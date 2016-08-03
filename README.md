@@ -7,7 +7,7 @@ At the top level, we still have the `swarm` script for starting infrastructure s
 The need for any prerequisites other than Docker is being eliminated. When you build, for example, `protoc` runs in a container. However, for the time being
 you should install go on your system as well as:
 
-* lint
+* [lint](https://github.com/golang/lint)
   `go get -u github.com/golang/lint/golint`
 
 
