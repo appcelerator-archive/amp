@@ -2,16 +2,16 @@ package server
 
 import (
 	//	"fmt"
+	"fmt"
 	"log"
 	"net"
+	"os"
 
-	"fmt"
 	"github.com/appcelerator/amp/api/rpc/project"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"google.golang.org/grpc"
 	"gopkg.in/olivere/elastic.v3"
-	"os"
 )
 
 var (
