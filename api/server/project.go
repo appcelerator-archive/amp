@@ -12,13 +12,29 @@ import (
 )
 
 const (
-	esIndex = "amp-project"
-	esType  = "project"
+	esIndex   = "amp-project"
+	esType    = "project"
+	esMapping = `{
+			"project":{
+				"properties":{
+					"name":{
+						"type":"string"
+					}
+				}
+			}
+		}`
 )
 
 var (
 	es elasticsearch.ElasticSearch
 )
+
+func init() {
+	// Initialize elastic search
+	es = elasticsearch.ElasticSearch{}
+	es.Connect()
+	es.CreateIndexIfNotExists(esIndex, esType, esMapping)
+}
 
 // projectService is used to implement project.ProjectServer
 type projectService struct {
