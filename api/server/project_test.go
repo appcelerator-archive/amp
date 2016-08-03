@@ -24,7 +24,7 @@ func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not greet: %v", err)
 	}
-	t.Log("Greeting: %s", r.Message)
+	t.Logf("Greeting: %s", r.Message)
 
 	conn.Close()
 }
