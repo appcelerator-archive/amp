@@ -1,8 +1,10 @@
-hash: 33d00386a902e2cee79802264d293d520f90d49527ecfddee79306f2dc0121e1
-updated: 2016-08-03T00:06:24.232440738-07:00
+hash: 5bcef169e446ee80ec9d8273e0e8cb46a4234dafe5d4b8d49fb18df94be1b421
+updated: 2016-08-03T01:59:21.204001193-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
+- name: github.com/docker/engine-api.git
+  version: 603ec41824c63d1e6498a22271987fa1f268c0c0
 - name: github.com/fsnotify/fsnotify
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/golang/protobuf
