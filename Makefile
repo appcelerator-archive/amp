@@ -30,7 +30,7 @@ CLI := amp
 SERVER := amplifier
 
 TAG := latest
-IMAGE := $(OWNER)/amp/:$(TAG)
+IMAGE := $(OWNER)/amp:$(TAG)
 
 all: version check install
 
@@ -79,4 +79,4 @@ build:
 	@docker build -t $(IMAGE) .
 
 run: build
-	@CID=$(shell docker run -d -p 50051:50051 --name $(SERVER) $(IMAGE)) && echo $${CID}
+	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 
 	"github.com/appcelerator/amp/api/rpc/project"
-	"github.com/appcelerator/amp/data/elasticsearch"
 
 	"golang.org/x/net/context"
 )
@@ -24,17 +23,6 @@ const (
 			}
 		}`
 )
-
-var (
-	es elasticsearch.ElasticSearch
-)
-
-func init() {
-	// Initialize elastic search
-	es = elasticsearch.ElasticSearch{}
-	es.Connect()
-	es.CreateIndexIfNotExists(esIndex, esType, esMapping)
-}
 
 // projectService is used to implement project.ProjectServer
 type projectService struct {
