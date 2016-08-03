@@ -20,3 +20,13 @@ At the top level, we still have the `swarm` script for starting infrastructure s
 * `make install` - will (re)build the project and install the executable binaries (`amp` and `amplifier`) in `$GOPATH/src`.
 * `make build` - will build a docker image (`appcelerator/amp:latest`) that contains the binaries.
 * `make run` - will run `amplifier` in a container.
+
+## Notes
+
+Use the `swarm` shell script to launch amp cluster services.
+
+    $ ./swarm pull
+    $ ./swarm start
+    $ ./swarm ls
+    $ ./swarm restart (equivalent to stop, pull, start)
+    $ ./swarm stop
