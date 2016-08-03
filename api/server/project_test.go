@@ -27,7 +27,7 @@ func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-	r, err := c.CreateProject(context.Background(), &project.CreateRequest{Name: name})
+	r, err := c.Create(context.Background(), &project.CreateRequest{Name: name})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
