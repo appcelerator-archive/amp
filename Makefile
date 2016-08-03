@@ -34,9 +34,15 @@ IMAGE := $(OWNER)/amp/:$(TAG)
 
 all: version check install
 
+version:
+	@echo "version: $(VERSION) (build: $(BUILD))"
+
 clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which amp)
+
+test:
+	@go test $(REPO)/api/server
 
 install: install-cli install-server
 
@@ -68,9 +74,6 @@ check:
 	@test -z $(shell gofmt -l ${CHECKSRC} | tee /dev/stderr) || echo "[WARN] Fix formatting issues with 'make fmt'"
 	@for d in $$(go list ./... | grep -v /vendor/); do golint $${d} | sed '/pb\.go/d'; done
 	@go tool vet ${CHECKSRC}
-
-version:
-	@echo "version: $(VERSION) (build: $(BUILD))"
 
 build:
 	@docker build -t $(IMAGE) .
