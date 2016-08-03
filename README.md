@@ -15,6 +15,9 @@ At the top level, we still have the `swarm` script for starting infrastructure s
 Test should generally be colocated with the packages they test. For example, see `api/server/project_test.go`, which tests the project service
 (`api/server/project.go`).
 
+It is usually most expedient to just run `go test` in the package directory you want to test. But for convenience, `make test` will run tests
+on the `github.com/appcelerator/amp/api/server` package to ensure that service tests are passing.
+
 ## Makefile
 
 * `make` - (no arguments) will print version/build info, run a check on your code, then install `amp` and `amplifier` in `$GOPATH/bin`.
