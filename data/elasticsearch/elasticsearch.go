@@ -1,6 +1,8 @@
 package elasticsearch
 
-import "gopkg.in/olivere/elastic.v3"
+import (
+	"gopkg.in/olivere/elastic.v3"
+)
 
 var (
 	// elasticSearch client
@@ -12,10 +14,11 @@ type ElasticSearch struct {
 }
 
 // Connect to the elastic search server
-func (es *ElasticSearch) Connect() {
+func (es *ElasticSearch) Connect(url string) {
 	// Create ES client
 	var err error
 	client, err = elastic.NewClient(
+		elastic.SetURL(url),
 		elastic.SetSniff(false),
 	)
 	if err != nil {

@@ -1,5 +1,5 @@
 hash: 5bcef169e446ee80ec9d8273e0e8cb46a4234dafe5d4b8d49fb18df94be1b421
-updated: 2016-08-03T01:59:21.204001193-07:00
+updated: 2016-08-03T14:14:07.248482476+02:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
@@ -7,10 +7,6 @@ imports:
   version: 603ec41824c63d1e6498a22271987fa1f268c0c0
 - name: github.com/fsnotify/fsnotify
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
-- name: github.com/golang/protobuf
-  version: c3cefd437628a0b7d31b34fe44b3a7a540e98527
-  subpackages:
-  - proto
 - name: github.com/hashicorp/hcl
   version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
   subpackages:
@@ -38,35 +34,10 @@ imports:
   version: 1560c1005499d61b80f865c04d39ca7505bf7f0b
 - name: github.com/spf13/viper
   version: b53595fb56a492ecef90ee0457595a999eb6ec15
-- name: golang.org/x/net
-  version: e2ba55e4e78399d85f2a0e0b92396b81ed410633
-  subpackages:
-  - context
-  - http2
-  - trace
-  - http2/hpack
-  - lex/httplex
-  - internal/timeseries
 - name: golang.org/x/sys
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
-- name: google.golang.org/grpc
-  version: 35896af9ad39c1fb1b1cd925fe3621be361e3d81
-  subpackages:
-  - codes
-  - credentials
-  - grpclog
-  - internal
-  - metadata
-  - naming
-  - transport
-  - peer
-- name: gopkg.in/olivere/elastic.v3
-  version: 787ebbb5a7600662bca364e4e8ca959f315e442f
-  subpackages:
-  - backoff
-  - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []
