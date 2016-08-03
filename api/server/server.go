@@ -20,15 +20,15 @@ var (
 
 func init() {
 	// Get elasticsearch url from environment
-	ES_URL := os.Getenv("ES_URL")
-	if ES_URL == "" {
-		ES_URL = elastic.DefaultURL
+	elasticSearchURL := os.Getenv("ES_URL")
+	if elasticSearchURL == "" {
+		elasticSearchURL = elastic.DefaultURL
 	}
-	fmt.Printf("ES_URL: %v\n", ES_URL)
+	fmt.Printf("ES_URL: %v\n", elasticSearchURL)
 
 	// Initialize elastic search
 	es = elasticsearch.ElasticSearch{}
-	es.Connect(ES_URL)
+	es.Connect(elasticSearchURL)
 	es.CreateIndexIfNotExists(esIndex, esType, esMapping)
 }
 
