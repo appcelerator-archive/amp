@@ -38,7 +38,16 @@ on the `github.com/appcelerator/amp/api/server` package to ensure that service t
 * `make build` - will build a docker image (`appcelerator/amp:latest`) that contains the binaries.
 * `make run` - will run `amplifier` in a container.
 
-## Notes
+## Package Management
+
+The project uses [Glide](https://glide.sh/) for vendoring, which is an approach to locking down packages that you have tested for a specific
+version. Glide isn't the only tool that supports vendoring, but it is one of the more popular ones. The Go community generally commits all the
+vendor artifacts (the `vendor` directory and lock file (`glide.lock`), along with the dependency specification (`glide.yaml`) file).
+
+When you want to add new dependencies to the project, run `glide get <package>`. If you want to update to the latest versions, run
+`glide update` and then `make test` to make sure nothing broke.
+
+## Swarm
 
 Use the `swarm` shell script to launch amp cluster services.
 
