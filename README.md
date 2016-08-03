@@ -10,6 +10,11 @@ At the top level, we still have the `swarm` script for starting infrastructure s
 * data/elasticsearch - the elasticsearch data layer (obviously).
 * vendor - used by glide to lock down versions and is supposed to be committed to version control, along with glide.lock and glide.yaml.
 
+## Tests
+
+Test should generally be colocated with the packages they test. For example, see `api/server/project_test.go`, which tests the project service
+(`api/server/project.go`).
+
 ## Makefile
 
 * `make` - (no arguments) will print version/build info, run a check on your code, then install `amp` and `amplifier` in `$GOPATH/bin`.

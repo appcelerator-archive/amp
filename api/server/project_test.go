@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"github.com/appcelerator/amp/api/rpc/project"
