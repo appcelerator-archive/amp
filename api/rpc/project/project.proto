@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package project;
+
+service Project {
+  rpc Create (CreateRequest) returns (CreateReply) {}
+}
+
+message CreateRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message CreateReply {
+  string message = 1;
+}
