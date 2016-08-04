@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  sut:
+    image: appcelerator/sut
+    build: .
+    entrypoint: make
+    command: test
+    environment:
+      ES_URL: http://elasticsearch:9200
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:latest
