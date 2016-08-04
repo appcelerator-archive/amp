@@ -24,45 +24,42 @@ type Etcd struct {
 }
 
 // Connect to the elastic search server
-func (etcd *Etcd) Connect(endpoints ...string) {
+func (etcd *Etcd) Connect(endpoints ...string) (err error) {
 	if len(endpoints) > 0 {
 		cfg.Endpoints = endpoints
 	}
 	c, err := client.New(cfg)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	kapi = client.NewKeysAPI(c)
 	log.Printf("Successfully Connected to etcd on: %+v\n", cfg.Endpoints)
+	return
 }
 
 // NewKey Generates a new key with the given value in the given keyspace and returns the key
-func (etcd *Etcd) NewKey(keyPrefix string, value interface{}) (key string) {
+func (etcd *Etcd) NewKey(keyPrefix string, value interface{}) (key string, err error) {
 	key = keyPrefix + "/" + uuid.NewV4().String()
 	json, err := json.Marshal(value)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	resp, err := kapi.Set(context.Background(), key, string(json), nil)
 	if err != nil {
-		log.Fatal(err)
-	} else {
-		// print common key info
-		log.Printf("Set is done. Metadata is %q\n", resp)
+		return
 	}
+	log.Printf("Set is done. Metadata is %q\n", resp)
 	return
 }
 
 // All get all the key/value pairs (nodes) under the given path.
-func (etcd *Etcd) All(path string) (nodes client.Nodes) {
+func (etcd *Etcd) All(path string) (nodes client.Nodes, err error) {
 	resp, err := kapi.Get(context.Background(), path, &client.GetOptions{Recursive: true, Quorum: true})
 	if err != nil {
-		log.Fatal(err)
-	} else {
-		// print common key info
-		log.Printf("All is done. Metadata is %q\n", resp)
+		return
 	}
+	log.Printf("All is done. Metadata is %q\n", resp)
 	nodes = resp.Node.Nodes
 	return
 }

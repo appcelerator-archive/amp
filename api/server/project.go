@@ -22,13 +22,17 @@ func (s *projectService) Create(ctx context.Context, in *project.CreateRequest) 
 	etc.NewKey(keySpace, in)
 
 	// Iterate through all entries
-	for _, node := range etc.All(keySpace) {
+	all, err := etc.All(keySpace)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range all {
 		// Deserialize node value into a CreateRequest (could also be just a map[string]interface{}).
 		var cr project.CreateRequest
 		err := json.Unmarshal([]byte(node.Value), &cr)
 		cr.Id = node.Key
 		if err != nil {
-			// Deserialization failed
+			return nil, err
 		}
 		log.Printf("%+v\n", cr)
 	}
