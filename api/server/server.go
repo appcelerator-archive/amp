@@ -11,23 +11,10 @@ import (
 )
 
 var (
-	//es elasticsearch.ElasticSearch
 	etc etcd.Etcd
 )
 
 func init() {
-	//// Get elasticsearch url from environment
-	//elasticSearchURL := os.Getenv("ES_URL")
-	//if elasticSearchURL == "" {
-	//	elasticSearchURL = elastic.DefaultURL
-	//}
-	//fmt.Printf("ES_URL: %v\n", elasticSearchURL)
-	//
-	//// Initialize elastic search
-	//es = elasticsearch.ElasticSearch{}
-	//es.Connect(elasticSearchURL)
-	//es.CreateIndexIfNotExists(esIndex, esType, esMapping)
-
 	// Initialize etcd
 	etc = etcd.Etcd{}
 	etc.Connect()
