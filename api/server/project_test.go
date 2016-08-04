@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/rpc/project"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
@@ -15,7 +14,7 @@ const (
 )
 
 func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
-	server.Start(port)
+	Start(port)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
