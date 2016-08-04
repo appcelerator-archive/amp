@@ -19,7 +19,7 @@ type projectService struct {
 // CreateProject implements project.ProjectServer
 func (s *projectService) Create(ctx context.Context, in *project.CreateRequest) (*project.CreateReply, error) {
 	// Storing the project
-	etc.NewKey(keySpace, in)
+	etc.Put(keySpace, in)
 
 	// Iterate through all entries
 	all, err := etc.All(keySpace)
