@@ -36,8 +36,8 @@ func (etcd *Etcd) Connect(endpoints ...string) {
 	log.Printf("Successfully Connected to etcd on: %+v\n", cfg.Endpoints)
 }
 
-// SetKey set the value for a given key
-func (etcd *Etcd) SetKey(keyPrefix string, value interface{}) (key string) {
+// NewKey Generates a new key with the given value in the given keyspace and returns the key
+func (etcd *Etcd) NewKey(keyPrefix string, value interface{}) (key string) {
 	key = keyPrefix + "/" + uuid.NewV4().String()
 	json, err := json.Marshal(value)
 	if err != nil {
@@ -50,22 +50,19 @@ func (etcd *Etcd) SetKey(keyPrefix string, value interface{}) (key string) {
 	} else {
 		// print common key info
 		log.Printf("Set is done. Metadata is %q\n", resp)
-		log.Printf("Set is done. Data is %+v\n", value)
 	}
 	return
 }
 
-// GetKey get the value for a given key
-func (etcd *Etcd) GetKey(key string) (value string) {
-	resp, err := kapi.Get(context.Background(), key, nil)
+// All get all the key/value pairs (nodes) under the given path.
+func (etcd *Etcd) All(path string) (nodes client.Nodes) {
+	resp, err := kapi.Get(context.Background(), path, &client.GetOptions{Recursive: true, Quorum: true})
 	if err != nil {
 		log.Fatal(err)
 	} else {
 		// print common key info
-		log.Printf("Get is done. Metadata is %q\n", resp)
-		// print value
-		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		log.Printf("All is done. Metadata is %q\n", resp)
 	}
-	value = resp.Node.Value
+	nodes = resp.Node.Nodes
 	return
 }
