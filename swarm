@@ -36,6 +36,7 @@ IMAGES=(
    appcelerator/nginx:latest
    appcelerator/telegraf:latest
    appcelerator/zookeeper:latest
+   quay.io/coreos/etcd:v3.0.4
    sheepkiller/kafka-manager:latest
 )
 
@@ -102,6 +103,7 @@ startservices() {
   amppilot
   nginx
   ampui
+  etcd
   consul
   zookeeper
   kafka
@@ -221,6 +223,16 @@ elasticsearch() { # Owner: bertrand-quenin
     --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
     appcelerator/elasticsearch-amp:latest /bin/amppilot/pilotLoader gosu elastico elasticsearch
 }
+
+etcd() { # Owner: subfuzion
+  docker service create --network amp-swarm --name etcd \
+    -p 2379:2379 \
+    -p 2380:2380 \
+    quay.io/coreos/etcd:v3.0.4 etcd \
+      --name etcd \
+      --listen-client-urls http://0.0.0.0:2379 \
+      --advertise-client-urls http://0.0.0.0:2380
+  }
 
 grafana() { # Owner: ndegory
   docker service create --network amp-swarm --name grafana \
