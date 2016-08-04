@@ -37,7 +37,7 @@ func (etcd *Etcd) Connect(endpoints ...string) (err error) {
 	return
 }
 
-// NewKey Generates a new key with the given value in the given keyspace and returns the key
+// Put Puts a new key with the given value in the given keyspace and returns the key
 func (etcd *Etcd) Put(keyPrefix string, value interface{}) (key string, err error) {
 	key = keyPrefix + "/" + uuid.NewV4().String()
 	json, err := json.Marshal(value)
