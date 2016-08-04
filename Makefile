@@ -64,10 +64,8 @@ install-host: rpc-host
 rpc-host: $(PROTOFILES)
 	@for PKG in $$(ls -d $(BASEDIR)/$(PROTODIR)/*/); do cd $${PKG}; protoc *.proto --go_out=plugins=grpc:.; done
 
+# format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 fmt:
-	@gofmt -l -w $(CHECKSRC)
-
-simplify:
 	@gofmt -s -l -w $(CHECKSRC)
 
 check:
