@@ -1,10 +1,10 @@
 hash: 147fffefb7be21a30e75ac39f81e4ec151370247997587bb30675f9855d4fed2
-updated: 2016-08-04T15:08:36.359073112+02:00
+updated: 2016-08-04T11:36:09.866098864-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/coreos/etcd
-  version: eb36d0dbba3636b4cf4decedc182eabf5f0f1fc2
+  version: e2a956c0c401752fa42ec4b51539703c0da267d3
   subpackages:
   - client
   - pkg/pathutil
@@ -43,7 +43,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 1560c1005499d61b80f865c04d39ca7505bf7f0b
+  version: f676131e2660dc8cd88de99f7486d34aa8172635
 - name: github.com/spf13/viper
   version: b53595fb56a492ecef90ee0457595a999eb6ec15
 - name: github.com/ugorji/go
@@ -81,4 +81,4 @@ imports:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-testImports: []
+devImports: []
