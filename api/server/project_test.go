@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/appcelerator/amp/api/rpc/project"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"testing"
@@ -20,7 +21,7 @@ func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
 
 	// Contact the server and print out its response.
 	c := project.NewProjectClient(conn)
-	r, err := c.Create(context.Background(), &project.CreateRequest{Name: "test-project"})
+	r, err := c.Create(context.Background(), &project.CreateRequest{Name: "test-project-" + uuid.NewV4().String()})
 	if err != nil {
 		t.Fatalf("could not greet: %v", err)
 	}

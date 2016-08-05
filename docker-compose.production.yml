@@ -1,0 +1,6 @@
+version: "2"
+
+services:
+  amp:
+    image: appcelerator/amp
+    build: .
