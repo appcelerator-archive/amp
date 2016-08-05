@@ -1,27 +1,15 @@
 package server
 
 import (
-	"fmt"
-
-	"encoding/json"
-
 	"github.com/appcelerator/amp/api/rpc/project"
 
+	"encoding/json"
 	"golang.org/x/net/context"
+	"log"
 )
 
 const (
-	esIndex   = "amp-project"
-	esType    = "project"
-	esMapping = `{
-			"project":{
-				"properties":{
-					"name":{
-						"type":"string"
-					}
-				}
-			}
-		}`
+	keySpace = "/amp/project"
 )
 
 // projectService is used to implement project.ProjectServer
@@ -30,22 +18,23 @@ type projectService struct {
 
 // CreateProject implements project.ProjectServer
 func (s *projectService) Create(ctx context.Context, in *project.CreateRequest) (*project.CreateReply, error) {
-	// Indexing the project
-	es.Index(esIndex, esType, in)
+	// Storing the project
+	etc.Put(keySpace, in)
 
-	// Get all the projects
-	all := es.All(esIndex)
-
-	// Iterate through results
-	for _, hit := range all {
-		// Deserialize hit.Source into a CreateRequest (could also be just a map[string]interface{}).
+	// Iterate through all entries
+	all, err := etc.All(keySpace)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range all {
+		// Deserialize node value into a CreateRequest (could also be just a map[string]interface{}).
 		var cr project.CreateRequest
-		err := json.Unmarshal(*hit.Source, &cr)
-		cr.Id = hit.Id
+		err := json.Unmarshal([]byte(node.Value), &cr)
+		cr.Id = node.Key
 		if err != nil {
-			// Deserialization failed
+			return nil, err
 		}
-		fmt.Printf("Project: %+v\n", cr)
+		log.Printf("%+v\n", cr)
 	}
 
 	return &project.CreateReply{Message: "Hello " + in.Name}, nil
