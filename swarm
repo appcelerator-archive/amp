@@ -18,13 +18,14 @@ USAGE
   exit 1
 }
 
+# please keep sorted
 IMAGES=(
-   appcelerator/amp-pilot:latest
    appcelerator/amp-docker-agent:latest
    appcelerator/amp-log:latest
    appcelerator/amp-log-service:latest
    appcelerator/amp-log-worker:latest
    appcelerator/amp-monitor:latest
+   appcelerator/amp-pilot:latest
    appcelerator/amp-ui:latest
    appcelerator/consul:latest-server
    appcelerator/elasticsearch-amp:latest
@@ -40,6 +41,30 @@ IMAGES=(
    sheepkiller/kafka-manager:latest
 )
 
+# please keep sorted
+SERVICES=(
+  ampdockeragent
+  amplog
+  amplogservice # only works properly with a single host
+  amplogworker
+  ampmonitor
+  amppilot
+  ampui
+  consul
+  elasticsearch
+  etcd
+  grafana
+  kafka
+  kafkamanager
+  kibana
+  influxdb
+  kapacitor
+  nginx
+  telegrafagent
+  telemetryworker
+  zookeeper
+)
+
 ROLE=infrastructure
 
 main() {
@@ -50,7 +75,7 @@ main() {
       start)
         initswarm
         createnetwork
-        startservices
+        startservices "${@:2}"
       ;;
       stop)
         removeservices
@@ -84,42 +109,25 @@ createnetwork() {
 # pull the latest AMP images to local docker cache
 pullimages() {
   echo "> Pulling AMP images"
-  for i in ${IMAGES[@]}
-  do
-    docker pull $i
-  done
+  for i in ${IMAGES[@]}; do docker pull $i; done
 }
 
 removeservices() {
-  SERVICES=$(docker service ls -q --filter "label=amp.swarm=$ROLE")
-  [[ ! -z ${SERVICES[0]} ]] && echo "> Removing current services..." && docker service rm $SERVICES || true
+  stop=$(docker service ls -q --filter "label=amp.swarm=$ROLE")
+  [[ ! -z ${stop[0]} ]] && echo "> Removing current services..." && docker service rm $stop || true
 }
 
 # start the services on the swarm
+# you can specify list of specific services on the command line as args to `start` command
+# (the service names must match the service functions defined below, such as `etcd`),
+# otherwise the default is to start all the services in the SERVICES array.
 startservices() {
   removeservices
 
   echo "> Starting services..."
-  amppilot
-  nginx
-  ampui
-  etcd
-  consul
-  zookeeper
-  kafka
-  kafkamanager
-  amplog
-  amplogworker
-  ampdockeragent
-  elasticsearch
-  kibana
-  ampmonitor
-  influxdb
-  grafana
-  kapacitor
-  telegrafagent
-  telemetryworker
-  amplogservice # only works properly with a single host
+  start=${SERVICES[@]}
+  [[ $# -ne 0 ]] && start=$@
+  for i in $start; do $i; done
 }
 
 ls() {
