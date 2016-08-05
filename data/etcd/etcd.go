@@ -24,7 +24,7 @@ type Etcd struct {
 }
 
 // Connect to the elastic search server
-func (etcd *Etcd) Connect(endpoints ...string) (err error) {
+func (etcd *Etcd) Connect(endpoints []string) (err error) {
 	if len(endpoints) > 0 {
 		cfg.Endpoints = endpoints
 	}
