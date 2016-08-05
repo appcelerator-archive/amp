@@ -1,10 +1,10 @@
-hash: 147fffefb7be21a30e75ac39f81e4ec151370247997587bb30675f9855d4fed2
-updated: 2016-08-04T11:46:12.229349036-07:00
+hash: 9aa6b5f7c191103c6fb7080c813408d1e756e5906448d796b72b8162c7e22295
+updated: 2016-08-05T16:50:31.634196919+02:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/coreos/etcd
-  version: c46955b60adc0c21c9f3d10730b858a997820c32
+  version: 6c3efde51bb254be94740e426c9f9313d2fbdd22
   subpackages:
   - client
   - pkg/pathutil
@@ -30,12 +30,23 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/kr/fs
+  version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
   version: b3f6dd549956e8a61ea4a686a1c02a33d5bdda4b
 - name: github.com/mitchellh/mapstructure
   version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+- name: github.com/pkg/errors
+  version: 2a9be18ecd8c148be18be08a811e33809206da19
+- name: github.com/pkg/sftp
+  version: a71e8f580e3b622ebff585309160b1cc549ef4d2
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: github.com/spf13/afero
+  version: cc9c21814bb945440253108c4d3c65c85aac3c68
+  subpackages:
+  - mem
+  - sftp
 - name: github.com/spf13/cast
   version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
@@ -45,13 +56,24 @@ imports:
 - name: github.com/spf13/pflag
   version: f676131e2660dc8cd88de99f7486d34aa8172635
 - name: github.com/spf13/viper
-  version: b53595fb56a492ecef90ee0457595a999eb6ec15
+  version: abafbf243b9583ac1360ae4ef680d8acaa361089
+- name: github.com/stretchr/testify
+  version: d77da356e56a7428ad25149ca77381849a6a5232
+  subpackages:
+  - assert
 - name: github.com/ugorji/go
   version: 3487a5545b3d480987dfb0492035299077fab33a
   subpackages:
   - codec
+- name: golang.org/x/crypto
+  version: 7a1054f3ac58191481dc500077c6b060f5d6c7e5
+  subpackages:
+  - ssh
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
 - name: golang.org/x/net
-  version: 57bfaa875b96fb91b4766077f34470528d4b03e9
+  version: 7c62cfdcccc65f87b0120ec841012ba816fc1aec
   subpackages:
   - context
   - http2
@@ -63,6 +85,11 @@ imports:
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
+- name: golang.org/x/text
+  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  subpackages:
+  - transform
+  - unicode/norm
 - name: google.golang.org/grpc
   version: 35896af9ad39c1fb1b1cd925fe3621be361e3d81
   subpackages:
@@ -81,4 +108,12 @@ imports:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib

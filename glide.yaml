@@ -8,3 +8,4 @@ import:
 - package: github.com/coreos/etcd/client
 - package: github.com/ugorji/go/codec
 - package: github.com/satori/go.uuid
+- package: github.com/stretchr/testify

@@ -4,8 +4,8 @@ import (
 	"github.com/appcelerator/amp/api/rpc/project"
 
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
-	"log"
 )
 
 const (
@@ -18,24 +18,36 @@ type projectService struct {
 
 // CreateProject implements project.ProjectServer
 func (s *projectService) Create(ctx context.Context, in *project.CreateRequest) (*project.CreateReply, error) {
-	// Storing the project
-	etc.Put(keySpace, in)
+	// Generate an id
+	id := uuid.NewV4().String()
+	in.Project.Id = id
 
-	// Iterate through all entries
-	all, err := etc.All(keySpace)
+	// Store the project
+	_, err := etc.Put(keySpace, id, in.Project)
 	if err != nil {
 		return nil, err
 	}
-	for _, node := range all {
-		// Deserialize node value into a CreateRequest (could also be just a map[string]interface{}).
-		var cr project.CreateRequest
-		err := json.Unmarshal([]byte(node.Value), &cr)
-		cr.Id = node.Key
+
+	return &project.CreateReply{Created: in.Project}, nil
+}
+
+func (s *projectService) List(ctx context.Context, in *project.ListRequest) (*project.ListReply, error) {
+	// Get all the projects
+	all, err := etc.List(keySpace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the reply
+	projects := make([]*project.Project, len(all))
+	for i, node := range all {
+		var project project.Project
+		err := json.Unmarshal([]byte(node.Value), &project)
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("%+v\n", cr)
+		projects[i] = &project
 	}
 
-	return &project.CreateReply{Message: "Hello " + in.Name}, nil
+	return &project.ListReply{Projects: projects}, nil
 }

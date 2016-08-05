@@ -3,7 +3,6 @@ package etcd
 import (
 	"encoding/json"
 	"github.com/coreos/etcd/client"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"log"
 	"time"
@@ -23,7 +22,7 @@ var (
 type Etcd struct {
 }
 
-// Connect to the elastic search server
+// Connect to the etcd server
 func (etcd *Etcd) Connect(endpoints ...string) (err error) {
 	if len(endpoints) > 0 {
 		cfg.Endpoints = endpoints
@@ -37,29 +36,27 @@ func (etcd *Etcd) Connect(endpoints ...string) (err error) {
 	return
 }
 
-// Put Puts a new key with the given value in the given keyspace and returns the key
-func (etcd *Etcd) Put(keyPrefix string, value interface{}) (key string, err error) {
-	key = keyPrefix + "/" + uuid.NewV4().String()
+// Put Puts a new key with the given value in the given keyspace and returns the key path
+func (etcd *Etcd) Put(prefix string, id string, value interface{}) (path string, err error) {
+	path = prefix + "/" + id
 	json, err := json.Marshal(value)
 	if err != nil {
 		return
 	}
 
-	resp, err := kapi.Set(context.Background(), key, string(json), nil)
+	_, err = kapi.Set(context.Background(), path, string(json), nil)
 	if err != nil {
 		return
 	}
-	log.Printf("Set is done. Metadata is %q\n", resp)
+	log.Printf("Successfully put a new key @ %v\n", path)
 	return
 }
 
-// All get all the key/value pairs (nodes) under the given path.
-func (etcd *Etcd) All(path string) (nodes client.Nodes, err error) {
+// List lists all the key/value pairs (nodes) under the given path
+func (etcd *Etcd) List(path string) (nodes client.Nodes, err error) {
 	resp, err := kapi.Get(context.Background(), path, &client.GetOptions{Recursive: true, Quorum: true})
 	if err != nil {
 		return
 	}
-	log.Printf("All is done. Metadata is %q\n", resp)
-	nodes = resp.Node.Nodes
-	return
+	return resp.Node.Nodes, nil
 }

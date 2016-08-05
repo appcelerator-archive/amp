@@ -4,13 +4,28 @@ package project;
 
 service Project {
   rpc Create (CreateRequest) returns (CreateReply) {}
+  rpc List (ListRequest) returns (ListReply) {
+  }
 }
 
-message CreateRequest {
+message project {
   string id = 1;
   string name = 2;
 }
 
+message CreateRequest {
+  project project = 1;
+}
+
 message CreateReply {
-  string message = 1;
+  string error = 1;
+  project created = 2;
+}
+
+message ListRequest {
+}
+
+message ListReply {
+  string error = 1;
+  repeated project projects = 2;
 }
