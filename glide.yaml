@@ -5,6 +5,10 @@ import:
 - package: github.com/spf13/viper
 - package: github.com/docker/engine-api.git
 - package: gopkg.in/olivere/elastic.v3
-- package: github.com/coreos/etcd/client
-- package: github.com/ugorji/go/codec
+- package: github.com/coreos/etcd
+  subpackages:
+  - client
+- package: github.com/ugorji/go
+  subpackages:
+  - codec
 - package: github.com/satori/go.uuid

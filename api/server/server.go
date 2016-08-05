@@ -1,28 +1,24 @@
 package server
 
 import (
-	//	"fmt"
+	"log"
+	"net"
+
 	"github.com/appcelerator/amp/api/rpc/project"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/etcd"
 	"google.golang.org/grpc"
-	"log"
-	"net"
 )
 
 var (
 	etc etcd.Etcd
 )
 
-func init() {
-	// Initialize etcd
-	etc = etcd.Etcd{}
-	etc.Connect()
-}
-
 // Start starts the server
-func Start(port string) {
-	lis, err := net.Listen("tcp", port)
+func Start(config Config) {
+	initEtcd(config)
+
+	lis, err := net.Listen("tcp", config.Port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -30,4 +26,14 @@ func Start(port string) {
 	project.RegisterProjectServer(s, &projectService{})
 	service.RegisterServiceServer(s, &serviceService{})
 	s.Serve(lis)
+}
+
+// fail fast on initialization errors; there's no point in attempting
+// to continue in a degraded state if there are problems at start up
+func initEtcd(config Config) {
+	etc = etcd.Etcd{}
+	err := etc.Connect(config.EtcdEndpoints)
+	if err != nil {
+		panic(err)
+	}
 }
