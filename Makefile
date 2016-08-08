@@ -64,7 +64,7 @@ install-host: proto-host
 
 # used to build under Docker
 proto-host: $(PROTOFILES)
-	@for DIR in $(DIRS); do cd $${DIR}; ls *.proto > /dev/null 2>&1 && protoc *.proto --go_out=plugins=grpc:.; done
+	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && protoc *.proto --go_out=plugins=grpc:. || true; done
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 fmt:
