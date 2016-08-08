@@ -1,4 +1,4 @@
-.PHONY: all clean install install-server install-cli fmt simplify check version build run
+.PHONY: all clean install install-server install-cli fmt simplify check version build run test
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
