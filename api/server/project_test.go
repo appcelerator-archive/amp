@@ -14,7 +14,7 @@ const (
 )
 
 func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
-	Start(port)
+	go Start(port)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
