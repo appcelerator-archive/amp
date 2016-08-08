@@ -1,7 +1,9 @@
 package etcd_test
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,19 +13,38 @@ import (
 )
 
 const (
-	defTimeout = 5 * time.Second
+	defTimeout           = 5 * time.Second
+	defaultPort          = ":50101"
+	etcdDefaultEndpoints = "http://localhost:2379"
 )
 
 var (
-	config = server.Config{
-		Port:          ":50101",
-		EtcdEndpoints: []string{"http://etcd:2379"},
-	}
-
-	store data.Store
+	config        server.Config
+	store         data.Store
+	port          string
+	etcdEndpoints string
 )
 
+func parseEnv() {
+	port = os.Getenv("port")
+	if (port == "") {
+		port = defaultPort
+	}
+	etcdEndpoints = os.Getenv("endpoints")
+	if (etcdEndpoints == "") {
+		etcdEndpoints = etcdDefaultEndpoints
+	}
+
+	// update config
+	config.Port = port
+	for _, s := range strings.Split(etcdEndpoints, ",") {
+		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
+	}
+	fmt.Printf("config: %q", config)
+}
+
 func TestMain(m *testing.M) {
+	parseEnv()
 	go server.Start(config)
 
 	// there is no event when the server starts listening, so we just wait a second
