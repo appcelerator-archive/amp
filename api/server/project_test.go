@@ -10,11 +10,14 @@ import (
 
 const (
 	address = "localhost:50051"
-	port = ":50051"
+	port    = ":50051"
 )
 
 func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
-	go Start(port)
+	go Start(Config{
+		Port:          port,
+		EtcdEndpoints: []string{"http://etcd:2379"},
+	})
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {

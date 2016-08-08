@@ -9,3 +9,5 @@ services:
       ES_URL: http://elasticsearch:9200
   elasticsearch:
     image: appcelerator/elasticsearch-amp:latest
+  etcd:
+    image: quay.io/coreos/etcd
