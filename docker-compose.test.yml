@@ -4,8 +4,7 @@ services:
   sut:
     image: appcelerator/sut
     build: .
-    entrypoint: make
-    command: test
+    command: ["make", "test"]
     environment:
       ES_URL: http://elasticsearch:9200
   elasticsearch:
