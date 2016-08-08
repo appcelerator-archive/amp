@@ -4,7 +4,7 @@ services:
   sut:
     image: appcelerator/sut
     build: .
-    command: ["make", "test"]
+    command: ["go", "test", "-v", "github.com/appcelerator/amp/data/etcd"]
     environment:
       ES_URL: http://elasticsearch:9200
   elasticsearch:
