@@ -1,13 +1,13 @@
 package etcd_test
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/data"
+	"golang.org/x/net/context"
 )
 
 const (
