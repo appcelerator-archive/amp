@@ -8,5 +8,5 @@ RUN curl https://glide.sh/get | sh
 RUN glide install
 COPY . /go/src/github.com/appcelerator/amp
 RUN make install-host
-EXPOSE 50051
+EXPOSE 50101
 ENTRYPOINT [ "amplifier" ]
