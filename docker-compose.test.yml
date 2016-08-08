@@ -4,9 +4,18 @@ services:
   sut:
     image: appcelerator/sut
     build: .
-    entrypoint: make
-    command: test
+    command: ["go", "test", "-v", "github.com/appcelerator/amp/data/etcd"]
     environment:
-      ES_URL: http://elasticsearch:9200
-  elasticsearch:
-    image: appcelerator/elasticsearch-amp:latest
+      endpoints: http://etcd:2379
+  etcd:
+    image: quay.io/coreos/etcd
+    command: [
+      "etcd",
+      "-name", "etcd0",
+      "-advertise-client-urls", "http://etcd:2379",
+      "-listen-client-urls", "http://0.0.0.0:2379",
+      "-initial-advertise-peer-urls", "http://etcd:2380",
+      "-initial-cluster-token", "etcd-cluster-1",
+      "-initial-cluster", "etcd0=http://etcd:2380",
+      "-initial-cluster-state", "new"
+    ]
