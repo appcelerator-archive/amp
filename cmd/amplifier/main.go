@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultPort          = ":50051"
+	defaultPort          = ":50101"
 	etcdDefaultEndpoints = "http://localhost:2379"
 )
 
@@ -24,14 +24,14 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config        = server.Config{Port: port}
+	config        server.Config
 	port          string
 	etcdEndpoints string
 )
 
 func parseFlags() {
 	// set up flags
-	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default ':50051')")
+	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
 
 	// parse command line flags

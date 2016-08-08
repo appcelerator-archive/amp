@@ -10,17 +10,19 @@ BUILD := $(shell git rev-parse HEAD | cut -c1-8)
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 # ignore vendor directory for go files
-SRC := $(shell find . -type f -name '*.go' -not -path './vendor/*')
+SRC := $(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path './.git/*')
 
-# generated file dependencies for rpc rule
-PROTODIR := api/rpc
-PROTOFILES = $(shell find $(PROTODIR) -type f -name '*.proto' -not -path './vendor/*')
+# for walking directory tree (like for proto rule)
+DIRS = $(shell find . -type d -not -path '.' -not -path './vendor' -not -path './vendor/*' -not -path './.git' -not -path './.git/*')
+
+# generated file dependencies for proto rule
+PROTOFILES = $(shell find . -type f -name '*.proto' -not -path './vendor/*' -not -path './.git/*')
 
 # generated files that can be cleaned
-GENERATED := $(shell find $(PROTODIR) -type f -name '*.pb.go' -not -path './vendor/*')
+GENERATED := $(shell find . -type f -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*')
 
 # ignore generated files when formatting/linting/vetting
-CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -path './vendor/*')
+CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*')
 
 OWNER := appcelerator
 REPO := github.com/$(OWNER)/amp
@@ -46,23 +48,23 @@ test:
 
 install: install-cli install-server
 
-install-cli: rpc
+install-cli: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 
-install-server: rpc
+install-server: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
-rpc: $(PROTOFILES)
-	@for PKG in $$(ls -d $(BASEDIR)/$(PROTODIR)/*/); do cd $${PKG}; docker run -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:.; done
+proto: $(PROTOFILES)
+	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:.; done
 
 # used to build under Docker
-install-host: rpc-host
+install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
 # used to build under Docker
-rpc-host: $(PROTOFILES)
-	@for PKG in $$(ls -d $(BASEDIR)/$(PROTODIR)/*/); do cd $${PKG}; protoc *.proto --go_out=plugins=grpc:.; done
+proto-host: $(PROTOFILES)
+	@for DIR in $(DIRS); do cd $${DIR}; ls *.proto > /dev/null 2>&1 && protoc *.proto --go_out=plugins=grpc:.; done
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 fmt:
