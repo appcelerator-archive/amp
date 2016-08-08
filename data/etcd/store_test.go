@@ -1,7 +1,6 @@
 package etcd_test
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -40,7 +39,6 @@ func parseEnv() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
-	fmt.Printf("config: %q", config)
 }
 
 func TestMain(m *testing.M) {
