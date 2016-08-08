@@ -15,9 +15,9 @@ const (
 )
 
 var (
-	config server.Config = server.Config{
+	config = server.Config{
 		Port:          ":50101",
-		EtcdEndpoints: []string{"http://localhost:2379"},
+		EtcdEndpoints: []string{"http://etcd:2379"},
 	}
 
 	store data.Store
