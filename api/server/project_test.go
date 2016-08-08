@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"testing"
+	"time"
 )
 
 const (
@@ -18,6 +19,7 @@ func TestShouldSucceedWhenProvidingAValidCreateRequest(t *testing.T) {
 		Port:          port,
 		EtcdEndpoints: []string{"http://etcd:2379"},
 	})
+	time.Sleep(10 * time.Second)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
