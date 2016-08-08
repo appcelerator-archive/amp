@@ -1,8 +1,9 @@
 package data
 
 import (
-	"context"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 // Store must be implemented for a key/value store

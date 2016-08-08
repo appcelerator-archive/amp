@@ -16,7 +16,6 @@ limitations under the License.
 package etcd
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/appcelerator/amp/data"
 	"github.com/coreos/etcd/clientv3"
+	"golang.org/x/net/context"
 )
 
 // Store is used to connect to and query etcd
