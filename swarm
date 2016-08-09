@@ -285,10 +285,7 @@ influxdb() { # Owner: ndegory
     -p 8083:8083 \
     -e FORCE_HOSTNAME=auto \
     -e PRE_CREATE_DB=telegraf \
-    -e CONSUL=consul:8500 \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
     appcelerator/influxdb:latest
 }
 
