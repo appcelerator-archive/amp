@@ -65,6 +65,18 @@ SERVICES=(
   zookeeper
 )
 
+MINSERVICES=(
+# amp-agent
+  amplogworker
+  etcd
+  elasticsearch
+  kafka
+  influxdb
+  telegrafagent
+  telemetryworker
+  zookeeper
+)
+
 ROLE=infrastructure
 
 main() {
@@ -125,8 +137,12 @@ startservices() {
   removeservices
 
   echo "> Starting services..."
+  # default is to run all the services
   start=${SERVICES[@]}
-  [[ $# -ne 0 ]] && start=$@
+
+  # check if --min was specified, otherwise only run the services if specified by args
+  [[ $@ =~ "--min" ]] && start=${MINSERVICES[@]} || ([[ $# -ne 0 ]] && start=$@)
+
   for i in $start; do $i; done
 }
 

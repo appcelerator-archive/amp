@@ -45,6 +45,7 @@ clean:
 
 test:
 	@go test $(REPO)/api/server
+	@go test $(REPO)/data/etcd
 
 install: install-cli install-server
 
