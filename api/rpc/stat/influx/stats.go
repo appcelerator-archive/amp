@@ -4,24 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/influxdata/influxdb/client/v2"
 )
-
-// New return a newly created stats structure
-func New(connection, dbname string) *stats {
-	return &stats{
-		dbname: dbname,
-		conn:   connection,
-	}
-}
 
 type stats struct {
 	client client.Client
 	dbname string
 	conn   string
+	//TODO figure out better Security
+	u string
+	p string
+}
+
+// New return a newly created stats structure
+func New(connection, dbname, u, p string) stat.Stats {
+	return &stats{
+		dbname: dbname,
+		conn:   connection,
+		u:      u,
+		p:      p,
+	}
 }
 
 func (s *stats) query(query string, database string) client.Query {
@@ -44,45 +49,41 @@ func (s *stats) Query(q string) (string, error) {
 		fmt.Printf("ERR: %s\n", response.Error())
 		return "", err
 	}
-	s.writeJSON(response, os.Stdout)
-	return "", err
+	data, err := json.Marshal(response)
+	return string(data), err
 }
 func (s *stats) Endpoints() []string {
 	return nil
 }
 
 // Connect to stats server
-func (s *stats) Connect(timeout time.Duration) (*stats, error) {
+func (s *stats) Connect(timeout time.Duration) error {
 	// Make client
 	//TODO Security!
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     s.conn,
-		Username: "admin",
-		Password: "changeme",
+		Username: s.u,
+		Password: s.p,
 	})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-		return nil, err
+		return err
 	}
 	s.client = c
-	return s, err
+	return err
 }
 
 // Close connection to stats server
 func (s *stats) Close() error {
 	err := s.client.Close()
-	if err != nil {
-		return err
-	}
 	return err
 }
 
+// writeSJON takes the response and marshals it to JSON
 func (s *stats) writeJSON(response *client.Response, w io.Writer) {
 	var data []byte
 	var err error
-
-	data, err = json.MarshalIndent(response, "", "    ")
+	data, err = json.Marshal(response)
 	if err != nil {
 		fmt.Fprintf(w, "Unable to parse json: %s\n", err)
 		return
