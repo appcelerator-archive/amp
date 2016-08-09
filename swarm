@@ -185,16 +185,13 @@ amplogservice() { # Owner: generalhenry
     appcelerator/amp-log-service:latest
 }
 
+# DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
     --label amp.swarm="infrastructure" \
     -p 4018:3000 \
     -e ZOOKEEPER=zookeeper:2181 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="kafka" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-log-worker:latest /bin/amppilot/pilotLoader
+    appcelerator/amp-log-worker:latest
 }
 
 ampdockeragent() { # Owner: freignat91
@@ -245,11 +242,7 @@ elasticsearch() { # Owner: bertrand-quenin
     --label amp.swarm="infrastructure" \
     -p 9200:9200 \
     -p 9300:9300 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/elasticsearch-amp:latest /bin/amppilot/pilotLoader gosu elastico elasticsearch
+    appcelerator/elasticsearch-amp:latest
 }
 
 etcd() { # Owner: subfuzion
@@ -289,18 +282,14 @@ influxdb() { # Owner: ndegory
     appcelerator/influxdb:latest
 }
 
+# DEPENDENCIES zookeepeer
 kafka() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name kafka \
     --label amp.swarm="infrastructure" \
     -p 9092:9092 \
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
     -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
-    -e DEPENDENCIES="zookeeper" \
-    -e AMPPILOT_READY_CMD=/opt/kafka/bin/check.sh \
-    -e AMPPILOT_KAFKA="localhost:9092" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/kafka:latest /bin/amppilot/pilotLoader
+    appcelerator/kafka:latest
 }
 
 kafkamanager() { # Owner: bertrand-quenin
@@ -356,11 +345,11 @@ nginx() { # Owner: freignat91
     appcelerator/nginx:latest /bin/amppilot/pilotLoader
 }
 
+# DEPENDENCIES kafka
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
     --mode global \
     --label amp.swarm="infrastructure" \
-    -e CONSUL=consul:8500 \
     -e OUTPUT_INFLUXDB_ENABLED=false \
     -e TAG_datacenter=dc1 \
     -e TAG_type=core \
@@ -376,14 +365,12 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_PROCESS_ENABLED=true \
     -e INPUT_SWAP_ENABLED=true \
     -e INPUT_SYSTEM_ENABLED=true \
-    -e DEPENDENCIES="kafka" \
     -e SERVICE_NAME="telegraf-agent" \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
     appcelerator/telegraf:latest
 }
 
+# DEPENDENCIES kafka, influxdb
 telemetryworker() { # Owner: ndegory
   docker service create --network amp-swarm --name telemetry-worker \
     --label amp.swarm="infrastructure" \
@@ -395,11 +382,8 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
     -e INPUT_KAFKA_TOPIC=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
-    -e CONSUL=consul:8500 \
     -e DEPENDENCIES="kafka, influxdb" \
     -e SERVICE_NAME="telemetry-worker" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
     appcelerator/telegraf:latest
 }
 
@@ -409,11 +393,7 @@ zookeeper() { # Owner: bertrand-quenin
     -p 2181:2181 \
     -p 2888:2888 \
     -p 3888:3888 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/zookeeper:latest /bin/amppilot/pilotLoader
+    appcelerator/zookeeper:latest
 }
 
 main $@
