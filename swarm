@@ -138,10 +138,14 @@ startservices() {
 
   echo "> Starting services..."
   # default is to run all the services
+  # check if --min was specified
+  # otherwise only run the services specified on the command line
   start=${SERVICES[@]}
-
-  # check if --min was specified, otherwise only run the services if specified by args
-  [[ $@ =~ "--min" ]] && start=${MINSERVICES[@]} || ([[ $# -ne 0 ]] && start=$@)
+  if [[ $@ =~ "--min" ]]; then
+    start=${MINSERVICES[@]}
+  elif [[ $# -ne 0 ]]; then
+    start=$@
+  fi
 
   for i in $start; do $i; done
 }
