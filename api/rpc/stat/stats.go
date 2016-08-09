@@ -1,8 +1,8 @@
-package data
+package stat
 
 import "time"
 
-// Store must be implemented for
+// Stats must be implemented for
 type Stats interface {
 	// Endpoints returns an array of endpoints for the storage
 	Endpoints() []string
