@@ -32,6 +32,7 @@ func (s *stats) query(query string, database string) client.Query {
 	}
 }
 
+// Query executes the provided query string and returns the results as a JSON object
 func (s *stats) Query(q string) (string, error) {
 	// ExecuteQuery runs any query statement
 	response, err := s.client.Query(s.query(q, s.dbname))
@@ -61,8 +62,8 @@ func (s *stats) Connect(timeout time.Duration) (*stats, error) {
 	})
 
 	if err != nil {
-
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		return nil, err
 	}
 	s.client = c
 	return s, err
@@ -72,7 +73,7 @@ func (s *stats) Connect(timeout time.Duration) (*stats, error) {
 func (s *stats) Close() error {
 	err := s.client.Close()
 	if err != nil {
-		//TODO Error Handling
+		return err
 	}
 	return err
 }
