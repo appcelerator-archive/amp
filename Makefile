@@ -55,7 +55,7 @@ install-server: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
 proto: $(PROTOFILES)
-	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:.; done
+	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:. || true; done
 
 # used to build under Docker
 install-host: proto-host
