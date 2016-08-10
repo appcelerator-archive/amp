@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package logs;
+
+service Logs {
+    rpc Get (GetRequest) returns (GetReply) {
+    }
+}
+
+message LogEntry {
+    string timestamp = 1;
+    string TimeId = 2;
+    string Service_id = 3;
+    string Service_name = 4;
+    string Message = 5;
+    string Container_id = 6;
+    string Node_id = 7;
+}
+
+message GetRequest {
+    // TODO: filtering
+}
+
+message GetReply {
+    repeated LogEntry entries = 1;
+}

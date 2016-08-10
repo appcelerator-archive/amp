@@ -7,6 +7,7 @@ import (
 	"time"
 
 	// "github.com/appcelerator/amp/api/rpc/project"
+	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data"
 	"github.com/appcelerator/amp/data/etcd"
@@ -27,9 +28,12 @@ func Start(config Config) {
 		log.Fatalf("amplifer is unable to listen on: %s\n%v", config.Port[1:], err)
 	}
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
+
 	s := grpc.NewServer()
+	logs.RegisterLogsServer(s, &logsService{})
 	// project.RegisterProjectServer(s, &projectService{})
 	service.RegisterServiceServer(s, &serviceService{})
+
 	s.Serve(lis)
 }
 
