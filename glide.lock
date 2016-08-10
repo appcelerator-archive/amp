@@ -1,12 +1,20 @@
-hash: 162c3231d84349fac4fde9b1d26fa7abde4a6917a8a3936eb4c96db7c5931d18
-updated: 2016-08-08T01:56:27.282857238-07:00
+hash: e0ba9b475e6a8c6e00a1d48c69bd0049102d6d1172eba0853a95f5e71ac56464
+updated: 2016-08-10T14:51:07.758328902-07:00
 imports:
+- name: github.com/appcelerator/amp
+  version: 549a22acc41813018431e11b1733559e111cb10f
+  subpackages:
+  - api/rpc/service
+  - data
+  - data/etcd
+  - cli
+  - api/server
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: bb28c9ab0046268f414e27cff33da87255688fd5
+  version: 7eb43ea75b9d4c30933585b29152b5d6b2f6e958
   subpackages:
   - clientv3
   - auth/authpb
@@ -15,16 +23,26 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/docker/engine-api.git
-  version: 16c66e864c3c2f2dc8c35276232aafe9828c88bc
+  version: fc564829f64e3a820d7b896611ede92c8744d752
+- name: github.com/fatih/color
+  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/fsnotify/fsnotify
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/ghodss/yaml
   version: aa0c862057666179de291b67d9f093d12b5a8473
 - name: github.com/golang/protobuf
-  version: c3cefd437628a0b7d31b34fe44b3a7a540e98527
+  version: 2c1988e8c18d14b142c0b472624f71647cf39adb
   subpackages:
   - proto
   - jsonpb
+- name: github.com/google/go-github
+  version: 56add9d4071bb1a06003a1239ebbc1500692b55d
+  subpackages:
+  - github
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
 - name: github.com/grpc-ecosystem/grpc-gateway
   version: ccd4e6b091a44f9f6b32848ffc63b3e8f8e26092
   subpackages:
@@ -42,14 +60,20 @@ imports:
   - hcl/strconv
   - json/scanner
   - json/token
+- name: github.com/howeyc/gopass
+  version: b63a7d07e65df376d14e2d72907a93d4847dffe4
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/kr/fs
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
   version: b3f6dd549956e8a61ea4a686a1c02a33d5bdda4b
+- name: github.com/mattn/go-colorable
+  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/mitchellh/mapstructure
-  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/pkg/errors
   version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/pkg/sftp
@@ -72,12 +96,13 @@ imports:
 - name: github.com/spf13/viper
   version: 346299ea79e446ebdddb834371ceba2e5926b732
 - name: github.com/ugorji/go
-  version: 3487a5545b3d480987dfb0492035299077fab33a
+  version: 4a1cb5252a6951f715a85d0e4be334c2a2dbf2a2
   subpackages:
   - codec
 - name: golang.org/x/crypto
-  version: e0d166c33c321d0ff863f459a5882096e334f508
+  version: 5f961cd492ac9d43fc33a8ef646bae79d113fd97
   subpackages:
+  - ssh/terminal
   - ssh
   - curve25519
   - ed25519
@@ -86,11 +111,10 @@ imports:
   version: 075e191f18186a8ff2becaf64478e30f4545cdad
   subpackages:
   - context
-  - http2
-  - trace
-  - http2/hpack
-  - lex/httplex
-  - internal/timeseries
+- name: golang.org/x/oauth2
+  version: 4784bb855e56a530f1ce5d788959359ed6cb4a16
+  subpackages:
+  - internal
 - name: golang.org/x/sys
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
@@ -100,17 +124,23 @@ imports:
   subpackages:
   - transform
   - unicode/norm
+- name: google.golang.org/appengine
+  version: e951d3868b377b14f4e60efa3a301532ee3c1ebf
+  subpackages:
+  - urlfetch
+  - internal
+  - internal/urlfetch
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
 - name: google.golang.org/grpc
-  version: 35896af9ad39c1fb1b1cd925fe3621be361e3d81
+  version: edc5ccf8cbfd321723e26d2cf177b05c16132ad9
   subpackages:
   - credentials
   - grpclog
   - metadata
   - codes
-  - internal
-  - naming
-  - transport
-  - peer
 - name: gopkg.in/olivere/elastic.v3
   version: 787ebbb5a7600662bca364e4e8ca959f315e442f
   subpackages:
@@ -118,4 +148,4 @@ imports:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []

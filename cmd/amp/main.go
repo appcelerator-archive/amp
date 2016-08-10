@@ -92,6 +92,17 @@ func main() {
 			fmt.Println(config)
 		},
 	}
+	
+	// loginCmd represents the login command
+	loginCmd := &cobra.Command{
+		Use: "login",
+		Short: "Login via github",
+		Long: `Create a github access token and store it in your config file to authenticate further commands`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a := cli.NewAMP(&config)
+			a.Login()
+		},
+	}
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
@@ -109,6 +120,7 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(loginCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
