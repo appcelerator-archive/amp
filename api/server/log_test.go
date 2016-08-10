@@ -15,12 +15,14 @@ const (
 	defaultPort          = ":50101"
 	etcdDefaultEndpoints = "http://localhost:2379"
 	serverAddress        = "localhost" + defaultPort
+	esDefaultURL         = "http://localhost:9200"
 )
 
 var (
 	config        Config
 	port          string
 	etcdEndpoints string
+	esURL         string
 )
 
 func parseEnv() {
@@ -32,12 +34,17 @@ func parseEnv() {
 	if etcdEndpoints == "" {
 		etcdEndpoints = etcdDefaultEndpoints
 	}
+	esURL = os.Getenv("esURL")
+	if esURL == "" {
+		esURL = esDefaultURL
+	}
 
 	// update config
 	config.Port = port
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
+	config.esURL = esURL
 }
 
 func TestMain(m *testing.M) {

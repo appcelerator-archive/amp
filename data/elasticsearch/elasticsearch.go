@@ -14,17 +14,14 @@ type ElasticSearch struct {
 }
 
 // Connect to the elastic search server
-func (es *ElasticSearch) Connect(url string) {
+func (es *ElasticSearch) Connect(url string) error {
 	// Create ES client
 	var err error
 	client, err = elastic.NewClient(
 		elastic.SetURL(url),
 		elastic.SetSniff(false),
 	)
-	if err != nil {
-		// TODO: Handle error
-		panic(err)
-	}
+	return err
 }
 
 // CreateIndexIfNotExists Creates an index if it doesn't already exists
@@ -85,4 +82,9 @@ func (es *ElasticSearch) All(esIndex string) []*elastic.SearchHit {
 		panic(err)
 	}
 	return searchResult.Hits.Hits
+}
+
+// GetNative returns the native elastic search client
+func (es *ElasticSearch) GetNative() *elastic.Client {
+	return client
 }

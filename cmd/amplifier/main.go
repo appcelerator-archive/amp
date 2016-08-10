@@ -11,6 +11,7 @@ import (
 const (
 	defaultPort          = ":50101"
 	etcdDefaultEndpoints = "http://localhost:2379"
+	esDefaultURL         = "http://localhost:9200"
 )
 
 // build vars
@@ -27,12 +28,14 @@ var (
 	config        server.Config
 	port          string
 	etcdEndpoints string
+	esURL         string
 )
 
 func parseFlags() {
 	// set up flags
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
+	flag.StringVarP(&esURL, "esURL", "s", esDefaultURL, "elasitc serach url (default '"+esDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
