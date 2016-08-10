@@ -44,8 +44,8 @@ clean:
 	@rm -f $$(which amp)
 
 test:
-	@go test $(REPO)/api/server
-	@go test $(REPO)/data/etcd
+	@go test -v $(REPO)/api/server
+	@go test -v $(REPO)/data/etcd
 
 install: install-cli install-server
 
