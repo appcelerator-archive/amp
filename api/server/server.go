@@ -18,13 +18,13 @@ import (
 var (
 	// Store is the interface used to access etcd backend
 	Store data.Store
-	es    elasticsearch.ElasticSearch
+	es    elasticsearch.Elasticsearch
 )
 
 // Start starts the server
 func Start(config Config) {
 	initEtcd(config)
-	initElasticSearch(config)
+	initElasticsearch(config)
 
 	lis, err := net.Listen("tcp", config.Port)
 	if err != nil {
@@ -53,11 +53,11 @@ func initEtcd(config Config) {
 
 // fail fast on initialization errors; there's no point in attempting
 // to continue in a degraded state if there are problems at start up
-func initElasticSearch(config Config) {
-	log.Printf("connecting to elasticsearch at %s\n", config.ElasticSearchURL)
-	err := es.Connect(config.ElasticSearchURL)
+func initElasticsearch(config Config) {
+	log.Printf("connecting to elasticsearch at %s\n", config.ElasticsearchURL)
+	err := es.Connect(config.ElasticsearchURL)
 	if err != nil {
-		log.Fatalf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticSearchURL, err)
+		log.Fatalf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
 	}
-	log.Printf("connected to elasticsearch at %s\n", config.ElasticSearchURL)
+	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
 }

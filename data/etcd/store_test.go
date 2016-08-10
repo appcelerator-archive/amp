@@ -45,7 +45,7 @@ func parseEnv() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
-	config.ElasticSearchURL = elasticsearchURL
+	config.ElasticsearchURL = elasticsearchURL
 }
 
 func TestMain(m *testing.M) {
