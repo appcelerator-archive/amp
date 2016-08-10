@@ -35,7 +35,7 @@ func parseFlags() {
 	// set up flags
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
-	flag.StringVarP(&elasticSearchURL, "elasticSearchURL", "s", elasticSearchDefaultURL, "elastic search url (default '"+elasticSearchDefaultURL+"')")
+	flag.StringVarP(&elasticSearchURL, "esurl", "s", elasticSearchDefaultURL, "elastic search url (default '"+elasticSearchDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()

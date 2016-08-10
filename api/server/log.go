@@ -19,7 +19,7 @@ type logsService struct {
 func (s *logsService) Get(ctx context.Context, in *logs.GetRequest) (*logs.GetReply, error) {
 	// Search with a term query
 	//termQuery := elastic.NewTermQuery("user", "bquenin")
-	searchResult, err := es.GetNative().Search().
+	searchResult, err := es.GetClient().Search().
 		Index(esIndex).
 		//Query(termQuery).
 		Sort("time_id", false).

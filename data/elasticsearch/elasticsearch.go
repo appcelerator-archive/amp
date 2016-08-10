@@ -85,6 +85,6 @@ func (es *ElasticSearch) All(esIndex string) []*elastic.SearchHit {
 }
 
 // GetNative returns the native elastic search client
-func (es *ElasticSearch) GetNative() *elastic.Client {
+func (es *ElasticSearch) GetClient() *elastic.Client {
 	return client
 }
