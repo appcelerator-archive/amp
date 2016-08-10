@@ -6,12 +6,12 @@ import (
 
 // Config is used for amplifier configuration settings
 type Config struct {
-	Port          string
-	EtcdEndpoints []string
-	EsURL         string
+	Port             string
+	EtcdEndpoints    []string
+	ElasticSearchURL string
 }
 
 // String is used to display struct as a string
 func (config Config) String() string {
-	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, esURL: %s}", config.Port, config.EtcdEndpoints, config.EsURL)
+	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, ElasticSearchURL: %s}", config.Port, config.EtcdEndpoints, config.ElasticSearchURL)
 }
