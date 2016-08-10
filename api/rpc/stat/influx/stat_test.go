@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -29,6 +30,8 @@ func TestQuery(t *testing.T) {
 }
 
 func statsInit() {
+	//Need to sleep for CI swarm to launch stacks
+	time.Sleep(1000 * time.Millisecond)
 	host := os.Getenv("influxhost")
 	cstr := "http://localhost:8086"
 	if host != "" {
@@ -36,4 +39,5 @@ func statsInit() {
 	}
 	s = New(cstr, "_internal", "admin", "changme")
 	s.Connect(5)
+
 }
