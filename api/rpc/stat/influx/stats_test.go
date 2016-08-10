@@ -4,12 +4,11 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/appcelerator/amp/api/rpc/stat"
 )
 
 var (
-	s stat.Stats
+	s    Stats
+	host string
 )
 
 func TestMain(m *testing.M) {
@@ -28,7 +27,13 @@ func TestQuery(t *testing.T) {
 	}
 
 }
+
 func statsInit() {
-	s = New("http://localhost:8086", "_internal", "admin", "changme")
+	host := os.Getenv("influxhost")
+	cstr := "http://localhost:8086"
+	if host != "" {
+		cstr = "http://" + host + ":8086"
+	}
+	s = New(cstr, "_internal", "admin", "changme")
 	s.Connect(5)
 }

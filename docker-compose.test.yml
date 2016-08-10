@@ -7,6 +7,7 @@ services:
     command: ["make", "test"]
     environment:
       endpoints: http://etcd:2379
+      influxhost: influxdb
   etcd:
     image: quay.io/coreos/etcd
     command: [

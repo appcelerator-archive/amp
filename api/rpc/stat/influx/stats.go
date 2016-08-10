@@ -3,14 +3,13 @@ package influx
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"time"
 
-	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-type stats struct {
+// Stats is the wrapper for the influx client connection
+type Stats struct {
 	client client.Client
 	dbname string
 	conn   string
@@ -20,8 +19,8 @@ type stats struct {
 }
 
 // New return a newly created stats structure
-func New(connection, dbname, u, p string) stat.Stats {
-	return &stats{
+func New(connection, dbname, u, p string) Stats {
+	return Stats{
 		dbname: dbname,
 		conn:   connection,
 		u:      u,
@@ -29,7 +28,7 @@ func New(connection, dbname, u, p string) stat.Stats {
 	}
 }
 
-func (s *stats) query(query string, database string) client.Query {
+func (s *Stats) query(query string, database string) client.Query {
 	return client.Query{
 		Command:   query,
 		Database:  database,
@@ -38,7 +37,7 @@ func (s *stats) query(query string, database string) client.Query {
 }
 
 // Query executes the provided query string and returns the results as a JSON object
-func (s *stats) Query(q string) (string, error) {
+func (s *Stats) Query(q string) (string, error) {
 	// ExecuteQuery runs any query statement
 	response, err := s.client.Query(s.query(q, s.dbname))
 	if err != nil {
@@ -52,12 +51,9 @@ func (s *stats) Query(q string) (string, error) {
 	data, err := json.Marshal(response)
 	return string(data), err
 }
-func (s *stats) Endpoints() []string {
-	return nil
-}
 
 // Connect to stats server
-func (s *stats) Connect(timeout time.Duration) error {
+func (s *Stats) Connect(timeout time.Duration) error {
 	// Make client
 	//TODO Security!
 	c, err := client.NewHTTPClient(client.HTTPConfig{
@@ -74,19 +70,7 @@ func (s *stats) Connect(timeout time.Duration) error {
 }
 
 // Close connection to stats server
-func (s *stats) Close() error {
+func (s *Stats) Close() error {
 	err := s.client.Close()
 	return err
-}
-
-// writeSJON takes the response and marshals it to JSON
-func (s *stats) writeJSON(response *client.Response, w io.Writer) {
-	var data []byte
-	var err error
-	data, err = json.Marshal(response)
-	if err != nil {
-		fmt.Fprintf(w, "Unable to parse json: %s\n", err)
-		return
-	}
-	fmt.Fprintln(w, string(data))
 }
