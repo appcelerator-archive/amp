@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGet(t *testing.T) {
+func TestShouldGetAHundredLogEntries(t *testing.T) {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
@@ -70,7 +70,9 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get logs: %v", err)
 	}
-	t.Logf("Reply: %+v", r)
+	if len(r.Entries) != 100 {
+		t.Fatalf("expected: %v, got: %v", 100, len(r.Entries))
 
+	}
 	conn.Close()
 }
