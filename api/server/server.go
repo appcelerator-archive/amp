@@ -54,10 +54,10 @@ func initEtcd(config Config) {
 // fail fast on initialization errors; there's no point in attempting
 // to continue in a degraded state if there are problems at start up
 func initElasticSearch(config Config) {
-	log.Printf("connecting to elasticsearch at %s\n", config.esURL)
-	err := es.Connect(config.esURL)
+	log.Printf("connecting to elasticsearch at %s\n", config.EsURL)
+	err := es.Connect(config.EsURL)
 	if err != nil {
-		log.Fatalf("amplifer is unable to connect to elasticSearch on: %s\n%v", config.esURL, err)
+		log.Fatalf("amplifer is unable to connect to elasticSearch on: %s\n%v", config.EsURL, err)
 	}
-	log.Printf("connected to elasticsearch at %s\n", config.esURL)
+	log.Printf("connected to elasticsearch at %s\n", config.EsURL)
 }

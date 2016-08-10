@@ -44,7 +44,7 @@ func parseEnv() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
-	config.esURL = esURL
+	config.EsURL = esURL
 }
 
 func TestMain(m *testing.M) {

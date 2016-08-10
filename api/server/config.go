@@ -8,10 +8,10 @@ import (
 type Config struct {
 	Port          string
 	EtcdEndpoints []string
-	esURL         string
+	EsURL         string
 }
 
 // String is used to display struct as a string
 func (config Config) String() string {
-	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, esURL: %s}", config.Port, config.EtcdEndpoints, config.esURL)
+	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, esURL: %s}", config.Port, config.EtcdEndpoints, config.EsURL)
 }

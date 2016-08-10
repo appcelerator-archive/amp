@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"golang.org/x/net/context"
+	"reflect"
 )
 
 const (
@@ -33,18 +34,19 @@ func (s *logsService) Get(ctx context.Context, in *logs.GetRequest) (*logs.GetRe
 	// and all kinds of other information from Elasticsearch.
 	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
 
-	//// Each is a convenience function that iterates over hits in a search result.
-	//// It makes sure you don't need to check for nil values in the response.
-	//// However, it ignores errors in serialization. If you want full control
-	//// over iterating the hits, see below.
-	//var ttyp Tweet
-	//for _, item := range searchResult.Each(reflect.TypeOf(ttyp)) {
-	//	if t, ok := item.(Tweet); ok {
-	//		fmt.Printf("Tweet by %s: %s\n", t.User, t.Message)
-	//	}
-	//}
-	//// TotalHits is another convenience function that works even when something goes wrong.
-	//fmt.Printf("Found a total of %d tweets\n", searchResult.TotalHits())
+	// Each is a convenience function that iterates over hits in a search result.
+	// It makes sure you don't need to check for nil values in the response.
+	// However, it ignores errors in serialization. If you want full control
+	// over iterating the hits, see below.
+	var entry logs.LogEntry
+	for _, item := range searchResult.Each(reflect.TypeOf(entry)) {
+		if e, ok := item.(logs.LogEntry); ok {
+			fmt.Printf("Message: %s\n", e.Message)
+		}
+	}
+	// TotalHits is another convenience function that works even when something goes wrong.
+	fmt.Printf("Found a total of %d log entries\n", searchResult.TotalHits())
+
 	//
 	//// Here's how you iterate through results with full control over each step.
 	//if searchResult.Hits.TotalHits > 0 {

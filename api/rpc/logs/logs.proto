@@ -9,12 +9,12 @@ service Logs {
 
 message LogEntry {
     string timestamp = 1;
-    string TimeId = 2;
-    string Service_id = 3;
-    string Service_name = 4;
-    string Message = 5;
-    string Container_id = 6;
-    string Node_id = 7;
+    string time_id = 2;
+    string service_id = 3;
+    string service_name = 4;
+    string message = 5;
+    string container_id = 6;
+    string node_id = 7;
 }
 
 message GetRequest {

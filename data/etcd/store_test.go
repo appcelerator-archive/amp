@@ -15,6 +15,7 @@ const (
 	defTimeout           = 5 * time.Second
 	defaultPort          = ":50101"
 	etcdDefaultEndpoints = "http://localhost:2379"
+	esDefaultURL         = "http://localhost:9200"
 )
 
 var (
@@ -22,16 +23,21 @@ var (
 	store         data.Store
 	port          string
 	etcdEndpoints string
+	esURL         string
 )
 
 func parseEnv() {
 	port = os.Getenv("port")
-	if (port == "") {
+	if port == "" {
 		port = defaultPort
 	}
 	etcdEndpoints = os.Getenv("endpoints")
-	if (etcdEndpoints == "") {
+	if etcdEndpoints == "" {
 		etcdEndpoints = etcdDefaultEndpoints
+	}
+	esURL = os.Getenv("esURL")
+	if esURL == "" {
+		esURL = esDefaultURL
 	}
 
 	// update config
@@ -39,6 +45,7 @@ func parseEnv() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
+	config.EsURL = esURL
 }
 
 func TestMain(m *testing.M) {
