@@ -4,7 +4,7 @@ services:
   sut:
     image: appcelerator/sut
     build: .
-    command: ["go", "test", "-v", "github.com/appcelerator/amp/data/etcd"]
+    command: ["make", "test"]
     environment:
       endpoints: http://etcd:2379
   etcd:
