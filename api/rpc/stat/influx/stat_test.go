@@ -31,7 +31,7 @@ func TestQuery(t *testing.T) {
 
 func statsInit() {
 	//Need to sleep for CI swarm to launch stacks
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(5000 * time.Millisecond)
 	host := os.Getenv("influxhost")
 	cstr := "http://localhost:8086"
 	if host != "" {
