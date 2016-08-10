@@ -15,14 +15,14 @@ const (
 	defaultPort             = ":50101"
 	etcdDefaultEndpoints    = "http://localhost:2379"
 	serverAddress           = "localhost" + defaultPort
-	elasticSearchDefaultURL = "http://localhost:9200"
+	elasticsearchDefaultURL = "http://localhost:9200"
 )
 
 var (
 	config           Config
 	port             string
 	etcdEndpoints    string
-	elasticSearchURL string
+	elasticsearchURL string
 )
 
 func parseEnv() {
@@ -34,9 +34,9 @@ func parseEnv() {
 	if etcdEndpoints == "" {
 		etcdEndpoints = etcdDefaultEndpoints
 	}
-	elasticSearchURL = os.Getenv("elasticSearchURL")
-	if elasticSearchURL == "" {
-		elasticSearchURL = elasticSearchDefaultURL
+	elasticsearchURL = os.Getenv("elasticsearchURL")
+	if elasticsearchURL == "" {
+		elasticsearchURL = elasticsearchDefaultURL
 	}
 
 	// update config
@@ -44,7 +44,7 @@ func parseEnv() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
-	config.ElasticSearchURL = elasticSearchURL
+	config.ElasticSearchURL = elasticsearchURL
 }
 
 func TestMain(m *testing.M) {

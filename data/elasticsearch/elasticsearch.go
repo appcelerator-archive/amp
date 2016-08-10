@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	// elasticSearch client
+	// elasticsearch client
 	client *elastic.Client
 )
 

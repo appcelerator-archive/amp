@@ -57,7 +57,7 @@ func initElasticSearch(config Config) {
 	log.Printf("connecting to elasticsearch at %s\n", config.ElasticSearchURL)
 	err := es.Connect(config.ElasticSearchURL)
 	if err != nil {
-		log.Fatalf("amplifer is unable to connect to elasticSearch on: %s\n%v", config.ElasticSearchURL, err)
+		log.Fatalf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticSearchURL, err)
 	}
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticSearchURL)
 }
