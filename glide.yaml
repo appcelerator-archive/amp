@@ -12,3 +12,7 @@ import:
 - package: github.com/coreos/etcd
   subpackages:
   - clientv3
+- package: github.com/howeyc/gopass
+- package: github.com/fatih/color
+- package: github.com/google/go-github/github
+- package: golang.org/x/oauth2
