@@ -1,4 +1,4 @@
-package data
+package storage
 
 import (
 	"time"
@@ -6,8 +6,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Store must be implemented for a key/value store
-type Store interface {
+// Interface must be implemented for a key/value store
+type Interface interface {
 	// Endpoints returns an array of endpoints for the storage
 	Endpoints() []string
 

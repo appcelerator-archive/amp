@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/server"
-	"github.com/appcelerator/amp/data"
+	"github.com/appcelerator/amp/data/storage"
 	"golang.org/x/net/context"
 )
 
@@ -19,7 +19,7 @@ const (
 
 var (
 	config        server.Config
-	store         data.Store
+	store         storage.Interface
 	port          string
 	etcdEndpoints string
 )
