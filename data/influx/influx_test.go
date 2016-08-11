@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	influx    Influx
-	host string
+	influx Influx
+	host   string
 )
 
 func TestMain(m *testing.M) {
@@ -34,7 +34,7 @@ func influxInit() {
 	if host != "" {
 		cstr = "http://" + host + ":8086"
 	}
- 	influx = New(cstr, "_internal", "admin", "changme")
+	influx = New(cstr, "_internal", "admin", "changme")
 	influx.Connect(5)
 
 }
