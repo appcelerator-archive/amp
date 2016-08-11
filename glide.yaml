@@ -12,3 +12,5 @@ import:
 - package: github.com/coreos/etcd
   subpackages:
   - clientv3
+- package: github.com/influxdata/influxdb
+  version: v1.0.0-beta3
