@@ -28,8 +28,8 @@ func Start(config Config) {
 	}
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
 	s := grpc.NewServer()
-	// project.RegisterProjectServer(s, &projectService{})
-	service.RegisterServiceServer(s, &serviceService{})
+	// project.RegisterProjectServer(s, &project.Service{})
+	service.RegisterServiceServer(s, &service.Service{})
 	s.Serve(lis)
 }
 
