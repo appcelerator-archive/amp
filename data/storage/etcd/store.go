@@ -23,6 +23,7 @@ import (
 
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
@@ -64,7 +65,7 @@ func (s *etcd) Close() error {
 
 // Create implements storage.Interface.Create
 // TODO: val, out will be protocol buffer messages
-func (s *etcd) Create(ctx context.Context, key string, val interface{}, out *string, ttl int64) error {
+func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out proto.Message, ttl int64) error {
 	key = s.prefix(key)
 
 	opts, err := s.options(ctx, int64(ttl))
@@ -72,16 +73,11 @@ func (s *etcd) Create(ctx context.Context, key string, val interface{}, out *str
 		return err
 	}
 
-	// TODO: cast to string is just to get basic mechanics in place before using proto buf messages
-	var str string
-	var ok bool
-	if str, ok = val.(string); !ok {
-		return fmt.Errorf("val must be a string but was type (%T): %v", val, val)
-	}
+	data, err := proto.Marshal(val)
 
 	txn, err := s.client.KV.Txn(ctx).
 		If(notFound(key)).
-		Then(clientv3.OpPut(key, str, opts...)).
+		Then(clientv3.OpPut(key, string(data), opts...)).
 		Commit()
 
 	if err != nil {
@@ -94,8 +90,11 @@ func (s *etcd) Create(ctx context.Context, key string, val interface{}, out *str
 
 	if out != nil {
 		// TODO: out will be the encoded message, revision comes from resp header
-		//putResp := txn.Responses[0].GetResponsePut()
-		*out = str
+		putResp := txn.Responses[0].GetResponsePut()
+		kv := putResp.PrevKv
+		if kv != nil && kv.Value != nil {
+			proto.Unmarshal(kv.Value, out)
+		}
 	}
 
 	return nil
@@ -103,7 +102,11 @@ func (s *etcd) Create(ctx context.Context, key string, val interface{}, out *str
 
 // Get implements storage.Interface.Get.
 // TODO: out will be a protocol buffer message
-func (s *etcd) Get(ctx context.Context, key string, out *string, ignoreNotFound bool) error {
+func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error {
+	if out == nil {
+		return fmt.Errorf("`out` param must not be nil")
+	}
+
 	key = s.prefix(key)
 
 	getResp, err := s.client.KV.Get(ctx, key)
@@ -113,19 +116,22 @@ func (s *etcd) Get(ctx context.Context, key string, out *string, ignoreNotFound 
 
 	if len(getResp.Kvs) == 0 {
 		if ignoreNotFound {
-			*out = key
+			// TODO: do we want to ignore out or set it to an empty message
+			// if out != nil {
+			//	*out.Reset()
+			// }
 			return nil
 		}
 		return fmt.Errorf("key not found: %q", key)
 	}
 
 	kv := getResp.Kvs[0]
-	*out = string(kv.Value)
-	return nil
+	data := []byte(kv.Value)
+	return proto.Unmarshal(data, out)
 }
 
 // Delete implements storage.Interface.Delete
-func (s *etcd) Delete(ctx context.Context, key string, out *string) error {
+func (s *etcd) Delete(ctx context.Context, key string, out proto.Message) error {
 	key = s.prefix(key)
 
 	txn, err := s.client.KV.Txn(ctx).
@@ -141,8 +147,8 @@ func (s *etcd) Delete(ctx context.Context, key string, out *string) error {
 		return fmt.Errorf("key not found: %q", key)
 	}
 	kv := getResp.Kvs[0]
-	*out = string(kv.Value)
-	return nil
+	data := []byte(kv.Value)
+	return proto.Unmarshal(data, out)
 }
 
 // options returns a slice of client options (currently just a lease based on the given ttl).

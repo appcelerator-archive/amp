@@ -1,60 +1,44 @@
 package etcd_test
 
 import (
+	"log"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
 const (
 	defTimeout              = 5 * time.Second
 	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	elasticsearchDefaultURL = "http://localhost:9200"
+	etcdDefaultEndpoint     = "http://localhost:2379"
 )
 
 var (
-	config           server.Config
 	store            storage.Interface
 	port             string
-	etcdEndpoints    string
-	elasticsearchURL string
+	etcdEndpoints    = []string{etcdDefaultEndpoint}
 )
 
-func parseEnv() {
-	port = os.Getenv("port")
-	if port == "" {
-		port = defaultPort
-	}
-	etcdEndpoints = os.Getenv("endpoints")
-	if etcdEndpoints == "" {
-		etcdEndpoints = etcdDefaultEndpoints
-	}
-	elasticsearchURL = os.Getenv("elasticsearchURL")
-	if elasticsearchURL == "" {
-		elasticsearchURL = elasticsearchDefaultURL
-	}
-
-	// update config
-	config.Port = port
-	for _, s := range strings.Split(etcdEndpoints, ",") {
-		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
-	}
-	config.ElasticsearchURL = elasticsearchURL
-}
-
 func TestMain(m *testing.M) {
-	parseEnv()
-	go server.Start(config)
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Lshortfile)
+	log.SetPrefix("test: ")
 
-	// there is no event when the server starts listening, so we just wait a second
-	time.Sleep(1 * time.Second)
-	store = server.Store
+	if endpoints := os.Getenv("endpoints"); endpoints != "" {
+		etcdEndpoints = strings.Split(endpoints, ",")
+	}
+
+	store = etcd.New(etcdEndpoints, "amp")
+	if err := store.Connect(5 * time.Second); err != nil {
+		panic(err)
+	}
+	log.Printf("connected to etcd at %v", strings.Join(store.Endpoints(), ","))
 
 	os.Exit(m.Run())
 }
@@ -62,55 +46,56 @@ func TestMain(m *testing.M) {
 func TestCreate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := "bar"
-	var out string
+	val := &storage.Project{Id: "100", Name: "AMP"}
+	out := &storage.Project{}
 	ttl := int64(0)
 
-	err := store.Create(ctx, key, val, &out, ttl)
+	err := store.Create(ctx, key, val, out, ttl)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
 		t.Error(err)
 	}
 
-	if out != val {
-		t.Errorf("expected %q, got %q", val, out)
+	// on creation there should be no previous value
+	if proto.Equal(val, out) {
+		t.Errorf("expected %v, got %v", val, out)
 	}
 }
 
 func TestGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := "bar"
-	var out string
+	val := &storage.Project{Id: "100", Name: "AMP"}
+	out := &storage.Project{}
 	ignoreNotFound := false
 
-	err := store.Get(ctx, key, &out, ignoreNotFound)
+	err := store.Get(ctx, key, out, ignoreNotFound)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
 		t.Error(err)
 	}
 
-	if out != val {
-		t.Errorf("expected %q, got %q", val, out)
+	if !proto.Equal(val, out) {
+		t.Errorf("expected %v, got %v", val, out)
 	}
 }
 
 func TestDelete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := "bar"
-	var out string
+	val := &storage.Project{Id: "100", Name: "AMP"}
+	out := &storage.Project{}
 
-	err := store.Delete(ctx, key, &out)
+	err := store.Delete(ctx, key, out)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
 		t.Error(err)
 	}
 
-	if out != val {
-		t.Errorf("expected %q, got %q", val, out)
+	if !proto.Equal(val, out) {
+		t.Errorf("expected %v, got %v", val, out)
 	}
 }
