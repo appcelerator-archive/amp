@@ -9,15 +9,6 @@
 
 set -euo pipefail
 
-usage() {
-  cat << USAGE >&2
-Usage:
-  $(basename $0) [pull|start|stop|restart|ls]
-  Note: restart pulls images (to avoid, use stop/start commands explicitly)
-USAGE
-  exit 1
-}
-
 # please keep sorted
 IMAGES=(
    appcelerator/amp-agent:latest
@@ -79,6 +70,38 @@ MINSERVICES=(
 
 ROLE=infrastructure
 
+usage() {
+  cat << USAGE >&2
+Usage:
+  $(basename $0) [pull|start|stop|restart|ls]
+  $(basename $0) [ -h | --help ]
+
+Basic AMP swarm operations.
+
+Options:
+
+  -h, --help                    Print help information and quit
+
+Commands:
+
+  pull     Pull the latest AMP images
+  start    Start all services (can also specify services or use --min flag)
+  stop     Remove services
+  restart  Restart services (same as: stop, pull, start)
+  ls       List running AMP services
+
+USAGE
+  exit 1
+}
+
+error() {
+  cat << USAGE >&2
+$(basename $0): $1
+See 'swarm --help'.
+USAGE
+  exit 1
+}
+
 main() {
   if [ $# -eq 0 ]; then
     usage
@@ -102,6 +125,15 @@ main() {
       ;;
       ls)
         ls
+      ;;
+      -h)
+        usage
+      ;;
+      --help)
+        usage
+      ;;
+      *)
+        error "'""$1""'"" is not a valid command."
       ;;
     esac
   fi
