@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	defaultPort          = ":50101"
-	etcdDefaultEndpoints = "http://localhost:2379"
+	defaultPort             = ":50101"
+	etcdDefaultEndpoints    = "http://localhost:2379"
+	elasticsearchDefaultURL = "http://localhost:9200"
 )
 
 // build vars
@@ -24,15 +25,17 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config        server.Config
-	port          string
-	etcdEndpoints string
+	config           server.Config
+	port             string
+	etcdEndpoints    string
+	elasticsearchURL string
 )
 
 func parseFlags() {
 	// set up flags
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
+	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
@@ -42,6 +45,7 @@ func parseFlags() {
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
+	config.ElasticsearchURL = elasticsearchURL
 }
 
 func main() {

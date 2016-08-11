@@ -12,16 +12,18 @@ import (
 )
 
 const (
-	defTimeout           = 5 * time.Second
-	defaultPort          = ":50101"
-	etcdDefaultEndpoints = "http://localhost:2379"
+	defTimeout              = 5 * time.Second
+	defaultPort             = ":50101"
+	etcdDefaultEndpoints    = "http://localhost:2379"
+	elasticsearchDefaultURL = "http://localhost:9200"
 )
 
 var (
-	config        server.Config
-	store         storage.Interface
-	port          string
-	etcdEndpoints string
+	config           server.Config
+	store            storage.Interface
+	port             string
+	etcdEndpoints    string
+	elasticsearchURL string
 )
 
 func parseEnv() {
@@ -33,12 +35,17 @@ func parseEnv() {
 	if etcdEndpoints == "" {
 		etcdEndpoints = etcdDefaultEndpoints
 	}
+	elasticsearchURL = os.Getenv("elasticsearchURL")
+	if elasticsearchURL == "" {
+		elasticsearchURL = elasticsearchDefaultURL
+	}
 
 	// update config
 	config.Port = port
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
+	config.ElasticsearchURL = elasticsearchURL
 }
 
 func TestMain(m *testing.M) {

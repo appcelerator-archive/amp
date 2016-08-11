@@ -71,7 +71,7 @@ func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) 
 	}
 }
 
-// All Returns all the documents for a given index
+// All returns all the documents for a given index
 func (es *Elasticsearch) All(esIndex string) []*elastic.SearchHit {
 	// Search with a term query
 	searchResult, err := client.Search().
@@ -84,7 +84,7 @@ func (es *Elasticsearch) All(esIndex string) []*elastic.SearchHit {
 	return searchResult.Hits.Hits
 }
 
-// GetNative returns the native elastic search client
+// GetClient returns the native elastic search client
 func (es *Elasticsearch) GetClient() *elastic.Client {
 	return client
 }
