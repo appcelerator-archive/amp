@@ -44,11 +44,11 @@ clean:
 	@rm -f $$(which amp)
 
 test:
-	@go test -v $(REPO)/data/etcd
+	@go test -v $(REPO)/data/storage/etcd
+	@go test -v $(REPO)/data/influx
 	@go test -v $(REPO)/api/rpc/project
 	@go test -v $(REPO)/api/rpc/service
 	@go test -v $(REPO)/api/rpc/stat
-	@go test -v $(REPO)/api/rpc/stat/influx
 
 install: install-cli install-server
 
