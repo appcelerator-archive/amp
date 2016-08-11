@@ -1,7 +1,6 @@
-package server
+package project
 
 // import (
-// 	"github.com/appcelerator/amp/api/rpc/project"
 //
 // 	"encoding/json"
 // 	"golang.org/x/net/context"
@@ -12,12 +11,12 @@ package server
 // 	keySpace = "/amp/project"
 // )
 //
-// // projectService is used to implement project.ProjectServer
-// type projectService struct {
+// // Service is used to implement ProjectServer
+// type Service struct {
 // }
 //
-// // CreateProject implements project.ProjectServer
-// func (s *projectService) Create(ctx context.Context, in *project.CreateRequest) (*project.CreateReply, error) {
+// // CreateProject implements ProjectServer
+// func (s *Service) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 // 	// Storing the project
 // 	etc.Put(keySpace, in)
 //
@@ -37,5 +36,5 @@ package server
 // 		log.Printf("%+v\n", cr)
 // 	}
 //
-// 	return &project.CreateReply{Message: "Hello " + in.Name}, nil
+// 	return &CreateReply{Message: "Hello " + in.Name}, nil
 // }

@@ -1,7 +1,6 @@
-package server
+package project
 
 // import (
-// 	"github.com/appcelerator/amp/api/rpc/project"
 // 	"github.com/satori/go.uuid"
 // 	"golang.org/x/net/context"
 // 	"google.golang.org/grpc"
