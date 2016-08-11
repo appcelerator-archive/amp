@@ -1,8 +1,8 @@
-hash: 162c3231d84349fac4fde9b1d26fa7abde4a6917a8a3936eb4c96db7c5931d18
-updated: 2016-08-08T01:56:27.282857238-07:00
+hash: 67ba50bc482606f8862124471e333edb496a5221f4124b2afaea80f492d2aa2f
+updated: 2016-08-10T15:00:21.840506759-07:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: 99064174e013895bbd9b025c31100bd1d9b590ca
+  version: a4eecd407cf4129fc902ece859a0114e4cf1a7f4
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
@@ -44,6 +44,12 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/influxdata/influxdb
+  version: 30efa2d922babde5ccbdf09960e510c0de5e0bcb
+  subpackages:
+  - client/v2
+  - models
+  - pkg/escape
 - name: github.com/kr/fs
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
@@ -76,12 +82,10 @@ imports:
   subpackages:
   - codec
 - name: golang.org/x/crypto
-  version: e0d166c33c321d0ff863f459a5882096e334f508
+  version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
   - ssh
   - curve25519
-  - ed25519
-  - ed25519/internal/edwards25519
 - name: golang.org/x/net
   version: 075e191f18186a8ff2becaf64478e30f4545cdad
   subpackages:
@@ -103,11 +107,11 @@ imports:
 - name: google.golang.org/grpc
   version: 35896af9ad39c1fb1b1cd925fe3621be361e3d81
   subpackages:
+  - codes
   - credentials
   - grpclog
-  - metadata
-  - codes
   - internal
+  - metadata
   - naming
   - transport
   - peer
@@ -118,4 +122,4 @@ imports:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []

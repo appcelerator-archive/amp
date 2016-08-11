@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package stat;
+
+service Stat {
+  rpc GetMeasurments (MeasurementRequest) returns (MeasurementReply) {}
+}
+
+message MeasurementRequest {
+  string database = 1;
+}
+
+message MeasurementReply {
+  repeated string measurement = 1;
+}
