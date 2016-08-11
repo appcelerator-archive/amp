@@ -26,11 +26,11 @@ var (
 
 func parseEnv() {
 	port = os.Getenv("port")
-	if (port == "") {
+	if port == "" {
 		port = defaultPort
 	}
 	etcdEndpoints = os.Getenv("endpoints")
-	if (etcdEndpoints == "") {
+	if etcdEndpoints == "" {
 		etcdEndpoints = etcdDefaultEndpoints
 	}
 
