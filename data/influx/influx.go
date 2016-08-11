@@ -8,8 +8,8 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-// Stats is the wrapper for the influx client connection
-type Stats struct {
+// Influx is the wrapper for the influx client connection
+type Influx struct {
 	client client.Client
 	dbname string
 	conn   string
@@ -18,9 +18,9 @@ type Stats struct {
 	p string
 }
 
-// New return a newly created stats structure
-func New(connection, dbname, u, p string) Stats {
-	return Stats{
+// New returns a newly created influxdb object
+func New(connection, dbname, u, p string) Influx {
+	return Influx{
 		dbname: dbname,
 		conn:   connection,
 		u:      u,
@@ -28,7 +28,7 @@ func New(connection, dbname, u, p string) Stats {
 	}
 }
 
-func (s *Stats) query(query string, database string) client.Query {
+func (s *Influx) query(query string, database string) client.Query {
 	return client.Query{
 		Command:   query,
 		Database:  database,
@@ -37,7 +37,7 @@ func (s *Stats) query(query string, database string) client.Query {
 }
 
 // Query executes the provided query string and returns the results as a JSON object
-func (s *Stats) Query(q string) (string, error) {
+func (s *Influx) Query(q string) (string, error) {
 	// ExecuteQuery runs any query statement
 	response, err := s.client.Query(s.query(q, s.dbname))
 	if err != nil {
@@ -52,8 +52,8 @@ func (s *Stats) Query(q string) (string, error) {
 	return string(data), err
 }
 
-// Connect to stats server
-func (s *Stats) Connect(timeout time.Duration) error {
+// Connect to influxdb server
+func (s *Influx) Connect(timeout time.Duration) error {
 	// Make client
 	//TODO Security!
 	c, err := client.NewHTTPClient(client.HTTPConfig{
@@ -69,8 +69,8 @@ func (s *Stats) Connect(timeout time.Duration) error {
 	return err
 }
 
-// Close connection to stats server
-func (s *Stats) Close() error {
+// Close connection to influxdb server
+func (s *Influx) Close() error {
 	err := s.client.Close()
 	return err
 }

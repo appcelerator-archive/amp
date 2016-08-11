@@ -7,18 +7,18 @@ import (
 )
 
 var (
-	s    Stats
-	host string
+	influx Influx
+	host   string
 )
 
 func TestMain(m *testing.M) {
-	statsInit()
-	defer s.Close()
+	influxInit()
+	defer influx.Close()
 	os.Exit(m.Run())
 }
 
 func TestQuery(t *testing.T) {
-	res, err := s.Query("SHOW MEASUREMENTS")
+	res, err := influx.Query("SHOW MEASUREMENTS")
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,13 +28,13 @@ func TestQuery(t *testing.T) {
 
 }
 
-func statsInit() {
+func influxInit() {
 	host := os.Getenv("influxhost")
 	cstr := "http://localhost:8086"
 	if host != "" {
 		cstr = "http://" + host + ":8086"
 	}
-	s = New(cstr, "_internal", "admin", "changme")
-	s.Connect(5)
+	influx = New(cstr, "_internal", "admin", "changme")
+	influx.Connect(5)
 
 }

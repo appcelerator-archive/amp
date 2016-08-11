@@ -8,14 +8,14 @@ import (
 
 	// "github.com/appcelerator/amp/api/rpc/project"
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/data"
-	"github.com/appcelerator/amp/data/etcd"
+	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
 	"google.golang.org/grpc"
 )
 
 var (
-	// Store is the interface used to access etcd backend
-	Store data.Store
+	// Store is the interface used to access the key/value storage backend
+	Store storage.Interface
 )
 
 // Start starts the server
@@ -28,8 +28,8 @@ func Start(config Config) {
 	}
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
 	s := grpc.NewServer()
-	// project.RegisterProjectServer(s, &projectService{})
-	service.RegisterServiceServer(s, &serviceService{})
+	// project.RegisterProjectServer(s, &project.Service{})
+	service.RegisterServiceServer(s, &service.Service{})
 	s.Serve(lis)
 }
 
