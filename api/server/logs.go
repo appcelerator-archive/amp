@@ -1,18 +1,13 @@
-package logs
+package server
 
 import (
 	"encoding/json"
-	"github.com/appcelerator/amp-backup/api/rpc/logs"
-	"github.com/appcelerator/amp/api/server"
+	"github.com/appcelerator/amp/api/rpc/logs"
 	"golang.org/x/net/context"
 )
 
 const (
 	esIndex = "amp-logs"
-)
-
-var (
-	es = server.ES
 )
 
 // logService is used to implement log.LogServer
@@ -23,7 +18,7 @@ type Logs struct {
 func (s *Logs) Get(ctx context.Context, in *logs.GetRequest) (*logs.GetReply, error) {
 	// Search with a term query
 	//termQuery := elastic.NewTermQuery("user", "bquenin")
-	searchResult, err := es.GetClient().Search().
+	searchResult, err := ES.GetClient().Search().
 		Index(esIndex).
 		//Query(termQuery).
 		Sort("time_id", false).

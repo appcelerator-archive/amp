@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp-backup/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/server"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -67,8 +65,8 @@ func TestShouldGetAHundredLogEntries(t *testing.T) {
 	}
 
 	// Contact the server and print out its response.
-	c := logs.NewLogsClient(conn)
-	r, err := c.Get(context.Background(), &logs.GetRequest{})
+	c := NewLogsClient(conn)
+	r, err := c.Get(context.Background(), &GetRequest{})
 	if err != nil {
 		t.Fatalf("could not get logs: %v", err)
 	}
