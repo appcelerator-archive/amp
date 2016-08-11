@@ -11,24 +11,37 @@ set -euo pipefail
 
 # please keep sorted
 IMAGES=(
-   appcelerator/amp-agent:latest
-   appcelerator/amp-log:latest
-   appcelerator/amp-log-worker:latest
-   appcelerator/amp-monitor:latest
-   appcelerator/amp-pilot:latest
-   appcelerator/amp-ui:latest
-   appcelerator/consul:latest-server
-   appcelerator/elasticsearch-amp:latest
-   appcelerator/grafana:latest
-   appcelerator/influxdb:latest
-   appcelerator/kafka:latest
-   appcelerator/kapacitor:latest
-   appcelerator/kibana:latest
-   appcelerator/nginx:latest
-   appcelerator/telegraf:latest
-   appcelerator/zookeeper:latest
-   quay.io/coreos/etcd:v3.0.4
-   sheepkiller/kafka-manager:latest
+  appcelerator/amp-agent:latest
+  appcelerator/amp-log:latest
+  appcelerator/amp-log-worker:latest
+  appcelerator/amp-monitor:latest
+  appcelerator/amp-pilot:latest
+  appcelerator/amp-ui:latest
+  appcelerator/consul:latest-server
+  appcelerator/elasticsearch-amp:latest
+  appcelerator/grafana:latest
+  appcelerator/influxdb:latest
+  appcelerator/kafka:latest
+  appcelerator/kapacitor:latest
+  appcelerator/kibana:latest
+  appcelerator/nginx:latest
+  appcelerator/telegraf:latest
+  appcelerator/zookeeper:latest
+  quay.io/coreos/etcd:v3.0.4
+  sheepkiller/kafka-manager:latest
+)
+
+MINIMAGES=(
+  appcelerator/amp-agent:latest
+  appcelerator/amp-log-worker:latest
+  appcelerator/elasticsearch-amp:latest
+  appcelerator/influxdb:latest
+  appcelerator/kafka:latest
+  appcelerator/kibana:latest
+  appcelerator/telegraf:latest
+  appcelerator/zookeeper:latest
+  quay.io/coreos/etcd:v3.0.4
+  sheepkiller/kafka-manager:latest
 )
 
 # please keep sorted
@@ -80,15 +93,15 @@ Basic AMP swarm operations.
 
 Options:
 
-  -h, --help                    Print help information and quit
+  -h, --help   Print help information and quit
 
 Commands:
 
-  pull     Pull the latest AMP images
-  start    Start all services (can also specify services or use --min flag)
-  stop     Remove services
-  restart  Restart services (same as: stop, pull, start)
-  ls       List running AMP services
+  pull         Pull the latest AMP images (options: --min)
+  start        Start all services (options: --min | specific services)
+  restart      Restart services (options: --min); same as stop, pull, start
+  stop         Remove services
+  ls           List running services
 
 USAGE
   exit 1
@@ -116,12 +129,12 @@ main() {
         removeservices
       ;;
       pull)
-        pullimages
+        pullimages "${@:2}"
       ;;
       restart)
         $0 stop
-        $0 pull
-        $0 start
+        $0 pull "${@:2}"
+        $0 start "${@:2}"
       ;;
       ls)
         ls
@@ -153,7 +166,9 @@ createnetwork() {
 # pull the latest AMP images to local docker cache
 pullimages() {
   echo "> Pulling AMP images"
-  for i in ${IMAGES[@]}; do docker pull $i; done
+  images=${IMAGES[@]}
+  [[ $@ =~ "--min" ]] && images=${MINIMAGES[@]}
+  for i in ${images[@]}; do docker pull $i; done
 }
 
 removeservices() {
@@ -172,14 +187,14 @@ startservices() {
   # default is to run all the services
   # check if --min was specified
   # otherwise only run the services specified on the command line
-  start=${SERVICES[@]}
+  services=${SERVICES[@]}
   if [[ $@ =~ "--min" ]]; then
-    start=${MINSERVICES[@]}
+    services=${MINSERVICES[@]}
   elif [[ $# -ne 0 ]]; then
-    start=$@
+    services=$@
   fi
 
-  for i in $start; do $i; done
+  for i in $services; do $i; done
 }
 
 ls() {
