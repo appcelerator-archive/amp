@@ -93,6 +93,17 @@ func main() {
 		},
 	}
 
+	// configCmd represents the config command
+	logsCmd := &cobra.Command{
+		Use:   "logs",
+		Short: "Fetch the logs of a container",
+		Long:  `Fetch the logs of a container.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a := cli.NewAMP(&config)
+			a.Logs()
+		},
+	}
+
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:   "amp",
@@ -109,6 +120,7 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(logsCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

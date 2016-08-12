@@ -2,6 +2,15 @@ package cli
 
 import (
 	"fmt"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"log"
+)
+
+const (
+	defaultPort   = ":50101"
+	serverAddress = "localhost" + defaultPort
 )
 
 // AMP holds the state for the current envirionment
@@ -52,4 +61,26 @@ func (a *AMP) Status() {
 	if a.verbose() {
 		fmt.Println("Status")
 	}
+}
+
+// Logs returns the logs
+func (a *AMP) Logs() {
+	if a.verbose() {
+		fmt.Println("Logs")
+	}
+	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+
+	// Contact the server and print out its response.
+	c := logs.NewLogsClient(conn)
+	r, err := c.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		panic(err)
+	}
+	for _, entry := range r.Entries {
+		log.Printf("%+v", entry)
+	}
+	conn.Close()
 }
