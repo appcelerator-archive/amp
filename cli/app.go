@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"log"
+	"strconv"
 )
 
 const (
@@ -68,6 +70,12 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 	if a.verbose() {
 		fmt.Println("Logs")
 		fmt.Printf("service_id: %v\n", cmd.Flag("service_id").Value)
+		fmt.Printf("service_name: %v\n", cmd.Flag("service_name").Value)
+		fmt.Printf("message: %v\n", cmd.Flag("message").Value)
+		fmt.Printf("container_id: %v\n", cmd.Flag("container_id").Value)
+		fmt.Printf("node_id: %v\n", cmd.Flag("node_id").Value)
+		fmt.Printf("from: %v\n", cmd.Flag("from").Value)
+		fmt.Printf("n: %v\n", cmd.Flag("n").Value)
 	}
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
@@ -76,6 +84,16 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 
 	request := logs.GetRequest{}
 	request.ServiceId = cmd.Flag("service_id").Value.String()
+	request.ServiceName = cmd.Flag("service_name").Value.String()
+	request.Message = cmd.Flag("message").Value.String()
+	request.ContainerId = cmd.Flag("container_id").Value.String()
+	request.NodeId = cmd.Flag("node_id").Value.String()
+	if request.From, err = strconv.ParseInt(cmd.Flag("from").Value.String(), 10, 64); err != nil {
+		log.Panicf("Unable to convert from paramter: %v\n", cmd.Flag("from").Value.String())
+	}
+	if request.Size, err = strconv.ParseInt(cmd.Flag("n").Value.String(), 10, 64); err != nil {
+		log.Panicf("Unable to convert n paramter: %v\n", cmd.Flag("n").Value.String())
+	}
 
 	c := logs.NewLogsClient(conn)
 	r, err := c.Get(context.Background(), &request)

@@ -99,14 +99,22 @@ func main() {
 	// configCmd represents the config command
 	logsCmd := &cobra.Command{
 		Use:   "logs",
-		Short: "Fetch the logs of a container",
-		Long:  `Fetch the logs of a container.`,
+		Short: "Fetch the logs",
+		Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a := cli.NewAMP(&config)
 			a.Logs(cmd)
 		},
 	}
-	logsCmd.Flags().String("service_id", "", "filter by the given service_id")
+
+	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
+	logsCmd.Flags().String("service_id", "", "filter by the given service id")
+	logsCmd.Flags().String("service_name", "", "filter by the given service name")
+	logsCmd.Flags().String("message", "", "filter by the given pattern in the message field")
+	logsCmd.Flags().String("container_id", "", "filter by the given container id")
+	logsCmd.Flags().String("node_id", "", "filter by the given node id")
+	logsCmd.Flags().String("from", "0", "Fetches from the given index")
+	logsCmd.Flags().String("n", "100", "Number of results")
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
