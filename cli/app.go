@@ -76,6 +76,7 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 		fmt.Printf("node_id: %v\n", cmd.Flag("node_id").Value)
 		fmt.Printf("from: %v\n", cmd.Flag("from").Value)
 		fmt.Printf("n: %v\n", cmd.Flag("n").Value)
+		fmt.Printf("short: %v\n", cmd.Flag("short").Value)
 	}
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
@@ -89,10 +90,10 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 	request.ContainerId = cmd.Flag("container_id").Value.String()
 	request.NodeId = cmd.Flag("node_id").Value.String()
 	if request.From, err = strconv.ParseInt(cmd.Flag("from").Value.String(), 10, 64); err != nil {
-		log.Panicf("Unable to convert from paramter: %v\n", cmd.Flag("from").Value.String())
+		log.Panicf("Unable to convert from parameter: %v\n", cmd.Flag("from").Value.String())
 	}
 	if request.Size, err = strconv.ParseInt(cmd.Flag("n").Value.String(), 10, 64); err != nil {
-		log.Panicf("Unable to convert n paramter: %v\n", cmd.Flag("n").Value.String())
+		log.Panicf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 
 	c := logs.NewLogsClient(conn)
@@ -101,7 +102,15 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 		return err
 	}
 	for _, entry := range r.Entries {
-		fmt.Printf("%+v\n", entry)
+		var short bool
+		if short, err = strconv.ParseBool(cmd.Flag("short").Value.String()); err != nil {
+			log.Panicf("Unable to convert short parameter: %v\n", cmd.Flag("short").Value.String())
+		}
+		if short {
+			fmt.Printf("%s\n", entry.Message)
+		} else {
+			fmt.Printf("%+v\n", entry)
+		}
 	}
 	conn.Close()
 	return nil

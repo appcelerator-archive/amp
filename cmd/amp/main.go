@@ -112,6 +112,7 @@ func main() {
 	logsCmd.Flags().String("node_id", "", "filter by the given node id")
 	logsCmd.Flags().String("from", "-1", "Fetches from the given index")
 	logsCmd.Flags().String("n", "100", "Number of results")
+	logsCmd.Flags().Bool("short", false, "Displays only the message field")
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{

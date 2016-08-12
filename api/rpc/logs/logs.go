@@ -22,8 +22,6 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	request := s.ES.GetClient().Search().Index(esIndex)
 	if in.From >= 0 {
 		request.From(int(in.From))
-	} else {
-		request.Sort("timestamp", false)
 	}
 	if in.Size != 0 {
 		request.Size(int(in.Size))
