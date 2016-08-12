@@ -93,6 +93,27 @@ func main() {
 		},
 	}
 
+	// configCmd represents the config command
+	logsCmd := &cobra.Command{
+		Use:   "logs",
+		Short: "Fetch the logs",
+		Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a := cli.NewAMP(&config)
+			a.Logs(cmd)
+		},
+	}
+
+	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
+	logsCmd.Flags().String("service_id", "", "filter by the given service id")
+	logsCmd.Flags().String("service_name", "", "filter by the given service name")
+	logsCmd.Flags().String("message", "", "filter by the given pattern in the message field")
+	logsCmd.Flags().String("container_id", "", "filter by the given container id")
+	logsCmd.Flags().String("node_id", "", "filter by the given node id")
+	logsCmd.Flags().String("from", "-1", "Fetches from the given index")
+	logsCmd.Flags().String("n", "100", "Number of results")
+	logsCmd.Flags().Bool("short", false, "Displays only the message field")
+
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:   "amp",
@@ -109,6 +130,7 @@ func main() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(logsCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

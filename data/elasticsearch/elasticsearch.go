@@ -5,16 +5,17 @@ import (
 )
 
 var (
-	// elasticSearch client
+	// elasticsearch client
 	client *elastic.Client
 )
 
-// ElasticSearch singleton
-type ElasticSearch struct {
+// Elasticsearch singleton
+type Elasticsearch struct {
 }
 
 // Connect to the elastic search server
-func (es *ElasticSearch) Connect(url string) error {
+func (es *Elasticsearch) Connect(url string) error {
+	// Create ES client
 	var err error
 	client, err = elastic.NewClient(
 		elastic.SetURL(url),
@@ -23,8 +24,40 @@ func (es *ElasticSearch) Connect(url string) error {
 	return err
 }
 
-// Index stores a document inside elastic search
-func (es *ElasticSearch) Index(esIndex string, esType string, body interface{}) error {
+// CreateIndexIfNotExists Creates an index if it doesn't already exists
+func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, mapping string) {
+	// Use the IndexExists service to check if the index exists
+	exists, err := client.IndexExists(esIndex).Do()
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+	if !exists {
+		// Create a new index.
+		createIndex, err := client.CreateIndex(esIndex).Do()
+		if err != nil {
+			// TODO: Handle error
+			panic(err)
+		}
+		if !createIndex.Acknowledged {
+			// TODO: Handle not acknowledged
+			panic("not acked")
+		}
+
+		response, err := client.PutMapping().Index(esIndex).Type(esType).BodyString(mapping).Do()
+		if err != nil {
+			// TODO: Handle error
+			panic(err)
+		}
+		if response == nil {
+			// TODO: Handle error
+			panic(err)
+		}
+	}
+}
+
+// Index store a document inside elastic search
+func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) {
 	// Add a document to the index
 	_, err := client.Index().
 		Index(esIndex).
@@ -32,17 +65,26 @@ func (es *ElasticSearch) Index(esIndex string, esType string, body interface{}) 
 		BodyJson(body).
 		Refresh(true).
 		Do()
-	return err
+	if err != nil {
+		// TODO: Handle error
+		panic(err)
+	}
 }
 
 // All returns all the documents for a given index
-func (es *ElasticSearch) All(esIndex string) ([]*elastic.SearchHit, error) {
+func (es *Elasticsearch) All(esIndex string) []*elastic.SearchHit {
 	// Search with a term query
 	searchResult, err := client.Search().
 		Index(esIndex).
 		Do()
 	if err != nil {
-		return nil, err
+		// TODO: Handle error
+		panic(err)
 	}
-	return searchResult.Hits.Hits, nil
+	return searchResult.Hits.Hits
+}
+
+// GetClient returns the native elastic search client
+func (es *Elasticsearch) GetClient() *elastic.Client {
+	return client
 }

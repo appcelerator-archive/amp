@@ -46,6 +46,7 @@ clean:
 test:
 	@go test -v $(REPO)/data/storage/etcd
 	@go test -v $(REPO)/data/influx
+	@go test -v $(REPO)/api/rpc/logs
 	@go test -v $(REPO)/api/rpc/project
 	@go test -v $(REPO)/api/rpc/service
 	@go test -v $(REPO)/api/rpc/stat
