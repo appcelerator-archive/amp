@@ -3,13 +3,14 @@ syntax = "proto3";
 package stat;
 
 service Stat {
-  rpc GetMeasurments (MeasurementRequest) returns (MeasurementReply) {}
+  rpc ExecuteQuery (QueryRequest) returns (QueryReply) {}
 }
 
-message MeasurementRequest {
+message QueryRequest {
   string database = 1;
+  string query=2;
 }
 
-message MeasurementReply {
-  repeated string measurement = 1;
+message QueryReply {
+  string response = 1;
 }

@@ -2,7 +2,6 @@ package influx
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/influxdata/influxdb/client/v2"
@@ -11,6 +10,8 @@ import (
 // Influx is the wrapper for the influx client connection
 type Influx struct {
 	client client.Client
+	//Influx can support multiple databases within a single cluster
+	//Each connection should specify which database to work with eg, "telegraf"
 	dbname string
 	conn   string
 	//TODO figure out better Security
@@ -41,11 +42,9 @@ func (s *Influx) Query(q string) (string, error) {
 	// ExecuteQuery runs any query statement
 	response, err := s.client.Query(s.query(q, s.dbname))
 	if err != nil {
-		fmt.Printf("ERR: %s\n", err)
 		return "", err
 	}
 	if err = response.Error(); err != nil {
-		fmt.Printf("ERR: %s\n", response.Error())
 		return "", err
 	}
 	data, err := json.Marshal(response)
