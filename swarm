@@ -15,9 +15,7 @@ IMAGES=(
   appcelerator/amp-log:latest
   appcelerator/amp-log-worker:latest
   appcelerator/amp-monitor:latest
-  appcelerator/amp-pilot:latest
   appcelerator/amp-ui:latest
-  appcelerator/consul:latest-server
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/influxdb:latest
@@ -50,9 +48,7 @@ SERVICES=(
   amplog
   amplogworker
   ampmonitor
-  amppilot
   ampui
-  consul
   elasticsearch
   etcd
   grafana
@@ -210,35 +206,11 @@ ampagent() {
     appcelerator/amp-agent:latest
 }
 
-amppilot() {
-  docker service create --network amp-swarm --name amp-pilot \
-    --mode global \
-    --label amp.swarm="infrastructure" \
-    -e CONSUL=consul:8500 \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-pilot:latest
-}
-
 amplog() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log \
     --label amp.swarm="infrastructure" \
     -p 5000:3000 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="elasticsearch" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-log:latest /bin/amppilot/pilotLoader
-}
-
-amplogservice() { # Owner: generalhenry
-  # serves logs @ http://<host>:5055/<service-name>
-  docker service create --network amp-swarm --name amp-log-service \
-    --label amp.swarm="infrastructure" \
-    --label ServiceUUId=system.amp-log-service \
-    -p 5055:80 \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amp-log-service:latest
+    appcelerator/amp-log:latest
 }
 
 # DEPENDENCIES kafka
@@ -250,26 +222,12 @@ amplogworker() { # Owner: bertrand-quenin
     appcelerator/amp-log-worker:latest
 }
 
-ampdockeragent() { # Owner: freignat91
-  docker service create --network amp-swarm --name amp-docker-agent \
-    --label amp.swarm="infrastructure" \
-    -e ZOOKEEPER=zookeeper:2181 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="zookeeper,kafka" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-docker-agent:latest /bin/amppilot/pilotLoader
-}
-
 ampui() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-ui \
     --label amp.swarm="infrastructure" \
     -p 8080:8080 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-ui:latest /bin/amppilot/pilotLoader
+    appcelerator/amp-ui:latest
 }
 
 ampmonitor() { # Owner: bertrand-quenin
@@ -277,21 +235,9 @@ ampmonitor() { # Owner: bertrand-quenin
     --label amp.swarm="infrastructure" \
     -p 6000:3000 \
     -e ZOOKEEPER=zookeeper:2181 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="kafka" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/amp-monitor:latest /bin/amppilot/pilotLoader
+    appcelerator/amp-monitor:latest
 }
 
-consul() { # Owner: subfuzion
-  docker service create --network amp-swarm --name consul \
-    --label amp.swarm="infrastructure" \
-    -p 8400:8400 \
-    -p 8500:8500 \
-    -p 8600:53/udp \
-    appcelerator/consul:latest-server -bootstrap -bind 127.0.0.1
-}
 
 elasticsearch() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name elasticsearch \
@@ -319,12 +265,8 @@ grafana() { # Owner: ndegory
     -e INFLUXDB_HOST=influxdb \
     -e INFLUXDB_PASS=changeme \
     -e FORCE_HOSTNAME=auto \
-    -e CONSUL=consul:8500 \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
-    -e DEPENDENCIES="influxdb" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/grafana:latest /bin/amppilot/pilotLoader
+    appcelerator/grafana:latest
 }
 
 influxdb() { # Owner: ndegory
@@ -367,12 +309,8 @@ kapacitor() { # Owner: ndegory
     -e OUTPUT_SLACK_CHANNEL=kapacitor-test \
     -e OUTPUT_SLACK_GLOBAL="true" \
     -e OUTPUT_SLACK_STATE_CHANGE_ONLY="true" \
-    -e CONSUL=consul:8500 \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
-    -e DEPENDENCIES="influxdb" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/kapacitor:latest /bin/amppilot/pilotLoader
+    appcelerator/kapacitor:latest
 }
 
 kibana() { # Owner: ndegory
@@ -389,11 +327,7 @@ nginx() { # Owner: freignat91
   docker service create --network amp-swarm --name nginx \
     --label amp.swarm="infrastructure" \
     -p 80:80 \
-    -e CONSUL=consul:8500 \
-    -e DEPENDENCIES="" \
-    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    --mount type=bind,source=/bin/amppilot,target=/bin/amppilot \
-    appcelerator/nginx:latest /bin/amppilot/pilotLoader
+    appcelerator/nginx:latest
 }
 
 # DEPENDENCIES kafka
