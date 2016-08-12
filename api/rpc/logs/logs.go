@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"golang.org/x/net/context"
-	"log"
 )
 
 const (
@@ -33,7 +32,6 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
 		var entry LogEntry
-		log.Printf("hit: %s", hit.Source)
 		err := json.Unmarshal(*hit.Source, &entry)
 		if err != nil {
 			return &reply, err
