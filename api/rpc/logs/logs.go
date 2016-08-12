@@ -19,12 +19,11 @@ type Logs struct {
 // Get implements log.LogServer
 func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Prepare request to elasticsearch
-	request := s.ES.GetClient().Search().
-		Index(esIndex).
-		Sort("timestamp", false)
-	// TODO timestamp queries
-	if in.From != 0 {
+	request := s.ES.GetClient().Search().Index(esIndex)
+	if in.From >= 0 {
 		request.From(int(in.From))
+	} else {
+		request.Sort("timestamp", false)
 	}
 	if in.Size != 0 {
 		request.Size(int(in.Size))
@@ -44,8 +43,9 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		request.Query(elastic.NewTermQuery("node_id", in.NodeId))
 	}
 	if in.Message != "" {
-		request.Query(elastic.NewTermQuery("message", in.Message))
+		request.Query(elastic.NewFuzzyQuery("message", in.Message))
 	}
+	// TODO timestamp queries
 
 	// Perform request
 	searchResult, err := request.Do()
