@@ -18,7 +18,7 @@ var (
 	// Store is the interface used to access the key/value storage backend
 	Store storage.Interface
 
-	// es is the elasticsearch
+	// ES is the elasticsearch client
 	ES elasticsearch.Elasticsearch
 )
 

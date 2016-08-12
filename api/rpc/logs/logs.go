@@ -10,7 +10,7 @@ const (
 	esIndex = "amp-logs"
 )
 
-// logService is used to implement log.LogServer
+// Logs is used to implement log.LogServer
 type Logs struct {
 	ES elasticsearch.Elasticsearch
 }

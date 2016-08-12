@@ -45,45 +45,27 @@ type LogEntry struct {
 	NodeId      string `protobuf:"bytes,7,opt,name=node_id,json=nodeId" json:"node_id,omitempty"`
 }
 
-func (m *LogEntry) Reset() {
-	*m = LogEntry{}
-}
-func (m *LogEntry) String() string {
-	return proto.CompactTextString(m)
-}
-func (*LogEntry) ProtoMessage() {}
-func (*LogEntry) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{0}
-}
+func (m *LogEntry) Reset()                    { *m = LogEntry{} }
+func (m *LogEntry) String() string            { return proto.CompactTextString(m) }
+func (*LogEntry) ProtoMessage()               {}
+func (*LogEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 type GetRequest struct {
 }
 
-func (m *GetRequest) Reset() {
-	*m = GetRequest{}
-}
-func (m *GetRequest) String() string {
-	return proto.CompactTextString(m)
-}
-func (*GetRequest) ProtoMessage() {}
-func (*GetRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{1}
-}
+func (m *GetRequest) Reset()                    { *m = GetRequest{} }
+func (m *GetRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()               {}
+func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 type GetReply struct {
 	Entries []*LogEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
 }
 
-func (m *GetReply) Reset() {
-	*m = GetReply{}
-}
-func (m *GetReply) String() string {
-	return proto.CompactTextString(m)
-}
-func (*GetReply) ProtoMessage() {}
-func (*GetReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{2}
-}
+func (m *GetReply) Reset()                    { *m = GetReply{} }
+func (m *GetReply) String() string            { return proto.CompactTextString(m) }
+func (*GetReply) ProtoMessage()               {}
+func (*GetReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *GetReply) GetEntries() []*LogEntry {
 	if m != nil {
@@ -170,9 +152,7 @@ var _Logs_serviceDesc = grpc.ServiceDesc{
 	Metadata: fileDescriptor0,
 }
 
-func init() {
-	proto.RegisterFile("logs.proto", fileDescriptor0)
-}
+func init() { proto.RegisterFile("logs.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
 	// 255 bytes of a gzipped FileDescriptorProto
