@@ -18,7 +18,14 @@ message LogEntry {
 }
 
 message GetRequest {
-    // TODO: filtering
+    string timestamp = 1;
+    string service_id = 2;
+    string service_name = 3;
+    string message = 4;
+    string container_id = 5;
+    string node_id = 6;
+    string from = 7;
+    string size = 8;
 }
 
 message GetReply {
