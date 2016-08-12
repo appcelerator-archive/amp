@@ -352,6 +352,7 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_SYSTEM_ENABLED=true \
     -e SERVICE_NAME="telegraf-agent" \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
+    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/telegraf:latest
 }
 
