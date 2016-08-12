@@ -18,6 +18,9 @@ var (
 	config     cli.Config
 	configFile string
 	verbose    bool
+
+	// logs command
+	service_id string
 )
 
 // All main does is process commands and flags and invoke the app
@@ -100,9 +103,10 @@ func main() {
 		Long:  `Fetch the logs of a container.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a := cli.NewAMP(&config)
-			a.Logs()
+			a.Logs(cmd)
 		},
 	}
+	logsCmd.Flags().String("service_id", "", "filter by the given service_id")
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{

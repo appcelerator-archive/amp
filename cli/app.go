@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"log"
 )
 
 const (
@@ -63,24 +63,28 @@ func (a *AMP) Status() {
 	}
 }
 
-// Logs returns the logs
-func (a *AMP) Logs() {
+// Logs fetches the logs
+func (a *AMP) Logs(cmd *cobra.Command) error {
 	if a.verbose() {
 		fmt.Println("Logs")
+		fmt.Printf("service_id: %v\n", cmd.Flag("service_id").Value)
 	}
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	// Contact the server and print out its response.
+	request := logs.GetRequest{}
+	request.ServiceId = cmd.Flag("service_id").Value.String()
+
 	c := logs.NewLogsClient(conn)
-	r, err := c.Get(context.Background(), &logs.GetRequest{})
+	r, err := c.Get(context.Background(), &request)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for _, entry := range r.Entries {
-		log.Printf("%+v", entry)
+		fmt.Printf("%+v\n", entry)
 	}
 	conn.Close()
+	return nil
 }
