@@ -64,7 +64,6 @@ func (s *etcd) Close() error {
 }
 
 // Create implements storage.Interface.Create
-// TODO: val, out will be protocol buffer messages
 func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out proto.Message, ttl int64) error {
 	key = s.prefix(key)
 
@@ -90,18 +89,13 @@ func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out pr
 
 	if out != nil {
 		// TODO: out will be the encoded message, revision comes from resp header
-		putResp := txn.Responses[0].GetResponsePut()
-		kv := putResp.PrevKv
-		if kv != nil && kv.Value != nil {
-			proto.Unmarshal(kv.Value, out)
-		}
+		// putResp := txn.Responses[0].GetResponsePut()
 	}
 
 	return nil
 }
 
 // Get implements storage.Interface.Get.
-// TODO: out will be a protocol buffer message
 func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error {
 	if out == nil {
 		return fmt.Errorf("`out` param must not be nil")
@@ -116,10 +110,9 @@ func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNot
 
 	if len(getResp.Kvs) == 0 {
 		if ignoreNotFound {
-			// TODO: do we want to ignore out or set it to an empty message
-			// if out != nil {
-			//	*out.Reset()
-			// }
+			if out != nil {
+				out.Reset()
+			}
 			return nil
 		}
 		return fmt.Errorf("key not found: %q", key)

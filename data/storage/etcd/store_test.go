@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	defTimeout              = 5 * time.Second
-	defaultPort             = ":50101"
-	etcdDefaultEndpoint     = "http://localhost:2379"
+	defTimeout          = 5 * time.Second
+	defaultPort         = ":50101"
+	etcdDefaultEndpoint = "http://localhost:2379"
 )
 
 var (
-	store            storage.Interface
-	port             string
-	etcdEndpoints    = []string{etcdDefaultEndpoint}
+	store         storage.Interface
+	port          string
+	etcdEndpoints = []string{etcdDefaultEndpoint}
 )
 
 func TestMain(m *testing.M) {
