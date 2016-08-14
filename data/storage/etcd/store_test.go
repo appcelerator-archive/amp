@@ -82,6 +82,34 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetWithError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
+	key := "foobar"
+	out := &storage.Project{}
+	ignoreNotFound := false
+
+	err := store.Get(ctx, key, out, ignoreNotFound)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel()
+	if err == nil {
+		t.Errorf("expected an error result")
+	}
+}
+
+func TestGetIgnoreError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
+	key := "foobar"
+	out := &storage.Project{}
+	ignoreNotFound := true
+
+	err := store.Get(ctx, key, out, ignoreNotFound)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel()
+	if err != nil {
+		t.Errorf("error not expected: %s", err)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
