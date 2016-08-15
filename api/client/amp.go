@@ -1,4 +1,4 @@
-package cli
+package client
 
 import (
 	"fmt"
@@ -15,19 +15,26 @@ const (
 	serverAddress = "localhost" + defaultPort
 )
 
+// Configuration is for all configurable client settings
+type Configuration struct {
+	Verbose bool
+	Target  string
+	Images  []string
+}
+
 // AMP holds the state for the current envirionment
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
-	Config *Config
+	Configuration *Configuration
 }
 
 func (a *AMP) verbose() bool {
-	return a.Config.Verbose
+	return a.Configuration.Verbose
 }
 
 // NewAMP creates a new AMP instance
-func NewAMP(c *Config) *AMP {
-	return &AMP{Config: c}
+func NewAMP(c *Configuration) *AMP {
+	return &AMP{Configuration: c}
 }
 
 // Create a new swarm
