@@ -18,6 +18,7 @@ const (
 // Configuration is for all configurable client settings
 type Configuration struct {
 	Verbose bool
+	Github  string
 	Target  string
 	Images  []string
 }
@@ -26,6 +27,22 @@ type Configuration struct {
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
 	Configuration *Configuration
+	Conn          *grpc.ClientConn
+}
+
+func (a *AMP) connect() {
+	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.Conn = conn
+}
+
+func (a *AMP) disconnect() {
+	err := a.Conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (a *AMP) verbose() bool {

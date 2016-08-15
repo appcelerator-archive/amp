@@ -9,6 +9,8 @@ type Config struct {
 	Port             string
 	EtcdEndpoints    []string
 	ElasticsearchURL string
+	ClientID         string
+	ClientSecret     string
 }
 
 // String is used to display struct as a string

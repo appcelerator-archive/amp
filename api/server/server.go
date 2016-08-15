@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
@@ -35,6 +36,11 @@ func Start(config Config) {
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Logs{ES: ES})
+	oauth.RegisterGithubServer(s, &oauth.Oauth{
+		Store:        Store,
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
+	})
 	service.RegisterServiceServer(s, &service.Service{})
 	s.Serve(lis)
 }

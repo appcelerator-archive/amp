@@ -12,6 +12,8 @@ const (
 	defaultPort             = ":50101"
 	etcdDefaultEndpoints    = "http://localhost:2379"
 	elasticsearchDefaultURL = "http://localhost:9200"
+	defaultClientID         = ""
+	defaultClientSecret     = ""
 )
 
 // build vars
@@ -29,6 +31,8 @@ var (
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
+	clientID         string
+	clientSecret     string
 )
 
 func parseFlags() {
@@ -36,12 +40,16 @@ func parseFlags() {
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
 	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
+	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
+	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
 
 	// parse command line flags
 	flag.Parse()
 
 	// update config
 	config.Port = port
+	config.ClientID = clientID
+	config.ClientSecret = clientSecret
 	for _, s := range strings.Split(etcdEndpoints, ",") {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}

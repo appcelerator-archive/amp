@@ -7,6 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config is for all the configuration settings.
+type Config struct {
+	Verbose bool
+	Github  string
+	Target  string
+	Images  []string
+}
+
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
 func InitConfig(configFile string, config *client.Configuration, verbose bool) {
@@ -23,7 +31,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool) {
 	// Add default config file (without extension) - will be last in precedence.
 	// First search home directory; if not found, then attempt to also search working
 	// directory (will only succeed if process was started from application directory).
-	viper.SetConfigName(".ampswarm")
+	viper.SetConfigName(".amp")
 	viper.AddConfigPath("$HOME")
 	viper.AddConfigPath(".")
 
@@ -36,7 +44,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool) {
 		}
 	} else {
 		if verbose || viper.GetBool("Verbose") {
-			fmt.Println("warning: no valid configuration file (.ampswarm.yaml) found in home or current directory")
+			fmt.Println("warning: no valid configuration file (.amp.yaml) found in home or current directory")
 		}
 	}
 
