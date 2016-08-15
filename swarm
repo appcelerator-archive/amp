@@ -82,7 +82,7 @@ ROLE=infrastructure
 usage() {
   cat << USAGE >&2
 Usage:
-  $(basename $0) [pull|start|stop|restart|ls]
+  $(basename $0) [pull|start|stop|restart|ls|monitor]
   $(basename $0) [ -h | --help ]
 
 Basic AMP swarm operations.
@@ -98,6 +98,7 @@ Commands:
   restart      Restart services (options: --min); same as stop, pull, start
   stop         Remove services
   ls           List running services
+  monitor      Continually update running services list with current status
 
 USAGE
   exit 1
@@ -134,6 +135,9 @@ main() {
       ;;
       ls)
         ls
+      ;;
+      monitor)
+        monitor "${@:2}"
       ;;
       -h)
         usage
@@ -195,6 +199,11 @@ startservices() {
 
 ls() {
   docker service ls --filter "label=amp.swarm=$ROLE"
+}
+
+monitor() {
+  interval=${1:-5}
+  clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
 }
 
 ampagent() {
