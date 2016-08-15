@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package etcd;
+package storage;
 
 message Project {
   string id = 1;
