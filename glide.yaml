@@ -18,3 +18,5 @@ import:
 - package: golang.org/x/oauth2
 - package: github.com/mitchellh/go-homedir
 - package: gopkg.in/yaml.v2
+- package: github.com/influxdata/influxdb
+  version: v1.0.0-beta3

@@ -21,30 +21,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/data"
+	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
-// Store is used to connect to and query etcd
-type store struct {
+// etcd is used to connect to and query etcd
+type etcd struct {
 	client     *clientv3.Client
 	endpoints  []string
 	pathPrefix string
 }
 
-// New returns an etcd implementation of data.Store
-func New(endpoints []string, prefix string) data.Store {
-	return &store{endpoints: endpoints, pathPrefix: prefix}
+// New returns an etcd implementation of storage.Interface
+func New(endpoints []string, prefix string) storage.Interface {
+	return &etcd{endpoints: endpoints, pathPrefix: prefix}
 }
 
 // Endpoints gets the endpoints etcd
-func (s *store) Endpoints() []string {
+func (s *etcd) Endpoints() []string {
 	return s.endpoints
 }
 
 // Connect to etcd using client v3 api
-func (s *store) Connect(timeout time.Duration) error {
+func (s *etcd) Connect(timeout time.Duration) error {
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   s.endpoints,
 		DialTimeout: timeout,
@@ -54,7 +55,7 @@ func (s *store) Connect(timeout time.Duration) error {
 }
 
 // Close connection to etcd
-func (s *store) Close() error {
+func (s *etcd) Close() error {
 	if err := s.client.Close(); err != nil {
 		return err
 	}
@@ -62,9 +63,8 @@ func (s *store) Close() error {
 	return nil
 }
 
-// Create implements data.Store.Create
-// TODO: val, out will be protocol buffer messages
-func (s *store) Create(ctx context.Context, key string, val interface{}, out *string, ttl int64) error {
+// Create implements storage.Interface.Create
+func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out proto.Message, ttl int64) error {
 	key = s.prefix(key)
 
 	opts, err := s.options(ctx, int64(ttl))
@@ -72,16 +72,11 @@ func (s *store) Create(ctx context.Context, key string, val interface{}, out *st
 		return err
 	}
 
-	// TODO: cast to string is just to get basic mechanics in place before using proto buf messages
-	var str string
-	var ok bool
-	if str, ok = val.(string); !ok {
-		return fmt.Errorf("val must be a string but was type (%T): %v", val, val)
-	}
+	data, err := proto.Marshal(val)
 
 	txn, err := s.client.KV.Txn(ctx).
 		If(notFound(key)).
-		Then(clientv3.OpPut(key, str, opts...)).
+		Then(clientv3.OpPut(key, string(data), opts...)).
 		Commit()
 
 	if err != nil {
@@ -94,16 +89,18 @@ func (s *store) Create(ctx context.Context, key string, val interface{}, out *st
 
 	if out != nil {
 		// TODO: out will be the encoded message, revision comes from resp header
-		//putResp := txn.Responses[0].GetResponsePut()
-		*out = str
+		// putResp := txn.Responses[0].GetResponsePut()
 	}
 
 	return nil
 }
 
-// Get implements data.Store.Get.
-// TODO: out will be a protocol buffer message
-func (s *store) Get(ctx context.Context, key string, out *string, ignoreNotFound bool) error {
+// Get implements storage.Interface.Get.
+func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error {
+	if out == nil {
+		return fmt.Errorf("`out` param must not be nil")
+	}
+
 	key = s.prefix(key)
 
 	getResp, err := s.client.KV.Get(ctx, key)
@@ -113,19 +110,21 @@ func (s *store) Get(ctx context.Context, key string, out *string, ignoreNotFound
 
 	if len(getResp.Kvs) == 0 {
 		if ignoreNotFound {
-			*out = key
+			if out != nil {
+				out.Reset()
+			}
 			return nil
 		}
 		return fmt.Errorf("key not found: %q", key)
 	}
 
 	kv := getResp.Kvs[0]
-	*out = string(kv.Value)
-	return nil
+	data := []byte(kv.Value)
+	return proto.Unmarshal(data, out)
 }
 
-// Delete implements data.Store.Delete
-func (s *store) Delete(ctx context.Context, key string, out *string) error {
+// Delete implements storage.Interface.Delete
+func (s *etcd) Delete(ctx context.Context, key string, out proto.Message) error {
 	key = s.prefix(key)
 
 	txn, err := s.client.KV.Txn(ctx).
@@ -141,13 +140,13 @@ func (s *store) Delete(ctx context.Context, key string, out *string) error {
 		return fmt.Errorf("key not found: %q", key)
 	}
 	kv := getResp.Kvs[0]
-	*out = string(kv.Value)
-	return nil
+	data := []byte(kv.Value)
+	return proto.Unmarshal(data, out)
 }
 
 // options returns a slice of client options (currently just a lease based on the given ttl).
 // ttl: time in seconds that key will exist (0 means forever); if ttl is non-zero, it will attach the key to a lease with ttl of roughly the same length
-func (s *store) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, error) {
+func (s *etcd) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, error) {
 	if ttl == 0 {
 		return nil, nil
 	}
@@ -159,7 +158,7 @@ func (s *store) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, er
 	return []clientv3.OpOption{clientv3.WithLease(clientv3.LeaseID(lcr.ID))}, nil
 }
 
-func (s *store) prefix(key string) string {
+func (s *etcd) prefix(key string) string {
 	if strings.HasPrefix(key, s.pathPrefix) {
 		return key
 	}

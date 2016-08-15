@@ -5,30 +5,27 @@ import (
 )
 
 var (
-	// elasticSearch client
+	// elasticsearch client
 	client *elastic.Client
 )
 
-// ElasticSearch singleton
-type ElasticSearch struct {
+// Elasticsearch singleton
+type Elasticsearch struct {
 }
 
 // Connect to the elastic search server
-func (es *ElasticSearch) Connect(url string) {
+func (es *Elasticsearch) Connect(url string) error {
 	// Create ES client
 	var err error
 	client, err = elastic.NewClient(
 		elastic.SetURL(url),
 		elastic.SetSniff(false),
 	)
-	if err != nil {
-		// TODO: Handle error
-		panic(err)
-	}
+	return err
 }
 
 // CreateIndexIfNotExists Creates an index if it doesn't already exists
-func (es *ElasticSearch) CreateIndexIfNotExists(esIndex string, esType string, mapping string) {
+func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, mapping string) {
 	// Use the IndexExists service to check if the index exists
 	exists, err := client.IndexExists(esIndex).Do()
 	if err != nil {
@@ -60,7 +57,7 @@ func (es *ElasticSearch) CreateIndexIfNotExists(esIndex string, esType string, m
 }
 
 // Index store a document inside elastic search
-func (es *ElasticSearch) Index(esIndex string, esType string, body interface{}) {
+func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) {
 	// Add a document to the index
 	_, err := client.Index().
 		Index(esIndex).
@@ -74,8 +71,8 @@ func (es *ElasticSearch) Index(esIndex string, esType string, body interface{}) 
 	}
 }
 
-// All Returns all the documents for a given index
-func (es *ElasticSearch) All(esIndex string) []*elastic.SearchHit {
+// All returns all the documents for a given index
+func (es *Elasticsearch) All(esIndex string) []*elastic.SearchHit {
 	// Search with a term query
 	searchResult, err := client.Search().
 		Index(esIndex).
@@ -85,4 +82,9 @@ func (es *ElasticSearch) All(esIndex string) []*elastic.SearchHit {
 		panic(err)
 	}
 	return searchResult.Hits.Hits
+}
+
+// GetClient returns the native elastic search client
+func (es *Elasticsearch) GetClient() *elastic.Client {
+	return client
 }
