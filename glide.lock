@@ -1,8 +1,8 @@
-hash: e0ba9b475e6a8c6e00a1d48c69bd0049102d6d1172eba0853a95f5e71ac56464
-updated: 2016-08-10T14:51:07.758328902-07:00
+hash: 048cacc07c1f5b41707a0625280a2a89f02f579ae114a73706031e4c90d23cc6
+updated: 2016-08-10T15:51:31.328190329-07:00
 imports:
 - name: github.com/appcelerator/amp
-  version: 549a22acc41813018431e11b1733559e111cb10f
+  version: afe54fb0f48e30c18408c6f8806b6bfe6376feae
   subpackages:
   - api/rpc/service
   - data
@@ -72,6 +72,8 @@ imports:
   version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/mitchellh/go-homedir
+  version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/pkg/errors
@@ -111,6 +113,11 @@ imports:
   version: 075e191f18186a8ff2becaf64478e30f4545cdad
   subpackages:
   - context
+  - http2
+  - trace
+  - http2/hpack
+  - lex/httplex
+  - internal/timeseries
 - name: golang.org/x/oauth2
   version: 4784bb855e56a530f1ce5d788959359ed6cb4a16
   subpackages:
@@ -137,10 +144,14 @@ imports:
 - name: google.golang.org/grpc
   version: edc5ccf8cbfd321723e26d2cf177b05c16132ad9
   subpackages:
+  - codes
   - credentials
   - grpclog
+  - internal
   - metadata
-  - codes
+  - naming
+  - transport
+  - peer
 - name: gopkg.in/olivere/elastic.v3
   version: 787ebbb5a7600662bca364e4e8ca959f315e442f
   subpackages:

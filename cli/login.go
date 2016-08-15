@@ -2,13 +2,17 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
+	"path"
 
 	"github.com/fatih/color"
 	"github.com/google/go-github/github"
 	"github.com/howeyc/gopass"
 	"golang.org/x/oauth2"
+	"github.com/mitchellh/go-homedir"
+	"gopkg.in/yaml.v2"
 )
 
 func getUsername() (username string) {
@@ -95,30 +99,88 @@ func getOauthClient(token string) (client *github.Client) {
 
 // Login creates a github access token and store it in your config file to authenticate further commands
 func (a *AMP) Login() {
-	color.Set(color.FgRed)
-	defer color.Unset()
-	token, err := getToken()
-	if err != nil {
+	fmt.Println(a.Config)
+	homedir, err := homedir.Dir()
+	if (err != nil) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	client := getOauthClient(token)
+  fmt.Println(homedir)
+	contents, err := ioutil.ReadFile(path.Join(homedir, ".ampswarm.yaml"))
+	if (err != nil) {
+		notFoundError := regexp.MustCompile("no such file or directory")
+		if (!notFoundError.MatchString(err.Error())) {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+	fmt.Println(contents)
+	
+	m := make(map[interface{}]interface{})
+	
+	err = yaml.Unmarshal(contents, &m)
+	if err != nil {
+    fmt.Println(err)
+		os.Exit(1)
+	}
+	
+	fmt.Println(m)
+	
+	m["github"] = "foo"
+	
+	fmt.Println(m)
+	
+	contents, err = yaml.Marshal(&m)
+	if err != nil {
+    fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(contents))
+	
+	err = ioutil.WriteFile(path.Join(homedir, ".ampswarm.yaml"), contents, os.ModeAppend)
+	if err != nil {
+    fmt.Println(err)
+		os.Exit(1)
+	}
+  contents, err = ioutil.ReadFile(path.Join(homedir, ".ampswarm.yaml"))
+	if (err != nil) {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	m = make(map[interface{}]interface{})
+	
+	err = yaml.Unmarshal(contents, &m)
+	if err != nil {
+    fmt.Println(err)
+		os.Exit(1)
+	}
+	
+	fmt.Println(m["github"])
 
-	user, _, err := client.Users.Get("")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	// color.Set(color.FgRed)
+	// defer color.Unset()
+	// token, err := getToken()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+	// client := getOauthClient(token)
 
-	member, _, err := client.Organizations.IsMember("appcelerator", *user.Login)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	if !member {
-		fmt.Println("not a member of the organization")
-		os.Exit(1)
-	}
-	color.Set(color.FgCyan)
-	fmt.Println("Ok, now save the token")
+	// user, _, err := client.Users.Get("")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+
+	// member, _, err := client.Organizations.IsMember("appcelerator", *user.Login)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+	// if !member {
+	// 	fmt.Println("not a member of the organization")
+	// 	os.Exit(1)
+	// }
+	// color.Set(color.FgCyan)
+	// fmt.Println("Ok, now save the token")
 }

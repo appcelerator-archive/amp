@@ -9,6 +9,7 @@ import (
 // Config is for all the configuration settings.
 type Config struct {
 	Verbose bool
+	Github  string
 	Target  string
 	Images  []string
 }
