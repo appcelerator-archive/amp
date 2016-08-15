@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/api/client"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 
-	config     cli.Config
+	config     client.Configuration
 	configFile string
 	verbose    bool
 )
@@ -25,7 +25,7 @@ func main() {
 	fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 
 	cobra.OnInitialize(func() {
-		cli.InitConfig(configFile, &config, verbose)
+		InitConfig(configFile, &config, verbose)
 	})
 
 	// createCmd represents the create command
@@ -34,7 +34,7 @@ func main() {
 		Short: "Create a new AMP swarm",
 		Long:  `Create a new AMP swarm for the target environment.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Create()
 		},
 	}
@@ -45,7 +45,7 @@ func main() {
 		Short: "Stop a running AMP swarm",
 		Long:  `Stop an running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Stop()
 		},
 	}
@@ -56,7 +56,7 @@ func main() {
 		Short: "Start a stopped AMP swarm",
 		Long:  `Start a stopped AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Start()
 		},
 	}
@@ -67,7 +67,7 @@ func main() {
 		Short: "Update an existing AMP swarm",
 		Long:  `Updated an existing AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Update()
 		},
 	}
@@ -78,7 +78,7 @@ func main() {
 		Short: "Get status of a running AMP swarm",
 		Long:  `Get status of a running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Status()
 		},
 	}
@@ -99,7 +99,7 @@ func main() {
 		Short: "Fetch the logs",
 		Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := cli.NewAMP(&config)
+			a := client.NewAMP(&config)
 			a.Logs(cmd)
 		},
 	}

@@ -1,21 +1,15 @@
-package cli
+package main
 
 import (
 	"fmt"
 
+	"github.com/appcelerator/amp/api/client"
 	"github.com/spf13/viper"
 )
 
-// Config is for all the configuration settings.
-type Config struct {
-	Verbose bool
-	Target  string
-	Images  []string
-}
-
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
-func InitConfig(configFile string, config *Config, verbose bool) {
+func InitConfig(configFile string, config *client.Configuration, verbose bool) {
 	config.Verbose = verbose
 
 	// Add matching envirionment variables - will be first in precedence.
