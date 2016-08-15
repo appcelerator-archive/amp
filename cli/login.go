@@ -34,14 +34,13 @@ func getPassword() (password string, err error) {
 }
 
 func getAuth(client *github.Client, username, password string) (auth *github.Authorization, err error) {
-	clientId := "7d30fbdaa1a16b09bce0"
-	clientSecret := "6f75d52101addcc1cbf439af109fd0e377c3dca4"
-	auth, _, err = client.Authorizations.GetGetOrCreateForApp(clientId, &github.AuthorizationRequest{
-		ClientSecret: &clientSecret,
+	note := "note"
+	auth, _, err = client.Authorizations.Create(&github.AuthorizationRequest{
 		Scopes: []github.Scope{
 			github.ScopeRepo,
 			github.ScopeAdminRepoHook,
 		},
+		Note: &note,
 	})
 	if err != nil {
 		otpError := regexp.MustCompile("Must specify two-factor authentication OTP code")
