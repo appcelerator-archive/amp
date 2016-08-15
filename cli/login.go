@@ -2,17 +2,13 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
-	"path"
 
 	"github.com/fatih/color"
 	"github.com/google/go-github/github"
 	"github.com/howeyc/gopass"
 	"golang.org/x/oauth2"
-	"github.com/mitchellh/go-homedir"
-	"gopkg.in/yaml.v2"
 )
 
 func getUsername() (username string) {
@@ -38,13 +34,14 @@ func getPassword() (password string, err error) {
 }
 
 func getAuth(client *github.Client, username, password string) (auth *github.Authorization, err error) {
-	note := "note"
-	auth, _, err = client.Authorizations.Create(&github.AuthorizationRequest{
+	clientId := "7d30fbdaa1a16b09bce0"
+	clientSecret := "6f75d52101addcc1cbf439af109fd0e377c3dca4"
+	auth, _, err = client.Authorizations.GetGetOrCreateForApp(clientId, &github.AuthorizationRequest{
+		ClientSecret: &clientSecret,
 		Scopes: []github.Scope{
 			github.ScopeRepo,
 			github.ScopeAdminRepoHook,
 		},
-		Note: &note,
 	})
 	if err != nil {
 		otpError := regexp.MustCompile("Must specify two-factor authentication OTP code")
@@ -69,7 +66,7 @@ func getAuth(client *github.Client, username, password string) (auth *github.Aut
 	return
 }
 
-func getToken() (token string, err error) {
+func getToken() (token, lastEight string, err error) {
 	username := getUsername()
 	password, err := getPassword()
 	if err != nil {
@@ -83,7 +80,9 @@ func getToken() (token string, err error) {
 	if err != nil {
 		return
 	}
+	fmt.Println(*auth)
 	token = *auth.Token
+	lastEight = *auth.TokenLastEight
 	return
 }
 
@@ -99,88 +98,32 @@ func getOauthClient(token string) (client *github.Client) {
 
 // Login creates a github access token and store it in your config file to authenticate further commands
 func (a *AMP) Login() {
-	fmt.Println(a.Config)
-	homedir, err := homedir.Dir()
-	if (err != nil) {
+	color.Set(color.FgRed)
+	defer color.Unset()
+	token, lastEight, err := getToken()
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-  fmt.Println(homedir)
-	contents, err := ioutil.ReadFile(path.Join(homedir, ".ampswarm.yaml"))
-	if (err != nil) {
-		notFoundError := regexp.MustCompile("no such file or directory")
-		if (!notFoundError.MatchString(err.Error())) {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
-	fmt.Println(contents)
-	
-	m := make(map[interface{}]interface{})
-	
-	err = yaml.Unmarshal(contents, &m)
+	client := getOauthClient(token)
+
+	user, _, err := client.Users.Get("")
 	if err != nil {
-    fmt.Println(err)
-		os.Exit(1)
-	}
-	
-	fmt.Println(m)
-	
-	m["github"] = "foo"
-	
-	fmt.Println(m)
-	
-	contents, err = yaml.Marshal(&m)
-	if err != nil {
-    fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println(string(contents))
-	
-	err = ioutil.WriteFile(path.Join(homedir, ".ampswarm.yaml"), contents, os.ModeAppend)
-	if err != nil {
-    fmt.Println(err)
-		os.Exit(1)
-	}
-  contents, err = ioutil.ReadFile(path.Join(homedir, ".ampswarm.yaml"))
-	if (err != nil) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	m = make(map[interface{}]interface{})
-	
-	err = yaml.Unmarshal(contents, &m)
+
+	member, _, err := client.Organizations.IsMember("appcelerator", *user.Login)
 	if err != nil {
-    fmt.Println(err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	
-	fmt.Println(m["github"])
-
-	// color.Set(color.FgRed)
-	// defer color.Unset()
-	// token, err := getToken()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-	// client := getOauthClient(token)
-
-	// user, _, err := client.Users.Get("")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-
-	// member, _, err := client.Organizations.IsMember("appcelerator", *user.Login)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-	// if !member {
-	// 	fmt.Println("not a member of the organization")
-	// 	os.Exit(1)
-	// }
-	// color.Set(color.FgCyan)
-	// fmt.Println("Ok, now save the token")
+	if !member {
+		fmt.Println("not a member of the organization")
+		os.Exit(1)
+	}
+	color.Set(color.FgCyan)
+	a.Config.Github = lastEight
+	a.Config.Save()
+	fmt.Println("token saved")
 }
