@@ -12,5 +12,11 @@ import:
 - package: github.com/coreos/etcd
   subpackages:
   - clientv3
+- package: github.com/howeyc/gopass
+- package: github.com/fatih/color
+- package: github.com/google/go-github/github
+- package: golang.org/x/oauth2
+- package: github.com/mitchellh/go-homedir
+- package: gopkg.in/yaml.v2
 - package: github.com/influxdata/influxdb
   version: v1.0.0-beta3

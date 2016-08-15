@@ -2,13 +2,19 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // Config is for all the configuration settings.
 type Config struct {
 	Verbose bool
+	Github  string
 	Target  string
 	Images  []string
 }
@@ -64,5 +70,23 @@ func LoadImageList() (images []string, err error) {
 	}
 
 	images = viper.GetStringSlice("images")
+	return
+}
+
+// Save saves the configuration to ~/.ampswarm.yaml
+func (c *Config) Save() (err error) {
+	homedir, err := homedir.Dir()
+	if err != nil {
+		return
+	}
+	contents, err := yaml.Marshal(c)
+	if err != nil {
+		return
+	}
+	fmt.Println(string(contents))
+	err = ioutil.WriteFile(path.Join(homedir, ".ampswarm.yaml"), contents, os.ModeAppend)
+	if err != nil {
+		return
+	}
 	return
 }
