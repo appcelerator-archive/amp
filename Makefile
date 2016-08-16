@@ -85,3 +85,9 @@ build:
 
 run: build
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
+
+install-deps:
+	@glide install --strip-vcs --strip-vendor --update-vendored
+
+update-deps:
+	@glide update --strip-vcs --strip-vendor --update-vendored

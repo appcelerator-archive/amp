@@ -1,9 +1,33 @@
+## v1.1.0 [unreleased]
+
+### Release Notes
+
+### Features
+
+- [#7120](https://github.com/influxdata/influxdb/issues/7120): Add additional statistics to query executor.
+- [#7135](https://github.com/influxdata/influxdb/pull/7135): Support enable HTTP service over unix domain socket. Thanks @oiooj
+- [#3634](https://github.com/influxdata/influxdb/issues/3634): Support mixed duration units.
+- [#7099](https://github.com/influxdata/influxdb/pull/7099): Implement text/csv content encoding for the response writer.
+- [#6992](https://github.com/influxdata/influxdb/issues/6992): Support tools for running async queries.
+- [#7136](https://github.com/influxdata/influxdb/pull/7136): Update jwt-go dependency to version 3.
+
+### Bugfixes
+
+- [#1834](https://github.com/influxdata/influxdb/issues/1834): Drop time when used as a tag or field key.
+- [#7152](https://github.com/influxdata/influxdb/issues/7152): Decrement number of measurements only once when deleting the last series from a measurement.
+
 ## v1.0.0 [unreleased]
+
+### Breaking changes
+
+* `max-series-per-database` was added with a default of 1M but can be disabled by setting it to `0`. Existing databases with series that exceed this limit will continue to load but writes that would create new series will fail.
 
 ### Release Notes
 
 * Config option `[cluster]` has been replaced with `[coordinator]`
-* Support for config options `[collectd]` and `[opentsdb]` has been removed; use `[[collectd]]` and `[[opentsdb]]` instead
+* Support for config options `[collectd]` and `[opentsdb]` has been removed; use `[[collectd]]` and `[[opentsdb]]` instead.
+* Config option `data-logging-enabled` within the `[data]` section, has been renamed to `trace-logging-enabled`, and defaults to `false`.
+* The keywords `IF`, `EXISTS`, and `NOT` where removed for this release.  This means you no longer need to specify `IF NOT EXISTS` for `DROP DATABASE` or `IF EXISTS` for `CREATE DATABASE`.
 
 With this release the systemd configuration files for InfluxDB will use the system configured default for logging and will no longer write files to `/var/log/influxdb` by default. On most systems, the logs will be directed to the systemd journal and can be accessed by `journalctl -u influxdb.service`. Consult the systemd journald documentation for configuring journald.
 
@@ -37,6 +61,14 @@ With this release the systemd configuration files for InfluxDB will use the syst
 - [#6959](https://github.com/influxdata/influxdb/issues/6959): Return 403 Forbidden when authentication succeeds but authorization fails.
 - [#1110](https://github.com/influxdata/influxdb/issues/1110): Support loading a folder for collectd typesdb files.
 - [#6928](https://github.com/influxdata/influxdb/issues/6928): Run continuous query for multiple buckets rather than one per bucket.
+- [#5500](https://github.com/influxdata/influxdb/issues/5500): Add extra trace logging to tsm engine.
+- [#6909](https://github.com/influxdata/influxdb/issues/6909): Log the CQ execution time when continuous query logging is enabled.
+- [#7046](https://github.com/influxdata/influxdb/pull/7046): Add tsm file export to influx_inspect tool.
+- [#7011](https://github.com/influxdata/influxdb/issues/7011): Create man pages for commands.
+- [#7050](https://github.com/influxdata/influxdb/pull/7050): Update go package library dependencies.
+- [#5750](https://github.com/influxdata/influxdb/issues/5750): Support wildcards in aggregate functions.
+- [#7605](https://github.com/influxdata/influxdb/issues/7605): Remove IF EXISTS/IF NOT EXISTS from influxql language.
+- [#7095](https://github.com/influxdata/influxdb/pull/7095): Add MaxSeriesPerDatabase config setting.
 
 ### Bugfixes
 
@@ -94,6 +126,23 @@ With this release the systemd configuration files for InfluxDB will use the syst
 - [#6952](https://github.com/influxdata/influxdb/pull/6952): Fix compaction planning with large TSM files
 - [#6819](https://github.com/influxdata/influxdb/issues/6819): Database unresponsive after DROP MEASUREMENT
 - [#6796](https://github.com/influxdata/influxdb/issues/6796): Out of Memory Error when Dropping Measurement
+- [#6946](https://github.com/influxdata/influxdb/issues/6946): Duplicate data for the same timestamp
+- [#7043](https://github.com/influxdata/influxdb/pull/7043): Remove limiter from walkShards
+- [#5501](https://github.com/influxdata/influxdb/issues/5501): Queries against files that have just been compacted need to point to new files
+- [#6595](https://github.com/influxdata/influxdb/issues/6595): Fix full compactions conflicting with level compactions
+- [#7081](https://github.com/influxdata/influxdb/issues/7081): Hardcode auto generated RP names to autogen
+- [#7088](https://github.com/influxdata/influxdb/pull/7088): Fix UDP pointsRx being incremented twice.
+- [#7080](https://github.com/influxdata/influxdb/pull/7080): Ensure IDs can't clash when managing Continuous Queries.
+- [#6990](https://github.com/influxdata/influxdb/issues/6990): Fix panic parsing empty key
+- [#7084](https://github.com/influxdata/influxdb/pull/7084): Tombstone memory improvements
+- [#6543](https://github.com/influxdata/influxdb/issues/6543): Fix parseFill to check for fill ident before attempting to parse an expression.
+- [#7032](https://github.com/influxdata/influxdb/pull/7032): Copy tags in influx_stress to avoid a concurrent write panic on a map.
+- [#7107](https://github.com/influxdata/influxdb/pull/7107): Limit shard concurrency
+- [#7028](https://github.com/influxdata/influxdb/pull/7028): Do not run continuous queries that have no time span.
+- [#7025](https://github.com/influxdata/influxdb/issues/7025): Move the CQ interval by the group by offset.
+- [#7125](https://github.com/influxdata/influxdb/pull/7125): Ensure gzip writer is closed in influx_inspect export
+- [#7127](https://github.com/influxdata/influxdb/pull/7127): Concurrent series limit
+- [#7119](https://github.com/influxdata/influxdb/pull/7119): Fix CREATE DATABASE when dealing with default values.
 
 ## v0.13.0 [2016-05-12]
 

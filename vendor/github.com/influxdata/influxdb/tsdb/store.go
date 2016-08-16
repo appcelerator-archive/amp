@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -60,14 +61,17 @@ func NewStore(path string) *Store {
 	}
 }
 
-// SetLogOutput sets the writer to which all logs are written. It must not be
-// called after Open is called.
+// SetLogOutput sets the writer to which all logs are written. It is safe for
+// concurrent use.
 func (s *Store) SetLogOutput(w io.Writer) {
-	s.Logger = log.New(w, "[store] ", log.LstdFlags)
-	s.logOutput = w
+	s.Logger.SetOutput(w)
 	for _, s := range s.shards {
 		s.SetLogOutput(w)
 	}
+
+	s.mu.Lock()
+	s.logOutput = w
+	s.mu.Unlock()
 }
 
 func (s *Store) Statistics(tags map[string]string) []models.Statistic {
@@ -373,12 +377,15 @@ func (s *Store) DeleteShard(shardID uint64) error {
 }
 
 // ShardIteratorCreator returns an iterator creator for a shard.
-func (s *Store) ShardIteratorCreator(id uint64) influxql.IteratorCreator {
+func (s *Store) ShardIteratorCreator(id uint64, opt *influxql.SelectOptions) influxql.IteratorCreator {
 	sh := s.Shard(id)
 	if sh == nil {
 		return nil
 	}
-	return &shardIteratorCreator{sh: sh}
+	return &shardIteratorCreator{
+		sh:         sh,
+		maxSeriesN: opt.MaxSeriesN,
+	}
 }
 
 // DeleteDatabase will close all shards associated with a database and remove the directory and files from disk.
@@ -515,8 +522,6 @@ func (s *Store) walkShards(shards []*Shard, fn func(sh *Shard) error) error {
 		err error
 	}
 
-	t := limiter.NewFixed(runtime.GOMAXPROCS(0))
-
 	resC := make(chan res)
 	var n int
 
@@ -524,9 +529,6 @@ func (s *Store) walkShards(shards []*Shard, fn func(sh *Shard) error) error {
 		n++
 
 		go func(sh *Shard) {
-			t.Take()
-			defer t.Release()
-
 			if err := fn(sh); err != nil {
 				resC <- res{err: fmt.Errorf("shard %d: %s", sh.id, err)}
 				return
@@ -784,7 +786,7 @@ func (s *Store) IteratorCreator(shards []uint64, opt *influxql.SelectOptions) (i
 	ics := make([]influxql.IteratorCreator, 0)
 	if err := func() error {
 		for _, id := range shards {
-			ic := s.ShardIteratorCreator(id)
+			ic := s.ShardIteratorCreator(id, opt)
 			if ic == nil {
 				continue
 			}
@@ -797,7 +799,7 @@ func (s *Store) IteratorCreator(shards []uint64, opt *influxql.SelectOptions) (i
 		return nil, err
 	}
 
-	return influxql.IteratorCreators(ics), nil
+	return influxql.NewLazyIteratorCreator(ics), nil
 }
 
 // WriteToShard writes a list of points to a shard identified by its ID.
@@ -819,6 +821,155 @@ func (s *Store) WriteToShard(shardID uint64, points []models.Point) error {
 	s.mu.RUnlock()
 
 	return sh.WritePoints(points)
+}
+
+func (s *Store) Measurements(database string, cond influxql.Expr) ([]string, error) {
+	dbi := s.DatabaseIndex(database)
+	if dbi == nil {
+		return nil, nil
+	}
+
+	// Retrieve measurements from database index. Filter if condition specified.
+	var mms Measurements
+	if cond == nil {
+		mms = dbi.Measurements()
+	} else {
+		var err error
+		mms, _, err = dbi.MeasurementsByExpr(cond)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Sort measurements by name.
+	sort.Sort(mms)
+
+	measurements := make([]string, len(mms))
+	for i, m := range mms {
+		measurements[i] = m.Name
+	}
+
+	return measurements, nil
+}
+
+type TagValues struct {
+	Measurement string
+	Values      []KeyValue
+}
+
+func (s *Store) TagValues(database string, cond influxql.Expr) ([]TagValues, error) {
+	if cond == nil {
+		return nil, errors.New("a condition is required")
+	}
+
+	dbi := s.DatabaseIndex(database)
+	if dbi == nil {
+		return nil, nil
+	}
+
+	measurementExpr := influxql.CloneExpr(cond)
+	measurementExpr = influxql.Reduce(influxql.RewriteExpr(measurementExpr, func(e influxql.Expr) influxql.Expr {
+		switch e := e.(type) {
+		case *influxql.BinaryExpr:
+			switch e.Op {
+			case influxql.EQ, influxql.NEQ, influxql.EQREGEX, influxql.NEQREGEX:
+				tag, ok := e.LHS.(*influxql.VarRef)
+				if !ok || tag.Val != "_name" {
+					return nil
+				}
+			}
+		}
+		return e
+	}), nil)
+
+	mms, ok, err := dbi.MeasurementsByExpr(measurementExpr)
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		mms = dbi.Measurements()
+		sort.Sort(mms)
+	}
+
+	// If there are no measurements, return immediately.
+	if len(mms) == 0 {
+		return nil, nil
+	}
+
+	filterExpr := influxql.CloneExpr(cond)
+	filterExpr = influxql.Reduce(influxql.RewriteExpr(filterExpr, func(e influxql.Expr) influxql.Expr {
+		switch e := e.(type) {
+		case *influxql.BinaryExpr:
+			switch e.Op {
+			case influxql.EQ, influxql.NEQ, influxql.EQREGEX, influxql.NEQREGEX:
+				tag, ok := e.LHS.(*influxql.VarRef)
+				if !ok || strings.HasPrefix(tag.Val, "_") {
+					return nil
+				}
+			}
+		}
+		return e
+	}), nil)
+
+	tagValues := make([]TagValues, len(mms))
+	for i, mm := range mms {
+		tagValues[i].Measurement = mm.Name
+
+		ids, err := mm.SeriesIDsAllOrByExpr(filterExpr)
+		if err != nil {
+			return nil, err
+		}
+		ss := mm.SeriesByIDSlice(ids)
+
+		// Determine a list of keys from condition.
+		keySet, ok, err := mm.TagKeysByExpr(cond)
+		if err != nil {
+			return nil, err
+		}
+
+		// Loop over all keys for each series.
+		m := make(map[KeyValue]struct{}, len(ss))
+		for _, series := range ss {
+			for key, value := range series.Tags {
+				if !ok {
+					// nop
+				} else if _, exists := keySet[key]; !exists {
+					continue
+				}
+				m[KeyValue{key, value}] = struct{}{}
+			}
+		}
+
+		// Return an empty slice if there are no key/value matches.
+		if len(m) == 0 {
+			continue
+		}
+
+		// Sort key/value set.
+		a := make([]KeyValue, 0, len(m))
+		for kv := range m {
+			a = append(a, kv)
+		}
+		sort.Sort(KeyValues(a))
+		tagValues[i].Values = a
+	}
+
+	return tagValues, nil
+}
+
+type KeyValue struct {
+	Key, Value string
+}
+
+type KeyValues []KeyValue
+
+func (a KeyValues) Len() int      { return len(a) }
+func (a KeyValues) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a KeyValues) Less(i, j int) bool {
+	ki, kj := a[i].Key, a[j].Key
+	if ki == kj {
+		return a[i].Value < a[j].Value
+	}
+	return ki < kj
 }
 
 // filterShowSeriesResult will limit the number of series returned based on the limit and the offset.

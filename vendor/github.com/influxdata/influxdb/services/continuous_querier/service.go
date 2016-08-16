@@ -21,6 +21,10 @@ const (
 	// a select statement, passing zero tells it not to chunk results.
 	// Only applies to raw queries.
 	NoChunkingSize = 0
+
+	// idDelimiter is used as a delimiter when creating a unique name for a
+	// Continuous Query.
+	idDelimiter = string(rune(31)) // unit separator
 )
 
 // Statistics for the CQ service.
@@ -175,7 +179,7 @@ func (s *Service) Run(database, name string, t time.Time) error {
 		for _, cq := range db.ContinuousQueries {
 			if name == "" || cq.Name == name {
 				// Remove the last run time for the CQ
-				id := fmt.Sprintf("%s:%s", db.Name, cq.Name)
+				id := fmt.Sprintf("%s%s%s", db.Name, idDelimiter, cq.Name)
 				if _, ok := s.lastRuns[id]; ok {
 					delete(s.lastRuns, id)
 				}
@@ -265,7 +269,7 @@ func (s *Service) ExecuteContinuousQuery(dbi *meta.DatabaseInfo, cqi *meta.Conti
 	// Get the last time this CQ was run from the service's cache.
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	id := fmt.Sprintf("%s:%s", dbi.Name, cqi.Name)
+	id := fmt.Sprintf("%s%s%s", dbi.Name, idDelimiter, cqi.Name)
 	cq.LastRun, cq.HasRun = s.lastRuns[id]
 
 	// Set the retention policy to default if it wasn't specified in the query.
@@ -289,6 +293,12 @@ func (s *Service) ExecuteContinuousQuery(dbi *meta.DatabaseInfo, cqi *meta.Conti
 		return nil
 	}
 
+	// Get the group by offset.
+	offset, err := cq.q.GroupByOffset()
+	if err != nil {
+		return err
+	}
+
 	resampleEvery := interval
 	if cq.Resample.Every != 0 {
 		resampleEvery = cq.Resample.Every
@@ -296,7 +306,7 @@ func (s *Service) ExecuteContinuousQuery(dbi *meta.DatabaseInfo, cqi *meta.Conti
 
 	// We're about to run the query so store the current time closest to the nearest interval.
 	// If all is going well, this time should be the same as nextRun.
-	cq.LastRun = now.Truncate(resampleEvery)
+	cq.LastRun = now.Add(-offset).Truncate(resampleEvery).Add(offset)
 	s.lastRuns[id] = cq.LastRun
 
 	// Retrieve the oldest interval we should calculate based on the next time
@@ -317,21 +327,32 @@ func (s *Service) ExecuteContinuousQuery(dbi *meta.DatabaseInfo, cqi *meta.Conti
 	}
 
 	// Calculate and set the time range for the query.
-	startTime := nextRun.Add(-resampleFor).Add(interval - 1).Truncate(interval)
-	endTime := now.Add(-resampleEvery).Add(interval).Truncate(interval)
+	startTime := nextRun.Add(interval - resampleFor - offset - 1).Truncate(interval).Add(offset)
+	endTime := now.Add(interval - resampleEvery - offset).Truncate(interval).Add(offset)
+	if !endTime.After(startTime) {
+		// Exit early since there is no time interval.
+		return nil
+	}
+
 	if err := cq.q.SetTimeRange(startTime, endTime); err != nil {
 		s.Logger.Printf("error setting time range: %s\n", err)
 		return err
 	}
 
+	var start time.Time
 	if s.loggingEnabled {
 		s.Logger.Printf("executing continuous query %s (%v to %v)", cq.Info.Name, startTime, endTime)
+		start = time.Now()
 	}
 
 	// Do the actual processing of the query & writing of results.
 	if err := s.runContinuousQueryAndWriteResult(cq); err != nil {
 		s.Logger.Printf("error: %s. running: %s\n", err, cq.q.String())
 		return err
+	}
+
+	if s.loggingEnabled {
+		s.Logger.Printf("finished continuous query %s (%v to %v) in %s", cq.Info.Name, startTime, endTime, time.Now().Sub(start))
 	}
 	return nil
 }

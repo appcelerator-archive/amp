@@ -74,7 +74,7 @@ func (d *DatabaseIndex) Series(key string) *Series {
 
 func (d *DatabaseIndex) SeriesKeys() []string {
 	d.mu.RLock()
-	s := make([]string, len(d.series))
+	s := make([]string, 0, len(d.series))
 	for k := range d.series {
 		s = append(s, k)
 	}
@@ -147,6 +147,13 @@ func (d *DatabaseIndex) CreateSeriesIndexIfNotExists(measurementName string, ser
 	m := d.CreateMeasurementIndexIfNotExists(measurementName)
 
 	d.mu.Lock()
+	// Check for the series again under a write lock
+	ss = d.series[series.Key]
+	if ss != nil {
+		d.mu.Unlock()
+		return ss
+	}
+
 	// set the in memory ID for query processing on this shard
 	series.id = d.lastID + 1
 	d.lastID++
@@ -218,7 +225,6 @@ func (d *DatabaseIndex) UnassignShard(k string, shardID uint64) {
 				if !ss.measurement.HasSeries() {
 					d.mu.Lock()
 					d.dropMeasurement(ss.measurement.Name)
-					atomic.AddInt64(&d.stats.NumMeasurements, -1)
 					d.mu.Unlock()
 				}
 
