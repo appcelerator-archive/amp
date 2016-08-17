@@ -2,7 +2,9 @@ package logs
 
 import (
 	"encoding/json"
+	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/storage"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
 )
@@ -13,11 +15,16 @@ const (
 
 // Logs is used to implement log.LogServer
 type Logs struct {
-	ES elasticsearch.Elasticsearch
+	ES    elasticsearch.Elasticsearch
+	Store storage.Interface
 }
 
 // Get implements log.LogServer
 func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+	_, err := oauth.CheckAuthorization(ctx, s.Store)
+	if err != nil {
+		return nil, err
+	}
 	// Prepare request to elasticsearch
 	request := s.ES.GetClient().Search().Index(esIndex)
 	if in.From >= 0 {

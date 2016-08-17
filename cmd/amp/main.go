@@ -112,7 +112,10 @@ func main() {
 		Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a := client.NewAMP(&config)
-			a.Logs(cmd)
+			err := a.Logs(cmd)
+			if err != nil {
+				fmt.Println(err)
+			}
 		},
 	}
 
