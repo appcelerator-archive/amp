@@ -1,4 +1,4 @@
-.PHONY: all clean install install-server install-cli fmt simplify check version build run
+.PHONY: all clean install install-server install-cli fmt simplify check version build run test test-storage
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -43,14 +43,6 @@ clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which amp)
 
-test:
-	@go test -v $(REPO)/data/storage/etcd
-	@go test -v $(REPO)/data/influx
-	@go test -v $(REPO)/api/rpc/logs
-	@go test -v $(REPO)/api/rpc/project
-	@go test -v $(REPO)/api/rpc/service
-	@go test -v $(REPO)/api/rpc/stat
-
 install: install-cli install-server
 
 install-cli: proto
@@ -91,3 +83,14 @@ install-deps:
 
 update-deps:
 	@glide update --strip-vcs --strip-vendor --update-vendored
+
+test: test-storage
+	@go test -v $(REPO)/data/influx
+	@go test -v $(REPO)/api/rpc/logs
+	@go test -v $(REPO)/api/rpc/project
+	@go test -v $(REPO)/api/rpc/service
+	@go test -v $(REPO)/api/rpc/stat
+
+test-storage:
+	@go test -v $(REPO)/data/storage/etcd
+	
