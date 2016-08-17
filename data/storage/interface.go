@@ -27,16 +27,17 @@ type Interface interface {
 	// If not found and ignoreNotFound is set, then out will be a zero object, otherwise
 	// error will be set to not found. A non-existing node or an empty response are both
 	// treated as not found.
-	// TODO: out will be proto3 message
 	Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error
 
 	// List(ctx context.Context, key string, resourceVersion string, filter FilterFunc, list interface{}) error
 
 	// TODO: will need to add preconditions support
-	// TODO: out needs to be proto3 message
 	Delete(ctx context.Context, key string, out proto.Message) error
 
+	// Update performs a guaranteed update, which means it will continue to retry until an update succeeds or the request is canceled.
 	// Update(ctx context.Context, key string, type interface, ignoreNotFound bool, precondtions *Preconditions, tryUpdate UpdateFunc) error
+	// TODO: the following is a temporary interface
+	Update(ctx context.Context, key string, val proto.Message, ttl int64) error
 
 	// Watch(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
 

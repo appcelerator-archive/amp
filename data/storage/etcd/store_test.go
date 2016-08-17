@@ -66,7 +66,6 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := &storage.Project{Id: "100", Name: "AMP"}
 	out := &storage.Project{}
 	ignoreNotFound := false
 
@@ -77,8 +76,9 @@ func TestGet(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !proto.Equal(val, out) {
-		t.Errorf("expected %v, got %v", val, out)
+	expected := &storage.Project{Id: "100", Name: "AMP"}
+	if !proto.Equal(expected, out) {
+		t.Errorf("expected %v, got %v", expected, out)
 	}
 }
 
@@ -113,7 +113,6 @@ func TestGetIgnoreError(t *testing.T) {
 func TestDelete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := &storage.Project{Id: "100", Name: "AMP"}
 	out := &storage.Project{}
 
 	err := store.Delete(ctx, key, out)
@@ -123,7 +122,47 @@ func TestDelete(t *testing.T) {
 		t.Error(err)
 	}
 
+	expected := &storage.Project{Id: "100", Name: "AMP"}
+	if !proto.Equal(expected, out) {
+		t.Errorf("expected %v, got %v", expected, out)
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	key := "foo"
+	val := &storage.Project{Id: "100", Name: "bar"}
+	ttl := int64(0)
+
+	ctx1, cancel1 := newContext()
+	err := store.Update(ctx1, key, val, ttl)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel1()
+	if err != nil {
+		t.Error(err)
+	}
+
+	out := &storage.Project{}
+	ignoreNotFound := false
+	ctx2, cancel2 := newContext()
+	err = store.Get(ctx2, key, out, ignoreNotFound)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel2()
+	if err != nil {
+		t.Error(err)
+	}
 	if !proto.Equal(val, out) {
 		t.Errorf("expected %v, got %v", val, out)
 	}
+
+	ctx3, cancel3 := newContext()
+	err = store.Delete(ctx3, key, out)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel3()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func newContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), defTimeout)
 }
