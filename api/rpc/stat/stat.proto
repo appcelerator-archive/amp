@@ -4,6 +4,7 @@ package stat;
 
 service Stat {
   rpc ExecuteQuery (QueryRequest) returns (QueryReply) {}
+  rpc GetCpuByContainer (GetCPURequest) returns (GetCPUReply) {}
 }
 
 message QueryRequest {
@@ -13,4 +14,27 @@ message QueryRequest {
 
 message QueryReply {
   string response = 1;
+}
+
+message GetCPURequest {
+  string containername=1;
+  string datacenter=2;
+  QueryContext ctx=3;
+}
+message QueryContext {
+  string interval=3;
+  int32  limit=4;
+  int32  offset=5;
+  int32  epoch=6;
+}
+message GetCPUReply{
+  repeated CPUByContainer cpus=1;
+}
+
+message CPUByContainer {
+  string containerimage=1;
+  string containername=2;
+  string datacenter=3;
+  string time=4;
+  string cpupct=5;
 }
