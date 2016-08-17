@@ -1,5 +1,5 @@
-hash: c01e42cc3b1fdded9c237368ce656068f6ef3e816feeca117a9232127a16d660
-updated: 2016-08-16T17:06:39.14052255-07:00
+hash: 7bd7bfb79875b1e45c77347726345c3fd3a7f8b41ca600c15675a91abeda59f9
+updated: 2016-08-16T17:47:39.840699638-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
@@ -12,6 +12,8 @@ imports:
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
+- name: github.com/fatih/color
+  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
@@ -21,6 +23,14 @@ imports:
   subpackages:
   - proto
   - jsonpb
+- name: github.com/google/go-github
+  version: b9698164669e386680621e2006cab02271257611
+  subpackages:
+  - github
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
 - name: github.com/grpc-ecosystem/grpc-gateway
   version: f52d055dc48aec25854ed7d31862f78913cf17d1
   subpackages:
@@ -38,6 +48,8 @@ imports:
   - hcl/strconv
   - json/scanner
   - json/token
+- name: github.com/howeyc/gopass
+  version: b63a7d07e65df376d14e2d72907a93d4847dffe4
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
@@ -50,6 +62,12 @@ imports:
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
   version: 61b492c03cf472e0c6419be5899b8e0dc28b1b88
+- name: github.com/mattn/go-colorable
+  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/mitchellh/go-homedir
+  version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/pkg/errors
@@ -74,6 +92,7 @@ imports:
 - name: golang.org/x/crypto
   version: c197bcf24cde29d3f73c7b4ac6fd41f4384e8af6
   subpackages:
+  - ssh/terminal
   - ssh
   - curve25519
 - name: golang.org/x/net
@@ -83,8 +102,11 @@ imports:
   - http2
   - trace
   - http2/hpack
-  - lex/httplex
   - internal/timeseries
+- name: golang.org/x/oauth2
+  version: 4784bb855e56a530f1ce5d788959359ed6cb4a16
+  subpackages:
+  - internal
 - name: golang.org/x/sys
   version: 9c60d1c508f5134d1ca726b4641db998f2523357
   subpackages:
@@ -94,6 +116,16 @@ imports:
   subpackages:
   - transform
   - unicode/norm
+- name: google.golang.org/appengine
+  version: e951d3868b377b14f4e60efa3a301532ee3c1ebf
+  subpackages:
+  - urlfetch
+  - internal
+  - internal/urlfetch
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
 - name: google.golang.org/grpc
   version: c2781963b3af261a37e0f14fdcb7c1fa13259e1f
   subpackages:
@@ -112,4 +144,4 @@ imports:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []
