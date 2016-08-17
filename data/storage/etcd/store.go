@@ -97,10 +97,6 @@ func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out pr
 
 // Get implements storage.Interface.Get.
 func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error {
-	if out == nil {
-		return fmt.Errorf("`out` param must not be nil")
-	}
-
 	key = s.prefix(key)
 
 	getResp, err := s.client.KV.Get(ctx, key)
@@ -121,6 +117,41 @@ func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNot
 	kv := getResp.Kvs[0]
 	data := []byte(kv.Value)
 	return proto.Unmarshal(data, out)
+}
+
+// Update implements storage.Interface.Update
+func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl int64) error {
+	key = s.prefix(key)
+
+	// must exist
+	_, err := s.client.KV.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	opts, err := s.options(ctx, int64(ttl))
+	if err != nil {
+		return err
+	}
+
+	data, err := proto.Marshal(val)
+
+	txn, err := s.client.KV.Txn(ctx).
+		If().
+		Then(clientv3.OpPut(key, string(data), opts...)).
+		Commit()
+	if err != nil {
+		return err
+	}
+
+	if !txn.Succeeded {
+		// TODO: implement guaranteed update support
+		return fmt.Errorf("Update for %s failed because of a conflict", key)
+	}
+
+	putResp := txn.Responses[0].GetResponsePut()
+	fmt.Println(putResp)
+	return nil
 }
 
 // Delete implements storage.Interface.Delete
