@@ -359,7 +359,6 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_PROCESS_ENABLED=true \
     -e INPUT_SWAP_ENABLED=true \
     -e INPUT_SYSTEM_ENABLED=true \
-    -e SERVICE_NAME="telegraf-agent" \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/telegraf:latest
@@ -377,8 +376,6 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
     -e INPUT_KAFKA_TOPIC=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
-    -e DEPENDENCIES="kafka, influxdb" \
-    -e SERVICE_NAME="telemetry-worker" \
     appcelerator/telegraf:latest
 }
 
