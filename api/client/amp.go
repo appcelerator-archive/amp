@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"strconv"
 )
@@ -43,6 +44,15 @@ func (a *AMP) disconnect() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (a *AMP) getAuthorizedContext() (ctx context.Context, err error) {
+	if a.Configuration.Github == "" {
+		return nil, fmt.Errorf("Requires login")
+	}
+	md := metadata.Pairs("sessionkey", a.Configuration.Github)
+	ctx = metadata.NewContext(context.Background(), md)
+	return
 }
 
 func (a *AMP) verbose() bool {
@@ -91,6 +101,10 @@ func (a *AMP) Status() {
 
 // Logs fetches the logs
 func (a *AMP) Logs(cmd *cobra.Command) error {
+	ctx, err := a.getAuthorizedContext()
+	if err != nil {
+		return err
+	}
 	if a.verbose() {
 		fmt.Println("Logs")
 		fmt.Printf("service_id: %v\n", cmd.Flag("service_id").Value)
@@ -121,7 +135,7 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 	}
 
 	c := logs.NewLogsClient(conn)
-	r, err := c.Get(context.Background(), &request)
+	r, err := c.Get(ctx, &request)
 	if err != nil {
 		return err
 	}

@@ -35,7 +35,10 @@ func Start(config Config) {
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
-	logs.RegisterLogsServer(s, &logs.Logs{ES: ES})
+	logs.RegisterLogsServer(s, &logs.Logs{
+		ES:    ES,
+		Store: Store,
+	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        Store,
 		ClientID:     config.ClientID,

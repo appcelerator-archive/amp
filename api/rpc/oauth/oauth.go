@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/appcelerator/amp/data/storage"
@@ -9,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -47,7 +49,7 @@ func (o *Oauth) Create(ctx context.Context, in *AuthRequest) (out *AuthReply, er
 
 	// try to retrieve token from store
 	if token == "" {
-		token, err = o.getToken(ctx, auth)
+		token, err = getToken(ctx, o.Store, *auth.TokenLastEight)
 		if err != nil {
 			return
 		}
@@ -103,9 +105,9 @@ func deleteAuth(auth *github.Authorization, username, password, otp string) (err
 	return
 }
 
-func (o *Oauth) getToken(ctx context.Context, auth *github.Authorization) (token string, err error) {
+func getToken(ctx context.Context, store storage.Interface, key string) (token string, err error) {
 	out := Token{}
-	err = o.Store.Get(ctx, *auth.TokenLastEight, &out, true)
+	err = store.Get(ctx, key, &out, true)
 	if err != nil {
 		return
 	}
@@ -162,4 +164,26 @@ func checkOrganization(token string) (name string, err error) {
 	}
 	name = *user.Name
 	return
+}
+
+// CheckAuthorization verifies that the user is logged in and has organization access
+func CheckAuthorization(ctx context.Context, store storage.Interface) (name string, err error) {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return "", grpc.Errorf(codes.Unauthenticated, "Metadata not ok")
+	}
+	fmt.Println(md)
+	keys := md["sessionkey"]
+	if len(keys) == 0 {
+		return "", grpc.Errorf(codes.Unauthenticated, "SessionKey missing")
+	}
+	key := keys[0]
+	if key == "" {
+		return "", grpc.Errorf(codes.Unauthenticated, "SessionKey missing")
+	}
+	token, err := getToken(ctx, store, key)
+	if err != nil {
+		return
+	}
+	return checkOrganization(token)
 }
