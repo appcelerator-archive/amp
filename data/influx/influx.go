@@ -38,16 +38,24 @@ func (s *Influx) query(query string, database string) client.Query {
 }
 
 // Query executes the provided query string and returns the results as a JSON object
-func (s *Influx) Query(q string) (string, error) {
+func (s *Influx) Query(q string) (*client.Response, error) {
 	// ExecuteQuery runs any query statement
 	response, err := s.client.Query(s.query(q, s.dbname))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if err = response.Error(); err != nil {
+		return nil, err
+	}
+	return response, err
+}
+
+//Marshal Convert client.Respnse to JSON
+func (s *Influx) Marshal(resp *client.Response) (string, error) {
+	data, err := json.Marshal(resp)
+	if err != nil {
 		return "", err
 	}
-	data, err := json.Marshal(response)
 	return string(data), err
 }
 

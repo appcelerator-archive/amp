@@ -50,7 +50,13 @@ func TestExecuteQuery(t *testing.T) {
 }
 func createStatServer() *Stat {
 	//Create the config
-	cfg := Config{Connstr: "http://localhost:8086", Dbname: "_internal", U: "admin", P: "changeme"}
+	host := os.Getenv("influxhost")
+	cstr := "http://localhost:8086"
+	if host != "" {
+		cstr = "http://" + host + ":8086"
+	}
+
+	cfg := Config{Connstr: cstr, Dbname: "_internal", U: "admin", P: "changeme"}
 	// Create the service to allow service calls directly
 	srv, err := New(cfg)
 	if err != nil {
