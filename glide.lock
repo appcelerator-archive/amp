@@ -1,10 +1,10 @@
-hash: af171682b377a55432bb60413815abaa91f951422db670e773cccc11f203e935
-updated: 2016-08-16T13:05:00.276753258-07:00
+hash: c01e42cc3b1fdded9c237368ce656068f6ef3e816feeca117a9232127a16d660
+updated: 2016-08-16T17:06:39.14052255-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/coreos/etcd
-  version: 8d7703528ac4dcca780a78e21eac4ef2fc65de8f
+  version: 28b797b538a57c374ba2432dc10b6750ce68595b
   subpackages:
   - clientv3
   - auth/authpb
@@ -12,8 +12,6 @@ imports:
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
-- name: github.com/docker/engine-api.git
-  version: 94a8f8f29307ab291abad6c6f2182d67089aae5d
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
@@ -43,7 +41,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: 30efa2d922babde5ccbdf09960e510c0de5e0bcb
+  version: a0004b68577cdbfc921463404eab839c50f14a0c
   subpackages:
   - client/v2
   - models
@@ -58,8 +56,6 @@ imports:
   version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
-- name: github.com/satori/go.uuid
-  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/spf13/afero
   version: b28a7effac979219c2a2ed6205a4d70e4b1bcd02
   subpackages:
@@ -75,10 +71,6 @@ imports:
   version: 4f9190456aed1c2113ca51ea9b89219747458dc1
 - name: github.com/spf13/viper
   version: 654fc7bb54d0c138ef80405ff577391f79c0c32d
-- name: github.com/ugorji/go
-  version: 4a1cb5252a6951f715a85d0e4be334c2a2dbf2a2
-  subpackages:
-  - codec
 - name: golang.org/x/crypto
   version: c197bcf24cde29d3f73c7b4ac6fd41f4384e8af6
   subpackages:
@@ -91,6 +83,7 @@ imports:
   - http2
   - trace
   - http2/hpack
+  - lex/httplex
   - internal/timeseries
 - name: golang.org/x/sys
   version: 9c60d1c508f5134d1ca726b4641db998f2523357
@@ -104,11 +97,11 @@ imports:
 - name: google.golang.org/grpc
   version: c2781963b3af261a37e0f14fdcb7c1fa13259e1f
   subpackages:
+  - codes
   - credentials
   - grpclog
-  - metadata
-  - codes
   - internal
+  - metadata
   - naming
   - transport
   - peer
