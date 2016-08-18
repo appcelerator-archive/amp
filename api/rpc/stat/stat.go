@@ -29,9 +29,16 @@ func New(cfg Config) (*Stat, error) {
 	return &Stat{conn: c}, err
 }
 
-// ExecuteQuery implements business logic for StateServer interface
+// ExecuteQuery implements business logic for StatServer interface
 func (s *Stat) ExecuteQuery(ctx context.Context, req *QueryRequest) (*QueryReply, error) {
 	resp, err := s.conn.Query(req.Query)
-	rep := &QueryReply{Response: resp}
+	if err != nil {
+		return nil, err
+	}
+	data, err := s.conn.Marshal(resp)
+	if err != nil {
+		return nil, err
+	}
+	rep := &QueryReply{Response: data}
 	return rep, err
 }

@@ -2,8 +2,8 @@ package influx
 
 import (
 	"os"
-	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -20,12 +20,17 @@ func TestMain(m *testing.M) {
 func TestQuery(t *testing.T) {
 	res, err := influx.Query("SHOW MEASUREMENTS")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	if !strings.Contains(res, "measurements") {
-		t.Errorf("Expected String to contain %s, actual=%s \n", "Measurement", res)
+	if len(res.Results) == 0 {
+		t.Errorf("Expected results")
 	}
-
+	if len(res.Results[0].Series) == 0 {
+		t.Errorf("Expected series")
+	}
+	if res.Results[0].Series[0].Name != "measurements" {
+		t.Errorf("Expected name to be %s, actual=%s \n", "measurement", res.Results[0].Series[0].Name)
+	}
 }
 
 func influxInit() {
@@ -35,6 +40,6 @@ func influxInit() {
 		cstr = "http://" + host + ":8086"
 	}
 	influx = New(cstr, "_internal", "admin", "changme")
-	influx.Connect(5)
-
+	influx.Connect(time.Second * 60)
+	time.Sleep(time.Second * 60)
 }
