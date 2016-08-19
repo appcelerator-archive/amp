@@ -1,0 +1,65 @@
+
+syntax = "proto3";
+
+package build;
+
+service AmpBuild {
+  rpc PingPong (Ping) returns (Pong) {}
+  rpc CreateProject (ProjectRequest) returns (Project) {}
+  rpc DeleteProject (ProjectRequest) returns (Project) {}
+  rpc ListProjects (ProjectQuery) returns (ProjectList) {}
+  rpc ListBuilds (ProjectRequest) returns (BuildList) {}
+  rpc BuildLog (BuildRequest) returns (stream Log) {}
+  rpc Rebuild (BuildRequest) returns (Build) {}
+}
+
+message Ping {
+  string message = 1;
+}
+
+message Pong {
+  string message = 1;
+}
+
+message ProjectRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message ProjectQuery {
+  string organization = 1;
+  bool latest = 2;
+}
+
+message ProjectList {
+  repeated Project projects = 1;
+}
+
+message Project {
+  uint32 id = 1;
+  string owner = 2;
+  string name = 3;
+  string status = 4;
+}
+
+message BuildRequest {
+  string owner = 1;
+  string name = 2;
+  string sha = 3;
+}
+
+message BuildList {
+  repeated Build builds = 1;
+}
+
+message Build {
+  string owner = 1;
+  string name = 2;
+  string sha = 3;
+  string status = 4;
+  string commit_message = 5;
+}
+
+message Log {
+  string message = 1;
+}

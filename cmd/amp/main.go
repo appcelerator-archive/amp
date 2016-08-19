@@ -148,6 +148,7 @@ func main() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logsCmd)
+	rootCmd.AddCommand(buildCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

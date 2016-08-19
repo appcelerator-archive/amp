@@ -8,6 +8,8 @@ services:
     environment:
       endpoints: http://etcd:2379
       influxhost: influxdb
+      elasticsearchURL: http://elasticsearch:9200
+      kafkaURL: kafka:9092
   etcd:
     image: quay.io/coreos/etcd
     command: [
@@ -26,3 +28,13 @@ services:
       FORCE_HOSTNAME: auto
       PRE_CREATE_DB: telegraf
       CONFIG_ARCHIVE_URL: "https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz"
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp
+  zookeeper:
+    image: appcelerator/zookeeper:latest
+  kafka:
+    image: appcelerator/kafka:latest
+    environment:
+      ZOOKEEPER_CONNECT: zookeeper:2181
+      TOPIC_LIST: amp-logs amp-docker-events telegraf
+   

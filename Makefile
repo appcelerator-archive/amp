@@ -1,5 +1,6 @@
+
 .PHONY: all clean install install-server install-cli fmt simplify check version build run
-.PHONY: test test-storage test-influx test-stat test-logs
+.PHONY: test test-storage test-influx test-stat test-logs test-build test-project test-service
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -85,7 +86,7 @@ install-deps:
 update-deps:
 	@glide update --strip-vcs --strip-vendor --update-vendored
 
-test: test-storage test-influx test-stat test-logs test-project test-service
+test: test-storage test-influx test-stat test-logs test-project test-build test-service
 
 test-storage:
 	@go test -v $(REPO)/data/storage/etcd
@@ -104,3 +105,7 @@ test-project:
 
 test-service:
 	@go test -v $(REPO)/api/rpc/service
+	
+test-build:
+	@go test -v $(REPO)/api/rpc/build
+
