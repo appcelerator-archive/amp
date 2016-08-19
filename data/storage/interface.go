@@ -39,11 +39,28 @@ type Interface interface {
 	// TODO: the following is a temporary interface
 	Update(ctx context.Context, key string, val proto.Message, ttl int64) error
 
+	// List returns all the values that match the filter.
+	List(ctx context.Context, key string, filter Filter, obj proto.Message, out *[]proto.Message) error
+
 	// Watch(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
 
 	// WatchList(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
+}
 
-	// Find(ctx context.Context, key string, filter FilterFunc, list interface{}) error
+// Filter is the interface used for storage operations that apply to sets (list, find, update).
+type Filter interface {
+	// Filter is a predicate that inspects a value (protocol buffer message instance) and returns true if and only if the value should remain in the set
+	Filter(val proto.Message) bool
+}
 
-	// FindFirst(ctx context.Context, key string, filter FilterFunc, val interface{}) error
+// Everything is a Filter which accepts every object.
+var Everything Filter = everything{}
+
+// everything is an implementation of Everything.
+type everything struct {
+}
+
+// Filter implements the Filter interface to accept every object.
+func (e everything) Filter(val proto.Message) bool {
+	return true
 }

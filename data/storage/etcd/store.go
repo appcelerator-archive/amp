@@ -149,8 +149,9 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 		return fmt.Errorf("Update for %s failed because of a conflict", key)
 	}
 
-	putResp := txn.Responses[0].GetResponsePut()
-	fmt.Println(putResp)
+	// TODO: save metatdata
+	// putResp := txn.Responses[0].GetResponsePut()
+	// fmt.Println(putResp)
 	return nil
 }
 
@@ -175,6 +176,33 @@ func (s *etcd) Delete(ctx context.Context, key string, out proto.Message) error 
 	return proto.Unmarshal(data, out)
 }
 
+// List implements storage.Interface.List.
+func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj proto.Message, out *[]proto.Message) error {
+	key = slash(s.prefix(key))
+
+	getResp, err := s.client.KV.Get(ctx, key, clientv3.WithPrefix())
+	if err != nil {
+		return err
+	}
+
+	kvs := getResp.Kvs
+	*out = make([]proto.Message, len(kvs))
+	for i, kv := range kvs {
+		data := []byte(kv.Value)
+		// create a new empty message from the typed instance template
+		val := proto.Clone(obj)
+		// unmarshal the bytes into the new instance
+		err := proto.Unmarshal(data, val)
+		if err != nil {
+			return err
+		}
+		// add to the list
+		(*out)[i] = val
+	}
+
+	return nil
+}
+
 // options returns a slice of client options (currently just a lease based on the given ttl).
 // ttl: time in seconds that key will exist (0 means forever); if ttl is non-zero, it will attach the key to a lease with ttl of roughly the same length
 func (s *etcd) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, error) {
@@ -189,13 +217,24 @@ func (s *etcd) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, err
 	return []clientv3.OpOption{clientv3.WithLease(clientv3.LeaseID(lcr.ID))}, nil
 }
 
-func (s *etcd) prefix(key string) string {
-	if strings.HasPrefix(key, s.pathPrefix) {
-		return key
-	}
-	return path.Join(s.pathPrefix, key)
-}
-
 func notFound(key string) clientv3.Cmp {
 	return clientv3.Compare(clientv3.ModRevision(key), "=", 0)
+}
+
+// prefix checks that the key is using the configured prefix and adds it, if needed.
+func (s *etcd) prefix(key string) string {
+	if !strings.HasPrefix(key, s.pathPrefix) {
+		key = path.Join(s.pathPrefix, key)
+	}
+	return key
+}
+
+// slash ensures the key has a trailing "/" for correct behavior when listing "directories".
+// For example, if we have key "/a", "/a/b", "/ab", getting keys with prefix "/a" will return all three,
+// while with prefix "/a/" will return only "/a/b" which is the expected result.
+func slash(key string) string {
+	if !strings.HasSuffix(key, "/") {
+		key += "/"
+	}
+	return key
 }

@@ -1,8 +1,11 @@
 package etcd_test
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -141,6 +144,7 @@ func TestUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
+	// confirm
 	out := &storage.Project{}
 	ignoreNotFound := false
 	ctx2, cancel2 := newContext()
@@ -154,12 +158,84 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("expected %v, got %v", val, out)
 	}
 
+	// cleanup
 	ctx3, cancel3 := newContext()
 	err = store.Delete(ctx3, key, out)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel3()
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestList(t *testing.T) {
+	// generic context
+	ctx := context.Background()
+
+	// store everything under amp/foo/
+	key := "foo"
+
+	// this is a "template" object that provides a concrete type for list to unmarshal into
+	obj := &storage.Project{}
+
+	// unlimited ttl
+	ttl := int64(0)
+
+	// will store values that we store, which we will use to compare list results against
+	vals := []*storage.Project{}
+
+	// will store the results of calling list
+	var out []proto.Message
+
+	// this will create a bunch of storage.Project items to store in etcd
+	// it will also save them to vals so we can compare them against what
+	// we get back when we call the list method to ensure actual matches expected
+	for i := 0; i < 5; i++ {
+		id := strconv.Itoa(i)
+		name := fmt.Sprintf("bar%d", i)
+		subkey := path.Join(key, id)
+		vals = append(vals, &storage.Project{Id: id, Name: name})
+
+		err := store.Create(ctx, subkey, vals[i], obj, ttl)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	// use list with the Everything filter to fetch all the items we stored
+	err := store.List(ctx, key, storage.Everything, obj, &out)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// compare the list that we got back (out) with the items we created (vals)
+	for i := 0; i < len(out); i++ {
+		if !proto.Equal(vals[i], out[i]) {
+			t.Errorf("expected %v, got %v", vals[i], out[i])
+		}
+
+		// actually inspect individual message contents
+		// Unfortunately, without generics in Go, this requires a type assertion
+		m, ok := out[i].(*storage.Project)
+		if !ok {
+			t.Errorf("value is not the right type (expected storage.Project): %T", out[i])
+		}
+		name := fmt.Sprintf("bar%d", i)
+		if m.Name != name {
+			t.Errorf("id: %d, name: %s does not match expected name: %s", m.Id, m.Name, name)
+		}
+
+		// clean up after ourselves -- delete the item
+		id := strconv.Itoa(i)
+		subkey := path.Join(key, id)
+		err := store.Delete(ctx, subkey, obj)
+		if err != nil {
+			t.Error(err)
+		}
+		// confirm the deleted object matches the original object
+		if !proto.Equal(vals[i], obj) {
+			t.Errorf("expected %v, deleted %v", vals[i], obj)
+		}
 	}
 }
 
