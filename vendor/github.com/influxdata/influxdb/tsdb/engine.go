@@ -1,6 +1,7 @@
 package tsdb
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -30,10 +31,8 @@ type Engine interface {
 	SetLogOutput(io.Writer)
 	LoadMetadataIndex(shardID uint64, index *DatabaseIndex) error
 
-	Backup(w io.Writer, basePath string, since time.Time) error
-	Restore(r io.Reader, basePath string) error
-
 	CreateIterator(opt influxql.IteratorOptions) (influxql.Iterator, error)
+	SeriesKeys(opt influxql.IteratorOptions) (influxql.SeriesList, error)
 	WritePoints(points []models.Point) error
 	ContainsSeries(keys []string) (map[string]bool, error)
 	DeleteSeries(keys []string) error
@@ -41,16 +40,13 @@ type Engine interface {
 	DeleteMeasurement(name string, seriesKeys []string) error
 	SeriesCount() (n int, err error)
 	MeasurementFields(measurement string) *MeasurementFields
-	CreateSnapshot() (string, error)
-	SetEnabled(enabled bool)
 
 	// Format will return the format for the engine
 	Format() EngineFormat
 
-	// Statistics will return statistics relevant to this engine.
-	Statistics(tags map[string]string) []models.Statistic
-
 	io.WriterTo
+
+	Backup(w io.Writer, basePath string, since time.Time) error
 }
 
 // EngineFormat represents the format for an engine.
@@ -94,7 +90,7 @@ func NewEngine(path string, walPath string, options EngineOptions) (Engine, erro
 	}
 
 	// If it's a dir then it's a tsm1 engine
-	format := DefaultEngine
+	format := "tsm1"
 	if fi, err := os.Stat(path); err != nil {
 		return nil, err
 	} else if !fi.Mode().IsDir() {
@@ -126,3 +122,30 @@ func NewEngineOptions() EngineOptions {
 		Config:        NewConfig(),
 	}
 }
+
+// DedupeEntries returns slices with unique keys (the first 8 bytes).
+func DedupeEntries(a [][]byte) [][]byte {
+	// Convert to a map where the last slice is used.
+	m := make(map[string][]byte)
+	for _, b := range a {
+		m[string(b[0:8])] = b
+	}
+
+	// Convert map back to a slice of byte slices.
+	other := make([][]byte, 0, len(m))
+	for _, v := range m {
+		other = append(other, v)
+	}
+
+	// Sort entries.
+	sort.Sort(ByteSlices(other))
+
+	return other
+}
+
+// ByteSlices wraps a list of byte-slices for sorting.
+type ByteSlices [][]byte
+
+func (a ByteSlices) Len() int           { return len(a) }
+func (a ByteSlices) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByteSlices) Less(i, j int) bool { return bytes.Compare(a[i], a[j]) == -1 }

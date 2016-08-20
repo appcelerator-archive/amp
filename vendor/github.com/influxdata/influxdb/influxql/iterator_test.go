@@ -639,14 +639,17 @@ func TestFloatAuxIterator(t *testing.T) {
 			{Time: 0, Value: 1, Aux: []interface{}{float64(100), float64(200)}},
 			{Time: 1, Value: 2, Aux: []interface{}{float64(500), math.NaN()}},
 		}},
-		influxql.IteratorOptions{Aux: []influxql.VarRef{{Val: "f0", Type: influxql.Float}, {Val: "f1", Type: influxql.Float}}},
+		[]influxql.Series{
+			{Aux: []influxql.DataType{influxql.Float, influxql.Float}},
+		},
+		influxql.IteratorOptions{Aux: []string{"f0", "f1"}},
 	)
 
 	itrs := []influxql.Iterator{
 		itr,
-		itr.Iterator("f0", influxql.Unknown),
-		itr.Iterator("f1", influxql.Unknown),
-		itr.Iterator("f0", influxql.Unknown),
+		itr.Iterator("f0"),
+		itr.Iterator("f1"),
+		itr.Iterator("f0"),
 	}
 	itr.Start()
 
@@ -944,7 +947,7 @@ func TestIteratorOptions_ElapsedInterval_Call(t *testing.T) {
 func TestIteratorOptions_MarshalBinary(t *testing.T) {
 	opt := &influxql.IteratorOptions{
 		Expr: MustParseExpr("count(value)"),
-		Aux:  []influxql.VarRef{{Val: "a"}, {Val: "b"}, {Val: "c"}},
+		Aux:  []string{"a", "b", "c"},
 		Sources: []influxql.Source{
 			&influxql.Measurement{Database: "db0", RetentionPolicy: "rp0", Name: "mm0"},
 		},
@@ -999,8 +1002,32 @@ func TestIteratorOptions_MarshalBinary_Measurement_Regex(t *testing.T) {
 	var other influxql.IteratorOptions
 	if err := other.UnmarshalBinary(buf); err != nil {
 		t.Fatal(err)
-	} else if v := other.Sources[0].(*influxql.Measurement).Regex.Val.String(); v != `series.+` {
+	} else if v := other.Sources[0].(*influxql.Measurement).Regex.Val.String(); v != `/series.+/` {
 		t.Fatalf("unexpected measurement regex: %s", v)
+	}
+}
+
+// Ensure series list can be marshaled into and out of a binary format.
+func TestSeriesList_MarshalBinary(t *testing.T) {
+	a := []influxql.Series{
+		{Name: "cpu", Tags: ParseTags("foo=bar"), Aux: []influxql.DataType{influxql.Float, influxql.String}},
+		{Name: "mem", Aux: []influxql.DataType{influxql.Integer}},
+		{Name: "disk"},
+		{},
+	}
+
+	// Marshal to binary.
+	buf, err := influxql.SeriesList(a).MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Unmarshal back to an object.
+	var other influxql.SeriesList
+	if err := other.UnmarshalBinary(buf); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(other, influxql.SeriesList(a)) {
+		t.Fatalf("unexpected series list: %s", spew.Sdump(other))
 	}
 }
 
@@ -1028,7 +1055,10 @@ func TestIterator_EncodeDecode(t *testing.T) {
 	}
 
 	// Decode from the buffer.
-	dec := influxql.NewReaderIterator(&buf, influxql.Float, itr.Stats())
+	dec, err := influxql.NewReaderIterator(&buf, influxql.Float, itr.Stats())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Initial stats should exist immediately.
 	fdec := dec.(influxql.FloatIterator)
@@ -1057,7 +1087,8 @@ func TestIterator_EncodeDecode(t *testing.T) {
 // IteratorCreator is a mockable implementation of SelectStatementExecutor.IteratorCreator.
 type IteratorCreator struct {
 	CreateIteratorFn  func(opt influxql.IteratorOptions) (influxql.Iterator, error)
-	FieldDimensionsFn func(sources influxql.Sources) (fields map[string]influxql.DataType, dimensions map[string]struct{}, err error)
+	FieldDimensionsFn func(sources influxql.Sources) (fields, dimensions map[string]struct{}, err error)
+	SeriesKeysFn      func(opt influxql.IteratorOptions) (influxql.SeriesList, error)
 	ExpandSourcesFn   func(sources influxql.Sources) (influxql.Sources, error)
 }
 
@@ -1065,8 +1096,73 @@ func (ic *IteratorCreator) CreateIterator(opt influxql.IteratorOptions) (influxq
 	return ic.CreateIteratorFn(opt)
 }
 
-func (ic *IteratorCreator) FieldDimensions(sources influxql.Sources) (fields map[string]influxql.DataType, dimensions map[string]struct{}, err error) {
+func (ic *IteratorCreator) FieldDimensions(sources influxql.Sources) (fields, dimensions map[string]struct{}, err error) {
 	return ic.FieldDimensionsFn(sources)
+}
+
+func (ic *IteratorCreator) SeriesKeys(opt influxql.IteratorOptions) (influxql.SeriesList, error) {
+	if ic.SeriesKeysFn != nil {
+		return ic.SeriesKeysFn(opt)
+	}
+
+	itr, err := ic.CreateIterator(opt)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesMap := make(map[string]influxql.Series)
+	switch itr := itr.(type) {
+	case influxql.FloatIterator:
+		for p, err := itr.Next(); p != nil; p, err = itr.Next() {
+			if err != nil {
+				return nil, err
+			}
+			s := influxql.Series{Name: p.Name, Tags: p.Tags, Aux: influxql.InspectDataTypes(p.Aux)}
+			if series, ok := seriesMap[s.ID()]; ok {
+				s.Combine(&series)
+			}
+			seriesMap[s.ID()] = s
+		}
+	case influxql.IntegerIterator:
+		for p, err := itr.Next(); p != nil; p, err = itr.Next() {
+			if err != nil {
+				return nil, err
+			}
+			s := influxql.Series{Name: p.Name, Tags: p.Tags, Aux: influxql.InspectDataTypes(p.Aux)}
+			if series, ok := seriesMap[s.ID()]; ok {
+				s.Combine(&series)
+			}
+			seriesMap[s.ID()] = s
+		}
+	case influxql.StringIterator:
+		for p, err := itr.Next(); p != nil; p, err = itr.Next() {
+			if err != nil {
+				return nil, err
+			}
+			s := influxql.Series{Name: p.Name, Tags: p.Tags, Aux: influxql.InspectDataTypes(p.Aux)}
+			if series, ok := seriesMap[s.ID()]; ok {
+				s.Combine(&series)
+			}
+			seriesMap[s.ID()] = s
+		}
+	case influxql.BooleanIterator:
+		for p, err := itr.Next(); p != nil; p, err = itr.Next() {
+			if err != nil {
+				return nil, err
+			}
+			s := influxql.Series{Name: p.Name, Tags: p.Tags, Aux: influxql.InspectDataTypes(p.Aux)}
+			if series, ok := seriesMap[s.ID()]; ok {
+				s.Combine(&series)
+			}
+			seriesMap[s.ID()] = s
+		}
+	}
+
+	seriesList := make([]influxql.Series, 0, len(seriesMap))
+	for _, s := range seriesMap {
+		seriesList = append(seriesList, s)
+	}
+	return influxql.SeriesList(seriesList), nil
 }
 
 func (ic *IteratorCreator) ExpandSources(sources influxql.Sources) (influxql.Sources, error) {

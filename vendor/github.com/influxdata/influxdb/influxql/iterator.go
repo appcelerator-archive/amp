@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/influxdata/influxdb/models"
-
 	"github.com/gogo/protobuf/proto"
 	internal "github.com/influxdata/influxdb/influxql/internal"
 )
@@ -22,8 +20,8 @@ const (
 	MinTime = int64(0)
 
 	// MaxTime is used as the maximum time value when computing an unbounded range.
-	// This time is 2262-04-11 23:47:16.854775806 +0000 UTC
-	MaxTime = models.MaxNanoTime
+	// This time is Jan 1, 2050 at midnight UTC.
+	MaxTime = int64(2524608000000000000)
 )
 
 // Iterator represents a generic interface for all Iterators.
@@ -112,38 +110,6 @@ func (a Iterators) cast() interface{} {
 	return a
 }
 
-// Merge combines all iterators into a single iterator.
-// A sorted merge iterator or a merge iterator can be used based on opt.
-func (a Iterators) Merge(opt IteratorOptions) (Iterator, error) {
-	// Merge into a single iterator.
-	if opt.MergeSorted() {
-		itr := NewSortedMergeIterator(a, opt)
-		if itr != nil && opt.InterruptCh != nil {
-			itr = NewInterruptIterator(itr, opt.InterruptCh)
-		}
-		return itr, nil
-	}
-
-	itr := NewMergeIterator(a, opt)
-	if itr == nil {
-		return nil, nil
-	}
-
-	if opt.Expr != nil {
-		if expr, ok := opt.Expr.(*Call); ok && expr.Name == "count" {
-			opt.Expr = &Call{
-				Name: "sum",
-				Args: expr.Args,
-			}
-		}
-	}
-
-	if opt.InterruptCh != nil {
-		itr = NewInterruptIterator(itr, opt.InterruptCh)
-	}
-	return NewCallIterator(itr, opt)
-}
-
 // NewMergeIterator returns an iterator to merge itrs into one.
 // Inputs must either be merge iterators or only contain a single name/tag in
 // sorted order. The iterator will output all points by window, name/tag, then
@@ -151,10 +117,8 @@ func (a Iterators) Merge(opt IteratorOptions) (Iterator, error) {
 // interval.
 func NewMergeIterator(inputs []Iterator, opt IteratorOptions) Iterator {
 	inputs = Iterators(inputs).filterNonNil()
-	if n := len(inputs); n == 0 {
+	if len(inputs) == 0 {
 		return nil
-	} else if n == 1 {
-		return inputs[0]
 	}
 
 	// Aggregate functions can use a more relaxed sorting so that points
@@ -171,41 +135,6 @@ func NewMergeIterator(inputs []Iterator, opt IteratorOptions) Iterator {
 	default:
 		panic(fmt.Sprintf("unsupported merge iterator type: %T", inputs))
 	}
-}
-
-// NewParallelMergeIterator returns an iterator that breaks input iterators
-// into groups and processes them in parallel.
-func NewParallelMergeIterator(inputs []Iterator, opt IteratorOptions, parallelism int) Iterator {
-	inputs = Iterators(inputs).filterNonNil()
-	if len(inputs) == 0 {
-		return nil
-	} else if len(inputs) == 1 {
-		return inputs[0]
-	}
-
-	// Limit parallelism to the number of inputs.
-	if len(inputs) < parallelism {
-		parallelism = len(inputs)
-	}
-
-	// Determine the number of inputs per output iterator.
-	n := len(inputs) / parallelism
-
-	// Group iterators together.
-	outputs := make([]Iterator, parallelism)
-	for i := range outputs {
-		var slice []Iterator
-		if i < len(outputs)-1 {
-			slice = inputs[i*n : (i+1)*n]
-		} else {
-			slice = inputs[i*n:]
-		}
-
-		outputs[i] = newParallelIterator(NewMergeIterator(slice, opt))
-	}
-
-	// Merge all groups together.
-	return NewMergeIterator(outputs, opt)
 }
 
 // NewSortedMergeIterator returns an iterator to merge itrs into one.
@@ -230,26 +159,6 @@ func NewSortedMergeIterator(inputs []Iterator, opt IteratorOptions) Iterator {
 		return newBooleanSortedMergeIterator(inputs, opt)
 	default:
 		panic(fmt.Sprintf("unsupported sorted merge iterator type: %T", inputs))
-	}
-}
-
-// newParallelIterator returns an iterator that runs in a separate goroutine.
-func newParallelIterator(input Iterator) Iterator {
-	if input == nil {
-		return nil
-	}
-
-	switch itr := input.(type) {
-	case FloatIterator:
-		return newFloatParallelIterator(itr)
-	case IntegerIterator:
-		return newIntegerParallelIterator(itr)
-	case StringIterator:
-		return newStringParallelIterator(itr)
-	case BooleanIterator:
-		return newBooleanParallelIterator(itr)
-	default:
-		panic(fmt.Sprintf("unsupported parallel iterator type: %T", itr))
 	}
 }
 
@@ -336,24 +245,7 @@ func NewInterruptIterator(input Iterator, closing <-chan struct{}) Iterator {
 	case BooleanIterator:
 		return newBooleanInterruptIterator(input, closing)
 	default:
-		panic(fmt.Sprintf("unsupported interrupt iterator type: %T", input))
-	}
-}
-
-// NewCloseInterruptIterator returns an iterator that will invoke the Close() method on an
-// iterator when a channel has been closed.
-func NewCloseInterruptIterator(input Iterator, closing <-chan struct{}) Iterator {
-	switch input := input.(type) {
-	case FloatIterator:
-		return newFloatCloseInterruptIterator(input, closing)
-	case IntegerIterator:
-		return newIntegerCloseInterruptIterator(input, closing)
-	case StringIterator:
-		return newStringCloseInterruptIterator(input, closing)
-	case BooleanIterator:
-		return newBooleanCloseInterruptIterator(input, closing)
-	default:
-		panic(fmt.Sprintf("unsupported close iterator iterator type: %T", input))
+		panic(fmt.Sprintf("unsupported fill iterator type: %T", input))
 	}
 }
 
@@ -363,7 +255,7 @@ type AuxIterator interface {
 	IteratorCreator
 
 	// Auxilary iterator
-	Iterator(name string, typ DataType) Iterator
+	Iterator(name string) Iterator
 
 	// Start starts writing to the created iterators.
 	Start()
@@ -374,16 +266,16 @@ type AuxIterator interface {
 }
 
 // NewAuxIterator returns a new instance of AuxIterator.
-func NewAuxIterator(input Iterator, opt IteratorOptions) AuxIterator {
+func NewAuxIterator(input Iterator, seriesKeys SeriesList, opt IteratorOptions) AuxIterator {
 	switch input := input.(type) {
 	case FloatIterator:
-		return newFloatAuxIterator(input, opt)
+		return newFloatAuxIterator(input, seriesKeys, opt)
 	case IntegerIterator:
-		return newIntegerAuxIterator(input, opt)
+		return newIntegerAuxIterator(input, seriesKeys, opt)
 	case StringIterator:
-		return newStringAuxIterator(input, opt)
+		return newStringAuxIterator(input, seriesKeys, opt)
 	case BooleanIterator:
-		return newBooleanAuxIterator(input, opt)
+		return newBooleanAuxIterator(input, seriesKeys, opt)
 	default:
 		panic(fmt.Sprintf("unsupported aux iterator type: %T", input))
 	}
@@ -415,10 +307,20 @@ func (f *auxIteratorField) close() {
 type auxIteratorFields []*auxIteratorField
 
 // newAuxIteratorFields returns a new instance of auxIteratorFields from a list of field names.
-func newAuxIteratorFields(opt IteratorOptions) auxIteratorFields {
+func newAuxIteratorFields(seriesKeys SeriesList, opt IteratorOptions) auxIteratorFields {
 	fields := make(auxIteratorFields, len(opt.Aux))
-	for i, ref := range opt.Aux {
-		fields[i] = &auxIteratorField{name: ref.Val, typ: ref.Type, opt: opt}
+	for i, name := range opt.Aux {
+		fields[i] = &auxIteratorField{name: name, opt: opt}
+		for _, s := range seriesKeys {
+			aux := s.Aux[i]
+			if aux == Unknown {
+				continue
+			}
+
+			if fields[i].typ == Unknown || aux < fields[i].typ {
+				fields[i].typ = aux
+			}
+		}
 	}
 	return fields
 }
@@ -430,11 +332,11 @@ func (a auxIteratorFields) close() {
 }
 
 // iterator creates a new iterator for a named auxilary field.
-func (a auxIteratorFields) iterator(name string, typ DataType) Iterator {
+func (a auxIteratorFields) iterator(name string) Iterator {
 	for _, f := range a {
 		// Skip field if it's name doesn't match.
 		// Exit if no points were received by the iterator.
-		if f.name != name || (typ != Unknown && f.typ != typ) {
+		if f.name != name {
 			continue
 		}
 
@@ -448,7 +350,7 @@ func (a auxIteratorFields) iterator(name string, typ DataType) Iterator {
 			itr := &integerChanIterator{cond: sync.NewCond(&sync.Mutex{})}
 			f.append(itr)
 			return itr
-		case String, Tag:
+		case String:
 			itr := &stringChanIterator{cond: sync.NewCond(&sync.Mutex{})}
 			f.append(itr)
 			return itr
@@ -514,7 +416,6 @@ func (a auxIteratorFields) sendError(err error) {
 
 // DrainIterator reads all points from an iterator.
 func DrainIterator(itr Iterator) {
-	defer itr.Close()
 	switch itr := itr.(type) {
 	case FloatIterator:
 		for p, _ := itr.Next(); p != nil; p, _ = itr.Next() {
@@ -535,7 +436,6 @@ func DrainIterator(itr Iterator) {
 
 // DrainIterators reads all points from all iterators.
 func DrainIterators(itrs []Iterator) {
-	defer Iterators(itrs).Close()
 	for {
 		var hasData bool
 
@@ -570,18 +470,18 @@ func DrainIterators(itrs []Iterator) {
 }
 
 // NewReaderIterator returns an iterator that streams from a reader.
-func NewReaderIterator(r io.Reader, typ DataType, stats IteratorStats) Iterator {
+func NewReaderIterator(r io.Reader, typ DataType, stats IteratorStats) (Iterator, error) {
 	switch typ {
 	case Float:
-		return newFloatReaderIterator(r, stats)
+		return newFloatReaderIterator(r, stats), nil
 	case Integer:
-		return newIntegerReaderIterator(r, stats)
+		return newIntegerReaderIterator(r, stats), nil
 	case String:
-		return newStringReaderIterator(r, stats)
+		return newStringReaderIterator(r, stats), nil
 	case Boolean:
-		return newBooleanReaderIterator(r, stats)
+		return newBooleanReaderIterator(r, stats), nil
 	default:
-		return &nilFloatIterator{}
+		return &nilFloatIterator{}, nil
 	}
 }
 
@@ -591,7 +491,10 @@ type IteratorCreator interface {
 	CreateIterator(opt IteratorOptions) (Iterator, error)
 
 	// Returns the unique fields and dimensions across a list of sources.
-	FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error)
+	FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error)
+
+	// Returns the series keys that will be returned by this iterator.
+	SeriesKeys(opt IteratorOptions) (SeriesList, error)
 
 	// Expands regex sources to all matching sources.
 	ExpandSources(sources Sources) (Sources, error)
@@ -620,8 +523,6 @@ func (a IteratorCreators) CreateIterator(opt IteratorOptions) (Iterator, error) 
 			itr, err := ic.CreateIterator(opt)
 			if err != nil {
 				return err
-			} else if itr == nil {
-				continue
 			}
 			itrs = append(itrs, itr)
 		}
@@ -631,16 +532,37 @@ func (a IteratorCreators) CreateIterator(opt IteratorOptions) (Iterator, error) 
 		return nil, err
 	}
 
-	if len(itrs) == 0 {
-		return nil, nil
+	// Merge into a single iterator.
+	if opt.MergeSorted() {
+		itr := NewSortedMergeIterator(itrs, opt)
+		if itr != nil && opt.InterruptCh != nil {
+			itr = NewInterruptIterator(itr, opt.InterruptCh)
+		}
+		return itr, nil
 	}
 
-	return Iterators(itrs).Merge(opt)
+	itr := NewMergeIterator(itrs, opt)
+	if itr != nil {
+		if opt.Expr != nil {
+			if expr, ok := opt.Expr.(*Call); ok && expr.Name == "count" {
+				opt.Expr = &Call{
+					Name: "sum",
+					Args: expr.Args,
+				}
+			}
+		}
+
+		if opt.InterruptCh != nil {
+			itr = NewInterruptIterator(itr, opt.InterruptCh)
+		}
+		return NewCallIterator(itr, opt)
+	}
+	return nil, nil
 }
 
 // FieldDimensions returns unique fields and dimensions from multiple iterator creators.
-func (a IteratorCreators) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
-	fields = make(map[string]DataType)
+func (a IteratorCreators) FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error) {
+	fields = make(map[string]struct{})
 	dimensions = make(map[string]struct{})
 
 	for _, ic := range a {
@@ -648,16 +570,43 @@ func (a IteratorCreators) FieldDimensions(sources Sources) (fields map[string]Da
 		if err != nil {
 			return nil, nil, err
 		}
-		for k, typ := range f {
-			if _, ok := fields[k]; typ != Unknown && (!ok || typ < fields[k]) {
-				fields[k] = typ
-			}
+		for k := range f {
+			fields[k] = struct{}{}
 		}
 		for k := range d {
 			dimensions[k] = struct{}{}
 		}
 	}
 	return
+}
+
+// SeriesKeys returns a list of series in all iterator creators in a.
+// If a series exists in multiple creators in a, all instances will be combined
+// into a single Series by calling Combine on it.
+func (a IteratorCreators) SeriesKeys(opt IteratorOptions) (SeriesList, error) {
+	seriesMap := make(map[string]Series)
+	for _, ic := range a {
+		series, err := ic.SeriesKeys(opt)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, s := range series {
+			cur, ok := seriesMap[s.ID()]
+			if ok {
+				cur.Combine(&s)
+			} else {
+				seriesMap[s.ID()] = s
+			}
+		}
+	}
+
+	seriesList := make([]Series, 0, len(seriesMap))
+	for _, s := range seriesMap {
+		seriesList = append(seriesList, s)
+	}
+	sort.Sort(SeriesList(seriesList))
+	return SeriesList(seriesList), nil
 }
 
 // ExpandSources expands sources across all iterator creators and returns a unique result.
@@ -696,91 +645,6 @@ func (a IteratorCreators) ExpandSources(sources Sources) (Sources, error) {
 	return sorted, nil
 }
 
-// lazyIteratorCreators represents a list of iterator creators that are lazily created.
-type lazyIteratorCreators IteratorCreators
-
-// NewLazyIteratorCreator returns an iterator creator for that creates iterators lazily.
-func NewLazyIteratorCreator(a []IteratorCreator) IteratorCreator {
-	return lazyIteratorCreators(a)
-}
-
-func (a lazyIteratorCreators) CreateIterator(opt IteratorOptions) (Iterator, error) {
-	for {
-		if len(a) == 0 {
-			return nil, nil
-		}
-
-		// Create first iterator to determine data type.
-		itr, err := a[0].CreateIterator(opt)
-		if err != nil {
-			return nil, err
-		} else if itr == nil {
-			a = a[1:]
-			continue
-		} else if len(a) == 1 {
-			return Iterators{itr}.Merge(opt)
-		}
-
-		// All additional iterators need to be the same type.
-		switch itr := itr.(type) {
-		case FloatIterator:
-			itrs := make([]FloatIterator, len(a))
-			itrs[0] = itr
-			for i := 1; i < len(itrs); i++ {
-				ic := a[i]
-				itrs[i] = &lazyFloatIterator{
-					fn: func() (Iterator, error) { return ic.CreateIterator(opt) },
-				}
-			}
-			return Iterators{NewMultiFloatIterator(itrs)}.Merge(opt)
-
-		case IntegerIterator:
-			itrs := make([]IntegerIterator, len(a))
-			itrs[0] = itr
-			for i := 1; i < len(itrs); i++ {
-				ic := a[i]
-				itrs[i] = &lazyIntegerIterator{
-					fn: func() (Iterator, error) { return ic.CreateIterator(opt) },
-				}
-			}
-			return Iterators{NewMultiIntegerIterator(itrs)}.Merge(opt)
-
-		case StringIterator:
-			itrs := make([]StringIterator, len(a))
-			itrs[0] = itr
-			for i := 1; i < len(itrs); i++ {
-				ic := a[i]
-				itrs[i] = &lazyStringIterator{
-					fn: func() (Iterator, error) { return ic.CreateIterator(opt) },
-				}
-			}
-			return Iterators{NewMultiStringIterator(itrs)}.Merge(opt)
-
-		case BooleanIterator:
-			itrs := make([]BooleanIterator, len(a))
-			itrs[0] = itr
-			for i := 1; i < len(itrs); i++ {
-				ic := a[i]
-				itrs[i] = &lazyBooleanIterator{
-					fn: func() (Iterator, error) { return ic.CreateIterator(opt) },
-				}
-			}
-			return Iterators{NewMultiBooleanIterator(itrs)}.Merge(opt)
-
-		default:
-			panic(fmt.Sprintf("unsupported iterator type for lazy iteration: %T", itr))
-		}
-	}
-}
-
-func (a lazyIteratorCreators) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
-	return IteratorCreators(a).FieldDimensions(sources)
-}
-
-func (a lazyIteratorCreators) ExpandSources(sources Sources) (Sources, error) {
-	return IteratorCreators(a).ExpandSources(sources)
-}
-
 // IteratorOptions is an object passed to CreateIterator to specify creation options.
 type IteratorOptions struct {
 	// Expression to iterate for.
@@ -788,7 +652,7 @@ type IteratorOptions struct {
 	Expr Expr
 
 	// Auxilary tags or values to also retrieve for the point.
-	Aux []VarRef
+	Aux []string
 
 	// Data sources from which to retrieve data.
 	Sources []Source
@@ -861,7 +725,7 @@ func newIteratorOptionsStmt(stmt *SelectStatement, sopt *SelectOptions) (opt Ite
 	if interval < 0 {
 		interval = 0
 	} else if interval > 0 {
-		opt.Interval.Offset, err = stmt.GroupByOffset()
+		opt.Interval.Offset, err = stmt.GroupByOffset(&opt)
 		if err != nil {
 			return opt, err
 		}
@@ -981,6 +845,7 @@ func (opt *IteratorOptions) UnmarshalBinary(buf []byte) error {
 
 func encodeIteratorOptions(opt *IteratorOptions) *internal.IteratorOptions {
 	pb := &internal.IteratorOptions{
+		Aux:        opt.Aux,
 		Interval:   encodeInterval(opt.Interval),
 		Dimensions: opt.Dimensions,
 		Fill:       proto.Int32(int32(opt.Fill)),
@@ -997,14 +862,6 @@ func encodeIteratorOptions(opt *IteratorOptions) *internal.IteratorOptions {
 	// Set expression, if set.
 	if opt.Expr != nil {
 		pb.Expr = proto.String(opt.Expr.String())
-	}
-
-	// Convert and encode aux fields as variable references.
-	pb.Fields = make([]*internal.VarRef, len(opt.Aux))
-	pb.Aux = make([]string, len(opt.Aux))
-	for i, ref := range opt.Aux {
-		pb.Fields[i] = encodeVarRef(ref)
-		pb.Aux[i] = ref.Val
 	}
 
 	// Convert and encode sources to measurements.
@@ -1030,6 +887,7 @@ func encodeIteratorOptions(opt *IteratorOptions) *internal.IteratorOptions {
 
 func decodeIteratorOptions(pb *internal.IteratorOptions) (*IteratorOptions, error) {
 	opt := &IteratorOptions{
+		Aux:        pb.GetAux(),
 		Interval:   decodeInterval(pb.GetInterval()),
 		Dimensions: pb.GetDimensions(),
 		Fill:       FillOption(pb.GetFill()),
@@ -1053,20 +911,7 @@ func decodeIteratorOptions(pb *internal.IteratorOptions) (*IteratorOptions, erro
 		opt.Expr = expr
 	}
 
-	// Convert and decode variable references.
-	if fields := pb.GetFields(); fields != nil {
-		opt.Aux = make([]VarRef, len(fields))
-		for i, ref := range fields {
-			opt.Aux[i] = decodeVarRef(ref)
-		}
-	} else {
-		opt.Aux = make([]VarRef, len(pb.GetAux()))
-		for i, name := range pb.GetAux() {
-			opt.Aux[i] = VarRef{Val: name}
-		}
-	}
-
-	// Convert and dencode sources to measurements.
+	// Convert and encode sources to measurements.
 	sources := make([]Source, len(pb.GetSources()))
 	for i, source := range pb.GetSources() {
 		mm, err := decodeMeasurement(source)
@@ -1117,6 +962,110 @@ func (v *selectInfo) Visit(n Node) Visitor {
 	return v
 }
 
+// Series represents a series that will be returned by the iterator.
+type Series struct {
+	Name string
+	Tags Tags
+	Aux  []DataType
+}
+
+// ID is a single string that combines the name and tags id for the series.
+func (s *Series) ID() string {
+	return s.Name + "\x00" + s.Tags.ID()
+}
+
+// Combine combines two series with the same name and tags.
+// It will promote auxiliary iterator types to the highest type.
+func (s *Series) Combine(other *Series) {
+	for i, t := range s.Aux {
+		if other.Aux[i] == Unknown {
+			continue
+		}
+
+		if t == Unknown || other.Aux[i] < t {
+			s.Aux[i] = other.Aux[i]
+		}
+	}
+}
+
+func encodeSeries(s Series) *internal.Series {
+	aux := make([]uint32, len(s.Aux))
+	for i := range s.Aux {
+		aux[i] = uint32(s.Aux[i])
+	}
+
+	return &internal.Series{
+		Name: proto.String(s.Name),
+		Tags: encodeTags(s.Tags.KeyValues()),
+		Aux:  aux,
+	}
+}
+
+func decodeSeries(pb *internal.Series) Series {
+	var aux []DataType
+	if len(pb.GetAux()) > 0 {
+		aux = make([]DataType, len(pb.GetAux()))
+		for i := range pb.GetAux() {
+			aux[i] = DataType(pb.GetAux()[i])
+		}
+	}
+
+	return Series{
+		Name: pb.GetName(),
+		Tags: newTagsID(string(pb.GetTags())),
+		Aux:  aux,
+	}
+}
+
+// SeriesList is a list of series that will be returned by an iterator.
+type SeriesList []Series
+
+func (a SeriesList) Len() int      { return len(a) }
+func (a SeriesList) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+func (a SeriesList) Less(i, j int) bool {
+	if a[i].Name != a[j].Name {
+		return a[i].Name < a[j].Name
+	}
+	return a[i].Tags.ID() < a[j].Tags.ID()
+}
+
+// MarshalBinary encodes list into a binary format.
+func (a SeriesList) MarshalBinary() ([]byte, error) {
+	return proto.Marshal(encodeSeriesList(a))
+}
+
+// UnmarshalBinary decodes from a binary format.
+func (a *SeriesList) UnmarshalBinary(buf []byte) error {
+	var pb internal.SeriesList
+	if err := proto.Unmarshal(buf, &pb); err != nil {
+		return err
+	}
+
+	(*a) = decodeSeriesList(&pb)
+
+	return nil
+}
+
+func encodeSeriesList(a SeriesList) *internal.SeriesList {
+	pb := make([]*internal.Series, len(a))
+	for i := range a {
+		pb[i] = encodeSeries(a[i])
+	}
+
+	return &internal.SeriesList{
+		Items: pb,
+	}
+}
+
+func decodeSeriesList(pb *internal.SeriesList) SeriesList {
+	a := make([]Series, len(pb.GetItems()))
+	for i := range pb.GetItems() {
+		a[i] = decodeSeries(pb.GetItems()[i])
+	}
+	return SeriesList(a)
+}
+
 // Interval represents a repeating interval for a query.
 type Interval struct {
 	Duration time.Duration
@@ -1137,20 +1086,6 @@ func decodeInterval(pb *internal.Interval) Interval {
 	return Interval{
 		Duration: time.Duration(pb.GetDuration()),
 		Offset:   time.Duration(pb.GetOffset()),
-	}
-}
-
-func encodeVarRef(ref VarRef) *internal.VarRef {
-	return &internal.VarRef{
-		Val:  proto.String(ref.Val),
-		Type: proto.Int32(int32(ref.Type)),
-	}
-}
-
-func decodeVarRef(pb *internal.VarRef) VarRef {
-	return VarRef{
-		Val:  pb.GetVal(),
-		Type: DataType(pb.GetType()),
 	}
 }
 
@@ -1272,11 +1207,7 @@ func (itr *floatFastDedupeIterator) Next() (*FloatPoint, error) {
 		}
 
 		// If the point has already been output then move to the next point.
-		key := fastDedupeKey{name: p.Name}
-		key.values[0] = p.Aux[0]
-		if len(p.Aux) > 1 {
-			key.values[1] = p.Aux[1]
-		}
+		key := fastDedupeKey{p.Name, p.Aux[0]}
 		if _, ok := itr.m[key]; ok {
 			continue
 		}
@@ -1288,8 +1219,8 @@ func (itr *floatFastDedupeIterator) Next() (*FloatPoint, error) {
 }
 
 type fastDedupeKey struct {
-	name   string
-	values [2]interface{}
+	name  string
+	value interface{}
 }
 
 type reverseStringSlice []string

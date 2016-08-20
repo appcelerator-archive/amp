@@ -1,6 +1,7 @@
 package tsm1
 
 import (
+	"expvar"
 	"fmt"
 	"io"
 	"log"
@@ -8,10 +9,10 @@ import (
 	"os"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/influxdata/influxdb/models"
+	"github.com/influxdata/influxdb"
+	"github.com/influxdata/influxdb/tsdb"
 )
 
 var (
@@ -91,7 +92,7 @@ func (e *entry) count() int {
 // filter removes all values between min and max inclusive
 func (e *entry) filter(min, max int64) {
 	e.mu.Lock()
-	e.values = e.values.Exclude(min, max)
+	e.values = e.values.Filter(min, max)
 	e.mu.Unlock()
 }
 
@@ -136,17 +137,22 @@ type Cache struct {
 	// This number is the number of pending or failed WriteSnaphot attempts since the last successful one.
 	snapshotAttempts int
 
-	stats        *CacheStatistics
+	statMap      *expvar.Map // nil for snapshots.
 	lastSnapshot time.Time
 }
 
 // NewCache returns an instance of a cache which will use a maximum of maxSize bytes of memory.
 // Only used for engine caches, never for snapshots
 func NewCache(maxSize uint64, path string) *Cache {
+	db, rp := tsdb.DecodeStorePath(path)
 	c := &Cache{
-		maxSize:      maxSize,
-		store:        make(map[string]*entry),
-		stats:        &CacheStatistics{},
+		maxSize: maxSize,
+		store:   make(map[string]*entry),
+		statMap: influxdb.NewStatistics(
+			"tsm1_cache:"+path,
+			"tsm1_cache",
+			map[string]string{"path": path, "database": db, "retentionPolicy": rp},
+		),
 		lastSnapshot: time.Now(),
 	}
 	c.UpdateAge()
@@ -155,32 +161,6 @@ func NewCache(maxSize uint64, path string) *Cache {
 	c.updateMemSize(0)
 	c.updateSnapshots()
 	return c
-}
-
-// CacheStatistics hold statistics related to the cache.
-type CacheStatistics struct {
-	MemSizeBytes        int64
-	DiskSizeBytes       int64
-	SnapshotCount       int64
-	CacheAgeMs          int64
-	CachedBytes         int64
-	WALCompactionTimeMs int64
-}
-
-// Statistics returns statistics for periodic monitoring.
-func (c *Cache) Statistics(tags map[string]string) []models.Statistic {
-	return []models.Statistic{{
-		Name: "tsm1_cache",
-		Tags: tags,
-		Values: map[string]interface{}{
-			statCacheMemoryBytes:    atomic.LoadInt64(&c.stats.MemSizeBytes),
-			statCacheDiskBytes:      atomic.LoadInt64(&c.stats.DiskSizeBytes),
-			statSnapshots:           atomic.LoadInt64(&c.stats.SnapshotCount),
-			statCacheAgeMs:          atomic.LoadInt64(&c.stats.CacheAgeMs),
-			statCachedBytes:         atomic.LoadInt64(&c.stats.CachedBytes),
-			statWALCompactionTimeMs: atomic.LoadInt64(&c.stats.WALCompactionTimeMs),
-		},
-	}}
 }
 
 // Write writes the set of values for the key to the cache. This function is goroutine-safe.
@@ -227,7 +207,7 @@ func (c *Cache) WriteMulti(values map[string][]Value) error {
 		c.entry(k).add(v)
 	}
 	c.mu.Lock()
-	c.size += uint64(totalSz)
+	c.size = newSize
 	c.mu.Unlock()
 
 	// Update the memory size stat
@@ -288,11 +268,9 @@ func (c *Cache) Snapshot() (*Cache, error) {
 // Deduplicate sorts the snapshot before returning it. The compactor and any queries
 // coming in while it writes will need the values sorted
 func (c *Cache) Deduplicate() {
-	c.mu.RLock()
 	for _, e := range c.store {
 		e.deduplicate()
 	}
-	c.mu.RUnlock()
 }
 
 // ClearSnapshot will remove the snapshot cache from the list of flushing caches and
@@ -356,27 +334,21 @@ func (c *Cache) DeleteRange(keys []string, min, max int64) {
 	defer c.mu.Unlock()
 
 	for _, k := range keys {
-		// Make sure key exist in the cache, skip if it does not
-		e, ok := c.store[k]
-		if !ok {
-			continue
-		}
-
-		origSize := e.size()
+		origSize := c.store[k].size()
 		if min == math.MinInt64 && max == math.MaxInt64 {
 			c.size -= uint64(origSize)
 			delete(c.store, k)
 			continue
 		}
 
-		e.filter(min, max)
-		if e.count() == 0 {
+		c.store[k].filter(min, max)
+		if c.store[k].count() == 0 {
 			delete(c.store, k)
 			c.size -= uint64(origSize)
 			continue
 		}
 
-		c.size -= uint64(origSize - e.size())
+		c.size -= uint64(origSize - c.store[k].size())
 	}
 }
 
@@ -433,13 +405,12 @@ func (c *Cache) merged(key string) Values {
 	n := 0
 	for _, e := range entries {
 		e.mu.RLock()
-		if !needSort && n > 0 && len(e.values) > 0 {
+		if !needSort && n > 0 {
 			needSort = values[n-1].UnixNano() >= e.values[0].UnixNano()
 		}
 		n += copy(values[n:], e.values)
 		e.mu.RUnlock()
 	}
-	values = values[:n]
 
 	if needSort {
 		values = values.Deduplicate()
@@ -484,27 +455,13 @@ func (c *Cache) write(key string, values []Value) {
 }
 
 func (c *Cache) entry(key string) *entry {
-	// low-contention path: entry exists, no write operations needed:
-	c.mu.RLock()
-	e, ok := c.store[key]
-	c.mu.RUnlock()
-
-	if ok {
-		return e
-	}
-
-	// high-contention path: entry doesn't exist (probably), create a new
-	// one after checking again:
 	c.mu.Lock()
-
-	e, ok = c.store[key]
+	e, ok := c.store[key]
 	if !ok {
 		e = newEntry()
 		c.store[key] = e
 	}
-
 	c.mu.Unlock()
-
 	return e
 }
 
@@ -588,28 +545,34 @@ func (cl *CacheLoader) SetLogOutput(w io.Writer) {
 func (c *Cache) UpdateAge() {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	ageStat := int64(time.Now().Sub(c.lastSnapshot) / time.Millisecond)
-	atomic.StoreInt64(&c.stats.CacheAgeMs, ageStat)
+	ageStat := new(expvar.Int)
+	ageStat.Set(int64(time.Now().Sub(c.lastSnapshot) / time.Millisecond))
+	c.statMap.Set(statCacheAgeMs, ageStat)
 }
 
 // Updates WAL compaction time statistic
 func (c *Cache) UpdateCompactTime(d time.Duration) {
-	atomic.AddInt64(&c.stats.WALCompactionTimeMs, int64(d/time.Millisecond))
+	c.statMap.Add(statWALCompactionTimeMs, int64(d/time.Millisecond))
 }
 
 // Update the cachedBytes counter
 func (c *Cache) updateCachedBytes(b uint64) {
-	atomic.AddInt64(&c.stats.CachedBytes, int64(b))
+	c.statMap.Add(statCachedBytes, int64(b))
 }
 
 // Update the memSize level
 func (c *Cache) updateMemSize(b int64) {
-	atomic.AddInt64(&c.stats.MemSizeBytes, b)
+	c.statMap.Add(statCacheMemoryBytes, b)
 }
 
 // Update the snapshotsCount and the diskSize levels
 func (c *Cache) updateSnapshots() {
 	// Update disk stats
-	atomic.StoreInt64(&c.stats.DiskSizeBytes, int64(c.snapshotSize))
-	atomic.StoreInt64(&c.stats.SnapshotCount, int64(c.snapshotAttempts))
+	diskSizeStat := new(expvar.Int)
+	diskSizeStat.Set(int64(c.snapshotSize))
+	c.statMap.Set(statCacheDiskBytes, diskSizeStat)
+
+	snapshotsStat := new(expvar.Int)
+	snapshotsStat.Set(int64(c.snapshotAttempts))
+	c.statMap.Set(statSnapshots, snapshotsStat)
 }

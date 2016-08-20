@@ -102,7 +102,6 @@ var (
 	ErrNoValues             = fmt.Errorf("no values written")
 	ErrTSMClosed            = fmt.Errorf("tsm file closed")
 	ErrMaxKeyLengthExceeded = fmt.Errorf("max key length exceeded")
-	ErrMaxBlocksExceeded    = fmt.Errorf("max blocks exceeded")
 )
 
 // TSMWriter writes TSM formatted key and values.
@@ -154,7 +153,7 @@ type IndexWriter interface {
 	MarshalBinary() ([]byte, error)
 
 	// WriteTo writes the index contents to a writer
-	WriteTo(w io.Writer) (int64, error)
+	WriteTo(w io.Writer) error
 }
 
 // IndexEntry is the index information for a given block in a TSM file.
@@ -257,26 +256,22 @@ func (d *directIndex) Add(key string, blockType byte, minTime, maxTime int64, of
 	d.size += indexEntrySize
 }
 
-func (d *directIndex) entries(key string) []IndexEntry {
-	entries := d.blocks[key]
-	if entries == nil {
-		return nil
-	}
-	return entries.entries
-}
-
 func (d *directIndex) Entries(key string) []IndexEntry {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	return d.entries(key)
+	entries := d.blocks[key]
+	if entries == nil {
+		return nil
+	}
+	return d.blocks[key].entries
 }
 
 func (d *directIndex) Entry(key string, t int64) *IndexEntry {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	entries := d.entries(key)
+	entries := d.Entries(key)
 	for _, entry := range entries {
 		if entry.Contains(t) {
 			return &entry
@@ -298,10 +293,7 @@ func (d *directIndex) Keys() []string {
 }
 
 func (d *directIndex) KeyCount() int {
-	d.mu.RLock()
-	n := len(d.blocks)
-	d.mu.RUnlock()
-	return n
+	return len(d.blocks)
 }
 
 func (d *directIndex) addEntries(key string, entries *indexEntries) {
@@ -313,30 +305,27 @@ func (d *directIndex) addEntries(key string, entries *indexEntries) {
 	existing.entries = append(existing.entries, entries.entries...)
 }
 
-func (d *directIndex) WriteTo(w io.Writer) (int64, error) {
+func (d *directIndex) WriteTo(w io.Writer) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	// Index blocks are writtens sorted by key
-	keys := make([]string, 0, len(d.blocks))
+	var keys []string
 	for k := range d.blocks {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	var (
-		n   int
-		err error
-		buf [5]byte
-		N   int64
-	)
+	var buf [5]byte
+	var err error
 
 	// For each key, individual entries are sorted by time
 	for _, key := range keys {
 		entries := d.blocks[key]
 
 		if entries.Len() > maxIndexEntries {
-			return N, fmt.Errorf("key '%s' exceeds max index entries: %d > %d", key, entries.Len(), maxIndexEntries)
+			return fmt.Errorf("key '%s' exceeds max index entries: %d > %d",
+				key, entries.Len(), maxIndexEntries)
 		}
 		sort.Sort(entries)
 
@@ -345,36 +334,30 @@ func (d *directIndex) WriteTo(w io.Writer) (int64, error) {
 		binary.BigEndian.PutUint16(buf[3:5], uint16(entries.Len()))
 
 		// Append the key length and key
-		if n, err = w.Write(buf[0:2]); err != nil {
-			return int64(n) + N, fmt.Errorf("write: writer key length error: %v", err)
+		if _, err = w.Write(buf[0:2]); err != nil {
+			return fmt.Errorf("write: writer key length error: %v", err)
 		}
-		N += int64(n)
 
-		if n, err = io.WriteString(w, key); err != nil {
-			return int64(n) + N, fmt.Errorf("write: writer key error: %v", err)
+		if _, err = io.WriteString(w, key); err != nil {
+			return fmt.Errorf("write: writer key error: %v", err)
 		}
-		N += int64(n)
 
 		// Append the block type and count
-		if n, err = w.Write(buf[2:5]); err != nil {
-			return int64(n) + N, fmt.Errorf("write: writer block type and count error: %v", err)
+		if _, err = w.Write(buf[2:5]); err != nil {
+			return fmt.Errorf("write: writer block type and count error: %v", err)
 		}
-		N += int64(n)
 
 		// Append each index entry for all blocks for this key
-		var n64 int64
-		if n64, err = entries.WriteTo(w); err != nil {
-			return n64 + N, fmt.Errorf("write: writer entries error: %v", err)
+		if _, err = entries.WriteTo(w); err != nil {
+			return fmt.Errorf("write: writer entries error: %v", err)
 		}
-		N += n64
-
 	}
-	return N, nil
+	return nil
 }
 
 func (d *directIndex) MarshalBinary() ([]byte, error) {
 	var b bytes.Buffer
-	if _, err := d.WriteTo(&b); err != nil {
+	if err := d.WriteTo(&b); err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil
@@ -488,9 +471,6 @@ func (t *tsmWriter) Write(key string, values Values) error {
 	return nil
 }
 
-// WriteBlock writes block for the given key and time range to the TSM file.  If the write
-// exceeds max entries for a given key, ErrMaxBlocksExceeded is returned.  This indicates
-// that the index is now full for this key and no future writes to this key will succeed.
 func (t *tsmWriter) WriteBlock(key string, minTime, maxTime int64, block []byte) error {
 	// Nothing to write
 	if len(block) == 0 {
@@ -529,10 +509,6 @@ func (t *tsmWriter) WriteBlock(key string, minTime, maxTime int64, block []byte)
 	// Increment file position pointer (checksum + block len)
 	t.n += int64(n)
 
-	if len(t.index.Entries(key)) >= maxIndexEntries {
-		return ErrMaxBlocksExceeded
-	}
-
 	return nil
 }
 
@@ -546,7 +522,7 @@ func (t *tsmWriter) WriteIndex() error {
 	}
 
 	// Write the index
-	if _, err := t.index.WriteTo(t.w); err != nil {
+	if err := t.index.WriteTo(t.w); err != nil {
 		return err
 	}
 

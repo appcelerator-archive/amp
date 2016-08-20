@@ -13,13 +13,15 @@ func TestConfig_Parse(t *testing.T) {
 	// Parse configuration.
 	var c run.Config
 	if err := c.FromToml(`
+join = "foo:123,bar:456"
+
 [meta]
 dir = "/tmp/meta"
 
 [data]
 dir = "/tmp/data"
 
-[coordinator]
+[cluster]
 
 [admin]
 bind-address = ":8083"
@@ -94,6 +96,8 @@ enabled = true
 		t.Fatalf("unexpected subscriber enabled: %v", c.Subscriber.Enabled)
 	} else if c.ContinuousQuery.Enabled != true {
 		t.Fatalf("unexpected continuous query enabled: %v", c.ContinuousQuery.Enabled)
+	} else if exp, got := "foo:123,bar:456", c.Join; exp != got {
+		t.Fatalf("unexpected join value: got %v, exp %v", got, exp)
 	}
 }
 
@@ -108,7 +112,7 @@ dir = "/tmp/meta"
 [data]
 dir = "/tmp/data"
 
-[coordinator]
+[cluster]
 
 [admin]
 bind-address = ":8083"
@@ -243,15 +247,19 @@ func TestConfig_DeprecatedOptions(t *testing.T) {
 	// Parse configuration.
 	var c run.Config
 	if err := c.FromToml(`
-[cluster]
-max-select-point = 100
+[collectd]
+bind-address = ":1000"
+
+[opentsdb]
+bind-address = ":2000"
 `); err != nil {
 		t.Fatal(err)
 	}
 
 	// Validate configuration.
-	if c.Coordinator.MaxSelectPointN != 100 {
-		t.Fatalf("unexpected coordinator max select points: %d", c.Coordinator.MaxSelectPointN)
-
+	if c.CollectdInputs[0].BindAddress != ":1000" {
+		t.Fatalf("unexpected collectd bind address: %s", c.CollectdInputs[0].BindAddress)
+	} else if c.OpenTSDBInputs[0].BindAddress != ":2000" {
+		t.Fatalf("unexpected opentsdb bind address: %s", c.OpenTSDBInputs[0].BindAddress)
 	}
 }

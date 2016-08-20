@@ -11,7 +11,7 @@ import:
 - package: github.com/bgentry/speakeasy
   version: 36e9cfdd690967f4f690c6edcc9ffacd006014a0
 - package: github.com/boltdb/bolt
-  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+  version: v1.3.0
 - package: github.com/cockroachdb/cmux
   version: 112f0506e7743d64a6eb8fedbcff13d9979bbf92
 - package: github.com/coreos/go-semver
@@ -62,7 +62,7 @@ import:
 - package: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - package: github.com/jonboulle/clockwork
-  version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
+  version: v0.1.0
 - package: github.com/kballard/go-shellquote
   version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
 - package: github.com/kr/pty
@@ -134,7 +134,7 @@ import:
   subpackages:
   - rate
 - package: google.golang.org/grpc
-  version: c2781963b3af261a37e0f14fdcb7c1fa13259e1f
+  version: 231b4cfea0e79843053a33f5fe90bd4d84b23cd3
   subpackages:
   - codes
   - credentials

@@ -1,5 +1,5 @@
-hash: c04a6b4fa79b3e780e38f875e3863551c8a7e5a1d1020b9a3a06268d50e592e3
-updated: 2016-08-15T15:51:12.533454067-07:00
+hash: 9d37c5aecd92dfa9b789162e389d87564aa7e7a18f9c1f14ea57d06c0165a1cf
+updated: 2016-08-18T20:16:50.783927627-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -12,7 +12,7 @@ imports:
 - name: github.com/bgentry/speakeasy
   version: 36e9cfdd690967f4f690c6edcc9ffacd006014a0
 - name: github.com/boltdb/bolt
-  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/cockroachdb/cmux
   version: 112f0506e7743d64a6eb8fedbcff13d9979bbf92
 - name: github.com/coreos/go-semver
@@ -64,7 +64,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jonboulle/clockwork
-  version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
+  version: 2eee05ed794112d45db504eb05aa693efd2b8b09
 - name: github.com/kballard/go-shellquote
   version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
 - name: github.com/kr/pty
@@ -136,7 +136,7 @@ imports:
   subpackages:
   - rate
 - name: google.golang.org/grpc
-  version: c2781963b3af261a37e0f14fdcb7c1fa13259e1f
+  version: 231b4cfea0e79843053a33f5fe90bd4d84b23cd3
   subpackages:
   - codes
   - credentials

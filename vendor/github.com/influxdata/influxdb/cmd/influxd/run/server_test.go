@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/influxdata/influxdb/coordinator"
+	"github.com/influxdata/influxdb/cluster"
 	"github.com/influxdata/influxdb/models"
 )
 
@@ -54,7 +54,7 @@ func TestServer_Query_DropAndRecreateDatabase(t *testing.T) {
 
 	test := tests.load(t, "drop_and_recreate_database")
 
-	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicySpec(test.retentionPolicy(), 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicyInfo(test.retentionPolicy(), 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy(test.database(), test.retentionPolicy()); err != nil {
@@ -86,13 +86,13 @@ func TestServer_Query_DropDatabaseIsolated(t *testing.T) {
 
 	test := tests.load(t, "drop_database_isolated")
 
-	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicySpec(test.retentionPolicy(), 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicyInfo(test.retentionPolicy(), 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy(test.database(), test.retentionPolicy()); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateDatabaseAndRetentionPolicy("db1", newRetentionPolicySpec("rp1", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db1", newRetentionPolicyInfo("rp1", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -121,7 +121,7 @@ func TestServer_Query_DeleteSeries(t *testing.T) {
 
 	test := tests.load(t, "delete_series")
 
-	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicySpec(test.retentionPolicy(), 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicyInfo(test.retentionPolicy(), 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy(test.database(), test.retentionPolicy()); err != nil {
@@ -153,7 +153,7 @@ func TestServer_Query_DropAndRecreateSeries(t *testing.T) {
 
 	test := tests.load(t, "drop_and_recreate_series")
 
-	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicySpec(test.retentionPolicy(), 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicyInfo(test.retentionPolicy(), 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy(test.database(), test.retentionPolicy()); err != nil {
@@ -205,7 +205,7 @@ func TestServer_Query_DropSeriesFromRegex(t *testing.T) {
 
 	test := tests.load(t, "drop_series_from_regex")
 
-	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicySpec(test.retentionPolicy(), 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy(test.database(), newRetentionPolicyInfo(test.retentionPolicy(), 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy(test.database(), test.retentionPolicy()); err != nil {
@@ -330,7 +330,7 @@ func TestServer_UserCommands(t *testing.T) {
 			&Query{
 				name:    "bad create user request",
 				command: `CREATE USER 0xBAD WITH PASSWORD pwd1337`,
-				exp:     `{"error":"error parsing query: found 0xBAD, expected identifier at line 1, char 13"}`,
+				exp:     `{"error":"error parsing query: found 0, expected identifier at line 1, char 13"}`,
 			},
 			&Query{
 				name:    "bad create user request, no name",
@@ -379,7 +379,7 @@ func TestServer_Write_LineProtocol_Float(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 1*time.Hour)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 1*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -404,7 +404,7 @@ func TestServer_Write_LineProtocol_Bool(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 1*time.Hour)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 1*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -429,7 +429,7 @@ func TestServer_Write_LineProtocol_String(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 1*time.Hour)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 1*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -454,7 +454,7 @@ func TestServer_Write_LineProtocol_Integer(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 1*time.Hour)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 1*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -480,7 +480,7 @@ func TestServer_Write_LineProtocol_Partial(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 1*time.Hour)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 1*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -527,7 +527,7 @@ func TestServer_Query_DefaultDBAndRP(t *testing.T) {
 		&Query{
 			name:    "default rp exists",
 			command: `show retention policies ON db0`,
-			exp:     `{"results":[{"series":[{"columns":["name","duration","shardGroupDuration","replicaN","default"],"values":[["autogen","0","168h0m0s",1,false],["rp0","0","168h0m0s",1,true]]}]}]}`,
+			exp:     `{"results":[{"series":[{"columns":["name","duration","shardGroupDuration","replicaN","default"],"values":[["default","0","168h0m0s",1,false],["rp0","0","168h0m0s",1,true]]}]}]}`,
 		},
 		&Query{
 			name:    "default rp",
@@ -876,55 +876,9 @@ func TestServer_Query_Count(t *testing.T) {
 			exp:     `{"results":[{}]}`,
 		},
 		&Query{
-			name:    "selecting count(*) should expand the wildcard",
+			name:    "selecting count(*) should error",
 			command: `SELECT count(*) FROM db0.rp0.cpu`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["time","count_value"],"values":[["1970-01-01T00:00:00Z",1]]}]}]}`,
-		},
-		&Query{
-			name:    "selecting count(2) should error",
-			command: `SELECT count(2) FROM db0.rp0.cpu`,
 			exp:     `{"error":"error parsing query: expected field argument in count()"}`,
-		},
-	}...)
-
-	if err := test.init(s); err != nil {
-		t.Fatalf("test init failed: %s", err)
-	}
-
-	for _, query := range test.queries {
-		if query.skip {
-			t.Logf("SKIP:: %s", query.name)
-			continue
-		}
-		if err := query.Execute(s); err != nil {
-			t.Error(query.Error(err))
-		} else if !query.success() {
-			t.Error(query.failureMessage())
-		}
-	}
-}
-
-// Ensure the server can limit concurrent series.
-func TestServer_Query_MaxSelectSeriesN(t *testing.T) {
-	t.Parallel()
-	config := NewConfig()
-	config.Coordinator.MaxSelectSeriesN = 3
-	s := OpenServer(config)
-	defer s.Close()
-
-	test := NewTest("db0", "rp0")
-	test.writes = Writes{
-		&Write{data: `cpu,host=server01 value=1.0 0`},
-		&Write{data: `cpu,host=server02 value=1.0 0`},
-		&Write{data: `cpu,host=server03 value=1.0 0`},
-		&Write{data: `cpu,host=server04 value=1.0 0`},
-	}
-
-	test.addQueries([]*Query{
-		&Query{
-			name:    "exceeed max series",
-			command: `SELECT COUNT(value) FROM db0.rp0.cpu`,
-			exp:     `{"results":[{"error":"max select series count exceeded: 4 series"}]}`,
 		},
 	}...)
 
@@ -2360,43 +2314,6 @@ cpu value=35 1278010025000000000
 	}
 }
 
-func TestServer_Query_MathWithFill(t *testing.T) {
-	t.Parallel()
-	s := OpenServer(NewConfig())
-	defer s.Close()
-
-	test := NewTest("db0", "rp0")
-	test.writes = Writes{
-		&Write{data: fmt.Sprintf(`cpu value=15 1278010020000000000
-`)},
-	}
-
-	test.addQueries([]*Query{
-		&Query{
-			name:    "multiplication with fill previous",
-			command: `SELECT 4*mean(value) FROM db0.rp0.cpu WHERE time >= '2010-07-01 18:47:00' AND time < '2010-07-01 18:48:30' GROUP BY time(30s) FILL(previous)`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["time","mean"],"values":[["2010-07-01T18:47:00Z",60],["2010-07-01T18:47:30Z",60],["2010-07-01T18:48:00Z",60]]}]}]}`,
-		},
-	}...)
-
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
-		if query.skip {
-			t.Logf("SKIP:: %s", query.name)
-			continue
-		}
-		if err := query.Execute(s); err != nil {
-			t.Error(query.Error(err))
-		} else if !query.success() {
-			t.Error(query.failureMessage())
-		}
-	}
-}
-
 // mergeMany ensures that when merging many series together and some of them have a different number
 // of points than others in a group by interval the results are correct
 func TestServer_Query_MergeMany(t *testing.T) {
@@ -2405,7 +2322,7 @@ func TestServer_Query_MergeMany(t *testing.T) {
 	defer s.Close()
 
 	// set infinite retention policy as we are inserting data in the past and don't want retention policy enforcement to make this test racy
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -2465,7 +2382,7 @@ func TestServer_Query_SLimitAndSOffset(t *testing.T) {
 	defer s.Close()
 
 	// set infinite retention policy as we are inserting data in the past and don't want retention policy enforcement to make this test racy
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -2521,7 +2438,7 @@ func TestServer_Query_Regex(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -3476,7 +3393,7 @@ func TestServer_Query_AggregateSelectors(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -3505,7 +3422,7 @@ func TestServer_Query_AggregateSelectors(t *testing.T) {
 			name:    "baseline",
 			params:  url.Values{"db": []string{"db0"}},
 			command: `SELECT * FROM network`,
-			exp:     `{"results":[{"series":[{"name":"network","columns":["time","core","core_1","host","region","rx","tx"],"values":[["2000-01-01T00:00:00Z",2,"1","server01","west",10,20],["2000-01-01T00:00:10Z",3,"2","server02","west",40,50],["2000-01-01T00:00:20Z",4,"3","server03","east",40,55],["2000-01-01T00:00:30Z",1,"4","server04","east",40,60],["2000-01-01T00:00:40Z",2,"1","server05","west",50,70],["2000-01-01T00:00:50Z",3,"2","server06","east",50,40],["2000-01-01T00:01:00Z",4,"3","server07","west",70,30],["2000-01-01T00:01:10Z",1,"4","server08","east",90,10],["2000-01-01T00:01:20Z",2,"1","server09","east",5,4]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"network","columns":["time","core","host","region","rx","tx"],"values":[["2000-01-01T00:00:00Z",2,"server01","west",10,20],["2000-01-01T00:00:10Z",3,"server02","west",40,50],["2000-01-01T00:00:20Z",4,"server03","east",40,55],["2000-01-01T00:00:30Z",1,"server04","east",40,60],["2000-01-01T00:00:40Z",2,"server05","west",50,70],["2000-01-01T00:00:50Z",3,"server06","east",50,40],["2000-01-01T00:01:00Z",4,"server07","west",70,30],["2000-01-01T00:01:10Z",1,"server08","east",90,10],["2000-01-01T00:01:20Z",2,"server09","east",5,4]]}]}]}`,
 		},
 		&Query{
 			name:    "max - baseline 30s",
@@ -3772,7 +3689,7 @@ func TestServer_Query_TopInt(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -3939,7 +3856,7 @@ func TestServer_Query_Aggregates_IdenticalTime(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4007,7 +3924,7 @@ func TestServer_Query_GroupByTimeCutoffs(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4089,7 +4006,7 @@ func TestServer_Write_Precision(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4206,7 +4123,7 @@ func TestServer_Query_Wildcards(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4324,7 +4241,7 @@ func TestServer_Query_WildcardExpansion(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4374,10 +4291,10 @@ func TestServer_Query_WildcardExpansion(t *testing.T) {
 			exp:     `{"results":[{"series":[{"name":"wildcard","columns":["time","c","h","region","value"],"values":[["2000-01-01T00:00:00Z",80,"A","us-east",10],["2000-01-01T00:00:10Z",90,"B","us-east",20],["2000-01-01T00:00:20Z",70,"B","us-west",30],["2000-01-01T00:00:30Z",60,"A","us-east",40]]}]}]}`,
 		},
 		&Query{
-			name:    "duplicate tag and field key",
+			name:    "duplicate tag and field key, always favor field over tag",
 			command: `SELECT * FROM dupnames`,
 			params:  url.Values{"db": []string{"db0"}},
-			exp:     `{"results":[{"series":[{"name":"dupnames","columns":["time","day","day_1","region","value"],"values":[["2000-01-01T00:00:00Z",3,"1","us-east",10],["2000-01-01T00:00:10Z",2,"2","us-east",20],["2000-01-01T00:00:20Z",1,"3","us-west",30]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"dupnames","columns":["time","day","region","value"],"values":[["2000-01-01T00:00:00Z",3,"us-east",10],["2000-01-01T00:00:10Z",2,"us-east",20],["2000-01-01T00:00:20Z",1,"us-west",30]]}]}]}`,
 		},
 	}...)
 
@@ -4404,7 +4321,7 @@ func TestServer_Query_AcrossShardsAndFields(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4478,7 +4395,7 @@ func TestServer_Query_Where_Fields(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4700,7 +4617,7 @@ func TestServer_Query_Where_With_Tags(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4788,7 +4705,7 @@ func TestServer_Query_With_EmptyTags(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4879,7 +4796,7 @@ func TestServer_Query_LimitAndOffset(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -4996,7 +4913,7 @@ func TestServer_Query_Fill(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5095,7 +5012,7 @@ func TestServer_Query_Chunk(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5147,13 +5064,13 @@ func TestServer_Query_DropAndRecreateMeasurement(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateDatabaseAndRetentionPolicy("db1", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db1", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db1", "rp0"); err != nil {
@@ -5308,84 +5225,12 @@ func TestServer_Query_DropAndRecreateMeasurement(t *testing.T) {
 	}
 }
 
-func TestServer_Query_ShowQueries_Future(t *testing.T) {
-	t.Parallel()
-	s := OpenServer(NewConfig())
-	defer s.Close()
-
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
-		t.Fatal(err)
-	}
-
-	writes := []string{
-		fmt.Sprintf(`cpu,host=server01 value=100 %d`, models.MaxNanoTime),
-	}
-
-	test := NewTest("db0", "rp0")
-	test.writes = Writes{
-		&Write{data: strings.Join(writes, "\n")},
-	}
-
-	test.addQueries([]*Query{
-		&Query{
-			name:    `show measurements`,
-			command: "SHOW MEASUREMENTS",
-			exp:     `{"results":[{"series":[{"name":"measurements","columns":["name"],"values":[["cpu"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show series`,
-			command: "SHOW SERIES",
-			exp:     `{"results":[{"series":[{"columns":["key"],"values":[["cpu,host=server01"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag keys`,
-			command: "SHOW TAG KEYS FROM cpu",
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["tagKey"],"values":[["host"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag values`,
-			command: "SHOW TAG VALUES WITH KEY = \"host\"",
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show field keys`,
-			command: "SHOW FIELD KEYS",
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey","fieldType"],"values":[["value","float"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-	}...)
-
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
-		if query.skip {
-			t.Logf("SKIP:: %s", query.name)
-			continue
-		}
-		if err := query.Execute(s); err != nil {
-			t.Error(query.Error(err))
-		} else if !query.success() {
-			t.Error(query.failureMessage())
-		}
-	}
-}
-
 func TestServer_Query_ShowSeries(t *testing.T) {
 	t.Parallel()
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5487,7 +5332,7 @@ func TestServer_Query_ShowMeasurements(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5577,7 +5422,7 @@ func TestServer_Query_ShowTagKeys(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5637,20 +5482,8 @@ func TestServer_Query_ShowTagKeys(t *testing.T) {
 			params:  url.Values{"db": []string{"db0"}},
 		},
 		&Query{
-			name:    "show tag values with key regex",
-			command: "SHOW TAG VALUES WITH KEY =~ /ho/",
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"],["host","server02"]]},{"name":"disk","columns":["key","value"],"values":[["host","server03"]]},{"name":"gpu","columns":["key","value"],"values":[["host","server02"],["host","server03"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
 			name:    `show tag values with key and where`,
 			command: `SHOW TAG VALUES FROM cpu WITH KEY = host WHERE region = 'uswest'`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag values with key regex and where`,
-			command: `SHOW TAG VALUES FROM cpu WITH KEY =~ /ho/ WHERE region = 'uswest'`,
 			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
@@ -5663,30 +5496,12 @@ func TestServer_Query_ShowTagKeys(t *testing.T) {
 		&Query{
 			name:    `show tag values with key and where does not match the regular expression`,
 			command: `SHOW TAG VALUES WITH KEY = region WHERE host !~ /server0[12]/`,
-			exp:     `{"results":[{"series":[{"name":"disk","columns":["key","value"],"values":[["region","caeast"]]},{"name":"gpu","columns":["key","value"],"values":[["region","caeast"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag values with key and where partially matches the regular expression`,
-			command: `SHOW TAG VALUES WITH KEY = host WHERE region =~ /us/`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"],["host","server02"]]},{"name":"gpu","columns":["key","value"],"values":[["host","server02"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag values with key and where partially does not match the regular expression`,
-			command: `SHOW TAG VALUES WITH KEY = host WHERE region !~ /us/`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"]]},{"name":"disk","columns":["key","value"],"values":[["host","server03"]]},{"name":"gpu","columns":["key","value"],"values":[["host","server03"]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"disk","columns":["key","value"],"values":[["region","caeast"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
 		&Query{
 			name:    `show tag values with key in and where does not match the regular expression`,
 			command: `SHOW TAG VALUES FROM cpu WITH KEY IN (host, region) WHERE region = 'uswest'`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"],["region","uswest"]]}]}]}`,
-			params:  url.Values{"db": []string{"db0"}},
-		},
-		&Query{
-			name:    `show tag values with key regex and where does not match the regular expression`,
-			command: `SHOW TAG VALUES FROM cpu WITH KEY =~ /(host|region)/ WHERE region = 'uswest'`,
 			exp:     `{"results":[{"series":[{"name":"cpu","columns":["key","value"],"values":[["host","server01"],["region","uswest"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
@@ -5727,7 +5542,7 @@ func TestServer_Query_ShowFieldKeys(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5753,19 +5568,19 @@ func TestServer_Query_ShowFieldKeys(t *testing.T) {
 		&Query{
 			name:    `show field keys`,
 			command: `SHOW FIELD KEYS`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey","fieldType"],"values":[["field1","float"],["field2","float"],["field3","float"]]},{"name":"disk","columns":["fieldKey","fieldType"],"values":[["field8","float"],["field9","float"]]},{"name":"gpu","columns":["fieldKey","fieldType"],"values":[["field4","float"],["field5","float"],["field6","float"],["field7","float"]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey"],"values":[["field1"],["field2"],["field3"]]},{"name":"disk","columns":["fieldKey"],"values":[["field8"],["field9"]]},{"name":"gpu","columns":["fieldKey"],"values":[["field4"],["field5"],["field6"],["field7"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
 		&Query{
 			name:    `show field keys from measurement`,
 			command: `SHOW FIELD KEYS FROM cpu`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey","fieldType"],"values":[["field1","float"],["field2","float"],["field3","float"]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey"],"values":[["field1"],["field2"],["field3"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
 		&Query{
 			name:    `show field keys measurement with regex`,
 			command: `SHOW FIELD KEYS FROM /[cg]pu/`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey","fieldType"],"values":[["field1","float"],["field2","float"],["field3","float"]]},{"name":"gpu","columns":["fieldKey","fieldType"],"values":[["field4","float"],["field5","float"],["field6","float"],["field7","float"]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"cpu","columns":["fieldKey"],"values":[["field1"],["field2"],["field3"]]},{"name":"gpu","columns":["fieldKey"],"values":[["field4"],["field5"],["field6"],["field7"]]}]}]}`,
 			params:  url.Values{"db": []string{"db0"}},
 		},
 	}...)
@@ -5789,11 +5604,12 @@ func TestServer_Query_ShowFieldKeys(t *testing.T) {
 }
 
 func TestServer_ContinuousQuery(t *testing.T) {
+	t.Skip()
 	t.Parallel()
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -5871,7 +5687,7 @@ func TestServer_ContinuousQuery(t *testing.T) {
 		&Query{
 			name:    `show continuous queries`,
 			command: `SHOW CONTINUOUS QUERIES`,
-			exp:     `{"results":[{"series":[{"name":"db0","columns":["name","query"],"values":[["cq1","CREATE CONTINUOUS QUERY cq1 ON db0 BEGIN SELECT count(value) INTO db0.rp1.:MEASUREMENT FROM db0.rp0./[cg]pu/ GROUP BY time(5s) END"],["cq2","CREATE CONTINUOUS QUERY cq2 ON db0 BEGIN SELECT count(value) INTO db0.rp2.:MEASUREMENT FROM db0.rp0./[cg]pu/ GROUP BY time(5s), * END"]]}]}]}`,
+			exp:     `{"results":[{"series":[{"name":"db0","columns":["name","query"],"values":[["cq1","CREATE CONTINUOUS QUERY cq1 ON db0 BEGIN SELECT count(value) INTO \"db0\".\"rp1\".:MEASUREMENT FROM \"db0\".\"rp0\"./[cg]pu/ GROUP BY time(5s) END"],["cq2","CREATE CONTINUOUS QUERY cq2 ON db0 BEGIN SELECT count(value) INTO \"db0\".\"rp2\".:MEASUREMENT FROM \"db0\".\"rp0\"./[cg]pu/ GROUP BY time(5s), * END"]]}]}]}`,
 		},
 	}...)
 
@@ -5885,13 +5701,12 @@ func TestServer_ContinuousQuery(t *testing.T) {
 	}
 
 	// Wait for CQs to run. TODO: fix this ugly hack
-	//time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 5)
 
 	// Setup tests to check the CQ results.
 	test2 := NewTest("db0", "rp1")
 	test2.addQueries([]*Query{
 		&Query{
-			skip:    true,
 			name:    "check results of cq1",
 			command: `SELECT * FROM "rp1"./[cg]pu/`,
 			exp:     `{"results":[{"series":[{"name":"cpu","columns":["time","count","host","region","value"],"values":[["` + interval2.UTC().Format(time.RFC3339Nano) + `",3,null,null,null]]},{"name":"gpu","columns":["time","count","host","region","value"],"values":[["` + interval1.UTC().Format(time.RFC3339Nano) + `",2,null,null,null],["` + interval0.UTC().Format(time.RFC3339Nano) + `",1,null,null,null]]}]}]}`,
@@ -5928,7 +5743,7 @@ func TestServer_ContinuousQuery_Deadlock(t *testing.T) {
 		s.Server = nil
 	}()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6001,7 +5816,7 @@ func TestServer_Query_EvilIdentifiers(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6045,7 +5860,7 @@ func TestServer_Query_OrderByTime(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6107,7 +5922,7 @@ func TestServer_Query_FieldWithMultiplePeriods(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6161,7 +5976,7 @@ func TestServer_Query_FieldWithMultiplePeriodsMeasurementPrefixMatch(t *testing.
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6215,7 +6030,7 @@ func TestServer_Query_IntoTarget(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
@@ -6267,105 +6082,6 @@ func TestServer_Query_IntoTarget(t *testing.T) {
 	}
 }
 
-// This test ensures that data is not duplicated with measurements
-// of the same name.
-func TestServer_Query_DuplicateMeasurements(t *testing.T) {
-	t.Parallel()
-	s := OpenDefaultServer(NewConfig())
-	defer s.Close()
-
-	// Create a second database.
-	if err := s.CreateDatabaseAndRetentionPolicy("db1", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.MetaClient.SetDefaultRetentionPolicy("db1", "rp0"); err != nil {
-		t.Fatal(err)
-	}
-
-	test := NewTest("db0", "rp0")
-	test.writes = Writes{
-		&Write{data: fmt.Sprintf(`cpu value=1 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:00Z").UnixNano())},
-	}
-
-	if err := test.init(s); err != nil {
-		t.Fatalf("test init failed: %s", err)
-	}
-
-	test = NewTest("db1", "rp0")
-	test.writes = Writes{
-		&Write{data: fmt.Sprintf(`cpu value=2 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:10Z").UnixNano())},
-	}
-
-	if err := test.init(s); err != nil {
-		t.Fatalf("test init failed: %s", err)
-	}
-
-	test.addQueries([]*Query{
-		&Query{
-			name:    "select from both databases",
-			params:  url.Values{"db": []string{"db0"}},
-			command: `SELECT value FROM db0.rp0.cpu, db1.rp0.cpu`,
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["time","value"],"values":[["2000-01-01T00:00:00Z",1],["2000-01-01T00:00:10Z",2]]}]}]}`,
-		},
-	}...)
-
-	for _, query := range test.queries {
-		if query.skip {
-			t.Logf("SKIP:: %s", query.name)
-			continue
-		}
-		if err := query.Execute(s); err != nil {
-			t.Error(query.Error(err))
-		} else if !query.success() {
-			t.Error(query.failureMessage())
-		}
-	}
-}
-
-func TestServer_Query_LargeTimestamp(t *testing.T) {
-	t.Parallel()
-	s := OpenDefaultServer(NewConfig())
-	defer s.Close()
-
-	writes := []string{
-		fmt.Sprintf(`cpu value=100 %d`, models.MaxNanoTime),
-	}
-
-	test := NewTest("db0", "rp0")
-	test.writes = Writes{
-		&Write{data: strings.Join(writes, "\n")},
-	}
-	test.addQueries([]*Query{
-		&Query{
-			name:    `select value at max nano time`,
-			params:  url.Values{"db": []string{"db0"}},
-			command: fmt.Sprintf(`SELECT value FROM cpu WHERE time <= %d`, models.MaxNanoTime),
-			exp:     `{"results":[{"series":[{"name":"cpu","columns":["time","value"],"values":[["` + time.Unix(0, models.MaxNanoTime).UTC().Format(time.RFC3339Nano) + `",100]]}]}]}`,
-		},
-	}...)
-
-	if err := test.init(s); err != nil {
-		t.Fatalf("test init failed: %s", err)
-	}
-
-	// Open a new server with the same configuration file.
-	// This is to ensure the meta data was marshaled correctly.
-	s2 := OpenServer(s.Config)
-	defer s2.Close()
-
-	for _, query := range test.queries {
-		if query.skip {
-			t.Logf("SKIP:: %s", query.name)
-			continue
-		}
-		if err := query.Execute(s); err != nil {
-			t.Error(query.Error(err))
-		} else if !query.success() {
-			t.Error(query.failureMessage())
-		}
-	}
-}
-
 // This test reproduced a data race with closing the
 // Subscriber points channel while writes were in-flight in the PointsWriter.
 func TestServer_ConcurrentPointsWriter_Subscriber(t *testing.T) {
@@ -6381,7 +6097,7 @@ func TestServer_ConcurrentPointsWriter_Subscriber(t *testing.T) {
 			case <-done:
 				return
 			default:
-				wpr := &coordinator.WritePointsRequest{
+				wpr := &cluster.WritePointsRequest{
 					Database:        "db0",
 					RetentionPolicy: "rp0",
 				}
@@ -6402,7 +6118,7 @@ func TestServer_WhereTimeInclusive(t *testing.T) {
 	s := OpenServer(NewConfig())
 	defer s.Close()
 
-	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicySpec("rp0", 1, 0)); err != nil {
+	if err := s.CreateDatabaseAndRetentionPolicy("db0", newRetentionPolicyInfo("rp0", 1, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.MetaClient.SetDefaultRetentionPolicy("db0", "rp0"); err != nil {
