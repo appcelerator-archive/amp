@@ -49,8 +49,10 @@ the configuration below.
 package main
 
 import (
+	"net/url"
+	"fmt"
 	"log"
-	"time"
+	"os"
 
 	"github.com/influxdata/influxdb/client/v2"
 )

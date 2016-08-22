@@ -24,7 +24,6 @@ DATA_DIR = "/var/lib/influxdb"
 SCRIPT_DIR = "/usr/lib/influxdb/scripts"
 CONFIG_DIR = "/etc/influxdb"
 LOGROTATE_DIR = "/etc/logrotate.d"
-MAN_DIR = "/usr/share/man"
 
 INIT_SCRIPT = "scripts/init.sh"
 SYSTEMD_SCRIPT = "scripts/influxdb.service"
@@ -49,7 +48,7 @@ VENDOR = "InfluxData"
 DESCRIPTION = "Distributed time-series database."
 
 prereqs = [ 'git', 'go' ]
-go_vet_command = "go tool vet -example=false ./"
+go_vet_command = "go tool vet -composites=true ./"
 optional_prereqs = [ 'fpm', 'rpmbuild', 'gpg' ]
 
 fpm_common_args = "-f -s dir --log error \
@@ -62,7 +61,6 @@ fpm_common_args = "-f -s dir --log error \
 --maintainer {} \
 --directories {} \
 --directories {} \
---directories {} \
 --description \"{}\"".format(
      VENDOR,
      PACKAGE_URL,
@@ -73,7 +71,6 @@ fpm_common_args = "-f -s dir --log error \
      MAINTAINER,
      LOG_DIR,
      DATA_DIR,
-     MAN_DIR,
      DESCRIPTION)
 
 for f in CONFIGURATION_FILES:
@@ -123,13 +120,12 @@ def create_package_fs(build_root):
              DATA_DIR[1:],
              SCRIPT_DIR[1:],
              CONFIG_DIR[1:],
-             LOGROTATE_DIR[1:],
-             MAN_DIR[1:] ]
+             LOGROTATE_DIR[1:] ]
     for d in dirs:
         os.makedirs(os.path.join(build_root, d))
         os.chmod(os.path.join(build_root, d), 0o755)
 
-def package_scripts(build_root, config_only=False, windows=False):
+def package_scripts(build_root, config_only=False):
     """Copy the necessary scripts and configuration files to the package
     filesystem.
     """
@@ -147,14 +143,6 @@ def package_scripts(build_root, config_only=False, windows=False):
         os.chmod(os.path.join(build_root, LOGROTATE_DIR[1:], "influxdb"), 0o644)
         shutil.copyfile(DEFAULT_CONFIG, os.path.join(build_root, CONFIG_DIR[1:], "influxdb.conf"))
         os.chmod(os.path.join(build_root, CONFIG_DIR[1:], "influxdb.conf"), 0o644)
-
-def package_man_files(build_root):
-    """Copy and gzip man pages to the package filesystem."""
-    logging.debug("Installing man pages.")
-    run("make -C man/ clean install DESTDIR={}/usr".format(build_root))
-    for path, dir, files in os.walk(os.path.join(build_root, MAN_DIR[1:])):
-        for f in files:
-            run("gzip {}".format(os.path.join(path, f)))
 
 def run_generate():
     """Run 'go generate' to rebuild any static assets.
@@ -203,7 +191,8 @@ def run_tests(race, parallel, timeout, no_vet):
         logging.error("{}".format(out))
         return False
     if not no_vet:
-        logging.info("Running 'go vet'...")
+        logging.info("Installing 'go vet' tool...")
+        run("go install golang.org/x/tools/cmd/vet")
         out = run(go_vet_command)
         if len(out) > 0:
             logging.error("Go vet failed. Please run 'go vet ./...' and fix any errors.")
@@ -289,15 +278,21 @@ def get_current_version():
     """Parse version information from git tag output.
     """
     version_tag = get_current_version_tag()
-    # Remove leading 'v'
+    # Remove leading 'v' and possible '-rc\d+'
     if version_tag[0] == 'v':
         version_tag = version_tag[1:]
-    # Replace any '-'/'_' with '~'
-    if '-' in version_tag:
-        version_tag = version_tag.replace("-","~")
-    if '_' in version_tag:
-        version_tag = version_tag.replace("_","~")
-    return version_tag
+    version = re.sub(r'-rc\d+', '', str(version_tag))
+    return version
+
+def get_current_rc():
+    """Parse release candidate from git tag output.
+    """
+    rc = None
+    version_tag = get_current_version_tag()
+    matches = re.match(r'.*-rc(\d+)', str(version_tag))
+    if matches:
+        rc, = matches.groups(1)
+    return rc
 
 def get_current_commit(short=False):
     """Retrieve the current git commit.
@@ -462,6 +457,7 @@ def build(version=None,
           platform=None,
           arch=None,
           nightly=False,
+          rc=None,
           race=False,
           clean=False,
           outdir=".",
@@ -488,8 +484,12 @@ def build(version=None,
         shutil.rmtree(outdir)
         os.makedirs(outdir)
 
+    if rc:
+        # If a release candidate, update the version information accordingly
+        version = "{}rc{}".format(version, rc)
     logging.info("Using version '{}' for build.".format(version))
 
+    tmp_build_dir = create_temp_dir()
     for target, path in targets.items():
         logging.info("Building target: {}".format(target))
         build_command = ""
@@ -579,7 +579,7 @@ def generate_sig_from_file(path):
         run('gpg --armor --detach-sign --yes {}'.format(path))
     return True
 
-def package(build_output, pkg_name, version, nightly=False, iteration=1, static=False, release=False):
+def package(build_output, version, nightly=False, rc=None, iteration=1, static=False, release=False):
     """Package the output of the build process.
     """
     outfiles = []
@@ -603,19 +603,14 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
                 os.makedirs(build_root)
 
                 # Copy packaging scripts to build directory
-                if platform == "windows":
+                if platform == "windows" or static or "static_" in arch:
                     # For windows and static builds, just copy
                     # binaries to root of package (no other scripts or
                     # directories)
-                    package_scripts(build_root, config_only=True, windows=True)
-                elif static or "static_" in arch:
                     package_scripts(build_root, config_only=True)
                 else:
                     create_package_fs(build_root)
                     package_scripts(build_root)
-
-                if platform != "windows":
-                    package_man_files(build_root)
 
                 for binary in targets:
                     # Copy newly-built binaries to packaging directory
@@ -636,7 +631,7 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
                 for package_type in supported_packages[platform]:
                     # Package the directory structure for each package type for the platform
                     logging.debug("Packaging directory '{}' as '{}'.".format(build_root, package_type))
-                    name = pkg_name
+                    name = PACKAGE_NAME
                     # Reset version, iteration, and current location on each run
                     # since they may be modified below.
                     package_version = version
@@ -648,11 +643,16 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
                         package_arch = arch
                     if not release and not nightly:
                         # For non-release builds, just use the commit hash as the version
-                        package_version = "{}~{}".format(version,
-                                                         get_current_commit(short=True))
+                        package_version = "{}~{}.{}".format(version,
+                                                            get_current_branch(),
+                                                            get_current_commit(short=True))
                         package_iteration = "0"
                     package_build_root = build_root
                     current_location = build_output[platform][arch]
+
+                    if rc is not None and release:
+                        # Set iteration to 0 since it's a release candidate
+                        package_iteration = "0.rc{}".format(rc)
 
                     if package_type in ['zip', 'tar']:
                         # For tars and zips, start the packaging one folder above
@@ -668,27 +668,42 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
                                                                  platform,
                                                                  package_arch)
                         else:
-                            if static or "static_" in arch:
-                                name = '{}-{}-static_{}_{}'.format(name,
+                            if rc is not None or 'rc' in package_iteration or 'beta' not in package_iteration:
+                                # If RC or beta, include iteration in package output
+                                if static or "static_" in arch:
+                                    name = '{}-{}-static_{}_{}'.format(name,
+                                                                       package_version,
+                                                                       platform,
+                                                                       package_arch)
+                                else:
+                                    name = '{}-{}_{}_{}'.format(name,
+                                                                package_version,
+                                                                platform,
+                                                                package_arch)
+                            else:
+                                if static or "static_" in arch:
+                                    name = '{}-{}-{}-static_{}_{}'.format(name,
+                                                                          package_version,
+                                                                          package_iteration,
+                                                                          platform,
+                                                                          package_arch)
+                                else:
+                                    name = '{}-{}-{}_{}_{}'.format(name,
                                                                    package_version,
+                                                                   package_iteration,
                                                                    platform,
                                                                    package_arch)
-                            else:
-                                name = '{}-{}_{}_{}'.format(name,
-                                                            package_version,
-                                                            platform,
-                                                            package_arch)
                         current_location = os.path.join(os.getcwd(), current_location)
                         if package_type == 'tar':
-                            tar_command = "cd {} && tar -cvzf {}.tar.gz ./*".format(package_build_root, name)
+                            tar_command = "cd {} && tar -cvzf {}.tar.gz ./*".format(build_root, name)
                             run(tar_command, shell=True)
-                            run("mv {}.tar.gz {}".format(os.path.join(package_build_root, name), current_location), shell=True)
+                            run("mv {}.tar.gz {}".format(os.path.join(build_root, name), current_location), shell=True)
                             outfile = os.path.join(current_location, name + ".tar.gz")
                             outfiles.append(outfile)
                         elif package_type == 'zip':
-                            zip_command = "cd {} && zip -r {}.zip ./*".format(package_build_root, name)
+                            zip_command = "cd {} && zip -r {}.zip ./*".format(build_root, name)
                             run(zip_command, shell=True)
-                            run("mv {}.zip {}".format(os.path.join(package_build_root, name), current_location), shell=True)
+                            run("mv {}.zip {}".format(os.path.join(build_root, name), current_location), shell=True)
                             outfile = os.path.join(current_location, name + ".zip")
                             outfiles.append(outfile)
                     elif package_type not in ['zip', 'tar'] and static or "static_" in arch:
@@ -719,12 +734,14 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
                                 os.rename(outfile, new_outfile)
                                 outfile = new_outfile
                             else:
-                                if package_type == 'rpm':
-                                    # rpm's convert any dashes to underscores
-                                    package_version = package_version.replace("-", "_")
-                                new_outfile = outfile.replace("{}-{}".format(package_version, package_iteration), package_version)
-                                os.rename(outfile, new_outfile)
-                                outfile = new_outfile
+                                if rc is None and 'rc' not in package_iteration and 'beta' not in package_iteration:
+                                    # Strip iteration from package name (if there is no RC or beta)
+                                    if package_type == 'rpm':
+                                        # rpm's convert any dashes to underscores
+                                        package_version = package_version.replace("-", "_")
+                                    new_outfile = outfile.replace("{}-{}".format(package_version, package_iteration), package_version)
+                                    os.rename(outfile, new_outfile)
+                                    outfile = new_outfile
                             outfiles.append(os.path.join(os.getcwd(), outfile))
         logging.debug("Produced package files: {}".format(outfiles))
         return outfiles
@@ -735,6 +752,9 @@ def package(build_output, pkg_name, version, nightly=False, iteration=1, static=
 def main(args):
     global PACKAGE_NAME
 
+    if args.nightly and args.rc:
+        logging.error("Cannot be both a nightly and a release candidate.")
+        return 1
     if args.release and args.nightly:
         logging.error("Cannot be both a nightly and a release.")
         return 1
@@ -743,6 +763,8 @@ def main(args):
         args.version = increment_minor_version(args.version)
         args.version = "{}~n{}".format(args.version,
                                        datetime.utcnow().strftime("%Y%m%d%H%M"))
+        args.iteration = 0
+    elif args.rc:
         args.iteration = 0
 
     # Pre-build checks
@@ -810,6 +832,7 @@ def main(args):
                          platform=platform,
                          arch=arch,
                          nightly=args.nightly,
+                         rc=args.rc,
                          race=args.race,
                          clean=args.clean,
                          outdir=od,
@@ -824,9 +847,9 @@ def main(args):
             logging.error("FPM ruby gem required for packaging. Stopping.")
             return 1
         packages = package(build_output,
-                           args.name,
                            args.version,
                            nightly=args.nightly,
+                           rc=args.rc,
                            iteration=args.iteration,
                            static=args.static,
                            release=args.release)
@@ -851,7 +874,7 @@ def main(args):
             logging.info("{} (MD5={})".format(p.split('/')[-1:][0],
                                               generate_md5_from_file(p)))
     if orig_branch != get_current_branch():
-        logging.info("Moving back to original git branch: {}".format(orig_branch))
+        logging.info("Moving back to original git branch: {}".format(args.branch))
         run("git checkout {}".format(orig_branch))
 
     return 0
@@ -875,7 +898,6 @@ if __name__ == '__main__':
                         help='Output directory')
     parser.add_argument('--name', '-n',
                         metavar='<name>',
-                        default=PACKAGE_NAME,
                         type=str,
                         help='Name to use for package name (when package is specified)')
     parser.add_argument('--arch',
@@ -903,6 +925,10 @@ if __name__ == '__main__':
                         type=str,
                         default=get_current_version(),
                         help='Version information to apply to build output (ex: 0.12.0)')
+    parser.add_argument('--rc',
+                        metavar='<release candidate>',
+                        type=int,
+                        help='Release Candidate (RC) version to apply to build output')
     parser.add_argument('--iteration',
                         metavar='<package iteration>',
                         type=str,

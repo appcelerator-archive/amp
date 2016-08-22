@@ -3,9 +3,9 @@ package tsm1
 import (
 	"encoding/binary"
 	"errors"
+	"expvar"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -14,12 +14,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/golang/snappy"
-	"github.com/influxdata/influxdb/models"
-	"github.com/influxdata/influxdb/pkg/limiter"
+	"github.com/influxdata/influxdb"
+	"github.com/influxdata/influxdb/tsdb"
 )
 
 const (
@@ -64,9 +63,8 @@ var (
 
 // Statistics gathered by the WAL.
 const (
-	statWALOldBytes         = "oldSegmentsDiskBytes"
-	statWALCurrentBytes     = "currentSegmentDiskBytes"
-	defaultWaitingWALWrites = 10
+	statWALOldBytes     = "oldSegmentsDiskBytes"
+	statWALCurrentBytes = "currentSegmentDiskBytes"
 )
 
 type WAL struct {
@@ -83,73 +81,41 @@ type WAL struct {
 	closing chan struct{}
 
 	// WALOutput is the writer used by the logger.
-	logger       *log.Logger // Logger to be used for important messages
-	traceLogger  *log.Logger // Logger to be used when trace-logging is on.
-	logOutput    io.Writer   // Writer to be logger and traceLogger if active.
-	traceLogging bool
+	LogOutput io.Writer
+	logger    *log.Logger
 
 	// SegmentSize is the file size at which a segment file will be rotated
 	SegmentSize int
 
-	// statistics for the WAL
-	stats   *WALStatistics
-	limiter limiter.Fixed
+	// LoggingEnabled specifies if detailed logs should be output
+	LoggingEnabled bool
+
+	statMap *expvar.Map
 }
 
 func NewWAL(path string) *WAL {
+	db, rp := tsdb.DecodeStorePath(path)
 	return &WAL{
 		path: path,
 
 		// these options should be overriden by any options in the config
+		LogOutput:   os.Stderr,
 		SegmentSize: DefaultSegmentSize,
-		closing:     make(chan struct{}),
-		stats:       &WALStatistics{},
-		limiter:     limiter.NewFixed(defaultWaitingWALWrites),
 		logger:      log.New(os.Stderr, "[tsm1wal] ", log.LstdFlags),
-		traceLogger: log.New(ioutil.Discard, "[tsm1wal] ", log.LstdFlags),
-		logOutput:   os.Stderr,
+		closing:     make(chan struct{}),
+
+		statMap: influxdb.NewStatistics(
+			"tsm1_wal:"+path,
+			"tsm1_wal",
+			map[string]string{"path": path, "database": db, "retentionPolicy": rp},
+		),
 	}
 }
 
-// enableTraceLogging must be called before the WAL is opened.
-func (l *WAL) enableTraceLogging(enabled bool) {
-	l.traceLogging = enabled
-	if enabled {
-		l.traceLogger.SetOutput(l.logOutput)
-	}
-}
-
-// SetLogOutput sets the location that logs are written to. It is safe for
-// concurrent use.
+// SetLogOutput sets the location that logs are written to. It must not be
+// called after the Open method has been called.
 func (l *WAL) SetLogOutput(w io.Writer) {
-	l.logger.SetOutput(w)
-
-	// Set the trace logger's output only if trace logging is enabled.
-	if l.traceLogging {
-		l.traceLogger.SetOutput(w)
-	}
-
-	l.mu.Lock()
-	l.logOutput = w
-	l.mu.Unlock()
-}
-
-// WALStatistics maintains statistics about the WAL.
-type WALStatistics struct {
-	OldBytes     int64
-	CurrentBytes int64
-}
-
-// Statistics returns statistics for periodic monitoring.
-func (l *WAL) Statistics(tags map[string]string) []models.Statistic {
-	return []models.Statistic{{
-		Name: "tsm1_wal",
-		Tags: tags,
-		Values: map[string]interface{}{
-			statWALOldBytes:     atomic.LoadInt64(&l.stats.OldBytes),
-			statWALCurrentBytes: atomic.LoadInt64(&l.stats.CurrentBytes),
-		},
-	}}
+	l.logger = log.New(w, "[tsm1wal] ", log.LstdFlags)
 }
 
 // Path returns the path the log was initialized with.
@@ -164,9 +130,10 @@ func (l *WAL) Open() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.traceLogger.Printf("tsm1 WAL starting with %d segment size\n", l.SegmentSize)
-	l.traceLogger.Printf("tsm1 WAL writing to %s\n", l.path)
-
+	if l.LoggingEnabled {
+		l.logger.Printf("tsm1 WAL starting with %d segment size\n", l.SegmentSize)
+		l.logger.Printf("tsm1 WAL writing to %s\n", l.path)
+	}
 	if err := os.MkdirAll(l.path, 0777); err != nil {
 		return err
 	}
@@ -207,7 +174,9 @@ func (l *WAL) Open() error {
 
 		totalOldDiskSize += stat.Size()
 	}
-	atomic.StoreInt64(&l.stats.OldBytes, totalOldDiskSize)
+	sizeStat := new(expvar.Int)
+	sizeStat.Set(totalOldDiskSize)
+	l.statMap.Set(statWALOldBytes, sizeStat)
 
 	l.closing = make(chan struct{})
 
@@ -267,7 +236,6 @@ func (l *WAL) Remove(files []string) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	for _, fn := range files {
-		l.traceLogger.Printf("Removing %s", fn)
 		os.RemoveAll(fn)
 	}
 
@@ -286,7 +254,9 @@ func (l *WAL) Remove(files []string) error {
 
 		totalOldDiskSize += stat.Size()
 	}
-	atomic.StoreInt64(&l.stats.OldBytes, totalOldDiskSize)
+	sizeStat := new(expvar.Int)
+	sizeStat.Set(totalOldDiskSize)
+	l.statMap.Set(statWALOldBytes, sizeStat)
 
 	return nil
 }
@@ -299,12 +269,6 @@ func (l *WAL) LastWriteTime() time.Time {
 }
 
 func (l *WAL) writeToLog(entry WALEntry) (int, error) {
-	// limit how many concurrent encodings can be in flight.  Since we can only
-	// write one at a time to disk, a slow disk can cause the allocations below
-	// to increase quickly.  If we're backed up, wait until others have completed.
-	l.limiter.Take()
-	defer l.limiter.Release()
-
 	// encode and compress the entry while we're not locked
 	bytes := getBuf(walEncodeBufSize)
 	defer putBuf(bytes)
@@ -339,7 +303,9 @@ func (l *WAL) writeToLog(entry WALEntry) (int, error) {
 	}
 
 	// Update stats for current segment size
-	atomic.StoreInt64(&l.stats.CurrentBytes, int64(l.currentSegmentWriter.size))
+	curSize := new(expvar.Int)
+	curSize.Set(int64(l.currentSegmentWriter.size))
+	l.statMap.Set(statWALCurrentBytes, curSize)
 
 	l.lastWriteTime = time.Now()
 
@@ -415,7 +381,6 @@ func (l *WAL) Close() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.traceLogger.Printf("Closing %s", l.path)
 	// Close, but don't set to nil so future goroutines can still be signaled
 	close(l.closing)
 
@@ -444,7 +409,7 @@ func (l *WAL) newSegmentFile() error {
 		if err := l.currentSegmentWriter.close(); err != nil {
 			return err
 		}
-		atomic.StoreInt64(&l.stats.OldBytes, int64(l.currentSegmentWriter.size))
+		l.statMap.Add(statWALOldBytes, int64(l.currentSegmentWriter.size))
 	}
 
 	fileName := filepath.Join(l.path, fmt.Sprintf("%s%05d.%s", WALFilePrefix, l.currentSegmentID, WALFileExtension))
@@ -455,7 +420,9 @@ func (l *WAL) newSegmentFile() error {
 	l.currentSegmentWriter = NewWALSegmentWriter(fd)
 
 	// Reset the current segment size stat
-	atomic.StoreInt64(&l.stats.CurrentBytes, 0)
+	curSize := new(expvar.Int)
+	curSize.Set(0)
+	l.statMap.Set(statWALCurrentBytes, curSize)
 
 	return nil
 }

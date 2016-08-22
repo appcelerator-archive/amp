@@ -205,12 +205,11 @@ func decodeTags(id []byte) map[string]string {
 	if len(a) == 0 {
 		return nil
 	}
-	mid := len(a) / 2
 
 	// Decode key/value tags.
 	m := make(map[string]string)
-	for i := 0; i < mid; i++ {
-		m[string(a[i])] = string(a[i+mid])
+	for i := 0; i < len(a); i += 2 {
+		m[string(a[i])] = string(a[i+1])
 	}
 	return m
 }
@@ -281,7 +280,7 @@ func decodeAux(pb []*internal.Aux) []interface{} {
 	return aux
 }
 
-// PointDecoder decodes generic points from a reader.
+// NewPointDecoder decodes generic points from a reader.
 type PointDecoder struct {
 	r     io.Reader
 	stats IteratorStats

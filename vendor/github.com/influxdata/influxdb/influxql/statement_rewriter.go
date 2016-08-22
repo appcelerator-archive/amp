@@ -24,7 +24,6 @@ func rewriteShowFieldKeysStatement(stmt *ShowFieldKeysStatement) (Statement, err
 	return &SelectStatement{
 		Fields: Fields([]*Field{
 			{Expr: &VarRef{Val: "fieldKey"}},
-			{Expr: &VarRef{Val: "fieldType"}},
 		}),
 		Sources:    rewriteSources(stmt.Sources, "_fieldKeys"),
 		Condition:  rewriteSourcesCondition(stmt.Sources, nil),
@@ -46,11 +45,20 @@ func rewriteShowMeasurementsStatement(stmt *ShowMeasurementsStatement) (Statemen
 	if stmt.Source != nil {
 		condition = rewriteSourcesCondition(Sources([]Source{stmt.Source}), stmt.Condition)
 	}
-	return &ShowMeasurementsStatement{
+
+	return &SelectStatement{
+		Fields: Fields([]*Field{
+			{Expr: &VarRef{Val: "_name"}, Alias: "name"},
+		}),
+		Sources: Sources([]Source{
+			&Measurement{Name: "_measurements"},
+		}),
 		Condition:  condition,
-		Limit:      stmt.Limit,
 		Offset:     stmt.Offset,
+		Limit:      stmt.Limit,
 		SortFields: stmt.SortFields,
+		OmitTime:   true,
+		Dedupe:     true,
 	}, nil
 }
 
@@ -81,9 +89,9 @@ func rewriteShowTagValuesStatement(stmt *ShowTagValuesStatement) (Statement, err
 	}
 
 	condition := stmt.Condition
-	var expr Expr
-	if list, ok := stmt.TagKeyExpr.(*ListLiteral); ok {
-		for _, tagKey := range list.Vals {
+	if len(stmt.TagKeys) > 0 {
+		var expr Expr
+		for _, tagKey := range stmt.TagKeys {
 			tagExpr := &BinaryExpr{
 				Op:  EQ,
 				LHS: &VarRef{Val: "_tagKey"},
@@ -100,33 +108,32 @@ func rewriteShowTagValuesStatement(stmt *ShowTagValuesStatement) (Statement, err
 				expr = tagExpr
 			}
 		}
-	} else {
-		expr = &BinaryExpr{
-			Op:  stmt.Op,
-			LHS: &VarRef{Val: "_tagKey"},
-			RHS: stmt.TagKeyExpr,
-		}
-	}
 
-	// Set condition or "AND" together.
-	if condition == nil {
-		condition = expr
-	} else {
-		condition = &BinaryExpr{
-			Op:  AND,
-			LHS: &ParenExpr{Expr: condition},
-			RHS: &ParenExpr{Expr: expr},
+		// Set condition or "AND" together.
+		if condition == nil {
+			condition = expr
+		} else {
+			condition = &BinaryExpr{
+				Op:  AND,
+				LHS: &ParenExpr{Expr: condition},
+				RHS: &ParenExpr{Expr: expr},
+			}
 		}
 	}
 	condition = rewriteSourcesCondition(stmt.Sources, condition)
 
-	return &ShowTagValuesStatement{
-		Op:         stmt.Op,
-		TagKeyExpr: stmt.TagKeyExpr,
+	return &SelectStatement{
+		Fields: []*Field{
+			{Expr: &VarRef{Val: "_tagKey"}, Alias: "key"},
+			{Expr: &VarRef{Val: "value"}},
+		},
+		Sources:    rewriteSources(stmt.Sources, "_tags"),
 		Condition:  condition,
-		SortFields: stmt.SortFields,
-		Limit:      stmt.Limit,
 		Offset:     stmt.Offset,
+		Limit:      stmt.Limit,
+		SortFields: stmt.SortFields,
+		OmitTime:   true,
+		Dedupe:     true,
 	}, nil
 }
 
@@ -148,6 +155,7 @@ func rewriteShowTagKeysStatement(stmt *ShowTagKeysStatement) (Statement, error) 
 		OmitTime:   true,
 		Dedupe:     true,
 	}, nil
+
 }
 
 // rewriteSources rewrites sources with previous database and retention policy

@@ -1,10 +1,10 @@
-hash: 7bd7bfb79875b1e45c77347726345c3fd3a7f8b41ca600c15675a91abeda59f9
-updated: 2016-08-16T17:47:39.840699638-07:00
+hash: f9a8682116ead526ebe20676187e0522b75276b1dacbd93f56006dc358fb333e
+updated: 2016-08-19T21:31:29.098749768-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/coreos/etcd
-  version: 28b797b538a57c374ba2432dc10b6750ce68595b
+  version: 8c88c1611e3d2bf7969f53d0ba25e4c0b2248002
   subpackages:
   - clientv3
   - auth/authpb
@@ -53,7 +53,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: a0004b68577cdbfc921463404eab839c50f14a0c
+  version: e57fb88a051ee40fd9277094345fbd47bb4783ce
   subpackages:
   - client/v2
   - models
@@ -86,11 +86,11 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 4f9190456aed1c2113ca51ea9b89219747458dc1
+  version: 6454a84b6da0ea8b628d5d8a26759f62c6c161b4
 - name: github.com/spf13/viper
   version: 654fc7bb54d0c138ef80405ff577391f79c0c32d
 - name: golang.org/x/crypto
-  version: c197bcf24cde29d3f73c7b4ac6fd41f4384e8af6
+  version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
   - ssh/terminal
   - ssh
@@ -102,9 +102,10 @@ imports:
   - http2
   - trace
   - http2/hpack
+  - lex/httplex
   - internal/timeseries
 - name: golang.org/x/oauth2
-  version: 4784bb855e56a530f1ce5d788959359ed6cb4a16
+  version: 3b966c7f301c0c71c53d94dc632a62df0a682cd7
   subpackages:
   - internal
 - name: golang.org/x/sys
@@ -127,13 +128,13 @@ imports:
   - internal/log
   - internal/remote_api
 - name: google.golang.org/grpc
-  version: c2781963b3af261a37e0f14fdcb7c1fa13259e1f
+  version: 231b4cfea0e79843053a33f5fe90bd4d84b23cd3
   subpackages:
   - codes
+  - metadata
   - credentials
   - grpclog
   - internal
-  - metadata
   - naming
   - transport
   - peer

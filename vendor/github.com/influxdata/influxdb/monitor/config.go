@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"errors"
 	"time"
 
 	"github.com/influxdata/influxdb/toml"
@@ -33,12 +32,4 @@ func NewConfig() Config {
 		StoreDatabase: DefaultStoreDatabase,
 		StoreInterval: toml.Duration(DefaultStoreInterval),
 	}
-}
-
-// Validate validates that the configuration is acceptable.
-func (c Config) Validate() error {
-	if c.StoreInterval <= 0 {
-		return errors.New("monitor store interval must be positive")
-	}
-	return nil
 }

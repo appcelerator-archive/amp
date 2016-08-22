@@ -10,14 +10,6 @@ import (
 	"github.com/influxdata/influxdb/influxql"
 )
 
-func BenchmarkQuery_String(b *testing.B) {
-	p := influxql.NewParser(strings.NewReader(`SELECT foo AS zoo, a AS b FROM bar WHERE value > 10 AND q = 'hello'`))
-	q, _ := p.ParseStatement()
-	for i := 0; i < b.N; i++ {
-		_ = q.String()
-	}
-}
-
 // Ensure a value's data type can be retrieved.
 func TestInspectDataType(t *testing.T) {
 	for i, tt := range []struct {
@@ -52,7 +44,6 @@ func TestDataType_String(t *testing.T) {
 		{influxql.String, "string"},
 		{influxql.Time, "time"},
 		{influxql.Duration, "duration"},
-		{influxql.Tag, "tag"},
 		{influxql.Unknown, "unknown"},
 	} {
 		if v := tt.typ.String(); tt.v != v {
@@ -343,8 +334,8 @@ func TestSelectStatement_HasWildcard(t *testing.T) {
 	}
 }
 
-// Test SELECT statement field rewrite.
-func TestSelectStatement_RewriteFields(t *testing.T) {
+// Test SELECT statement wildcard rewrite.
+func TestSelectStatement_RewriteWildcards(t *testing.T) {
 	var tests = []struct {
 		stmt    string
 		rewrite string
@@ -358,7 +349,7 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 		// Query wildcard
 		{
 			stmt:    `SELECT * FROM cpu`,
-			rewrite: `SELECT host::tag, region::tag, value1::float, value2::integer FROM cpu`,
+			rewrite: `SELECT host, region, value1, value2 FROM cpu`,
 		},
 
 		// Parser fundamentally prohibits multiple query sources
@@ -366,19 +357,19 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 		// Query wildcard with explicit
 		{
 			stmt:    `SELECT *,value1 FROM cpu`,
-			rewrite: `SELECT host::tag, region::tag, value1::float, value2::integer, value1::float FROM cpu`,
+			rewrite: `SELECT host, region, value1, value2, value1 FROM cpu`,
 		},
 
 		// Query multiple wildcards
 		{
 			stmt:    `SELECT *,* FROM cpu`,
-			rewrite: `SELECT host::tag, region::tag, value1::float, value2::integer, host::tag, region::tag, value1::float, value2::integer FROM cpu`,
+			rewrite: `SELECT host, region, value1, value2, host, region, value1, value2 FROM cpu`,
 		},
 
 		// Query wildcards with group by
 		{
 			stmt:    `SELECT * FROM cpu GROUP BY host`,
-			rewrite: `SELECT region::tag, value1::float, value2::integer FROM cpu GROUP BY host`,
+			rewrite: `SELECT region, value1, value2 FROM cpu GROUP BY host`,
 		},
 
 		// No GROUP BY wildcards
@@ -405,7 +396,7 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 			rewrite: `SELECT mean(value) FROM cpu WHERE time < now() GROUP BY host, region, time(1m)`,
 		},
 
-		// GROUP BY wildcard with fill
+		// GROUP BY wildarde with fill
 		{
 			stmt:    `SELECT mean(value) FROM cpu where time < now() GROUP BY *,time(1m) fill(0)`,
 			rewrite: `SELECT mean(value) FROM cpu WHERE time < now() GROUP BY host, region, time(1m) fill(0)`,
@@ -426,40 +417,7 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 		// Combo
 		{
 			stmt:    `SELECT * FROM cpu GROUP BY *`,
-			rewrite: `SELECT value1::float, value2::integer FROM cpu GROUP BY host, region`,
-		},
-
-		// Wildcard function with all fields.
-		{
-			stmt:    `SELECT mean(*) FROM cpu`,
-			rewrite: `SELECT mean(value1::float) AS mean_value1, mean(value2::integer) AS mean_value2 FROM cpu`,
-		},
-
-		{
-			stmt:    `SELECT distinct(*) FROM strings`,
-			rewrite: `SELECT distinct(string::string) AS distinct_string, distinct(value::float) AS distinct_value FROM strings`,
-		},
-
-		{
-			stmt:    `SELECT distinct(*) FROM bools`,
-			rewrite: `SELECT distinct(bool::boolean) AS distinct_bool, distinct(value::float) AS distinct_value FROM bools`,
-		},
-
-		// Wildcard function with some fields excluded.
-		{
-			stmt:    `SELECT mean(*) FROM strings`,
-			rewrite: `SELECT mean(value::float) AS mean_value FROM strings`,
-		},
-
-		{
-			stmt:    `SELECT mean(*) FROM bools`,
-			rewrite: `SELECT mean(value::float) AS mean_value FROM bools`,
-		},
-
-		// Wildcard function with an alias.
-		{
-			stmt:    `SELECT mean(*) AS alias FROM cpu`,
-			rewrite: `SELECT mean(value1::float) AS alias_value1, mean(value2::integer) AS alias_value2 FROM cpu`,
+			rewrite: `SELECT value1, value2 FROM cpu GROUP BY host, region`,
 		},
 	}
 
@@ -471,31 +429,14 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 		}
 
 		var ic IteratorCreator
-		ic.FieldDimensionsFn = func(sources influxql.Sources) (fields map[string]influxql.DataType, dimensions map[string]struct{}, err error) {
-			source := sources[0].(*influxql.Measurement)
-			switch source.Name {
-			case "cpu":
-				fields = map[string]influxql.DataType{
-					"value1": influxql.Float,
-					"value2": influxql.Integer,
-				}
-			case "strings":
-				fields = map[string]influxql.DataType{
-					"value":  influxql.Float,
-					"string": influxql.String,
-				}
-			case "bools":
-				fields = map[string]influxql.DataType{
-					"value": influxql.Float,
-					"bool":  influxql.Boolean,
-				}
-			}
+		ic.FieldDimensionsFn = func(sources influxql.Sources) (fields, dimensions map[string]struct{}, err error) {
+			fields = map[string]struct{}{"value1": struct{}{}, "value2": struct{}{}}
 			dimensions = map[string]struct{}{"host": struct{}{}, "region": struct{}{}}
 			return
 		}
 
 		// Rewrite statement.
-		rw, err := stmt.(*influxql.SelectStatement).RewriteFields(&ic)
+		rw, err := stmt.(*influxql.SelectStatement).RewriteWildcards(&ic)
 		if err != nil {
 			t.Errorf("%d. %q: error: %s", i, tt.stmt, err)
 		} else if rw == nil {
@@ -770,6 +711,7 @@ func TestTimeRange(t *testing.T) {
 
 		// number literal
 		{expr: `time < 10`, min: `0001-01-01T00:00:00Z`, max: `1970-01-01T00:00:00.000000009Z`},
+		{expr: `time < 10i`, min: `0001-01-01T00:00:00Z`, max: `1970-01-01T00:00:00.000000009Z`},
 
 		// Equality
 		{expr: `time = '2000-01-01 00:00:00'`, min: `2000-01-01T00:00:00Z`, max: `2000-01-01T00:00:00.000000001Z`},
@@ -791,7 +733,7 @@ func TestTimeRange(t *testing.T) {
 
 		// Invalid time expressions.
 		{expr: `time > "2000-01-01 00:00:00"`, min: `0001-01-01T00:00:00Z`, max: `0001-01-01T00:00:00Z`, err: `invalid operation: time and *influxql.VarRef are not compatible`},
-		{expr: `time > '2262-04-11 23:47:17'`, min: `0001-01-01T00:00:00Z`, max: `0001-01-01T00:00:00Z`, err: `time 2262-04-11T23:47:17Z overflows time literal`},
+		{expr: `time > '2262-04-11 13:47:17'`, min: `0001-01-01T00:00:00Z`, max: `0001-01-01T00:00:00Z`, err: `time 2262-04-11T13:47:17Z overflows time literal`},
 		{expr: `time > '1677-09-20 19:12:43'`, min: `0001-01-01T00:00:00Z`, max: `0001-01-01T00:00:00Z`, err: `time 1677-09-20T19:12:43Z underflows time literal`},
 	} {
 		// Extract time range.
@@ -1269,33 +1211,6 @@ func TestSelect_ColumnNames(t *testing.T) {
 		if !reflect.DeepEqual(columns, tt.columns) {
 			t.Errorf("%d. expected %s, got %s", i, tt.columns, columns)
 		}
-	}
-}
-
-func TestSelect_Privileges(t *testing.T) {
-	stmt := &influxql.SelectStatement{
-		Target: &influxql.Target{
-			Measurement: &influxql.Measurement{Database: "db2"},
-		},
-		Sources: []influxql.Source{
-			&influxql.Measurement{Database: "db0"},
-			&influxql.Measurement{Database: "db1"},
-		},
-	}
-
-	exp := influxql.ExecutionPrivileges{
-		influxql.ExecutionPrivilege{Name: "db0", Privilege: influxql.ReadPrivilege},
-		influxql.ExecutionPrivilege{Name: "db1", Privilege: influxql.ReadPrivilege},
-		influxql.ExecutionPrivilege{Name: "db2", Privilege: influxql.WritePrivilege},
-	}
-
-	got, err := stmt.RequiredPrivileges()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(exp, got) {
-		t.Errorf("exp: %v, got: %v", exp, got)
 	}
 }
 

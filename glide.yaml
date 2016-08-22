@@ -11,9 +11,6 @@ import:
   subpackages:
   - github
 - package: github.com/howeyc/gopass
-- package: github.com/influxdata/influxdb
-  subpackages:
-  - client/v2
 - package: github.com/mitchellh/go-homedir
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
@@ -27,3 +24,7 @@ import:
   - codes
 - package: gopkg.in/olivere/elastic.v3
 - package: gopkg.in/yaml.v2
+- package: github.com/influxdata/influxdb
+  version: v0.13.0
+  subpackages:
+  - client/v2

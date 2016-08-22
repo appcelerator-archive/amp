@@ -190,12 +190,14 @@ type EtcdServer struct {
 	applyV3 applierV3
 	// applyV3Base is the core applier without auth or quotas
 	applyV3Base applierV3
-	kv          mvcc.ConsistentWatchableKV
-	lessor      lease.Lessor
-	bemu        sync.Mutex
-	be          backend.Backend
-	authStore   auth.AuthStore
-	alarmStore  *alarm.AlarmStore
+	applyWait   wait.WaitTime
+
+	kv         mvcc.ConsistentWatchableKV
+	lessor     lease.Lessor
+	bemu       sync.Mutex
+	be         backend.Backend
+	authStore  auth.AuthStore
+	alarmStore *alarm.AlarmStore
 
 	stats  *stats.ServerStats
 	lstats *stats.LeaderStats
@@ -475,6 +477,7 @@ func (s *EtcdServer) start() {
 		s.snapCount = DefaultSnapCount
 	}
 	s.w = wait.New()
+	s.applyWait = wait.NewTimeList()
 	s.done = make(chan struct{})
 	s.stop = make(chan struct{})
 	if s.ClusterVersion() != nil {
@@ -629,10 +632,12 @@ func (s *EtcdServer) applyAll(ep *etcdProgress, apply *apply) {
 		plog.Warningf("avoid queries with large range/delete range!")
 	}
 	proposalsApplied.Set(float64(ep.appliedi))
+	s.applyWait.Trigger(ep.appliedi)
 	// wait for the raft routine to finish the disk writes before triggering a
 	// snapshot. or applied index might be greater than the last index in raft
 	// storage, since the raft routine might be slower than apply routine.
 	<-apply.raftDone
+
 	s.triggerSnapshot(ep)
 	select {
 	// snapshot requested via send()
@@ -801,14 +806,19 @@ func (s *EtcdServer) transferLeadership(ctx context.Context, lead, transferee ui
 
 	// TODO: drain all requests, or drop all messages to the old leader
 
-	plog.Infof("%s finished leadership transfer from %s to to %s (took %v)", s.ID(), types.ID(lead), types.ID(transferee), time.Since(now))
+	plog.Infof("%s finished leadership transfer from %s to %s (took %v)", s.ID(), types.ID(lead), types.ID(transferee), time.Since(now))
 	return nil
 }
 
 // TransferLeadership transfers the leader to the chosen transferee.
 func (s *EtcdServer) TransferLeadership() error {
-	if !s.isMultiNode() || !s.isLeader() {
-		plog.Printf("skipping leader transfer since multi-node %v or is-leader %v", s.isMultiNode(), s.isLeader())
+	if !s.isLeader() {
+		plog.Printf("skipped leadership transfer for stopping non-leader member")
+		return nil
+	}
+
+	if !s.isMultiNode() {
+		plog.Printf("skipped leadership transfer for single member cluster")
 		return nil
 	}
 
