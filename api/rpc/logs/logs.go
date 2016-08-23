@@ -71,3 +71,8 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 	return &reply, nil
 }
+
+// GetStream implements log.LogServer
+func (s *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
+	return nil
+}
