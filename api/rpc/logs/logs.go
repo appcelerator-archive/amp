@@ -7,6 +7,7 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
+	"github.com/appcelerator/amp/data/kafka"
 )
 
 const (
@@ -17,6 +18,7 @@ const (
 type Logs struct {
 	ES    elasticsearch.Elasticsearch
 	Store storage.Interface
+	Kafka kafka.Kafka
 }
 
 // Get implements log.LogServer
