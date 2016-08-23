@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -149,6 +150,47 @@ func (a *AMP) Logs(cmd *cobra.Command) error {
 		} else {
 			fmt.Printf("%+v\n", entry)
 		}
+	}
+	conn.Close()
+	return nil
+}
+
+
+//CPU Display CPU Stats
+func (a *AMP) CPU(cmd *cobra.Command) error {
+	ctx, err := a.getAuthorizedContext()
+	if err != nil {
+		return err
+	}
+	if a.verbose() {
+		fmt.Println("Cpu")
+		fmt.Printf("Ressource: %v\n", cmd.Flag("ressourceName").Value)
+	}
+	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+
+	request := stat.CPURequest{}
+	request.RessourceName = cmd.Flag("RessourceName").Value.String()
+
+	config := stat.Config{
+		Connstr: "http://influxdb:8086",
+		Dbname:  "telegraf",
+		U:       "",
+		P:       "",
+	}
+
+	r, err := c.CPUQuery(ctx, &request)
+	if err != nil {
+		return err
+	}
+	for _, entry := range r.Entries {
+		fmt.Printf("%s %s\t\t%d", entry.ID, entry.Name, (entry.UsageUser*100)/entry.UsageTotal)
+		//TODO format and
+		//add (entry.UsageKernel*100)/entry.UsageTotal
+		//add (entry.UsageSystem*100)/entry.UsageTotal
+
 	}
 	conn.Close()
 	return nil

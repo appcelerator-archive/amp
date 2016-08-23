@@ -1,5 +1,6 @@
 package stat
 
+/*
 import (
 	"log"
 	"os"
@@ -64,3 +65,4 @@ func createStatServer() *Stat {
 	}
 	return srv
 }
+*/

@@ -129,6 +129,24 @@ func main() {
 	logsCmd.Flags().String("n", "100", "Number of results")
 	logsCmd.Flags().Bool("short", false, "Displays only the message field")
 
+
+
+	// CPUCmd represents the CPU command
+	CPUCmd := &cobra.Command{
+		Use:   "cpu",
+		Short: "get cpu stats",
+		Long:  `display cpu current values for containers, services, nodes.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a := client.NewAMP(&config)
+			err := a.CPU(cmd)
+			if err != nil {
+				fmt.Println(err)
+			}
+		},
+	}
+
+	CPUCmd.Flags().String("ressourceName", "", "ressource for which cpu values are comuted. cab be container, service or node")
+	
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:   "amp",
