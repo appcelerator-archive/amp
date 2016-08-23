@@ -60,6 +60,8 @@ func (s *Stat) containersCPUQuery(ctx context.Context, req *CPURequest) (*CPURep
 	return &cpuReply, nil
 }
 
+//TODO: It's possible to have container/service/node 6 functions in only two and simply the code.
+
 //Extract CPU information for one container according to CPURequest
 func (s *Stat) containerCPUQuery(ctx context.Context, req *CPURequest, containerID string) (*CPUEntry, error) {
 	ql := fmt.Sprintf("SELECT container_name, usage_in_kernelmode, usage_in_usermode, usage_system, usage_total FROM docker_container_cpu WHERE container_id='%s' ORDER BY time DESC LIMIT 1", containerID)
