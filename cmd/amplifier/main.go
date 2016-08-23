@@ -14,6 +14,7 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	defaultClientID         = ""
 	defaultClientSecret     = ""
+	kafkaDefaultURL         = "kafka:9092"
 )
 
 // build vars
@@ -33,6 +34,7 @@ var (
 	elasticsearchURL string
 	clientID         string
 	clientSecret     string
+	kafkaURL         string
 )
 
 func parseFlags() {
@@ -42,6 +44,7 @@ func parseFlags() {
 	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
 	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
+	flag.StringVarP(&kafkaURL, "kafkaURL", "k", kafkaDefaultURL, "kafka URL (default '"+kafkaDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
@@ -54,6 +57,7 @@ func parseFlags() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
+	config.KafkaURL = kafkaURL
 }
 
 func main() {

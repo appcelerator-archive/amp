@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"google.golang.org/grpc"
@@ -21,12 +22,16 @@ var (
 
 	// ES is the elasticsearch client
 	ES elasticsearch.Elasticsearch
+
+	// Kafka is the kafka client
+	Kafka kafka.Kafka
 )
 
 // Start starts the server
 func Start(config Config) {
 	initEtcd(config)
 	initElasticsearch(config)
+	initKafka(config)
 
 	lis, err := net.Listen("tcp", config.Port)
 	if err != nil {
@@ -68,4 +73,15 @@ func initElasticsearch(config Config) {
 		log.Fatalf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
 	}
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
+}
+
+// fail fast on initialization errors; there's no point in attempting
+// to continue in a degraded state if there are problems at start up
+func initKafka(config Config) {
+	log.Printf("connecting to kafka at %s\n", config.KafkaURL)
+	err := Kafka.Connect(config.KafkaURL)
+	if err != nil {
+		log.Fatalf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
+	}
+	log.Printf("connected to kafka at %s\n", config.KafkaURL)
 }

@@ -28,3 +28,4 @@ import:
   version: v0.13.0
   subpackages:
   - client/v2
+- package: github.com/Shopify/sarama
