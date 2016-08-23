@@ -3,14 +3,29 @@ syntax = "proto3";
 package stat;
 
 service Stat {
-  rpc ExecuteQuery (QueryRequest) returns (QueryReply) {}
+  rpc CPUQuery (CPURequest) returns (CPUReply) {}
 }
 
-message QueryRequest {
-  string database = 1;
-  string query=2;
+message CPURequest {
+  string ressourceName=1;
+  string filterDatacenter=2;
+  string filterServiceName=3;
+  string filterServiceID=4;
+  string filterContainerName=5;
+  string filterContainerID=6;
+  string filterContainerImage=7;
+  string filterNodeID=8;
 }
 
-message QueryReply {
-  string response = 1;
+message CPUEntry {
+  string ID=1;
+  string name=2;
+  int32 usageSystem=3;
+  int32 usageKernel=4;
+  int32 usageUser=5;
+  int32 usageTotal=6;
+}
+
+message CPUReply {
+    repeated CPUEntry entries = 1;
 }

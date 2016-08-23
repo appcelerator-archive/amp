@@ -105,14 +105,14 @@ func main() {
 		},
 	}
 
-	// configCmd represents the config command
+// logsCmd represents the logs command
 	logsCmd := &cobra.Command{
 		Use:   "logs",
 		Short: "Fetch the logs",
 		Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&config)
-			err := a.Logs(cmd)
+			amp := client.NewAMP(&config)
+			err := cli.Logs(amp, cmd)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -128,7 +128,26 @@ func main() {
 	logsCmd.Flags().String("from", "-1", "Fetches from the given index")
 	logsCmd.Flags().String("n", "100", "Number of results")
 	logsCmd.Flags().Bool("short", false, "Displays only the message field")
+	logsCmd.Flags().Bool("f", false, "Follow log output")
 
+
+
+	// CPUCmd represents the CPU command
+	CPUCmd := &cobra.Command{
+		Use:   "cpu",
+		Short: "get cpu stats",
+		Long:  `display cpu current values for containers, services, nodes.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			amp := client.NewAMP(&config)
+			err := cli.CPU(amp, cmd)
+			if err != nil {
+				fmt.Println(err)
+			}
+		},
+	}
+
+	CPUCmd.Flags().String("ressourceName", "", "ressource for which cpu values are comuted. cab be container, service or node")
+	
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:   "amp",
@@ -147,6 +166,8 @@ func main() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logsCmd)
+	rootCmd.AddCommand(CPUCmd)
+
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
