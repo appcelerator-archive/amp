@@ -180,7 +180,7 @@ func (a *AMP) CPU(cmd *cobra.Command) error {
 		U:       "",
 		P:       "",
 	}
-
+	c := logs.NewsStatClient(conn)
 	r, err := c.CPUQuery(ctx, &request)
 	if err != nil {
 		return err
