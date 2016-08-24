@@ -130,6 +130,45 @@ func main() {
 	logsCmd.Flags().Bool("short", false, "Displays only the message field")
 	logsCmd.Flags().Bool("f", false, "Follow log output")
 
+	// logsCmd represents the logs command
+	statCmd := &cobra.Command{
+		Use:   "stat",
+		Short: "Fetch statistics",
+		Long:  `get statistics on containers, services, nodes about cpu, memory, io, net.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			amp := client.NewAMP(&config)
+			err := cli.Stat(amp, cmd)
+			if err != nil {
+				fmt.Println(err)
+			}
+		},
+	}
+
+	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
+	//Discriminators
+	statCmd.Flags().Bool("container", false, "display stats on containers")
+	statCmd.Flags().Bool("service", false, "displat stats on services")
+	statCmd.Flags().Bool("node", false, "display stats on nodes")
+	//metrics
+	statCmd.Flags().Bool("cpu", false, "display cpu stats")
+	statCmd.Flags().Bool("mem", false, "display memory stats")
+	statCmd.Flags().Bool("io", false, "display memory stats")
+	statCmd.Flags().Bool("net", false, "display memory stats")
+	//historic
+	statCmd.Flags().String("period", "", "historic period of metrics extraction, duration + time unit")
+	statCmd.Flags().String("since", "", "date defining when begin the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
+	statCmd.Flags().String("until", "", "RFC3339 date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
+	statCmd.Flags().String("time-unit", "", "historic extraction group can be: second, minute, hour, day, month, year")
+	//filters
+	statCmd.Flags().String("service-name", "", "Filter on service name")
+	statCmd.Flags().String("container-name", "", "Filter on container name")
+	statCmd.Flags().String("service-id", "", "Filter on service id")
+	statCmd.Flags().String("container-id", "", "Filter on container id")
+	statCmd.Flags().String("datacenter", "", "Filter on datacenter")
+	statCmd.Flags().String("host", "", "Filter on host")
+	statCmd.Flags().String("image", "", "Filter on container image name")
+	statCmd.Flags().String("node", "", "Filter on node id")
+
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:   "amp",
@@ -148,6 +187,7 @@ func main() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logsCmd)
+	rootCmd.AddCommand(statCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
