@@ -169,7 +169,7 @@ func main() {
 	statCmd.Flags().String("task-id", "", "Filter on task id")
 	statCmd.Flags().String("datacenter", "", "Filter on datacenter")
 	statCmd.Flags().String("host", "", "Filter on host")
-	statCmd.Flags().String("node", "", "Filter on node id")
+	statCmd.Flags().String("node-id", "", "Filter on node id")
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
