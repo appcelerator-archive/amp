@@ -7,8 +7,8 @@ import (
 
 // GithubOauth does an rpc call to login via github
 func (a *AMP) GithubOauth(username, password, otp string) (lastEight, name string, err error) {
-	a.connect()
-	defer a.disconnect()
+	a.Connect()
+	defer a.Disconnect()
 	c := oauth.NewGithubClient(a.Conn)
 	authReply, err := c.Create(context.Background(), &oauth.AuthRequest{
 		Username: username,
