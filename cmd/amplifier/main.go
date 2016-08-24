@@ -15,6 +15,7 @@ const (
 	defaultClientID         = ""
 	defaultClientSecret     = ""
 	kafkaDefaultURL         = "localhost:9092"
+	influxDefaultURL		  = "http://influxdb:8086"
 )
 
 // build vars
@@ -35,6 +36,7 @@ var (
 	clientID         string
 	clientSecret     string
 	kafkaURL         string
+	influxURL 			 string
 )
 
 func parseFlags() {
@@ -45,6 +47,7 @@ func parseFlags() {
 	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
 	flag.StringVarP(&kafkaURL, "kafkaURL", "k", kafkaDefaultURL, "kafka URL (default '"+kafkaDefaultURL+"')")
+	flag.StringVarP(&influxURL, "influxURL", "", influxDefaultURL, "InfluxDB URL (default '"+influxDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
@@ -58,6 +61,7 @@ func parseFlags() {
 	}
 	config.ElasticsearchURL = elasticsearchURL
 	config.KafkaURL = kafkaURL
+	config.InfluxURL = influxURL
 }
 
 func main() {
