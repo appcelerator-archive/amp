@@ -3,14 +3,79 @@ syntax = "proto3";
 package stat;
 
 service Stat {
-  rpc ExecuteQuery (QueryRequest) returns (QueryReply) {}
+  rpc CPUQuery (StatRequest) returns (CPUReply) {}
+  rpc MemQuery (StatRequest) returns (MemReply) {}
+  rpc IOQuery (StatRequest) returns (IOReply) {}
+  rpc NetQuery (StatRequest) returns (NetReply) {}
 }
 
-message QueryRequest {
-  string database = 1;
-  string query=2;
+message StatRequest {
+  string metric=1;
+  string discriminator=2;
+  string filter_datacenter=3;
+  string filter_host=4;
+  string filter_container_id=5;
+  string filter_container_name=6;
+  string filter_container_image=7;
+  string filter_service_id=8;
+  string filter_service_name=9;
+  string filter_node_id=10;
+  string since=11;
+  string until=12;
+  string period=13;
+  string time_unit=14;
 }
 
-message QueryReply {
-  string response = 1;
+message CPUEntry {
+  string id=1;
+  string name=2;
+  int64 usage_system=3;
+  int64 usage_kernel=4;
+  int64 usage_user=5;
+  int64 usage_total=6;
 }
+
+message CPUReply {
+  repeated CPUEntry entries = 1;
+}
+
+message MemEntry {
+  string id=1;
+  string name=2;
+  int64 cache=3;
+  int64 rss=4;
+  int64 usage=5;
+}
+
+message MemReply {
+  repeated MemEntry entries = 1;
+}
+
+message IOEntry {
+  string Id=1;
+  string name=2;
+  int64 number_read=3;
+  int64 number_write=4;
+  int64 number_total=5;
+  int64 size_read=6;
+  int64 size_write=7;
+  int64 size_total=8;
+}
+
+message IOReply {
+  repeated IOEntry entries = 1;
+}
+
+message NetEntry {
+  string id=1;
+  string name=2;
+  int64 rx_bytes=3;
+  int64 rx_errors=4;
+  int64 tx_bytes=5;
+  int64 tx_errors=6;
+}
+
+message NetReply {
+  repeated NetEntry entries = 1;
+}
+
