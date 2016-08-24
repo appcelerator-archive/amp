@@ -160,13 +160,15 @@ func main() {
 	statCmd.Flags().String("until", "", "RFC3339 date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
 	statCmd.Flags().String("time-unit", "", "historic extraction group can be: second, minute, hour, day, month, year")
 	//filters
-	statCmd.Flags().String("service-name", "", "Filter on service name")
-	statCmd.Flags().String("container-name", "", "Filter on container name")
-	statCmd.Flags().String("service-id", "", "Filter on service id")
 	statCmd.Flags().String("container-id", "", "Filter on container id")
+	statCmd.Flags().String("container-name", "", "Filter on container name")
+	statCmd.Flags().String("image", "", "Filter on container image name")
+	statCmd.Flags().String("service-name", "", "Filter on service name")
+	statCmd.Flags().String("service-id", "", "Filter on service id")
+	statCmd.Flags().String("task-name", "", "Filter on task name")
+	statCmd.Flags().String("task-id", "", "Filter on task id")
 	statCmd.Flags().String("datacenter", "", "Filter on datacenter")
 	statCmd.Flags().String("host", "", "Filter on host")
-	statCmd.Flags().String("image", "", "Filter on container image name")
 	statCmd.Flags().String("node", "", "Filter on node id")
 
 	// This represents the base command when called without any subcommands

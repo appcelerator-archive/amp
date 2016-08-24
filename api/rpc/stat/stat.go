@@ -243,6 +243,12 @@ func buildQueryString(req *StatRequest, ressourceFieldName string, metric string
 	if (req.FilterServiceName != "") {
 		query+= fmt.Sprintf(" AND com.docker.swarm.service.name='%s'", req.FilterServiceName)
 	}
+	if (req.FilterTaskId != "") {
+		query+= fmt.Sprintf(" AND com.docker.swarm.task.id='%s'", req.FilterTaskId)
+	}	
+	if (req.FilterTaskName != "") {
+		query+= fmt.Sprintf(" AND com.docker.swarm.task.name='%s'", req.FilterTaskName)
+	}	
 	if (req.FilterNodeId != "") {
 		query+= fmt.Sprintf(" AND com.docker.swarm.node.id='%s'", req.FilterNodeId)
 	}
