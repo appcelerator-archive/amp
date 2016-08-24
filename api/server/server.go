@@ -70,7 +70,7 @@ func initElasticsearch(config Config) {
 	log.Printf("connecting to elasticsearch at %s\n", config.ElasticsearchURL)
 	err := ES.Connect(config.ElasticsearchURL)
 	if err != nil {
-		log.Fatalf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
+		log.Panicf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
 	}
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
 }
@@ -81,7 +81,7 @@ func initKafka(config Config) {
 	log.Printf("connecting to kafka at %s\n", config.KafkaURL)
 	err := Kafka.Connect(config.KafkaURL)
 	if err != nil {
-		log.Fatalf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
+		log.Panicf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
 	}
 	log.Printf("connected to kafka at %s\n", config.KafkaURL)
 }

@@ -14,7 +14,7 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	defaultClientID         = ""
 	defaultClientSecret     = ""
-	kafkaDefaultURL         = "kafka:9092"
+	kafkaDefaultURL         = "localhost:9092"
 )
 
 // build vars
