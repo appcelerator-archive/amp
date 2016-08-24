@@ -155,6 +155,9 @@ func checkOrganization(token string) (name string, err error) {
 	client := getOauthClient(token)
 
 	user, _, err := client.Users.Get("")
+	if err != nil {
+		return
+	}
 	member, _, err := client.Organizations.IsMember(organization, *user.Login)
 	if err != nil {
 		return
