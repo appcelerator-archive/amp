@@ -5,7 +5,6 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	"log"
 	"strconv"
 )
@@ -27,10 +26,6 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 		fmt.Printf("n: %v\n", cmd.Flag("n").Value)
 		fmt.Printf("short: %v\n", cmd.Flag("short").Value)
 	}
-	conn, err := grpc.Dial(client.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
 
 	request := logs.GetRequest{}
 	request.ServiceId = cmd.Flag("service_id").Value.String()
@@ -45,7 +40,8 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 		log.Panicf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 
-	c := logs.NewLogsClient(conn)
+	c := logs.NewLogsClient(amp.Connect())
+	defer amp.Disconnect()
 	r, err := c.Get(ctx, &request)
 	if err != nil {
 		return err
@@ -69,6 +65,5 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 	if follow {
 		fmt.Printf("follow requested")
 	}
-	conn.Close()
 	return nil
 }

@@ -10,8 +10,7 @@ import (
 
 const (
 	defaultPort = ":50101"
-	// ServerAddress the server address
-	ServerAddress = "localhost" + defaultPort
+	serverAddress = "localhost" + defaultPort
 )
 
 // Configuration is for all configurable client settings
@@ -30,19 +29,20 @@ type AMP struct {
 }
 
 // Connect to amplifier
-func (a *AMP) Connect() {
-	conn, err := grpc.Dial(ServerAddress, grpc.WithInsecure())
+func (a *AMP) Connect() *grpc.ClientConn {
+	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	a.Conn = conn
+	return conn
 }
 
 // Disconnect from amplifier
 func (a *AMP) Disconnect() {
 	err := a.Conn.Close()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }
 
