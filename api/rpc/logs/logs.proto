@@ -3,31 +3,33 @@ syntax = "proto3";
 package logs;
 
 service Logs {
-    rpc Get (GetRequest) returns (GetReply) {
-    }
+  rpc Get (GetRequest) returns (GetReply) {
+  }
+  rpc GetStream (GetRequest) returns (stream LogEntry) {
+  }
 }
 
 message LogEntry {
-    string timestamp = 1;
-    string time_id = 2;
-    string service_id = 3;
-    string service_name = 4;
-    string message = 5;
-    string container_id = 6;
-    string node_id = 7;
+  string timestamp = 1;
+  string time_id = 2;
+  string service_id = 3;
+  string service_name = 4;
+  string message = 5;
+  string container_id = 6;
+  string node_id = 7;
 }
 
 message GetRequest {
-    string timestamp = 1;
-    string service_id = 2;
-    string service_name = 3;
-    string message = 4;
-    string container_id = 5;
-    string node_id = 6;
-    sint64 from = 7;
-    sint64 size = 8;
+  string timestamp = 1;
+  string service_id = 2;
+  string service_name = 3;
+  string message = 4;
+  string container_id = 5;
+  string node_id = 6;
+  sint64 from = 7;
+  sint64 size = 8;
 }
 
 message GetReply {
-    repeated LogEntry entries = 1;
+  repeated LogEntry entries = 1;
 }
