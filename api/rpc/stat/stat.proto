@@ -19,11 +19,13 @@ message StatRequest {
   string filter_container_image=7;
   string filter_service_id=8;
   string filter_service_name=9;
-  string filter_node_id=10;
-  string since=11;
-  string until=12;
-  string period=13;
-  string time_unit=14;
+  string filter_task_id=10;
+  string filter_task_name=11;
+  string filter_node_id=12;
+  string since=13;
+  string until=14;
+  string period=15;
+  string time_unit=16;
 }
 
 message CPUEntry {

@@ -43,6 +43,8 @@ func Stat(amp *client.AMP, cmd *cobra.Command) error {
   query.FilterContainerImage = cmd.Flag("image").Value.String()
   query.FilterServiceId = cmd.Flag("service-id").Value.String()
   query.FilterServiceName = cmd.Flag("service-name").Value.String()
+  query.FilterTaskId = cmd.Flag("task-id").Value.String()
+  query.FilterTaskName = cmd.Flag("task-name").Value.String()
   query.FilterNodeId = cmd.Flag("node").Value.String()
   //Set historic parameters
   query.Period = cmd.Flag("period").Value.String()
@@ -134,6 +136,12 @@ func displayStatQueryParameters(query stat.StatRequest) {
   }
   if (query.FilterServiceName != "") {
     fmt.Printf("service name = %v/n", query.FilterServiceName)
+  }
+  if (query.FilterTaskId != "") {
+    fmt.Printf("task id = %v/n", query.FilterTaskId)
+  }
+  if (query.FilterTaskName != "") {
+    fmt.Printf("task name = %v/n", query.FilterTaskName)
   }
   if (query.FilterNodeId != "") {
     fmt.Printf("node id = %v/n", query.FilterNodeId)
