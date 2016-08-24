@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultPort = ":50101"
+	defaultPort   = ":50101"
 	serverAddress = "localhost" + defaultPort
 )
 

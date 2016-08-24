@@ -1,5 +1,5 @@
 hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
-updated: 2016-08-23T20:36:43.949200975+02:00
+updated: 2016-08-24T00:50:33.059952129-07:00
 imports:
 - name: github.com/coreos/etcd
   version: 8e4fcaa6dcd759517e85acdef6ad482960495d71
@@ -102,7 +102,7 @@ imports:
 - name: github.com/spf13/cast
   version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
-  version: 1f4717172e07e12150feb061b2ab847c3054f53f
+  version: 37c3f8060359192150945916cbc2d72bce804b4d
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
@@ -125,7 +125,7 @@ imports:
   - lex/httplex
   - internal/timeseries
 - name: golang.org/x/oauth2
-  version: 3b966c7f301c0c71c53d94dc632a62df0a682cd7
+  version: 54f42edba4a8f81d48dc8b2287b7c7421e673022
   subpackages:
   - internal
 - name: golang.org/x/sys
