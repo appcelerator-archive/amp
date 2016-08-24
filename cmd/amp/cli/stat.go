@@ -45,7 +45,7 @@ func Stat(amp *client.AMP, cmd *cobra.Command) error {
   query.FilterServiceName = cmd.Flag("service-name").Value.String()
   query.FilterTaskId = cmd.Flag("task-id").Value.String()
   query.FilterTaskName = cmd.Flag("task-name").Value.String()
-  query.FilterNodeId = cmd.Flag("node").Value.String()
+  query.FilterNodeId = cmd.Flag("node-id").Value.String()
   //Set historic parameters
   query.Period = cmd.Flag("period").Value.String()
   query.Since = cmd.Flag("since").Value.String()
@@ -60,20 +60,20 @@ func Stat(amp *client.AMP, cmd *cobra.Command) error {
   c := stat.NewStatClient(amp.Connect())
   defer amp.Disconnect()
   if (query.Metric == "cpu") {
-    return cpuStat(ctx, c, query)
+    return cpuStat(ctx, c, &query)
   } else if (query.Metric == "mem") {
-    return memStat(ctx, c, query)
+    return memStat(ctx, c, &query)
   } else if (query.Metric == "io") {
-    return ioStat(ctx, c, query) 
+    return ioStat(ctx, c, &query) 
   } else if (query.Metric == "net") {
-    return netStat(ctx, c, query)
+    return netStat(ctx, c, &query)
   } 
   return nil
 }
 
 
-func cpuStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) error {
-  r, err := c.CPUQuery(ctx, &query)
+func cpuStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
+  r, err := c.CPUQuery(ctx, query)
   if err != nil {
     return err
   }
@@ -82,8 +82,8 @@ func cpuStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) err
   return nil
 }
 
-func memStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) error {
-  r, err := c.MemQuery(ctx, &query)
+func memStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
+  r, err := c.MemQuery(ctx, query)
   if err != nil {
     return err
   }
@@ -92,8 +92,8 @@ func memStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) err
   return nil
 }
 
-func ioStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) error {
-  r, err := c.IOQuery(ctx, &query)
+func ioStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
+  r, err := c.IOQuery(ctx, query)
   if err != nil {
     return err
   }
@@ -102,8 +102,8 @@ func ioStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) erro
   return nil
 }
 
-func netStat(ctx context.Context, c stat.StatClient, query stat.StatRequest) error {
-  r, err := c.NetQuery(ctx, &query)
+func netStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
+  r, err := c.NetQuery(ctx, query)
   if err != nil {
     return err
   }

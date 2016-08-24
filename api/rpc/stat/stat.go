@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/appcelerator/amp/data/influx"
 	"golang.org/x/net/context"
-	"time"
+	//"time"
 )
 
 //Stat structure to implement StatServer interface
@@ -12,28 +12,10 @@ type Stat struct {
 	conn influx.Influx
 }
 
-// Config is used to provide specific Parameters for Stats Connection
-type Config struct {
-	Connstr string
-	Dbname  string
-	U       string
-	P       string
-	//TODO add pagination?
-}
-
-//New return a new implementation of StateServer
-func New(cfg Config) (*Stat, error) {
-
-	c := influx.New(cfg.Connstr, cfg.Dbname, cfg.U, cfg.P)
-	err := c.Connect(5 * time.Second)
-	return &Stat{conn: c}, err
-}
-
-
 //CPUQuery Extract CPU information according to StatRequest
 func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error) {
-
 	idFieldName, nameFieldName := getIDNameFields(req)
+	fmt.Println(idFieldName, nameFieldName )
 	query := buildQueryString(req, idFieldName, "cpu")
 	res, err := s.conn.Query(query)
 	if err != nil {
