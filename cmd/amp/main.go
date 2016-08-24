@@ -157,19 +157,19 @@ func main() {
 	//historic
 	statCmd.Flags().String("period", "", "historic period of metrics extraction, duration + time unit")
 	statCmd.Flags().String("since", "", "date defining when begin the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
-	statCmd.Flags().String("until", "", "RFC3339 date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
+	statCmd.Flags().String("until", "", "date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
 	statCmd.Flags().String("time-unit", "", "historic extraction group can be: second, minute, hour, day, month, year")
 	//filters
-	statCmd.Flags().String("container-id", "", "Filter on container id")
-	statCmd.Flags().String("container-name", "", "Filter on container name")
-	statCmd.Flags().String("image", "", "Filter on container image name")
-	statCmd.Flags().String("service-name", "", "Filter on service name")
-	statCmd.Flags().String("service-id", "", "Filter on service id")
-	statCmd.Flags().String("task-name", "", "Filter on task name")
-	statCmd.Flags().String("task-id", "", "Filter on task id")
-	statCmd.Flags().String("datacenter", "", "Filter on datacenter")
-	statCmd.Flags().String("host", "", "Filter on host")
-	statCmd.Flags().String("node-id", "", "Filter on node id")
+	statCmd.Flags().String("container-id", "", "filter on container id")
+	statCmd.Flags().String("container-name", "", "filter on container name")
+	statCmd.Flags().String("image", "", "filter on container image name")
+	statCmd.Flags().String("service-name", "", "filter on service name")
+	statCmd.Flags().String("service-id", "", "filter on service id")
+	statCmd.Flags().String("task-name", "", "filter on task name")
+	statCmd.Flags().String("task-id", "", "filter on task id")
+	statCmd.Flags().String("datacenter", "", "filter on datacenter")
+	statCmd.Flags().String("host", "", "filter on host")
+	statCmd.Flags().String("node-id", "", "filter on node id")
 
 	// This represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{

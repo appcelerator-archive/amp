@@ -3,10 +3,10 @@ syntax = "proto3";
 package stat;
 
 service Stat {
-  rpc CPUQuery (StatRequest) returns (CPUReply) {}
-  rpc MemQuery (StatRequest) returns (MemReply) {}
-  rpc IOQuery (StatRequest) returns (IOReply) {}
-  rpc NetQuery (StatRequest) returns (NetReply) {}
+  rpc CPUQuery (StatRequest) returns (CPUReply);
+  rpc MemQuery (StatRequest) returns (MemReply);
+  rpc IOQuery (StatRequest) returns (IOReply);
+  rpc NetQuery (StatRequest) returns (NetReply);
 }
 
 message StatRequest {
