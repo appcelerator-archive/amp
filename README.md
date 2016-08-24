@@ -37,6 +37,10 @@ on the `github.com/appcelerator/amp/api/server` package to ensure that service t
 * `make install` - will (re)build the project and install the executable binaries (`amp` and `amplifier`) in `$GOPATH/src`.
 * `make build` - will build a docker image (`appcelerator/amp:latest`) that contains the binaries.
 * `make run` - will run `amplifier` in a container.
+* `make test` - will run automated tests.
+* `make proto` - will regenerate all protocol buffer files using `protoc`.
+* `make install-deps` - will reinstall all required packages under the `vendor` directory.
+* `make update-deps` - will update all package dependencies.
 
 ## Package Management
 
@@ -44,8 +48,12 @@ The project uses [Glide](https://glide.sh/) for vendoring, which is an approach 
 version. Glide isn't the only tool that supports vendoring, but it is one of the more popular ones. The Go community generally commits all the
 vendor artifacts (the `vendor` directory and lock file (`glide.lock`), along with the dependency specification (`glide.yaml`) file).
 
-When you want to add new dependencies to the project, run `glide get <package>`. If you want to update to the latest versions, run
-`glide update` and then `make test` to make sure nothing broke.
+When you want to add new dependencies to the project, run `glide get <package>`.
+
+When you want to reinstall dependencies, run `make install-deps`.
+
+When you want to update to the latest versions, run `make update-deps`. Run `make test` to ensure tests continue to pass after updates
+before submitting a PR.
 
 ## Swarm
 
@@ -56,3 +64,18 @@ Use the `swarm` shell script to launch amp cluster services.
     $ ./swarm ls
     $ ./swarm restart (equivalent to stop, pull, start)
     $ ./swarm stop
+
+## CLI
+
+AMP currently uses GitHub authentication for logging in. The CLI command `amp login` will use your GitHub credentials to authenticate
+you via GitHub. You need to be a member of the AMP team in the Appcelerator organization to be authorized. For the GitHub OAuth flow
+to work, you need to start `amplifier` with a client ID and secret before you can run the `amp login` command. Follow these instructions
+for now:
+
+* [Create](https://github.com/settings/applications/new) an OAuth application (to simulate the amp backend)
+* Note the `Client ID` and `Client Secret`
+* Start `amplifier` with the following flags:
+    $ amplifier --clientid <Client ID> --clientsecret <Client Secret> &
+* Use the CLI to login
+    $ amp login
+* When prompted, enter username, password, and two-factor auth code
