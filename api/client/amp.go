@@ -31,15 +31,17 @@ type AMP struct {
 	Conn          *grpc.ClientConn
 }
 
-func (a *AMP) connect() {
-	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+// Connect to amplifier
+func (a *AMP) Connect() {
+	conn, err := grpc.Dial(ServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
 	a.Conn = conn
 }
 
-func (a *AMP) disconnect() {
+// Disconnect from amplifier
+func (a *AMP) Disconnect() {
 	err := a.Conn.Close()
 	if err != nil {
 		log.Fatal(err)
