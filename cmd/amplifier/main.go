@@ -15,7 +15,7 @@ const (
 	defaultClientID         = ""
 	defaultClientSecret     = ""
 	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL		  = "http://influxdb:8086"
+	influxDefaultURL		  = "http://localhost:8086"
 )
 
 // build vars
