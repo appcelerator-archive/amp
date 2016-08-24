@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/elasticsearch"
@@ -48,6 +49,9 @@ func Start(config Config) {
 	logs.RegisterLogsServer(s, &logs.Logs{
 		ES:    ES,
 		Store: Store,
+	})
+	stat.RegisterStatServer(s, &stat.Stat{
+		Influx: Influx,		
 	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        Store,

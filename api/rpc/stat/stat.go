@@ -9,7 +9,7 @@ import (
 
 //Stat structure to implement StatServer interface
 type Stat struct {
-	conn influx.Influx
+	Influx influx.Influx
 }
 
 //CPUQuery Extract CPU information according to StatRequest
@@ -17,7 +17,7 @@ func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error
 	idFieldName, nameFieldName := getIDNameFields(req)
 	fmt.Println(idFieldName, nameFieldName )
 	query := buildQueryString(req, idFieldName, "cpu")
-	res, err := s.conn.Query(query)
+	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error
 func (s *Stat) ressourceCPUQuery(ctx context.Context, req *StatRequest, idFieldName string, nameFieldName, ID string) (*CPUEntry, error) {
 	var cpuFields = "usage_in_kernelmode, usage_in_usermode, usage_system, usage_total"
 	ql := fmt.Sprintf("SELECT %s, %s FROM docker_container_cpu WHERE %s='%s' ORDER BY time DESC LIMIT 1", nameFieldName, cpuFields, idFieldName, ID)
-	res, err := s.conn.Query(ql)
+	res, err := s.Influx.Query(ql)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *Stat) MemQuery(ctx context.Context, req *StatRequest) (*MemReply, error
 
 	idFieldName, nameFieldName := getIDNameFields(req)
 	query := buildQueryString(req, idFieldName, "mem")
-	res, err := s.conn.Query(query)
+	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Stat) MemQuery(ctx context.Context, req *StatRequest) (*MemReply, error
 func (s *Stat) ressourceMemQuery(ctx context.Context, req *StatRequest, idFieldName string, nameFieldName, ID string) (*MemEntry, error) {
 	var memfields = "total_cache, rss, usage FROM docker_container_mem"
 	ql := fmt.Sprintf("SELECT %s, %s WHERE %s='%s' ORDER BY time DESC LIMIT 1", nameFieldName, memfields, idFieldName, ID)
-	res, err := s.conn.Query(ql)
+	res, err := s.Influx.Query(ql)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *Stat) IOQuery(ctx context.Context, req *StatRequest) (*IOReply, error) 
 
 	idFieldName, nameFieldName := getIDNameFields(req)
 	query := buildQueryString(req, idFieldName, "blkio")
-	res, err := s.conn.Query(query)
+	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (s *Stat) IOQuery(ctx context.Context, req *StatRequest) (*IOReply, error) 
 func (s *Stat) ressourceIOQuery(ctx context.Context, req *StatRequest, idFieldName string, nameFieldName, ID string) (*IOEntry, error) {
 	var ioFields = "io_serviced_recursive_read, io_serviced_recursive_write, io_serviced_recursive_total, io_service_bytes_recursive_read, io_service_bytes_recursive_write, io_service_bytes_recursive_total"
 	ql := fmt.Sprintf("SELECT %s, %s WHERE %s='%s' ORDER BY time DESC LIMIT 1", nameFieldName, ioFields, idFieldName, ID)
-	res, err := s.conn.Query(ql)
+	res, err := s.Influx.Query(ql)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (s *Stat) ressourceIOQuery(ctx context.Context, req *StatRequest, idFieldNa
 func (s *Stat) NetQuery(ctx context.Context, req *StatRequest) (*NetReply, error) {
 	idFieldName, nameFieldName := getIDNameFields(req)
 	query := buildQueryString(req, idFieldName, "net")
-	res, err := s.conn.Query(query)
+	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (s *Stat) NetQuery(ctx context.Context, req *StatRequest) (*NetReply, error
 func (s *Stat) ressourceNetQuery(ctx context.Context, req *StatRequest, idFieldName string, nameFieldName, ID string) (*NetEntry, error) {
 	var netFields = "rx_bytes, rx_errors, tx_bytes, tx_erros"
 	ql := fmt.Sprintf("SELECT %s, %s WHERE %s='%s' ORDER BY time DESC LIMIT 1", nameFieldName, netFields, idFieldName, ID)
-	res, err := s.conn.Query(ql)
+	res, err := s.Influx.Query(ql)
 	if err != nil {
 		return nil, err
 	}
