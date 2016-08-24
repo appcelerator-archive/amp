@@ -1,10 +1,8 @@
-hash: f9a8682116ead526ebe20676187e0522b75276b1dacbd93f56006dc358fb333e
-updated: 2016-08-19T21:31:29.098749768-07:00
+hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
+updated: 2016-08-23T20:36:43.949200975+02:00
 imports:
-- name: github.com/BurntSushi/toml
-  version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/coreos/etcd
-  version: 8c88c1611e3d2bf7969f53d0ba25e4c0b2248002
+  version: 8e4fcaa6dcd759517e85acdef6ad482960495d71
   subpackages:
   - clientv3
   - auth/authpb
@@ -12,6 +10,18 @@ imports:
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
+- name: github.com/davecgh/go-spew
+  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/fsnotify/fsnotify
@@ -23,6 +33,8 @@ imports:
   subpackages:
   - proto
   - jsonpb
+- name: github.com/golang/snappy
+  version: 5979233c5d6225d4a8e438cdd0b411888449ddab
 - name: github.com/google/go-github
   version: b9698164669e386680621e2006cab02271257611
   subpackages:
@@ -38,7 +50,7 @@ imports:
   - runtime/internal
   - utilities
 - name: github.com/hashicorp/hcl
-  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  version: baeb59c710717b06aac1dbe2270e8192ec593244
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -58,6 +70,8 @@ imports:
   - client/v2
   - models
   - pkg/escape
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/kr/fs
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
@@ -70,25 +84,31 @@ imports:
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: 5a62685873ef617233ab5f1b825a6e4a758e16cf
 - name: github.com/pkg/errors
-  version: a22138067af1c4942683050411a841ade67fe1eb
+  version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
+- name: github.com/Shopify/sarama
+  version: 94895118af045d13c7e576477276a53afccdd6b1
 - name: github.com/spf13/afero
-  version: b28a7effac979219c2a2ed6205a4d70e4b1bcd02
+  version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
   - mem
   - sftp
 - name: github.com/spf13/cast
   version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
-  version: 7c674d9e72017ed25f6d2b5e497a1368086b6a6f
+  version: 1f4717172e07e12150feb061b2ab847c3054f53f
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 6454a84b6da0ea8b628d5d8a26759f62c6c161b4
+  version: 103ce5cd2042f2fe629c1957abb64ab3e7f50235
 - name: github.com/spf13/viper
-  version: 654fc7bb54d0c138ef80405ff577391f79c0c32d
+  version: 7fb2782df3d83e0036cc89f461ed0422628776f4
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
@@ -118,7 +138,7 @@ imports:
   - transform
   - unicode/norm
 - name: google.golang.org/appengine
-  version: e951d3868b377b14f4e60efa3a301532ee3c1ebf
+  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
   subpackages:
   - urlfetch
   - internal
@@ -139,7 +159,7 @@ imports:
   - transport
   - peer
 - name: gopkg.in/olivere/elastic.v3
-  version: 787ebbb5a7600662bca364e4e8ca959f315e442f
+  version: 908ffee99d2c7e5fc7cf6ddf437b1fb26f4bb286
   subpackages:
   - backoff
   - uritemplates

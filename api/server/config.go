@@ -11,9 +11,10 @@ type Config struct {
 	ElasticsearchURL string
 	ClientID         string
 	ClientSecret     string
+	KafkaURL         string
 }
 
 // String is used to display struct as a string
 func (config Config) String() string {
-	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, ElasticsearchURL: %s}", config.Port, config.EtcdEndpoints, config.ElasticsearchURL)
+	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, ElasticsearchURL: %s, KafkaURL: %s}", config.Port, config.EtcdEndpoints, config.ElasticsearchURL, config.KafkaURL)
 }
