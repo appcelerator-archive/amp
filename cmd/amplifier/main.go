@@ -15,7 +15,7 @@ const (
 	defaultClientID         = ""
 	defaultClientSecret     = ""
 	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL		  = "http://localhost:8086"
+	influxDefaultURL        = "http://localhost:8086"
 )
 
 // build vars
@@ -36,7 +36,7 @@ var (
 	clientID         string
 	clientSecret     string
 	kafkaURL         string
-	influxURL 			 string
+	influxURL        string
 )
 
 func parseFlags() {

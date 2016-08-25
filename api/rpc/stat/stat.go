@@ -15,7 +15,7 @@ type Stat struct {
 //CPUQuery Extract CPU information according to StatRequest
 func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error) {
 	idFieldName, nameFieldName := getIDNameFields(req)
-	fmt.Println(idFieldName, nameFieldName )
+	fmt.Println(idFieldName, nameFieldName)
 	query := buildQueryString(req, idFieldName, "cpu")
 	res, err := s.Influx.Query(query)
 	if err != nil {
@@ -88,11 +88,11 @@ func (s *Stat) ressourceMemQuery(ctx context.Context, req *StatRequest, idFieldN
 	}
 	data := res.Results[0].Series[0].Values[0]
 	entry := MemEntry{
-		Id:     ID,
-		Name:   data[0].(string),
-		Cache: 	data[1].(int64),
-		Rss:   	data[2].(int64),
-		Usage: 	data[3].(int64),
+		Id:    ID,
+		Name:  data[0].(string),
+		Cache: data[1].(int64),
+		Rss:   data[2].(int64),
+		Usage: data[3].(int64),
 	}
 	return &entry, nil
 }
@@ -130,14 +130,14 @@ func (s *Stat) ressourceIOQuery(ctx context.Context, req *StatRequest, idFieldNa
 	}
 	data := res.Results[0].Series[0].Values[0]
 	entry := IOEntry{
-		Id:     			ID,
-		Name:   			data[0].(string),
-		NumberRead: 	data[1].(int64),
-		NumberWrite:  data[2].(int64),
-		NumberTotal: 	data[3].(int64),
-		SizeRead:			data[4].(int64),
-		SizeWrite:		data[5].(int64),
-		SizeTotal:		data[6].(int64),
+		Id:          ID,
+		Name:        data[0].(string),
+		NumberRead:  data[1].(int64),
+		NumberWrite: data[2].(int64),
+		NumberTotal: data[3].(int64),
+		SizeRead:    data[4].(int64),
+		SizeWrite:   data[5].(int64),
+		SizeTotal:   data[6].(int64),
 	}
 	return &entry, nil
 }
@@ -174,12 +174,12 @@ func (s *Stat) ressourceNetQuery(ctx context.Context, req *StatRequest, idFieldN
 	}
 	data := res.Results[0].Series[0].Values[0]
 	entry := NetEntry{
-		Id:     		ID,
-		Name:   		data[0].(string),
-		RxBytes: 		data[1].(int64),
-		RxErrors:  	data[2].(int64),
-		TxBytes: 		data[3].(int64),
-		TxErrors:		data[4].(int64),
+		Id:       ID,
+		Name:     data[0].(string),
+		RxBytes:  data[1].(int64),
+		RxErrors: data[2].(int64),
+		TxBytes:  data[3].(int64),
+		TxErrors: data[4].(int64),
 	}
 	return &entry, nil
 }
@@ -190,7 +190,7 @@ func getIDNameFields(req *StatRequest) (string, string) {
 	var nameFieldName = "host"
 	if req.Discriminator == "container" {
 		idFieldName = "container_id"
-		nameFieldName="container_name"
+		nameFieldName = "container_name"
 	} else if req.Discriminator == "service" {
 		idFieldName = "com.docker.swarm.service.id"
 		nameFieldName = "com.docker.swarm.service.name"
@@ -200,40 +200,38 @@ func getIDNameFields(req *StatRequest) (string, string) {
 	return idFieldName, nameFieldName
 }
 
-
 //Compute the influx 'sql' query string concidering StatRequest
 func buildQueryString(req *StatRequest, ressourceFieldName string, metric string) string {
 	query := fmt.Sprintf("SELECT distinct %s FROM docker_container_%s WHERE container_id!=''", ressourceFieldName, metric)
-	if (req.FilterDatacenter != "") {
-		query+= fmt.Sprintf(" AND datacenter='%s'", req.FilterDatacenter)
+	if req.FilterDatacenter != "" {
+		query += fmt.Sprintf(" AND datacenter='%s'", req.FilterDatacenter)
 	}
-	if (req.FilterHost != "") {
-		query+= fmt.Sprintf(" AND host='%s'", req.FilterHost)
+	if req.FilterHost != "" {
+		query += fmt.Sprintf(" AND host='%s'", req.FilterHost)
 	}
-	if (req.FilterContainerId != "") {
-		query+= fmt.Sprintf(" AND container_id='%s'", req.FilterContainerId)
+	if req.FilterContainerId != "" {
+		query += fmt.Sprintf(" AND container_id='%s'", req.FilterContainerId)
 	}
-	if (req.FilterContainerName != "") {
-		query+= fmt.Sprintf(" AND container_name='%s'", req.FilterContainerName)
+	if req.FilterContainerName != "" {
+		query += fmt.Sprintf(" AND container_name='%s'", req.FilterContainerName)
 	}
-	if (req.FilterContainerImage != "") {
-		query+= fmt.Sprintf(" AND container_image='%s'", req.FilterContainerImage)
+	if req.FilterContainerImage != "" {
+		query += fmt.Sprintf(" AND container_image='%s'", req.FilterContainerImage)
 	}
-	if (req.FilterServiceId != "") {
-		query+= fmt.Sprintf(" AND com.docker.swarm.service.id='%s'", req.FilterServiceId)
-	}	
-	if (req.FilterServiceName != "") {
-		query+= fmt.Sprintf(" AND com.docker.swarm.service.name='%s'", req.FilterServiceName)
+	if req.FilterServiceId != "" {
+		query += fmt.Sprintf(" AND com.docker.swarm.service.id='%s'", req.FilterServiceId)
 	}
-	if (req.FilterTaskId != "") {
-		query+= fmt.Sprintf(" AND com.docker.swarm.task.id='%s'", req.FilterTaskId)
-	}	
-	if (req.FilterTaskName != "") {
-		query+= fmt.Sprintf(" AND com.docker.swarm.task.name='%s'", req.FilterTaskName)
-	}	
-	if (req.FilterNodeId != "") {
-		query+= fmt.Sprintf(" AND com.docker.swarm.node.id='%s'", req.FilterNodeId)
+	if req.FilterServiceName != "" {
+		query += fmt.Sprintf(" AND com.docker.swarm.service.name='%s'", req.FilterServiceName)
+	}
+	if req.FilterTaskId != "" {
+		query += fmt.Sprintf(" AND com.docker.swarm.task.id='%s'", req.FilterTaskId)
+	}
+	if req.FilterTaskName != "" {
+		query += fmt.Sprintf(" AND com.docker.swarm.task.name='%s'", req.FilterTaskName)
+	}
+	if req.FilterNodeId != "" {
+		query += fmt.Sprintf(" AND com.docker.swarm.node.id='%s'", req.FilterNodeId)
 	}
 	return query
 }
-
