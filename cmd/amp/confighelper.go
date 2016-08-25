@@ -7,14 +7,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config is for all the configuration settings.
-type Config struct {
-	Verbose bool
-	Github  string
-	Target  string
-	Images  []string
-}
-
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
 func InitConfig(configFile string, config *client.Configuration, verbose bool) {
