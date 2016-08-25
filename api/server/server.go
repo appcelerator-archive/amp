@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/api/rpc/stat"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/data/influx"
 	"google.golang.org/grpc"
 )
 
@@ -51,7 +51,7 @@ func Start(config Config) {
 		Store: Store,
 	})
 	stat.RegisterStatServer(s, &stat.Stat{
-		Influx: Influx,		
+		Influx: Influx,
 	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        Store,
@@ -94,7 +94,6 @@ func initKafka(config Config) {
 	}
 	log.Printf("connected to kafka at %s\n", config.KafkaURL)
 }
-
 
 // fail fast on initialization errors; there's no point in attempting
 // to continue in a degraded state if there are problems at start up

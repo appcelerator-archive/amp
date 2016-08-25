@@ -12,7 +12,7 @@ type Config struct {
 	ClientID         string
 	ClientSecret     string
 	KafkaURL         string
-  InfluxURL        string
+	InfluxURL        string
 }
 
 // String is used to display struct as a string
