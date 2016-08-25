@@ -21,7 +21,7 @@ const (
 	serverAddress           = "localhost" + defaultPort
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL        = "localhost:9092"
+	influxDefaultURL        = "http://localhost:8086"
 )
 
 var (
@@ -64,6 +64,7 @@ func parseEnv() {
 	}
 	config.ElasticsearchURL = elasticsearchURL
 	config.KafkaURL = kafkaURL
+	config.InfluxURL = influxURL
 }
 
 func TestMain(m *testing.M) {
