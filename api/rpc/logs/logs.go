@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
+	"strings"
 )
 
 const (
@@ -93,7 +94,9 @@ func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 			if err != nil {
 				return err
 			}
-			stream.Send(&entry)
+			if filter(&entry, in) {
+				stream.Send(&entry)
+			}
 
 		case <-stream.Context().Done():
 			return stream.Context().Err()
@@ -108,4 +111,24 @@ func parseLogEntry(data []byte) (LogEntry, error) {
 		return entry, err
 	}
 	return entry, err
+}
+
+func filter(entry *LogEntry, in *GetRequest) bool {
+	match := true
+	if in.ServiceId != "" {
+		match = entry.ServiceId == in.ServiceId
+	}
+	if in.ServiceName != "" {
+		match = entry.ServiceName == in.ServiceName
+	}
+	if in.ContainerId != "" {
+		match = entry.ContainerId == in.ContainerId
+	}
+	if in.NodeId != "" {
+		match = entry.NodeId == in.NodeId
+	}
+	if in.Message != "" {
+		match = strings.Contains(entry.Message, in.Message)
+	}
+	return match
 }

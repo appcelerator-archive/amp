@@ -37,7 +37,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 	if request.From, err = strconv.ParseInt(cmd.Flag("from").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert from parameter: %v\n", cmd.Flag("from").Value.String())
 	}
-	if request.Size, err = strconv.ParseInt(cmd.Flag("n").Value.String(), 10, 64); err != nil {
+	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 	var short bool
@@ -45,7 +45,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 		log.Fatalf("Unable to convert short parameter: %v\n", cmd.Flag("short").Value.String())
 	}
 	var follow bool
-	if follow, err = strconv.ParseBool(cmd.Flag("f").Value.String()); err != nil {
+	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
 		log.Fatalf("Unable to convert f parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 
