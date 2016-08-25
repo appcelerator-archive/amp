@@ -14,9 +14,11 @@ type Kafka struct {
 
 // Connect to kafka
 func (kafka *Kafka) Connect(host string) error {
-	// Create Kafka client
+	config := sarama.NewConfig()
+	config.Version = sarama.V0_10_0_0
+
 	var err error
-	client, err = sarama.NewClient([]string{host}, nil)
+	client, err = sarama.NewClient([]string{host}, config)
 	return err
 }
 

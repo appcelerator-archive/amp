@@ -5,6 +5,7 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/spf13/cobra"
+	"io"
 	"log"
 	"strconv"
 )
@@ -39,7 +40,16 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 	if request.Size, err = strconv.ParseInt(cmd.Flag("n").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
+	var short bool
+	if short, err = strconv.ParseBool(cmd.Flag("short").Value.String()); err != nil {
+		log.Fatalf("Unable to convert short parameter: %v\n", cmd.Flag("short").Value.String())
+	}
+	var follow bool
+	if follow, err = strconv.ParseBool(cmd.Flag("f").Value.String()); err != nil {
+		log.Fatalf("Unable to convert f parameter: %v\n", cmd.Flag("f").Value.String())
+	}
 
+	// Get logs from elasticsearch
 	c := logs.NewLogsClient(amp.Connect())
 	defer amp.Disconnect()
 	r, err := c.Get(ctx, &request)
@@ -47,23 +57,34 @@ func Logs(amp *client.AMP, cmd *cobra.Command) error {
 		return err
 	}
 	for _, entry := range r.Entries {
-		var short bool
-		if short, err = strconv.ParseBool(cmd.Flag("short").Value.String()); err != nil {
-			log.Fatalf("Unable to convert short parameter: %v\n", cmd.Flag("short").Value.String())
-		}
-		if short {
-			fmt.Printf("%s\n", entry.Message)
-		} else {
-			fmt.Printf("%+v\n", entry)
-		}
+		displayLogEntry(entry, short)
+	}
+	if !follow {
+		return nil
 	}
 
-	var follow bool
-	if follow, err = strconv.ParseBool(cmd.Flag("f").Value.String()); err != nil {
-		log.Fatalf("Unable to convert f parameter: %v\n", cmd.Flag("f").Value.String())
+	// If follow is requested, get subsequent logs from Kafka and stream it
+	stream, err := c.GetStream(ctx, &request)
+	if err != nil {
+		return err
 	}
-	if follow {
-		fmt.Printf("follow requested")
+	for {
+		entry, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		displayLogEntry(entry, short)
 	}
 	return nil
+}
+
+func displayLogEntry(entry *logs.LogEntry, short bool) {
+	if short {
+		fmt.Printf("%s\n", entry.Message)
+	} else {
+		fmt.Printf("%+v\n", entry)
+	}
 }
