@@ -1,8 +1,8 @@
 hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
-updated: 2016-08-24T00:50:33.059952129-07:00
+updated: 2016-08-25T12:21:41.276673469-07:00
 imports:
 - name: github.com/coreos/etcd
-  version: 8e4fcaa6dcd759517e85acdef6ad482960495d71
+  version: 488ae52a5190fbf24539e281f13b461b1ac35df4
   subpackages:
   - clientv3
   - auth/authpb
@@ -36,7 +36,7 @@ imports:
 - name: github.com/golang/snappy
   version: 5979233c5d6225d4a8e438cdd0b411888449ddab
 - name: github.com/google/go-github
-  version: b9698164669e386680621e2006cab02271257611
+  version: a59a35745f99ad92d70d69a9f180767063aa4bf3
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -125,7 +125,7 @@ imports:
   - lex/httplex
   - internal/timeseries
 - name: golang.org/x/oauth2
-  version: 54f42edba4a8f81d48dc8b2287b7c7421e673022
+  version: 75e75ddc3d156dc8fc71c6f2ef3607cbdcfc8c27
   subpackages:
   - internal
 - name: golang.org/x/sys
