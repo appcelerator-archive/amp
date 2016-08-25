@@ -21,6 +21,7 @@ const (
 	serverAddress           = "localhost" + defaultPort
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
+	influxDefaultURL        = "localhost:9092"
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	etcdEndpoints    string
 	elasticsearchURL string
 	kafkaURL         string
+	influxURL        string
 	client           build.AmpBuildClient
 	ctx              context.Context
 )
@@ -49,6 +51,10 @@ func parseEnv() {
 	kafkaURL = os.Getenv("kafkaURL")
 	if kafkaURL == "" {
 		kafkaURL = kafkaDefaultURL
+	}
+	influxURL = os.Getenv("influxURL")
+	if influxURL == "" {
+		influxURL = influxDefaultURL
 	}
 
 	// update config

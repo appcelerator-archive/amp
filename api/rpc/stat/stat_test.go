@@ -3,15 +3,15 @@ package stat
 import (
 	"log"
 	"os"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/appcelerator/amp/data/influx"
 
 	"golang.org/x/net/context"
 )
 
 const (
-	svcAddr  = "localhost:51001"
 	queryVal = "measurements"
 )
 
@@ -26,41 +26,65 @@ func TestMain(m *testing.M) {
 	log.SetPrefix("test: ")
 	// Create an instance of the service interface
 	srv = createStatServer()
-	err := srv.conn.Connect(5 * time.Second)
+
+	err := srv.Influx.Connect(5 * time.Second)
 	if err != nil {
 		panic(err)
 	}
-	defer srv.conn.Close()
+	defer srv.Influx.Close()
 	os.Exit(m.Run())
 }
 
-// Create a grpc client to invoke the stat service over specified port
-// This runs in the same process but executes the call over the wire
-func TestExecuteQuery(t *testing.T) {
-	req := QueryRequest{Database: "", Query: "SHOW MEASUREMENTS"}
-
+// Excercises the rpc service for CPUQuery
+func TestCPUQueryServiceWithLimit(t *testing.T) {
+	//Build a query to validate the following command from the CLI
+	//amp stats --cpu --container --service-name=kafka --period 5m
+	query := StatRequest{}
+	//set discriminator
+	query.Discriminator = "container"
+	//Set filters
+	query.FilterServiceName = "kafka"
+	query.Period = "5m"
+	query.Limit = "1"
 	// Call the service over the call stack directly
-	res, err := srv.ExecuteQuery(context.Background(), &req)
+	res, err := srv.CPUQuery(context.Background(), &query)
 	if err != nil {
 		t.Error(err)
 	}
-	if !strings.Contains(res.Response, queryVal) {
-		t.Errorf("Expected String to contain %s, actual=%s \n", queryVal, res.Response)
+	if len(res.Entries) != 1 {
+		t.Errorf("Unexpected a response from influx %v\n", len(res.Entries))
 	}
+
+}
+
+// Excercises the rpc service for CPUQuery
+func TestCPUQueryService(t *testing.T) {
+	//Build a query to validate the following command from the CLI
+	//amp stats --cpu --container --service-name=kafka --period 5m
+	query := StatRequest{}
+	//set discriminator
+	query.Discriminator = "container"
+	//Set filters
+	query.FilterServiceName = "kafka"
+	query.Period = "5m"
+	// Call the service over the call stack directly
+	res, err := srv.CPUQuery(context.Background(), &query)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(res.Entries) == 0 {
+		t.Errorf("Expected a response from influx \n")
+	}
+
 }
 func createStatServer() *Stat {
 	//Create the config
+	var stat = &Stat{}
 	host := os.Getenv("influxhost")
 	cstr := "http://localhost:8086"
 	if host != "" {
 		cstr = "http://" + host + ":8086"
 	}
-
-	cfg := Config{Connstr: cstr, Dbname: "_internal", U: "admin", P: "changeme"}
-	// Create the service to allow service calls directly
-	srv, err := New(cfg)
-	if err != nil {
-		panic(err)
-	}
-	return srv
+	stat.Influx = influx.New(cstr, "telegraf", "", "")
+	return stat
 }
