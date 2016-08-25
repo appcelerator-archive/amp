@@ -44,6 +44,7 @@ version:
 clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which amp)
+	@rm -f $$(which amplifier)
 
 install: install-cli install-server
 
@@ -105,7 +106,6 @@ test-project:
 
 test-service:
 	@go test -v $(REPO)/api/rpc/service
-	
+
 test-build:
 	@go test -v $(REPO)/api/rpc/build
-
