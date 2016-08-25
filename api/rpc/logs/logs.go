@@ -2,31 +2,35 @@ package logs
 
 import (
 	"encoding/json"
+	"github.com/Shopify/sarama"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
 )
 
 const (
-	esIndex = "amp-logs"
+	esIndex       = "amp-logs"
+	kafkaLogTopic = "amp-logs"
 )
 
 // Logs is used to implement log.LogServer
 type Logs struct {
-	ES    elasticsearch.Elasticsearch
+	Es    elasticsearch.Elasticsearch
 	Store storage.Interface
+	Kafka kafka.Kafka
 }
 
 // Get implements log.LogServer
-func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
-	_, err := oauth.CheckAuthorization(ctx, s.Store)
+func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+	_, err := oauth.CheckAuthorization(ctx, logs.Store)
 	if err != nil {
 		return nil, err
 	}
 	// Prepare request to elasticsearch
-	request := s.ES.GetClient().Search().Index(esIndex)
+	request := logs.Es.GetClient().Search().Index(esIndex)
 	if in.From >= 0 {
 		request.From(int(in.From))
 	}
@@ -62,8 +66,7 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	reply := GetReply{}
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
-		var entry LogEntry
-		err := json.Unmarshal(*hit.Source, &entry)
+		entry, err := parseLogEntry(*hit.Source)
 		if err != nil {
 			return nil, err
 		}
@@ -73,6 +76,36 @@ func (s *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 }
 
 // GetStream implements log.LogServer
-func (s *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	return nil
+func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
+	consumer, err := logs.Kafka.NewConsumer()
+	if err != nil {
+		return err
+	}
+	partitionConsumer, err := consumer.ConsumePartition(kafkaLogTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case msg := <-partitionConsumer.Messages():
+			entry, err := parseLogEntry(msg.Value)
+			if err != nil {
+				return err
+			}
+			stream.Send(&entry)
+
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		}
+	}
+}
+
+func parseLogEntry(data []byte) (LogEntry, error) {
+	var entry LogEntry
+	err := json.Unmarshal(data, &entry)
+	if err != nil {
+		return entry, err
+	}
+	return entry, err
 }

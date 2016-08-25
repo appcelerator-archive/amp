@@ -1,11 +1,6 @@
 package server
 
 import (
-	"log"
-	"net"
-	"strings"
-	"time"
-
 	"github.com/appcelerator/amp/api/rpc/build"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
@@ -15,6 +10,10 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"google.golang.org/grpc"
+	"log"
+	"net"
+	"strings"
+	"time"
 )
 
 var (
@@ -41,10 +40,7 @@ func Start(config Config) {
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
-	logs.RegisterLogsServer(s, &logs.Logs{
-		ES:    ES,
-		Store: Store,
-	})
+	logs.RegisterLogsServer(s, &logs.Logs{ES, Store, Kafka})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        Store,
 		ClientID:     config.ClientID,

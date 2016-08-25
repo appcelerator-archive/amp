@@ -3,10 +3,8 @@ syntax = "proto3";
 package logs;
 
 service Logs {
-  rpc Get (GetRequest) returns (GetReply) {
-  }
-  rpc GetStream (GetRequest) returns (stream LogEntry) {
-  }
+  rpc Get (GetRequest) returns (GetReply);
+  rpc GetStream (GetRequest) returns (stream LogEntry);
 }
 
 message LogEntry {
