@@ -5,7 +5,6 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -34,9 +33,9 @@ func init() {
 				fmt.Println("must specify repo to register")
 				return
 			}
+
 			repo := args[0]
-			amp := client.NewAMP(&Config)
-			project, err := amp.RegisterProject(repo)
+			project, err := AMP.RegisterProject(repo)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -54,9 +53,9 @@ func init() {
 				fmt.Println("must specify repo to remove")
 				return
 			}
+
 			repo := args[0]
-			amp := client.NewAMP(&Config)
-			project, err := amp.RemoveProject(repo)
+			project, err := AMP.RemoveProject(repo)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -76,22 +75,25 @@ func init() {
 				fmt.Println("could not process flags")
 				return
 			}
+
 			quiet, err := flags.GetBool("quiet")
 			if err != nil {
 				fmt.Println("could not process flags")
 				return
 			}
+
 			organization, err := flags.GetString("organization")
 			if err != nil {
 				fmt.Println("could not process flags")
 				return
 			}
-			amp := client.NewAMP(&Config)
-			projects, err := amp.ListProjects(organization, latest)
+
+			projects, err := AMP.ListProjects(organization, latest)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+
 			for _, p := range projects.Projects {
 				if quiet {
 					fmt.Println(p.Owner + "/" + p.Name)
@@ -114,6 +116,7 @@ func init() {
 				fmt.Println("must specify project to list build from")
 				return
 			}
+
 			repo := args[0]
 			flags := cmd.Flags()
 			latest, err := flags.GetBool("latest")
@@ -121,13 +124,14 @@ func init() {
 				fmt.Println("could not process flags")
 				return
 			}
+
 			quiet, err := flags.GetBool("quiet")
 			if err != nil {
 				fmt.Println("could not process flags")
 				return
 			}
-			amp := client.NewAMP(&Config)
-			builds, err := amp.ListBuilds(repo, latest)
+
+			builds, err := AMP.ListBuilds(repo, latest)
 			for i, b := range builds.Builds {
 				if quiet {
 					fmt.Println(b.Owner + "/" + b.Name + "/" + b.Sha)
@@ -151,13 +155,14 @@ func init() {
 				fmt.Println("must specify build to print logs from")
 				return
 			}
+
 			buildid := args[0]
-			amp := client.NewAMP(&Config)
-			logs, err := amp.BuildLog(buildid)
+			logs, err := AMP.BuildLog(buildid)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+
 			for {
 				log, err := logs.Recv()
 				if err == io.EOF {
@@ -184,9 +189,9 @@ func init() {
 				fmt.Println("must specify build to rebuild")
 				return
 			}
+
 			buildid := args[0]
-			amp := client.NewAMP(&Config)
-			build, err := amp.Rebuild(buildid)
+			build, err := AMP.Rebuild(buildid)
 			if err != nil {
 				fmt.Println(err)
 				return

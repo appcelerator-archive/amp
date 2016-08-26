@@ -16,7 +16,7 @@ var (
 )
 
 // Exit ensures that any registered functions are executed before exiting
-// with the status code.
+// with the specified status code.
 func Exit(code int) {
 	for _, f := range atexitFuncs {
 		f()

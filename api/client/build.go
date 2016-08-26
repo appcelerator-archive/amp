@@ -39,8 +39,6 @@ func createBuildRequest(buildid string) (request *build.BuildRequest, err error)
 
 // RegisterProject registers a project through the amplifier proxy to the build service
 func (a *AMP) RegisterProject(repo string) (*build.Project, error) {
-	a.Connect()
-	defer a.Disconnect()
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	request, err := createProjectRequest(repo)
@@ -52,8 +50,6 @@ func (a *AMP) RegisterProject(repo string) (*build.Project, error) {
 
 // RemoveProject removes a project through the amplifier proxy to the build service
 func (a *AMP) RemoveProject(repo string) (*build.Project, error) {
-	a.Connect()
-	defer a.Disconnect()
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	request, err := createProjectRequest(repo)
@@ -65,8 +61,6 @@ func (a *AMP) RemoveProject(repo string) (*build.Project, error) {
 
 // ListProjects lists projects through the amplifier proxy to the build service
 func (a *AMP) ListProjects(organization string, latest bool) (*build.ProjectList, error) {
-	a.Connect()
-	defer a.Disconnect()
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	query := build.ProjectQuery{
@@ -78,8 +72,6 @@ func (a *AMP) ListProjects(organization string, latest bool) (*build.ProjectList
 
 // ListBuilds lists builds through the amplifier proxy to the build service
 func (a *AMP) ListBuilds(repo string, latest bool) (*build.BuildList, error) {
-	a.Connect()
-	defer a.Disconnect()
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	request, err := createProjectRequest(repo)
@@ -91,8 +83,6 @@ func (a *AMP) ListBuilds(repo string, latest bool) (*build.BuildList, error) {
 
 // BuildLog returns a log stream through the amplifier proxy to the build service
 func (a *AMP) BuildLog(buildid string) (build.AmpBuild_BuildLogClient, error) {
-	a.Connect()
-	// connection left open to stream
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	request, err := createBuildRequest(buildid)
@@ -104,8 +94,6 @@ func (a *AMP) BuildLog(buildid string) (build.AmpBuild_BuildLogClient, error) {
 
 // Rebuild triggers a rebuild through the amplifier proxy to the build service
 func (a *AMP) Rebuild(buildid string) (*build.Build, error) {
-	a.Connect()
-	defer a.Disconnect()
 	client := build.NewAmpBuildClient(a.Conn)
 	ctx := context.Background()
 	request, err := createBuildRequest(buildid)

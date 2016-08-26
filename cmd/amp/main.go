@@ -51,8 +51,7 @@ func main() {
 		Short: "Create a new AMP swarm",
 		Long:  `Create a new AMP swarm for the target environment.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Create()
+			AMP.Create()
 		},
 	}
 
@@ -62,8 +61,7 @@ func main() {
 		Short: "Stop a running AMP swarm",
 		Long:  `Stop an running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Stop()
+			AMP.Stop()
 		},
 	}
 
@@ -73,8 +71,7 @@ func main() {
 		Short: "Start a stopped AMP swarm",
 		Long:  `Start a stopped AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Start()
+			AMP.Start()
 		},
 	}
 
@@ -84,8 +81,7 @@ func main() {
 		Short: "Update an existing AMP swarm",
 		Long:  `Updated an existing AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Update()
+			AMP.Update()
 		},
 	}
 
@@ -95,8 +91,7 @@ func main() {
 		Short: "Get status of a running AMP swarm",
 		Long:  `Get status of a running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Status()
+			AMP.Status()
 		},
 	}
 

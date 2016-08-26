@@ -16,8 +16,7 @@ var logsCmd = &cobra.Command{
 	Short: "Fetch the logs",
 	Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		amp := client.NewAMP(&Config)
-		err := Logs(amp, cmd, args)
+		err := Logs(AMP, cmd, args)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -79,8 +78,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	// Get logs from elasticsearch
-	c := logs.NewLogsClient(amp.Connect())
-	defer amp.Disconnect()
+	c := logs.NewLogsClient(amp.Conn)
 	r, err := c.Get(ctx, &request)
 	if err != nil {
 		return err
