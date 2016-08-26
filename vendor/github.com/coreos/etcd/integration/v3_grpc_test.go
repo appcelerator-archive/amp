@@ -288,18 +288,6 @@ func TestV3TxnRevision(t *testing.T) {
 		t.Fatalf("got rev %d, wanted rev %d", tresp.Header.Revision, presp.Header.Revision)
 	}
 
-	txndr := &pb.RequestOp{Request: &pb.RequestOp_RequestDeleteRange{RequestDeleteRange: &pb.DeleteRangeRequest{Key: []byte("def")}}}
-	txn = &pb.TxnRequest{Success: []*pb.RequestOp{txndr}}
-	tresp, err = kvc.Txn(context.TODO(), txn)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// did not update revision
-	if presp.Header.Revision != tresp.Header.Revision {
-		t.Fatalf("got rev %d, wanted rev %d", tresp.Header.Revision, presp.Header.Revision)
-	}
-
 	txnput := &pb.RequestOp{Request: &pb.RequestOp_RequestPut{RequestPut: &pb.PutRequest{Key: []byte("abc"), Value: []byte("123")}}}
 	txn = &pb.TxnRequest{Success: []*pb.RequestOp{txnput}}
 	tresp, err = kvc.Txn(context.TODO(), txn)
@@ -391,7 +379,6 @@ func TestV3DeleteRange(t *testing.T) {
 		keySet []string
 		begin  string
 		end    string
-		prevKV bool
 
 		wantSet [][]byte
 		deleted int64
@@ -399,44 +386,38 @@ func TestV3DeleteRange(t *testing.T) {
 		// delete middle
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "fop", false,
+			"foo/", "fop",
 			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 		// no delete
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "foo/", false,
+			"foo/", "foo/",
 			[][]byte{[]byte("foo"), []byte("foo/abc"), []byte("fop")}, 0,
 		},
 		// delete first
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"fo", "fop", false,
+			"fo", "fop",
 			[][]byte{[]byte("fop")}, 2,
 		},
 		// delete tail
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "fos", false,
+			"foo/", "fos",
 			[][]byte{[]byte("foo")}, 2,
 		},
 		// delete exact
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/abc", "", false,
+			"foo/abc", "",
 			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 		// delete none, [x,x)
 		{
 			[]string{"foo"},
-			"foo", "foo", false,
+			"foo", "foo",
 			[][]byte{[]byte("foo")}, 0,
-		},
-		// delete middle with preserveKVs set
-		{
-			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "fop", true,
-			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 	}
 
@@ -455,20 +436,13 @@ func TestV3DeleteRange(t *testing.T) {
 
 		dreq := &pb.DeleteRangeRequest{
 			Key:      []byte(tt.begin),
-			RangeEnd: []byte(tt.end),
-			PrevKv:   tt.prevKV,
-		}
+			RangeEnd: []byte(tt.end)}
 		dresp, err := kvc.DeleteRange(context.TODO(), dreq)
 		if err != nil {
 			t.Fatalf("couldn't delete range on test %d (%v)", i, err)
 		}
 		if tt.deleted != dresp.Deleted {
 			t.Errorf("expected %d on test %v, got %d", tt.deleted, i, dresp.Deleted)
-		}
-		if tt.prevKV {
-			if len(dresp.PrevKvs) != int(dresp.Deleted) {
-				t.Errorf("preserve %d keys, want %d", len(dresp.PrevKvs), dresp.Deleted)
-			}
 		}
 
 		rreq := &pb.RangeRequest{Key: []byte{0x0}, RangeEnd: []byte{0xff}}
@@ -488,6 +462,7 @@ func TestV3DeleteRange(t *testing.T) {
 		if !reflect.DeepEqual(tt.wantSet, keys) {
 			t.Errorf("expected %v on test %v, got %v", tt.wantSet, i, keys)
 		}
+
 		// can't defer because tcp ports will be in use
 		clus.Terminate(t)
 	}

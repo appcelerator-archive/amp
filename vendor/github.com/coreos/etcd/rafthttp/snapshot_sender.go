@@ -103,7 +103,7 @@ func (s *snapshotSender) send(merged snap.Message) {
 // post posts the given request.
 // It returns nil when request is sent out and processed successfully.
 func (s *snapshotSender) post(req *http.Request) (err error) {
-	cancel := httputil.RequestCanceler(req)
+	cancel := httputil.RequestCanceler(s.tr.pipelineRt, req)
 
 	type responseAndError struct {
 		resp *http.Response
@@ -143,7 +143,7 @@ func createSnapBody(merged snap.Message) io.ReadCloser {
 	buf := new(bytes.Buffer)
 	enc := &messageEncoder{w: buf}
 	// encode raft message
-	if err := enc.encode(&merged.Message); err != nil {
+	if err := enc.encode(merged.Message); err != nil {
 		plog.Panicf("encode message error (%v)", err)
 	}
 

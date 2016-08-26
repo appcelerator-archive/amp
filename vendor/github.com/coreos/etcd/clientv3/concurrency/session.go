@@ -15,11 +15,21 @@
 package concurrency
 
 import (
+	"sync"
+
 	v3 "github.com/coreos/etcd/clientv3"
 	"golang.org/x/net/context"
 )
 
-const defaultSessionTTL = 60
+// only keep one ephemeral lease per client
+var clientSessions clientSessionMgr = clientSessionMgr{sessions: make(map[*v3.Client]*Session)}
+
+const sessionTTL = 60
+
+type clientSessionMgr struct {
+	sessions map[*v3.Client]*Session
+	mu       sync.Mutex
+}
 
 // Session represents a lease kept alive for the lifetime of a client.
 // Fault-tolerant applications may use sessions to reason about liveness.
@@ -32,13 +42,14 @@ type Session struct {
 }
 
 // NewSession gets the leased session for a client.
-func NewSession(client *v3.Client, opts ...SessionOption) (*Session, error) {
-	ops := &sessionOptions{ttl: defaultSessionTTL}
-	for _, opt := range opts {
-		opt(ops)
+func NewSession(client *v3.Client) (*Session, error) {
+	clientSessions.mu.Lock()
+	defer clientSessions.mu.Unlock()
+	if s, ok := clientSessions.sessions[client]; ok {
+		return s, nil
 	}
 
-	resp, err := client.Grant(client.Ctx(), int64(ops.ttl))
+	resp, err := client.Grant(client.Ctx(), sessionTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -52,21 +63,22 @@ func NewSession(client *v3.Client, opts ...SessionOption) (*Session, error) {
 
 	donec := make(chan struct{})
 	s := &Session{client: client, id: id, cancel: cancel, donec: donec}
+	clientSessions.sessions[client] = s
 
 	// keep the lease alive until client error or cancelled context
 	go func() {
-		defer close(donec)
+		defer func() {
+			clientSessions.mu.Lock()
+			delete(clientSessions.sessions, client)
+			clientSessions.mu.Unlock()
+			close(donec)
+		}()
 		for range keepAlive {
 			// eat messages until keep alive channel closes
 		}
 	}()
 
 	return s, nil
-}
-
-// Client is the etcd client that is attached to the session.
-func (s *Session) Client() *v3.Client {
-	return s.client
 }
 
 // Lease is the lease ID for keys bound to the session.
@@ -89,21 +101,4 @@ func (s *Session) Close() error {
 	s.Orphan()
 	_, err := s.client.Revoke(s.client.Ctx(), s.id)
 	return err
-}
-
-type sessionOptions struct {
-	ttl int
-}
-
-// SessionOption configures Session.
-type SessionOption func(*sessionOptions)
-
-// WithTTL configures the session's TTL in seconds.
-// If TTL is <= 0, the default 60 seconds TTL will be used.
-func WithTTL(ttl int) SessionOption {
-	return func(so *sessionOptions) {
-		if ttl > 0 {
-			so.ttl = ttl
-		}
-	}
 }

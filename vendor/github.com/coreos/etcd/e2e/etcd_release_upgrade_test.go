@@ -27,7 +27,7 @@ import (
 // TestReleaseUpgrade ensures that changes to master branch does not affect
 // upgrade from latest etcd releases.
 func TestReleaseUpgrade(t *testing.T) {
-	lastReleaseBinary := binDir + "/etcd-last-release"
+	lastReleaseBinary := "../bin/etcd-last-release"
 	if !fileutil.Exist(lastReleaseBinary) {
 		t.Skipf("%q does not exist", lastReleaseBinary)
 	}
@@ -37,7 +37,6 @@ func TestReleaseUpgrade(t *testing.T) {
 	copiedCfg := configNoTLS
 	copiedCfg.execPath = lastReleaseBinary
 	copiedCfg.snapCount = 3
-	copiedCfg.baseScheme = "unix" // to avoid port conflict
 
 	epc, err := newEtcdProcessCluster(&copiedCfg)
 	if err != nil {
@@ -72,7 +71,7 @@ func TestReleaseUpgrade(t *testing.T) {
 		if err := epc.procs[i].Stop(); err != nil {
 			t.Fatalf("#%d: error closing etcd process (%v)", i, err)
 		}
-		epc.procs[i].cfg.execPath = binDir + "/etcd"
+		epc.procs[i].cfg.execPath = "../bin/etcd"
 		epc.procs[i].cfg.keepDataDir = true
 
 		if err := epc.procs[i].Restart(); err != nil {
