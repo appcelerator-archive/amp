@@ -5,10 +5,11 @@
 package jwt
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"golang.org/x/oauth2"
 )
 
 var dummyPrivateKey = []byte(`-----BEGIN RSA PRIVATE KEY-----
@@ -56,7 +57,7 @@ func TestJWTFetch_JSONResponse(t *testing.T) {
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(context.Background()).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +91,7 @@ func TestJWTFetch_BadResponse(t *testing.T) {
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(context.Background()).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +124,7 @@ func TestJWTFetch_BadResponseType(t *testing.T) {
 		PrivateKey: dummyPrivateKey,
 		TokenURL:   ts.URL,
 	}
-	tok, err := conf.TokenSource(context.Background()).Token()
+	tok, err := conf.TokenSource(oauth2.NoContext).Token()
 	if err == nil {
 		t.Error("got a token; expected error")
 		if tok.AccessToken != "" {
