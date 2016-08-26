@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# resolves the hostname of a Docker service and adds it in local host resolution
+_advertise_service(){
+  local _host_file="/etc/hosts"
+  # whatever local ip, avoiding 127.0.0.1 to not make a mess
+  local _line_pattern="127.0.1.1"
+  local _container_id
+  local _hostname
+  local _loop=0
+  local _retries=12
+  local _remove_only=0
+  if [[ "x$1" = "xremove" ]]; then _remove_only=1; _retries=1; shift ; fi
+  local _service=$1
+  if [[ -z "$_service" ]]; then echo "ERROR: $(basename $0) should be called with the name of a service"; return 1 ; fi
+  while [[ -z $_container_id ]]; do
+    _container_id=$(docker ps --filter "name=${_service}\." --format '{{ .ID }}')
+    if [[ $? -ne 0 ]]; then
+      echo "ERROR - caught a Docker error"
+      return 1
+    fi
+    ((_loop++))
+    if [[ $_loop -gt $_retries ]]; then
+      if [[ $_remove_only -eq 0 ]]; then echo "WARN - cannot find service $_service to advertise"; fi
+      return 0
+    fi
+    sleep 1
+  done
+  if [[ $(echo "$_container_id" | wc -w) -ne 1 ]]; then echo "ERROR - found more than one container for service $_service"; return 1; fi
+  # cleanup: remove any hostname that looks like a Docker host
+  _hostname=$(grep "$_line_pattern" "$_host_file" | sed 's/^.*\([a-h0-9]\{12\}\).*$/\1/')
+  #if no match, _hostname will be the full line
+  echo "$_hostname" | grep -q "$_line_pattern"
+  if [[ $? -ne 0 && -n "$_hostname" ]]; then
+    echo "$_hostname has been removed from $_host_file"
+    sed -i "s/ $_hostname//" "$_host_file"
+  fi
+  if [[ $_remove_only -eq 1 ]]; then return 0; fi
+  echo "$_container_id has been added to $_host_file"
+  grep -q "$_line_pattern" "$_host_file"
+  if [[ $? -ne 0 ]]; then
+    echo "$_line_pattern $_container_id" >> "$_host_file"
+  else
+    sed -i "s/^\(${_line_pattern}.*\)$/\1 $_container_id/" $_host_file
+  fi
+}
+ 
+_advertise_service $@

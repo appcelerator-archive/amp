@@ -125,6 +125,7 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
+        $(dirname $0)/advertise_service remove kafka &
         removeservices
       ;;
       pull)
@@ -197,6 +198,7 @@ startservices() {
   fi
 
   for i in $services; do $i; done
+  $(dirname $0)/advertise_service kafka &
 }
 
 ls() {
