@@ -219,7 +219,6 @@ func listenToEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int
 	timeout := time.After(60 * time.Second)
 	entries := make(chan *logs.LogEntry, howMany)
 	entryCount := 0
-ListenLoop:
 	for {
 		entry, err := stream.Recv()
 		select {
@@ -229,10 +228,10 @@ ListenLoop:
 			}
 			entryCount++
 			if entryCount == howMany {
-				break ListenLoop
+				return entries
 			}
 		case <-timeout:
-			break ListenLoop
+			return entries
 		}
 	}
 	return entries
