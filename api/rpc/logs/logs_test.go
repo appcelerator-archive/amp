@@ -9,6 +9,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/server"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -82,11 +83,19 @@ func TestMain(m *testing.M) {
 }
 
 func TestShouldGetAHundredLogEntries(t *testing.T) {
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
-	if err != nil {
-		t.Fatalf("could not get logs: %v", err)
+	expected := 100
+	actual := -1
+	for i := 0; i < 60; i++ {
+		r, err := client.Get(context.Background(), &logs.GetRequest{})
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		actual = len(r.Entries)
+		if actual == expected {
+			break
+		}
+		time.Sleep(1 * time.Second)
 	}
-	if len(r.Entries) != 100 {
-		t.Fatalf("expected: %v, got: %v", 100, len(r.Entries))
-	}
+	assert.Equal(t, expected, actual)
 }
