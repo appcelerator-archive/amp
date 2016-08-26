@@ -228,12 +228,15 @@ func listenToEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int
 			}
 			entryCount++
 			if entryCount == howMany {
+				close(entries)
 				return entries
 			}
 		case <-timeout:
+			close(entries)
 			return entries
 		}
 	}
+	close(entries)
 	return entries
 }
 
@@ -243,7 +246,6 @@ func TestShouldStreamLogs(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 
 }
@@ -262,7 +264,6 @@ func TestShouldStreamAndFilterByContainerId(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
 		assert.Equal(t, randomContainerId, entry.ContainerId)
@@ -283,7 +284,6 @@ func TestShouldStreamAndFilterByNodeId(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
 		assert.Equal(t, randomNodeId, entry.NodeId)
@@ -304,7 +304,6 @@ func TestShouldStreamAndFilterByServiceId(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
 		assert.Equal(t, randomServiceId, entry.ServiceId)
@@ -324,7 +323,6 @@ func TestShouldStreamAndFilterByServiceName(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
 		assert.Equal(t, randomServiceName, entry.ServiceName)
@@ -337,7 +335,6 @@ func TestShouldStreamAndFilterByMessage(t *testing.T) {
 		t.Error(err)
 	}
 	entries := listenToEntries(t, stream, defaultNumberOfEntries)
-	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
 		assert.Contains(t, strings.ToLower(entry.Message), "info")
