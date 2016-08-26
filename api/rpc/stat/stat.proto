@@ -23,18 +23,30 @@ message StatRequest {
   string until=14;
   string period=15;
   string time_unit=16;
-  string limit=17;
 }
 
 message CPUEntry {
-  string id=1;
-  string name=2;
-  string usage_system=3;
-  string usage_kernel=4;
-  string usage_user=5;
-  string usage_total=6;
+  //Common data
+  int64 time=1;
+  string datacenter=2;
+  string host=3;
+  string container_id=4;
+  string container_name=5;
+  string container_image=6;
+  string service_id=7;
+  string service_name=8;
+  string task_id=9;
+  string task_name=10;
+  string node_id=11;
+  //CPU Dedicated data
+  string usage_system=12;
+  string usage_kernel=13;
+  string usage_user=14;
+  string usage_total=15;
 }
 
 message CPUReply {
   repeated CPUEntry entries = 1;
 }
+
+

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/appcelerator/amp/data/influx"
 	"golang.org/x/net/context"
 	//"time"
@@ -17,9 +16,9 @@ type Stat struct {
 
 //CPUQuery Extract CPU information according to StatRequest
 func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error) {
-	idFieldName, nameFieldName := getIDNameFields(req)
-	cpuFields := idFieldName + ", " + nameFieldName + ", " + "usage_in_kernelmode, usage_in_usermode, usage_system, usage_total"
-	query := buildQueryString(req, cpuFields, idFieldName, "cpu", req.Limit)
+	idFieldName := getIDNameFields(req)
+	cpuFields := "usage_in_kernelmode, usage_in_usermode, usage_system, usage_total"
+	query := buildQueryString(req, cpuFields, idFieldName, "cpu")
 	fmt.Println("query: ", query)
 	res, err := s.Influx.Query(query)
 	if err != nil {
@@ -33,57 +32,67 @@ func (s *Stat) CPUQuery(ctx context.Context, req *StatRequest) (*CPUReply, error
 	list := res.Results[0].Series[0].Values
 	cpuReply.Entries = make([]*CPUEntry, len(list))
 	for i, row := range list {
-		ID := row[1].(string)
-		var UsageKernel = ""
-		if row[3] != nil {
-			UsageKernel = row[3].(json.Number).String()
-		}
-		var UsageUser = ""
-		if row[4] != nil {
-			UsageUser = row[4].(json.Number).String()
-		}
-		var UsageSystem = ""
-		if row[5] != nil {
-			UsageSystem = row[5].(json.Number).String()
-		}
-		var UsageTotal = ""
-		if row[6] != nil {
-			UsageTotal = row[6].(json.Number).String()
-		}
 		entry := CPUEntry{
-			Id:          ID,
-			Name:        row[2].(string),
-			UsageKernel: UsageKernel,
-			UsageUser:   UsageUser,
-			UsageSystem: UsageSystem,
-			UsageTotal:  UsageTotal,
-		}
-		if err != nil {
-			return nil, err
+			Time:           getTimeFieldValue(row[0]),
+			Datacenter:     getStringFieldValue(row[1]),
+			Host:           getStringFieldValue(row[2]),
+			ContainerId:    getStringFieldValue(row[3]),
+			ContainerName:  getStringFieldValue(row[4]),
+			ContainerImage: getStringFieldValue(row[5]),
+			ServiceId:      getStringFieldValue(row[6]),
+			ServiceName:    getStringFieldValue(row[7]),
+			TaskId:         getStringFieldValue(row[8]),
+			TaskName:       getStringFieldValue(row[9]),
+			NodeId:         getStringFieldValue(row[10]),
+			UsageKernel:    getNumberFieldValue(row[11]),
+			UsageUser:      getNumberFieldValue(row[12]),
+			UsageSystem:    getNumberFieldValue(row[13]),
+			UsageTotal:     getNumberFieldValue(row[14]),
 		}
 		cpuReply.Entries[i] = &entry
 	}
 	return &cpuReply, nil
 }
 
-//Return specific field name for influx query concidering StatRequest
-func getIDNameFields(req *StatRequest) (string, string) {
+func getStringFieldValue(field interface{}) string {
+	if field == nil {
+		return ""
+	}
+	return field.(string)
+}
+
+func getNumberFieldValue(field interface{}) string {
+	if field == nil {
+		return "0"
+	}
+	return field.(json.Number).String()
+}
+
+func getTimeFieldValue(field interface{}) int64 {
+	if field == nil {
+		return 0
+	}
+	ret, _ := field.(json.Number).Int64()
+	return ret
+}
+
+//Return specific field name for influx query concidering StatRequest discriminator
+func getIDNameFields(req *StatRequest) string {
 	var idFieldName = "\"com.docker.swarm.node.id\""
-	var nameFieldName = "host"
 	if req.Discriminator == "container" {
-		idFieldName = "container_id"
-		nameFieldName = "container_name"
+		idFieldName = "cotainer_id"
 	} else if req.Discriminator == "service" {
 		idFieldName = "\"com.docker.swarm.service.id\""
-		nameFieldName = "\"com.docker.swarm.service.name\""
+	} else if req.Discriminator == "task" {
+		idFieldName = "\"com.docker.swarm.task.id\""
 	} else {
 		req.Discriminator = "node"
 	}
-	return idFieldName, nameFieldName
+	return idFieldName
 }
 
 //Compute the influx 'sql' query string concidering StatRequest
-func buildQueryString(req *StatRequest, fields string, groupby string, metric string, limit string) string {
+func buildQueryString(req *StatRequest, fields string, groupby string, metric string) string {
 	var where = ""
 	//var limit = " LIMIT 1"
 	if req.Since != "" {
@@ -131,9 +140,6 @@ func buildQueryString(req *StatRequest, fields string, groupby string, metric st
 	if where != "" {
 		where = "WHERE " + where[5:]
 	}
-	fmt.Println("where: " + where)
-	if limit != "" {
-		limit = " LIMIT " + limit
-	}
-	return fmt.Sprintf("SELECT %s FROM docker_container_%s %s GROUP BY %s ORDER BY time DESC %s", fields, metric, where, groupby, limit)
+	qSelect := `datacenter, host, container_id, container_name, container_image, "com.docker.swarm.service.id", "com.docker.swarm.service.name", "com.docker.swarm.task.id", "com.docker.swarm.task.name", "com.docker.swarm.node.id"`
+	return fmt.Sprintf("SELECT %s,%s FROM docker_container_%s %s GROUP BY %s ORDER BY time DESC", qSelect, fields, metric, where, groupby)
 }

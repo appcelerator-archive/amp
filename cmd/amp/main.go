@@ -146,6 +146,7 @@ func main() {
 	statsCmd.Flags().Bool("container", false, "display stats on containers")
 	statsCmd.Flags().Bool("service", false, "displat stats on services")
 	statsCmd.Flags().Bool("node", false, "display stats on nodes")
+	statsCmd.Flags().Bool("task", false, "display stats on tasks")
 	//metrics
 	statsCmd.Flags().Bool("cpu", false, "display cpu stats")
 	//statsCmd.Flags().Bool("mem", false, "display memory stats")
