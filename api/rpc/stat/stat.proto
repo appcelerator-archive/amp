@@ -39,10 +39,10 @@ message CPUEntry {
   string task_name=10;
   string node_id=11;
   //CPU Dedicated data
-  string usage_system=12;
-  string usage_kernel=13;
-  string usage_user=14;
-  string usage_total=15;
+  double usage_system=12;
+  double usage_total=13;
+  double usage_percent=14;
+  double cpu=15;
 }
 
 message CPUReply {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stat"
@@ -11,6 +10,7 @@ import (
 )
 
 const blank = "                                                                     "
+const separator = "---------------------------------------------------------------------"
 
 var statsCmd = &cobra.Command{
 	Use:   "stats",
@@ -39,7 +39,7 @@ func init() {
 	statsCmd.Flags().String("period", "", "historic period of metrics extraction, duration + time unit")
 	statsCmd.Flags().String("since", "", "date defining when begin the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
 	statsCmd.Flags().String("until", "", "date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
-	//statsCmd.Flags().String("time-unit", "", "historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks")
+	statsCmd.Flags().String("time-unit", "", "historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks")
 	//filters:
 	statsCmd.Flags().String("container-id", "", "filter on container id")
 	statsCmd.Flags().String("container-name", "", "filter on container name")
@@ -90,7 +90,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	query.Period = cmd.Flag("period").Value.String()
 	query.Since = cmd.Flag("since").Value.String()
 	query.Until = cmd.Flag("until").Value.String()
-	//query.TimeUnit = cmd.Flag("time-unit").Value.String()
+	query.TimeUnit = cmd.Flag("time-unit").Value.String()
 
 	if amp.Verbose() {
 		displayStatQueryParameters(&query)
@@ -122,9 +122,7 @@ func cpuStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) er
 	} else if query.Discriminator == "service" {
 		displayCPUService(query, r)
 	} else if query.Discriminator == "task" {
-		displayCPUService(query, r)
-	} else if query.Discriminator == "node" {
-		displayCPUService(query, r)
+		displayCPUTask(query, r)
 	} else {
 		displayCPUNode(query, r)
 	}
@@ -168,51 +166,56 @@ func displayStatQueryParameters(query *stat.StatRequest) {
 }
 
 func displayCPUContainer(query *stat.StatRequest, result *stat.CPUReply) {
+	fmt.Println(col("Service name", 20) + col("Container name", 50) + col("Node id", 30) + colr("CPU", 12))
+	fmt.Println(col("-", 25) + col("-", 20) + col("-", 50) + col("-", 30) + col("-", 12))
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ContainerName, 50) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(col(row.ServiceName, 20) + col(row.ContainerName, 50) + col(row.NodeId, 30) + getCPUCol(row))
 	}
 }
 
 func displayCPUService(query *stat.StatRequest, result *stat.CPUReply) {
+	fmt.Println(col("Service name", 20) + col("Node id", 30) + colr("CPU", 12))
+	fmt.Println(col("-", 20) + col("-", 30) + col("-", 12))
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ServiceName, 20) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(col(row.ServiceName, 20) + col(row.NodeId, 30) + getCPUCol(row))
 	}
 }
 
 func displayCPUTask(query *stat.StatRequest, result *stat.CPUReply) {
+	fmt.Println(col("Task name", 20) + col("Node id", 30) + colr("CPU", 12))
+	fmt.Println(col("-", 20) + col("-", 30) + col("-", 12))
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.TaskName, 20) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(col(row.TaskName, 20) + col(row.NodeId, 30) + getCPUCol(row))
 	}
 }
 
 func displayCPUNode(query *stat.StatRequest, result *stat.CPUReply) {
+	fmt.Println(col("Datacenter", 20) + col("Host", 30) + col("Node id", 30) + colr("CPU", 12))
+	fmt.Println(col("-", 20) + col("-", 30) + col("-", 30) + col("-", 12))
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.Datacenter, 20) + col(row.Host, 30) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(col(row.Datacenter, 20) + col(row.Host, 30) + col(row.NodeId, 30) + getCPUCol(row))
 	}
 }
 
-func getCPUCols(row *stat.CPUEntry) string {
-	//usageSystem, _ := strconv.ParseFloat(row.UsageSystem, 64)
-	//usageKernel, _ := strconv.ParseFloat(row.UsageKernel, 64)
-	usageUser, _ := strconv.ParseFloat(row.UsageUser, 64)
-	usageTotal, _ := strconv.ParseFloat(row.UsageTotal, 64)
-	//var system string
-	//var kernel string
-	var user string
-	if usageTotal != 0 {
-		//system = fmt.Sprintf("%f", usageSystem * 100 / usageTotal)
-		//kernel = fmt.Sprintf("%f", usageKernel * 100 / usageTotal)
-		user = fmt.Sprintf("%.1f", usageUser*100/usageTotal)
-	}
-	//return col(system, 12) + col(kernel, 12) + col(user, 12)
-	return col(user, 12)
+func getCPUCol(row *stat.CPUEntry) string {
+	return colr(fmt.Sprintf("%.1f", row.Cpu), 12)
 }
 
 func col(value string, size int) string {
+	if value == "-" {
+		return separator[0:size]
+	}
 	if len(value) > size {
 		return value[0:size]
 	}
 	return value + blank[0:size-len(value)]
+}
+
+func colr(value string, size int) string {
+	if len(value) > size {
+		return value[0:size]
+	}
+	return blank[0:size-len(value)]+value
 }
 
 func colTime(val int64, size int) string {
