@@ -206,7 +206,7 @@ func TestShouldFetchFromGivenIndex(t *testing.T) {
 }
 
 func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
-	for i := int64(1); i < 1000; i += 10 {
+	for i := int64(1); i < 200; i += 10 {
 		r, err := client.Get(context.Background(), &logs.GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
@@ -250,15 +250,15 @@ func TestShouldStreamLogs(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByContainerId(t *testing.T) {
-	// First, get zookeeper container id
-	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	// First, get a random container id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
-	zookeeperContainerId := r.Entries[0].ContainerId
+	randomContainerId := r.Entries[0].ContainerId
 
 	// Then stream by container id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: zookeeperContainerId})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: randomContainerId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -266,20 +266,20 @@ func TestShouldStreamAndFilterByContainerId(t *testing.T) {
 	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, zookeeperContainerId, entry.ContainerId)
+		assert.Equal(t, randomContainerId, entry.ContainerId)
 	}
 }
 
 func TestShouldStreamAndFilterByNodeId(t *testing.T) {
-	// First, get zookeeper node id
-	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	// First, get a random node id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
-	zookeeperNodeId := r.Entries[0].NodeId
+	randomNodeId := r.Entries[0].NodeId
 
 	// Then stream by node id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: zookeeperNodeId})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: randomNodeId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -287,20 +287,20 @@ func TestShouldStreamAndFilterByNodeId(t *testing.T) {
 	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, zookeeperNodeId, entry.NodeId)
+		assert.Equal(t, randomNodeId, entry.NodeId)
 	}
 }
 
 func TestShouldStreamAndFilterByServiceId(t *testing.T) {
-	// First, get zookeeper service id
-	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	// First, get a random service id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
-	zookeeperServiceId := r.Entries[0].ServiceId
+	randomServiceId := r.Entries[0].ServiceId
 
 	// Then stream by service id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: zookeeperServiceId})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: randomServiceId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -308,12 +308,19 @@ func TestShouldStreamAndFilterByServiceId(t *testing.T) {
 	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, zookeeperServiceId, entry.ServiceId)
+		assert.Equal(t, randomServiceId, entry.ServiceId)
 	}
 }
 
 func TestShouldStreamAndFilterByServiceName(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	// First, get a random service name
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	randomServiceName := r.Entries[0].ServiceName
+
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: randomServiceName})
 	if err != nil {
 		t.Error(err)
 	}
@@ -321,7 +328,7 @@ func TestShouldStreamAndFilterByServiceName(t *testing.T) {
 	close(entries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, "zookeeper", entry.ServiceName)
+		assert.Equal(t, randomServiceName, entry.ServiceName)
 	}
 }
 
