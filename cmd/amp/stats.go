@@ -17,8 +17,7 @@ var statsCmd = &cobra.Command{
 	Short: "Display resource usage statistics",
 	Long:  `get statistics on containers, services, nodes about cpu, memory, io, net.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		amp := client.NewAMP(&Config)
-		err := Stats(amp, cmd, args)
+		err := Stats(AMP, cmd, args)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -101,9 +100,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	//Execute query regarding discriminator
-	c := stat.NewStatClient(amp.Connect())
-	defer amp.Disconnect()
-
+	c := stat.NewStatClient(amp.Conn)
 	return cpuStat(ctx, c, &query)
 }
 

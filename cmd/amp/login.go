@@ -16,8 +16,7 @@ var loginCmd = &cobra.Command{
 	Short: "Login via github",
 	Long:  `Create a github access token and store it in your Config file to authenticate further commands`,
 	Run: func(cmd *cobra.Command, args []string) {
-		a := client.NewAMP(&Config)
-		Login(a)
+		Login(AMP)
 	},
 }
 

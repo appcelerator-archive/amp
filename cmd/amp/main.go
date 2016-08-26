@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +14,9 @@ var (
 
 	// Build is set with a linker flag (see Makefile)
 	Build string
+
+	// AMP manages the connection and state for the client
+	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
 	Config     client.Configuration
@@ -34,16 +37,21 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose)
+		AMP = client.NewAMP(&Config)
+		AMP.Connect()
+		cli.AtExit(func() {
+			if AMP != nil {
+				AMP.Disconnect()
+			}
+		})
 	})
 
-	// createCmd represents the create command
 	createCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new AMP swarm",
 		Long:  `Create a new AMP swarm for the target environment.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Create()
+			AMP.Create()
 		},
 	}
 
@@ -53,8 +61,7 @@ func main() {
 		Short: "Stop a running AMP swarm",
 		Long:  `Stop an running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Stop()
+			AMP.Stop()
 		},
 	}
 
@@ -64,8 +71,7 @@ func main() {
 		Short: "Start a stopped AMP swarm",
 		Long:  `Start a stopped AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Start()
+			AMP.Start()
 		},
 	}
 
@@ -75,8 +81,7 @@ func main() {
 		Short: "Update an existing AMP swarm",
 		Long:  `Updated an existing AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Update()
+			AMP.Update()
 		},
 	}
 
@@ -86,8 +91,7 @@ func main() {
 		Short: "Get status of a running AMP swarm",
 		Long:  `Get status of a running AMP swarm.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			a := client.NewAMP(&Config)
-			a.Status()
+			AMP.Status()
 		},
 	}
 
@@ -114,6 +118,7 @@ func main() {
 
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(-1)
+		cli.Exit(-1)
 	}
+	cli.Exit(0)
 }
