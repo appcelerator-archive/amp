@@ -277,7 +277,6 @@ func listenToLogEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany 
 			return entries
 		}
 	}
-	return entries
 }
 
 func TestShouldStreamLogs(t *testing.T) {
