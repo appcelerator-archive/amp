@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +14,9 @@ var (
 
 	// Build is set with a linker flag (see Makefile)
 	Build string
+
+	// AMP manages the connection and state for the client
+	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
 	Config     client.Configuration
@@ -34,9 +37,15 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose)
+		AMP = client.NewAMP(&Config)
+		AMP.Connect()
+		cli.AtExit(func() {
+			if AMP != nil {
+				AMP.Disconnect()
+			}
+		})
 	})
 
-	// createCmd represents the create command
 	createCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new AMP swarm",
@@ -114,6 +123,7 @@ func main() {
 
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(-1)
+		cli.Exit(-1)
 	}
+	cli.Exit(0)
 }
