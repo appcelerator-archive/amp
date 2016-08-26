@@ -128,7 +128,7 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = entry.NodeId == in.NodeId
 	}
 	if in.Message != "" {
-		match = strings.Contains(entry.Message, in.Message)
+		match = strings.Contains(strings.ToLower(entry.Message), in.Message)
 	}
 	return match
 }
