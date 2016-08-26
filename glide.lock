@@ -1,19 +1,17 @@
-hash: 34aff4a5528e5ad8a03f7cedf68eff7c69fd847aa1559a1936f3adc63341be74
-updated: 2016-08-26T00:47:20.686469496-07:00
+hash: b8f43f9a77a4097dd600192797c5e7bc58c724e73bf290ac6efcbe90fc3ed1db
+updated: 2016-08-26T12:17:51.829826001+02:00
 imports:
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
   version: 9efa00d1030d4bf62eb8e5ec130023aeb1b8e2d0
   subpackages:
-  - clientv3
   - auth/authpb
+  - clientv3
   - etcdserver/api/v3rpc/rpctypes
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: 6cf5744a041a0022271cefed95ba843f6d87fd51
+  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency
@@ -29,16 +27,16 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
-  version: aa0c862057666179de291b67d9f093d12b5a8473
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/golang/protobuf
-  version: 888eb0692c857ec880338addf316bd662d5e630e
+  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
   subpackages:
-  - proto
   - jsonpb
+  - proto
 - name: github.com/golang/snappy
   version: 5979233c5d6225d4a8e438cdd0b411888449ddab
 - name: github.com/google/go-github
-  version: a59a35745f99ad92d70d69a9f180767063aa4bf3
+  version: b9698164669e386680621e2006cab02271257611
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -46,20 +44,20 @@ imports:
   subpackages:
   - query
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: 331418a167bc76e7e4e7469cf704033eddaba7a5
+  version: f52d055dc48aec25854ed7d31862f78913cf17d1
   subpackages:
   - runtime
-  - utilities
   - runtime/internal
+  - utilities
 - name: github.com/hashicorp/hcl
   version: baeb59c710717b06aac1dbe2270e8192ec593244
   subpackages:
   - hcl/ast
   - hcl/parser
-  - hcl/token
-  - json/parser
   - hcl/scanner
   - hcl/strconv
+  - hcl/token
+  - json/parser
   - json/scanner
   - json/token
 - name: github.com/howeyc/gopass
@@ -111,27 +109,28 @@ imports:
   version: 103ce5cd2042f2fe629c1957abb64ab3e7f50235
 - name: github.com/spf13/viper
   version: 7fb2782df3d83e0036cc89f461ed0422628776f4
+- name: github.com/stretchr/testify
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
-  - ssh/terminal
-  - ssh
   - curve25519
+  - ssh
+  - ssh/terminal
 - name: golang.org/x/net
-  version: 6c89f9617983ee917132513a791d8b5850fe90c5
+  version: 6acef71eb69611914f7a30939ea9f6e194c78172
   subpackages:
   - context
   - http2
-  - trace
   - http2/hpack
-  - lex/httplex
   - internal/timeseries
+  - trace
 - name: golang.org/x/oauth2
-  version: 75e75ddc3d156dc8fc71c6f2ef3607cbdcfc8c27
+  version: 54f42edba4a8f81d48dc8b2287b7c7421e673022
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: 9c60d1c508f5134d1ca726b4641db998f2523357
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -142,24 +141,24 @@ imports:
 - name: google.golang.org/appengine
   version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
   subpackages:
-  - urlfetch
   - internal
-  - internal/urlfetch
   - internal/base
   - internal/datastore
   - internal/log
   - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
 - name: google.golang.org/grpc
   version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
   subpackages:
   - codes
-  - metadata
   - credentials
   - grpclog
   - internal
+  - metadata
   - naming
-  - transport
   - peer
+  - transport
 - name: gopkg.in/olivere/elastic.v3
   version: 908ffee99d2c7e5fc7cf6ddf437b1fb26f4bb286
   subpackages:

@@ -5,7 +5,6 @@
 package oauth2_test
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -13,7 +12,6 @@ import (
 )
 
 func ExampleConfig() {
-	ctx := context.Background()
 	conf := &oauth2.Config{
 		ClientID:     "YOUR_CLIENT_ID",
 		ClientSecret: "YOUR_CLIENT_SECRET",
@@ -37,11 +35,11 @@ func ExampleConfig() {
 	if _, err := fmt.Scan(&code); err != nil {
 		log.Fatal(err)
 	}
-	tok, err := conf.Exchange(ctx, code)
+	tok, err := conf.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client := conf.Client(ctx, tok)
+	client := conf.Client(oauth2.NoContext, tok)
 	client.Get("...")
 }

@@ -30,8 +30,8 @@ Some API methods have optional parameters that can be passed. For example:
 ```go
 client := github.NewClient(nil)
 
-// list public repositories for org "github"
-opt := &github.RepositoryListByOrgOptions{Type: "public"}
+// list recently updated repositories for org "github"
+opt := &github.RepositoryListByOrgOptions{Sort: "updated"}
 repos, _, err := client.Repositories.ListByOrg("github", opt)
 ```
 
