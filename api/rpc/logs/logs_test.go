@@ -7,11 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+	"github.com/Shopify/sarama"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/server"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"math/rand"
+	"strconv"
 )
 
 const (
@@ -21,7 +25,12 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
-	defaultNumberOfEntries  = 5
+	defaultNumberOfEntries  = 50
+	testServiceId           = "testServiceId"
+	testServiceName         = "testServiceName"
+	testNodeId              = "testNodeId"
+	testContainerId         = "testContainerId"
+	testMessage             = "test message "
 )
 
 var (
@@ -33,6 +42,7 @@ var (
 	influxURL        string
 	client           logs.LogsClient
 	ctx              context.Context
+	producer         sarama.SyncProducer
 )
 
 func parseEnv() {
@@ -68,6 +78,10 @@ func parseEnv() {
 }
 
 func TestMain(m *testing.M) {
+	defer func() {
+		producer.Close()
+	}()
+
 	parseEnv()
 	go server.Start(config)
 
@@ -75,6 +89,11 @@ func TestMain(m *testing.M) {
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("connection failure")
+		os.Exit(1)
+	}
+	producer, err = sarama.NewSyncProducer([]string{kafkaDefaultURL}, nil)
+	if err != nil {
+		fmt.Println("Cannot create kafka producer")
 		os.Exit(1)
 	}
 	client = logs.NewLogsClient(conn)
@@ -192,14 +211,12 @@ func TestShouldFetchFromGivenIndex(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 100, len(r1.Entries), "We should have fetched a hunderd entries")
-
+	assert.NotZero(t, len(r1.Entries), "We should have at least one entry")
 	r2, err := client.Get(context.Background(), &logs.GetRequest{From: 10})
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 100, len(r2.Entries), "We should have fetched a hunderd entries")
-
+	assert.NotZero(t, len(r2.Entries), "We should have at least one entry")
 	for i, entry := range r1.Entries[10:len(r1.Entries)] {
 		assert.Equal(t, entry, r2.Entries[i])
 	}
@@ -215,10 +232,36 @@ func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
 	}
 }
 
-func listenToEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int) chan *logs.LogEntry {
-	timeout := time.After(60 * time.Second)
+func produceLogEntries(t *testing.T, howMany int) {
+	for i := 0; i < howMany; i++ {
+		message, err := json.Marshal(logs.LogEntry{
+			Timestamp:   strconv.Itoa(time.Now().Nanosecond()),
+			TimeId:      strconv.Itoa(time.Now().Nanosecond()),
+			ServiceId:   testServiceId,
+			ServiceName: testServiceName,
+			NodeId:      testNodeId,
+			ContainerId: testContainerId,
+			Message:     testMessage + strconv.Itoa(rand.Int()),
+		})
+		_, _, err = producer.SendMessage(&sarama.ProducerMessage{
+			Topic: "amp-logs",
+			Value: sarama.ByteEncoder(message),
+		})
+		if err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func listenToLogEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int) chan *logs.LogEntry {
 	entries := make(chan *logs.LogEntry, howMany)
 	entryCount := 0
+	timeout := time.After(60 * time.Second)
+
+	defer func() {
+		close(entries)
+	}()
+
 	for {
 		entry, err := stream.Recv()
 		select {
@@ -228,15 +271,12 @@ func listenToEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int
 			}
 			entryCount++
 			if entryCount == howMany {
-				close(entries)
 				return entries
 			}
 		case <-timeout:
-			close(entries)
 			return entries
 		}
 	}
-	close(entries)
 	return entries
 }
 
@@ -245,98 +285,85 @@ func TestShouldStreamLogs(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
-
 }
 
 func TestShouldStreamAndFilterByContainerId(t *testing.T) {
-	// First, get a random container id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: testContainerId})
 	if err != nil {
 		t.Error(err)
 	}
-	randomContainerId := r.Entries[0].ContainerId
-
-	// Then stream by container id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: randomContainerId})
-	if err != nil {
-		t.Error(err)
-	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, randomContainerId, entry.ContainerId)
+		assert.Equal(t, testContainerId, entry.ContainerId)
 	}
 }
 
 func TestShouldStreamAndFilterByNodeId(t *testing.T) {
-	// First, get a random node id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: testNodeId})
 	if err != nil {
 		t.Error(err)
 	}
-	randomNodeId := r.Entries[0].NodeId
-
-	// Then stream by node id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: randomNodeId})
-	if err != nil {
-		t.Error(err)
-	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, randomNodeId, entry.NodeId)
+		assert.Equal(t, testNodeId, entry.NodeId)
 	}
 }
 
 func TestShouldStreamAndFilterByServiceId(t *testing.T) {
-	// First, get a random service id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: testServiceId})
 	if err != nil {
 		t.Error(err)
 	}
-	randomServiceId := r.Entries[0].ServiceId
-
-	// Then stream by service id
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: randomServiceId})
-	if err != nil {
-		t.Error(err)
-	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, randomServiceId, entry.ServiceId)
+		assert.Equal(t, testServiceId, entry.ServiceId)
 	}
 }
 
 func TestShouldStreamAndFilterByServiceName(t *testing.T) {
-	// First, get a random service name
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: testServiceName})
 	if err != nil {
 		t.Error(err)
 	}
-	randomServiceName := r.Entries[0].ServiceName
-
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: randomServiceName})
-	if err != nil {
-		t.Error(err)
-	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, randomServiceName, entry.ServiceName)
+		assert.Equal(t, testServiceName, entry.ServiceName)
 	}
 }
 
 func TestShouldStreamAndFilterByMessage(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: "info"})
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: testMessage})
 	if err != nil {
 		t.Error(err)
 	}
-	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Contains(t, strings.ToLower(entry.Message), "info")
+		assert.Contains(t, strings.ToLower(entry.Message), testMessage)
+	}
+}
+
+func TestShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: strings.ToUpper(testMessage)})
+	if err != nil {
+		t.Error(err)
+	}
+	go produceLogEntries(t, 100)
+	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Contains(t, strings.ToLower(entry.Message), testMessage)
 	}
 }
