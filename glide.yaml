@@ -29,3 +29,4 @@ import:
   subpackages:
   - client/v2
 - package: github.com/Shopify/sarama
+- package: github.com/pelletier/go-toml

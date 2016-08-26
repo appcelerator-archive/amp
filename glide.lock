@@ -1,5 +1,5 @@
-hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
-updated: 2016-08-25T23:09:48.116094293-07:00
+hash: a6ad02ee91700bb6127c5b08128be1d55f507bf1f7b146d0937a5ea9fc1a6c1a
+updated: 2016-08-26T00:22:02.21357812-07:00
 imports:
 - name: github.com/coreos/etcd
   version: 417b9469aa0f3708829f80dfc3325a576ed43ab0
@@ -34,7 +34,7 @@ imports:
   - proto
   - jsonpb
 - name: github.com/golang/snappy
-  version: 5979233c5d6225d4a8e438cdd0b411888449ddab
+  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/google/go-github
   version: a59a35745f99ad92d70d69a9f180767063aa4bf3
   subpackages:
@@ -87,7 +87,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
-  version: 5a62685873ef617233ab5f1b825a6e4a758e16cf
+  version: 64ff1ea4d585bc1fca65e6331eb8239f2ff31845
 - name: github.com/pkg/errors
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
@@ -110,7 +110,7 @@ imports:
 - name: github.com/spf13/viper
   version: 7fb2782df3d83e0036cc89f461ed0422628776f4
 - name: golang.org/x/crypto
-  version: 1f22c0103821b9390939b6776727195525381532
+  version: c197bcf24cde29d3f73c7b4ac6fd41f4384e8af6
   subpackages:
   - ssh/terminal
   - ssh
