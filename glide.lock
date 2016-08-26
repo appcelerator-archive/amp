@@ -1,8 +1,8 @@
 hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
-updated: 2016-08-25T12:21:41.276673469-07:00
+updated: 2016-08-26T07:10:43.808385273+02:00
 imports:
 - name: github.com/coreos/etcd
-  version: 488ae52a5190fbf24539e281f13b461b1ac35df4
+  version: 417b9469aa0f3708829f80dfc3325a576ed43ab0
   subpackages:
   - clientv3
   - auth/authpb
@@ -11,7 +11,7 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
+  version: 6cf5744a041a0022271cefed95ba843f6d87fd51
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency

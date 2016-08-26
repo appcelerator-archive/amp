@@ -96,7 +96,7 @@ test-influx:
 	@go test -v $(REPO)/data/influx
 
 test-stat:
-	@go test -v $(REPO)/api/rpc/stat
+#	@go test -v $(REPO)/api/rpc/stat
 
 test-logs:
 	@go test -v $(REPO)/api/rpc/logs

@@ -1,19 +1,22 @@
 package server
 
 import (
-	"github.com/appcelerator/amp/api/rpc/build"
-	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/oauth"
-	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/data/elasticsearch"
-	"github.com/appcelerator/amp/data/kafka"
-	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/data/storage/etcd"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/appcelerator/amp/api/rpc/build"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/oauth"
+	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/api/rpc/stat"
+	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/influx"
+	"github.com/appcelerator/amp/data/kafka"
+	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -25,6 +28,9 @@ var (
 
 	// Kafka is the kafka client
 	Kafka kafka.Kafka
+
+	//Influx is the influxDB client
+	Influx influx.Influx
 )
 
 // Start starts the server
@@ -32,6 +38,7 @@ func Start(config Config) {
 	initEtcd(config)
 	initElasticsearch(config)
 	initKafka(config)
+	initInfluxDB(config)
 
 	lis, err := net.Listen("tcp", config.Port)
 	if err != nil {
@@ -41,6 +48,9 @@ func Start(config Config) {
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Logs{ES, Store, Kafka})
+	stat.RegisterStatServer(s, &stat.Stat{
+		Influx: Influx,
+	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        Store,
 		ClientID:     config.ClientID,
@@ -82,4 +92,15 @@ func initKafka(config Config) {
 		log.Panicf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
 	}
 	log.Printf("connected to kafka at %s\n", config.KafkaURL)
+}
+
+// fail fast on initialization errors; there's no point in attempting
+// to continue in a degraded state if there are problems at start up
+func initInfluxDB(config Config) {
+	log.Printf("connecting to InfluxDB at %s\n", config.InfluxURL)
+	Influx = influx.New(config.InfluxURL, "telegraf", "", "")
+	if err := Influx.Connect(5 * time.Second); err != nil {
+		log.Panicf("amplifer is unable to connect to influxDB on: %s\n%v", config.InfluxURL, err)
+	}
+	log.Printf("connected to influxDB at %s\n", config.InfluxURL)
 }
