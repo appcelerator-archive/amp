@@ -39,3 +39,8 @@ services:
       TOPIC_LIST: amp-logs amp-docker-events telegraf
   log-worker:
     image: appcelerator/amp-log-worker:latest
+  agent:
+    image: appcelerator/amp-agent:latest
+    privileged: true
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
