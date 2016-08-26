@@ -25,6 +25,7 @@ type Logs struct {
 
 // Get implements log.LogServer
 func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+	// TODO: Authentication is disabled in order to allow tests. Re-enable this as soon as we have a way to auth in tests.
 	//_, err := oauth.CheckAuthorization(ctx, logs.Store)
 	//if err != nil {
 	//	return nil, err
