@@ -8,6 +8,8 @@
 # 2. Create function for starting the service and add it to startservices()
 
 set -euo pipefail
+# INFLUXDATA_VERSION should be 0.13 or 1.0
+INFLUXDATA_VERSION=0.13
 
 # please keep sorted
 IMAGES=(
@@ -18,12 +20,12 @@ IMAGES=(
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
-  appcelerator/influxdb:latest
+  appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:latest
-  appcelerator/kapacitor:latest
+  appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
   appcelerator/nginx:latest
-  appcelerator/telegraf:latest
+  appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:latest
   quay.io/coreos/etcd:v3.0.4
   sheepkiller/kafka-manager:latest
@@ -33,10 +35,10 @@ MINIMAGES=(
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
-  appcelerator/influxdb:latest
+  appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:latest
   appcelerator/kibana:latest
-  appcelerator/telegraf:latest
+  appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:latest
   quay.io/coreos/etcd:v3.0.4
   sheepkiller/kafka-manager:latest
@@ -286,7 +288,7 @@ influxdb() { # Owner: ndegory
     -e FORCE_HOSTNAME=auto \
     -e PRE_CREATE_DB=telegraf \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
-    appcelerator/influxdb:latest
+    appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
 }
 
 # DEPENDENCIES zookeepeer
@@ -319,7 +321,7 @@ kapacitor() { # Owner: ndegory
     -e OUTPUT_SLACK_GLOBAL="true" \
     -e OUTPUT_SLACK_STATE_CHANGE_ONLY="true" \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
-    appcelerator/kapacitor:latest
+    appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
 kibana() { # Owner: ndegory
@@ -361,7 +363,7 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_SYSTEM_ENABLED=true \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/telegraf:latest
+    appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
 # DEPENDENCIES kafka, influxdb
@@ -385,7 +387,7 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
     -e INPUT_KAFKA_TOPIC=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
-    appcelerator/telegraf:latest
+    appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
 zookeeper() { # Owner: bertrand-quenin
