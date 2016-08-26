@@ -66,17 +66,7 @@ func runElection(eps []string, rounds int) {
 		validateWaiters := 0
 
 		rcs[i].c = randClient(eps)
-		var (
-			s   *concurrency.Session
-			err error
-		)
-		for {
-			s, err = concurrency.NewSession(rcs[i].c)
-			if err == nil {
-				break
-			}
-		}
-		e := concurrency.NewElection(s, "electors")
+		e := concurrency.NewElection(rcs[i].c, "electors")
 
 		rcs[i].acquire = func() error {
 			<-releasec
@@ -89,7 +79,7 @@ func runElection(eps []string, rounds int) {
 					}
 				}
 			}()
-			err = e.Campaign(ctx, v)
+			err := e.Campaign(ctx, v)
 			if err == nil {
 				observedLeader = v
 			}
@@ -183,17 +173,7 @@ func runRacer(eps []string, round int) {
 	cnt := 0
 	for i := range rcs {
 		rcs[i].c = randClient(eps)
-		var (
-			s   *concurrency.Session
-			err error
-		)
-		for {
-			s, err = concurrency.NewSession(rcs[i].c)
-			if err == nil {
-				break
-			}
-		}
-		m := concurrency.NewMutex(s, "racers")
+		m := concurrency.NewMutex(rcs[i].c, "racers")
 		rcs[i].acquire = func() error { return m.Lock(ctx) }
 		rcs[i].validate = func() error {
 			if cnt++; cnt != 1 {

@@ -41,18 +41,16 @@ const (
 	crcType
 	snapshotType
 
+	// the expected size of each wal segment file.
+	// the actual size might be bigger than it.
+	segmentSizeBytes = 64 * 1000 * 1000 // 64MB
+
 	// warnSyncDuration is the amount of time allotted to an fsync before
 	// logging a warning
 	warnSyncDuration = time.Second
 )
 
 var (
-	// SegmentSizeBytes is the preallocated size of each wal segment file.
-	// The actual size might be larger than this. In general, the default
-	// value should be used, but this is defined as an exported variable
-	// so that tests can set a different segment size.
-	SegmentSizeBytes int64 = 64 * 1000 * 1000 // 64MB
-
 	plog = capnslog.NewPackageLogger("github.com/coreos/etcd", "wal")
 
 	ErrMetadataConflict = errors.New("wal: conflicting metadata found")
@@ -111,7 +109,7 @@ func Create(dirpath string, metadata []byte) (*WAL, error) {
 	if _, err := f.Seek(0, os.SEEK_END); err != nil {
 		return nil, err
 	}
-	if err := fileutil.Preallocate(f.File, SegmentSizeBytes, true); err != nil {
+	if err := fileutil.Preallocate(f.File, segmentSizeBytes, true); err != nil {
 		return nil, err
 	}
 
@@ -221,7 +219,7 @@ func openAtIndex(dirpath string, snap walpb.Snapshot, write bool) (*WAL, error) 
 			closer()
 			return nil, err
 		}
-		w.fp = newFilePipeline(w.dir, SegmentSizeBytes)
+		w.fp = newFilePipeline(w.dir, segmentSizeBytes)
 	}
 
 	return w, nil
@@ -301,18 +299,6 @@ func (w *WAL) ReadAll() (metadata []byte, state raftpb.HardState, ents []raftpb.
 			state.Reset()
 			return nil, state, nil, err
 		}
-		// decodeRecord() will return io.EOF if it detects a zero record,
-		// but this zero record may be followed by non-zero records from
-		// a torn write. Overwriting some of these non-zero records, but
-		// not all, will cause CRC errors on WAL open. Since the records
-		// were never fully synced to disk in the first place, it's safe
-		// to zero them out to avoid any CRC errors from new writes.
-		if _, err = w.tail().Seek(w.decoder.lastOffset(), os.SEEK_SET); err != nil {
-			return nil, state, nil, err
-		}
-		if err = fileutil.ZeroToEnd(w.tail().File); err != nil {
-			return nil, state, nil, err
-		}
 	}
 
 	err = nil
@@ -331,6 +317,7 @@ func (w *WAL) ReadAll() (metadata []byte, state raftpb.HardState, ents []raftpb.
 
 	if w.tail() != nil {
 		// create encoder (chain crc with the decoder), enable appending
+		_, err = w.tail().Seek(w.decoder.lastOffset(), os.SEEK_SET)
 		w.encoder = newEncoder(w.tail(), w.decoder.lastCRC())
 	}
 	w.decoder = nil
@@ -539,7 +526,7 @@ func (w *WAL) Save(st raftpb.HardState, ents []raftpb.Entry) error {
 	if err != nil {
 		return err
 	}
-	if curOff < SegmentSizeBytes {
+	if curOff < segmentSizeBytes {
 		if mustSync {
 			return w.sync()
 		}

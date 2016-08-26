@@ -1,8 +1,10 @@
-hash: 07655c1bfbf5d408dd9298a16c322767226c88b2f852ff581dfe553d6e07f674
-updated: 2016-08-25T23:09:48.116094293-07:00
+hash: 34aff4a5528e5ad8a03f7cedf68eff7c69fd847aa1559a1936f3adc63341be74
+updated: 2016-08-26T00:47:20.686469496-07:00
 imports:
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: 417b9469aa0f3708829f80dfc3325a576ed43ab0
+  version: 9efa00d1030d4bf62eb8e5ec130023aeb1b8e2d0
   subpackages:
   - clientv3
   - auth/authpb
@@ -27,9 +29,9 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
-  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+  version: aa0c862057666179de291b67d9f093d12b5a8473
 - name: github.com/golang/protobuf
-  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
+  version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
   - proto
   - jsonpb
@@ -44,11 +46,11 @@ imports:
   subpackages:
   - query
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: f52d055dc48aec25854ed7d31862f78913cf17d1
+  version: 331418a167bc76e7e4e7469cf704033eddaba7a5
   subpackages:
   - runtime
-  - runtime/internal
   - utilities
+  - runtime/internal
 - name: github.com/hashicorp/hcl
   version: baeb59c710717b06aac1dbe2270e8192ec593244
   subpackages:
@@ -93,7 +95,7 @@ imports:
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
 - name: github.com/Shopify/sarama
-  version: 94895118af045d13c7e576477276a53afccdd6b1
+  version: 9bb4a68d57ff6f623363aa172f0a8297aa289ba7
 - name: github.com/spf13/afero
   version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
@@ -116,7 +118,7 @@ imports:
   - ssh
   - curve25519
 - name: golang.org/x/net
-  version: 6acef71eb69611914f7a30939ea9f6e194c78172
+  version: 6c89f9617983ee917132513a791d8b5850fe90c5
   subpackages:
   - context
   - http2
@@ -129,7 +131,7 @@ imports:
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 9c60d1c508f5134d1ca726b4641db998f2523357
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -148,7 +150,7 @@ imports:
   - internal/log
   - internal/remote_api
 - name: google.golang.org/grpc
-  version: 231b4cfea0e79843053a33f5fe90bd4d84b23cd3
+  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
   subpackages:
   - codes
   - metadata

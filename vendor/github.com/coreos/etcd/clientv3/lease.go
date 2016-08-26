@@ -390,7 +390,7 @@ func (l *lessor) sendKeepAliveLoop(stream pb.Lease_LeaseKeepAliveClient) {
 			return
 		}
 
-		var tosend []LeaseID
+		tosend := make([]LeaseID, 0)
 
 		now := time.Now()
 		l.mu.Lock()
