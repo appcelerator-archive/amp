@@ -37,4 +37,5 @@ services:
     environment:
       ZOOKEEPER_CONNECT: zookeeper:2181
       TOPIC_LIST: amp-logs amp-docker-events telegraf
-   
+  log-worker:
+    image: appcelerator/amp-log-worker:latest
