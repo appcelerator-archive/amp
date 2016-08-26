@@ -10,13 +10,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	buildCmd = &cobra.Command{
-		Use:   "build",
-		Short: "Manage the amp build service",
-		Long:  `Register projects, list builds etc . . . in the amp build service.`,
-	}
-)
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "Manage the amp build service",
+	Long:  `Register projects, list builds etc . . . in the amp build service.`,
+}
 
 func init() {
 	pingCmd := &cobra.Command{
@@ -26,6 +24,7 @@ func init() {
 			fmt.Println("pong")
 		},
 	}
+
 	registerCmd := &cobra.Command{
 		Use:   "register [repo to register]",
 		Short: "Register a repo as a project",
@@ -36,7 +35,7 @@ func init() {
 				return
 			}
 			repo := args[0]
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			project, err := amp.RegisterProject(repo)
 			if err != nil {
 				fmt.Println(err)
@@ -45,6 +44,7 @@ func init() {
 			fmt.Println("registered https://build.amp.appcelerator.io/p/" + project.Owner + "/" + project.Name)
 		},
 	}
+
 	removeCmd := &cobra.Command{
 		Use:   "remove [repo to remove]",
 		Short: "Remove a repo as a project",
@@ -55,7 +55,7 @@ func init() {
 				return
 			}
 			repo := args[0]
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			project, err := amp.RemoveProject(repo)
 			if err != nil {
 				fmt.Println(err)
@@ -64,6 +64,7 @@ func init() {
 			fmt.Println("removed https://build.amp.appcelerator.io/p/" + project.Owner + "/" + project.Name)
 		},
 	}
+
 	listProjectsCmd := &cobra.Command{
 		Use:   "listprojects",
 		Short: "Lists projects",
@@ -85,7 +86,7 @@ func init() {
 				fmt.Println("could not process flags")
 				return
 			}
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			projects, err := amp.ListProjects(organization, latest)
 			if err != nil {
 				fmt.Println(err)
@@ -103,6 +104,7 @@ func init() {
 	listProjectsCmd.Flags().StringP("organization", "o", "", "filter projects by organization")
 	listProjectsCmd.Flags().BoolP("latest", "l", false, "only return the latest project")
 	listProjectsCmd.Flags().BoolP("quiet", "q", false, "only display the project id")
+
 	listBuildsCmd := &cobra.Command{
 		Use:   "listbuilds [project to list builds from]",
 		Short: "Lists builds",
@@ -124,7 +126,7 @@ func init() {
 				fmt.Println("could not process flags")
 				return
 			}
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			builds, err := amp.ListBuilds(repo, latest)
 			for i, b := range builds.Builds {
 				if quiet {
@@ -140,6 +142,7 @@ func init() {
 	}
 	listBuildsCmd.Flags().BoolP("latest", "l", false, "only return the latest build")
 	listBuildsCmd.Flags().BoolP("quiet", "q", false, "only display the build id")
+
 	logsCmd := &cobra.Command{
 		Use:   "logs [build to print the logs from]",
 		Short: "Prints the logs for a build",
@@ -149,7 +152,7 @@ func init() {
 				return
 			}
 			buildid := args[0]
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			logs, err := amp.BuildLog(buildid)
 			if err != nil {
 				fmt.Println(err)
@@ -172,6 +175,7 @@ func init() {
 			}
 		},
 	}
+
 	rebuildCmd := &cobra.Command{
 		Use:   "rebuild [build to rebuild]",
 		Short: "Triggers a rebuild of a build",
@@ -181,7 +185,7 @@ func init() {
 				return
 			}
 			buildid := args[0]
-			amp := client.NewAMP(&config)
+			amp := client.NewAMP(&Config)
 			build, err := amp.Rebuild(buildid)
 			if err != nil {
 				fmt.Println(err)
@@ -190,6 +194,7 @@ func init() {
 			fmt.Println("rebuilding https://build.amp.appcelerator.io/p/" + build.Owner + "/" + build.Name + "/" + build.Sha)
 		},
 	}
+
 	buildCmd.AddCommand(pingCmd)
 	buildCmd.AddCommand(registerCmd)
 	buildCmd.AddCommand(removeCmd)
@@ -197,4 +202,6 @@ func init() {
 	buildCmd.AddCommand(listBuildsCmd)
 	buildCmd.AddCommand(logsCmd)
 	buildCmd.AddCommand(rebuildCmd)
+
+	RootCmd.AddCommand(buildCmd)
 }

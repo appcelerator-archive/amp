@@ -1,17 +1,46 @@
-package cli
+package main
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/api/client"
-	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"strconv"
+
+	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/spf13/cobra"
 )
 
+var logsCmd = &cobra.Command{
+	Use:   "logs",
+	Short: "Fetch the logs",
+	Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		amp := client.NewAMP(&Config)
+		err := Logs(amp, cmd, args)
+		if err != nil {
+			fmt.Println(err)
+		}
+	},
+}
+
+func init() {
+	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
+	logsCmd.Flags().String("service_id", "", "filter by the given service id")
+	logsCmd.Flags().String("service_name", "", "filter by the given service name")
+	logsCmd.Flags().String("message", "", "filter by the given pattern in the message field")
+	logsCmd.Flags().String("container_id", "", "filter by the given container id")
+	logsCmd.Flags().String("node_id", "", "filter by the given node id")
+	logsCmd.Flags().String("from", "-1", "Fetches from the given index")
+	logsCmd.Flags().StringP("number", "n", "100", "Number of results")
+	logsCmd.Flags().BoolP("short", "s", false, "Displays only the message field")
+	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
+
+	RootCmd.AddCommand(logsCmd)
+}
+
 // Logs fetches the logs
-func Logs(amp *client.AMP, cmd *cobra.Command) error {
+func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

@@ -12,14 +12,14 @@ import (
 )
 
 // PrintErr prints the error and then exits
-func printErr(err error) {
+func PrintErr(err error) {
 	color.Set(color.FgRed)
 	fmt.Println(err)
 	os.Exit(1)
 }
 
 // SaveConfiguration saves the configuration to ~/.ampswarm.yaml
-func saveConfiguration(c interface{}) (err error) {
+func SaveConfiguration(c interface{}) (err error) {
 	homedir, err := homedir.Dir()
 	if err != nil {
 		return

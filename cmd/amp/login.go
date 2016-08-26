@@ -1,13 +1,48 @@
-package cli
+package main
 
 import (
 	"fmt"
 	"regexp"
 
 	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/fatih/color"
 	"github.com/howeyc/gopass"
+	"github.com/spf13/cobra"
 )
+
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "Login via github",
+	Long:  `Create a github access token and store it in your Config file to authenticate further commands`,
+	Run: func(cmd *cobra.Command, args []string) {
+		a := client.NewAMP(&Config)
+		Login(a)
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(loginCmd)
+}
+
+// Login creates a github access token and store it in your Config file to authenticate further commands
+func Login(a *client.AMP) {
+	username, password, lastEight, name, err := basicLogin(a)
+	if err != nil {
+		otpError := regexp.MustCompile("Must specify two-factor authentication OTP code")
+		if otpError.MatchString(err.Error()) {
+			lastEight, name, err = otpLogin(a, username, password)
+		}
+		if err != nil {
+			cli.PrintErr(err)
+		}
+	}
+
+	a.Configuration.Github = lastEight
+	cli.SaveConfiguration(a.Configuration)
+
+	welcomeUser(name)
+}
 
 // GetUsername prompts for username and returns the result
 func getUsername() (username string) {
@@ -85,23 +120,4 @@ func otpLogin(a *client.AMP, username, password string) (lastEight, name string,
 		}
 	}
 	return
-}
-
-// Login creates a github access token and store it in your config file to authenticate further commands
-func Login(a *client.AMP) {
-	username, password, lastEight, name, err := basicLogin(a)
-	if err != nil {
-		otpError := regexp.MustCompile("Must specify two-factor authentication OTP code")
-		if otpError.MatchString(err.Error()) {
-			lastEight, name, err = otpLogin(a, username, password)
-		}
-		if err != nil {
-			printErr(err)
-		}
-	}
-
-	a.Configuration.Github = lastEight
-	saveConfiguration(a.Configuration)
-
-	welcomeUser(name)
 }
