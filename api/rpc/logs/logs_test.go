@@ -91,7 +91,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("connection failure")
 		os.Exit(1)
 	}
-	producer, err = sarama.NewSyncProducer([]string{kafkaDefaultURL}, nil)
+	producer, err = sarama.NewSyncProducer([]string{config.KafkaURL}, nil)
 	if err != nil {
 		fmt.Println("Cannot create kafka producer")
 		os.Exit(1)
