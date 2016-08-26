@@ -17,5 +17,5 @@ type Config struct {
 
 // String is used to display struct as a string
 func (config Config) String() string {
-	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, ElasticsearchURL: %s, KafkaURL: %s, InfluxURL}", config.Port, config.EtcdEndpoints, config.ElasticsearchURL, config.KafkaURL, config.InfluxURL)
+	return fmt.Sprintf("{ Port: %s, EtcdEndpoints: %v, ElasticsearchURL: %s, KafkaURL: %s, InfluxURL: %s}", config.Port, config.EtcdEndpoints, config.ElasticsearchURL, config.KafkaURL, config.InfluxURL)
 }
