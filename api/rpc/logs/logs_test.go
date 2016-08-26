@@ -21,6 +21,7 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
+	defaultNumberOfEntries  = 5
 )
 
 var (
@@ -71,7 +72,6 @@ func TestMain(m *testing.M) {
 	go server.Start(config)
 
 	// there is no event when the server starts listening, so we just wait a second
-	time.Sleep(1 * time.Second)
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("connection failure")
@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestShouldGetAHundredLogEntries(t *testing.T) {
+func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	expected := 100
 	actual := -1
 	for i := 0; i < 60; i++ {
@@ -98,4 +98,242 @@ func TestShouldGetAHundredLogEntries(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 	assert.Equal(t, expected, actual)
+}
+
+func TestShouldFilterByContainerId(t *testing.T) {
+	// First, get a random container id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	randomContainerId := r.Entries[0].ContainerId
+
+	// Then filter by this container id
+	r, err = client.Get(context.Background(), &logs.GetRequest{ContainerId: randomContainerId})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.Equal(t, randomContainerId, entry.ContainerId)
+	}
+}
+
+func TestShouldFilterByNodeId(t *testing.T) {
+	// First, get a random node id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	randomNodeId := r.Entries[0].NodeId
+
+	// Then filter by this node id
+	r, err = client.Get(context.Background(), &logs.GetRequest{NodeId: randomNodeId})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.Equal(t, randomNodeId, entry.NodeId)
+	}
+}
+
+func TestShouldFilterByServiceId(t *testing.T) {
+	// First, get a random service id
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	randomServiceId := r.Entries[0].ServiceId
+
+	// Then filter by this service id
+	r, err = client.Get(context.Background(), &logs.GetRequest{ServiceId: randomServiceId})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.Equal(t, randomServiceId, entry.ServiceId)
+	}
+}
+
+func TestShouldFilterByServiceName(t *testing.T) {
+	// First, get a random service name
+	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	randomServiceName := r.Entries[0].ServiceName
+
+	// Then filter by this service name
+	r, err = client.Get(context.Background(), &logs.GetRequest{ServiceName: randomServiceName})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.Equal(t, randomServiceName, entry.ServiceName)
+	}
+}
+
+func TestShouldFilterByMessage(t *testing.T) {
+	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "kafka"})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.Contains(t, strings.ToLower(entry.Message), "kafka")
+	}
+}
+
+func TestShouldFetchFromGivenIndex(t *testing.T) {
+	r1, err := client.Get(context.Background(), &logs.GetRequest{From: 0})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, 100, len(r1.Entries), "We should have fetched a hunderd entries")
+
+	r2, err := client.Get(context.Background(), &logs.GetRequest{From: 10})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, 100, len(r2.Entries), "We should have fetched a hunderd entries")
+
+	for i, entry := range r1.Entries[10:len(r1.Entries)] {
+		assert.Equal(t, entry, r2.Entries[i])
+	}
+}
+
+func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
+	for i := int64(1); i < 1000; i += 10 {
+		r, err := client.Get(context.Background(), &logs.GetRequest{Size: i})
+		if err != nil {
+			t.Error(err)
+		}
+		assert.Equal(t, i, int64(len(r.Entries)))
+	}
+}
+
+func listenToEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany int) chan *logs.LogEntry {
+	timeout := time.After(60 * time.Second)
+	entries := make(chan *logs.LogEntry, howMany)
+	entryCount := 0
+ListenLoop:
+	for {
+		entry, err := stream.Recv()
+		select {
+		case entries <- entry:
+			if err != nil {
+				t.Error(err)
+			}
+			entryCount++
+			if entryCount == howMany {
+				break ListenLoop
+			}
+		case <-timeout:
+			break ListenLoop
+		}
+	}
+	return entries
+}
+
+func TestShouldStreamLogs(t *testing.T) {
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+
+}
+
+func TestShouldStreamAndFilterByContainerId(t *testing.T) {
+	// First, get zookeeper container id
+	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	if err != nil {
+		t.Error(err)
+	}
+	zookeeperContainerId := r.Entries[0].ContainerId
+
+	// Then stream by container id
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: zookeeperContainerId})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Equal(t, zookeeperContainerId, entry.ContainerId)
+	}
+}
+
+func TestShouldStreamAndFilterByNodeId(t *testing.T) {
+	// First, get zookeeper node id
+	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	if err != nil {
+		t.Error(err)
+	}
+	zookeeperNodeId := r.Entries[0].NodeId
+
+	// Then stream by node id
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: zookeeperNodeId})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Equal(t, zookeeperNodeId, entry.NodeId)
+	}
+}
+
+func TestShouldStreamAndFilterByServiceId(t *testing.T) {
+	// First, get zookeeper service id
+	r, err := client.Get(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	if err != nil {
+		t.Error(err)
+	}
+	zookeeperServiceId := r.Entries[0].ServiceId
+
+	// Then stream by service id
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: zookeeperServiceId})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Equal(t, zookeeperServiceId, entry.ServiceId)
+	}
+}
+
+func TestShouldStreamAndFilterByServiceName(t *testing.T) {
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: "zookeeper"})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Equal(t, "zookeeper", entry.ServiceName)
+	}
+}
+
+func TestShouldStreamAndFilterByMessage(t *testing.T) {
+	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: "info"})
+	if err != nil {
+		t.Error(err)
+	}
+	entries := listenToEntries(t, stream, defaultNumberOfEntries)
+	close(entries)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.Contains(t, strings.ToLower(entry.Message), "info")
+	}
 }
