@@ -328,7 +328,9 @@ func getMetricsTitle(query *stat.StatRequest, un string) string {
 }
 
 func formatBytes(val float64) string {
-	if val < 1 {
+	if val == 0 {
+		return "0"
+	} else if val < 1 {
 		return "0.0"
 	} else if val < 1024 {
 		return fmt.Sprintf("%.0f B", val)
