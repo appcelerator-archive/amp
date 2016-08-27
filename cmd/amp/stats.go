@@ -133,7 +133,8 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	defer amp.Disconnect()
 
 	if !query.StatFollow {
-		return executeStat(ctx, c, &query, true)
+		_, err = executeStat(ctx, c, &query, true, 0)
+		return err
 	}
 	return startFollow(ctx, c, &query)
 }
@@ -145,10 +146,14 @@ func validateQuery(query *stat.StatRequest) error {
 	return nil
 }
 
-func executeStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest, title bool) error {
+func executeStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest, title bool, currentTime int64) (int64, error) {
 	r, err := c.StatQuery(ctx, query)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	//fmt.Println(r.Entries[0].Time)
+	if currentTime!=0 && r.Entries[0].Time == currentTime {
+		return currentTime, nil
 	}
 	if query.Discriminator == "container" {
 		displayContainer(query, r, title)
@@ -159,7 +164,7 @@ func executeStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest
 	} else {
 		displayNode(query, r, title)
 	}
-	return nil
+	return r.Entries[0].Time, nil
 }
 
 func displayStatQueryParameters(query *stat.StatRequest) {
@@ -394,14 +399,17 @@ func startFollow(ctx context.Context, c stat.StatClient, query *stat.StatRequest
         cmd.Stdout = os.Stdout
         cmd.Run()
         isHisto := isHistoricQuery(query)
+        var currentTime int64
         if isHisto {
-	        err := executeStat(ctx, c, query, true)
+	        ctime, err := executeStat(ctx, c, query, true, 0)
+	        currentTime = ctime
 	        if err != nil {
 			return err
 		}	
 		query.Since = ""
 		query.Until = ""
 		query.Period = ""
+		query.StatFollow = false
 		if query.TimeGroup == "" {
 			query.TimeGroup = "1m"
 		}
@@ -411,10 +419,11 @@ func startFollow(ctx context.Context, c stat.StatClient, query *stat.StatRequest
 		if !isHisto {
 			fmt.Println("\033[0;0H")
 		}
-		err := executeStat(ctx, c, query, !isHisto)
+		ctime, err := executeStat(ctx, c, query, !isHisto, currentTime)
+		currentTime = ctime
 		if err != nil {
 			return err
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }

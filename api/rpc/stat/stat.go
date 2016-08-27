@@ -100,6 +100,7 @@ func debugList(mes string, list *[4]*StatReply) {
 	}
 }
 */
+
 func (s *Stat) isRowsMatch(req *StatRequest, r1 *StatEntry, r2 *StatEntry) bool {
 	if req.Discriminator == "container" {
 		if r1.ContainerId == r2.ContainerId {
