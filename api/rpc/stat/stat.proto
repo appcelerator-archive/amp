@@ -3,29 +3,32 @@ syntax = "proto3";
 package stat;
 
 service Stat {
-  rpc CPUQuery (StatRequest) returns (CPUReply);
+  rpc StatQuery (StatRequest) returns (StatReply);
 }
 
 message StatRequest {
-  string metric=1;
-  string discriminator=2;
-  string filter_datacenter=3;
-  string filter_host=4;
-  string filter_container_id=5;
-  string filter_container_name=6;
-  string filter_container_image=7;
-  string filter_service_id=8;
-  string filter_service_name=9;
-  string filter_task_id=10;
-  string filter_task_name=11;
-  string filter_node_id=12;
-  string since=13;
-  string until=14;
-  string period=15;
-  string time_unit=16;
+  bool stat_cpu=1;
+  bool stat_mem=2;
+  bool stat_io=3;
+  bool stat_net=4;
+  string discriminator=5;
+  string filter_datacenter=6;
+  string filter_host=7;
+  string filter_container_id=8;
+  string filter_container_name=9;
+  string filter_container_image=10;
+  string filter_service_id=11;
+  string filter_service_name=12;
+  string filter_task_id=13;
+  string filter_task_name=14;
+  string filter_node_id=15;
+  string since=16;
+  string until=17;
+  string period=18;
+  string time_group=19;
 }
 
-message CPUEntry {
+message StatEntry {
   //Common data
   int64 time=1;
   string datacenter=2;
@@ -38,15 +41,21 @@ message CPUEntry {
   string task_id=9;
   string task_name=10;
   string node_id=11;
-  //CPU Dedicated data
-  double usage_system=12;
-  double usage_total=13;
-  double usage_percent=14;
-  double cpu=15;
+  string type=12;
+  //CPU Metrics fields
+  double number=13;
+  double cpu=14;
+  double mem=15;
+  double mem_usage=16;
+  double mem_limit=17;
+  double io_read=18;
+  double io_write=19;
+  double net_tx_bytes=20;
+  double net_rx_bytes=21;
 }
 
-message CPUReply {
-  repeated CPUEntry entries = 1;
+message StatReply {
+  repeated StatEntry entries = 1;
 }
 
 
