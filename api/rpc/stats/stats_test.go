@@ -1,4 +1,4 @@
-package stat
+package stats
 
 import (
 	"log"
