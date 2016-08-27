@@ -384,6 +384,7 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_SWAP_ENABLED=false \
     -e INPUT_SYSTEM_ENABLED=false \
     -e INPUT_NETSTAT_ENABLED=false \
+    -e INPUT_NET_ENABLED=false \
     -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
     -e INPUT_KAFKA_TOPIC=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
