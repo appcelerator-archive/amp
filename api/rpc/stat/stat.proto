@@ -11,21 +11,22 @@ message StatRequest {
   bool stat_mem=2;
   bool stat_io=3;
   bool stat_net=4;
-  string discriminator=5;
-  string filter_datacenter=6;
-  string filter_host=7;
-  string filter_container_id=8;
-  string filter_container_name=9;
-  string filter_container_image=10;
-  string filter_service_id=11;
-  string filter_service_name=12;
-  string filter_task_id=13;
-  string filter_task_name=14;
-  string filter_node_id=15;
-  string since=16;
-  string until=17;
-  string period=18;
-  string time_group=19;
+  bool stat_follow=5;
+  string discriminator=6;
+  string filter_datacenter=7;
+  string filter_host=8;
+  string filter_container_id=9;
+  string filter_container_name=10;
+  string filter_container_image=11;
+  string filter_service_id=12;
+  string filter_service_name=13;
+  string filter_task_id=14;
+  string filter_task_name=15;
+  string filter_node_id=16;
+  string since=17;
+  string until=18;
+  string period=19;
+  string time_group=20;
 }
 
 message StatEntry {

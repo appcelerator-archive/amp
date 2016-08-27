@@ -88,6 +88,7 @@ func (s *Stat) combineStat(req *StatRequest, list *[4]*StatReply) *StatReply {
 
 }
 
+/*
 func debugList(mes string, list *[4]*StatReply) {
 	fmt.Println(mes)
 	for i := 0 ; i < 4 ; i++ {
@@ -98,7 +99,7 @@ func debugList(mes string, list *[4]*StatReply) {
 		}
 	}
 }
-
+*/
 func (s *Stat) isRowsMatch(req *StatRequest, r1 *StatEntry, r2 *StatEntry) bool {
 	if req.Discriminator == "container" {
 		if r1.ContainerId == r2.ContainerId {
@@ -142,7 +143,7 @@ func (s *Stat) updateRow(ref *StatEntry, row *StatEntry) {
 func (s *Stat) statQueryMetric(req *StatRequest, metric string) (*StatReply, error) {
 	idFieldName, metricFields := getMetricFieldsName(req, metric)
 	query := s.buildInfluxQuery(req, metricFields, idFieldName, metric)
-	fmt.Println("Influx query: "+query)	
+	//fmt.Println("Influx query: "+query)	
 	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err

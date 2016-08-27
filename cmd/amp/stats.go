@@ -99,9 +99,9 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		query.StatIo = true;
 		query.StatNet = true;
 	}
-	follow := false
+	query.StatFollow = false
 	if cmd.Flag("follow").Value.String() == "true" {
-		follow = true
+		query.StatFollow = true
 	}
 
 	//Set filters
@@ -133,32 +133,32 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	c := stat.NewStatClient(amp.Connect())
 	defer amp.Disconnect()
 
-	if !follow {
-		return executeStat(ctx, c, &query)
+	if !query.StatFollow {
+		return executeStat(ctx, c, &query, true)
 	}
 	return startFollow(ctx, c, &query)
 }
 
 func validateQuery(query *stat.StatRequest) error {
-	if !isHistoricQuery(query) && query.TimeGroup != "" {
+	if !isHistoricQuery(query) && query.TimeGroup != "" && !query.StatFollow {
 		return errors.New("--time-group should be used with: --period | --since || --until")
 	}
 	return nil
 }
 
-func executeStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
+func executeStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest, title bool) error {
 	r, err := c.StatQuery(ctx, query)
 	if err != nil {
 		return err
 	}
 	if query.Discriminator == "container" {
-		displayContainer(query, r)
+		displayContainer(query, r, title)
 	} else if query.Discriminator == "service" {
-		displayService(query, r)
+		displayService(query, r, title)
 	} else if query.Discriminator == "task" {
-		displayTask(query, r)
+		displayTask(query, r, title)
 	} else {
-		displayNode(query, r)
+		displayNode(query, r, title)
 	}
 	return nil
 }
@@ -200,109 +200,78 @@ func displayStatQueryParameters(query *stat.StatRequest) {
 }
 
 func isHistoricQuery(req *stat.StatRequest) bool {
-	if req.Period != "" || req.Since != "" || req.Until != "" {
+	if req.Period != "" || req.Since != "" || req.Until != "" || req.TimeGroup != "" {
 		return true
 	}
 	return false
 }
 
-func displayContainer(query *stat.StatRequest, result *stat.StatReply) {
-	if isHistoricQuery(query) {
-		displayHistoricContainer(query, result)
-		return
-	}
+func displayContainer(query *stat.StatRequest, result *stat.StatReply, title bool) {
+	histoTitle, histoSub := getHistoColTitle(query)
 	if query.FilterServiceName != "" {
-		fmt.Println("Service: " + query.FilterServiceName)
-		fmt.Println(col("Container name", 40) + getMeticsTitle(query,""))
-		fmt.Println(col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+		if title {
+			fmt.Println("Service: " + query.FilterServiceName)
+			fmt.Println(histoTitle + col("Container name", 40) + getMeticsTitle(query,""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+		}
 		for _, row := range result.Entries {
-			fmt.Println(col(row.ContainerName, 40) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ContainerName, 40) + getMeticsCol(query, row))
 		}
 	} else {
-		fmt.Println(col("Service name", 20) + col("Container name", 40) + getMeticsTitle(query,""))
-		fmt.Println(col("-", 25) + col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+		if title {
+			fmt.Println(histoTitle+ col("Service name", 20) + col("Container name", 40) + getMeticsTitle(query,""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+		}
 		for _, row := range result.Entries {
-			fmt.Println(col(row.ServiceName, 20) + col(row.ContainerName, 40) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + col(row.ContainerName, 40) + getMeticsCol(query, row))
 		}
 	}
 }
 
-func displayService(query *stat.StatRequest, result *stat.StatReply) {
-	if isHistoricQuery(query) {
-		displayHistoricService(query, result)
-		return
+func displayService(query *stat.StatRequest, result *stat.StatReply, title bool) {
+	if title {
+		histoTitle, histoSub := getHistoColTitle(query)
+		fmt.Println(histoTitle + col("Service name", 20) + getMeticsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 20) + getMeticsTitle(query, "-"))
 	}
-	fmt.Println(col("Service name", 20) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 20) + getMeticsTitle(query, "-"))
 	for _, row := range result.Entries {
-		fmt.Println(col(row.ServiceName, 20) + getMeticsCol(query, row))
+		fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + getMeticsCol(query, row))
 	}
 }
 
-func displayTask(query *stat.StatRequest, result *stat.StatReply) {
-	if isHistoricQuery(query) {
-		displayHistoricTask(query, result)
-		return
-	}
+func displayTask(query *stat.StatRequest, result *stat.StatReply, title bool) {
+	histoTitle, histoSub := getHistoColTitle(query)
 	if query.FilterServiceName != "" {
-		fmt.Println("Service: " + query.FilterServiceName)
-		fmt.Println(col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
-		fmt.Println(col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+		if title {
+			fmt.Println("Service: " + query.FilterServiceName)
+			fmt.Println(histoTitle + col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+		}
 		for _, row := range result.Entries {
-			fmt.Println(col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
 		}
 	} else {
-		fmt.Println(col("Service name", 20) + col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
-		fmt.Println(col("-", 20) + col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+		if title {
+			fmt.Println(histoTitle + col("Service name", 20) + col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+		}
 		for _, row := range result.Entries {
-			fmt.Println(col(row.ServiceName, 25) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 25) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
 		}
 	}
 }
 
-func displayNode(query *stat.StatRequest, result *stat.StatReply) {
-	if isHistoricQuery(query) {
-		displayHistoricNode(query, result)
-		return
+func displayNode(query *stat.StatRequest, result *stat.StatReply, title bool) {
+	if title {
+		histoTitle, histoSub := getHistoColTitle(query)
+		fmt.Println(histoTitle + col("Node id", 30) + getMeticsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 30) + getMeticsTitle(query, "-"))
 	}
-	fmt.Println(col("Node id", 30) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 30) + getMeticsTitle(query, "-"))
 	for _, row := range result.Entries {
-		fmt.Println(col(row.NodeId, 30) + getMeticsCol(query, row))
+		fmt.Println(getHistoColVal(query, row) + col(row.NodeId, 30) + getMeticsCol(query, row))
 	}
 }
 
-func displayHistoricContainer(query *stat.StatRequest, result *stat.StatReply) {
-	fmt.Println(col("Time", 25) + col("Service name", 20) + col("Container name", 50) + col("Node id", 30) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 25) + col("-", 25) + col("-", 20) + col("-", 50) + col("-", 30) + getMeticsTitle(query, "-"))
-	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ServiceName, 20) + col(row.ContainerName, 50) + col(row.NodeId, 30) + getMeticsCol(query, row))
-	}
-}
-
-func displayHistoricService(query *stat.StatRequest, result *stat.StatReply) {
-	fmt.Println(col("Time", 25) + col("Service name", 20) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 25) + col("-", 20) + getMeticsTitle(query, "-"))
-	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ServiceName, 20) + getMeticsCol(query, row))
-	}
-}
-
-func displayHistoricTask(query *stat.StatRequest, result *stat.StatReply) {
-	fmt.Println(col("Time", 25) + col("Task name", 20) + col("Node id", 30) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 25) + col("-", 20) + col("-", 30) + getMeticsTitle(query, "-"))
-	for _, row := range result.Entries {
-		fmt.Println(col(colTime(row.Time, 25) + row.TaskName, 20) + col(row.NodeId, 30) + getMeticsCol(query, row))
-	}
-}
-
-func displayHistoricNode(query *stat.StatRequest, result *stat.StatReply) {
-	fmt.Println(col("Time", 25) + col("Datacenter", 20) + col("Host", 30) + col("Node id", 30) + getMeticsTitle(query, ""))
-	fmt.Println(col("-", 25) + col("-", 20) + col("-", 30) + col("-", 30) + getMeticsTitle(query, "-"))
-	for _, row := range result.Entries {
-		fmt.Println(col(colTime(row.Time, 25) + row.Datacenter, 20) + col(row.Host, 30) + col(row.NodeId, 30) + getMeticsCol(query, row))
-	}
-}
 
 func getMeticsCol(query *stat.StatRequest, row *stat.StatEntry) string {
 	var ret string
@@ -401,22 +370,51 @@ func colm(value string, size int) string {
 func colTime(val int64, size int) string {
 	tm := time.Unix(val, 0)
 	value := tm.Format("2006-01-02 15:04:05")
-	if len(value) > size {
-		return value[0:size]
+	return col(value, size)
+}
+
+func getHistoColTitle(query *stat.StatRequest) (string, string) {
+	if !isHistoricQuery(query) {
+		return "", ""
 	}
-	return value + blank[0:size-len(value)]
+	return col("Time", 25), col("-", 25)
+}
+
+func getHistoColVal(query *stat.StatRequest, row *stat.StatEntry) string {
+	if !isHistoricQuery(query) {
+		return ""
+	}
+	if query.StatFollow {
+		return colTime(time.Now().Unix(), 25)
+	}
+	return colTime(row.Time, 25)
 }
 
 func startFollow(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
 	cmd := exec.Command("clear")
         cmd.Stdout = os.Stdout
         cmd.Run()
+        err := executeStat(ctx, c, query, true)
+        isHisto := isHistoricQuery(query)
+        if isHisto {
+        	query.Since = ""
+        	query.Until = ""
+        	query.Period = ""
+        	if query.TimeGroup == "" {
+        		query.TimeGroup = "1m"
+        	}
+        }
+	if err != nil {
+		return err
+	}
 	for {
-		fmt.Println("\033[0;0H")
-		err := executeStat(ctx, c, query)
+		time.Sleep(1 * time.Second)
+		if !isHisto {
+			fmt.Println("\033[0;0H")
+		}
+		err := executeStat(ctx, c, query, !isHisto)
 		if err != nil {
 			return err
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
