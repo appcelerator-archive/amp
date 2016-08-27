@@ -14,7 +14,7 @@ _advertise_service(){
   local _service=$1
   if [[ -z "$_service" ]]; then echo "ERROR: $(basename $0) should be called with the name of a service"; return 1 ; fi
   while [[ -z $_container_id ]]; do
-    _container_id=$(docker ps --filter "name=${_service}\." --format '{{ .ID }}')
+    _container_id=$(docker ps --filter "name=${_service}\." --format '{{ .ID }}' | tail -1)
     if [[ $? -ne 0 ]]; then
       echo "ERROR - caught a Docker error"
       return 1
@@ -26,7 +26,14 @@ _advertise_service(){
     fi
     sleep 1
   done
-  if [[ $(echo "$_container_id" | wc -w) -ne 1 ]]; then echo "ERROR - found more than one container for service $_service"; return 1; fi
+  if [[ $(echo "$_container_id" | wc -w) -ne 1 ]]; then
+    if [[ $_remove_only -eq 0 ]]; then
+      echo "ERROR - unable to advertise service $_service"
+      return 1
+    else
+      return 0
+    fi
+  fi
   # cleanup: remove any hostname that looks like a Docker host
   _hostname=$(grep "$_line_pattern" "$_host_file" | sed 's/^.*\([a-h0-9]\{12\}\).*$/\1/')
   #if no match, _hostname will be the full line
