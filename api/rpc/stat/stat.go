@@ -144,7 +144,7 @@ func (s *Stat) updateRow(ref *StatEntry, row *StatEntry) {
 func (s *Stat) statQueryMetric(req *StatRequest, metric string) (*StatReply, error) {
 	idFieldName, metricFields := getMetricFieldsName(req, metric)
 	query := s.buildInfluxQuery(req, metricFields, idFieldName, metric)
-	fmt.Println("Influx query: "+query)	
+	//fmt.Println("Influx query: "+query)	
 	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
