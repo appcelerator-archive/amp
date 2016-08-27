@@ -130,7 +130,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	//Execute query regarding discriminator
-	c := stat.NewStatClient(amp.Connect())
+	c := stat.NewStatClient(amp.Conn)
 	defer amp.Disconnect()
 
 	if !query.StatFollow {
