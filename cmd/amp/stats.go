@@ -1,16 +1,22 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
+	"os"
+	"os/exec"
+	"time"
 
 	"github.com/appcelerator/amp/api/client"
-	"github.com/appcelerator/amp/api/rpc/stat"
+	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
 
-const blank = "                                                                     "
+const (
+	blank     = "                                                                     "
+	separator = "---------------------------------------------------------------------"
+)
 
 var statsCmd = &cobra.Command{
 	Use:   "stats",
@@ -31,14 +37,14 @@ func init() {
 	statsCmd.Flags().Bool("task", false, "display stats on tasks")
 	//metrics
 	statsCmd.Flags().Bool("cpu", false, "display cpu stats")
-	//statsCmd.Flags().Bool("mem", false, "display memory stats")
-	//statsCmd.Flags().Bool("io", false, "display memory stats")
-	//statsCmd.Flags().Bool("net", false, "display memory stats")
+	statsCmd.Flags().Bool("mem", false, "display memory stats")
+	statsCmd.Flags().Bool("io", false, "display disk io stats")
+	statsCmd.Flags().Bool("net", false, "display net rx/tx stats")
 	//historic
-	statsCmd.Flags().String("period", "", "historic period of metrics extraction, duration + time unit")
+	statsCmd.Flags().String("period", "", "historic period of metrics extraction, duration + time-group as 1m, 10m, 4h, see time-group")
 	statsCmd.Flags().String("since", "", "date defining when begin the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
 	statsCmd.Flags().String("until", "", "date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm")
-	//statsCmd.Flags().String("time-unit", "", "historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks")
+	statsCmd.Flags().String("time-group", "", "historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks")
 	//filters:
 	statsCmd.Flags().String("container-id", "", "filter on container id")
 	statsCmd.Flags().String("container-name", "", "filter on container name")
@@ -50,6 +56,8 @@ func init() {
 	statsCmd.Flags().String("datacenter", "", "filter on datacenter")
 	statsCmd.Flags().String("host", "", "filter on host")
 	statsCmd.Flags().String("node-id", "", "filter on node id")
+	//Stream flag
+	statsCmd.Flags().BoolP("follow", "f", false, "Follow stat output")
 
 	RootCmd.AddCommand(statsCmd)
 }
@@ -61,7 +69,8 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var query = stat.StatRequest{}
+	var query = stats.StatsRequest{}
+
 	//set discriminator
 	if cmd.Flag("container").Value.String() == "true" {
 		query.Discriminator = "container"
@@ -72,6 +81,31 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	} else {
 		query.Discriminator = "node"
+	}
+
+	//set metrics
+	if cmd.Flag("cpu").Value.String() == "true" {
+		query.StatsCpu = true
+	}
+	if cmd.Flag("mem").Value.String() == "true" {
+		query.StatsMem = true
+	}
+	if cmd.Flag("io").Value.String() == "true" {
+		query.StatsIo = true
+	}
+	if cmd.Flag("net").Value.String() == "true" {
+		query.StatsNet = true
+	}
+	if !query.StatsCpu && !query.StatsMem && !query.StatsIo && !query.StatsNet {
+		query.StatsCpu = true
+		query.StatsMem = true
+		query.StatsIo = true
+		query.StatsNet = true
+	}
+
+	query.StatsFollow = false
+	if cmd.Flag("follow").Value.String() == "true" {
+		query.StatsFollow = true
 	}
 
 	//Set filters
@@ -89,48 +123,56 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	query.Period = cmd.Flag("period").Value.String()
 	query.Since = cmd.Flag("since").Value.String()
 	query.Until = cmd.Flag("until").Value.String()
-	//query.TimeUnit = cmd.Flag("time-unit").Value.String()
 
 	if amp.Verbose() {
-		displayStatQueryParameters(&query)
+		displayStatsQueryParameters(&query)
 	}
 
 	if err = validateQuery(&query); err != nil {
 		return err
 	}
 
-	//Execute query regarding discriminator
-	c := stat.NewStatClient(amp.Conn)
-	return cpuStat(ctx, c, &query)
-}
+	// Execute query regarding discriminator
+	c := stats.NewStatsClient(AMP.Conn)
 
-func validateQuery(query *stat.StatRequest) error {
-	// TODO consider implementing basic query validation here before calling service
-	return nil
-}
-
-func cpuStat(ctx context.Context, c stat.StatClient, query *stat.StatRequest) error {
-	r, err := c.CPUQuery(ctx, query)
-	if err != nil {
+	if !query.StatsFollow {
+		_, err = executeStat(ctx, c, &query, true, 0)
 		return err
 	}
-	if query.Discriminator == "container" {
-		displayCPUContainer(query, r)
-	} else if query.Discriminator == "service" {
-		displayCPUService(query, r)
-	} else if query.Discriminator == "task" {
-		displayCPUService(query, r)
-	} else if query.Discriminator == "node" {
-		displayCPUService(query, r)
-	} else {
-		displayCPUNode(query, r)
+	return startFollow(ctx, c, &query)
+}
+
+func validateQuery(query *stats.StatsRequest) error {
+	if query.Period != "" && (query.Since != "" || query.Until != "") {
+		return errors.New("--period can't be used with --since or --until")
 	}
 	return nil
 }
 
-func displayStatQueryParameters(query *stat.StatRequest) {
+func executeStat(ctx context.Context, c stats.StatsClient, query *stats.StatsRequest, title bool, currentTime int64) (int64, error) {
+	r, err := c.StatsQuery(ctx, query)
+	if err != nil {
+		return 0, err
+	}
+	//fmt.Println(r.Entries[0].Time)
+	if currentTime != 0 && r.Entries[0].Time == currentTime {
+		return currentTime, nil
+	}
+	if query.Discriminator == "container" {
+		displayContainer(query, r, title)
+	} else if query.Discriminator == "service" {
+		displayService(query, r, title)
+	} else if query.Discriminator == "task" {
+		displayTask(query, r, title)
+	} else {
+		displayNode(query, r, title)
+	}
+	return r.Entries[0].Time, nil
+}
+
+func displayStatsQueryParameters(query *stats.StatsRequest) {
 	fmt.Println("Stat:")
-	fmt.Printf("metric: %v on %s/n", query.Metric, query.Discriminator)
+	fmt.Printf("cpu:%t mem:%t io:%t net:%t on %s/n", query.StatsCpu, query.StatsMem, query.StatsIo, query.StatsNet, query.Discriminator)
 	fmt.Println("filters:")
 	if query.FilterDatacenter != "" {
 		fmt.Printf("datacenter = %v/n", query.FilterDatacenter)
@@ -164,58 +206,229 @@ func displayStatQueryParameters(query *stat.StatRequest) {
 	}
 }
 
-func displayCPUContainer(query *stat.StatRequest, result *stat.CPUReply) {
+func isHistoricQuery(req *stats.StatsRequest) bool {
+	if req.Period != "" || req.Since != "" || req.Until != "" || req.TimeGroup != "" {
+		return true
+	}
+	return false
+}
+
+func displayContainer(query *stats.StatsRequest, result *stats.StatsReply, title bool) {
+	histoTitle, histoSub := getHistoColTitle(query)
+	if query.FilterServiceName != "" {
+		if title {
+			fmt.Println("Service: " + query.FilterServiceName)
+			fmt.Println(histoTitle + col("Container name", 40) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 40) + getMetricsTitle(query, "-"))
+		}
+		for _, row := range result.Entries {
+			fmt.Println(getHistoColVal(query, row) + col(row.ContainerName, 40) + getMetricsCol(query, row))
+		}
+	} else {
+		if title {
+			fmt.Println(histoTitle + col("Service name", 20) + col("Container name", 40) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 20) + col("-", 40) + getMetricsTitle(query, "-"))
+		}
+		for _, row := range result.Entries {
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + col(row.ContainerName, 40) + getMetricsCol(query, row))
+		}
+	}
+}
+
+func displayService(query *stats.StatsRequest, result *stats.StatsReply, title bool) {
+	if title {
+		histoTitle, histoSub := getHistoColTitle(query)
+		fmt.Println(histoTitle + col("Service name", 20) + getMetricsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 20) + getMetricsTitle(query, "-"))
+	}
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ContainerName, 50) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + getMetricsCol(query, row))
 	}
 }
 
-func displayCPUService(query *stat.StatRequest, result *stat.CPUReply) {
+func displayTask(query *stats.StatsRequest, result *stats.StatsReply, title bool) {
+	histoTitle, histoSub := getHistoColTitle(query)
+	if query.FilterServiceName != "" {
+		if title {
+			fmt.Println("Service: " + query.FilterServiceName)
+			fmt.Println(histoTitle + col("Task name", 25) + col("Node id", 30) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 30) + getMetricsTitle(query, "-"))
+		}
+		for _, row := range result.Entries {
+			fmt.Println(getHistoColVal(query, row) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMetricsCol(query, row))
+		}
+	} else {
+		if title {
+			fmt.Println(histoTitle + col("Service name", 20) + col("Task name", 25) + col("Node id", 30) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 25) + col("-", 30) + getMetricsTitle(query, "-"))
+		}
+		for _, row := range result.Entries {
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 25) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMetricsCol(query, row))
+		}
+	}
+}
+
+func displayNode(query *stats.StatsRequest, result *stats.StatsReply, title bool) {
+	if title {
+		histoTitle, histoSub := getHistoColTitle(query)
+		fmt.Println(histoTitle + col("Node id", 30) + getMetricsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 30) + getMetricsTitle(query, "-"))
+	}
 	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.ServiceName, 20) + col(row.NodeId, 30) + getCPUCols(row))
+		fmt.Println(getHistoColVal(query, row) + col(row.NodeId, 30) + getMetricsCol(query, row))
 	}
 }
 
-func displayCPUTask(query *stat.StatRequest, result *stat.CPUReply) {
-	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.TaskName, 20) + col(row.NodeId, 30) + getCPUCols(row))
+func getMetricsCol(query *stats.StatsRequest, row *stats.StatsEntry) string {
+	var ret string
+	if query.StatsCpu {
+		ret = colr(fmt.Sprintf("%.1f%%", row.Cpu), 8)
 	}
+	if query.StatsMem {
+		ret += colr(formatBytes(row.MemUsage), 12) + colr(fmt.Sprintf("%.1f%%", row.Mem), 8)
+	}
+	if query.StatsIo {
+		ret += colr(formatBytes(row.IoRead), 10) + " / " + col(formatBytes(row.IoWrite), 10)
+	}
+	if query.StatsNet {
+		ret += colr(formatBytes(row.NetRxBytes), 10) + " / " + col(formatBytes(row.NetTxBytes), 10)
+	}
+	return ret
 }
 
-func displayCPUNode(query *stat.StatRequest, result *stat.CPUReply) {
-	for _, row := range result.Entries {
-		fmt.Println(colTime(row.Time, 25) + col(row.Datacenter, 20) + col(row.Host, 30) + col(row.NodeId, 30) + getCPUCols(row))
+func getMetricsTitle(query *stats.StatsRequest, un string) string {
+	var ret string
+	if query.StatsCpu {
+		if un != "-" {
+			ret = colr("CPU %%", 8)
+		} else {
+			ret = col("-", 8)
+		}
 	}
+	if query.StatsMem {
+		if un != "-" {
+			ret += colr("Mem usage", 12) + colr("Mem %%", 8)
+		} else {
+			ret += col("-", 12) + col("-", 8)
+		}
+	}
+	if query.StatsIo {
+		if un != "-" {
+			ret += colm("Disk IO read/write", 23)
+		} else {
+			ret += col("-", 23)
+		}
+	}
+	if query.StatsNet {
+		if un != "-" {
+			ret += colm("Net Rx/Tx", 23)
+		} else {
+			ret += col("-", 23)
+		}
+	}
+	return ret
 }
 
-func getCPUCols(row *stat.CPUEntry) string {
-	//usageSystem, _ := strconv.ParseFloat(row.UsageSystem, 64)
-	//usageKernel, _ := strconv.ParseFloat(row.UsageKernel, 64)
-	usageUser, _ := strconv.ParseFloat(row.UsageUser, 64)
-	usageTotal, _ := strconv.ParseFloat(row.UsageTotal, 64)
-	//var system string
-	//var kernel string
-	var user string
-	if usageTotal != 0 {
-		//system = fmt.Sprintf("%f", usageSystem * 100 / usageTotal)
-		//kernel = fmt.Sprintf("%f", usageKernel * 100 / usageTotal)
-		user = fmt.Sprintf("%.1f", usageUser*100/usageTotal)
+func formatBytes(val float64) string {
+	if val == 0 {
+		return "0"
+	} else if val < 1 {
+		return "0.0"
+	} else if val < 1024 {
+		return fmt.Sprintf("%.0f B", val)
+	} else if val < 1048576 {
+		return fmt.Sprintf("%.1f KB", val/1024)
+	} else if val < 1073741824 {
+		return fmt.Sprintf("%.1f MB", val/1048576)
 	}
-	//return col(system, 12) + col(kernel, 12) + col(user, 12)
-	return col(user, 12)
+	return fmt.Sprintf("%.1f GB", val/1073741824)
 }
 
+// display value in the left of a col
 func col(value string, size int) string {
+	if value == "-" {
+		return separator[0:size]
+	}
 	if len(value) > size {
 		return value[0:size]
 	}
 	return value + blank[0:size-len(value)]
 }
 
-func colTime(val int64, size int) string {
-	value := fmt.Sprintf("%d", val)
+// display value in the right of a col
+func colr(value string, size int) string {
 	if len(value) > size {
 		return value[0:size]
 	}
-	return value + blank[0:size-len(value)]
+	return blank[0:size-len(value)] + value
+}
+
+// display value in the middle of a col
+func colm(value string, size int) string {
+	if len(value) > size {
+		return value[0:size]
+	}
+	space := size - len(value)
+	rest := space % 2
+	return blank[0:space/2+rest] + value + blank[0:space/2]
+}
+
+// display time col
+func colTime(val int64, size int) string {
+	tm := time.Unix(val, 0)
+	value := tm.Format("2006-01-02 15:04:05")
+	return col(value, size)
+}
+
+func getHistoColTitle(query *stats.StatsRequest) (string, string) {
+	if !isHistoricQuery(query) {
+		return "", ""
+	}
+	return col("Time", 25), col("-", 25)
+}
+
+func getHistoColVal(query *stats.StatsRequest, row *stats.StatsEntry) string {
+	if !isHistoricQuery(query) {
+		return ""
+	}
+	/*
+		if query.StatsFollow {
+			return colTime(time.Now().Unix(), 25)
+		}
+	*/
+	return colTime(row.Time, 25)
+}
+
+func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsRequest) error {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+	isHisto := isHistoricQuery(query)
+	var currentTime int64
+	if isHisto {
+		ctime, err := executeStat(ctx, c, query, true, 0)
+		currentTime = ctime
+		if err != nil {
+			return err
+		}
+		query.Since = ""
+		query.Until = ""
+		query.Period = ""
+		query.StatsFollow = false
+		if query.TimeGroup == "" {
+			query.TimeGroup = "1m"
+		}
+		time.Sleep(1 * time.Second)
+	}
+	for {
+		if !isHisto {
+			fmt.Println("\033[0;0H")
+		}
+		ctime, err := executeStat(ctx, c, query, !isHisto, currentTime)
+		currentTime = ctime
+		if err != nil {
+			return err
+		}
+		time.Sleep(3 * time.Second)
+	}
 }
