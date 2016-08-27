@@ -119,7 +119,6 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	query.Period = cmd.Flag("period").Value.String()
 	query.Since = cmd.Flag("since").Value.String()
 	query.Until = cmd.Flag("until").Value.String()
-	query.TimeGroup = cmd.Flag("time-group").Value.String()
 
 	if amp.Verbose() {
 		displayStatQueryParameters(&query)
@@ -140,8 +139,8 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 }
 
 func validateQuery(query *stat.StatRequest) error {
-	if !isHistoricQuery(query) && query.TimeGroup != "" && !query.StatFollow {
-		return errors.New("--time-group should be used with: --period | --since || --until")
+	if query.Period != "" && (query.Since != "" || query.Until !="") {
+		return errors.New("--period can't be used with --since or --until")
 	}
 	return nil
 }
@@ -211,19 +210,19 @@ func displayContainer(query *stat.StatRequest, result *stat.StatReply, title boo
 	if query.FilterServiceName != "" {
 		if title {
 			fmt.Println("Service: " + query.FilterServiceName)
-			fmt.Println(histoTitle + col("Container name", 40) + getMeticsTitle(query,""))
-			fmt.Println(histoSub + col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+			fmt.Println(histoTitle + col("Container name", 40) + getMetricsTitle(query,""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 40) + getMetricsTitle(query, "-"))
 		}
 		for _, row := range result.Entries {
-			fmt.Println(getHistoColVal(query, row) + col(row.ContainerName, 40) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ContainerName, 40) + getMetricsCol(query, row))
 		}
 	} else {
 		if title {
-			fmt.Println(histoTitle+ col("Service name", 20) + col("Container name", 40) + getMeticsTitle(query,""))
-			fmt.Println(histoSub + col("-", 25) + col("-", 20) + col("-", 40) + getMeticsTitle(query, "-"))
+			fmt.Println(histoTitle+ col("Service name", 20) + col("Container name", 40) + getMetricsTitle(query,""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 20) + col("-", 40) + getMetricsTitle(query, "-"))
 		}
 		for _, row := range result.Entries {
-			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + col(row.ContainerName, 40) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + col(row.ContainerName, 40) + getMetricsCol(query, row))
 		}
 	}
 }
@@ -231,11 +230,11 @@ func displayContainer(query *stat.StatRequest, result *stat.StatReply, title boo
 func displayService(query *stat.StatRequest, result *stat.StatReply, title bool) {
 	if title {
 		histoTitle, histoSub := getHistoColTitle(query)
-		fmt.Println(histoTitle + col("Service name", 20) + getMeticsTitle(query, ""))
-		fmt.Println(histoSub + col("-", 20) + getMeticsTitle(query, "-"))
+		fmt.Println(histoTitle + col("Service name", 20) + getMetricsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 20) + getMetricsTitle(query, "-"))
 	}
 	for _, row := range result.Entries {
-		fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + getMeticsCol(query, row))
+		fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 20) + getMetricsCol(query, row))
 	}
 }
 
@@ -244,19 +243,19 @@ func displayTask(query *stat.StatRequest, result *stat.StatReply, title bool) {
 	if query.FilterServiceName != "" {
 		if title {
 			fmt.Println("Service: " + query.FilterServiceName)
-			fmt.Println(histoTitle + col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
-			fmt.Println(histoSub + col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+			fmt.Println(histoTitle + col("Task name", 25) + col("Node id", 30) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 25) + col("-", 30) + getMetricsTitle(query, "-"))
 		}
 		for _, row := range result.Entries {
-			fmt.Println(getHistoColVal(query, row) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMetricsCol(query, row))
 		}
 	} else {
 		if title {
-			fmt.Println(histoTitle + col("Service name", 20) + col("Task name", 25) + col("Node id", 30) + getMeticsTitle(query, ""))
-			fmt.Println(histoSub + col("-", 20) + col("-", 25) + col("-", 30) + getMeticsTitle(query, "-"))
+			fmt.Println(histoTitle + col("Service name", 20) + col("Task name", 25) + col("Node id", 30) + getMetricsTitle(query, ""))
+			fmt.Println(histoSub + col("-", 20) + col("-", 25) + col("-", 30) + getMetricsTitle(query, "-"))
 		}
 		for _, row := range result.Entries {
-			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 25) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMeticsCol(query, row))
+			fmt.Println(getHistoColVal(query, row) + col(row.ServiceName, 25) + col(row.TaskName, 25) + col(row.NodeId, 30) + getMetricsCol(query, row))
 		}
 	}
 }
@@ -264,16 +263,16 @@ func displayTask(query *stat.StatRequest, result *stat.StatReply, title bool) {
 func displayNode(query *stat.StatRequest, result *stat.StatReply, title bool) {
 	if title {
 		histoTitle, histoSub := getHistoColTitle(query)
-		fmt.Println(histoTitle + col("Node id", 30) + getMeticsTitle(query, ""))
-		fmt.Println(histoSub + col("-", 30) + getMeticsTitle(query, "-"))
+		fmt.Println(histoTitle + col("Node id", 30) + getMetricsTitle(query, ""))
+		fmt.Println(histoSub + col("-", 30) + getMetricsTitle(query, "-"))
 	}
 	for _, row := range result.Entries {
-		fmt.Println(getHistoColVal(query, row) + col(row.NodeId, 30) + getMeticsCol(query, row))
+		fmt.Println(getHistoColVal(query, row) + col(row.NodeId, 30) + getMetricsCol(query, row))
 	}
 }
 
 
-func getMeticsCol(query *stat.StatRequest, row *stat.StatEntry) string {
+func getMetricsCol(query *stat.StatRequest, row *stat.StatEntry) string {
 	var ret string
 	if query.StatCpu {
 		ret = colr(fmt.Sprintf("%.1f%%", row.Cpu), 8)
@@ -290,7 +289,7 @@ func getMeticsCol(query *stat.StatRequest, row *stat.StatEntry) string {
 	return ret
 }
 
-func getMeticsTitle(query *stat.StatRequest, un string) string {
+func getMetricsTitle(query *stat.StatRequest, un string) string {
 	var ret string
 	if query.StatCpu {
 		if un != "-" {
