@@ -60,7 +60,7 @@ func (s *Stat) addStatResult(list *[4]*StatReply, ret *StatReply) {
 		if list[i] == nil {
 			list[i] = ret
 			break
-		} else if len(list[i].Entries) > len(ret.Entries) {
+		} else if len(list[i].Entries) < len(ret.Entries) {
 			for j :=2; j>=i ; j-- {
 				list[j+1] = list[j]
 			}
@@ -144,7 +144,7 @@ func (s *Stat) updateRow(ref *StatEntry, row *StatEntry) {
 func (s *Stat) statQueryMetric(req *StatRequest, metric string) (*StatReply, error) {
 	idFieldName, metricFields := getMetricFieldsName(req, metric)
 	query := s.buildInfluxQuery(req, metricFields, idFieldName, metric)
-	//fmt.Println("Influx query: "+query)	
+	fmt.Println("Influx query: "+query)	
 	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
@@ -257,9 +257,8 @@ func (s *Stat) getKey(req *StatRequest, row *StatEntry) string {
 	} else if period == "w" {
 		return fmt.Sprintf("%d", row.Time / (3600* 24 * 7))
 	}
-	return fmt.Sprintf("%d", row.Time / 60)
- }
-
+	return fmt.Sprintf("%d", row.Time)
+}
 
 func (s *Stat) computeMetric(cpuReply *StatReply) {
 	for _, row := range cpuReply.Entries {
