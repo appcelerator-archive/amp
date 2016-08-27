@@ -143,7 +143,7 @@ func (s *Stat) updateRow(ref *StatEntry, row *StatEntry) {
 func (s *Stat) statQueryMetric(req *StatRequest, metric string) (*StatReply, error) {
 	idFieldName, metricFields := getMetricFieldsName(req, metric)
 	query := s.buildInfluxQuery(req, metricFields, idFieldName, metric)
-	//fmt.Println("Influx query: "+query)	
+	fmt.Println("Influx query: "+query)	
 	res, err := s.Influx.Query(query)
 	if err != nil {
 		return nil, err
@@ -171,6 +171,7 @@ func (s *Stat) statQueryMetric(req *StatRequest, metric string) (*StatReply, err
   			TaskId:			s.getStringFieldValue(row[8]),
   			TaskName:		s.getStringFieldValue(row[9]),
   			NodeId:			s.getStringFieldValue(row[10]),
+  			SortType:		req.Discriminator,
 		}
 		entry.Type = metric
 		if metric == "cpu" {
@@ -407,6 +408,16 @@ func (s *Stat) buildWhereStatement(req *StatRequest) string {
 	return "WHERE " + where[5:]
 }
 
+func getSortKeyValue(row *StatEntry) string {
+	if row.SortType == "container" {
+		return row.ContainerId
+	} else if row.SortType == "service" {
+		return row.ServiceId
+	} else if row.SortType == "task" {
+		return row.TaskId
+	}
+	return row.NodeId
+}
 
 func (a StatReply) Len() int { 
 	return len(a.Entries) 
@@ -417,7 +428,13 @@ func (a StatReply) Swap(i, j int) {
 }
 
 func (a StatReply) Less(i, j int) bool { 
-	if ret := strings.Compare(a.Entries[i].ContainerId, a.Entries[j].ContainerId); ret ==-1 {
+	ret := strings.Compare(getSortKeyValue(a.Entries[i]), getSortKeyValue(a.Entries[j]))
+	if ret == 0 {
+		if (a.Entries[i].Time < a.Entries[j].Time) {
+			return true
+		}
+		return false
+	} else if ret ==-1 {
 		return true
 	} 
 	return false

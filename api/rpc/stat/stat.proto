@@ -43,16 +43,17 @@ message StatEntry {
   string task_name=10;
   string node_id=11;
   string type=12;
+  string sort_type=13;
   //CPU Metrics fields
-  double number=13;
-  double cpu=14;
-  double mem=15;
-  double mem_usage=16;
-  double mem_limit=17;
-  double io_read=18;
-  double io_write=19;
-  double net_tx_bytes=20;
-  double net_rx_bytes=21;
+  double number=14;
+  double cpu=15;
+  double mem=16;
+  double mem_usage=17;
+  double mem_limit=18;
+  double io_read=19;
+  double io_write=20;
+  double net_tx_bytes=21;
+  double net_rx_bytes=22;
 }
 
 message StatReply {

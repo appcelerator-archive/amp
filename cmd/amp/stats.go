@@ -383,9 +383,11 @@ func getHistoColVal(query *stat.StatRequest, row *stat.StatEntry) string {
 	if !isHistoricQuery(query) {
 		return ""
 	}
+	/*
 	if query.StatFollow {
-		return colTime(time.Now().Unix(), 25)
+		//return colTime(time.Now().Unix(), 25)
 	}
+	*/
 	return colTime(row.Time, 25)
 }
 
