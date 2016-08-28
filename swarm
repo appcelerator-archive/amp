@@ -125,7 +125,7 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
-        $(dirname $0)/advertise_service remove kafka &
+        $(dirname $0)/advertise_service -r kafka &
         removeservices
       ;;
       pull)
