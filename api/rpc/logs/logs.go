@@ -116,19 +116,19 @@ func parseLogEntry(data []byte) (LogEntry, error) {
 func filter(entry *LogEntry, in *GetRequest) bool {
 	match := true
 	if in.ServiceId != "" {
-		match = entry.ServiceId == in.ServiceId
+		match = strings.EqualFold(entry.ServiceId, in.ServiceId)
 	}
 	if in.ServiceName != "" {
-		match = entry.ServiceName == in.ServiceName
+		match = strings.EqualFold(entry.ServiceName, in.ServiceName)
 	}
 	if in.ContainerId != "" {
-		match = entry.ContainerId == in.ContainerId
+		match = strings.EqualFold(entry.ContainerId, in.ContainerId)
 	}
 	if in.NodeId != "" {
-		match = entry.NodeId == in.NodeId
+		match = strings.EqualFold(entry.NodeId, in.NodeId)
 	}
 	if in.Message != "" {
-		match = strings.Contains(entry.Message, in.Message)
+		match = strings.Contains(strings.ToLower(entry.Message), strings.ToLower(in.Message))
 	}
 	return match
 }
