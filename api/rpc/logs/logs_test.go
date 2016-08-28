@@ -41,7 +41,6 @@ var (
 	kafkaURL         string
 	influxURL        string
 	client           logs.LogsClient
-	ctx              context.Context
 	producer         sarama.SyncProducer
 )
 
@@ -86,6 +85,8 @@ func TestMain(m *testing.M) {
 	go server.Start(config)
 
 	// there is no event when the server starts listening, so we just wait a second
+	time.Sleep(1 * time.Second)
+
 	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("connection failure")
@@ -97,7 +98,6 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	client = logs.NewLogsClient(conn)
-	ctx = context.Background()
 	os.Exit(m.Run())
 }
 
@@ -125,6 +125,7 @@ func TestShouldFilterByContainerId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	randomContainerId := r.Entries[0].ContainerId
 
 	// Then filter by this container id
@@ -132,7 +133,7 @@ func TestShouldFilterByContainerId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
 		assert.Equal(t, randomContainerId, entry.ContainerId)
 	}
@@ -144,6 +145,7 @@ func TestShouldFilterByNodeId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	randomNodeId := r.Entries[0].NodeId
 
 	// Then filter by this node id
@@ -151,7 +153,7 @@ func TestShouldFilterByNodeId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
 		assert.Equal(t, randomNodeId, entry.NodeId)
 	}
@@ -163,6 +165,7 @@ func TestShouldFilterByServiceId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	randomServiceId := r.Entries[0].ServiceId
 
 	// Then filter by this service id
@@ -170,7 +173,7 @@ func TestShouldFilterByServiceId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
 		assert.Equal(t, randomServiceId, entry.ServiceId)
 	}
@@ -182,6 +185,7 @@ func TestShouldFilterByServiceName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	randomServiceName := r.Entries[0].ServiceName
 
 	// Then filter by this service name
@@ -189,7 +193,7 @@ func TestShouldFilterByServiceName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
 		assert.Equal(t, randomServiceName, entry.ServiceName)
 	}
@@ -200,7 +204,7 @@ func TestShouldFilterByMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
 		assert.Contains(t, strings.ToLower(entry.Message), "kafka")
 	}
@@ -211,12 +215,12 @@ func TestShouldFetchFromGivenIndex(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r1.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r1.Entries, "We should have at least one entry")
 	r2, err := client.Get(context.Background(), &logs.GetRequest{From: 10})
 	if err != nil {
 		t.Error(err)
 	}
-	assert.NotZero(t, len(r2.Entries), "We should have at least one entry")
+	assert.NotEmpty(t, r2.Entries, "We should have at least one entry")
 	for i, entry := range r1.Entries[10:len(r1.Entries)] {
 		assert.Equal(t, entry, r2.Entries[i])
 	}
