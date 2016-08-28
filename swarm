@@ -35,6 +35,7 @@ MINIMAGES=(
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
+  appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:latest
   appcelerator/kibana:latest
@@ -70,6 +71,7 @@ MINSERVICES=(
   amplogworker
   etcd
   elasticsearch
+  grafana
   kafka
   kafkamanager
   influxdb
