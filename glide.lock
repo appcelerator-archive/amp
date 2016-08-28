@@ -1,6 +1,8 @@
-hash: b8f43f9a77a4097dd600192797c5e7bc58c724e73bf290ac6efcbe90fc3ed1db
-updated: 2016-08-26T12:17:51.829826001+02:00
+hash: aaa5347213febe48122a6af1545b25af6b908946e929dcc14a1d848678266bcc
+updated: 2016-08-28T10:52:54.281506465-07:00
 imports:
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
   version: 9efa00d1030d4bf62eb8e5ec130023aeb1b8e2d0
   subpackages:
@@ -11,7 +13,7 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: fc32781af5e85e548d3f1abaf0fa3dbe8a72495c
+  version: 6cf5744a041a0022271cefed95ba843f6d87fd51
   subpackages:
   - spew
 - name: github.com/eapache/go-resiliency
@@ -27,16 +29,16 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
-  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+  version: aa0c862057666179de291b67d9f093d12b5a8473
 - name: github.com/golang/protobuf
-  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
+  version: 888eb0692c857ec880338addf316bd662d5e630e
   subpackages:
   - jsonpb
   - proto
 - name: github.com/golang/snappy
-  version: 5979233c5d6225d4a8e438cdd0b411888449ddab
+  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/google/go-github
-  version: b9698164669e386680621e2006cab02271257611
+  version: a59a35745f99ad92d70d69a9f180767063aa4bf3
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -44,7 +46,7 @@ imports:
   subpackages:
   - query
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: f52d055dc48aec25854ed7d31862f78913cf17d1
+  version: 331418a167bc76e7e4e7469cf704033eddaba7a5
   subpackages:
   - runtime
   - runtime/internal
@@ -61,7 +63,7 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/howeyc/gopass
-  version: b63a7d07e65df376d14e2d72907a93d4847dffe4
+  version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
@@ -92,6 +94,10 @@ imports:
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
 - name: github.com/Shopify/sarama
   version: 9bb4a68d57ff6f623363aa172f0a8297aa289ba7
 - name: github.com/spf13/afero
@@ -111,26 +117,31 @@ imports:
   version: 7fb2782df3d83e0036cc89f461ed0422628776f4
 - name: github.com/stretchr/testify
   version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  subpackages:
+  - assert
 - name: golang.org/x/crypto
-  version: 1f22c0103821b9390939b6776727195525381532
+  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
   subpackages:
   - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
   - ssh
   - ssh/terminal
 - name: golang.org/x/net
-  version: 6acef71eb69611914f7a30939ea9f6e194c78172
+  version: 6250b412798208e6c90b03b7c4f226de5aa299e2
   subpackages:
   - context
   - http2
   - http2/hpack
   - internal/timeseries
+  - lex/httplex
   - trace
 - name: golang.org/x/oauth2
-  version: 54f42edba4a8f81d48dc8b2287b7c7421e673022
+  version: 4d549c893be7d4011bab739cc585d091a7188d27
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 9c60d1c508f5134d1ca726b4641db998f2523357
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: golang.org/x/text
