@@ -10,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/rpc/stat"
+	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/kafka"
@@ -52,7 +52,7 @@ func Start(config Config) {
 		Store: Store,
 		Kafka: Kafka,
 	})
-	stat.RegisterStatServer(s, &stat.Stat{
+	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: Influx,
 	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
