@@ -79,3 +79,39 @@ for now:
 * Use the CLI to login
     $ amp login
 * When prompted, enter username, password, and two-factor auth code
+
+### Logs
+
+    Search through all the logs of the system and fetch entries matching provided criteria.
+
+    Usage:
+      amp logs [flags]
+    
+    Flags:
+          --container_id string   Filter by the given container id
+      -f, --follow                Follow log output
+          --from string           Fetch from the given index (default "-1")
+          --message string        Filter the message content by the given pattern
+          --node_id string        Filter by the given node id
+      -n, --number string         Number of results (default "100")
+          --service_id string     Filter by the given service id
+          --service_name string   Filter by the given service name
+      -s, --short                 Display message content only
+    
+    Global Flags:
+          --Config string   Config file (default is $HOME/.amp.yaml)
+          --target string   target environment ("local"|"virtualbox"|"aws") (default "local")
+      -v, --verbose         verbose output
+
+A few useful examples:
+
+* To fetch and follow all the logs from the swarm:
+```
+  $ amp logs -f
+```
+    
+* To fetch and follow the logs for a specific service, with the message content only:
+```
+  $ amp logs -fs --service_name etcd
+```
+
