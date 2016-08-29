@@ -1,5 +1,5 @@
-hash: d75aa023309bab007654b774317aed85764d84226428b5d01a33f5f5a2c797f1
-updated: 2016-08-28T18:43:14.814741533-07:00
+hash: bb2a84e4e9d836dfd207eca74b360255777c55777c645343e222b273249b9eb5
+updated: 2016-08-30T22:07:50.660313454Z
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -16,8 +16,6 @@ imports:
   version: 6cf5744a041a0022271cefed95ba843f6d87fd51
   subpackages:
   - spew
-- name: github.com/docker/engine-api
-  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
@@ -33,7 +31,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: aa0c862057666179de291b67d9f093d12b5a8473
 - name: github.com/golang/protobuf
-  version: 888eb0692c857ec880338addf316bd662d5e630e
+  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
   subpackages:
   - jsonpb
   - proto
@@ -69,7 +67,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: e57fb88a051ee40fd9277094345fbd47bb4783ce
+  version: 05ddf85d245a3bd26e9e3a16c5036c07df9ab3b9
   subpackages:
   - client/v2
   - models
@@ -101,7 +99,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Shopify/sarama
-  version: 9bb4a68d57ff6f623363aa172f0a8297aa289ba7
+  version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
 - name: github.com/spf13/afero
   version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
@@ -110,19 +108,19 @@ imports:
 - name: github.com/spf13/cast
   version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
-  version: 37c3f8060359192150945916cbc2d72bce804b4d
+  version: 9c28e4bbd74e5c3ed7aacbc552b2cab7cfdfe744
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
   version: 103ce5cd2042f2fe629c1957abb64ab3e7f50235
 - name: github.com/spf13/viper
-  version: 7fb2782df3d83e0036cc89f461ed0422628776f4
+  version: 16990631d4aa7e38f73dbbbf37fa13e67c648531
 - name: github.com/stretchr/testify
   version: f390dcf405f7b83c997eac1b06768bb9f44dec18
   subpackages:
   - assert
 - name: golang.org/x/crypto
-  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
+  version: b13fc1fd382d01861b16b2e6474487d3d4d27f20
   subpackages:
   - curve25519
   - ed25519
@@ -133,6 +131,7 @@ imports:
   version: 6250b412798208e6c90b03b7c4f226de5aa299e2
   subpackages:
   - context
+  - context/ctxhttp
   - http2
   - http2/hpack
   - internal/timeseries
@@ -173,7 +172,7 @@ imports:
   - peer
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: 908ffee99d2c7e5fc7cf6ddf437b1fb26f4bb286
+  version: edce13c297077bd11b936063f7572485fd9cbbb6
   subpackages:
   - backoff
   - uritemplates

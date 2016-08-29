@@ -184,11 +184,16 @@ func (e *encoder) encodeRLE(first, delta, div uint64, n int) ([]byte, error) {
 }
 
 type TimeDecoder struct {
-	v   int64
-	i   int
-	ts  []uint64
-	dec simple8b.Decoder
-	err error
+	v    int64
+	i, n int
+	ts   []uint64
+	dec  simple8b.Decoder
+	err  error
+
+	// The delta value for a run-length encoded byte slice
+	rleDelta int64
+
+	encoding byte
 }
 
 func (d *TimeDecoder) Init(b []byte) {
@@ -196,10 +201,27 @@ func (d *TimeDecoder) Init(b []byte) {
 	d.i = 0
 	d.ts = d.ts[:0]
 	d.err = nil
+	if len(b) > 0 {
+		// Encoding type is stored in the 4 high bits of the first byte
+		d.encoding = b[0] >> 4
+	}
 	d.decode(b)
 }
 
 func (d *TimeDecoder) Next() bool {
+	if d.err != nil {
+		return false
+	}
+
+	if d.encoding == timeCompressedRLE {
+		if d.i >= d.n {
+			return false
+		}
+		d.i++
+		d.v += d.rleDelta
+		return d.i < d.n
+	}
+
 	if d.i >= len(d.ts) {
 		return false
 	}
@@ -221,9 +243,7 @@ func (d *TimeDecoder) decode(b []byte) {
 		return
 	}
 
-	// Encoding type is stored in the 4 high bits of the first byte
-	encoding := b[0] >> 4
-	switch encoding {
+	switch d.encoding {
 	case timeUncompressed:
 		d.decodeRaw(b[1:])
 	case timeCompressedRLE:
@@ -231,11 +251,15 @@ func (d *TimeDecoder) decode(b []byte) {
 	case timeCompressedPackedSimple:
 		d.decodePacked(b)
 	default:
-		d.err = fmt.Errorf("unknown encoding: %v", encoding)
+		d.err = fmt.Errorf("unknown encoding: %v", d.encoding)
 	}
 }
 
 func (d *TimeDecoder) decodePacked(b []byte) {
+	if len(b) < 9 {
+		d.err = fmt.Errorf("TimeDecoder: not enough data to decode packed timestamps")
+		return
+	}
 	div := uint64(math.Pow10(int(b[0] & 0xF)))
 	first := uint64(binary.BigEndian.Uint64(b[1:9]))
 
@@ -259,6 +283,11 @@ func (d *TimeDecoder) decodePacked(b []byte) {
 }
 
 func (d *TimeDecoder) decodeRLE(b []byte) {
+	if len(b) < 9 {
+		d.err = fmt.Errorf("TimeDecoder: not enough data for initial RLE timestamp")
+		return
+	}
+
 	var i, n int
 
 	// Lower 4 bits hold the 10 based exponent so we can scale the values back up
@@ -271,28 +300,27 @@ func (d *TimeDecoder) decodeRLE(b []byte) {
 
 	// Next 1-10 bytes is our (scaled down by factor of 10) run length values
 	value, n := binary.Uvarint(b[i:])
+	if n <= 0 {
+		d.err = fmt.Errorf("TimeDecoder: invalid run length in decodeRLE")
+		return
+	}
 
 	// Scale the value back up
 	value *= uint64(mod)
 	i += n
 
 	// Last 1-10 bytes is how many times the value repeats
-	count, _ := binary.Uvarint(b[i:])
-
-	// Rebuild construct the original values now
-	deltas := d.ts[:0]
-	for i := 0; i < int(count); i++ {
-		deltas = append(deltas, value)
+	count, n := binary.Uvarint(b[i:])
+	if n <= 0 {
+		d.err = fmt.Errorf("TimeDecoder: invalid repeat value in decodeRLE")
+		return
 	}
 
-	// Reverse the delta-encoding
-	deltas[0] = first
-	for i := 1; i < len(deltas); i++ {
-		deltas[i] = deltas[i-1] + deltas[i]
-	}
+	d.v = int64(first - value)
+	d.rleDelta = int64(value)
 
-	d.i = 0
-	d.ts = deltas
+	d.i = -1
+	d.n = int(count)
 }
 
 func (d *TimeDecoder) decodeRaw(b []byte) {

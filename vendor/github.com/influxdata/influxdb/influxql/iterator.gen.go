@@ -164,6 +164,9 @@ func (itr *floatMergeIterator) Close() error {
 	for _, input := range itr.inputs {
 		input.Close()
 	}
+	itr.curr = nil
+	itr.inputs = nil
+	itr.heap.items = nil
 	return nil
 }
 
@@ -299,7 +302,6 @@ func (h *floatMergeHeap) Pop() interface{} {
 
 type floatMergeHeapItem struct {
 	itr *bufFloatIterator
-	err error
 }
 
 // floatSortedMergeIterator is an iterator that sorts and merges multiple iterators into one.
@@ -308,7 +310,6 @@ type floatSortedMergeIterator struct {
 	opt    IteratorOptions
 	heap   floatSortedMergeHeap
 	init   bool
-	point  FloatPoint
 }
 
 // newFloatSortedMergeIterator returns an instance of floatSortedMergeIterator.
@@ -435,6 +436,69 @@ type floatSortedMergeHeapItem struct {
 	ascending bool
 }
 
+// floatParallelIterator represents an iterator that pulls data in a separate goroutine.
+type floatParallelIterator struct {
+	input FloatIterator
+	ch    chan floatPointError
+
+	once    sync.Once
+	closing chan struct{}
+	wg      sync.WaitGroup
+}
+
+// newFloatParallelIterator returns a new instance of floatParallelIterator.
+func newFloatParallelIterator(input FloatIterator) *floatParallelIterator {
+	itr := &floatParallelIterator{
+		input:   input,
+		ch:      make(chan floatPointError, 1),
+		closing: make(chan struct{}),
+	}
+	itr.wg.Add(1)
+	go itr.monitor()
+	return itr
+}
+
+// Stats returns stats from the underlying iterator.
+func (itr *floatParallelIterator) Stats() IteratorStats { return itr.input.Stats() }
+
+// Close closes the underlying iterators.
+func (itr *floatParallelIterator) Close() error {
+	itr.once.Do(func() { close(itr.closing) })
+	itr.wg.Wait()
+	return itr.input.Close()
+}
+
+// Next returns the next point from the iterator.
+func (itr *floatParallelIterator) Next() (*FloatPoint, error) {
+	v, ok := <-itr.ch
+	if !ok {
+		return nil, io.EOF
+	}
+	return v.point, v.err
+}
+
+// monitor runs in a separate goroutine and actively pulls the next point.
+func (itr *floatParallelIterator) monitor() {
+	defer close(itr.ch)
+	defer itr.wg.Done()
+
+	for {
+		// Read next point.
+		p, err := itr.input.Next()
+
+		select {
+		case <-itr.closing:
+			return
+		case itr.ch <- floatPointError{point: p, err: err}:
+		}
+	}
+}
+
+type floatPointError struct {
+	point *FloatPoint
+	err   error
+}
+
 // floatLimitIterator represents an iterator that limits points per group.
 type floatLimitIterator struct {
 	input FloatIterator
@@ -499,7 +563,7 @@ func (itr *floatLimitIterator) Next() (*FloatPoint, error) {
 
 type floatFillIterator struct {
 	input     *bufFloatIterator
-	prev      *FloatPoint
+	prev      FloatPoint
 	startTime int64
 	endTime   int64
 	auxFields []interface{}
@@ -537,6 +601,7 @@ func newFloatFillIterator(input FloatIterator, expr Expr, opt IteratorOptions) *
 
 	return &floatFillIterator{
 		input:     newBufFloatIterator(input),
+		prev:      FloatPoint{Nil: true},
 		startTime: startTime,
 		endTime:   endTime,
 		auxFields: auxFields,
@@ -590,7 +655,7 @@ func (itr *floatFillIterator) Next() (*FloatPoint, error) {
 		// Set the new interval.
 		itr.window.name, itr.window.tags = p.Name, p.Tags
 		itr.window.time = itr.startTime
-		itr.prev = nil
+		itr.prev = FloatPoint{Nil: true}
 		break
 	}
 
@@ -613,7 +678,7 @@ func (itr *floatFillIterator) Next() (*FloatPoint, error) {
 		case NumberFill:
 			p.Value = castToFloat(itr.opt.FillValue)
 		case PreviousFill:
-			if itr.prev != nil {
+			if !itr.prev.Nil {
 				p.Value = itr.prev.Value
 				p.Nil = itr.prev.Nil
 			} else {
@@ -621,7 +686,7 @@ func (itr *floatFillIterator) Next() (*FloatPoint, error) {
 			}
 		}
 	} else {
-		itr.prev = p
+		itr.prev = *p
 	}
 
 	// Advance the expected time. Do not advance to a new window here
@@ -654,6 +719,11 @@ func (itr *floatIntervalIterator) Next() (*FloatPoint, error) {
 		return nil, err
 	}
 	p.Time, _ = itr.opt.Window(p.Time)
+	// If we see the minimum allowable time, set the time to zero so we don't
+	// break the default returned time for aggregate queries without times.
+	if p.Time == MinTime {
+		p.Time = 0
+	}
 	return p, nil
 }
 
@@ -691,6 +761,58 @@ func (itr *floatInterruptIterator) Next() (*FloatPoint, error) {
 	return itr.input.Next()
 }
 
+// floatCloseInterruptIterator represents a float implementation of CloseInterruptIterator.
+type floatCloseInterruptIterator struct {
+	input   FloatIterator
+	closing <-chan struct{}
+	done    chan struct{}
+	once    sync.Once
+}
+
+func newFloatCloseInterruptIterator(input FloatIterator, closing <-chan struct{}) *floatCloseInterruptIterator {
+	itr := &floatCloseInterruptIterator{
+		input:   input,
+		closing: closing,
+		done:    make(chan struct{}),
+	}
+	go itr.monitor()
+	return itr
+}
+
+func (itr *floatCloseInterruptIterator) monitor() {
+	select {
+	case <-itr.closing:
+		itr.Close()
+	case <-itr.done:
+	}
+}
+
+func (itr *floatCloseInterruptIterator) Stats() IteratorStats {
+	return itr.input.Stats()
+}
+
+func (itr *floatCloseInterruptIterator) Close() error {
+	itr.once.Do(func() {
+		close(itr.done)
+		itr.input.Close()
+	})
+	return nil
+}
+
+func (itr *floatCloseInterruptIterator) Next() (*FloatPoint, error) {
+	p, err := itr.input.Next()
+	if err != nil {
+		// Check if the iterator was closed.
+		select {
+		case <-itr.done:
+			return nil, nil
+		default:
+			return nil, err
+		}
+	}
+	return p, nil
+}
+
 // auxFloatPoint represents a combination of a point and an error for the AuxIterator.
 type auxFloatPoint struct {
 	point *FloatPoint
@@ -705,11 +827,11 @@ type floatAuxIterator struct {
 	background bool
 }
 
-func newFloatAuxIterator(input FloatIterator, seriesKeys SeriesList, opt IteratorOptions) *floatAuxIterator {
+func newFloatAuxIterator(input FloatIterator, opt IteratorOptions) *floatAuxIterator {
 	return &floatAuxIterator{
 		input:  newBufFloatIterator(input),
 		output: make(chan auxFloatPoint, 1),
-		fields: newAuxIteratorFields(seriesKeys, opt),
+		fields: newAuxIteratorFields(opt),
 	}
 }
 
@@ -726,7 +848,9 @@ func (itr *floatAuxIterator) Next() (*FloatPoint, error) {
 	p := <-itr.output
 	return p.point, p.err
 }
-func (itr *floatAuxIterator) Iterator(name string) Iterator { return itr.fields.iterator(name) }
+func (itr *floatAuxIterator) Iterator(name string, typ DataType) Iterator {
+	return itr.fields.iterator(name, typ)
+}
 
 func (itr *floatAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, error) {
 	expr := opt.Expr
@@ -736,18 +860,14 @@ func (itr *floatAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, erro
 
 	switch expr := expr.(type) {
 	case *VarRef:
-		return itr.Iterator(expr.Val), nil
+		return itr.Iterator(expr.Val, expr.Type), nil
 	default:
 		panic(fmt.Sprintf("invalid expression type for an aux iterator: %T", expr))
 	}
 }
 
-func (itr *floatAuxIterator) FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error) {
+func (itr *floatAuxIterator) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
 	return nil, nil, errors.New("not implemented")
-}
-
-func (itr *floatAuxIterator) SeriesKeys(opt IteratorOptions) (SeriesList, error) {
-	return nil, errors.New("not implemented")
 }
 
 func (itr *floatAuxIterator) ExpandSources(sources Sources) (Sources, error) {
@@ -2113,6 +2233,9 @@ func (itr *integerMergeIterator) Close() error {
 	for _, input := range itr.inputs {
 		input.Close()
 	}
+	itr.curr = nil
+	itr.inputs = nil
+	itr.heap.items = nil
 	return nil
 }
 
@@ -2248,7 +2371,6 @@ func (h *integerMergeHeap) Pop() interface{} {
 
 type integerMergeHeapItem struct {
 	itr *bufIntegerIterator
-	err error
 }
 
 // integerSortedMergeIterator is an iterator that sorts and merges multiple iterators into one.
@@ -2257,7 +2379,6 @@ type integerSortedMergeIterator struct {
 	opt    IteratorOptions
 	heap   integerSortedMergeHeap
 	init   bool
-	point  IntegerPoint
 }
 
 // newIntegerSortedMergeIterator returns an instance of integerSortedMergeIterator.
@@ -2384,6 +2505,69 @@ type integerSortedMergeHeapItem struct {
 	ascending bool
 }
 
+// integerParallelIterator represents an iterator that pulls data in a separate goroutine.
+type integerParallelIterator struct {
+	input IntegerIterator
+	ch    chan integerPointError
+
+	once    sync.Once
+	closing chan struct{}
+	wg      sync.WaitGroup
+}
+
+// newIntegerParallelIterator returns a new instance of integerParallelIterator.
+func newIntegerParallelIterator(input IntegerIterator) *integerParallelIterator {
+	itr := &integerParallelIterator{
+		input:   input,
+		ch:      make(chan integerPointError, 1),
+		closing: make(chan struct{}),
+	}
+	itr.wg.Add(1)
+	go itr.monitor()
+	return itr
+}
+
+// Stats returns stats from the underlying iterator.
+func (itr *integerParallelIterator) Stats() IteratorStats { return itr.input.Stats() }
+
+// Close closes the underlying iterators.
+func (itr *integerParallelIterator) Close() error {
+	itr.once.Do(func() { close(itr.closing) })
+	itr.wg.Wait()
+	return itr.input.Close()
+}
+
+// Next returns the next point from the iterator.
+func (itr *integerParallelIterator) Next() (*IntegerPoint, error) {
+	v, ok := <-itr.ch
+	if !ok {
+		return nil, io.EOF
+	}
+	return v.point, v.err
+}
+
+// monitor runs in a separate goroutine and actively pulls the next point.
+func (itr *integerParallelIterator) monitor() {
+	defer close(itr.ch)
+	defer itr.wg.Done()
+
+	for {
+		// Read next point.
+		p, err := itr.input.Next()
+
+		select {
+		case <-itr.closing:
+			return
+		case itr.ch <- integerPointError{point: p, err: err}:
+		}
+	}
+}
+
+type integerPointError struct {
+	point *IntegerPoint
+	err   error
+}
+
 // integerLimitIterator represents an iterator that limits points per group.
 type integerLimitIterator struct {
 	input IntegerIterator
@@ -2448,7 +2632,7 @@ func (itr *integerLimitIterator) Next() (*IntegerPoint, error) {
 
 type integerFillIterator struct {
 	input     *bufIntegerIterator
-	prev      *IntegerPoint
+	prev      IntegerPoint
 	startTime int64
 	endTime   int64
 	auxFields []interface{}
@@ -2486,6 +2670,7 @@ func newIntegerFillIterator(input IntegerIterator, expr Expr, opt IteratorOption
 
 	return &integerFillIterator{
 		input:     newBufIntegerIterator(input),
+		prev:      IntegerPoint{Nil: true},
 		startTime: startTime,
 		endTime:   endTime,
 		auxFields: auxFields,
@@ -2539,7 +2724,7 @@ func (itr *integerFillIterator) Next() (*IntegerPoint, error) {
 		// Set the new interval.
 		itr.window.name, itr.window.tags = p.Name, p.Tags
 		itr.window.time = itr.startTime
-		itr.prev = nil
+		itr.prev = IntegerPoint{Nil: true}
 		break
 	}
 
@@ -2562,7 +2747,7 @@ func (itr *integerFillIterator) Next() (*IntegerPoint, error) {
 		case NumberFill:
 			p.Value = castToInteger(itr.opt.FillValue)
 		case PreviousFill:
-			if itr.prev != nil {
+			if !itr.prev.Nil {
 				p.Value = itr.prev.Value
 				p.Nil = itr.prev.Nil
 			} else {
@@ -2570,7 +2755,7 @@ func (itr *integerFillIterator) Next() (*IntegerPoint, error) {
 			}
 		}
 	} else {
-		itr.prev = p
+		itr.prev = *p
 	}
 
 	// Advance the expected time. Do not advance to a new window here
@@ -2603,6 +2788,11 @@ func (itr *integerIntervalIterator) Next() (*IntegerPoint, error) {
 		return nil, err
 	}
 	p.Time, _ = itr.opt.Window(p.Time)
+	// If we see the minimum allowable time, set the time to zero so we don't
+	// break the default returned time for aggregate queries without times.
+	if p.Time == MinTime {
+		p.Time = 0
+	}
 	return p, nil
 }
 
@@ -2640,6 +2830,58 @@ func (itr *integerInterruptIterator) Next() (*IntegerPoint, error) {
 	return itr.input.Next()
 }
 
+// integerCloseInterruptIterator represents a integer implementation of CloseInterruptIterator.
+type integerCloseInterruptIterator struct {
+	input   IntegerIterator
+	closing <-chan struct{}
+	done    chan struct{}
+	once    sync.Once
+}
+
+func newIntegerCloseInterruptIterator(input IntegerIterator, closing <-chan struct{}) *integerCloseInterruptIterator {
+	itr := &integerCloseInterruptIterator{
+		input:   input,
+		closing: closing,
+		done:    make(chan struct{}),
+	}
+	go itr.monitor()
+	return itr
+}
+
+func (itr *integerCloseInterruptIterator) monitor() {
+	select {
+	case <-itr.closing:
+		itr.Close()
+	case <-itr.done:
+	}
+}
+
+func (itr *integerCloseInterruptIterator) Stats() IteratorStats {
+	return itr.input.Stats()
+}
+
+func (itr *integerCloseInterruptIterator) Close() error {
+	itr.once.Do(func() {
+		close(itr.done)
+		itr.input.Close()
+	})
+	return nil
+}
+
+func (itr *integerCloseInterruptIterator) Next() (*IntegerPoint, error) {
+	p, err := itr.input.Next()
+	if err != nil {
+		// Check if the iterator was closed.
+		select {
+		case <-itr.done:
+			return nil, nil
+		default:
+			return nil, err
+		}
+	}
+	return p, nil
+}
+
 // auxIntegerPoint represents a combination of a point and an error for the AuxIterator.
 type auxIntegerPoint struct {
 	point *IntegerPoint
@@ -2654,11 +2896,11 @@ type integerAuxIterator struct {
 	background bool
 }
 
-func newIntegerAuxIterator(input IntegerIterator, seriesKeys SeriesList, opt IteratorOptions) *integerAuxIterator {
+func newIntegerAuxIterator(input IntegerIterator, opt IteratorOptions) *integerAuxIterator {
 	return &integerAuxIterator{
 		input:  newBufIntegerIterator(input),
 		output: make(chan auxIntegerPoint, 1),
-		fields: newAuxIteratorFields(seriesKeys, opt),
+		fields: newAuxIteratorFields(opt),
 	}
 }
 
@@ -2675,7 +2917,9 @@ func (itr *integerAuxIterator) Next() (*IntegerPoint, error) {
 	p := <-itr.output
 	return p.point, p.err
 }
-func (itr *integerAuxIterator) Iterator(name string) Iterator { return itr.fields.iterator(name) }
+func (itr *integerAuxIterator) Iterator(name string, typ DataType) Iterator {
+	return itr.fields.iterator(name, typ)
+}
 
 func (itr *integerAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, error) {
 	expr := opt.Expr
@@ -2685,18 +2929,14 @@ func (itr *integerAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, er
 
 	switch expr := expr.(type) {
 	case *VarRef:
-		return itr.Iterator(expr.Val), nil
+		return itr.Iterator(expr.Val, expr.Type), nil
 	default:
 		panic(fmt.Sprintf("invalid expression type for an aux iterator: %T", expr))
 	}
 }
 
-func (itr *integerAuxIterator) FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error) {
+func (itr *integerAuxIterator) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
 	return nil, nil, errors.New("not implemented")
-}
-
-func (itr *integerAuxIterator) SeriesKeys(opt IteratorOptions) (SeriesList, error) {
-	return nil, errors.New("not implemented")
 }
 
 func (itr *integerAuxIterator) ExpandSources(sources Sources) (Sources, error) {
@@ -4059,6 +4299,9 @@ func (itr *stringMergeIterator) Close() error {
 	for _, input := range itr.inputs {
 		input.Close()
 	}
+	itr.curr = nil
+	itr.inputs = nil
+	itr.heap.items = nil
 	return nil
 }
 
@@ -4194,7 +4437,6 @@ func (h *stringMergeHeap) Pop() interface{} {
 
 type stringMergeHeapItem struct {
 	itr *bufStringIterator
-	err error
 }
 
 // stringSortedMergeIterator is an iterator that sorts and merges multiple iterators into one.
@@ -4203,7 +4445,6 @@ type stringSortedMergeIterator struct {
 	opt    IteratorOptions
 	heap   stringSortedMergeHeap
 	init   bool
-	point  StringPoint
 }
 
 // newStringSortedMergeIterator returns an instance of stringSortedMergeIterator.
@@ -4330,6 +4571,69 @@ type stringSortedMergeHeapItem struct {
 	ascending bool
 }
 
+// stringParallelIterator represents an iterator that pulls data in a separate goroutine.
+type stringParallelIterator struct {
+	input StringIterator
+	ch    chan stringPointError
+
+	once    sync.Once
+	closing chan struct{}
+	wg      sync.WaitGroup
+}
+
+// newStringParallelIterator returns a new instance of stringParallelIterator.
+func newStringParallelIterator(input StringIterator) *stringParallelIterator {
+	itr := &stringParallelIterator{
+		input:   input,
+		ch:      make(chan stringPointError, 1),
+		closing: make(chan struct{}),
+	}
+	itr.wg.Add(1)
+	go itr.monitor()
+	return itr
+}
+
+// Stats returns stats from the underlying iterator.
+func (itr *stringParallelIterator) Stats() IteratorStats { return itr.input.Stats() }
+
+// Close closes the underlying iterators.
+func (itr *stringParallelIterator) Close() error {
+	itr.once.Do(func() { close(itr.closing) })
+	itr.wg.Wait()
+	return itr.input.Close()
+}
+
+// Next returns the next point from the iterator.
+func (itr *stringParallelIterator) Next() (*StringPoint, error) {
+	v, ok := <-itr.ch
+	if !ok {
+		return nil, io.EOF
+	}
+	return v.point, v.err
+}
+
+// monitor runs in a separate goroutine and actively pulls the next point.
+func (itr *stringParallelIterator) monitor() {
+	defer close(itr.ch)
+	defer itr.wg.Done()
+
+	for {
+		// Read next point.
+		p, err := itr.input.Next()
+
+		select {
+		case <-itr.closing:
+			return
+		case itr.ch <- stringPointError{point: p, err: err}:
+		}
+	}
+}
+
+type stringPointError struct {
+	point *StringPoint
+	err   error
+}
+
 // stringLimitIterator represents an iterator that limits points per group.
 type stringLimitIterator struct {
 	input StringIterator
@@ -4394,7 +4698,7 @@ func (itr *stringLimitIterator) Next() (*StringPoint, error) {
 
 type stringFillIterator struct {
 	input     *bufStringIterator
-	prev      *StringPoint
+	prev      StringPoint
 	startTime int64
 	endTime   int64
 	auxFields []interface{}
@@ -4432,6 +4736,7 @@ func newStringFillIterator(input StringIterator, expr Expr, opt IteratorOptions)
 
 	return &stringFillIterator{
 		input:     newBufStringIterator(input),
+		prev:      StringPoint{Nil: true},
 		startTime: startTime,
 		endTime:   endTime,
 		auxFields: auxFields,
@@ -4485,7 +4790,7 @@ func (itr *stringFillIterator) Next() (*StringPoint, error) {
 		// Set the new interval.
 		itr.window.name, itr.window.tags = p.Name, p.Tags
 		itr.window.time = itr.startTime
-		itr.prev = nil
+		itr.prev = StringPoint{Nil: true}
 		break
 	}
 
@@ -4508,7 +4813,7 @@ func (itr *stringFillIterator) Next() (*StringPoint, error) {
 		case NumberFill:
 			p.Value = castToString(itr.opt.FillValue)
 		case PreviousFill:
-			if itr.prev != nil {
+			if !itr.prev.Nil {
 				p.Value = itr.prev.Value
 				p.Nil = itr.prev.Nil
 			} else {
@@ -4516,7 +4821,7 @@ func (itr *stringFillIterator) Next() (*StringPoint, error) {
 			}
 		}
 	} else {
-		itr.prev = p
+		itr.prev = *p
 	}
 
 	// Advance the expected time. Do not advance to a new window here
@@ -4549,6 +4854,11 @@ func (itr *stringIntervalIterator) Next() (*StringPoint, error) {
 		return nil, err
 	}
 	p.Time, _ = itr.opt.Window(p.Time)
+	// If we see the minimum allowable time, set the time to zero so we don't
+	// break the default returned time for aggregate queries without times.
+	if p.Time == MinTime {
+		p.Time = 0
+	}
 	return p, nil
 }
 
@@ -4586,6 +4896,58 @@ func (itr *stringInterruptIterator) Next() (*StringPoint, error) {
 	return itr.input.Next()
 }
 
+// stringCloseInterruptIterator represents a string implementation of CloseInterruptIterator.
+type stringCloseInterruptIterator struct {
+	input   StringIterator
+	closing <-chan struct{}
+	done    chan struct{}
+	once    sync.Once
+}
+
+func newStringCloseInterruptIterator(input StringIterator, closing <-chan struct{}) *stringCloseInterruptIterator {
+	itr := &stringCloseInterruptIterator{
+		input:   input,
+		closing: closing,
+		done:    make(chan struct{}),
+	}
+	go itr.monitor()
+	return itr
+}
+
+func (itr *stringCloseInterruptIterator) monitor() {
+	select {
+	case <-itr.closing:
+		itr.Close()
+	case <-itr.done:
+	}
+}
+
+func (itr *stringCloseInterruptIterator) Stats() IteratorStats {
+	return itr.input.Stats()
+}
+
+func (itr *stringCloseInterruptIterator) Close() error {
+	itr.once.Do(func() {
+		close(itr.done)
+		itr.input.Close()
+	})
+	return nil
+}
+
+func (itr *stringCloseInterruptIterator) Next() (*StringPoint, error) {
+	p, err := itr.input.Next()
+	if err != nil {
+		// Check if the iterator was closed.
+		select {
+		case <-itr.done:
+			return nil, nil
+		default:
+			return nil, err
+		}
+	}
+	return p, nil
+}
+
 // auxStringPoint represents a combination of a point and an error for the AuxIterator.
 type auxStringPoint struct {
 	point *StringPoint
@@ -4600,11 +4962,11 @@ type stringAuxIterator struct {
 	background bool
 }
 
-func newStringAuxIterator(input StringIterator, seriesKeys SeriesList, opt IteratorOptions) *stringAuxIterator {
+func newStringAuxIterator(input StringIterator, opt IteratorOptions) *stringAuxIterator {
 	return &stringAuxIterator{
 		input:  newBufStringIterator(input),
 		output: make(chan auxStringPoint, 1),
-		fields: newAuxIteratorFields(seriesKeys, opt),
+		fields: newAuxIteratorFields(opt),
 	}
 }
 
@@ -4621,7 +4983,9 @@ func (itr *stringAuxIterator) Next() (*StringPoint, error) {
 	p := <-itr.output
 	return p.point, p.err
 }
-func (itr *stringAuxIterator) Iterator(name string) Iterator { return itr.fields.iterator(name) }
+func (itr *stringAuxIterator) Iterator(name string, typ DataType) Iterator {
+	return itr.fields.iterator(name, typ)
+}
 
 func (itr *stringAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, error) {
 	expr := opt.Expr
@@ -4631,18 +4995,14 @@ func (itr *stringAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, err
 
 	switch expr := expr.(type) {
 	case *VarRef:
-		return itr.Iterator(expr.Val), nil
+		return itr.Iterator(expr.Val, expr.Type), nil
 	default:
 		panic(fmt.Sprintf("invalid expression type for an aux iterator: %T", expr))
 	}
 }
 
-func (itr *stringAuxIterator) FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error) {
+func (itr *stringAuxIterator) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
 	return nil, nil, errors.New("not implemented")
-}
-
-func (itr *stringAuxIterator) SeriesKeys(opt IteratorOptions) (SeriesList, error) {
-	return nil, errors.New("not implemented")
 }
 
 func (itr *stringAuxIterator) ExpandSources(sources Sources) (Sources, error) {
@@ -6005,6 +6365,9 @@ func (itr *booleanMergeIterator) Close() error {
 	for _, input := range itr.inputs {
 		input.Close()
 	}
+	itr.curr = nil
+	itr.inputs = nil
+	itr.heap.items = nil
 	return nil
 }
 
@@ -6140,7 +6503,6 @@ func (h *booleanMergeHeap) Pop() interface{} {
 
 type booleanMergeHeapItem struct {
 	itr *bufBooleanIterator
-	err error
 }
 
 // booleanSortedMergeIterator is an iterator that sorts and merges multiple iterators into one.
@@ -6149,7 +6511,6 @@ type booleanSortedMergeIterator struct {
 	opt    IteratorOptions
 	heap   booleanSortedMergeHeap
 	init   bool
-	point  BooleanPoint
 }
 
 // newBooleanSortedMergeIterator returns an instance of booleanSortedMergeIterator.
@@ -6276,6 +6637,69 @@ type booleanSortedMergeHeapItem struct {
 	ascending bool
 }
 
+// booleanParallelIterator represents an iterator that pulls data in a separate goroutine.
+type booleanParallelIterator struct {
+	input BooleanIterator
+	ch    chan booleanPointError
+
+	once    sync.Once
+	closing chan struct{}
+	wg      sync.WaitGroup
+}
+
+// newBooleanParallelIterator returns a new instance of booleanParallelIterator.
+func newBooleanParallelIterator(input BooleanIterator) *booleanParallelIterator {
+	itr := &booleanParallelIterator{
+		input:   input,
+		ch:      make(chan booleanPointError, 1),
+		closing: make(chan struct{}),
+	}
+	itr.wg.Add(1)
+	go itr.monitor()
+	return itr
+}
+
+// Stats returns stats from the underlying iterator.
+func (itr *booleanParallelIterator) Stats() IteratorStats { return itr.input.Stats() }
+
+// Close closes the underlying iterators.
+func (itr *booleanParallelIterator) Close() error {
+	itr.once.Do(func() { close(itr.closing) })
+	itr.wg.Wait()
+	return itr.input.Close()
+}
+
+// Next returns the next point from the iterator.
+func (itr *booleanParallelIterator) Next() (*BooleanPoint, error) {
+	v, ok := <-itr.ch
+	if !ok {
+		return nil, io.EOF
+	}
+	return v.point, v.err
+}
+
+// monitor runs in a separate goroutine and actively pulls the next point.
+func (itr *booleanParallelIterator) monitor() {
+	defer close(itr.ch)
+	defer itr.wg.Done()
+
+	for {
+		// Read next point.
+		p, err := itr.input.Next()
+
+		select {
+		case <-itr.closing:
+			return
+		case itr.ch <- booleanPointError{point: p, err: err}:
+		}
+	}
+}
+
+type booleanPointError struct {
+	point *BooleanPoint
+	err   error
+}
+
 // booleanLimitIterator represents an iterator that limits points per group.
 type booleanLimitIterator struct {
 	input BooleanIterator
@@ -6340,7 +6764,7 @@ func (itr *booleanLimitIterator) Next() (*BooleanPoint, error) {
 
 type booleanFillIterator struct {
 	input     *bufBooleanIterator
-	prev      *BooleanPoint
+	prev      BooleanPoint
 	startTime int64
 	endTime   int64
 	auxFields []interface{}
@@ -6378,6 +6802,7 @@ func newBooleanFillIterator(input BooleanIterator, expr Expr, opt IteratorOption
 
 	return &booleanFillIterator{
 		input:     newBufBooleanIterator(input),
+		prev:      BooleanPoint{Nil: true},
 		startTime: startTime,
 		endTime:   endTime,
 		auxFields: auxFields,
@@ -6431,7 +6856,7 @@ func (itr *booleanFillIterator) Next() (*BooleanPoint, error) {
 		// Set the new interval.
 		itr.window.name, itr.window.tags = p.Name, p.Tags
 		itr.window.time = itr.startTime
-		itr.prev = nil
+		itr.prev = BooleanPoint{Nil: true}
 		break
 	}
 
@@ -6454,7 +6879,7 @@ func (itr *booleanFillIterator) Next() (*BooleanPoint, error) {
 		case NumberFill:
 			p.Value = castToBoolean(itr.opt.FillValue)
 		case PreviousFill:
-			if itr.prev != nil {
+			if !itr.prev.Nil {
 				p.Value = itr.prev.Value
 				p.Nil = itr.prev.Nil
 			} else {
@@ -6462,7 +6887,7 @@ func (itr *booleanFillIterator) Next() (*BooleanPoint, error) {
 			}
 		}
 	} else {
-		itr.prev = p
+		itr.prev = *p
 	}
 
 	// Advance the expected time. Do not advance to a new window here
@@ -6495,6 +6920,11 @@ func (itr *booleanIntervalIterator) Next() (*BooleanPoint, error) {
 		return nil, err
 	}
 	p.Time, _ = itr.opt.Window(p.Time)
+	// If we see the minimum allowable time, set the time to zero so we don't
+	// break the default returned time for aggregate queries without times.
+	if p.Time == MinTime {
+		p.Time = 0
+	}
 	return p, nil
 }
 
@@ -6532,6 +6962,58 @@ func (itr *booleanInterruptIterator) Next() (*BooleanPoint, error) {
 	return itr.input.Next()
 }
 
+// booleanCloseInterruptIterator represents a boolean implementation of CloseInterruptIterator.
+type booleanCloseInterruptIterator struct {
+	input   BooleanIterator
+	closing <-chan struct{}
+	done    chan struct{}
+	once    sync.Once
+}
+
+func newBooleanCloseInterruptIterator(input BooleanIterator, closing <-chan struct{}) *booleanCloseInterruptIterator {
+	itr := &booleanCloseInterruptIterator{
+		input:   input,
+		closing: closing,
+		done:    make(chan struct{}),
+	}
+	go itr.monitor()
+	return itr
+}
+
+func (itr *booleanCloseInterruptIterator) monitor() {
+	select {
+	case <-itr.closing:
+		itr.Close()
+	case <-itr.done:
+	}
+}
+
+func (itr *booleanCloseInterruptIterator) Stats() IteratorStats {
+	return itr.input.Stats()
+}
+
+func (itr *booleanCloseInterruptIterator) Close() error {
+	itr.once.Do(func() {
+		close(itr.done)
+		itr.input.Close()
+	})
+	return nil
+}
+
+func (itr *booleanCloseInterruptIterator) Next() (*BooleanPoint, error) {
+	p, err := itr.input.Next()
+	if err != nil {
+		// Check if the iterator was closed.
+		select {
+		case <-itr.done:
+			return nil, nil
+		default:
+			return nil, err
+		}
+	}
+	return p, nil
+}
+
 // auxBooleanPoint represents a combination of a point and an error for the AuxIterator.
 type auxBooleanPoint struct {
 	point *BooleanPoint
@@ -6546,11 +7028,11 @@ type booleanAuxIterator struct {
 	background bool
 }
 
-func newBooleanAuxIterator(input BooleanIterator, seriesKeys SeriesList, opt IteratorOptions) *booleanAuxIterator {
+func newBooleanAuxIterator(input BooleanIterator, opt IteratorOptions) *booleanAuxIterator {
 	return &booleanAuxIterator{
 		input:  newBufBooleanIterator(input),
 		output: make(chan auxBooleanPoint, 1),
-		fields: newAuxIteratorFields(seriesKeys, opt),
+		fields: newAuxIteratorFields(opt),
 	}
 }
 
@@ -6567,7 +7049,9 @@ func (itr *booleanAuxIterator) Next() (*BooleanPoint, error) {
 	p := <-itr.output
 	return p.point, p.err
 }
-func (itr *booleanAuxIterator) Iterator(name string) Iterator { return itr.fields.iterator(name) }
+func (itr *booleanAuxIterator) Iterator(name string, typ DataType) Iterator {
+	return itr.fields.iterator(name, typ)
+}
 
 func (itr *booleanAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, error) {
 	expr := opt.Expr
@@ -6577,18 +7061,14 @@ func (itr *booleanAuxIterator) CreateIterator(opt IteratorOptions) (Iterator, er
 
 	switch expr := expr.(type) {
 	case *VarRef:
-		return itr.Iterator(expr.Val), nil
+		return itr.Iterator(expr.Val, expr.Type), nil
 	default:
 		panic(fmt.Sprintf("invalid expression type for an aux iterator: %T", expr))
 	}
 }
 
-func (itr *booleanAuxIterator) FieldDimensions(sources Sources) (fields, dimensions map[string]struct{}, err error) {
+func (itr *booleanAuxIterator) FieldDimensions(sources Sources) (fields map[string]DataType, dimensions map[string]struct{}, err error) {
 	return nil, nil, errors.New("not implemented")
-}
-
-func (itr *booleanAuxIterator) SeriesKeys(opt IteratorOptions) (SeriesList, error) {
-	return nil, errors.New("not implemented")
 }
 
 func (itr *booleanAuxIterator) ExpandSources(sources Sources) (Sources, error) {
@@ -7830,7 +8310,7 @@ func NewIteratorEncoder(w io.Writer) *IteratorEncoder {
 	}
 }
 
-// Encode encodes and writes all of itr's points to the underlying writer.
+// EncodeIterator encodes and writes all of itr's points to the underlying writer.
 func (enc *IteratorEncoder) EncodeIterator(itr Iterator) error {
 	switch itr := itr.(type) {
 	case FloatIterator:

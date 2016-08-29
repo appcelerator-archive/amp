@@ -5,14 +5,16 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 	"sort"
 
 	"github.com/gogo/protobuf/proto"
 	internal "github.com/influxdata/influxdb/influxql/internal"
 )
 
-// ZeroTime is the Unix nanosecond timestamp for time.Time{}.
-const ZeroTime = int64(-6795364578871345152)
+// ZeroTime is the Unix nanosecond timestamp for no time.
+// This time is not used by the query engine or the storage engine as a valid time.
+const ZeroTime = int64(math.MinInt64)
 
 // Point represents a value in a series that occurred at a given time.
 type Point interface {
@@ -205,11 +207,12 @@ func decodeTags(id []byte) map[string]string {
 	if len(a) == 0 {
 		return nil
 	}
+	mid := len(a) / 2
 
 	// Decode key/value tags.
 	m := make(map[string]string)
-	for i := 0; i < len(a); i += 2 {
-		m[string(a[i])] = string(a[i+1])
+	for i := 0; i < mid; i++ {
+		m[string(a[i])] = string(a[i+mid])
 	}
 	return m
 }
@@ -280,7 +283,7 @@ func decodeAux(pb []*internal.Aux) []interface{} {
 	return aux
 }
 
-// NewPointDecoder decodes generic points from a reader.
+// PointDecoder decodes generic points from a reader.
 type PointDecoder struct {
 	r     io.Reader
 	stats IteratorStats

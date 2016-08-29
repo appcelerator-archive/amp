@@ -112,6 +112,13 @@ func BenchmarkParsePointsTagsUnSorted10(b *testing.B) {
 	}
 }
 
+func BenchmarkParseKey(b *testing.B) {
+	line := `cpu,region=us-west,host=serverA,env=prod,target=servers,zone=1c,tag1=value1,tag2=value2,tag3=value3,tag4=value4,tag5=value5`
+	for i := 0; i < b.N; i++ {
+		models.ParseKey(line)
+	}
+}
+
 // TestPoint wraps a models.Point but also makes available the raw
 // arguments to the Point.
 //
@@ -586,6 +593,47 @@ func TestParsePointScientificIntInvalid(t *testing.T) {
 	}
 }
 
+func TestParsePointWhitespace(t *testing.T) {
+	examples := []string{
+		`cpu    value=1.0 1257894000000000000`,
+		`cpu value=1.0     1257894000000000000`,
+		`cpu      value=1.0     1257894000000000000`,
+		`cpu value=1.0 1257894000000000000   `,
+		`cpu value=1.0 1257894000000000000
+`,
+		`cpu   value=1.0 1257894000000000000
+`,
+	}
+
+	expPoint := NewTestPoint("cpu", models.Tags{}, models.Fields{"value": 1.0}, time.Unix(0, 1257894000000000000))
+	for i, example := range examples {
+		pts, err := models.ParsePoints([]byte(example))
+		if err != nil {
+			t.Fatalf(`[Example %d] ParsePoints("%s") error. got %v, exp nil`, i, example, err)
+		}
+
+		if got, exp := len(pts), 1; got != exp {
+			t.Fatalf("[Example %d] got %d points, expected %d", i, got, exp)
+		}
+
+		if got, exp := pts[0].Name(), expPoint.Name(); got != exp {
+			t.Fatalf("[Example %d] got %v measurement, expected %v", i, got, exp)
+		}
+
+		if got, exp := len(pts[0].Fields()), len(expPoint.Fields()); got != exp {
+			t.Fatalf("[Example %d] got %d fields, expected %d", i, got, exp)
+		}
+
+		if got, exp := pts[0].Fields()["value"], expPoint.Fields()["value"]; got != exp {
+			t.Fatalf(`[Example %d] got %v for field "value", expected %v`, i, got, exp)
+		}
+
+		if got, exp := pts[0].Time().UnixNano(), expPoint.Time().UnixNano(); got != exp {
+			t.Fatalf(`[Example %d] got %d time, expected %d`, i, got, exp)
+		}
+	}
+}
+
 func TestParsePointUnescape(t *testing.T) {
 	// commas in measurement name
 	test(t, `foo\,bar value=1i`,
@@ -848,10 +896,28 @@ func TestParsePointWithTags(t *testing.T) {
 			models.Fields{"value": 1.0}, time.Unix(1, 0)))
 }
 
-func TestParsPointWithDuplicateTags(t *testing.T) {
-	_, err := models.ParsePoints([]byte(`cpu,host=serverA,host=serverB value=1i 1000000000`))
-	if err == nil {
-		t.Fatalf(`ParsePoint() expected error. got nil`)
+func TestParsePointWithDuplicateTags(t *testing.T) {
+	for i, tt := range []struct {
+		line string
+		err  string
+	}{
+		{
+			line: `cpu,host=serverA,host=serverB value=1i 1000000000`,
+			err:  `unable to parse 'cpu,host=serverA,host=serverB value=1i 1000000000': duplicate tags`,
+		},
+		{
+			line: `cpu,b=2,b=1,c=3 value=1i 1000000000`,
+			err:  `unable to parse 'cpu,b=2,b=1,c=3 value=1i 1000000000': duplicate tags`,
+		},
+		{
+			line: `cpu,b=2,c=3,b=1 value=1i 1000000000`,
+			err:  `unable to parse 'cpu,b=2,c=3,b=1 value=1i 1000000000': duplicate tags`,
+		},
+	} {
+		_, err := models.ParsePointsString(tt.line)
+		if err == nil || tt.err != err.Error() {
+			t.Errorf("%d. ParsePoint() expected error '%s'. got '%s'", i, tt.err, err)
+		}
 	}
 }
 
@@ -1147,53 +1213,45 @@ func TestParsePointNegativeTimestamp(t *testing.T) {
 }
 
 func TestParsePointMaxTimestamp(t *testing.T) {
-	test(t, `cpu value=1 9223372036854775807`,
+	test(t, fmt.Sprintf(`cpu value=1 %d`, models.MaxNanoTime),
 		NewTestPoint(
 			"cpu",
 			models.Tags{},
 			models.Fields{
 				"value": 1.0,
 			},
-			time.Unix(0, int64(1<<63-1))),
+			time.Unix(0, models.MaxNanoTime)),
 	)
 }
 
 func TestParsePointMinTimestamp(t *testing.T) {
-	test(t, `cpu value=1 -9223372036854775807`,
+	test(t, `cpu value=1 -9223372036854775806`,
 		NewTestPoint(
 			"cpu",
 			models.Tags{},
 			models.Fields{
 				"value": 1.0,
 			},
-			time.Unix(0, -int64(1<<63-1))),
+			time.Unix(0, models.MinNanoTime)),
 	)
 }
 
 func TestParsePointInvalidTimestamp(t *testing.T) {
-	_, err := models.ParsePointsString("cpu value=1 9223372036854775808")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
+	examples := []string{
+		"cpu value=1 9223372036854775808",
+		"cpu value=1 -92233720368547758078",
+		"cpu value=1 -",
+		"cpu value=1 -/",
+		"cpu value=1 -1?",
+		"cpu value=1 1-",
+		"cpu value=1 9223372036854775807 12",
 	}
-	_, err = models.ParsePointsString("cpu value=1 -92233720368547758078")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
-	}
-	_, err = models.ParsePointsString("cpu value=1 -")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
-	}
-	_, err = models.ParsePointsString("cpu value=1 -/")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
-	}
-	_, err = models.ParsePointsString("cpu value=1 -1?")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
-	}
-	_, err = models.ParsePointsString("cpu value=1 1-")
-	if err == nil {
-		t.Fatalf("ParsePoints failed: %v", err)
+
+	for i, example := range examples {
+		_, err := models.ParsePointsString(example)
+		if err == nil {
+			t.Fatalf("[Example %d] ParsePoints failed: %v", i, err)
+		}
 	}
 }
 
@@ -1778,6 +1836,20 @@ t159,label=another a=2i,value=1i 1`
 	}
 }
 
+func TestParsePointsBlankLine(t *testing.T) {
+	buf := `cpu value=1i 1000000000
+
+cpu value=2i 2000000000`
+	points, err := models.ParsePointsString(buf)
+	if err != nil {
+		t.Fatalf("failed to write points: %s", err.Error())
+	}
+
+	if len(points) != 2 {
+		t.Fatalf("expected 2 points, got %d", len(points))
+	}
+}
+
 func TestNewPointsWithBytesWithCorruptData(t *testing.T) {
 	corrupted := []byte{0, 0, 0, 3, 102, 111, 111, 0, 0, 0, 4, 61, 34, 65, 34, 1, 0, 0, 0, 14, 206, 86, 119, 24, 32, 72, 233, 168, 2, 148}
 	p, err := models.NewPointFromBytes(corrupted)
@@ -1804,5 +1876,11 @@ func TestNewPointsRejectsMaxKey(t *testing.T) {
 
 	if _, err := models.ParsePointsString(fmt.Sprintf("%v value=1", key)); err == nil {
 		t.Fatalf("parse point with max key. got: nil, expected: error")
+	}
+}
+
+func TestParseKeyEmpty(t *testing.T) {
+	if _, _, err := models.ParseKey(""); err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

@@ -353,7 +353,7 @@ var pretty = function(val) {
 }
 
 var getClientVersion = function () {
-    var query = $.get(window.location.origin + "/");
+    var query = $.get(window.location.origin + window.location.pathname);
 
     query.fail(handleRequestError);
 
@@ -361,6 +361,8 @@ var getClientVersion = function () {
         var version = xhr.getResponseHeader('X-InfluxDB-Version');
         if (version.indexOf("unknown") == -1) {
             version = 'v' + version;
+            console.log('got client version '+version);
+            $('#influxdb-doc-link').attr('href', 'https://docs.influxdata.com/influxdb/'+version+'/introduction/getting_started/');
         }
         $('.influxdb-client-version').html(version);
     });

@@ -24,14 +24,6 @@ import (
 )
 
 const (
-	// errSleep is the time to sleep after we've failed on every metaserver
-	// before making another pass
-	errSleep = time.Second
-
-	// maxRetries is the maximum number of attemps to make before returning
-	// a failure to the caller
-	maxRetries = 10
-
 	// SaltBytes is the number of bytes used for salts
 	SaltBytes = 32
 
@@ -74,12 +66,12 @@ type authUser struct {
 func NewClient(config *Config) *Client {
 	return &Client{
 		cacheData: &Data{
-			ClusterID: uint64(uint64(rand.Int63())),
+			ClusterID: uint64(rand.Int63()),
 			Index:     1,
 		},
 		closing:             make(chan struct{}),
 		changed:             make(chan struct{}),
-		logger:              log.New(os.Stderr, "[metaclient] ", log.LstdFlags),
+		logger:              log.New(ioutil.Discard, "[metaclient] ", log.LstdFlags),
 		authCache:           make(map[string]authUser, 0),
 		path:                config.Dir,
 		retentionAutoCreate: config.RetentionAutoCreate,
@@ -195,13 +187,11 @@ func (c *Client) CreateDatabase(name string) (*DatabaseInfo, error) {
 
 	// create default retention policy
 	if c.retentionAutoCreate {
-		if err := data.CreateRetentionPolicy(name, &RetentionPolicyInfo{
-			Name:     "default",
-			ReplicaN: 1,
-		}); err != nil {
+		rpi := DefaultRetentionPolicyInfo()
+		if err := data.CreateRetentionPolicy(name, rpi); err != nil {
 			return nil, err
 		}
-		if err := data.SetDefaultRetentionPolicy(name, "default"); err != nil {
+		if err := data.SetDefaultRetentionPolicy(name, rpi.Name); err != nil {
 			return nil, err
 		}
 	}
@@ -216,42 +206,48 @@ func (c *Client) CreateDatabase(name string) (*DatabaseInfo, error) {
 }
 
 // CreateDatabaseWithRetentionPolicy creates a database with the specified retention policy.
-func (c *Client) CreateDatabaseWithRetentionPolicy(name string, rpi *RetentionPolicyInfo) (*DatabaseInfo, error) {
+func (c *Client) CreateDatabaseWithRetentionPolicy(name string, spec *RetentionPolicySpec) (*DatabaseInfo, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	data := c.cacheData.Clone()
 
-	if rpi.Duration < MinRetentionPolicyDuration && rpi.Duration != 0 {
+	if spec.Duration != nil && *spec.Duration < MinRetentionPolicyDuration && *spec.Duration != 0 {
 		return nil, ErrRetentionPolicyDurationTooLow
 	}
 
-	if db := data.Database(name); db != nil {
-		// Check if the retention policy already exists. If it does and matches
-		// the desired retention policy, exit with no error.
-		if rp := db.RetentionPolicy(rpi.Name); rp != nil {
-			// Normalise ShardDuration before comparing to any existing retention policies.
-			rpi.ShardGroupDuration = normalisedShardDuration(rpi.ShardGroupDuration, rpi.Duration)
-			if rp.ReplicaN != rpi.ReplicaN || rp.Duration != rpi.Duration || rp.ShardGroupDuration != rpi.ShardGroupDuration {
-				return nil, ErrRetentionPolicyConflict
-			}
-			return db, nil
-		}
-	}
-
-	if err := data.CreateDatabase(name); err != nil {
-		return nil, err
-	}
-
-	if err := data.CreateRetentionPolicy(name, rpi); err != nil {
-		return nil, err
-	}
-
-	if err := data.SetDefaultRetentionPolicy(name, rpi.Name); err != nil {
-		return nil, err
-	}
-
 	db := data.Database(name)
+	if db == nil {
+		if err := data.CreateDatabase(name); err != nil {
+			return nil, err
+		}
+		db = data.Database(name)
+	}
+
+	rpi := spec.NewRetentionPolicyInfo()
+	if rp := db.RetentionPolicy(rpi.Name); rp == nil {
+		if err := data.CreateRetentionPolicy(name, rpi); err != nil {
+			return nil, err
+		}
+	} else if !spec.Matches(rp) {
+		// Verify that the retention policy with this name matches
+		// the one already created.
+		return nil, ErrRetentionPolicyConflict
+	}
+
+	// If no default retention policy has been set, set it to the retention
+	// policy we just created. If the default is different from what we are
+	// trying to create, record it as a conflict and abandon with an error.
+	if db.DefaultRetentionPolicy == "" {
+		if err := data.SetDefaultRetentionPolicy(name, rpi.Name); err != nil {
+			return nil, err
+		}
+	} else if rpi.Name != db.DefaultRetentionPolicy {
+		return nil, ErrRetentionPolicyConflict
+	}
+
+	// Refresh the database info.
+	db = data.Database(name)
 
 	if err := c.commit(data); err != nil {
 		return nil, err
@@ -279,22 +275,18 @@ func (c *Client) DropDatabase(name string) error {
 }
 
 // CreateRetentionPolicy creates a retention policy on the specified database.
-func (c *Client) CreateRetentionPolicy(database string, rpi *RetentionPolicyInfo) (*RetentionPolicyInfo, error) {
+func (c *Client) CreateRetentionPolicy(database string, spec *RetentionPolicySpec) (*RetentionPolicyInfo, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	data := c.cacheData.Clone()
 
-	if rpi.Duration < MinRetentionPolicyDuration && rpi.Duration != 0 {
+	if spec.Duration != nil && *spec.Duration < MinRetentionPolicyDuration && *spec.Duration != 0 {
 		return nil, ErrRetentionPolicyDurationTooLow
 	}
 
-	if err := data.CreateRetentionPolicy(database, rpi); err != nil {
-		return nil, err
-	}
-
-	rp, err := data.RetentionPolicy(database, rpi.Name)
-	if err != nil {
+	rp := spec.NewRetentionPolicyInfo()
+	if err := data.CreateRetentionPolicy(database, rp); err != nil {
 		return nil, err
 	}
 
@@ -569,19 +561,19 @@ func (c *Client) AdminUserExists() bool {
 }
 
 func (c *Client) Authenticate(username, password string) (*UserInfo, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	data := c.cacheData.Clone()
-
 	// Find user.
-	userInfo := data.User(username)
+	c.mu.RLock()
+	userInfo := c.cacheData.User(username)
+	c.mu.RUnlock()
 	if userInfo == nil {
 		return nil, ErrUserNotFound
 	}
 
 	// Check the local auth cache first.
-	if au, ok := c.authCache[username]; ok {
+	c.mu.RLock()
+	au, ok := c.authCache[username]
+	c.mu.RUnlock()
+	if ok {
 		// verify the password using the cached salt and hash
 		if bytes.Equal(c.hashWithSalt(au.salt, password), au.hash) {
 			return userInfo, nil
@@ -600,8 +592,9 @@ func (c *Client) Authenticate(username, password string) (*UserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	c.mu.Lock()
 	c.authCache[username] = authUser{salt: salt, hash: hashed, bhash: userInfo.Hash}
-
+	c.mu.Unlock()
 	return userInfo, nil
 }
 
@@ -694,11 +687,19 @@ func (c *Client) DropShard(id uint64) error {
 
 // CreateShardGroup creates a shard group on a database and policy for a given timestamp.
 func (c *Client) CreateShardGroup(database, policy string, timestamp time.Time) (*ShardGroupInfo, error) {
+	// Check under a read-lock
+	c.mu.RLock()
+	if sg, _ := c.cacheData.ShardGroupByTimestamp(database, policy, timestamp); sg != nil {
+		c.mu.RUnlock()
+		return sg, nil
+	}
+	c.mu.RUnlock()
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Check again under the write lock
 	data := c.cacheData.Clone()
-
 	if sg, _ := data.ShardGroupByTimestamp(database, policy, timestamp); sg != nil {
 		return sg, nil
 	}
@@ -1036,14 +1037,6 @@ func (c *Client) Load() error {
 		return err
 	}
 	return nil
-}
-
-type errCommand struct {
-	msg string
-}
-
-func (e errCommand) Error() string {
-	return e.msg
 }
 
 type uint64Slice []uint64
