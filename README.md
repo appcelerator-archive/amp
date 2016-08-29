@@ -115,3 +115,58 @@ A few useful examples:
   $ amp logs -fs --service_name etcd
 ```
 
+### Stats
+
+    Get statistics on containers, services, nodes about cpu, memory, io, net.
+    
+    Usage:
+      amp stats [flags]
+    
+    Flags:
+          --container               display stats on containers
+          --container-id string     filter on container id
+          --container-name string   filter on container name
+          --cpu                     display cpu stats
+          --datacenter string       filter on datacenter
+      -f, --follow                  Follow stat output
+          --host string             filter on host
+          --image string            filter on container image name
+          --io                      display disk io stats
+          --mem                     display memory stats
+          --net                     display net rx/tx stats
+          --node                    display stats on nodes
+          --node-id string          filter on node id
+          --period string           historic period of metrics extraction, duration + time-group as 1m, 10m, 4h, see time-group
+          --service                 displat stats on services
+          --service-id string       filter on service id
+          --service-name string     filter on service name
+          --since string            date defining when begin the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm
+          --task                    display stats on tasks
+          --task-id string          filter on task id
+          --task-name string        filter on task name
+          --time-group string       historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks
+          --until string            date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm
+    
+    Global Flags:
+          --Config string   Config file (default is $HOME/.amp.yaml)
+          --target string   target environment ("local"|"virtualbox"|"aws") (default "local")
+      -v, --verbose         verbose output
+
+A few useful examples:
+
+* To display list of services with cpu, mem, io, net metrics and follow them
+```
+  $ amp stats --service -f
+```
+    
+* To display last 10 minutes of historic of the containers of service kafka with cpu, mem, io, net metrics and follow them:
+```
+  $ amp stats --container --service-name=kafka --period=10m  -f
+```
+
+* To display list of tasks with only cpu and mem metrics
+```
+  $ amp stats --task --cpu --mem
+```
+
+
