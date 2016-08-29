@@ -10,6 +10,8 @@
 set -euo pipefail
 # INFLUXDATA_VERSION should be 0.13 or 1.0
 INFLUXDATA_VERSION=0.13
+KAFKA_VERSION=10.0.0.0
+ZOOKEEPER_VERSION=3.4.6
 
 # please keep sorted
 IMAGES=(
@@ -22,11 +24,11 @@ IMAGES=(
   appcelerator/grafana:latest
   appcelerator/haproxy:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
-  appcelerator/kafka:latest
+  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-  appcelerator/zookeeper:latest
+  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
   sheepkiller/kafka-manager:latest
 )
@@ -37,10 +39,10 @@ MINIMAGES=(
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
-  appcelerator/kafka:latest
+  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-  appcelerator/zookeeper:latest
+  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
   sheepkiller/kafka-manager:latest
 )
@@ -302,7 +304,7 @@ kafka() { # Owner: bertrand-quenin
     -p 9092:9092 \
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
     -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
-    appcelerator/kafka:latest
+    appcelerator/kafka:${KAFKA_VERSION}
 }
 
 kafkamanager() { # Owner: bertrand-quenin
@@ -401,7 +403,7 @@ zookeeper() { # Owner: bertrand-quenin
     -p 2181:2181 \
     -p 2888:2888 \
     -p 3888:3888 \
-    appcelerator/zookeeper:latest
+    appcelerator/zookeeper:${ZOOKEEPER_VERSION}
 }
 
 main $@
