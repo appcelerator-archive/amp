@@ -49,7 +49,8 @@ _advertise_service(){
   #if no match, _hostname will be the full line
   echo "$_hostname" | grep -q "$_line_pattern"
   if [[ $? -ne 0 && -n "$_hostname" ]]; then
-    echo "WARN - there's another service still advertised in $_host_file: $_hostname, please remove it manually"
+    sed -i.bak  "s/^\($_line_pattern.*\)$_hostname\(.*\)$/\1\2/" "$_host_file"
+    echo "WARN - $_hostname is advertised and look like a Docker hostname, removed from $_host_file"
   fi
   egrep -q "^$_line_pattern[ 	]*$" $_host_file
   if [[ $? -eq 0 ]]; then
