@@ -9,7 +9,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/build"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
-	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/elasticsearch"
@@ -59,7 +58,6 @@ func Start(config Config) {
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 	})
-	service.RegisterServiceServer(s, &service.Service{})
 	build.RegisterAmpBuildServer(s, &build.Proxy{})
 	stack.RegisterStackServer(s, &stack.Stack{
 		Store: Store,

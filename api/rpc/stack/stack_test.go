@@ -91,3 +91,11 @@ func TestShouldCreateAStackSuccessfully(t *testing.T) {
 	}
 	assert.NotEmpty(t, r.StackId, "We should have a non empty stack id")
 }
+
+func TestShouldUpStackSuccessfully(t *testing.T) {
+	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: ""})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotEmpty(t, r.StackId, "StackId should not be empty")
+}

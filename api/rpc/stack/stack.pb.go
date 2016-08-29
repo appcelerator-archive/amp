@@ -11,6 +11,8 @@ It is generated from these files:
 It has these top-level messages:
 	CreateRequest
 	CreateReply
+	UpRequest
+	UpReply
 */
 package stack
 
@@ -52,9 +54,29 @@ func (m *CreateReply) String() string            { return proto.CompactTextStrin
 func (*CreateReply) ProtoMessage()               {}
 func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
+type UpRequest struct {
+	Stackfile string `protobuf:"bytes,1,opt,name=stackfile" json:"stackfile,omitempty"`
+}
+
+func (m *UpRequest) Reset()                    { *m = UpRequest{} }
+func (m *UpRequest) String() string            { return proto.CompactTextString(m) }
+func (*UpRequest) ProtoMessage()               {}
+func (*UpRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+type UpReply struct {
+	StackId string `protobuf:"bytes,1,opt,name=stack_id,json=stackId" json:"stack_id,omitempty"`
+}
+
+func (m *UpReply) Reset()                    { *m = UpReply{} }
+func (m *UpReply) String() string            { return proto.CompactTextString(m) }
+func (*UpReply) ProtoMessage()               {}
+func (*UpReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "stack.CreateRequest")
 	proto.RegisterType((*CreateReply)(nil), "stack.CreateReply")
+	proto.RegisterType((*UpRequest)(nil), "stack.UpRequest")
+	proto.RegisterType((*UpReply)(nil), "stack.UpReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -69,6 +91,7 @@ const _ = grpc.SupportPackageIsVersion3
 
 type StackClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
+	Up(ctx context.Context, in *UpRequest, opts ...grpc.CallOption) (*UpReply, error)
 }
 
 type stackClient struct {
@@ -88,10 +111,20 @@ func (c *stackClient) Create(ctx context.Context, in *CreateRequest, opts ...grp
 	return out, nil
 }
 
+func (c *stackClient) Up(ctx context.Context, in *UpRequest, opts ...grpc.CallOption) (*UpReply, error) {
+	out := new(UpReply)
+	err := grpc.Invoke(ctx, "/stack.Stack/Up", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Stack service
 
 type StackServer interface {
 	Create(context.Context, *CreateRequest) (*CreateReply, error)
+	Up(context.Context, *UpRequest) (*UpReply, error)
 }
 
 func RegisterStackServer(s *grpc.Server, srv StackServer) {
@@ -116,6 +149,24 @@ func _Stack_Create_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Stack_Up_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StackServer).Up(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stack.Stack/Up",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StackServer).Up(ctx, req.(*UpRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Stack_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stack.Stack",
 	HandlerType: (*StackServer)(nil),
@@ -123,6 +174,10 @@ var _Stack_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _Stack_Create_Handler,
+		},
+		{
+			MethodName: "Up",
+			Handler:    _Stack_Up_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -132,14 +187,17 @@ var _Stack_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("stack.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 144 bytes of a gzipped FileDescriptorProto
+	// 191 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2e, 0x2e, 0x49, 0x4c,
 	0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0xac, 0xb8, 0x78, 0x9d,
 	0x8b, 0x52, 0x13, 0x4b, 0x52, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0x34, 0xb9, 0x04,
 	0xc0, 0x32, 0xf1, 0x29, 0xa9, 0x69, 0x99, 0x79, 0x99, 0x25, 0x99, 0xf9, 0x79, 0x12, 0x8c, 0x0a,
 	0x8c, 0x1a, 0x9c, 0x41, 0xfc, 0x60, 0x71, 0x17, 0xb8, 0xb0, 0x92, 0x06, 0x17, 0x37, 0x4c, 0x6f,
 	0x41, 0x4e, 0xa5, 0x90, 0x24, 0x17, 0x07, 0x44, 0x67, 0x66, 0x0a, 0x54, 0x07, 0x3b, 0x98, 0xef,
-	0x99, 0x62, 0x64, 0xcd, 0xc5, 0x1a, 0x0c, 0x62, 0x0a, 0x19, 0x71, 0xb1, 0x41, 0xb4, 0x08, 0x89,
-	0xe8, 0x41, 0x5c, 0x83, 0x62, 0xbb, 0x94, 0x10, 0x9a, 0x68, 0x41, 0x4e, 0x65, 0x12, 0x1b, 0xd8,
-	0xc1, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x29, 0xee, 0x5c, 0x59, 0xbf, 0x00, 0x00, 0x00,
+	0x99, 0xa2, 0xa4, 0xc9, 0xc5, 0x19, 0x5a, 0x00, 0xb3, 0x41, 0x86, 0x8b, 0x13, 0x2c, 0x9e, 0x96,
+	0x99, 0x93, 0x0a, 0x55, 0x88, 0x10, 0x50, 0x52, 0xe1, 0x62, 0x07, 0x29, 0xc5, 0x6f, 0xa0, 0x51,
+	0x32, 0x17, 0x6b, 0x30, 0x88, 0x29, 0x64, 0xc4, 0xc5, 0x06, 0x71, 0x83, 0x90, 0x88, 0x1e, 0xc4,
+	0x7b, 0x28, 0xde, 0x91, 0x12, 0x42, 0x13, 0x05, 0x99, 0xab, 0xc6, 0xc5, 0x14, 0x5a, 0x20, 0x24,
+	0x00, 0x95, 0x81, 0x3b, 0x4c, 0x8a, 0x0f, 0x49, 0xa4, 0x20, 0xa7, 0x32, 0x89, 0x0d, 0x1c, 0x52,
+	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa8, 0x05, 0xa4, 0xdf, 0x38, 0x01, 0x00, 0x00,
 }

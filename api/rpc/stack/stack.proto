@@ -4,6 +4,7 @@ package stack;
 
 service Stack {
   rpc Create (CreateRequest) returns (CreateReply);
+  rpc Up (UpRequest) returns (UpReply);
 }
 
 message CreateRequest {
@@ -11,5 +12,13 @@ message CreateRequest {
 }
 
 message CreateReply {
+  string stack_id = 1;
+}
+
+message UpRequest {
+  string stackfile = 1;
+}
+
+message UpReply {
   string stack_id = 1;
 }
