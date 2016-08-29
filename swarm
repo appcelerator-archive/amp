@@ -24,7 +24,7 @@ IMAGES=(
   appcelerator/kafka:latest
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
-  appcelerator/nginx:latest
+  appcelerator/haproxy:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:latest
   quay.io/coreos/etcd:v3.0.4
@@ -60,7 +60,7 @@ SERVICES=(
   kibana
   influxdb
   kapacitor
-  nginx
+  haproxy
   telegrafagent
   telemetryworker
   zookeeper
@@ -338,11 +338,11 @@ kibana() { # Owner: ndegory
 
 }
 
-nginx() { # Owner: freignat91
-  docker service create --network amp-swarm --name nginx \
+haproxy() { # Owner: freignat91
+  docker service create --network amp-swarm --name haproxy \
     --label amp.swarm="infrastructure" \
     -p 80:80 \
-    appcelerator/nginx:latest
+    appcelerator/haproxy:latest
 }
 
 # DEPENDENCIES kafka
