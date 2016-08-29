@@ -20,11 +20,11 @@ IMAGES=(
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
+  appcelerator/haproxy:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:latest
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
-  appcelerator/haproxy:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:latest
   quay.io/coreos/etcd:v3.0.4
@@ -55,12 +55,12 @@ SERVICES=(
   elasticsearch
   etcd
   grafana
+  haproxy
+  influxdb
   kafka
   kafkamanager
   kibana
-  influxdb
   kapacitor
-  haproxy
   telegrafagent
   telemetryworker
   zookeeper
