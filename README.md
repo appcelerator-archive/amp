@@ -7,6 +7,7 @@ At the top level, we still have the `swarm` script for starting infrastructure s
 While all of the infrastructure services and almost all tooling is completely containerized, there are still three
 tools that need to be installed manually for development (the Makefile will be updated to run containerized versions shortly): 
 
+* [Docker](https://www.docker.com/products/docker)
 * [Go](https://golang.org/dl/)
 * [Glide](https://glide.sh)
   `curl https://glide.sh/get | sh`
