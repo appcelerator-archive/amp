@@ -1,5 +1,5 @@
-hash: aaa5347213febe48122a6af1545b25af6b908946e929dcc14a1d848678266bcc
-updated: 2016-08-28T10:52:54.281506465-07:00
+hash: d75aa023309bab007654b774317aed85764d84226428b5d01a33f5f5a2c797f1
+updated: 2016-08-28T18:43:14.814741533-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -16,6 +16,8 @@ imports:
   version: 6cf5744a041a0022271cefed95ba843f6d87fd51
   subpackages:
   - spew
+- name: github.com/docker/engine-api
+  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
