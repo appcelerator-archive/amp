@@ -1,6 +1,6 @@
-# amp
+# Appcelerator Microservice Platform (AMP)
 
-At the top level, we still have the `swarm` script for starting infrastructure services. We will need this for one more sprint, but it will be going away.
+AMP's goal is to provide a platform and simple tools to help developers manage and monitor complex, orchestrated service applications. AMP is based entirely on the swarm mode features introduced with Docker 1.12, providing developers a simple path to exploit these features in a hosted environment (that runs locally during development) without straying from the core Docker ecosystem and the need to adopt complex third party frameworks.
 
 # Prerequisites
 
@@ -13,7 +13,6 @@ tools that need to be installed manually for development (the Makefile will be u
   `curl https://glide.sh/get | sh`
 * [lint](https://github.com/golang/lint)
   `go get -u github.com/golang/lint/golint`
-
 
 ## Directories
 
