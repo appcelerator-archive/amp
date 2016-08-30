@@ -3,7 +3,6 @@ package tsm1
 import (
 	"encoding/binary"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/influxdata/influxdb/influxql"
@@ -65,40 +64,6 @@ func (_ *IntegerValue) internalOnly() {}
 func (_ *BooleanValue) internalOnly() {}
 func (_ *FloatValue) internalOnly()   {}
 
-// Values represented a time ascending sorted collection of Value types.
-// the underlying type should be the same across all values, but the interface
-// makes the code cleaner.
-type Values []Value
-
-func (a Values) MinTime() int64 {
-	return a[0].UnixNano()
-}
-
-func (a Values) MaxTime() int64 {
-	return a[len(a)-1].UnixNano()
-}
-
-func (a Values) Size() int {
-	sz := 0
-	for _, v := range a {
-		sz += v.Size()
-	}
-	return sz
-}
-
-func (a Values) Filter(min, max int64) Values {
-	var i int
-	for j := 0; j < len(a); j++ {
-		if a[j].UnixNano() >= min && a[j].UnixNano() <= max {
-			continue
-		}
-
-		a[i] = a[j]
-		i++
-	}
-	return a[:i]
-}
-
 // Encode converts the values to a byte slice.  If there are no values,
 // this function panics.
 func (a Values) Encode(buf []byte) ([]byte, error) {
@@ -157,7 +122,10 @@ func BlockCount(block []byte) int {
 		panic(fmt.Sprintf("count of short block: got %v, exp %v", len(block), encodedBlockHeaderSize))
 	}
 	// first byte is the block type
-	tb, _ := unpackBlock(block[1:])
+	tb, _, err := unpackBlock(block[1:])
+	if err != nil {
+		panic(fmt.Sprintf("BlockCount: error unpacking block: %s", err.Error()))
+	}
 	return CountTimestamps(tb)
 }
 
@@ -221,28 +189,6 @@ func DecodeBlock(block []byte, vals []Value) ([]Value, error) {
 		panic(fmt.Sprintf("unknown block type: %d", blockType))
 	}
 }
-
-// Deduplicate returns a new Values slice with any values that have the same timestamp removed.
-// The Value that appears last in the slice is the one that is kept.
-func (a Values) Deduplicate() Values {
-	m := make(map[int64]Value, len(a))
-	for _, val := range a {
-		m[val.UnixNano()] = val
-	}
-
-	other := make([]Value, 0, len(m))
-	for _, val := range m {
-		other = append(other, val)
-	}
-
-	sort.Sort(Values(other))
-	return other
-}
-
-// Sort methods
-func (a Values) Len() int           { return len(a) }
-func (a Values) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a Values) Less(i, j int) bool { return a[i].UnixNano() < a[j].UnixNano() }
 
 type FloatValue struct {
 	unixnano int64
@@ -312,7 +258,10 @@ func DecodeFloatBlock(block []byte, tdec *TimeDecoder, vdec *FloatDecoder, a *[]
 	}
 	block = block[1:]
 
-	tb, vb := unpackBlock(block)
+	tb, vb, err := unpackBlock(block)
+	if err != nil {
+		return nil, err
+	}
 
 	// Setup our timestamp and value decoders
 	tdec.Init(tb)
@@ -346,44 +295,6 @@ func DecodeFloatBlock(block []byte, tdec *TimeDecoder, vdec *FloatDecoder, a *[]
 
 	return (*a)[:i], nil
 }
-
-// FloatValues represents a slice of float values.
-type FloatValues []FloatValue
-
-// Deduplicate returns a new slice with any values that have the same timestamp removed.
-// The Value that appears last in the slice is the one that is kept.
-func (a FloatValues) Deduplicate() FloatValues {
-	m := make(map[int64]FloatValue)
-	for _, val := range a {
-		m[val.UnixNano()] = val
-	}
-
-	other := make(FloatValues, 0, len(m))
-	for _, val := range m {
-		other = append(other, val)
-	}
-
-	sort.Sort(other)
-	return other
-}
-
-func (a FloatValues) Filter(min, max int64) FloatValues {
-	var i int
-	for j := 0; j < len(a); j++ {
-		if a[j].UnixNano() >= min && a[j].UnixNano() <= max {
-			continue
-		}
-
-		a[i] = a[j]
-		i++
-	}
-	return a[:i]
-}
-
-// Sort methods
-func (a FloatValues) Len() int           { return len(a) }
-func (a FloatValues) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a FloatValues) Less(i, j int) bool { return a[i].UnixNano() < a[j].UnixNano() }
 
 type BooleanValue struct {
 	unixnano int64
@@ -451,7 +362,10 @@ func DecodeBooleanBlock(block []byte, tdec *TimeDecoder, vdec *BooleanDecoder, a
 	}
 	block = block[1:]
 
-	tb, vb := unpackBlock(block)
+	tb, vb, err := unpackBlock(block)
+	if err != nil {
+		return nil, err
+	}
 
 	// Setup our timestamp and value decoders
 	tdec.Init(tb)
@@ -483,44 +397,6 @@ func DecodeBooleanBlock(block []byte, tdec *TimeDecoder, vdec *BooleanDecoder, a
 
 	return (*a)[:i], nil
 }
-
-// BooleanValues represents a slice of boolean values.
-type BooleanValues []BooleanValue
-
-// Deduplicate returns a new slice with any values that have the same timestamp removed.
-// The Value that appears last in the slice is the one that is kept.
-func (a BooleanValues) Deduplicate() BooleanValues {
-	m := make(map[int64]BooleanValue)
-	for _, val := range a {
-		m[val.UnixNano()] = val
-	}
-
-	other := make(BooleanValues, 0, len(m))
-	for _, val := range m {
-		other = append(other, val)
-	}
-
-	sort.Sort(other)
-	return other
-}
-
-func (a BooleanValues) Filter(min, max int64) BooleanValues {
-	var i int
-	for j := 0; j < len(a); j++ {
-		if a[j].UnixNano() >= min && a[j].UnixNano() <= max {
-			continue
-		}
-
-		a[i] = a[j]
-		i++
-	}
-	return a[:i]
-}
-
-// Sort methods
-func (a BooleanValues) Len() int           { return len(a) }
-func (a BooleanValues) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a BooleanValues) Less(i, j int) bool { return a[i].UnixNano() < a[j].UnixNano() }
 
 type IntegerValue struct {
 	unixnano int64
@@ -576,7 +452,10 @@ func DecodeIntegerBlock(block []byte, tdec *TimeDecoder, vdec *IntegerDecoder, a
 	block = block[1:]
 
 	// The first 8 bytes is the minimum timestamp of the block
-	tb, vb := unpackBlock(block)
+	tb, vb, err := unpackBlock(block)
+	if err != nil {
+		return nil, err
+	}
 
 	// Setup our timestamp and value decoders
 	tdec.Init(tb)
@@ -608,44 +487,6 @@ func DecodeIntegerBlock(block []byte, tdec *TimeDecoder, vdec *IntegerDecoder, a
 
 	return (*a)[:i], nil
 }
-
-// IntegerValues represents a slice of integer values.
-type IntegerValues []IntegerValue
-
-// Deduplicate returns a new slice with any values that have the same timestamp removed.
-// The Value that appears last in the slice is the one that is kept.
-func (a IntegerValues) Deduplicate() IntegerValues {
-	m := make(map[int64]IntegerValue)
-	for _, val := range a {
-		m[val.UnixNano()] = val
-	}
-
-	other := make(IntegerValues, 0, len(m))
-	for _, val := range m {
-		other = append(other, val)
-	}
-
-	sort.Sort(other)
-	return other
-}
-
-func (a IntegerValues) Filter(min, max int64) IntegerValues {
-	var i int
-	for j := 0; j < len(a); j++ {
-		if a[j].UnixNano() >= min && a[j].UnixNano() <= max {
-			continue
-		}
-
-		a[i] = a[j]
-		i++
-	}
-	return a[:i]
-}
-
-// Sort methods
-func (a IntegerValues) Len() int           { return len(a) }
-func (a IntegerValues) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a IntegerValues) Less(i, j int) bool { return a[i].UnixNano() < a[j].UnixNano() }
 
 type StringValue struct {
 	unixnano int64
@@ -701,7 +542,10 @@ func DecodeStringBlock(block []byte, tdec *TimeDecoder, vdec *StringDecoder, a *
 	block = block[1:]
 
 	// The first 8 bytes is the minimum timestamp of the block
-	tb, vb := unpackBlock(block)
+	tb, vb, err := unpackBlock(block)
+	if err != nil {
+		return nil, err
+	}
 
 	// Setup our timestamp and value decoders
 	tdec.Init(tb)
@@ -736,44 +580,6 @@ func DecodeStringBlock(block []byte, tdec *TimeDecoder, vdec *StringDecoder, a *
 	return (*a)[:i], nil
 }
 
-// StringValues represents a slice of string values.
-type StringValues []StringValue
-
-// Deduplicate returns a new slice with any values that have the same timestamp removed.
-// The Value that appears last in the slice is the one that is kept.
-func (a StringValues) Deduplicate() StringValues {
-	m := make(map[int64]StringValue)
-	for _, val := range a {
-		m[val.UnixNano()] = val
-	}
-
-	other := make(StringValues, 0, len(m))
-	for _, val := range m {
-		other = append(other, val)
-	}
-
-	sort.Sort(other)
-	return other
-}
-
-func (a StringValues) Filter(min, max int64) StringValues {
-	var i int
-	for j := 0; j < len(a); j++ {
-		if a[j].UnixNano() >= min && a[j].UnixNano() <= max {
-			continue
-		}
-
-		a[i] = a[j]
-		i++
-	}
-	return a[:i]
-}
-
-// Sort methods
-func (a StringValues) Len() int           { return len(a) }
-func (a StringValues) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a StringValues) Less(i, j int) bool { return a[i].UnixNano() < a[j].UnixNano() }
-
 func packBlockHeader(blockType byte) []byte {
 	return []byte{blockType}
 }
@@ -792,15 +598,24 @@ func packBlock(ts []byte, values []byte) []byte {
 	return append(block, values...)
 }
 
-func unpackBlock(buf []byte) (ts, values []byte) {
+func unpackBlock(buf []byte) (ts, values []byte, err error) {
 	// Unpack the timestamp block length
 	tsLen, i := binary.Uvarint(buf)
+	if i <= 0 {
+		err = fmt.Errorf("unpackBlock: unable to read timestamp block length")
+		return
+	}
 
 	// Unpack the timestamp bytes
-	ts = buf[int(i) : int(i)+int(tsLen)]
+	tsIdx := int(i) + int(tsLen)
+	if tsIdx > len(buf) {
+		err = fmt.Errorf("unpackBlock: not enough data for timestamp")
+		return
+	}
+	ts = buf[int(i):tsIdx]
 
 	// Unpack the value bytes
-	values = buf[int(i)+int(tsLen):]
+	values = buf[tsIdx:]
 	return
 }
 

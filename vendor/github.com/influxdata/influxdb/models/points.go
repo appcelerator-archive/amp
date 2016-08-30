@@ -29,6 +29,7 @@ var (
 
 	ErrPointMustHaveAField  = errors.New("point without fields is unsupported")
 	ErrInvalidNumber        = errors.New("invalid number")
+	ErrInvalidPoint         = errors.New("point is invalid")
 	ErrMaxKeyLengthExceeded = errors.New("max key length exceeded")
 )
 
@@ -161,12 +162,12 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 		block  []byte
 		failed []string
 	)
-	for {
+	for pos < len(buf) {
 		pos, block = scanLine(buf, pos)
 		pos++
 
 		if len(block) == 0 {
-			break
+			continue
 		}
 
 		// lines which start with '#' are comments
@@ -191,10 +192,6 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 			failed = append(failed, fmt.Sprintf("unable to parse '%s': %v", string(block[start:len(block)]), err))
 		} else {
 			points = append(points, pt)
-		}
-
-		if pos >= len(buf) {
-			break
 		}
 
 	}
@@ -234,7 +231,6 @@ func parsePoint(buf []byte, defaultTime time.Time, precision string) (Point, err
 
 	// scan the last block which is an optional integer timestamp
 	pos, ts, err := scanTime(buf, pos)
-
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +252,15 @@ func parsePoint(buf []byte, defaultTime time.Time, precision string) (Point, err
 		pt.time, err = SafeCalcTime(ts, precision)
 		if err != nil {
 			return nil, err
+		}
+
+		// Determine if there are illegal non-whitespace characters after the
+		// timestamp block.
+		for pos < len(buf) {
+			if buf[pos] != ' ' {
+				return nil, ErrInvalidPoint
+			}
+			pos++
 		}
 	}
 	return pt, nil
@@ -315,24 +320,24 @@ func scanKey(buf []byte, i int) (int, []byte, error) {
 		}
 	}
 
-	// Now we know where the key region is within buf, and the locations of tags, we
-	// need to determine if duplicate tags exist and if the tags are sorted.  This iterates
-	// 1/2 of the list comparing each end with each other, walking towards the center from
-	// both sides.
-	for j := 0; j < commas/2; j++ {
+	// Now we know where the key region is within buf, and the location of tags, we
+	// need to determine if duplicate tags exist and if the tags are sorted. This iterates
+	// over the list comparing each tag in the sequence with each other.
+	for j := 0; j < commas-1; j++ {
 		// get the left and right tags
 		_, left := scanTo(buf[indices[j]:indices[j+1]-1], 0, '=')
-		_, right := scanTo(buf[indices[commas-j-1]:indices[commas-j]-1], 0, '=')
+		_, right := scanTo(buf[indices[j+1]:indices[j+2]-1], 0, '=')
 
-		// If the tags are equal, then there are duplicate tags, and we should abort
-		if bytes.Equal(left, right) {
-			return i, buf[start:i], fmt.Errorf("duplicate tags")
-		}
-
-		// If left is greater than right, the tags are not sorted.  We must continue
-		// since their could be duplicate tags still.
-		if bytes.Compare(left, right) > 0 {
+		// If left is greater than right, the tags are not sorted. We do not have to
+		// continue because the short path no longer works.
+		// If the tags are equal, then there are duplicate tags, and we should abort.
+		// If the tags are not sorted, this pass may not find duplicate tags and we
+		// need to do a more exhaustive search later.
+		if cmp := bytes.Compare(left, right); cmp > 0 {
 			sorted = false
+			break
+		} else if cmp == 0 {
+			return i, buf[start:i], fmt.Errorf("duplicate tags")
 		}
 	}
 
@@ -358,6 +363,20 @@ func scanKey(buf []byte, i int) (int, []byte, error) {
 			pos += copy(b[pos:], v)
 		}
 
+		// Check again for duplicate tags now that the tags are sorted.
+		for j := 0; j < commas-1; j++ {
+			// get the left and right tags
+			_, left := scanTo(buf[indices[j]:], 0, '=')
+			_, right := scanTo(buf[indices[j+1]:], 0, '=')
+
+			// If the tags are equal, then there are duplicate tags, and we should abort.
+			// If the tags are not sorted, this pass may not find duplicate tags and we
+			// need to do a more exhaustive search later.
+			if bytes.Equal(left, right) {
+				return i, b, fmt.Errorf("duplicate tags")
+			}
+		}
+
 		return i, b, nil
 	}
 
@@ -378,7 +397,7 @@ func scanMeasurement(buf []byte, i int) (int, int, error) {
 	// Check first byte of measurement, anything except a comma is fine.
 	// It can't be a space, since whitespace is stripped prior to this
 	// function call.
-	if buf[i] == ',' {
+	if i >= len(buf) || buf[i] == ',' {
 		return -1, i, fmt.Errorf("missing measurement")
 	}
 
@@ -525,15 +544,6 @@ func less(buf []byte, indices []int, i, j int) bool {
 	return bytes.Compare(a, b) < 0
 }
 
-func isFieldEscapeChar(b byte) bool {
-	for c := range escape.Codes {
-		if c == b {
-			return true
-		}
-	}
-	return false
-}
-
 // scanFields scans buf, starting at i for the fields section of a point.  It returns
 // the ending position and the byte slice of the fields within buf
 func scanFields(buf []byte, i int) (int, []byte, error) {
@@ -634,32 +644,34 @@ func scanFields(buf []byte, i int) (int, []byte, error) {
 	return i, buf[start:i], nil
 }
 
-// scanTime scans buf, starting at i for the time section of a point.  It returns
-// the ending position and the byte slice of the fields within buf and error if the
-// timestamp is not in the correct numeric format
+// scanTime scans buf, starting at i for the time section of a point. It
+// returns the ending position and the byte slice of the timestamp within buf
+// and and error if the timestamp is not in the correct numeric format.
 func scanTime(buf []byte, i int) (int, []byte, error) {
 	start := skipWhitespace(buf, i)
 	i = start
+
 	for {
 		// reached the end of buf?
 		if i >= len(buf) {
 			break
 		}
 
-		// Timestamps should be integers, make sure they are so we don't need to actually
-		// parse the timestamp until needed
-		if buf[i] < '0' || buf[i] > '9' {
-			// Handle negative timestamps
-			if i == start && buf[i] == '-' {
-				i++
-				continue
-			}
-			return i, buf[start:i], fmt.Errorf("bad timestamp")
+		// Reached end of block or trailing whitespace?
+		if buf[i] == '\n' || buf[i] == ' ' {
+			break
 		}
 
-		// reached end of block?
-		if buf[i] == '\n' {
-			break
+		// Handle negative timestamps
+		if i == start && buf[i] == '-' {
+			i++
+			continue
+		}
+
+		// Timestamps should be integers, make sure they are so we don't need
+		// to actually  parse the timestamp until needed.
+		if buf[i] < '0' || buf[i] > '9' {
+			return i, buf[start:i], fmt.Errorf("bad timestamp")
 		}
 		i++
 	}
@@ -1029,6 +1041,10 @@ func escapeTag(in []byte) []byte {
 }
 
 func unescapeTag(in []byte) []byte {
+	if bytes.IndexByte(in, '\\') == -1 {
+		return in
+	}
+
 	for b, esc := range tagEscapeCodes {
 		if bytes.IndexByte(in, b) != -1 {
 			in = bytes.Replace(in, esc, []byte{b}, -1)
@@ -1037,9 +1053,9 @@ func unescapeTag(in []byte) []byte {
 	return in
 }
 
-// escapeStringField returns a copy of in with any double quotes or
+// EscapeStringField returns a copy of in with any double quotes or
 // backslashes with escaped values
-func escapeStringField(in string) string {
+func EscapeStringField(in string) string {
 	var out []byte
 	i := 0
 	for {
@@ -1205,7 +1221,8 @@ func (p *point) Tags() Tags {
 }
 
 func parseTags(buf []byte) Tags {
-	tags := map[string]string{}
+	tags := make(map[string]string, bytes.Count(buf, []byte(",")))
+	hasEscape := bytes.IndexByte(buf, '\\') != -1
 
 	if len(buf) != 0 {
 		pos, name := scanTo(buf, 0, ',')
@@ -1228,7 +1245,11 @@ func parseTags(buf []byte) Tags {
 				continue
 			}
 
-			tags[string(unescapeTag(key))] = string(unescapeTag(value))
+			if hasEscape {
+				tags[string(unescapeTag(key))] = string(unescapeTag(value))
+			} else {
+				tags[string(key)] = string(value)
+			}
 
 			i++
 		}
@@ -1364,6 +1385,20 @@ func (p *point) UnixNano() int64 {
 // Tags represents a mapping between a Point's tag names and their
 // values.
 type Tags map[string]string
+
+// Merge merges the tags combining the two. If both define a tag with the
+// same key, the merged value overwrites the old value.
+// A new map is returned.
+func (t Tags) Merge(other map[string]string) Tags {
+	merged := make(map[string]string, len(t)+len(other))
+	for k, v := range t {
+		merged[k] = v
+	}
+	for k, v := range other {
+		merged[k] = v
+	}
+	return Tags(merged)
+}
 
 // HashKey hashes all of a tag's keys.
 func (t Tags) HashKey() []byte {
@@ -1537,14 +1572,14 @@ func (p Fields) MarshalBinary() []byte {
 			b = append(b, t...)
 		case string:
 			b = append(b, '"')
-			b = append(b, []byte(escapeStringField(t))...)
+			b = append(b, []byte(EscapeStringField(t))...)
 			b = append(b, '"')
 		case nil:
 			// skip
 		default:
 			// Can't determine the type, so convert to string
 			b = append(b, '"')
-			b = append(b, []byte(escapeStringField(fmt.Sprintf("%v", v)))...)
+			b = append(b, []byte(EscapeStringField(fmt.Sprintf("%v", v)))...)
 			b = append(b, '"')
 
 		}
@@ -1554,23 +1589,4 @@ func (p Fields) MarshalBinary() []byte {
 		return b[0 : len(b)-1]
 	}
 	return b
-}
-
-type indexedSlice struct {
-	indices []int
-	b       []byte
-}
-
-func (s *indexedSlice) Less(i, j int) bool {
-	_, a := scanTo(s.b, s.indices[i], '=')
-	_, b := scanTo(s.b, s.indices[j], '=')
-	return bytes.Compare(a, b) < 0
-}
-
-func (s *indexedSlice) Swap(i, j int) {
-	s.indices[i], s.indices[j] = s.indices[j], s.indices[i]
-}
-
-func (s *indexedSlice) Len() int {
-	return len(s.indices)
 }

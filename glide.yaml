@@ -15,10 +15,6 @@ import:
   subpackages:
   - github
 - package: github.com/howeyc/gopass
-- package: github.com/influxdata/influxdb
-  version: ^0.13.0
-  subpackages:
-  - client/v2
 - package: github.com/mitchellh/go-homedir
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
@@ -41,5 +37,7 @@ import:
   version: ^1.0.0
   subpackages:
   - difflib
-- package: github.com/docker/engine-api
-  version: ^0.4.0
+- package: github.com/influxdata/influxdb
+  version: ^1.0.0-rc2
+  subpackages:
+  - client/v2

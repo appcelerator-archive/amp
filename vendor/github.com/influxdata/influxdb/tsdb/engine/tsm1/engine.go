@@ -4,12 +4,15 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/influxdata/influxdb/influxql"
@@ -18,6 +21,8 @@ import (
 )
 
 //go:generate tmpl -data=@iterator.gen.go.tmpldata iterator.gen.go.tmpl
+//go:generate tmpl -data=@file_store.gen.go.tmpldata file_store.gen.go.tmpl
+//go:generate tmpl -data=@encoding.gen.go.tmpldata encoding.gen.go.tmpl
 
 func init() {
 	tsdb.RegisterEngine("tsm1", NewEngine)
@@ -32,15 +37,35 @@ const (
 	keyFieldSeparator = "#!~#"
 )
 
+// Statistics gathered by the engine.
+const (
+	statCacheCompactions              = "cacheCompactions"
+	statCacheCompactionError          = "cacheCompactionErr"
+	statCacheCompactionDuration       = "cacheCompactionDuration"
+	statTSMLevel1Compactions          = "tsmLevel1Compactions"
+	statTSMLevel1CompactionDuration   = "tsmLevel1CompactionDuration"
+	statTSMLevel2Compactions          = "tsmLevel2Compactions"
+	statTSMLevel2CompactionDuration   = "tsmLevel2CompactionDuration"
+	statTSMLevel3Compactions          = "tsmLevel3Compactions"
+	statTSMLevel3CompactionDuration   = "tsmLevel3CompactionDuration"
+	statTSMOptimizeCompactions        = "tsmOptimizeCompactions"
+	statTSMOptimizeCompactionDuration = "tsmOptimizeCompactionDuration"
+	statTSMFullCompactions            = "tsmFullCompactions"
+	statTSMFullCompactionDuration     = "tsmFullCompactionDuration"
+)
+
 // Engine represents a storage engine with compressed blocks.
 type Engine struct {
-	mu   sync.RWMutex
-	done chan struct{}
-	wg   sync.WaitGroup
+	mu                 sync.RWMutex
+	done               chan struct{}
+	wg                 sync.WaitGroup
+	compactionsEnabled bool
 
-	path      string
-	logger    *log.Logger
-	logOutput io.Writer
+	path         string
+	logger       *log.Logger // Logger to be used for important messages
+	traceLogger  *log.Logger // Logger to be used when trace-logging is on.
+	logOutput    io.Writer   // Writer to be logger and traceLogger if active.
+	traceLogging bool
 
 	// TODO(benbjohnson): Index needs to be moved entirely into engine.
 	index             *tsdb.DatabaseIndex
@@ -62,16 +87,17 @@ type Engine struct {
 	// no writes have been committed to the WAL, the engine will write
 	// a snapshot of the cache to a TSM file
 	CacheFlushWriteColdDuration time.Duration
+
+	// Controls whether to enabled compactions when the engine is open
+	enableCompactionsOnOpen bool
+
+	stats *EngineStatistics
 }
 
 // NewEngine returns a new instance of Engine.
 func NewEngine(path string, walPath string, opt tsdb.EngineOptions) tsdb.Engine {
 	w := NewWAL(walPath)
-	w.LoggingEnabled = opt.Config.WALLoggingEnabled
-
 	fs := NewFileStore(path)
-	fs.traceLogging = opt.Config.DataLoggingEnabled
-
 	cache := NewCache(uint64(opt.Config.CacheMaxMemorySize), path)
 
 	c := &Compactor{
@@ -80,7 +106,12 @@ func NewEngine(path string, walPath string, opt tsdb.EngineOptions) tsdb.Engine 
 	}
 
 	e := &Engine{
-		path:              path,
+		path:         path,
+		logger:       log.New(os.Stderr, "[tsm1] ", log.LstdFlags),
+		traceLogger:  log.New(ioutil.Discard, "[tsm1] ", log.LstdFlags),
+		logOutput:    os.Stderr,
+		traceLogging: opt.Config.TraceLoggingEnabled,
+
 		measurementFields: make(map[string]*tsdb.MeasurementFields),
 
 		WAL:   w,
@@ -96,10 +127,69 @@ func NewEngine(path string, walPath string, opt tsdb.EngineOptions) tsdb.Engine 
 
 		CacheFlushMemorySizeThreshold: opt.Config.CacheSnapshotMemorySize,
 		CacheFlushWriteColdDuration:   time.Duration(opt.Config.CacheSnapshotWriteColdDuration),
+		enableCompactionsOnOpen:       true,
+		stats: &EngineStatistics{},
 	}
-	e.SetLogOutput(os.Stderr)
+
+	if e.traceLogging {
+		e.traceLogger.SetOutput(e.logOutput)
+		fs.enableTraceLogging(true)
+		w.enableTraceLogging(true)
+	}
 
 	return e
+}
+
+func (e *Engine) SetEnabled(enabled bool) {
+	e.enableCompactionsOnOpen = enabled
+	e.SetCompactionsEnabled(enabled)
+}
+
+// SetCompactionsEnabled enables compactions on the engine.  When disabled
+// all running compactions are aborted and new compactions stop running.
+func (e *Engine) SetCompactionsEnabled(enabled bool) {
+	if enabled {
+		e.mu.Lock()
+		if e.compactionsEnabled {
+			e.mu.Unlock()
+			return
+		}
+		e.compactionsEnabled = true
+
+		e.done = make(chan struct{})
+		e.Compactor.Open()
+
+		e.mu.Unlock()
+
+		e.wg.Add(5)
+		go e.compactCache()
+		go e.compactTSMFull()
+		go e.compactTSMLevel(true, 1)
+		go e.compactTSMLevel(true, 2)
+		go e.compactTSMLevel(false, 3)
+	} else {
+		e.mu.Lock()
+		if !e.compactionsEnabled {
+			e.mu.Unlock()
+			return
+		}
+		// Prevent new compactions from starting
+		e.compactionsEnabled = false
+		e.mu.Unlock()
+
+		// Stop all background compaction goroutines
+		close(e.done)
+
+		// Abort any running goroutines (this could take a while)
+		e.Compactor.Close()
+
+		// Wait for compaction goroutines to exit
+		e.wg.Wait()
+
+		if err := e.cleanup(); err != nil {
+			e.logger.Printf("error cleaning up temp file: %v", err)
+		}
+	}
 }
 
 // Path returns the path the engine was opened with.
@@ -137,10 +227,50 @@ func (e *Engine) Format() tsdb.EngineFormat {
 	return tsdb.TSM1Format
 }
 
+// EngineStatistics maintains statistics for the engine.
+type EngineStatistics struct {
+	CacheCompactions              int64
+	CacheCompactionErrors         int64
+	CacheCompactionDuration       int64
+	TSMCompactions                [3]int64
+	TSMCompactionErrors           [3]int64
+	TSMCompactionDuration         [3]int64
+	TSMOptimizeCompactions        int64
+	TSMOptimizeCompactionErrors   int64
+	TSMOptimizeCompactionDuration int64
+	TSMFullCompactions            int64
+	TSMFullCompactionErrors       int64
+	TSMFullCompactionDuration     int64
+}
+
+// Statistics returns statistics for periodic monitoring.
+func (e *Engine) Statistics(tags map[string]string) []models.Statistic {
+	statistics := make([]models.Statistic, 0, 4)
+	statistics = append(statistics, models.Statistic{
+		Name: "tsm1_engine",
+		Tags: tags,
+		Values: map[string]interface{}{
+			statCacheCompactions:            atomic.LoadInt64(&e.stats.CacheCompactions),
+			statCacheCompactionDuration:     atomic.LoadInt64(&e.stats.CacheCompactionDuration),
+			statTSMLevel1Compactions:        atomic.LoadInt64(&e.stats.TSMCompactions[0]),
+			statTSMLevel1CompactionDuration: atomic.LoadInt64(&e.stats.TSMCompactionDuration[0]),
+			statTSMLevel2Compactions:        atomic.LoadInt64(&e.stats.TSMCompactions[1]),
+			statTSMLevel2CompactionDuration: atomic.LoadInt64(&e.stats.TSMCompactionDuration[1]),
+			statTSMLevel3Compactions:        atomic.LoadInt64(&e.stats.TSMCompactions[2]),
+			statTSMLevel3CompactionDuration: atomic.LoadInt64(&e.stats.TSMCompactionDuration[2]),
+			statTSMFullCompactions:          atomic.LoadInt64(&e.stats.TSMFullCompactions),
+			statTSMFullCompactionDuration:   atomic.LoadInt64(&e.stats.TSMFullCompactionDuration),
+		},
+	})
+	statistics = append(statistics, e.Cache.Statistics(tags)...)
+	statistics = append(statistics, e.FileStore.Statistics(tags)...)
+	statistics = append(statistics, e.WAL.Statistics(tags)...)
+	return statistics
+}
+
 // Open opens and initializes the engine.
 func (e *Engine) Open() error {
 	e.done = make(chan struct{})
-	e.Compactor.Cancel = e.done
 
 	if err := os.MkdirAll(e.path, 0777); err != nil {
 		return err
@@ -162,28 +292,16 @@ func (e *Engine) Open() error {
 		return err
 	}
 
-	e.wg.Add(5)
-	go e.compactCache()
-	go e.compactTSMFull()
-	go e.compactTSMLevel(true, 1)
-	go e.compactTSMLevel(true, 2)
-	go e.compactTSMLevel(false, 3)
+	if e.enableCompactionsOnOpen {
+		e.SetCompactionsEnabled(true)
+	}
 
 	return nil
 }
 
 // Close closes the engine. Subsequent calls to Close are a nop.
 func (e *Engine) Close() error {
-	e.mu.RLock()
-	if e.done == nil {
-		e.mu.RUnlock()
-		return nil
-	}
-	e.mu.RUnlock()
-
-	// Shutdown goroutines and wait.
-	close(e.done)
-	e.wg.Wait()
+	e.SetCompactionsEnabled(false)
 
 	// Lock now and close everything else down.
 	e.mu.Lock()
@@ -196,17 +314,28 @@ func (e *Engine) Close() error {
 	return e.WAL.Close()
 }
 
-// SetLogOutput sets the logger used for all messages. It must not be called
-// after the Open method has been called.
+// SetLogOutput sets the logger used for all messages. It is safe for concurrent
+// use.
 func (e *Engine) SetLogOutput(w io.Writer) {
-	e.logger = log.New(w, "[tsm1] ", log.LstdFlags)
+	e.logger.SetOutput(w)
+
+	// Set the trace logger's output only if trace logging is enabled.
+	if e.traceLogging {
+		e.traceLogger.SetOutput(w)
+	}
+
 	e.WAL.SetLogOutput(w)
 	e.FileStore.SetLogOutput(w)
+
+	e.mu.Lock()
 	e.logOutput = w
+	e.mu.Unlock()
 }
 
 // LoadMetadataIndex loads the shard metadata into memory.
 func (e *Engine) LoadMetadataIndex(shardID uint64, index *tsdb.DatabaseIndex) error {
+	now := time.Now()
+
 	// Save reference to index for iterator creation.
 	e.index = index
 
@@ -241,6 +370,7 @@ func (e *Engine) LoadMetadataIndex(shardID uint64, index *tsdb.DatabaseIndex) er
 		}
 	}
 
+	e.traceLogger.Printf("Meta data index for shard %d loaded in %v", shardID, time.Since(now))
 	return nil
 }
 
@@ -252,31 +382,42 @@ func (e *Engine) LoadMetadataIndex(shardID uint64, index *tsdb.DatabaseIndex) er
 // backup is running. For shards that are still acively getting writes, this
 // could cause the WAL to backup, increasing memory usage and evenutally rejecting writes.
 func (e *Engine) Backup(w io.Writer, basePath string, since time.Time) error {
-	if err := e.WriteSnapshot(); err != nil {
+	path, err := e.CreateSnapshot()
+	if err != nil {
 		return err
 	}
-	e.FileStore.mu.RLock()
-	defer e.FileStore.mu.RUnlock()
 
-	var files []FileStat
+	// Remove the temporary snapshot dir
+	defer os.RemoveAll(path)
 
+	snapDir, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer snapDir.Close()
+
+	snapshotFiles, err := snapDir.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	var files []os.FileInfo
 	// grab all the files and tombstones that have a modified time after since
-	for _, f := range e.FileStore.files {
-		if stat := f.Stats(); stat.LastModified > since.UnixNano() {
-			files = append(files, f.Stats())
+	for _, f := range snapshotFiles {
+		if f.ModTime().UnixNano() > since.UnixNano() {
+			files = append(files, f)
 		}
-		for _, t := range f.TombstoneFiles() {
-			if t.LastModified > since.UnixNano() {
-				files = append(files, f.Stats())
-			}
-		}
+	}
+
+	if len(files) == 0 {
+		return nil
 	}
 
 	tw := tar.NewWriter(w)
 	defer tw.Close()
 
 	for _, f := range files {
-		if err := e.writeFileToBackup(f, basePath, tw); err != nil {
+		if err := e.writeFileToBackup(f, basePath, filepath.Join(path, f.Name()), tw); err != nil {
 			return err
 		}
 	}
@@ -286,16 +427,17 @@ func (e *Engine) Backup(w io.Writer, basePath string, since time.Time) error {
 
 // writeFileToBackup will copy the file into the tar archive. Files will use the shardRelativePath
 // in their names. This should be the <db>/<retention policy>/<id> part of the path
-func (e *Engine) writeFileToBackup(f FileStat, shardRelativePath string, tw *tar.Writer) error {
+func (e *Engine) writeFileToBackup(f os.FileInfo, shardRelativePath, fullPath string, tw *tar.Writer) error {
 	h := &tar.Header{
-		Name:    filepath.Join(shardRelativePath, filepath.Base(f.Path)),
-		ModTime: time.Unix(0, f.LastModified),
-		Size:    int64(f.Size),
+		Name:    filepath.Join(shardRelativePath, f.Name()),
+		ModTime: f.ModTime(),
+		Size:    f.Size(),
+		Mode:    int64(f.Mode()),
 	}
 	if err := tw.WriteHeader(h); err != nil {
 		return err
 	}
-	fr, err := os.Open(f.Path)
+	fr, err := os.Open(fullPath)
 	if err != nil {
 		return err
 	}
@@ -307,10 +449,81 @@ func (e *Engine) writeFileToBackup(f FileStat, shardRelativePath string, tw *tar
 	return err
 }
 
+// Restore will read a tar archive generated by Backup().
+// Only files that match basePath will be copied into the directory. This obtains
+// a write lock so no operations can be performed while restoring.
+func (e *Engine) Restore(r io.Reader, basePath string) error {
+	// Copy files from archive while under lock to prevent reopening.
+	if err := func() error {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+
+		tr := tar.NewReader(r)
+		for {
+			if err := e.readFileFromBackup(tr, basePath); err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+		}
+
+		return syncDir(e.path)
+	}(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// readFileFromBackup copies the next file from the archive into the shard.
+// The file is skipped if it does not have a matching shardRelativePath prefix.
+func (e *Engine) readFileFromBackup(tr *tar.Reader, shardRelativePath string) error {
+	// Read next archive file.
+	hdr, err := tr.Next()
+	if err != nil {
+		return err
+	}
+
+	// Skip file if it does not have a matching prefix.
+	if !filepath.HasPrefix(hdr.Name, shardRelativePath) {
+		return nil
+	}
+	path, err := filepath.Rel(shardRelativePath, hdr.Name)
+	if err != nil {
+		return err
+	}
+
+	destPath := filepath.Join(e.path, path)
+	tmp := destPath + ".tmp"
+
+	// Create new file on disk.
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Copy from archive to the file.
+	if _, err := io.CopyN(f, tr, hdr.Size); err != nil {
+		return err
+	}
+
+	// Sync to disk & close.
+	if err := f.Sync(); err != nil {
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	return renameFile(tmp, destPath)
+}
+
 // addToIndexFromKey will pull the measurement name, series key, and field name from a composite key and add it to the
 // database index and measurement fields
 func (e *Engine) addToIndexFromKey(shardID uint64, key string, fieldType influxql.DataType, index *tsdb.DatabaseIndex) error {
-	seriesKey, field := seriesAndFieldFromCompositeKey(key)
+	seriesKey, field := SeriesAndFieldFromCompositeKey(key)
 	measurement := tsdb.MeasurementFromSeriesKey(seriesKey)
 
 	m := index.CreateMeasurementIndexIfNotExists(measurement)
@@ -326,12 +539,19 @@ func (e *Engine) addToIndexFromKey(shardID uint64, key string, fieldType influxq
 		return err
 	}
 
+	// Have we already indexed this series?
+	ss := index.Series(seriesKey)
+	if ss != nil {
+		// Add this shard to the existing series
+		ss.AssignShard(shardID)
+		return nil
+	}
+
 	// ignore error because ParseKey returns "missing fields" and we don't have
 	// fields (in line protocol format) in the series key
 	_, tags, _ := models.ParseKey(seriesKey)
 
 	s := tsdb.NewSeries(seriesKey, tags)
-	s.InitializeShards()
 	index.CreateSeriesIndexIfNotExists(measurement, s)
 	s.AssignShard(shardID)
 
@@ -373,12 +593,12 @@ func (e *Engine) ContainsSeries(keys []string) (map[string]bool, error) {
 	}
 
 	for _, k := range e.Cache.Keys() {
-		seriesKey, _ := seriesAndFieldFromCompositeKey(k)
+		seriesKey, _ := SeriesAndFieldFromCompositeKey(k)
 		keyMap[seriesKey] = true
 	}
 
 	if err := e.FileStore.WalkKeys(func(k string, _ byte) error {
-		seriesKey, _ := seriesAndFieldFromCompositeKey(k)
+		seriesKey, _ := SeriesAndFieldFromCompositeKey(k)
 		if _, ok := keyMap[seriesKey]; ok {
 			keyMap[seriesKey] = true
 		}
@@ -400,22 +620,32 @@ func (e *Engine) DeleteSeriesRange(seriesKeys []string, min, max int64) error {
 		return nil
 	}
 
+	// Disable and abort running compactions so that tombstones added existing tsm
+	// files don't get removed.  This would cause deleted measurements/series to
+	// re-appear once the compaction completed.
+	e.SetCompactionsEnabled(false)
+	defer e.SetCompactionsEnabled(true)
+
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
 	// keyMap is used to see if a given key should be deleted.  seriesKey
 	// are the measurement + tagset (minus separate & field)
-	keyMap := map[string]struct{}{}
+	keyMap := make(map[string]int, len(seriesKeys))
 	for _, k := range seriesKeys {
-		keyMap[k] = struct{}{}
+		keyMap[k] = 0
 	}
 
-	var deleteKeys []string
+	deleteKeys := make([]string, 0, len(seriesKeys))
 	// go through the keys in the file store
 	if err := e.FileStore.WalkKeys(func(k string, _ byte) error {
-		seriesKey, _ := seriesAndFieldFromCompositeKey(k)
-		if _, ok := keyMap[seriesKey]; ok {
+		seriesKey, _ := SeriesAndFieldFromCompositeKey(k)
+
+		// Keep track if we've added this key since WalkKeys can return keys
+		// we've seen before
+		if v, ok := keyMap[seriesKey]; ok && v == 0 {
 			deleteKeys = append(deleteKeys, k)
+			keyMap[seriesKey] += 1
 		}
 		return nil
 	}); err != nil {
@@ -426,12 +656,16 @@ func (e *Engine) DeleteSeriesRange(seriesKeys []string, min, max int64) error {
 		return err
 	}
 
+	// reset the counts
+	for k := range keyMap {
+		keyMap[k] = 0
+	}
 	// find the keys in the cache and remove them
-	walKeys := make([]string, 0)
+	walKeys := deleteKeys[:0]
 	e.Cache.RLock()
 	s := e.Cache.Store()
 	for k, _ := range s {
-		seriesKey, _ := seriesAndFieldFromCompositeKey(k)
+		seriesKey, _ := SeriesAndFieldFromCompositeKey(k)
 		if _, ok := keyMap[seriesKey]; ok {
 			walKeys = append(walKeys, k)
 		}
@@ -457,7 +691,7 @@ func (e *Engine) DeleteMeasurement(name string, seriesKeys []string) error {
 
 // SeriesCount returns the number of series buckets on the shard.
 func (e *Engine) SeriesCount() (n int, err error) {
-	return 0, nil
+	return e.index.SeriesN(), nil
 }
 
 func (e *Engine) WriteTo(w io.Writer) (n int64, err error) { panic("not implemented") }
@@ -472,10 +706,11 @@ func (e *Engine) WriteSnapshot() error {
 	defer func() {
 		if started != nil {
 			e.Cache.UpdateCompactTime(time.Now().Sub(*started))
+			e.logger.Printf("Snapshot for path %s written in %v", e.path, time.Since(*started))
 		}
 	}()
 
-	closedFiles, snapshot, compactor, err := func() ([]string, *Cache, *Compactor, error) {
+	closedFiles, snapshot, err := func() ([]string, *Cache, error) {
 		e.mu.Lock()
 		defer e.mu.Unlock()
 
@@ -483,20 +718,20 @@ func (e *Engine) WriteSnapshot() error {
 		started = &now
 
 		if err := e.WAL.CloseSegment(); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		segments, err := e.WAL.ClosedSegments()
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		snapshot, err := e.Cache.Snapshot()
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
-		return segments, snapshot, e.Compactor.Clone(), nil
+		return segments, snapshot, nil
 	}()
 
 	if err != nil {
@@ -506,13 +741,28 @@ func (e *Engine) WriteSnapshot() error {
 	// The snapshotted cache may have duplicate points and unsorted data.  We need to deduplicate
 	// it before writing the snapshot.  This can be very expensive so it's done while we are not
 	// holding the engine write lock.
+	dedup := time.Now()
 	snapshot.Deduplicate()
+	e.traceLogger.Printf("Snapshot for path %s deduplicated in %v", e.path, time.Since(dedup))
 
-	return e.writeSnapshotAndCommit(closedFiles, snapshot, compactor)
+	return e.writeSnapshotAndCommit(closedFiles, snapshot)
+}
+
+// CreateSnapshot will create a temp directory that holds
+// temporary hardlinks to the underylyng shard files
+func (e *Engine) CreateSnapshot() (string, error) {
+	if err := e.WriteSnapshot(); err != nil {
+		return "", err
+	}
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	return e.FileStore.CreateSnapshot()
 }
 
 // writeSnapshotAndCommit will write the passed cache to a new TSM file and remove the closed WAL segments
-func (e *Engine) writeSnapshotAndCommit(closedFiles []string, snapshot *Cache, compactor *Compactor) (err error) {
+func (e *Engine) writeSnapshotAndCommit(closedFiles []string, snapshot *Cache) (err error) {
 
 	defer func() {
 		if err != nil {
@@ -520,7 +770,7 @@ func (e *Engine) writeSnapshotAndCommit(closedFiles []string, snapshot *Cache, c
 		}
 	}()
 	// write the new snapshot files
-	newFiles, err := compactor.WriteSnapshot(snapshot)
+	newFiles, err := e.Compactor.WriteSnapshot(snapshot)
 	if err != nil {
 		e.logger.Printf("error writing snapshot from compactor: %v", err)
 		return err
@@ -556,10 +806,16 @@ func (e *Engine) compactCache() {
 		default:
 			e.Cache.UpdateAge()
 			if e.ShouldCompactCache(e.WAL.LastWriteTime()) {
+				start := time.Now()
+				e.traceLogger.Printf("Compacting cache for %s", e.path)
 				err := e.WriteSnapshot()
-				if err != nil {
+				if err != nil && err != errCompactionsDisabled {
 					e.logger.Printf("error writing snapshot: %v", err)
+					atomic.AddInt64(&e.stats.CacheCompactionErrors, 1)
+				} else {
+					atomic.AddInt64(&e.stats.CacheCompactions, 1)
 				}
+				atomic.AddInt64(&e.stats.CacheCompactionDuration, time.Since(start).Nanoseconds())
 			}
 		}
 		time.Sleep(time.Second)
@@ -595,6 +851,9 @@ func (e *Engine) compactTSMLevel(fast bool, level int) {
 				continue
 			}
 
+			// Keep track of the start time for statistics.
+			start := time.Now()
+
 			var wg sync.WaitGroup
 			for i, group := range tsmFiles {
 				wg.Add(1)
@@ -611,15 +870,33 @@ func (e *Engine) compactTSMLevel(fast bool, level int) {
 
 					if fast {
 						files, err = e.Compactor.CompactFast(group)
-						if err != nil {
+						if err == errCompactionsDisabled || err == errCompactionInProgress {
+							e.logger.Printf("aborted level %d group (%d). %v",
+								level, groupNum, err)
+
+							if err == errCompactionInProgress {
+								time.Sleep(time.Second)
+							}
+							return
+						} else if err != nil {
 							e.logger.Printf("error compacting TSM files: %v", err)
+							atomic.AddInt64(&e.stats.TSMCompactionErrors[level-1], 1)
 							time.Sleep(time.Second)
 							return
 						}
 					} else {
 						files, err = e.Compactor.CompactFull(group)
-						if err != nil {
+						if err == errCompactionsDisabled || err == errCompactionInProgress {
+							e.logger.Printf("aborted level %d compaction group (%d). %v",
+								level, groupNum, err)
+
+							if err == errCompactionInProgress {
+								time.Sleep(time.Second)
+							}
+							return
+						} else if err != nil {
 							e.logger.Printf("error compacting TSM files: %v", err)
+							atomic.AddInt64(&e.stats.TSMCompactionErrors[level-1], 1)
 							time.Sleep(time.Second)
 							return
 						}
@@ -627,6 +904,7 @@ func (e *Engine) compactTSMLevel(fast bool, level int) {
 
 					if err := e.FileStore.Replace(group, files); err != nil {
 						e.logger.Printf("error replacing new TSM files: %v", err)
+						atomic.AddInt64(&e.stats.TSMCompactionErrors[level-1], 1)
 						time.Sleep(time.Second)
 						return
 					}
@@ -634,11 +912,15 @@ func (e *Engine) compactTSMLevel(fast bool, level int) {
 					for i, f := range files {
 						e.logger.Printf("compacted level %d group (%d) into %s (#%d)", level, groupNum, f, i)
 					}
+					atomic.AddInt64(&e.stats.TSMCompactions[level-1], 1)
 					e.logger.Printf("compacted level %d group %d of %d files into %d files in %s",
 						level, groupNum, len(group), len(files), time.Since(start))
 				}(i, group)
 			}
 			wg.Wait()
+
+			// Track the amount of time spent compacting the groups.
+			atomic.AddInt64(&e.stats.TSMCompactionDuration[level-1], time.Since(start).Nanoseconds())
 		}
 	}
 }
@@ -652,12 +934,23 @@ func (e *Engine) compactTSMFull() {
 			return
 
 		default:
+			optimize := false
+			logDesc := "full"
 			tsmFiles := e.CompactionPlan.Plan(e.WAL.LastWriteTime())
+
+			if len(tsmFiles) == 0 {
+				optimize = true
+				logDesc = "optimize"
+				tsmFiles = e.CompactionPlan.PlanOptimize()
+			}
 
 			if len(tsmFiles) == 0 {
 				time.Sleep(time.Second)
 				continue
 			}
+
+			// Keep track of the start time for statistics.
+			start := time.Now()
 
 			var wg sync.WaitGroup
 			for i, group := range tsmFiles {
@@ -665,38 +958,87 @@ func (e *Engine) compactTSMFull() {
 				go func(groupNum int, group CompactionGroup) {
 					defer wg.Done()
 					start := time.Now()
-					e.logger.Printf("beginning full compaction of group %d, %d TSM files", groupNum, len(group))
+					e.logger.Printf("beginning %s compaction of group %d, %d TSM files", logDesc, groupNum, len(group))
 					for i, f := range group {
-						e.logger.Printf("compacting full group (%d) %s (#%d)", groupNum, f, i)
+						e.logger.Printf("compacting %s group (%d) %s (#%d)", logDesc, groupNum, f, i)
 					}
 
-					files, err := e.Compactor.CompactFull(group)
-					if err != nil {
-						e.logger.Printf("error compacting TSM files: %v", err)
-						time.Sleep(time.Second)
-						return
+					var (
+						files []string
+						err   error
+					)
+					if optimize {
+						files, err = e.Compactor.CompactFast(group)
+						if err == errCompactionsDisabled || err == errCompactionInProgress {
+							e.logger.Printf("aborted %s compaction group (%d). %v",
+								logDesc, groupNum, err)
+
+							if err == errCompactionInProgress {
+								time.Sleep(time.Second)
+							}
+							return
+						} else if err != nil {
+							e.logger.Printf("error compacting TSM files: %v", err)
+							atomic.AddInt64(&e.stats.TSMOptimizeCompactionErrors, 1)
+
+							time.Sleep(time.Second)
+							return
+						}
+					} else {
+						files, err = e.Compactor.CompactFull(group)
+						if err == errCompactionsDisabled || err == errCompactionInProgress {
+							e.logger.Printf("aborted %s compaction group (%d). %v",
+								logDesc, groupNum, err)
+
+							if err == errCompactionInProgress {
+								time.Sleep(time.Second)
+							}
+							return
+						} else if err != nil {
+							e.logger.Printf("error compacting TSM files: %v", err)
+							atomic.AddInt64(&e.stats.TSMFullCompactionErrors, 1)
+
+							time.Sleep(time.Second)
+							return
+						}
 					}
 
 					if err := e.FileStore.Replace(group, files); err != nil {
 						e.logger.Printf("error replacing new TSM files: %v", err)
+						atomic.AddInt64(&e.stats.TSMFullCompactionErrors, 1)
 						time.Sleep(time.Second)
 						return
 					}
 
 					for i, f := range files {
-						e.logger.Printf("compacted full group (%d) into %s (#%d)", groupNum, f, i)
+						e.logger.Printf("compacted %s group (%d) into %s (#%d)", logDesc, groupNum, f, i)
 					}
-					e.logger.Printf("compacted full %d files into %d files in %s",
-						len(group), len(files), time.Since(start))
+
+					if optimize {
+						atomic.AddInt64(&e.stats.TSMOptimizeCompactions, 1)
+					} else {
+						atomic.AddInt64(&e.stats.TSMFullCompactions, 1)
+					}
+					e.logger.Printf("compacted %s %d files into %d files in %s",
+						logDesc, len(group), len(files), time.Since(start))
 				}(i, group)
 			}
 			wg.Wait()
+
+			// Track the amount of time spent compacting the groups.
+			if optimize {
+				atomic.AddInt64(&e.stats.TSMOptimizeCompactionDuration, time.Since(start).Nanoseconds())
+			} else {
+				atomic.AddInt64(&e.stats.TSMFullCompactionDuration, time.Since(start).Nanoseconds())
+			}
+
 		}
 	}
 }
 
 // reloadCache reads the WAL segment files and loads them into the cache.
 func (e *Engine) reloadCache() error {
+	now := time.Now()
 	files, err := segmentFileNames(e.WAL.Path())
 	if err != nil {
 		return err
@@ -716,13 +1058,32 @@ func (e *Engine) reloadCache() error {
 		return err
 	}
 
+	e.traceLogger.Printf("Reloaded WAL cache %s in %v", e.WAL.Path(), time.Since(now))
 	return nil
 }
 
 func (e *Engine) cleanup() error {
+	allfiles, err := ioutil.ReadDir(e.path)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range allfiles {
+		// Check to see if there are any `.tmp` directories that were left over from failed shard snapshots
+		if f.IsDir() && strings.HasSuffix(f.Name(), ".tmp") {
+			if err := os.RemoveAll(filepath.Join(e.path, f.Name())); err != nil {
+				return fmt.Errorf("error removing tmp snapshot directory %q: %s", f.Name(), err)
+			}
+		}
+	}
+
+	return e.cleanupTempTSMFiles()
+}
+
+func (e *Engine) cleanupTempTSMFiles() error {
 	files, err := filepath.Glob(filepath.Join(e.path, fmt.Sprintf("*.%s", CompactionTempExtension)))
 	if err != nil {
-		return fmt.Errorf("error getting compaction checkpoints: %s", err.Error())
+		return fmt.Errorf("error getting compaction temp files: %s", err.Error())
 	}
 
 	for _, f := range files {
@@ -743,22 +1104,30 @@ func (e *Engine) CreateIterator(opt influxql.IteratorOptions) (influxql.Iterator
 	if call, ok := opt.Expr.(*influxql.Call); ok {
 		refOpt := opt
 		refOpt.Expr = call.Args[0].(*influxql.VarRef)
-		inputs, err := e.createVarRefIterator(refOpt)
+		inputs, err := e.createVarRefIterator(refOpt, true)
 		if err != nil {
 			return nil, err
+		} else if len(inputs) == 0 {
+			return nil, nil
 		}
 
-		input := influxql.NewMergeIterator(inputs, opt)
-		if input != nil {
+		// Wrap each series in a call iterator.
+		for i, input := range inputs {
 			if opt.InterruptCh != nil {
 				input = influxql.NewInterruptIterator(input, opt.InterruptCh)
 			}
-			return influxql.NewCallIterator(input, opt)
+
+			itr, err := influxql.NewCallIterator(input, opt)
+			if err != nil {
+				return nil, err
+			}
+			inputs[i] = itr
 		}
-		return nil, nil
+
+		return influxql.NewParallelMergeIterator(inputs, opt, runtime.GOMAXPROCS(0)), nil
 	}
 
-	itrs, err := e.createVarRefIterator(opt)
+	itrs, err := e.createVarRefIterator(opt, false)
 	if err != nil {
 		return nil, err
 	}
@@ -770,72 +1139,15 @@ func (e *Engine) CreateIterator(opt influxql.IteratorOptions) (influxql.Iterator
 	return itr, nil
 }
 
-func (e *Engine) SeriesKeys(opt influxql.IteratorOptions) (influxql.SeriesList, error) {
-	seriesList := influxql.SeriesList{}
-	mms := tsdb.Measurements(e.index.MeasurementsByName(influxql.Sources(opt.Sources).Names()))
-	for _, mm := range mms {
-		// Determine tagsets for this measurement based on dimensions and filters.
-		tagSets, err := mm.TagSets(opt.Dimensions, opt.Condition)
-		if err != nil {
-			return nil, err
-		}
-
-		// Calculate tag sets and apply SLIMIT/SOFFSET.
-		tagSets = influxql.LimitTagSets(tagSets, opt.SLimit, opt.SOffset)
-		for _, t := range tagSets {
-			series := influxql.Series{
-				Name: mm.Name,
-				Tags: influxql.NewTags(t.Tags),
-				Aux:  make([]influxql.DataType, len(opt.Aux)),
-			}
-
-			// Determine the aux field types.
-			for _, seriesKey := range t.SeriesKeys {
-				tags := influxql.NewTags(e.index.TagsForSeries(seriesKey))
-				for i, field := range opt.Aux {
-					typ := func() influxql.DataType {
-						mf := e.measurementFields[mm.Name]
-						if mf == nil {
-							return influxql.Unknown
-						}
-
-						f := mf.Field(field)
-						if f == nil {
-							return influxql.Unknown
-						}
-						return f.Type
-					}()
-
-					if typ == influxql.Unknown {
-						if v := tags.Value(field); v != "" {
-							// All tags are strings.
-							typ = influxql.String
-						}
-					}
-
-					if typ != influxql.Unknown {
-						if series.Aux[i] == influxql.Unknown || typ < series.Aux[i] {
-							series.Aux[i] = typ
-						}
-					}
-				}
-			}
-			seriesList = append(seriesList, series)
-		}
-	}
-	return seriesList, nil
-}
-
 // createVarRefIterator creates an iterator for a variable reference.
-func (e *Engine) createVarRefIterator(opt influxql.IteratorOptions) ([]influxql.Iterator, error) {
+// The aggregate argument determines this is being created for an aggregate.
+// If this is an aggregate, the limit optimization is disabled temporarily. See #6661.
+func (e *Engine) createVarRefIterator(opt influxql.IteratorOptions, aggregate bool) ([]influxql.Iterator, error) {
 	ref, _ := opt.Expr.(*influxql.VarRef)
 
 	var itrs []influxql.Iterator
 	if err := func() error {
 		mms := tsdb.Measurements(e.index.MeasurementsByName(influxql.Sources(opt.Sources).Names()))
-
-		// Retrieve the maximum number of fields (without time).
-		conditionFields := make([]string, len(influxql.ExprNames(opt.Condition)))
 
 		for _, mm := range mms {
 			// Determine tagsets for this measurement based on dimensions and filters.
@@ -848,34 +1160,13 @@ func (e *Engine) createVarRefIterator(opt influxql.IteratorOptions) ([]influxql.
 			tagSets = influxql.LimitTagSets(tagSets, opt.SLimit, opt.SOffset)
 
 			for _, t := range tagSets {
-				inputs := make([]influxql.Iterator, 0, len(t.SeriesKeys))
-				for i, seriesKey := range t.SeriesKeys {
-					fields := 0
-					if t.Filters[i] != nil {
-						// Retrieve non-time fields from this series filter and filter out tags.
-						for _, f := range influxql.ExprNames(t.Filters[i]) {
-							conditionFields[fields] = f
-							fields++
-						}
-					}
-
-					input, err := e.createVarRefSeriesIterator(ref, mm, seriesKey, t, t.Filters[i], conditionFields[:fields], opt)
-					if err != nil {
-						return err
-					} else if input == nil {
-						continue
-					}
-					inputs = append(inputs, input)
+				inputs, err := e.createTagSetIterators(ref, mm, t, opt)
+				if err != nil {
+					return err
 				}
 
-				if len(inputs) > 0 && (opt.Limit > 0 || opt.Offset > 0) {
-					var itr influxql.Iterator
-					if opt.MergeSorted() {
-						itr = influxql.NewSortedMergeIterator(inputs, opt)
-					} else {
-						itr = influxql.NewMergeIterator(inputs, opt)
-					}
-					itrs = append(itrs, newLimitIterator(itr, opt))
+				if !aggregate && len(inputs) > 0 && (opt.Limit > 0 || opt.Offset > 0) {
+					itrs = append(itrs, newLimitIterator(influxql.NewSortedMergeIterator(inputs, opt), opt))
 				} else {
 					itrs = append(itrs, inputs...)
 				}
@@ -890,8 +1181,102 @@ func (e *Engine) createVarRefIterator(opt influxql.IteratorOptions) ([]influxql.
 	return itrs, nil
 }
 
+// createTagSetIterators creates a set of iterators for a tagset.
+func (e *Engine) createTagSetIterators(ref *influxql.VarRef, mm *tsdb.Measurement, t *influxql.TagSet, opt influxql.IteratorOptions) ([]influxql.Iterator, error) {
+	// Set parallelism by number of logical cpus.
+	parallelism := runtime.GOMAXPROCS(0)
+	if parallelism > len(t.SeriesKeys) {
+		parallelism = len(t.SeriesKeys)
+	}
+
+	// Create series key groupings w/ return error.
+	groups := make([]struct {
+		keys    []string
+		filters []influxql.Expr
+		itrs    []influxql.Iterator
+		err     error
+	}, parallelism)
+
+	// Group series keys.
+	n := len(t.SeriesKeys) / parallelism
+	for i := 0; i < parallelism; i++ {
+		group := &groups[i]
+
+		if i < parallelism-1 {
+			group.keys = t.SeriesKeys[i*n : (i+1)*n]
+			group.filters = t.Filters[i*n : (i+1)*n]
+		} else {
+			group.keys = t.SeriesKeys[i*n:]
+			group.filters = t.Filters[i*n:]
+		}
+
+		group.itrs = make([]influxql.Iterator, 0, len(group.keys))
+	}
+
+	// Read series groups in parallel.
+	var wg sync.WaitGroup
+	for i := range groups {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			groups[i].itrs, groups[i].err = e.createTagSetGroupIterators(ref, mm, groups[i].keys, t, groups[i].filters, opt)
+		}(i)
+	}
+	wg.Wait()
+
+	// Determine total number of iterators so we can allocate only once.
+	var itrN int
+	for _, group := range groups {
+		itrN += len(group.itrs)
+	}
+
+	// Combine all iterators together and check for errors.
+	var err error
+	itrs := make([]influxql.Iterator, 0, itrN)
+	for _, group := range groups {
+		if group.err != nil {
+			err = group.err
+		}
+		itrs = append(itrs, group.itrs...)
+	}
+
+	// If an error occurred, make sure we close all created iterators.
+	if err != nil {
+		influxql.Iterators(itrs).Close()
+		return nil, err
+	}
+
+	return itrs, nil
+}
+
+// createTagSetGroupIterators creates a set of iterators for a subset of a tagset's series.
+func (e *Engine) createTagSetGroupIterators(ref *influxql.VarRef, mm *tsdb.Measurement, seriesKeys []string, t *influxql.TagSet, filters []influxql.Expr, opt influxql.IteratorOptions) ([]influxql.Iterator, error) {
+	conditionFields := make([]influxql.VarRef, len(influxql.ExprNames(opt.Condition)))
+
+	itrs := make([]influxql.Iterator, 0, len(seriesKeys))
+	for i, seriesKey := range seriesKeys {
+		fields := 0
+		if filters[i] != nil {
+			// Retrieve non-time fields from this series filter and filter out tags.
+			for _, f := range influxql.ExprNames(filters[i]) {
+				conditionFields[fields] = f
+				fields++
+			}
+		}
+
+		itr, err := e.createVarRefSeriesIterator(ref, mm, seriesKey, t, filters[i], conditionFields[:fields], opt)
+		if err != nil {
+			return itrs, err
+		} else if itr == nil {
+			continue
+		}
+		itrs = append(itrs, itr)
+	}
+	return itrs, nil
+}
+
 // createVarRefSeriesIterator creates an iterator for a variable reference for a series.
-func (e *Engine) createVarRefSeriesIterator(ref *influxql.VarRef, mm *tsdb.Measurement, seriesKey string, t *influxql.TagSet, filter influxql.Expr, conditionFields []string, opt influxql.IteratorOptions) (influxql.Iterator, error) {
+func (e *Engine) createVarRefSeriesIterator(ref *influxql.VarRef, mm *tsdb.Measurement, seriesKey string, t *influxql.TagSet, filter influxql.Expr, conditionFields []influxql.VarRef, opt influxql.IteratorOptions) (influxql.Iterator, error) {
 	tags := influxql.NewTags(e.index.TagsForSeries(seriesKey))
 
 	// Create options specific for this series.
@@ -903,17 +1288,35 @@ func (e *Engine) createVarRefSeriesIterator(ref *influxql.VarRef, mm *tsdb.Measu
 	var aux []cursorAt
 	if len(opt.Aux) > 0 {
 		aux = make([]cursorAt, len(opt.Aux))
-		for i := range aux {
-			// Create cursor from field.
-			cur := e.buildCursor(mm.Name, seriesKey, opt.Aux[i], opt)
-			if cur != nil {
-				aux[i] = newBufCursor(cur, opt.Ascending)
-				continue
+		for i, ref := range opt.Aux {
+			// Create cursor from field if a tag wasn't requested.
+			if ref.Type != influxql.Tag {
+				cur := e.buildCursor(mm.Name, seriesKey, &ref, opt)
+				if cur != nil {
+					aux[i] = newBufCursor(cur, opt.Ascending)
+					continue
+				}
+
+				// If a field was requested, use a nil cursor of the requested type.
+				switch ref.Type {
+				case influxql.Float, influxql.AnyField:
+					aux[i] = &floatNilLiteralCursor{}
+					continue
+				case influxql.Integer:
+					aux[i] = &integerNilLiteralCursor{}
+					continue
+				case influxql.String:
+					aux[i] = &stringNilLiteralCursor{}
+					continue
+				case influxql.Boolean:
+					aux[i] = &booleanNilLiteralCursor{}
+					continue
+				}
 			}
 
 			// If field doesn't exist, use the tag value.
-			// However, if the tag value is blank then return a null.
-			if v := tags.Value(opt.Aux[i]); v == "" {
+			if v := tags.Value(ref.Val); v == "" {
+				// However, if the tag value is blank then return a null.
 				aux[i] = &stringNilLiteralCursor{}
 			} else {
 				aux[i] = &stringLiteralCursor{value: v}
@@ -926,33 +1329,53 @@ func (e *Engine) createVarRefSeriesIterator(ref *influxql.VarRef, mm *tsdb.Measu
 	var conds []cursorAt
 	if len(conditionFields) > 0 {
 		conds = make([]cursorAt, len(conditionFields))
-		for i := range conds {
-			cur := e.buildCursor(mm.Name, seriesKey, conditionFields[i], opt)
-			if cur != nil {
-				conds[i] = newBufCursor(cur, opt.Ascending)
-				continue
+		for i, ref := range conditionFields {
+			// Create cursor from field if a tag wasn't requested.
+			if ref.Type != influxql.Tag {
+				cur := e.buildCursor(mm.Name, seriesKey, &ref, opt)
+				if cur != nil {
+					conds[i] = newBufCursor(cur, opt.Ascending)
+					continue
+				}
+
+				// If a field was requested, use a nil cursor of the requested type.
+				switch ref.Type {
+				case influxql.Float, influxql.AnyField:
+					conds[i] = &floatNilLiteralCursor{}
+					continue
+				case influxql.Integer:
+					conds[i] = &integerNilLiteralCursor{}
+					continue
+				case influxql.String:
+					conds[i] = &stringNilLiteralCursor{}
+					continue
+				case influxql.Boolean:
+					conds[i] = &booleanNilLiteralCursor{}
+					continue
+				}
 			}
 
 			// If field doesn't exist, use the tag value.
-			// However, if the tag value is blank then return a null.
-			if v := tags.Value(conditionFields[i]); v == "" {
+			if v := tags.Value(ref.Val); v == "" {
+				// However, if the tag value is blank then return a null.
 				conds[i] = &stringNilLiteralCursor{}
 			} else {
 				conds[i] = &stringLiteralCursor{value: v}
 			}
 		}
 	}
+	condNames := influxql.VarRefs(conditionFields).Strings()
 
 	// Limit tags to only the dimensions selected.
 	tags = tags.Subset(opt.Dimensions)
 
 	// If it's only auxiliary fields then it doesn't matter what type of iterator we use.
 	if ref == nil {
-		return newFloatIterator(mm.Name, tags, itrOpt, nil, aux, conds, conditionFields), nil
+		return newFloatIterator(mm.Name, tags, itrOpt, nil, aux, conds, condNames), nil
 	}
 
 	// Build main cursor.
-	cur := e.buildCursor(mm.Name, seriesKey, ref.Val, opt)
+	cur := e.buildCursor(mm.Name, seriesKey, ref, opt)
 
 	// If the field doesn't exist then don't build an iterator.
 	if cur == nil {
@@ -961,42 +1384,65 @@ func (e *Engine) createVarRefSeriesIterator(ref *influxql.VarRef, mm *tsdb.Measu
 
 	switch cur := cur.(type) {
 	case floatCursor:
-		return newFloatIterator(mm.Name, tags, itrOpt, cur, aux, conds, conditionFields), nil
+		return newFloatIterator(mm.Name, tags, itrOpt, cur, aux, conds, condNames), nil
 	case integerCursor:
-		return newIntegerIterator(mm.Name, tags, itrOpt, cur, aux, conds, conditionFields), nil
+		return newIntegerIterator(mm.Name, tags, itrOpt, cur, aux, conds, condNames), nil
 	case stringCursor:
-		return newStringIterator(mm.Name, tags, itrOpt, cur, aux, conds, conditionFields), nil
+		return newStringIterator(mm.Name, tags, itrOpt, cur, aux, conds, condNames), nil
 	case booleanCursor:
-		return newBooleanIterator(mm.Name, tags, itrOpt, cur, aux, conds, conditionFields), nil
+		return newBooleanIterator(mm.Name, tags, itrOpt, cur, aux, conds, condNames), nil
 	default:
 		panic("unreachable")
 	}
 }
 
 // buildCursor creates an untyped cursor for a field.
-func (e *Engine) buildCursor(measurement, seriesKey, field string, opt influxql.IteratorOptions) cursor {
+func (e *Engine) buildCursor(measurement, seriesKey string, ref *influxql.VarRef, opt influxql.IteratorOptions) cursor {
 	// Look up fields for measurement.
+	e.mu.RLock()
 	mf := e.measurementFields[measurement]
+	e.mu.RUnlock()
+
 	if mf == nil {
 		return nil
 	}
 
 	// Find individual field.
-	f := mf.Field(field)
+	f := mf.Field(ref.Val)
 	if f == nil {
+		return nil
+	}
+
+	// Check if we need to perform a cast. Performing a cast in the
+	// engine (if it is possible) is much more efficient than an automatic cast.
+	if ref.Type != influxql.Unknown && ref.Type != influxql.AnyField && ref.Type != f.Type {
+		switch ref.Type {
+		case influxql.Float:
+			switch f.Type {
+			case influxql.Integer:
+				cur := e.buildIntegerCursor(measurement, seriesKey, ref.Val, opt)
+				return &floatCastIntegerCursor{cursor: cur}
+			}
+		case influxql.Integer:
+			switch f.Type {
+			case influxql.Float:
+				cur := e.buildFloatCursor(measurement, seriesKey, ref.Val, opt)
+				return &integerCastFloatCursor{cursor: cur}
+			}
+		}
 		return nil
 	}
 
 	// Return appropriate cursor based on type.
 	switch f.Type {
 	case influxql.Float:
-		return e.buildFloatCursor(measurement, seriesKey, field, opt)
+		return e.buildFloatCursor(measurement, seriesKey, ref.Val, opt)
 	case influxql.Integer:
-		return e.buildIntegerCursor(measurement, seriesKey, field, opt)
+		return e.buildIntegerCursor(measurement, seriesKey, ref.Val, opt)
 	case influxql.String:
-		return e.buildStringCursor(measurement, seriesKey, field, opt)
+		return e.buildStringCursor(measurement, seriesKey, ref.Val, opt)
 	case influxql.Boolean:
-		return e.buildBooleanCursor(measurement, seriesKey, field, opt)
+		return e.buildBooleanCursor(measurement, seriesKey, ref.Val, opt)
 	default:
 		panic("unreachable")
 	}
@@ -1050,10 +1496,11 @@ func tsmFieldTypeToInfluxQLDataType(typ byte) (influxql.DataType, error) {
 	}
 }
 
-func seriesAndFieldFromCompositeKey(key string) (string, string) {
-	parts := strings.Split(key, keyFieldSeparator)
-	if len(parts) != 0 {
-		return parts[0], strings.Join(parts[1:], keyFieldSeparator)
+func SeriesAndFieldFromCompositeKey(key string) (string, string) {
+	sep := strings.Index(key, keyFieldSeparator)
+	if sep == -1 {
+		// No field???
+		return key, ""
 	}
-	return parts[0], parts[1]
+	return key[:sep], key[sep+len(keyFieldSeparator):]
 }
