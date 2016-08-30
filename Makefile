@@ -36,6 +36,13 @@ SERVER := amplifier
 TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
 
+# tools
+GOTOOLS := appcelerator/gotools
+GLIDE := docker run --rm -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
+GLIDE_INSTALL := $(GLIDE) install -v
+GLIDE_UPDATE := $(GLIDE) update -v
+
+
 all: version check install
 
 version:
@@ -47,6 +54,12 @@ clean:
 	@rm -f $$(which amplifier)
 
 install: install-cli install-server
+
+install-deps:
+	@$(GLIDE_INSTALL)
+
+update-deps:
+	@$(GLIDE_UPDATE)
 
 install-cli: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
@@ -80,12 +93,6 @@ build:
 
 run: build
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
-
-install-deps:
-	@glide install --strip-vcs --strip-vendor --update-vendored
-
-update-deps:
-	@glide update --strip-vcs --strip-vendor --update-vendored
 
 test: test-storage test-influx test-stat test-logs test-project test-build test-service
 
