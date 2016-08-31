@@ -1,5 +1,5 @@
 
-.PHONY: all clean install install-server install-cli fmt simplify check version build run
+.PHONY: all clean build build-cli build-server install install-server install-cli fmt simplify check version build-image run
 .PHONY: test test-storage test-influx test-stat test-logs test-build test-project test-service
 
 SHELL := /bin/bash
@@ -15,16 +15,19 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 SRC := $(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path './.git/*')
 
 # for walking directory tree (like for proto rule)
-DIRS = $(shell find . -type d -not -path '.' -not -path './vendor' -not -path './vendor/*' -not -path './.git' -not -path './.git/*')
+EXCLUDE_FILES_FILTER := -not -path './vendor/*' -not -path './.git/*' -not -path './.glide/*'
+EXCLUDE_DIRS_FILTER := $(EXCLUDE_FILES_FILTER) -not -path '.' -not -path './vendor' -not -path './.git' -not -path './.glide'
+
+DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 
 # generated file dependencies for proto rule
-PROTOFILES = $(shell find . -type f -name '*.proto' -not -path './vendor/*' -not -path './.git/*')
+PROTOFILES = $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
 
 # generated files that can be cleaned
-GENERATED := $(shell find . -type f -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*')
+GENERATED := $(shell find . -type f -name '*.pb.go' $(EXCLUDE_FILES_FILTER))
 
 # ignore generated files when formatting/linting/vetting
-CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*' -not -path './.glide/*')
+CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' $(EXCLUDE_FILES_FILTER))
 
 OWNER := appcelerator
 REPO := github.com/$(OWNER)/amp
@@ -38,23 +41,29 @@ IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
 DOCKER_RUN := docker run -t --rm
+
 GOTOOLS := appcelerator/gotools2
+GOOS := $(shell uname | tr [:upper:] [:lower:])
+GOARCH := amd64
+GO := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) $(GOTOOLS) go
+GOTEST := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) go test -v
 
 GLIDE := $(DOCKER_RUN) -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
 GLIDE_INSTALL := $(GLIDE) install -v
 GLIDE_UPDATE := $(GLIDE) update -v
 
-all: version check install
+all: version check build
+
+arch:
+	@echo $(GOOS)
 
 version:
 	@echo "version: $(VERSION) (build: $(BUILD))"
 
 clean:
 	@rm -rf $(GENERATED)
-	@rm -f $$(which amp)
-	@rm -f $$(which amplifier)
-
-install: install-cli install-server
+	@rm -f $$(which $(CLI)) ./$(CLI)
+	@rm -f $$(which $(SERVER)) ./$(SERVER)
 
 install-deps:
 	@$(GLIDE_INSTALL)
@@ -62,21 +71,31 @@ install-deps:
 update-deps:
 	@$(GLIDE_UPDATE)
 
+install: install-cli install-server
+
 install-cli: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 
 install-server: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
-proto: $(PROTOFILES)
-	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:. || true; done
+build: build-cli build-server
 
-# used to build under Docker
+build-cli: proto
+	@hack/build $(CLI)
+
+build-server: proto
+	@hack/build $(SERVER)
+
+proto: $(PROTOFILES)
+	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run --rm --name protoc -t -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:. || true; done
+
+# used to install when you're already inside a container
 install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
-# used to build under Docker
+# used to run protoc when you're already inside a container
 proto-host: $(PROTOFILES)
 	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && protoc *.proto --go_out=plugins=grpc:. || true; done
 
@@ -89,16 +108,16 @@ check:
 	@$(DOCKER_RUN) -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) bash -c 'for p in $$(go list ./... | grep -v /vendor/); do golint $${p} | sed "/pb\.go/d"; done'
 	@go tool vet ${CHECKSRC}
 
-build:
+build-image:
 	@docker build -t $(IMAGE) .
 
-run: build
+run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
 test: test-storage test-influx test-stat test-logs test-project test-build test-service
 
 test-storage:
-	@go test -v $(REPO)/data/storage/etcd
+	@go $(REPO)/data/storage/etcd
 
 test-influx:
 	@go test -v $(REPO)/data/influx
