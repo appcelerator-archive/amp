@@ -37,11 +37,11 @@ TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
-GOTOOLS := appcelerator/gotools
+GOTOOLS := appcelerator/gotools2
+
 GLIDE := docker run --rm -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
 GLIDE_INSTALL := $(GLIDE) install -v
 GLIDE_UPDATE := $(GLIDE) update -v
-
 
 all: version check install
 
@@ -85,7 +85,7 @@ fmt:
 
 check:
 	@test -z $(shell gofmt -l ${CHECKSRC} | tee /dev/stderr) || echo "[WARN] Fix formatting issues with 'make fmt'"
-	@for d in $$(go list ./... | grep -v /vendor/); do golint $${d} | sed '/pb\.go/d'; done
+	@for d in $$(go list ./... | grep -v /vendor/); do $(GOLINT) $${d} | sed '/pb\.go/d'; done
 	@go tool vet ${CHECKSRC}
 
 build:
