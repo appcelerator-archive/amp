@@ -4,12 +4,16 @@ AMP's goal is to provide a platform and simple tools to help developers manage a
 
 # Prerequisites
 
-While all of the infrastructure services and almost all tooling is completely
-containerized, there are still a couple of tool dependencies that need to be
-installed manually for development (the Makefile will be updated to run
-containerized versions of them shortly): 
+All of the infrastructure services and almost all tooling is completely
+containerized: 
+
+Docker the main prerequisite that is required.
 
 * [Docker](https://www.docker.com/products/docker)
+* `make` (almost all the Makefile rules execute in containers now)
+
+Currently, to run tests and a few tools like `gofmt`, Go still needs to be installed on the system.
+
 * [Go](https://golang.org/dl/)
 
 ## Directories
