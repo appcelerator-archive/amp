@@ -24,7 +24,7 @@ PROTOFILES = $(shell find . -type f -name '*.proto' -not -path './vendor/*' -not
 GENERATED := $(shell find . -type f -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*')
 
 # ignore generated files when formatting/linting/vetting
-CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*')
+CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -path './vendor/*' -not -path './.git/*' -not -path './.glide/*')
 
 OWNER := appcelerator
 REPO := github.com/$(OWNER)/amp
@@ -37,9 +37,10 @@ TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
+DOCKER_RUN := docker run -t --rm
 GOTOOLS := appcelerator/gotools2
 
-GLIDE := docker run --rm -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
+GLIDE := $(DOCKER_RUN) -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
 GLIDE_INSTALL := $(GLIDE) install -v
 GLIDE_UPDATE := $(GLIDE) update -v
 
@@ -85,7 +86,7 @@ fmt:
 
 check:
 	@test -z $(shell gofmt -l ${CHECKSRC} | tee /dev/stderr) || echo "[WARN] Fix formatting issues with 'make fmt'"
-	@for d in $$(go list ./... | grep -v /vendor/); do $(GOLINT) $${d} | sed '/pb\.go/d'; done
+	@$(DOCKER_RUN) -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) bash -c 'for p in $$(go list ./... | grep -v /vendor/); do golint $${p} | sed "/pb\.go/d"; done'
 	@go tool vet ${CHECKSRC}
 
 build:
