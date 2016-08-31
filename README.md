@@ -4,15 +4,13 @@ AMP's goal is to provide a platform and simple tools to help developers manage a
 
 # Prerequisites
 
-While all of the infrastructure services and almost all tooling is completely containerized, there are still three
-tools that need to be installed manually for development (the Makefile will be updated to run containerized versions shortly): 
+While all of the infrastructure services and almost all tooling is completely
+containerized, there are still a couple of tool dependencies that need to be
+installed manually for development (the Makefile will be updated to run
+containerized versions of them shortly): 
 
 * [Docker](https://www.docker.com/products/docker)
 * [Go](https://golang.org/dl/)
-* [Glide](https://glide.sh)
-  `curl https://glide.sh/get | sh`
-* [lint](https://github.com/golang/lint)
-  `go get -u github.com/golang/lint/golint`
 
 ## Directories
 
@@ -94,7 +92,7 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
 
     Usage:
       amp logs [flags]
-    
+
     Flags:
           --container_id string   Filter by the given container id
       -f, --follow                Follow log output
@@ -105,7 +103,7 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
           --service_id string     Filter by the given service id
           --service_name string   Filter by the given service name
       -s, --short                 Display message content only
-    
+
     Global Flags:
           --Config string   Config file (default is $HOME/.amp.yaml)
           --target string   target environment ("local"|"virtualbox"|"aws") (default "local")
@@ -117,7 +115,7 @@ A few useful examples:
 ```
   $ amp logs -f
 ```
-    
+
 * To fetch and follow the logs for a specific service, with the message content only:
 ```
   $ amp logs -fs --service_name etcd
@@ -131,10 +129,10 @@ to query and monitor specfic metrics that complements and extends what is visibl
     $ amp stats --help
 
     Get statistics on containers, services, nodes about cpu, memory, io, net.
-    
+
     Usage:
       amp stats [flags]
-    
+
     Flags:
           --container               display stats on containers
           --container-id string     filter on container id
@@ -159,7 +157,7 @@ to query and monitor specfic metrics that complements and extends what is visibl
           --task-name string        filter on task name
           --time-group string       historic extraction group can be: s:seconds, m:minutes, h:hours, d:days, w:weeks
           --until string            date defining when stop the historic metrics extraction, format: YYYY-MM-DD HH:MM:SS.mmm
-    
+
     Global Flags:
           --Config string   Config file (default is $HOME/.amp.yaml)
           --target string   target environment ("local"|"virtualbox"|"aws") (default "local")
@@ -171,7 +169,7 @@ A few useful examples:
 ```
   $ amp stats --service -f
 ```
-    
+
 * To display last 10 minutes of historic of the containers of service kafka with cpu, mem, io, net metrics and follow them:
 ```
   $ amp stats --container --service-name=kafka --period=10m  -f
@@ -181,5 +179,3 @@ A few useful examples:
 ```
   $ amp stats --task --cpu --mem
 ```
-
-
