@@ -269,6 +269,7 @@ etcd() { # Owner: subfuzion
     --label amp.swarm="infrastructure" \
     -p 2379:2379 \
     -p 2380:2380 \
+    -e ETCDCTL_API=3 \
     quay.io/coreos/etcd:v3.0.4 etcd \
       --name etcd \
       --listen-client-urls http://0.0.0.0:2379 \
