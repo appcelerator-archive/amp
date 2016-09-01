@@ -321,6 +321,7 @@ kapacitor() { # Owner: ndegory
     --label amp.swarm="infrastructure" \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e KAPACITOR_HOSTNAME=auto \
+    -e SUBSCRIPTION_PROTOCOL="udp" \
     -e OUTPUT_SLACK_ENABLED="true" \
     -e OUTPUT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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 \
     -e OUTPUT_SLACK_CHANNEL=kapacitor-test \
