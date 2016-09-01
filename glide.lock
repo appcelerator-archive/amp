@@ -1,10 +1,10 @@
-hash: bb2a84e4e9d836dfd207eca74b360255777c55777c645343e222b273249b9eb5
-updated: 2016-08-30T22:07:50.660313454Z
+hash: 5db08def347cc661a5b60bc351b0c5278386ef085573552690fdbc54482ef93c
+updated: 2016-09-01T08:13:40.098414487-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: 9efa00d1030d4bf62eb8e5ec130023aeb1b8e2d0
+  version: 5695120efcfdc05b8ba51be2018d99c2937b41d0
   subpackages:
   - auth/authpb
   - clientv3
@@ -16,6 +16,8 @@ imports:
   version: 6cf5744a041a0022271cefed95ba843f6d87fd51
   subpackages:
   - spew
+- name: github.com/docker/engine-api
+  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
@@ -67,7 +69,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: 05ddf85d245a3bd26e9e3a16c5036c07df9ab3b9
+  version: a6f6fda415dd6739436c7a5e9a93086cb9c27acf
   subpackages:
   - client/v2
   - models
@@ -172,7 +174,7 @@ imports:
   - peer
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: edce13c297077bd11b936063f7572485fd9cbbb6
+  version: f9fd15e1ea3a50bbe58c72a4b8820499fe3bb0e1
   subpackages:
   - backoff
   - uritemplates
