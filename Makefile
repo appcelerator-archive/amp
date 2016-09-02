@@ -51,8 +51,8 @@ GOTEST := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:
 UG := $(shell echo "$$(id -u $${USER}):$$(id -g $${USER})")
 
 GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
-GLIDE_INSTALL := $(GLIDE) install -v
-GLIDE_UPDATE := $(GLIDE) update -v
+GLIDE_INSTALL := $(GLIDE) install
+GLIDE_UPDATE := $(GLIDE) update
 
 all: version check build
 
