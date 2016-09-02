@@ -48,9 +48,11 @@ GOARCH := amd64
 GO := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) $(GOTOOLS) go
 GOTEST := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) go test -v
 
-GLIDE := $(DOCKER_RUN) -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
-GLIDE_INSTALL := $(GLIDE) install -v
-GLIDE_UPDATE := $(GLIDE) update -v
+UG := $(shell echo "$$(id -u $${USER}):$$(id -g $${USER})")
+
+GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide
+GLIDE_INSTALL := $(GLIDE) install
+GLIDE_UPDATE := $(GLIDE) update
 
 all: version check build
 
