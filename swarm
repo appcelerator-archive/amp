@@ -367,9 +367,9 @@ telegrafagent() { # Owner: ndegory
     -e OUTPUT_INFLUXDB_ENABLED=false \
     -e TAG_datacenter=dc1 \
     -e TAG_type=core \
-    -e OUTPUT_KAFKA_ENABLED=true \
-    -e OUTPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e OUTPUT_KAFKA_TOPIC=telegraf \
+    -e OUTPUT_NATS_ENABLED=true \
+    -e OUTPUT_NATS_URL=nats:4222 \
+    -e OUTPUT_NATS_SUBJECT=telegraf \
     -e INPUT_DOCKER_ENABLED=true \
     -e INPUT_CPU_ENABLED=true \
     -e INPUT_DISK_ENABLED=true \
@@ -390,8 +390,7 @@ telemetryworker() { # Owner: ndegory
     --label amp.swarm="infrastructure" \
     -e OUTPUT_INFLUXDB_ENABLED="true" \
     -e INFLUXDB_URL=http://influxdb:8086 \
-    -e OUTPUT_KAFKA_ENABLED=false \
-    -e INPUT_KAFKA_ENABLED=true \
+    -e INPUT_NATS_ENABLED=true \
     -e INPUT_DOCKER_ENABLED=false \
     -e INPUT_CPU_ENABLED=false \
     -e INPUT_DISK_ENABLED=false \
@@ -403,8 +402,8 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_SYSTEM_ENABLED=false \
     -e INPUT_NETSTAT_ENABLED=false \
     -e INPUT_NET_ENABLED=false \
-    -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e INPUT_KAFKA_TOPIC=telegraf \
+    -e INPUT_NATS_URL=nats:4222 \
+    -e INPUT_NATS_SUBJECT=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
