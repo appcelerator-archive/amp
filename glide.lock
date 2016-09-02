@@ -1,5 +1,5 @@
 hash: 59277a3ffbf27c8ba8963ded0a434d8a90bd22ca1523efdac104ab24b9836341
-updated: 2016-09-02T09:27:42.452278959Z
+updated: 2016-09-02T16:39:06.189005373+02:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -32,12 +32,6 @@ imports:
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
   version: aa0c862057666179de291b67d9f093d12b5a8473
-- name: github.com/gogo/protobuf
-  version: 909568be09de550ed094403c2bf8a261b5bb730a
-  subpackages:
-  - gogoproto
-  - proto
-  - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
   version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
   subpackages:
@@ -96,14 +90,6 @@ imports:
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/nats-io/go-nats-streaming
   version: 1875d675b301931c7037d118eac68dca8c99ceed
-  subpackages:
-  - pb
-- name: github.com/nats-io/nats
-  version: ea8b4fd12ebb823073c0004b9f09ac8748f4f165
-  subpackages:
-  - encoders/builtin
-- name: github.com/nats-io/nuid
-  version: a5152d67cf63cbfb5d992a395458722a45194715
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
