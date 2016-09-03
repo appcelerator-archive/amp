@@ -1,5 +1,5 @@
-hash: 59277a3ffbf27c8ba8963ded0a434d8a90bd22ca1523efdac104ab24b9836341
-updated: 2016-09-02T16:39:06.189005373+02:00
+hash: 49919e364308a27c1e24b1673aa447a6a4f50a111adbf37b39049dc2dabd7c90
+updated: 2016-09-02T17:59:38.299267056-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -40,7 +40,7 @@ imports:
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/google/go-github
-  version: a59a35745f99ad92d70d69a9f180767063aa4bf3
+  version: 6d1b527d46849e8fc9238298ebe86dced178609c
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -54,7 +54,7 @@ imports:
   - runtime/internal
   - utilities
 - name: github.com/hashicorp/hcl
-  version: baeb59c710717b06aac1dbe2270e8192ec593244
+  version: 99df0eb941dd8ddbc83d3f3605a34f6a686ac85e
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -90,6 +90,10 @@ imports:
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/nats-io/go-nats-streaming
   version: 1875d675b301931c7037d118eac68dca8c99ceed
+- name: github.com/opencontainers/runc
+  version: 04f275d4601ca7e5ff9460cec7f65e8dd15443ec
+  subpackages:
+  - libcontainer/user
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
@@ -98,6 +102,8 @@ imports:
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
+- name: github.com/rcrowley/go-metrics
+  version: bdb33529eca3e55eac7328e07c57012a797af602
 - name: github.com/Shopify/sarama
   version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
 - name: github.com/spf13/afero
@@ -116,7 +122,7 @@ imports:
 - name: github.com/spf13/viper
   version: 16990631d4aa7e38f73dbbbf37fa13e67c648531
 - name: golang.org/x/crypto
-  version: f160b6bf95857cd862817875dd958be022e587c4
+  version: 9e590154d2353f3f5e1b24da7275686040dcf491
   subpackages:
   - curve25519
   - ed25519
