@@ -342,6 +342,20 @@ func TestDecode_interface(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"interpolate.json",
+			false,
+			map[string]interface{}{
+				"default": `${replace("europe-west", "-", " ")}`,
+			},
+		},
+
+		{
+			"block_assign.hcl",
+			true,
+			nil,
+		},
 	}
 
 	for _, tc := range cases {

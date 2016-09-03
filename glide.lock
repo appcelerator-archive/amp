@@ -1,5 +1,5 @@
 hash: 59277a3ffbf27c8ba8963ded0a434d8a90bd22ca1523efdac104ab24b9836341
-updated: 2016-09-02T16:39:06.189005373+02:00
+updated: 2016-09-03T00:05:49.809244914Z
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -40,7 +40,7 @@ imports:
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/google/go-github
-  version: a59a35745f99ad92d70d69a9f180767063aa4bf3
+  version: 6d1b527d46849e8fc9238298ebe86dced178609c
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -54,7 +54,7 @@ imports:
   - runtime/internal
   - utilities
 - name: github.com/hashicorp/hcl
-  version: baeb59c710717b06aac1dbe2270e8192ec593244
+  version: 99df0eb941dd8ddbc83d3f3605a34f6a686ac85e
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -116,7 +116,7 @@ imports:
 - name: github.com/spf13/viper
   version: 16990631d4aa7e38f73dbbbf37fa13e67c648531
 - name: golang.org/x/crypto
-  version: f160b6bf95857cd862817875dd958be022e587c4
+  version: 9e590154d2353f3f5e1b24da7275686040dcf491
   subpackages:
   - curve25519
   - ed25519
