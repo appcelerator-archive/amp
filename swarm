@@ -11,13 +11,13 @@ set -euo pipefail
 # INFLUXDATA_VERSION should be the Major.minor version, e.g 0.13 or 1.0
 INFLUXDATA_VERSION=1.0
 KAFKA_VERSION=10.0.0.1
+NATS_VERSION=0.2
 ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amp-agent:latest
-  appcelerator/amp-log:latest
-  appcelerator/amp-log-worker:latest
+  appcelerator/amp-agent:nats
+  appcelerator/amp-log-worker:nats
   appcelerator/amp-monitor:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
@@ -27,6 +27,7 @@ IMAGES=(
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
+  appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
@@ -34,13 +35,14 @@ IMAGES=(
 )
 
 MINIMAGES=(
-  appcelerator/amp-agent:latest
-  appcelerator/amp-log-worker:latest
+  appcelerator/amp-agent:nats
+  appcelerator/amp-log-worker:nats
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
+  appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
@@ -63,6 +65,7 @@ SERVICES=(
   kafkamanager
   kibana
   kapacitor
+  nats-streaming
   telegrafagent
   telemetryworker
   zookeeper
@@ -78,6 +81,7 @@ MINSERVICES=(
   kafkamanager
   influxdb
   kibana
+  nats-streaming
   telegrafagent
   telemetryworker
   zookeeper
@@ -220,7 +224,7 @@ ampagent() {
     --label amp.swarm="infrastructure" \
     -p 5001:3000 \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amp-agent:latest
+    appcelerator/amp-agent:nats
 }
 
 amplog() { # Owner: bertrand-quenin
@@ -230,13 +234,13 @@ amplog() { # Owner: bertrand-quenin
     appcelerator/amp-log:latest
 }
 
-# DEPENDENCIES kafka
+# DEPENDENCIES nats-streaming
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
     --label amp.swarm="infrastructure" \
     -p 4018:3000 \
     -e ZOOKEEPER=zookeeper:2181 \
-    appcelerator/amp-log-worker:latest
+    appcelerator/amp-log-worker:nats
 }
 
 ampui() { # Owner: freignat91
@@ -348,6 +352,14 @@ haproxy() { # Owner: freignat91
     appcelerator/haproxy:latest
 }
 
+nats-streaming() { # Owner: bquenin
+  docker service create --network amp-swarm --name nats \
+    --label amp.swarm="infrastructure" \
+    -p 4222:4222 \
+    -p 8222:8222 \
+    appcelerator/nats-streaming:${NATS_VERSION}
+}
+
 # DEPENDENCIES kafka
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
@@ -356,9 +368,9 @@ telegrafagent() { # Owner: ndegory
     -e OUTPUT_INFLUXDB_ENABLED=false \
     -e TAG_datacenter=dc1 \
     -e TAG_type=core \
-    -e OUTPUT_KAFKA_ENABLED=true \
-    -e OUTPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e OUTPUT_KAFKA_TOPIC=telegraf \
+    -e OUTPUT_NATS_ENABLED=true \
+    -e OUTPUT_NATS_URL=nats:4222 \
+    -e OUTPUT_NATS_SUBJECT=telegraf \
     -e INPUT_DOCKER_ENABLED=true \
     -e INPUT_CPU_ENABLED=true \
     -e INPUT_DISK_ENABLED=true \
@@ -379,8 +391,7 @@ telemetryworker() { # Owner: ndegory
     --label amp.swarm="infrastructure" \
     -e OUTPUT_INFLUXDB_ENABLED="true" \
     -e INFLUXDB_URL=http://influxdb:8086 \
-    -e OUTPUT_KAFKA_ENABLED=false \
-    -e INPUT_KAFKA_ENABLED=true \
+    -e INPUT_NATS_ENABLED=true \
     -e INPUT_DOCKER_ENABLED=false \
     -e INPUT_CPU_ENABLED=false \
     -e INPUT_DISK_ENABLED=false \
@@ -392,8 +403,8 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_SYSTEM_ENABLED=false \
     -e INPUT_NETSTAT_ENABLED=false \
     -e INPUT_NET_ENABLED=false \
-    -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e INPUT_KAFKA_TOPIC=telegraf \
+    -e INPUT_NATS_URL=nats:4222 \
+    -e INPUT_NATS_SUBJECT=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }

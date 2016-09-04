@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"encoding/json"
-	"github.com/Shopify/sarama"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/server"
+	"github.com/golang/protobuf/proto"
+	"github.com/nats-io/go-nats-streaming"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -31,6 +31,9 @@ const (
 	testNodeId              = "testNodeId"
 	testContainerId         = "testContainerId"
 	testMessage             = "test message "
+	natsClusterID           = "test-cluster"
+	natsClientID            = "amplifier-log-test"
+	natsURL                 = "nats://localhost:4222"
 )
 
 var (
@@ -41,7 +44,7 @@ var (
 	kafkaURL         string
 	influxURL        string
 	client           logs.LogsClient
-	producer         sarama.SyncProducer
+	sc               stan.Conn
 )
 
 func parseEnv() {
@@ -78,7 +81,7 @@ func parseEnv() {
 
 func TestMain(m *testing.M) {
 	defer func() {
-		producer.Close()
+		sc.Close()
 	}()
 
 	parseEnv()
@@ -92,9 +95,9 @@ func TestMain(m *testing.M) {
 		fmt.Println("connection failure")
 		os.Exit(1)
 	}
-	producer, err = sarama.NewSyncProducer([]string{config.KafkaURL}, nil)
+	sc, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(natsURL))
 	if err != nil {
-		fmt.Println("Cannot create kafka producer")
+		fmt.Println("connection failure")
 		os.Exit(1)
 	}
 	client = logs.NewLogsClient(conn)
@@ -102,6 +105,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
+	produceLogEntries(t, 100)
 	expected := 100
 	actual := -1
 	for i := 0; i < 60; i++ {
@@ -238,19 +242,20 @@ func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
 
 func produceLogEntries(t *testing.T, howMany int) {
 	for i := 0; i < howMany; i++ {
-		message, err := json.Marshal(logs.LogEntry{
-			Timestamp:   strconv.Itoa(time.Now().Nanosecond()),
-			TimeId:      strconv.Itoa(time.Now().Nanosecond()),
+		logEntry := logs.LogEntry{
+			Timestamp:   time.Now().Format(time.RFC3339Nano),
+			TimeId:      time.Now().Format(time.RFC3339Nano),
 			ServiceId:   testServiceId,
 			ServiceName: testServiceName,
 			NodeId:      testNodeId,
 			ContainerId: testContainerId,
 			Message:     testMessage + strconv.Itoa(rand.Int()),
-		})
-		_, _, err = producer.SendMessage(&sarama.ProducerMessage{
-			Topic: "amp-logs",
-			Value: sarama.ByteEncoder(message),
-		})
+		}
+		encoded, err := proto.Marshal(&logEntry)
+		if err != nil {
+			t.Error(err)
+		}
+		err = sc.Publish(logs.NatsLogTopic, encoded)
 		if err != nil {
 			t.Error(err)
 		}
@@ -288,7 +293,7 @@ func TestShouldStreamLogs(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 }
@@ -298,7 +303,7 @@ func TestShouldStreamAndFilterByContainerId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
@@ -311,7 +316,7 @@ func TestShouldStreamAndFilterByNodeId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
@@ -324,7 +329,7 @@ func TestShouldStreamAndFilterByServiceId(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
@@ -337,7 +342,7 @@ func TestShouldStreamAndFilterByServiceName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
@@ -350,7 +355,7 @@ func TestShouldStreamAndFilterByMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
@@ -363,7 +368,7 @@ func TestShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(t, 100)
+	produceLogEntries(t, 100)
 	entries := listenToLogEntries(t, stream, defaultNumberOfEntries)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
