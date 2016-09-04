@@ -282,7 +282,7 @@ grafana() { # Owner: ndegory
     -e INFLUXDB_HOST=influxdb \
     -e INFLUXDB_PASS=changeme \
     -e FORCE_HOSTNAME=auto \
-    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
+    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz" \
     appcelerator/grafana:latest
 }
 
@@ -293,7 +293,7 @@ influxdb() { # Owner: ndegory
     -p 8083:8083 \
     -e FORCE_HOSTNAME=auto \
     -e PRE_CREATE_DB=telegraf \
-    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
+    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz" \
     appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
 }
 
@@ -321,12 +321,13 @@ kapacitor() { # Owner: ndegory
     --label amp.swarm="infrastructure" \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e KAPACITOR_HOSTNAME=auto \
+    -e SUBSCRIPTION_PROTOCOL="udp" \
     -e OUTPUT_SLACK_ENABLED="true" \
     -e OUTPUT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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 \
     -e OUTPUT_SLACK_CHANNEL=kapacitor-test \
     -e OUTPUT_SLACK_GLOBAL="true" \
     -e OUTPUT_SLACK_STATE_CHANGE_ONLY="true" \
-    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz" \
+    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz" \
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
