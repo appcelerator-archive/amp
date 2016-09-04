@@ -1,5 +1,5 @@
 hash: 49919e364308a27c1e24b1673aa447a6a4f50a111adbf37b39049dc2dabd7c90
-updated: 2016-09-02T17:59:38.299267056-07:00
+updated: 2016-09-04T10:51:08.605640387-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -32,6 +32,12 @@ imports:
   version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/ghodss/yaml
   version: aa0c862057666179de291b67d9f093d12b5a8473
+- name: github.com/gogo/protobuf
+  version: 25ba8223d7d87221953053beb97ebf159b982257
+  subpackages:
+  - gogoproto
+  - proto
+  - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
   version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
   subpackages:
@@ -90,6 +96,14 @@ imports:
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/nats-io/go-nats-streaming
   version: 1875d675b301931c7037d118eac68dca8c99ceed
+  subpackages:
+  - pb
+- name: github.com/nats-io/nats
+  version: ea8b4fd12ebb823073c0004b9f09ac8748f4f165
+  subpackages:
+  - encoders/builtin
+- name: github.com/nats-io/nuid
+  version: a5152d67cf63cbfb5d992a395458722a45194715
 - name: github.com/opencontainers/runc
   version: 04f275d4601ca7e5ff9460cec7f65e8dd15443ec
   subpackages:
@@ -102,8 +116,6 @@ imports:
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
   version: a71e8f580e3b622ebff585309160b1cc549ef4d2
-- name: github.com/rcrowley/go-metrics
-  version: bdb33529eca3e55eac7328e07c57012a797af602
 - name: github.com/Shopify/sarama
   version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
 - name: github.com/spf13/afero
