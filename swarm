@@ -360,7 +360,7 @@ nats-streaming() { # Owner: bquenin
     appcelerator/nats-streaming:${NATS_VERSION}
 }
 
-# DEPENDENCIES kafka
+# DEPENDENCIES nats
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
     --mode global \
@@ -385,7 +385,7 @@ telegrafagent() { # Owner: ndegory
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
-# DEPENDENCIES kafka, influxdb
+# DEPENDENCIES nats, influxdb
 telemetryworker() { # Owner: ndegory
   docker service create --network amp-swarm --name telemetry-worker \
     --label amp.swarm="infrastructure" \
