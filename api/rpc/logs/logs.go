@@ -56,7 +56,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		request.Query(elastic.NewTermQuery("node_id", in.NodeId))
 	}
 	if in.Message != "" {
-		request.Query(elastic.NewFuzzyQuery("message", in.Message))
+		request.Query(elastic.NewTermQuery("message", in.Message))
 	}
 	// TODO timestamp queries
 
