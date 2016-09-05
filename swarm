@@ -14,8 +14,8 @@ NATS_VERSION=0.2
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amp-agent:nats
-  appcelerator/amp-log-worker:nats
+  appcelerator/amp-agent:latest
+  appcelerator/amp-log-worker:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
@@ -29,8 +29,8 @@ IMAGES=(
 )
 
 MINIMAGES=(
-  appcelerator/amp-agent:nats
-  appcelerator/amp-log-worker:nats
+  appcelerator/amp-agent:latest
+  appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
@@ -205,7 +205,7 @@ ampagent() {
     --label amp.swarm="infrastructure" \
     -p 5001:3000 \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amp-agent:nats
+    appcelerator/amp-agent:latest
 }
 
 # DEPENDENCIES nats-streaming
@@ -214,7 +214,7 @@ amplogworker() { # Owner: bertrand-quenin
     --label amp.swarm="infrastructure" \
     -p 4018:3000 \
     -e ZOOKEEPER=zookeeper:2181 \
-    appcelerator/amp-log-worker:nats
+    appcelerator/amp-log-worker:latest
 }
 
 ampui() { # Owner: freignat91
