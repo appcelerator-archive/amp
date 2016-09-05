@@ -174,9 +174,9 @@ A few useful examples:
   $ amp stats --service -f
 ```
 
-* To display last 10 minutes of historic of the containers of service kafka with cpu, mem, io, net metrics and follow them:
+* To display last 10 minutes of historic of the containers of service amp-agent with cpu, mem, io, net metrics and follow them:
 ```
-  $ amp stats --container --service-name=kafka --period=10m  -f
+  $ amp stats --container --service-name=amp-agent --period=10m  -f
 ```
 
 * To display list of tasks with only cpu and mem metrics

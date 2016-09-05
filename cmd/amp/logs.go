@@ -90,7 +90,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// If follow is requested, get subsequent logs from Kafka and stream it
+	// If follow is requested, get subsequent logs and stream it
 	stream, err := c.GetStream(ctx, &request)
 	if err != nil {
 		return err

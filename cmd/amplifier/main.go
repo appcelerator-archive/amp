@@ -14,8 +14,8 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	defaultClientID         = ""
 	defaultClientSecret     = ""
-	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
+	natsDefaultURL          = "nats://localhost:4222"
 )
 
 // build vars
@@ -35,8 +35,8 @@ var (
 	elasticsearchURL string
 	clientID         string
 	clientSecret     string
-	kafkaURL         string
 	influxURL        string
+	natsURL          string
 )
 
 func parseFlags() {
@@ -46,8 +46,8 @@ func parseFlags() {
 	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
 	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
-	flag.StringVarP(&kafkaURL, "kafkaURL", "k", kafkaDefaultURL, "kafka URL (default '"+kafkaDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influxURL", "", influxDefaultURL, "InfluxDB URL (default '"+influxDefaultURL+"')")
+	flag.StringVarP(&natsURL, "natsURL", "", natsDefaultURL, "Nats URL (default '"+natsDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
@@ -60,8 +60,8 @@ func parseFlags() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
-	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
+	config.NatsURL = natsURL
 }
 
 func main() {

@@ -13,7 +13,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
-	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/nats-io/go-nats-streaming"
@@ -27,9 +26,6 @@ var (
 	// Elasticsearch is the elasticsearch client
 	Elasticsearch elasticsearch.Elasticsearch
 
-	// Kafka is the kafka client
-	Kafka kafka.Kafka
-
 	//Influx is the influxDB client
 	Influx influx.Influx
 
@@ -40,7 +36,6 @@ var (
 const (
 	natsClusterID = "test-cluster"
 	natsClientID  = "amplifier"
-	natsURL       = "nats://localhost:4222"
 )
 
 // Start starts the server
@@ -49,7 +44,6 @@ func Start(config Config) {
 	// attempting to continue in a degraded state if there are problems at start up
 	initEtcd(config)
 	initElasticsearch(config)
-	initKafka(config)
 	initInfluxDB(config)
 	initNats(config)
 
@@ -99,15 +93,6 @@ func initElasticsearch(config Config) {
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
 }
 
-func initKafka(config Config) {
-	log.Printf("connecting to kafka at %s\n", config.KafkaURL)
-	err := Kafka.Connect(config.KafkaURL)
-	if err != nil {
-		log.Panicf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
-	}
-	log.Printf("connected to kafka at %s\n", config.KafkaURL)
-}
-
 func initInfluxDB(config Config) {
 	log.Printf("connecting to InfluxDB at %s\n", config.InfluxURL)
 	Influx = influx.New(config.InfluxURL, "telegraf", "", "")
@@ -118,11 +103,11 @@ func initInfluxDB(config Config) {
 }
 
 func initNats(config Config) {
-	log.Printf("Connecting to NATS-Streaming at %s\n", natsURL)
+	log.Printf("Connecting to NATS-Streaming at %s\n", config.NatsURL)
 	var err error
-	Nats, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(natsURL))
+	Nats, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(config.NatsURL))
 	if err != nil {
-		log.Panicf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", natsURL, err)
+		log.Panicf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", config.NatsURL, err)
 	}
-	log.Printf("Connected to NATS-Streaming at %s\n", natsURL)
+	log.Printf("Connected to NATS-Streaming at %s\n", config.NatsURL)
 }
