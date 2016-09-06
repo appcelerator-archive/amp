@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	//DefaultServerAddress amplifier or HAProxy address
 	DefaultServerAddress = "localhost:50101"
 )
 
