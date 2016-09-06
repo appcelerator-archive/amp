@@ -4,26 +4,24 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/Shopify/sarama"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
-	"log"
 )
 
 const (
-	esIndex = "amp-logs"
-	// NatsLogTopic is the topic used for logs
-	NatsLogTopic = "amp-logs"
+	esIndex       = "amp-logs"
+	kafkaLogTopic = "amp-logs"
 )
 
 // Logs is used to implement log.LogServer
 type Logs struct {
 	Es    elasticsearch.Elasticsearch
 	Store storage.Interface
-	Nats  stan.Conn
+	Kafka kafka.Kafka
 }
 
 // Get implements log.LogServer
@@ -56,7 +54,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		request.Query(elastic.NewTermQuery("node_id", in.NodeId))
 	}
 	if in.Message != "" {
-		request.Query(elastic.NewTermQuery("message", in.Message))
+		request.Query(elastic.NewFuzzyQuery("message", in.Message))
 	}
 	// TODO timestamp queries
 
@@ -81,24 +79,27 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 // GetStream implements log.LogServer
 func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	sub, err := logs.Nats.Subscribe(NatsLogTopic, func(msg *stan.Msg) {
-		logEntry := LogEntry{}
-		err := proto.Unmarshal(msg.Data, &logEntry)
-		if err != nil {
-			log.Printf("error unmarshalling log entry: %v", err)
-		}
-		if filter(&logEntry, in) {
-			stream.Send(&logEntry)
-		}
-	})
+	consumer, err := logs.Kafka.NewConsumer()
 	if err != nil {
-		sub.Unsubscribe()
 		return err
 	}
+	partitionConsumer, err := consumer.ConsumePartition(kafkaLogTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		return err
+	}
+
 	for {
 		select {
+		case msg := <-partitionConsumer.Messages():
+			entry, err := parseLogEntry(msg.Value)
+			if err != nil {
+				return err
+			}
+			if filter(&entry, in) {
+				stream.Send(&entry)
+			}
+
 		case <-stream.Context().Done():
-			sub.Unsubscribe()
 			return stream.Context().Err()
 		}
 	}
