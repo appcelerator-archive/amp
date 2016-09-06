@@ -322,7 +322,7 @@ haproxy() { # Owner: freignat91
     --label amp.swarm="infrastructure" \
     -p 80:80 \
     -p 81:81 \
-    appcelerator/haproxy:test
+    appcelerator/haproxy:latest
 }
 
 telegrafagent() { # Owner: ndegory
