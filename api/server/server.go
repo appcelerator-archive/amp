@@ -13,6 +13,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
+	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/nats-io/go-nats-streaming"
@@ -25,6 +26,9 @@ var (
 
 	// Elasticsearch is the elasticsearch client
 	Elasticsearch elasticsearch.Elasticsearch
+
+	// Kafka is the kafka client
+	Kafka kafka.Kafka
 
 	//Influx is the influxDB client
 	Influx influx.Influx
@@ -44,6 +48,7 @@ func Start(config Config) {
 	// attempting to continue in a degraded state if there are problems at start up
 	initEtcd(config)
 	initElasticsearch(config)
+	initKafka(config)
 	initInfluxDB(config)
 	initNats(config)
 
@@ -91,6 +96,15 @@ func initElasticsearch(config Config) {
 		log.Panicf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
 	}
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
+}
+
+func initKafka(config Config) {
+	log.Printf("connecting to kafka at %s\n", config.KafkaURL)
+	err := Kafka.Connect(config.KafkaURL)
+	if err != nil {
+		log.Panicf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
+	}
+	log.Printf("connected to kafka at %s\n", config.KafkaURL)
 }
 
 func initInfluxDB(config Config) {

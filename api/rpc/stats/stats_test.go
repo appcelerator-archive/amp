@@ -38,12 +38,12 @@ func TestMain(m *testing.M) {
 // Excercises the rpc service for CPUQuery
 func TestCPUQueryServiceWithLimit(t *testing.T) {
 	//Build a query to validate the following command from the CLI
-	//amp stats --cpu --container --service-name=grafana --period 5m
+	//amp stats --cpu --container --service-name=kafka --period 5m
 	query := StatRequest{}
 	//set discriminator
 	query.Discriminator = "container"
 	//Set filters
-	query.FilterServiceName = "grafana"
+	query.FilterServiceName = "kafka"
 	query.Period = "5m"
 	query.Limit = "1"
 	// Call the service over the call stack directly
@@ -60,12 +60,12 @@ func TestCPUQueryServiceWithLimit(t *testing.T) {
 // Excercises the rpc service for CPUQuery
 func TestCPUQueryService(t *testing.T) {
 	//Build a query to validate the following command from the CLI
-	//amp stats --cpu --container --service-name=grafana --period 5m
+	//amp stats --cpu --container --service-name=kafka --period 5m
 	query := StatRequest{}
 	//set discriminator
 	query.Discriminator = "container"
 	//Set filters
-	query.FilterServiceName = "grafana"
+	query.FilterServiceName = "kafka"
 	query.Period = "5m"
 	// Call the service over the call stack directly
 	res, err := srv.CPUQuery(context.Background(), &query)

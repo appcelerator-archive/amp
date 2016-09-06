@@ -23,6 +23,7 @@ const (
 	etcdDefaultEndpoints    = "http://localhost:2379"
 	serverAddress           = "localhost" + defaultPort
 	elasticsearchDefaultURL = "http://localhost:9200"
+	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
 	defaultNumberOfEntries  = 50
 	testServiceId           = "testServiceId"
@@ -40,6 +41,7 @@ var (
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
+	kafkaURL         string
 	influxURL        string
 	natsURL          string
 	client           logs.LogsClient
@@ -59,6 +61,10 @@ func parseEnv() {
 	if elasticsearchURL == "" {
 		elasticsearchURL = elasticsearchDefaultURL
 	}
+	kafkaURL = os.Getenv("kafkaURL")
+	if kafkaURL == "" {
+		kafkaURL = kafkaDefaultURL
+	}
 	influxURL = os.Getenv("influxURL")
 	if influxURL == "" {
 		influxURL = influxDefaultURL
@@ -74,6 +80,7 @@ func parseEnv() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
+	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
 	config.NatsURL = natsURL
 }
