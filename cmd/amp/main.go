@@ -112,7 +112,6 @@ func main() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
-
 	RootCmd.AddCommand(createCmd)
 	RootCmd.AddCommand(stopCmd)
 	RootCmd.AddCommand(startCmd)
