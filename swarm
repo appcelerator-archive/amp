@@ -325,6 +325,7 @@ haproxy() { # Owner: freignat91
     appcelerator/haproxy:latest
 }
 
+
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
     --mode global \
