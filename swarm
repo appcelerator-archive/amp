@@ -248,6 +248,7 @@ elasticsearch() { # Owner: bertrand-quenin
     appcelerator/elasticsearch-amp:latest
 }
 
+
 etcd() { # Owner: subfuzion
   docker service create --network amp-swarm --name etcd \
     --label amp.swarm="infrastructure" \
