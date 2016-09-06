@@ -56,7 +56,10 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		request.Query(elastic.NewTermQuery("node_id", in.NodeId))
 	}
 	if in.Message != "" {
-		request.Query(elastic.NewTermQuery("message", in.Message))
+		queryString := elastic.NewQueryStringQuery("*" + in.Message)
+		queryString.DefaultField("message")
+		queryString.AnalyzeWildcard(true)
+		request.Query(queryString)
 	}
 	// TODO timestamp queries
 
