@@ -200,13 +200,13 @@ func TestShouldFilterByServiceName(t *testing.T) {
 }
 
 func TestShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "kafka"})
+	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "info"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Contains(t, strings.ToLower(entry.Message), "kafka")
+		assert.Contains(t, strings.ToLower(entry.Message), "info")
 	}
 }
 
