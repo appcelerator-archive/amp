@@ -30,7 +30,6 @@ IMAGES=(
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
-  sheepkiller/kafka-manager:latest
 )
 
 MINIMAGES=(
@@ -45,7 +44,6 @@ MINIMAGES=(
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
-  sheepkiller/kafka-manager:latest
 )
 
 # please keep sorted
@@ -63,7 +61,6 @@ SERVICES=(
   kapacitor
   nats-streaming
   telegrafagent
-  telemetryworker
   zookeeper
 )
 
@@ -78,7 +75,6 @@ MINSERVICES=(
   kibana
   nats-streaming
   telegrafagent
-  telemetryworker
   zookeeper
 )
 
@@ -128,7 +124,7 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
-        # $(dirname $0)/advertise_service -r kafka &
+        $(dirname $0)/advertise_service -r kafka &
         removeservices
       ;;
       pull)
@@ -201,7 +197,7 @@ startservices() {
   fi
 
   for i in $services; do $i; done
-  # $(dirname $0)/advertise_service kafka &
+  $(dirname $0)/advertise_service kafka &
 }
 
 ls() {
@@ -226,8 +222,6 @@ ampagent() { # Owner: freignat91
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
     --label amp.swarm="infrastructure" \
-    -p 4018:3000 \
-    -e ZOOKEEPER=zookeeper:2181 \
     appcelerator/amp-log-worker:latest
 }
 
@@ -330,17 +324,14 @@ nats-streaming() { # Owner: bquenin
     appcelerator/nats-streaming:${NATS_VERSION}
 }
 
-# DEPENDENCIES kafka
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
     --mode global \
     --label amp.swarm="infrastructure" \
-    -e OUTPUT_INFLUXDB_ENABLED=false \
+    -e OUTPUT_INFLUXDB_ENABLED=true \
+    -e INFLUXDB_URL=http://influxdb:8086 \
     -e TAG_datacenter=dc1 \
     -e TAG_type=core \
-    -e OUTPUT_KAFKA_ENABLED=true \
-    -e OUTPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e OUTPUT_KAFKA_TOPIC=telegraf \
     -e INPUT_DOCKER_ENABLED=true \
     -e INPUT_CPU_ENABLED=true \
     -e INPUT_DISK_ENABLED=true \
@@ -350,33 +341,9 @@ telegrafagent() { # Owner: ndegory
     -e INPUT_PROCESS_ENABLED=true \
     -e INPUT_SWAP_ENABLED=true \
     -e INPUT_SYSTEM_ENABLED=true \
+    -e INFLUXDB_TIMEOUT=20 \
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-}
-
-# DEPENDENCIES kafka, influxdb
-telemetryworker() { # Owner: ndegory
-  docker service create --network amp-swarm --name telemetry-worker \
-    --label amp.swarm="infrastructure" \
-    -e OUTPUT_INFLUXDB_ENABLED="true" \
-    -e INFLUXDB_URL=http://influxdb:8086 \
-    -e OUTPUT_KAFKA_ENABLED=false \
-    -e INPUT_KAFKA_ENABLED=true \
-    -e INPUT_DOCKER_ENABLED=false \
-    -e INPUT_CPU_ENABLED=false \
-    -e INPUT_DISK_ENABLED=false \
-    -e INPUT_DISKIO_ENABLED=false \
-    -e INPUT_KERNEL_ENABLED=false \
-    -e INPUT_MEM_ENABLED=false \
-    -e INPUT_PROCESS_ENABLED=false \
-    -e INPUT_SWAP_ENABLED=false \
-    -e INPUT_SYSTEM_ENABLED=false \
-    -e INPUT_NETSTAT_ENABLED=false \
-    -e INPUT_NET_ENABLED=false \
-    -e INPUT_KAFKA_BROKER_URL=kafka:9092 \
-    -e INPUT_KAFKA_TOPIC=telegraf \
-    -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
