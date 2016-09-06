@@ -38,6 +38,7 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose, serverAddr)
+		fmt.Println("Server: "+Config.ServerAddress)
 		AMP = client.NewAMP(&Config)
 		AMP.Connect()
 		cli.AtExit(func() {
@@ -109,7 +110,7 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().String("target", "local", `target environment ("local"|"virtualbox"|"aws")`)
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
-	RootCmd.PersistentFlags().StringVarP(&serverAddr, "server", "s", client.DefaultServerAddress, "Server address")
+	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
 	RootCmd.AddCommand(createCmd)
 	RootCmd.AddCommand(stopCmd)
