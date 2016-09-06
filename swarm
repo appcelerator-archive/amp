@@ -308,6 +308,7 @@ kapacitor() { # Owner: ndegory
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
+
 kibana() { # Owner: ndegory
   docker service create --network amp-swarm --name kibana \
     --replicas 1 \
