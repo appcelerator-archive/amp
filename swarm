@@ -18,7 +18,6 @@ ZOOKEEPER_VERSION=3.4.8
 IMAGES=(
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
-  appcelerator/amp-monitor:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
@@ -52,9 +51,7 @@ MINIMAGES=(
 # please keep sorted
 SERVICES=(
   ampagent
-  amplog
   amplogworker
-  ampmonitor
   ampui
   elasticsearch
   etcd
@@ -133,7 +130,7 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
-        $(dirname $0)/advertise_service -r kafka &
+        # $(dirname $0)/advertise_service -r kafka &
         removeservices
       ;;
       pull)
@@ -206,7 +203,7 @@ startservices() {
   fi
 
   for i in $services; do $i; done
-  $(dirname $0)/advertise_service kafka &
+  # $(dirname $0)/advertise_service kafka &
 }
 
 ls() {
@@ -227,13 +224,6 @@ ampagent() {
     appcelerator/amp-agent:latest
 }
 
-amplog() { # Owner: bertrand-quenin
-  docker service create --network amp-swarm --name amp-log \
-    --label amp.swarm="infrastructure" \
-    -p 5000:3000 \
-    appcelerator/amp-log:latest
-}
-
 # DEPENDENCIES nats-streaming
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
@@ -250,15 +240,6 @@ ampui() { # Owner: freignat91
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-ui:latest
 }
-
-ampmonitor() { # Owner: bertrand-quenin
-  docker service create --network amp-swarm --name amp-monitor \
-    --label amp.swarm="infrastructure" \
-    -p 6000:3000 \
-    -e ZOOKEEPER=zookeeper:2181 \
-    appcelerator/amp-monitor:latest
-}
-
 
 elasticsearch() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name elasticsearch \

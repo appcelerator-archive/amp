@@ -9,7 +9,6 @@ services:
       endpoints: http://etcd:2379
       influxhost: influxdb
       elasticsearchURL: http://elasticsearch:9200
-      kafkaURL: kafka:9092
   etcd:
     image: quay.io/coreos/etcd
     command: [
@@ -32,11 +31,6 @@ services:
     image: appcelerator/elasticsearch-amp
   zookeeper:
     image: appcelerator/zookeeper:latest
-  kafka:
-    image: appcelerator/kafka:latest
-    environment:
-      ZOOKEEPER_CONNECT: zookeeper:2181
-      TOPIC_LIST: amp-logs amp-docker-events telegraf
   log-worker:
     image: appcelerator/amp-log-worker:latest
     restart: "always"

@@ -40,7 +40,6 @@ var (
 const (
 	natsClusterID = "test-cluster"
 	natsClientID  = "amplifier"
-	natsURL       = "nats://localhost:4222"
 )
 
 // Start starts the server
@@ -118,11 +117,11 @@ func initInfluxDB(config Config) {
 }
 
 func initNats(config Config) {
-	log.Printf("Connecting to NATS-Streaming at %s\n", natsURL)
+	log.Printf("Connecting to NATS-Streaming at %s\n", config.NatsURL)
 	var err error
-	Nats, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(natsURL))
+	Nats, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(config.NatsURL))
 	if err != nil {
-		log.Panicf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", natsURL, err)
+		log.Panicf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", config.NatsURL, err)
 	}
-	log.Printf("Connected to NATS-Streaming at %s\n", natsURL)
+	log.Printf("Connected to NATS-Streaming at %s\n", config.NatsURL)
 }

@@ -33,7 +33,7 @@ const (
 	testMessage             = "test message "
 	natsClusterID           = "test-cluster"
 	natsClientID            = "amplifier-log-test"
-	natsURL                 = "nats://localhost:4222"
+	natsDefaultURL          = "nats://localhost:4222"
 )
 
 var (
@@ -43,6 +43,7 @@ var (
 	elasticsearchURL string
 	kafkaURL         string
 	influxURL        string
+	natsURL          string
 	client           logs.LogsClient
 	sc               stan.Conn
 )
@@ -68,6 +69,10 @@ func parseEnv() {
 	if influxURL == "" {
 		influxURL = influxDefaultURL
 	}
+	natsURL = os.Getenv("natsURL")
+	if natsURL == "" {
+		natsURL = natsDefaultURL
+	}
 
 	// update config
 	config.Port = port
@@ -77,6 +82,7 @@ func parseEnv() {
 	config.ElasticsearchURL = elasticsearchURL
 	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
+	config.NatsURL = natsURL
 }
 
 func TestMain(m *testing.M) {
@@ -204,13 +210,13 @@ func TestShouldFilterByServiceName(t *testing.T) {
 }
 
 func TestShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "kafka"})
+	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "into"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Contains(t, strings.ToLower(entry.Message), "kafka")
+		assert.Contains(t, strings.ToLower(entry.Message), "into")
 	}
 }
 
