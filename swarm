@@ -16,8 +16,8 @@ ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amp-agent:nats
-  appcelerator/amp-log-worker:nats
+  appcelerator/amp-agent:latest
+  appcelerator/amp-log-worker:latest
   appcelerator/amp-monitor:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
