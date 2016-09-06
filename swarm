@@ -59,7 +59,6 @@ SERVICES=(
   haproxy
   influxdb
   kafka
-  kafkamanager
   kibana
   kapacitor
   nats-streaming
@@ -75,7 +74,6 @@ MINSERVICES=(
   elasticsearch
   grafana
   kafka
-  kafkamanager
   influxdb
   kibana
   nats-streaming
@@ -215,7 +213,7 @@ monitor() {
   clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
 }
 
-ampagent() {
+ampagent() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-agent \
     --mode global \
     --label amp.swarm="infrastructure" \
@@ -290,15 +288,6 @@ kafka() { # Owner: bertrand-quenin
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
     -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
     appcelerator/kafka:${KAFKA_VERSION}
-}
-
-kafkamanager() { # Owner: bertrand-quenin
-  docker service create --network amp-swarm --name kafka-manager \
-    --replicas 1 \
-    --label amp.swarm="infrastructure" \
-    -p 8081:9000 \
-    -e ZK_HOSTS=zookeeper:2181 \
-    sheepkiller/kafka-manager:latest
 }
 
 kapacitor() { # Owner: ndegory
