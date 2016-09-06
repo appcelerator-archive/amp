@@ -110,7 +110,11 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().String("target", "local", `target environment ("local"|"virtualbox"|"aws")`)
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
+<<<<<<< 6d9143a34fdbe62882f12343609539a74e53e744
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
+=======
+	RootCmd.PersistentFlags().StringVarP(&serverAddr, "server", "s", client.DefaultServerAddress, "Server address")
+>>>>>>> add -s --server to choose the target
 
 	RootCmd.AddCommand(createCmd)
 	RootCmd.AddCommand(stopCmd)
