@@ -360,7 +360,7 @@ nats-streaming() { # Owner: bquenin
     appcelerator/nats-streaming:${NATS_VERSION}
 }
 
-# DEPENDENCIES nats
+# DEPENDENCIES kafka
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \
     --mode global \
@@ -369,7 +369,7 @@ telegrafagent() { # Owner: ndegory
     -e TAG_datacenter=dc1 \
     -e TAG_type=core \
     -e OUTPUT_NATS_ENABLED=true \
-    -e OUTPUT_NATS_URL=nats://nats:4222 \
+    -e OUTPUT_NATS_URL=nats:4222 \
     -e OUTPUT_NATS_SUBJECT=telegraf \
     -e INPUT_DOCKER_ENABLED=true \
     -e INPUT_CPU_ENABLED=true \
@@ -385,7 +385,7 @@ telegrafagent() { # Owner: ndegory
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
 }
 
-# DEPENDENCIES nats, influxdb
+# DEPENDENCIES kafka, influxdb
 telemetryworker() { # Owner: ndegory
   docker service create --network amp-swarm --name telemetry-worker \
     --label amp.swarm="infrastructure" \
@@ -403,7 +403,7 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_SYSTEM_ENABLED=false \
     -e INPUT_NETSTAT_ENABLED=false \
     -e INPUT_NET_ENABLED=false \
-    -e INPUT_NATS_URL=nats://nats:4222 \
+    -e INPUT_NATS_URL=nats:4222 \
     -e INPUT_NATS_SUBJECT=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
