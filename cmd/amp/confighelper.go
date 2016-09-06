@@ -9,8 +9,9 @@ import (
 
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
-func InitConfig(configFile string, config *client.Configuration, verbose bool) {
+func InitConfig(configFile string, config *client.Configuration, verbose bool, serverAddr string) {
 	config.Verbose = verbose
+	config.ServerAddress = serverAddr
 
 	// Add matching envirionment variables - will be first in precedence.
 	viper.AutomaticEnv()
