@@ -232,6 +232,7 @@ amplogworker() { # Owner: bertrand-quenin
     appcelerator/amp-log-worker:latest
 }
 
+
 ampui() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-ui \
     --label amp.swarm="infrastructure" \
