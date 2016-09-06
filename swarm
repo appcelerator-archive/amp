@@ -10,22 +10,28 @@
 set -euo pipefail
 # INFLUXDATA_VERSION should be the Major.minor version, e.g 0.13 or 1.0
 INFLUXDATA_VERSION=1.0
-NATS_VERSION=latest
+NATS_VERSION=0.2
+KAFKA_VERSION=10.0.0.1
+ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amp-agent:latest
-  appcelerator/amp-log-worker:latest
+  appcelerator/amp-agent:nats
+  appcelerator/amp-log-worker:nats
+  appcelerator/amp-monitor:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/haproxy:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
+  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
   appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
+  sheepkiller/kafka-manager:latest
 )
 
 MINIMAGES=(
@@ -34,27 +40,35 @@ MINIMAGES=(
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
+  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
   appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
+  sheepkiller/kafka-manager:latest
 )
 
 # please keep sorted
 SERVICES=(
   ampagent
+  amplog
   amplogworker
+  ampmonitor
   ampui
   elasticsearch
   etcd
   grafana
   haproxy
   influxdb
+  kafka
+  kafkamanager
   kibana
   kapacitor
   nats-streaming
   telegrafagent
   telemetryworker
+  zookeeper
 )
 
 MINSERVICES=(
@@ -63,11 +77,14 @@ MINSERVICES=(
   etcd
   elasticsearch
   grafana
+  kafka
+  kafkamanager
   influxdb
   kibana
   nats-streaming
   telegrafagent
   telemetryworker
+  zookeeper
 )
 
 ROLE=infrastructure
@@ -116,6 +133,7 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
+        $(dirname $0)/advertise_service -r kafka &
         removeservices
       ;;
       pull)
@@ -188,6 +206,7 @@ startservices() {
   fi
 
   for i in $services; do $i; done
+  $(dirname $0)/advertise_service kafka &
 }
 
 ls() {
@@ -208,6 +227,13 @@ ampagent() {
     appcelerator/amp-agent:latest
 }
 
+amplog() { # Owner: bertrand-quenin
+  docker service create --network amp-swarm --name amp-log \
+    --label amp.swarm="infrastructure" \
+    -p 5000:3000 \
+    appcelerator/amp-log:latest
+}
+
 # DEPENDENCIES nats-streaming
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
@@ -224,6 +250,15 @@ ampui() { # Owner: freignat91
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-ui:latest
 }
+
+ampmonitor() { # Owner: bertrand-quenin
+  docker service create --network amp-swarm --name amp-monitor \
+    --label amp.swarm="infrastructure" \
+    -p 6000:3000 \
+    -e ZOOKEEPER=zookeeper:2181 \
+    appcelerator/amp-monitor:latest
+}
+
 
 elasticsearch() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name elasticsearch \
@@ -264,6 +299,25 @@ influxdb() { # Owner: ndegory
     -e PRE_CREATE_DB=telegraf \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz" \
     appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
+}
+
+# DEPENDENCIES zookeepeer
+kafka() { # Owner: bertrand-quenin
+  docker service create --network amp-swarm --name kafka \
+    --label amp.swarm="infrastructure" \
+    -p 9092:9092 \
+    -e ZOOKEEPER_CONNECT=zookeeper:2181 \
+    -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
+    appcelerator/kafka:${KAFKA_VERSION}
+}
+
+kafkamanager() { # Owner: bertrand-quenin
+  docker service create --network amp-swarm --name kafka-manager \
+    --replicas 1 \
+    --label amp.swarm="infrastructure" \
+    -p 8081:9000 \
+    -e ZK_HOSTS=zookeeper:2181 \
+    sheepkiller/kafka-manager:latest
 }
 
 kapacitor() { # Owner: ndegory
@@ -353,6 +407,15 @@ telemetryworker() { # Owner: ndegory
     -e INPUT_NATS_SUBJECT=telegraf \
     -e INFLUXDB_TIMEOUT=20 \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+}
+
+zookeeper() { # Owner: bertrand-quenin
+  docker service create --network amp-swarm --name zookeeper \
+    --label amp.swarm="infrastructure" \
+    -p 2181:2181 \
+    -p 2888:2888 \
+    -p 3888:3888 \
+    appcelerator/zookeeper:${ZOOKEEPER_VERSION}
 }
 
 main $@

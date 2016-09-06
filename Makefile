@@ -122,7 +122,7 @@ run: build-image
 test: test-storage test-influx test-stat test-logs test-project test-build test-service
 
 test-storage:
-	@go test -v $(REPO)/data/storage/etcd
+	@go $(REPO)/data/storage/etcd
 
 test-influx:
 	@go test -v $(REPO)/data/influx

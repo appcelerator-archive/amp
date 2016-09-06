@@ -23,6 +23,7 @@ const (
 	etcdDefaultEndpoints    = "http://localhost:2379"
 	serverAddress           = "localhost" + defaultPort
 	elasticsearchDefaultURL = "http://localhost:9200"
+	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
 	defaultNumberOfEntries  = 50
 	testServiceId           = "testServiceId"
@@ -32,7 +33,7 @@ const (
 	testMessage             = "test message "
 	natsClusterID           = "test-cluster"
 	natsClientID            = "amplifier-log-test"
-	natsDefaultURL          = "nats://localhost:4222"
+	natsURL                 = "nats://localhost:4222"
 )
 
 var (
@@ -40,8 +41,8 @@ var (
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
+	kafkaURL         string
 	influxURL        string
-	natsURL          string
 	client           logs.LogsClient
 	sc               stan.Conn
 )
@@ -59,13 +60,13 @@ func parseEnv() {
 	if elasticsearchURL == "" {
 		elasticsearchURL = elasticsearchDefaultURL
 	}
+	kafkaURL = os.Getenv("kafkaURL")
+	if kafkaURL == "" {
+		kafkaURL = kafkaDefaultURL
+	}
 	influxURL = os.Getenv("influxURL")
 	if influxURL == "" {
 		influxURL = influxDefaultURL
-	}
-	natsURL = os.Getenv("natsURL")
-	if natsURL == "" {
-		natsURL = natsDefaultURL
 	}
 
 	// update config
@@ -74,8 +75,8 @@ func parseEnv() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
+	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
-	config.NatsURL = natsURL
 }
 
 func TestMain(m *testing.M) {
@@ -203,13 +204,13 @@ func TestShouldFilterByServiceName(t *testing.T) {
 }
 
 func TestShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "into"})
+	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "kafka"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Contains(t, strings.ToLower(entry.Message), "into")
+		assert.Contains(t, strings.ToLower(entry.Message), "kafka")
 	}
 }
 
