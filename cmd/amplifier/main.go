@@ -10,12 +10,12 @@ import (
 
 const (
 	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	elasticsearchDefaultURL = "http://localhost:9200"
+	etcdDefaultEndpoints    = "http://etcd:2379"
+	elasticsearchDefaultURL = "http://elasticsearch:9200"
 	defaultClientID         = ""
 	defaultClientSecret     = ""
-	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL        = "http://localhost:8086"
+	kafkaDefaultURL         = "kafka:9092"
+	influxDefaultURL        = "http://influxdb:8086"
 )
 
 // build vars
