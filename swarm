@@ -15,6 +15,7 @@ ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
+  appcelerator/amplifier:latest
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/amp-ui:latest
@@ -31,6 +32,7 @@ IMAGES=(
 )
 
 MINIMAGES=(
+  appcelerator/amplifier:latest  
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
@@ -45,6 +47,7 @@ MINIMAGES=(
 
 # please keep sorted
 SERVICES=(
+  amplifier
   ampagent
   amplogworker
   ampui
@@ -61,6 +64,7 @@ SERVICES=(
 )
 
 MINSERVICES=(
+  amplifier
   ampagent
   amplogworker
   etcd
@@ -158,6 +162,7 @@ initswarm() {
 # set up the amp-swarm overlay network
 createnetwork() {
   docker network ls | grep amp-swarm || (echo "> Creating overlay network 'amp-swarm'" && docker network create -d overlay amp-swarm)
+  docker network ls | grep amp-public || (echo "> Creating overlay network 'amp-public'" && docker network create -d overlay amp-public)
 }
 
 # pull the latest AMP images to local docker cache
@@ -202,6 +207,13 @@ ls() {
 monitor() {
   interval=${1:-5}
   clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
+}
+
+amplifier() {
+  docker service create --network amp-swarm,amp-public --name amplifier \
+    --label amp.swarm="infrastructure" \
+    -p 50101:50101 \
+    appcelerator/amplifier:latest
 }
 
 ampagent() { # Owner: freignat91
