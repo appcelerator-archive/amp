@@ -236,7 +236,6 @@ ampui() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-ui \
     --label amp.swarm="infrastructure" \
     --constraint "node.role == manager" \
-    -p 8080:8080 \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-ui:latest
 }
