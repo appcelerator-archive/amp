@@ -321,7 +321,7 @@ haproxy() { # Owner: freignat91
   docker service create --network amp-swarm,amp-public --name haproxy \
     --label amp.swarm="infrastructure" \
     -p 80:80 \
-    -p 81:81 \
+    -p 8080:8080 \  #For GRPC HAPROXY and by-pass Firewall to reach AWS
     appcelerator/haproxy:latest
 }
 
