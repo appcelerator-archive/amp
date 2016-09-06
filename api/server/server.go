@@ -16,7 +16,6 @@ import (
 	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/nats-io/go-nats-streaming"
 	"google.golang.org/grpc"
 )
 
@@ -32,14 +31,6 @@ var (
 
 	//Influx is the influxDB client
 	Influx influx.Influx
-
-	//Nats is the nats client
-	Nats stan.Conn
-)
-
-const (
-	natsClusterID = "test-cluster"
-	natsClientID  = "amplifier"
 )
 
 // Start starts the server
@@ -50,7 +41,6 @@ func Start(config Config) {
 	initElasticsearch(config)
 	initKafka(config)
 	initInfluxDB(config)
-	initNats(config)
 
 	// register services
 	s := grpc.NewServer()
@@ -58,7 +48,7 @@ func Start(config Config) {
 	logs.RegisterLogsServer(s, &logs.Logs{
 		Es:    Elasticsearch,
 		Store: Store,
-		Nats:  Nats,
+		Kafka: Kafka,
 	})
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: Influx,
@@ -114,14 +104,4 @@ func initInfluxDB(config Config) {
 		log.Panicf("amplifer is unable to connect to influxDB on: %s\n%v", config.InfluxURL, err)
 	}
 	log.Printf("connected to influxDB at %s\n", config.InfluxURL)
-}
-
-func initNats(config Config) {
-	log.Printf("Connecting to NATS-Streaming at %s\n", config.NatsURL)
-	var err error
-	Nats, err = stan.Connect(natsClusterID, natsClientID, stan.NatsURL(config.NatsURL))
-	if err != nil {
-		log.Panicf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", config.NatsURL, err)
-	}
-	log.Printf("Connected to NATS-Streaming at %s\n", config.NatsURL)
 }

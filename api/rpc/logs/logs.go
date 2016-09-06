@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
 )
@@ -68,7 +69,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	reply := GetReply{}
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
-		entry, err := parseLogEntry(*hit.Source)
+		entry, err := parseJSONLogEntry(*hit.Source)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +92,7 @@ func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	for {
 		select {
 		case msg := <-partitionConsumer.Messages():
-			entry, err := parseLogEntry(msg.Value)
+			entry, err := parseProtoLogEntry(msg.Value)
 			if err != nil {
 				return err
 			}
@@ -105,13 +106,14 @@ func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	}
 }
 
-func parseLogEntry(data []byte) (LogEntry, error) {
-	var entry LogEntry
-	err := json.Unmarshal(data, &entry)
-	if err != nil {
-		return entry, err
-	}
-	return entry, err
+func parseJSONLogEntry(data []byte) (logEntry LogEntry, err error) {
+	err = json.Unmarshal(data, &logEntry)
+	return
+}
+
+func parseProtoLogEntry(data []byte) (logEntry LogEntry, err error) {
+	err = proto.Unmarshal(data, &logEntry)
+	return
 }
 
 func filter(entry *LogEntry, in *GetRequest) bool {

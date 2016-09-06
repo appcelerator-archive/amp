@@ -15,7 +15,7 @@ ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amp-agent:kafka
+  appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
@@ -31,7 +31,7 @@ IMAGES=(
 )
 
 MINIMAGES=(
-  appcelerator/amp-agent:kafka
+  appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
@@ -213,7 +213,7 @@ ampagent() { # Owner: freignat91
     appcelerator/amp-agent:latest
 }
 
-# DEPENDENCIES nats-streaming
+# DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
     --label amp.swarm="infrastructure" \
