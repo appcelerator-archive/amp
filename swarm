@@ -10,7 +10,6 @@
 set -euo pipefail
 # INFLUXDATA_VERSION should be the Major.minor version, e.g 0.13 or 1.0
 INFLUXDATA_VERSION=1.0
-NATS_VERSION=0.2
 KAFKA_VERSION=10.0.0.1
 ZOOKEEPER_VERSION=3.4.8
 
@@ -26,7 +25,6 @@ IMAGES=(
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
-  appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
@@ -40,7 +38,6 @@ MINIMAGES=(
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
-  appcelerator/nats-streaming:${NATS_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
@@ -59,7 +56,6 @@ SERVICES=(
   kafka
   kibana
   kapacitor
-  nats-streaming
   telegrafagent
   zookeeper
 )
@@ -73,7 +69,6 @@ MINSERVICES=(
   kafka
   influxdb
   kibana
-  nats-streaming
   telegrafagent
   zookeeper
 )
@@ -218,7 +213,7 @@ ampagent() { # Owner: freignat91
     appcelerator/amp-agent:latest
 }
 
-# DEPENDENCIES nats-streaming
+# DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
   docker service create --network amp-swarm --name amp-log-worker \
     --label amp.swarm="infrastructure" \
@@ -314,14 +309,6 @@ haproxy() { # Owner: freignat91
     --label amp.swarm="infrastructure" \
     -p 80:80 \
     appcelerator/haproxy:latest
-}
-
-nats-streaming() { # Owner: bquenin
-  docker service create --network amp-swarm --name nats \
-    --label amp.swarm="infrastructure" \
-    -p 4222:4222 \
-    -p 8222:8222 \
-    appcelerator/nats-streaming:${NATS_VERSION}
 }
 
 telegrafagent() { # Owner: ndegory

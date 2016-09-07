@@ -22,7 +22,6 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
-	natsDefaultURL          = "nats://localhost:4222"
 )
 
 var (
@@ -32,7 +31,6 @@ var (
 	elasticsearchURL string
 	kafkaURL         string
 	influxURL        string
-	natsURL          string
 	client           build.AmpBuildClient
 	ctx              context.Context
 )
@@ -58,10 +56,6 @@ func parseEnv() {
 	if influxURL == "" {
 		influxURL = influxDefaultURL
 	}
-	natsURL = os.Getenv("natsURL")
-	if natsURL == "" {
-		natsURL = natsDefaultURL
-	}
 
 	// update config
 	config.Port = port
@@ -71,7 +65,6 @@ func parseEnv() {
 	config.ElasticsearchURL = elasticsearchURL
 	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
-	config.NatsURL = natsURL
 }
 
 func TestMain(m *testing.M) {
