@@ -211,7 +211,6 @@ monitor() {
 amplifier() {
   docker service create --network amp-swarm,amp-public --name amplifier \
     --label amp.swarm="infrastructure" \
-    -p 50101:50101 \
     appcelerator/amplifier:latest
 }
 
@@ -230,7 +229,6 @@ amplogworker() { # Owner: bertrand-quenin
     --label amp.swarm="infrastructure" \
     appcelerator/amp-log-worker:latest
 }
-
 
 ampui() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-ui \

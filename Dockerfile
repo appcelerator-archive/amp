@@ -11,4 +11,4 @@ COPY . /go/src/github.com/appcelerator/amp
 RUN make install-host
 EXPOSE 50101
 ENTRYPOINT []
-CMD [ "amplifier" ]
+CMD [ "/go/bin/amplifier", "--service"]

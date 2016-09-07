@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	//DefaultServerAddress amplifier address + port default
 	DefaultServerAddress = "localhost:50101"
 )
 
