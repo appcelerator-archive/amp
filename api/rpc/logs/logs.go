@@ -34,7 +34,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//}
 	// Prepare request to elasticsearch
 	request := logs.Es.GetClient().Search().Index(esIndex)
-	request.Sort("time_id", true)
+	request.Sort("time_id", false)
 	if in.From >= 0 {
 		request.From(int(in.From))
 	}
@@ -79,6 +79,12 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		}
 		reply.Entries[i] = &entry
 	}
+
+	// Reverse entries
+	for i, j := 0, len(reply.Entries)-1; i < j; i, j = i+1, j-1 {
+		reply.Entries[i], reply.Entries[j] = reply.Entries[j], reply.Entries[i]
+	}
+
 	return &reply, nil
 }
 

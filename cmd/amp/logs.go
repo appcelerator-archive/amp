@@ -32,7 +32,7 @@ func init() {
 	logsCmd.Flags().String("node", "", "Filter by the given node id")
 	logsCmd.Flags().String("from", "-1", "Fetch from the given index")
 	logsCmd.Flags().StringP("number", "n", "100", "Number of results")
-	logsCmd.Flags().BoolP("short", "s", false, "Display message content only")
+	logsCmd.Flags().BoolP("meta", "m", false, "Display entry metadata")
 	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
 
 	RootCmd.AddCommand(logsCmd)
@@ -53,7 +53,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		fmt.Printf("node: %v\n", cmd.Flag("node_id").Value)
 		fmt.Printf("from: %v\n", cmd.Flag("from").Value)
 		fmt.Printf("n: %v\n", cmd.Flag("n").Value)
-		fmt.Printf("short: %v\n", cmd.Flag("short").Value)
+		fmt.Printf("meta: %v\n", cmd.Flag("meta").Value)
 	}
 
 	request := logs.GetRequest{}
@@ -68,9 +68,9 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
-	var short bool
-	if short, err = strconv.ParseBool(cmd.Flag("short").Value.String()); err != nil {
-		log.Fatalf("Unable to convert short parameter: %v\n", cmd.Flag("short").Value.String())
+	var meta bool
+	if meta, err = strconv.ParseBool(cmd.Flag("meta").Value.String()); err != nil {
+		log.Fatalf("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 	}
 	var follow bool
 	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
@@ -84,7 +84,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 	for _, entry := range r.Entries {
-		displayLogEntry(entry, short)
+		displayLogEntry(entry, meta)
 	}
 	if !follow {
 		return nil
@@ -103,15 +103,15 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		displayLogEntry(entry, short)
+		displayLogEntry(entry, meta)
 	}
 	return nil
 }
 
-func displayLogEntry(entry *logs.LogEntry, short bool) {
-	if short {
-		fmt.Printf("%s\n", entry.Message)
-	} else {
+func displayLogEntry(entry *logs.LogEntry, meta bool) {
+	if meta {
 		fmt.Printf("%+v\n", entry)
+	} else {
+		fmt.Printf("%s\n", entry.Message)
 	}
 }
