@@ -152,12 +152,14 @@ func (s *Stats) statQueryMetric(req *StatsRequest, metric string) (*StatsReply, 
 	if len(res.Results[0].Series) == 0 {
 		return nil, errors.New("No result found")
 	}
+
+	cpuReply := StatsReply{}
 	if len(res.Results[0].Series) == 0 {
 		return nil, errors.New("No result found")
 	}
 	list := res.Results[0].Series[0].Values
-	containerMap := make(map[string]*StatsEntry)
-	for _, row := range list {
+	cpuReply.Entries = make([]*StatsEntry, len(list))
+	for i, row := range list {
 		entry := StatsEntry{
 			Time:           s.getTimeFieldValue(row[0]),
 			Datacenter:     s.getStringFieldValue(row[1]),
@@ -186,53 +188,34 @@ func (s *Stats) statQueryMetric(req *StatsRequest, metric string) (*StatsReply, 
 			entry.NetTxBytes = s.getNumberFieldValue(row[11])
 			entry.NetRxBytes = s.getNumberFieldValue(row[12])
 		}
-		s.sumByContainer(containerMap, &entry)
+
+		cpuReply.Entries[i] = &entry
 	}
-	return s.computeData(req, containerMap)
+	return s.computeData(req, &cpuReply)
 }
 
-func (s *Stats) sumByContainer(containerMap map[string]*StatsEntry, row *StatsEntry) {
-	key := row.ContainerId
-	aggr, ok := containerMap[key]
-	if !ok {
-		containerMap[key] = row
-		if row.Cpu != 0 || row.Mem != 0 || row.IoRead != 0 || row.IoWrite != 0 || row.NetTxBytes != 0 || row.NetRxBytes != 0 {
-			row.Number = 1
-		}
-	} else {
-		aggr.Cpu += row.Cpu
-		aggr.Mem += row.Mem
-		aggr.MemUsage += row.MemUsage
-		aggr.MemLimit += row.MemLimit
-		aggr.IoRead += row.IoRead
-		aggr.IoWrite += row.IoWrite
-		aggr.NetTxBytes += row.NetTxBytes
-		aggr.NetRxBytes += row.NetRxBytes
-		if row.Cpu != 0 || row.Mem != 0 || row.IoRead != 0 || row.IoWrite != 0 || row.NetTxBytes != 0 || row.NetRxBytes != 0 {
-			aggr.Number++
-		}
-	}
-}
-
-func (s *Stats) computeData(req *StatsRequest, containerMap map[string]*StatsEntry) (*StatsReply, error) {
+func (s *Stats) computeData(req *StatsRequest, data *StatsReply) (*StatsReply, error) {
 	// aggreggate rows in map per id concidering req (containner_id | service_id | task_id | nodeId)
 	resultMap := make(map[string]*StatsEntry)
-	for _, row := range containerMap {
+	for _, row := range data.Entries {
 		key := s.getKey(req, row)
 		aggr, ok := resultMap[key]
 		if !ok {
 			resultMap[key] = row
+			if row.Cpu != 0 || row.Mem != 0 || row.IoRead != 0 || row.IoWrite != 0 || row.NetTxBytes != 0 || row.NetRxBytes != 0 {
+				row.Number = 1
+			}
 		} else {
-			number := row.Number
-			if number >0 {
-				aggr.Cpu += row.Cpu / number
-				aggr.Mem += row.Mem / number
-				aggr.MemUsage += row.MemUsage / number
-				aggr.MemLimit += row.MemLimit / number
-				aggr.IoRead += row.IoRead / number
-				aggr.IoWrite += row.IoWrite / number
-				aggr.NetTxBytes += row.NetTxBytes / number
-				aggr.NetRxBytes += row.NetRxBytes / number
+			aggr.Cpu += row.Cpu
+			aggr.Mem += row.Mem
+			aggr.MemUsage += row.MemUsage
+			aggr.MemLimit += row.MemLimit
+			aggr.IoRead += row.IoRead
+			aggr.IoWrite += row.IoWrite
+			aggr.NetTxBytes += row.NetTxBytes
+			aggr.NetRxBytes += row.NetRxBytes
+			if row.Cpu != 0 || row.Mem != 0 {
+				aggr.Number++
 			}
 		}
 	}
