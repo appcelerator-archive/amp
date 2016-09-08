@@ -38,7 +38,7 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose, serverAddr)
-		fmt.Println("Server: "+Config.ServerAddress)
+		fmt.Println("Server: " + Config.ServerAddress)
 		AMP = client.NewAMP(&Config)
 		AMP.Connect()
 		cli.AtExit(func() {

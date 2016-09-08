@@ -15,11 +15,11 @@ const (
 
 // Configuration is for all configurable client settings
 type Configuration struct {
-	Verbose bool
-	Github  string
-	Target  string
-	Images  []string
-	Port   string
+	Verbose       bool
+	Github        string
+	Target        string
+	Images        []string
+	Port          string
 	ServerAddress string
 }
 
