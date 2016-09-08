@@ -34,6 +34,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//}
 	// Prepare request to elasticsearch
 	request := logs.Es.GetClient().Search().Index(esIndex)
+	request.Sort("time_id", true)
 	if in.From >= 0 {
 		request.From(int(in.From))
 	}
@@ -49,7 +50,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		request.Query(elastic.NewTermQuery("service_name", in.ServiceName))
 	}
 	if in.ContainerId != "" {
-		request.Query(elastic.NewTermQuery("container_id", in.ContainerId))
+		request.Query(elastic.NewPrefixQuery("container_id", in.ContainerId))
 	}
 	if in.NodeId != "" {
 		request.Query(elastic.NewTermQuery("node_id", in.NodeId))
