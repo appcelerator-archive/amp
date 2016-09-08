@@ -215,7 +215,6 @@ func (s *Stats) avgInContainerMap(containerMap map[string]*StatsEntry, row *Stat
 	}
 }
 
-
 func (s *Stats) addByKeyUsingContainerData(req *StatsRequest, containerMap map[string]*StatsEntry) (*StatsReply, error) {
 	// aggreggate rows in map per id concidering req (containner_id | service_id | task_id | nodeId)
 	resultMap := make(map[string]*StatsEntry)

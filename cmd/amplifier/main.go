@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"github.com/appcelerator/amp/api/server"
 	flag "github.com/spf13/pflag"
+	"strings"
 )
 
 const (
-	defaultPort             = ":50101"
-	defaultClientID         = ""
-	defaultClientSecret     = ""
+	defaultPort         = ":50101"
+	defaultClientID     = ""
+	defaultClientSecret = ""
 )
 
 var (
@@ -39,7 +39,7 @@ var (
 	clientSecret     string
 	kafkaURL         string
 	influxURL        string
-	isService	 bool
+	isService        bool
 )
 
 func parseFlags() {
@@ -58,10 +58,10 @@ func parseFlags() {
 
 	//Update url is service usage
 	if isService {
-		etcdEndpoints    = "http://etcd:2379"
+		etcdEndpoints = "http://etcd:2379"
 		elasticsearchURL = "http://elasticsearch:9200"
-		kafkaURL         = "kafka:9092"
-		influxURL        = "http://influxdb:8086"
+		kafkaURL = "kafka:9092"
+		influxURL = "http://influxdb:8086"
 	}
 
 	// update config
