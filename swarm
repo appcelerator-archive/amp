@@ -15,6 +15,7 @@ ZOOKEEPER_VERSION=3.4.8
 
 # please keep sorted
 IMAGES=(
+  appcelerator/amplifier:latest
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/amp-ui:latest
@@ -31,6 +32,7 @@ IMAGES=(
 )
 
 MINIMAGES=(
+  appcelerator/amplifier:latest  
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
@@ -45,6 +47,7 @@ MINIMAGES=(
 
 # please keep sorted
 SERVICES=(
+  amplifier
   ampagent
   amplogworker
   ampui
@@ -61,6 +64,7 @@ SERVICES=(
 )
 
 MINSERVICES=(
+  amplifier
   ampagent
   amplogworker
   etcd
@@ -149,7 +153,6 @@ main() {
   fi
 }
 
-
 # initialize / join swarm as manager
 initswarm() {
   docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init)
@@ -158,6 +161,7 @@ initswarm() {
 # set up the amp-swarm overlay network
 createnetwork() {
   docker network ls | grep amp-swarm || (echo "> Creating overlay network 'amp-swarm'" && docker network create -d overlay amp-swarm)
+  docker network ls | grep amp-public || (echo "> Creating overlay network 'amp-public'" && docker network create -d overlay amp-public)
 }
 
 # pull the latest AMP images to local docker cache
@@ -204,6 +208,12 @@ monitor() {
   clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
 }
 
+amplifier() {
+  docker service create --network amp-swarm,amp-public --name amplifier \
+    --label amp.swarm="infrastructure" \
+    appcelerator/amplifier:latest
+}
+
 ampagent() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-agent \
     --mode global \
@@ -223,7 +233,7 @@ amplogworker() { # Owner: bertrand-quenin
 ampui() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-ui \
     --label amp.swarm="infrastructure" \
-    -p 8080:8080 \
+    --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-ui:latest
 }
@@ -235,6 +245,7 @@ elasticsearch() { # Owner: bertrand-quenin
     -p 9300:9300 \
     appcelerator/elasticsearch-amp:latest
 }
+
 
 etcd() { # Owner: subfuzion
   docker service create --network amp-swarm --name etcd \
@@ -294,6 +305,7 @@ kapacitor() { # Owner: ndegory
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
+
 kibana() { # Owner: ndegory
   docker service create --network amp-swarm --name kibana \
     --replicas 1 \
@@ -305,11 +317,13 @@ kibana() { # Owner: ndegory
 }
 
 haproxy() { # Owner: freignat91
-  docker service create --network amp-swarm --name haproxy \
+  docker service create --network amp-swarm,amp-public --name haproxy \
     --label amp.swarm="infrastructure" \
+    -p 8080:8080 \
     -p 80:80 \
     appcelerator/haproxy:latest
 }
+
 
 telegrafagent() { # Owner: ndegory
   docker service create --network amp-swarm --name telegraf-agent \

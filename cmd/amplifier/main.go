@@ -3,17 +3,19 @@ package main
 import (
 	"fmt"
 	"strings"
-
 	"github.com/appcelerator/amp/api/server"
 	flag "github.com/spf13/pflag"
 )
 
 const (
 	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	elasticsearchDefaultURL = "http://localhost:9200"
 	defaultClientID         = ""
 	defaultClientSecret     = ""
+)
+
+var (
+	etcdDefaultEndpoints    = "http://localhost:2379"
+	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
 )
@@ -37,10 +39,12 @@ var (
 	clientSecret     string
 	kafkaURL         string
 	influxURL        string
+	isService	 bool
 )
 
 func parseFlags() {
 	// set up flags
+	flag.BoolVar(&isService, "service", false, "Launched as a service into swarm network")
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", etcdDefaultEndpoints, "etcd comma-separated endpoints")
 	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
@@ -51,6 +55,14 @@ func parseFlags() {
 
 	// parse command line flags
 	flag.Parse()
+
+	//Update url is service usage
+	if isService {
+		etcdEndpoints    = "http://etcd:2379"
+		elasticsearchURL = "http://elasticsearch:9200"
+		kafkaURL         = "kafka:9092"
+		influxURL        = "http://influxdb:8086"
+	}
 
 	// update config
 	config.Port = port

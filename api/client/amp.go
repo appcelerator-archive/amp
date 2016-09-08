@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	defaultPort   = ":50101"
-	serverAddress = "localhost" + defaultPort
+	//DefaultServerAddress amplifier address + port default
+	DefaultServerAddress = "localhost:50101"
 )
 
 // Configuration is for all configurable client settings
@@ -19,6 +19,8 @@ type Configuration struct {
 	Github  string
 	Target  string
 	Images  []string
+	Port   string
+	ServerAddress string
 }
 
 // AMP holds the state for the current environment
@@ -30,7 +32,7 @@ type AMP struct {
 
 // Connect to amplifier
 func (a *AMP) Connect() *grpc.ClientConn {
-	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(a.Configuration.ServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Panic(err)
 	}

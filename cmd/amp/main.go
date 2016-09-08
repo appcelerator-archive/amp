@@ -22,6 +22,7 @@ var (
 	Config     client.Configuration
 	configFile string
 	verbose    bool
+	serverAddr string
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
@@ -36,7 +37,8 @@ func main() {
 	fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 
 	cobra.OnInitialize(func() {
-		InitConfig(configFile, &Config, verbose)
+		InitConfig(configFile, &Config, verbose, serverAddr)
+		fmt.Println("Server: "+Config.ServerAddress)
 		AMP = client.NewAMP(&Config)
 		AMP.Connect()
 		cli.AtExit(func() {
@@ -108,6 +110,7 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().String("target", "local", `target environment ("local"|"virtualbox"|"aws")`)
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
+	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
 	RootCmd.AddCommand(createCmd)
 	RootCmd.AddCommand(stopCmd)
