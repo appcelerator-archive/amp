@@ -6,8 +6,6 @@ import:
   version: ^3.0.7
   subpackages:
   - clientv3
-- package: github.com/docker/engine-api
-  version: ^0.4.0
 - package: github.com/fatih/color
   version: ^1.0.0
 - package: github.com/golang/protobuf
@@ -18,12 +16,10 @@ import:
   - github
 - package: github.com/howeyc/gopass
 - package: github.com/influxdata/influxdb
-  version: ^1.0.0-rc2
+  version: ^1.0.0
   subpackages:
   - client/v2
 - package: github.com/mitchellh/go-homedir
-- package: github.com/nats-io/go-nats-streaming
-  version: ^0.2.0
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
@@ -39,14 +35,6 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^3.0.50
 - package: gopkg.in/yaml.v2
-- package: github.com/opencontainers/runc
-  version: ^1.0.0-rc1
-  subpackages:
-  - libcontainer/user
-- package: github.com/docker/distribution
-  version: ^2.5.1-rc.1
-  subpackages:
-  - reference
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.3
