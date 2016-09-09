@@ -434,7 +434,7 @@ func (f *Flag) defaultIsZeroValue() bool {
 		return f.DefValue == ""
 	case *ipValue, *ipMaskValue, *ipNetValue:
 		return f.DefValue == "<nil>"
-	case *intSliceValue, *stringSliceValue:
+	case *intSliceValue, *stringSliceValue, *stringArrayValue:
 		return f.DefValue == "[]"
 	default:
 		return true
