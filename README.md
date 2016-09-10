@@ -1,5 +1,7 @@
 # Appcelerator Microservice Platform (AMP)
 
+[![Join the chat at https://gitter.im/appcelerator/amp](https://badges.gitter.im/appcelerator/amp.svg)](https://gitter.im/appcelerator/amp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 AMP's goal is to provide a platform and simple tools to help developers manage and monitor complex, orchestrated service applications. AMP is based entirely on the swarm mode features introduced with Docker 1.12, providing developers a simple path to exploit these features in a hosted environment (that runs locally during development) without straying from the core Docker ecosystem and the need to adopt complex third party frameworks.
 
 # Prerequisites
