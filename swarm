@@ -215,6 +215,7 @@ monitor() {
 registry() { # Owner: freignat91
   docker service create --network amp-swarm --name registry \
   --label amp.swarm="infrastructure" \
+  --mount type=bind,source=$HOME/registry/data,target=/var/lib/registry \
   -p 5000:5000 \
   registry:2
 }
@@ -229,7 +230,6 @@ ampagent() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-agent \
     --mode global \
     --label amp.swarm="infrastructure" \
-    -p 5001:3000 \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-agent:latest
 }
