@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
@@ -60,6 +61,9 @@ func Start(config Config) {
 	})
 	service.RegisterServiceServer(s, &service.Service{})
 	build.RegisterAmpBuildServer(s, &build.Proxy{})
+	stack.RegisterStackServer(s, &stack.Stack{
+		Store: Store,
+	})
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)
