@@ -1,6 +1,7 @@
 #!/bin/sh
 
-if [ $(id -u) -ne 0 ]; then
+docker version >/dev/null 2>&1
+if [ $? -ne 0 ]; then
   DOCKER="sudo docker"
 else
   DOCKER=docker
