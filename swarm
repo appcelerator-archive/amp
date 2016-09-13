@@ -27,7 +27,7 @@ IMAGES=(
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-  appcelerator/registry:2
+  registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
 )
@@ -42,7 +42,7 @@ MINIMAGES=(
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-  appcelerator/registry:2
+  registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
 )
