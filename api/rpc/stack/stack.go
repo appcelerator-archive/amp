@@ -19,3 +19,11 @@ func (stack *Stack) Create(ctx context.Context, in *CreateRequest) (*CreateReply
 	}
 	return &reply, nil
 }
+
+// Up implements stack.StackServer
+func (stack *Stack) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
+	reply := UpReply{
+		StackId: stringid.GenerateNonCryptoID(),
+	}
+	return &reply, nil
+}
