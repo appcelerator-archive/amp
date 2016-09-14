@@ -27,12 +27,13 @@ IMAGES=(
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+  registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
 )
 
 MINIMAGES=(
-  appcelerator/amplifier:latest  
+  appcelerator/amplifier:latest
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
@@ -41,6 +42,7 @@ MINIMAGES=(
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
+  registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   quay.io/coreos/etcd:v3.0.4
 )
@@ -60,6 +62,7 @@ SERVICES=(
   kibana
   kapacitor
   telegrafagent
+  registry
   zookeeper
 )
 
@@ -74,6 +77,7 @@ MINSERVICES=(
   influxdb
   kibana
   telegrafagent
+  registry
   zookeeper
 )
 
@@ -208,6 +212,14 @@ monitor() {
   clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
 }
 
+registry() { # Owner: freignat91
+  docker service create --network amp-swarm --name registry \
+  --label amp.swarm="infrastructure" \
+  --mount type=bind,source=$HOME/registry/data,target=/var/lib/registry \
+  -p 5000:5000 \
+  registry:2
+}
+
 amplifier() {
   docker service create --network amp-swarm,amp-public --name amplifier \
     --label amp.swarm="infrastructure" \
@@ -218,7 +230,6 @@ ampagent() { # Owner: freignat91
   docker service create --network amp-swarm --name amp-agent \
     --mode global \
     --label amp.swarm="infrastructure" \
-    -p 5001:3000 \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-agent:latest
 }
