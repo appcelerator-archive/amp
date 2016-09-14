@@ -8,7 +8,6 @@ import (
 
 var (
 	influx Influx
-	host   string
 )
 
 func TestMain(m *testing.M) {
@@ -41,5 +40,4 @@ func influxInit() {
 	}
 	influx = New(cstr, "_internal", "admin", "changme")
 	influx.Connect(time.Second * 60)
-	time.Sleep(time.Second * 60)
 }

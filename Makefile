@@ -1,6 +1,6 @@
 
 .PHONY: all clean build build-cli build-server install install-server install-cli fmt simplify check version build-image run
-.PHONY: test test-storage test-influx test-stat test-logs test-build test-project test-service test-stack
+.PHONY: test
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -122,28 +122,12 @@ build-image:
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
-test: test-storage test-influx test-stat test-logs test-project test-service test-stack
-
-test-storage:
-	@go test -v $(REPO)/data/storage/etcd
-
-test-influx:
-	@go test -v $(REPO)/data/influx
-
-test-stat:
-#	@go test -v $(REPO)/api/rpc/stat
-
-test-logs:
-	@go test -v $(REPO)/api/rpc/logs
-
-test-project:
-	@go test -v $(REPO)/api/rpc/project
-
-test-service:
-	@go test -v $(REPO)/api/rpc/service
-
-# test-build:
-# 	@go test -v $(REPO)/api/rpc/build
-
-test-stack:
-	@go test -v $(REPO)/api/rpc/stack
+test:
+#	@go test $(REPO)/api/rpc/build
+	@go test $(REPO)/api/rpc/logs
+#	@go test $(REPO)/api/rpc/project
+	@go test $(REPO)/api/rpc/service
+	@go test $(REPO)/api/rpc/stack
+#	@go test $(REPO)/api/rpc/stat
+	@go test $(REPO)/data/influx
+	@go test $(REPO)/data/storage/etcd

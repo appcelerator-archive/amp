@@ -60,7 +60,7 @@ var (
 	sample3 = map[string]serviceMap{
 		"pinger": {
 			Image:    "appcelerator/pinger",
-			Replicas: 2,			
+			Replicas: 2,
 		},
 		"pinger2": {
 			Image:    "appcelerator/pinger",
@@ -83,7 +83,7 @@ var (
 					Name:         "python",
 					InternalPort: 80,
 				},
-			},			
+			},
 		},
 		"go": {
 			Image:    "htilford/go-redis-counter",
@@ -96,7 +96,7 @@ var (
 			},
 		},
 		"redis": {
-			Image:    "redis",
+			Image: "redis",
 		},
 	}
 
@@ -106,7 +106,7 @@ var (
 		"sample-02.yml":  sample2,
 		"sample-03.yml":  sample3,
 		"sample-03.json": sample3,
-		"sample-04.yml": sample4,
+		"sample-04.yml":  sample4,
 	}
 )
 
