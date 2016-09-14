@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"context"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/server"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -21,6 +21,17 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
+	example                 = `web:
+  image: appcelerator.io/amp-demo
+  ports:
+    - 80:3000
+  replicas: 3
+  environment:
+    REDIS_PASSWORD: password
+redis:
+  image: redis
+  environment:
+    - PASSWORD=password`
 )
 
 var (
@@ -85,7 +96,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestShouldCreateAStackSuccessfully(t *testing.T) {
-	r, err := client.Create(ctx, &stack.CreateRequest{StackDefinition: ""})
+	r, err := client.Create(ctx, &stack.CreateRequest{StackDefinition: example})
 	if err != nil {
 		t.Error(err)
 	}
@@ -93,7 +104,7 @@ func TestShouldCreateAStackSuccessfully(t *testing.T) {
 }
 
 func TestShouldUpStackSuccessfully(t *testing.T) {
-	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: ""})
+	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: example})
 	if err != nil {
 		t.Error(err)
 	}
