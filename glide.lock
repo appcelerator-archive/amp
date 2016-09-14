@@ -1,10 +1,10 @@
-hash: 60861db664cb3b7e7c497893aa03e87bc2509b035c37ab7528396c9f77888b7d
-updated: 2016-09-09T13:57:25.808364083-07:00
+hash: 062991602202116fb52233ba0d05009ad91b1c7219d87e35134566aa83b650a9
+updated: 2016-09-14T09:07:45.37601625-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: 5695120efcfdc05b8ba51be2018d99c2937b41d0
+  version: d40982fc9160b7471cd832bff34d09e218b12e0e
   subpackages:
   - auth/authpb
   - clientv3
@@ -16,6 +16,11 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/docker/docker
+  version: 23cf638307f030cd8d48c9efc21feec18a6f88f8
+  subpackages:
+  - client
+  - types
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
