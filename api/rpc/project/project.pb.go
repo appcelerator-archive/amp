@@ -9,7 +9,7 @@ It is generated from these files:
 	project.proto
 
 It has these top-level messages:
-	Project
+	ProjectEntry
 	Empty
 	ProjectRequest
 	ProjectReply
@@ -37,17 +37,17 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Project struct {
+type ProjectEntry struct {
 	RepoId    int32  `protobuf:"varint,1,opt,name=repo_id,json=repoId" json:"repo_id,omitempty"`
 	OwnerName string `protobuf:"bytes,2,opt,name=owner_name,json=ownerName" json:"owner_name,omitempty"`
 	RepoName  string `protobuf:"bytes,3,opt,name=repo_name,json=repoName" json:"repo_name,omitempty"`
 	Token     string `protobuf:"bytes,4,opt,name=token" json:"token,omitempty"`
 }
 
-func (m *Project) Reset()                    { *m = Project{} }
-func (m *Project) String() string            { return proto.CompactTextString(m) }
-func (*Project) ProtoMessage()               {}
-func (*Project) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *ProjectEntry) Reset()                    { *m = ProjectEntry{} }
+func (m *ProjectEntry) String() string            { return proto.CompactTextString(m) }
+func (*ProjectEntry) ProtoMessage()               {}
+func (*ProjectEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 type Empty struct {
 }
@@ -58,7 +58,7 @@ func (*Empty) ProtoMessage()               {}
 func (*Empty) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 type ProjectRequest struct {
-	Project *Project `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
 }
 
 func (m *ProjectRequest) Reset()                    { *m = ProjectRequest{} }
@@ -66,7 +66,7 @@ func (m *ProjectRequest) String() string            { return proto.CompactTextSt
 func (*ProjectRequest) ProtoMessage()               {}
 func (*ProjectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *ProjectRequest) GetProject() *Project {
+func (m *ProjectRequest) GetProject() *ProjectEntry {
 	if m != nil {
 		return m.Project
 	}
@@ -74,7 +74,7 @@ func (m *ProjectRequest) GetProject() *Project {
 }
 
 type ProjectReply struct {
-	Project *Project `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
 }
 
 func (m *ProjectReply) Reset()                    { *m = ProjectReply{} }
@@ -82,7 +82,7 @@ func (m *ProjectReply) String() string            { return proto.CompactTextStri
 func (*ProjectReply) ProtoMessage()               {}
 func (*ProjectReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
-func (m *ProjectReply) GetProject() *Project {
+func (m *ProjectReply) GetProject() *ProjectEntry {
 	if m != nil {
 		return m.Project
 	}
@@ -90,7 +90,7 @@ func (m *ProjectReply) GetProject() *Project {
 }
 
 type ProjectsReply struct {
-	Projects []*Project `protobuf:"bytes,1,rep,name=projects" json:"projects,omitempty"`
+	Projects []*ProjectEntry `protobuf:"bytes,1,rep,name=projects" json:"projects,omitempty"`
 }
 
 func (m *ProjectsReply) Reset()                    { *m = ProjectsReply{} }
@@ -98,7 +98,7 @@ func (m *ProjectsReply) String() string            { return proto.CompactTextStr
 func (*ProjectsReply) ProtoMessage()               {}
 func (*ProjectsReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
-func (m *ProjectsReply) GetProjects() []*Project {
+func (m *ProjectsReply) GetProjects() []*ProjectEntry {
 	if m != nil {
 		return m.Projects
 	}
@@ -106,7 +106,7 @@ func (m *ProjectsReply) GetProjects() []*Project {
 }
 
 func init() {
-	proto.RegisterType((*Project)(nil), "project.Project")
+	proto.RegisterType((*ProjectEntry)(nil), "project.ProjectEntry")
 	proto.RegisterType((*Empty)(nil), "project.Empty")
 	proto.RegisterType((*ProjectRequest)(nil), "project.ProjectRequest")
 	proto.RegisterType((*ProjectReply)(nil), "project.ProjectReply")
@@ -121,9 +121,9 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion3
 
-// Client API for ProjectSvc service
+// Client API for Project service
 
-type ProjectSvcClient interface {
+type ProjectClient interface {
 	Create(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error)
 	Delete(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error)
 	List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ProjectsReply, error)
@@ -131,62 +131,62 @@ type ProjectSvcClient interface {
 	Update(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error)
 }
 
-type projectSvcClient struct {
+type projectClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewProjectSvcClient(cc *grpc.ClientConn) ProjectSvcClient {
-	return &projectSvcClient{cc}
+func NewProjectClient(cc *grpc.ClientConn) ProjectClient {
+	return &projectClient{cc}
 }
 
-func (c *projectSvcClient) Create(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
+func (c *projectClient) Create(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
 	out := new(ProjectReply)
-	err := grpc.Invoke(ctx, "/project.ProjectSvc/Create", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/project.Project/Create", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *projectSvcClient) Delete(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
+func (c *projectClient) Delete(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
 	out := new(ProjectReply)
-	err := grpc.Invoke(ctx, "/project.ProjectSvc/Delete", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/project.Project/Delete", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *projectSvcClient) List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ProjectsReply, error) {
+func (c *projectClient) List(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ProjectsReply, error) {
 	out := new(ProjectsReply)
-	err := grpc.Invoke(ctx, "/project.ProjectSvc/List", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/project.Project/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *projectSvcClient) Get(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
+func (c *projectClient) Get(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
 	out := new(ProjectReply)
-	err := grpc.Invoke(ctx, "/project.ProjectSvc/Get", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/project.Project/Get", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *projectSvcClient) Update(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
+func (c *projectClient) Update(ctx context.Context, in *ProjectRequest, opts ...grpc.CallOption) (*ProjectReply, error) {
 	out := new(ProjectReply)
-	err := grpc.Invoke(ctx, "/project.ProjectSvc/Update", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/project.Project/Update", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for ProjectSvc service
+// Server API for Project service
 
-type ProjectSvcServer interface {
+type ProjectServer interface {
 	Create(context.Context, *ProjectRequest) (*ProjectReply, error)
 	Delete(context.Context, *ProjectRequest) (*ProjectReply, error)
 	List(context.Context, *Empty) (*ProjectsReply, error)
@@ -194,123 +194,123 @@ type ProjectSvcServer interface {
 	Update(context.Context, *ProjectRequest) (*ProjectReply, error)
 }
 
-func RegisterProjectSvcServer(s *grpc.Server, srv ProjectSvcServer) {
-	s.RegisterService(&_ProjectSvc_serviceDesc, srv)
+func RegisterProjectServer(s *grpc.Server, srv ProjectServer) {
+	s.RegisterService(&_Project_serviceDesc, srv)
 }
 
-func _ProjectSvc_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Project_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectSvcServer).Create(ctx, in)
+		return srv.(ProjectServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/project.ProjectSvc/Create",
+		FullMethod: "/project.Project/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectSvcServer).Create(ctx, req.(*ProjectRequest))
+		return srv.(ProjectServer).Create(ctx, req.(*ProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectSvc_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Project_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectSvcServer).Delete(ctx, in)
+		return srv.(ProjectServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/project.ProjectSvc/Delete",
+		FullMethod: "/project.Project/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectSvcServer).Delete(ctx, req.(*ProjectRequest))
+		return srv.(ProjectServer).Delete(ctx, req.(*ProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectSvc_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Project_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectSvcServer).List(ctx, in)
+		return srv.(ProjectServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/project.ProjectSvc/List",
+		FullMethod: "/project.Project/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectSvcServer).List(ctx, req.(*Empty))
+		return srv.(ProjectServer).List(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectSvc_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Project_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectSvcServer).Get(ctx, in)
+		return srv.(ProjectServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/project.ProjectSvc/Get",
+		FullMethod: "/project.Project/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectSvcServer).Get(ctx, req.(*ProjectRequest))
+		return srv.(ProjectServer).Get(ctx, req.(*ProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectSvc_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Project_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProjectSvcServer).Update(ctx, in)
+		return srv.(ProjectServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/project.ProjectSvc/Update",
+		FullMethod: "/project.Project/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectSvcServer).Update(ctx, req.(*ProjectRequest))
+		return srv.(ProjectServer).Update(ctx, req.(*ProjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _ProjectSvc_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "project.ProjectSvc",
-	HandlerType: (*ProjectSvcServer)(nil),
+var _Project_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "project.Project",
+	HandlerType: (*ProjectServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Create",
-			Handler:    _ProjectSvc_Create_Handler,
+			Handler:    _Project_Create_Handler,
 		},
 		{
 			MethodName: "Delete",
-			Handler:    _ProjectSvc_Delete_Handler,
+			Handler:    _Project_Delete_Handler,
 		},
 		{
 			MethodName: "List",
-			Handler:    _ProjectSvc_List_Handler,
+			Handler:    _Project_List_Handler,
 		},
 		{
 			MethodName: "Get",
-			Handler:    _ProjectSvc_Get_Handler,
+			Handler:    _Project_Get_Handler,
 		},
 		{
 			MethodName: "Update",
-			Handler:    _ProjectSvc_Update_Handler,
+			Handler:    _Project_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -320,23 +320,23 @@ var _ProjectSvc_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("project.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 283 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x92, 0x41, 0x4b, 0xc3, 0x40,
-	0x10, 0x85, 0x4d, 0xd3, 0x24, 0xcd, 0x68, 0x8b, 0x2c, 0x6a, 0x43, 0x45, 0x08, 0x39, 0x15, 0x91,
-	0x22, 0xf5, 0x20, 0x14, 0x3d, 0xa9, 0x88, 0x20, 0x22, 0x11, 0xcf, 0x25, 0x36, 0x73, 0xa8, 0x26,
-	0xd9, 0x75, 0x77, 0x55, 0xf2, 0x9b, 0xfc, 0x93, 0x92, 0xc9, 0x26, 0x07, 0xeb, 0xc5, 0xdc, 0x76,
-	0xde, 0x7b, 0x1f, 0xfb, 0x66, 0x59, 0x18, 0x0a, 0xc9, 0x5f, 0x71, 0xa5, 0x67, 0x42, 0x72, 0xcd,
-	0x99, 0x67, 0xc6, 0x48, 0x83, 0xf7, 0x58, 0x1f, 0xd9, 0x18, 0x3c, 0x89, 0x82, 0x2f, 0xd7, 0x69,
-	0x60, 0x85, 0xd6, 0xd4, 0x89, 0xdd, 0x6a, 0xbc, 0x4b, 0xd9, 0x11, 0x00, 0xff, 0x2a, 0x50, 0x2e,
-	0x8b, 0x24, 0xc7, 0xa0, 0x17, 0x5a, 0x53, 0x3f, 0xf6, 0x49, 0x79, 0x48, 0x72, 0x64, 0x87, 0xe0,
-	0x13, 0x47, 0xae, 0x4d, 0xee, 0xa0, 0x12, 0xc8, 0xdc, 0x03, 0x47, 0xf3, 0x37, 0x2c, 0x82, 0x3e,
-	0x19, 0xf5, 0x10, 0x79, 0xe0, 0xdc, 0xe4, 0x42, 0x97, 0xd1, 0x05, 0x8c, 0xcc, 0xf5, 0x31, 0xbe,
-	0x7f, 0xa0, 0xd2, 0xec, 0x18, 0x9a, 0x6e, 0xd4, 0x62, 0x7b, 0xbe, 0x3b, 0x6b, 0xaa, 0x37, 0xc9,
-	0xb6, 0xfc, 0x02, 0x76, 0x5a, 0x5a, 0x64, 0xe5, 0xbf, 0xd8, 0x4b, 0x18, 0x1a, 0x4d, 0xd5, 0xf0,
-	0x09, 0x0c, 0x8c, 0xa7, 0x02, 0x2b, 0xb4, 0xff, 0xa4, 0xdb, 0xc4, 0xfc, 0xbb, 0x07, 0x60, 0xd4,
-	0xa7, 0xcf, 0x15, 0x5b, 0x80, 0x7b, 0x25, 0x31, 0xd1, 0xc8, 0xc6, 0x1b, 0x50, 0xbd, 0xd8, 0x64,
-	0x7f, 0xd3, 0x10, 0x59, 0x19, 0x6d, 0x55, 0xec, 0x35, 0x66, 0xd8, 0x89, 0x3d, 0x85, 0xfe, 0xfd,
-	0x5a, 0x69, 0x36, 0x6a, 0x03, 0xf4, 0xae, 0x93, 0x83, 0xdf, 0x80, 0x6a, 0x88, 0x73, 0xb0, 0x6f,
-	0x51, 0x77, 0xab, 0xf9, 0x2c, 0xd2, 0x4e, 0x2b, 0xbe, 0xb8, 0xf4, 0xeb, 0xce, 0x7e, 0x02, 0x00,
-	0x00, 0xff, 0xff, 0x1e, 0xe3, 0xf8, 0xfa, 0x86, 0x02, 0x00, 0x00,
+	// 287 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x92, 0x4f, 0x4b, 0xc3, 0x40,
+	0x10, 0xc5, 0x4d, 0xd3, 0x24, 0xcd, 0x68, 0x7b, 0x58, 0xac, 0x0d, 0x15, 0x21, 0xe4, 0xd4, 0x53,
+	0xd5, 0x7a, 0x10, 0xbc, 0x88, 0x7f, 0x8a, 0x08, 0x22, 0xb2, 0xe0, 0xb9, 0x44, 0x33, 0x87, 0x6a,
+	0x92, 0x5d, 0x77, 0x57, 0x64, 0xbf, 0x91, 0x1f, 0x53, 0xb2, 0xd9, 0x04, 0xa9, 0x78, 0x68, 0x6e,
+	0x99, 0xf9, 0xcd, 0x7b, 0xbc, 0x17, 0x16, 0x86, 0x5c, 0xb0, 0x37, 0x7c, 0x55, 0x73, 0x2e, 0x98,
+	0x62, 0x24, 0xb0, 0x63, 0xa2, 0x61, 0xef, 0xa9, 0xfe, 0x5c, 0x96, 0x4a, 0x68, 0x32, 0x81, 0x40,
+	0x20, 0x67, 0xab, 0x75, 0x16, 0x39, 0xb1, 0x33, 0xf3, 0xa8, 0x5f, 0x8d, 0xf7, 0x19, 0x39, 0x02,
+	0x60, 0x5f, 0x25, 0x8a, 0x55, 0x99, 0x16, 0x18, 0xf5, 0x62, 0x67, 0x16, 0xd2, 0xd0, 0x6c, 0x1e,
+	0xd3, 0x02, 0xc9, 0x21, 0x84, 0x46, 0x67, 0xa8, 0x6b, 0xe8, 0xa0, 0x5a, 0x18, 0xb8, 0x0f, 0x9e,
+	0x62, 0xef, 0x58, 0x46, 0x7d, 0x03, 0xea, 0x21, 0x09, 0xc0, 0x5b, 0x16, 0x5c, 0xe9, 0xe4, 0x0a,
+	0x46, 0x36, 0x03, 0xc5, 0x8f, 0x4f, 0x94, 0x8a, 0x1c, 0x43, 0x13, 0xd0, 0xa4, 0xd8, 0x5d, 0x8c,
+	0xe7, 0x4d, 0xfe, 0xdf, 0x69, 0x69, 0x5b, 0xe3, 0xb2, 0xad, 0x41, 0x91, 0xe7, 0x7a, 0x7b, 0x83,
+	0x6b, 0x18, 0x5a, 0x20, 0x6b, 0x87, 0x53, 0x18, 0x58, 0x26, 0x23, 0x27, 0x76, 0xff, 0xb7, 0x68,
+	0xcf, 0x16, 0xdf, 0x3d, 0x08, 0x2c, 0x22, 0x17, 0xe0, 0xdf, 0x08, 0x4c, 0x15, 0x92, 0xc9, 0xa6,
+	0xcc, 0x96, 0x9c, 0x8e, 0xff, 0x02, 0x9e, 0xeb, 0x64, 0xa7, 0xd2, 0xde, 0x62, 0x8e, 0x9d, 0xb4,
+	0x27, 0xd0, 0x7f, 0x58, 0x4b, 0x45, 0x46, 0xed, 0x81, 0xf9, 0xc7, 0xd3, 0x83, 0x4d, 0x81, 0x6c,
+	0x14, 0xe7, 0xe0, 0xde, 0xa1, 0xea, 0x16, 0xf3, 0x99, 0x67, 0x9d, 0x2a, 0xbe, 0xf8, 0xe6, 0x19,
+	0x9e, 0xfd, 0x04, 0x00, 0x00, 0xff, 0xff, 0x55, 0xd8, 0xac, 0x46, 0x97, 0x02, 0x00, 0x00,
 }

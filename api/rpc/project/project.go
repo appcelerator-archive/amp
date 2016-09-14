@@ -43,7 +43,7 @@ func (p *Proj) Update(ctx context.Context, req *ProjectRequest) (*ProjectReply, 
 func (p *Proj) Get(ctx context.Context, req *ProjectRequest) (*ProjectReply, error) {
 	// Build The Key for the Project
 	key := fmt.Sprintf("%s/%v", prefix, req.Project.RepoId)
-	reply := &ProjectReply{Project: &Project{}}
+	reply := &ProjectReply{Project: &ProjectEntry{}}
 	// Retrieve the Value for the Given Key
 	err := p.Store.Get(ctx, key, reply.Project, true)
 	return reply, err
@@ -53,7 +53,7 @@ func (p *Proj) Get(ctx context.Context, req *ProjectRequest) (*ProjectReply, err
 func (p *Proj) Delete(ctx context.Context, req *ProjectRequest) (*ProjectReply, error) {
 	// Build The Key for the Project
 	key := fmt.Sprintf("%s/%v", prefix, req.Project.RepoId)
-	reply := &ProjectReply{Project: &Project{}}
+	reply := &ProjectReply{Project: &ProjectEntry{}}
 	// Delete the Key and Value from the Store
 	err := p.Store.Delete(ctx, key, reply.Project)
 	return reply, err
@@ -63,8 +63,8 @@ func (p *Proj) Delete(ctx context.Context, req *ProjectRequest) (*ProjectReply, 
 func (p *Proj) List(ctx context.Context, req *Empty) (*ProjectsReply, error) {
 	// Build the Key based on the prefix only
 	key := fmt.Sprintf("%s", prefix)
-	obj := &Project{}
-	reply := &ProjectsReply{Projects: []*Project{}}
+	obj := &ProjectEntry{}
+	reply := &ProjectsReply{Projects: []*ProjectEntry{}}
 	var out []proto.Message
 	// Return all of the entries for the given Key Pattern
 	err := p.Store.List(ctx, key, storage.Everything, obj, &out)
@@ -75,7 +75,7 @@ func (p *Proj) List(ctx context.Context, req *Empty) (*ProjectsReply, error) {
 	// 	reply.Projects = out.([]*Project) <-- Illegal Syntax
 
 	for i := 0; i < len(out); i++ {
-		resp, ok := out[i].(*Project)
+		resp, ok := out[i].(*ProjectEntry)
 		if !ok {
 
 			return reply, fmt.Errorf("Inavlid Type Conversion")

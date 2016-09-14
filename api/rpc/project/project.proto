@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package project;
 
-service ProjectSvc {
+service Project {
   rpc Create (ProjectRequest) returns (ProjectReply) {}
   rpc Delete (ProjectRequest) returns (ProjectReply) {}
   rpc List   (Empty) returns (ProjectsReply) {}
@@ -10,7 +10,7 @@ service ProjectSvc {
   rpc Update (ProjectRequest) returns (ProjectReply) {}
 }
 
-message Project {
+message ProjectEntry {
   int32  repo_id = 1;
   string owner_name = 2;
   string repo_name = 3;
@@ -20,11 +20,11 @@ message Project {
 message Empty{}
 
 message ProjectRequest {
-  Project project=1;
+  ProjectEntry project=1;
 }
 message ProjectReply {
-    Project project=1;
+    ProjectEntry project=1;
 }
 message ProjectsReply {
-    repeated Project projects=1;
+    repeated ProjectEntry projects=1;
 }

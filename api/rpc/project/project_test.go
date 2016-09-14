@@ -19,9 +19,9 @@ const (
 var (
 	etcdEndpoints    = []string{etcdDefaultEndpoint}
 	proj             *Proj
-	sampleProject    = &ProjectRequest{&Project{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
-	updSampleProject = &ProjectRequest{&Project{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo2", Token: "FakeToken"}}
-	sampleProject2   = &ProjectRequest{&Project{RepoId: 12346, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
+	sampleProject    = &ProjectRequest{&ProjectEntry{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
+	updSampleProject = &ProjectRequest{&ProjectEntry{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo2", Token: "FakeToken"}}
+	sampleProject2   = &ProjectRequest{&ProjectEntry{RepoId: 12346, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
 )
 
 func TestMain(m *testing.M) {
