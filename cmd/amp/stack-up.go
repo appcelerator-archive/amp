@@ -46,15 +46,12 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return errors.New("specify the stackfile with the --flag option")
 	}
 
-	fmt.Printf("stackfile: %s\n", stackfile)
 	b, err := ioutil.ReadFile(stackfile)
 	if err != nil {
 		return err
 	}
 
 	contents := string(b)
-	fmt.Println(contents)
-
 	request := &stack.UpRequest{Stackfile: contents}
 
 	client := stack.NewStackClient(amp.Conn)
@@ -64,6 +61,5 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println(reply)
-
 	return nil
 }
