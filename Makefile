@@ -1,6 +1,6 @@
 
 .PHONY: all clean build build-cli build-server install install-server install-cli fmt simplify check version build-image run
-.PHONY: test test-storage test-influx test-stat test-logs test-build test-project test-service
+.PHONY: test test-storage test-influx test-stat test-logs test-build test-project test-service test-stack
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -122,7 +122,7 @@ build-image:
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
-test: test-storage test-influx test-stat test-logs test-project test-build test-service
+test: test-storage test-influx test-stat test-logs test-project test-build test-service test-stack
 
 test-storage:
 	@go test -v $(REPO)/data/storage/etcd
@@ -144,3 +144,6 @@ test-service:
 
 test-build:
 	@go test -v $(REPO)/api/rpc/build
+
+test-stack:
+	@go test -v $(REPO)/api/rpc/stack

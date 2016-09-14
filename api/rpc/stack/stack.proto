@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package stack;
+
+service Stack {
+  rpc Create (CreateRequest) returns (CreateReply);
+}
+
+message CreateRequest {
+  string stack_definition = 1;
+}
+
+message CreateReply {
+  string stack_id = 1;
+}
