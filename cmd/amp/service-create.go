@@ -34,6 +34,10 @@ var (
 
 	// environment variables
 	env []string
+
+	// ports
+	publishPorts []string
+	exposePorts  []string
 )
 
 func init() {
@@ -41,6 +45,8 @@ func init() {
 	flags.StringVar(&name, "name", name, "Service name")
 	flags.Uint64Var(&replicas, "replicas", replicas, "Number of tasks (default none)")
 	flags.StringSliceVarP(&env, "env", "e", env, "Set environment variables (default [])")
+	flags.StringSliceVarP(&publishPorts, "publish", "p", publishPorts, "Publish a container's port to the host. Format: [hostPort:]containerPort[/protocol], i.e. '80:80/tcp'")
+	flags.StringSliceVar(&exposePorts, "expose", exposePorts, "Publish a container's port to the host. Format: [hostPort:]containerPort[/protocol], i.e. '80:80/tcp'")
 
 	ServiceCmd.AddCommand(createCmd)
 }
@@ -55,15 +61,17 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	fmt.Println(args)
 	fmt.Println(stringify(cmd))
 
-	config := &service.ServiceConfig{
-		Image:    image,
-		Name:     name,
-		Replicas: replicas,
-		Env:      stringmap(env),
+	spec := &service.ServiceSpec{
+		Image:        image,
+		Name:         name,
+		Replicas:     replicas,
+		Env:          stringmap(env),
+		PublishPorts: parsePublishPorts(publishPorts),
+		ExposePorts:  parseExposePorts(exposePorts),
 	}
 
-	request := &service.CreateRequest{
-		Config: config,
+	request := &service.ServiceCreateRequest{
+		ServiceSpec: spec,
 	}
 
 	fmt.Println(request)
@@ -91,4 +99,12 @@ func stringmap(a []string) map[string]string {
 func stringify(cmd *cobra.Command) string {
 	return fmt.Sprintf("{ name: %s, replicas: %d, env: %v }",
 		name, replicas, env)
+}
+
+func parsePublishPorts(ports []string) *service.Ports {
+	return &service.Ports{}
+}
+
+func parseExposePorts(ports []string) *service.Ports {
+	return &service.Ports{}
 }
