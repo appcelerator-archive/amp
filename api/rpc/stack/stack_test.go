@@ -95,14 +95,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestShouldCreateAStackSuccessfully(t *testing.T) {
-	r, err := client.Create(ctx, &stack.CreateRequest{StackDefinition: example})
-	if err != nil {
-		t.Error(err)
-	}
-	assert.NotEmpty(t, r.StackId, "We should have a non empty stack id")
-}
-
 func TestShouldUpStackSuccessfully(t *testing.T) {
 	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: example})
 	if err != nil {
