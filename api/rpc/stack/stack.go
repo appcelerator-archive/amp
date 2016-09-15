@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"golang.org/x/net/context"
