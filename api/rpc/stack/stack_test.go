@@ -41,7 +41,7 @@ var (
 	elasticsearchURL string
 	kafkaURL         string
 	influxURL        string
-	client           stack.StackClient
+	client           stack.StackServiceClient
 	ctx              context.Context
 )
 
@@ -91,7 +91,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("connection failure")
 		os.Exit(1)
 	}
-	client = stack.NewStackClient(conn)
+	client = stack.NewStackServiceClient(conn)
 	os.Exit(m.Run())
 }
 

@@ -9,23 +9,13 @@ import (
 type serviceMap struct {
 	Image       string      `yaml:"image"`
 	Ports       []string    `yaml:"ports"`
-	Replicas    int         `yaml:"replicas"`
+	Replicas    uint64       `yaml:"replicas"`
 	Environment interface{} `yaml:"environment"`
 	Labels      interface{} `yaml:"labels"`
 }
 
-// Service represents a docker service for use in a docker stack
-type Service struct {
-	Name        string
-	Image       string
-	Ports       map[nat.Port][]nat.PortBinding
-	Replicas    int
-	Environment map[string]string
-	Labels      map[string]string
-}
-
-func parseStackYaml(in string) (out []Service, err error) {
-	out = []Service{}
+func parseStackYaml(in string) (out *Stack, err error) {
+	out = &Stack{}
 	b := []byte(in)
 	sm, err := parseAsServiceMap(b)
 	if err != nil {
@@ -64,15 +54,26 @@ func parseStackYaml(in string) (out []Service, err error) {
 				l[k] = v
 			}
 		}
-		_, ports, err := nat.ParsePortSpecs(d.Ports)
+		_, natPorts, err := nat.ParsePortSpecs(d.Ports)
 		if err != nil {
-			return nil, err
+			return &Stack{}, err
+		}
+		ports := map[string]*Service_PortBindings{}
+		for p, bs := range natPorts {
+			pbs := Service_PortBindings{}
+			for _, b := range bs {
+				pbs.PortBindings = append(pbs.PortBindings, &Service_PortBinding{
+					HostIp:   b.HostIP,
+					HostPort: b.HostPort,
+				})
+			}
+			ports[string(p)] = &pbs
 		}
 		r := d.Replicas
 		if r == 0 {
 			r = 1
 		}
-		out = append(out, Service{
+		out.Services = append(out.Services, &Service{
 			Name:        n,
 			Image:       d.Image,
 			Ports:       ports,

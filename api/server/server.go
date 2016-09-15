@@ -59,7 +59,7 @@ func Start(config Config) {
 		ClientSecret: config.ClientSecret,
 	})
 	build.RegisterAmpBuildServer(s, &build.Proxy{})
-	stack.RegisterStackServer(s, &stack.Stack{
+	stack.RegisterStackServiceServer(s, &stack.Server{
 		Store: Store,
 	})
 

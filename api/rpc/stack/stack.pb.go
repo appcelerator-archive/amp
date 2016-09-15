@@ -13,6 +13,8 @@ It has these top-level messages:
 	CreateReply
 	UpRequest
 	UpReply
+	Stack
+	Service
 */
 package stack
 
@@ -72,11 +74,93 @@ func (m *UpReply) String() string            { return proto.CompactTextString(m)
 func (*UpReply) ProtoMessage()               {}
 func (*UpReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
+type Stack struct {
+	StackId  string     `protobuf:"bytes,1,opt,name=stack_id,json=stackId" json:"stack_id,omitempty"`
+	Services []*Service `protobuf:"bytes,2,rep,name=services" json:"services,omitempty"`
+}
+
+func (m *Stack) Reset()                    { *m = Stack{} }
+func (m *Stack) String() string            { return proto.CompactTextString(m) }
+func (*Stack) ProtoMessage()               {}
+func (*Stack) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *Stack) GetServices() []*Service {
+	if m != nil {
+		return m.Services
+	}
+	return nil
+}
+
+type Service struct {
+	Name        string                           `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Image       string                           `protobuf:"bytes,2,opt,name=image" json:"image,omitempty"`
+	Ports       map[string]*Service_PortBindings `protobuf:"bytes,3,rep,name=ports" json:"ports,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Replicas    uint64                           `protobuf:"varint,4,opt,name=replicas" json:"replicas,omitempty"`
+	Environment map[string]string                `protobuf:"bytes,5,rep,name=environment" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Labels      map[string]string                `protobuf:"bytes,6,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *Service) Reset()                    { *m = Service{} }
+func (m *Service) String() string            { return proto.CompactTextString(m) }
+func (*Service) ProtoMessage()               {}
+func (*Service) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *Service) GetPorts() map[string]*Service_PortBindings {
+	if m != nil {
+		return m.Ports
+	}
+	return nil
+}
+
+func (m *Service) GetEnvironment() map[string]string {
+	if m != nil {
+		return m.Environment
+	}
+	return nil
+}
+
+func (m *Service) GetLabels() map[string]string {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
+type Service_PortBinding struct {
+	HostIp   string `protobuf:"bytes,1,opt,name=host_ip,json=hostIp" json:"host_ip,omitempty"`
+	HostPort string `protobuf:"bytes,2,opt,name=host_port,json=hostPort" json:"host_port,omitempty"`
+}
+
+func (m *Service_PortBinding) Reset()                    { *m = Service_PortBinding{} }
+func (m *Service_PortBinding) String() string            { return proto.CompactTextString(m) }
+func (*Service_PortBinding) ProtoMessage()               {}
+func (*Service_PortBinding) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 0} }
+
+type Service_PortBindings struct {
+	PortBindings []*Service_PortBinding `protobuf:"bytes,1,rep,name=port_bindings,json=portBindings" json:"port_bindings,omitempty"`
+}
+
+func (m *Service_PortBindings) Reset()                    { *m = Service_PortBindings{} }
+func (m *Service_PortBindings) String() string            { return proto.CompactTextString(m) }
+func (*Service_PortBindings) ProtoMessage()               {}
+func (*Service_PortBindings) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 1} }
+
+func (m *Service_PortBindings) GetPortBindings() []*Service_PortBinding {
+	if m != nil {
+		return m.PortBindings
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "stack.CreateRequest")
 	proto.RegisterType((*CreateReply)(nil), "stack.CreateReply")
 	proto.RegisterType((*UpRequest)(nil), "stack.UpRequest")
 	proto.RegisterType((*UpReply)(nil), "stack.UpReply")
+	proto.RegisterType((*Stack)(nil), "stack.Stack")
+	proto.RegisterType((*Service)(nil), "stack.Service")
+	proto.RegisterType((*Service_PortBinding)(nil), "stack.Service.PortBinding")
+	proto.RegisterType((*Service_PortBindings)(nil), "stack.Service.PortBindings")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -87,97 +171,97 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion3
 
-// Client API for Stack service
+// Client API for StackService service
 
-type StackClient interface {
+type StackServiceClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
 	Up(ctx context.Context, in *UpRequest, opts ...grpc.CallOption) (*UpReply, error)
 }
 
-type stackClient struct {
+type stackServiceClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewStackClient(cc *grpc.ClientConn) StackClient {
-	return &stackClient{cc}
+func NewStackServiceClient(cc *grpc.ClientConn) StackServiceClient {
+	return &stackServiceClient{cc}
 }
 
-func (c *stackClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
+func (c *stackServiceClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
 	out := new(CreateReply)
-	err := grpc.Invoke(ctx, "/stack.Stack/Create", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/stack.StackService/Create", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *stackClient) Up(ctx context.Context, in *UpRequest, opts ...grpc.CallOption) (*UpReply, error) {
+func (c *stackServiceClient) Up(ctx context.Context, in *UpRequest, opts ...grpc.CallOption) (*UpReply, error) {
 	out := new(UpReply)
-	err := grpc.Invoke(ctx, "/stack.Stack/Up", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/stack.StackService/Up", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for Stack service
+// Server API for StackService service
 
-type StackServer interface {
+type StackServiceServer interface {
 	Create(context.Context, *CreateRequest) (*CreateReply, error)
 	Up(context.Context, *UpRequest) (*UpReply, error)
 }
 
-func RegisterStackServer(s *grpc.Server, srv StackServer) {
-	s.RegisterService(&_Stack_serviceDesc, srv)
+func RegisterStackServiceServer(s *grpc.Server, srv StackServiceServer) {
+	s.RegisterService(&_StackService_serviceDesc, srv)
 }
 
-func _Stack_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _StackService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StackServer).Create(ctx, in)
+		return srv.(StackServiceServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stack.Stack/Create",
+		FullMethod: "/stack.StackService/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StackServer).Create(ctx, req.(*CreateRequest))
+		return srv.(StackServiceServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Stack_Up_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _StackService_Up_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StackServer).Up(ctx, in)
+		return srv.(StackServiceServer).Up(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stack.Stack/Up",
+		FullMethod: "/stack.StackService/Up",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StackServer).Up(ctx, req.(*UpRequest))
+		return srv.(StackServiceServer).Up(ctx, req.(*UpRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Stack_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "stack.Stack",
-	HandlerType: (*StackServer)(nil),
+var _StackService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "stack.StackService",
+	HandlerType: (*StackServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Create",
-			Handler:    _Stack_Create_Handler,
+			Handler:    _StackService_Create_Handler,
 		},
 		{
 			MethodName: "Up",
-			Handler:    _Stack_Up_Handler,
+			Handler:    _StackService_Up_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -187,17 +271,35 @@ var _Stack_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("stack.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 191 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2e, 0x2e, 0x49, 0x4c,
-	0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0xac, 0xb8, 0x78, 0x9d,
-	0x8b, 0x52, 0x13, 0x4b, 0x52, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0x34, 0xb9, 0x04,
-	0xc0, 0x32, 0xf1, 0x29, 0xa9, 0x69, 0x99, 0x79, 0x99, 0x25, 0x99, 0xf9, 0x79, 0x12, 0x8c, 0x0a,
-	0x8c, 0x1a, 0x9c, 0x41, 0xfc, 0x60, 0x71, 0x17, 0xb8, 0xb0, 0x92, 0x06, 0x17, 0x37, 0x4c, 0x6f,
-	0x41, 0x4e, 0xa5, 0x90, 0x24, 0x17, 0x07, 0x44, 0x67, 0x66, 0x0a, 0x54, 0x07, 0x3b, 0x98, 0xef,
-	0x99, 0xa2, 0xa4, 0xc9, 0xc5, 0x19, 0x5a, 0x00, 0xb3, 0x41, 0x86, 0x8b, 0x13, 0x2c, 0x9e, 0x96,
-	0x99, 0x93, 0x0a, 0x55, 0x88, 0x10, 0x50, 0x52, 0xe1, 0x62, 0x07, 0x29, 0xc5, 0x6f, 0xa0, 0x51,
-	0x32, 0x17, 0x6b, 0x30, 0x88, 0x29, 0x64, 0xc4, 0xc5, 0x06, 0x71, 0x83, 0x90, 0x88, 0x1e, 0xc4,
-	0x7b, 0x28, 0xde, 0x91, 0x12, 0x42, 0x13, 0x05, 0x99, 0xab, 0xc6, 0xc5, 0x14, 0x5a, 0x20, 0x24,
-	0x00, 0x95, 0x81, 0x3b, 0x4c, 0x8a, 0x0f, 0x49, 0xa4, 0x20, 0xa7, 0x32, 0x89, 0x0d, 0x1c, 0x52,
-	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa8, 0x05, 0xa4, 0xdf, 0x38, 0x01, 0x00, 0x00,
+	// 466 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x94, 0x53, 0x4f, 0x6f, 0xd3, 0x30,
+	0x14, 0x57, 0xda, 0x26, 0x6d, 0x5e, 0xba, 0x51, 0x3d, 0x55, 0x22, 0xcb, 0x90, 0xa8, 0x22, 0x84,
+	0x3a, 0x0e, 0x45, 0x84, 0x0b, 0xec, 0x00, 0x82, 0xb1, 0xc3, 0x24, 0x04, 0x28, 0x53, 0xcf, 0x55,
+	0xda, 0x7a, 0xc3, 0x2c, 0x75, 0x4c, 0xec, 0x55, 0xea, 0xa7, 0xe5, 0xab, 0x20, 0xff, 0x69, 0xeb,
+	0x45, 0x05, 0xc4, 0xcd, 0xef, 0xf7, 0x2f, 0xcf, 0x2f, 0x7e, 0x10, 0x09, 0x59, 0x2c, 0xee, 0x26,
+	0xbc, 0xae, 0x64, 0x85, 0xbe, 0x2e, 0xd2, 0x73, 0x38, 0xba, 0xa8, 0x49, 0x21, 0x49, 0x4e, 0x7e,
+	0xde, 0x13, 0x21, 0xf1, 0x0c, 0x06, 0x9a, 0x99, 0x2d, 0xc9, 0x0d, 0x65, 0x54, 0xd2, 0x8a, 0xc5,
+	0xde, 0xc8, 0x1b, 0x87, 0xf9, 0x23, 0x8d, 0x7f, 0xda, 0xc1, 0xe9, 0x18, 0xa2, 0xad, 0x97, 0x97,
+	0x1b, 0x3c, 0x81, 0x9e, 0x71, 0xd2, 0xa5, 0x75, 0x74, 0x75, 0x7d, 0xb5, 0x4c, 0xcf, 0x20, 0x9c,
+	0xf2, 0xed, 0x17, 0x9e, 0x40, 0xa8, 0xf1, 0x1b, 0x5a, 0x12, 0x2b, 0xdc, 0x03, 0xe9, 0x33, 0xe8,
+	0x2a, 0xe9, 0x3f, 0x02, 0xbf, 0x80, 0x7f, 0xad, 0x8e, 0x7f, 0xd1, 0xe0, 0x0b, 0xe8, 0x09, 0x52,
+	0xaf, 0xe9, 0x82, 0x88, 0xb8, 0x35, 0x6a, 0x8f, 0xa3, 0xec, 0x78, 0x62, 0x26, 0x70, 0x6d, 0xe0,
+	0x7c, 0xc7, 0xa7, 0xbf, 0x3a, 0xd0, 0xb5, 0x28, 0x22, 0x74, 0x58, 0xb1, 0xda, 0xb6, 0xa6, 0xcf,
+	0x38, 0x04, 0x9f, 0xae, 0x8a, 0x5b, 0x12, 0xb7, 0x34, 0x68, 0x0a, 0x7c, 0x09, 0x3e, 0xaf, 0x6a,
+	0x29, 0xe2, 0xb6, 0x8e, 0x3f, 0x79, 0x18, 0x3f, 0xf9, 0xa6, 0xb8, 0x4b, 0x26, 0xeb, 0x4d, 0x6e,
+	0x74, 0x98, 0x40, 0xaf, 0x26, 0xbc, 0xa4, 0x8b, 0x42, 0xc4, 0x9d, 0x91, 0x37, 0xee, 0xe4, 0xbb,
+	0x1a, 0x3f, 0x40, 0x44, 0xd8, 0x9a, 0xd6, 0x15, 0x5b, 0x11, 0x26, 0x63, 0x5f, 0x47, 0x3e, 0x6d,
+	0x44, 0x5e, 0xee, 0x15, 0x26, 0xd8, 0xf5, 0x60, 0x06, 0x41, 0x59, 0xcc, 0x49, 0x29, 0xe2, 0x40,
+	0xbb, 0x93, 0x86, 0xfb, 0xb3, 0x26, 0x8d, 0xd1, 0x2a, 0x93, 0x0b, 0x88, 0x54, 0x9f, 0x1f, 0x29,
+	0x5b, 0x52, 0x76, 0x8b, 0x8f, 0xa1, 0xfb, 0xbd, 0x12, 0x72, 0x46, 0xb9, 0xbd, 0x7f, 0xa0, 0xca,
+	0x2b, 0x8e, 0xa7, 0x10, 0x6a, 0x42, 0x5d, 0xc4, 0x4e, 0xa1, 0xa7, 0x00, 0x65, 0x4e, 0xbe, 0x42,
+	0xdf, 0x09, 0x11, 0xf8, 0x1e, 0x8e, 0x94, 0x6e, 0x36, 0xb7, 0x40, 0xec, 0x1d, 0xec, 0xc7, 0xf1,
+	0xe4, 0x7d, 0xee, 0x04, 0x24, 0x53, 0x80, 0xfd, 0xf4, 0x70, 0x00, 0xed, 0x3b, 0xb2, 0xb1, 0x0d,
+	0xa9, 0x23, 0xbe, 0x02, 0x7f, 0x5d, 0x94, 0xf7, 0xe6, 0x7f, 0x44, 0xd9, 0xe9, 0x9f, 0x83, 0x45,
+	0x6e, 0x94, 0xe7, 0xad, 0x37, 0x5e, 0xf2, 0x0e, 0x06, 0xcd, 0x09, 0x1e, 0x08, 0x1f, 0xba, 0xe1,
+	0xa1, 0xeb, 0x7f, 0x0b, 0x91, 0x33, 0xc3, 0xff, 0xb1, 0x66, 0x3f, 0xa0, 0xaf, 0x5f, 0xec, 0xf6,
+	0x95, 0x65, 0x10, 0x98, 0xe5, 0xc1, 0xa1, 0x6d, 0xfe, 0xc1, 0x1e, 0x26, 0xd8, 0x40, 0xd5, 0x42,
+	0x3c, 0x87, 0xd6, 0x94, 0xe3, 0xc0, 0x32, 0xbb, 0x8d, 0x4a, 0x8e, 0x1d, 0x84, 0x97, 0x9b, 0x79,
+	0xa0, 0x57, 0xfc, 0xf5, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x74, 0xa8, 0x28, 0x63, 0xf1, 0x03,
+	0x00, 0x00,
 }

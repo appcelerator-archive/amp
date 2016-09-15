@@ -1,40 +1,42 @@
 package stack
 
 import (
-	"fmt"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"golang.org/x/net/context"
 )
 
-// Stack is used to implement stack.StackServer
-type Stack struct {
+// Server is used to implement stack.StackService
+type Server struct {
 	Store storage.Interface
 }
 
-// Create implements stack.StackServer
-func (stack *Stack) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
-	services, err := parseStackYaml(in.StackDefinition)
+// Create implements stack.ServerService Create
+func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
+	stack, err := parseStackYaml(in.StackDefinition)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(services)
-	// Build reply
+	stackID := stringid.GenerateNonCryptoID()
+	stack.StackId = stackID
+	s.Store.Create(ctx, "stacks/"+stackID, stack, nil, 0)
 	reply := CreateReply{
 		StackId: stringid.GenerateNonCryptoID(),
 	}
 	return &reply, nil
 }
 
-// Up implements stack.StackServer
-func (stack *Stack) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
-	services, err := parseStackYaml(in.Stackfile)
+// Up implements stack.ServerService Up
+func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
+	stack, err := parseStackYaml(in.Stackfile)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(services)
+	stackID := stringid.GenerateNonCryptoID()
+  stack.StackId = stackID
+	s.Store.Create(ctx, "stacks/"+stackID, stack, nil, 0)
 	reply := UpReply{
-		StackId: stringid.GenerateNonCryptoID(),
+		StackId: stackID,
 	}
 	return &reply, nil
 }
