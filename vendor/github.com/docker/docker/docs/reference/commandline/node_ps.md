@@ -9,20 +9,19 @@ parent = "smn_cli"
 +++
 <![end-metadata]-->
 
-**Warning:** this command is part of the Swarm management feature introduced in Docker 1.12, and might be subject to non backward-compatible changes.
-
 # node ps
 
 ```markdown
-Usage:  docker node ps [OPTIONS] self|NODE
+Usage:  docker node ps [OPTIONS] [NODE]
 
-List tasks running on a node
+List tasks running on a node, defaults to current node.
 
 Options:
   -a, --all            Display all instances
   -f, --filter value   Filter output based on conditions provided
       --help           Print usage
       --no-resolve     Do not map IDs to Names
+      --no-trunc       Do not truncate output
 ```
 
 Lists all the tasks on a Node that Docker knows about. You can filter using the `-f` or `--filter` flag. Refer to the [filtering](#filtering) section for more information about available filter options.

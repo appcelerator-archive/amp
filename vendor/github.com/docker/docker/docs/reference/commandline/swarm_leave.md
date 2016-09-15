@@ -8,8 +8,6 @@ parent = "smn_cli"
 +++
 <![end-metadata]-->
 
-**Warning:** this command is part of the Swarm management feature introduced in Docker 1.12, and might be subject to non backward-compatible changes.
-
 # swarm leave
 
 ```markdown
@@ -33,7 +31,7 @@ dkp8vy1dq1kxleu9g4u78tlag    worker1   Ready   Active        Reachable
 dvfxp4zseq4s0rih1selh0d20 *  manager1  Ready   Active        Leader
 ```
 
-On a worker node:
+On a worker node, worker2 in the following example:
 ```bash
 $ docker swarm leave
 Node left the default swarm.

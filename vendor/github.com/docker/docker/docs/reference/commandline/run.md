@@ -194,11 +194,11 @@ The `-w` lets the command being executed inside directory given, here
 
 ### Set storage driver options per container
 
-    $ docker create -it --storage-opt size=120G fedora /bin/bash
+    $ docker run -it --storage-opt size=120G fedora /bin/bash
 
 This (size) will allow to set the container rootfs size to 120G at creation time. 
 User cannot pass a size less than the Default BaseFS Size. This option is only 
-available for the `devicemapper`, `btrfs`, and `zfs` graph drivers.
+available for the `devicemapper`, `btrfs`, `windowsfilter`, and `zfs` graph drivers.
 
 ### Mount tmpfs (--tmpfs)
 
@@ -546,7 +546,7 @@ more `--add-host` flags. This example adds a static address for a host named
 `docker`:
 
     $ docker run --add-host=docker:10.180.0.1 --rm -it debian
-    $$ ping docker
+    root@f38c87f2a42d:/# ping docker
     PING docker (10.180.0.1): 48 data bytes
     56 bytes from 10.180.0.1: icmp_seq=0 ttl=254 time=7.600 ms
     56 bytes from 10.180.0.1: icmp_seq=1 ttl=254 time=30.705 ms
@@ -657,7 +657,7 @@ network namespace, run this command:
     $ docker run --sysctl net.ipv4.ip_forward=1 someimage
 
 
-> **Note**: Not all sysctls are namespaced. docker does not support changing sysctls
+> **Note**: Not all sysctls are namespaced. Docker does not support changing sysctls
 > inside of a container that also modify the host system. As the kernel 
 > evolves we expect to see more sysctls become namespaced.
 

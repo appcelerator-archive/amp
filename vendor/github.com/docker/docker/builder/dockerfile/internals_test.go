@@ -1,12 +1,13 @@
 package dockerfile
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/docker/engine-api/types"
 )
 
 func TestEmptyDockerfile(t *testing.T) {
@@ -15,49 +16,43 @@ func TestEmptyDockerfile(t *testing.T) {
 
 	createTestTempFile(t, contextDir, builder.DefaultDockerfileName, "", 0777)
 
-	tarStream, err := archive.Tar(contextDir, archive.Uncompressed)
+	readAndCheckDockerfile(t, "emptyDockefile", contextDir, "", "The Dockerfile (Dockerfile) cannot be empty")
+}
 
-	if err != nil {
-		t.Fatalf("Error when creating tar stream: %s", err)
-	}
+func TestSymlinkDockerfile(t *testing.T) {
+	contextDir, cleanup := createTestTempDir(t, "", "builder-dockerfile-test")
+	defer cleanup()
 
-	defer func() {
-		if err = tarStream.Close(); err != nil {
-			t.Fatalf("Error when closing tar stream: %s", err)
-		}
-	}()
+	createTestSymlink(t, contextDir, builder.DefaultDockerfileName, "/etc/passwd")
 
-	context, err := builder.MakeTarSumContext(tarStream)
+	// The reason the error is "Cannot locate specified Dockerfile" is because
+	// in the builder, the symlink is resolved within the context, therefore
+	// Dockerfile -> /etc/passwd becomes etc/passwd from the context which is
+	// a nonexistent file.
+	expectedError := fmt.Sprintf("Cannot locate specified Dockerfile: %s", builder.DefaultDockerfileName)
 
-	if err != nil {
-		t.Fatalf("Error when creating tar context: %s", err)
-	}
-
-	defer func() {
-		if err = context.Close(); err != nil {
-			t.Fatalf("Error when closing tar context: %s", err)
-		}
-	}()
-
-	options := &types.ImageBuildOptions{}
-
-	b := &Builder{options: options, context: context}
-
-	err = b.readDockerfile()
-
-	if err == nil {
-		t.Fatalf("No error when executing test for empty Dockerfile")
-	}
-
-	if !strings.Contains(err.Error(), "The Dockerfile (Dockerfile) cannot be empty") {
-		t.Fatalf("Wrong error message. Should be \"%s\". Got \"%s\"", "The Dockerfile (Dockerfile) cannot be empty", err.Error())
-	}
+	readAndCheckDockerfile(t, "symlinkDockerfile", contextDir, builder.DefaultDockerfileName, expectedError)
 }
 
 func TestDockerfileOutsideTheBuildContext(t *testing.T) {
 	contextDir, cleanup := createTestTempDir(t, "", "builder-dockerfile-test")
 	defer cleanup()
 
+	expectedError := "Forbidden path outside the build context"
+
+	readAndCheckDockerfile(t, "DockerfileOutsideTheBuildContext", contextDir, "../../Dockerfile", expectedError)
+}
+
+func TestNonExistingDockerfile(t *testing.T) {
+	contextDir, cleanup := createTestTempDir(t, "", "builder-dockerfile-test")
+	defer cleanup()
+
+	expectedError := "Cannot locate specified Dockerfile: Dockerfile"
+
+	readAndCheckDockerfile(t, "NonExistingDockerfile", contextDir, "Dockerfile", expectedError)
+}
+
+func readAndCheckDockerfile(t *testing.T, testName, contextDir, dockerfilePath, expectedError string) {
 	tarStream, err := archive.Tar(contextDir, archive.Uncompressed)
 
 	if err != nil {
@@ -83,7 +78,7 @@ func TestDockerfileOutsideTheBuildContext(t *testing.T) {
 	}()
 
 	options := &types.ImageBuildOptions{
-		Dockerfile: "../../Dockerfile",
+		Dockerfile: dockerfilePath,
 	}
 
 	b := &Builder{options: options, context: context}
@@ -91,10 +86,8 @@ func TestDockerfileOutsideTheBuildContext(t *testing.T) {
 	err = b.readDockerfile()
 
 	if err == nil {
-		t.Fatalf("No error when executing test for Dockerfile outside the build context")
+		t.Fatalf("No error when executing test: %s", testName)
 	}
-
-	expectedError := "Forbidden path outside the build context"
 
 	if !strings.Contains(err.Error(), expectedError) {
 		t.Fatalf("Wrong error message. Should be \"%s\". Got \"%s\"", expectedError, err.Error())

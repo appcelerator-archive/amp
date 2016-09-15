@@ -95,7 +95,7 @@ func (ctr *container) start() error {
 	ctr.process.hcsProcess = hcsProcess
 
 	// If this is a servicing container, wait on the process synchronously here and
-	// immediately call shutdown/terminate when it returns.
+	// if it succeeds, wait for it cleanly shutdown and merge into the parent container.
 	if isServicing {
 		exitCode := ctr.waitProcessExitCode(&ctr.process)
 
@@ -104,7 +104,7 @@ func (ctr *container) start() error {
 			return ctr.terminate()
 		}
 
-		return ctr.shutdown()
+		return ctr.hcsContainer.WaitTimeout(time.Minute * 5)
 	}
 
 	var stdout, stderr io.ReadCloser
@@ -175,6 +175,10 @@ func (ctr *container) waitProcessExitCode(process *process) int {
 		if herr, ok := err.(*hcsshim.ProcessError); ok && herr.Err != syscall.ERROR_BROKEN_PIPE {
 			logrus.Warnf("libcontainerd: unable to get exit code from container %s", ctr.containerID)
 		}
+		// Since we got an error retrieving the exit code, make sure that the code we return
+		// doesn't incorrectly indicate success.
+		exitCode = -1
+
 		// Fall through here, do not return. This ensures we attempt to continue the
 		// shutdown in HCS and tell the docker engine that the process/container
 		// has exited to avoid a container being dropped on the floor.
@@ -257,7 +261,7 @@ func (ctr *container) waitExit(process *process, isFirstProcessToStart bool) err
 			ctr.restarting = false
 			ctr.client.deleteContainer(ctr.friendlyName)
 			if err == nil {
-				if err = ctr.client.Create(ctr.containerID, ctr.ociSpec, ctr.options...); err != nil {
+				if err = ctr.client.Create(ctr.containerID, "", "", ctr.ociSpec, ctr.options...); err != nil {
 					logrus.Errorf("libcontainerd: error restarting %v", err)
 				}
 			}
@@ -277,9 +281,11 @@ func (ctr *container) waitExit(process *process, isFirstProcessToStart bool) err
 func (ctr *container) shutdown() error {
 	const shutdownTimeout = time.Minute * 5
 	err := ctr.hcsContainer.Shutdown()
-	if err == hcsshim.ErrVmcomputeOperationPending {
+	if hcsshim.IsPending(err) {
 		// Explicit timeout to avoid a (remote) possibility that shutdown hangs indefinitely.
 		err = ctr.hcsContainer.WaitTimeout(shutdownTimeout)
+	} else if hcsshim.IsAlreadyStopped(err) {
+		err = nil
 	}
 
 	if err != nil {
@@ -297,8 +303,10 @@ func (ctr *container) terminate() error {
 	const terminateTimeout = time.Minute * 5
 	err := ctr.hcsContainer.Terminate()
 
-	if err == hcsshim.ErrVmcomputeOperationPending {
+	if hcsshim.IsPending(err) {
 		err = ctr.hcsContainer.WaitTimeout(terminateTimeout)
+	} else if hcsshim.IsAlreadyStopped(err) {
+		err = nil
 	}
 
 	if err != nil {

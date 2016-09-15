@@ -8,12 +8,10 @@ parent = "smn_cli"
 +++
 <![end-metadata]-->
 
-**Warning:** this command is part of the Swarm management feature introduced in Docker 1.12, and might be subject to non backward-compatible changes.
-
 # service rm
 
 ```Markdown
-Usage:	docker service rm [OPTIONS] SERVICE [SERVICE...]
+Usage:	docker service rm SERVICE [SERVICE...]
 
 Remove one or more services
 

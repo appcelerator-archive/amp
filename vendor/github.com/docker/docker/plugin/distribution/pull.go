@@ -14,11 +14,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/docker/api/types"
 	dockerdist "github.com/docker/docker/distribution"
 	archive "github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
-	"github.com/docker/engine-api/types"
 	"golang.org/x/net/context"
 )
 
@@ -143,7 +143,7 @@ func Pull(name string, rs registry.Service, metaheader http.Header, authConfig *
 		logrus.Debugf("pull.go: error in json.Unmarshal(): %v", err)
 		return nil, err
 	}
-	if m.Config.MediaType != MediaTypeConfig {
+	if m.Config.MediaType != schema2.MediaTypePluginConfig {
 		return nil, ErrUnsupportedMediaType
 	}
 

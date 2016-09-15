@@ -552,6 +552,22 @@ options for `zfs` start with `zfs` and options for `btrfs` start with `btrfs`.
     $ dockerd --storage-opt dm.min_free_space=10%
     ```
 
+*  `dm.xfs_nospace_max_retries`
+
+    Specifies the maximum number of retries XFS should attempt to complete
+    IO when ENOSPC (no space) error is returned by underlying storage device.
+
+    By default XFS retries infinitely for IO to finish and this can result
+    in unkillable process. To change this behavior one can set
+    xfs_nospace_max_retries to say 0 and XFS will not retry IO after getting
+    ENOSPC and will shutdown filesystem.
+
+    Example use:
+
+    ```bash
+    $ dockerd --storage-opt dm.xfs_nospace_max_retries=0
+    ```
+
 #### ZFS options
 
 * `zfs.fsname`
@@ -574,7 +590,7 @@ options for `zfs` start with `zfs` and options for `btrfs` start with `btrfs`.
     **size** cannot be smaller than **btrfs.min_space**.
 
     Example use:
-        $ docker daemon -s btrfs --storage-opt btrfs.min_space=10G
+        $ dockerd -s btrfs --storage-opt btrfs.min_space=10G
 
 #### Overlay2 options
 
@@ -590,9 +606,17 @@ options for `zfs` start with `zfs` and options for `btrfs` start with `btrfs`.
 ## Docker runtime execution options
 
 The Docker daemon relies on a
-[OCI](https://github.com/opencontainers/specs) compliant runtime
+[OCI](https://github.com/opencontainers/runtime-spec) compliant runtime
 (invoked via the `containerd` daemon) as its interface to the Linux
 kernel `namespaces`, `cgroups`, and `SELinux`.
+
+By default, the Docker daemon automatically starts `containerd`. If you want to
+control `containerd` startup, manually start `containerd` and pass the path to
+the `containerd` socket using the `--containerd` flag. For example:
+
+```bash
+$ dockerd --containerd /var/run/dev/docker-containerd.sock
+```
 
 Runtimes can be registered with the daemon either via the
 configuration file or using the `--add-runtime` command line argument.
@@ -931,16 +955,16 @@ This option will completely disable user namespace mapping for the container's u
 The following standard Docker features are currently incompatible when
 running a Docker daemon with user namespaces enabled:
 
- - sharing PID or NET namespaces with the host (`--pid=host` or `--network=host`)
- - A `--read-only` container filesystem (this is a Linux kernel restriction against remounting with modified flags of a currently mounted filesystem when inside a user namespace)
- - external (volume or graph) drivers which are unaware/incapable of using daemon user mappings
+ - sharing PID or NET namespaces with the host (`--pid=host` or `--net=host`)
  - Using `--privileged` mode flag on `docker run` (unless also specifying `--userns=host`)
 
 In general, user namespaces are an advanced feature and will require
 coordination with other capabilities. For example, if volumes are mounted from
 the host, file ownership will have to be pre-arranged if the user or
 administrator wishes the containers to have expected access to the volume
-contents.
+contents. Note that when using external volume or graph driver plugins, those
+external software programs must be made aware of user and group mapping ranges
+if they are to work seamlessly with user namespace support.
 
 Finally, while the `root` user inside a user namespaced container process has
 many of the expected admin privileges that go along with being the superuser, the
@@ -1152,6 +1176,7 @@ The list of currently supported options that can be reconfigured is this:
   the runtime shipped with the official docker packages.
 - `runtimes`: it updates the list of available OCI runtimes that can
   be used to run containers
+- `authorization-plugin`: specifies the authorization plugins to use.
 
 Updating and reloading the cluster configurations such as `--cluster-store`,
 `--cluster-advertise` and `--cluster-store-opts` will take effect only if
@@ -1212,7 +1237,7 @@ The `--tls*` options enable use of specific certificates for individual daemons.
 Example script for a separate “bootstrap” instance of the Docker daemon without network:
 
 ```bash
-$ docker daemon \
+$ dockerd \
         -H unix:///var/run/docker-bootstrap.sock \
         -p /var/run/docker-bootstrap.pid \
         --iptables=false \

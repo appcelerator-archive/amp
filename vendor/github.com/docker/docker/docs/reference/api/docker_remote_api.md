@@ -35,15 +35,16 @@ If you have bound the Docker daemon to a different socket path or TCP
 port, you would reference that in your cURL rather than the
 default.
 
-The current version of the API is v1.24 which means calling `/info` is the same
-as calling `/v1.24/info`. To call an older version of the API use
-`/v1.23/info`. If a newer daemon is installed, new properties may be returned
+The current version of the API is v1.25 which means calling `/info` is the same
+as calling `/v1.25/info`. To call an older version of the API use
+`/v1.24/info`. If a newer daemon is installed, new properties may be returned
 even when calling older versions of the API.
 
 Use the table below to find the API version for a Docker version:
 
 Docker version  | API version                        | Changes
 ----------------|------------------------------------|------------------------------------------------------
+1.13.x          | [1.25](docker_remote_api_v1.25.md) | [API changes](docker_remote_api.md#v1-25-api-changes)
 1.12.x          | [1.24](docker_remote_api_v1.24.md) | [API changes](docker_remote_api.md#v1-24-api-changes)
 1.11.x          | [1.23](docker_remote_api_v1.23.md) | [API changes](docker_remote_api.md#v1-23-api-changes)
 1.10.x          | [1.22](docker_remote_api_v1.22.md) | [API changes](docker_remote_api.md#v1-22-api-changes)
@@ -93,7 +94,7 @@ wget --no-check-certificate --certificate=$DOCKER_CERT_PATH/cert.pem \
 
 The following diagram depicts the container states accessible through the API.
 
-![States](images/event_state.png)
+[![States](images/event_state.png)](../images/event_state.png)
 
 Some container-related events are not affected by container state, so they are not included in this diagram. These events are:
 
@@ -110,6 +111,18 @@ Running `docker rmi` emits an **untag** event when removing an image name.  The 
 ## Version history
 
 This section lists each version from latest to oldest.  Each listing includes a link to the full documentation set and the changes relevant in that release.
+
+### v1.25 API changes
+
+[Docker Remote API v1.25](docker_remote_api_v1.25.md) documentation
+
+* `POST /containers/create` now takes `AutoRemove` in HostConfig, to enable auto-removal of the container on daemon side when the container's process exits.
+* `GET /containers/json` and `GET /containers/(id or name)/json` now return `"removing"` as a value for the `State.Status` field if the container is being removed. Previously, "exited" was returned as status.
+* `GET /containers/json` now accepts `removing` as a valid value for the `status` filter.
+* `DELETE /volumes/(name)` now accepts a `force` query parameter to force removal of volumes that were already removed out of band by the volume driver plugin.
+* `POST /containers/create/` and `POST /containers/(name)/update` now validates restart policies.
+* `POST /containers/create` now validates IPAMConfig in NetworkingConfig, and returns error for invalid IPv4 and IPv6 addresses (`--ip` and `--ip6` in `docker create/run`).
+* `POST /containers/create` now takes a `Mounts` field in `HostConfig` which replaces `Binds` and `Volumes`. *note*: `Binds` and `Volumes` are still available but are exclusive with `Mounts`
 
 ### v1.24 API changes
 

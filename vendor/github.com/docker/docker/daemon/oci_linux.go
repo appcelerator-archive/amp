@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/daemon/caps"
 	"github.com/docker/docker/libcontainerd"
@@ -19,11 +20,10 @@ import (
 	"github.com/docker/docker/pkg/stringutils"
 	"github.com/docker/docker/pkg/symlink"
 	"github.com/docker/docker/volume"
-	containertypes "github.com/docker/engine-api/types/container"
 	"github.com/opencontainers/runc/libcontainer/apparmor"
 	"github.com/opencontainers/runc/libcontainer/devices"
 	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/opencontainers/specs/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func setResources(s *specs.Spec, r containertypes.Resources) error {
@@ -115,19 +115,11 @@ func setDevices(s *specs.Spec, c *container.Container) error {
 func setRlimits(daemon *Daemon, s *specs.Spec, c *container.Container) error {
 	var rlimits []specs.Rlimit
 
-	ulimits := c.HostConfig.Ulimits
-	// Merge ulimits with daemon defaults
-	ulIdx := make(map[string]struct{})
-	for _, ul := range ulimits {
-		ulIdx[ul.Name] = struct{}{}
-	}
-	for name, ul := range daemon.configStore.Ulimits {
-		if _, exists := ulIdx[name]; !exists {
-			ulimits = append(ulimits, ul)
-		}
-	}
-
-	for _, ul := range ulimits {
+	// We want to leave the original HostConfig alone so make a copy here
+	hostConfig := *c.HostConfig
+	// Merge with the daemon defaults
+	daemon.mergeUlimits(&hostConfig)
+	for _, ul := range hostConfig.Ulimits {
 		rlimits = append(rlimits, specs.Rlimit{
 			Type: "RLIMIT_" + strings.ToUpper(ul.Name),
 			Soft: uint64(ul.Soft),
@@ -481,7 +473,7 @@ func setMounts(daemon *Daemon, s *specs.Spec, c *container.Container, mounts []c
 
 		if m.Source == "tmpfs" {
 			data := c.HostConfig.Tmpfs[m.Destination]
-			options := []string{"noexec", "nosuid", "nodev", volume.DefaultPropagationMode}
+			options := []string{"noexec", "nosuid", "nodev", string(volume.DefaultPropagationMode)}
 			if data != "" {
 				options = append(options, strings.Split(data, ",")...)
 			}
@@ -708,4 +700,20 @@ func clearReadOnly(m *specs.Mount) {
 		}
 	}
 	m.Options = opt
+}
+
+// mergeUlimits merge the Ulimits from HostConfig with daemon defaults, and update HostConfig
+func (daemon *Daemon) mergeUlimits(c *containertypes.HostConfig) {
+	ulimits := c.Ulimits
+	// Merge ulimits with daemon defaults
+	ulIdx := make(map[string]struct{})
+	for _, ul := range ulimits {
+		ulIdx[ul.Name] = struct{}{}
+	}
+	for name, ul := range daemon.configStore.Ulimits {
+		if _, exists := ulIdx[name]; !exists {
+			ulimits = append(ulimits, ul)
+		}
+	}
+	c.Ulimits = ulimits
 }

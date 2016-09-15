@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/utils"
 	"github.com/docker/docker/volume"
-	containertypes "github.com/docker/engine-api/types/container"
 )
 
 // Container holds fields specific to the Windows implementation. See
@@ -72,6 +72,9 @@ func (container *Container) UpdateContainer(hostConfig *containertypes.HostConfi
 	}
 	// update HostConfig of container
 	if hostConfig.RestartPolicy.Name != "" {
+		if container.HostConfig.AutoRemove && !hostConfig.RestartPolicy.IsNone() {
+			return fmt.Errorf("Restart policy cannot be updated because AutoRemove is enabled for the container")
+		}
 		container.HostConfig.RestartPolicy = hostConfig.RestartPolicy
 	}
 	return nil

@@ -54,7 +54,7 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	contents := string(b)
 	request := &stack.UpRequest{Stackfile: contents}
 
-	client := stack.NewStackClient(amp.Conn)
+	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.Up(context.Background(), request)
 	if err != nil {
 		return err

@@ -2,17 +2,15 @@ package dockerfile
 
 import (
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/builder/dockerfile/parser"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/reexec"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
 )
 
 type dispatchTestCase struct {
@@ -30,7 +28,7 @@ func initDispatchTestCases() []dispatchTestCase {
 		dockerfile: `COPY
 	quux \
       bar`,
-		expectedError: "COPY requires at least one argument",
+		expectedError: "COPY requires at least two arguments",
 	},
 		{
 			name:          "ONBUILD forbidden FROM",
@@ -47,7 +45,7 @@ func initDispatchTestCases() []dispatchTestCase {
 		{
 			name:          "ARG two arguments",
 			dockerfile:    "ARG foo bar",
-			expectedError: "ARG requires exactly one argument definition",
+			expectedError: "ARG requires exactly one argument",
 			files:         nil,
 		},
 		{
@@ -186,7 +184,7 @@ func executeTestCase(t *testing.T, testCase dispatchTestCase) {
 
 	b := &Builder{runConfig: config, options: options, Stdout: ioutil.Discard, context: context}
 
-	err = b.dispatch(0, n.Children[0])
+	err = b.dispatch(0, len(n.Children), n.Children[0])
 
 	if err == nil {
 		t.Fatalf("No error when executing test %s", testCase.name)
@@ -196,36 +194,4 @@ func executeTestCase(t *testing.T, testCase dispatchTestCase) {
 		t.Fatalf("Wrong error message. Should be \"%s\". Got \"%s\"", testCase.expectedError, err.Error())
 	}
 
-}
-
-// createTestTempDir creates a temporary directory for testing.
-// It returns the created path and a cleanup function which is meant to be used as deferred call.
-// When an error occurs, it terminates the test.
-func createTestTempDir(t *testing.T, dir, prefix string) (string, func()) {
-	path, err := ioutil.TempDir(dir, prefix)
-
-	if err != nil {
-		t.Fatalf("Error when creating directory %s with prefix %s: %s", dir, prefix, err)
-	}
-
-	return path, func() {
-		err = os.RemoveAll(path)
-
-		if err != nil {
-			t.Fatalf("Error when removing directory %s: %s", path, err)
-		}
-	}
-}
-
-// createTestTempFile creates a temporary file within dir with specific contents and permissions.
-// When an error occurs, it terminates the test
-func createTestTempFile(t *testing.T, dir, filename, contents string, perm os.FileMode) string {
-	filePath := filepath.Join(dir, filename)
-	err := ioutil.WriteFile(filePath, []byte(contents), perm)
-
-	if err != nil {
-		t.Fatalf("Error when creating %s file: %s", filename, err)
-	}
-
-	return filePath
 }

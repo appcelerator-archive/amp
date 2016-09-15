@@ -21,7 +21,7 @@ import (
 	"github.com/docker/swarmkit/ioutils"
 	"github.com/docker/swarmkit/log"
 	"github.com/docker/swarmkit/manager"
-	"github.com/docker/swarmkit/picker"
+	"github.com/docker/swarmkit/remotes"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -89,7 +89,9 @@ type Node struct {
 	nodeID               string
 	nodeMembership       api.NodeSpec_Membership
 	started              chan struct{}
+	startOnce            sync.Once
 	stopped              chan struct{}
+	stopOnce             sync.Once
 	ready                chan struct{} // closed when agent has completed registration and manager(if enabled) is ready to receive control requests
 	certificateRequested chan struct{} // closed when certificate issue request has been sent by node
 	closed               chan struct{}
@@ -137,26 +139,15 @@ func NewNode(c *NodeConfig) (*Node, error) {
 
 // Start starts a node instance.
 func (n *Node) Start(ctx context.Context) error {
-	select {
-	case <-n.started:
-		select {
-		case <-n.closed:
-			return n.err
-		case <-n.stopped:
-			return errAgentStopped
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			return errAgentStarted
-		}
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
+	err := errNodeStarted
 
-	close(n.started)
-	go n.run(ctx)
-	return nil
+	n.startOnce.Do(func() {
+		close(n.started)
+		go n.run(ctx)
+		err = nil // clear error above, only once.
+	})
+
+	return err
 }
 
 func (n *Node) run(ctx context.Context) (err error) {
@@ -166,7 +157,7 @@ func (n *Node) run(ctx context.Context) (err error) {
 	}()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	ctx = log.WithLogger(ctx, log.G(ctx).WithField("module", "node"))
+	ctx = log.WithModule(ctx, "node")
 
 	go func() {
 		select {
@@ -187,7 +178,7 @@ func (n *Node) run(ctx context.Context) (err error) {
 	if n.config.JoinAddr != "" || n.config.ForceNewCluster {
 		n.remotes = newPersistentRemotes(filepath.Join(n.config.StateDir, stateFilename))
 		if n.config.JoinAddr != "" {
-			n.remotes.Observe(api.Peer{Addr: n.config.JoinAddr}, picker.DefaultObservationWeight)
+			n.remotes.Observe(api.Peer{Addr: n.config.JoinAddr}, remotes.DefaultObservationWeight)
 		}
 	}
 
@@ -213,7 +204,7 @@ func (n *Node) run(ctx context.Context) (err error) {
 	}()
 
 	certDir := filepath.Join(n.config.StateDir, "certificates")
-	securityConfig, err := ca.LoadOrCreateSecurityConfig(ctx, certDir, n.config.JoinToken, ca.ManagerRole, picker.NewPicker(n.remotes), issueResponseChan)
+	securityConfig, err := ca.LoadOrCreateSecurityConfig(ctx, certDir, n.config.JoinToken, ca.ManagerRole, n.remotes, issueResponseChan)
 	if err != nil {
 		return err
 	}
@@ -265,7 +256,7 @@ func (n *Node) run(ctx context.Context) (err error) {
 		}
 	}()
 
-	updates := ca.RenewTLSConfig(ctx, securityConfig, certDir, picker.NewPicker(n.remotes), forceCertRenewal)
+	updates := ca.RenewTLSConfig(ctx, securityConfig, certDir, n.remotes, forceCertRenewal)
 	go func() {
 		for {
 			select {
@@ -325,27 +316,19 @@ func (n *Node) run(ctx context.Context) (err error) {
 func (n *Node) Stop(ctx context.Context) error {
 	select {
 	case <-n.started:
-		select {
-		case <-n.closed:
-			return n.err
-		case <-n.stopped:
-			select {
-			case <-n.closed:
-				return n.err
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			close(n.stopped)
-			// recurse and wait for closure
-			return n.Stop(ctx)
-		}
+	default:
+		return errNodeNotStarted
+	}
+
+	n.stopOnce.Do(func() {
+		close(n.stopped)
+	})
+
+	select {
+	case <-n.closed:
+		return nil
 	case <-ctx.Done():
 		return ctx.Err()
-	default:
-		return errAgentNotStarted
 	}
 }
 
@@ -550,31 +533,29 @@ func (n *Node) initManagerConnection(ctx context.Context, ready chan<- struct{})
 	if err != nil {
 		return err
 	}
-	state := grpc.Idle
+	client := api.NewHealthClient(conn)
 	for {
-		s, err := conn.WaitForStateChange(ctx, state)
+		resp, err := client.Check(ctx, &api.HealthCheckRequest{Service: "ControlAPI"})
 		if err != nil {
-			n.setControlSocket(nil)
 			return err
 		}
-		if s == grpc.Ready {
-			n.setControlSocket(conn)
-			if ready != nil {
-				close(ready)
-				ready = nil
-			}
-		} else if state == grpc.Shutdown {
-			n.setControlSocket(nil)
+		if resp.Status == api.HealthCheckResponse_SERVING {
+			break
 		}
-		state = s
+		time.Sleep(500 * time.Millisecond)
 	}
+	n.setControlSocket(conn)
+	if ready != nil {
+		close(ready)
+	}
+	return nil
 }
 
-func (n *Node) waitRole(ctx context.Context, role string) {
+func (n *Node) waitRole(ctx context.Context, role string) error {
 	n.roleCond.L.Lock()
 	if role == n.role {
 		n.roleCond.L.Unlock()
-		return
+		return nil
 	}
 	finishCh := make(chan struct{})
 	defer close(finishCh)
@@ -589,18 +570,24 @@ func (n *Node) waitRole(ctx context.Context, role string) {
 	defer n.roleCond.L.Unlock()
 	for role != n.role {
 		n.roleCond.Wait()
-		if ctx.Err() != nil {
-			return
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+		default:
 		}
 	}
+
+	return nil
 }
 
 func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig, ready chan struct{}) error {
 	for {
-		n.waitRole(ctx, ca.ManagerRole)
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if err := n.waitRole(ctx, ca.ManagerRole); err != nil {
+			return err
 		}
+
 		remoteAddr, _ := n.remotes.Select(n.nodeID)
 		m, err := manager.New(&manager.Config{
 			ForceNewCluster: n.config.ForceNewCluster,
@@ -637,14 +624,14 @@ func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig
 			go func(ready chan struct{}) {
 				select {
 				case <-ready:
-					n.remotes.Observe(api.Peer{NodeID: n.nodeID, Addr: n.config.ListenRemoteAPI}, picker.DefaultObservationWeight)
+					n.remotes.Observe(api.Peer{NodeID: n.nodeID, Addr: n.config.ListenRemoteAPI}, remotes.DefaultObservationWeight)
 				case <-connCtx.Done():
 				}
 			}(ready)
 			ready = nil
 		}
 
-		n.waitRole(ctx, ca.AgentRole)
+		err = n.waitRole(ctx, ca.AgentRole)
 
 		n.Lock()
 		n.manager = nil
@@ -658,6 +645,7 @@ func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig
 			<-done
 		}
 		connCancel()
+		n.setControlSocket(nil)
 
 		if err != nil {
 			return err
@@ -668,15 +656,15 @@ func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig
 type persistentRemotes struct {
 	sync.RWMutex
 	c *sync.Cond
-	picker.Remotes
+	remotes.Remotes
 	storePath      string
 	lastSavedState []api.Peer
 }
 
-func newPersistentRemotes(f string, remotes ...api.Peer) *persistentRemotes {
+func newPersistentRemotes(f string, peers ...api.Peer) *persistentRemotes {
 	pr := &persistentRemotes{
 		storePath: f,
-		Remotes:   picker.NewRemotes(remotes...),
+		Remotes:   remotes.NewRemotes(peers...),
 	}
 	pr.c = sync.NewCond(pr.RLocker())
 	return pr

@@ -9,7 +9,7 @@
 # docker run -v `pwd`:/go/src/github.com/docker/docker --privileged -i -t docker bash
 #
 # # Run the test suite:
-# docker run --privileged docker hack/make.sh test
+# docker run --privileged docker hack/make.sh test-unit test-integration-cli test-docker-py
 #
 # Note: AppArmor used to mess with privileged mode, but this is no longer
 # the case. Therefore, you don't have to disable it anymore.
@@ -48,6 +48,8 @@ RUN apt-get update && apt-get install -y \
 	python-pip \
 	python-websocket \
 	gccgo \
+	iproute2 \
+	iputils-ping \
 	--no-install-recommends
 
 # Install armhf loader to use armv6 binaries on armv8
@@ -95,9 +97,10 @@ RUN set -x \
 
 # Install Go
 # We don't have official binary tarballs for ARM64, eigher for Go or bootstrap,
-# so we use the official armv6 released binaries as a GOROOT_BOOTSTRAP, and
-# build Go from source code.
-ENV GO_VERSION 1.6.3
+# so we use gccgo as bootstrap to build Go from source code.
+# We don't use the official ARMv6 released binaries as a GOROOT_BOOTSTRAP, because
+# not all ARM64 platforms support 32-bit mode. 32-bit mode is optional for ARMv8.
+ENV GO_VERSION 1.7.1
 RUN mkdir /usr/src/go && curl -fsSL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -v -C /usr/src/go -xz --strip-components=1 \
 	&& cd /usr/src/go/src \
 	&& GOOS=linux GOARCH=arm64 GOROOT_BOOTSTRAP="$(go env GOROOT)" ./make.bash
@@ -130,7 +133,7 @@ RUN set -x \
 	&& rm -rf "$GOPATH"
 
 # Get the "docker-py" source so we can run their integration tests
-ENV DOCKER_PY_COMMIT 7befe694bd21e3c54bb1d7825270ea4bd6864c13
+ENV DOCKER_PY_COMMIT e2655f658408f9ad1f62abdef3eb6ed43c0cf324
 RUN git clone https://github.com/docker/docker-py.git /docker-py \
 	&& cd /docker-py \
 	&& git checkout -q $DOCKER_PY_COMMIT \
@@ -162,15 +165,6 @@ RUN ./contrib/download-frozen-image-v2.sh /docker-frozen-images \
 	aarch64/hello-world:latest@sha256:65a4a158587b307bb02db4de41b836addb0c35175bdc801367b1ac1ddeb9afda
 # see also "hack/make/.ensure-frozen-images" (which needs to be updated any time this list is)
 
-# Download man page generator
-RUN set -x \
-	&& export GOPATH="$(mktemp -d)" \
-	&& git clone --depth 1 -b v1.0.5 https://github.com/cpuguy83/go-md2man.git "$GOPATH/src/github.com/cpuguy83/go-md2man" \
-	&& git clone --depth 1 -b v1.4 https://github.com/russross/blackfriday.git "$GOPATH/src/github.com/russross/blackfriday" \
-	&& go get -v -d github.com/cpuguy83/go-md2man \
-	&& go build -v -o /usr/local/bin/go-md2man github.com/cpuguy83/go-md2man \
-	&& rm -rf "$GOPATH"
-
 # Download toml validator
 ENV TOMLV_COMMIT 9baf8a8a9f2ed20a8e54160840c492f937eeaf9a
 RUN set -x \
@@ -192,7 +186,7 @@ RUN set -x \
 	&& rm -rf "$GOPATH"
 
 # Install containerd
-ENV CONTAINERD_COMMIT 0ac3cd1be170d180b2baed755e8f0da547ceb267
+ENV CONTAINERD_COMMIT 4c21ad662f71af56c0e6b29c0afef72df441d1ff
 RUN set -x \
 	&& export GOPATH="$(mktemp -d)" \
 	&& git clone https://github.com/docker/containerd.git "$GOPATH/src/github.com/docker/containerd" \

@@ -355,17 +355,12 @@ func (n *Node) saveSnapshot(snapshot raftpb.Snapshot, keepOldSnapshots uint64) e
 
 	for i := 0; i < deleteUntil; i++ {
 		walPath := filepath.Join(n.walDir(), wals[i])
-		l, err := fileutil.NewLock(walPath)
-		if err != nil {
-			continue
-		}
-		err = l.TryLock()
+		l, err := fileutil.TryLockFile(walPath, os.O_WRONLY, fileutil.PrivateFileMode)
 		if err != nil {
 			return fmt.Errorf("could not lock old WAL file %s for removal: %v", wals[i], err)
 		}
 		err = os.Remove(walPath)
-		l.Unlock()
-		l.Destroy()
+		l.Close()
 		if err != nil {
 			return fmt.Errorf("error removing old WAL file %s: %v", wals[i], err)
 		}
@@ -450,18 +445,24 @@ func (n *Node) restoreFromSnapshot(data []byte, forceNewCluster bool) error {
 		return err
 	}
 
-	n.cluster.Clear()
+	oldMembers := n.cluster.Members()
 
 	if !forceNewCluster {
 		for _, member := range snapshot.Membership.Members {
 			if err := n.registerNode(&api.RaftMember{RaftID: member.RaftID, NodeID: member.NodeID, Addr: member.Addr}); err != nil {
 				return err
 			}
+			delete(oldMembers, member.RaftID)
 		}
 	}
 
 	for _, removedMember := range snapshot.Membership.Removed {
 		n.cluster.RemoveMember(removedMember)
+		delete(oldMembers, removedMember)
+	}
+
+	for member := range oldMembers {
+		n.cluster.ClearMember(member)
 	}
 
 	return nil

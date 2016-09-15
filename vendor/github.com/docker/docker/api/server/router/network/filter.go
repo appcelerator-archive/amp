@@ -3,12 +3,10 @@ package network
 import (
 	"fmt"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/runconfig"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
 )
-
-type filterHandler func([]types.NetworkResource, string) ([]types.NetworkResource, error)
 
 var (
 	// AcceptedFilters is an acceptable filters for validation

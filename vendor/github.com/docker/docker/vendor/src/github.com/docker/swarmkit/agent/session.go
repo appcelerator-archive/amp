@@ -6,8 +6,8 @@ import (
 
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/log"
-	"github.com/docker/swarmkit/picker"
 	"github.com/docker/swarmkit/protobuf/ptypes"
+	"github.com/docker/swarmkit/remotes"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -42,9 +42,10 @@ type session struct {
 	closed     chan struct{}
 }
 
-func newSession(ctx context.Context, agent *Agent, delay time.Duration) *session {
+func newSession(ctx context.Context, agent *Agent, delay time.Duration, sessionID string) *session {
 	s := &session{
 		agent:      agent,
+		sessionID:  sessionID,
 		errs:       make(chan error, 1),
 		messages:   make(chan *api.SessionMessage),
 		tasks:      make(chan *api.TasksMessage),
@@ -124,6 +125,7 @@ func (s *session) start(ctx context.Context) error {
 
 		stream, err = client.Session(sessionCtx, &api.SessionRequest{
 			Description: description,
+			SessionID:   s.sessionID,
 		})
 		if err != nil {
 			errChan <- err
@@ -305,7 +307,7 @@ func (s *session) close() error {
 		return errSessionClosed
 	default:
 		if s.conn != nil {
-			s.agent.config.Managers.ObserveIfExists(api.Peer{Addr: s.addr}, -picker.DefaultObservationWeight)
+			s.agent.config.Managers.ObserveIfExists(api.Peer{Addr: s.addr}, -remotes.DefaultObservationWeight)
 			s.conn.Close()
 		}
 		close(s.closed)

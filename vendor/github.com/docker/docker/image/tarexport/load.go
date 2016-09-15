@@ -30,8 +30,8 @@ func (l *tarexporter) Load(inTar io.ReadCloser, outStream io.Writer, quiet bool)
 	)
 	if !quiet {
 		progressOutput = sf.NewProgressOutput(outStream, false)
-		outStream = &streamformatter.StdoutFormatter{Writer: outStream, StreamFormatter: streamformatter.NewJSONStreamFormatter()}
 	}
+	outStream = &streamformatter.StdoutFormatter{Writer: outStream, StreamFormatter: streamformatter.NewJSONStreamFormatter()}
 
 	tmpDir, err := ioutil.TempDir("", "docker-import-")
 	if err != nil {
@@ -52,7 +52,7 @@ func (l *tarexporter) Load(inTar io.ReadCloser, outStream io.Writer, quiet bool)
 		if os.IsNotExist(err) {
 			return l.legacyLoad(tmpDir, outStream, progressOutput)
 		}
-		return manifestFile.Close()
+		return err
 	}
 	defer manifestFile.Close()
 
@@ -170,27 +170,24 @@ func (l *tarexporter) loadLayer(filename string, rootFS image.RootFS, id string,
 	}
 	defer rawTar.Close()
 
-	inflatedLayerData, err := archive.DecompressStream(rawTar)
-	if err != nil {
-		return nil, err
-	}
-	defer inflatedLayerData.Close()
-
+	var r io.Reader
 	if progressOutput != nil {
-		fileInfo, err := os.Stat(filename)
+		fileInfo, err := rawTar.Stat()
 		if err != nil {
 			logrus.Debugf("Error statting file: %v", err)
 			return nil, err
 		}
 
-		progressReader := progress.NewProgressReader(inflatedLayerData, progressOutput, fileInfo.Size(), stringid.TruncateID(id), "Loading layer")
-
-		if ds, ok := l.ls.(layer.DescribableStore); ok {
-			return ds.RegisterWithDescriptor(progressReader, rootFS.ChainID(), foreignSrc)
-		}
-		return l.ls.Register(progressReader, rootFS.ChainID())
-
+		r = progress.NewProgressReader(rawTar, progressOutput, fileInfo.Size(), stringid.TruncateID(id), "Loading layer")
+	} else {
+		r = rawTar
 	}
+
+	inflatedLayerData, err := archive.DecompressStream(r)
+	if err != nil {
+		return nil, err
+	}
+	defer inflatedLayerData.Close()
 
 	if ds, ok := l.ls.(layer.DescribableStore); ok {
 		return ds.RegisterWithDescriptor(inflatedLayerData, rootFS.ChainID(), foreignSrc)
@@ -233,10 +230,7 @@ func (l *tarexporter) legacyLoad(tmpDir string, outStream io.Writer, progressOut
 	}
 	repositoriesFile, err := os.Open(repositoriesPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		return repositoriesFile.Close()
+		return err
 	}
 	defer repositoriesFile.Close()
 

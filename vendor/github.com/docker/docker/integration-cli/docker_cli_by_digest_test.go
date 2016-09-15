@@ -11,9 +11,9 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/integration/checker"
 	"github.com/docker/docker/pkg/stringutils"
-	"github.com/docker/engine-api/types"
 	"github.com/go-check/check"
 )
 
@@ -176,7 +176,7 @@ func (s *DockerRegistrySuite) TestRemoveImageByDigest(c *check.C) {
 	_, err = inspectFieldWithError(imageReference, "Id")
 	//unexpected nil err trying to inspect what should be a non-existent image
 	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, "No such image")
+	c.Assert(err.Error(), checker.Contains, "No such object")
 }
 
 func (s *DockerRegistrySuite) TestBuildByDigest(c *check.C) {
@@ -344,7 +344,7 @@ func (s *DockerRegistrySuite) TestListDanglingImagesWithDigests(c *check.C) {
 	dockerCmd(c, "pull", imageReference2)
 
 	// list images
-	out, _ = dockerCmd(c, "images", "--digests", "--filter=\"dangling=true\"")
+	out, _ = dockerCmd(c, "images", "--digests", "--filter=dangling=true")
 
 	// make sure repo shown, tag=<none>, digest = $digest1
 	c.Assert(re1.MatchString(out), checker.True, check.Commentf("expected %q: %s", re1.String(), out))
@@ -357,7 +357,7 @@ func (s *DockerRegistrySuite) TestListDanglingImagesWithDigests(c *check.C) {
 	dockerCmd(c, "pull", repoName+":dangle1")
 
 	// list images
-	out, _ = dockerCmd(c, "images", "--digests", "--filter=\"dangling=true\"")
+	out, _ = dockerCmd(c, "images", "--digests", "--filter=dangling=true")
 
 	// make sure image 1 has repo, tag, <none> AND repo, <none>, digest
 	reWithDigest1 := regexp.MustCompile(`\s*` + repoName + `\s*dangle1\s*` + digest1.String() + `\s`)
@@ -379,7 +379,7 @@ func (s *DockerRegistrySuite) TestListDanglingImagesWithDigests(c *check.C) {
 	c.Assert(reWithDigest2.MatchString(out), checker.True, check.Commentf("expected %q: %s", reWithDigest2.String(), out))
 
 	// list images, no longer dangling, should not match
-	out, _ = dockerCmd(c, "images", "--digests", "--filter=\"dangling=true\"")
+	out, _ = dockerCmd(c, "images", "--digests", "--filter=dangling=true")
 
 	// make sure image 1 has repo, tag, digest
 	c.Assert(reWithDigest1.MatchString(out), checker.False, check.Commentf("unexpected %q: %s", reWithDigest1.String(), out))
@@ -643,7 +643,7 @@ func (s *DockerRegistrySuite) TestPullFailsWithAlteredLayer(c *check.C) {
 	// Pull from the registry using the <name>@<digest> reference.
 	imageReference := fmt.Sprintf("%s@%s", repoName, manifestDigest)
 	out, exitStatus, _ := dockerCmdWithError("pull", imageReference)
-	c.Assert(exitStatus, checker.Not(check.Equals), 0, check.Commentf("expected a zero exit status"))
+	c.Assert(exitStatus, checker.Not(check.Equals), 0, check.Commentf("expected a non-zero exit status"))
 
 	expectedErrorMsg := fmt.Sprintf("filesystem layer verification failed for digest %s", targetLayerDigest)
 	c.Assert(out, checker.Contains, expectedErrorMsg, check.Commentf("expected error message in output: %s", out))
@@ -686,7 +686,7 @@ func (s *DockerSchema1RegistrySuite) TestPullFailsWithAlteredLayer(c *check.C) {
 	// Pull from the registry using the <name>@<digest> reference.
 	imageReference := fmt.Sprintf("%s@%s", repoName, manifestDigest)
 	out, exitStatus, _ := dockerCmdWithError("pull", imageReference)
-	c.Assert(exitStatus, checker.Not(check.Equals), 0, check.Commentf("expected a zero exit status"))
+	c.Assert(exitStatus, checker.Not(check.Equals), 0, check.Commentf("expected a non-zero exit status"))
 
 	expectedErrorMsg := fmt.Sprintf("filesystem layer verification failed for digest %s", targetLayerDigest)
 	c.Assert(out, checker.Contains, expectedErrorMsg, check.Commentf("expected error message in output: %s", out))

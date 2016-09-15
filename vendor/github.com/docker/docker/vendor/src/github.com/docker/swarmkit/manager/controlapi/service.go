@@ -182,6 +182,9 @@ func validateServiceSpec(spec *api.ServiceSpec) error {
 
 // checkPortConflicts does a best effort to find if the passed in spec has port
 // conflicts with existing services.
+// `serviceID string` is the service ID of the spec in service update. If
+// `serviceID` is not "", then conflicts check will be skipped against this
+// service (the service being updated).
 func (s *Server) checkPortConflicts(spec *api.ServiceSpec, serviceID string) error {
 	if spec.Endpoint == nil {
 		return nil
@@ -324,8 +327,20 @@ func (s *Server) UpdateService(ctx context.Context, request *api.UpdateServiceRe
 			return nil
 		}
 		// temporary disable network update
-		if request.Spec != nil && !reflect.DeepEqual(request.Spec.Networks, service.Spec.Networks) {
-			return errNetworkUpdateNotSupported
+		if request.Spec != nil {
+			requestSpecNetworks := request.Spec.Task.Networks
+			if len(requestSpecNetworks) == 0 {
+				requestSpecNetworks = request.Spec.Networks
+			}
+
+			specNetworks := service.Spec.Task.Networks
+			if len(specNetworks) == 0 {
+				specNetworks = service.Spec.Networks
+			}
+
+			if !reflect.DeepEqual(requestSpecNetworks, specNetworks) {
+				return errNetworkUpdateNotSupported
+			}
 		}
 
 		// orchestrator is designed to be stateless, so it should not deal
