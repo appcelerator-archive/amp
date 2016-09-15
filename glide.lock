@@ -1,186 +1,188 @@
-hash: 062991602202116fb52233ba0d05009ad91b1c7219d87e35134566aa83b650a9
-updated: 2016-09-14T09:07:45.37601625-07:00
+hash: a2bde427e6a4f22fd31d48e6ed2a5743c711d25ff6101bde46af9c166f4168e1
+updated: 2016-09-14T18:32:36.895816971-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/coreos/etcd
-  version: d40982fc9160b7471cd832bff34d09e218b12e0e
+  version: ""
   subpackages:
-  - auth/authpb
   - clientv3
+  - auth/authpb
   - etcdserver/api/v3rpc/rpctypes
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - spew
 - name: github.com/docker/docker
-  version: 23cf638307f030cd8d48c9efc21feec18a6f88f8
+  version: ""
   subpackages:
   - client
   - types
+  - pkg/stringid
+  - pkg/random
+- name: github.com/docker/go-connections
+  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+  subpackages:
+  - nat
 - name: github.com/eapache/go-resiliency
-  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - breaker
 - name: github.com/eapache/go-xerial-snappy
-  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/eapache/queue
-  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/fatih/color
-  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+  version: ""
 - name: github.com/fsnotify/fsnotify
-  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/ghodss/yaml
-  version: aa0c862057666179de291b67d9f093d12b5a8473
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/golang/protobuf
-  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
-  - jsonpb
   - proto
+  - jsonpb
 - name: github.com/golang/snappy
-  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+  version: ""
 - name: github.com/google/go-github
-  version: a32b73b3f7165492568dbf7bf6663b5c369034db
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - github
 - name: github.com/google/go-querystring
-  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - query
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: 331418a167bc76e7e4e7469cf704033eddaba7a5
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - runtime
-  - runtime/internal
   - utilities
+  - runtime/internal
 - name: github.com/hashicorp/hcl
-  version: 99df0eb941dd8ddbc83d3f3605a34f6a686ac85e
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - hcl/ast
   - hcl/parser
-  - hcl/scanner
-  - hcl/strconv
   - hcl/token
   - json/parser
+  - hcl/scanner
+  - hcl/strconv
   - json/scanner
   - json/token
 - name: github.com/howeyc/gopass
-  version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/inconshreveable/mousetrap
-  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/influxdata/influxdb
-  version: 37992377a55fbc138b2c01edd4deffed64b53989
+  version: ""
   subpackages:
   - client/v2
   - models
   - pkg/escape
 - name: github.com/klauspost/crc32
-  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/kr/fs
-  version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/magiconair/properties
-  version: 0723e352fa358f9322c938cc2dadda874e9151a9
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/mattn/go-colorable
-  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/mitchellh/go-homedir
-  version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/mitchellh/mapstructure
-  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/pelletier/go-buffruneio
-  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/pelletier/go-toml
-  version: 31055c2ff0bb0c7f9095aec0d220aed21108121e
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/pkg/errors
-  version: 17b591df37844cde689f4d5813e5cea0927d8dd2
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/pkg/sftp
-  version: 8197a2e580736b78d704be0fc47b2324c0591a32
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/Shopify/sarama
-  version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
+  version: ""
 - name: github.com/spf13/afero
-  version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - mem
   - sftp
 - name: github.com/spf13/cast
-  version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/spf13/cobra
-  version: 9c28e4bbd74e5c3ed7aacbc552b2cab7cfdfe744
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/spf13/jwalterweatherman
-  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/spf13/pflag
-  version: 6fd2ff4ff8dfcdf5556fbdc0ac0284408274b1a7
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: github.com/spf13/viper
-  version: 16990631d4aa7e38f73dbbbf37fa13e67c648531
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 - name: golang.org/x/crypto
-  version: 05d11b2ca14108dfc7f74f4f66b28c7fe92e1fd0
+  version: ""
   subpackages:
+  - ssh/terminal
+  - ssh
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
-  - ssh
-  - ssh/terminal
 - name: golang.org/x/net
-  version: 9313baa13d9262e49d07b20ed57dceafcd7240cc
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - context
-  - context/ctxhttp
   - http2
-  - http2/hpack
-  - internal/timeseries
-  - lex/httplex
   - trace
+  - context/ctxhttp
+  - http2/hpack
+  - lex/httplex
+  - internal/timeseries
 - name: golang.org/x/oauth2
-  version: 3c3a985cb79f52a3190fbc056984415ca6763d01
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 1e65e9bf72c307081cea196f47ef37aed17eb316
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
   - transform
   - unicode/norm
 - name: google.golang.org/appengine
-  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
   subpackages:
+  - urlfetch
   - internal
+  - internal/urlfetch
   - internal/base
   - internal/datastore
   - internal/log
   - internal/remote_api
-  - internal/urlfetch
-  - urlfetch
 - name: google.golang.org/grpc
-  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
+  version: ""
   subpackages:
   - codes
+  - metadata
   - credentials
   - grpclog
   - internal
-  - metadata
   - naming
-  - peer
   - transport
+  - peer
 - name: gopkg.in/olivere/elastic.v3
-  version: f9fd15e1ea3a50bbe58c72a4b8820499fe3bb0e1
+  version: ""
   subpackages:
   - backoff
   - uritemplates
 - name: gopkg.in/yaml.v2
-  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
+  version: 88044bcce21d8837bae1d58b135a615386e7da6b
 testImports:
-- name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
-  subpackages:
-  - difflib
 - name: github.com/stretchr/testify
-  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  version: ""
   subpackages:
   - assert

@@ -40,6 +40,8 @@ import:
   subpackages:
   - client
   - types
+- package: github.com/docker/go-connections
+  version: ~0.2.1
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.3
