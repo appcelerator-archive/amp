@@ -23,30 +23,11 @@ var stackStateMachine = stateMachine{
 	[]bool{true /* */, true /* */, false /**/, false /**/}, // Redeploying
 }
 
-// NewState creates a default state object.
-func NewState() State {
-	return Stopped
-}
-
-// IsStarting returns whether the starting flag is set.
-func (s *State) IsStarting() bool {
-	return *s == Starting
-}
-
-// IsRunning returns whether the running flag is set.
-func (s *State) IsRunning() bool {
-	return *s == Running
-}
-
-// IsStopped returns whether the stopped flag is set.
-func (s *State) IsStopped() bool {
-	return *s == Stopped
-}
-
-// IsRedeploying returns whether the redeploying flag is set.
-func (s *State) IsRedeploying() bool {
-	return *s == Redeploying
-}
+func NewState() State                { return Stopped }
+func (s *State) IsStarting() bool    { return *s == Starting }
+func (s *State) IsRunning() bool     { return *s == Running }
+func (s *State) IsStopped() bool     { return *s == Stopped }
+func (s *State) IsRedeploying() bool { return *s == Redeploying }
 
 // SetStarting sets the state to "starting".
 func (s *State) SetStarting() error {
