@@ -9,13 +9,13 @@ import (
 type serviceMap struct {
 	Image       string      `yaml:"image"`
 	Ports       []string    `yaml:"ports"`
-	Replicas    int32       `yaml:"replicas"`
+	Replicas    uint64       `yaml:"replicas"`
 	Environment interface{} `yaml:"environment"`
 	Labels      interface{} `yaml:"labels"`
 }
 
-func parseStackYaml(in string) (out Stack, err error) {
-	out = Stack{}
+func parseStackYaml(in string) (out *Stack, err error) {
+	out = &Stack{}
 	b := []byte(in)
 	sm, err := parseAsServiceMap(b)
 	if err != nil {
@@ -56,7 +56,7 @@ func parseStackYaml(in string) (out Stack, err error) {
 		}
 		_, natPorts, err := nat.ParsePortSpecs(d.Ports)
 		if err != nil {
-			return Stack{}, err
+			return &Stack{}, err
 		}
 		ports := map[string]*Service_PortBindings{}
 		for p, bs := range natPorts {
