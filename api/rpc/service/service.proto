@@ -3,30 +3,34 @@ syntax = "proto3";
 package service;
 
 service Service {
-  rpc Create (CreateRequest) returns (CreateReply) {}
+  rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse) {}
 }
 
-message CreateRequest {
-  ServiceConfig config = 1;
+message ServiceCreateRequest {
+  ServiceSpec service_spec = 1;
 }
 
-message CreateReply {
-  string message = 1;
+message ServiceCreateResponse {
+  string id = 1;
 }
 
-message ServiceConfig {
+message ServiceSpec {
+
   string image = 1;
   string name = 2;
   uint64 replicas = 3;
   map<string, string> env = 4;
   map<string, string> labels = 5;
+  Ports publish_ports = 6;
+  Ports expose_ports = 7;
+}
 
-  message PortBinding {
-    string host_ip = 1;
-    string host_port = 2;
-  }
-  message PortBindings {
-    repeated PortBinding port_bindings = 1;
-  }
-  map<string, PortBindings> ports = 6;
+message PortSpec {
+  string host_ip = 1;
+  string host_port = 2;
+  string container_port = 3;
+  string protocol = 4;
+}
+message Ports {
+  repeated PortSpec port_specs = 1;
 }
