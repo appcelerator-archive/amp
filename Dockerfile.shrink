@@ -1,0 +1,7 @@
+FROM appcelerator/alpine:20160726
+RUN echo "@community http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk --no-cache add docker@community
+COPY ./amplifier /go/bin/
+EXPOSE 50101
+ENTRYPOINT []
+CMD [ "/go/bin/amplifier", "--service"]

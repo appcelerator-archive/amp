@@ -22,11 +22,11 @@ services:
       "-initial-cluster-state", "new"
     ]
   influxdb:
-    image: appcelerator/influxdb
+    image: appcelerator/influxdb:influxdb-1.0
     environment:
       FORCE_HOSTNAME: auto
       PRE_CREATE_DB: telegraf
-      CONFIG_ARCHIVE_URL: "https://github.com/appcelerator/amp-config/archive/0.1.0.tar.gz"
+      CONFIG_ARCHIVE_URL: "https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz"
   elasticsearch:
     image: appcelerator/elasticsearch-amp
   zookeeper:
