@@ -5,7 +5,6 @@ package stack;
 import "github.com/appcelerator/amp/api/rpc/service/service.proto";
 
 service StackService {
-  rpc Create (CreateRequest) returns (CreateReply);
   rpc Up (UpRequest) returns (UpReply);
 }
 
@@ -41,5 +40,12 @@ message State {
 message Stack {
   string name = 1;
   string id = 2;
-  repeated service.ServiceSpec services = 3;
+  int32 state = 3;
+  repeated service.ServiceSpec services = 4;
 }
+
+message ServiceIdList {
+  repeated string list = 1;
+}
+
+
