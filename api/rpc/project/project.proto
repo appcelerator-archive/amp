@@ -3,28 +3,55 @@ syntax = "proto3";
 package project;
 
 service Project {
-  rpc Create (ProjectRequest) returns (ProjectReply) {}
-  rpc Delete (ProjectRequest) returns (ProjectReply) {}
-  rpc List   (Empty) returns (ProjectsReply) {}
-  rpc Get   (ProjectRequest) returns  (ProjectReply) {}
-  rpc Update (ProjectRequest) returns (ProjectReply) {}
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc Delete (DeleteRequest) returns (DeleteReply);
+  rpc List (ListRequest) returns (ListReply);
+  rpc Get (GetRequest) returns (GetReply);
+  rpc Update (UpdateRequest) returns (UpdateReply);
 }
 
 message ProjectEntry {
-  int32  repo_id = 1;
+  int32 id = 1;
   string owner_name = 2;
   string repo_name = 3;
   string token = 4;
 }
 
-message Empty{}
+message CreateRequest {
+  ProjectEntry project = 1;
+}
 
-message ProjectRequest {
-  ProjectEntry project=1;
+message CreateReply {
+  ProjectEntry project = 1;
 }
-message ProjectReply {
-    ProjectEntry project=1;
+
+message DeleteRequest {
+  int32 id = 1;
 }
-message ProjectsReply {
-    repeated ProjectEntry projects=1;
+
+message DeleteReply {
+  ProjectEntry project = 1;
+}
+
+message ListRequest {
+}
+
+message ListReply {
+  repeated ProjectEntry projects = 1;
+}
+
+message GetRequest {
+  int32 id = 1;
+}
+
+message GetReply {
+  ProjectEntry project = 1;
+}
+
+message UpdateRequest {
+  ProjectEntry project = 1;
+}
+
+message UpdateReply {
+  ProjectEntry project = 1;
 }

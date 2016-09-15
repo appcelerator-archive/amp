@@ -19,9 +19,10 @@ const (
 var (
 	etcdEndpoints    = []string{etcdDefaultEndpoint}
 	proj             *Proj
-	sampleProject    = &ProjectRequest{&ProjectEntry{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
-	updSampleProject = &ProjectRequest{&ProjectEntry{RepoId: 12345, OwnerName: "amp", RepoName: "amp-repo2", Token: "FakeToken"}}
-	sampleProject2   = &ProjectRequest{&ProjectEntry{RepoId: 12346, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}}
+	ctx              context.Context
+	sampleProject    = ProjectEntry{Id: 12345, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}
+	updSampleProject = ProjectEntry{Id: 12345, OwnerName: "amp", RepoName: "amp-repo2", Token: "FakeToken"}
+	sampleProject2   = ProjectEntry{Id: 12346, OwnerName: "amp", RepoName: "amp-repo", Token: "FakeToken"}
 )
 
 func TestMain(m *testing.M) {
@@ -29,31 +30,32 @@ func TestMain(m *testing.M) {
 	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("test: ")
 	proj = createProjectServer()
+	ctx = context.Background()
 	os.Exit(m.Run())
 }
 
 func TestCreate(t *testing.T) {
-	proj.Delete(context.Background(), sampleProject)
-	resp, err := proj.Create(context.Background(), sampleProject)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
+	_, err := proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err = proj.Get(context.Background(), sampleProject)
+	resp, err := proj.Get(ctx, &GetRequest{Id: sampleProject.Id})
 	if err != nil {
 		t.Error(err)
 	}
-	if !proto.Equal(resp.Project, sampleProject.Project) {
-		t.Errorf("expected %v, got %v", sampleProject.Project, resp.Project)
+	if !proto.Equal(resp.Project, &sampleProject) {
+		t.Errorf("expected %v, got %v", sampleProject, resp.Project)
 	}
 }
 
 func TestCreateAlreadyExists(t *testing.T) {
 	// Guarantee no data exists
-	proj.Delete(context.Background(), sampleProject)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
 	// Create new Entry
-	proj.Create(context.Background(), sampleProject)
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	// Attempt to create a duplicate
-	_, err := proj.Create(context.Background(), sampleProject)
+	_, err := proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	// Should result in a duplicate entry
 	if !strings.Contains(err.Error(), "key already exists") {
 		t.Error("Duplicate Key Error was not detected")
@@ -62,44 +64,43 @@ func TestCreateAlreadyExists(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	// Guarantee no data exists
-	proj.Delete(context.Background(), sampleProject)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
 	// Create new Entry
-	proj.Create(context.Background(), sampleProject)
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	// Fetch The Entry
-
-	resp, err := proj.Get(context.Background(), sampleProject)
+	resp, err := proj.Get(ctx, &GetRequest{Id: sampleProject.Id})
 	if err != nil {
 		t.Error(err)
 	}
-	if !proto.Equal(resp.Project, sampleProject.Project) {
-		t.Errorf("expected %v, got %v", sampleProject.Project, resp.Project)
+	if !proto.Equal(resp.Project, &sampleProject) {
+		t.Errorf("expected %v, got %v", sampleProject, resp.Project)
 	}
 }
 func TestUpdate(t *testing.T) {
 	// Guarantee no data exists
-	proj.Delete(context.Background(), sampleProject)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
 	// Create new Entry
-	proj.Create(context.Background(), sampleProject)
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	// Update The Entry
-	resp, err := proj.Update(context.Background(), updSampleProject)
+	_, err := proj.Update(ctx, &UpdateRequest{Project: &updSampleProject})
 	if err != nil {
 		t.Error(err)
 	}
-	resp, _ = proj.Get(context.Background(), sampleProject)
-	if !proto.Equal(resp.Project, updSampleProject.Project) {
-		t.Errorf("expected %v, got %v", updSampleProject.Project, resp.Project)
+	resp, _ := proj.Get(ctx, &GetRequest{Id: sampleProject.Id})
+	if !proto.Equal(resp.Project, &updSampleProject) {
+		t.Errorf("expected %v, got %v", updSampleProject, resp.Project)
 	}
 }
 
 func TestList(t *testing.T) {
 	// Guarantee no data exists
-	proj.Delete(context.Background(), sampleProject)
-	proj.Delete(context.Background(), sampleProject2)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject2.Id})
 	// Create new Entries
-	proj.Create(context.Background(), sampleProject)
-	proj.Create(context.Background(), sampleProject2)
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject})
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject2})
 	// Fetch The Entry
-	resp, err := proj.List(context.Background(), &Empty{})
+	resp, err := proj.List(ctx, &ListRequest{})
 	if err != nil {
 		t.Error(err)
 	} else if len(resp.Projects) != 2 {
@@ -110,16 +111,16 @@ func TestList(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	// Guarantee no data exists
-	proj.Delete(context.Background(), sampleProject)
+	proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
 	// Create new Entry
-	proj.Create(context.Background(), sampleProject)
+	proj.Create(ctx, &CreateRequest{Project: &sampleProject})
 	// Delete The Entry
-	resp, err := proj.Delete(context.Background(), sampleProject)
+	resp, err := proj.Delete(ctx, &DeleteRequest{Id: sampleProject.Id})
 	if err != nil {
 		t.Error(err)
 	}
-	if !proto.Equal(resp.Project, sampleProject.Project) {
-		t.Errorf("expected %v, got %v", sampleProject.Project, resp.Project)
+	if !proto.Equal(resp.Project, &sampleProject) {
+		t.Errorf("expected %v, got %v", sampleProject, resp.Project)
 	}
 }
 
