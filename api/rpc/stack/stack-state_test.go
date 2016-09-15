@@ -15,12 +15,16 @@ func TestShouldCreateAValidInitilaState(t *testing.T) {
 
 func TestTransitionsFromStopped(t *testing.T) {
 	// KO
-	assert.Error(t, NewState().SetStopped(), "transitioning from stopped to stopped should not be possible")
-	assert.Error(t, NewState().SetRunning(), "transitioning from stopped to running should not be possible")
+	state := NewState()
+	assert.Error(t, state.SetStopped(), "transitioning from stopped to stopped should not be possible")
+	state = NewState()
+	assert.Error(t, state.SetRunning(), "transitioning from stopped to running should not be possible")
 
 	// OK
-	assert.NoError(t, NewState().SetRedeploying(), "transitioning from stopped to redeploying should be possible")
-	assert.NoError(t, NewState().SetStarting(), "transitioning from stopped to starting should be possible")
+	state = NewState()
+	assert.NoError(t, state.SetRedeploying(), "transitioning from stopped to redeploying should be possible")
+	state = NewState()
+	assert.NoError(t, state.SetStarting(), "transitioning from stopped to starting should be possible")
 }
 
 func TestTransitionsFromStarting(t *testing.T) {
