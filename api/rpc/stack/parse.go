@@ -9,7 +9,7 @@ import (
 type serviceMap struct {
 	Image       string      `yaml:"image"`
 	Ports       []string    `yaml:"ports"`
-	Replicas    uint64       `yaml:"replicas"`
+	Replicas    uint64      `yaml:"replicas"`
 	Environment interface{} `yaml:"environment"`
 	Labels      interface{} `yaml:"labels"`
 }
