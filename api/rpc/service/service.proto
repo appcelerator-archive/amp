@@ -15,7 +15,6 @@ message ServiceCreateResponse {
 }
 
 message ServiceSpec {
-
   string image = 1;
   string name = 2;
   uint64 replicas = 3;
@@ -31,6 +30,7 @@ message PortSpec {
   string container_port = 3;
   string protocol = 4;
 }
+
 message Ports {
   repeated PortSpec port_specs = 1;
 }

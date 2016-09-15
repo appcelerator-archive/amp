@@ -18,7 +18,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 		return nil, err
 	}
 	stackID := stringid.GenerateNonCryptoID()
-	stack.StackId = stackID
+	stack.Id = stackID
 	s.Store.Create(ctx, "stacks/"+stackID, stack, nil, 0)
 	reply := CreateReply{
 		StackId: stringid.GenerateNonCryptoID(),
@@ -33,7 +33,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, err
 	}
 	stackID := stringid.GenerateNonCryptoID()
-	stack.StackId = stackID
+	stack.Id = stackID
 	s.Store.Create(ctx, "stacks/"+stackID, stack, nil, 0)
 	reply := UpReply{
 		StackId: stackID,
