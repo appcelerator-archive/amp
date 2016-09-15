@@ -58,11 +58,11 @@ func parseStackYaml(in string) (out *Stack, err error) {
 		if err != nil {
 			return &Stack{}, err
 		}
-		ports := map[string]*Service_PortBindings{}
+		ports := map[string]*ServiceConfig_PortBindings{}
 		for p, bs := range natPorts {
-			pbs := Service_PortBindings{}
+			pbs := ServiceConfig_PortBindings{}
 			for _, b := range bs {
-				pbs.PortBindings = append(pbs.PortBindings, &Service_PortBinding{
+				pbs.PortBindings = append(pbs.PortBindings, &ServiceConfig_PortBinding{
 					HostIp:   b.HostIP,
 					HostPort: b.HostPort,
 				})
@@ -73,7 +73,7 @@ func parseStackYaml(in string) (out *Stack, err error) {
 		if r == 0 {
 			r = 1
 		}
-		out.Services = append(out.Services, &Service{
+		out.Services = append(out.Services, &ServiceConfig{
 			Name:        n,
 			Image:       d.Image,
 			Ports:       ports,
