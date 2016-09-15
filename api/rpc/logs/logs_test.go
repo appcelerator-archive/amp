@@ -210,22 +210,6 @@ func TestShouldFilterByMessage(t *testing.T) {
 	}
 }
 
-func TestShouldFetchFromGivenIndex(t *testing.T) {
-	r1, err := client.Get(context.Background(), &logs.GetRequest{From: 0})
-	if err != nil {
-		t.Error(err)
-	}
-	assert.NotEmpty(t, r1.Entries, "We should have at least one entry")
-	r2, err := client.Get(context.Background(), &logs.GetRequest{From: 10})
-	if err != nil {
-		t.Error(err)
-	}
-	assert.NotEmpty(t, r2.Entries, "We should have at least one entry")
-	for i, entry := range r1.Entries[10:len(r1.Entries)] {
-		assert.Equal(t, entry, r2.Entries[i])
-	}
-}
-
 func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 200; i += 10 {
 		r, err := client.Get(context.Background(), &logs.GetRequest{Size: i})

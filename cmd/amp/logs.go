@@ -30,7 +30,6 @@ func init() {
 	logsCmd.Flags().String("message", "", "Filter the message content by the given pattern")
 	logsCmd.Flags().String("container", "", "Filter by the given container id")
 	logsCmd.Flags().String("node", "", "Filter by the given node id")
-	logsCmd.Flags().String("from", "-1", "Fetch from the given index")
 	logsCmd.Flags().StringP("number", "n", "100", "Number of results")
 	logsCmd.Flags().BoolP("meta", "m", false, "Display entry metadata")
 	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
@@ -51,7 +50,6 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		fmt.Printf("message: %v\n", cmd.Flag("message").Value)
 		fmt.Printf("container: %v\n", cmd.Flag("container_id").Value)
 		fmt.Printf("node: %v\n", cmd.Flag("node_id").Value)
-		fmt.Printf("from: %v\n", cmd.Flag("from").Value)
 		fmt.Printf("n: %v\n", cmd.Flag("n").Value)
 		fmt.Printf("meta: %v\n", cmd.Flag("meta").Value)
 	}
@@ -62,9 +60,6 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	request.Message = cmd.Flag("message").Value.String()
 	request.ContainerId = cmd.Flag("container").Value.String()
 	request.NodeId = cmd.Flag("node").Value.String()
-	if request.From, err = strconv.ParseInt(cmd.Flag("from").Value.String(), 10, 64); err != nil {
-		log.Fatalf("Unable to convert from parameter: %v\n", cmd.Flag("from").Value.String())
-	}
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
