@@ -43,4 +43,5 @@ message ServiceConfig {
     repeated PortBinding port_bindings = 1;
   }
   map<string, PortBindings> ports = 6;
+  repeated string expose = 7;
 }

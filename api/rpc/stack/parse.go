@@ -1,9 +1,9 @@
 package stack
 
 import (
+	"strings"
 	"github.com/docker/go-connections/nat"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
 
 type serviceMap struct {
@@ -12,6 +12,7 @@ type serviceMap struct {
 	Replicas    uint64      `yaml:"replicas"`
 	Environment interface{} `yaml:"environment"`
 	Labels      interface{} `yaml:"labels"`
+	Expose      []string    `yaml:"expose"`
 }
 
 func parseStackYaml(in string) (out *Stack, err error) {
@@ -80,6 +81,7 @@ func parseStackYaml(in string) (out *Stack, err error) {
 			Replicas:    r,
 			Environment: e,
 			Labels:      l,
+			Expose:      d.Expose,
 		})
 	}
 	return
