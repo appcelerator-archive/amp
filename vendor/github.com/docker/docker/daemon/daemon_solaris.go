@@ -5,14 +5,14 @@ package daemon
 import (
 	"fmt"
 
+	"github.com/docker/docker/api/types"
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/parsers/kernel"
 	"github.com/docker/docker/reference"
-	"github.com/docker/engine-api/types"
-	containertypes "github.com/docker/engine-api/types/container"
 	"github.com/docker/libnetwork"
 	nwconfig "github.com/docker/libnetwork/config"
 )
@@ -163,5 +163,12 @@ func rootFSToAPIType(rootfs *image.RootFS) types.RootFS {
 }
 
 func setupDaemonProcess(config *Config) error {
+	return nil
+}
+
+// verifyVolumesInfo is a no-op on solaris.
+// This is called during daemon initialization to migrate volumes from pre-1.7.
+// Solaris was not supported on pre-1.7 daemons.
+func (daemon *Daemon) verifyVolumesInfo(container *container.Container) error {
 	return nil
 }

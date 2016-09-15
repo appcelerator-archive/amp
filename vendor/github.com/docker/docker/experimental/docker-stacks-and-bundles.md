@@ -41,7 +41,7 @@ A stack is created using the `docker deploy` command:
 
 Usage:  docker deploy [OPTIONS] STACK
 
-Create and update a stack
+Create and update a stack from a Distributed Application Bundle (DAB)
 
 Options:
       --file   string        Path to a Distributed Application Bundle file (Default: STACK.dab)
@@ -94,6 +94,7 @@ Commands:
   config      Print the stack configuration
   deploy      Create and update a stack
   rm          Remove the stack
+  services    List the services in the stack
   tasks       List the tasks in the stack
 
 Run 'docker stack COMMAND --help' for more information on a command.
@@ -181,3 +182,21 @@ A service has the following fields:
     </dd>
 </dl>
 
+The following is an example of bundlefile with two services:
+
+```json
+{
+	"Version": "0.1",
+	"Services": {
+		"redis": {
+			"Image": "redis@sha256:4b24131101fa0117bcaa18ac37055fffd9176aa1a240392bb8ea85e0be50f2ce",
+			"Networks": ["default"]
+		},
+		"web": {
+			"Image": "dockercloud/hello-world@sha256:fe79a2cfbd17eefc344fb8419420808df95a1e22d93b7f621a7399fd1e9dca1d",
+			"Networks": ["default"],
+			"User": "web"
+		}
+	}
+}
+```

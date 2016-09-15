@@ -2,16 +2,14 @@ package network
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"golang.org/x/net/context"
 
 	"github.com/docker/docker/api/server/httputils"
-	"github.com/docker/docker/errors"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
-	"github.com/docker/engine-api/types/network"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/libnetwork"
 )
 
@@ -116,17 +114,7 @@ func (n *networkRouter) postNetworkConnect(ctx context.Context, w http.ResponseW
 		return err
 	}
 
-	nw, err := n.backend.FindNetwork(vars["id"])
-	if err != nil {
-		return err
-	}
-
-	if nw.Info().Dynamic() {
-		err := fmt.Errorf("operation not supported for swarm scoped networks")
-		return errors.NewRequestForbiddenError(err)
-	}
-
-	return n.backend.ConnectContainerToNetwork(connect.Container, nw.Name(), connect.EndpointConfig)
+	return n.backend.ConnectContainerToNetwork(connect.Container, vars["id"], connect.EndpointConfig)
 }
 
 func (n *networkRouter) postNetworkDisconnect(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -143,17 +131,7 @@ func (n *networkRouter) postNetworkDisconnect(ctx context.Context, w http.Respon
 		return err
 	}
 
-	nw, err := n.backend.FindNetwork(vars["id"])
-	if err != nil {
-		return err
-	}
-
-	if nw.Info().Dynamic() {
-		err := fmt.Errorf("operation not supported for swarm scoped networks")
-		return errors.NewRequestForbiddenError(err)
-	}
-
-	return n.backend.DisconnectContainerFromNetwork(disconnect.Container, nw, disconnect.Force)
+	return n.backend.DisconnectContainerFromNetwork(disconnect.Container, vars["id"], disconnect.Force)
 }
 
 func (n *networkRouter) deleteNetwork(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -203,12 +181,13 @@ func (n *networkRouter) buildNetworkResource(nw libnetwork.Network) *types.Netwo
 			continue
 		}
 		sb := ei.Sandbox()
-		key := "ep-" + e.ID()
+		tmpID := e.ID()
+		key := "ep-" + tmpID
 		if sb != nil {
 			key = sb.ContainerID()
 		}
 
-		r.Containers[key] = buildEndpointResource(e)
+		r.Containers[key] = buildEndpointResource(tmpID, e.Name(), ei)
 	}
 	return r
 }
@@ -239,7 +218,7 @@ func buildIpamResources(r *types.NetworkResource, nwInfo libnetwork.NetworkInfo)
 		for _, ip4Info := range ipv4Info {
 			iData := network.IPAMConfig{}
 			iData.Subnet = ip4Info.IPAMData.Pool.String()
-			iData.Gateway = ip4Info.IPAMData.Gateway.String()
+			iData.Gateway = ip4Info.IPAMData.Gateway.IP.String()
 			r.IPAM.Config = append(r.IPAM.Config, iData)
 		}
 	}
@@ -268,15 +247,12 @@ func buildIpamResources(r *types.NetworkResource, nwInfo libnetwork.NetworkInfo)
 	}
 }
 
-func buildEndpointResource(e libnetwork.Endpoint) types.EndpointResource {
+func buildEndpointResource(id string, name string, info libnetwork.EndpointInfo) types.EndpointResource {
 	er := types.EndpointResource{}
-	if e == nil {
-		return er
-	}
 
-	er.EndpointID = e.ID()
-	er.Name = e.Name()
-	ei := e.Info()
+	er.EndpointID = id
+	er.Name = name
+	ei := info
 	if ei == nil {
 		return er
 	}

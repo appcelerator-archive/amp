@@ -86,15 +86,15 @@ the `Using cache` message in the console output.
 
     $ docker build -t svendowideit/ambassador .
     Sending build context to Docker daemon 15.36 kB
-    Step 0 : FROM alpine:3.2
+    Step 1 : FROM alpine:3.2
      ---> 31f630c65071
-    Step 1 : MAINTAINER SvenDowideit@home.org.au
+    Step 2 : MAINTAINER SvenDowideit@home.org.au
      ---> Using cache
      ---> 2a1c91448f5f
-    Step 2 : RUN apk update &&      apk add socat &&        rm -r /var/cache/
+    Step 3 : RUN apk update &&      apk add socat &&        rm -r /var/cache/
      ---> Using cache
      ---> 21ed6e7fbb73
-    Step 3 : CMD env | grep _TCP= | (sed 's/.*_PORT_\([0-9]*\)_TCP=tcp:\/\/\(.*\):\(.*\)/socat -t 100000000 TCP4-LISTEN:\1,fork,reuseaddr TCP4:\2:\3 \&/' && echo wait) | sh
+    Step 4 : CMD env | grep _TCP= | (sed 's/.*_PORT_\([0-9]*\)_TCP=tcp:\/\/\(.*\):\(.*\)/socat -t 100000000 TCP4-LISTEN:\1,fork,reuseaddr TCP4:\2:\3 \&/' && echo wait) | sh
      ---> Using cache
      ---> 7ea8aef582cc
     Successfully built 7ea8aef582cc
@@ -120,7 +120,7 @@ instruction must be \`FROM\`** in order to specify the [*Base
 Image*](glossary.md#base-image) from which you are building.
 
 Docker treats lines that *begin* with `#` as a comment, unless the line is
-a valid [parser directive](builder.md#parser directives). A `#` marker anywhere
+a valid [parser directive](builder.md#parser-directives). A `#` marker anywhere
 else in a line is treated as an argument. This allows statements like:
 
 ```Dockerfile
@@ -486,13 +486,6 @@ before each new `FROM` command.
 assumes a `latest` by default. The builder returns an error if it cannot match
 the `tag` value.
 
-## MAINTAINER
-
-    MAINTAINER <name>
-
-The `MAINTAINER` instruction allows you to set the *Author* field of the
-generated images.
-
 ## RUN
 
 RUN has 2 forms:
@@ -541,6 +534,9 @@ RUN /bin/bash -c 'source $HOME/.bashrc ; echo $HOME'
 > `RUN [ "echo", "$HOME" ]` will not do variable substitution on `$HOME`.
 > If you want shell processing then either use the *shell* form or execute
 > a shell directly, for example: `RUN [ "sh", "-c", "echo $HOME" ]`.
+> When using the exec form and executing a shell directly, as in the case for
+> the shell form, it is the shell that is doing the environment variable
+> expansion, not docker.
 >
 > **Note**:
 > In the *JSON* form, it is necessary to escape backslashes. This is
@@ -607,6 +603,9 @@ instruction as well.
 > `CMD [ "echo", "$HOME" ]` will not do variable substitution on `$HOME`.
 > If you want shell processing then either use the *shell* form or execute
 > a shell directly, for example: `CMD [ "sh", "-c", "echo $HOME" ]`.
+> When using the exec form and executing a shell directly, as in the case for
+> the shell form, it is the shell that is doing the environment variable
+> expansion, not docker.
 
 When used in the shell or exec formats, the `CMD` instruction sets the command
 to be executed when running the image.
@@ -680,6 +679,20 @@ To view an image's labels, use the `docker inspect` command.
         "multi.label2": "value2",
         "other": "value3"
     },
+
+## MAINTAINER (deprecated)
+
+    MAINTAINER <name>
+
+The `MAINTAINER` instruction sets the *Author* field of the generated images. 
+The `LABEL` instruction is a much more flexible version of this and you should use
+it instead, as it enables setting any metadata you require, and can be viewed
+easily, for example with `docker inspect`. To set a label corresponding to the
+`MAINTAINER` field you could use:
+
+    LABEL maintainer "SvenDowideit@home.org.au"
+
+This will then be visible from `docker inspect` with the other labels.
 
 ## EXPOSE
 
@@ -1062,7 +1075,7 @@ user	0m 0.03s
 sys	0m 0.03s
 ```
 
-> **Note:** you can over ride the `ENTRYPOINT` setting using `--entrypoint`,
+> **Note:** you can override the `ENTRYPOINT` setting using `--entrypoint`,
 > but this can only set the binary to *exec* (no `sh -c` will be used).
 
 > **Note**:
@@ -1075,8 +1088,9 @@ sys	0m 0.03s
 > `ENTRYPOINT [ "echo", "$HOME" ]` will not do variable substitution on `$HOME`.
 > If you want shell processing then either use the *shell* form or execute
 > a shell directly, for example: `ENTRYPOINT [ "sh", "-c", "echo $HOME" ]`.
-> Variables that are defined in the `Dockerfile`using `ENV`, will be substituted by
-> the `Dockerfile` parser.
+> When using the exec form and executing a shell directly, as in the case for
+> the shell form, it is the shell that is doing the environment variable
+> expansion, not docker.
 
 ### Shell form ENTRYPOINT example
 
@@ -1154,12 +1168,12 @@ or for executing an ad-hoc command in a container.
 
 The table below shows what command is executed for different `ENTRYPOINT` / `CMD` combinations:
 
-|                                | No ENTRYPOINT              | ENTRYPOINT exec_entry p1_entry                            | ENTRYPOINT ["exec_entry", "p1_entry"]          |
-|--------------------------------|----------------------------|-----------------------------------------------------------|------------------------------------------------|
-| **No CMD**                     | *error, not allowed*       | /bin/sh -c exec_entry p1_entry                            | exec_entry p1_entry                            |
-| **CMD ["exec_cmd", "p1_cmd"]** | exec_cmd p1_cmd            | /bin/sh -c exec_entry p1_entry exec_cmd p1_cmd            | exec_entry p1_entry exec_cmd p1_cmd            |
-| **CMD ["p1_cmd", "p2_cmd"]**   | p1_cmd p2_cmd              | /bin/sh -c exec_entry p1_entry p1_cmd p2_cmd              | exec_entry p1_entry p1_cmd p2_cmd              |
-| **CMD exec_cmd p1_cmd**        | /bin/sh -c exec_cmd p1_cmd | /bin/sh -c exec_entry p1_entry /bin/sh -c exec_cmd p1_cmd | exec_entry p1_entry /bin/sh -c exec_cmd p1_cmd |
+|                                | No ENTRYPOINT              | ENTRYPOINT exec_entry p1_entry | ENTRYPOINT ["exec_entry", "p1_entry"]          |
+|--------------------------------|----------------------------|--------------------------------|------------------------------------------------|
+| **No CMD**                     | *error, not allowed*       | /bin/sh -c exec_entry p1_entry | exec_entry p1_entry                            |
+| **CMD ["exec_cmd", "p1_cmd"]** | exec_cmd p1_cmd            | /bin/sh -c exec_entry p1_entry | exec_entry p1_entry exec_cmd p1_cmd            |
+| **CMD ["p1_cmd", "p2_cmd"]**   | p1_cmd p2_cmd              | /bin/sh -c exec_entry p1_entry | exec_entry p1_entry p1_cmd p2_cmd              |
+| **CMD exec_cmd p1_cmd**        | /bin/sh -c exec_cmd p1_cmd | /bin/sh -c exec_entry p1_entry | exec_entry p1_entry /bin/sh -c exec_cmd p1_cmd |
 
 ## VOLUME
 
@@ -1669,8 +1683,6 @@ something more realistic, take a look at the list of [Dockerization examples](..
 # VERSION               0.0.1
 
 FROM      ubuntu
-MAINTAINER Victor Vieux <victor@docker.com>
-
 LABEL Description="This image is used to start the foobar executable" Vendor="ACME Products" Version="1.0"
 RUN apt-get update && apt-get install -y inotify-tools nginx apache2 openssh-server
 ```

@@ -1,5 +1,12 @@
 package: github.com/appcelerator/amp
 import:
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/docker/docker
+  subpackages:
+  - client
+  - api/types
 - package: github.com/Shopify/sarama
   version: ^1.10.1
 - package: github.com/coreos/etcd
@@ -8,9 +15,6 @@ import:
   - clientv3
 - package: github.com/fatih/color
   version: ^1.0.0
-- package: github.com/golang/protobuf
-  subpackages:
-  - proto
 - package: github.com/google/go-github
   subpackages:
   - github
@@ -35,11 +39,6 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^3.0.50
 - package: gopkg.in/yaml.v2
-- package: github.com/docker/docker
-  version: ^1.12.1
-  subpackages:
-  - client
-  - types
 - package: github.com/docker/go-connections
   version: ~0.2.1
 testImport:

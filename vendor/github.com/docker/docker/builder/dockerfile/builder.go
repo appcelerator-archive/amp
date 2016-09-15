@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/builder/dockerfile/parser"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/reference"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
 	"golang.org/x/net/context"
 )
 
@@ -233,6 +233,7 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 	}
 
 	var shortImgID string
+	total := len(b.dockerfile.Children)
 	for i, n := range b.dockerfile.Children {
 		select {
 		case <-b.clientCtx.Done():
@@ -242,7 +243,7 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 		default:
 			// Not cancelled yet, keep going...
 		}
-		if err := b.dispatch(i, n); err != nil {
+		if err := b.dispatch(i, total, n); err != nil {
 			if b.options.ForceRemove {
 				b.clearTmp()
 			}
@@ -320,8 +321,9 @@ func BuildFromConfig(config *container.Config, changes []string) (*container.Con
 	b.Stderr = ioutil.Discard
 	b.disableCommit = true
 
+	total := len(ast.Children)
 	for i, n := range ast.Children {
-		if err := b.dispatch(i, n); err != nil {
+		if err := b.dispatch(i, total, n); err != nil {
 			return nil, err
 		}
 	}

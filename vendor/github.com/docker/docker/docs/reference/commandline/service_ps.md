@@ -9,8 +9,6 @@ parent = "smn_cli"
 +++
 <![end-metadata]-->
 
-**Warning:** this command is part of the Swarm management feature introduced in Docker 1.12, and might be subject to non backward-compatible changes.
-
 # service ps
 
 ```Markdown
@@ -23,6 +21,7 @@ Options:
   -f, --filter value   Filter output based on conditions provided
       --help           Print usage
       --no-resolve     Do not map IDs to Names
+      --no-trunc       Do not truncate output
 ```
 
 Lists the tasks that are running as part of the specified service. This command

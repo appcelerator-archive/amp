@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	networktypes "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/volume"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
-	networktypes "github.com/docker/engine-api/types/network"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -21,6 +21,7 @@ var acceptedVolumeFilterTags = map[string]bool{
 	"dangling": true,
 	"name":     true,
 	"driver":   true,
+	"label":    true,
 }
 
 var acceptedPsFilterTags = map[string]bool{
@@ -101,17 +102,6 @@ func (daemon *Daemon) Containers(config *types.ContainerListOptions) ([]*types.C
 	return daemon.reduceContainers(config, daemon.transformContainer)
 }
 
-// ListContainersForNode returns all containerID that match the specified nodeID
-func (daemon *Daemon) ListContainersForNode(nodeID string) []string {
-	var ids []string
-	for _, c := range daemon.List() {
-		if c.Config.Labels["com.docker.swarm.node.id"] == nodeID {
-			ids = append(ids, c.ID)
-		}
-	}
-	return ids
-}
-
 func (daemon *Daemon) filterByNameIDMatches(ctx *listContext) []*container.Container {
 	idSearch := false
 	names := ctx.filters.Get("name")
@@ -157,7 +147,9 @@ func (daemon *Daemon) filterByNameIDMatches(ctx *listContext) []*container.Conta
 
 	cntrs := make([]*container.Container, 0, len(matches))
 	for id := range matches {
-		cntrs = append(cntrs, daemon.containers.Get(id))
+		if c := daemon.containers.Get(id); c != nil {
+			cntrs = append(cntrs, c)
+		}
 	}
 
 	// Restore sort-order after filtering
@@ -408,6 +400,9 @@ func includeContainerInList(container *container.Container, ctx *listContext) it
 				return networkExist
 			}
 			for _, nw := range container.NetworkSettings.Networks {
+				if nw.EndpointSettings == nil {
+					continue
+				}
 				if nw.NetworkID == value {
 					return networkExist
 				}
@@ -468,7 +463,7 @@ func (daemon *Daemon) transformContainer(container *container.Container, ctx *li
 	// copy networks to avoid races
 	networks := make(map[string]*networktypes.EndpointSettings)
 	for name, network := range container.NetworkSettings.Networks {
-		if network == nil {
+		if network == nil || network.EndpointSettings == nil {
 			continue
 		}
 		networks[name] = &networktypes.EndpointSettings{
@@ -584,6 +579,15 @@ func (daemon *Daemon) filterVolumes(vols []volume.Volume, filter filters.Args) (
 		}
 		if filter.Include("driver") {
 			if !filter.Match("driver", vol.DriverName()) {
+				continue
+			}
+		}
+		if filter.Include("label") {
+			v, ok := vol.(volume.LabeledVolume)
+			if !ok {
+				continue
+			}
+			if !filter.MatchKVList("label", v.Labels()) {
 				continue
 			}
 		}

@@ -89,14 +89,13 @@ download the `centos` image.
 
     $ docker pull centos
 
-    Pulling repository centos
-    b7de3133ff98: Pulling dependent layers
-    5cc9e91966f7: Pulling fs layer
-    511136ea3c5a: Download complete
-    ef52fb1fe610: Download complete
-    . . .
-
-    Status: Downloaded newer image for centos
+    Using default tag: latest
+    latest: Pulling from library/centos
+    f1b10cd84249: Pull complete
+    c852f6d61e65: Pull complete
+    7322fbe74aa5: Pull complete
+    Digest: sha256:90305c9112250c7e3746425477f1c4ef112b03b4abe78c612e092037bfecc3b7
+    Status: Downloaded newer image for centos:latest
 
 You can see that each layer of the image has been pulled down and now you
 can run a container from this image and you won't have to wait to
@@ -265,7 +264,6 @@ building your own Sinatra image for your fictitious development team.
 
     # This is a comment
     FROM ubuntu:14.04
-    MAINTAINER Kate Smith <ksmith@example.com>
     RUN apt-get update && apt-get install -y ruby ruby-dev
     RUN gem install sinatra
 
@@ -277,7 +275,7 @@ is capitalized.
 > **Note:** You use `#` to indicate a comment
 
 The first instruction `FROM` tells Docker what the source of our image is, in
-this case you're basing our new image on an Ubuntu 14.04 image. The instruction uses the `MAINTAINER` instruction to specify who maintains the new image.
+this case you're basing our new image on an Ubuntu 14.04 image.
 
 Lastly, you've specified two `RUN` instructions. A `RUN` instruction executes
 a command inside the image, for example installing a package. Here you're
@@ -294,10 +292,7 @@ Now let's take our `Dockerfile` and use the `docker build` command to build an i
     Sending build context to Docker daemon
     Step 1 : FROM ubuntu:14.04
      ---> e54ca5efa2e9
-    Step 2 : MAINTAINER Kate Smith <ksmith@example.com>
-     ---> Using cache
-     ---> 851baf55332b
-    Step 3 : RUN apt-get update && apt-get install -y ruby ruby-dev
+    Step 2 : RUN apt-get update && apt-get install -y ruby ruby-dev
      ---> Running in 3a2558904e9b
     Selecting previously unselected package libasan0:amd64.
     (Reading database ... 11518 files and directories currently installed.)
@@ -432,7 +427,7 @@ Now let's take our `Dockerfile` and use the `docker build` command to build an i
     Running hooks in /etc/ca-certificates/update.d....done.
      ---> c55c31703134
     Removing intermediate container 3a2558904e9b
-    Step 4 : RUN gem install sinatra
+    Step 3 : RUN gem install sinatra
      ---> Running in 6b81cb6313e5
     unable to convert "\xC3" to UTF-8 in conversion from ASCII-8BIT to UTF-8 to US-ASCII for README.rdoc, skipping
     unable to convert "\xC3" to UTF-8 in conversion from ASCII-8BIT to UTF-8 to US-ASCII for README.rdoc, skipping

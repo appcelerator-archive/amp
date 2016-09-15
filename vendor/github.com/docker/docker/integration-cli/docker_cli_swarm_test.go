@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/pkg/integration/checker"
-	"github.com/docker/engine-api/types/swarm"
 	"github.com/go-check/check"
 )
 
@@ -25,7 +25,7 @@ func (s *DockerSwarmSuite) TestSwarmUpdate(c *check.C) {
 
 	spec := getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(11*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 11*time.Second)
 
 	// setting anything under 30m for cert-expiry is not allowed
 	out, err = d.Cmd("swarm", "update", "--cert-expiry", "15m")
@@ -48,16 +48,16 @@ func (s *DockerSwarmSuite) TestSwarmInit(c *check.C) {
 
 	spec := getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(11*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 11*time.Second)
 
 	c.Assert(d.Leave(true), checker.IsNil)
-
+	time.Sleep(500 * time.Millisecond) // https://github.com/docker/swarmkit/issues/1421
 	out, err = d.Cmd("swarm", "init")
 	c.Assert(err, checker.IsNil, check.Commentf("out: %v", out))
 
 	spec = getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 90*24*time.Hour)
-	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, uint64(5*time.Second))
+	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 5*time.Second)
 }
 
 func (s *DockerSwarmSuite) TestSwarmInitIPv6(c *check.C) {
@@ -219,4 +219,48 @@ func (s *DockerSwarmSuite) TestSwarmPublishAdd(c *check.C) {
 	out, err = d.Cmd("service", "inspect", "--format", "{{ .Spec.EndpointSpec.Ports }}", name)
 	c.Assert(err, checker.IsNil)
 	c.Assert(strings.TrimSpace(out), checker.Equals, "[{ tcp 20 80}]")
+}
+
+func (s *DockerSwarmSuite) TestSwarmServiceWithGroup(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	name := "top"
+	out, err := d.Cmd("service", "create", "--name", name, "--user", "root:root", "--group-add", "wheel", "--group-add", "audio", "--group-add", "staff", "--group-add", "777", "busybox", "sh", "-c", "id > /id && top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	// make sure task has been deployed.
+	waitAndAssert(c, defaultReconciliationTimeout, d.checkActiveContainerCount, checker.Equals, 1)
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	container := strings.TrimSpace(out)
+
+	out, err = d.Cmd("exec", container, "cat", "/id")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Equals, "uid=0(root) gid=0(root) groups=10(wheel),29(audio),50(staff),777")
+}
+
+func (s *DockerSwarmSuite) TestSwarmContainerAutoStart(c *check.C) {
+	d := s.AddDaemon(c, true, true)
+
+	out, err := d.Cmd("network", "create", "--attachable", "-d", "overlay", "foo")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	out, err = d.Cmd("run", "-id", "--restart=always", "--net=foo", "--name=test", "busybox", "top")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
+
+	d.Restart()
+
+	out, err = d.Cmd("ps", "-q")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Not(checker.Equals), "")
 }

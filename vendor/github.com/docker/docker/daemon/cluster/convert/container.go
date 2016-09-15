@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	types "github.com/docker/engine-api/types/swarm"
+	mounttypes "github.com/docker/docker/api/types/mount"
+	types "github.com/docker/docker/api/types/swarm"
 	swarmapi "github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/protobuf/ptypes"
 )
@@ -18,30 +19,31 @@ func containerSpecFromGRPC(c *swarmapi.ContainerSpec) types.ContainerSpec {
 		Env:     c.Env,
 		Dir:     c.Dir,
 		User:    c.User,
+		Groups:  c.Groups,
 	}
 
 	// Mounts
 	for _, m := range c.Mounts {
-		mount := types.Mount{
+		mount := mounttypes.Mount{
 			Target:   m.Target,
 			Source:   m.Source,
-			Type:     types.MountType(strings.ToLower(swarmapi.Mount_MountType_name[int32(m.Type)])),
+			Type:     mounttypes.Type(strings.ToLower(swarmapi.Mount_MountType_name[int32(m.Type)])),
 			ReadOnly: m.ReadOnly,
 		}
 
 		if m.BindOptions != nil {
-			mount.BindOptions = &types.BindOptions{
-				Propagation: types.MountPropagation(strings.ToLower(swarmapi.Mount_BindOptions_MountPropagation_name[int32(m.BindOptions.Propagation)])),
+			mount.BindOptions = &mounttypes.BindOptions{
+				Propagation: mounttypes.Propagation(strings.ToLower(swarmapi.Mount_BindOptions_MountPropagation_name[int32(m.BindOptions.Propagation)])),
 			}
 		}
 
 		if m.VolumeOptions != nil {
-			mount.VolumeOptions = &types.VolumeOptions{
+			mount.VolumeOptions = &mounttypes.VolumeOptions{
 				NoCopy: m.VolumeOptions.NoCopy,
 				Labels: m.VolumeOptions.Labels,
 			}
 			if m.VolumeOptions.DriverConfig != nil {
-				mount.VolumeOptions.DriverConfig = &types.Driver{
+				mount.VolumeOptions.DriverConfig = &mounttypes.Driver{
 					Name:    m.VolumeOptions.DriverConfig.Name,
 					Options: m.VolumeOptions.DriverConfig.Options,
 				}
@@ -66,6 +68,7 @@ func containerToGRPC(c types.ContainerSpec) (*swarmapi.ContainerSpec, error) {
 		Env:     c.Env,
 		Dir:     c.Dir,
 		User:    c.User,
+		Groups:  c.Groups,
 	}
 
 	if c.StopGracePeriod != nil {

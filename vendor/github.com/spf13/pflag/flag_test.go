@@ -891,6 +891,7 @@ const defaultOutput = `      --A                         for bootstrapping, allo
       --StringSlice stringSlice   string slice with zero default
       --Z int                     an int that defaults to zero
       --custom custom             custom Value implementation
+      --customP custom            a VarP with default (default 10)
       --maxT timeout              set timeout for dial
 `
 
@@ -933,6 +934,9 @@ func TestPrintDefaults(t *testing.T) {
 
 	var cv customValue
 	fs.Var(&cv, "custom", "custom Value implementation")
+
+	cv2 := customValue(10)
+	fs.VarP(&cv2, "customP", "", "a VarP with default")
 
 	fs.PrintDefaults()
 	got := buf.String()

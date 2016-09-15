@@ -3,8 +3,6 @@ package dispatcher
 import (
 	"errors"
 	"fmt"
-	"reflect"
-	"sort"
 	"sync"
 	"time"
 
@@ -13,6 +11,7 @@ import (
 	"google.golang.org/grpc/transport"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/go-events"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/api/equality"
 	"github.com/docker/swarmkit/ca"
@@ -20,8 +19,8 @@ import (
 	"github.com/docker/swarmkit/manager/state"
 	"github.com/docker/swarmkit/manager/state/store"
 	"github.com/docker/swarmkit/manager/state/watch"
-	"github.com/docker/swarmkit/picker"
 	"github.com/docker/swarmkit/protobuf/ptypes"
+	"github.com/docker/swarmkit/remotes"
 	"golang.org/x/net/context"
 )
 
@@ -59,10 +58,8 @@ var (
 )
 
 // Config is configuration for Dispatcher. For default you should use
-// DefautConfig.
+// DefaultConfig.
 type Config struct {
-	// Addr configures the address the dispatcher reports to agents.
-	Addr             string
 	HeartbeatPeriod  time.Duration
 	HeartbeatEpsilon time.Duration
 	// RateLimitPeriod specifies how often node with same ID can try to register
@@ -81,17 +78,24 @@ func DefaultConfig() *Config {
 	}
 }
 
-// Cluster is interface which represent raft cluster. mananger/state/raft.Node
-// is implenents it. This interface needed only for easier unit-testing.
+// Cluster is interface which represent raft cluster. manager/state/raft.Node
+// is implements it. This interface needed only for easier unit-testing.
 type Cluster interface {
 	GetMemberlist() map[uint64]*api.RaftMember
+	SubscribePeers() (chan events.Event, func())
 	MemoryStore() *store.MemoryStore
+}
+
+// nodeUpdate provides a new status and/or description to apply to a node
+// object.
+type nodeUpdate struct {
+	status      *api.NodeStatus
+	description *api.NodeDescription
 }
 
 // Dispatcher is responsible for dispatching tasks and tracking agent health.
 type Dispatcher struct {
 	mu                   sync.Mutex
-	addr                 string
 	nodes                *nodeStore
 	store                *store.MemoryStore
 	mgrQueue             *watch.Queue
@@ -106,32 +110,34 @@ type Dispatcher struct {
 	taskUpdates     map[string]*api.TaskStatus // indexed by task ID
 	taskUpdatesLock sync.Mutex
 
-	processTaskUpdatesTrigger chan struct{}
+	nodeUpdates     map[string]nodeUpdate // indexed by node ID
+	nodeUpdatesLock sync.Mutex
+
+	processUpdatesTrigger chan struct{}
+
+	// for waiting for the next task/node batch update
+	processUpdatesLock sync.Mutex
+	processUpdatesCond *sync.Cond
 }
-
-// weightedPeerByNodeID is a sort wrapper for []*api.WeightedPeer
-type weightedPeerByNodeID []*api.WeightedPeer
-
-func (b weightedPeerByNodeID) Less(i, j int) bool { return b[i].Peer.NodeID < b[j].Peer.NodeID }
-
-func (b weightedPeerByNodeID) Len() int { return len(b) }
-
-func (b weightedPeerByNodeID) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 
 // New returns Dispatcher with cluster interface(usually raft.Node).
 // NOTE: each handler which does something with raft must add to Dispatcher.wg
 func New(cluster Cluster, c *Config) *Dispatcher {
-	return &Dispatcher{
-		addr:                      c.Addr,
-		nodes:                     newNodeStore(c.HeartbeatPeriod, c.HeartbeatEpsilon, c.GracePeriodMultiplier, c.RateLimitPeriod),
-		store:                     cluster.MemoryStore(),
-		cluster:                   cluster,
-		mgrQueue:                  watch.NewQueue(16),
-		keyMgrQueue:               watch.NewQueue(16),
-		taskUpdates:               make(map[string]*api.TaskStatus),
-		processTaskUpdatesTrigger: make(chan struct{}, 1),
-		config: c,
+	d := &Dispatcher{
+		nodes:                 newNodeStore(c.HeartbeatPeriod, c.HeartbeatEpsilon, c.GracePeriodMultiplier, c.RateLimitPeriod),
+		store:                 cluster.MemoryStore(),
+		cluster:               cluster,
+		mgrQueue:              watch.NewQueue(),
+		keyMgrQueue:           watch.NewQueue(),
+		taskUpdates:           make(map[string]*api.TaskStatus),
+		nodeUpdates:           make(map[string]nodeUpdate),
+		processUpdatesTrigger: make(chan struct{}, 1),
+		config:                c,
 	}
+
+	d.processUpdatesCond = sync.NewCond(&d.processUpdatesLock)
+
+	return d
 }
 
 func getWeightedPeers(cluster Cluster) []*api.WeightedPeer {
@@ -147,7 +153,7 @@ func getWeightedPeers(cluster Cluster) []*api.WeightedPeer {
 			// TODO(stevvooe): Calculate weight of manager selection based on
 			// cluster-level observations, such as number of connections and
 			// load.
-			Weight: picker.DefaultObservationWeight,
+			Weight: remotes.DefaultObservationWeight,
 		})
 	}
 	return mgrs
@@ -161,10 +167,9 @@ func (d *Dispatcher) Run(ctx context.Context) error {
 		d.mu.Unlock()
 		return fmt.Errorf("dispatcher is already running")
 	}
-	logger := log.G(ctx).WithField("module", "dispatcher")
-	ctx = log.WithLogger(ctx, logger)
+	ctx = log.WithModule(ctx, "dispatcher")
 	if err := d.markNodesUnknown(ctx); err != nil {
-		logger.Errorf(`failed to move all nodes to "unknown" state: %v`, err)
+		log.G(ctx).Errorf(`failed to move all nodes to "unknown" state: %v`, err)
 	}
 	configWatcher, cancel, err := store.ViewAndWatch(
 		d.store,
@@ -190,39 +195,41 @@ func (d *Dispatcher) Run(ctx context.Context) error {
 		d.mu.Unlock()
 		return err
 	}
+
+	peerWatcher, peerCancel := d.cluster.SubscribePeers()
+	defer peerCancel()
+	d.lastSeenManagers = getWeightedPeers(d.cluster)
+
 	defer cancel()
 	d.ctx, d.cancel = context.WithCancel(ctx)
 	d.mu.Unlock()
 
-	publishManagers := func() {
-		mgrs := getWeightedPeers(d.cluster)
-		sort.Sort(weightedPeerByNodeID(mgrs))
-		d.mu.Lock()
-		if reflect.DeepEqual(mgrs, d.lastSeenManagers) {
-			d.mu.Unlock()
-			return
+	publishManagers := func(peers []*api.Peer) {
+		var mgrs []*api.WeightedPeer
+		for _, p := range peers {
+			mgrs = append(mgrs, &api.WeightedPeer{
+				Peer:   p,
+				Weight: remotes.DefaultObservationWeight,
+			})
 		}
+		d.mu.Lock()
 		d.lastSeenManagers = mgrs
 		d.mu.Unlock()
 		d.mgrQueue.Publish(mgrs)
 	}
-
-	publishManagers()
-	publishTicker := time.NewTicker(1 * time.Second)
-	defer publishTicker.Stop()
 
 	batchTimer := time.NewTimer(maxBatchInterval)
 	defer batchTimer.Stop()
 
 	for {
 		select {
-		case <-publishTicker.C:
-			publishManagers()
-		case <-d.processTaskUpdatesTrigger:
-			d.processTaskUpdates()
+		case ev := <-peerWatcher:
+			publishManagers(ev.([]*api.Peer))
+		case <-d.processUpdatesTrigger:
+			d.processUpdates()
 			batchTimer.Reset(maxBatchInterval)
 		case <-batchTimer.C:
-			d.processTaskUpdates()
+			d.processUpdates()
 			batchTimer.Reset(maxBatchInterval)
 		case v := <-configWatcher:
 			cluster := v.(state.EventUpdateCluster)
@@ -238,7 +245,7 @@ func (d *Dispatcher) Run(ctx context.Context) error {
 			}
 			d.networkBootstrapKeys = cluster.Cluster.NetworkBootstrapKeys
 			d.mu.Unlock()
-			d.keyMgrQueue.Publish(struct{}{})
+			d.keyMgrQueue.Publish(cluster.Cluster.NetworkBootstrapKeys)
 		case <-d.ctx.Done():
 			return nil
 		}
@@ -255,6 +262,17 @@ func (d *Dispatcher) Stop() error {
 	d.cancel()
 	d.mu.Unlock()
 	d.nodes.Clean()
+
+	d.processUpdatesLock.Lock()
+	// In case there are any waiters. There is no chance of any starting
+	// after this point, because they check if the context is canceled
+	// before waiting.
+	d.processUpdatesCond.Broadcast()
+	d.processUpdatesLock.Unlock()
+
+	d.mgrQueue.Close()
+	d.keyMgrQueue.Close()
+
 	return nil
 }
 
@@ -344,25 +362,38 @@ func (d *Dispatcher) register(ctx context.Context, nodeID string, description *a
 		return "", err
 	}
 
-	// create or update node in store
 	// TODO(stevvooe): Validate node specification.
 	var node *api.Node
-	err := d.store.Update(func(tx store.Tx) error {
+	d.store.View(func(tx store.ReadTx) {
 		node = store.GetNode(tx, nodeID)
-		if node == nil {
-			return ErrNodeNotFound
-		}
-
-		node.Description = description
-		node.Status = api.NodeStatus{
-			State: api.NodeStatus_READY,
-		}
-		return store.UpdateNode(tx, node)
-
 	})
-	if err != nil {
-		return "", err
+	if node == nil {
+		return "", ErrNodeNotFound
 	}
+
+	d.nodeUpdatesLock.Lock()
+	d.nodeUpdates[nodeID] = nodeUpdate{status: &api.NodeStatus{State: api.NodeStatus_READY}, description: description}
+	numUpdates := len(d.nodeUpdates)
+	d.nodeUpdatesLock.Unlock()
+
+	if numUpdates >= maxBatchItems {
+		select {
+		case d.processUpdatesTrigger <- struct{}{}:
+		case <-d.ctx.Done():
+			return "", d.ctx.Err()
+		}
+
+	}
+
+	// Wait until the node update batch happens before unblocking register.
+	d.processUpdatesLock.Lock()
+	select {
+	case <-d.ctx.Done():
+		return "", d.ctx.Err()
+	default:
+	}
+	d.processUpdatesCond.Wait()
+	d.processUpdatesLock.Unlock()
 
 	expireFunc := func() {
 		nodeStatus := api.NodeStatus{State: api.NodeStatus_DOWN, Message: "heartbeat failure"}
@@ -448,23 +479,39 @@ func (d *Dispatcher) UpdateTaskStatus(ctx context.Context, r *api.UpdateTaskStat
 	d.taskUpdatesLock.Unlock()
 
 	if numUpdates >= maxBatchItems {
-		d.processTaskUpdatesTrigger <- struct{}{}
+		select {
+		case d.processUpdatesTrigger <- struct{}{}:
+		case <-d.ctx.Done():
+		}
 	}
 	return nil, nil
 }
 
-func (d *Dispatcher) processTaskUpdates() {
+func (d *Dispatcher) processUpdates() {
+	var (
+		taskUpdates map[string]*api.TaskStatus
+		nodeUpdates map[string]nodeUpdate
+	)
 	d.taskUpdatesLock.Lock()
-	if len(d.taskUpdates) == 0 {
-		d.taskUpdatesLock.Unlock()
-		return
+	if len(d.taskUpdates) != 0 {
+		taskUpdates = d.taskUpdates
+		d.taskUpdates = make(map[string]*api.TaskStatus)
 	}
-	taskUpdates := d.taskUpdates
-	d.taskUpdates = make(map[string]*api.TaskStatus)
 	d.taskUpdatesLock.Unlock()
 
+	d.nodeUpdatesLock.Lock()
+	if len(d.nodeUpdates) != 0 {
+		nodeUpdates = d.nodeUpdates
+		d.nodeUpdates = make(map[string]nodeUpdate)
+	}
+	d.nodeUpdatesLock.Unlock()
+
+	if len(taskUpdates) == 0 && len(nodeUpdates) == 0 {
+		return
+	}
+
 	log := log.G(d.ctx).WithFields(logrus.Fields{
-		"method": "(*Dispatcher).processTaskUpdates",
+		"method": "(*Dispatcher).processUpdates",
 	})
 
 	_, err := d.store.Batch(func(batch *store.Batch) error {
@@ -498,14 +545,45 @@ func (d *Dispatcher) processTaskUpdates() {
 				return nil
 			})
 			if err != nil {
-				log.WithError(err).Error("dispatcher transaction failed")
+				log.WithError(err).Error("dispatcher task update transaction failed")
 			}
 		}
+
+		for nodeID, nodeUpdate := range nodeUpdates {
+			err := batch.Update(func(tx store.Tx) error {
+				logger := log.WithField("node.id", nodeID)
+				node := store.GetNode(tx, nodeID)
+				if node == nil {
+					logger.Errorf("node unavailable")
+					return nil
+				}
+
+				if nodeUpdate.status != nil {
+					node.Status = *nodeUpdate.status
+				}
+				if nodeUpdate.description != nil {
+					node.Description = nodeUpdate.description
+				}
+
+				if err := store.UpdateNode(tx, node); err != nil {
+					logger.WithError(err).Error("failed to update node status")
+					return nil
+				}
+				logger.Debug("node status updated")
+				return nil
+			})
+			if err != nil {
+				log.WithError(err).Error("dispatcher node update transaction failed")
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
 		log.WithError(err).Error("dispatcher batch failed")
 	}
+
+	d.processUpdatesCond.Broadcast()
 }
 
 // Tasks is a stream of tasks state for node. Each message contains full list
@@ -579,14 +657,18 @@ func (d *Dispatcher) Tasks(r *api.TasksRequest, stream api.Dispatcher_TasksServe
 		}
 
 		// bursty events should be processed in batches and sent out snapshot
-		const modificationBatchLimit = 200
-		const eventPausedGap = 50 * time.Millisecond
-		var modificationCnt int
-		// eventPaused is true when there have been modifications
-		// but next event has not arrived within eventPausedGap
-		eventPaused := false
+		const (
+			modificationBatchLimit = 200
+			eventPausedGap         = 50 * time.Millisecond
+		)
+		var (
+			modificationCnt    int
+			eventPausedTimer   *time.Timer
+			eventPausedTimeout <-chan time.Time
+		)
 
-		for modificationCnt < modificationBatchLimit && !eventPaused {
+	batchingLoop:
+		for modificationCnt < modificationBatchLimit {
 			select {
 			case event := <-nodeTasks:
 				switch v := event.(type) {
@@ -610,15 +692,23 @@ func (d *Dispatcher) Tasks(r *api.TasksRequest, stream api.Dispatcher_TasksServe
 					delete(tasksMap, v.Task.ID)
 					modificationCnt++
 				}
-			case <-time.After(eventPausedGap):
-				if modificationCnt > 0 {
-					eventPaused = true
+				if eventPausedTimer != nil {
+					eventPausedTimer.Reset(eventPausedGap)
+				} else {
+					eventPausedTimer = time.NewTimer(eventPausedGap)
+					eventPausedTimeout = eventPausedTimer.C
 				}
+			case <-eventPausedTimeout:
+				break batchingLoop
 			case <-stream.Context().Done():
 				return stream.Context().Err()
 			case <-d.ctx.Done():
 				return d.ctx.Err()
 			}
+		}
+
+		if eventPausedTimer != nil {
+			eventPausedTimer.Stop()
 		}
 	}
 }
@@ -627,17 +717,17 @@ func (d *Dispatcher) nodeRemove(id string, status api.NodeStatus) error {
 	if err := d.isRunningLocked(); err != nil {
 		return err
 	}
-	// TODO(aaronl): Is it worth batching node removals?
-	err := d.store.Update(func(tx store.Tx) error {
-		node := store.GetNode(tx, id)
-		if node == nil {
-			return errors.New("node not found")
+
+	d.nodeUpdatesLock.Lock()
+	d.nodeUpdates[id] = nodeUpdate{status: status.Copy(), description: d.nodeUpdates[id].description}
+	numUpdates := len(d.nodeUpdates)
+	d.nodeUpdatesLock.Unlock()
+
+	if numUpdates >= maxBatchItems {
+		select {
+		case d.processUpdatesTrigger <- struct{}{}:
+		case <-d.ctx.Done():
 		}
-		node.Status = status
-		return store.UpdateNode(tx, node)
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update node %s status to down: %v", id, err)
 	}
 
 	if rn := d.nodes.Delete(id); rn == nil {
@@ -666,6 +756,12 @@ func (d *Dispatcher) getManagers() []*api.WeightedPeer {
 	return d.lastSeenManagers
 }
 
+func (d *Dispatcher) getNetworkBootstrapKeys() []*api.EncryptionKey {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.networkBootstrapKeys
+}
+
 // Session is a stream which controls agent connection.
 // Each message contains list of backup Managers with weights. Also there is
 // a special boolean field Disconnect which if true indicates that node should
@@ -682,10 +778,15 @@ func (d *Dispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_Sessio
 		return err
 	}
 
-	// register the node.
-	sessionID, err := d.register(stream.Context(), nodeID, r.Description)
-	if err != nil {
-		return err
+	var sessionID string
+	if _, err := d.nodes.GetWithSession(nodeID, r.SessionID); err != nil {
+		// register the node.
+		sessionID, err = d.register(stream.Context(), nodeID, r.Description)
+		if err != nil {
+			return err
+		}
+	} else {
+		sessionID = r.SessionID
 	}
 
 	fields := logrus.Fields{
@@ -721,7 +822,7 @@ func (d *Dispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_Sessio
 		SessionID:            sessionID,
 		Node:                 nodeObj,
 		Managers:             d.getManagers(),
-		NetworkBootstrapKeys: d.networkBootstrapKeys,
+		NetworkBootstrapKeys: d.getNetworkBootstrapKeys(),
 	}); err != nil {
 		return err
 	}
@@ -753,16 +854,18 @@ func (d *Dispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_Sessio
 
 	for {
 		// After each message send, we need to check the nodes sessionID hasn't
-		// changed. If it has, we will the stream and make the node
+		// changed. If it has, we will shut down the stream and make the node
 		// re-register.
 		node, err := d.nodes.GetWithSession(nodeID, sessionID)
 		if err != nil {
 			return err
 		}
 
-		var mgrs []*api.WeightedPeer
-
-		var disconnect bool
+		var (
+			disconnect bool
+			mgrs       []*api.WeightedPeer
+			netKeys    []*api.EncryptionKey
+		)
 
 		select {
 		case ev := <-managerUpdates:
@@ -775,17 +878,21 @@ func (d *Dispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_Sessio
 			disconnect = true
 		case <-d.ctx.Done():
 			disconnect = true
-		case <-keyMgrUpdates:
+		case ev := <-keyMgrUpdates:
+			netKeys = ev.([]*api.EncryptionKey)
 		}
 		if mgrs == nil {
 			mgrs = d.getManagers()
+		}
+		if netKeys == nil {
+			netKeys = d.getNetworkBootstrapKeys()
 		}
 
 		if err := stream.Send(&api.SessionMessage{
 			SessionID:            sessionID,
 			Node:                 nodeObj,
 			Managers:             mgrs,
-			NetworkBootstrapKeys: d.networkBootstrapKeys,
+			NetworkBootstrapKeys: netKeys,
 		}); err != nil {
 			return err
 		}

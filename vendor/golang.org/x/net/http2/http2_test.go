@@ -28,7 +28,7 @@ func condSkipFailingTest(t *testing.T) {
 
 func init() {
 	DebugGoroutines = true
-	flag.BoolVar(&VerboseLogs, "verboseh2", VerboseLogs, "Verbose HTTP/2 debug logging")
+	flag.BoolVar(&VerboseLogs, "verboseh2", false, "Verbose HTTP/2 debug logging")
 }
 
 func TestSettingString(t *testing.T) {
@@ -65,7 +65,7 @@ func (w twriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// like encodeHeader, but don't add implicit pseudo headers.
+// like encodeHeader, but don't add implicit psuedo headers.
 func encodeHeaderNoImplicit(t *testing.T, headers ...string) []byte {
 	var buf bytes.Buffer
 	enc := hpack.NewEncoder(&buf)

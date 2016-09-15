@@ -37,7 +37,7 @@ const defaultOwner = "docker"
 
 // Create is the entrypoint to create a container from a spec, and if successfully
 // created, start it too.
-func (clnt *client) Create(containerID string, spec Spec, options ...CreateOption) error {
+func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec Spec, options ...CreateOption) error {
 	logrus.Debugln("libcontainerd: client.Create() with spec", spec)
 
 	configuration := &hcsshim.ContainerConfig{
@@ -76,9 +76,6 @@ func (clnt *client) Create(containerID string, spec Spec, options ...CreateOptio
 			if spec.Windows.Resources.Storage.Iops != nil {
 				configuration.StorageIOPSMaximum = *spec.Windows.Resources.Storage.Iops
 			}
-			if spec.Windows.Resources.Storage.SandboxSize != nil {
-				configuration.StorageSandboxSize = *spec.Windows.Resources.Storage.SandboxSize
-			}
 		}
 	}
 
@@ -87,6 +84,13 @@ func (clnt *client) Create(containerID string, spec Spec, options ...CreateOptio
 		configuration.HvPartition = true
 		configuration.HvRuntime = &hcsshim.HvRuntime{
 			ImagePath: spec.Windows.HvRuntime.ImagePath,
+		}
+
+		// Images with build version < 14350 don't support running with clone, but
+		// Windows cannot automatically detect this. Explicitly block cloning in this
+		// case.
+		if build := buildFromVersion(spec.Platform.OSVersion); build > 0 && build < 14350 {
+			configuration.HvRuntime.SkipTemplate = true
 		}
 	}
 
@@ -290,13 +294,13 @@ func (clnt *client) Signal(containerID string, sig int) error {
 	if syscall.Signal(sig) == syscall.SIGKILL {
 		// Terminate the compute system
 		if err := cont.hcsContainer.Terminate(); err != nil {
-			if err != hcsshim.ErrVmcomputeOperationPending {
+			if !hcsshim.IsPending(err) {
 				logrus.Errorf("libcontainerd: failed to terminate %s - %q", containerID, err)
 			}
 		}
 	} else {
 		// Terminate Process
-		if err := cont.hcsProcess.Kill(); err != nil {
+		if err := cont.hcsProcess.Kill(); err != nil && !hcsshim.IsAlreadyStopped(err) {
 			// ignore errors
 			logrus.Warnf("libcontainerd: failed to terminate pid %d in %s: %q", cont.systemPid, containerID, err)
 		}
@@ -317,7 +321,7 @@ func (clnt *client) SignalProcess(containerID string, processFriendlyName string
 
 	for _, p := range cont.processes {
 		if p.friendlyName == processFriendlyName {
-			return hcsshim.TerminateProcessInComputeSystem(containerID, p.systemPid)
+			return p.hcsProcess.Kill()
 		}
 	}
 
@@ -406,26 +410,23 @@ func (clnt *client) GetPidsForContainer(containerID string) ([]int, error) {
 // visible on the container host. However, libcontainerd does have
 // that information.
 func (clnt *client) Summary(containerID string) ([]Summary, error) {
-	var s []Summary
+
+	// Get the libcontainerd container object
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
-	cont, err := clnt.getContainer(containerID)
+	container, err := clnt.getContainer(containerID)
 	if err != nil {
 		return nil, err
 	}
-
-	// Add the first process
-	s = append(s, Summary{
-		Pid:     cont.containerCommon.systemPid,
-		Command: cont.ociSpec.Process.Args[0]})
-	// And add all the exec'd processes
-	for _, p := range cont.processes {
-		s = append(s, Summary{
-			Pid:     p.processCommon.systemPid,
-			Command: p.commandLine})
+	p, err := container.hcsContainer.ProcessList()
+	if err != nil {
+		return nil, err
 	}
-	return s, nil
-
+	pl := make([]Summary, len(p))
+	for i := range p {
+		pl[i] = Summary(p[i])
+	}
+	return pl, nil
 }
 
 // UpdateResources updates resources for a running container.
@@ -433,4 +434,16 @@ func (clnt *client) UpdateResources(containerID string, resources Resources) err
 	// Updating resource isn't supported on Windows
 	// but we should return nil for enabling updating container
 	return nil
+}
+
+func (clnt *client) CreateCheckpoint(containerID string, checkpointID string, checkpointDir string, exit bool) error {
+	return errors.New("Windows: Containers do not support checkpoints")
+}
+
+func (clnt *client) DeleteCheckpoint(containerID string, checkpointID string, checkpointDir string) error {
+	return errors.New("Windows: Containers do not support checkpoints")
+}
+
+func (clnt *client) ListCheckpoints(containerID string, checkpointDir string) (*Checkpoints, error) {
+	return nil, errors.New("Windows: Containers do not support checkpoints")
 }

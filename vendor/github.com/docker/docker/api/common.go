@@ -12,16 +12,16 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/system"
-	"github.com/docker/engine-api/types"
 	"github.com/docker/libtrust"
 )
 
 // Common constants for daemon and client.
 const (
 	// Version of Current REST API
-	DefaultVersion string = "1.24"
+	DefaultVersion string = "1.25"
 
 	// MinVersion represents Minimum REST API version supported
 	MinVersion string = "1.12"

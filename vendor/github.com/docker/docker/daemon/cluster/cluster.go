@@ -14,16 +14,18 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/Sirupsen/logrus"
+	apitypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
+	types "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/daemon/cluster/convert"
 	executorpkg "github.com/docker/docker/daemon/cluster/executor"
 	"github.com/docker/docker/daemon/cluster/executor/container"
 	"github.com/docker/docker/errors"
 	"github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/ioutils"
+	"github.com/docker/docker/pkg/signal"
 	"github.com/docker/docker/runconfig"
-	apitypes "github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
-	types "github.com/docker/engine-api/types/swarm"
 	swarmagent "github.com/docker/swarmkit/agent"
 	swarmapi "github.com/docker/swarmkit/api"
 	"golang.org/x/net/context"
@@ -66,7 +68,7 @@ var defaultSpec = types.Spec{
 		NodeCertExpiry: 90 * 24 * time.Hour,
 	},
 	Dispatcher: types.DispatcherConfig{
-		HeartbeatPeriod: uint64((5 * time.Second).Nanoseconds()),
+		HeartbeatPeriod: 5 * time.Second,
 	},
 	Orchestration: types.OrchestrationConfig{
 		TaskHistoryRetentionLimit: 10,
@@ -103,6 +105,9 @@ type Config struct {
 	// DefaultAdvertiseAddr is the default host/IP or network interface to use
 	// if no AdvertiseAddr value is specified.
 	DefaultAdvertiseAddr string
+
+	// path to store runtime state, such as the swarm control socket
+	RuntimeRoot string
 }
 
 // Cluster provides capabilities to participate in a cluster as a worker or a
@@ -111,6 +116,7 @@ type Cluster struct {
 	sync.RWMutex
 	*node
 	root            string
+	runtimeRoot     string
 	config          Config
 	configEvent     chan struct{} // todo: make this array and goroutine safe
 	localAddr       string
@@ -121,6 +127,19 @@ type Cluster struct {
 	stop            bool
 	err             error
 	cancelDelay     func()
+	attachers       map[string]*attacher
+}
+
+// attacher manages the in-memory attachment state of a container
+// attachment to a global scope network managed by swarm manager. It
+// helps in identifying the attachment ID via the taskID and the
+// corresponding attachment configuration obtained from the manager.
+type attacher struct {
+	taskID           string
+	config           *network.NetworkingConfig
+	attachWaitCh     chan *network.NetworkingConfig
+	attachCompleteCh chan struct{}
+	detachWaitCh     chan struct{}
 }
 
 type node struct {
@@ -138,10 +157,18 @@ func New(config Config) (*Cluster, error) {
 	if err := os.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
+	if config.RuntimeRoot == "" {
+		config.RuntimeRoot = root
+	}
+	if err := os.MkdirAll(config.RuntimeRoot, 0700); err != nil {
+		return nil, err
+	}
 	c := &Cluster{
 		root:        root,
 		config:      config,
 		configEvent: make(chan struct{}, 10),
+		runtimeRoot: config.RuntimeRoot,
+		attachers:   make(map[string]*attacher),
 	}
 
 	st, err := c.loadState()
@@ -275,7 +302,7 @@ func (c *Cluster) startNewNode(forceNewCluster bool, localAddr, remoteAddr, list
 	n, err := swarmagent.NewNode(&swarmagent.NodeConfig{
 		Hostname:           c.config.Name,
 		ForceNewCluster:    forceNewCluster,
-		ListenControlAPI:   filepath.Join(c.root, controlSocket),
+		ListenControlAPI:   filepath.Join(c.runtimeRoot, controlSocket),
 		ListenRemoteAPI:    listenAddr,
 		AdvertiseRemoteAPI: advertiseAddr,
 		JoinAddr:           joinAddr,
@@ -455,11 +482,13 @@ func (c *Cluster) Join(req types.JoinRequest) error {
 	}
 
 	var advertiseAddr string
-	advertiseHost, advertisePort, err := c.resolveAdvertiseAddr(req.AdvertiseAddr, listenPort)
-	// For joining, we don't need to provide an advertise address,
-	// since the remote side can detect it.
-	if err == nil {
-		advertiseAddr = net.JoinHostPort(advertiseHost, advertisePort)
+	if req.AdvertiseAddr != "" {
+		advertiseHost, advertisePort, err := c.resolveAdvertiseAddr(req.AdvertiseAddr, listenPort)
+		// For joining, we don't need to provide an advertise address,
+		// since the remote side can detect it.
+		if err == nil {
+			advertiseAddr = net.JoinHostPort(advertiseHost, advertisePort)
+		}
 	}
 
 	// todo: check current state existing
@@ -509,6 +538,14 @@ func (c *Cluster) stopNode() error {
 	return nil
 }
 
+func removingManagerCausesLossOfQuorum(reachable, unreachable int) bool {
+	return reachable-2 <= unreachable
+}
+
+func isLastManager(reachable, unreachable int) bool {
+	return reachable == 1 && unreachable == 0
+}
+
 // Leave shuts down Cluster and removes current state.
 func (c *Cluster) Leave(force bool) error {
 	c.Lock()
@@ -523,8 +560,8 @@ func (c *Cluster) Leave(force bool) error {
 		if c.isActiveManager() {
 			active, reachable, unreachable, err := c.managerStats()
 			if err == nil {
-				if active && reachable-2 <= unreachable {
-					if reachable == 1 && unreachable == 0 {
+				if active && removingManagerCausesLossOfQuorum(reachable, unreachable) {
+					if isLastManager(reachable, unreachable) {
 						msg += "Removing the last manager erases all current state of the swarm. Use `--force` to ignore this message. "
 						c.Unlock()
 						return fmt.Errorf(msg)
@@ -541,12 +578,18 @@ func (c *Cluster) Leave(force bool) error {
 		return fmt.Errorf(msg)
 	}
 	if err := c.stopNode(); err != nil {
+		logrus.Errorf("failed to shut down cluster node: %v", err)
+		signal.DumpStacks("")
 		c.Unlock()
 		return err
 	}
 	c.Unlock()
 	if nodeID := node.NodeID(); nodeID != "" {
-		for _, id := range c.config.Backend.ListContainersForNode(nodeID) {
+		nodeContainers, err := c.listContainerForNode(nodeID)
+		if err != nil {
+			return err
+		}
+		for _, id := range nodeContainers {
 			if err := c.config.Backend.ContainerRm(id, &apitypes.ContainerRmConfig{ForceRemove: true}); err != nil {
 				logrus.Errorf("error removing %v: %v", id, err)
 			}
@@ -558,6 +601,22 @@ func (c *Cluster) Leave(force bool) error {
 		return err
 	}
 	return nil
+}
+
+func (c *Cluster) listContainerForNode(nodeID string) ([]string, error) {
+	var ids []string
+	filters := filters.NewArgs()
+	filters.Add("label", fmt.Sprintf("com.docker.swarm.node.id=%s", nodeID))
+	containers, err := c.config.Backend.Containers(&apitypes.ContainerListOptions{
+		Filter: filters,
+	})
+	if err != nil {
+		return []string{}, err
+	}
+	for _, c := range containers {
+		ids = append(ids, c.ID)
+	}
+	return ids, nil
 }
 
 func (c *Cluster) clearState() error {
@@ -864,7 +923,7 @@ func (c *Cluster) GetService(input string) (types.Service, error) {
 }
 
 // UpdateService updates existing service to match new properties.
-func (c *Cluster) UpdateService(serviceID string, version uint64, spec types.ServiceSpec, encodedAuth string) error {
+func (c *Cluster) UpdateService(serviceIDOrName string, version uint64, spec types.ServiceSpec, encodedAuth string) error {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -885,6 +944,11 @@ func (c *Cluster) UpdateService(serviceID string, version uint64, spec types.Ser
 		return err
 	}
 
+	currentService, err := getService(ctx, c.client, serviceIDOrName)
+	if err != nil {
+		return err
+	}
+
 	if encodedAuth != "" {
 		ctnr := serviceSpec.Task.GetContainer()
 		if ctnr == nil {
@@ -894,10 +958,6 @@ func (c *Cluster) UpdateService(serviceID string, version uint64, spec types.Ser
 	} else {
 		// this is needed because if the encodedAuth isn't being updated then we
 		// shouldn't lose it, and continue to use the one that was already present
-		currentService, err := getService(ctx, c.client, serviceID)
-		if err != nil {
-			return err
-		}
 		ctnr := currentService.Spec.Task.GetContainer()
 		if ctnr == nil {
 			return fmt.Errorf("service does not use container tasks")
@@ -908,7 +968,7 @@ func (c *Cluster) UpdateService(serviceID string, version uint64, spec types.Ser
 	_, err = c.client.UpdateService(
 		ctx,
 		&swarmapi.UpdateServiceRequest{
-			ServiceID: serviceID,
+			ServiceID: currentService.ID,
 			Spec:      &serviceSpec,
 			ServiceVersion: &swarmapi.Version{
 				Index: version,
@@ -1098,7 +1158,9 @@ func (c *Cluster) GetTasks(options apitypes.TaskListOptions) ([]types.Task, erro
 	tasks := []types.Task{}
 
 	for _, task := range r.Tasks {
-		tasks = append(tasks, convert.TaskFromGRPC(*task))
+		if task.Spec.GetContainer() != nil {
+			tasks = append(tasks, convert.TaskFromGRPC(*task))
+		}
 	}
 	return tasks, nil
 }
@@ -1167,6 +1229,138 @@ func (c *Cluster) GetNetworks() ([]apitypes.NetworkResource, error) {
 	return networks, nil
 }
 
+func attacherKey(target, containerID string) string {
+	return containerID + ":" + target
+}
+
+// UpdateAttachment signals the attachment config to the attachment
+// waiter who is trying to start or attach the container to the
+// network.
+func (c *Cluster) UpdateAttachment(target, containerID string, config *network.NetworkingConfig) error {
+	c.RLock()
+	attacher, ok := c.attachers[attacherKey(target, containerID)]
+	c.RUnlock()
+	if !ok || attacher == nil {
+		return fmt.Errorf("could not find attacher for container %s to network %s", containerID, target)
+	}
+
+	attacher.attachWaitCh <- config
+	close(attacher.attachWaitCh)
+	return nil
+}
+
+// WaitForDetachment waits for the container to stop or detach from
+// the network.
+func (c *Cluster) WaitForDetachment(ctx context.Context, networkName, networkID, taskID, containerID string) error {
+	c.RLock()
+	attacher, ok := c.attachers[attacherKey(networkName, containerID)]
+	if !ok {
+		attacher, ok = c.attachers[attacherKey(networkID, containerID)]
+	}
+	if c.node == nil || c.node.Agent() == nil {
+		c.RUnlock()
+		return fmt.Errorf("invalid cluster node while waiting for detachment")
+	}
+
+	agent := c.node.Agent()
+	c.RUnlock()
+
+	if ok && attacher != nil &&
+		attacher.detachWaitCh != nil &&
+		attacher.attachCompleteCh != nil {
+		// Attachment may be in progress still so wait for
+		// attachment to complete.
+		select {
+		case <-attacher.attachCompleteCh:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+
+		if attacher.taskID == taskID {
+			select {
+			case <-attacher.detachWaitCh:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
+
+	return agent.ResourceAllocator().DetachNetwork(ctx, taskID)
+}
+
+// AttachNetwork generates an attachment request towards the manager.
+func (c *Cluster) AttachNetwork(target string, containerID string, addresses []string) (*network.NetworkingConfig, error) {
+	aKey := attacherKey(target, containerID)
+	c.Lock()
+	if c.node == nil || c.node.Agent() == nil {
+		c.Unlock()
+		return nil, fmt.Errorf("invalid cluster node while attaching to network")
+	}
+	if attacher, ok := c.attachers[aKey]; ok {
+		c.Unlock()
+		return attacher.config, nil
+	}
+
+	agent := c.node.Agent()
+	attachWaitCh := make(chan *network.NetworkingConfig)
+	detachWaitCh := make(chan struct{})
+	attachCompleteCh := make(chan struct{})
+	c.attachers[aKey] = &attacher{
+		attachWaitCh:     attachWaitCh,
+		attachCompleteCh: attachCompleteCh,
+		detachWaitCh:     detachWaitCh,
+	}
+	c.Unlock()
+
+	ctx, cancel := c.getRequestContext()
+	defer cancel()
+
+	taskID, err := agent.ResourceAllocator().AttachNetwork(ctx, containerID, target, addresses)
+	if err != nil {
+		c.Lock()
+		delete(c.attachers, aKey)
+		c.Unlock()
+		return nil, fmt.Errorf("Could not attach to network %s: %v", target, err)
+	}
+
+	c.Lock()
+	c.attachers[aKey].taskID = taskID
+	close(attachCompleteCh)
+	c.Unlock()
+
+	logrus.Debugf("Successfully attached to network %s with tid %s", target, taskID)
+
+	var config *network.NetworkingConfig
+	select {
+	case config = <-attachWaitCh:
+	case <-ctx.Done():
+		return nil, fmt.Errorf("attaching to network failed, make sure your network options are correct and check manager logs: %v", ctx.Err())
+	}
+
+	c.Lock()
+	c.attachers[aKey].config = config
+	c.Unlock()
+	return config, nil
+}
+
+// DetachNetwork unblocks the waiters waiting on WaitForDetachment so
+// that a request to detach can be generated towards the manager.
+func (c *Cluster) DetachNetwork(target string, containerID string) error {
+	aKey := attacherKey(target, containerID)
+
+	c.Lock()
+	attacher, ok := c.attachers[aKey]
+	delete(c.attachers, aKey)
+	c.Unlock()
+
+	if !ok {
+		return fmt.Errorf("could not find network attachment for container %s to network %s", containerID, target)
+	}
+
+	close(attacher.detachWaitCh)
+	return nil
+}
+
 // CreateNetwork creates a new cluster managed network.
 func (c *Cluster) CreateNetwork(s apitypes.NetworkCreateRequest) (string, error) {
 	c.RLock()
@@ -1217,7 +1411,14 @@ func (c *Cluster) RemoveNetwork(input string) error {
 }
 
 func (c *Cluster) populateNetworkID(ctx context.Context, client swarmapi.ControlClient, s *types.ServiceSpec) error {
-	for i, n := range s.Networks {
+	// Always prefer NetworkAttachmentConfigs from TaskTemplate
+	// but fallback to service spec for backward compatibility
+	networks := s.TaskTemplate.Networks
+	if len(networks) == 0 {
+		networks = s.Networks
+	}
+
+	for i, n := range networks {
 		apiNetwork, err := getNetwork(ctx, client, n.Target)
 		if err != nil {
 			if ln, _ := c.config.Backend.FindNetwork(n.Target); ln != nil && !ln.Info().Dynamic() {
@@ -1226,7 +1427,7 @@ func (c *Cluster) populateNetworkID(ctx context.Context, client swarmapi.Control
 			}
 			return err
 		}
-		s.Networks[i].Target = apiNetwork.ID
+		networks[i].Target = apiNetwork.ID
 	}
 	return nil
 }
@@ -1270,8 +1471,8 @@ func (c *Cluster) Cleanup() {
 	if c.isActiveManager() {
 		active, reachable, unreachable, err := c.managerStats()
 		if err == nil {
-			singlenode := active && reachable == 1 && unreachable == 0
-			if active && !singlenode && reachable-2 <= unreachable {
+			singlenode := active && isLastManager(reachable, unreachable)
+			if active && !singlenode && removingManagerCausesLossOfQuorum(reachable, unreachable) {
 				logrus.Errorf("Leaving cluster with %v managers left out of %v. Raft quorum will be lost.", reachable-1, reachable+unreachable)
 			}
 		}

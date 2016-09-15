@@ -64,6 +64,7 @@ docker-create - Create a new container
 [**--privileged**]
 [**--read-only**]
 [**--restart**[=*RESTART*]]
+[**--rm**]
 [**--security-opt**[=*[]*]]
 [**--storage-opt**[=*[]*]]
 [**--stop-signal**[=*SIGNAL*]]
@@ -317,6 +318,9 @@ unit, `b` is used. Set LIMIT to `-1` to enable unlimited swap.
 **--restart**="*no*"
    Restart policy to apply when a container exits (no, on-failure[:max-retry], always, unless-stopped).
 
+**--rm**=*true*|*false*
+   Automatically remove the container when it exits. The default is *false*.
+
 **--shm-size**=""
    Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
    Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes). If you omit the unit, the system uses bytes.
@@ -375,7 +379,12 @@ any options, the systems uses the following options:
 `rw,noexec,nosuid,nodev,size=65536k`.
 
 **-u**, **--user**=""
-   Username or UID
+   Sets the username or UID used and optionally the groupname or GID for the specified command.
+
+   The followings examples are all valid:
+   --user [user | user:group | uid | uid:gid | user:gid | uid:group ]
+
+   Without this argument root user will be used in the container by default.
 
 **--ulimit**=[]
    Ulimit options
