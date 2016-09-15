@@ -73,8 +73,8 @@ func parseStackYaml(in string) (out *Stack, err error) {
 				}
 				ports = append(ports, &Port{
 					PublishedPort: uint64(h),
-					TargetPort: uint64(t),
-					Protocol: p.Proto(),
+					TargetPort:    uint64(t),
+					Protocol:      p.Proto(),
 				})
 			}
 		}

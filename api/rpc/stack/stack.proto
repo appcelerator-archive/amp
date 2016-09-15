@@ -8,7 +8,8 @@ service StackService {
 }
 
 message CreateRequest {
-  string stack_definition = 1;
+  string stack_name = 1;
+  string stack_definition = 2;
 }
 
 message CreateReply {
@@ -16,7 +17,8 @@ message CreateReply {
 }
 
 message UpRequest {
-  string stackfile = 1;
+  string stack_name = 1;
+  string stackfile = 2;
 }
 
 message UpReply {
