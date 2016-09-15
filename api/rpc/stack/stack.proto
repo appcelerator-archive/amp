@@ -38,6 +38,7 @@ message Service {
   map<string, string> env = 4;
   map<string, string> labels = 5;
   repeated Port ports = 6;
+  repeated string expose = 7;
 }
 
 message Port {

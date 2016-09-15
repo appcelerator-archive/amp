@@ -14,6 +14,7 @@ type serviceMap struct {
 	Replicas    uint64      `yaml:"replicas"`
 	Environment interface{} `yaml:"environment"`
 	Labels      interface{} `yaml:"labels"`
+	Expose      []string    `yaml:"expose"`
 }
 
 func parseStackYaml(in string) (out *Stack, err error) {
@@ -89,6 +90,7 @@ func parseStackYaml(in string) (out *Stack, err error) {
 			Env:      e,
 			Labels:   l,
 			Ports:    ports,
+			Expose:      d.Expose,
 		})
 	}
 	return

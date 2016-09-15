@@ -14,6 +14,8 @@ var examples = []string{
     REDIS_PASSWORD: password
 redis:
   image: redis
+  expose:
+    - 6379
   environment:
     - PASSWORD=password`,
 	`tutum-cron:
