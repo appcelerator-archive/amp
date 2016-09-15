@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package service;
+
+service Service {
+  rpc Create (CreateRequest) returns (CreateReply) {}
+}
+
+message CreateRequest {
+  ServiceConfig config = 1;
+}
+
+message CreateReply {
+  string message = 1;
+}
+
+message ServiceConfig {
+  string image = 1;
+  string name = 2;
+  uint64 replicas = 3;
+  map<string, string> env = 4;
+  map<string, string> labels = 5;
+
+  message PortBinding {
+    string host_ip = 1;
+    string host_port = 2;
+  }
+  message PortBindings {
+    repeated PortBinding port_bindings = 1;
+  }
+  map<string, PortBindings> ports = 6;
+}

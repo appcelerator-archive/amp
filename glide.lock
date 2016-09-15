@@ -1,5 +1,5 @@
-hash: 19463626c4868b127ad9f0977211587a7739c8cbaa517a52b6669b6b4a1fc89b
-updated: 2016-09-14T19:37:29.962092107-07:00
+hash: 5b89ca6c1fa401ee26d1c9f2d1d27dd9ab1c0935065dab6a551a5ad0c41f9aa7
+updated: 2016-09-14T20:11:18.480338362-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -16,17 +16,39 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/docker/distribution
+  version: 12acdf0a6c1e56d965ac6eb395d2bce687bf22fc
+  subpackages:
+  - digest
+  - reference
 - name: github.com/docker/docker
   version: 39f5d97cde3f93953be3c9172034b83d61bff710
   subpackages:
   - api/types
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/filters
+  - api/types/mount
+  - api/types/network
+  - api/types/reference
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
   - client
+  - client/transport
+  - client/transport/cancellable
   - pkg/random
   - pkg/stringid
 - name: github.com/docker/go-connections
   version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
   subpackages:
   - nat
+  - sockets
+  - tlsconfig
+- name: github.com/docker/go-units
+  version: f2145db703495b2e525c59662db69a7344b00bb8
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
@@ -93,10 +115,16 @@ imports:
   version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/Microsoft/go-winio
+  version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+- name: github.com/opencontainers/runc
+  version: b1e602e8ba592a663a4eb63ed9c18d6b2b475fec
+  subpackages:
+  - libcontainer/user
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
@@ -107,6 +135,10 @@ imports:
   version: 8197a2e580736b78d704be0fc47b2324c0591a32
 - name: github.com/Shopify/sarama
   version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
+- name: github.com/Sirupsen/logrus
+  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  subpackages:
+  - formatters/logstash
 - name: github.com/spf13/afero
   version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
@@ -136,6 +168,7 @@ imports:
   - http2
   - http2/hpack
   - internal/timeseries
+  - proxy
   - trace
 - name: golang.org/x/oauth2
   version: 3c3a985cb79f52a3190fbc056984415ca6763d01
@@ -145,6 +178,7 @@ imports:
   version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/text
   version: f6f58eac0a9f37bcb49f8c8010c24cd382bf862d
   subpackages:
