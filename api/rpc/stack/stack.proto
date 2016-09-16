@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package stack;
 
+import "github.com/appcelerator/amp/api/rpc/service/service.proto";
+
 service StackService {
   rpc Create (CreateRequest) returns (CreateReply);
   rpc Up (UpRequest) returns (UpReply);
@@ -29,21 +31,5 @@ message Stack {
   string name = 1;
   string id = 2;
   int32 state = 3;
-  repeated Service services = 4;
-}
-
-message Service {
-  string image = 1;
-  string name = 2;
-  uint64 replicas = 3;
-  map<string, string> env = 4;
-  map<string, string> labels = 5;
-  repeated Port ports = 6;
-  repeated string expose = 7;
-}
-
-message Port {
-  uint64 published_port = 1;
-  uint64 target_port = 2;
-  string protocol = 3;
+  repeated service.ServiceSpec services = 4;
 }

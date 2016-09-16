@@ -96,7 +96,7 @@ build-server-image:
 	@docker build -t appcelerator/$(SERVER):$(TAG) .
 
 proto: $(PROTOFILES)
-	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && docker run -u $(UG) --rm --name protoc -t -v $${PWD}:/go/src -v /var/run/docker.sock:/var/run/docker.sock appcelerator/protoc *.proto --go_out=plugins=grpc:. || true; done
+	@go run hack/proto.go
 
 # used to install when you're already inside a container
 install-host: proto-host
@@ -105,7 +105,7 @@ install-host: proto-host
 
 # used to run protoc when you're already inside a container
 proto-host: $(PROTOFILES)
-	@for DIR in $(DIRS); do cd $(BASEDIR)/$${DIR}; ls *.proto > /dev/null 2>&1 && protoc *.proto --go_out=plugins=grpc:. || true; done
+	@go run hack/proto.go -protoc
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 fmt:
