@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/appcelerator/amp/api/runtime"
 	"golang.org/x/net/context"
+	"path"
 )
 
 const (
@@ -53,7 +54,7 @@ func (s *Stack) SetRedeploying() error { return s.transitionTo(Redeploying) }
 
 func (s *Stack) getState() (int32, error) {
 	stack := &Stack{}
-	err := runtime.Store.Get(context.Background(), "stacks/"+s.Id, stack, false)
+	err := runtime.Store.Get(context.Background(), path.Join("stacks", s.Id), stack, false)
 	if err != nil {
 		return -1, err
 	}
@@ -62,12 +63,12 @@ func (s *Stack) getState() (int32, error) {
 
 func (s *Stack) setState(state int32) error {
 	stack := &Stack{}
-	err := runtime.Store.Get(context.Background(), "stacks/"+s.Id, stack, false)
+	err := runtime.Store.Get(context.Background(), path.Join("stacks", s.Id), stack, false)
 	if err != nil {
 		return err
 	}
 	stack.State = state
-	err = runtime.Store.Update(context.Background(), "stacks/"+s.Id, stack, int64(0))
+	err = runtime.Store.Update(context.Background(), path.Join("stacks", s.Id), stack, int64(0))
 	if err != nil {
 		return err
 	}
