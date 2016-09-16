@@ -90,7 +90,7 @@ func parseStackYaml(in string) (out *Stack, err error) {
 			Env:      e,
 			Labels:   l,
 			Ports:    ports,
-			Expose:      d.Expose,
+			Expose:   d.Expose,
 		})
 	}
 	return
