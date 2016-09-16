@@ -1,7 +1,9 @@
 package stack
 
 import (
+	"strconv"
 	"strings"
+
 	"github.com/docker/go-connections/nat"
 	"gopkg.in/yaml.v2"
 )
@@ -57,30 +59,37 @@ func parseStackYaml(in string) (out *Stack, err error) {
 		}
 		_, natPorts, err := nat.ParsePortSpecs(d.Ports)
 		if err != nil {
-			return &Stack{}, err
+			return nil, err
 		}
-		ports := map[string]*ServiceConfig_PortBindings{}
+		ports := []*Port{}
 		for p, bs := range natPorts {
-			pbs := ServiceConfig_PortBindings{}
+			t, err := strconv.Atoi(p.Port())
+			if err != nil {
+				return nil, err
+			}
 			for _, b := range bs {
-				pbs.PortBindings = append(pbs.PortBindings, &ServiceConfig_PortBinding{
-					HostIp:   b.HostIP,
-					HostPort: b.HostPort,
+				h, err := strconv.Atoi(b.HostPort)
+				if err != nil {
+					return nil, err
+				}
+				ports = append(ports, &Port{
+					PublishedPort: uint64(h),
+					TargetPort:    uint64(t),
+					Protocol:      p.Proto(),
 				})
 			}
-			ports[string(p)] = &pbs
 		}
 		r := d.Replicas
 		if r == 0 {
 			r = 1
 		}
-		out.Services = append(out.Services, &ServiceConfig{
-			Name:        n,
-			Image:       d.Image,
-			Ports:       ports,
-			Replicas:    r,
-			Environment: e,
-			Labels:      l,
+		out.Services = append(out.Services, &Service{
+			Name:     n,
+			Image:    d.Image,
+			Replicas: r,
+			Env:      e,
+			Labels:   l,
+			Ports:    ports,
 			Expose:      d.Expose,
 		})
 	}

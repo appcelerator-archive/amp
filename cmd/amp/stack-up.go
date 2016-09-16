@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -9,11 +8,12 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 var (
 	upCmd = &cobra.Command{
-		Use:   "up [-f FILE]",
+		Use:   "up [-f FILE] [name]",
 		Short: "Create and deploy a stack",
 		Long:  `Create and deploy a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -46,13 +46,21 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return errors.New("specify the stackfile with the --flag option")
 	}
 
+	if len(args) == 0 {
+		return errors.New("must specify stack name")
+	}
+	name := args[0]
+	if name == "" {
+		return errors.New("must specify stack name")
+	}
+
 	b, err := ioutil.ReadFile(stackfile)
 	if err != nil {
 		return err
 	}
 
 	contents := string(b)
-	request := &stack.UpRequest{Stackfile: contents}
+	request := &stack.UpRequest{StackName: name, Stackfile: contents}
 
 	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.Up(context.Background(), request)

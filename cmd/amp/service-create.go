@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 var (
