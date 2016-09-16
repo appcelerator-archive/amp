@@ -28,7 +28,8 @@ message UpReply {
 message Stack {
   string name = 1;
   string id = 2;
-  repeated Service services = 3;
+  int32 state = 3;
+  repeated Service services = 4;
 }
 
 message Service {
