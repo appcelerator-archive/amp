@@ -13,7 +13,7 @@ var (
 	// https://docs.docker.com/engine/reference/api/docker_remote_api/
 	// `docker version` -> Server API version  => Docker 1.12x
 	defaultVersion = "1.24"
-	defaultHeaders = map[string]string{"User-Agent": "engine-api-cli-1.0"}
+	defaultHeaders = map[string]string{"User-Agent": "amplifier-1.0"}
 	dockerSock     = "unix:///var/run/docker.sock"
 	docker         *client.Client
 	err            error

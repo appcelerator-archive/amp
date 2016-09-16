@@ -30,5 +30,6 @@ message UpReply {
 message Stack {
   string name = 1;
   string id = 2;
-  repeated service.ServiceSpec services = 3;
+  int32 state = 3;
+  repeated service.ServiceSpec services = 4;
 }

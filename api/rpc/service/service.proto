@@ -20,17 +20,12 @@ message ServiceSpec {
   uint64 replicas = 3;
   map<string, string> env = 4;
   map<string, string> labels = 5;
-  Ports publish_ports = 6;
-  Ports expose_ports = 7;
+  repeated PublishSpec publish_specs = 6;
 }
 
-message PortSpec {
-  string host_ip = 1;
-  string host_port = 2;
-  string container_port = 3;
-  string protocol = 4;
-}
-
-message Ports {
-  repeated PortSpec port_specs = 1;
+message PublishSpec {
+  string name = 1;
+  string protocol = 2;
+  uint32 publish_port = 3;
+  uint32 internal_port = 4;
 }
