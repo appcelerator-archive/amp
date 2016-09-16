@@ -23,8 +23,11 @@ const (
 	influxDefaultURL        = "http://localhost:8086"
 	example                 = `web:
   image: appcelerator.io/amp-demo
-  ports:
-    - 80:3000
+  public:
+    - name: www
+      protocol: tcp
+      publish_port: 80
+      internal_port: 3000
   replicas: 3
   environment:
     REDIS_PASSWORD: password
@@ -98,7 +101,7 @@ func TestMain(m *testing.M) {
 func TestShouldCreateAStackSuccessfully(t *testing.T) {
 	r, err := client.Create(ctx, &stack.CreateRequest{StackDefinition: example})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.NotEmpty(t, r.StackId, "We should have a non empty stack id")
 }
@@ -106,7 +109,7 @@ func TestShouldCreateAStackSuccessfully(t *testing.T) {
 func TestShouldUpStackSuccessfully(t *testing.T) {
 	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: example})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.NotEmpty(t, r.StackId, "StackId should not be empty")
 }

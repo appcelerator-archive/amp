@@ -1,20 +1,26 @@
 package stack
 
 import (
-	"strconv"
 	"strings"
 
-	"github.com/docker/go-connections/nat"
 	"gopkg.in/yaml.v2"
+
+	"github.com/appcelerator/amp/api/rpc/service"
 )
 
 type serviceMap struct {
-	Image       string      `yaml:"image"`
-	Ports       []string    `yaml:"ports"`
-	Replicas    uint64      `yaml:"replicas"`
-	Environment interface{} `yaml:"environment"`
-	Labels      interface{} `yaml:"labels"`
-	Expose      []string    `yaml:"expose"`
+	Image       string        `yaml:"image"`
+	Replicas    uint64        `yaml:"replicas"`
+	Environment interface{}   `yaml:"environment"`
+	Labels      interface{}   `yaml:"labels"`
+	Public      []publishSpec `yaml:"public"`
+}
+
+type publishSpec struct {
+	Name         string `yaml:"name"`
+	Protocol     string `yaml:"protocol"`
+	PublishPort  uint32 `yaml:"publish_port"`
+	InternalPort uint32 `yaml:"internal_port"`
 }
 
 func parseStackYaml(in string) (out *Stack, err error) {
@@ -57,40 +63,26 @@ func parseStackYaml(in string) (out *Stack, err error) {
 				l[k] = v
 			}
 		}
-		_, natPorts, err := nat.ParsePortSpecs(d.Ports)
-		if err != nil {
-			return nil, err
-		}
-		ports := []*Port{}
-		for p, bs := range natPorts {
-			t, err := strconv.Atoi(p.Port())
-			if err != nil {
-				return nil, err
-			}
-			for _, b := range bs {
-				h, err := strconv.Atoi(b.HostPort)
-				if err != nil {
-					return nil, err
-				}
-				ports = append(ports, &Port{
-					PublishedPort: uint64(h),
-					TargetPort:    uint64(t),
-					Protocol:      p.Proto(),
-				})
-			}
-		}
 		r := d.Replicas
 		if r == 0 {
 			r = 1
 		}
-		out.Services = append(out.Services, &Service{
-			Name:     n,
-			Image:    d.Image,
-			Replicas: r,
-			Env:      e,
-			Labels:   l,
-			Ports:    ports,
-			Expose:   d.Expose,
+		publishSpecs := []*service.PublishSpec{}
+		for _, p := range d.Public {
+			publishSpecs = append(publishSpecs, &service.PublishSpec{
+				Name:         p.Name,
+				Protocol:     p.Protocol,
+				PublishPort:  p.PublishPort,
+				InternalPort: p.InternalPort,
+			})
+		}
+		out.Services = append(out.Services, &service.ServiceSpec{
+			Name:         n,
+			Image:        d.Image,
+			Replicas:     r,
+			Env:          e,
+			Labels:       l,
+			PublishSpecs: publishSpecs,
 		})
 	}
 	return
