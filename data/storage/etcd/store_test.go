@@ -69,7 +69,7 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	out := &storage.Project{}
+	out := &storagerecursive.Project{}
 	ignoreNotFound := false
 
 	err := store.Get(ctx, key, out, ignoreNotFound)
@@ -118,7 +118,7 @@ func TestDelete(t *testing.T) {
 	key := "foo"
 	out := &storage.Project{}
 
-	err := store.Delete(ctx, key, out)
+	err := store.Delete(ctx, key, false, out)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {

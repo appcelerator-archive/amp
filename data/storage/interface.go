@@ -32,7 +32,7 @@ type Interface interface {
 	// List(ctx context.Context, key string, resourceVersion string, filter FilterFunc, list interface{}) error
 
 	// TODO: will need to add preconditions support
-	Delete(ctx context.Context, key string, out proto.Message) error
+	Delete(ctx context.Context, key string, withFromKey bool, out proto.Message) error
 
 	// Update performs a guaranteed update, which means it will continue to retry until an update succeeds or the request is canceled.
 	// Update(ctx context.Context, key string, type interface, ignoreNotFound bool, precondtions *Preconditions, tryUpdate UpdateFunc) error

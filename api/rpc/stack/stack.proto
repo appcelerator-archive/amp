@@ -3,7 +3,6 @@ syntax = "proto3";
 package stack;
 
 service StackService {
-  rpc Create (CreateRequest) returns (CreateReply);
   rpc Up (UpRequest) returns (UpReply);
 }
 
@@ -46,4 +45,8 @@ message Port {
   uint64 published_port = 1;
   uint64 target_port = 2;
   string protocol = 3;
+}
+
+message ServiceIdList {
+  repeated string list = 1;
 }
