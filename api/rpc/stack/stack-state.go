@@ -61,6 +61,7 @@ func (s *Stack) getState() (int32, error) {
 	return stack.State, nil
 }
 
+// TODO: make the update transactional
 func (s *Stack) setState(state int32) error {
 	stack := &Stack{}
 	err := runtime.Store.Get(context.Background(), path.Join("stacks", s.Id), stack, false)
