@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/api/rpc/build"
+	// "github.com/appcelerator/amp/api/rpc/build"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -43,7 +43,7 @@ func Start(config Config) {
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 	})
-	build.RegisterAmpBuildServer(s, &build.Proxy{})
+	// build.RegisterAmpBuildServer(s, &build.Proxy{})
 	service.RegisterServiceServer(s, &service.Service{})
 	stack.RegisterStackServiceServer(s, &stack.Server{
 		Store: runtime.Store,
