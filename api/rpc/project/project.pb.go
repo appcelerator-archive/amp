@@ -9,8 +9,17 @@ It is generated from these files:
 	project.proto
 
 It has these top-level messages:
+	ProjectEntry
 	CreateRequest
 	CreateReply
+	DeleteRequest
+	DeleteReply
+	ListRequest
+	ListReply
+	GetRequest
+	GetReply
+	UpdateRequest
+	UpdateReply
 */
 package project
 
@@ -34,28 +43,168 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type ProjectEntry struct {
+	Id        int32  `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	OwnerName string `protobuf:"bytes,2,opt,name=owner_name,json=ownerName" json:"owner_name,omitempty"`
+	RepoName  string `protobuf:"bytes,3,opt,name=repo_name,json=repoName" json:"repo_name,omitempty"`
+	Token     string `protobuf:"bytes,4,opt,name=token" json:"token,omitempty"`
+}
+
+func (m *ProjectEntry) Reset()                    { *m = ProjectEntry{} }
+func (m *ProjectEntry) String() string            { return proto.CompactTextString(m) }
+func (*ProjectEntry) ProtoMessage()               {}
+func (*ProjectEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
 type CreateRequest struct {
-	Id   string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
 }
 
 func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
 func (m *CreateRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateRequest) ProtoMessage()               {}
-func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *CreateRequest) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
 
 type CreateReply struct {
-	Message string `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
 }
 
 func (m *CreateReply) Reset()                    { *m = CreateReply{} }
 func (m *CreateReply) String() string            { return proto.CompactTextString(m) }
 func (*CreateReply) ProtoMessage()               {}
-func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *CreateReply) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
+
+type DeleteRequest struct {
+	Id int32 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
+func (m *DeleteRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteRequest) ProtoMessage()               {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+type DeleteReply struct {
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+}
+
+func (m *DeleteReply) Reset()                    { *m = DeleteReply{} }
+func (m *DeleteReply) String() string            { return proto.CompactTextString(m) }
+func (*DeleteReply) ProtoMessage()               {}
+func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *DeleteReply) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
+
+type ListRequest struct {
+}
+
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+type ListReply struct {
+	Projects []*ProjectEntry `protobuf:"bytes,1,rep,name=projects" json:"projects,omitempty"`
+}
+
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (m *ListReply) String() string            { return proto.CompactTextString(m) }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *ListReply) GetProjects() []*ProjectEntry {
+	if m != nil {
+		return m.Projects
+	}
+	return nil
+}
+
+type GetRequest struct {
+	Id int32 `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *GetRequest) Reset()                    { *m = GetRequest{} }
+func (m *GetRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()               {}
+func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+type GetReply struct {
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+}
+
+func (m *GetReply) Reset()                    { *m = GetReply{} }
+func (m *GetReply) String() string            { return proto.CompactTextString(m) }
+func (*GetReply) ProtoMessage()               {}
+func (*GetReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *GetReply) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
+
+type UpdateRequest struct {
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+}
+
+func (m *UpdateRequest) Reset()                    { *m = UpdateRequest{} }
+func (m *UpdateRequest) String() string            { return proto.CompactTextString(m) }
+func (*UpdateRequest) ProtoMessage()               {}
+func (*UpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *UpdateRequest) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
+
+type UpdateReply struct {
+	Project *ProjectEntry `protobuf:"bytes,1,opt,name=project" json:"project,omitempty"`
+}
+
+func (m *UpdateReply) Reset()                    { *m = UpdateReply{} }
+func (m *UpdateReply) String() string            { return proto.CompactTextString(m) }
+func (*UpdateReply) ProtoMessage()               {}
+func (*UpdateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *UpdateReply) GetProject() *ProjectEntry {
+	if m != nil {
+		return m.Project
+	}
+	return nil
+}
 
 func init() {
+	proto.RegisterType((*ProjectEntry)(nil), "project.ProjectEntry")
 	proto.RegisterType((*CreateRequest)(nil), "project.CreateRequest")
 	proto.RegisterType((*CreateReply)(nil), "project.CreateReply")
+	proto.RegisterType((*DeleteRequest)(nil), "project.DeleteRequest")
+	proto.RegisterType((*DeleteReply)(nil), "project.DeleteReply")
+	proto.RegisterType((*ListRequest)(nil), "project.ListRequest")
+	proto.RegisterType((*ListReply)(nil), "project.ListReply")
+	proto.RegisterType((*GetRequest)(nil), "project.GetRequest")
+	proto.RegisterType((*GetReply)(nil), "project.GetReply")
+	proto.RegisterType((*UpdateRequest)(nil), "project.UpdateRequest")
+	proto.RegisterType((*UpdateReply)(nil), "project.UpdateReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -70,6 +219,10 @@ const _ = grpc.SupportPackageIsVersion3
 
 type ProjectClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error)
+	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error)
 }
 
 type projectClient struct {
@@ -89,10 +242,50 @@ func (c *projectClient) Create(ctx context.Context, in *CreateRequest, opts ...g
 	return out, nil
 }
 
+func (c *projectClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := grpc.Invoke(ctx, "/project.Project/Delete", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
+	err := grpc.Invoke(ctx, "/project.Project/List", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error) {
+	out := new(GetReply)
+	err := grpc.Invoke(ctx, "/project.Project/Get", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := grpc.Invoke(ctx, "/project.Project/Update", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Project service
 
 type ProjectServer interface {
 	Create(context.Context, *CreateRequest) (*CreateReply, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteReply, error)
+	List(context.Context, *ListRequest) (*ListReply, error)
+	Get(context.Context, *GetRequest) (*GetReply, error)
+	Update(context.Context, *UpdateRequest) (*UpdateReply, error)
 }
 
 func RegisterProjectServer(s *grpc.Server, srv ProjectServer) {
@@ -117,6 +310,78 @@ func _Project_Create_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Project_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/project.Project/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Project_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/project.Project/List",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServer).List(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Project_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/project.Project/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Project_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/project.Project/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServer).Update(ctx, req.(*UpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Project_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "project.Project",
 	HandlerType: (*ProjectServer)(nil),
@@ -124,6 +389,22 @@ var _Project_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _Project_Create_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Project_Delete_Handler,
+		},
+		{
+			MethodName: "List",
+			Handler:    _Project_List_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _Project_Get_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _Project_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -133,15 +414,27 @@ var _Project_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("project.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 148 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2d, 0x28, 0xca, 0xcf,
-	0x4a, 0x4d, 0x2e, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x87, 0x72, 0x95, 0x8c, 0xb9,
-	0x78, 0x9d, 0x8b, 0x52, 0x13, 0x4b, 0x52, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0xf8,
-	0xb8, 0x98, 0x32, 0x53, 0x24, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0x98, 0x32, 0x53, 0x84, 0x84,
-	0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x98, 0xc0, 0x22, 0x60, 0xb6, 0x92, 0x3a, 0x17, 0x37,
-	0x4c, 0x53, 0x41, 0x4e, 0xa5, 0x90, 0x04, 0x17, 0x7b, 0x6e, 0x6a, 0x71, 0x71, 0x62, 0x7a, 0x2a,
-	0x54, 0x1f, 0x8c, 0x6b, 0xe4, 0xcc, 0xc5, 0x1e, 0x00, 0xb1, 0x48, 0xc8, 0x82, 0x8b, 0x0d, 0xa2,
-	0x47, 0x48, 0x4c, 0x0f, 0xe6, 0x16, 0x14, 0x9b, 0xa5, 0x44, 0x30, 0xc4, 0x0b, 0x72, 0x2a, 0x95,
-	0x18, 0x92, 0xd8, 0xc0, 0x4e, 0x36, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x1c, 0x74, 0x60, 0x63,
-	0xc3, 0x00, 0x00, 0x00,
+	// 339 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xa4, 0x93, 0x4b, 0x4b, 0xc3, 0x40,
+	0x10, 0xc7, 0x49, 0xfa, 0xcc, 0xd4, 0x08, 0xae, 0x55, 0x42, 0x55, 0x2c, 0x39, 0xf5, 0x62, 0xd5,
+	0x0a, 0xbd, 0x08, 0xa5, 0xa0, 0xd2, 0x8b, 0x88, 0x04, 0x3c, 0x4b, 0x34, 0x73, 0x88, 0xb6, 0xd9,
+	0x75, 0xb3, 0x22, 0xfd, 0x1a, 0x7e, 0x62, 0xd9, 0xdd, 0x3c, 0x36, 0x95, 0x1e, 0x8c, 0xb7, 0xcc,
+	0xfc, 0xe7, 0xf1, 0xcb, 0xfc, 0x13, 0x70, 0x19, 0xa7, 0x6f, 0xf8, 0x2a, 0xc6, 0x8c, 0x53, 0x41,
+	0x49, 0x27, 0x0b, 0x7d, 0x06, 0x3b, 0x8f, 0xfa, 0xf1, 0x2e, 0x11, 0x7c, 0x4d, 0x76, 0xc1, 0x8e,
+	0x23, 0xcf, 0x1a, 0x5a, 0xa3, 0x56, 0x60, 0xc7, 0x11, 0x39, 0x01, 0xa0, 0x5f, 0x09, 0xf2, 0xe7,
+	0x24, 0x5c, 0xa1, 0x67, 0x0f, 0xad, 0x91, 0x13, 0x38, 0x2a, 0xf3, 0x10, 0xae, 0x90, 0x1c, 0x81,
+	0xc3, 0x91, 0x51, 0xad, 0x36, 0x94, 0xda, 0x95, 0x09, 0x25, 0xf6, 0xa1, 0x25, 0xe8, 0x3b, 0x26,
+	0x5e, 0x53, 0x09, 0x3a, 0xf0, 0xe7, 0xe0, 0xde, 0x70, 0x0c, 0x05, 0x06, 0xf8, 0xf1, 0x89, 0xa9,
+	0x20, 0xe7, 0x90, 0xd3, 0xa8, 0xbd, 0xbd, 0xc9, 0xc1, 0x38, 0x87, 0x35, 0xd1, 0x82, 0x82, 0x79,
+	0x06, 0xbd, 0x7c, 0x02, 0x5b, 0xae, 0xff, 0xde, 0x7f, 0x0a, 0xee, 0x2d, 0x2e, 0xb1, 0x24, 0xd8,
+	0x78, 0x69, 0xb9, 0x20, 0x2f, 0xa8, 0xb5, 0xc0, 0x85, 0xde, 0x7d, 0x9c, 0x8a, 0x6c, 0xbc, 0x3f,
+	0x03, 0x47, 0x87, 0x72, 0xd8, 0x25, 0x74, 0xb3, 0xb2, 0xd4, 0xb3, 0x86, 0x8d, 0xed, 0xd3, 0x8a,
+	0x32, 0xff, 0x18, 0x60, 0x81, 0x62, 0x1b, 0xec, 0x35, 0x74, 0x95, 0x5a, 0x8b, 0x74, 0x0e, 0xee,
+	0x13, 0x8b, 0xfe, 0x69, 0x46, 0x3e, 0xa1, 0x0e, 0xc1, 0xe4, 0xdb, 0x86, 0x4e, 0xa6, 0x90, 0x29,
+	0xb4, 0xb5, 0xb1, 0xe4, 0xb0, 0xe8, 0xaa, 0x7c, 0x2b, 0x83, 0xfe, 0xaf, 0xbc, 0x5c, 0x3a, 0x85,
+	0xb6, 0xf6, 0xcb, 0xe8, 0xab, 0x38, 0x6c, 0xf4, 0x99, 0xc6, 0x5e, 0x40, 0x53, 0x1a, 0x43, 0x4a,
+	0xd5, 0xb0, 0x6d, 0x40, 0x36, 0xb2, 0xb2, 0xe3, 0x0c, 0x1a, 0x0b, 0x14, 0x64, 0xbf, 0x90, 0x4a,
+	0x63, 0x06, 0x7b, 0xd5, 0x64, 0x06, 0xa6, 0x8f, 0x63, 0x80, 0x55, 0xee, 0x6d, 0x80, 0x19, 0x57,
+	0x7c, 0x69, 0xab, 0xbf, 0xf4, 0xea, 0x27, 0x00, 0x00, 0xff, 0xff, 0x9a, 0x52, 0x04, 0x2d, 0xb6,
+	0x03, 0x00, 0x00,
 }
