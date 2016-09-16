@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/golang/protobuf/proto"
@@ -236,6 +237,28 @@ func TestList(t *testing.T) {
 		if !proto.Equal(vals[i], obj) {
 			t.Errorf("expected %v, deleted %v", vals[i], obj)
 		}
+	}
+}
+
+func TestCompareAndSet(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
+	key := "state"
+	expect := &stack.State{Value: stack.StackState_Stopped}
+	update := &stack.State{Value: stack.StackState_Running}
+
+	err := store.Delete(ctx, key, &stack.State{})
+	err = store.Create(ctx, key, expect, nil, 0)
+	err = store.CompareAndSet(ctx, key, expect, update)
+	// cancel timeout (release resources) if operation completes before timeout
+	defer cancel()
+	if err != nil {
+		t.Error(err)
+	}
+
+	actual := &stack.State{}
+	err = store.Get(ctx, key, actual, false)
+	if !proto.Equal(update, actual) {
+		t.Errorf("expected %v, got %v", update, actual)
 	}
 }
 

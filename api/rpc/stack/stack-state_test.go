@@ -6,29 +6,29 @@ import (
 )
 
 func TestTransitionsFromStopped(t *testing.T) {
-	assert.False(t, stackStateMachine.CanTransition(Stopped, Stopped))
-	assert.True(t, stackStateMachine.CanTransition(Stopped, Starting))
-	assert.False(t, stackStateMachine.CanTransition(Stopped, Running))
-	assert.True(t, stackStateMachine.CanTransition(Stopped, Redeploying))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Stopped), int32(StackState_Stopped)))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Stopped), int32(StackState_Starting)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Stopped), int32(StackState_Running)))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Stopped), int32(StackState_Redeploying)))
 }
 
 func TestTransitionsFromStarting(t *testing.T) {
-	assert.False(t, stackStateMachine.CanTransition(Starting, Stopped))
-	assert.False(t, stackStateMachine.CanTransition(Starting, Starting))
-	assert.True(t, stackStateMachine.CanTransition(Starting, Running))
-	assert.False(t, stackStateMachine.CanTransition(Starting, Redeploying))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Starting), int32(StackState_Stopped)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Starting), int32(StackState_Starting)))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Starting), int32(StackState_Running)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Starting), int32(StackState_Redeploying)))
 }
 
 func TestTransitionsFromRunning(t *testing.T) {
-	assert.True(t, stackStateMachine.CanTransition(Running, Stopped))
-	assert.False(t, stackStateMachine.CanTransition(Running, Starting))
-	assert.False(t, stackStateMachine.CanTransition(Running, Running))
-	assert.True(t, stackStateMachine.CanTransition(Running, Redeploying))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Running), int32(StackState_Stopped)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Running), int32(StackState_Starting)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Running), int32(StackState_Running)))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Running), int32(StackState_Redeploying)))
 }
 
 func TestTransitionsFromRedeploying(t *testing.T) {
-	assert.True(t, stackStateMachine.CanTransition(Redeploying, Stopped))
-	assert.True(t, stackStateMachine.CanTransition(Redeploying, Starting))
-	assert.False(t, stackStateMachine.CanTransition(Redeploying, Running))
-	assert.False(t, stackStateMachine.CanTransition(Redeploying, Redeploying))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Redeploying), int32(StackState_Stopped)))
+	assert.True(t, stackStateMachine.CanTransition(int32(StackState_Redeploying), int32(StackState_Starting)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Redeploying), int32(StackState_Running)))
+	assert.False(t, stackStateMachine.CanTransition(int32(StackState_Redeploying), int32(StackState_Redeploying)))
 }

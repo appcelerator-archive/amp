@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"golang.org/x/net/context"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ redis:
 
 func TestParseStackYaml(t *testing.T) {
 	for _, example := range examples {
-		out, err := parseStackYaml(example)
+		out, err := NewStackfromYaml(context.Background(), example)
 		if err != nil {
 			t.Fatal(err)
 		}

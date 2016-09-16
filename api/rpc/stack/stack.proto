@@ -27,9 +27,19 @@ message UpReply {
   string stack_id = 1;
 }
 
+enum StackState {
+  Stopped = 0;
+  Starting = 1;
+  Running = 2;
+  Redeploying = 3;
+}
+
+message State {
+  StackState value = 1;
+}
+
 message Stack {
   string name = 1;
   string id = 2;
-  int32 state = 3;
-  repeated service.ServiceSpec services = 4;
+  repeated service.ServiceSpec services = 3;
 }
