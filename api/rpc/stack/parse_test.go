@@ -11,7 +11,7 @@ var examples = []string{
   public:
     - name: www
       protocol: tcp
-      publish_port: 80
+      publish_port: 90
       internalPort: 3000
   replicas: 3
   environment:
