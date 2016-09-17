@@ -70,7 +70,7 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	out := &storagerecursive.Project{}
+	out := &storage.Project{}
 	ignoreNotFound := false
 
 	err := store.Get(ctx, key, out, ignoreNotFound)
@@ -161,7 +161,7 @@ func TestUpdate(t *testing.T) {
 
 	// cleanup
 	ctx3, cancel3 := newContext()
-	err = store.Delete(ctx3, key, out)
+	err = store.Delete(ctx3, key, false, out)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel3()
 	if err != nil {
@@ -229,7 +229,7 @@ func TestList(t *testing.T) {
 		// clean up after ourselves -- delete the item
 		id := strconv.Itoa(i)
 		subkey := path.Join(key, id)
-		err := store.Delete(ctx, subkey, obj)
+		err := store.Delete(ctx, subkey, false, obj)
 		if err != nil {
 			t.Error(err)
 		}
@@ -246,7 +246,7 @@ func TestCompareAndSet(t *testing.T) {
 	expect := &stack.State{Value: stack.StackState_Stopped}
 	update := &stack.State{Value: stack.StackState_Running}
 
-	err := store.Delete(ctx, key, &stack.State{})
+	err := store.Delete(ctx, key, false, &stack.State{})
 	err = store.Create(ctx, key, expect, nil, 0)
 	err = store.CompareAndSet(ctx, key, expect, update)
 	// cancel timeout (release resources) if operation completes before timeout

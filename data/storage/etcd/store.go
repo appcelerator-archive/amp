@@ -156,11 +156,11 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 }
 
 // Delete implements storage.Interface.Delete
-func (s *etcd) Delete(ctx context.Context, key string, withFromKey bool, out proto.Message) error {
+func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.Message) error {
 	key = s.prefix(key)
 
 	opts := []clientv3.OpOption{clientv3.WithFromKey()}
-	if !withFromKey {
+	if !recurse {
 		opts = nil
 	}
 
