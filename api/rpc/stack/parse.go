@@ -3,10 +3,10 @@ package stack
 import (
 	"strings"
 
-	"golang.org/x/net/context"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/docker/docker/pkg/stringid"
+	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
 	"path"
 )
@@ -26,6 +26,7 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
+// NewStack create new stack
 func NewStack(ctx context.Context) (stack *Stack, err error) {
 	stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
@@ -45,6 +46,7 @@ func NewStack(ctx context.Context) (stack *Stack, err error) {
 	return
 }
 
+// NewStackfromYaml create new stack from yaml
 func NewStackfromYaml(ctx context.Context, in string) (stack *Stack, err error) {
 	stack, err = NewStack(ctx)
 	b := []byte(in)
