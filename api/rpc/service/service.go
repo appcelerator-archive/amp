@@ -43,7 +43,8 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 // CreateService uses docker api to create a service
 func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
 	annotations := swarm.Annotations{
-		Name: req.ServiceSpec.Name,
+		Name:   req.ServiceSpec.Name,
+		Labels: req.ServiceSpec.Labels,
 	}
 
 	containerSpec := swarm.ContainerSpec{
@@ -58,7 +59,17 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 		Annotations:  annotations,
 		TaskTemplate: taskSpec,
 	}
-
+	if req.ServiceSpec.PublishSpecs != nil && len(req.ServiceSpec.PublishSpecs) > 0 {
+		swarmSpec.EndpointSpec.Ports = make([]swarm.PortConfig, len(req.ServiceSpec.PublishSpecs), len(req.ServiceSpec.PublishSpecs))
+		for i, publish := range req.ServiceSpec.PublishSpecs {
+			swarmSpec.EndpointSpec.Ports[i] = swarm.PortConfig{
+				Name:          publish.Name,
+				Protocol:      swarm.PortConfigProtocol(publish.Protocol),
+				TargetPort:    publish.InternalPort,
+				PublishedPort: publish.PublishPort,
+			}
+		}
+	}
 	options := types.ServiceCreateOptions{}
 
 	log.Println("service create ....")
