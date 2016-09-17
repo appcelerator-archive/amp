@@ -59,14 +59,20 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 		Annotations:  annotations,
 		TaskTemplate: taskSpec,
 	}
-	if req.ServiceSpec.PublishSpecs != nil && len(req.ServiceSpec.PublishSpecs) > 0 {
-		swarmSpec.EndpointSpec.Ports = make([]swarm.PortConfig, len(req.ServiceSpec.PublishSpecs), len(req.ServiceSpec.PublishSpecs))
-		for i, publish := range req.ServiceSpec.PublishSpecs {
-			swarmSpec.EndpointSpec.Ports[i] = swarm.PortConfig{
-				Name:          publish.Name,
-				Protocol:      swarm.PortConfigProtocol(publish.Protocol),
-				TargetPort:    publish.InternalPort,
-				PublishedPort: publish.PublishPort,
+	if req.ServiceSpec.PublishSpecs != nil {
+		nn := len(req.ServiceSpec.PublishSpecs)
+		if nn > 0 {
+			swarmSpec.EndpointSpec = &swarm.EndpointSpec{
+				Mode:  swarm.ResolutionModeVIP,
+				Ports: make([]swarm.PortConfig, nn, nn),
+			}
+			for i, publish := range req.ServiceSpec.PublishSpecs {
+				swarmSpec.EndpointSpec.Ports[i] = swarm.PortConfig{
+					Name:          publish.Name,
+					Protocol:      swarm.PortConfigProtocol(publish.Protocol),
+					TargetPort:    publish.InternalPort,
+					PublishedPort: publish.PublishPort,
+				}
 			}
 		}
 	}

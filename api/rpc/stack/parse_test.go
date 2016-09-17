@@ -12,7 +12,7 @@ var examples = []string{
     - name: www
       protocol: tcp
       publish_port: 90
-      internalPort: 3000
+      internal_port: 3000
   replicas: 3
   environment:
     REDIS_PASSWORD: password
@@ -28,6 +28,7 @@ func TestParseStackYaml(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		fmt.Print("Out: ", out)
 		t.Log(out)
 	}
 }

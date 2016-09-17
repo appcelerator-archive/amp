@@ -58,11 +58,11 @@ func (s *Server) processService(ctx context.Context, stackID string, serv *servi
 		ServiceSpec: serv,
 	}
 	server := service.Service{}
-	fmt.Printf("Create service: %s\n", serv.Name)
 	reply, err := server.Create(ctx, request)
 	if err != nil {
 		return "", err
 	}
+	fmt.Printf("Service: %s created, id=%s\n", serv.Name, reply.Id)
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, "/", reply.Id), serv, nil, 0)
 	if createErr != nil {
 		return "", createErr
