@@ -122,7 +122,7 @@ build-image:
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
-test: test-storage test-influx test-stat test-logs test-project test-build test-service test-stack
+test: test-storage test-influx test-stat test-logs test-project test-service test-stack
 
 test-storage:
 	@go test -v $(REPO)/data/storage/etcd
@@ -142,8 +142,8 @@ test-project:
 test-service:
 	@go test -v $(REPO)/api/rpc/service
 
-test-build:
-	@go test -v $(REPO)/api/rpc/build
+# test-build:
+# 	@go test -v $(REPO)/api/rpc/build
 
 test-stack:
 	@go test -v $(REPO)/api/rpc/stack
