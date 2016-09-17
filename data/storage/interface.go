@@ -45,6 +45,9 @@ type Interface interface {
 	// Watch(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
 
 	// WatchList(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
+
+	// CompareAndSet atomically sets the value to the given updated value if the current value == the expected value
+	CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error
 }
 
 // Filter is the interface used for storage operations that apply to sets (list, find, update).

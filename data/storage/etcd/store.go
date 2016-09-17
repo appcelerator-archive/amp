@@ -203,6 +203,26 @@ func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj 
 	return nil
 }
 
+// Create implements storage.Interface.Create
+func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error {
+	key = s.prefix(key)
+
+	expected, _ := proto.Marshal(expect)
+	updated, _ := proto.Marshal(update)
+
+	txn, err := s.client.KV.Txn(ctx).
+		If(clientv3.Compare(clientv3.Value(key), "=", string(expected))).
+		Then(clientv3.OpPut(key, string(updated))).
+		Commit()
+	if err != nil {
+		return err
+	}
+	if !txn.Succeeded {
+		return fmt.Errorf("transaction failed for key: %v", key)
+	}
+	return nil
+}
+
 // options returns a slice of client options (currently just a lease based on the given ttl).
 // ttl: time in seconds that key will exist (0 means forever); if ttl is non-zero, it will attach the key to a lease with ttl of roughly the same length
 func (s *etcd) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, error) {

@@ -3,9 +3,12 @@ package stack
 import (
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
+	"golang.org/x/net/context"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/api/runtime"
+	"github.com/docker/docker/pkg/stringid"
+	"gopkg.in/yaml.v2"
+	"path"
 )
 
 type serviceMap struct {
@@ -23,8 +26,27 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
-func parseStackYaml(in string) (out *Stack, err error) {
-	out = &Stack{}
+func NewStack(ctx context.Context) (stack *Stack, err error) {
+	stack = &Stack{}
+	stack.Id = stringid.GenerateNonCryptoID()
+
+	// Store stack
+	err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id), stack, nil, 0)
+	if err != nil {
+		return
+	}
+
+	// Store stack state
+	state := &State{Value: StackState_Stopped}
+	err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id, "state"), state, nil, 0)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func NewStackfromYaml(ctx context.Context, in string) (stack *Stack, err error) {
+	stack, err = NewStack(ctx)
 	b := []byte(in)
 	sm, err := parseAsServiceMap(b)
 	if err != nil {
@@ -76,7 +98,7 @@ func parseStackYaml(in string) (out *Stack, err error) {
 				InternalPort: p.InternalPort,
 			})
 		}
-		out.Services = append(out.Services, &service.ServiceSpec{
+		stack.Services = append(stack.Services, &service.ServiceSpec{
 			Name:         n,
 			Image:        d.Image,
 			Replicas:     r,
