@@ -50,6 +50,7 @@ func (a *AMP) Disconnect() {
 
 // GetAuthorizedContext returns an authorized context
 func (a *AMP) GetAuthorizedContext() (ctx context.Context, err error) {
+	// TODO: reenable
 	// Disabled temporally
 	// if a.Configuration.Github == "" {
 	// 	return nil, fmt.Errorf("Requires login")
