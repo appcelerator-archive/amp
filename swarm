@@ -29,7 +29,7 @@ IMAGES=(
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
-  quay.io/coreos/etcd:v3.0.4
+  quay.io/coreos/etcd:v3.0.9
 )
 
 MINIMAGES=(
@@ -44,7 +44,7 @@ MINIMAGES=(
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
-  quay.io/coreos/etcd:v3.0.4
+  quay.io/coreos/etcd:v3.0.9
 )
 
 # please keep sorted
@@ -263,10 +263,10 @@ etcd() { # Owner: subfuzion
     --label amp.swarm="infrastructure" \
     -p 2379:2379 \
     -p 2380:2380 \
-    quay.io/coreos/etcd:v3.0.4 etcd \
+    quay.io/coreos/etcd:v3.0.9 etcd \
       --name etcd \
       --listen-client-urls http://0.0.0.0:2379 \
-      --advertise-client-urls http://0.0.0.0:2380
+      --advertise-client-urls http://etcd:2379
   }
 
 grafana() { # Owner: ndegory
