@@ -59,11 +59,11 @@ var (
 
 	sample3 = map[string]serviceMap{
 		"pinger": {
-			Image: "appcelerator/pinger",
+			Image:    "appcelerator/pinger",
 			Replicas: 2,
 		},
 		"pinger2": {
-			Image: "appcelerator/pinger",
+			Image:    "appcelerator/pinger",
 			Replicas: 2,
 			Public: []publishSpec{
 				{
@@ -77,9 +77,9 @@ var (
 
 	// map of filenames to a map of serviceMap elements (each file has one or more)
 	compareStructs = map[string]map[string]serviceMap{
-		"sample-01.yml": sample1,
-		"sample-02.yml": sample2,
-		"sample-03.yml": sample3,
+		"sample-01.yml":  sample1,
+		"sample-02.yml":  sample2,
+		"sample-03.yml":  sample3,
 		"sample-03.json": sample3,
 	}
 )
@@ -197,7 +197,7 @@ func compareEnvironment(a serviceMap, b serviceMap) bool {
 	return reflect.DeepEqual(ae, be)
 }
 
-// environmentToMap 
+// environmentToMap
 func environmentToMap(env interface{}) map[string]string {
 	es, ok := env.(map[string]string)
 	if ok {
