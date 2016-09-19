@@ -111,7 +111,7 @@ func TestShouldUpStopRemoveStackSuccessfully(t *testing.T) {
 	assert.NotEmpty(t, rUp.StackId, "StackId should not be empty")
 	fmt.Printf("Stack id = %s\n", rUp.StackId)
 	stackRequest := stack.StackRequest{
-		StackId : rUp.StackId,
+		StackId: rUp.StackId,
 	}
 	rStop, errStop := client.Stop(ctx, &stackRequest)
 	if errStop != nil {

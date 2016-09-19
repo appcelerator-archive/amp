@@ -1,9 +1,9 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"path"
-	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
@@ -81,7 +81,7 @@ func (s *Server) processService(ctx context.Context, stackID string, serv *servi
 // Stop implements stack.ServerService Stop
 func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error) {
 	stack := Stack{
-		Id:  in.StackId,
+		Id: in.StackId,
 	}
 	if running, err := stack.IsRunning(); err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 // Remove implements stack.ServerService Remove
 func (s *Server) Remove(ctx context.Context, in *StackRequest) (*StackReply, error) {
 	stack := Stack{
-		Id:  in.StackId,
+		Id: in.StackId,
 	}
 	if stopped, err := stack.IsStopped(); err != nil {
 		return nil, err
