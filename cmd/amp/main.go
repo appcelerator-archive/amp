@@ -27,8 +27,8 @@ var (
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
 		Use:   "amp",
-		Short: "Manage an AMP swarm",
-		Long:  `Manage an AMP swarm.`,
+		Short: "AMP CLI",
+		Long:  `AMP CLI.`,
 	}
 )
 
@@ -48,60 +48,11 @@ func main() {
 		})
 	})
 
-	createCmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new AMP swarm",
-		Long:  `Create a new AMP swarm for the target environment.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Create()
-		},
-	}
-
-	// stopCmd represents the stop command
-	stopCmd := &cobra.Command{
-		Use:   "stop",
-		Short: "Stop a running AMP swarm",
-		Long:  `Stop an running AMP swarm.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Stop()
-		},
-	}
-
-	// startCmd represents the start command
-	startCmd := &cobra.Command{
-		Use:   "start",
-		Short: "Start a stopped AMP swarm",
-		Long:  `Start a stopped AMP swarm.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Start()
-		},
-	}
-
-	// updateCmd represents the update command
-	updateCmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update an existing AMP swarm",
-		Long:  `Updated an existing AMP swarm.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Update()
-		},
-	}
-
-	// statusCmd represents the status command
-	statusCmd := &cobra.Command{
-		Use:   "status",
-		Short: "Get status of a running AMP swarm",
-		Long:  `Get status of a running AMP swarm.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Status()
-		},
-	}
-
 	// configCmd represents the Config command
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Display the current configuration",
-		Long:  `Display the current configuration, taking into account flags and environment variables.`,
+		Long:  `Display the current configuration.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(Config)
 		},
@@ -112,11 +63,6 @@ func main() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
-	RootCmd.AddCommand(createCmd)
-	RootCmd.AddCommand(stopCmd)
-	RootCmd.AddCommand(startCmd)
-	RootCmd.AddCommand(updateCmd)
-	RootCmd.AddCommand(statusCmd)
 	RootCmd.AddCommand(configCmd)
 
 	if err := RootCmd.Execute(); err != nil {
