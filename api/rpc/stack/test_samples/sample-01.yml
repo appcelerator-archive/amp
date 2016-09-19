@@ -1,0 +1,7 @@
+pinger:
+  image: appcelerator/pinger
+  replicas: 2
+  public:
+    - publish_port: 80
+      internal_port: 3000
+      protocol: tcp

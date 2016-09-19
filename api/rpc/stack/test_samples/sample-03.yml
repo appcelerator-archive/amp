@@ -1,0 +1,10 @@
+pinger:
+  image: appcelerator/pinger
+  replicas: 2
+pinger2:
+  image: appcelerator/pinger
+  replicas: 2
+  public:
+    - name: www
+      protocol: tcp
+      internal_port: 3000
