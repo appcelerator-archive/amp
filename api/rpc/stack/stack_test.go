@@ -21,20 +21,25 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
-	example                 = `web:
-  image: appcelerator.io/amp-demo
+	example                 = `
+pinger:
+  image: appcelerator/pinger
+  replicas: 2
+pingerExt1:
+  image: appcelerator/pinger
+  replicas: 2
   public:
-    - name: www
+    - name: www1
       protocol: tcp
-      publish_port: 90
       internal_port: 3000
-  replicas: 3
-  environment:
-    REDIS_PASSWORD: password
-redis:
-  image: redis
-  environment:
-    - PASSWORD=password`
+pingerExt2:
+  image: appcelerator/pinger
+  replicas: 2
+  public:
+    - name: www2
+      protocol: tcp
+      publish_port: 3001
+      internal_port: 3000`
 )
 
 var (
@@ -98,10 +103,24 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestShouldUpStackSuccessfully(t *testing.T) {
-	r, err := client.Up(ctx, &stack.UpRequest{Stackfile: example})
-	if err != nil {
-		t.Fatal(err)
+func TestShouldUpStopRemoveStackSuccessfully(t *testing.T) {
+	rUp, errUp := client.Up(ctx, &stack.UpRequest{Stackfile: example})
+	if errUp != nil {
+		t.Fatal(errUp)
 	}
-	assert.NotEmpty(t, r.StackId, "StackId should not be empty")
+	assert.NotEmpty(t, rUp.StackId, "StackId should not be empty")
+	fmt.Printf("Stack id = %s\n", rUp.StackId)
+	stackRequest := stack.StackRequest{
+		StackId : rUp.StackId,
+	}
+	rStop, errStop := client.Stop(ctx, &stackRequest)
+	if errStop != nil {
+		t.Fatal(errStop)
+	}
+	assert.NotEmpty(t, rStop.StackId, "StackId should not be empty")
+	rRemove, errRemove := client.Remove(ctx, &stackRequest)
+	if errRemove != nil {
+		t.Fatal(errRemove)
+	}
+	assert.NotEmpty(t, rRemove.StackId, "StackId should not be empty")
 }
