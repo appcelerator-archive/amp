@@ -176,6 +176,9 @@ func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.M
 	if len(getResp.Kvs) == 0 {
 		return fmt.Errorf("key not found: %q", key)
 	}
+	if out == nil {
+		return nil
+	}
 	kv := getResp.Kvs[0]
 	data := []byte(kv.Value)
 	return proto.Unmarshal(data, out)

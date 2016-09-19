@@ -14,6 +14,11 @@ message ServiceCreateResponse {
   string id = 1;
 }
 
+message ServiceRemoveRequest {
+  string service_id = 1;
+}
+
+
 message ServiceSpec {
   string image = 1;
   string name = 2;

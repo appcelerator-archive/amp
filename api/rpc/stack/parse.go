@@ -36,10 +36,9 @@ func NewStack(ctx context.Context) (stack *Stack, err error) {
 	if err != nil {
 		return
 	}
-
 	// Store stack state
 	state := &State{Value: StackState_Stopped}
-	err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id, "state"), state, nil, 0)
+	err = runtime.Store.Create(ctx, path.Join(stackRootKey, "/", stack.Id, "state"), state, nil, 0)
 	if err != nil {
 		return
 	}

@@ -6,15 +6,8 @@ import "github.com/appcelerator/amp/api/rpc/service/service.proto";
 
 service StackService {
   rpc Up (UpRequest) returns (UpReply);
-}
-
-message CreateRequest {
-  string stack_name = 1;
-  string stack_definition = 2;
-}
-
-message CreateReply {
-  string stack_id = 1;
+  rpc Stop (StackRequest) returns (StackReply);
+  rpc Remove (StackRequest) returns (StackReply);
 }
 
 message UpRequest {
@@ -24,6 +17,14 @@ message UpRequest {
 
 message UpReply {
   string stack_id = 1;
+}
+
+message StackRequest {
+  string stack_id = 1;  
+}
+
+message StackReply {
+  string stack_id = 1;  
 }
 
 enum StackState {

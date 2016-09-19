@@ -78,7 +78,6 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	}
 	options := types.ServiceCreateOptions{}
 
-	log.Println("service create ....")
 	r, err := docker.ServiceCreate(ctx, swarmSpec, options)
 	if err != nil {
 		return nil, err
@@ -89,4 +88,9 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	}
 
 	return resp, nil
+}
+
+// RemoveService uses docker api to remove a service
+func RemoveService(ctx context.Context, ID string) error {
+	return docker.ServiceRemove(ctx, ID)
 }

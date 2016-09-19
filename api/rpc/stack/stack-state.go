@@ -56,11 +56,11 @@ func (s *Stack) transitionTo(to StackState) error {
 		return err
 	}
 	if !stackStateMachine.CanTransition(int32(current), int32(to)) {
-		return fmt.Errorf("Cannot transition to state", to.String())
+		return fmt.Errorf("Cannot transition to state %s", to.String())
 	}
 	expect := &State{Value: current}
 	update := &State{Value: to}
-	err = runtime.Store.CompareAndSet(context.Background(), path.Join("stacks", s.Id, "state"), expect, update)
+	err = runtime.Store.CompareAndSet(context.Background(), path.Join(stackRootKey, "/", s.Id, "/state"), expect, update)
 	if err != nil {
 		return err
 	}

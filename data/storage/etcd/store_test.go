@@ -72,8 +72,9 @@ func TestGet(t *testing.T) {
 	key := "foo"
 	out := &storage.Project{}
 	ignoreNotFound := false
+	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound)
+	err := store.Get(ctx, key, out, ignoreNotFound, withPrefix)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
@@ -91,8 +92,9 @@ func TestGetWithError(t *testing.T) {
 	key := "foobar"
 	out := &storage.Project{}
 	ignoreNotFound := false
+	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound)
+	err := store.Get(ctx, key, out, ignoreNotFound, withPrfix)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err == nil {
@@ -105,8 +107,9 @@ func TestGetIgnoreError(t *testing.T) {
 	key := "foobar"
 	out := &storage.Project{}
 	ignoreNotFound := true
+	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound)
+	err := store.Get(ctx, key, out, ignoreNotFound, withPrefix)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {

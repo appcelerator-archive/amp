@@ -1,12 +1,12 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/docker/docker/pkg/stringid"
 	"golang.org/x/net/context"
 )
 
@@ -26,12 +26,12 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, err
 	}
 	stack.Name = in.StackName
-	stackID := stringid.GenerateNonCryptoID()
-	s.Store.Delete(ctx, path.Join(stackRootKey, "/", stackID, servicesRootKey), true, nil)
-	s.Store.Create(ctx, path.Join(stackRootKey, "/", stackID), stack, nil, 0)
-	reply := UpReply{
-		StackId: stack.Id,
+	stackID := stack.Id
+	if err := stack.SetStarting(); err != nil {
+		return nil, err
 	}
+	fmt.Printf("Creating stack %s\n", stackID)
+	s.Store.Create(ctx, path.Join(stackRootKey, "/", stackID), stack, nil, 0)
 	serviceIDList := make([]string, len(stack.Services), len(stack.Services))
 	for i, service := range stack.Services {
 		serviceID, err := s.processService(ctx, stackID, service)
@@ -44,10 +44,18 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	val := &ServiceIdList{
 		List: serviceIDList,
 	}
+	fmt.Println("list", val)
 	createErr := s.Store.Create(ctx, path.Join(stackRootKey, "/", stackID, servicesRootKey), val, nil, 0)
 	if createErr != nil {
 		return nil, createErr
 	}
+	if err := stack.SetRunning(); err != nil {
+		return nil, err
+	}
+	reply := UpReply{
+		StackId: stackID,
+	}
+	fmt.Printf("Stack is running: %s\n", stackID)
 	return &reply, nil
 }
 
@@ -68,4 +76,63 @@ func (s *Server) processService(ctx context.Context, stackID string, serv *servi
 		return "", createErr
 	}
 	return reply.Id, nil
+}
+
+// Stop implements stack.ServerService Stop
+func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error) {
+	stack := Stack{
+		Id: in.StackId,
+	}
+	if running, err := stack.IsRunning(); err != nil {
+		return nil, err
+	} else if !running {
+		return nil, errors.New("Stack is not running")
+	}
+	fmt.Printf("Stopping stack %s\n", in.StackId)
+	listKeys := &ServiceIdList{}
+	err := s.Store.Get(ctx, path.Join(stackRootKey, "/", in.StackId, servicesRootKey), listKeys, true)
+	if err != nil {
+		return nil, err
+	}
+	var removeErr error
+	for _, key := range listKeys.List {
+		err := service.RemoveService(ctx, key)
+		if err != nil {
+			removeErr = err
+		}
+
+	}
+	if removeErr != nil {
+		return nil, removeErr
+	}
+	if err := stack.SetStopped(); err != nil {
+		return nil, err
+	}
+	reply := StackReply{
+		StackId: in.StackId,
+	}
+	fmt.Printf("Stack stopped %s\n", in.StackId)
+	return &reply, nil
+}
+
+// Remove implements stack.ServerService Remove
+func (s *Server) Remove(ctx context.Context, in *StackRequest) (*StackReply, error) {
+	stack := Stack{
+		Id: in.StackId,
+	}
+	if stopped, err := stack.IsStopped(); err != nil {
+		return nil, err
+	} else if !stopped {
+		return nil, errors.New("The stack is not stopped")
+	}
+	fmt.Printf("Removing stack %s\n", in.StackId)
+	err := s.Store.Delete(ctx, path.Join(stackRootKey, "/", in.StackId, servicesRootKey), true, nil)
+	if err != nil {
+		return nil, err
+	}
+	reply := StackReply{
+		StackId: in.StackId,
+	}
+	fmt.Printf("Stack removed %s\n", in.StackId)
+	return &reply, nil
 }
