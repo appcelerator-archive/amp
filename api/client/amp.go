@@ -50,9 +50,10 @@ func (a *AMP) Disconnect() {
 
 // GetAuthorizedContext returns an authorized context
 func (a *AMP) GetAuthorizedContext() (ctx context.Context, err error) {
-	if a.Configuration.Github == "" {
-		return nil, fmt.Errorf("Requires login")
-	}
+	// Disabled temporally
+	// if a.Configuration.Github == "" {
+	// 	return nil, fmt.Errorf("Requires login")
+	// }
 	md := metadata.Pairs("sessionkey", a.Configuration.Github)
 	ctx = metadata.NewContext(context.Background(), md)
 	return
