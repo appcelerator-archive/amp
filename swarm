@@ -223,6 +223,7 @@ registry() { # Owner: freignat91
 amplifier() {
   docker service create --with-registry-auth --network amp-swarm,amp-public --name amplifier \
     --label amp.swarm="infrastructure" \
+    --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amplifier:latest
 }
 
