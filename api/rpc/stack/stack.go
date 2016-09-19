@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -26,11 +27,11 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	}
 	stack.Name = in.StackName
 	stackID := stringid.GenerateNonCryptoID()
+	s.Store.Delete(ctx, path.Join(stackRootKey, "/", stackID, servicesRootKey), true, nil)
 	s.Store.Create(ctx, path.Join(stackRootKey, "/", stackID), stack, nil, 0)
 	reply := UpReply{
 		StackId: stack.Id,
 	}
-	s.Store.Delete(ctx, path.Join(stackRootKey, "/", stackID+servicesRootKey), true, nil)
 	serviceIDList := make([]string, len(stack.Services), len(stack.Services))
 	for i, service := range stack.Services {
 		serviceID, err := s.processService(ctx, stackID, service)
@@ -61,6 +62,7 @@ func (s *Server) processService(ctx context.Context, stackID string, serv *servi
 	if err != nil {
 		return "", err
 	}
+	fmt.Printf("Service: %s created, id=%s\n", serv.Name, reply.Id)
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, "/", reply.Id), serv, nil, 0)
 	if createErr != nil {
 		return "", createErr
