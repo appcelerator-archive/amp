@@ -298,6 +298,7 @@ influxdb() { # Owner: ndegory
 kafka() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-swarm --name kafka \
     --label io.amp.role="infrastructure" \
+    -p 4242:4242 \
     -p 9092:9092 \
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
     -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
