@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/docker/docker/api/types"
@@ -86,11 +87,12 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	resp := &ServiceCreateResponse{
 		Id: r.ID,
 	}
-
+	fmt.Printf("Service: %s created, id=%s\n", req.ServiceSpec.Name, resp.Id)
 	return resp, nil
 }
 
-// RemoveService uses docker api to remove a service
-func RemoveService(ctx context.Context, ID string) error {
+// Remove uses docker api to remove a service
+func (s *Service) Remove(ctx context.Context, ID string) error {
+	fmt.Printf("Service removed %s\n", ID)
 	return docker.ServiceRemove(ctx, ID)
 }

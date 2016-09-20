@@ -36,6 +36,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	for i, service := range stack.Services {
 		serviceID, err := s.processService(ctx, stackID, service)
 		if err != nil {
+			s.rollbackStack(ctx, stackID, serviceIDList, err)
 			return nil, err
 		}
 		serviceIDList[i] = serviceID
@@ -47,6 +48,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	fmt.Println("list", val)
 	createErr := s.Store.Create(ctx, path.Join(stackRootKey, "/", stackID, servicesRootKey), val, nil, 0)
 	if createErr != nil {
+		s.rollbackStack(ctx, stackID, serviceIDList, err)
 		return nil, createErr
 	}
 	if err := stack.SetRunning(); err != nil {
@@ -57,6 +59,19 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	}
 	fmt.Printf("Stack is running: %s\n", stackID)
 	return &reply, nil
+}
+
+// clean up if error happended during stack creation, delete all created services and all etcd data
+func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDList []string, err error) {
+	fmt.Printf("Error clean up stack: %v \n", err)
+	server := service.Service{}
+	for _, ID := range serviceIDList {
+		if ID != "" {
+			server.Remove(ctx, ID)
+		}
+	}
+	s.Store.Delete(ctx, path.Join(stackRootKey, "/", stackID), true, nil)
+	fmt.Printf("Stack cleaned %s\n", stackID)
 }
 
 // start one service and if ok store it in ETCD:
@@ -70,7 +85,6 @@ func (s *Server) processService(ctx context.Context, stackID string, serv *servi
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Service: %s created, id=%s\n", serv.Name, reply.Id)
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, "/", reply.Id), serv, nil, 0)
 	if createErr != nil {
 		return "", createErr
@@ -89,6 +103,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 		return nil, errors.New("Stack is not running")
 	}
 	fmt.Printf("Stopping stack %s\n", in.StackId)
+	server := service.Service{}
 	listKeys := &ServiceIdList{}
 	err := s.Store.Get(ctx, path.Join(stackRootKey, "/", in.StackId, servicesRootKey), listKeys, true)
 	if err != nil {
@@ -96,7 +111,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	}
 	var removeErr error
 	for _, key := range listKeys.List {
-		err := service.RemoveService(ctx, key)
+		err := server.Remove(ctx, key)
 		if err != nil {
 			removeErr = err
 		}
