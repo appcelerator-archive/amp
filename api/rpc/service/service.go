@@ -16,6 +16,7 @@ var (
 	defaultVersion = "1.24"
 	defaultHeaders = map[string]string{"User-Agent": "amplifier-1.0"}
 	dockerSock     = "unix:///var/run/docker.sock"
+	defaultNetwork = "amp-public"
 	docker         *client.Client
 	err            error
 )
@@ -55,7 +56,14 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	taskSpec := swarm.TaskSpec{
 		ContainerSpec: containerSpec,
 	}
-	
+
+	networks := []swarm.NetworkAttachmentConfig{
+		swarm.NetworkAttachmentConfig{
+			Target: defaultNetwork,
+			Aliases: []string{req.ServiceSpec.Name},
+		},
+	}
+
 	mode := swarm.ServiceMode{
 		Replicated: &swarm.ReplicatedService{
 			Replicas: &req.ServiceSpec.Replicas,
@@ -65,8 +73,10 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	swarmSpec := swarm.ServiceSpec{
 		Annotations:  annotations,
 		TaskTemplate: taskSpec,
+		Networks: networks,
 		Mode: mode,
 	}
+
 	if req.ServiceSpec.PublishSpecs != nil {
 		nn := len(req.ServiceSpec.PublishSpecs)
 		if nn > 0 {

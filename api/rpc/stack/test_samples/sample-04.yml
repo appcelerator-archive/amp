@@ -1,0 +1,14 @@
+python:
+  image: tutum/quickstart-python
+  public:
+  - name: python
+    internal_port: 80
+  replicas: 3
+go:
+  image: htilford/go-redis-counter
+  public:
+  - name: go
+    internal_port: 80
+  replicas: 3
+redis:
+  image: redis
