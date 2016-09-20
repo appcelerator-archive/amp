@@ -4,11 +4,9 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/runtime"
 	"github.com/docker/docker/pkg/stringid"
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
-	"path"
 )
 
 type serviceMap struct {
@@ -26,7 +24,7 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
-// NewStackfromYaml create a new stack from yaml
+// NewStackFromYaml create a new stack from yaml
 func NewStackFromYaml(ctx context.Context, in string) (stack *Stack, err error) {
 	stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
@@ -89,11 +87,6 @@ func NewStackFromYaml(ctx context.Context, in string) (stack *Stack, err error) 
 			Labels:       l,
 			PublishSpecs: publishSpecs,
 		})
-	}
-
-	// Store stack
-	if err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id), stack, nil, 0); err != nil {
-		return
 	}
 
 	// Create stack state

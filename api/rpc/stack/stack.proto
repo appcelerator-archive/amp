@@ -8,6 +8,7 @@ service StackService {
   rpc Up (UpRequest) returns (UpReply);
   rpc Stop (StackRequest) returns (StackReply);
   rpc Remove (StackRequest) returns (StackReply);
+  rpc List(ListRequest) returns (ListReply);
 }
 
 message UpRequest {
@@ -20,11 +21,15 @@ message UpReply {
 }
 
 message StackRequest {
-  string stack_id = 1;
+  string stack_ident = 1;  
 }
 
 message StackReply {
   string stack_id = 1;
+}
+
+message StackID {
+  string id = 1;
 }
 
 enum StackState {
@@ -40,6 +45,20 @@ message Stack {
   repeated service.ServiceSpec services = 3;
 }
 
+message ListRequest {  
+}
+
 message ServiceIdList {
   repeated string list = 1;
 }
+
+message ListReply {
+  repeated StackInfo list = 1;
+}
+
+message StackInfo {
+  string name = 1;
+  string id = 2;
+  string state = 3;
+}
+

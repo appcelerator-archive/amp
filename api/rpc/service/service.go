@@ -58,8 +58,8 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	}
 
 	networks := []swarm.NetworkAttachmentConfig{
-		swarm.NetworkAttachmentConfig{
-			Target: defaultNetwork,
+		{
+			Target:  defaultNetwork,
 			Aliases: []string{req.ServiceSpec.Name},
 		},
 	}
@@ -73,8 +73,8 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	swarmSpec := swarm.ServiceSpec{
 		Annotations:  annotations,
 		TaskTemplate: taskSpec,
-		Networks: networks,
-		Mode: mode,
+		Networks:     networks,
+		Mode:         mode,
 	}
 
 	if req.ServiceSpec.PublishSpecs != nil {

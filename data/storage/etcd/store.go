@@ -73,6 +73,9 @@ func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out pr
 	}
 
 	data, err := proto.Marshal(val)
+	if err != nil {
+		return err
+	}
 
 	txn, err := s.client.KV.Txn(ctx).
 		If(notFound(key)).
