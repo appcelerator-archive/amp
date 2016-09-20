@@ -55,10 +55,17 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	taskSpec := swarm.TaskSpec{
 		ContainerSpec: containerSpec,
 	}
+	
+	mode := swarm.ServiceMode{
+		Replicated: &swarm.ReplicatedService{
+			Replicas: &req.ServiceSpec.Replicas,
+		},
+	}
 
 	swarmSpec := swarm.ServiceSpec{
 		Annotations:  annotations,
 		TaskTemplate: taskSpec,
+		Mode: mode,
 	}
 	if req.ServiceSpec.PublishSpecs != nil {
 		nn := len(req.ServiceSpec.PublishSpecs)
