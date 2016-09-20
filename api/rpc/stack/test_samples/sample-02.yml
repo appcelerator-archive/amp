@@ -1,5 +1,5 @@
 web:
-  image: appcelerator/amp-demo
+  image: appcelerator/amp-demo-service
   public:
   - name: www
     protocol: tcp
