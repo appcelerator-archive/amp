@@ -14,8 +14,8 @@ var (
 		{input: "80:3000", expect: PublishSpec{InternalPort: 3000, PublishPort: 80}},
 		{input: "80:3000/tcp", expect: PublishSpec{InternalPort: 3000, PublishPort: 80, Protocol: "tcp"}},
 		{input: "4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp"}},
-		{input: "host:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp"}},
-		{input: "host-1:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp"}},
+		{input: "host:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp", Name: "host"}},
+		{input: "host-1:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp", Name: "host-1"}},
 	}
 
 	badPublishSpecs = []struct {
@@ -26,8 +26,8 @@ var (
 		{input: "80:", reason: "publish port must specify internal port"},
 		{input: "80:3000/", reason: "missing protocol"},
 		{input: "80:3000/x", reason: "invalid protocol"},
-		{input: "host-:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp"}},
-		{input: "-host:4000:3000/udp", expect: PublishSpec{InternalPort: 3000, PublishPort: 4000, Protocol: "udp"}},
+		{input: "host-:4000:3000/udp", reason: "can't begin or end with a dash"},
+		{input: "-host:4000:3000/udp", reason: "can't begin or end with a dash"},
 	}
 )
 
