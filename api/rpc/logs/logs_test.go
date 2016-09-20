@@ -13,91 +13,40 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"math/rand"
 	"strconv"
 )
 
 const (
-	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	serverAddress           = "localhost" + defaultPort
-	elasticsearchDefaultURL = "http://localhost:9200"
-	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL        = "http://localhost:8086"
-	defaultNumberOfEntries  = 50
-	testServiceId           = "testServiceId"
-	testServiceName         = "testServiceName"
-	testNodeId              = "testNodeId"
-	testContainerId         = "testContainerId"
-	testMessage             = "test message "
+	defaultNumberOfEntries = 50
+	testServiceId          = "testServiceId"
+	testServiceName        = "testServiceName"
+	testNodeId             = "testNodeId"
+	testContainerId        = "testContainerId"
+	testMessage            = "test message "
 )
 
 var (
-	config           server.Config
-	port             string
-	etcdEndpoints    string
-	elasticsearchURL string
-	kafkaURL         string
-	influxURL        string
-	client           logs.LogsClient
-	producer         sarama.SyncProducer
+	ctx      context.Context
+	client   logs.LogsClient
+	producer sarama.SyncProducer
 )
 
-func parseEnv() {
-	port = os.Getenv("port")
-	if port == "" {
-		port = defaultPort
-	}
-	etcdEndpoints = os.Getenv("endpoints")
-	if etcdEndpoints == "" {
-		etcdEndpoints = etcdDefaultEndpoints
-	}
-	elasticsearchURL = os.Getenv("elasticsearchURL")
-	if elasticsearchURL == "" {
-		elasticsearchURL = elasticsearchDefaultURL
-	}
-	kafkaURL = os.Getenv("kafkaURL")
-	if kafkaURL == "" {
-		kafkaURL = kafkaDefaultURL
-	}
-	influxURL = os.Getenv("influxURL")
-	if influxURL == "" {
-		influxURL = influxDefaultURL
-	}
-
-	// update config
-	config.Port = port
-	for _, s := range strings.Split(etcdEndpoints, ",") {
-		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
-	}
-	config.ElasticsearchURL = elasticsearchURL
-	config.KafkaURL = kafkaURL
-	config.InfluxURL = influxURL
-}
-
 func TestMain(m *testing.M) {
-	defer func() {
-		producer.Close()
-	}()
+	config, conn := server.StartTestServer()
+	client = logs.NewLogsClient(conn)
+	ctx = context.Background()
 
-	parseEnv()
-	go server.Start(config)
-
-	// there is no event when the server starts listening, so we just wait a second
-	time.Sleep(1 * time.Second)
-
-	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
-	if err != nil {
-		fmt.Println("connection failure")
-		os.Exit(1)
-	}
+	var err error
 	producer, err = sarama.NewSyncProducer([]string{config.KafkaURL}, nil)
 	if err != nil {
 		fmt.Println("Cannot create kafka producer")
 		os.Exit(1)
 	}
-	client = logs.NewLogsClient(conn)
+	defer func() {
+		producer.Close()
+	}()
+
 	os.Exit(m.Run())
 }
 
@@ -105,7 +54,7 @@ func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	expected := 100
 	actual := -1
 	for i := 0; i < 60; i++ {
-		r, err := client.Get(context.Background(), &logs.GetRequest{})
+		r, err := client.Get(ctx, &logs.GetRequest{})
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -121,7 +70,7 @@ func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 
 func TestShouldFilterByContainerId(t *testing.T) {
 	// First, get a random container id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	r, err := client.Get(ctx, &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -129,7 +78,7 @@ func TestShouldFilterByContainerId(t *testing.T) {
 	randomContainerId := r.Entries[0].ContainerId
 
 	// Then filter by this container id
-	r, err = client.Get(context.Background(), &logs.GetRequest{ContainerId: randomContainerId})
+	r, err = client.Get(ctx, &logs.GetRequest{ContainerId: randomContainerId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -141,7 +90,7 @@ func TestShouldFilterByContainerId(t *testing.T) {
 
 func TestShouldFilterByNodeId(t *testing.T) {
 	// First, get a random node id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	r, err := client.Get(ctx, &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -149,7 +98,7 @@ func TestShouldFilterByNodeId(t *testing.T) {
 	randomNodeId := r.Entries[0].NodeId
 
 	// Then filter by this node id
-	r, err = client.Get(context.Background(), &logs.GetRequest{NodeId: randomNodeId})
+	r, err = client.Get(ctx, &logs.GetRequest{NodeId: randomNodeId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -161,7 +110,7 @@ func TestShouldFilterByNodeId(t *testing.T) {
 
 func TestShouldFilterByServiceId(t *testing.T) {
 	// First, get a random service id
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	r, err := client.Get(ctx, &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -169,7 +118,7 @@ func TestShouldFilterByServiceId(t *testing.T) {
 	randomServiceId := r.Entries[0].ServiceId
 
 	// Then filter by this service id
-	r, err = client.Get(context.Background(), &logs.GetRequest{ServiceId: randomServiceId})
+	r, err = client.Get(ctx, &logs.GetRequest{ServiceId: randomServiceId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -181,7 +130,7 @@ func TestShouldFilterByServiceId(t *testing.T) {
 
 func TestShouldFilterByServiceName(t *testing.T) {
 	// First, get a random service name
-	r, err := client.Get(context.Background(), &logs.GetRequest{})
+	r, err := client.Get(ctx, &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -189,7 +138,7 @@ func TestShouldFilterByServiceName(t *testing.T) {
 	randomServiceName := r.Entries[0].ServiceName
 
 	// Then filter by this service name
-	r, err = client.Get(context.Background(), &logs.GetRequest{ServiceName: randomServiceName})
+	r, err = client.Get(ctx, &logs.GetRequest{ServiceName: randomServiceName})
 	if err != nil {
 		t.Error(err)
 	}
@@ -200,7 +149,7 @@ func TestShouldFilterByServiceName(t *testing.T) {
 }
 
 func TestShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(context.Background(), &logs.GetRequest{Message: "info"})
+	r, err := client.Get(ctx, &logs.GetRequest{Message: "info"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -212,7 +161,7 @@ func TestShouldFilterByMessage(t *testing.T) {
 
 func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 200; i += 10 {
-		r, err := client.Get(context.Background(), &logs.GetRequest{Size: i})
+		r, err := client.Get(ctx, &logs.GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
 		}
@@ -268,7 +217,7 @@ func listenToLogEntries(t *testing.T, stream logs.Logs_GetStreamClient, howMany 
 }
 
 func TestShouldStreamLogs(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -278,7 +227,7 @@ func TestShouldStreamLogs(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByContainerId(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ContainerId: testContainerId})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{ContainerId: testContainerId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -291,7 +240,7 @@ func TestShouldStreamAndFilterByContainerId(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByNodeId(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{NodeId: testNodeId})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{NodeId: testNodeId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -304,7 +253,7 @@ func TestShouldStreamAndFilterByNodeId(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByServiceId(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceId: testServiceId})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{ServiceId: testServiceId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -317,7 +266,7 @@ func TestShouldStreamAndFilterByServiceId(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByServiceName(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{ServiceName: testServiceName})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{ServiceName: testServiceName})
 	if err != nil {
 		t.Error(err)
 	}
@@ -330,7 +279,7 @@ func TestShouldStreamAndFilterByServiceName(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterByMessage(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: testMessage})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{Message: testMessage})
 	if err != nil {
 		t.Error(err)
 	}
@@ -343,7 +292,7 @@ func TestShouldStreamAndFilterByMessage(t *testing.T) {
 }
 
 func TestShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
-	stream, err := client.GetStream(context.Background(), &logs.GetRequest{Message: strings.ToUpper(testMessage)})
+	stream, err := client.GetStream(ctx, &logs.GetRequest{Message: strings.ToUpper(testMessage)})
 	if err != nil {
 		t.Error(err)
 	}

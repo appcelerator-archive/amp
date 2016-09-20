@@ -6,28 +6,24 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
 const (
-	defTimeout          = 5 * time.Second
-	defaultPort         = ":50101"
-	etcdDefaultEndpoint = "http://localhost:2379"
+	defTimeout = 5 * time.Second
 )
 
 var (
-	store         storage.Interface
-	port          string
-	etcdEndpoints = []string{etcdDefaultEndpoint}
+	store storage.Interface
 )
 
 func TestMain(m *testing.M) {
@@ -35,15 +31,9 @@ func TestMain(m *testing.M) {
 	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("test: ")
 
-	if endpoints := os.Getenv("endpoints"); endpoints != "" {
-		etcdEndpoints = strings.Split(endpoints, ",")
-	}
+	server.StartTestServer()
 
-	store = etcd.New(etcdEndpoints, "amp")
-	if err := store.Connect(5 * time.Second); err != nil {
-		panic(err)
-	}
-	log.Printf("connected to etcd at %v", strings.Join(store.Endpoints(), ","))
+	store = runtime.Store
 
 	os.Exit(m.Run())
 }
