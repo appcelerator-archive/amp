@@ -23,7 +23,7 @@ This foundation allows developers to deploy complete containerized application s
 
 ## What distinguishes the foundation platform from any other CaaS solution?
 
-AMP can be used standalone, but it is also part of a bigger picture to support our enterprise customers in the API space. Axway and Appcelerator customers will reap the benefits of modern container technology while also enjoying the advantages of deep integration into our existing solutions for API gateways, federated security and policy enforcement, and analytics.
+AMP provides CaaS features, but it is also part of a bigger picture to support our enterprise customers in the API space. Axway and Appcelerator customers will reap the benefits of modern container technology while also enjoying the advantages of deep integration into our existing solutions for API gateways, federated security and policy enforcement, and analytics.
 
 AMP also provides developers with excellent insight into their application's behavior. Developers can create filtered queries for logs and metrics that can return results for a specific period or can be streamed for realtime monitoring. These filtered queries allow developers to focus on specific aspects of their application's behavior, and multiple queries can execute and stream simultaneously without impacting their application's performance.
 
