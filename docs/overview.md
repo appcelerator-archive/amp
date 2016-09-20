@@ -1,6 +1,6 @@
 # What is AMP?
 
-AMP is the codename for a project that incubated at Atomiq, then became the Appcelerator Microservices Platform. Ultimately, the project's goal is to provide developers with facilities to deploy containerized microservices (also called tasks or workers) for what is now called "serverless computing" that can be activated
+AMP is the codename for a project that incubated at Atomiq, then became the Appcelerator Microservices Platform. Ultimately, the project's goal is to provide developers with facilities to deploy containerized microservices for what is now called "serverless computing" that can be activated
 
 * on demand (for example, in response to a message or an API request)
 * on schedule (think "cloud-based Cron")
