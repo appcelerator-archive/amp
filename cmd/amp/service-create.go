@@ -59,12 +59,17 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	fmt.Println(args)
 	fmt.Println(stringify(cmd))
 
+	parsedSpecs, err := parsePublishSpecs(publishSpecs)
+	if err != nil {
+		return err
+	}
+
 	spec := &service.ServiceSpec{
 		Image:        image,
 		Name:         name,
 		Replicas:     replicas,
 		Env:          stringmap(env),
-		PublishSpecs: parsePublishSpecs(publishSpecs),
+		PublishSpecs: parsedSpecs,
 	}
 
 	request := &service.ServiceCreateRequest{
@@ -98,6 +103,15 @@ func stringify(cmd *cobra.Command) string {
 		name, replicas, env)
 }
 
-func parsePublishSpecs(specs []string) []*service.PublishSpec {
-	return []*service.PublishSpec{}
+func parsePublishSpecs(specs []string) ([]*service.PublishSpec, error) {
+	publishSpecs := []*service.PublishSpec{}
+	for _, input := range specs {
+		publishSpec, err := service.ParsePublishSpec(input)
+		if err != nil {
+			return nil, err
+		}
+		publishSpecs = append(publishSpecs, &publishSpec)
+
+	}
+	return publishSpecs, nil
 }
