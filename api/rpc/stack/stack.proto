@@ -20,11 +20,11 @@ message UpReply {
 }
 
 message StackRequest {
-  string stack_id = 1;  
+  string stack_id = 1;
 }
 
 message StackReply {
-  string stack_id = 1;  
+  string stack_id = 1;
 }
 
 enum StackState {
@@ -32,10 +32,6 @@ enum StackState {
   Starting = 1;
   Running = 2;
   Redeploying = 3;
-}
-
-message State {
-  StackState value = 1;
 }
 
 message Stack {
@@ -47,5 +43,3 @@ message Stack {
 message ServiceIdList {
   repeated string list = 1;
 }
-
-

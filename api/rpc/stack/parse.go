@@ -26,28 +26,10 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
-// NewStack create new stack
-func NewStack(ctx context.Context) (stack *Stack, err error) {
+// NewStackfromYaml create a new stack from yaml
+func NewStackFromYaml(ctx context.Context, in string) (stack *Stack, err error) {
 	stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
-
-	// Store stack
-	err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id), stack, nil, 0)
-	if err != nil {
-		return
-	}
-	// Store stack state
-	state := &State{Value: StackState_Stopped}
-	err = runtime.Store.Create(ctx, path.Join(stackRootKey, "/", stack.Id, "state"), state, nil, 0)
-	if err != nil {
-		return
-	}
-	return
-}
-
-// NewStackfromYaml create new stack from yaml
-func NewStackfromYaml(ctx context.Context, in string) (stack *Stack, err error) {
-	stack, err = NewStack(ctx)
 	b := []byte(in)
 	sm, err := parseAsServiceMap(b)
 	if err != nil {
@@ -107,6 +89,16 @@ func NewStackfromYaml(ctx context.Context, in string) (stack *Stack, err error) 
 			Labels:       l,
 			PublishSpecs: publishSpecs,
 		})
+	}
+
+	// Store stack
+	if err = runtime.Store.Create(ctx, path.Join("stacks", stack.Id), stack, nil, 0); err != nil {
+		return
+	}
+
+	// Create stack state
+	if err = stackStateMachine.CreateState(stack.Id, int32(StackState_Stopped)); err != nil {
+		return
 	}
 	return
 }

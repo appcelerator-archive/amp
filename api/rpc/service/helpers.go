@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"regexp"
-        "strconv"
+	"strconv"
 )
 
 const (
@@ -26,50 +26,50 @@ func ParsePublishSpec(s string) (publishSpec PublishSpec, err error) {
 		return
 	}
 
-        names := publishSpecParser.SubexpNames()
-        nameMap := mapNames(names)
-        for name, index := range nameMap {
-                val := m[index]
-                switch name {
-                case "name":
-                        publishSpec.Name = val
-                case "publish_port":
-                        err = portAtoi(val, &publishSpec.PublishPort)
-                        if err != nil {
-                                return
-                        }
-                case "internal_port":
-                        err = portAtoi(val, &publishSpec.InternalPort)
-                        if err != nil {
-                                return
-                        }
-                case "protocol":
-                        publishSpec.Protocol = val
-                }
-        }
+	names := publishSpecParser.SubexpNames()
+	nameMap := mapNames(names)
+	for name, index := range nameMap {
+		val := m[index]
+		switch name {
+		case "name":
+			publishSpec.Name = val
+		case "publish_port":
+			err = portAtoi(val, &publishSpec.PublishPort)
+			if err != nil {
+				return
+			}
+		case "internal_port":
+			err = portAtoi(val, &publishSpec.InternalPort)
+			if err != nil {
+				return
+			}
+		case "protocol":
+			publishSpec.Protocol = val
+		}
+	}
 
 	return
 }
 
 func portAtoi(s string, port *uint32) error {
-        var u64 uint64
-        if s == "" {
-                s = "0"
-        }
-        u64, err = strconv.ParseUint(s, 10, 32)
-        if err != nil {
-                return err
-        }
-        *port = uint32(u64)
-        return nil
+	var u64 uint64
+	if s == "" {
+		s = "0"
+	}
+	u64, err = strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return err
+	}
+	*port = uint32(u64)
+	return nil
 }
 
 func mapNames(names []string) map[string]int {
-        nameMap := make(map[string]int)
-        for i, name := range names {
-                if name != "" {
-                        nameMap[name] = i
-                }
-        }
-        return nameMap
+	nameMap := make(map[string]int)
+	for i, name := range names {
+		if name != "" {
+			nameMap[name] = i
+		}
+	}
+	return nameMap
 }

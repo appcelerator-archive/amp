@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/api/server"
+	"github.com/appcelerator/amp/api/state"
+	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -123,4 +126,88 @@ func TestShouldUpStopRemoveStackSuccessfully(t *testing.T) {
 		t.Fatal(errRemove)
 	}
 	assert.NotEmpty(t, rRemove.StackId, "StackId should not be empty")
+}
+
+func TestTransitionsFromStopped(t *testing.T) {
+	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+
+	id := stringid.GenerateNonCryptoID()
+	machine.CreateState(id, int32(stack.StackState_Stopped))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Stopped))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Stopped))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Stopped))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.DeleteState(id)
+}
+
+func TestTransitionsFromStarting(t *testing.T) {
+	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	id := stringid.GenerateNonCryptoID()
+
+	machine.CreateState(id, int32(stack.StackState_Starting))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Starting))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Starting))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Starting))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.DeleteState(id)
+}
+
+func TestTransitionsFromRunning(t *testing.T) {
+	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	id := stringid.GenerateNonCryptoID()
+
+	machine.CreateState(id, int32(stack.StackState_Running))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Running))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Running))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Running))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.DeleteState(id)
+}
+
+func TestTransitionsFromRedeploying(t *testing.T) {
+	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	id := stringid.GenerateNonCryptoID()
+
+	machine.CreateState(id, int32(stack.StackState_Redeploying))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Redeploying))
+	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Redeploying))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.DeleteState(id)
+
+	machine.CreateState(id, int32(stack.StackState_Redeploying))
+	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.DeleteState(id)
 }
