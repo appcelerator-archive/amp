@@ -41,8 +41,7 @@ message State {
 message Stack {
   string name = 1;
   string id = 2;
-  int32 state = 3;
-  repeated service.ServiceSpec services = 4;
+  repeated service.ServiceSpec services = 3;
 }
 
 message ServiceIdList {

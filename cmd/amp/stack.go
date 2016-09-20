@@ -30,7 +30,6 @@ var (
 			}
 		},
 	}
-
 	// stack configuration file
 	stackfile string
 	stopCmd   = &cobra.Command{
@@ -44,8 +43,8 @@ var (
 			}
 		},
 	}
-	removeCmd = &cobra.Command{
-		Use:   "remove [stack id]",
+	rmCmd = &cobra.Command{
+		Use:   "rm [stack id]",
 		Short: "Remove a stack",
 		Long:  `Remove a stack completly including ETCD data.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -63,7 +62,7 @@ func init() {
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "the name of the stackfile")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(stopCmd)
-	StackCmd.AddCommand(removeCmd)
+	StackCmd.AddCommand(rmCmd)
 }
 
 func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
