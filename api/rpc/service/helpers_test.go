@@ -1,8 +1,8 @@
 package service_test
 
 import (
+	. "github.com/appcelerator/amp/api/rpc/service"
 	"testing"
-        . "github.com/appcelerator/amp/api/rpc/service"
 )
 
 var (
@@ -35,8 +35,8 @@ var (
 // the tests just verify that we can generally identify PublishSpec components
 func TestRegex(t *testing.T) {
 	for _, test := range goodPublishSpecs {
-                input := test.input
-                expected := test.expect
+		input := test.input
+		expected := test.expect
 
 		spec, err := ParsePublishSpec(input)
 
@@ -63,9 +63,9 @@ func TestRegex(t *testing.T) {
 
 	// TODO
 	// for _, test := range badPublishSpecs {
-        //         input := test.input
-        //         reason := test.reason
-        //
+	//         input := test.input
+	//         reason := test.reason
+	//
 	// 	//fmt.Printf("%s => %s\n", input, reason)
 	// 	_, err := ParsePublishSpec(input)
 	// 	if err == nil {
