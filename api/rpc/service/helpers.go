@@ -29,7 +29,6 @@ func ParsePublishSpec(s string) (publishSpec PublishSpec, err error) {
         names := publishSpecParser.SubexpNames()
         nameMap := mapNames(names)
         for name, index := range nameMap {
-                fmt.Printf("%s => %s\n", name, m[index])
                 val := m[index]
                 switch name {
                 case "name":

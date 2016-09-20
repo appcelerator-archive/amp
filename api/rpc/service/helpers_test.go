@@ -38,9 +38,7 @@ func TestRegex(t *testing.T) {
                 input := test.input
                 expected := test.expect
 
-		//fmt.Println(input)
 		spec, err := ParsePublishSpec(input)
-                t.Logf("input: %s, PublishSpec: %v", input, spec)
 
 		if err != nil {
 			t.Errorf("failed to parse \"%s\"\n%v", input, err)
