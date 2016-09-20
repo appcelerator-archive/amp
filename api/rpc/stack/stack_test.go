@@ -107,14 +107,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestShouldUpStopRemoveStackSuccessfully(t *testing.T) {
-	rUp, errUp := client.Up(ctx, &stack.UpRequest{Stackfile: example})
+	rUp, errUp := client.Up(ctx, &stack.UpRequest{StackName: "essai", Stackfile: example})
 	if errUp != nil {
 		t.Fatal(errUp)
 	}
 	assert.NotEmpty(t, rUp.StackId, "StackId should not be empty")
 	fmt.Printf("Stack id = %s\n", rUp.StackId)
 	stackRequest := stack.StackRequest{
-		StackId: rUp.StackId,
+		StackIdent: rUp.StackId,
 	}
 	rStop, errStop := client.Stop(ctx, &stackRequest)
 	if errStop != nil {

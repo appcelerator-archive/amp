@@ -25,7 +25,8 @@ var (
 			Replicas: 2,
 			Public: []publishSpec{
 				{
-					PublishPort:  80,
+					Name:         "www",
+					PublishPort:  90,
 					InternalPort: 3000,
 					Protocol:     "tcp",
 				},
@@ -35,7 +36,7 @@ var (
 
 	sample2 = map[string]serviceMap{
 		"web": {
-			Image:    "appcelerator/amp-demo",
+			Image:    "appcelerator/amp-demo-service",
 			Replicas: 3,
 			Public: []publishSpec{
 				{
@@ -56,11 +57,10 @@ var (
 			},
 		},
 	}
-
 	sample3 = map[string]serviceMap{
 		"pinger": {
 			Image:    "appcelerator/pinger",
-			Replicas: 2,
+			Replicas: 2,			
 		},
 		"pinger2": {
 			Image:    "appcelerator/pinger",
@@ -74,6 +74,31 @@ var (
 			},
 		},
 	}
+	sample4 = map[string]serviceMap{
+		"python": {
+			Image:    "tutum/quickstart-python",
+			Replicas: 3,
+			Public: []publishSpec{
+				{
+					Name:         "python",
+					InternalPort: 80,
+				},
+			},			
+		},
+		"go": {
+			Image:    "htilford/go-redis-counter",
+			Replicas: 3,
+			Public: []publishSpec{
+				{
+					Name:         "go",
+					InternalPort: 80,
+				},
+			},
+		},
+		"redis": {
+			Image:    "redis",
+		},
+	}
 
 	// map of filenames to a map of serviceMap elements (each file has one or more)
 	compareStructs = map[string]map[string]serviceMap{
@@ -81,6 +106,7 @@ var (
 		"sample-02.yml":  sample2,
 		"sample-03.yml":  sample3,
 		"sample-03.json": sample3,
+		"sample-04.yml": sample4,
 	}
 )
 
@@ -128,7 +154,7 @@ func parse(t *testing.T, test *TestSpec) {
 	}
 
 	for name, spec := range serviceSpecMap {
-		if !spec.compare(compareStructs[test.fileName][name]) {
+		if !spec.compare(t, compareStructs[test.fileName][name]) {
 			t.Logf("name: %s, valid: %t, contents:\n%s", test.fileName, test.valid, string(test.contents))
 			t.Log(serviceSpecMap)
 			t.Errorf("FAIL: %s (%s)", name, test.fileName)
@@ -142,22 +168,27 @@ func parse(t *testing.T, test *TestSpec) {
 	// t.Logf("parsed => \n%v", out)
 }
 
-func (a serviceMap) compare(b serviceMap) bool {
+func (a serviceMap) compare(t *testing.T, b serviceMap) bool {
 	if a.Image != b.Image {
+		t.Logf("Images don't match: %v != %v\n", a.Image, b.Image)
 		return false
 	}
 	if a.Replicas != b.Replicas {
+		t.Logf("Replicas don't match: %v != %v\n", a.Replicas, b.Replicas)
 		return false
 	}
 	if len(a.Public) != len(b.Public) {
+		t.Logf("Public don't match: %v != %v\n", a.Public, b.Public)
 		return false
 	}
 	for _, publishSpec := range a.Public {
 		if !contains(b.Public, publishSpec) {
+			t.Logf("Public doesn' contains: %v => %v\n", a.Public, b.Public)
 			return false
 		}
 	}
 	if !compareEnvironment(a, b) {
+		t.Logf("Env don't match: %v != %v\n", a, b)
 		return false
 	}
 	return true

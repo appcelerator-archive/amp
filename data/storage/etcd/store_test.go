@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/golang/protobuf/proto"
@@ -72,9 +73,8 @@ func TestGet(t *testing.T) {
 	key := "foo"
 	out := &storage.Project{}
 	ignoreNotFound := false
-	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound, withPrefix)
+	err := store.Get(ctx, key, out, ignoreNotFound)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
@@ -92,9 +92,8 @@ func TestGetWithError(t *testing.T) {
 	key := "foobar"
 	out := &storage.Project{}
 	ignoreNotFound := false
-	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound, withPrfix)
+	err := store.Get(ctx, key, out, ignoreNotFound)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err == nil {
@@ -107,9 +106,8 @@ func TestGetIgnoreError(t *testing.T) {
 	key := "foobar"
 	out := &storage.Project{}
 	ignoreNotFound := true
-	withPrefix := false
 
-	err := store.Get(ctx, key, out, ignoreNotFound, withPrefix)
+	err := store.Get(ctx, key, out, ignoreNotFound)
 	// cancel timeout (release resources) if operation completes before timeout
 	defer cancel()
 	if err != nil {
@@ -246,10 +244,10 @@ func TestList(t *testing.T) {
 func TestCompareAndSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "state"
-	expect := &stack.State{Value: stack.StackState_Stopped}
-	update := &stack.State{Value: stack.StackState_Running}
+	expect := &state.State{Value: int32(stack.StackState_Stopped)}
+	update := &state.State{Value: int32(stack.StackState_Running)}
 
-	err := store.Delete(ctx, key, false, &stack.State{})
+	err := store.Delete(ctx, key, false, &state.State{})
 	err = store.Create(ctx, key, expect, nil, 0)
 	err = store.CompareAndSet(ctx, key, expect, update)
 	// cancel timeout (release resources) if operation completes before timeout
@@ -258,7 +256,7 @@ func TestCompareAndSet(t *testing.T) {
 		t.Error(err)
 	}
 
-	actual := &stack.State{}
+	actual := &state.State{}
 	err = store.Get(ctx, key, actual, false)
 	if !proto.Equal(update, actual) {
 		t.Errorf("expected %v, got %v", update, actual)
