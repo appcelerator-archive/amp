@@ -23,10 +23,11 @@ message StatsRequest {
   string filter_task_id=14;
   string filter_task_name=15;
   string filter_node_id=16;
-  string since=17;
-  string until=18;
-  string period=19;
-  string time_group=20;
+  string filter_service_ident=17;
+  string since=18;
+  string until=19;
+  string period=20;
+  string time_group=21;
 }
 
 message StatsEntry {

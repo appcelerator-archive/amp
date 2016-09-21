@@ -96,3 +96,21 @@ func TestStatQueryNode(t *testing.T) {
 		t.Errorf("Unexpected empty answer from server")
 	}
 }
+
+func TestStatQueryServiceIdent(t *testing.T) {
+	query := stats.StatsRequest{}
+	query.Discriminator = "node"
+	query.StatsCpu = true
+	query.StatsMem = true
+	query.StatsIo = true
+	query.StatsNet = true
+	query.Period = "5m"
+	query.FilterServiceIdent = "amp"
+	res, err := client.StatsQuery(ctx, &query)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(res.Entries) == 0 {
+		t.Errorf("Unexpected empty answer from server")
+	}
+}
