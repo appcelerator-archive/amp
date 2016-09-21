@@ -46,8 +46,8 @@ func Login(a *client.AMP) {
 // GetUsername prompts for username and returns the result
 func getUsername() (username string) {
 	color.Set(color.FgMagenta, color.Bold)
-	fmt.Println("Login using github")
-	fmt.Print("github username or email: ")
+	fmt.Println("Login using GitHub")
+	fmt.Print("GitHub username or email: ")
 	color.Unset()
 	fmt.Scanln(&username)
 	return
@@ -57,7 +57,7 @@ func getUsername() (username string) {
 func getPassword() (password string, err error) {
 	color.Set(color.FgMagenta, color.Bold)
 	defer color.Unset()
-	fmt.Print("github password: ")
+	fmt.Print("GitHub password: ")
 	pw, err := gopass.GetPasswd()
 	if err != nil {
 		return
@@ -72,7 +72,7 @@ func getOTP() (otp string, err error) {
 	color.Set(color.FgBlue)
 	defer color.Unset()
 	fmt.Println("Two Factor Authentication required")
-	fmt.Print("authentication code: ")
+	fmt.Print("Authentication code: ")
 	otpraw, err := gopass.GetPasswd()
 	if err != nil {
 		return
@@ -87,7 +87,7 @@ func welcomeUser(name string) {
 	color.Set(color.FgCyan)
 	defer color.Unset()
 	fmt.Println("Welcome", name)
-	fmt.Println("you are logged in")
+	fmt.Println("You are logged in")
 }
 
 func basicLogin(a *client.AMP) (username, password, lastEight, name string, err error) {

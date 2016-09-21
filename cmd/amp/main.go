@@ -26,9 +26,8 @@ var (
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
-		Use:   "amp",
-		Short: "AMP CLI",
-		Long:  `AMP CLI.`,
+		Use:   `amp [OPTIONS] COMMAND [arg...]`,
+		Short: "Appcelerator Microservice Platform.",
 	}
 )
 
