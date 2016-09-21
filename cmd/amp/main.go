@@ -57,7 +57,7 @@ func main() {
 			fmt.Println(Config)
 		},
 	}
-	
+
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
