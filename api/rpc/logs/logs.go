@@ -146,6 +146,11 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 	if in.NodeId != "" {
 		match = strings.EqualFold(entry.NodeId, in.NodeId)
 	}
+	if in.ServiceIsh != "" {
+		serviceID := strings.ToLower(entry.ServiceId)
+		serviceName := strings.ToLower(entry.ServiceName)
+		match = strings.HasPrefix(serviceID, strings.ToLower(in.ServiceIsh)) || strings.HasPrefix(serviceName, strings.ToLower(in.ServiceIsh))
+	}
 	if in.Message != "" {
 		match = strings.Contains(strings.ToLower(entry.Message), strings.ToLower(in.Message))
 	}
