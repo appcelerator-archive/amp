@@ -66,9 +66,9 @@ func main() {
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
-	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
+	RootCmd.Flags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
-	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
+	RootCmd.Flags().StringVar(&serverAddr, "server", "", "Server address")
 	RootCmd.AddCommand(configCmd)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
