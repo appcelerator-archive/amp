@@ -6,8 +6,9 @@ import "github.com/appcelerator/amp/api/rpc/service/service.proto";
 
 service StackService {
   rpc Up (UpRequest) returns (UpReply);
+  rpc Start (StackRequest) returns (StackReply);
   rpc Stop (StackRequest) returns (StackReply);
-  rpc Remove (StackRequest) returns (StackReply);
+  rpc Remove (removeRequest) returns (StackReply);
   rpc List(ListRequest) returns (ListReply);
 }
 
@@ -22,6 +23,11 @@ message UpReply {
 
 message StackRequest {
   string stack_ident = 1;  
+}
+
+message removeRequest {
+  string stack_ident = 1;  
+  bool force = 2;
 }
 
 message StackReply {
