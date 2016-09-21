@@ -141,7 +141,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	}
 	assert.NotEmpty(t, rUp1.StackId, "Stack essai1 StackId should not be empty")
 	assert.NotEmpty(t, rUp2.StackId, "Stack essai2 StackId should not be empty")
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 	//verifyusing ls
 	t.Log("perform stack ls")
 	listRequest := stack.ListRequest{}
@@ -171,7 +171,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 		t.Fatal(errRestart1)
 	}
 	assert.NotEmpty(t, rRestart1.StackId, "Stack essai1 StackId should not be empty")
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	//Stop again stack essai1
 	t.Log("stop again stack essai1")
 	rStop12, errStop12 := client.Stop(ctx, &stackRequest1)
