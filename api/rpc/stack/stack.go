@@ -49,7 +49,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, errStart
 	}
 	fmt.Printf("Stack is up: %s\n", stack.Id)
-	reply := UpR3eply{
+	reply := UpReply{
 		StackId: stack.Id,
 	}
 	return &reply, nil
