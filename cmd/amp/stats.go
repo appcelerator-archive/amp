@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/api/client"
@@ -19,7 +20,7 @@ const (
 )
 
 var statsCmd = &cobra.Command{
-	Use:   "stats",
+	Use:   "stats [service name] or --flags...",
 	Short: "Display resource usage statistics",
 	Long:  `get statistics on containers, services, nodes about cpu, memory, io, net.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -74,13 +75,13 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	//set discriminator
 	if cmd.Flag("container").Value.String() == "true" {
 		query.Discriminator = "container"
-	} else if cmd.Flag("service").Value.String() == "true" {
-		query.Discriminator = "service"
+	} else if cmd.Flag("node").Value.String() == "true" {
+		query.Discriminator = "node"
 	} else if cmd.Flag("task").Value.String() == "true" {
 		query.Discriminator = "task"
 
 	} else {
-		query.Discriminator = "node"
+		query.Discriminator = "service"
 	}
 
 	//set metrics
@@ -109,13 +110,17 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	//Set filters
+	if len(args) > 0 && cmd.Flag("service-name").Value.String() == "" {
+		query.FilterServiceName = backQuoteDash(args[0])
+	} else {
+		query.FilterServiceName = backQuoteDash(cmd.Flag("service-name").Value.String())
+	}
 	query.FilterDatacenter = cmd.Flag("datacenter").Value.String()
 	query.FilterHost = cmd.Flag("host").Value.String()
 	query.FilterContainerId = cmd.Flag("container-id").Value.String()
 	query.FilterContainerName = cmd.Flag("container-name").Value.String()
 	query.FilterContainerImage = cmd.Flag("image").Value.String()
 	query.FilterServiceId = cmd.Flag("service-id").Value.String()
-	query.FilterServiceName = cmd.Flag("service-name").Value.String()
 	query.FilterTaskId = cmd.Flag("task-id").Value.String()
 	query.FilterTaskName = cmd.Flag("task-name").Value.String()
 	query.FilterNodeId = cmd.Flag("node-id").Value.String()
@@ -125,6 +130,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	query.Until = cmd.Flag("until").Value.String()
 
 	if amp.Verbose() {
+
 		displayStatsQueryParameters(&query)
 	}
 
@@ -142,6 +148,10 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return startFollow(ctx, c, &query)
 }
 
+func backQuoteDash(val string) string {
+	return strings.Replace(val, "-", "[-]", -1)
+}
+
 func validateQuery(query *stats.StatsRequest) error {
 	if query.Period != "" && (query.Since != "" || query.Until != "") {
 		return errors.New("--period can't be used with --since or --until")
@@ -153,6 +163,10 @@ func executeStat(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 	r, err := c.StatsQuery(ctx, query)
 	if err != nil {
 		return 0, err
+	}
+	if r.Entries == nil {
+		fmt.Println("No result found")
+		os.Exit(0)
 	}
 	//fmt.Println(r.Entries[0].Time)
 	if currentTime != 0 && r.Entries[0].Time == currentTime {

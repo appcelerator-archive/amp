@@ -1,13 +1,12 @@
-package stats
+package stats_test
 
 import (
-	"log"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/appcelerator/amp/data/influx"
-
+	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/server"
+	//"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
 
@@ -16,75 +15,84 @@ const (
 )
 
 var (
-	srv  *Stat
-	host string
+	ctx    context.Context
+	client stats.StatsClient
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Lshortfile)
-	log.SetPrefix("test: ")
-	// Create an instance of the service interface
-	srv = createStatServer()
-
-	err := srv.Influx.Connect(5 * time.Second)
-	if err != nil {
-		panic(err)
-	}
-	defer srv.Influx.Close()
+	_, conn := server.StartTestServer()
+	client = stats.NewStatsClient(conn)
+	ctx = context.Background()
 	os.Exit(m.Run())
 }
 
-// Excercises the rpc service for CPUQuery
-func TestCPUQueryServiceWithLimit(t *testing.T) {
-	//Build a query to validate the following command from the CLI
-	//amp stats --cpu --container --service-name=kafka --period 5m
-	query := StatRequest{}
-	//set discriminator
-	query.Discriminator = "container"
-	//Set filters
-	query.FilterServiceName = "kafka"
+func TestStatQueryService(t *testing.T) {
+	query := stats.StatsRequest{}
+	query.Discriminator = "service"
+	query.StatsCpu = true
+	query.StatsMem = true
+	query.StatsIo = true
+	query.StatsNet = true
 	query.Period = "5m"
-	query.Limit = "1"
-	// Call the service over the call stack directly
-	res, err := srv.CPUQuery(context.Background(), &query)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(res.Entries) != 1 {
-		t.Errorf("Unexpected a response from influx %v\n", len(res.Entries))
-	}
-
-}
-
-// Excercises the rpc service for CPUQuery
-func TestCPUQueryService(t *testing.T) {
-	//Build a query to validate the following command from the CLI
-	//amp stats --cpu --container --service-name=kafka --period 5m
-	query := StatRequest{}
-	//set discriminator
-	query.Discriminator = "container"
-	//Set filters
-	query.FilterServiceName = "kafka"
-	query.Period = "5m"
-	// Call the service over the call stack directly
-	res, err := srv.CPUQuery(context.Background(), &query)
+	query.FilterServiceName = "amp"
+	res, err := client.StatsQuery(ctx, &query)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Expected a response from influx \n")
+		t.Errorf("Unexpected empty answer from server")
 	}
-
 }
-func createStatServer() *Stat {
-	//Create the config
-	var stat = &Stat{}
-	host := os.Getenv("influxhost")
-	cstr := "http://localhost:8086"
-	if host != "" {
-		cstr = "http://" + host + ":8086"
+
+func TestStatQueryContainer(t *testing.T) {
+	query := stats.StatsRequest{}
+	query.Discriminator = "container"
+	query.StatsCpu = true
+	query.StatsMem = true
+	query.StatsIo = true
+	query.StatsNet = true
+	query.Period = "5m"
+	query.FilterContainerName = "amp"
+	res, err := client.StatsQuery(ctx, &query)
+	if err != nil {
+		t.Error(err)
 	}
-	stat.Influx = influx.New(cstr, "telegraf", "", "")
-	return stat
+	if len(res.Entries) == 0 {
+		t.Errorf("Unexpected empty answer from server")
+	}
+}
+
+func TestStatQueryTask(t *testing.T) {
+	query := stats.StatsRequest{}
+	query.Discriminator = "task"
+	query.StatsCpu = true
+	query.StatsMem = true
+	query.StatsIo = true
+	query.StatsNet = true
+	query.Period = "5m"
+	query.FilterTaskName = "amp"
+	res, err := client.StatsQuery(ctx, &query)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(res.Entries) == 0 {
+		t.Errorf("Unexpected empty answer from server")
+	}
+}
+
+func TestStatQueryNode(t *testing.T) {
+	query := stats.StatsRequest{}
+	query.Discriminator = "node"
+	query.StatsCpu = true
+	query.StatsMem = true
+	query.StatsIo = true
+	query.StatsNet = true
+	query.Period = "5m"
+	res, err := client.StatsQuery(ctx, &query)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(res.Entries) == 0 {
+		t.Errorf("Unexpected empty answer from server")
+	}
 }
