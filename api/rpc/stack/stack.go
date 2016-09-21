@@ -49,7 +49,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, errStart
 	}
 	fmt.Printf("Stack is up: %s\n", stack.Id)
-	reply := UpReply{
+	reply := UpR3eply{
 		StackId: stack.Id,
 	}
 	return &reply, nil
@@ -111,7 +111,7 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	}
 	serv.Labels[stackIDLabelName] = stack.Id
 	serv.Labels[stackNameLabelName] = stack.Name
-	serv.Name = stack.Name + "-" + serv.Name
+	//serv.Name = stack.Name + "-" + serv.Name
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,
 	}
