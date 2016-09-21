@@ -23,6 +23,7 @@ import (
 
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -189,14 +190,11 @@ func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.M
 
 // List implements storage.Interface.List.
 func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj proto.Message, out *[]proto.Message) error {
-	key = slash(s.prefix(key))
-
-	getResp, err := s.client.KV.Get(ctx, key, clientv3.WithPrefix())
+	kvs, err := s.ListRaw(ctx, key, filter)
 	if err != nil {
 		return err
 	}
 
-	kvs := getResp.Kvs
 	*out = make([]proto.Message, len(kvs))
 	for i, kv := range kvs {
 		data := []byte(kv.Value)
@@ -212,6 +210,18 @@ func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj 
 	}
 
 	return nil
+}
+
+// ListRaw implements storage.Interface.List.
+func (s *etcd) ListRaw(ctx context.Context, key string, filter storage.Filter) ([]*mvccpb.KeyValue, error) {
+	key = slash(s.prefix(key))
+
+	getResp, err := s.client.KV.Get(ctx, key, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+
+	return getResp.Kvs, nil
 }
 
 // Create implements storage.Interface.Create
@@ -232,6 +242,19 @@ func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Messa
 		return fmt.Errorf("transaction failed for key: %v", key)
 	}
 	return nil
+}
+
+func (s *etcd) Watch(ctx context.Context, key string, recursive bool) clientv3.WatchChan {
+	key = s.prefix(key)
+	opts := []clientv3.OpOption{}
+	if recursive {
+		opts = append(opts, clientv3.WithPrefix())
+	}
+	return s.client.Watcher.Watch(ctx, key, opts...)
+}
+
+func (s *etcd) StopWatching() error {
+	return s.client.Watcher.Close()
 }
 
 // options returns a slice of client options (currently just a lease based on the given ttl).
