@@ -62,8 +62,7 @@ func main() {
 	RootCmd.SetHelpTemplate(helpTemplate)
 
 	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
-	RootCmd.PersistentFlags().String("target", "local", `target environment ("local"|"virtualbox"|"aws")`)
-	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `verbose output`)
+	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
 	RootCmd.AddCommand(configCmd)
