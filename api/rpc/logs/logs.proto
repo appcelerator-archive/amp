@@ -27,6 +27,7 @@ message GetRequest {
   string container_id = 5;
   string node_id = 6;
   sint64 size = 7;
+  string service_ish = 8;
 }
 
 message GetReply {

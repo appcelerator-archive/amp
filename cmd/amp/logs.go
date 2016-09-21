@@ -55,6 +55,9 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	request := logs.GetRequest{}
+	if len(args) > 0 {
+		request.ServiceIsh = args[0]
+	}
 	request.ServiceId = cmd.Flag("service-id").Value.String()
 	request.ServiceName = cmd.Flag("service-name").Value.String()
 	request.Message = cmd.Flag("message").Value.String()
