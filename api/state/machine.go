@@ -29,7 +29,8 @@ func (s *Machine) canTransition(from int32, to int32) bool {
 	return s.ruleSet[from][to]
 }
 
-func (s *Machine) getState(id string) (int32, error) {
+// GetState get state
+func (s *Machine) GetState(id string) (int32, error) {
 	state := &State{}
 	if err := runtime.Store.Get(context.Background(), path.Join(statesRootKey, id), state, true); err != nil {
 		return -1, err
@@ -39,7 +40,7 @@ func (s *Machine) getState(id string) (int32, error) {
 
 // TransitionTo transitionTo
 func (s *Machine) TransitionTo(id string, to int32) error {
-	current, err := s.getState(id)
+	current, err := s.GetState(id)
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func (s *Machine) TransitionTo(id string, to int32) error {
 
 // Is is
 func (s *Machine) Is(id string, expected int32) (bool, error) {
-	state, err := s.getState(id)
+	state, err := s.GetState(id)
 	if err != nil {
 		return false, err
 	}
