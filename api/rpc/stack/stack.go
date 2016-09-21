@@ -45,7 +45,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	_, errStart := s.Start(ctx, &startRequest)
 	if errStart != nil {
 		fmt.Printf("Error found during service creation: %v \n", err)
-		s.rollbackETCDStack(ctx, stack.Id)
+		s.rollbackETCDStack(ctx, stack)
 		return nil, errStart
 	}
 	fmt.Printf("Stack is up: %s\n", stack.Id)
@@ -97,10 +97,11 @@ func (s *Server) rollbackServiceStack(ctx context.Context, stackID string, servi
 }
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
-func (s *Server) rollbackETCDStack(ctx context.Context, stackID string) {
-	fmt.Printf("Cleanning up ETCD storage %s\n", stackID)
-	s.Store.Delete(ctx, path.Join(stackRootKey, stackID), true, nil)
-	fmt.Printf("ETCD cleaned %s\n", stackID)
+func (s *Server) rollbackETCDStack(ctx context.Context, stack *Stack) {
+	fmt.Printf("Cleanning up ETCD storage %s\n", stack.Id)
+	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)
+	s.Store.Delete(ctx, path.Join(stackRootNameKey, stack.Name), true, nil)
+	fmt.Printf("ETCD cleaned %s\n", stack.Id)
 }
 
 // start one service and if ok store it in ETCD:
