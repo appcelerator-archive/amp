@@ -83,6 +83,7 @@ func init() {
 	flags := upCmd.Flags()
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
 	rmCmd.Flags().Bool("force", false, "Remove the stack whatever condition")
+	listCmd.Flags().BoolP("quiet", "q", false, "return only stack id to be use with grep")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(startCmd)
 	StackCmd.AddCommand(stopCmd)
@@ -211,9 +212,32 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		fmt.Println("No stack is available")
 		return nil
 	}
-	fmt.Println("Stack list")
+	//Manage -q
+	if cmd.Flag("quiet").Value.String() == "true" {
+		for _, info := range reply.List {
+			fmt.Println(info.Id)
+		}
+		return nil
+	}
+	//Format output
+	col1 := 10
+	col2 := 20
+	col3 := 10
 	for _, info := range reply.List {
-		fmt.Println(info)
+		if len(info.Name) > col1 {
+			col1 = len(info.Name) + 2
+		}
+		if len(info.Id) > col2 {
+			col2 = len(info.Id) + 2
+		}
+		if len(info.State) > col3 {
+			col3 = len(info.State) + 2
+		}
+	}
+	fmt.Printf("%s%s%s\n", col("NAME", col1), col("ID", col2), col("STATE", col3))
+	fmt.Printf("%s%s%s\n", col("-", col1), col("-", col2), col("-", col3))
+	for _, info := range reply.List {
+		fmt.Printf("%s%s%s\n", col(info.Name, col1), col(info.Id, col2), col(info.State, col3))
 	}
 	return nil
 }

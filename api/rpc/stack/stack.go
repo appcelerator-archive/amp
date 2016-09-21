@@ -279,12 +279,10 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 		info.Name = stack.Name
 		info.Id = stack.Id
 	}
-	/* Waiting for Bertrand's getState
-	state := &State{}
-	errGet := s.Store.Get(ctx, path.Join(stackRootKey, ID, stackStackKey), state, true)
+	state, errGet := stackStateMachine.GetState(stack.Id)
 	info.State = "nc"
 	if errGet == nil {
-		switch state.Value {
+		switch state {
 		case 0:
 			info.State = "Stopped"
 		case 1:
@@ -295,6 +293,5 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 			info.State = "Redeploying"
 		}
 	}
-	*/
 	return &info
 }
