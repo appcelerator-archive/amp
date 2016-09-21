@@ -405,6 +405,9 @@ func (s *Stats) buildWhereStatsement(req *StatsRequest) string {
 	if req.FilterServiceName != "" {
 		where += fmt.Sprintf(" AND \"com.docker.swarm.service.name\" =~ /%s.*/", req.FilterServiceName)
 	}
+	if req.FilterServiceIdent != "" {
+		where += fmt.Sprintf(" AND (\"com.docker.swarm.service.name\" =~ /%s.*/ OR \"com.docker.swarm.service.id\" =~ /%s.*/ )", req.FilterServiceIdent, req.FilterServiceIdent)
+	}
 	if req.FilterTaskId != "" {
 		where += fmt.Sprintf(" AND \"com.docker.swarm.task.id\" =~ /%s.*/", req.FilterTaskId)
 	}

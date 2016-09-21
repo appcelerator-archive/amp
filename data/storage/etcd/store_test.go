@@ -312,16 +312,11 @@ func TestCompareAndSet(t *testing.T) {
 	expect := &state.State{Value: 0}
 	update := &state.State{Value: 42}
 
-	if err := store.Delete(ctx, key, false, &state.State{}); err != nil {
-		t.Error(err)
-	}
-	if err := store.Create(ctx, key, expect, nil, 0); err != nil {
-		t.Error(err)
-	}
+	store.Delete(ctx, key, false, &state.State{})
+	store.Create(ctx, key, expect, nil, 0)
 	if err := store.CompareAndSet(ctx, key, expect, update); err != nil {
 		t.Error(err)
 	}
-
 	actual := &state.State{}
 	if err := store.Get(ctx, key, actual, false); err != nil {
 		t.Error(err)
@@ -339,12 +334,8 @@ func TestWatch(t *testing.T) {
 	watcher := store.Watch(ctx, key, false)
 	expect := &state.State{Value: 0}
 	update := &state.State{Value: 42}
-	if err := store.Delete(ctx, key, false, &state.State{}); err != nil {
-		t.Error(err)
-	}
-	if err := store.Create(ctx, key, expect, nil, 0); err != nil {
-		t.Error(err)
-	}
+	store.Delete(ctx, key, false, &state.State{})
+	store.Create(ctx, key, expect, nil, 0)
 	if err := store.CompareAndSet(ctx, key, expect, update); err != nil {
 		t.Error(err)
 	}

@@ -20,7 +20,7 @@ const (
 )
 
 var statsCmd = &cobra.Command{
-	Use:   "stats [service name] or --flags...",
+	Use:   "stats [service name or id] or --flags...",
 	Short: "Display resource usage statistics",
 	Long:  `Get statistics on containers, services, nodes about cpu, memory, io, net.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -110,19 +110,17 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	//Set filters
-	if len(args) > 0 && cmd.Flag("service-name").Value.String() == "" {
-		query.FilterServiceName = backQuoteDash(args[0])
-	} else {
-		query.FilterServiceName = backQuoteDash(cmd.Flag("service-name").Value.String())
+	if len(args) > 0 {
+		query.FilterServiceIdent = backQuoteDash(args[0])
 	}
-	query.FilterDatacenter = cmd.Flag("datacenter").Value.String()
-	query.FilterHost = cmd.Flag("host").Value.String()
+	query.FilterDatacenter = backQuoteDash(cmd.Flag("datacenter").Value.String())
+	query.FilterHost = backQuoteDash(cmd.Flag("host").Value.String())
 	query.FilterContainerId = cmd.Flag("container-id").Value.String()
-	query.FilterContainerName = cmd.Flag("container-name").Value.String()
-	query.FilterContainerImage = cmd.Flag("image").Value.String()
+	query.FilterContainerName = backQuoteDash(cmd.Flag("container-name").Value.String())
+	query.FilterContainerImage = backQuoteDash(cmd.Flag("image").Value.String())
 	query.FilterServiceId = cmd.Flag("service-id").Value.String()
 	query.FilterTaskId = cmd.Flag("task-id").Value.String()
-	query.FilterTaskName = cmd.Flag("task-name").Value.String()
+	query.FilterTaskName = backQuoteDash(cmd.Flag("task-name").Value.String())
 	query.FilterNodeId = cmd.Flag("node-id").Value.String()
 	//Set historic parameters
 	query.Period = cmd.Flag("period").Value.String()
