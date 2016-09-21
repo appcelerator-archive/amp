@@ -37,7 +37,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 		}
 	} else {
 		if verbose || viper.GetBool("Verbose") {
-			fmt.Println("warning: no valid configuration file (.amp.yaml) found in home or current directory")
+			fmt.Println("Warning: no valid configuration file (.amp.yaml) found in home or current directory")
 		}
 	}
 
@@ -45,7 +45,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	err := viper.Unmarshal(config)
 	if err != nil {
 		fmt.Println(err)
-		panic("unable to process config")
+		panic("Unable to process config")
 	}
 }
 

@@ -12,8 +12,8 @@ import (
 
 var pushCmd = &cobra.Command{
 	Use:   "push",
-	Short: "push an image in the amp registry",
-	Long:  `push an image to the amp registry`,
+	Short: "Push an image in the amp registry",
+	Long:  `Push an image to the amp registry`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := RegistryPush(AMP, cmd, args)
 		if err != nil {
@@ -55,7 +55,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 func validateRegistryImage(image string) error {
 	if image == "" {
-		return errors.New("need a valid image name")
+		return errors.New("Need a valid image name")
 	}
 	return nil
 }

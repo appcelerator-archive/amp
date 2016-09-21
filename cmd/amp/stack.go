@@ -14,7 +14,7 @@ import (
 // StackCmd is the main command for attaching stack subcommands.
 var StackCmd = &cobra.Command{
 	Use:   "stack operations",
-	Short: "stack operations",
+	Short: "Stack operations",
 	Long:  `Manage stack-related operations.`,
 }
 
@@ -81,7 +81,7 @@ var (
 func init() {
 	RootCmd.AddCommand(StackCmd)
 	flags := upCmd.Flags()
-	flags.StringVarP(&stackfile, "file", "f", stackfile, "the name of the stackfile")
+	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
 	rmCmd.Flags().Bool("force", false, "Remove the stack whatever condition")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(startCmd)
@@ -98,15 +98,15 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
 	if stackfile == "" {
-		return errors.New("specify the stackfile with the --flag option")
+		return errors.New("Specify the stackfile with the --flag option")
 	}
 
 	if len(args) == 0 {
-		return errors.New("must specify stack name")
+		return errors.New("Must specify stack name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("must specify stack name")
+		return errors.New("Must specify stack name")
 	}
 
 	b, err := ioutil.ReadFile(stackfile)
@@ -130,11 +130,11 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("must specify stack id")
+		return errors.New("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("must specify stack name or id")
+		return errors.New("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -152,11 +152,11 @@ func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("must specify stack id")
+		return errors.New("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("must specify stack name or id")
+		return errors.New("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -174,11 +174,11 @@ func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("must specify stack id")
+		return errors.New("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("must specify stack name or id")
+		return errors.New("Must specify stack name or id")
 	}
 
 	force := false
