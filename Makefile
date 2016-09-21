@@ -130,4 +130,4 @@ test:
 	@go test $(REPO)/data/storage/etcd
 	@go test $(REPO)/api/rpc/stack
 	@go test $(REPO)/data/influx
-#	@go test $(REPO)/api/rpc/stat
+	@go test $(REPO)/api/rpc/stats

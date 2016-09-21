@@ -2,7 +2,6 @@ package stats
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -60,9 +59,14 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 	}
 	//fmt.Println(metricList)
 	result := s.combineStats(req, &metricList)
+	if result == nil || result.Entries == nil {
+		ret := &StatsReply{
+			Entries: make([]*StatsEntry, 0),
+		}
+		return ret, nil
+	}
 	sort.Sort(result)
 	return result, nil
-
 }
 
 func (s *Stats) addStatsResult(list *[4]*StatsReply, ret *StatsReply) {
@@ -161,11 +165,10 @@ func (s *Stats) statQueryMetric(req *StatsRequest, metric string) (*StatsReply, 
 		return nil, err
 	}
 	if len(res.Results[0].Series) == 0 {
-		return nil, errors.New("No result found")
-	}
-
-	if len(res.Results[0].Series) == 0 {
-		return nil, errors.New("No result found")
+		ret := &StatsReply{
+			Entries: make([]*StatsEntry, 0),
+		}
+		return ret, nil
 	}
 	list := res.Results[0].Series[0].Values
 	containerMap := make(map[string]*StatsEntry)
@@ -382,34 +385,34 @@ func (s *Stats) buildWhereStatsement(req *StatsRequest) string {
 		where += fmt.Sprintf(" AND time > now() - %s", "1m")
 	}
 	if req.FilterDatacenter != "" {
-		where += fmt.Sprintf(" AND datacenter='%s'", req.FilterDatacenter)
+		where += fmt.Sprintf(" AND datacenter =~ /%s.*/", req.FilterDatacenter)
 	}
 	if req.FilterHost != "" {
-		where += fmt.Sprintf(" AND host='%s'", req.FilterHost)
+		where += fmt.Sprintf(" AND host =~ /%s.*/", req.FilterHost)
 	}
 	if req.FilterContainerId != "" {
-		where += fmt.Sprintf(" AND container_id='%s'", req.FilterContainerId)
+		where += fmt.Sprintf(" AND container_id =~ /%s.*/", req.FilterContainerId)
 	}
 	if req.FilterContainerName != "" {
-		where += fmt.Sprintf(" AND container_name='%s'", req.FilterContainerName)
+		where += fmt.Sprintf(" AND container_name =~ /%s.*/", req.FilterContainerName)
 	}
 	if req.FilterContainerImage != "" {
-		where += fmt.Sprintf(" AND container_image='%s'", req.FilterContainerImage)
+		where += fmt.Sprintf(" AND container_image =~ /%s.*/", req.FilterContainerImage)
 	}
 	if req.FilterServiceId != "" {
-		where += fmt.Sprintf(" AND \"com.docker.swarm.service.id\"='%s'", req.FilterServiceId)
+		where += fmt.Sprintf(" AND \"com.docker.swarm.service.id\" =~ /%s.*/", req.FilterServiceId)
 	}
 	if req.FilterServiceName != "" {
-		where += fmt.Sprintf(" AND \"com.docker.swarm.service.name\"='%s'", req.FilterServiceName)
+		where += fmt.Sprintf(" AND \"com.docker.swarm.service.name\" =~ /%s.*/", req.FilterServiceName)
 	}
 	if req.FilterTaskId != "" {
-		where += fmt.Sprintf(" AND \"com.docker.swarm.task.id\"='%s'", req.FilterTaskId)
+		where += fmt.Sprintf(" AND \"com.docker.swarm.task.id\" =~ /%s.*/", req.FilterTaskId)
 	}
 	if req.FilterTaskName != "" {
-		where += fmt.Sprintf(" AND \"com.docker.swarm.task.name\"='%s'", req.FilterTaskName)
+		where += fmt.Sprintf(" AND \"com.docker.swarm.task.name\" =~ /%s.*/", req.FilterTaskName)
 	}
 	if req.FilterNodeId != "" {
-		where += fmt.Sprintf(" AND \"com.docker.swarm.node.id\"='%s'", req.FilterNodeId)
+		where += fmt.Sprintf(" AND \"com.docker.swarm.node.id\" =~ /%s.*/", req.FilterNodeId)
 	}
 	if where == "" {
 		return ""
