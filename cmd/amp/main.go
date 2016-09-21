@@ -56,11 +56,11 @@ func main() {
 			fmt.Println(Config)
 		},
 	}
-	
+
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
-	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
+	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
 
