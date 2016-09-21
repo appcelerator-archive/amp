@@ -8,6 +8,8 @@ import (
 	"path"
 )
 
+const statesRootKey = "states"
+
 // RuleSet describe allowed state transitions
 type RuleSet [][]bool
 
@@ -29,7 +31,7 @@ func (s *Machine) canTransition(from int32, to int32) bool {
 
 func (s *Machine) getState(id string) (int32, error) {
 	state := &State{}
-	if err := runtime.Store.Get(context.Background(), path.Join("states", id), state, true); err != nil {
+	if err := runtime.Store.Get(context.Background(), path.Join(statesRootKey, id), state, true); err != nil {
 		return -1, err
 	}
 	return state.Value, nil
@@ -46,7 +48,7 @@ func (s *Machine) TransitionTo(id string, to int32) error {
 	}
 	expect := &State{Value: current}
 	update := &State{Value: to}
-	if err = runtime.Store.CompareAndSet(context.Background(), path.Join("states", id), expect, update); err != nil {
+	if err = runtime.Store.CompareAndSet(context.Background(), path.Join(statesRootKey, id), expect, update); err != nil {
 		return err
 	}
 	return nil
@@ -64,7 +66,7 @@ func (s *Machine) Is(id string, expected int32) (bool, error) {
 // CreateState createstate
 func (s *Machine) CreateState(id string, initial int32) error {
 	state := &State{Value: initial}
-	if err := runtime.Store.Create(context.Background(), path.Join("states", id), state, nil, 0); err != nil {
+	if err := runtime.Store.Create(context.Background(), path.Join(statesRootKey, id), state, nil, 0); err != nil {
 		return err
 	}
 	return nil
@@ -72,5 +74,5 @@ func (s *Machine) CreateState(id string, initial int32) error {
 
 // DeleteState deleteState
 func (s *Machine) DeleteState(id string) error {
-	return runtime.Store.Delete(context.Background(), path.Join("states", id), false, nil)
+	return runtime.Store.Delete(context.Background(), path.Join(statesRootKey, id), false, nil)
 }

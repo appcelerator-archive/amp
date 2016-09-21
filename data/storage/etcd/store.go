@@ -162,7 +162,7 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.Message) error {
 	key = s.prefix(key)
 
-	opts := []clientv3.OpOption{clientv3.WithFromKey()}
+	opts := []clientv3.OpOption{clientv3.WithPrefix()}
 	if !recurse {
 		opts = nil
 	}

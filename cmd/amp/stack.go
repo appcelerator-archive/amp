@@ -32,7 +32,18 @@ var (
 	}
 	// stack configuration file
 	stackfile string
-	stopCmd   = &cobra.Command{
+	startCmd  = &cobra.Command{
+		Use:   "restart [stack name or id]",
+		Short: "Start a stopped stack",
+		Long:  `Start a stopped stack`,
+		Run: func(cmd *cobra.Command, args []string) {
+			err := start(AMP, cmd, args)
+			if err != nil {
+				fmt.Println(err)
+			}
+		},
+	}
+	stopCmd = &cobra.Command{
 		Use:   "stop [stack name or id]",
 		Short: "Stop a stack",
 		Long:  `Stop all services of a stack.`,
@@ -71,7 +82,9 @@ func init() {
 	RootCmd.AddCommand(StackCmd)
 	flags := upCmd.Flags()
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "the name of the stackfile")
+	rmCmd.Flags().Bool("force", false, "Remove the stack whatever condition")
 	StackCmd.AddCommand(upCmd)
+	StackCmd.AddCommand(startCmd)
 	StackCmd.AddCommand(stopCmd)
 	StackCmd.AddCommand(rmCmd)
 	StackCmd.AddCommand(listCmd)
@@ -114,6 +127,28 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
+
+	if len(args) == 0 {
+		return errors.New("must specify stack id")
+	}
+	ident := args[0]
+	if ident == "" {
+		return errors.New("must specify stack name or id")
+	}
+
+	request := &stack.StackRequest{StackIdent: ident}
+
+	client := stack.NewStackServiceClient(amp.Conn)
+	reply, err := client.Start(context.Background(), request)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(reply)
+	return nil
+}
+
 func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
@@ -146,7 +181,14 @@ func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return errors.New("must specify stack name or id")
 	}
 
-	request := &stack.StackRequest{StackIdent: ident}
+	force := false
+	if cmd.Flag("force").Value.String() == "true" {
+		force = true
+	}
+	request := &stack.RemoveRequest{
+		StackIdent: ident,
+		Force:      force,
+	}
 
 	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.Remove(context.Background(), request)
@@ -166,7 +208,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if reply == nil || len(reply.List) == 0 {
-		fmt.Println("No stack is avaialble")
+		fmt.Println("No stack is available")
 		return nil
 	}
 	fmt.Println("Stack list")

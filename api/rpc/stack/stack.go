@@ -15,6 +15,7 @@ const stackRootKey = "stacks"
 const servicesRootKey = "services"
 const stackRootNameKey = "stacks/names"
 const stackIDLabelName = "io.amp.stack.id"
+const stackNameLabelName = "io.amp.stack.name"
 
 // Server is used to implement stack.StackService
 type Server struct {
@@ -32,40 +33,25 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, err
 	}
 	stack.Name = in.StackName
-	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Starting)); err != nil {
-		return nil, err
-	}
-	err2 := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0)
-	if err2 != nil {
-		fmt.Println("error ", err2)
+	errCreate := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0)
+	if errCreate != nil {
+		return nil, errCreate
 	}
 	stackID := StackID{Id: stack.Id}
 	s.Store.Create(ctx, path.Join(stackRootNameKey, stack.Name), &stackID, nil, 0)
-	serviceIDList := make([]string, len(stack.Services), len(stack.Services))
-	for i, service := range stack.Services {
-		serviceID, err := s.processService(ctx, stack, service)
-		if err != nil {
-			s.rollbackStack(ctx, stack.Id, serviceIDList, err)
-			return nil, err
-		}
-		serviceIDList[i] = serviceID
+	startRequest := StackRequest{
+		StackIdent: stack.Id,
 	}
-	// Save the service id list in ETCD
-	val := &ServiceIdList{
-		List: serviceIDList,
+	_, errStart := s.Start(ctx, &startRequest)
+	if errStart != nil {
+		fmt.Printf("Error found during service creation: %v \n", err)
+		s.rollbackETCDStack(ctx, stack.Id)
+		return nil, errStart
 	}
-	createErr := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), val, nil, 0)
-	if createErr != nil {
-		s.rollbackStack(ctx, stack.Id, serviceIDList, err)
-		return nil, createErr
-	}
-	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Running)); err != nil {
-		return nil, err
-	}
+	fmt.Printf("Stack is up: %s\n", stack.Id)
 	reply := UpReply{
 		StackId: stack.Id,
 	}
-	fmt.Printf("Stack is running: %s\n", stack.Id)
 	return &reply, nil
 }
 
@@ -98,22 +84,32 @@ func (s *Server) getStack(ctx context.Context, in *StackRequest) (*Stack, error)
 }
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
-func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDList []string, err error) {
-	fmt.Printf("Error found: %v \n", err)
-	fmt.Printf("Cancel stack Up, cleanning up stack %s\n", stackID)
+func (s *Server) rollbackServiceStack(ctx context.Context, stackID string, serviceIDList []string) {
+	fmt.Printf("removing created services %s\n", stackID)
 	server := service.Service{}
 	for _, ID := range serviceIDList {
 		if ID != "" {
 			server.Remove(ctx, ID)
+			s.Store.Delete(ctx, path.Join(servicesRootKey, ID), true, nil)
 		}
 	}
+	fmt.Printf("Services removed %s\n", stackID)
+}
+
+// clean up if error happended during stack creation, delete all created services and all etcd data
+func (s *Server) rollbackETCDStack(ctx context.Context, stackID string) {
+	fmt.Printf("Cleanning up ETCD storage %s\n", stackID)
 	s.Store.Delete(ctx, path.Join(stackRootKey, stackID), true, nil)
-	fmt.Printf("Stack cleaned %s\n", stackID)
+	fmt.Printf("ETCD cleaned %s\n", stackID)
 }
 
 // start one service and if ok store it in ETCD:
 func (s *Server) processService(ctx context.Context, stack *Stack, serv *service.ServiceSpec) (string, error) {
+	if serv.Labels == nil {
+		serv.Labels = make(map[string]string)
+	}
 	serv.Labels[stackIDLabelName] = stack.Id
+	serv.Labels[stackNameLabelName] = stack.Name
 	serv.Name = stack.Name + "-" + serv.Name
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,
@@ -130,6 +126,51 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	return reply.Id, nil
 }
 
+// Start implements stack.ServerService Stop
+func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, error) {
+	stack, errIdent := s.getStack(ctx, in)
+	if errIdent != nil {
+		return nil, errIdent
+	}
+	if stack.Services == nil || len(stack.Services) == 0 {
+		return nil, fmt.Errorf("No services found for the stack %s \n", in.StackIdent)
+	}
+	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Starting)); err != nil {
+		return nil, err
+	}
+	fmt.Printf("Starting stack %s\n", in.StackIdent)
+
+	serviceIDList := make([]string, len(stack.Services), len(stack.Services))
+	for i, service := range stack.Services {
+		serviceID, err := s.processService(ctx, stack, service)
+		if err != nil {
+			s.rollbackServiceStack(ctx, stack.Id, serviceIDList)
+			return nil, err
+		}
+		serviceIDList[i] = serviceID
+	}
+	// Save the service id list in ETCD
+	val := &ServiceIdList{
+		List: serviceIDList,
+	}
+	updateErr := s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), val, 0)
+	if updateErr != nil {
+		createErr := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), val, nil, 0)
+		if createErr != nil {
+			s.rollbackServiceStack(ctx, stack.Id, serviceIDList)
+			return nil, createErr
+		}
+	}
+	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Running)); err != nil {
+		return nil, err
+	}
+	reply := StackReply{
+		StackId: stack.Id,
+	}
+	fmt.Printf("Stack is running %s\n", in.StackIdent)
+	return &reply, nil
+}
+
 // Stop implements stack.ServerService Stop
 func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error) {
 	stack, errIdent := s.getStack(ctx, in)
@@ -142,22 +183,8 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 		return nil, errors.New("Stack is not running")
 	}
 	fmt.Printf("Stopping stack %s\n", in.StackIdent)
-	server := service.Service{}
-	listKeys := &ServiceIdList{}
-	err := s.Store.Get(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), listKeys, true)
-	if err != nil {
+	if err := s.stopStackServices(ctx, stack.Id, false); err != nil {
 		return nil, err
-	}
-	var removeErr error
-	for _, key := range listKeys.List {
-		err := server.Remove(ctx, key)
-		if err != nil {
-			removeErr = err
-		}
-
-	}
-	if removeErr != nil {
-		return nil, removeErr
 	}
 	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Stopped)); err != nil {
 		return nil, err
@@ -165,25 +192,60 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	reply := StackReply{
 		StackId: stack.Id,
 	}
+	empty := &ServiceIdList{
+		List: make([]string, 0),
+	}
+	s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), empty, 0)
 	fmt.Printf("Stack stopped %s\n", in.StackIdent)
 	return &reply, nil
 }
 
+func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) error {
+	server := service.Service{}
+	listKeys := &ServiceIdList{}
+	err := s.Store.Get(ctx, path.Join(stackRootKey, ID, servicesRootKey), listKeys, true)
+	if err != nil && !force {
+		return err
+	}
+	var removeErr error
+	for _, key := range listKeys.List {
+		err := server.Remove(ctx, key)
+		if err != nil {
+			removeErr = err
+		}
+		s.Store.Delete(ctx, path.Join(servicesRootKey, key), false, nil)
+
+	}
+	if removeErr != nil {
+		return removeErr
+	}
+	return nil
+}
+
 // Remove implements stack.ServerService Remove
-func (s *Server) Remove(ctx context.Context, in *StackRequest) (*StackReply, error) {
-	stack, errIdent := s.getStack(ctx, in)
+func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, error) {
+	request := &StackRequest{StackIdent: in.StackIdent}
+	stack, errIdent := s.getStack(ctx, request)
 	if errIdent != nil {
 		return nil, errIdent
 	}
-	if stopped, err := stackStateMachine.Is(stack.Id, int32(StackState_Stopped)); err != nil {
-		return nil, err
-	} else if !stopped {
-		return nil, errors.New("The stack is not stopped")
+	if !in.Force {
+		if stopped, err := stackStateMachine.Is(stack.Id, int32(StackState_Stopped)); err != nil {
+			return nil, err
+		} else if !stopped {
+			return nil, errors.New("The stack is not stopped")
+		}
+	} else {
+		fmt.Printf("Removing services stack %s\n", in.StackIdent)
+		s.stopStackServices(ctx, stack.Id, true)
 	}
 	fmt.Printf("Removing stack %s\n", in.StackIdent)
 	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)
 	s.Store.Delete(ctx, path.Join(stackRootNameKey, stack.Name), true, nil)
-	stackStateMachine.DeleteState(stack.Id)
+	err := stackStateMachine.DeleteState(stack.Id)
+	if err != nil {
+		fmt.Printf("catching error: %v\n", err)
+	}
 	reply := StackReply{
 		StackId: stack.Id,
 	}
