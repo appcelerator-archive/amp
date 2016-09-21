@@ -37,6 +37,12 @@ func main() {
 
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose, serverAddr)
+		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
+			Config.ServerAddress = addr
+		}
+		if Config.ServerAddress == "" {
+			Config.ServerAddress = client.DefaultServerAddress
+		}
 		fmt.Println("Server: " + Config.ServerAddress)
 		AMP = client.NewAMP(&Config)
 		AMP.Connect()
@@ -62,10 +68,8 @@ func main() {
 
 	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
-	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", client.DefaultServerAddress, "Server address")
-
+	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
 	RootCmd.AddCommand(configCmd)
-
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		cli.Exit(-1)
