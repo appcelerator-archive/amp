@@ -57,6 +57,9 @@ func main() {
 			fmt.Println(Config)
 		},
 	}
+	
+	RootCmd.SetUsageTemplate(usageTemplate)
+	RootCmd.SetHelpTemplate(helpTemplate)
 
 	RootCmd.PersistentFlags().StringVar(&configFile, "Config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().String("target", "local", `target environment ("local"|"virtualbox"|"aws")`)
@@ -71,3 +74,25 @@ func main() {
 	}
 	cli.Exit(0)
 }
+
+var usageTemplate = `Usage:	{{if not .HasSubCommands}}{{.UseLine}}{{end}}{{if .HasSubCommands}}{{ .CommandPath}} COMMAND{{end}}
+
+{{ .Short | trim }}{{if gt .Aliases 0}}
+
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{ .Example }}{{end}}{{if .HasFlags}}
+
+Options:
+{{.Flags.FlagUsages | trimRightSpace}}{{end}}{{ if .HasAvailableSubCommands}}
+
+Commands:{{range .Commands}}{{if .IsAvailableCommand}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{ if .HasSubCommands }}
+
+Run '{{.CommandPath}} COMMAND --help' for more information on a command.{{end}}
+`
+
+var helpTemplate = `
+{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
