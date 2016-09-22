@@ -43,14 +43,18 @@ func ToDurationE(i interface{}) (d time.Duration, err error) {
 	switch s := i.(type) {
 	case time.Duration:
 		return s, nil
-	case int64:
-		d = time.Duration(s)
+	case int64, int32, int16, int8, int:
+		d = time.Duration(ToInt64(s))
 		return
-	case float64:
-		d = time.Duration(s)
+	case float32, float64:
+		d = time.Duration(ToFloat64(s))
 		return
 	case string:
-		d, err = time.ParseDuration(s)
+		if strings.ContainsAny(s, "nsuµmh") {
+			d, err = time.ParseDuration(s)
+		} else {
+			d, err = time.ParseDuration(s + "ns")
+		}
 		return
 	default:
 		err = fmt.Errorf("Unable to Cast %#v to Duration\n", i)
@@ -310,7 +314,14 @@ func ToStringMapStringSliceE(i interface{}) (map[string][]string, error) {
 		}
 	case map[string]interface{}:
 		for k, val := range v {
-			m[ToString(k)] = []string{ToString(val)}
+			switch vt := val.(type) {
+			case []interface{}:
+				m[ToString(k)] = ToStringSlice(vt)
+			case []string:
+				m[ToString(k)] = vt
+			default:
+				m[ToString(k)] = []string{ToString(val)}
+			}
 		}
 		return m, nil
 	case map[interface{}][]string:
@@ -410,6 +421,38 @@ func ToSliceE(i interface{}) ([]interface{}, error) {
 		return s, fmt.Errorf("Unable to Cast %#v of type %v to []interface{}", i, reflect.TypeOf(i))
 	}
 }
+
+// ToBoolSliceE casts an empty interface to a []bool.
+func ToBoolSliceE(i interface{}) ([]bool, error) {
+	jww.DEBUG.Println("ToBoolSliceE called on type:", reflect.TypeOf(i))
+
+	if i == nil {
+		return []bool{}, fmt.Errorf("Unable to Cast %#v to []bool", i)
+	}
+
+	switch v := i.(type) {
+	case []bool:
+		return v, nil
+	}
+
+	kind := reflect.TypeOf(i).Kind()
+	switch kind {
+	case reflect.Slice, reflect.Array:
+		s := reflect.ValueOf(i)
+		a := make([]bool, s.Len())
+		for j := 0; j < s.Len(); j++ {
+			val, err := ToBoolE(s.Index(j).Interface())
+			if err != nil {
+				return []bool{}, fmt.Errorf("Unable to Cast %#v to []bool", i)
+			}
+			a[j] = val
+		}
+		return a, nil
+	default:
+		return []bool{}, fmt.Errorf("Unable to Cast %#v to []bool", i)
+	}
+}
+
 
 // ToStringSliceE casts an empty interface to a []string.
 func ToStringSliceE(i interface{}) ([]string, error) {

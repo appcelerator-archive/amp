@@ -491,7 +491,7 @@ func TestBindPFlags(t *testing.T) {
 		"endpoint": "/public",
 	}
 
-	for name, _ := range testValues {
+	for name := range testValues {
 		testValues[name] = flagSet.String(name, "", "test")
 	}
 
@@ -906,4 +906,13 @@ func TestSetConfigNameClearsFileCache(t *testing.T) {
 	SetConfigFile("/tmp/config.yaml")
 	SetConfigName("default")
 	assert.Empty(t, v.getConfigFile())
+}
+
+func TestShadowedNestedValue(t *testing.T) {
+	polyester := "polyester"
+	initYAML()
+	SetDefault("clothing.shirt", polyester)
+
+	assert.Equal(t, GetString("clothing.jacket"), "leather")
+	assert.Equal(t, GetString("clothing.shirt"), polyester)
 }

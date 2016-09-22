@@ -177,8 +177,10 @@ pullimages() {
 }
 
 removeservices() {
-  stop=$(docker service ls -q --filter "label=amp.swarm=$ROLE")
-  [[ ! -z ${stop[0]} ]] && echo "> Removing current services..." && docker service rm $stop || true
+  stop=$(docker service ls -q --filter "label=io.amp.role=$ROLE")
+  [[ ! -z ${stop[0]} ]] && echo "> Removing current infrastructure services..." && docker service rm $stop || true
+  stop=$(docker service ls -q --filter "label=io.amp.role=user")
+  [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true  
 }
 
 # start the services on the swarm
@@ -204,7 +206,7 @@ startservices() {
 }
 
 ls() {
-  docker service ls --filter "label=amp.swarm=$ROLE"
+  docker service ls --filter "label=io.amp.role=$ROLE"
 }
 
 monitor() {
@@ -214,7 +216,7 @@ monitor() {
 
 registry() { # Owner: freignat91
   docker service create --network amp-swarm --name registry \
-  --label amp.swarm="infrastructure" \
+  --label io.amp.role="infrastructure" \
   --mount type=bind,source=$HOME/registry/data,target=/var/lib/registry \
   -p 5000:5000 \
   registry:2
@@ -222,7 +224,7 @@ registry() { # Owner: freignat91
 
 amplifier() {
   docker service create --with-registry-auth --network amp-swarm,amp-public --name amplifier \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amplifier:latest
@@ -231,7 +233,7 @@ amplifier() {
 ampagent() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-swarm --name amp-agent \
     --mode global \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-agent:latest
 }
@@ -239,13 +241,13 @@ ampagent() { # Owner: freignat91
 # DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-swarm --name amp-log-worker \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     appcelerator/amp-log-worker:latest
 }
 
 ampui() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-swarm --name amp-ui \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/amp-ui:latest
@@ -253,7 +255,7 @@ ampui() { # Owner: freignat91
 
 elasticsearch() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-swarm --name elasticsearch \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 9200:9200 \
     -p 9300:9300 \
     appcelerator/elasticsearch-amp:latest
@@ -262,7 +264,7 @@ elasticsearch() { # Owner: bertrand-quenin
 
 etcd() { # Owner: subfuzion
   docker service create --with-registry-auth --network amp-swarm --name etcd \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 2379:2379 \
     -p 2380:2380 \
     quay.io/coreos/etcd:v3.0.9 etcd \
@@ -273,7 +275,7 @@ etcd() { # Owner: subfuzion
 
 grafana() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name grafana \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 6001:3000 \
     -e INFLUXDB_HOST=influxdb \
     -e INFLUXDB_PASS=changeme \
@@ -284,7 +286,7 @@ grafana() { # Owner: ndegory
 
 influxdb() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name influxdb \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 8086:8086 \
     -p 8083:8083 \
     -e FORCE_HOSTNAME=auto \
@@ -296,7 +298,7 @@ influxdb() { # Owner: ndegory
 # DEPENDENCIES zookeepeer
 kafka() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-swarm --name kafka \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 9092:9092 \
     -e ZOOKEEPER_CONNECT=zookeeper:2181 \
     -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
@@ -305,7 +307,7 @@ kafka() { # Owner: bertrand-quenin
 
 kapacitor() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name kapacitor \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e KAPACITOR_HOSTNAME=auto \
     -e SUBSCRIPTION_PROTOCOL="udp" \
@@ -322,7 +324,7 @@ kapacitor() { # Owner: ndegory
 kibana() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name kibana \
     --replicas 1 \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 5601:5601 \
     -e ELASTICSEARCH_URL=http://elasticsearch:9200 \
     appcelerator/kibana:latest
@@ -331,17 +333,17 @@ kibana() { # Owner: ndegory
 
 haproxy() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-swarm,amp-public --name haproxy \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 8080:8080 \
     -p 80:80 \
-    appcelerator/haproxy:test2
+    appcelerator/haproxy:latest
 }
 
 
 telegrafagent() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name telegraf-agent \
     --mode global \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -e OUTPUT_INFLUXDB_ENABLED=true \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e TAG_datacenter=dc1 \
@@ -363,7 +365,7 @@ telegrafagent() { # Owner: ndegory
 
 zookeeper() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-swarm --name zookeeper \
-    --label amp.swarm="infrastructure" \
+    --label io.amp.role="infrastructure" \
     -p 2181:2181 \
     -p 2888:2888 \
     -p 3888:3888 \

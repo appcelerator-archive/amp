@@ -111,6 +111,7 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	}
 	serv.Labels[stackIDLabelName] = stack.Id
 	serv.Labels[stackNameLabelName] = stack.Name
+	serv.Labels["amp-swarm"] = "user"
 	serv.Name = stack.Name + "-" + serv.Name
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,

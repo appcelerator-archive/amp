@@ -29,6 +29,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
@@ -294,17 +295,14 @@ func isHaltErr(ctx context.Context, err error) bool {
 	if err == nil {
 		return false
 	}
-	eErr := rpctypes.Error(err)
-	if _, ok := eErr.(rpctypes.EtcdError); ok {
-		return eErr != rpctypes.ErrStopped && eErr != rpctypes.ErrNoLeader
-	}
-	// treat etcdserver errors not recognized by the client as halting
-	return isConnClosing(err) || strings.Contains(err.Error(), "etcdserver:")
-}
-
-// isConnClosing returns true if the error matches a grpc client closing error
-func isConnClosing(err error) bool {
-	return strings.Contains(err.Error(), grpc.ErrClientConnClosing.Error())
+	code := grpc.Code(err)
+	// Unavailable codes mean the system will be right back.
+	// (e.g., can't connect, lost leader)
+	// Treat Internal codes as if something failed, leaving the
+	// system in an inconsistent state, but retrying could make progress.
+	// (e.g., failed in middle of send, corrupted frame)
+	// TODO: are permanent Internal errors possible from grpc?
+	return code != codes.Unavailable && code != codes.Internal
 }
 
 func toErr(ctx context.Context, err error) error {
@@ -312,12 +310,20 @@ func toErr(ctx context.Context, err error) error {
 		return nil
 	}
 	err = rpctypes.Error(err)
-	switch {
-	case ctx.Err() != nil && strings.Contains(err.Error(), "context"):
-		err = ctx.Err()
-	case strings.Contains(err.Error(), ErrNoAvailableEndpoints.Error()):
+	if _, ok := err.(rpctypes.EtcdError); ok {
+		return err
+	}
+	code := grpc.Code(err)
+	switch code {
+	case codes.DeadlineExceeded:
+		fallthrough
+	case codes.Canceled:
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+	case codes.Unavailable:
 		err = ErrNoAvailableEndpoints
-	case strings.Contains(err.Error(), grpc.ErrClientConnClosing.Error()):
+	case codes.FailedPrecondition:
 		err = grpc.ErrClientConnClosing
 	}
 	return err
