@@ -17,6 +17,8 @@ message LogEntry {
   string node_id = 7;
   string task_id = 8;
   string task_name = 9;
+  string stack_id = 10;
+  string stack_name = 11;
 }
 
 message GetRequest {
