@@ -334,7 +334,7 @@ haproxy() { # Owner: freignat91
     --label amp.swarm="infrastructure" \
     -p 8080:8080 \
     -p 80:80 \
-    appcelerator/haproxy:test2
+    appcelerator/haproxy:latest
 }
 
 
