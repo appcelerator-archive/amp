@@ -21,6 +21,8 @@ var (
 	err            error
 )
 
+const serviceRoleLabelName = "io.amp.role"
+
 // Service is used to implement ServiceServer
 type Service struct{}
 
@@ -44,6 +46,10 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 
 // CreateService uses docker api to create a service
 func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
+	if req.ServiceSpec.Labels == nil {
+		req.ServiceSpec.Labels = make(map[string]string)
+	}
+	req.ServiceSpec.Labels[serviceRoleLabelName] = "user"
 	annotations := swarm.Annotations{
 		Name:   req.ServiceSpec.Name,
 		Labels: req.ServiceSpec.Labels,
