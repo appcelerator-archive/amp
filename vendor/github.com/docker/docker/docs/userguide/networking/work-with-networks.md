@@ -62,7 +62,8 @@ $ docker network inspect simple-network
             ]
         },
         "Containers": {},
-        "Options": {}
+        "Options": {},
+        "Labels": {}
     }
 ]
 ```
@@ -123,7 +124,7 @@ equivalent docker daemon flags used for docker0 bridge:
 | `com.docker.network.bridge.enable_ip_masquerade` | `--ip-masq` | Enable IP masquerading                                |
 | `com.docker.network.bridge.enable_icc`           | `--icc`     | Enable or Disable Inter Container Connectivity        |
 | `com.docker.network.bridge.host_binding_ipv4`    | `--ip`      | Default IP when binding container ports               |
-| `com.docker.network.mtu`                         | `--mtu`     | Set the containers network MTU                        |
+| `com.docker.network.driver.mtu`                  | `--mtu`     | Set the containers network MTU                        |
 
 The following arguments can be passed to `docker network create` for any network driver.
 
@@ -160,7 +161,8 @@ $ docker network inspect my-network
         "Containers": {},
         "Options": {
             "com.docker.network.bridge.host_binding_ipv4": "172.23.0.1"
-        }
+        },
+        "Labels": {}
     }
 ]
 
@@ -236,7 +238,8 @@ $ docker network inspect isolated_nw
                 "IPv6Address": ""
             }
         },
-        "Options": {}
+        "Options": {},
+        "Labels": {}
     }
 ]
 ```
@@ -797,7 +800,8 @@ $ docker network inspect isolated_nw
                 "IPv6Address": ""
             }
         },
-        "Options": {}
+        "Options": {},
+        "Labels": {}
     }
 ]
 ```
@@ -882,7 +886,7 @@ $ docker network disconnect isolated_nw container3
 ```
 
 ```bash
-docker network inspect isolated_nw
+$ docker network inspect isolated_nw
 
 [
     {
@@ -900,7 +904,8 @@ docker network inspect isolated_nw
             ]
         },
         "Containers": {},
-        "Options": {}
+        "Options": {},
+        "Labels": {}
     }
 ]
 

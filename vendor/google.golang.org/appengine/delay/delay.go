@@ -124,6 +124,9 @@ func Func(key string, i interface{}) *Function {
 		gob.Register(reflect.Zero(t.In(i)).Interface())
 	}
 
+	if old := funcs[f.key]; old != nil {
+		old.err = fmt.Errorf("multiple functions registered for %s in %s", key, file)
+	}
 	funcs[f.key] = f
 	return f
 }
@@ -137,7 +140,7 @@ type invocation struct {
 //   err := f.Call(c, ...)
 // is equivalent to
 //   t, _ := f.Task(...)
-//   err := taskqueue.Add(c, t, "")
+//   _, err := taskqueue.Add(c, t, "")
 func (f *Function) Call(c context.Context, args ...interface{}) error {
 	t, err := f.Task(args...)
 	if err != nil {

@@ -41,6 +41,7 @@ type ctlCtx struct {
 	t                 *testing.T
 	cfg               etcdProcessClusterConfig
 	quotaBackendBytes int64
+	noStrictReconfig  bool
 
 	epc *etcdProcessCluster
 
@@ -88,6 +89,10 @@ func withCompactPhysical() ctlOption {
 	return func(cx *ctlCtx) { cx.compactPhysical = true }
 }
 
+func withNoStrictReconfig() ctlOption {
+	return func(cx *ctlCtx) { cx.noStrictReconfig = true }
+}
+
 func testCtl(t *testing.T, testFunc func(ctlCtx), opts ...ctlOption) {
 	defer testutil.AfterTest(t)
 
@@ -106,6 +111,7 @@ func testCtl(t *testing.T, testFunc func(ctlCtx), opts ...ctlOption) {
 	if ret.quotaBackendBytes > 0 {
 		ret.cfg.quotaBackendBytes = ret.quotaBackendBytes
 	}
+	ret.cfg.noStrictReconfig = ret.noStrictReconfig
 
 	epc, err := newEtcdProcessCluster(&ret.cfg)
 	if err != nil {
@@ -140,15 +146,7 @@ func (cx *ctlCtx) PrefixArgs() []string {
 		panic("v3 proxy not implemented")
 	}
 
-	endpoints := ""
-	if backends := cx.epc.backends(); len(backends) != 0 {
-		es := []string{}
-		for _, b := range backends {
-			es = append(es, stripSchema(b.cfg.acurl))
-		}
-		endpoints = strings.Join(es, ",")
-	}
-	cmdArgs := []string{"../bin/etcdctl", "--endpoints", endpoints, "--dial-timeout", cx.dialTimeout.String()}
+	cmdArgs := []string{ctlBinPath, "--endpoints", strings.Join(cx.epc.grpcEndpoints(), ","), "--dial-timeout", cx.dialTimeout.String()}
 	if cx.epc.cfg.clientTLS == clientTLS {
 		if cx.epc.cfg.isClientAutoTLS {
 			cmdArgs = append(cmdArgs, "--insecure-transport=false", "--insecure-skip-tls-verify")
@@ -166,14 +164,4 @@ func (cx *ctlCtx) PrefixArgs() []string {
 
 func isGRPCTimedout(err error) bool {
 	return strings.Contains(err.Error(), "grpc: timed out trying to connect")
-}
-
-func stripSchema(s string) string {
-	if strings.HasPrefix(s, "http://") {
-		s = strings.Replace(s, "http://", "", -1)
-	}
-	if strings.HasPrefix(s, "https://") {
-		s = strings.Replace(s, "https://", "", -1)
-	}
-	return s
 }

@@ -2025,13 +2025,8 @@ func (s *DockerSuite) TestRunBindMounts(c *check.C) {
 // Ensure that CIDFile gets deleted if it's empty
 // Perform this test by making `docker run` fail
 func (s *DockerSuite) TestRunCidFileCleanupIfEmpty(c *check.C) {
-	// Windows Server 2016 RS1 builds load the windowsservercore image from a tar rather than
-	// a .WIM file, and the tar layer has the default CMD set (same as the Linux ubuntu image),
-	// where-as the TP5 .WIM had a blank CMD. Hence this test is not applicable on RS1 or later
-	// builds as the command won't fail as it's not blank
-	if daemonPlatform == "windows" && windowsDaemonKV >= 14375 {
-		c.Skip("Not applicable on Windows RS1 or later builds")
-	}
+	// Skip on Windows. Base image on Windows has a CMD set in the image.
+	testRequires(c, DaemonIsLinux)
 
 	tmpDir, err := ioutil.TempDir("", "TestRunCidFile")
 	if err != nil {
@@ -2401,30 +2396,6 @@ func (s *DockerSuite) TestRunExposePort(c *check.C) {
 	out, _, err := dockerCmdWithError("run", "--expose", "80000", "busybox")
 	c.Assert(err, checker.NotNil, check.Commentf("--expose with an invalid port should error out"))
 	c.Assert(out, checker.Contains, "invalid range format for --expose")
-}
-
-func (s *DockerSuite) TestRunUnknownCommand(c *check.C) {
-	out, _, _ := dockerCmdWithStdoutStderr(c, "create", "busybox", "/bin/nada")
-
-	cID := strings.TrimSpace(out)
-	_, _, err := dockerCmdWithError("start", cID)
-
-	// Windows and Linux are different here by architectural design. Linux will
-	// fail to start the container, so an error is expected. Windows will
-	// successfully start the container, and once started attempt to execute
-	// the command which will fail.
-	if daemonPlatform == "windows" {
-		// Wait for it to exit.
-		waitExited(cID, 30*time.Second)
-		c.Assert(err, check.IsNil)
-	} else {
-		c.Assert(err, check.NotNil)
-	}
-
-	rc := inspectField(c, cID, "State.ExitCode")
-	if rc == "0" {
-		c.Fatalf("ExitCode(%v) cannot be 0", rc)
-	}
 }
 
 func (s *DockerSuite) TestRunModeIpcHost(c *check.C) {
