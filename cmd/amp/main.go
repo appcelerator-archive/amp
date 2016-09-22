@@ -33,8 +33,6 @@ var (
 
 // All main does is process commands and flags and invoke the app
 func main() {
-	fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
-
 	cobra.OnInitialize(func() {
 		InitConfig(configFile, &Config, verbose, serverAddr)
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
@@ -43,7 +41,6 @@ func main() {
 		if Config.ServerAddress == "" {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
-		fmt.Println("Server: " + Config.ServerAddress)
 		AMP = client.NewAMP(&Config)
 		AMP.Connect()
 		cli.AtExit(func() {
@@ -62,7 +59,16 @@ func main() {
 			fmt.Println(Config)
 		},
 	}
-
+	// infoCmd represents the amp information
+	infoCmd := &cobra.Command{
+		Use:   "info",
+		Short: "Display amp version and server information",
+		Long:  `Display amp version and server information.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+			fmt.Printf("Server: %s\n", Config.ServerAddress)
+		},
+	}
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
@@ -70,6 +76,7 @@ func main() {
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
 	RootCmd.AddCommand(configCmd)
+	RootCmd.AddCommand(infoCmd)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		cli.Exit(-1)
