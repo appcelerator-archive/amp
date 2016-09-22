@@ -82,7 +82,7 @@ func init() {
 	RootCmd.AddCommand(StackCmd)
 	flags := upCmd.Flags()
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
-	rmCmd.Flags().Bool("force", false, "Remove the stack whatever condition")
+	rmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
 	listCmd.Flags().BoolP("quiet", "q", false, "return only stack id to be use with grep")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(startCmd)
@@ -186,18 +186,20 @@ func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if cmd.Flag("force").Value.String() == "true" {
 		force = true
 	}
-	request := &stack.RemoveRequest{
-		StackIdent: ident,
-		Force:      force,
-	}
+	for _, stackIdent := range args {
+		request := &stack.RemoveRequest{
+			StackIdent: stackIdent,
+			Force:      force,
+		}
 
-	client := stack.NewStackServiceClient(amp.Conn)
-	reply, err := client.Remove(context.Background(), request)
-	if err != nil {
-		return err
-	}
+		client := stack.NewStackServiceClient(amp.Conn)
+		reply, err := client.Remove(context.Background(), request)
+		if err != nil {
+			return err
+		}
 
-	fmt.Println(reply)
+		fmt.Println(reply.StackId)
+	}
 	return nil
 }
 
