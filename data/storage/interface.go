@@ -3,8 +3,6 @@ package storage
 import (
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -46,15 +44,10 @@ type Interface interface {
 	// List returns all the values that match the filter.
 	List(ctx context.Context, key string, filter Filter, obj proto.Message, out *[]proto.Message) error
 
-	// ListRaw returns all the raw entries matching the filter.
-	ListRaw(ctx context.Context, key string, filter Filter) ([]*mvccpb.KeyValue, error)
-
 	// Watch(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
 
 	// WatchList(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
 
-	Watch(ctx context.Context, key string, recursive bool) clientv3.WatchChan
-	StopWatching() error
 	// CompareAndSet atomically sets the value to the given updated value if the current value == the expected value
 	CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error
 }

@@ -13,8 +13,6 @@ import (
 	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -232,78 +230,6 @@ func TestList(t *testing.T) {
 	}
 }
 
-func TestListRaw(t *testing.T) {
-	// generic context
-	ctx := context.Background()
-
-	// store everything under amp/foo/
-	key := "foo"
-
-	// this is a "template" object that provides a concrete type for list to unmarshal into
-	obj := &storage.Project{}
-
-	// unlimited ttl
-	ttl := int64(0)
-
-	// will store values that we store, which we will use to compare list results against
-	keys := []string{}
-	vals := []*storage.Project{}
-
-	// this will create a bunch of storage.Project items to store in etcd
-	// it will also save them to vals so we can compare them against what
-	// we get back when we call the list method to ensure actual matches expected
-	for i := 0; i < 5; i++ {
-		id := strconv.Itoa(i)
-		name := fmt.Sprintf("bar%d", i)
-		subkey := path.Join(key, id)
-		keys = append(keys, subkey)
-		vals = append(vals, &storage.Project{Id: id, Name: name})
-
-		err := store.Create(ctx, subkey, vals[i], obj, ttl)
-		if err != nil {
-			t.Error(err)
-		}
-	}
-
-	// use list with the Everything filter to fetch all the items we stored
-	raw, err := store.ListRaw(ctx, key, storage.Everything)
-	if err != nil {
-		t.Error(err)
-	}
-
-	// compare the list that we got back (out) with the items we created (vals)
-	for i := 0; i < len(raw); i++ {
-		if path.Join("amp", keys[i]) != string(raw[i].Key) {
-			t.Errorf("expected %v, got %v", path.Join("amp", keys[i]), string(raw[i].Key))
-		}
-
-		msg := &storage.Project{}
-		proto.Unmarshal(raw[i].Value, msg)
-		if !proto.Equal(vals[i], msg) {
-			t.Errorf("expected %v, got %v", vals[i], msg)
-		}
-
-		// actually inspect individual message contents
-		// Unfortunately, without generics in Go, this requires a type assertion
-		name := fmt.Sprintf("bar%d", i)
-		if msg.Name != name {
-			t.Errorf("id: %d, name: %s does not match expected name: %s", msg.Id, msg.Name, name)
-		}
-
-		// clean up after ourselves -- delete the item
-		id := strconv.Itoa(i)
-		subkey := path.Join(key, id)
-		err := store.Delete(ctx, subkey, false, obj)
-		if err != nil {
-			t.Error(err)
-		}
-		// confirm the deleted object matches the original object
-		if !proto.Equal(vals[i], obj) {
-			t.Errorf("expected %v, deleted %v", vals[i], obj)
-		}
-	}
-}
-
 func TestCompareAndSet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	defer cancel()
@@ -323,43 +249,6 @@ func TestCompareAndSet(t *testing.T) {
 	}
 	if !proto.Equal(update, actual) {
 		t.Errorf("expected %v, got %v", update, actual)
-	}
-}
-
-func TestWatch(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
-	defer cancel()
-	key := "watch"
-
-	watcher := store.Watch(ctx, key, false)
-	expect := &state.State{Value: 0}
-	update := &state.State{Value: 42}
-	store.Delete(ctx, key, false, &state.State{})
-	store.Create(ctx, key, expect, nil, 0)
-	if err := store.CompareAndSet(ctx, key, expect, update); err != nil {
-		t.Error(err)
-	}
-
-	timeout := time.After(100 * time.Millisecond)
-
-	received := 0
-	responses := []clientv3.WatchResponse{}
-WatchLoop:
-	for {
-		select {
-		case watchResponse := <-watcher:
-			received++
-			responses = append(responses, watchResponse)
-
-		case <-timeout:
-			break WatchLoop
-		}
-	}
-
-	assert.Equal(t, received, 3)
-
-	if err := store.StopWatching(); err != nil {
-		t.Error(err)
 	}
 }
 
