@@ -25,7 +25,8 @@ message ServiceSpec {
   uint64 replicas = 3;
   map<string, string> env = 4;
   map<string, string> labels = 5;
-  repeated PublishSpec publish_specs = 6;
+  map<string, string> container_labels = 6;
+  repeated PublishSpec publish_specs = 7;
 }
 
 message PublishSpec {

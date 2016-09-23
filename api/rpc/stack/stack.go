@@ -111,6 +111,11 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	}
 	serv.Labels[stackIDLabelName] = stack.Id
 	serv.Labels[stackNameLabelName] = stack.Name
+	if serv.ContainerLabels == nil {
+		serv.ContainerLabels = make(map[string]string)
+	}
+	serv.ContainerLabels[stackIDLabelName] = stack.Id
+	serv.ContainerLabels[stackNameLabelName] = stack.Name
 	serv.Name = stack.Name + "-" + serv.Name
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,
