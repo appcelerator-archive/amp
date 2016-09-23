@@ -46,52 +46,67 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 
 // CreateService uses docker api to create a service
 func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
-	if req.ServiceSpec.Labels == nil {
-		req.ServiceSpec.Labels = make(map[string]string)
-	}
-	req.ServiceSpec.Labels[serviceRoleLabelName] = "user"
-	annotations := swarm.Annotations{
-		Name:   req.ServiceSpec.Name,
-		Labels: req.ServiceSpec.Labels,
-	}
 
-	containerSpec := swarm.ContainerSpec{
-		Image: req.ServiceSpec.Image,
-	}
-
-	taskSpec := swarm.TaskSpec{
-		ContainerSpec: containerSpec,
-	}
-
-	networks := []swarm.NetworkAttachmentConfig{
-		{
-			Target:  defaultNetwork,
-			Aliases: []string{req.ServiceSpec.Name},
+	serv := req.ServiceSpec
+	//prepare swarm.ServiceSpec full instance
+	service := swarm.ServiceSpec{
+		Annotations: swarm.Annotations{
+			Name:   serv.Name,
+			Labels: make(map[string]string),
 		},
-	}
-
-	mode := swarm.ServiceMode{
-		Replicated: &swarm.ReplicatedService{
-			Replicas: &req.ServiceSpec.Replicas,
+		TaskTemplate: swarm.TaskSpec{
+			ContainerSpec: swarm.ContainerSpec{
+				Image:           serv.Image,
+				Args:            nil, //[]string
+				Env:             nil, //[]string
+				Labels:          serv.ContainerLabels,
+				Dir:             "",
+				User:            "",
+				Groups:          nil, //[]string
+				Mounts:          nil, //[]mount.Mount
+				StopGracePeriod: nil, //*time.Duration
+			},
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  defaultNetwork,
+					Aliases: []string{req.ServiceSpec.Name},
+				},
+			},
+			Resources:     nil, //*ResourceRequirements
+			RestartPolicy: nil, //*RestartPolicy
+			Placement: &swarm.Placement{
+				Constraints: nil, //[]string
+			},
+			LogDriver: nil, //*Driver
 		},
+		Networks: nil, //[]NetworkAttachmentConfig
+		Mode: swarm.ServiceMode{
+			Replicated: &swarm.ReplicatedService{
+				Replicas: &serv.Replicas,
+			},
+		},
+		UpdateConfig: &swarm.UpdateConfig{
+			Parallelism:   0,
+			Delay:         0,
+			FailureAction: "",
+		},
+		EndpointSpec: nil, // &EndpointSpec
 	}
-
-	swarmSpec := swarm.ServiceSpec{
-		Annotations:  annotations,
-		TaskTemplate: taskSpec,
-		Networks:     networks,
-		Mode:         mode,
+	//add common labels
+	if service.Annotations.Labels == nil {
+		service.Annotations.Labels = make(map[string]string)
 	}
+	service.Annotations.Labels[serviceRoleLabelName] = "user"
 
 	if req.ServiceSpec.PublishSpecs != nil {
 		nn := len(req.ServiceSpec.PublishSpecs)
 		if nn > 0 {
-			swarmSpec.EndpointSpec = &swarm.EndpointSpec{
+			service.EndpointSpec = &swarm.EndpointSpec{
 				Mode:  swarm.ResolutionModeVIP,
 				Ports: make([]swarm.PortConfig, nn, nn),
 			}
 			for i, publish := range req.ServiceSpec.PublishSpecs {
-				swarmSpec.EndpointSpec.Ports[i] = swarm.PortConfig{
+				service.EndpointSpec.Ports[i] = swarm.PortConfig{
 					Name:          publish.Name,
 					Protocol:      swarm.PortConfigProtocol(publish.Protocol),
 					TargetPort:    publish.InternalPort,
@@ -102,7 +117,7 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	}
 	options := types.ServiceCreateOptions{}
 
-	r, err := docker.ServiceCreate(ctx, swarmSpec, options)
+	r, err := docker.ServiceCreate(ctx, service, options)
 	if err != nil {
 		return nil, err
 	}

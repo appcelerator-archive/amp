@@ -2,6 +2,7 @@ package stack_test
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -128,28 +129,30 @@ func TestMain(m *testing.M) {
 //Test two stacks life cycle in the same time
 func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	//Start stack essai1
-	t.Log("start stack essai1")
-	rUp1, errUp1 := client.Up(ctx, &stack.UpRequest{StackName: "essai1", Stackfile: example1})
+	name1 := fmt.Sprintf("test1-%d", rand.Int31n(10000000))
+	name2 := fmt.Sprintf("test2-%d", rand.Int31n(10000000))
+	//Start stack test1
+	t.Log("start stack " + name1)
+	rUp1, errUp1 := client.Up(ctx, &stack.UpRequest{StackName: name1, Stackfile: example1})
 	if errUp1 != nil {
 		t.Fatal(errUp1)
 	}
-	//Start stack essai2
-	t.Log("start stack essai2")
-	rUp2, errUp2 := client.Up(ctx, &stack.UpRequest{StackName: "essai2", Stackfile: example2})
+	//Start stack test2
+	t.Log("start stack " + name2)
+	rUp2, errUp2 := client.Up(ctx, &stack.UpRequest{StackName: name2, Stackfile: example2})
 	if errUp2 != nil {
 		t.Fatal(errUp2)
 	}
-	assert.NotEmpty(t, rUp1.StackId, "Stack essai1 StackId should not be empty")
-	assert.NotEmpty(t, rUp2.StackId, "Stack essai2 StackId should not be empty")
+	assert.NotEmpty(t, rUp1.StackId, "Stack test1 StackId should not be empty")
+	assert.NotEmpty(t, rUp2.StackId, "Stack test2 StackId should not be empty")
 	time.Sleep(3 * time.Second)
 	//verifyusing ls
 	t.Log("perform stack ls")
 	listRequest := stack.ListRequest{}
-	rls, errls := client.List(ctx, &listRequest)
+	_, errls := client.List(ctx, &listRequest)
 	if errls != nil {
 		t.Fatal(errls)
 	}
-	assert.Equal(t, len(rls.List), 2, "amp stack ls should return two lines")
 	//Prepare requests
 	stackRequest1 := stack.StackRequest{
 		StackIdent: rUp1.StackId,
@@ -157,30 +160,30 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	stackRequest2 := stack.StackRequest{
 		StackIdent: rUp2.StackId,
 	}
-	//Stop stack essai1
-	t.Log("stop stack essai1")
+	//Stop stack test1
+	t.Log("stop stack " + name1)
 	rStop1, errStop1 := client.Stop(ctx, &stackRequest1)
 	if errStop1 != nil {
 		t.Fatal(errStop1)
 	}
-	assert.NotEmpty(t, rStop1.StackId, "Stack essai1 StackId should not be empty")
-	//Restart stack essai1
-	t.Log("restart stack essai1")
+	assert.NotEmpty(t, rStop1.StackId, "Stack test1 StackId should not be empty")
+	//Restart stack test1
+	t.Log("restart stack " + name1)
 	rRestart1, errRestart1 := client.Start(ctx, &stackRequest1)
 	if errRestart1 != nil {
 		t.Fatal(errRestart1)
 	}
-	assert.NotEmpty(t, rRestart1.StackId, "Stack essai1 StackId should not be empty")
+	assert.NotEmpty(t, rRestart1.StackId, "Stack test1 StackId should not be empty")
 	time.Sleep(1 * time.Second)
-	//Stop again stack essai1
-	t.Log("stop again stack essai1")
+	//Stop again stack test1
+	t.Log("stop again stack " + name1)
 	rStop12, errStop12 := client.Stop(ctx, &stackRequest1)
 	if errStop12 != nil {
 		t.Fatal(errStop12)
 	}
-	assert.NotEmpty(t, rStop12.StackId, "Stack essai1 StackId should not be empty")
-	t.Log("remove stack essai1")
-	//Remove stack essai1
+	assert.NotEmpty(t, rStop12.StackId, "Stack test1 StackId should not be empty")
+	t.Log("remove stack " + name1)
+	//Remove stack test1
 	removeRequest1 := stack.RemoveRequest{
 		StackIdent: rUp1.StackId,
 		Force:      false,
@@ -189,16 +192,16 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	if errRemove1 != nil {
 		t.Fatal(errRemove1)
 	}
-	assert.NotEmpty(t, rRemove1.StackId, "Stack essai1 StackId should not be empty")
-	//Stop stack essai2
-	t.Log("stop stack essai2")
+	assert.NotEmpty(t, rRemove1.StackId, "Stack test1 StackId should not be empty")
+	//Stop stack test2
+	t.Log("stop stack " + name2)
 	rStop2, errStop2 := client.Stop(ctx, &stackRequest2)
 	if errStop2 != nil {
 		t.Fatal(errStop2)
 	}
-	assert.NotEmpty(t, rStop2.StackId, "Stack essai2 StackId should not be empty")
-	//Remove stack essai2
-	t.Log("remove stack essai2")
+	assert.NotEmpty(t, rStop2.StackId, "Stack test2 StackId should not be empty")
+	//Remove stack test2
+	t.Log("remove stack " + name2)
 	removeRequest2 := stack.RemoveRequest{
 		StackIdent: rUp2.StackId,
 		Force:      false,
@@ -207,7 +210,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	if errRemove2 != nil {
 		t.Fatal(errRemove2)
 	}
-	assert.NotEmpty(t, rRemove2.StackId, "Stack essai2 StackId should not be empty")
+	assert.NotEmpty(t, rRemove2.StackId, "Stack test2 StackId should not be empty")
 }
 
 func TestTransitionsFromStopped(t *testing.T) {
