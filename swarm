@@ -180,7 +180,7 @@ removeservices() {
   stop=$(docker service ls -q --filter "label=io.amp.role=$ROLE")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current infrastructure services..." && docker service rm $stop || true
   stop=$(docker service ls -q --filter "label=io.amp.role=user")
-  [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true  
+  [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true
 }
 
 # start the services on the swarm

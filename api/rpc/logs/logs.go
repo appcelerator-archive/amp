@@ -42,30 +42,25 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 
 	masterQuery := elastic.NewBoolQuery()
-	if in.ServiceId != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("service_id", in.ServiceId))
-	}
-	if in.ServiceName != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("service_name", in.ServiceName))
-	}
-	if in.ContainerId != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("container_id", in.ContainerId))
-	}
-	if in.NodeId != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("node_id", in.NodeId))
-	}
-	if in.ServiceIsh != "" {
-		queryString := elastic.NewQueryStringQuery(in.ServiceIsh + "*")
-		queryString.Field("service_id")
-		queryString.Field("service_name")
-		queryString.AnalyzeWildcard(true)
-		masterQuery.Must(queryString)
+	if in.Container != "" {
+		masterQuery.Must(elastic.NewPrefixQuery("container_id", in.Container))
 	}
 	if in.Message != "" {
 		queryString := elastic.NewQueryStringQuery(in.Message + "*")
 		queryString.Field("message")
 		queryString.AnalyzeWildcard(true)
 		masterQuery.Must(queryString)
+	}
+	if in.Node != "" {
+		masterQuery.Must(elastic.NewPrefixQuery("node_id", in.Node))
+	}
+	if in.Service != "" {
+		masterQuery.Should(elastic.NewPrefixQuery("service_id", in.Service))
+		masterQuery.Should(elastic.NewPrefixQuery("service_name", in.Service))
+	}
+	if in.Stack != "" {
+		masterQuery.Should(elastic.NewPrefixQuery("stack_id", in.Stack))
+		masterQuery.Should(elastic.NewPrefixQuery("stack_name", in.Stack))
 	}
 	// TODO timestamp queries
 
@@ -134,25 +129,24 @@ func parseProtoLogEntry(data []byte) (logEntry LogEntry, err error) {
 
 func filter(entry *LogEntry, in *GetRequest) bool {
 	match := true
-	if in.ServiceId != "" {
-		match = strings.EqualFold(entry.ServiceId, in.ServiceId)
-	}
-	if in.ServiceName != "" {
-		match = strings.EqualFold(entry.ServiceName, in.ServiceName)
-	}
-	if in.ContainerId != "" {
-		match = strings.EqualFold(entry.ContainerId, in.ContainerId)
-	}
-	if in.NodeId != "" {
-		match = strings.EqualFold(entry.NodeId, in.NodeId)
-	}
-	if in.ServiceIsh != "" {
-		serviceID := strings.ToLower(entry.ServiceId)
-		serviceName := strings.ToLower(entry.ServiceName)
-		match = strings.HasPrefix(serviceID, strings.ToLower(in.ServiceIsh)) || strings.HasPrefix(serviceName, strings.ToLower(in.ServiceIsh))
+	if in.Container != "" {
+		match = strings.HasPrefix(strings.ToLower(entry.ContainerId), strings.ToLower(in.Container))
 	}
 	if in.Message != "" {
 		match = strings.Contains(strings.ToLower(entry.Message), strings.ToLower(in.Message))
+	}
+	if in.Node != "" {
+		match = strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
+	}
+	if in.Service != "" {
+		serviceID := strings.ToLower(entry.ServiceId)
+		serviceName := strings.ToLower(entry.ServiceName)
+		match = strings.HasPrefix(serviceID, strings.ToLower(in.Service)) || strings.HasPrefix(serviceName, strings.ToLower(in.Service))
+	}
+	if in.Stack != "" {
+		stackID := strings.ToLower(entry.StackId)
+		stackName := strings.ToLower(entry.StackName)
+		match = strings.HasPrefix(stackID, strings.ToLower(in.Stack)) || strings.HasPrefix(stackName, strings.ToLower(in.Stack))
 	}
 	return match
 }
