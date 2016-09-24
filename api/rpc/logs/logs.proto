@@ -22,14 +22,12 @@ message LogEntry {
 }
 
 message GetRequest {
-  string timestamp = 1;
-  string service_id = 2;
-  string service_name = 3;
-  string message = 4;
-  string container_id = 5;
-  string node_id = 6;
-  sint64 size = 7;
-  string service_ish = 8;
+  string container = 1;
+  string message = 2;
+  string node = 3;
+  sint64 size = 4;
+  string service = 5;
+  string stack = 6;
 }
 
 message GetReply {

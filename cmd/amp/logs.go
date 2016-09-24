@@ -12,7 +12,7 @@ import (
 )
 
 var logsCmd = &cobra.Command{
-	Use:   "logs",
+	Use:   "logs [OPTIONS] SERVICE",
 	Short: "Fetch the logs",
 	Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,14 +25,13 @@ var logsCmd = &cobra.Command{
 
 func init() {
 	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
-	logsCmd.Flags().String("service-id", "", "Filter by the given service id")
-	logsCmd.Flags().String("service-name", "", "Filter by the given service name")
-	logsCmd.Flags().String("message", "", "Filter the message content by the given pattern")
-	logsCmd.Flags().String("container", "", "Filter by the given container id")
-	logsCmd.Flags().String("node", "", "Filter by the given node id")
-	logsCmd.Flags().StringP("number", "n", "100", "Number of results")
-	logsCmd.Flags().BoolP("meta", "m", false, "Display entry metadata")
+	logsCmd.Flags().String("container", "", "Filter by the given container")
 	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
+	logsCmd.Flags().String("message", "", "Filter the message content by the given pattern")
+	logsCmd.Flags().BoolP("meta", "m", false, "Display entry metadata")
+	logsCmd.Flags().String("node", "", "Filter by the given node")
+	logsCmd.Flags().StringP("number", "n", "100", "Number of results")
+	logsCmd.Flags().String("stack", "", "Filter by the given stack")
 
 	RootCmd.AddCommand(logsCmd)
 }
@@ -45,8 +44,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 	if amp.Verbose() {
 		fmt.Println("Logs")
-		fmt.Printf("service-id: %v\n", cmd.Flag("service_id").Value)
-		fmt.Printf("service-name: %v\n", cmd.Flag("service_name").Value)
+		fmt.Printf("stack: %v\n", cmd.Flag("stack").Value)
 		fmt.Printf("message: %v\n", cmd.Flag("message").Value)
 		fmt.Printf("container: %v\n", cmd.Flag("container_id").Value)
 		fmt.Printf("node: %v\n", cmd.Flag("node_id").Value)
@@ -56,13 +54,12 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	request := logs.GetRequest{}
 	if len(args) > 0 {
-		request.ServiceIsh = args[0]
+		request.Service = args[0]
 	}
-	request.ServiceId = cmd.Flag("service-id").Value.String()
-	request.ServiceName = cmd.Flag("service-name").Value.String()
+	request.Container = cmd.Flag("container").Value.String()
+	request.Node = cmd.Flag("node").Value.String()
 	request.Message = cmd.Flag("message").Value.String()
-	request.ContainerId = cmd.Flag("container").Value.String()
-	request.NodeId = cmd.Flag("node").Value.String()
+	request.Stack = cmd.Flag("stack").Value.String()
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
 		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
 	}
