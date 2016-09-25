@@ -10,11 +10,12 @@ import (
 )
 
 type serviceSpec struct {
-	Image       string        `yaml:"image"`
-	Replicas    uint64        `yaml:"replicas"`
-	Environment interface{}   `yaml:"environment"`
-	Labels      interface{}   `yaml:"labels"`
-	Public      []publishSpec `yaml:"public"`
+	Image           string        `yaml:"image"`
+	Public          []publishSpec `yaml:"public"`
+	Replicas        uint64        `yaml:"replicas"`
+	Environment     interface{}   `yaml:"environment"`
+	Labels          interface{}   `yaml:"labels"`
+	ContainerLabels interface{}   `yaml:"container_labels"`
 }
 
 type publishSpec struct {
@@ -62,6 +63,22 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 			}
 		}
 
+		// try to parse container labels as a map
+		// else try to parse container labels as string entries
+		containerLabels := map[string]string{}
+		if labelMap, ok := spec.ContainerLabels.(map[interface{}]interface{}); ok {
+			for k, v := range labelMap {
+				containerLabels[k.(string)] = v.(string)
+			}
+		} else if labelList, ok := spec.ContainerLabels.([]interface{}); ok {
+			for _, s := range labelList {
+				a := strings.Split(s.(string), "=")
+				k := a[0]
+				v := a[1]
+				containerLabels[k] = v
+			}
+		}
+
 		replicas := spec.Replicas
 		if replicas == 0 {
 			replicas = 1
@@ -78,12 +95,13 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 		}
 
 		stack.Services = append(stack.Services, &service.ServiceSpec{
-			Name:         name,
-			Image:        spec.Image,
-			Replicas:     replicas,
-			Env:          env,
-			Labels:       labels,
-			PublishSpecs: publishSpecs,
+			Name:            name,
+			Image:           spec.Image,
+			PublishSpecs:    publishSpecs,
+			Replicas:        replicas,
+			Env:             env,
+			Labels:          labels,
+			ContainerLabels: containerLabels,
 		})
 	}
 
