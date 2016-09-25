@@ -25,7 +25,6 @@ IMAGES=(
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
-  appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
@@ -40,7 +39,6 @@ MINIMAGES=(
   appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
-  appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
@@ -59,7 +57,6 @@ SERVICES=(
   haproxy
   influxdb
   kafka
-  kibana
   kapacitor
   telegrafagent
   registry
@@ -75,7 +72,6 @@ MINSERVICES=(
   grafana
   kafka
   influxdb
-  kibana
   telegrafagent
   registry
   zookeeper
@@ -209,7 +205,6 @@ ls() {
   docker service ls --filter "label=io.amp.role=$ROLE"
 }
 
-
 monitor() {
   interval=${1:-5}
   clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
@@ -261,7 +256,6 @@ elasticsearch() { # Owner: bertrand-quenin
     -p 9300:9300 \
     appcelerator/elasticsearch-amp:latest
 }
-
 
 etcd() { # Owner: subfuzion
   docker service create --with-registry-auth --network amp-swarm --name etcd \
@@ -321,17 +315,6 @@ kapacitor() { # Owner: ndegory
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
-
-kibana() { # Owner: ndegory
-  docker service create --with-registry-auth --network amp-swarm --name kibana \
-    --replicas 1 \
-    --label io.amp.role="infrastructure" \
-    -p 5601:5601 \
-    -e ELASTICSEARCH_URL=http://elasticsearch:9200 \
-    appcelerator/kibana:latest
-
-}
-
 haproxy() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-swarm,amp-public --name haproxy \
     --label io.amp.role="infrastructure" \
@@ -339,7 +322,6 @@ haproxy() { # Owner: freignat91
     -p 80:80 \
     appcelerator/haproxy:latest
 }
-
 
 telegrafagent() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-swarm --name telegraf-agent \
