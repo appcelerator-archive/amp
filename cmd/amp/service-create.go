@@ -68,7 +68,7 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		Image:        image,
 		Name:         name,
 		Replicas:     replicas,
-		Env:          stringmap(env),
+		Env:          env,
 		PublishSpecs: parsedSpecs,
 	}
 
@@ -89,6 +89,7 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// TODO: use this when adding label support
 func stringmap(a []string) map[string]string {
 	m := make(map[string]string)
 	for _, e := range a {

@@ -19,7 +19,7 @@ type TestSpec struct {
 var (
 	testDir = "./test_samples"
 
-	sample1 = map[string]serviceMap{
+	sample1 = map[string]serviceSpec{
 		"pinger": {
 			Image:    "appcelerator/pinger",
 			Replicas: 2,
@@ -34,7 +34,7 @@ var (
 		},
 	}
 
-	sample2 = map[string]serviceMap{
+	sample2 = map[string]serviceSpec{
 		"web": {
 			Image:    "appcelerator/amp-demo-service",
 			Replicas: 3,
@@ -57,7 +57,7 @@ var (
 			},
 		},
 	}
-	sample3 = map[string]serviceMap{
+	sample3 = map[string]serviceSpec{
 		"pinger": {
 			Image:    "appcelerator/pinger",
 			Replicas: 2,
@@ -74,7 +74,7 @@ var (
 			},
 		},
 	}
-	sample4 = map[string]serviceMap{
+	sample4 = map[string]serviceSpec{
 		"python": {
 			Image:    "tutum/quickstart-python",
 			Replicas: 3,
@@ -100,8 +100,8 @@ var (
 		},
 	}
 
-	// map of filenames to a map of serviceMap elements (each file has one or more)
-	compareStructs = map[string]map[string]serviceMap{
+	// map of filenames to a map of serviceSpec elements (each file has one or more)
+	compareStructs = map[string]map[string]serviceSpec{
 		"sample-01.yml":  sample1,
 		"sample-02.yml":  sample2,
 		"sample-03.yml":  sample3,
@@ -147,28 +147,22 @@ func loadFiles(t *testing.T) []*TestSpec {
 }
 
 func parse(t *testing.T, test *TestSpec) {
-	serviceSpecMap, err := parseAsServiceMap(test.contents)
+	serviceMap, err := parseServiceMap(test.contents)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	for name, spec := range serviceSpecMap {
+	for name, spec := range serviceMap {
 		if !spec.compare(t, compareStructs[test.fileName][name]) {
 			t.Logf("name: %s, valid: %t, contents:\n%s", test.fileName, test.valid, string(test.contents))
-			t.Log(serviceSpecMap)
+			t.Log(serviceMap)
 			t.Errorf("FAIL: %s (%s)", name, test.fileName)
 		}
 	}
-
-	// out, err := NewStackfromYaml(context.Background(), test.contents)
-	// if err != nil {
-	// 	t.Logf("fatal error parsing contents of %s: %v", test.fileName, err)
-	// }
-	// t.Logf("parsed => \n%v", out)
 }
 
-func (a serviceMap) compare(t *testing.T, b serviceMap) bool {
+func (a serviceSpec) compare(t *testing.T, b serviceSpec) bool {
 	if a.Image != b.Image {
 		t.Logf("Images don't match: %v != %v\n", a.Image, b.Image)
 		return false
@@ -221,8 +215,8 @@ func (a publishSpec) compare(b publishSpec) bool {
 	return true
 }
 
-// compareEnvironment returns true if and only if both serviceMap maps are equal (performs deep equal check)
-func compareEnvironment(a serviceMap, b serviceMap) bool {
+// compareEnvironment returns true if and only if both serviceSpec maps are equal (performs deep equal check)
+func compareEnvironment(a serviceSpec, b serviceSpec) bool {
 	ae := environmentToMap(a.Environment)
 	be := environmentToMap(b.Environment)
 	return reflect.DeepEqual(ae, be)
