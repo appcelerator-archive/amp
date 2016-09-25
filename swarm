@@ -72,10 +72,8 @@ MINSERVICES=(
   amplogworker
   etcd
   elasticsearch
-  grafana
   kafka
   influxdb
-  kibana
   telegrafagent
   registry
   zookeeper
