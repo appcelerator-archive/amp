@@ -13,7 +13,7 @@ import (
 var (
 	createCmd = &cobra.Command{
 		Use:   "create [OPTIONS] IMAGE [CMD] [ARG...]",
-		Short: "Create a service",
+		Short: "Create a new service",
 		Long:  `Create a new service`,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := create(AMP, cmd, args)

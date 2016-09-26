@@ -2,23 +2,6 @@ syntax = "proto3";
 
 package service;
 
-service Service {
-  rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse) {}
-}
-
-message ServiceCreateRequest {
-  ServiceSpec service_spec = 1;
-}
-
-message ServiceCreateResponse {
-  string id = 1;
-}
-
-message ServiceRemoveRequest {
-  string service_id = 1;
-}
-
-
 message ServiceSpec {
   string image = 1;
   string name = 2;
@@ -34,4 +17,26 @@ message PublishSpec {
   string protocol = 2;
   uint32 publish_port = 3;
   uint32 internal_port = 4;
+}
+
+message ServiceCreateRequest {
+  ServiceSpec service_spec = 1;
+}
+
+message ServiceCreateResponse {
+  string id = 1;
+}
+
+message RemoveRequest {
+  string ident = 1;
+}
+
+message RemoveResponse {
+  string ident = 1;
+}
+
+
+service Service {
+  rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse) {}
+  rpc Remove (RemoveRequest) returns (RemoveResponse) {}
 }
