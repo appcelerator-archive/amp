@@ -29,27 +29,31 @@ var (
 	// service name
 	name string
 
+	// service mode
+	mode = "replicated"
+
 	// number of tasks
-	replicas uint64 = 1
+	replicas uint64
 
 	// environment variables
-	env []string
+	env = []string{}
 
 	// service labels
-	serviceLabels []string
+	serviceLabels = []string{}
 
 	// container labels
-	containerLabels []string
+	containerLabels = []string{}
 
 	// ports
-	publishSpecs []string
+	publishSpecs = []string{}
 )
 
 func init() {
 	flags := createCmd.Flags()
 	flags.StringVar(&name, "name", name, "Service name")
-	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], i.e. '80:3000/tcp' or 'admin:3000'")
-	flags.Uint64Var(&replicas, "replicas", replicas, "Number of tasks (default none)")
+	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], ex: '80:3000/tcp' or 'admin:3000'")
+	flags.StringVar(&mode, "mode", mode, "Service mode (replicated or global)")
+	flags.Uint64Var(&replicas, "replicas", replicas, "Number of tasks")
 	flags.StringSliceVarP(&env, "env", "e", env, "Set environment variables (default [])")
 	flags.StringSliceVarP(&serviceLabels, "label", "l", serviceLabels, "Set service labels (default [])")
 	flags.StringSliceVar(&containerLabels, "container-label", containerLabels, "Set container labels for service replicas (default [])")
@@ -70,11 +74,34 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// add service mode to spec
+	var swarmMode service.SwarmMode
+	switch mode {
+	case "replicated":
+		if replicas < 1 {
+			// if replicated then must have at least 1 replica
+			replicas = 1
+		}
+		swarmMode = &service.ServiceSpec_Replicated{
+			Replicated: &service.ReplicatedService{Replicas: replicas},
+		}
+	case "global":
+		if replicas != 0 {
+			// global mode can't specify replicas (only allowed 1 per node)
+			return fmt.Errorf("replicas can only be used with replicated mode")
+		}
+		swarmMode = &service.ServiceSpec_Global{
+			Global: &service.GlobalService{},
+		}
+	default:
+		return fmt.Errorf("invalid option for mode: %s", mode)
+	}
+
 	spec := &service.ServiceSpec{
 		Image:           image,
 		Name:            name,
-		Replicas:        replicas,
 		Env:             env,
+		Mode:            swarmMode,
 		Labels:          stringmap(serviceLabels),
 		ContainerLabels: stringmap(containerLabels),
 		PublishSpecs:    parsedSpecs,
