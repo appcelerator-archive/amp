@@ -23,7 +23,7 @@ message ServiceSpec {
   string image = 1;
   string name = 2;
   uint64 replicas = 3;
-  map<string, string> env = 4;
+  repeated string env = 4;
   map<string, string> labels = 5;
   map<string, string> container_labels = 6;
   repeated PublishSpec publish_specs = 7;

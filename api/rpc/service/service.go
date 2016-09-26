@@ -92,6 +92,10 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 		},
 		EndpointSpec: nil, // &EndpointSpec
 	}
+
+	// add environment
+	service.TaskTemplate.ContainerSpec.Env = serv.Env
+
 	//add common labels
 	if service.Annotations.Labels == nil {
 		service.Annotations.Labels = make(map[string]string)

@@ -28,7 +28,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	if stackByName.Id != "" {
 		return nil, fmt.Errorf("Stack %s already exists", in.StackName)
 	}
-	stack, err := NewStackFromYaml(ctx, in.Stackfile)
+	stack, err := newStackFromYaml(ctx, in.Stackfile)
 	if err != nil {
 		return nil, err
 	}
@@ -300,4 +300,19 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 		}
 	}
 	return &info
+}
+
+// newStackFromYaml create a new stack from yaml
+func newStackFromYaml(ctx context.Context, config string) (stack *Stack, err error) {
+	stack, err = ParseStackfile(ctx, config)
+	if err != nil {
+		return
+	}
+
+	// Create stack state
+	if err = stackStateMachine.CreateState(stack.Id, int32(StackState_Stopped)); err != nil {
+		return
+	}
+
+	return
 }

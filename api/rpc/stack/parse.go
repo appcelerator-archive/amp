@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type serviceMap struct {
+type serviceSpec struct {
 	Image       string        `yaml:"image"`
 	Replicas    uint64        `yaml:"replicas"`
 	Environment interface{}   `yaml:"environment"`
@@ -24,54 +24,51 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
-// NewStackFromYaml create a new stack from yaml
-func NewStackFromYaml(ctx context.Context, in string) (stack *Stack, err error) {
+// ParseStackfile create a new stack from yaml
+func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 	stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
-	b := []byte(in)
-	sm, err := parseAsServiceMap(b)
+	serviceMap, err := parseServiceMap([]byte(in))
 	if err != nil {
 		return
 	}
-	for n, d := range sm {
-		e := map[string]string{}
-		l := map[string]string{}
-		em, ok := d.Environment.(map[interface{}]interface{})
-		if ok {
-			for k, v := range em {
-				e[k.(string)] = v.(string)
+	for name, spec := range serviceMap {
+		// try to parse environment entries as a map
+		// else try to parse environment as string entries
+		env := []string{}
+		if envMap, ok := spec.Environment.(map[interface{}]interface{}); ok {
+			for k, v := range envMap {
+				env = append(env, k.(string)+"="+v.(string))
+			}
+		} else if envList, ok := spec.Environment.([]interface{}); ok {
+			for _, e := range envList {
+				env = append(env, e.(string))
 			}
 		}
-		ea, ok := d.Environment.([]interface{})
-		if ok {
-			for _, s := range ea {
+
+		// try to parse labels as a map
+		// else try to parse labels as string entries
+		labels := map[string]string{}
+		if labelMap, ok := spec.Labels.(map[interface{}]interface{}); ok {
+			for k, v := range labelMap {
+				labels[k.(string)] = v.(string)
+			}
+		} else if labelList, ok := spec.Labels.([]interface{}); ok {
+			for _, s := range labelList {
 				a := strings.Split(s.(string), "=")
 				k := a[0]
 				v := a[1]
-				e[k] = v
+				labels[k] = v
 			}
 		}
-		lm, ok := d.Labels.(map[interface{}]interface{})
-		if ok {
-			for k, v := range lm {
-				l[k.(string)] = v.(string)
-			}
+
+		replicas := spec.Replicas
+		if replicas == 0 {
+			replicas = 1
 		}
-		la, ok := d.Labels.([]interface{})
-		if ok {
-			for _, s := range la {
-				a := strings.Split(s.(string), "=")
-				k := a[0]
-				v := a[1]
-				l[k] = v
-			}
-		}
-		r := d.Replicas
-		if r == 0 {
-			r = 1
-		}
+
 		publishSpecs := []*service.PublishSpec{}
-		for _, p := range d.Public {
+		for _, p := range spec.Public {
 			publishSpecs = append(publishSpecs, &service.PublishSpec{
 				Name:         p.Name,
 				Protocol:     p.Protocol,
@@ -79,24 +76,21 @@ func NewStackFromYaml(ctx context.Context, in string) (stack *Stack, err error) 
 				InternalPort: p.InternalPort,
 			})
 		}
+
 		stack.Services = append(stack.Services, &service.ServiceSpec{
-			Name:         n,
-			Image:        d.Image,
-			Replicas:     r,
-			Env:          e,
-			Labels:       l,
+			Name:         name,
+			Image:        spec.Image,
+			Replicas:     replicas,
+			Env:          env,
+			Labels:       labels,
 			PublishSpecs: publishSpecs,
 		})
 	}
 
-	// Create stack state
-	if err = stackStateMachine.CreateState(stack.Id, int32(StackState_Stopped)); err != nil {
-		return
-	}
 	return
 }
 
-func parseAsServiceMap(b []byte) (out map[string]serviceMap, err error) {
+func parseServiceMap(b []byte) (out map[string]serviceSpec, err error) {
 	err = yaml.Unmarshal(b, &out)
 	return
 }
