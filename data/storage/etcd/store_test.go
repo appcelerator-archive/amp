@@ -13,6 +13,7 @@ import (
 	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
+	. "github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -31,17 +32,15 @@ func TestMain(m *testing.M) {
 	log.SetPrefix("test: ")
 
 	server.StartTestServer()
-
 	store = runtime.Store
-
 	os.Exit(m.Run())
 }
 
 func TestCreate(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	val := &storage.Project{Id: "100", Name: "AMP"}
-	out := &storage.Project{}
+	val := &TestMessage{Id: "100", Name: "AMP"}
+	out := &TestMessage{}
 	ttl := int64(0)
 
 	err := store.Create(ctx, key, val, out, ttl)
@@ -60,7 +59,7 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	out := &storage.Project{}
+	out := &TestMessage{}
 	ignoreNotFound := false
 
 	err := store.Get(ctx, key, out, ignoreNotFound)
@@ -70,7 +69,7 @@ func TestGet(t *testing.T) {
 		t.Error(err)
 	}
 
-	expected := &storage.Project{Id: "100", Name: "AMP"}
+	expected := &TestMessage{Id: "100", Name: "AMP"}
 	if !proto.Equal(expected, out) {
 		t.Errorf("expected %v, got %v", expected, out)
 	}
@@ -79,7 +78,7 @@ func TestGet(t *testing.T) {
 func TestGetWithError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foobar"
-	out := &storage.Project{}
+	out := &TestMessage{}
 	ignoreNotFound := false
 
 	err := store.Get(ctx, key, out, ignoreNotFound)
@@ -93,7 +92,7 @@ func TestGetWithError(t *testing.T) {
 func TestGetIgnoreError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foobar"
-	out := &storage.Project{}
+	out := &TestMessage{}
 	ignoreNotFound := true
 
 	err := store.Get(ctx, key, out, ignoreNotFound)
@@ -107,7 +106,7 @@ func TestGetIgnoreError(t *testing.T) {
 func TestDelete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
 	key := "foo"
-	out := &storage.Project{}
+	out := &TestMessage{}
 
 	err := store.Delete(ctx, key, false, out)
 	// cancel timeout (release resources) if operation completes before timeout
@@ -116,7 +115,7 @@ func TestDelete(t *testing.T) {
 		t.Error(err)
 	}
 
-	expected := &storage.Project{Id: "100", Name: "AMP"}
+	expected := &TestMessage{Id: "100", Name: "AMP"}
 	if !proto.Equal(expected, out) {
 		t.Errorf("expected %v, got %v", expected, out)
 	}
@@ -124,7 +123,7 @@ func TestDelete(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	key := "foo"
-	val := &storage.Project{Id: "100", Name: "bar"}
+	val := &TestMessage{Id: "100", Name: "bar"}
 	ttl := int64(0)
 
 	ctx1, cancel1 := newContext()
@@ -136,7 +135,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	// confirm
-	out := &storage.Project{}
+	out := &TestMessage{}
 	ignoreNotFound := false
 	ctx2, cancel2 := newContext()
 	err = store.Get(ctx2, key, out, ignoreNotFound)
@@ -167,25 +166,25 @@ func TestList(t *testing.T) {
 	key := "foo"
 
 	// this is a "template" object that provides a concrete type for list to unmarshal into
-	obj := &storage.Project{}
+	obj := &TestMessage{}
 
 	// unlimited ttl
 	ttl := int64(0)
 
 	// will store values that we store, which we will use to compare list results against
-	vals := []*storage.Project{}
+	vals := []*TestMessage{}
 
 	// will store the results of calling list
 	var out []proto.Message
 
-	// this will create a bunch of storage.Project items to store in etcd
+	// this will create a bunch of TestMessage items to store in etcd
 	// it will also save them to vals so we can compare them against what
 	// we get back when we call the list method to ensure actual matches expected
 	for i := 0; i < 5; i++ {
 		id := strconv.Itoa(i)
 		name := fmt.Sprintf("bar%d", i)
 		subkey := path.Join(key, id)
-		vals = append(vals, &storage.Project{Id: id, Name: name})
+		vals = append(vals, &TestMessage{Id: id, Name: name})
 
 		err := store.Create(ctx, subkey, vals[i], obj, ttl)
 		if err != nil {
@@ -207,9 +206,9 @@ func TestList(t *testing.T) {
 
 		// actually inspect individual message contents
 		// Unfortunately, without generics in Go, this requires a type assertion
-		m, ok := out[i].(*storage.Project)
+		m, ok := out[i].(*TestMessage)
 		if !ok {
-			t.Errorf("value is not the right type (expected storage.Project): %T", out[i])
+			t.Errorf("value is not the right type (expected TestMessage): %T", out[i])
 		}
 		name := fmt.Sprintf("bar%d", i)
 		if m.Name != name {

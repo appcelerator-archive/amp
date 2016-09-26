@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package storage;
+package etcd;
 
-message Project {
+message TestMessage {
   string id = 1;
   string name = 2;
 }
