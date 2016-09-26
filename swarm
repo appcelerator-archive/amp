@@ -37,10 +37,8 @@ MINIMAGES=(
   appcelerator/amp-agent:latest
   appcelerator/amp-log-worker:latest
   appcelerator/elasticsearch-amp:latest
-  appcelerator/grafana:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/kafka:${KAFKA_VERSION}
-  appcelerator/kibana:latest
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
