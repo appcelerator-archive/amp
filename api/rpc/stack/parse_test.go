@@ -100,11 +100,28 @@ var (
 		},
 	}
 
-	sample5 = map[string]serviceSpec{
+	sample6 = map[string]serviceSpec{
 		"pinger": {
 			Image: "appcelerator/pinger",
 			Labels: map[string]string{
-				"foo": "bar",
+				"foo":   "bar",
+				"hello": "world",
+			},
+			Public: []publishSpec{
+				{
+					PublishPort:  3000,
+					InternalPort: 3000,
+				},
+			},
+		},
+	}
+
+	sample7 = map[string]serviceSpec{
+		"pinger": {
+			Image: "appcelerator/pinger",
+			ContainerLabels: map[string]string{
+				"foo":   "bar",
+				"hello": "world",
 			},
 			Public: []publishSpec{
 				{
@@ -117,13 +134,15 @@ var (
 
 	// map of filenames to a map of serviceSpec elements (each file has one or more)
 	compareSpecs = map[string]map[string]serviceSpec{
-		"sample-01.yml":        sample1,
-		"sample-02.yml":        sample2,
-		"sample-03.yml":        sample3,
-		"sample-03.json":       sample3,
-		"sample-04.yml":        sample4,
-		"sample-05-labels.yml": sample5,
-		"sample-06-labels.yml": sample5,
+		"sample-01.yml":                    sample1,
+		"sample-02.yml":                    sample2,
+		"sample-03.yml":                    sample3,
+		"sample-03.json":                   sample3,
+		"sample-04.yml":                    sample4,
+		"sample-06-1-service-labels.yml":   sample6,
+		"sample-06-2-service-labels.yml":   sample6,
+		"sample-07-1-container-labels.yml": sample7,
+		"sample-07-2-container-labels.yml": sample7,
 	}
 )
 
@@ -202,7 +221,11 @@ func (a serviceSpec) compare(t *testing.T, b serviceSpec) bool {
 		return false
 	}
 	if !reflect.DeepEqual(toMap(a.Labels), toMap(b.Labels)) {
-		t.Logf("actual != expected (label): %v != %v\n", a.Labels, b.Labels)
+		t.Logf("actual != expected (labels): %v != %v\n", a.Labels, b.Labels)
+		return false
+	}
+	if !reflect.DeepEqual(toMap(a.ContainerLabels), toMap(b.ContainerLabels)) {
+		t.Logf("actual != expected (container_labels): %v != %v\n", a.ContainerLabels, b.ContainerLabels)
 		return false
 	}
 	return true

@@ -36,7 +36,10 @@ var (
 	env []string
 
 	// service labels
-	labels []string
+	serviceLabels []string
+
+	// container labels
+	containerLabels []string
 
 	// ports
 	publishSpecs []string
@@ -45,10 +48,11 @@ var (
 func init() {
 	flags := createCmd.Flags()
 	flags.StringVar(&name, "name", name, "Service name")
+	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], i.e. '80:3000/tcp' or 'admin:3000'")
 	flags.Uint64Var(&replicas, "replicas", replicas, "Number of tasks (default none)")
 	flags.StringSliceVarP(&env, "env", "e", env, "Set environment variables (default [])")
-	flags.StringSliceVarP(&labels, "label", "l", labels, "Set service labels (default [])")
-	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], i.e. '80:3000/tcp' or 'admin:3000'")
+	flags.StringSliceVarP(&serviceLabels, "label", "l", serviceLabels, "Set service labels (default [])")
+	flags.StringSliceVar(&containerLabels, "container-label", containerLabels, "Set container labels for service replicas (default [])")
 
 	ServiceCmd.AddCommand(createCmd)
 }
@@ -67,12 +71,13 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	spec := &service.ServiceSpec{
-		Image:        image,
-		Name:         name,
-		Replicas:     replicas,
-		Env:          env,
-		Labels:       stringmap(labels),
-		PublishSpecs: parsedSpecs,
+		Image:           image,
+		Name:            name,
+		Replicas:        replicas,
+		Env:             env,
+		Labels:          stringmap(serviceLabels),
+		ContainerLabels: stringmap(containerLabels),
+		PublishSpecs:    parsedSpecs,
 	}
 
 	request := &service.ServiceCreateRequest{
