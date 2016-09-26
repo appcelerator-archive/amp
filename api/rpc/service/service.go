@@ -35,13 +35,26 @@ func init() {
 
 // Create implements ServiceServer
 func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
-	// TODO: pass-through right now, but will be refactored into a helper library
-	response, err := CreateService(docker, ctx, req)
+	response, err := Create(ctx, req)
 	return response, err
 }
 
-// CreateService uses docker api to create a service
-func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
+// Remove implements ServiceServer
+func (s *Service) Remove(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
+	err := Remove(ctx, req.Ident)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RemoveResponse{
+		Ident: req.Ident,
+	}
+
+	return response, nil
+}
+
+// Create uses docker api to create a service
+func Create(ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
 
 	serv := req.ServiceSpec
 	service := swarm.ServiceSpec{
@@ -129,7 +142,7 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 }
 
 // Remove uses docker api to remove a service
-func (s *Service) Remove(ctx context.Context, ID string) error {
+func Remove(ctx context.Context, ID string) error {
 	fmt.Printf("Service removed %s\n", ID)
 	return docker.ServiceRemove(ctx, ID)
 }
