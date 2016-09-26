@@ -100,19 +100,40 @@ var (
 		},
 	}
 
+	sample5 = map[string]serviceSpec{
+		"pinger": {
+			Image: "appcelerator/pinger",
+			Labels: map[string]string{
+				"foo": "bar",
+			},
+			Public: []publishSpec{
+				{
+					PublishPort:  3000,
+					InternalPort: 3000,
+				},
+			},
+		},
+	}
+
 	// map of filenames to a map of serviceSpec elements (each file has one or more)
-	compareStructs = map[string]map[string]serviceSpec{
-		"sample-01.yml":  sample1,
-		"sample-02.yml":  sample2,
-		"sample-03.yml":  sample3,
-		"sample-03.json": sample3,
-		"sample-04.yml":  sample4,
+	compareSpecs = map[string]map[string]serviceSpec{
+		"sample-01.yml":        sample1,
+		"sample-02.yml":        sample2,
+		"sample-03.yml":        sample3,
+		"sample-03.json":       sample3,
+		"sample-04.yml":        sample4,
+		"sample-05-labels.yml": sample5,
+		"sample-06-labels.yml": sample5,
 	}
 )
 
 func TestSamples(t *testing.T) {
 	tests := loadFiles(t)
 	for _, test := range tests {
+		if compareSpecs[test.fileName] == nil {
+			t.Logf("WARNING: skipping '%s' because the comparison sample is missing", test.fileName)
+			continue
+		}
 		parse(t, test)
 	}
 }
@@ -154,7 +175,7 @@ func parse(t *testing.T, test *TestSpec) {
 	}
 
 	for name, spec := range serviceMap {
-		if !spec.compare(t, compareStructs[test.fileName][name]) {
+		if !spec.compare(t, compareSpecs[test.fileName][name]) {
 			t.Logf("name: %s, valid: %t, contents:\n%s", test.fileName, test.valid, string(test.contents))
 			t.Log(serviceMap)
 			t.Errorf("FAIL: %s (%s)", name, test.fileName)
@@ -162,90 +183,58 @@ func parse(t *testing.T, test *TestSpec) {
 	}
 }
 
+// compares actual (parsed) service spec to expected
 func (a serviceSpec) compare(t *testing.T, b serviceSpec) bool {
 	if a.Image != b.Image {
-		t.Logf("Images don't match: %v != %v\n", a.Image, b.Image)
+		t.Logf("actual != expected (image): '%v' != '%v'\n", a.Image, b.Image)
 		return false
 	}
 	if a.Replicas != b.Replicas {
-		t.Logf("Replicas don't match: %v != %v\n", a.Replicas, b.Replicas)
+		t.Logf("actual != expected (replicas): %v != %v\n", a.Replicas, b.Replicas)
 		return false
 	}
-	if len(a.Public) != len(b.Public) {
-		t.Logf("Public don't match: %v != %v\n", a.Public, b.Public)
+	if !reflect.DeepEqual(a.Public, b.Public) {
+		t.Logf("actual != expected (public): %v != %v\n", a.Public, b.Public)
 		return false
 	}
-	for _, publishSpec := range a.Public {
-		if !contains(b.Public, publishSpec) {
-			t.Logf("Public doesn' contains: %v => %v\n", a.Public, b.Public)
-			return false
-		}
-	}
-	if !compareEnvironment(a, b) {
-		t.Logf("Env don't match: %v != %v\n", a, b)
+	if !reflect.DeepEqual(toMap(a.Environment), toMap(b.Environment)) {
+		t.Logf("actual != expected (env): %v != %v\n", a.Environment, b.Environment)
 		return false
 	}
-	return true
-}
-
-// contains checks to see if a publishSpec is contained in a publishSpec slice
-func contains(specs []publishSpec, spec publishSpec) bool {
-	for _, cmp := range specs {
-		if spec.compare(cmp) {
-			return true
-		}
-	}
-	return false
-}
-
-// compare returns true if and only if the members of both publishSpecs are equal
-func (a publishSpec) compare(b publishSpec) bool {
-	if a.Name != b.Name {
-		return false
-	}
-	if a.PublishPort != b.PublishPort {
-		return false
-	}
-	if a.InternalPort != b.InternalPort {
-		return false
-	}
-	if a.Protocol != b.Protocol {
+	if !reflect.DeepEqual(toMap(a.Labels), toMap(b.Labels)) {
+		t.Logf("actual != expected (label): %v != %v\n", a.Labels, b.Labels)
 		return false
 	}
 	return true
 }
 
 // compareEnvironment returns true if and only if both serviceSpec maps are equal (performs deep equal check)
+// first, ensure both environments are converted to maps (because an environment might be a string array or a map)
 func compareEnvironment(a serviceSpec, b serviceSpec) bool {
-	ae := environmentToMap(a.Environment)
-	be := environmentToMap(b.Environment)
+	ae := toMap(a.Environment)
+	be := toMap(b.Environment)
 	return reflect.DeepEqual(ae, be)
 }
 
-// environmentToMap
-func environmentToMap(env interface{}) map[string]string {
-	es, ok := env.(map[string]string)
+// toMap attempts to cast an interface to either an array of strings or a map of strings to strings and then returns a typed map
+func toMap(arrayOrMap interface{}) map[string]string {
+	stringmap, ok := arrayOrMap.(map[string]string)
 	if ok {
-		return es
+		return stringmap
 	}
 
-	envmap := make(map[string]string)
+	stringmap = make(map[string]string)
 
-	em, ok := env.(map[interface{}]interface{})
-	if ok {
-		for k, v := range em {
-			envmap[k.(string)] = v.(string)
+	if m, ok := arrayOrMap.(map[interface{}]interface{}); ok {
+		for k, v := range m {
+			stringmap[k.(string)] = v.(string)
 		}
-	}
-	ea, ok := env.([]interface{})
-	if ok {
-		for _, s := range ea {
-			a := strings.Split(s.(string), "=")
-			k := a[0]
-			v := a[1]
-			envmap[k] = v
+	} else if a, ok := arrayOrMap.([]interface{}); ok {
+		for _, s := range a {
+			parts := strings.Split(s.(string), "=")
+			stringmap[parts[0]] = parts[1]
 		}
 	}
 
-	return envmap
+	return stringmap
 }

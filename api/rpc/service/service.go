@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
@@ -30,15 +29,12 @@ func init() {
 	docker, err = client.NewClient(dockerSock, defaultVersion, nil, defaultHeaders)
 	if err != nil {
 		// fail fast
-		log.Println("new client ....")
 		panic(err)
 	}
 }
 
 // Create implements ServiceServer
 func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
-	log.Println(req)
-
 	// TODO: pass-through right now, but will be refactored into a helper library
 	response, err := CreateService(docker, ctx, req)
 	return response, err
@@ -48,11 +44,10 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
 
 	serv := req.ServiceSpec
-	//prepare swarm.ServiceSpec full instance
 	service := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name:   serv.Name,
-			Labels: make(map[string]string),
+			Labels: serv.Labels,
 		},
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: swarm.ContainerSpec{
@@ -96,7 +91,7 @@ func CreateService(docker *client.Client, ctx context.Context, req *ServiceCreat
 	// add environment
 	service.TaskTemplate.ContainerSpec.Env = serv.Env
 
-	//add common labels
+	// ensure supplied service label map is not nil, then add custom amp labels
 	if service.Annotations.Labels == nil {
 		service.Annotations.Labels = make(map[string]string)
 	}

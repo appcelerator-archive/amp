@@ -35,6 +35,9 @@ var (
 	// environment variables
 	env []string
 
+	// service labels
+	labels []string
+
 	// ports
 	publishSpecs []string
 )
@@ -44,6 +47,7 @@ func init() {
 	flags.StringVar(&name, "name", name, "Service name")
 	flags.Uint64Var(&replicas, "replicas", replicas, "Number of tasks (default none)")
 	flags.StringSliceVarP(&env, "env", "e", env, "Set environment variables (default [])")
+	flags.StringSliceVarP(&labels, "label", "l", labels, "Set service labels (default [])")
 	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], i.e. '80:3000/tcp' or 'admin:3000'")
 
 	ServiceCmd.AddCommand(createCmd)
@@ -56,8 +60,6 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	image = args[0]
-	fmt.Println(args)
-	fmt.Println(stringify(cmd))
 
 	parsedSpecs, err := parsePublishSpecs(publishSpecs)
 	if err != nil {
@@ -69,14 +71,13 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		Name:         name,
 		Replicas:     replicas,
 		Env:          env,
+		Labels:       stringmap(labels),
 		PublishSpecs: parsedSpecs,
 	}
 
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: spec,
 	}
-
-	fmt.Println(request)
 
 	client := service.NewServiceClient(amp.Conn)
 	reply, err := client.Create(context.Background(), request)
@@ -89,7 +90,6 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// TODO: use this when adding label support
 func stringmap(a []string) map[string]string {
 	m := make(map[string]string)
 	for _, e := range a {
@@ -97,11 +97,6 @@ func stringmap(a []string) map[string]string {
 		m[parts[0]] = parts[1]
 	}
 	return m
-}
-
-func stringify(cmd *cobra.Command) string {
-	return fmt.Sprintf("{ name: %s, replicas: %d, env: %v }",
-		name, replicas, env)
 }
 
 func parsePublishSpecs(specs []string) ([]*service.PublishSpec, error) {
