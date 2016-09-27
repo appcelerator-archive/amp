@@ -25,6 +25,10 @@ const serviceRoleLabelName = "io.amp.role"
 // Service is used to implement ServiceServer
 type Service struct{}
 
+// SwarmMode is needed to export isServiceSpec_Mode type, which consumers can use to
+// create a variable and assign either a ServiceSpec_Replicated or ServiceSpec_Global struct
+type SwarmMode isServiceSpec_Mode
+
 func init() {
 	docker, err = client.NewClient(dockerSock, defaultVersion, nil, defaultHeaders)
 	if err != nil {
@@ -57,6 +61,21 @@ func (s *Service) Remove(ctx context.Context, req *RemoveRequest) (*RemoveRespon
 func Create(ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateResponse, error) {
 
 	serv := req.ServiceSpec
+
+	var serviceMode swarm.ServiceMode
+	switch mode := serv.Mode.(type) {
+	case *ServiceSpec_Replicated:
+		serviceMode = swarm.ServiceMode{
+			Replicated: &swarm.ReplicatedService{
+				Replicas: &mode.Replicated.Replicas,
+			},
+		}
+	case *ServiceSpec_Global:
+		serviceMode = swarm.ServiceMode{
+			Global: &swarm.GlobalService{},
+		}
+	}
+
 	service := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name:   serv.Name,
@@ -88,17 +107,13 @@ func Create(ctx context.Context, req *ServiceCreateRequest) (*ServiceCreateRespo
 			LogDriver: nil, //*Driver
 		},
 		Networks: nil, //[]NetworkAttachmentConfig
-		Mode: swarm.ServiceMode{
-			Replicated: &swarm.ReplicatedService{
-				Replicas: &serv.Replicas,
-			},
-		},
 		UpdateConfig: &swarm.UpdateConfig{
 			Parallelism:   0,
 			Delay:         0,
 			FailureAction: "",
 		},
 		EndpointSpec: nil, // &EndpointSpec
+		Mode:         serviceMode,
 	}
 
 	// add environment

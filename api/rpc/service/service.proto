@@ -5,11 +5,15 @@ package service;
 message ServiceSpec {
   string image = 1;
   string name = 2;
-  uint64 replicas = 3;
-  repeated string env = 4;
-  map<string, string> labels = 5;
-  map<string, string> container_labels = 6;
-  repeated PublishSpec publish_specs = 7;
+  oneof mode {
+      ReplicatedService replicated = 3;
+      GlobalService global = 4;
+  }
+  repeated string env = 5;
+  map<string, string> labels = 6;
+  map<string, string> container_labels = 7;
+  repeated PublishSpec publish_specs = 8;
+
 }
 
 message PublishSpec {
@@ -17,6 +21,13 @@ message PublishSpec {
   string protocol = 2;
   uint32 publish_port = 3;
   uint32 internal_port = 4;
+}
+
+message ReplicatedService {
+    uint64 replicas = 1;
+}
+
+message GlobalService {
 }
 
 message ServiceCreateRequest {
@@ -34,7 +45,6 @@ message RemoveRequest {
 message RemoveResponse {
   string ident = 1;
 }
-
 
 service Service {
   rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse) {}

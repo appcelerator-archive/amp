@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -12,6 +13,7 @@ import (
 type serviceSpec struct {
 	Image           string        `yaml:"image"`
 	Public          []publishSpec `yaml:"public"`
+	Mode            string        `yaml:"mode"`
 	Replicas        uint64        `yaml:"replicas"`
 	Environment     interface{}   `yaml:"environment"`
 	Labels          interface{}   `yaml:"labels"`
@@ -79,11 +81,6 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 			}
 		}
 
-		replicas := spec.Replicas
-		if replicas == 0 {
-			replicas = 1
-		}
-
 		publishSpecs := []*service.PublishSpec{}
 		for _, p := range spec.Public {
 			publishSpecs = append(publishSpecs, &service.PublishSpec{
@@ -94,11 +91,44 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 			})
 		}
 
+		// add service mode and replicas to spec
+		var swarmMode service.SwarmMode
+		replicas := spec.Replicas
+		mode := spec.Mode
+
+		// supply a default value for mode only if it is empty and replicas is positive
+		if mode == "" && replicas > 0 {
+			mode = "replicated"
+		}
+
+		switch mode {
+		case "replicated":
+			if replicas < 1 {
+				// if replicated then must have at least 1 replica
+				replicas = 1
+			}
+			swarmMode = &service.ServiceSpec_Replicated{
+				Replicated: &service.ReplicatedService{Replicas: replicas},
+			}
+		case "global":
+			if replicas != 0 {
+				// global mode can't specify replicas (only allowed 1 per node)
+				err = fmt.Errorf("replicas can only be used with replicated mode")
+				return
+			}
+			swarmMode = &service.ServiceSpec_Global{
+				Global: &service.GlobalService{},
+			}
+		default:
+			err = fmt.Errorf("invalid option for mode: %s", mode)
+			return
+		}
+
 		stack.Services = append(stack.Services, &service.ServiceSpec{
 			Name:            name,
 			Image:           spec.Image,
 			PublishSpecs:    publishSpecs,
-			Replicas:        replicas,
+			Mode:            swarmMode,
 			Env:             env,
 			Labels:          labels,
 			ContainerLabels: containerLabels,

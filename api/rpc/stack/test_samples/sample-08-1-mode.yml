@@ -1,0 +1,7 @@
+pinger:
+  image: appcelerator/pinger
+  mode: replicated
+  replicas: 3
+  public:
+    - publish_port: 3000
+      internal_port: 3000

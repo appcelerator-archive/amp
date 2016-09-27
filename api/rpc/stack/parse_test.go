@@ -132,6 +132,33 @@ var (
 		},
 	}
 
+	sample8_1 = map[string]serviceSpec{
+		"pinger": {
+			Image:    "appcelerator/pinger",
+			Mode:     "replicated",
+			Replicas: 3,
+			Public: []publishSpec{
+				{
+					PublishPort:  3000,
+					InternalPort: 3000,
+				},
+			},
+		},
+	}
+
+	sample8_2 = map[string]serviceSpec{
+		"pinger": {
+			Image: "appcelerator/pinger",
+			Mode:  "global",
+			Public: []publishSpec{
+				{
+					PublishPort:  3000,
+					InternalPort: 3000,
+				},
+			},
+		},
+	}
+
 	// map of filenames to a map of serviceSpec elements (each file has one or more)
 	compareSpecs = map[string]map[string]serviceSpec{
 		"sample-01.yml":                    sample1,
@@ -143,6 +170,8 @@ var (
 		"sample-06-2-service-labels.yml":   sample6,
 		"sample-07-1-container-labels.yml": sample7,
 		"sample-07-2-container-labels.yml": sample7,
+		"sample-08-1-mode.yml":             sample8_1,
+		"sample-08-2-mode.yml":             sample8_2,
 	}
 )
 
