@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -19,7 +20,8 @@ const stackNameLabelName = "io.amp.stack.name"
 
 // Server is used to implement stack.StackService
 type Server struct {
-	Store storage.Interface
+	Store  storage.Interface
+	Docker *client.Client
 }
 
 // Up implements stack.ServerService Up
@@ -86,9 +88,14 @@ func (s *Server) getStack(ctx context.Context, in *StackRequest) (*Stack, error)
 // clean up if error happended during stack creation, delete all created services and all etcd data
 func (s *Server) rollbackServiceStack(ctx context.Context, stackID string, serviceIDList []string) {
 	fmt.Printf("removing created services %s\n", stackID)
+	server := service.Service{
+		Docker: s.Docker,
+	}
 	for _, ID := range serviceIDList {
 		if ID != "" {
-			service.Remove(ctx, ID)
+			server.Remove(ctx, &service.RemoveRequest{
+				Ident: ID,
+			})
 			s.Store.Delete(ctx, path.Join(servicesRootKey, ID), true, nil)
 		}
 	}
@@ -119,7 +126,9 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,
 	}
-	server := service.Service{}
+	server := service.Service{
+		Docker: s.Docker,
+	}
 	reply, err := server.Create(ctx, request)
 	if err != nil {
 		return "", err
@@ -211,9 +220,14 @@ func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) e
 	if err != nil && !force {
 		return err
 	}
+	server := service.Service{
+		Docker: s.Docker,
+	}
 	var removeErr error
 	for _, key := range listKeys.List {
-		err := service.Remove(ctx, key)
+		_, err := server.Remove(ctx, &service.RemoveRequest{
+			Ident: key,
+		})
 		if err != nil {
 			removeErr = err
 		}

@@ -5,6 +5,7 @@ import (
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/docker/docker/client"
 )
 
 var (
@@ -19,4 +20,7 @@ var (
 
 	// Influx is the influxDB client
 	Influx influx.Influx
+
+	// Docker is the Docker client
+	Docker *client.Client
 )

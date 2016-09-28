@@ -25,6 +25,8 @@ const (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
+	dockerDefaultURL        = "unix:///var/run/docker.sock"
+	dockerDefaultVersion    = "1.24"
 	example1                = `
 pinger:
   image: appcelerator/pinger
@@ -72,6 +74,8 @@ var (
 	elasticsearchURL string
 	kafkaURL         string
 	influxURL        string
+	dockerURL        string
+	dockerVersion    string
 	client           stack.StackServiceClient
 	ctx              context.Context
 )
@@ -97,7 +101,14 @@ func parseEnv() {
 	if influxURL == "" {
 		influxURL = influxDefaultURL
 	}
-
+	dockerURL = os.Getenv("DOCKER_HOST")
+	if dockerURL == "" {
+		dockerURL = dockerDefaultURL
+	}
+	dockerVersion = os.Getenv("DOCKER_API_VERSION")
+	if dockerVersion == "" {
+		dockerVersion = dockerDefaultVersion
+	}
 	// update config
 	config.Port = port
 	for _, s := range strings.Split(etcdEndpoints, ",") {
@@ -106,6 +117,8 @@ func parseEnv() {
 	config.ElasticsearchURL = elasticsearchURL
 	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
+	config.DockerURL = dockerURL
+	config.DockerVersion = dockerVersion
 }
 
 func TestMain(m *testing.M) {
