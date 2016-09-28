@@ -234,6 +234,18 @@ func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Messa
 	return nil
 }
 
+// Watch implements storage.Interface.Watch.
+func (s *etcd) Watch(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
+	key = s.prefix(key)
+	return s.watch(ctx, key, resourceVersion, filter, false)
+}
+
+// WatchList implements storage.Interface.WatchList.
+func (s *etcd) WatchList(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
+	key = s.prefix(key)
+	return s.watch(ctx, key, resourceVersion, filter, true)
+}
+
 // options returns a slice of client options (currently just a lease based on the given ttl).
 // ttl: time in seconds that key will exist (0 means forever); if ttl is non-zero, it will attach the key to a lease with ttl of roughly the same length
 func (s *etcd) options(ctx context.Context, ttl int64) ([]clientv3.OpOption, error) {

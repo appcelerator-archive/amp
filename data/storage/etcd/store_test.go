@@ -14,6 +14,7 @@ import (
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
 	. "github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -25,6 +26,10 @@ const (
 var (
 	store storage.Interface
 )
+
+func newContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), defTimeout)
+}
 
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stdout)
@@ -251,6 +256,41 @@ func TestCompareAndSet(t *testing.T) {
 	}
 }
 
-func newContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), defTimeout)
+func TestWatch(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
+	defer cancel()
+
+	key := "watch"
+	expect := &state.State{Value: 0}
+	update := &state.State{Value: 42}
+
+	watch, err := store.Watch(ctx, key, 0, storage.Everything)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if err := store.Create(ctx, key, expect, nil, 0); err != nil {
+		t.Error(err)
+	}
+	if err := store.CompareAndSet(ctx, key, expect, update); err != nil {
+		t.Error(err)
+	}
+	if err := store.Delete(ctx, key, false, &state.State{}); err != nil {
+		t.Error(err)
+	}
+
+	var events []storage.Event
+WatchLoop:
+	for {
+		select {
+		case event := <-watch.ResultChan():
+			events = append(events, event)
+		case <-time.After(time.Second):
+			break WatchLoop
+		}
+	}
+
+	watch.Stop()
+
+	assert.Equal(t, len(events), 3)
 }
