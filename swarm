@@ -309,7 +309,7 @@ kapacitor() { # Owner: ndegory
     -e OUTPUT_SLACK_CHANNEL=kapacitor-test \
     -e OUTPUT_SLACK_GLOBAL="true" \
     -e OUTPUT_SLACK_STATE_CHANGE_ONLY="true" \
-    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.0.tar.gz" \
+    -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/0.2.1.tar.gz" \
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
