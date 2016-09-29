@@ -18,7 +18,7 @@ var (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
-	dockerDefaultURL        = "unix:///var/run/docker.sock"
+	dockerDefaultURL        = `unix://var/run/docker.sock`
 	dockerDefaultVersion    = "1.24"
 )
 
@@ -56,8 +56,7 @@ func parseFlags() {
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
 	flag.StringVarP(&kafkaURL, "kafkaURL", "k", kafkaDefaultURL, "kafka URL (default '"+kafkaDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influxURL", "", influxDefaultURL, "InfluxDB URL (default '"+influxDefaultURL+"')")
-	flag.StringVarP(&dockerURL, "dockerURL", "", dockerDefaultURL, "Docker URL (default '"+dockerDefaultURL+"')")
-	flag.StringVarP(&dockerVersion, "dockerVersion", "", dockerDefaultVersion, "Docker API Version (default '"+dockerDefaultVersion+"')")
+	flag.StringVar(&dockerURL, "dockerURL", dockerDefaultURL, "Docker URL (default '"+dockerDefaultURL+"')")
 
 	// parse command line flags
 	flag.Parse()
@@ -81,7 +80,7 @@ func parseFlags() {
 	config.KafkaURL = kafkaURL
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
-	config.DockerVersion = dockerVersion
+	config.DockerVersion = dockerDefaultVersion
 }
 
 func main() {
