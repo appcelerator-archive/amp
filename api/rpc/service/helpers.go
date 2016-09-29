@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -49,6 +50,18 @@ func ParsePublishSpec(s string) (publishSpec PublishSpec, err error) {
 	}
 
 	return
+}
+
+// ParseNetwork parses a string and returns a NetworkAttachement
+func ParseNetwork(s string) *NetworkAttachment {
+	list := strings.Split(s, ":")
+	network := NetworkAttachment{
+		Target: list[0],
+	}
+	if len(list) > 1 {
+		network.Aliases = list[1:]
+	}
+	return &network
 }
 
 func portAtoi(s string, port *uint32) error {

@@ -46,6 +46,9 @@ var (
 
 	// ports
 	publishSpecs = []string{}
+
+	// network
+	networks = []string{}
 )
 
 func init() {
@@ -57,6 +60,7 @@ func init() {
 	flags.StringSliceVarP(&env, "env", "e", env, "Set environment variables (default [])")
 	flags.StringSliceVarP(&serviceLabels, "label", "l", serviceLabels, "Set service labels (default [])")
 	flags.StringSliceVar(&containerLabels, "container-label", containerLabels, "Set container labels for service replicas (default [])")
+	flags.StringSliceVar(&networks, "network", networks, "Set service networks attachment (default [])")
 
 	ServiceCmd.AddCommand(createCmd)
 }
@@ -70,6 +74,11 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	image = args[0]
 
 	parsedSpecs, err := parsePublishSpecs(publishSpecs)
+	if err != nil {
+		return err
+	}
+
+	parsedNetworks, err := parseNetworks(networks)
 	if err != nil {
 		return err
 	}
@@ -98,13 +107,14 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	spec := &service.ServiceSpec{
-		Image:           image,
-		Name:            name,
-		Env:             env,
-		Mode:            swarmMode,
-		Labels:          stringmap(serviceLabels),
-		ContainerLabels: stringmap(containerLabels),
-		PublishSpecs:    parsedSpecs,
+		Image:           	image,
+		Name:            	name,
+		Env:             	env,
+		Mode:            	swarmMode,
+		Labels:          	stringmap(serviceLabels),
+		ContainerLabels: 	stringmap(containerLabels),
+		PublishSpecs:    	parsedSpecs,
+		Networks:		parsedNetworks,
 	}
 
 	request := &service.ServiceCreateRequest{
@@ -118,7 +128,6 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println(reply)
-
 	return nil
 }
 
@@ -142,4 +151,14 @@ func parsePublishSpecs(specs []string) ([]*service.PublishSpec, error) {
 
 	}
 	return publishSpecs, nil
+}
+
+func parseNetworks(specs []string) ([]*service.NetworkAttachment, error) {
+	networks := []*service.NetworkAttachment{}
+	for _, input := range specs {
+		network := service.ParseNetwork(input)
+		networks = append(networks, network)
+
+	}
+	return networks, nil
 }

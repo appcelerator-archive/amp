@@ -57,7 +57,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 			ContainerSpec: swarm.ContainerSpec{
 				Image:           serv.Image,
 				Args:            nil, //[]string
-				Env:             nil, //[]string
+				Env:             serv.Env,
 				Labels:          serv.ContainerLabels,
 				Dir:             "",
 				User:            "",
@@ -65,12 +65,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 				Mounts:          nil, //[]mount.Mount
 				StopGracePeriod: nil, //*time.Duration
 			},
-			Networks: []swarm.NetworkAttachmentConfig{
-				{
-					Target:  defaultNetwork,
-					Aliases: []string{req.ServiceSpec.Name},
-				},
-			},
+			Networks: nil,
 			Resources:     nil, //*ResourceRequirements
 			RestartPolicy: nil, //*RestartPolicy
 			Placement: &swarm.Placement{
@@ -78,7 +73,12 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 			},
 			LogDriver: nil, //*Driver
 		},
-		Networks: nil, //[]NetworkAttachmentConfig
+		Networks: []swarm.NetworkAttachmentConfig{
+			{
+				Target:  defaultNetwork,
+				Aliases: []string{req.ServiceSpec.Name},
+			},
+		},
 		UpdateConfig: &swarm.UpdateConfig{
 			Parallelism:   0,
 			Delay:         0,
@@ -88,8 +88,17 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 		Mode:         serviceMode,
 	}
 
-	// add environment
-	service.TaskTemplate.ContainerSpec.Env = serv.Env
+	// add network
+	if req.ServiceSpec.Networks != nil {
+		service.Networks = make([]swarm.NetworkAttachmentConfig, len(req.ServiceSpec.Networks), len(req.ServiceSpec.Networks))
+		for i, net := range(req.ServiceSpec.Networks) {
+			fmt.Printf("network: %v\n", net)
+			service.Networks[i] = swarm.NetworkAttachmentConfig{
+				Target:  net.Target,
+				Aliases: net.Aliases,
+			}
+		}
+	}
 
 	// ensure supplied service label map is not nil, then add custom amp labels
 	if service.Annotations.Labels == nil {
