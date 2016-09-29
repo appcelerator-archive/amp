@@ -18,7 +18,7 @@ var (
 	elasticsearchDefaultURL = "http://localhost:9200"
 	kafkaDefaultURL         = "localhost:9092"
 	influxDefaultURL        = "http://localhost:8086"
-	dockerDefaultURL        = `unix://var/run/docker.sock`
+	dockerDefaultURL        = "unix:///var/run/docker.sock"
 	dockerDefaultVersion    = "1.24"
 )
 
