@@ -15,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
 )
 
@@ -26,6 +27,7 @@ func Start(config Config) {
 	initElasticsearch(config)
 	initKafka(config)
 	initInfluxDB(config)
+	initDocker(config)
 
 	// register services
 	s := grpc.NewServer()
@@ -44,9 +46,12 @@ func Start(config Config) {
 		ClientSecret: config.ClientSecret,
 	})
 	// build.RegisterAmpBuildServer(s, &build.Proxy{})
-	service.RegisterServiceServer(s, &service.Service{})
+	service.RegisterServiceServer(s, &service.Service{
+		Docker: runtime.Docker,
+	})
 	stack.RegisterStackServiceServer(s, &stack.Server{
-		Store: runtime.Store,
+		Store:  runtime.Store,
+		Docker: runtime.Docker,
 	})
 
 	// start listening
@@ -92,4 +97,15 @@ func initInfluxDB(config Config) {
 		log.Panicf("amplifer is unable to connect to influxDB on: %s\n%v", config.InfluxURL, err)
 	}
 	log.Printf("connected to influxDB at %s\n", config.InfluxURL)
+}
+
+func initDocker(config Config) {
+	log.Printf("connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
+	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
+	cli, err := client.NewClient(config.DockerURL, config.DockerVersion, nil, defaultHeaders)
+	if err != nil {
+		log.Panicf("amplifer is unable to connect to Docker on: %s\n%v", config.DockerURL, err)
+	}
+	runtime.Docker = cli
+	log.Printf("connected to Docker at %s\n", config.DockerURL)
 }

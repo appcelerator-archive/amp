@@ -134,6 +134,7 @@ func TestShouldFilterByMessage(t *testing.T) {
 	}
 }
 
+/*
 func TestShouldFilterByStack(t *testing.T) {
 	r, err := client.Get(ctx, &logs.GetRequest{Stack: "testStack"})
 	if err != nil {
@@ -144,7 +145,7 @@ func TestShouldFilterByStack(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.StackName, "testStack") || strings.HasPrefix(entry.StackId, "testStack"))
 	}
 }
-
+*/
 func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 200; i += 10 {
 		r, err := client.Get(ctx, &logs.GetRequest{Size: i})
