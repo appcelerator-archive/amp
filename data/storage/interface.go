@@ -37,16 +37,18 @@ type Interface interface {
 	Delete(ctx context.Context, key string, recurse bool, out proto.Message) error
 
 	// Update performs a guaranteed update, which means it will continue to retry until an update succeeds or the request is canceled.
-	// Update(ctx context.Context, key string, type interface, ignoreNotFound bool, precondtions *Preconditions, tryUpdate UpdateFunc) error
+	// Update(ctx context.Context, key string, type interface, ignoreNotFound bool, preconditions *Preconditions, tryUpdate UpdateFunc) error
 	// TODO: the following is a temporary interface
 	Update(ctx context.Context, key string, val proto.Message, ttl int64) error
 
 	// List returns all the values that match the filter.
 	List(ctx context.Context, key string, filter Filter, obj proto.Message, out *[]proto.Message) error
 
-	// Watch(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
+	// Watch begins watching the specified key.
+	Watch(ctx context.Context, key string, resourceVersion int64, filter Filter) (WatchInterface, error)
 
-	// WatchList(ctx context.Context, key string, resourceVersion string, filter FilterFunc) (watch.Interface, error)
+	// WatchList begins watching the specified key's items.
+	WatchList(ctx context.Context, key string, resourceVersion int64, filter Filter) (WatchInterface, error)
 
 	// CompareAndSet atomically sets the value to the given updated value if the current value == the expected value
 	CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error
@@ -68,4 +70,28 @@ type everything struct {
 // Filter implements the Filter interface to accept every object.
 func (e everything) Filter(val proto.Message) bool {
 	return true
+}
+
+// Interface can be implemented by anything that knows how to watch and report changes.
+type WatchInterface interface {
+	// Stops watching. Will close the channel returned by ResultChan(). Releases
+	// any resources used by the watch.
+	Stop()
+
+	// Returns a chan which will receive all the events. If an error occurs
+	// or Stop() is called, this channel will be closed, in which case the
+	// watch should be completely cleaned up.
+	ResultChan() <-chan Event
+}
+
+type Event struct {
+	Key       string
+	Value     []byte
+	Revision  int64
+	IsCreated bool
+	IsDeleted bool
+
+	// Error management
+	Error   error
+	IsError bool
 }
