@@ -73,6 +73,15 @@ var (
 				},
 			},
 		},
+		"haproxy": {
+  			Public: []publishSpec{
+  				{
+    					PublishPort: 83,
+      					InternalPort: 80,
+
+  				},
+  			},
+  		},
 	}
 	sample4 = map[string]serviceSpec{
 		"python": {

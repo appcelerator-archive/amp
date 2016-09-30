@@ -107,14 +107,14 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	spec := &service.ServiceSpec{
-		Image:           	image,
-		Name:            	name,
-		Env:             	env,
-		Mode:            	swarmMode,
-		Labels:          	stringmap(serviceLabels),
-		ContainerLabels: 	stringmap(containerLabels),
-		PublishSpecs:    	parsedSpecs,
-		Networks:		parsedNetworks,
+		Image:           image,
+		Name:            name,
+		Env:             env,
+		Mode:            swarmMode,
+		Labels:          stringmap(serviceLabels),
+		ContainerLabels: stringmap(containerLabels),
+		PublishSpecs:    parsedSpecs,
+		Networks:        parsedNetworks,
 	}
 
 	request := &service.ServiceCreateRequest{
