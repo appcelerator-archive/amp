@@ -288,6 +288,18 @@ func TestV3TxnRevision(t *testing.T) {
 		t.Fatalf("got rev %d, wanted rev %d", tresp.Header.Revision, presp.Header.Revision)
 	}
 
+	txndr := &pb.RequestOp{Request: &pb.RequestOp_RequestDeleteRange{RequestDeleteRange: &pb.DeleteRangeRequest{Key: []byte("def")}}}
+	txn = &pb.TxnRequest{Success: []*pb.RequestOp{txndr}}
+	tresp, err = kvc.Txn(context.TODO(), txn)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// did not update revision
+	if presp.Header.Revision != tresp.Header.Revision {
+		t.Fatalf("got rev %d, wanted rev %d", tresp.Header.Revision, presp.Header.Revision)
+	}
+
 	txnput := &pb.RequestOp{Request: &pb.RequestOp_RequestPut{RequestPut: &pb.PutRequest{Key: []byte("abc"), Value: []byte("123")}}}
 	txn = &pb.TxnRequest{Success: []*pb.RequestOp{txnput}}
 	tresp, err = kvc.Txn(context.TODO(), txn)
@@ -379,6 +391,7 @@ func TestV3DeleteRange(t *testing.T) {
 		keySet []string
 		begin  string
 		end    string
+		prevKV bool
 
 		wantSet [][]byte
 		deleted int64
@@ -386,38 +399,44 @@ func TestV3DeleteRange(t *testing.T) {
 		// delete middle
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "fop",
+			"foo/", "fop", false,
 			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 		// no delete
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "foo/",
+			"foo/", "foo/", false,
 			[][]byte{[]byte("foo"), []byte("foo/abc"), []byte("fop")}, 0,
 		},
 		// delete first
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"fo", "fop",
+			"fo", "fop", false,
 			[][]byte{[]byte("fop")}, 2,
 		},
 		// delete tail
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/", "fos",
+			"foo/", "fos", false,
 			[][]byte{[]byte("foo")}, 2,
 		},
 		// delete exact
 		{
 			[]string{"foo", "foo/abc", "fop"},
-			"foo/abc", "",
+			"foo/abc", "", false,
 			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 		// delete none, [x,x)
 		{
 			[]string{"foo"},
-			"foo", "foo",
+			"foo", "foo", false,
 			[][]byte{[]byte("foo")}, 0,
+		},
+		// delete middle with preserveKVs set
+		{
+			[]string{"foo", "foo/abc", "fop"},
+			"foo/", "fop", true,
+			[][]byte{[]byte("foo"), []byte("fop")}, 1,
 		},
 	}
 
@@ -436,13 +455,20 @@ func TestV3DeleteRange(t *testing.T) {
 
 		dreq := &pb.DeleteRangeRequest{
 			Key:      []byte(tt.begin),
-			RangeEnd: []byte(tt.end)}
+			RangeEnd: []byte(tt.end),
+			PrevKv:   tt.prevKV,
+		}
 		dresp, err := kvc.DeleteRange(context.TODO(), dreq)
 		if err != nil {
 			t.Fatalf("couldn't delete range on test %d (%v)", i, err)
 		}
 		if tt.deleted != dresp.Deleted {
 			t.Errorf("expected %d on test %v, got %d", tt.deleted, i, dresp.Deleted)
+		}
+		if tt.prevKV {
+			if len(dresp.PrevKvs) != int(dresp.Deleted) {
+				t.Errorf("preserve %d keys, want %d", len(dresp.PrevKvs), dresp.Deleted)
+			}
 		}
 
 		rreq := &pb.RangeRequest{Key: []byte{0x0}, RangeEnd: []byte{0xff}}
@@ -462,7 +488,6 @@ func TestV3DeleteRange(t *testing.T) {
 		if !reflect.DeepEqual(tt.wantSet, keys) {
 			t.Errorf("expected %v on test %v, got %v", tt.wantSet, i, keys)
 		}
-
 		// can't defer because tcp ports will be in use
 		clus.Terminate(t)
 	}
@@ -839,6 +864,68 @@ func TestV3RangeRequest(t *testing.T) {
 				{},
 			},
 			[]bool{true, true, true, true, false},
+		},
+		// min/max mod rev
+		{
+			[]string{"rev2", "rev3", "rev4", "rev5", "rev6"},
+			[]pb.RangeRequest{
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MinModRevision: 3,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MaxModRevision: 3,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MinModRevision: 3,
+					MaxModRevision: 5,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MaxModRevision: 10,
+				},
+			},
+
+			[][]string{
+				{"rev3", "rev4", "rev5", "rev6"},
+				{"rev2", "rev3"},
+				{"rev3", "rev4", "rev5"},
+				{"rev2", "rev3", "rev4", "rev5", "rev6"},
+			},
+			[]bool{false, false, false, false},
+		},
+		// min/max create rev
+		{
+			[]string{"rev2", "rev3", "rev2", "rev2", "rev6", "rev3"},
+			[]pb.RangeRequest{
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MinCreateRevision: 3,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MaxCreateRevision: 3,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MinCreateRevision: 3,
+					MaxCreateRevision: 5,
+				},
+				{
+					Key: []byte{0}, RangeEnd: []byte{0},
+					MaxCreateRevision: 10,
+				},
+			},
+
+			[][]string{
+				{"rev3", "rev6"},
+				{"rev2", "rev3"},
+				{"rev3"},
+				{"rev2", "rev3", "rev6"},
+			},
+			[]bool{false, false, false, false},
 		},
 	}
 

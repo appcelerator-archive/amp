@@ -100,18 +100,23 @@ func getFormatTest(cx ctlCtx) {
 	}
 
 	tests := []struct {
-		format string
+		format    string
+		valueOnly bool
 
 		wstr string
 	}{
-		{"simple", "abc"},
-		{"json", `"kvs":[{"key":"YWJj"`},
-		{"protobuf", "\x17\b\x93\xe7\xf6\x93\xd4ņ\xe14\x10\xed"},
+		{"simple", false, "abc"},
+		{"simple", true, "123"},
+		{"json", false, `"kvs":[{"key":"YWJj"`},
+		{"protobuf", false, "\x17\b\x93\xe7\xf6\x93\xd4ņ\xe14\x10\xed"},
 	}
 
 	for i, tt := range tests {
 		cmdArgs := append(cx.PrefixArgs(), "get")
 		cmdArgs = append(cmdArgs, "--write-out="+tt.format)
+		if tt.valueOnly {
+			cmdArgs = append(cmdArgs, "--print-value-only")
+		}
 		cmdArgs = append(cmdArgs, "abc")
 		if err := spawnWithExpect(cmdArgs, tt.wstr); err != nil {
 			cx.t.Errorf("#%d: error (%v), wanted %v", i, err, tt.wstr)
@@ -185,6 +190,11 @@ func delTest(cx ctlCtx) {
 		{
 			[]kv{{"key1", "val1"}, {"key2", "val2"}, {"key3", "val3"}},
 			[]string{"key", "--prefix"},
+			3,
+		},
+		{
+			[]kv{{"zoo1", "bar"}, {"zoo2", "bar2"}, {"zoo3", "bar3"}},
+			[]string{"zoo1", "--from-key"},
 			3,
 		},
 	}

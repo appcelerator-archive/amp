@@ -627,7 +627,17 @@ func TestToTomlValue(t *testing.T) {
 		Value  interface{}
 		Expect string
 	}{
+		{int(1), "1"},
+		{int8(2), "2"},
+		{int16(3), "3"},
+		{int32(4), "4"},
 		{int64(12345), "12345"},
+		{uint(10), "10"},
+		{uint8(20), "20"},
+		{uint16(30), "30"},
+		{uint32(40), "40"},
+		{uint64(50), "50"},
+		{float32(12.456), "12.456"},
 		{float64(123.45), "123.45"},
 		{bool(true), "true"},
 		{"hello world", "\"hello world\""},
@@ -637,6 +647,7 @@ func TestToTomlValue(t *testing.T) {
 			"1979-05-27T07:32:00Z"},
 		{[]interface{}{"gamma", "delta"},
 			"[\n  \"gamma\",\n  \"delta\",\n]"},
+		{nil, ""},
 	} {
 		result := toTomlValue(item.Value, 0)
 		if result != item.Expect {
@@ -655,6 +666,28 @@ func TestToString(t *testing.T) {
 	expected := "\n[foo]\n\n  [[foo.bar]]\n    a = 42\n\n  [[foo.bar]]\n    a = 69\n"
 	if result != expected {
 		t.Errorf("Expected got '%s', expected '%s'", result, expected)
+	}
+}
+
+func TestToStringMapStringString(t *testing.T) {
+	in := map[string]interface{}{"m": map[string]string{"v": "abc"}}
+	want := "\n[m]\n  v = \"abc\"\n"
+	tree := TreeFromMap(in)
+	got := tree.String()
+
+	if got != want {
+		t.Errorf("want:\n%q\ngot:\n%q", want, got)
+	}
+}
+
+func TestToStringMapInterfaceInterface(t *testing.T) {
+	in := map[string]interface{}{"m": map[interface{}]interface{}{"v": "abc"}}
+	want := "\n[m]\n  v = \"abc\"\n"
+	tree := TreeFromMap(in)
+	got := tree.String()
+
+	if got != want {
+		t.Errorf("want:\n%q\ngot:\n%q", want, got)
 	}
 }
 

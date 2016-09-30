@@ -14,13 +14,15 @@ The easiest way to get started using etcd as a distributed key-value store is to
  - [Interacting with etcd][interacting]
  - [API references][api_ref]
  - [gRPC gateway][api_grpc_gateway]
+ - [Embedding etcd][embed_etcd]
  - [Experimental features and APIs][experimental]
 
 ## Operating etcd clusters
 
 Administrators who need to create reliable and scalable key-value stores for the developers they support should begin with a [cluster on multiple machines][clustering].
 
- - [Setting up clusters][clustering]
+ - [Setting up etcd clusters][clustering]
+ - [Setting up etcd gateways][gateway]
  - [Run etcd clusters inside containers][container]
  - [Configuration][conf]
  - [Security][security]
@@ -56,7 +58,9 @@ To learn more about the concepts and internals behind etcd, read the following p
 [data_model]: learning/data_model.md
 [demo]: demo.md
 [download_build]: dl_build.md
+[embed_etcd]: https://godoc.org/github.com/coreos/etcd/embed
 [failures]: op-guide/failures.md
+[gateway]: op-guide/gateway.md
 [glossary]: learning/glossary.md
 [interacting]: dev-guide/interacting_v3.md
 [local_cluster]: dev-guide/local_cluster.md
