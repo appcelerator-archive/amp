@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
@@ -30,31 +31,43 @@ type Server struct {
 
 // Up implements stack.ServerService Up
 func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
+	//verify the stack name doesn't already exist
 	stackByName := s.getStackByName(ctx, in.StackName)
 	if stackByName.Id != "" {
 		return nil, fmt.Errorf("Stack %s already exists", in.StackName)
 	}
+
+	//parse the stack file
 	stack, err := newStackFromYaml(ctx, in.Stackfile)
 	if err != nil {
 		return nil, err
 	}
 	stack.Name = in.StackName
 	stack.IsPublic = s.isPublic(stack)
-	errCreate := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0)
-	if errCreate != nil {
-		return nil, errCreate
+
+	//save stack data in ETCD
+	if err := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0); err != nil {
+		return nil, err
 	}
 	stackID := StackID{Id: stack.Id}
 	s.Store.Create(ctx, path.Join(stackRootNameKey, stack.Name), &stackID, nil, 0)
+
+	//create custom networks
+	if err := s.createCustomNetworks(ctx, stack); err != nil {
+		return nil, err
+	}
+
+	//start the stack
 	startRequest := StackRequest{
 		StackIdent: stack.Id,
 	}
-	_, errStart := s.Start(ctx, &startRequest)
-	if errStart != nil {
-		fmt.Printf("Error found during stack up: %v \n", errStart)
+	if _, err := s.Start(ctx, &startRequest); err != nil {
+		fmt.Printf("Error found during stack up: %v \n", err)
 		s.rollbackETCDStack(ctx, stack)
-		return nil, errStart
+		return nil, err
 	}
+
+	//return the reply
 	fmt.Printf("Stack is up: %s\n", stack.Id)
 	reply := UpReply{
 		StackId: stack.Id,
@@ -151,7 +164,7 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 			serv.Networks = []*service.NetworkAttachment{}
 		}
 		serv.Networks = append(serv.Networks, &service.NetworkAttachment{
-			Target:  stack.Name,
+			Target:  fmt.Sprintf("%s-private", stack.Name),
 			Aliases: []string{serv.Name},
 		})
 		isPublic := false
@@ -164,8 +177,8 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 		}
 		if isPublic {
 			serv.Networks = append(serv.Networks, &service.NetworkAttachment{
-				Target:  fmt.Sprintf("%s-public", stack.Name),
-				Aliases: []string{serv.Name},
+				Target: fmt.Sprintf("%s-public", stack.Name),
+				//Aliases: []string{fmt.Sprintf("%s-%s", stack.Name, serv.Name)},
 			})
 		}
 	}
@@ -183,6 +196,7 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 		return "", err
 	}
 	//Save service defintion in ETCD
+	fmt.Println("service: ", serv)
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, reply.Id), serv, nil, 0)
 	if createErr != nil {
 		return "", createErr
@@ -234,18 +248,43 @@ func (s *Server) addHAProxyService(ctx context.Context, stack *Stack) (string, e
 }
 
 // create network
-func (s *Server) createStackNetwork(ctx context.Context, name string) (string, error) {
-	fmt.Printf("Create network %s\n", name)
-	rep, err := s.Docker.NetworkCreate(ctx, name, types.NetworkCreate{
-		CheckDuplicate: false,
-		Driver:         "overlay",
-		EnableIPv6:     false,
-		Internal:       true,
-		Labels:         map[string]string{serviceRoleLabelName: "user"},
-		IPAM: &network.IPAM{
-			Driver: "default",
-		},
-	})
+func (s *Server) createNetwork(ctx context.Context, data *NetworkSpec) (string, error) {
+	fmt.Printf("Create network %s\n", data.Name)
+	configs := []network.IPAMConfig{}
+	if data.Ipam != nil && data.Ipam.Config != nil {
+		for _, conf := range data.Ipam.Config {
+			configs = append(configs, network.IPAMConfig{
+				Subnet:     conf.Subnet,
+				IPRange:    conf.IpRange,
+				Gateway:    conf.Gateway,
+				AuxAddress: conf.AuxAddress,
+			})
+		}
+	}
+	IPAM := network.IPAM{
+		Driver: "default",
+	}
+	if data.Ipam != nil {
+		IPAM = network.IPAM{
+			Driver:  data.Ipam.Driver,
+			Options: data.Ipam.Options,
+			Config:  configs,
+		}
+	}
+	networkCreate := types.NetworkCreate{
+		CheckDuplicate: true,
+		Driver:         data.Driver,
+		EnableIPv6:     data.EnableIpv6,
+		Internal:       data.Internal,
+		Options:        data.Options,
+		Labels:         data.Labels,
+		IPAM:           &IPAM,
+	}
+	if networkCreate.Labels == nil {
+		networkCreate.Labels = make(map[string]string)
+	}
+	networkCreate.Labels[serviceRoleLabelName] = "user"
+	rep, err := s.Docker.NetworkCreate(ctx, data.Name, networkCreate)
 	if err != nil {
 		return "", err
 	}
@@ -254,13 +293,23 @@ func (s *Server) createStackNetwork(ctx context.Context, name string) (string, e
 
 func (s *Server) createStackNetworks(ctx context.Context, stack *Stack) error {
 	networkList := []string{}
-	id, err := s.createStackNetwork(ctx, stack.Name)
+	id, err := s.createNetwork(ctx, &NetworkSpec{
+		Name:       fmt.Sprintf("%s-private", stack.Name),
+		Driver:     "overlay",
+		Internal:   true,
+		EnableIpv6: false,
+	})
 	if err != nil {
 		return err
 	}
 	networkList = append(networkList, id)
 	if stack.IsPublic {
-		id, err := s.createStackNetwork(ctx, stack.Name+"-public")
+		id, err := s.createNetwork(ctx, &NetworkSpec{
+			Name:       fmt.Sprintf("%s-public", stack.Name),
+			Driver:     "overlay",
+			Internal:   true,
+			EnableIpv6: false,
+		})
 		if err != nil {
 			s.removeStackNetworksFromList(ctx, networkList)
 			return err
@@ -276,6 +325,45 @@ func (s *Server) createStackNetworks(ctx context.Context, stack *Stack) error {
 			s.removeStackNetworksFromList(ctx, networkList)
 			return cerr
 		}
+	}
+	return nil
+}
+
+// Create the custom networks of a stack
+func (s *Server) createCustomNetworks(ctx context.Context, stack *Stack) error {
+	if stack.Networks == nil {
+		return nil
+	}
+	for _, network := range stack.Networks {
+		if err := s.createCustomNetwork(ctx, network); err != nil {
+			s.removeCustomNetworks(ctx, stack, true)
+			return err
+		}
+	}
+	return nil
+
+}
+
+// create a custom network or increment its owner number
+func (s *Server) createCustomNetwork(ctx context.Context, data *NetworkSpec) error {
+	customNetwork := &CustomNetwork{}
+	s.Store.Get(ctx, path.Join(networksRootKey, data.Name), customNetwork, true)
+	if customNetwork.Id != "" {
+		customNetwork.OwnerNumber++
+		if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
+			return err
+		}
+		return nil
+	}
+	id, err := s.createNetwork(ctx, data)
+	if err != nil {
+		return err
+	}
+	customNetwork.Id = id
+	customNetwork.OwnerNumber = 1
+	customNetwork.Data = data
+	if cerr := s.Store.Create(ctx, path.Join(networksRootKey, data.Name), customNetwork, nil, 0); cerr != nil {
+		return cerr
 	}
 	return nil
 }
@@ -357,6 +445,9 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	if err := s.removeStackNetworks(ctx, stack.Id, false); err != nil {
 		fmt.Printf("catch error during remove networks: %v", err)
 	}
+	if err := s.removeCustomNetworks(ctx, stack, false); err != nil {
+		fmt.Printf("catch error during remove custom networks: %v", err)
+	}
 	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Stopped)); err != nil {
 		fmt.Printf("catch error during stack state transition: %v", err)
 	}
@@ -383,11 +474,74 @@ func (s *Server) removeStackNetworks(ctx context.Context, ID string, force bool)
 func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []string) error {
 	var removeErr error
 	for _, key := range networkList {
+
 		err := s.Docker.NetworkRemove(ctx, key)
 		if err != nil {
 			removeErr = err
 		}
-		fmt.Printf("Remove network %s\n", key)
+		fmt.Printf("Removing network: %s\n", key)
+		var existErr error
+		nn := 0
+		//allowing 1min to remove network
+		for existErr == nil && nn < 20 {
+			_, existErr = s.Docker.NetworkInspect(ctx, key)
+			time.Sleep(3 * time.Second)
+			nn++
+		}
+		if existErr != nil {
+			fmt.Printf("network removed: %s\n", key)
+		} else {
+			removeErr = fmt.Errorf("network remove timeout: %s\n", key)
+		}
+	}
+	if removeErr != nil {
+		return removeErr
+	}
+	return nil
+}
+
+func (s *Server) removeCustomNetworks(ctx context.Context, stack *Stack, force bool) error {
+	if stack.Networks == nil {
+		return nil
+	}
+	var removeErr error
+	customNetwork := &CustomNetwork{}
+	for _, data := range stack.Networks {
+		s.Store.Get(ctx, path.Join(networksRootKey, data.Name), customNetwork, true)
+		if customNetwork.Id != "" {
+			customNetwork.OwnerNumber--
+			if customNetwork.OwnerNumber == 0 {
+				err := s.Docker.NetworkRemove(ctx, data.Name)
+				if err != nil {
+					removeErr = err
+				}
+				s.Store.Delete(ctx, path.Join(networksRootKey, data.Name), false, nil)
+				fmt.Printf("Remove custom network %s\n", data.Name)
+			} else {
+				if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
+					removeErr = err
+				}
+				fmt.Printf("Decr. custom network %s owner number to %d\n", data.Name, customNetwork.OwnerNumber)
+			}
+		} else {
+			err := s.Docker.NetworkRemove(ctx, data.Name)
+			if err != nil {
+				removeErr = err
+			}
+			fmt.Printf("Removing curstom network: %s\n", data.Name)
+			var existErr error
+			nn := 0
+			for existErr == nil && nn < 20 {
+				_, existErr = s.Docker.NetworkInspect(ctx, data.Name)
+				time.Sleep(3 * time.Second)
+				nn++
+			}
+			if existErr != nil {
+				fmt.Printf("network removed: %s\n", data.Name)
+			} else {
+				removeErr = fmt.Errorf("network remove timeout: %s\n", data.Name)
+			}
+		}
 	}
 	if removeErr != nil {
 		return removeErr

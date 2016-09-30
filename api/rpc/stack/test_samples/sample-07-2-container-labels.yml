@@ -1,8 +1,9 @@
-pinger:
-  image: appcelerator/pinger
-  container_labels:
-    - "foo=bar"
-    - "hello=world"
-  public:
-    - publish_port: 3000
-      internal_port: 3000
+services:
+  pinger:
+    image: appcelerator/pinger
+    container_labels:
+      - "foo=bar"
+      - "hello=world"
+    public:
+      - publish_port: 3000
+        internal_port: 3000

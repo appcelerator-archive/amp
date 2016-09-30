@@ -1,15 +1,17 @@
-pinger:
-  image: appcelerator/pinger
-  replicas: 2
-pinger2:
-  image: appcelerator/pinger
-  replicas: 2
-  public:
-    - name: www
-      protocol: tcp
-      internal_port: 3000
-haproxy:
-  public:
-    - publish_port: 83
-      internal_port: 80
+services:
+  pinger:
+    image: appcelerator/pinger
+    replicas: 2
+  pinger2:
+    image: appcelerator/pinger
+    replicas: 2
+    public:
+      - name: www
+        protocol: tcp
+        internal_port: 3000
+  haproxy:
+    public:
+      - publish_port: 83
+        internal_port: 80
+
 

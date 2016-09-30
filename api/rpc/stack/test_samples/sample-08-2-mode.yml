@@ -1,6 +1,7 @@
-pinger:
-  image: appcelerator/pinger
-  mode: global
-  public:
-    - publish_port: 3000
-      internal_port: 3000
+services:
+  pinger:
+    image: appcelerator/pinger
+    mode: global
+    public:
+      - publish_port: 3000
+        internal_port: 3000

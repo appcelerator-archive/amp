@@ -2,8 +2,10 @@ package service
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
@@ -56,7 +58,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: swarm.ContainerSpec{
 				Image:           serv.Image,
-				Args:            nil, //[]string
+				Args:            serv.Args,
 				Env:             serv.Env,
 				Labels:          serv.ContainerLabels,
 				Dir:             "",
@@ -87,11 +89,15 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 		EndpointSpec: nil, // &EndpointSpec
 		Mode:         serviceMode,
 	}
+	// add volumes
+	if serv.Mounts != nil {
+		s.processMounts(&service, serv.Mounts)
+	}
 
 	// add network
-	if req.ServiceSpec.Networks != nil {
-		service.Networks = make([]swarm.NetworkAttachmentConfig, len(req.ServiceSpec.Networks), len(req.ServiceSpec.Networks))
-		for i, net := range req.ServiceSpec.Networks {
+	if serv.Networks != nil {
+		service.Networks = make([]swarm.NetworkAttachmentConfig, len(serv.Networks), len(serv.Networks))
+		for i, net := range serv.Networks {
 			service.Networks[i] = swarm.NetworkAttachmentConfig{
 				Target:  net.Target,
 				Aliases: net.Aliases,
@@ -105,14 +111,14 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 	}
 	service.Annotations.Labels[serviceRoleLabelName] = "user"
 
-	if req.ServiceSpec.PublishSpecs != nil {
-		nn := len(req.ServiceSpec.PublishSpecs)
+	if serv.PublishSpecs != nil {
+		nn := len(serv.PublishSpecs)
 		if nn > 0 {
 			service.EndpointSpec = &swarm.EndpointSpec{
 				Mode:  swarm.ResolutionModeVIP,
 				Ports: make([]swarm.PortConfig, nn, nn),
 			}
-			for i, publish := range req.ServiceSpec.PublishSpecs {
+			for i, publish := range serv.PublishSpecs {
 				service.EndpointSpec.Ports[i] = swarm.PortConfig{
 					Name:          publish.Name,
 					Protocol:      swarm.PortConfigProtocol(publish.Protocol),
@@ -132,8 +138,49 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 	resp := &ServiceCreateResponse{
 		Id: r.ID,
 	}
-	fmt.Printf("Service: %s created, id=%s\n", req.ServiceSpec.Name, resp.Id)
+	fmt.Printf("Service: %s created, id=%s\n", serv.Name, resp.Id)
 	return resp, nil
+}
+
+// set mount/volume info in serviceSpec
+func (s *Service) processMounts(service *swarm.ServiceSpec, mounts []string) {
+	service.TaskTemplate.ContainerSpec.Mounts = []mount.Mount{}
+	for _, vol := range mounts {
+		list := strings.Split(vol, ":")
+		ro := false
+		if len(list) == 3 && list[2] == "ro" {
+			ro = true
+		}
+		if len(list) == 1 {
+			//create a anonymous  volume
+			fmt.Println("create anonymous volume")
+			service.TaskTemplate.ContainerSpec.Mounts = append(service.TaskTemplate.ContainerSpec.Mounts, mount.Mount{
+				Type:   mount.TypeVolume,
+				Target: vol,
+			})
+		} else if len(list) == 2 {
+			if strings.Index(list[0], "/") < 0 {
+				//create named volume
+				fmt.Println("create named volume " + list[0])
+				service.TaskTemplate.ContainerSpec.Mounts = append(service.TaskTemplate.ContainerSpec.Mounts, mount.Mount{
+					Type:     mount.TypeVolume,
+					Source:   list[0],
+					Target:   list[1],
+					ReadOnly: ro,
+				})
+			} else {
+				//create bind
+				fmt.Println("create bind")
+				service.TaskTemplate.ContainerSpec.Mounts = append(service.TaskTemplate.ContainerSpec.Mounts, mount.Mount{
+					Type:     mount.TypeBind,
+					Source:   list[0],
+					Target:   list[1],
+					ReadOnly: ro,
+				})
+			}
+		}
+
+	}
 }
 
 // Remove implements ServiceServer
