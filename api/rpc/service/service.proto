@@ -10,10 +10,16 @@ message ServiceSpec {
       GlobalService global = 4;
   }
   repeated string env = 5;
-  map<string, string> labels = 6;
-  map<string, string> container_labels = 7;
-  repeated PublishSpec publish_specs = 8;
+  repeated NetworkAttachment networks= 6;
+  map<string, string> labels = 7;
+  map<string, string> container_labels = 8;
+  repeated PublishSpec publish_specs = 9;
 
+}
+
+message NetworkAttachment {
+  string target = 1;
+  repeated string aliases = 2;  
 }
 
 message PublishSpec {
