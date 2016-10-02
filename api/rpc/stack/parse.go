@@ -96,8 +96,8 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 		replicas := spec.Replicas
 		mode := spec.Mode
 
-		// supply a default value for mode only if it is empty and replicas is positive
-		if mode == "" && replicas > 0 {
+		// supply a default value for mode
+		if mode == "" {
 			mode = "replicated"
 		}
 
