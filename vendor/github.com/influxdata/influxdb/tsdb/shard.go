@@ -191,6 +191,7 @@ func (s *Shard) Statistics(tags map[string]string) []models.Statistic {
 			statWriteReqOK:     atomic.LoadInt64(&s.stats.WriteReqOK),
 			statWriteReqErr:    atomic.LoadInt64(&s.stats.WriteReqErr),
 			statSeriesCreate:   seriesN,
+			statFieldsCreate:   atomic.LoadInt64(&s.stats.FieldsCreated),
 			statWritePointsErr: atomic.LoadInt64(&s.stats.WritePointsErr),
 			statWritePointsOK:  atomic.LoadInt64(&s.stats.WritePointsOK),
 			statWriteBytes:     atomic.LoadInt64(&s.stats.BytesWritten),
@@ -261,6 +262,12 @@ func (s *Shard) Open() error {
 	return nil
 }
 
+// UnloadIndex removes all references to this shard from the DatabaseIndex
+func (s *Shard) UnloadIndex() {
+	// Don't leak our shard ID and series keys in the index
+	s.index.RemoveShard(s.id)
+}
+
 // Close shuts down the shard's store.
 func (s *Shard) Close() error {
 	s.mu.Lock()
@@ -281,7 +288,7 @@ func (s *Shard) close() error {
 	}
 
 	// Don't leak our shard ID and series keys in the index
-	s.index.RemoveShard(s.id)
+	s.UnloadIndex()
 
 	err := s.engine.Close()
 	if err == nil {

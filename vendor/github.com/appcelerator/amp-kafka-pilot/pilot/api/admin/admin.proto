@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package admin;
+
+service Admin {
+    rpc CreateTopic (CreateTopicRequest) returns (CreateTopicReply);
+    rpc DeleteTopic (DeleteTopicRequest) returns (DeleteTopicReply);
+}
+
+message TopicEntry {
+    string name = 1;
+    uint64 partitions = 2;
+    uint64 replication_factor = 3;
+}
+
+message CreateTopicRequest {
+    TopicEntry topic = 1;
+}
+
+message CreateTopicReply {
+    TopicEntry topic = 1;
+}
+
+message DeleteTopicRequest {
+    string topicName = 1;
+}
+
+message DeleteTopicReply {
+}

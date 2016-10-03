@@ -12,7 +12,7 @@ fi
 
 # enable/disable failpoints
 toggle_failpoints() {
-	FAILPKGS="etcdserver/"
+	FAILPKGS="etcdserver/ mvcc/backend/"
 
 	mode="disable"
 	if [ ! -z "$FAILPOINTS" ]; then mode="enable"; fi
@@ -27,18 +27,30 @@ toggle_failpoints() {
 }
 
 etcd_build() {
-	if [ -z "${GOARCH}" ] || [ "${GOARCH}" = "$(go env GOHOSTARCH)" ]; then
-		out="bin"
-	else
-		out="bin/${GOARCH}"
-	fi
+	out="bin"
+	if [ -n "${BINDIR}" ]; then out="${BINDIR}"; fi
 	toggle_failpoints
 	# Static compilation is useful when etcd is run in a container
-	CGO_ENABLED=0 go build $GO_BUILD_FLAGS -installsuffix cgo -ldflags "-s -X ${REPO_PATH}/cmd/vendor/${REPO_PATH}/version.GitSHA=${GIT_SHA}" -o ${out}/etcd ${REPO_PATH}/cmd
-	CGO_ENABLED=0 go build $GO_BUILD_FLAGS -installsuffix cgo -ldflags "-s" -o ${out}/etcdctl ${REPO_PATH}/cmd/etcdctl
+	CGO_ENABLED=0 go build $GO_BUILD_FLAGS -installsuffix cgo -ldflags "-s -X ${REPO_PATH}/cmd/vendor/${REPO_PATH}/version.GitSHA=${GIT_SHA}" -o ${out}/etcd ${REPO_PATH}/cmd/etcd || return
+	CGO_ENABLED=0 go build $GO_BUILD_FLAGS -installsuffix cgo -ldflags "-s" -o ${out}/etcdctl ${REPO_PATH}/cmd/etcdctl || return
+}
+
+etcd_setup_gopath() {
+	CDIR=$(cd `dirname "$0"` && pwd)
+	cd "$CDIR"
+	etcdGOPATH=${CDIR}/gopath
+	# preserve old gopath to support building with unvendored tooling deps (e.g., gofail)
+	export GOPATH=${etcdGOPATH}:$GOPATH
+	rm -f ${etcdGOPATH}/src
+	mkdir -p ${etcdGOPATH}
+	ln -s ${CDIR}/cmd/vendor ${etcdGOPATH}/src
 }
 
 toggle_failpoints
 
-# don't build when sourced
-(echo "$0" | grep "/build$" > /dev/null) && etcd_build || true
+# only build when called directly, not sourced
+if echo "$0" | grep "build$" >/dev/null; then
+	# force new gopath so builds outside of gopath work
+	etcd_setup_gopath
+	etcd_build
+fi

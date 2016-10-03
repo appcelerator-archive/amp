@@ -1,10 +1,12 @@
-hash: 5b89ca6c1fa401ee26d1c9f2d1d27dd9ab1c0935065dab6a551a5ad0c41f9aa7
-updated: 2016-09-14T20:11:18.480338362-07:00
+hash: 5bd424530e2ebc5434e7b3e7cdd0575c09a3d30f67a1d730dae59eaee6dcc489
+updated: 2016-10-03T14:53:29.927115069+02:00
 imports:
+- name: github.com/appcelerator/amp-kafka-pilot
+  version: ce14b974cfea1b80a0a462827d6cda79ccf04361
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
-  version: d40982fc9160b7471cd832bff34d09e218b12e0e
+  version: 2469a9568548b3f8abc22f5a2462c3443823334a
   subpackages:
   - auth/authpb
   - clientv3
@@ -41,6 +43,7 @@ imports:
   - client/transport/cancellable
   - pkg/random
   - pkg/stringid
+  - pkg/testutil/assert
 - name: github.com/docker/go-connections
   version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
   subpackages:
@@ -100,7 +103,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: 37992377a55fbc138b2c01edd4deffed64b53989
+  version: 8b354f72951f50b130894dddee2e05149a1801d8
   subpackages:
   - client/v2
   - models
@@ -206,7 +209,7 @@ imports:
   - peer
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: f9fd15e1ea3a50bbe58c72a4b8820499fe3bb0e1
+  version: eaecbad7a83e6b60f131825553e5eb7fd5a50b41
   subpackages:
   - backoff
   - uritemplates
@@ -218,6 +221,6 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
