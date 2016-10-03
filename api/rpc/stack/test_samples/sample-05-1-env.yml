@@ -1,6 +1,6 @@
 pinger:
   image: appcelerator/pinger
-  env:
+  environment:
     - "foo=bar"
   public:
     - publish_port: 3000
