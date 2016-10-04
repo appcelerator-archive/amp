@@ -216,7 +216,7 @@ monitor() {
 registry() { # Owner: freignat91
   docker service create --network amp-swarm --name registry \
   --label io.amp.role="infrastructure" \
-  --mount type=bind,source=$HOME/registry/data,target=/var/lib/registry \
+  --mount type=volume,source=amp-registry,target=/var/lib/registry \
   -p 5000:5000 \
   registry:2
 }
