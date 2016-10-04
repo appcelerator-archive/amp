@@ -265,6 +265,7 @@ etcd() { # Owner: ndegory
     --label io.amp.role="infrastructure" \
     -p 2379:2379 \
     -p 2380:2380 \
+    --mount type=volume,source=amp-etcd,target=/data \
     appcelerator/etcd:${ETCD_VERSION} \
       --name etcd \
       --listen-client-urls http://0.0.0.0:2379 \
