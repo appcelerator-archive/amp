@@ -94,39 +94,44 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
 
     $ amp logs --help
 
-    Search through all the logs of the system and fetch entries matching provided criteria.
+    Usage:  amp logs [OPTIONS] [SERVICE]
     
-    Usage:
-      amp logs [flags]
+    Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.
     
-    Flags:
-          --container string      Filter by the given container id
-      -f, --follow                Follow log output
-          --from string           Fetch from the given index (default "-1")
-          --message string        Filter the message content by the given pattern
-      -m, --meta                  Display entry metadata
-          --node string           Filter by the given node id
-      -n, --number string         Number of results (default "100")
-          --service-id string     Filter by the given service id
-          --service-name string   Filter by the given service name
-    
-    Global Flags:
-          --Config string   Config file (default is $HOME/.amp.yaml)
-          --server string   Server address (default "localhost:50101")
-          --target string   target environment ("local"|"virtualbox"|"aws") (default "local")
-      -v, --verbose         verbose output
+    Options:
+          --config string      Config file (default is $HOME/.amp.yaml)
+          --container string   Filter by the given container
+      -f, --follow             Follow log output
+      -h, --help               help for logs
+          --message string     Filter the message content by the given pattern
+      -m, --meta               Display entry metadata
+          --node string        Filter by the given node
+      -n, --number string      Number of results (default "100")
+          --server string      Server address
+          --stack string       Filter by the given stack
+      -v, --verbose            Verbose output
 
 
 A few useful examples:
 
-* To fetch and follow all the logs from the platform:
+* To fetch and follow all the logs from the whole AMP platform:
 ```
   $ amp logs -f
 ```
 
 * To fetch and follow the logs for a specific service, with the message content only:
 ```
-  $ amp logs -f --service_name etcd
+  $ amp logs -f etcd
+```
+
+* To search for a specific pattern through all the logs of the platform:
+```
+  $ amp logs --message error
+```
+
+* To fetch and follow the logs for a `elasticsearch`, using partial service name:
+```
+  $ amp logs -f ela
 ```
 
 ### Stats

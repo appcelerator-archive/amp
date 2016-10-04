@@ -12,9 +12,8 @@ import (
 )
 
 var logsCmd = &cobra.Command{
-	Use:   "logs [OPTIONS] SERVICE",
-	Short: "Fetch the logs",
-	Long:  `Search through all the logs of the system and fetch entries matching provided criteria.`,
+	Use:   "logs [OPTIONS] [SERVICE]",
+	Short: "Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := Logs(AMP, cmd, args)
 		if err != nil {
