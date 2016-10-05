@@ -100,6 +100,21 @@ var (
 		},
 	}
 
+	sample5 = map[string]serviceSpec{
+		"pinger": {
+			Image: "appcelerator/pinger",
+			Environment: map[string]string{
+				"foo": "bar",
+			},
+			Public: []publishSpec{
+				{
+					PublishPort:  3000,
+					InternalPort: 3000,
+				},
+			},
+		},
+	}
+
 	sample6 = map[string]serviceSpec{
 		"pinger": {
 			Image: "appcelerator/pinger",
@@ -166,6 +181,8 @@ var (
 		"sample-03.yml":                    sample3,
 		"sample-03.json":                   sample3,
 		"sample-04.yml":                    sample4,
+		"sample-05-1-env.yml":              sample5,
+		"sample-05-2-env.yml":              sample5,
 		"sample-06-1-service-labels.yml":   sample6,
 		"sample-06-2-service-labels.yml":   sample6,
 		"sample-07-1-container-labels.yml": sample7,
