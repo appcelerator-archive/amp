@@ -72,7 +72,7 @@ func (e everything) Filter(val proto.Message) bool {
 	return true
 }
 
-// Interface can be implemented by anything that knows how to watch and report changes.
+// WatchInterface can be implemented by anything that knows how to watch and report changes.
 type WatchInterface interface {
 	// Stops watching. Will close the channel returned by ResultChan(). Releases
 	// any resources used by the watch.
@@ -84,6 +84,7 @@ type WatchInterface interface {
 	ResultChan() <-chan Event
 }
 
+// Event represent a watch event
 type Event struct {
 	Key       string
 	Value     []byte
