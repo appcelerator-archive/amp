@@ -30,6 +30,7 @@ IMAGES=(
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   appcelerator/etcd:${ETCD_VERSION}
+  appcelerator/pinger:latest
 )
 
 MINIMAGES=(
@@ -43,6 +44,7 @@ MINIMAGES=(
   registry:2
   appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   appcelerator/etcd:${ETCD_VERSION}
+  appcelerator/pinger:latest
 )
 
 # please keep sorted
