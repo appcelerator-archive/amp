@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/coreos/pkg/capnslog"
@@ -26,20 +27,58 @@ import (
 
 var plog = capnslog.NewPackageLogger("github.com/coreos/etcd", "etcd-tester")
 
+const (
+	defaultClientPort    = 2379
+	defaultPeerPort      = 2380
+	defaultFailpointPort = 2381
+)
+
 func main() {
 	endpointStr := flag.String("agent-endpoints", "localhost:9027", "HTTP RPC endpoints of agents. Do not specify the schema.")
+	clientPorts := flag.String("client-ports", "", "etcd client port for each agent endpoint")
+	peerPorts := flag.String("peer-ports", "", "etcd peer port for each agent endpoint")
+	failpointPorts := flag.String("failpoint-ports", "", "etcd failpoint port for each agent endpoint")
+
 	datadir := flag.String("data-dir", "agent.etcd", "etcd data directory location on agent machine.")
-	stressKeySize := flag.Int("stress-key-size", 100, "the size of each key written into etcd.")
-	stressKeySuffixRange := flag.Int("stress-key-count", 250000, "the count of key range written into etcd.")
+	stressKeyLargeSize := flag.Uint("stress-key-large-size", 32*1024+1, "the size of each large key written into etcd.")
+	stressKeySize := flag.Uint("stress-key-size", 100, "the size of each small key written into etcd.")
+	stressKeySuffixRange := flag.Uint("stress-key-count", 250000, "the count of key range written into etcd.")
 	limit := flag.Int("limit", -1, "the limit of rounds to run failure set (-1 to run without limits).")
+	stressQPS := flag.Int("stress-qps", 10000, "maximum number of stresser requests per second.")
 	schedCases := flag.String("schedule-cases", "", "test case schedule")
 	consistencyCheck := flag.Bool("consistency-check", true, "true to check consistency (revision, hash)")
 	isV2Only := flag.Bool("v2-only", false, "'true' to run V2 only tester.")
+	stresserType := flag.String("stresser", "default", "specify stresser (\"default\" or \"nop\").")
 	flag.Parse()
 
-	endpoints := strings.Split(*endpointStr, ",")
-	c, err := newCluster(endpoints, *datadir, *stressKeySize, *stressKeySuffixRange, *isV2Only)
-	if err != nil {
+	eps := strings.Split(*endpointStr, ",")
+	cports := portsFromArg(*clientPorts, len(eps), defaultClientPort)
+	pports := portsFromArg(*peerPorts, len(eps), defaultPeerPort)
+	fports := portsFromArg(*failpointPorts, len(eps), defaultFailpointPort)
+	agents := make([]agentConfig, len(eps))
+	for i := range eps {
+		agents[i].endpoint = eps[i]
+		agents[i].clientPort = cports[i]
+		agents[i].peerPort = pports[i]
+		agents[i].failpointPort = fports[i]
+		agents[i].datadir = *datadir
+	}
+
+	sConfig := &stressConfig{
+		qps:            *stressQPS,
+		keyLargeSize:   int(*stressKeyLargeSize),
+		keySize:        int(*stressKeySize),
+		keySuffixRange: int(*stressKeySuffixRange),
+		v2:             *isV2Only,
+	}
+
+	c := &cluster{
+		agents:        agents,
+		v2Only:        *isV2Only,
+		stressBuilder: newStressBuilder(*stresserType, sConfig),
+	}
+
+	if err := c.bootstrap(); err != nil {
 		plog.Fatal(err)
 	}
 	defer c.Terminate()
@@ -58,6 +97,14 @@ func main() {
 		newFailureSlowNetworkAll(),
 	}
 
+	// ensure cluster is fully booted to know failpoints are available
+	c.WaitHealth()
+	fpFailures, fperr := failpointFailures(c)
+	if len(fpFailures) == 0 {
+		plog.Infof("no failpoints found (%v)", fperr)
+	}
+	failures = append(failures, fpFailures...)
+
 	schedule := failures
 	if schedCases != nil && *schedCases != "" {
 		cases := strings.Split(*schedCases, " ")
@@ -73,10 +120,14 @@ func main() {
 	}
 
 	t := &tester{
-		failures:         schedule,
-		cluster:          c,
-		limit:            *limit,
-		consistencyCheck: *consistencyCheck,
+		failures: schedule,
+		cluster:  c,
+		limit:    *limit,
+		checker:  newNoChecker(),
+	}
+
+	if *consistencyCheck && !c.v2Only {
+		t.checker = newHashChecker(t)
 	}
 
 	sh := statusHandler{status: &t.status}
@@ -85,4 +136,27 @@ func main() {
 	go func() { plog.Fatal(http.ListenAndServe(":9028", nil)) }()
 
 	t.runLoop()
+}
+
+// portsFromArg converts a comma separated list into a slice of ints
+func portsFromArg(arg string, n, defaultPort int) []int {
+	ret := make([]int, n)
+	if len(arg) == 0 {
+		for i := range ret {
+			ret[i] = defaultPort
+		}
+		return ret
+	}
+	s := strings.Split(arg, ",")
+	if len(s) != n {
+		fmt.Printf("expected %d ports, got %d (%s)\n", n, len(s), arg)
+		os.Exit(1)
+	}
+	for i := range s {
+		if _, err := fmt.Sscanf(s[i], "%d", &ret[i]); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+	return ret
 }
