@@ -55,7 +55,7 @@ func init() {
 	RegCmd.AddCommand(reglsCmd)
 }
 
-// RegistryPush displays resource usage statistcs
+// RegistryPush displays resource usage statistics
 func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
@@ -76,7 +76,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if !strings.HasPrefix(image, "registry."+domain) {
 		nn := strings.Index(image, "/")
 		if (nn < 0) {
-			return fmt.Errorf("Invalide image name %s", image)
+			return fmt.Errorf("Invalid image name %s", image)
 		}
 		taggedImage = "registry."+domain+"/"+image[nn+1:]
 		fmt.Printf("Tag image from %s to %s\n", image, taggedImage)
@@ -99,7 +99,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return err
 }
 
-// RegistryPush displays resource usage statistcs: localhost:5000/v2/_catalog
+// RegistryPush displays resource usage statistics: localhost:5000/v2/_catalog
 func RegistryLs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
