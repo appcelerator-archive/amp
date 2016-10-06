@@ -11,7 +11,7 @@ set -euo pipefail
 # INFLUXDATA_VERSION should be the Major.minor version, e.g 0.13 or 1.0
 INFLUXDATA_VERSION=1.0
 KAFKA_VERSION=0.10.0.1
-ZOOKEEPER_VERSION=3.4.8
+ZOOKEEPER_VERSION=3.4.9
 ETCD_VERSION=3.0.10
 
 # please keep sorted
