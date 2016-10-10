@@ -2,8 +2,6 @@
 
 ## 0.1.1 (2016-10-10)
 
-Alpha-Release
-
 ### Client
 
 * Add Stack list support + Stack management by Id & Name [#206](https://github.com/appcelerator/amp/pull/206)
@@ -48,7 +46,7 @@ Alpha-Release
 
 ## 0.1.0 (2016-09-23)
 
-Limited Preview
+Alpha release (limited Preview)
 
 ### Build
 
