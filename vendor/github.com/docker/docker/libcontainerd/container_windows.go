@@ -8,6 +8,7 @@ import (
 
 	"github.com/Microsoft/hcsshim"
 	"github.com/Sirupsen/logrus"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 type container struct {
@@ -19,7 +20,7 @@ type container struct {
 	// The ociSpec is required, as client.Create() needs a spec,
 	// but can be called from the RestartManager context which does not
 	// otherwise have access to the Spec
-	ociSpec Spec
+	ociSpec specs.Spec
 
 	manualStopRequested bool
 	hcsContainer        hcsshim.Container
@@ -35,6 +36,8 @@ func (ctr *container) newProcess(friendlyName string) *process {
 	}
 }
 
+// start starts a created container.
+// Caller needs to lock container ID before calling this method.
 func (ctr *container) start() error {
 	var err error
 	isServicing := false
@@ -66,18 +69,19 @@ func (ctr *container) start() error {
 	createProcessParms := &hcsshim.ProcessConfig{
 		EmulateConsole:   ctr.ociSpec.Process.Terminal,
 		WorkingDirectory: ctr.ociSpec.Process.Cwd,
-		ConsoleSize:      ctr.ociSpec.Process.InitialConsoleSize,
 		CreateStdInPipe:  !isServicing,
 		CreateStdOutPipe: !isServicing,
 		CreateStdErrPipe: !ctr.ociSpec.Process.Terminal && !isServicing,
 	}
+	createProcessParms.ConsoleSize[0] = uint(ctr.ociSpec.Process.ConsoleSize.Height)
+	createProcessParms.ConsoleSize[1] = uint(ctr.ociSpec.Process.ConsoleSize.Width)
 
 	// Configure the environment for the process
 	createProcessParms.Environment = setupEnvironmentVariables(ctr.ociSpec.Process.Env)
 	createProcessParms.CommandLine = strings.Join(ctr.ociSpec.Process.Args, " ")
 
 	// Start the command running in the container.
-	hcsProcess, err := ctr.hcsContainer.CreateProcess(createProcessParms)
+	newProcess, err := ctr.hcsContainer.CreateProcess(createProcessParms)
 	if err != nil {
 		logrus.Errorf("libcontainerd: CreateProcess() failed %s", err)
 		if err := ctr.terminate(); err != nil {
@@ -87,12 +91,12 @@ func (ctr *container) start() error {
 		}
 		return err
 	}
-	ctr.startedAt = time.Now()
+
+	pid := newProcess.Pid()
 
 	// Save the hcs Process and PID
 	ctr.process.friendlyName = InitFriendlyName
-	pid := hcsProcess.Pid()
-	ctr.process.hcsProcess = hcsProcess
+	ctr.process.hcsProcess = newProcess
 
 	// If this is a servicing container, wait on the process synchronously here and
 	// if it succeeds, wait for it cleanly shutdown and merge into the parent container.
@@ -109,7 +113,7 @@ func (ctr *container) start() error {
 
 	var stdout, stderr io.ReadCloser
 	var stdin io.WriteCloser
-	stdin, stdout, stderr, err = hcsProcess.Stdio()
+	stdin, stdout, stderr, err = newProcess.Stdio()
 	if err != nil {
 		logrus.Errorf("libcontainerd: failed to get stdio pipes: %s", err)
 		if err := ctr.terminate(); err != nil {
@@ -120,10 +124,7 @@ func (ctr *container) start() error {
 
 	iopipe := &IOPipe{Terminal: ctr.ociSpec.Process.Terminal}
 
-	iopipe.Stdin = createStdInCloser(stdin, hcsProcess)
-
-	// TEMP: Work around Windows BS/DEL behavior.
-	iopipe.Stdin = fixStdinBackspaceBehavior(iopipe.Stdin, ctr.ociSpec.Platform.OSVersion, ctr.ociSpec.Process.Terminal)
+	iopipe.Stdin = createStdInCloser(stdin, newProcess)
 
 	// Convert io.ReadClosers to io.Readers
 	if stdout != nil {
@@ -153,6 +154,7 @@ func (ctr *container) start() error {
 			State: StateStart,
 			Pid:   ctr.systemPid, // Not sure this is needed? Double-check monitor.go in daemon BUGBUG @jhowardmsft
 		}}
+	logrus.Debugf("libcontainerd: start() completed OK, %+v", si)
 	return ctr.client.backend.StateChanged(ctr.containerID, si)
 
 }
@@ -184,10 +186,6 @@ func (ctr *container) waitProcessExitCode(process *process) int {
 		// has exited to avoid a container being dropped on the floor.
 	}
 
-	if err := process.hcsProcess.Close(); err != nil {
-		logrus.Errorf("libcontainerd: hcsProcess.Close(): %v", err)
-	}
-
 	return exitCode
 }
 
@@ -195,10 +193,11 @@ func (ctr *container) waitProcessExitCode(process *process) int {
 // equivalent to (in the linux containerd world) where events come in for
 // state change notifications from containerd.
 func (ctr *container) waitExit(process *process, isFirstProcessToStart bool) error {
-	var waitRestart chan error
 	logrus.Debugln("libcontainerd: waitExit() on pid", process.systemPid)
 
 	exitCode := ctr.waitProcessExitCode(process)
+	// Lock the container while shutting down
+	ctr.client.lock(ctr.containerID)
 
 	// Assume the container has exited
 	si := StateInfo{
@@ -214,6 +213,7 @@ func (ctr *container) waitExit(process *process, isFirstProcessToStart bool) err
 	// But it could have been an exec'd process which exited
 	if !isFirstProcessToStart {
 		si.State = StateExitProcess
+		ctr.cleanProcess(process.friendlyName)
 	} else {
 		updatePending, err := ctr.hcsContainer.HasPendingUpdates()
 		if err != nil {
@@ -232,52 +232,38 @@ func (ctr *container) waitExit(process *process, isFirstProcessToStart bool) err
 			logrus.Error(err)
 		}
 
-		if !ctr.manualStopRequested && ctr.restartManager != nil {
-			restart, wait, err := ctr.restartManager.ShouldRestart(uint32(exitCode), false, time.Since(ctr.startedAt))
-			if err != nil {
-				logrus.Error(err)
-			} else if restart {
-				si.State = StateRestart
-				ctr.restarting = true
-				waitRestart = wait
-			}
-		}
-
 		// Remove process from list if we have exited
-		// We need to do so here in case the Message Handler decides to restart it.
 		if si.State == StateExit {
-			ctr.client.deleteContainer(ctr.friendlyName)
+			ctr.client.deleteContainer(ctr.containerID)
 		}
 	}
+
+	if err := process.hcsProcess.Close(); err != nil {
+		logrus.Errorf("libcontainerd: hcsProcess.Close(): %v", err)
+	}
+
+	// Unlock here before we call back into the daemon to update state
+	ctr.client.unlock(ctr.containerID)
 
 	// Call into the backend to notify it of the state change.
 	logrus.Debugf("libcontainerd: waitExit() calling backend.StateChanged %+v", si)
 	if err := ctr.client.backend.StateChanged(ctr.containerID, si); err != nil {
 		logrus.Error(err)
 	}
-	if si.State == StateRestart {
-		go func() {
-			err := <-waitRestart
-			ctr.restarting = false
-			ctr.client.deleteContainer(ctr.friendlyName)
-			if err == nil {
-				if err = ctr.client.Create(ctr.containerID, "", "", ctr.ociSpec, ctr.options...); err != nil {
-					logrus.Errorf("libcontainerd: error restarting %v", err)
-				}
-			}
-			if err != nil {
-				si.State = StateExit
-				if err := ctr.client.backend.StateChanged(ctr.containerID, si); err != nil {
-					logrus.Error(err)
-				}
-			}
-		}()
-	}
 
 	logrus.Debugf("libcontainerd: waitExit() completed OK, %+v", si)
+
 	return nil
 }
 
+// cleanProcess removes process from the map.
+// Caller needs to lock container ID before calling this method.
+func (ctr *container) cleanProcess(id string) {
+	delete(ctr.processes, id)
+}
+
+// shutdown shuts down the container in HCS
+// Caller needs to lock container ID before calling this method.
 func (ctr *container) shutdown() error {
 	const shutdownTimeout = time.Minute * 5
 	err := ctr.hcsContainer.Shutdown()
@@ -299,6 +285,8 @@ func (ctr *container) shutdown() error {
 	return nil
 }
 
+// terminate terminates the container in HCS
+// Caller needs to lock container ID before calling this method.
 func (ctr *container) terminate() error {
 	const terminateTimeout = time.Minute * 5
 	err := ctr.hcsContainer.Terminate()

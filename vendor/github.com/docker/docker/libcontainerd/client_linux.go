@@ -101,6 +101,7 @@ func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendly
 	clnt.unlock(containerID)
 
 	if err := clnt.backend.AttachStreams(processFriendlyName, *iopipe); err != nil {
+		clnt.lock(containerID)
 		return err
 	}
 	clnt.lock(containerID)
@@ -133,17 +134,12 @@ func (clnt *client) prepareBundleDir(uid, gid int) (string, error) {
 	return p, nil
 }
 
-func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec Spec, options ...CreateOption) (err error) {
+func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec specs.Spec, options ...CreateOption) (err error) {
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
 
-	if ctr, err := clnt.getContainer(containerID); err == nil {
-		if ctr.restarting {
-			ctr.restartManager.Cancel()
-			ctr.clean()
-		} else {
-			return fmt.Errorf("Container %s is already active", containerID)
-		}
+	if _, err := clnt.getContainer(containerID); err == nil {
+		return fmt.Errorf("Container %s is already active", containerID)
 	}
 
 	uid, gid, err := getRootIDs(specs.Spec(spec))

@@ -1,3 +1,26 @@
+## v1.0.2 [2016-10-05]
+
+### Bugfixes
+
+- [#7150](https://github.com/influxdata/influxdb/issues/7150): Do not automatically reset the shard duration when using ALTER RETENTION POLICY
+- [#5878](https://github.com/influxdata/influxdb/issues/5878): Ensure correct shard groups created when retention policy has been altered.
+- [#7391](https://github.com/influxdata/influxdb/issues/7391): Fix RLE integer decoding producing negative numbers
+- [#7335](https://github.com/influxdata/influxdb/pull/7335): Avoid stat syscall when planning compactions
+- [#7330](https://github.com/influxdata/influxdb/issues/7330): Subscription data loss under high write load
+
+## v1.0.1 [2016-09-26]
+
+### Bugfixes
+
+- [#7271](https://github.com/influxdata/influxdb/issues/7271): Fixing typo within example configuration file. Thanks @andyfeller!
+- [#7270](https://github.com/influxdata/influxdb/issues/7270): Implement time math for lazy time literals.
+- [#7272](https://github.com/influxdata/influxdb/issues/7272): Report cmdline and memstats in /debug/vars.
+- [#7299](https://github.com/influxdata/influxdb/ssues/7299): Ensure fieldsCreated stat available in shard measurement.
+- [#6846](https://github.com/influxdata/influxdb/issues/6846): Read an invalid JSON response as an error in the influx client.
+- [#7110](https://github.com/influxdata/influxdb/issues/7110): Skip past points at the same time in derivative call within a merged series.
+- [#7226](https://github.com/influxdata/influxdb/issues/7226): Fix database locked up when deleting shards
+- [#7315](https://github.com/influxdata/influxdb/issues/7315): Prevent users from manually using system queries since incorrect use would result in a panic.
+
 ## v1.0.0 [2016-09-07]
 
 ### Release Notes

@@ -706,8 +706,8 @@ func TestDoProposalStopped(t *testing.T) {
 	}
 	srv.applyV2 = &applierV2store{store: srv.store, cluster: srv.cluster}
 
-	srv.done = make(chan struct{})
-	close(srv.done)
+	srv.stopping = make(chan struct{})
+	close(srv.stopping)
 	_, err := srv.Do(context.Background(), pb.Request{Method: "PUT", ID: 1})
 	if err != ErrStopped {
 		t.Errorf("err = %v, want %v", err, ErrStopped)
@@ -844,7 +844,7 @@ func TestSnapshot(t *testing.T) {
 
 	s := raft.NewMemoryStorage()
 	s.Append([]raftpb.Entry{{Index: 1}})
-	st := mockstore.NewRecorder()
+	st := mockstore.NewRecorderStream()
 	p := mockstorage.NewStorageRecorderStream("")
 	srv := &EtcdServer{
 		Cfg: &ServerConfig{},
@@ -858,24 +858,36 @@ func TestSnapshot(t *testing.T) {
 	srv.kv = mvcc.New(be, &lease.FakeLessor{}, &srv.consistIndex)
 	srv.be = be
 
+	ch := make(chan struct{}, 2)
+
+	go func() {
+		gaction, _ := p.Wait(1)
+		if len(gaction) != 1 {
+			t.Fatalf("len(action) = %d, want 1", len(gaction))
+		}
+		if !reflect.DeepEqual(gaction[0], testutil.Action{Name: "SaveSnap"}) {
+			t.Errorf("action = %s, want SaveSnap", gaction[0])
+		}
+		ch <- struct{}{}
+	}()
+
+	go func() {
+		gaction, _ := st.Wait(2)
+		if len(gaction) != 2 {
+			t.Fatalf("len(action) = %d, want 2", len(gaction))
+		}
+		if !reflect.DeepEqual(gaction[0], testutil.Action{Name: "Clone"}) {
+			t.Errorf("action = %s, want Clone", gaction[0])
+		}
+		if !reflect.DeepEqual(gaction[1], testutil.Action{Name: "SaveNoCopy"}) {
+			t.Errorf("action = %s, want SaveNoCopy", gaction[1])
+		}
+		ch <- struct{}{}
+	}()
+
 	srv.snapshot(1, raftpb.ConfState{Nodes: []uint64{1}})
-	gaction, _ := st.Wait(2)
-	if len(gaction) != 2 {
-		t.Fatalf("len(action) = %d, want 1", len(gaction))
-	}
-	if !reflect.DeepEqual(gaction[0], testutil.Action{Name: "Clone"}) {
-		t.Errorf("action = %s, want Clone", gaction[0])
-	}
-	if !reflect.DeepEqual(gaction[1], testutil.Action{Name: "SaveNoCopy"}) {
-		t.Errorf("action = %s, want SaveNoCopy", gaction[1])
-	}
-	gaction, _ = p.Wait(1)
-	if len(gaction) != 1 {
-		t.Fatalf("len(action) = %d, want 1", len(gaction))
-	}
-	if !reflect.DeepEqual(gaction[0], testutil.Action{Name: "SaveSnap"}) {
-		t.Errorf("action = %s, want SaveSnap", gaction[0])
-	}
+	<-ch
+	<-ch
 }
 
 // Applied > SnapCount should trigger a SaveSnap event
@@ -1205,10 +1217,11 @@ func TestPublishStopped(t *testing.T) {
 		cluster:  &membership.RaftCluster{},
 		w:        mockwait.NewNop(),
 		done:     make(chan struct{}),
+		stopping: make(chan struct{}),
 		stop:     make(chan struct{}),
 		reqIDGen: idutil.NewGenerator(0, time.Time{}),
 	}
-	close(srv.done)
+	close(srv.stopping)
 	srv.publish(time.Hour)
 }
 
@@ -1219,11 +1232,11 @@ func TestPublishRetry(t *testing.T) {
 		Cfg:      &ServerConfig{TickMs: 1},
 		r:        raftNode{Node: n},
 		w:        mockwait.NewNop(),
-		done:     make(chan struct{}),
+		stopping: make(chan struct{}),
 		reqIDGen: idutil.NewGenerator(0, time.Time{}),
 	}
 	// TODO: use fakeClockwork
-	time.AfterFunc(10*time.Millisecond, func() { close(srv.done) })
+	time.AfterFunc(10*time.Millisecond, func() { close(srv.stopping) })
 	srv.publish(10 * time.Nanosecond)
 
 	action := n.Action()
@@ -1357,9 +1370,11 @@ func (n *nodeRecorder) Step(ctx context.Context, msg raftpb.Message) error {
 	n.Record(testutil.Action{Name: "Step"})
 	return nil
 }
-func (n *nodeRecorder) Status() raft.Status      { return raft.Status{} }
-func (n *nodeRecorder) Ready() <-chan raft.Ready { return nil }
-func (n *nodeRecorder) Advance()                 {}
+func (n *nodeRecorder) Status() raft.Status                                             { return raft.Status{} }
+func (n *nodeRecorder) Ready() <-chan raft.Ready                                        { return nil }
+func (n *nodeRecorder) TransferLeadership(ctx context.Context, lead, transferee uint64) {}
+func (n *nodeRecorder) ReadIndex(ctx context.Context, rctx []byte) error                { return nil }
+func (n *nodeRecorder) Advance()                                                        {}
 func (n *nodeRecorder) ApplyConfChange(conf raftpb.ConfChange) *raftpb.ConfState {
 	n.Record(testutil.Action{Name: "ApplyConfChange", Params: []interface{}{conf}})
 	return &raftpb.ConfState{}

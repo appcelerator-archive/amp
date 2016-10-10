@@ -5,9 +5,11 @@
 package precis
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
+	"golang.org/x/text/internal/testtext"
 	"golang.org/x/text/secure/bidirule"
 )
 
@@ -17,7 +19,7 @@ type testCase struct {
 	err    error
 }
 
-var testCases = []struct {
+var enforceTestCases = []struct {
 	name  string
 	p     *Profile
 	cases []testCase
@@ -160,6 +162,7 @@ var testCases = []struct {
 		{"foo", "foo", nil},
 		{"Foo Bar", "Foo Bar", nil},
 		{"foo bar", "foo bar", nil},
+		{"\u03A3", "\u03A3", nil},
 		{"\u03C3", "\u03C3", nil},
 		// Greek final sigma is left as is (do not fold!)
 		{"\u03C2", "\u03C2", nil},
@@ -192,11 +195,12 @@ var testCases = []struct {
 		// {UsernameCaseMapped, "", "", errDisallowedRune},
 		{"juliet@example.com", "juliet@example.com", nil},
 		{"fussball", "fussball", nil},
-		{"fu\u00DFball", "fussball", nil},
+		{"fu\u00DFball", "fu\u00DFball", nil},
 		{"\u03C0", "\u03C0", nil},
 		{"\u03A3", "\u03C3", nil},
 		{"\u03C3", "\u03C3", nil},
-		{"\u03C2", "\u03C3", nil},
+		// Greek final sigma is left as is (do not fold!)
+		{"\u03C2", "\u03C2", nil},
 		{"\u0049", "\u0069", nil},
 		{"\u0049", "\u0069", nil},
 		{"\u03D2", "", errDisallowedRune},
@@ -211,7 +215,7 @@ var testCases = []struct {
 		{"\n", "", bidirule.ErrInvalid},
 		{"\u26D6", "", bidirule.ErrInvalid},
 		{"\u26FF", "", bidirule.ErrInvalid},
-		{"\uFB00", "ff", nil}, // Side effect of case folding.
+		{"\uFB00", "", errDisallowedRune},
 		{"\u1680", "", bidirule.ErrInvalid},
 		{" ", "", bidirule.ErrInvalid},
 		{"  ", "", bidirule.ErrInvalid},
@@ -227,8 +231,6 @@ var testCases = []struct {
 		{"\u0052\u030C", "ř", nil},
 
 		{"\u1E61", "\u1E61", nil}, // LATIN SMALL LETTER S WITH DOT ABOVE
-		// U+1e9B: case folded.
-		{"ẛ", "\u1E61", nil}, // LATIN SMALL LETTER LONG S WITH DOT ABOVE
 
 		// Confusable characters ARE allowed and should NOT be mapped.
 		{"\u0410", "\u0430", nil}, // CYRILLIC CAPITAL LETTER A
@@ -246,6 +248,17 @@ var testCases = []struct {
 		{"\u212B", "\u00c5", nil},    // Angstrom sign, NFC -> U+00E5
 		{"ẛ", "", errDisallowedRune}, // LATIN SMALL LETTER LONG S WITH DOT ABOVE
 	}},
+}
+
+func doTests(t *testing.T, fn func(t *testing.T, p *Profile, tc testCase)) {
+	for _, g := range enforceTestCases {
+		for i, tc := range g.cases {
+			name := fmt.Sprintf("%s:%d:%+q", g.name, i, tc.input)
+			testtext.Run(t, name, func(t *testing.T) {
+				fn(t, g.p, tc)
+			})
+		}
+	}
 }
 
 func TestString(t *testing.T) {

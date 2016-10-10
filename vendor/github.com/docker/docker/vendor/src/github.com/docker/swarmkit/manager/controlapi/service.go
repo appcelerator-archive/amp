@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/docker/engine-api/types/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/identity"
 	"github.com/docker/swarmkit/manager/scheduler"
@@ -133,9 +133,18 @@ func validateTask(taskSpec api.TaskSpec) error {
 		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: image reference must be provided")
 	}
 
-	if _, _, err := reference.Parse(container.Image); err != nil {
+	if _, err := reference.ParseNamed(container.Image); err != nil {
 		return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: %q is not a valid repository/tag", container.Image)
 	}
+
+	mountMap := make(map[string]bool)
+	for _, mount := range container.Mounts {
+		if _, exists := mountMap[mount.Target]; exists {
+			return grpc.Errorf(codes.InvalidArgument, "ContainerSpec: duplicate mount point: %s", mount.Target)
+		}
+		mountMap[mount.Target] = true
+	}
+
 	return nil
 }
 
@@ -149,13 +158,13 @@ func validateEndpointSpec(epSpec *api.EndpointSpec) error {
 		return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: ports can't be used with dnsrr mode")
 	}
 
-	portSet := make(map[api.PortConfig]struct{})
+	portSet := make(map[uint32]struct{})
 	for _, port := range epSpec.Ports {
-		if _, ok := portSet[*port]; ok {
-			return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: duplicate ports provided")
+		if _, ok := portSet[port.PublishedPort]; ok {
+			return grpc.Errorf(codes.InvalidArgument, "EndpointSpec: duplicate published ports provided")
 		}
 
-		portSet[*port] = struct{}{}
+		portSet[port.PublishedPort] = struct{}{}
 	}
 
 	return nil
@@ -327,29 +336,28 @@ func (s *Server) UpdateService(ctx context.Context, request *api.UpdateServiceRe
 			return nil
 		}
 		// temporary disable network update
-		if request.Spec != nil {
-			requestSpecNetworks := request.Spec.Task.Networks
-			if len(requestSpecNetworks) == 0 {
-				requestSpecNetworks = request.Spec.Networks
-			}
+		requestSpecNetworks := request.Spec.Task.Networks
+		if len(requestSpecNetworks) == 0 {
+			requestSpecNetworks = request.Spec.Networks
+		}
 
-			specNetworks := service.Spec.Task.Networks
-			if len(specNetworks) == 0 {
-				specNetworks = service.Spec.Networks
-			}
+		specNetworks := service.Spec.Task.Networks
+		if len(specNetworks) == 0 {
+			specNetworks = service.Spec.Networks
+		}
 
-			if !reflect.DeepEqual(requestSpecNetworks, specNetworks) {
-				return errNetworkUpdateNotSupported
-			}
+		if !reflect.DeepEqual(requestSpecNetworks, specNetworks) {
+			return errNetworkUpdateNotSupported
 		}
 
 		// orchestrator is designed to be stateless, so it should not deal
 		// with service mode change (comparing current config with previous config).
 		// proper way to change service mode is to delete and re-add.
-		if request.Spec != nil && reflect.TypeOf(service.Spec.Mode) != reflect.TypeOf(request.Spec.Mode) {
+		if reflect.TypeOf(service.Spec.Mode) != reflect.TypeOf(request.Spec.Mode) {
 			return errModeChangeNotAllowed
 		}
 		service.Meta.Version = *request.ServiceVersion
+		service.PreviousSpec = service.Spec.Copy()
 		service.Spec = *request.Spec.Copy()
 
 		// Reset update status

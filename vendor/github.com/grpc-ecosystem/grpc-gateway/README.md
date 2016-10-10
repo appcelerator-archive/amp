@@ -5,7 +5,6 @@
 grpc-gateway is a plugin of [protoc](http://github.com/google/protobuf).
 It reads [gRPC](http://github.com/grpc/grpc-common) service definition,
 and generates a reverse-proxy server which translates a RESTful JSON API into gRPC.
-This server is generated according to [custom options](https://cloud.google.com/service-management/reference/rpc/google.api#http) in your gRPC definition.
 
 It helps you to provide your APIs in both gRPC and RESTful style at the same time.
 
@@ -61,7 +60,7 @@ Make sure that your `$GOPATH/bin` is in your `$PATH`.
      rpc Echo(StringMessage) returns (StringMessage) {}
    }
    ```
-2. Add a [custom option](https://cloud.google.com/service-management/reference/rpc/google.api#http) to the .proto file
+2. Add a custom option to the .proto file
    
    your_service.proto:
    ```diff
@@ -219,9 +218,6 @@ But patch is welcome.
 * Handling trailer metadata
 * Encoding request/response body in XML
 * True bi-directional streaming. (Probably impossible?)
-
-# Contribution
-See [CONTRIBUTING.md](http://github.com/grpc-ecosystem/grpc-gateway/blob/master/CONTRIBUTING.md).
 
 # License
 grpc-gateway is licensed under the BSD 3-Clause License.

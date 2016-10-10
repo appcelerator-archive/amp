@@ -6,6 +6,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
@@ -51,7 +52,7 @@ type ContainerAPIClient interface {
 	ContainerResize(ctx context.Context, container string, options types.ResizeOptions) error
 	ContainerRestart(ctx context.Context, container string, timeout *time.Duration) error
 	ContainerStatPath(ctx context.Context, container, path string) (types.ContainerPathStat, error)
-	ContainerStats(ctx context.Context, container string, stream bool) (io.ReadCloser, error)
+	ContainerStats(ctx context.Context, container string, stream bool) (types.ContainerStats, error)
 	ContainerStart(ctx context.Context, container string, options types.ContainerStartOptions) error
 	ContainerStop(ctx context.Context, container string, timeout *time.Duration) error
 	ContainerTop(ctx context.Context, container string, arguments []string) (types.ContainerProcessList, error)
@@ -60,6 +61,7 @@ type ContainerAPIClient interface {
 	ContainerWait(ctx context.Context, container string) (int, error)
 	CopyFromContainer(ctx context.Context, container, srcPath string) (io.ReadCloser, types.ContainerPathStat, error)
 	CopyToContainer(ctx context.Context, container, path string, content io.Reader, options types.CopyToContainerOptions) error
+	ContainersPrune(ctx context.Context, cfg types.ContainersPruneConfig) (types.ContainersPruneReport, error)
 }
 
 // ImageAPIClient defines API client methods for the images
@@ -77,6 +79,7 @@ type ImageAPIClient interface {
 	ImageSearch(ctx context.Context, term string, options types.ImageSearchOptions) ([]registry.SearchResult, error)
 	ImageSave(ctx context.Context, images []string) (io.ReadCloser, error)
 	ImageTag(ctx context.Context, image, ref string) error
+	ImagesPrune(ctx context.Context, cfg types.ImagesPruneConfig) (types.ImagesPruneReport, error)
 }
 
 // NetworkAPIClient defines API client methods for the networks
@@ -120,9 +123,10 @@ type SwarmAPIClient interface {
 
 // SystemAPIClient defines API client methods for the system
 type SystemAPIClient interface {
-	Events(ctx context.Context, options types.EventsOptions) (io.ReadCloser, error)
+	Events(ctx context.Context, options types.EventsOptions) (<-chan events.Message, <-chan error)
 	Info(ctx context.Context) (types.Info, error)
 	RegistryLogin(ctx context.Context, auth types.AuthConfig) (types.AuthResponse, error)
+	DiskUsage(ctx context.Context) (types.DiskUsage, error)
 }
 
 // VolumeAPIClient defines API client methods for the volumes
@@ -132,4 +136,5 @@ type VolumeAPIClient interface {
 	VolumeInspectWithRaw(ctx context.Context, volumeID string) (types.Volume, []byte, error)
 	VolumeList(ctx context.Context, filter filters.Args) (types.VolumesListResponse, error)
 	VolumeRemove(ctx context.Context, volumeID string, force bool) error
+	VolumesPrune(ctx context.Context, cfg types.VolumesPruneConfig) (types.VolumesPruneReport, error)
 }

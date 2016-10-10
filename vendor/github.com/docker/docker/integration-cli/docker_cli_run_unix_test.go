@@ -1229,16 +1229,16 @@ func (s *DockerSuite) TestRunDeviceSymlink(c *check.C) {
 	c.Assert(strings.Trim(out, "\r\n"), checker.Contains, "bb7df04e1b0a2570657527a7e108ae23", check.Commentf("expected output bb7df04e1b0a2570657527a7e108ae23"))
 }
 
-// TestRunPidsLimit makes sure the pids cgroup is set with --pids-limit
-func (s *DockerSuite) TestRunPidsLimit(c *check.C) {
+// TestRunPIDsLimit makes sure the pids cgroup is set with --pids-limit
+func (s *DockerSuite) TestRunPIDsLimit(c *check.C) {
 	testRequires(c, pidsLimit)
 
 	file := "/sys/fs/cgroup/pids/pids.max"
-	out, _ := dockerCmd(c, "run", "--name", "skittles", "--pids-limit", "2", "busybox", "cat", file)
-	c.Assert(strings.TrimSpace(out), checker.Equals, "2")
+	out, _ := dockerCmd(c, "run", "--name", "skittles", "--pids-limit", "4", "busybox", "cat", file)
+	c.Assert(strings.TrimSpace(out), checker.Equals, "4")
 
 	out = inspectField(c, "skittles", "HostConfig.PidsLimit")
-	c.Assert(out, checker.Equals, "2", check.Commentf("setting the pids limit failed"))
+	c.Assert(out, checker.Equals, "4", check.Commentf("setting the pids limit failed"))
 }
 
 func (s *DockerSuite) TestRunPrivilegedAllowedDevices(c *check.C) {

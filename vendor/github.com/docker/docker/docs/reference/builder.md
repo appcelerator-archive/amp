@@ -68,6 +68,13 @@ add multiple `-t` parameters when you run the `build` command:
 
     $ docker build -t shykes/myapp:1.0.2 -t shykes/myapp:latest .
 
+Before the Docker daemon runs the instructions in the `Dockerfile`, it performs
+a preliminary validation of the `Dockerfile` and returns an error if the syntax is incorrect:
+
+    $ docker build -t test/myapp .
+    Sending build context to Docker daemon 2.048 kB
+    Error response from daemon: Unknown instruction: RUNCMD
+
 The Docker daemon runs the instructions in the `Dockerfile` one-by-one,
 committing the result of each instruction
 to a new image if necessary, before finally outputting the ID of your
@@ -98,6 +105,13 @@ the `Using cache` message in the console output.
      ---> Using cache
      ---> 7ea8aef582cc
     Successfully built 7ea8aef582cc
+
+Build cache is only used from images that have a local parent chain. This means
+that these images were created by previous builds or the whole chain of images
+was loaded with `docker load`. If you wish to use build cache of a specific
+image you can specify it with `--cache-from` option. Images specified with
+`--cache-from` do not need to have a parent chain and may be pulled from other
+registries.
 
 When you're done with your build, you're ready to look into [*Pushing a
 repository to its registry*](../tutorials/dockerrepos.md#contributing-to-docker-hub).

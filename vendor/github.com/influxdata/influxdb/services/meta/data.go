@@ -150,6 +150,10 @@ func (data *Data) CreateRetentionPolicy(database string, rpi *RetentionPolicyInf
 	// do it again to verify input.
 	rpi.ShardGroupDuration = normalisedShardDuration(rpi.ShardGroupDuration, rpi.Duration)
 
+	if rpi.Duration > 0 && rpi.Duration < rpi.ShardGroupDuration {
+		return ErrIncompatibleDurations
+	}
+
 	// Find database.
 	di := data.Database(database)
 	if di == nil {
@@ -231,6 +235,15 @@ func (data *Data) UpdateRetentionPolicy(database, name string, rpu *RetentionPol
 		return ErrRetentionPolicyDurationTooLow
 	}
 
+	// Enforce duration is at least the shard duration
+	if (rpu.Duration != nil && *rpu.Duration > 0 &&
+		((rpu.ShardGroupDuration != nil && *rpu.Duration < *rpu.ShardGroupDuration) ||
+			(rpu.ShardGroupDuration == nil && *rpu.Duration < rpi.ShardGroupDuration))) ||
+		(rpu.Duration == nil && rpi.Duration > 0 &&
+			rpu.ShardGroupDuration != nil && rpi.Duration < *rpu.ShardGroupDuration) {
+		return ErrIncompatibleDurations
+	}
+
 	// Update fields.
 	if rpu.Name != nil {
 		rpi.Name = *rpu.Name
@@ -241,11 +254,8 @@ func (data *Data) UpdateRetentionPolicy(database, name string, rpu *RetentionPol
 	if rpu.ReplicaN != nil {
 		rpi.ReplicaN = *rpu.ReplicaN
 	}
-
 	if rpu.ShardGroupDuration != nil {
-		rpi.ShardGroupDuration = *rpu.ShardGroupDuration
-	} else {
-		rpi.ShardGroupDuration = shardGroupDuration(rpi.Duration)
+		rpi.ShardGroupDuration = normalisedShardDuration(*rpu.ShardGroupDuration, rpi.Duration)
 	}
 
 	return nil
@@ -1113,9 +1123,25 @@ type ShardGroupInfo struct {
 // on the StartTime field.
 type ShardGroupInfos []ShardGroupInfo
 
-func (a ShardGroupInfos) Len() int           { return len(a) }
-func (a ShardGroupInfos) Less(i, j int) bool { return a[i].StartTime.Before(a[j].StartTime) }
-func (a ShardGroupInfos) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ShardGroupInfos) Len() int      { return len(a) }
+func (a ShardGroupInfos) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ShardGroupInfos) Less(i, j int) bool {
+	iEnd := a[i].EndTime
+	if a[i].Truncated() {
+		iEnd = a[i].TruncatedAt
+	}
+
+	jEnd := a[j].EndTime
+	if a[j].Truncated() {
+		jEnd = a[j].TruncatedAt
+	}
+
+	if iEnd.Equal(jEnd) {
+		return a[i].StartTime.Before(a[j].StartTime)
+	}
+
+	return iEnd.Before(jEnd)
+}
 
 // Contains return true if the shard group contains data for the timestamp.
 func (sgi *ShardGroupInfo) Contains(timestamp time.Time) bool {

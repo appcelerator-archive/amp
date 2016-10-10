@@ -30,14 +30,14 @@ type ExitStatus struct {
 }
 
 // CreateDaemonEnvironment creates a new environment variable slice for this container.
-func (container *Container) CreateDaemonEnvironment(linkedEnv []string) []string {
+func (container *Container) CreateDaemonEnvironment(_ bool, linkedEnv []string) []string {
 	// because the env on the container can override certain default values
 	// we need to replace the 'env' keys where they match and append anything
 	// else.
 	return utils.ReplaceOrAppendEnvValues(linkedEnv, container.Config.Env)
 }
 
-// UnmountIpcMounts unmount Ipc related mounts.
+// UnmountIpcMounts unmounts Ipc related mounts.
 // This is a NOOP on windows.
 func (container *Container) UnmountIpcMounts(unmount func(pth string) error) {
 }
@@ -49,6 +49,38 @@ func (container *Container) IpcMounts() []Mount {
 
 // UnmountVolumes explicitly unmounts volumes from the container.
 func (container *Container) UnmountVolumes(forceSyscall bool, volumeEventLog func(name, action string, attributes map[string]string)) error {
+	var (
+		volumeMounts []volume.MountPoint
+		err          error
+	)
+
+	for _, mntPoint := range container.MountPoints {
+		// Do not attempt to get the mountpoint destination on the host as it
+		// is not accessible on Windows in the case that a container is running.
+		// (It's a special reparse point which doesn't have any contextual meaning).
+		volumeMounts = append(volumeMounts, volume.MountPoint{Volume: mntPoint.Volume, ID: mntPoint.ID})
+	}
+
+	// atm, this is a no-op.
+	if volumeMounts, err = appendNetworkMounts(container, volumeMounts); err != nil {
+		return err
+	}
+
+	for _, volumeMount := range volumeMounts {
+		if volumeMount.Volume != nil {
+			if err := volumeMount.Volume.Unmount(volumeMount.ID); err != nil {
+				return err
+			}
+			volumeMount.ID = ""
+
+			attributes := map[string]string{
+				"driver":    volumeMount.Volume.DriverName(),
+				"container": container.ID,
+			}
+			volumeEventLog(volumeMount.Volume.Name(), "unmount", attributes)
+		}
+	}
+
 	return nil
 }
 
@@ -109,4 +141,9 @@ func (container *Container) BuildHostnameFile() error {
 // for Hyper-V containers during WORKDIR execution for example.
 func (container *Container) canMountFS() bool {
 	return !containertypes.Isolation.IsHyperV(container.HostConfig.Isolation)
+}
+
+// EnableServiceDiscoveryOnDefaultNetwork Enable service discovery on default network
+func (container *Container) EnableServiceDiscoveryOnDefaultNetwork() bool {
+	return true
 }

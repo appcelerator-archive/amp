@@ -37,7 +37,7 @@ type buildOptions struct {
 	context        string
 	dockerfileName string
 	tags           opts.ListOpts
-	labels         []string
+	labels         opts.ListOpts
 	buildArgs      opts.ListOpts
 	ulimits        *runconfigopts.UlimitOpt
 	memory         string
@@ -55,6 +55,9 @@ type buildOptions struct {
 	rm             bool
 	forceRm        bool
 	pull           bool
+	cacheFrom      []string
+	compress       bool
+	securityOpt    []string
 }
 
 // NewBuildCommand creates a new `docker build` command
@@ -64,6 +67,7 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 		tags:      opts.NewListOpts(validateTag),
 		buildArgs: opts.NewListOpts(runconfigopts.ValidateArg),
 		ulimits:   runconfigopts.NewUlimitOpt(&ulimits),
+		labels:    opts.NewListOpts(runconfigopts.ValidateEnv),
 	}
 
 	cmd := &cobra.Command{
@@ -92,12 +96,15 @@ func NewBuildCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.StringVar(&options.cpuSetMems, "cpuset-mems", "", "MEMs in which to allow execution (0-3, 0,1)")
 	flags.StringVar(&options.cgroupParent, "cgroup-parent", "", "Optional parent cgroup for the container")
 	flags.StringVar(&options.isolation, "isolation", "", "Container isolation technology")
-	flags.StringSliceVar(&options.labels, "label", []string{}, "Set metadata for an image")
+	flags.Var(&options.labels, "label", "Set metadata for an image")
 	flags.BoolVar(&options.noCache, "no-cache", false, "Do not use cache when building the image")
 	flags.BoolVar(&options.rm, "rm", true, "Remove intermediate containers after a successful build")
 	flags.BoolVar(&options.forceRm, "force-rm", false, "Always remove intermediate containers")
 	flags.BoolVarP(&options.quiet, "quiet", "q", false, "Suppress the build output and print image ID on success")
 	flags.BoolVar(&options.pull, "pull", false, "Always attempt to pull a newer version of the image")
+	flags.StringSliceVar(&options.cacheFrom, "cache-from", []string{}, "Images to consider as cache sources")
+	flags.BoolVar(&options.compress, "compress", false, "Compress the build context using gzip")
+	flags.StringSliceVar(&options.securityOpt, "security-opt", []string{}, "Security options")
 
 	command.AddTrustedFlags(flags, true)
 
@@ -206,8 +213,12 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 			includes = append(includes, ".dockerignore", relDockerfile)
 		}
 
+		compression := archive.Uncompressed
+		if options.compress {
+			compression = archive.Gzip
+		}
 		buildCtx, err = archive.TarWithOptions(contextDir, &archive.TarOptions{
-			Compression:     archive.Uncompressed,
+			Compression:     compression,
 			ExcludePatterns: excludes,
 			IncludeFiles:    includes,
 		})
@@ -288,11 +299,16 @@ func runBuild(dockerCli *command.DockerCli, options buildOptions) error {
 		Ulimits:        options.ulimits.GetList(),
 		BuildArgs:      runconfigopts.ConvertKVStringsToMap(options.buildArgs.GetAll()),
 		AuthConfigs:    authConfig,
-		Labels:         runconfigopts.ConvertKVStringsToMap(options.labels),
+		Labels:         runconfigopts.ConvertKVStringsToMap(options.labels.GetAll()),
+		CacheFrom:      options.cacheFrom,
+		SecurityOpt:    options.securityOpt,
 	}
 
 	response, err := dockerCli.Client().ImageBuild(ctx, body, buildOptions)
 	if err != nil {
+		if options.quiet {
+			fmt.Fprintf(dockerCli.Err(), "%s", progBuff)
+		}
 		return err
 	}
 	defer response.Body.Close()

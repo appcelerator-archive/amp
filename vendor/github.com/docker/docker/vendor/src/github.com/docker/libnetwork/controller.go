@@ -52,8 +52,10 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/discovery"
+	"github.com/docker/docker/pkg/locker"
 	"github.com/docker/docker/pkg/plugins"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/plugin/getter"
 	"github.com/docker/libnetwork/cluster"
 	"github.com/docker/libnetwork/config"
 	"github.com/docker/libnetwork/datastore"
@@ -149,6 +151,7 @@ type controller struct {
 	ingressSandbox         *sandbox
 	sboxOnce               sync.Once
 	agent                  *agent
+	networkLocker          *locker.Locker
 	agentInitDone          chan struct{}
 	keys                   []*types.EncryptionKey
 	clusterConfigAvailable bool
@@ -169,13 +172,14 @@ func New(cfgOptions ...config.Option) (NetworkController, error) {
 		svcRecords:      make(map[string]svcInfo),
 		serviceBindings: make(map[serviceKey]*service),
 		agentInitDone:   make(chan struct{}),
+		networkLocker:   locker.New(),
 	}
 
 	if err := c.initStores(); err != nil {
 		return nil, err
 	}
 
-	drvRegistry, err := drvregistry.New(c.getStore(datastore.LocalScope), c.getStore(datastore.GlobalScope), c.RegisterDriver, nil)
+	drvRegistry, err := drvregistry.New(c.getStore(datastore.LocalScope), c.getStore(datastore.GlobalScope), c.RegisterDriver, nil, c.cfg.PluginGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -598,6 +602,10 @@ func (c *controller) isDistributedControl() bool {
 	return !c.isManager() && !c.isAgent()
 }
 
+func (c *controller) GetPluginGetter() getter.PluginGetter {
+	return c.drvRegistry.GetPluginGetter()
+}
+
 func (c *controller) RegisterDriver(networkType string, driver driverapi.Driver, capability driverapi.Capability) error {
 	c.Lock()
 	hd := c.discovery
@@ -614,6 +622,15 @@ func (c *controller) RegisterDriver(networkType string, driver driverapi.Driver,
 // NewNetwork creates a new network of the specified network type. The options
 // are network specific and modeled in a generic way.
 func (c *controller) NewNetwork(networkType, name string, id string, options ...NetworkOption) (Network, error) {
+	if id != "" {
+		c.networkLocker.Lock(id)
+		defer c.networkLocker.Unlock(id)
+
+		if _, err := c.NetworkByID(id); err == nil {
+			return nil, NetworkNameError(id)
+		}
+	}
+
 	if !config.IsValidName(name) {
 		return nil, ErrInvalidName(name)
 	}
@@ -741,9 +758,11 @@ func (c *controller) reservePools() {
 				c.Gateway = n.ipamV4Info[i].Gateway.IP.String()
 			}
 		}
-		for i, c := range n.ipamV6Config {
-			if c.Gateway == "" && n.ipamV6Info[i].Gateway != nil {
-				c.Gateway = n.ipamV6Info[i].Gateway.IP.String()
+		if n.enableIPv6 {
+			for i, c := range n.ipamV6Config {
+				if c.Gateway == "" && n.ipamV6Info[i].Gateway != nil {
+					c.Gateway = n.ipamV6Info[i].Gateway.IP.String()
+				}
 			}
 		}
 		// Reserve pools
@@ -789,6 +808,8 @@ func (c *controller) addNetwork(n *network) error {
 	if err := d.CreateNetwork(n.id, n.generic, n, n.getIPData(4), n.getIPData(6)); err != nil {
 		return err
 	}
+
+	n.startResolver()
 
 	return nil
 }
@@ -908,6 +929,7 @@ func (c *controller) NewSandbox(containerID string, options ...SandboxOption) (s
 
 	if sb.ingress {
 		c.ingressSandbox = sb
+		sb.id = "ingress_sbox"
 	}
 	c.Unlock()
 	defer func() {
@@ -1057,7 +1079,7 @@ func (c *controller) loadDriver(networkType string) error {
 }
 
 func (c *controller) loadIPAMDriver(name string) error {
-	if _, err := plugins.Get(name, ipamapi.PluginEndpointType); err != nil {
+	if _, err := c.GetPluginGetter().Get(name, ipamapi.PluginEndpointType, getter.LOOKUP); err != nil {
 		if err == plugins.ErrNotFound {
 			return types.NotFoundErrorf(err.Error())
 		}

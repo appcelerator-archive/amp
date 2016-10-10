@@ -105,9 +105,6 @@ func request_FlowCombination_StreamEmptyStream_0(ctx context.Context, marshaler 
 	handleSend := func() error {
 		var protoReq EmptyProto
 		err = dec.Decode(&protoReq)
-		if err == io.EOF {
-			return err
-		}
 		if err != nil {
 			grpclog.Printf("Failed to decode request: %v", err)
 			return err
@@ -119,11 +116,8 @@ func request_FlowCombination_StreamEmptyStream_0(ctx context.Context, marshaler 
 		return nil
 	}
 	if err := handleSend(); err != nil {
-		if cerr := stream.CloseSend(); cerr != nil {
-			grpclog.Printf("Failed to terminate client stream: %v", cerr)
-		}
-		if err == io.EOF {
-			return stream, metadata, nil
+		if err := stream.CloseSend(); err != nil {
+			grpclog.Printf("Failed to terminate client stream: %v", err)
 		}
 		return nil, metadata, err
 	}

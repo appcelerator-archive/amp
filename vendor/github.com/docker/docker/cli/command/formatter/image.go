@@ -1,14 +1,13 @@
 package formatter
 
 import (
-	"bytes"
-	"strings"
+	"fmt"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/reference"
-	"github.com/docker/go-units"
+	units "github.com/docker/go-units"
 )
 
 const (
@@ -25,59 +24,63 @@ const (
 type ImageContext struct {
 	Context
 	Digest bool
-	// Images
-	Images []types.Image
 }
 
 func isDangling(image types.Image) bool {
 	return len(image.RepoTags) == 1 && image.RepoTags[0] == "<none>:<none>" && len(image.RepoDigests) == 1 && image.RepoDigests[0] == "<none>@<none>"
 }
 
-func (ctx ImageContext) Write() {
-	switch ctx.Format {
-	case tableFormatKey:
-		ctx.Format = defaultImageTableFormat
-		if ctx.Digest {
-			ctx.Format = defaultImageTableFormatWithDigest
+// NewImageFormat returns a format for rendering an ImageContext
+func NewImageFormat(source string, quiet bool, digest bool) Format {
+	switch source {
+	case TableFormatKey:
+		switch {
+		case quiet:
+			return defaultQuietFormat
+		case digest:
+			return defaultImageTableFormatWithDigest
+		default:
+			return defaultImageTableFormat
 		}
-		if ctx.Quiet {
-			ctx.Format = defaultQuietFormat
-		}
-	case rawFormatKey:
-		if ctx.Quiet {
-			ctx.Format = `image_id: {{.ID}}`
-		} else {
-			if ctx.Digest {
-				ctx.Format = `repository: {{ .Repository }}
+	case RawFormatKey:
+		switch {
+		case quiet:
+			return `image_id: {{.ID}}`
+		case digest:
+			return `repository: {{ .Repository }}
 tag: {{.Tag}}
 digest: {{.Digest}}
 image_id: {{.ID}}
 created_at: {{.CreatedAt}}
 virtual_size: {{.Size}}
 `
-			} else {
-				ctx.Format = `repository: {{ .Repository }}
+		default:
+			return `repository: {{ .Repository }}
 tag: {{.Tag}}
 image_id: {{.ID}}
 created_at: {{.CreatedAt}}
 virtual_size: {{.Size}}
 `
-			}
 		}
 	}
 
-	ctx.buffer = bytes.NewBufferString("")
-	ctx.preformat()
-	if ctx.table && ctx.Digest && !strings.Contains(ctx.Format, "{{.Digest}}") {
-		ctx.finalFormat += "\t{{.Digest}}"
+	format := Format(source)
+	if format.IsTable() && digest && !format.Contains("{{.Digest}}") {
+		format += "\t{{.Digest}}"
 	}
+	return format
+}
 
-	tmpl, err := ctx.parseFormat()
-	if err != nil {
-		return
+// ImageWrite writes the formatter images using the ImageContext
+func ImageWrite(ctx ImageContext, images []types.Image) error {
+	render := func(format func(subContext subContext) error) error {
+		return imageFormat(ctx, images, format)
 	}
+	return ctx.Write(&imageContext{}, render)
+}
 
-	for _, image := range ctx.Images {
+func imageFormat(ctx ImageContext, images []types.Image, format func(subContext subContext) error) error {
+	for _, image := range images {
 		images := []*imageContext{}
 		if isDangling(image) {
 			images = append(images, &imageContext{
@@ -170,18 +173,16 @@ virtual_size: {{.Size}}
 			}
 		}
 		for _, imageCtx := range images {
-			err = ctx.contextFormat(tmpl, imageCtx)
-			if err != nil {
-				return
+			if err := format(imageCtx); err != nil {
+				return err
 			}
 		}
 	}
-
-	ctx.postformat(tmpl, &imageContext{})
+	return nil
 }
 
 type imageContext struct {
-	baseSubContext
+	HeaderContext
 	trunc  bool
 	i      types.Image
 	repo   string
@@ -190,7 +191,7 @@ type imageContext struct {
 }
 
 func (c *imageContext) ID() string {
-	c.addHeader(imageIDHeader)
+	c.AddHeader(imageIDHeader)
 	if c.trunc {
 		return stringid.TruncateID(c.i.ID)
 	}
@@ -198,32 +199,62 @@ func (c *imageContext) ID() string {
 }
 
 func (c *imageContext) Repository() string {
-	c.addHeader(repositoryHeader)
+	c.AddHeader(repositoryHeader)
 	return c.repo
 }
 
 func (c *imageContext) Tag() string {
-	c.addHeader(tagHeader)
+	c.AddHeader(tagHeader)
 	return c.tag
 }
 
 func (c *imageContext) Digest() string {
-	c.addHeader(digestHeader)
+	c.AddHeader(digestHeader)
 	return c.digest
 }
 
 func (c *imageContext) CreatedSince() string {
-	c.addHeader(createdSinceHeader)
+	c.AddHeader(createdSinceHeader)
 	createdAt := time.Unix(int64(c.i.Created), 0)
 	return units.HumanDuration(time.Now().UTC().Sub(createdAt))
 }
 
 func (c *imageContext) CreatedAt() string {
-	c.addHeader(createdAtHeader)
+	c.AddHeader(createdAtHeader)
 	return time.Unix(int64(c.i.Created), 0).String()
 }
 
 func (c *imageContext) Size() string {
-	c.addHeader(sizeHeader)
-	return units.HumanSizeWithPrecision(float64(c.i.Size), 3)
+	c.AddHeader(sizeHeader)
+	//NOTE: For backward compatibility we need to return VirtualSize
+	return units.HumanSizeWithPrecision(float64(c.i.VirtualSize), 3)
+}
+
+func (c *imageContext) Containers() string {
+	c.AddHeader(containersHeader)
+	if c.i.Containers == -1 {
+		return "N/A"
+	}
+	return fmt.Sprintf("%d", c.i.Containers)
+}
+
+func (c *imageContext) VirtualSize() string {
+	c.AddHeader(sizeHeader)
+	return units.HumanSize(float64(c.i.VirtualSize))
+}
+
+func (c *imageContext) SharedSize() string {
+	c.AddHeader(sharedSizeHeader)
+	if c.i.SharedSize == -1 {
+		return "N/A"
+	}
+	return units.HumanSize(float64(c.i.SharedSize))
+}
+
+func (c *imageContext) UniqueSize() string {
+	c.AddHeader(uniqueSizeHeader)
+	if c.i.Size == -1 {
+		return "N/A"
+	}
+	return units.HumanSize(float64(c.i.Size))
 }
