@@ -51,6 +51,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -408,7 +409,6 @@ type serverConn struct {
 	goAwayCode            ErrCode
 	shutdownTimerCh       <-chan time.Time // nil until used
 	shutdownTimer         *time.Timer      // nil until used
-	freeRequestBodyBuf    []byte           // if non-nil, a free initialWindowSize buffer for getRequestBodyBuf
 
 	// Owned by the writeFrameAsync goroutine:
 	headerWriteBuf bytes.Buffer
@@ -453,7 +453,6 @@ type stream struct {
 	sentReset        bool // only true once detached from streams map
 	gotReset         bool // only true once detacted from streams map
 	gotTrailerHeader bool // HEADER frame for trailers was seen
-	reqBuf           []byte
 
 	trailer    http.Header // accumulated trailers
 	reqTrailer http.Header // handler's Request.Trailer
@@ -597,11 +596,10 @@ type readFrameResult struct {
 // It's run on its own goroutine.
 func (sc *serverConn) readFrames() {
 	gate := make(gate)
-	gateDone := gate.Done
 	for {
 		f, err := sc.framer.ReadFrame()
 		select {
-		case sc.readFrameCh <- readFrameResult{f, err, gateDone}:
+		case sc.readFrameCh <- readFrameResult{f, err, gate.Done}:
 		case <-sc.doneServing:
 			return
 		}
@@ -1178,18 +1176,6 @@ func (sc *serverConn) closeStream(st *stream, err error) {
 	}
 	st.cw.Close() // signals Handler's CloseNotifier, unblocks writes, etc
 	sc.writeSched.forgetStream(st.id)
-	if st.reqBuf != nil {
-		// Stash this request body buffer (64k) away for reuse
-		// by a future POST/PUT/etc.
-		//
-		// TODO(bradfitz): share on the server? sync.Pool?
-		// Server requires locks and might hurt contention.
-		// sync.Pool might work, or might be worse, depending
-		// on goroutine CPU migrations. (get and put on
-		// separate CPUs).  Maybe a mix of strategies. But
-		// this is an easy win for now.
-		sc.freeRequestBodyBuf = st.reqBuf
-	}
 }
 
 func (sc *serverConn) processSettings(f *SettingsFrame) error {
@@ -1616,9 +1602,8 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 		Trailer:    trailer,
 	}
 	if bodyOpen {
-		st.reqBuf = sc.getRequestBodyBuf()
 		body.pipe = &pipe{
-			b: &fixedBuffer{buf: st.reqBuf},
+			b: &fixedBuffer{buf: make([]byte, initialWindowSize)}, // TODO: garbage
 		}
 
 		if vv, ok := header["Content-Length"]; ok {
@@ -1640,15 +1625,6 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 
 	rw := &responseWriter{rws: rws}
 	return rw, req, nil
-}
-
-func (sc *serverConn) getRequestBodyBuf() []byte {
-	sc.serveG.check()
-	if buf := sc.freeRequestBodyBuf; buf != nil {
-		sc.freeRequestBodyBuf = nil
-		return buf
-	}
-	return make([]byte, initialWindowSize)
 }
 
 // Run on its own goroutine.
@@ -2025,12 +2001,7 @@ func (rws *responseWriterState) promoteUndeclaredTrailers() {
 		rws.declareTrailer(trailerKey)
 		rws.handlerHeader[http.CanonicalHeaderKey(trailerKey)] = vv
 	}
-
-	if len(rws.trailers) > 1 {
-		sorter := sorterPool.Get().(*sorter)
-		sorter.SortStrings(rws.trailers)
-		sorterPool.Put(sorter)
-	}
+	sort.Strings(rws.trailers)
 }
 
 func (w *responseWriter) Flush() {

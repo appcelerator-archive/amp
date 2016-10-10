@@ -184,7 +184,7 @@ func (s *DockerSuite) TestRunLinksContainerWithContainerName(c *check.C) {
 }
 
 //test --link use container id to link target
-func (s *DockerSuite) TestRunLinksContainerWithContainerId(c *check.C) {
+func (s *DockerSuite) TestRunLinksContainerWithContainerID(c *check.C) {
 	// TODO Windows: This test cannot run on a Windows daemon as the networking
 	// settings are not populated back yet on inspect.
 	testRequires(c, DaemonIsLinux)
@@ -1709,7 +1709,7 @@ func (s *DockerSuite) TestRunState(c *check.C) {
 }
 
 // Test for #1737
-func (s *DockerSuite) TestRunCopyVolumeUidGid(c *check.C) {
+func (s *DockerSuite) TestRunCopyVolumeUIDGID(c *check.C) {
 	// Not applicable on Windows as it does not support uid or gid in this way
 	testRequires(c, DaemonIsLinux)
 	name := "testrunvolumesuidgid"
@@ -1864,7 +1864,7 @@ func (s *DockerSuite) TestRunInteractiveWithRestartPolicy(c *check.C) {
 		dockerCmdWithResult("stop", name).Assert(c, icmd.Success)
 	}()
 
-	result = icmd.WaitOnCmd(10*time.Second, result)
+	result = icmd.WaitOnCmd(60*time.Second, result)
 	c.Assert(result, icmd.Matches, icmd.Expected{ExitCode: 11})
 }
 
@@ -2025,13 +2025,8 @@ func (s *DockerSuite) TestRunBindMounts(c *check.C) {
 // Ensure that CIDFile gets deleted if it's empty
 // Perform this test by making `docker run` fail
 func (s *DockerSuite) TestRunCidFileCleanupIfEmpty(c *check.C) {
-	// Windows Server 2016 RS1 builds load the windowsservercore image from a tar rather than
-	// a .WIM file, and the tar layer has the default CMD set (same as the Linux ubuntu image),
-	// where-as the TP5 .WIM had a blank CMD. Hence this test is not applicable on RS1 or later
-	// builds as the command won't fail as it's not blank
-	if daemonPlatform == "windows" && windowsDaemonKV >= 14375 {
-		c.Skip("Not applicable on Windows RS1 or later builds")
-	}
+	// Skip on Windows. Base image on Windows has a CMD set in the image.
+	testRequires(c, DaemonIsLinux)
 
 	tmpDir, err := ioutil.TempDir("", "TestRunCidFile")
 	if err != nil {
@@ -2403,30 +2398,6 @@ func (s *DockerSuite) TestRunExposePort(c *check.C) {
 	c.Assert(out, checker.Contains, "invalid range format for --expose")
 }
 
-func (s *DockerSuite) TestRunUnknownCommand(c *check.C) {
-	out, _, _ := dockerCmdWithStdoutStderr(c, "create", "busybox", "/bin/nada")
-
-	cID := strings.TrimSpace(out)
-	_, _, err := dockerCmdWithError("start", cID)
-
-	// Windows and Linux are different here by architectural design. Linux will
-	// fail to start the container, so an error is expected. Windows will
-	// successfully start the container, and once started attempt to execute
-	// the command which will fail.
-	if daemonPlatform == "windows" {
-		// Wait for it to exit.
-		waitExited(cID, 30*time.Second)
-		c.Assert(err, check.IsNil)
-	} else {
-		c.Assert(err, check.NotNil)
-	}
-
-	rc := inspectField(c, cID, "State.ExitCode")
-	if rc == "0" {
-		c.Fatalf("ExitCode(%v) cannot be 0", rc)
-	}
-}
-
 func (s *DockerSuite) TestRunModeIpcHost(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux, NotUserNamespace)
@@ -2513,7 +2484,7 @@ func (s *DockerSuite) TestRunModeIpcContainerNotRunning(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainer(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainer(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
@@ -2538,7 +2509,7 @@ func (s *DockerSuite) TestRunModePidContainer(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainerNotExists(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainerNotExists(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, DaemonIsLinux)
 	out, _, err := dockerCmdWithError("run", "-d", "--pid", "container:abcd1234", "busybox", "top")
@@ -2547,7 +2518,7 @@ func (s *DockerSuite) TestRunModePidContainerNotExists(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidContainerNotRunning(c *check.C) {
+func (s *DockerSuite) TestRunModePIDContainerNotRunning(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
@@ -2605,7 +2576,7 @@ func (s *DockerSuite) TestContainerNetworkMode(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestRunModePidHost(c *check.C) {
+func (s *DockerSuite) TestRunModePIDHost(c *check.C) {
 	// Not applicable on Windows as uses Unix-specific capabilities
 	testRequires(c, SameHostDaemon, DaemonIsLinux, NotUserNamespace)
 
@@ -2987,7 +2958,7 @@ func (s *DockerSuite) TestRunContainerWithRmFlagCannotStartContainer(c *check.C)
 	}
 }
 
-func (s *DockerSuite) TestRunPidHostWithChildIsKillable(c *check.C) {
+func (s *DockerSuite) TestRunPIDHostWithChildIsKillable(c *check.C) {
 	// Not applicable on Windows as uses Unix specific functionality
 	testRequires(c, DaemonIsLinux, NotUserNamespace)
 	name := "ibuildthecloud"
@@ -4535,4 +4506,35 @@ func (s *DockerDaemonSuite) TestRunWithUlimitAndDaemonDefault(c *check.C) {
 	out, err = s.d.Cmd("inspect", "--format", "{{.HostConfig.Ulimits}}", name)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "[nofile=42:42]")
+}
+
+func (s *DockerSuite) TestRunStoppedLoggingDriverNoLeak(c *check.C) {
+	nroutines, err := getGoroutineNumber()
+	c.Assert(err, checker.IsNil)
+
+	out, _, err := dockerCmdWithError("run", "--name=fail", "--log-driver=splunk", "busybox", "true")
+	c.Assert(err, checker.NotNil)
+	c.Assert(out, checker.Contains, "Failed to initialize logging driver", check.Commentf("error should be about logging driver, got output %s", out))
+
+	// NGoroutines is not updated right away, so we need to wait before failing
+	c.Assert(waitForGoroutines(nroutines), checker.IsNil)
+}
+
+// Handles error conditions for --credentialspec. Validating E2E success cases
+// requires additional infrastructure (AD for example) on CI servers.
+func (s *DockerSuite) TestRunCredentialSpecFailures(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	attempts := []struct{ value, expectedError string }{
+		{"rubbish", "invalid credential spec security option - value must be prefixed file:// or registry://"},
+		{"rubbish://", "invalid credential spec security option - value must be prefixed file:// or registry://"},
+		{"file://", "no value supplied for file:// credential spec security option"},
+		{"registry://", "no value supplied for registry:// credential spec security option"},
+		{`file://c:\blah.txt`, "path cannot be absolute"},
+		{`file://doesnotexist.txt`, "The system cannot find the file specified"},
+	}
+	for _, attempt := range attempts {
+		_, _, err := dockerCmdWithError("run", "--security-opt=credentialspec="+attempt.value, "busybox", "true")
+		c.Assert(err, checker.NotNil, check.Commentf("%s expected non-nil err", attempt.value))
+		c.Assert(err.Error(), checker.Contains, attempt.expectedError, check.Commentf("%s expected %s got %s", attempt.value, attempt.expectedError, err))
+	}
 }

@@ -1235,9 +1235,8 @@ func TestLeaderSupersedingWithCheckQuorum(t *testing.T) {
 	c.checkQuorum = true
 
 	nt := newNetwork(a, b, c)
+	setRandomizedElectionTimeout(b, b.electionTimeout+1)
 
-	// Prevent campaigning from b
-	b.randomizedElectionTimeout = b.electionTimeout + 1
 	for i := 0; i < b.electionTimeout; i++ {
 		b.tick()
 	}
@@ -1279,11 +1278,11 @@ func TestLeaderElectionWithCheckQuorum(t *testing.T) {
 	c.checkQuorum = true
 
 	nt := newNetwork(a, b, c)
+	setRandomizedElectionTimeout(a, a.electionTimeout+1)
+	setRandomizedElectionTimeout(b, b.electionTimeout+2)
 
-	// Letting b's electionElapsed reach to timeout so that it can vote for a
-	for i := 0; i < b.electionTimeout; i++ {
-		b.tick()
-	}
+	// Immediately after creation, votes are cast regardless of the
+	// election timeout.
 	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
 
 	if a.state != StateLeader {
@@ -1294,6 +1293,10 @@ func TestLeaderElectionWithCheckQuorum(t *testing.T) {
 		t.Errorf("state = %s, want %s", c.state, StateFollower)
 	}
 
+	// need to reset randomizedElectionTimeout larger than electionTimeout again,
+	// because the value might be reset to electionTimeout since the last state changes
+	setRandomizedElectionTimeout(a, a.electionTimeout+1)
+	setRandomizedElectionTimeout(b, b.electionTimeout+2)
 	for i := 0; i < a.electionTimeout; i++ {
 		a.tick()
 	}
@@ -1324,6 +1327,8 @@ func TestFreeStuckCandidateWithCheckQuorum(t *testing.T) {
 	c.checkQuorum = true
 
 	nt := newNetwork(a, b, c)
+	setRandomizedElectionTimeout(b, b.electionTimeout+1)
+
 	for i := 0; i < b.electionTimeout; i++ {
 		b.tick()
 	}
@@ -1380,6 +1385,7 @@ func TestNonPromotableVoterWithCheckQuorum(t *testing.T) {
 	b.checkQuorum = true
 
 	nt := newNetwork(a, b)
+	setRandomizedElectionTimeout(b, b.electionTimeout+1)
 	// Need to remove 2 again to make it a non-promotable node since newNetwork overwritten some internal states
 	b.delProgress(2)
 
@@ -1402,6 +1408,137 @@ func TestNonPromotableVoterWithCheckQuorum(t *testing.T) {
 
 	if b.lead != 1 {
 		t.Errorf("lead = %d, want 1", b.lead)
+	}
+}
+
+func TestReadOnlyOptionSafe(t *testing.T) {
+	a := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	b := newTestRaft(2, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	c := newTestRaft(3, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+
+	nt := newNetwork(a, b, c)
+	setRandomizedElectionTimeout(b, b.electionTimeout+1)
+
+	for i := 0; i < b.electionTimeout; i++ {
+		b.tick()
+	}
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
+
+	if a.state != StateLeader {
+		t.Fatalf("state = %s, want %s", a.state, StateLeader)
+	}
+
+	tests := []struct {
+		sm        *raft
+		proposals int
+		wri       uint64
+		wctx      []byte
+	}{
+		{b, 10, 11, []byte("ctx1")},
+		{c, 10, 21, []byte("ctx2")},
+		{b, 10, 31, []byte("ctx3")},
+		{c, 10, 41, []byte("ctx4")},
+	}
+
+	for i, tt := range tests {
+		for j := 0; j < tt.proposals; j++ {
+			nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgProp, Entries: []pb.Entry{{}}})
+		}
+
+		nt.send(pb.Message{From: tt.sm.id, To: tt.sm.id, Type: pb.MsgReadIndex, Entries: []pb.Entry{{Data: tt.wctx}}})
+
+		r := tt.sm
+		if len(r.readStates) == 0 {
+			t.Errorf("#%d: len(readStates) = 0, want non-zero", i)
+		}
+		rs := r.readStates[0]
+		if rs.Index != tt.wri {
+			t.Errorf("#%d: readIndex = %d, want %d", i, rs.Index, tt.wri)
+		}
+
+		if !bytes.Equal(rs.RequestCtx, tt.wctx) {
+			t.Errorf("#%d: requestCtx = %v, want %v", i, rs.RequestCtx, tt.wctx)
+		}
+		r.readStates = nil
+	}
+}
+
+func TestReadOnlyOptionLease(t *testing.T) {
+	a := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	b := newTestRaft(2, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	c := newTestRaft(3, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	a.readOnly.option = ReadOnlyLeaseBased
+	b.readOnly.option = ReadOnlyLeaseBased
+	c.readOnly.option = ReadOnlyLeaseBased
+	a.checkQuorum = true
+	b.checkQuorum = true
+	c.checkQuorum = true
+
+	nt := newNetwork(a, b, c)
+	setRandomizedElectionTimeout(b, b.electionTimeout+1)
+
+	for i := 0; i < b.electionTimeout; i++ {
+		b.tick()
+	}
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
+
+	if a.state != StateLeader {
+		t.Fatalf("state = %s, want %s", a.state, StateLeader)
+	}
+
+	tests := []struct {
+		sm        *raft
+		proposals int
+		wri       uint64
+		wctx      []byte
+	}{
+		{b, 10, 11, []byte("ctx1")},
+		{c, 10, 21, []byte("ctx2")},
+		{b, 10, 31, []byte("ctx3")},
+		{c, 10, 41, []byte("ctx4")},
+	}
+
+	for i, tt := range tests {
+		for j := 0; j < tt.proposals; j++ {
+			nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgProp, Entries: []pb.Entry{{}}})
+		}
+
+		nt.send(pb.Message{From: tt.sm.id, To: tt.sm.id, Type: pb.MsgReadIndex, Entries: []pb.Entry{{Data: tt.wctx}}})
+
+		r := tt.sm
+		rs := r.readStates[0]
+		if rs.Index != tt.wri {
+			t.Errorf("#%d: readIndex = %d, want %d", i, rs.Index, tt.wri)
+		}
+
+		if !bytes.Equal(rs.RequestCtx, tt.wctx) {
+			t.Errorf("#%d: requestCtx = %v, want %v", i, rs.RequestCtx, tt.wctx)
+		}
+		r.readStates = nil
+	}
+}
+
+func TestReadOnlyOptionLeaseWithoutCheckQuorum(t *testing.T) {
+	a := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	b := newTestRaft(2, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	c := newTestRaft(3, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
+	a.readOnly.option = ReadOnlyLeaseBased
+	b.readOnly.option = ReadOnlyLeaseBased
+	c.readOnly.option = ReadOnlyLeaseBased
+
+	nt := newNetwork(a, b, c)
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
+
+	ctx := []byte("ctx1")
+	nt.send(pb.Message{From: 2, To: 2, Type: pb.MsgReadIndex, Entries: []pb.Entry{{Data: ctx}}})
+
+	rs := b.readStates[0]
+	if rs.Index != None {
+		t.Errorf("readIndex = %d, want %d", rs.Index, None)
+	}
+
+	if !bytes.Equal(rs.RequestCtx, ctx) {
+		t.Errorf("requestCtx = %v, want %v", rs.RequestCtx, ctx)
 	}
 }
 
@@ -1832,6 +1969,10 @@ func TestRestoreFromSnapMsg(t *testing.T) {
 	sm := newTestRaft(2, []uint64{1, 2}, 10, 1, NewMemoryStorage())
 	sm.Step(m)
 
+	if sm.lead != uint64(1) {
+		t.Errorf("sm.lead = %d, want 1", sm.lead)
+	}
+
 	// TODO(bdarnell): what should this test?
 }
 
@@ -2115,9 +2256,74 @@ func TestCommitAfterRemoveNode(t *testing.T) {
 }
 
 // TestLeaderTransferToUpToDateNode verifies transferring should succeed
-// if the transferee has the most up-to-date log entires when transfer starts.
+// if the transferee has the most up-to-date log entries when transfer starts.
 func TestLeaderTransferToUpToDateNode(t *testing.T) {
 	nt := newNetwork(nil, nil, nil)
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
+
+	lead := nt.peers[1].(*raft)
+
+	if lead.lead != 1 {
+		t.Fatalf("after election leader is %x, want 1", lead.lead)
+	}
+
+	// Transfer leadership to 2.
+	nt.send(pb.Message{From: 2, To: 1, Type: pb.MsgTransferLeader})
+
+	checkLeaderTransferState(t, lead, StateFollower, 2)
+
+	// After some log replication, transfer leadership back to 1.
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgProp, Entries: []pb.Entry{{}}})
+
+	nt.send(pb.Message{From: 1, To: 2, Type: pb.MsgTransferLeader})
+
+	checkLeaderTransferState(t, lead, StateLeader, 1)
+}
+
+// TestLeaderTransferToUpToDateNodeFromFollower verifies transferring should succeed
+// if the transferee has the most up-to-date log entries when transfer starts.
+// Not like TestLeaderTransferToUpToDateNode, where the leader transfer message
+// is sent to the leader, in this test case every leader transfer message is sent
+// to the follower.
+func TestLeaderTransferToUpToDateNodeFromFollower(t *testing.T) {
+	nt := newNetwork(nil, nil, nil)
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
+
+	lead := nt.peers[1].(*raft)
+
+	if lead.lead != 1 {
+		t.Fatalf("after election leader is %x, want 1", lead.lead)
+	}
+
+	// Transfer leadership to 2.
+	nt.send(pb.Message{From: 2, To: 2, Type: pb.MsgTransferLeader})
+
+	checkLeaderTransferState(t, lead, StateFollower, 2)
+
+	// After some log replication, transfer leadership back to 1.
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgProp, Entries: []pb.Entry{{}}})
+
+	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgTransferLeader})
+
+	checkLeaderTransferState(t, lead, StateLeader, 1)
+}
+
+// TestLeaderTransferWithCheckQuorum ensures transferring leader still works
+// even the current leader is still under its leader lease
+func TestLeaderTransferWithCheckQuorum(t *testing.T) {
+	nt := newNetwork(nil, nil, nil)
+	for i := 1; i < 4; i++ {
+		r := nt.peers[uint64(i)].(*raft)
+		r.checkQuorum = true
+		setRandomizedElectionTimeout(r, r.electionTimeout+i)
+	}
+
+	// Letting peer 2 electionElapsed reach to timeout so that it can vote for peer 1
+	f := nt.peers[2].(*raft)
+	for i := 0; i < f.electionTimeout; i++ {
+		f.tick()
+	}
+
 	nt.send(pb.Message{From: 1, To: 1, Type: pb.MsgHup})
 
 	lead := nt.peers[1].(*raft)
@@ -2501,6 +2707,13 @@ func idsBySize(size int) []uint64 {
 		ids[i] = 1 + uint64(i)
 	}
 	return ids
+}
+
+// setRandomizedElectionTimeout set up the value by caller instead of choosing
+// by system, in some test scenario we need to fill in some expected value to
+// ensure the certainty
+func setRandomizedElectionTimeout(r *raft, v int) {
+	r.randomizedElectionTimeout = v
 }
 
 func newTestConfig(id uint64, peers []uint64, election, heartbeat int, storage Storage) *Config {

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -16,7 +15,7 @@ import (
 var psCommand = cli.Command{
 	Name:      "ps",
 	Usage:     "ps displays the processes running inside a container",
-	ArgsUsage: `<container-id> [-- ps options]`,
+	ArgsUsage: `<container-id> [ps options]`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "format, f",
@@ -42,62 +41,28 @@ var psCommand = cli.Command{
 			return nil
 		}
 
+		pidlist := []string{}
+		for _, pid := range pids {
+			pidlist = append(pidlist, fmt.Sprintf("%d", pid))
+		}
+
 		// [1:] is to remove command name, ex:
 		// context.Args(): [containet_id ps_arg1 ps_arg2 ...]
 		// psArgs:         [ps_arg1 ps_arg2 ...]
 		//
 		psArgs := context.Args()[1:]
-
-		if len(psArgs) > 0 && psArgs[0] == "--" {
-			psArgs = psArgs[1:]
-		}
-
 		if len(psArgs) == 0 {
-			psArgs = []string{"-ef"}
+			psArgs = []string{"-f"}
 		}
 
+		psArgs = append(psArgs, "-p", strings.Join(pidlist, ","))
 		output, err := exec.Command("ps", psArgs...).Output()
 		if err != nil {
 			return err
 		}
 
-		lines := strings.Split(string(output), "\n")
-		pidIndex, err := getPidIndex(lines[0])
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(lines[0])
-		for _, line := range lines[1:] {
-			if len(line) == 0 {
-				continue
-			}
-			fields := strings.Fields(line)
-			p, err := strconv.Atoi(fields[pidIndex])
-			if err != nil {
-				return fmt.Errorf("unexpected pid '%s': %s", fields[pidIndex], err)
-			}
-
-			for _, pid := range pids {
-				if pid == p {
-					fmt.Println(line)
-					break
-				}
-			}
-		}
+		fmt.Printf(string(output))
 		return nil
 	},
-}
-
-func getPidIndex(title string) (int, error) {
-	titles := strings.Fields(title)
-
-	pidIndex := -1
-	for i, name := range titles {
-		if name == "PID" {
-			return i, nil
-		}
-	}
-
-	return pidIndex, fmt.Errorf("couldn't find PID field in ps output")
+	SkipArgReorder: true,
 }

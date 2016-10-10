@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -51,6 +52,7 @@ func newImageBuildOptions(ctx context.Context, r *http.Request) (*types.ImageBui
 	options.CPUSetMems = r.FormValue("cpusetmems")
 	options.CgroupParent = r.FormValue("cgroupparent")
 	options.Tags = r.Form["t"]
+	options.SecurityOpt = r.Form["securityopt"]
 
 	if r.Form.Get("shmsize") != "" {
 		shmSize, err := strconv.ParseInt(r.Form.Get("shmsize"), 10, 64)
@@ -67,10 +69,14 @@ func newImageBuildOptions(ctx context.Context, r *http.Request) (*types.ImageBui
 		options.Isolation = i
 	}
 
+	if runtime.GOOS != "windows" && options.SecurityOpt != nil {
+		return nil, fmt.Errorf("the daemon on this platform does not support --security-opt to build")
+	}
+
 	var buildUlimits = []*units.Ulimit{}
 	ulimitsJSON := r.FormValue("ulimits")
 	if ulimitsJSON != "" {
-		if err := json.NewDecoder(strings.NewReader(ulimitsJSON)).Decode(&buildUlimits); err != nil {
+		if err := json.Unmarshal([]byte(ulimitsJSON), &buildUlimits); err != nil {
 			return nil, err
 		}
 		options.Ulimits = buildUlimits
@@ -79,7 +85,7 @@ func newImageBuildOptions(ctx context.Context, r *http.Request) (*types.ImageBui
 	var buildArgs = map[string]string{}
 	buildArgsJSON := r.FormValue("buildargs")
 	if buildArgsJSON != "" {
-		if err := json.NewDecoder(strings.NewReader(buildArgsJSON)).Decode(&buildArgs); err != nil {
+		if err := json.Unmarshal([]byte(buildArgsJSON), &buildArgs); err != nil {
 			return nil, err
 		}
 		options.BuildArgs = buildArgs
@@ -87,10 +93,19 @@ func newImageBuildOptions(ctx context.Context, r *http.Request) (*types.ImageBui
 	var labels = map[string]string{}
 	labelsJSON := r.FormValue("labels")
 	if labelsJSON != "" {
-		if err := json.NewDecoder(strings.NewReader(labelsJSON)).Decode(&labels); err != nil {
+		if err := json.Unmarshal([]byte(labelsJSON), &labels); err != nil {
 			return nil, err
 		}
 		options.Labels = labels
+	}
+
+	var cacheFrom = []string{}
+	cacheFromJSON := r.FormValue("cachefrom")
+	if cacheFromJSON != "" {
+		if err := json.Unmarshal([]byte(cacheFromJSON), &cacheFrom); err != nil {
+			return nil, err
+		}
+		options.CacheFrom = cacheFrom
 	}
 
 	return options, nil

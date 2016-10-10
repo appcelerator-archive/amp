@@ -34,6 +34,8 @@ dockerd - Enable daemon mode
 [**-H**|**--host**[=*[]*]]
 [**--help**]
 [**--icc**[=*true*]]
+[**--init**[=*false*]]
+[**--init-path**[=*""*]]
 [**--insecure-registry**[=*[]*]]
 [**--ip**[=*0.0.0.0*]]
 [**--ip-forward**[=*true*]]
@@ -62,6 +64,7 @@ dockerd - Enable daemon mode
 [**--tlskey**[=*~/.docker/key.pem*]]
 [**--tlsverify**]
 [**--userland-proxy**[=*true*]]
+[**--userland-proxy-path**[=*""*]]
 [**--userns-remap**[=*default*]]
 
 # DESCRIPTION
@@ -166,6 +169,12 @@ unix://[/path/to/socket] to use.
 **--icc**=*true*|*false*
   Allow unrestricted inter\-container and Docker daemon host communication. If disabled, containers can still be linked together using the **--link** option (see **docker-run(1)**). Default is true.
 
+**--init**
+Run an init process inside containers for signal forwarding and process reaping.
+
+**--init-path**
+Path to the docker-init binary.
+
 **--insecure-registry**=[]
   Enable insecure registry communication, i.e., enable un-encrypted and/or untrusted communication.
 
@@ -263,6 +272,9 @@ output otherwise.
 
 **--userland-proxy**=*true*|*false*
     Rely on a userland proxy implementation for inter-container and outside-to-container loopback communications. Default is true.
+
+**--userland-proxy-path**=""
+  Path to the userland proxy binary.
 
 **--userns-remap**=*default*|*uid:gid*|*user:group*|*user*|*uid*
     Enable user namespaces for containers on the daemon. Specifying "default" will cause a new user and group to be created to handle UID and GID range remapping for the user namespace mappings used for contained processes. Specifying a user (or uid) and optionally a group (or gid) will cause the daemon to lookup the user and group's subordinate ID ranges for use as the user namespace mappings for contained processes.
@@ -528,6 +540,21 @@ Engine daemon, grow the size of loop files and restart the daemon to resolve
 the issue.
 
 Example use:: `dockerd --storage-opt dm.min_free_space=10%`
+
+#### dm.xfs_nospace_max_retries
+
+Specifies the maximum number of retries XFS should attempt to complete
+IO when ENOSPC (no space) error is returned by underlying storage device.
+
+By default XFS retries infinitely for IO to finish and this can result
+in unkillable process. To change this behavior one can set
+xfs_nospace_max_retries to say 0 and XFS will not retry IO after getting
+ENOSPC and will shutdown filesystem.
+
+Example use:
+
+    $ sudo dockerd --storage-opt dm.xfs_nospace_max_retries=0
+
 
 ## ZFS options
 

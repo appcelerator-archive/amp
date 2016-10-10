@@ -30,7 +30,7 @@ import (
 	"github.com/go-check/check"
 )
 
-func (s *DockerSuite) TestContainerApiGetAll(c *check.C) {
+func (s *DockerSuite) TestContainerAPIGetAll(c *check.C) {
 	startCount, err := getContainerCount()
 	c.Assert(err, checker.IsNil, check.Commentf("Cannot query container count"))
 
@@ -54,7 +54,7 @@ func (s *DockerSuite) TestContainerApiGetAll(c *check.C) {
 }
 
 // regression test for empty json field being omitted #13691
-func (s *DockerSuite) TestContainerApiGetJSONNoFieldsOmitted(c *check.C) {
+func (s *DockerSuite) TestContainerAPIGetJSONNoFieldsOmitted(c *check.C) {
 	dockerCmd(c, "run", "busybox", "true")
 
 	status, body, err := sockRequest("GET", "/containers/json?all=1", nil)
@@ -91,7 +91,7 @@ type containerPs struct {
 }
 
 // regression test for non-empty fields from #13901
-func (s *DockerSuite) TestContainerApiPsOmitFields(c *check.C) {
+func (s *DockerSuite) TestContainerAPIPsOmitFields(c *check.C) {
 	// Problematic for Windows porting due to networking not yet being passed back
 	testRequires(c, DaemonIsLinux)
 	name := "pstest"
@@ -124,8 +124,8 @@ func (s *DockerSuite) TestContainerApiPsOmitFields(c *check.C) {
 	c.Assert(ok, checker.Not(checker.Equals), true)
 }
 
-func (s *DockerSuite) TestContainerApiGetExport(c *check.C) {
-	// TODO: Investigate why this fails on Windows to Windows CI
+func (s *DockerSuite) TestContainerAPIGetExport(c *check.C) {
+	// Not supported on Windows as Windows does not support docker export
 	testRequires(c, DaemonIsLinux)
 	name := "exportcontainer"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test")
@@ -148,7 +148,7 @@ func (s *DockerSuite) TestContainerApiGetExport(c *check.C) {
 	c.Assert(found, checker.True, check.Commentf("The created test file has not been found in the exported image"))
 }
 
-func (s *DockerSuite) TestContainerApiGetChanges(c *check.C) {
+func (s *DockerSuite) TestContainerAPIGetChanges(c *check.C) {
 	// Not supported on Windows as Windows does not support docker diff (/containers/name/changes)
 	testRequires(c, DaemonIsLinux)
 	name := "changescontainer"
@@ -175,12 +175,10 @@ func (s *DockerSuite) TestContainerApiGetChanges(c *check.C) {
 }
 
 func (s *DockerSuite) TestGetContainerStats(c *check.C) {
-	// Problematic on Windows as Windows does not support stats
-	testRequires(c, DaemonIsLinux)
 	var (
 		name = "statscontainer"
 	)
-	dockerCmd(c, "run", "-d", "--name", name, "busybox", "top")
+	runSleepingContainer(c, "--name", name)
 
 	type b struct {
 		status int
@@ -214,9 +212,7 @@ func (s *DockerSuite) TestGetContainerStats(c *check.C) {
 }
 
 func (s *DockerSuite) TestGetContainerStatsRmRunning(c *check.C) {
-	// Problematic on Windows as Windows does not support stats
-	testRequires(c, DaemonIsLinux)
-	out, _ := dockerCmd(c, "run", "-d", "busybox", "top")
+	out, _ := runSleepingContainer(c)
 	id := strings.TrimSpace(out)
 
 	buf := &integration.ChannelBuffer{make(chan []byte, 1)}
@@ -251,10 +247,8 @@ func (s *DockerSuite) TestGetContainerStatsRmRunning(c *check.C) {
 // previous test was just checking one stat entry so it didn't fail (stats with
 // stream false always return one stat)
 func (s *DockerSuite) TestGetContainerStatsStream(c *check.C) {
-	// Problematic on Windows as Windows does not support stats
-	testRequires(c, DaemonIsLinux)
 	name := "statscontainer"
-	dockerCmd(c, "run", "-d", "--name", name, "busybox", "top")
+	runSleepingContainer(c, "--name", name)
 
 	type b struct {
 		status int
@@ -289,10 +283,8 @@ func (s *DockerSuite) TestGetContainerStatsStream(c *check.C) {
 }
 
 func (s *DockerSuite) TestGetContainerStatsNoStream(c *check.C) {
-	// Problematic on Windows as Windows does not support stats
-	testRequires(c, DaemonIsLinux)
 	name := "statscontainer"
-	dockerCmd(c, "run", "-d", "--name", name, "busybox", "top")
+	runSleepingContainer(c, "--name", name)
 
 	type b struct {
 		status int
@@ -319,16 +311,14 @@ func (s *DockerSuite) TestGetContainerStatsNoStream(c *check.C) {
 		c.Assert(sr.status, checker.Equals, http.StatusOK)
 
 		s := string(sr.body)
-		// count occurrences of "read" of types.Stats
-		c.Assert(strings.Count(s, "read"), checker.Equals, 1, check.Commentf("Expected only one stat streamed, got %d", strings.Count(s, "read")))
+		// count occurrences of `"read"` of types.Stats
+		c.Assert(strings.Count(s, `"read"`), checker.Equals, 1, check.Commentf("Expected only one stat streamed, got %d", strings.Count(s, `"read"`)))
 	}
 }
 
 func (s *DockerSuite) TestGetStoppedContainerStats(c *check.C) {
-	// Problematic on Windows as Windows does not support stats
-	testRequires(c, DaemonIsLinux)
 	name := "statscontainer"
-	dockerCmd(c, "create", "--name", name, "busybox", "top")
+	dockerCmd(c, "create", "--name", name, "busybox", "ps")
 
 	type stats struct {
 		status int
@@ -353,7 +343,7 @@ func (s *DockerSuite) TestGetStoppedContainerStats(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestContainerApiPause(c *check.C) {
+func (s *DockerSuite) TestContainerAPIPause(c *check.C) {
 	// Problematic on Windows as Windows does not support pause
 	testRequires(c, DaemonIsLinux)
 	defer unpauseAllContainers()
@@ -380,8 +370,7 @@ func (s *DockerSuite) TestContainerApiPause(c *check.C) {
 	c.Assert(pausedContainers, checker.IsNil, check.Commentf("There should be no paused container."))
 }
 
-func (s *DockerSuite) TestContainerApiTop(c *check.C) {
-	// Problematic on Windows as Windows does not support top
+func (s *DockerSuite) TestContainerAPITop(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 	out, _ := dockerCmd(c, "run", "-d", "busybox", "/bin/sh", "-c", "top")
 	id := strings.TrimSpace(string(out))
@@ -406,7 +395,41 @@ func (s *DockerSuite) TestContainerApiTop(c *check.C) {
 	c.Assert(top.Processes[1][10], checker.Equals, "top")
 }
 
-func (s *DockerSuite) TestContainerApiCommit(c *check.C) {
+func (s *DockerSuite) TestContainerAPITopWindows(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	out, _ := runSleepingContainer(c, "-d")
+	id := strings.TrimSpace(string(out))
+	c.Assert(waitRun(id), checker.IsNil)
+
+	type topResp struct {
+		Titles    []string
+		Processes [][]string
+	}
+	var top topResp
+	status, b, err := sockRequest("GET", "/containers/"+id+"/top", nil)
+	c.Assert(err, checker.IsNil)
+	c.Assert(status, checker.Equals, http.StatusOK)
+	c.Assert(json.Unmarshal(b, &top), checker.IsNil)
+	c.Assert(top.Titles, checker.HasLen, 4, check.Commentf("expected 4 titles, found %d: %v", len(top.Titles), top.Titles))
+
+	if top.Titles[0] != "Name" || top.Titles[3] != "Private Working Set" {
+		c.Fatalf("expected `Name` at `Titles[0]` and `Private Working Set` at Titles[3]: %v", top.Titles)
+	}
+	c.Assert(len(top.Processes), checker.GreaterOrEqualThan, 2, check.Commentf("expected at least 2 processes, found %d: %v", len(top.Processes), top.Processes))
+
+	foundProcess := false
+	expectedProcess := "busybox.exe"
+	for _, process := range top.Processes {
+		if process[0] == expectedProcess {
+			foundProcess = true
+			break
+		}
+	}
+
+	c.Assert(foundProcess, checker.Equals, true, check.Commentf("expected to find %s: %v", expectedProcess, top.Processes))
+}
+
+func (s *DockerSuite) TestContainerAPICommit(c *check.C) {
 	cName := "testapicommit"
 	dockerCmd(c, "run", "--name="+cName, "busybox", "/bin/sh", "-c", "touch /test")
 
@@ -428,7 +451,7 @@ func (s *DockerSuite) TestContainerApiCommit(c *check.C) {
 	dockerCmd(c, "run", img.ID, "ls", "/test")
 }
 
-func (s *DockerSuite) TestContainerApiCommitWithLabelInConfig(c *check.C) {
+func (s *DockerSuite) TestContainerAPICommitWithLabelInConfig(c *check.C) {
 	cName := "testapicommitwithconfig"
 	dockerCmd(c, "run", "--name="+cName, "busybox", "/bin/sh", "-c", "touch /test")
 
@@ -460,7 +483,7 @@ func (s *DockerSuite) TestContainerApiCommitWithLabelInConfig(c *check.C) {
 	dockerCmd(c, "run", img.ID, "ls", "/test")
 }
 
-func (s *DockerSuite) TestContainerApiBadPort(c *check.C) {
+func (s *DockerSuite) TestContainerAPIBadPort(c *check.C) {
 	// TODO Windows to Windows CI - Port this test
 	testRequires(c, DaemonIsLinux)
 	config := map[string]interface{}{
@@ -485,7 +508,7 @@ func (s *DockerSuite) TestContainerApiBadPort(c *check.C) {
 	c.Assert(getErrorMessage(c, body), checker.Equals, `invalid port specification: "aa80"`, check.Commentf("Incorrect error msg: %s", body))
 }
 
-func (s *DockerSuite) TestContainerApiCreate(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreate(c *check.C) {
 	config := map[string]interface{}{
 		"Image": "busybox",
 		"Cmd":   []string{"/bin/sh", "-c", "touch /test && ls /test"},
@@ -505,7 +528,7 @@ func (s *DockerSuite) TestContainerApiCreate(c *check.C) {
 	c.Assert(strings.TrimSpace(out), checker.Equals, "/test")
 }
 
-func (s *DockerSuite) TestContainerApiCreateEmptyConfig(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateEmptyConfig(c *check.C) {
 	config := map[string]interface{}{}
 
 	status, body, err := sockRequest("POST", "/containers/create", config)
@@ -516,7 +539,7 @@ func (s *DockerSuite) TestContainerApiCreateEmptyConfig(c *check.C) {
 	c.Assert(getErrorMessage(c, body), checker.Equals, expected)
 }
 
-func (s *DockerSuite) TestContainerApiCreateMultipleNetworksConfig(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateMultipleNetworksConfig(c *check.C) {
 	// Container creation must fail if client specified configurations for more than one network
 	config := map[string]interface{}{
 		"Image": "busybox",
@@ -540,7 +563,7 @@ func (s *DockerSuite) TestContainerApiCreateMultipleNetworksConfig(c *check.C) {
 	c.Assert(msg, checker.Contains, "net3")
 }
 
-func (s *DockerSuite) TestContainerApiCreateWithHostName(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateWithHostName(c *check.C) {
 	hostName := "test-host"
 	config := map[string]interface{}{
 		"Image":    "busybox",
@@ -563,7 +586,7 @@ func (s *DockerSuite) TestContainerApiCreateWithHostName(c *check.C) {
 	c.Assert(containerJSON.Config.Hostname, checker.Equals, hostName, check.Commentf("Mismatched Hostname"))
 }
 
-func (s *DockerSuite) TestContainerApiCreateWithDomainName(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateWithDomainName(c *check.C) {
 	domainName := "test-domain"
 	config := map[string]interface{}{
 		"Image":      "busybox",
@@ -586,13 +609,13 @@ func (s *DockerSuite) TestContainerApiCreateWithDomainName(c *check.C) {
 	c.Assert(containerJSON.Config.Domainname, checker.Equals, domainName, check.Commentf("Mismatched Domainname"))
 }
 
-func (s *DockerSuite) TestContainerApiCreateBridgeNetworkMode(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateBridgeNetworkMode(c *check.C) {
 	// Windows does not support bridge
 	testRequires(c, DaemonIsLinux)
 	UtilCreateNetworkMode(c, "bridge")
 }
 
-func (s *DockerSuite) TestContainerApiCreateOtherNetworkModes(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateOtherNetworkModes(c *check.C) {
 	// Windows does not support these network modes
 	testRequires(c, DaemonIsLinux, NotUserNamespace)
 	UtilCreateNetworkMode(c, "host")
@@ -621,7 +644,7 @@ func UtilCreateNetworkMode(c *check.C, networkMode string) {
 	c.Assert(containerJSON.HostConfig.NetworkMode, checker.Equals, containertypes.NetworkMode(networkMode), check.Commentf("Mismatched NetworkMode"))
 }
 
-func (s *DockerSuite) TestContainerApiCreateWithCpuSharesCpuset(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateWithCpuSharesCpuset(c *check.C) {
 	// TODO Windows to Windows CI. The CpuShares part could be ported.
 	testRequires(c, DaemonIsLinux)
 	config := map[string]interface{}{
@@ -652,7 +675,7 @@ func (s *DockerSuite) TestContainerApiCreateWithCpuSharesCpuset(c *check.C) {
 	c.Assert(outCpuset, checker.Equals, "0")
 }
 
-func (s *DockerSuite) TestContainerApiVerifyHeader(c *check.C) {
+func (s *DockerSuite) TestContainerAPIVerifyHeader(c *check.C) {
 	config := map[string]interface{}{
 		"Image": "busybox",
 	}
@@ -683,7 +706,7 @@ func (s *DockerSuite) TestContainerApiVerifyHeader(c *check.C) {
 }
 
 //Issue 14230. daemon should return 500 for invalid port syntax
-func (s *DockerSuite) TestContainerApiInvalidPortSyntax(c *check.C) {
+func (s *DockerSuite) TestContainerAPIInvalidPortSyntax(c *check.C) {
 	config := `{
 				  "Image": "busybox",
 				  "HostConfig": {
@@ -705,7 +728,7 @@ func (s *DockerSuite) TestContainerApiInvalidPortSyntax(c *check.C) {
 	c.Assert(string(b[:]), checker.Contains, "invalid port")
 }
 
-func (s *DockerSuite) TestContainerApiInvalidRestartPolicyName(c *check.C) {
+func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyName(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -725,7 +748,7 @@ func (s *DockerSuite) TestContainerApiInvalidRestartPolicyName(c *check.C) {
 	c.Assert(string(b[:]), checker.Contains, "invalid restart policy")
 }
 
-func (s *DockerSuite) TestContainerApiInvalidRestartPolicyRetryMismatch(c *check.C) {
+func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyRetryMismatch(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -745,7 +768,7 @@ func (s *DockerSuite) TestContainerApiInvalidRestartPolicyRetryMismatch(c *check
 	c.Assert(string(b[:]), checker.Contains, "maximum restart count not valid with restart policy")
 }
 
-func (s *DockerSuite) TestContainerApiInvalidRestartPolicyPositiveRetryCount(c *check.C) {
+func (s *DockerSuite) TestContainerAPIInvalidRestartPolicyPositiveRetryCount(c *check.C) {
 	config := `{
 		"Image": "busybox",
 		"HostConfig": {
@@ -767,7 +790,7 @@ func (s *DockerSuite) TestContainerApiInvalidRestartPolicyPositiveRetryCount(c *
 
 // Issue 7941 - test to make sure a "null" in JSON is just ignored.
 // W/o this fix a null in JSON would be parsed into a string var as "null"
-func (s *DockerSuite) TestContainerApiPostCreateNull(c *check.C) {
+func (s *DockerSuite) TestContainerAPIPostCreateNull(c *check.C) {
 	config := `{
 		"Hostname":"",
 		"Domainname":"",
@@ -831,11 +854,11 @@ func (s *DockerSuite) TestCreateWithTooLowMemoryLimit(c *check.C) {
 	c.Assert(string(b), checker.Contains, "Minimum memory limit allowed is 4MB")
 }
 
-func (s *DockerSuite) TestContainerApiRename(c *check.C) {
-	out, _ := dockerCmd(c, "run", "--name", "TestContainerApiRename", "-d", "busybox", "sh")
+func (s *DockerSuite) TestContainerAPIRename(c *check.C) {
+	out, _ := dockerCmd(c, "run", "--name", "TestContainerAPIRename", "-d", "busybox", "sh")
 
 	containerID := strings.TrimSpace(out)
-	newName := "TestContainerApiRenameNew"
+	newName := "TestContainerAPIRenameNew"
 	statusCode, _, err := sockRequest("POST", "/containers/"+containerID+"/rename?name="+newName, nil)
 	c.Assert(err, checker.IsNil)
 	// 204 No Content is expected, not 200
@@ -845,7 +868,7 @@ func (s *DockerSuite) TestContainerApiRename(c *check.C) {
 	c.Assert(name, checker.Equals, "/"+newName, check.Commentf("Failed to rename container"))
 }
 
-func (s *DockerSuite) TestContainerApiKill(c *check.C) {
+func (s *DockerSuite) TestContainerAPIKill(c *check.C) {
 	name := "test-api-kill"
 	runSleepingContainer(c, "-i", "--name", name)
 
@@ -857,33 +880,29 @@ func (s *DockerSuite) TestContainerApiKill(c *check.C) {
 	c.Assert(state, checker.Equals, "false", check.Commentf("got wrong State from container %s: %q", name, state))
 }
 
-func (s *DockerSuite) TestContainerApiRestart(c *check.C) {
-	// TODO Windows to Windows CI. This is flaky due to the timing
-	testRequires(c, DaemonIsLinux)
+func (s *DockerSuite) TestContainerAPIRestart(c *check.C) {
 	name := "test-api-restart"
-	dockerCmd(c, "run", "-di", "--name", name, "busybox", "top")
+	runSleepingContainer(c, "-di", "--name", name)
 
 	status, _, err := sockRequest("POST", "/containers/"+name+"/restart?t=1", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusNoContent)
-	c.Assert(waitInspect(name, "{{ .State.Restarting  }} {{ .State.Running  }}", "false true", 5*time.Second), checker.IsNil)
+	c.Assert(waitInspect(name, "{{ .State.Restarting  }} {{ .State.Running  }}", "false true", 15*time.Second), checker.IsNil)
 }
 
-func (s *DockerSuite) TestContainerApiRestartNotimeoutParam(c *check.C) {
-	// TODO Windows to Windows CI. This is flaky due to the timing
-	testRequires(c, DaemonIsLinux)
+func (s *DockerSuite) TestContainerAPIRestartNotimeoutParam(c *check.C) {
 	name := "test-api-restart-no-timeout-param"
-	out, _ := dockerCmd(c, "run", "-di", "--name", name, "busybox", "top")
+	out, _ := runSleepingContainer(c, "-di", "--name", name)
 	id := strings.TrimSpace(out)
 	c.Assert(waitRun(id), checker.IsNil)
 
 	status, _, err := sockRequest("POST", "/containers/"+name+"/restart", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusNoContent)
-	c.Assert(waitInspect(name, "{{ .State.Restarting  }} {{ .State.Running  }}", "false true", 5*time.Second), checker.IsNil)
+	c.Assert(waitInspect(name, "{{ .State.Restarting  }} {{ .State.Running  }}", "false true", 15*time.Second), checker.IsNil)
 }
 
-func (s *DockerSuite) TestContainerApiStart(c *check.C) {
+func (s *DockerSuite) TestContainerAPIStart(c *check.C) {
 	name := "testing-start"
 	config := map[string]interface{}{
 		"Image":     "busybox",
@@ -909,7 +928,7 @@ func (s *DockerSuite) TestContainerApiStart(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestContainerApiStop(c *check.C) {
+func (s *DockerSuite) TestContainerAPIStop(c *check.C) {
 	name := "test-api-stop"
 	runSleepingContainer(c, "-i", "--name", name)
 
@@ -924,7 +943,7 @@ func (s *DockerSuite) TestContainerApiStop(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNotModified)
 }
 
-func (s *DockerSuite) TestContainerApiWait(c *check.C) {
+func (s *DockerSuite) TestContainerAPIWait(c *check.C) {
 	name := "test-api-wait"
 
 	sleepCmd := "/bin/sleep"
@@ -943,7 +962,7 @@ func (s *DockerSuite) TestContainerApiWait(c *check.C) {
 	c.Assert(waitres.StatusCode, checker.Equals, 0)
 }
 
-func (s *DockerSuite) TestContainerApiCopyNotExistsAnyMore(c *check.C) {
+func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
 	name := "test-container-api-copy"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -956,7 +975,7 @@ func (s *DockerSuite) TestContainerApiCopyNotExistsAnyMore(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNotFound)
 }
 
-func (s *DockerSuite) TestContainerApiCopyPre124(c *check.C) {
+func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
 
 	name := "test-container-api-copy"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
@@ -986,7 +1005,7 @@ func (s *DockerSuite) TestContainerApiCopyPre124(c *check.C) {
 	c.Assert(found, checker.True)
 }
 
-func (s *DockerSuite) TestContainerApiCopyResourcePathEmptyPr124(c *check.C) {
+func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
 	name := "test-container-api-copy-resource-empty"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -1000,7 +1019,7 @@ func (s *DockerSuite) TestContainerApiCopyResourcePathEmptyPr124(c *check.C) {
 	c.Assert(string(body), checker.Matches, "Path cannot be empty\n")
 }
 
-func (s *DockerSuite) TestContainerApiCopyResourcePathNotFoundPre124(c *check.C) {
+func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C) {
 	name := "test-container-api-copy-resource-not-found"
 	dockerCmd(c, "run", "--name", name, "busybox")
 
@@ -1014,7 +1033,7 @@ func (s *DockerSuite) TestContainerApiCopyResourcePathNotFoundPre124(c *check.C)
 	c.Assert(string(body), checker.Matches, "Could not find the file /notexist in container "+name+"\n")
 }
 
-func (s *DockerSuite) TestContainerApiCopyContainerNotFoundPr124(c *check.C) {
+func (s *DockerSuite) TestContainerAPICopyContainerNotFoundPr124(c *check.C) {
 	postData := types.CopyConfig{
 		Resource: "/something",
 	}
@@ -1024,7 +1043,7 @@ func (s *DockerSuite) TestContainerApiCopyContainerNotFoundPr124(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNotFound)
 }
 
-func (s *DockerSuite) TestContainerApiDelete(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDelete(c *check.C) {
 	out, _ := runSleepingContainer(c)
 
 	id := strings.TrimSpace(out)
@@ -1037,14 +1056,14 @@ func (s *DockerSuite) TestContainerApiDelete(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNoContent)
 }
 
-func (s *DockerSuite) TestContainerApiDeleteNotExist(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteNotExist(c *check.C) {
 	status, body, err := sockRequest("DELETE", "/containers/doesnotexist", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusNotFound)
 	c.Assert(getErrorMessage(c, body), checker.Matches, "No such container: doesnotexist")
 }
 
-func (s *DockerSuite) TestContainerApiDeleteForce(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteForce(c *check.C) {
 	out, _ := runSleepingContainer(c)
 
 	id := strings.TrimSpace(out)
@@ -1055,7 +1074,7 @@ func (s *DockerSuite) TestContainerApiDeleteForce(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusNoContent)
 }
 
-func (s *DockerSuite) TestContainerApiDeleteRemoveLinks(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteRemoveLinks(c *check.C) {
 	// Windows does not support links
 	testRequires(c, DaemonIsLinux)
 	out, _ := dockerCmd(c, "run", "-d", "--name", "tlink1", "busybox", "top")
@@ -1079,7 +1098,7 @@ func (s *DockerSuite) TestContainerApiDeleteRemoveLinks(c *check.C) {
 	c.Assert(linksPostRm, checker.Equals, "null", check.Commentf("call to api deleteContainer links should have removed the specified links"))
 }
 
-func (s *DockerSuite) TestContainerApiDeleteConflict(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteConflict(c *check.C) {
 	out, _ := runSleepingContainer(c)
 
 	id := strings.TrimSpace(out)
@@ -1090,7 +1109,7 @@ func (s *DockerSuite) TestContainerApiDeleteConflict(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusConflict)
 }
 
-func (s *DockerSuite) TestContainerApiDeleteRemoveVolume(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteRemoveVolume(c *check.C) {
 	testRequires(c, SameHostDaemon)
 
 	vol := "/testvolume"
@@ -1115,7 +1134,7 @@ func (s *DockerSuite) TestContainerApiDeleteRemoveVolume(c *check.C) {
 }
 
 // Regression test for https://github.com/docker/docker/issues/6231
-func (s *DockerSuite) TestContainerApiChunkedEncoding(c *check.C) {
+func (s *DockerSuite) TestContainerAPIChunkedEncoding(c *check.C) {
 	conn, err := sockConn(time.Duration(10*time.Second), "")
 	c.Assert(err, checker.IsNil)
 	client := httputil.NewClientConn(conn, nil)
@@ -1143,7 +1162,7 @@ func (s *DockerSuite) TestContainerApiChunkedEncoding(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusCreated)
 }
 
-func (s *DockerSuite) TestContainerApiPostContainerStop(c *check.C) {
+func (s *DockerSuite) TestContainerAPIPostContainerStop(c *check.C) {
 	out, _ := runSleepingContainer(c)
 
 	containerID := strings.TrimSpace(out)
@@ -1157,7 +1176,7 @@ func (s *DockerSuite) TestContainerApiPostContainerStop(c *check.C) {
 }
 
 // #14170
-func (s *DockerSuite) TestPostContainerApiCreateWithStringOrSliceEntrypoint(c *check.C) {
+func (s *DockerSuite) TestPostContainerAPICreateWithStringOrSliceEntrypoint(c *check.C) {
 	config := struct {
 		Image      string
 		Entrypoint string
@@ -1225,7 +1244,7 @@ func (s *DockerSuite) TestPostContainersCreateWithStringOrSliceCapAddDrop(c *che
 }
 
 // #14915
-func (s *DockerSuite) TestContainerApiCreateNoHostConfig118(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateNoHostConfig118(c *check.C) {
 	config := struct {
 		Image string
 	}{"busybox"}
@@ -1269,7 +1288,7 @@ func (s *DockerSuite) TestPutContainerArchiveErrSymlinkInVolumeToReadOnlyRootfs(
 	}
 }
 
-func (s *DockerSuite) TestContainerApiGetContainersJSONEmpty(c *check.C) {
+func (s *DockerSuite) TestContainerAPIGetContainersJSONEmpty(c *check.C) {
 	status, body, err := sockRequest("GET", "/containers/json?all=1", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusOK)
@@ -1473,14 +1492,14 @@ func (s *DockerSuite) TestPostContainersCreateWithOomScoreAdjInvalidRange(c *che
 }
 
 // test case for #22210 where an empty container name caused panic.
-func (s *DockerSuite) TestContainerApiDeleteWithEmptyName(c *check.C) {
+func (s *DockerSuite) TestContainerAPIDeleteWithEmptyName(c *check.C) {
 	status, out, err := sockRequest("DELETE", "/containers/", nil)
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusBadRequest)
 	c.Assert(string(out), checker.Contains, "No container name or ID supplied")
 }
 
-func (s *DockerSuite) TestContainerApiStatsWithNetworkDisabled(c *check.C) {
+func (s *DockerSuite) TestContainerAPIStatsWithNetworkDisabled(c *check.C) {
 	// Problematic on Windows as Windows does not support stats
 	testRequires(c, DaemonIsLinux)
 
@@ -1532,7 +1551,7 @@ func (s *DockerSuite) TestContainerApiStatsWithNetworkDisabled(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestContainersApiCreateMountsValidation(c *check.C) {
+func (s *DockerSuite) TestContainersAPICreateMountsValidation(c *check.C) {
 	type m mounttypes.Mount
 	type hc struct{ Mounts []m }
 	type cfg struct {
@@ -1587,7 +1606,7 @@ func (s *DockerSuite) TestContainersApiCreateMountsValidation(c *check.C) {
 	}
 }
 
-func (s *DockerSuite) TestContainerApiCreateMountsBindRead(c *check.C) {
+func (s *DockerSuite) TestContainerAPICreateMountsBindRead(c *check.C) {
 	testRequires(c, NotUserNamespace, SameHostDaemon)
 	// also with data in the host side
 	prefix, slash := getPrefixAndSlashFromDaemonPlatform()
@@ -1612,7 +1631,7 @@ func (s *DockerSuite) TestContainerApiCreateMountsBindRead(c *check.C) {
 }
 
 // Test Mounts comes out as expected for the MountPoint
-func (s *DockerSuite) TestContainersApiCreateMountsCreate(c *check.C) {
+func (s *DockerSuite) TestContainersAPICreateMountsCreate(c *check.C) {
 	prefix, slash := getPrefixAndSlashFromDaemonPlatform()
 	destPath := prefix + slash + "foo"
 

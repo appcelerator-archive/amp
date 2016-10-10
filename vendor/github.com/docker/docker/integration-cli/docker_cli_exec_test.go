@@ -509,3 +509,23 @@ func (s *DockerSuite) TestExecStartFails(c *check.C) {
 	c.Assert(err, checker.NotNil, check.Commentf(out))
 	c.Assert(out, checker.Contains, "executable file not found")
 }
+
+// Fix regression in https://github.com/docker/docker/pull/26461#issuecomment-250287297
+func (s *DockerSuite) TestExecWindowsPathNotWiped(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	out, _ := dockerCmd(c, "run", "-d", "--name", "testing", minimalBaseImage(), "powershell", "start-sleep", "60")
+	c.Assert(waitRun(strings.TrimSpace(out)), check.IsNil)
+
+	out, _ = dockerCmd(c, "exec", "testing", "powershell", "write-host", "$env:PATH")
+	out = strings.ToLower(strings.Trim(out, "\r\n"))
+	c.Assert(out, checker.Contains, `windowspowershell\v1.0`)
+}
+
+func (s *DockerSuite) TestExecEnvLinksHost(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+	runSleepingContainer(c, "-d", "--name", "foo")
+	runSleepingContainer(c, "-d", "--link", "foo:db", "--hostname", "myhost", "--name", "bar")
+	out, _ := dockerCmd(c, "exec", "bar", "env")
+	c.Assert(out, checker.Contains, "HOSTNAME=myhost")
+	c.Assert(out, checker.Contains, "DB_NAME=/bar/db")
+}

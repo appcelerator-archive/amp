@@ -636,6 +636,33 @@
         ]
       }
     },
+    "/v3alpha/kv/lease/timetolive": {
+      "post": {
+        "summary": "LeaseTimeToLive retrieves lease information.",
+        "operationId": "LeaseTimeToLive",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/etcdserverpbLeaseTimeToLiveResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/etcdserverpbLeaseTimeToLiveRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Lease"
+        ]
+      }
+    },
     "/v3alpha/kv/put": {
       "post": {
         "summary": "Put puts the given key into the key-value store.\nA put request increments the revision of the key-value store\nand generates one event in the event history.",
@@ -992,6 +1019,15 @@
         "VALUE"
       ],
       "default": "KEY"
+    },
+    "WatchCreateRequestFilterType": {
+      "type": "string",
+      "enum": [
+        "NOPUT",
+        "NODELETE"
+      ],
+      "default": "NOPUT",
+      "description": "- NOPUT: filter out put event.\n - NODELETE: filter out delete event."
     },
     "authpbPermission": {
       "type": "object",
@@ -1474,6 +1510,11 @@
           "format": "byte",
           "description": "key is the first key to delete in the range."
         },
+        "prev_kv": {
+          "type": "boolean",
+          "format": "boolean",
+          "description": "If prev_kv is set, etcd gets the previous key-value pairs before deleting it.\nThe previous key-value pairs will be returned in the delte response."
+        },
         "range_end": {
           "type": "string",
           "format": "byte",
@@ -1491,6 +1532,13 @@
         },
         "header": {
           "$ref": "#/definitions/etcdserverpbResponseHeader"
+        },
+        "prev_kvs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mvccpbKeyValue"
+          },
+          "description": "if prev_kv is set in the request, the previous key-value pairs will be returned."
         }
       }
     },
@@ -1590,6 +1638,52 @@
       "properties": {
         "header": {
           "$ref": "#/definitions/etcdserverpbResponseHeader"
+        }
+      }
+    },
+    "etcdserverpbLeaseTimeToLiveRequest": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string",
+          "format": "int64",
+          "description": "ID is the lease ID for the lease."
+        },
+        "keys": {
+          "type": "boolean",
+          "format": "boolean",
+          "description": "keys is true to query all the keys attached to this lease."
+        }
+      }
+    },
+    "etcdserverpbLeaseTimeToLiveResponse": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string",
+          "format": "int64",
+          "description": "ID is the lease ID from the keep alive request."
+        },
+        "TTL": {
+          "type": "string",
+          "format": "int64",
+          "description": "TTL is the remaining TTL in seconds for the lease; the lease will expire in under TTL+1 seconds."
+        },
+        "grantedTTL": {
+          "type": "string",
+          "format": "int64",
+          "description": "GrantedTTL is the initial granted time in seconds upon lease creation/renewal."
+        },
+        "header": {
+          "$ref": "#/definitions/etcdserverpbResponseHeader"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          },
+          "description": "Keys is the list of keys attached to this lease."
         }
       }
     },
@@ -1724,6 +1818,11 @@
           "format": "int64",
           "description": "lease is the lease ID to associate with the key in the key-value store. A lease\nvalue of 0 indicates no lease."
         },
+        "prev_kv": {
+          "type": "boolean",
+          "format": "boolean",
+          "description": "If prev_kv is set, etcd gets the previous key-value pair before changing it.\nThe previous key-value pair will be returned in the put response."
+        },
         "value": {
           "type": "string",
           "format": "byte",
@@ -1736,6 +1835,10 @@
       "properties": {
         "header": {
           "$ref": "#/definitions/etcdserverpbResponseHeader"
+        },
+        "prev_kv": {
+          "$ref": "#/definitions/mvccpbKeyValue",
+          "description": "if prev_kv is set in the request, the previous key-value pair will be returned."
         }
       }
     },
@@ -1761,6 +1864,26 @@
           "type": "string",
           "format": "int64",
           "description": "limit is a limit on the number of keys returned for the request."
+        },
+        "max_create_revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "max_create_revision is the upper bound for returned key create revisions; all keys with\ngreater create revisions will be filtered away."
+        },
+        "max_mod_revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "max_mod_revision is the upper bound for returned key mod revisions; all keys with\ngreater mod revisions will be filtered away."
+        },
+        "min_create_revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "min_create_revision is the lower bound for returned key create revisions; all keys with\nlesser create trevisions will be filtered away."
+        },
+        "min_mod_revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "min_mod_revision is the lower bound for returned key mod revisions; all keys with\nlesser mod revisions will be filtered away."
         },
         "range_end": {
           "type": "string",
@@ -1983,10 +2106,22 @@
     "etcdserverpbWatchCreateRequest": {
       "type": "object",
       "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WatchCreateRequestFilterType"
+          },
+          "description": "filters filter the events at server side before it sends back to the watcher."
+        },
         "key": {
           "type": "string",
           "format": "byte",
           "description": "key is the key to register for watching."
+        },
+        "prev_kv": {
+          "type": "boolean",
+          "format": "boolean",
+          "description": "If prev_kv is set, created watcher gets the previous KV before the event happens.\nIf the previous KV is already compacted, nothing will be returned."
         },
         "progress_notify": {
           "type": "boolean",
@@ -1996,7 +2131,7 @@
         "range_end": {
           "type": "string",
           "format": "byte",
-          "description": "range_end is the end of the range [key, range_end) to watch. If range_end is not given,\nonly the key argument is watched. If range_end is equal to '\\0', all keys greater than\nor equal to the key argument are watched."
+          "description": "range_end is the end of the range [key, range_end) to watch. If range_end is not given,\nonly the key argument is watched. If range_end is equal to '\\0', all keys greater than\nor equal to the key argument are watched.\nIf the range_end is one bit larger than the given key,\nthen all keys with the prefix (the given key) will be watched."
         },
         "start_revision": {
           "type": "string",
@@ -2056,6 +2191,10 @@
         "kv": {
           "$ref": "#/definitions/mvccpbKeyValue",
           "description": "kv holds the KeyValue for the event.\nA PUT event contains current kv pair.\nA PUT event with kv.Version=1 indicates the creation of a key.\nA DELETE/EXPIRE event contains the deleted key with\nits modification revision set to the revision of deletion."
+        },
+        "prev_kv": {
+          "$ref": "#/definitions/mvccpbKeyValue",
+          "description": "prev_kv holds the key-value pair before the event happens."
         },
         "type": {
           "$ref": "#/definitions/EventEventType",

@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/errors"
 	"github.com/docker/docker/api/server/httputils"
 	"github.com/docker/docker/api/server/middleware"
 	"github.com/docker/docker/api/server/router"
-	"github.com/docker/docker/errors"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 )
@@ -76,7 +76,7 @@ func (s *Server) Close() {
 }
 
 // serveAPI loops through all initialized servers and spawns goroutine
-// with Server method for each. It sets createMux() as Handler also.
+// with Serve method for each. It sets createMux() as Handler also.
 func (s *Server) serveAPI() error {
 	var chErrors = make(chan error, len(s.servers))
 	for _, srv := range s.servers {

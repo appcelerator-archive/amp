@@ -39,6 +39,7 @@ import (
 	"github.com/opencontainers/runc/libcontainer/label"
 	"github.com/opencontainers/runc/libcontainer/user"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/vishvananda/netlink"
 )
 
 const (
@@ -609,7 +610,7 @@ func configureKernelSecuritySupport(config *Config, driverName string) error {
 }
 
 func (daemon *Daemon) initNetworkController(config *Config, activeSandboxes map[string]interface{}) (libnetwork.NetworkController, error) {
-	netOptions, err := daemon.networkOptions(config, activeSandboxes)
+	netOptions, err := daemon.networkOptions(config, daemon.pluginStore, activeSandboxes)
 	if err != nil {
 		return nil, err
 	}
@@ -637,11 +638,21 @@ func (daemon *Daemon) initNetworkController(config *Config, activeSandboxes map[
 			return nil, fmt.Errorf("Error creating default \"host\" network: %v", err)
 		}
 	}
+
+	// Clear stale bridge network
+	if n, err := controller.NetworkByName("bridge"); err == nil {
+		if err = n.Delete(); err != nil {
+			return nil, fmt.Errorf("could not delete the default bridge network: %v", err)
+		}
+	}
+
 	if !config.DisableBridge {
 		// Initialize default driver "bridge"
 		if err := initBridgeDriver(controller, config); err != nil {
 			return nil, err
 		}
+	} else {
+		removeDefaultBridgeInterface()
 	}
 
 	return controller, nil
@@ -651,7 +662,8 @@ func driverOptions(config *Config) []nwconfig.Option {
 	bridgeConfig := options.Generic{
 		"EnableIPForwarding":  config.bridgeConfig.EnableIPForward,
 		"EnableIPTables":      config.bridgeConfig.EnableIPTables,
-		"EnableUserlandProxy": config.bridgeConfig.EnableUserlandProxy}
+		"EnableUserlandProxy": config.bridgeConfig.EnableUserlandProxy,
+		"UserlandProxyPath":   config.bridgeConfig.UserlandProxyPath}
 	bridgeOption := options.Generic{netlabel.GenericData: bridgeConfig}
 
 	dOptions := []nwconfig.Option{}
@@ -660,12 +672,6 @@ func driverOptions(config *Config) []nwconfig.Option {
 }
 
 func initBridgeDriver(controller libnetwork.NetworkController, config *Config) error {
-	if n, err := controller.NetworkByName("bridge"); err == nil {
-		if err = n.Delete(); err != nil {
-			return fmt.Errorf("could not delete the default bridge network: %v", err)
-		}
-	}
-
 	bridgeName := bridge.DefaultBridgeName
 	if config.bridgeConfig.Iface != "" {
 		bridgeName = config.bridgeConfig.Iface
@@ -777,6 +783,19 @@ func initBridgeDriver(controller libnetwork.NetworkController, config *Config) e
 		return fmt.Errorf("Error creating default \"bridge\" network: %v", err)
 	}
 	return nil
+}
+
+// Remove default bridge interface if present (--bridge=none use case)
+func removeDefaultBridgeInterface() {
+	if lnk, err := netlink.LinkByName(bridge.DefaultBridgeName); err == nil {
+		if err := netlink.LinkDel(lnk); err != nil {
+			logrus.Warnf("Failed to remove bridge interface (%s): %v", bridge.DefaultBridgeName, err)
+		}
+	}
+}
+
+func (daemon *Daemon) getLayerInit() func(string) error {
+	return daemon.setupInitLayer
 }
 
 // setupInitLayer populates a directory with mountpoints suitable

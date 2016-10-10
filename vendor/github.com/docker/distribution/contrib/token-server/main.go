@@ -163,18 +163,37 @@ func filterAccessList(ctx context.Context, scope string, requestedAccessList []a
 	}
 	grantedAccessList := make([]auth.Access, 0, len(requestedAccessList))
 	for _, access := range requestedAccessList {
-		if access.Type != "repository" {
+		if access.Type == "repository" {
+			if !strings.HasPrefix(access.Name, scope) {
+				context.GetLogger(ctx).Debugf("Resource scope not allowed: %s", access.Name)
+				continue
+			}
+		} else if access.Type == "registry" {
+			if access.Name != "catalog" {
+				context.GetLogger(ctx).Debugf("Unknown registry resource: %s", access.Name)
+				continue
+			}
+			// TODO: Limit some actions to "admin" users
+		} else {
 			context.GetLogger(ctx).Debugf("Skipping unsupported resource type: %s", access.Type)
-			continue
-		}
-		if !strings.HasPrefix(access.Name, scope) {
-			context.GetLogger(ctx).Debugf("Resource scope not allowed: %s", access.Name)
 			continue
 		}
 		grantedAccessList = append(grantedAccessList, access)
 	}
 	return grantedAccessList
 }
+
+type acctSubject struct{}
+
+func (acctSubject) String() string { return "acctSubject" }
+
+type requestedAccess struct{}
+
+func (requestedAccess) String() string { return "requestedAccess" }
+
+type grantedAccess struct{}
+
+func (grantedAccess) String() string { return "grantedAccess" }
 
 // getToken handles authenticating the request and authorizing access to the
 // requested scopes.
@@ -218,17 +237,17 @@ func (ts *tokenServer) getToken(ctx context.Context, w http.ResponseWriter, r *h
 
 	username := context.GetStringValue(ctx, "auth.user.name")
 
-	ctx = context.WithValue(ctx, "acctSubject", username)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "acctSubject"))
+	ctx = context.WithValue(ctx, acctSubject{}, username)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, acctSubject{}))
 
 	context.GetLogger(ctx).Info("authenticated client")
 
-	ctx = context.WithValue(ctx, "requestedAccess", requestedAccessList)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "requestedAccess"))
+	ctx = context.WithValue(ctx, requestedAccess{}, requestedAccessList)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, requestedAccess{}))
 
 	grantedAccessList := filterAccessList(ctx, username, requestedAccessList)
-	ctx = context.WithValue(ctx, "grantedAccess", grantedAccessList)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "grantedAccess"))
+	ctx = context.WithValue(ctx, grantedAccess{}, grantedAccessList)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, grantedAccess{}))
 
 	token, err := ts.issuer.CreateJWT(username, service, grantedAccessList)
 	if err != nil {
@@ -340,17 +359,17 @@ func (ts *tokenServer) postToken(ctx context.Context, w http.ResponseWriter, r *
 		return
 	}
 
-	ctx = context.WithValue(ctx, "acctSubject", subject)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "acctSubject"))
+	ctx = context.WithValue(ctx, acctSubject{}, subject)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, acctSubject{}))
 
 	context.GetLogger(ctx).Info("authenticated client")
 
-	ctx = context.WithValue(ctx, "requestedAccess", requestedAccessList)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "requestedAccess"))
+	ctx = context.WithValue(ctx, requestedAccess{}, requestedAccessList)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, requestedAccess{}))
 
 	grantedAccessList := filterAccessList(ctx, subject, requestedAccessList)
-	ctx = context.WithValue(ctx, "grantedAccess", grantedAccessList)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "grantedAccess"))
+	ctx = context.WithValue(ctx, grantedAccess{}, grantedAccessList)
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx, grantedAccess{}))
 
 	token, err := ts.issuer.CreateJWT(subject, service, grantedAccessList)
 	if err != nil {

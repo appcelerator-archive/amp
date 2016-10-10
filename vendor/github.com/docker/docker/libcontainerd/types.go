@@ -3,6 +3,7 @@ package libcontainerd
 import (
 	"io"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/net/context"
 )
 
@@ -12,7 +13,6 @@ const (
 	StatePause        = "pause"
 	StateResume       = "resume"
 	StateExit         = "exit"
-	StateRestart      = "restart"
 	StateRestore      = "restore"
 	StateStartProcess = "start-process"
 	StateExitProcess  = "exit-process"
@@ -36,7 +36,7 @@ type Backend interface {
 
 // Client provides access to containerd features.
 type Client interface {
-	Create(containerID string, checkpoint string, checkpointDir string, spec Spec, options ...CreateOption) error
+	Create(containerID string, checkpoint string, checkpointDir string, spec specs.Spec, options ...CreateOption) error
 	Signal(containerID string, sig int) error
 	SignalProcess(containerID string, processFriendlyName string, sig int) error
 	AddProcess(ctx context.Context, containerID, processFriendlyName string, process Process) error

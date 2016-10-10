@@ -7,11 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	containerd "github.com/docker/containerd/api/grpc/types"
-	"github.com/docker/docker/restartmanager"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/net/context"
 )
@@ -91,10 +90,23 @@ func (ctr *container) start(checkpoint string, checkpointDir string) error {
 	if err != nil {
 		return nil
 	}
+	createChan := make(chan struct{})
 	iopipe, err := ctr.openFifos(spec.Process.Terminal)
 	if err != nil {
 		return err
 	}
+
+	// we need to delay stdin closure after container start or else "stdin close"
+	// event will be rejected by containerd.
+	// stdin closure happens in AttachStreams
+	stdin := iopipe.Stdin
+	iopipe.Stdin = ioutils.NewWriteCloserWrapper(stdin, func() error {
+		go func() {
+			<-createChan
+			stdin.Close()
+		}()
+		return nil
+	})
 
 	r := &containerd.CreateContainerRequest{
 		Id:            ctr.containerID,
@@ -111,17 +123,20 @@ func (ctr *container) start(checkpoint string, checkpointDir string) error {
 	}
 	ctr.client.appendContainer(ctr)
 
-	resp, err := ctr.client.remote.apiClient.CreateContainer(context.Background(), r)
-	if err != nil {
+	if err := ctr.client.backend.AttachStreams(ctr.containerID, *iopipe); err != nil {
+		close(createChan)
 		ctr.closeFifos(iopipe)
 		return err
 	}
-	ctr.startedAt = time.Now()
 
-	if err := ctr.client.backend.AttachStreams(ctr.containerID, *iopipe); err != nil {
+	resp, err := ctr.client.remote.apiClient.CreateContainer(context.Background(), r)
+	if err != nil {
+		close(createChan)
+		ctr.closeFifos(iopipe)
 		return err
 	}
 	ctr.systemPid = systemPid(resp.Container)
+	close(createChan)
 
 	return ctr.client.backend.StateChanged(ctr.containerID, StateInfo{
 		CommonStateInfo: CommonStateInfo{
@@ -146,7 +161,6 @@ func (ctr *container) handleEvent(e *containerd.Event) error {
 	defer ctr.client.unlock(ctr.containerID)
 	switch e.Type {
 	case StateExit, StatePause, StateResume, StateOOM:
-		var waitRestart chan error
 		st := StateInfo{
 			CommonStateInfo: CommonStateInfo{
 				State:    e.Type,
@@ -161,20 +175,8 @@ func (ctr *container) handleEvent(e *containerd.Event) error {
 			st.ProcessID = e.Pid
 			st.State = StateExitProcess
 		}
-		if st.State == StateExit && ctr.restartManager != nil {
-			restart, wait, err := ctr.restartManager.ShouldRestart(e.Status, false, time.Since(ctr.startedAt))
-			if err != nil {
-				logrus.Warnf("libcontainerd: container %s %v", ctr.containerID, err)
-			} else if restart {
-				st.State = StateRestart
-				ctr.restarting = true
-				ctr.client.deleteContainer(e.Id)
-				waitRestart = wait
-			}
-		}
 
 		// Remove process from list if we have exited
-		// We need to do so here in case the Message Handler decides to restart it.
 		switch st.State {
 		case StateExit:
 			ctr.clean()
@@ -186,32 +188,6 @@ func (ctr *container) handleEvent(e *containerd.Event) error {
 			if err := ctr.client.backend.StateChanged(e.Id, st); err != nil {
 				logrus.Errorf("libcontainerd: backend.StateChanged(): %v", err)
 			}
-			if st.State == StateRestart {
-				go func() {
-					err := <-waitRestart
-					ctr.client.lock(ctr.containerID)
-					defer ctr.client.unlock(ctr.containerID)
-					ctr.restarting = false
-					if err == nil {
-						if err = ctr.start("", ""); err != nil {
-							logrus.Errorf("libcontainerd: error restarting %v", err)
-						}
-					}
-					if err != nil {
-						st.State = StateExit
-						ctr.clean()
-						ctr.client.q.append(e.Id, func() {
-							if err := ctr.client.backend.StateChanged(e.Id, st); err != nil {
-								logrus.Errorf("libcontainerd: %v", err)
-							}
-						})
-						if err != restartmanager.ErrRestartCanceled {
-							logrus.Errorf("libcontainerd: %v", err)
-						}
-					}
-				}()
-			}
-
 			if e.Type == StatePause || e.Type == StateResume {
 				ctr.pauseMonitor.handle(e.Type)
 			}
