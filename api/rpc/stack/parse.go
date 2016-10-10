@@ -134,7 +134,6 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 			ContainerLabels: containerLabels,
 		})
 	}
-
 	return
 }
 

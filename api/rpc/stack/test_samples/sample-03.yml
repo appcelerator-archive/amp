@@ -8,3 +8,8 @@ pinger2:
     - name: www
       protocol: tcp
       internal_port: 3000
+haproxy:
+  public:
+    - publish_port: 83
+      internal_port: 80
+

@@ -7,6 +7,8 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
@@ -14,9 +16,11 @@ import (
 
 const stackRootKey = "stacks"
 const servicesRootKey = "services"
+const networksRootKey = "networks"
 const stackRootNameKey = "stacks/names"
 const stackIDLabelName = "io.amp.stack.id"
 const stackNameLabelName = "io.amp.stack.name"
+const serviceRoleLabelName = "io.amp.role"
 
 // Server is used to implement stack.StackService
 type Server struct {
@@ -35,6 +39,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		return nil, err
 	}
 	stack.Name = in.StackName
+	stack.IsPublic = s.isPublic(stack)
 	errCreate := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0)
 	if errCreate != nil {
 		return nil, errCreate
@@ -46,7 +51,7 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	}
 	_, errStart := s.Start(ctx, &startRequest)
 	if errStart != nil {
-		fmt.Printf("Error found during service creation: %v \n", err)
+		fmt.Printf("Error found during stack up: %v \n", errStart)
 		s.rollbackETCDStack(ctx, stack)
 		return nil, errStart
 	}
@@ -55,6 +60,21 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 		StackId: stack.Id,
 	}
 	return &reply, nil
+}
+
+// determine if stack have at least one service having one public name
+func (s *Server) isPublic(stack *Stack) bool {
+	isPublic := false
+	for _, service := range stack.Services {
+		if service.PublishSpecs != nil {
+			for _, public := range service.PublishSpecs {
+				if public.Name != "" {
+					isPublic = true
+				}
+			}
+		}
+	}
+	return isPublic
 }
 
 func (s *Server) getStackByName(ctx context.Context, name string) *Stack {
@@ -86,7 +106,9 @@ func (s *Server) getStack(ctx context.Context, in *StackRequest) (*Stack, error)
 }
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
-func (s *Server) rollbackServiceStack(ctx context.Context, stackID string, serviceIDList []string) {
+func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDList []string) {
+	fmt.Printf("removing created networks %s\n", stackID)
+	s.removeStackNetworks(ctx, stackID, true)
 	fmt.Printf("removing created services %s\n", stackID)
 	server := service.Service{
 		Docker: s.Docker,
@@ -112,6 +134,7 @@ func (s *Server) rollbackETCDStack(ctx context.Context, stack *Stack) {
 
 // start one service and if ok store it in ETCD:
 func (s *Server) processService(ctx context.Context, stack *Stack, serv *service.ServiceSpec) (string, error) {
+	//Add common labels to services
 	if serv.Labels == nil {
 		serv.Labels = make(map[string]string)
 	}
@@ -122,7 +145,33 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	}
 	serv.ContainerLabels[stackIDLabelName] = stack.Id
 	serv.ContainerLabels[stackNameLabelName] = stack.Name
-	serv.Name = stack.Name + "-" + serv.Name
+	// add default network
+	if serv.Name != "haproxy" {
+		if serv.Networks == nil {
+			serv.Networks = []*service.NetworkAttachment{}
+		}
+		serv.Networks = append(serv.Networks, &service.NetworkAttachment{
+			Target:  stack.Name,
+			Aliases: []string{serv.Name},
+		})
+		isPublic := false
+		if serv.PublishSpecs != nil {
+			for _, public := range serv.PublishSpecs {
+				if public.Name != "" {
+					isPublic = true
+				}
+			}
+		}
+		if isPublic {
+			serv.Networks = append(serv.Networks, &service.NetworkAttachment{
+				Target:  fmt.Sprintf("%s-public", stack.Name),
+				Aliases: []string{serv.Name},
+			})
+		}
+	}
+	//update name
+	serv.Name = fmt.Sprintf("%s-%s", stack.Name, serv.Name)
+	//Create service
 	request := &service.ServiceCreateRequest{
 		ServiceSpec: serv,
 	}
@@ -133,11 +182,102 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	if err != nil {
 		return "", err
 	}
+	//Save service defintion in ETCD
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, reply.Id), serv, nil, 0)
 	if createErr != nil {
 		return "", createErr
 	}
 	return reply.Id, nil
+}
+
+// add HAProxy service dedicated to the stack reverse proxy
+func (s *Server) addHAProxyService(ctx context.Context, stack *Stack) (string, error) {
+	serv := service.ServiceSpec{
+		Image: "appcelerator/haproxy:1.0.1",
+		Name:  "haproxy",
+		Env:   []string{"STACKNAME=" + stack.Name},
+		Networks: []*service.NetworkAttachment{
+			{
+				Target:  "amp-public",
+				Aliases: []string{fmt.Sprintf("%s-haproxy", stack.Name)},
+			},
+			{
+				Target:  fmt.Sprintf("%s-public", stack.Name),
+				Aliases: []string{fmt.Sprintf("%s-haproxy", stack.Name)},
+			},
+			{
+				Target:  "amp-infra",
+				Aliases: []string{fmt.Sprintf("%s-haproxy", stack.Name)},
+			},
+		},
+	}
+	//Verify if there is an HAProxy service in the stack definition to update publish port if exist
+	var publishPort uint32 = 0
+	for _, service := range stack.Services {
+		if service.Name == "haproxy" {
+			for _, public := range service.PublishSpecs {
+				if public.InternalPort == 80 {
+					publishPort = public.PublishPort
+				}
+			}
+		}
+	}
+	if publishPort != 0 {
+		serv.PublishSpecs = []*service.PublishSpec{
+			{
+				InternalPort: 80,
+				PublishPort:  publishPort,
+			},
+		}
+	}
+	return s.processService(ctx, stack, &serv)
+}
+
+// create network
+func (s *Server) createStackNetwork(ctx context.Context, name string) (string, error) {
+	fmt.Printf("Create network %s\n", name)
+	rep, err := s.Docker.NetworkCreate(ctx, name, types.NetworkCreate{
+		CheckDuplicate: false,
+		Driver:         "overlay",
+		EnableIPv6:     false,
+		Internal:       true,
+		Labels:         map[string]string{serviceRoleLabelName: "user"},
+		IPAM: &network.IPAM{
+			Driver: "default",
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return rep.ID, nil
+}
+
+func (s *Server) createStackNetworks(ctx context.Context, stack *Stack) error {
+	networkList := []string{}
+	id, err := s.createStackNetwork(ctx, stack.Name)
+	if err != nil {
+		return err
+	}
+	networkList = append(networkList, id)
+	if stack.IsPublic {
+		id, err := s.createStackNetwork(ctx, stack.Name+"-public")
+		if err != nil {
+			s.removeStackNetworksFromList(ctx, networkList)
+			return err
+		}
+		networkList = append(networkList, id)
+	}
+	//TODO: add custom network
+	list := IdList{
+		List: networkList,
+	}
+	if uerr := s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, networksRootKey), &list, 0); uerr != nil {
+		if cerr := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id, networksRootKey), &list, nil, 0); cerr != nil {
+			s.removeStackNetworksFromList(ctx, networkList)
+			return cerr
+		}
+	}
+	return nil
 }
 
 // Start implements stack.ServerService Stop
@@ -153,25 +293,39 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 		return nil, err
 	}
 	fmt.Printf("Starting stack %s\n", in.StackIdent)
+	err := s.createStackNetworks(ctx, stack)
+	if err != nil {
+		return nil, err
+	}
 
-	serviceIDList := make([]string, len(stack.Services), len(stack.Services))
-	for i, service := range stack.Services {
-		serviceID, err := s.processService(ctx, stack, service)
+	serviceIDList := []string{}
+	if stack.IsPublic {
+		serviceID, err := s.addHAProxyService(ctx, stack)
 		if err != nil {
-			s.rollbackServiceStack(ctx, stack.Id, serviceIDList)
+			s.rollbackStack(ctx, stack.Id, serviceIDList)
 			return nil, err
 		}
-		serviceIDList[i] = serviceID
+		serviceIDList = append(serviceIDList, serviceID)
+	}
+	for _, service := range stack.Services {
+		if service.Name != "haproxy" {
+			serviceID, err := s.processService(ctx, stack, service)
+			if err != nil {
+				s.rollbackStack(ctx, stack.Id, serviceIDList)
+				return nil, err
+			}
+			serviceIDList = append(serviceIDList, serviceID)
+		}
 	}
 	// Save the service id list in ETCD
-	val := &ServiceIdList{
+	val := &IdList{
 		List: serviceIDList,
 	}
 	updateErr := s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), val, 0)
 	if updateErr != nil {
 		createErr := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), val, nil, 0)
 		if createErr != nil {
-			s.rollbackServiceStack(ctx, stack.Id, serviceIDList)
+			s.rollbackStack(ctx, stack.Id, serviceIDList)
 			return nil, createErr
 		}
 	}
@@ -198,24 +352,51 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	}
 	fmt.Printf("Stopping stack %s\n", in.StackIdent)
 	if err := s.stopStackServices(ctx, stack.Id, false); err != nil {
-		return nil, err
+		fmt.Printf("catch error during stop services: %v", err)
+	}
+	if err := s.removeStackNetworks(ctx, stack.Id, false); err != nil {
+		fmt.Printf("catch error during remove networks: %v", err)
 	}
 	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Stopped)); err != nil {
-		return nil, err
+		fmt.Printf("catch error during stack state transition: %v", err)
 	}
 	reply := StackReply{
 		StackId: stack.Id,
 	}
-	empty := &ServiceIdList{
-		List: make([]string, 0),
+	empty := &IdList{
+		List: []string{},
 	}
 	s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, servicesRootKey), empty, 0)
 	fmt.Printf("Stack stopped %s\n", in.StackIdent)
 	return &reply, nil
 }
 
+func (s *Server) removeStackNetworks(ctx context.Context, ID string, force bool) error {
+	networkList := &IdList{}
+	err := s.Store.Get(ctx, path.Join(stackRootKey, ID, networksRootKey), networkList, true)
+	if err != nil && !force {
+		return err
+	}
+	return s.removeStackNetworksFromList(ctx, networkList.List)
+}
+
+func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []string) error {
+	var removeErr error
+	for _, key := range networkList {
+		err := s.Docker.NetworkRemove(ctx, key)
+		if err != nil {
+			removeErr = err
+		}
+		fmt.Printf("Remove network %s\n", key)
+	}
+	if removeErr != nil {
+		return removeErr
+	}
+	return nil
+}
+
 func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) error {
-	listKeys := &ServiceIdList{}
+	listKeys := &IdList{}
 	err := s.Store.Get(ctx, path.Join(stackRootKey, ID, servicesRootKey), listKeys, true)
 	if err != nil && !force {
 		return err
@@ -256,6 +437,8 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 	} else {
 		fmt.Printf("Removing services stack %s\n", in.StackIdent)
 		s.stopStackServices(ctx, stack.Id, true)
+		fmt.Printf("Removing networks stack %s\n", in.StackIdent)
+		s.removeStackNetworks(ctx, stack.Id, true)
 	}
 	fmt.Printf("Removing stack %s\n", in.StackIdent)
 	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)

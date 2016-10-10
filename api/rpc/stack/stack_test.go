@@ -2,7 +2,6 @@ package stack_test
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -142,8 +141,8 @@ func TestMain(m *testing.M) {
 //Test two stacks life cycle in the same time
 func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	//Start stack essai1
-	name1 := fmt.Sprintf("test1-%d", rand.Int31n(10000000))
-	name2 := fmt.Sprintf("test2-%d", rand.Int31n(10000000))
+	name1 := fmt.Sprintf("test1-%d", time.Now().Unix())
+	name2 := fmt.Sprintf("test2-%d", time.Now().Unix())
 	//Start stack test1
 	t.Log("start stack " + name1)
 	rUp1, errUp1 := client.Up(ctx, &stack.UpRequest{StackName: name1, Stackfile: example1})
@@ -181,6 +180,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	}
 	assert.NotEmpty(t, rStop1.StackId, "Stack test1 StackId should not be empty")
 	//Restart stack test1
+	time.Sleep(1 * time.Second)
 	t.Log("restart stack " + name1)
 	rRestart1, errRestart1 := client.Start(ctx, &stackRequest1)
 	if errRestart1 != nil {

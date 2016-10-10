@@ -12,30 +12,58 @@ service StackService {
   rpc List(ListRequest) returns (ListReply);
 }
 
+// struct for up request function
 message UpRequest {
   string stack_name = 1;
   string stackfile = 2;
 }
 
+// struct for up reply function
 message UpReply {
   string stack_id = 1;
 }
 
+// struct for start and stop request functions
 message StackRequest {
   string stack_ident = 1;  
 }
 
+// struct for remove request function
 message removeRequest {
   string stack_ident = 1;  
   bool force = 2;
 }
 
+// struct for start, stop and remove reply functions
 message StackReply {
   string stack_id = 1;
 }
 
+// struct for list request function
+message ListRequest {  
+}
+
+// struct for list reply function
+message ListReply {
+  repeated StackInfo list = 1;
+}
+
+// struct part of ListReply Struct
+message StackInfo {
+  string name = 1;
+  string id = 2;
+  string state = 3;
+}
+
+
+// struct to store Stack id in ETCD
 message StackID {
   string id = 1;
+}
+
+// struct to store service id list in ETCD
+message IdList {
+  repeated string list = 1;
 }
 
 enum StackState {
@@ -45,26 +73,12 @@ enum StackState {
   Redeploying = 3;
 }
 
+// Stack struct 
 message Stack {
   string name = 1;
   string id = 2;
   repeated service.ServiceSpec services = 3;
+  bool is_public = 4;
 }
 
-message ListRequest {  
-}
-
-message ServiceIdList {
-  repeated string list = 1;
-}
-
-message ListReply {
-  repeated StackInfo list = 1;
-}
-
-message StackInfo {
-  string name = 1;
-  string id = 2;
-  string state = 3;
-}
 

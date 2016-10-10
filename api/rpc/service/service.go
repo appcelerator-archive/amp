@@ -65,7 +65,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 				Mounts:          nil, //[]mount.Mount
 				StopGracePeriod: nil, //*time.Duration
 			},
-			Networks: nil,
+			Networks:      nil,
 			Resources:     nil, //*ResourceRequirements
 			RestartPolicy: nil, //*RestartPolicy
 			Placement: &swarm.Placement{
@@ -91,8 +91,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 	// add network
 	if req.ServiceSpec.Networks != nil {
 		service.Networks = make([]swarm.NetworkAttachmentConfig, len(req.ServiceSpec.Networks), len(req.ServiceSpec.Networks))
-		for i, net := range(req.ServiceSpec.Networks) {
-			fmt.Printf("network: %v\n", net)
+		for i, net := range req.ServiceSpec.Networks {
 			service.Networks[i] = swarm.NetworkAttachmentConfig{
 				Target:  net.Target,
 				Aliases: net.Aliases,
