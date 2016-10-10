@@ -206,7 +206,7 @@ removeservices() {
   [[ ! -z ${stop[0]} ]] && echo "> Removing current infrastructure services..." && docker service rm $stop || true
   stop=$(docker service ls -q --filter "label=io.amp.role=user")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true
-  for s in registry etcd; do
+  for s in etcd; do
     removevolume $s || echo "unable to remove volumes from $s service"
   done
 }
