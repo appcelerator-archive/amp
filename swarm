@@ -175,11 +175,40 @@ pullimages() {
   for i in ${images[@]}; do docker pull $i; done
 }
 
+removevolume() {
+  # remove Docker volumes for explicitly mounted containers
+  local service=$1
+  local loop=0
+  local retrytime=0.5
+  local maxretries=10
+  if [[ -z $service ]]; then
+    return 1
+  fi
+  local volumename=amp-$service
+  echo -n "deleting volume $volumename "
+  while docker volume ls --filter name=$volumename | grep -wq $volumename; do
+    echo -n "."
+    docker volume rm "$volumename" >/dev/null 2>&1 && echo "volume $volumename has been successfully deleted" || true
+    sleep $retrytime
+    (( loop++ ))
+    if [[ $loop -gt $maxretries ]]; then
+      echo "failed, ignore"
+      break
+    fi
+  done
+  if [[ $loop -eq 0 ]]; then
+    echo -e "\b, volume does not exist"
+  fi
+}
+
 removeservices() {
   stop=$(docker service ls -q --filter "label=io.amp.role=$ROLE")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current infrastructure services..." && docker service rm $stop || true
   stop=$(docker service ls -q --filter "label=io.amp.role=user")
   [[ ! -z ${stop[0]} ]] && echo "> Removing current user services..." && docker service rm $stop || true
+  for s in etcd; do
+    removevolume $s || echo "unable to remove volumes from $s service"
+  done
 }
 
 # start the services on the swarm
