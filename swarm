@@ -245,7 +245,7 @@ ls() {
 
 monitor() {
   interval=${1:-5}
-  clear; while true; do tput cup 0 0; docker service ls; sleep $interval; done
+  while true; do tput cup 0 0; tput ed; docker service ls; sleep $interval; done
 }
 
 registry() { # Owner: freignat91
