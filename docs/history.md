@@ -10,6 +10,6 @@ At this time, the team began working on a new foundation in Node.js designed to 
 
 However, after working for a couple of months, Docker released version 1.12 with Swarm Mode that provided orchestration support features built into its engine. Leveraging these native facilities was an obvious decision, so the project was rebooted in July.
 
-The team now consisted of Tony Pujals, Henry Allen-Tilford, and Chris Coy in the U.S., and Bertrand Quenin, Francois Reignat, and Nicolas Degory in France. As part of the project reboot, the team was able to benefit from its initial prototyping experience and make the strategic decision to switch to Go, which is the language that Docker is implemented in.
+The team now consisted of Tony Pujals, Henry Allen-Tilford, and Chris Coy in the U.S., and Bertrand Quenin, Francois Reignat, Nicolas Degory, and Hadrien Gantzer in France. As part of the project reboot, the team was able to benefit from its initial prototyping experience and make the strategic decision to switch to Go, which is the language that Docker is implemented in.
 
 The benefit to this choice was the ability to immediately leverage a large number of libraries being developed by Docker and other organizations that are a part of its ecosystem. Another strategic decision was to switch to Protocol Buffers and gRPC for very fast, efficient service communications and message serialization.
