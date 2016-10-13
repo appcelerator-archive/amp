@@ -127,7 +127,8 @@ test:
 	@go test $(REPO)/api/rpc/logs
 #	@go test $(REPO)/api/rpc/project
 	@go test $(REPO)/api/rpc/service
-	@go test $(REPO)/data/storage/etcd
 	@go test $(REPO)/api/rpc/stack
-	@go test $(REPO)/data/influx
 	@go test $(REPO)/api/rpc/stats
+	@go test $(REPO)/api/rpc/topic
+	@go test $(REPO)/data/influx
+	@go test $(REPO)/data/storage/etcd

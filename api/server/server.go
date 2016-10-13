@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -52,6 +53,10 @@ func Start(config Config) {
 	stack.RegisterStackServiceServer(s, &stack.Server{
 		Store:  runtime.Store,
 		Docker: runtime.Docker,
+	})
+	topic.RegisterTopicServer(s, &topic.Server{
+		Store: runtime.Store,
+		Kafka: runtime.Kafka,
 	})
 
 	// start listening
