@@ -1,21 +1,23 @@
 package server
 
 import (
-	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"google.golang.org/grpc"
+	"log"
+	"time"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"context"
 )
 
 const (
 	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	serverAddress           = "localhost" + defaultPort
-	elasticsearchDefaultURL = "http://localhost:9200"
-	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL        = "http://localhost:8086"
+	etcdDefaultEndpoints    = "http://127.0.0.1:2379"
+	serverAddress           = "127.0.0.1" + defaultPort
+	elasticsearchDefaultURL = "http://127.0.0.1:9200"
+	natsDefaultURL          = "nats://127.0.0.1:4222"
+	influxDefaultURL        = "http://127.0.0.1:8086"
 	dockerDefaultURL        = "unix:///var/run/docker.sock"
 	dockerDefaultVersion    = "1.24"
 )
@@ -25,7 +27,7 @@ var (
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
-	kafkaURL         string
+	natsURL          string
 	influxURL        string
 	dockerURL        string
 	dockerVersion    string
@@ -44,9 +46,9 @@ func parseEnv() {
 	if elasticsearchURL == "" {
 		elasticsearchURL = elasticsearchDefaultURL
 	}
-	kafkaURL = os.Getenv("kafkaURL")
-	if kafkaURL == "" {
-		kafkaURL = kafkaDefaultURL
+	natsURL = os.Getenv("natsURL")
+	if natsURL == "" {
+		natsURL = natsDefaultURL
 	}
 	influxURL = os.Getenv("influxURL")
 	if influxURL == "" {
@@ -66,7 +68,7 @@ func parseEnv() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
-	config.KafkaURL = kafkaURL
+	config.NatsURL = natsURL
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = dockerVersion
@@ -78,12 +80,32 @@ func StartTestServer() (Config, *grpc.ClientConn) {
 
 	go Start(config)
 
-	// there is no event when the server starts listening, so we just wait a second
-	time.Sleep(1 * time.Second)
-	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure())
-	if err != nil {
-		fmt.Println("connection failure")
-		os.Exit(1)
+	// Wait for swarm to be ready
+	log.Println("Waiting swarm to be ready")
+	if err := initDependencies(config); err != nil {
+		log.Panicln("Dependencies are not ready", err)
 	}
+
+	// Connect to amplifier
+	log.Println("Connecting to amplifier")
+	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure(), grpc.WithTimeout(60*time.Second))
+	if err != nil {
+		log.Panicln("Amplifier is not ready", err)
+	}
+	log.Println("Connected to amplifier")
+
+	// Use the connection to amplifier
+	logsClient := logs.NewLogsClient(conn)
+	for i := 0; i < 60; i++ {
+		_, err :=logsClient.Get(context.Background(), &logs.GetRequest{})
+		if err != nil {
+			log.Println("Connection to amplifier not ready yet: ", err)
+			time.Sleep(100 *time.Millisecond)
+			continue
+		}
+		break
+	}
+	log.Println("Ready")
+
 	return config, conn
 }

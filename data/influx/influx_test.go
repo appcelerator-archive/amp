@@ -34,10 +34,10 @@ func TestQuery(t *testing.T) {
 
 func influxInit() {
 	host := os.Getenv("influxhost")
-	cstr := "http://localhost:8086"
+	cstr := "http://127.0.0.1:8086"
 	if host != "" {
 		cstr = "http://" + host + ":8086"
 	}
 	influx = New(cstr, "_internal", "admin", "changme")
-	influx.Connect(time.Second * 60)
+	influx.Connect(60 * time.Second)
 }
