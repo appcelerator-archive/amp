@@ -23,7 +23,7 @@
 * `make fmt` - format source files according to go conventions.
 * `make clean` - cleans up auto-generated code and deletes the `amp` and `amplifier` executables from `$GOPATH/src`.
 * `make test` - run automated tests.
-* `make proto` - regenerate source files based on protocol buffer (*.pb) definition files using `protoc`.
+* `make proto` - regenerate source files (*.pb.go) based on protocol buffer (*.proto) definition files using `protoc`.
 * `make install-deps` - will reinstall all required packages under the `vendor` directory (same as `glide install`)
 * `make update-deps` - will update all package dependencies (same as `glide update`).
 
