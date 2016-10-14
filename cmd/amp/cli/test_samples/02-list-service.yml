@@ -1,0 +1,4 @@
+list-service:
+  cmd: docker service ls
+  args:
+  options:

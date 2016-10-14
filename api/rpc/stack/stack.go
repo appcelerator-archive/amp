@@ -615,10 +615,16 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	if err != nil {
 		return nil, err
 	}
-	listInfo := make([]*StackInfo, len(idList), len(idList))
+	listInfo := []*StackInfo{}
 	for i, ID := range idList {
-		obj, _ := ID.(*StackID)
-		listInfo[i] = s.getStackInfo(ctx, obj.Id)
+		if in.Limit == 0 || len(idList)-i <= int(in.Limit) {
+			obj, _ := ID.(*StackID)
+			info := s.getStackInfo(ctx, obj.Id)
+			fmt.Println("info", info)
+			if in.All || info.State == "Running" {
+				listInfo = append(listInfo, s.getStackInfo(ctx, obj.Id))
+			}
+		}
 	}
 	reply := ListReply{
 		List: listInfo,

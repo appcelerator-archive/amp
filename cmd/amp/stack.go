@@ -1,9 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -24,9 +24,14 @@ var (
 		Short: "Create and deploy a stack",
 		Long:  `Create and deploy a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			defer AMP.Disconnect()
 			err := up(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to create and deploy stack")
 			}
 		},
 	}
@@ -37,9 +42,14 @@ var (
 		Short: "Start a stopped stack",
 		Long:  `Start a stopped stack`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			defer AMP.Disconnect()
 			err := start(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to start stack")
 			}
 		},
 	}
@@ -48,9 +58,14 @@ var (
 		Short: "Stop a stack",
 		Long:  `Stop all services of a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			defer AMP.Disconnect()
 			err := stop(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to stop stack")
 			}
 		},
 	}
@@ -59,9 +74,14 @@ var (
 		Short: "Remove a stack",
 		Long:  `Remove a stack completly including ETCD data.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			defer AMP.Disconnect()
 			err := remove(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to remove stack")
 			}
 		},
 	}
@@ -70,12 +90,21 @@ var (
 		Short: "List available stacks",
 		Long:  `List available stacks.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			defer AMP.Disconnect()
 			err := list(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to list stacks")
 			}
 		},
 	}
+	listQuiet  *bool
+	listAll    *bool
+	listLast   *int64
+	listLatest *bool
 )
 
 func init() {
@@ -83,7 +112,10 @@ func init() {
 	flags := upCmd.Flags()
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
 	rmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
-	listCmd.Flags().BoolP("quiet", "q", false, "return only stack id to be use with grep")
+	listQuiet = listCmd.Flags().BoolP("quiet", "q", false, "Only display numeric IDs")
+	listAll = listCmd.Flags().BoolP("all", "a", false, "Show all stacks (default shows just running)")
+	listLast = listCmd.Flags().Int64P("last", "n", 0, "Show n last created stacks (includes all states)")
+	listLatest = listCmd.Flags().BoolP("latest", "l", false, "Show the latest created stack (includes all states)")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(startCmd)
 	StackCmd.AddCommand(stopCmd)
@@ -99,15 +131,15 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
 	if stackfile == "" {
-		return errors.New("Specify the stackfile with the --flag option")
+		log.Fatal("Specify the stackfile with the --flag option")
 	}
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack name")
+		log.Fatal("Must specify stack name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("Must specify stack name")
+		log.Fatal("Must specify stack name")
 	}
 
 	b, err := ioutil.ReadFile(stackfile)
@@ -124,18 +156,18 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.StackId)
 	return nil
 }
 
 func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -146,18 +178,18 @@ func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.StackId)
 	return nil
 }
 
 func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -168,18 +200,18 @@ func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.StackId)
 	return nil
 }
 
 func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	force := false
@@ -204,14 +236,21 @@ func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 }
 
 func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
-	request := &stack.ListRequest{}
+	var limit = *listLast
+	if *listLatest {
+		limit = 1
+	}
+	request := &stack.ListRequest{
+		All:   *listAll,
+		Limit: limit,
+	}
 	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.List(context.Background(), request)
 	if err != nil {
 		return err
 	}
 	//Manage -q
-	if cmd.Flag("quiet").Value.String() == "true" {
+	if *listQuiet {
 		for _, info := range reply.List {
 			fmt.Println(info.Id)
 		}

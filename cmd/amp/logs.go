@@ -15,6 +15,8 @@ var logsCmd = &cobra.Command{
 	Use:   "logs [OPTIONS] [SERVICE]",
 	Short: "Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.",
 	Run: func(cmd *cobra.Command, args []string) {
+		AMP.Connect()
+		defer AMP.Disconnect()
 		err := Logs(AMP, cmd, args)
 		if err != nil {
 			fmt.Println(err)
