@@ -21,7 +21,7 @@ func NewPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var opts pruneOptions
 
 	cmd := &cobra.Command{
-		Use:   "prune",
+		Use:   "prune [OPTIONS]",
 		Short: "Remove all unused volumes",
 		Args:  cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -67,7 +67,7 @@ func runPrune(dockerCli *command.DockerCli, opts pruneOptions) (spaceReclaimed u
 	return
 }
 
-// RunPrune call the Volume Prune API
+// RunPrune calls the Volume Prune API
 // This returns the amount of space reclaimed and a detailed output string
 func RunPrune(dockerCli *command.DockerCli) (uint64, string, error) {
 	return runPrune(dockerCli, pruneOptions{force: true})

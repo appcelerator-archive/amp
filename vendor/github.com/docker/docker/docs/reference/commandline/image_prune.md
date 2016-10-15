@@ -11,7 +11,7 @@ parent = "smn_cli"
 # image prune
 
 ```markdown
-Usage:	docker image prune
+Usage:	docker image prune [OPTIONS]
 
 Remove unused images
 
@@ -61,5 +61,5 @@ Total reclaimed space: 16.43 MB
 
 * [system df](system_df.md)
 * [container prune](container_prune.md)
-* [volume prune](container_prune.md)
+* [volume prune](volume_prune.md)
 * [system prune](system_prune.md)

@@ -186,7 +186,7 @@ flags=(
 	VETH BRIDGE BRIDGE_NETFILTER
 	NF_NAT_IPV4 IP_NF_FILTER IP_NF_TARGET_MASQUERADE
 	NETFILTER_XT_MATCH_{ADDRTYPE,CONNTRACK,IPVS}
-	NF_NAT NF_NAT_NEEDED
+	IP_NF_NAT NF_NAT NF_NAT_NEEDED
 
 	# required for bind-mounting /dev/mqueue into containers
 	POSIX_MQUEUE
@@ -252,8 +252,9 @@ echo '- Network Drivers:'
 {
 	echo '- "'$(wrap_color 'overlay' blue)'":'
 	check_flags VXLAN | sed 's/^/  /'
-	echo '  Optional (for secure networks):'
-	check_flags XFRM_ALGO XFRM_USER | sed 's/^/  /'
+	echo '    Optional (for encrypted networks):'
+	check_flags CRYPTO CRYPTO_AEAD CRYPTO_GCM CRYPTO_SEQIV CRYPTO_GHASH \
+	            XFRM XFRM_USER XFRM_ALGO INET_ESP INET_XFRM_MODE_TRANSPORT | sed 's/^/    /'
 	echo '- "'$(wrap_color 'ipvlan' blue)'":'
 	check_flags IPVLAN | sed 's/^/  /'
 	echo '- "'$(wrap_color 'macvlan' blue)'":'

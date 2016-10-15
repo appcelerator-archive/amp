@@ -37,6 +37,7 @@ import (
 	lntypes "github.com/docker/libnetwork/types"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/opencontainers/runc/libcontainer/label"
+	rsystem "github.com/opencontainers/runc/libcontainer/system"
 	"github.com/opencontainers/runc/libcontainer/user"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/vishvananda/netlink"
@@ -516,7 +517,7 @@ func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *containertypes.
 }
 
 // platformReload update configuration with platform specific options
-func (daemon *Daemon) platformReload(config *Config, attributes *map[string]string) {
+func (daemon *Daemon) platformReload(config *Config) map[string]string {
 	if config.IsValueSet("runtimes") {
 		daemon.configStore.Runtimes = config.Runtimes
 		// Always set the default one
@@ -536,8 +537,10 @@ func (daemon *Daemon) platformReload(config *Config, attributes *map[string]stri
 		runtimeList.WriteString(fmt.Sprintf("%s:%s", name, rt))
 	}
 
-	(*attributes)["runtimes"] = runtimeList.String()
-	(*attributes)["default-runtime"] = daemon.configStore.DefaultRuntime
+	return map[string]string{
+		"runtimes":        runtimeList.String(),
+		"default-runtime": daemon.configStore.DefaultRuntime,
+	}
 }
 
 // verifyDaemonSettings performs validation of daemon config struct
@@ -610,7 +613,7 @@ func configureKernelSecuritySupport(config *Config, driverName string) error {
 }
 
 func (daemon *Daemon) initNetworkController(config *Config, activeSandboxes map[string]interface{}) (libnetwork.NetworkController, error) {
-	netOptions, err := daemon.networkOptions(config, daemon.pluginStore, activeSandboxes)
+	netOptions, err := daemon.networkOptions(config, daemon.PluginStore, activeSandboxes)
 	if err != nil {
 		return nil, err
 	}
@@ -1166,7 +1169,18 @@ func setupOOMScoreAdj(score int) error {
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(strconv.Itoa(score))
+
+	stringScore := strconv.Itoa(score)
+	_, err = f.WriteString(stringScore)
+	if os.IsPermission(err) {
+		// Setting oom_score_adj does not work in an
+		// unprivileged container. Ignore the error, but log
+		// it if we appear not to be in that situation.
+		if !rsystem.RunningInUserNS() {
+			logrus.Debugf("Permission denied writing %q to /proc/self/oom_score_adj", stringScore)
+		}
+		return nil
+	}
 	f.Close()
 	return err
 }
