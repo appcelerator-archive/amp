@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/appcelerator/amp/api/client"
@@ -17,9 +18,13 @@ var (
 		Short: "Remove one or more services",
 		Long:  `Remove one or more services`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := rm(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to remove service")
 			}
 		},
 	}
@@ -35,7 +40,7 @@ func init() {
 func rm(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		return fmt.Errorf("\"amp service rm\" requires at least 1 argument(s)")
+		log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
 	}
 
 	client := service.NewServiceClient(amp.Conn)

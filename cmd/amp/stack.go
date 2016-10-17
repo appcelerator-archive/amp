@@ -1,9 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -24,9 +24,13 @@ var (
 		Short: "Create and deploy a stack",
 		Long:  `Create and deploy a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := up(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to create and deploy stack")
 			}
 		},
 	}
@@ -37,9 +41,13 @@ var (
 		Short: "Start a stopped stack",
 		Long:  `Start a stopped stack`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := start(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to start stack")
 			}
 		},
 	}
@@ -48,9 +56,13 @@ var (
 		Short: "Stop a stack",
 		Long:  `Stop all services of a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := stop(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to stop stack")
 			}
 		},
 	}
@@ -59,9 +71,13 @@ var (
 		Short: "Remove a stack",
 		Long:  `Remove a stack completly including ETCD data.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := remove(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to remove stack")
 			}
 		},
 	}
@@ -70,9 +86,13 @@ var (
 		Short: "List available stacks",
 		Long:  `List available stacks.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := list(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to list stacks")
 			}
 		},
 	}
@@ -106,15 +126,15 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
 	if stackfile == "" {
-		return errors.New("Specify the stackfile with the --flag option")
+		log.Fatal("Specify the stackfile with the --flag option")
 	}
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack name")
+		log.Fatal("Must specify stack name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("Must specify stack name")
+		log.Fatal("Must specify stack name")
 	}
 
 	b, err := ioutil.ReadFile(stackfile)
@@ -131,18 +151,18 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.StackId)
 	return nil
 }
 
 func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -160,11 +180,11 @@ func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
@@ -175,18 +195,18 @@ func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.StackId)
 	return nil
 }
 
 func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return errors.New("Must specify stack id")
+		log.Fatal("Must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		return errors.New("Must specify stack name or id")
+		log.Fatal("Must specify stack name or id")
 	}
 
 	force := false

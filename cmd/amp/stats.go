@@ -1,8 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -24,9 +24,13 @@ var statsCmd = &cobra.Command{
 	Short: "Display resource usage statistics",
 	Long:  `Get statistics on containers, services, nodes about cpu, memory, io, net.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		AMP.Connect()
 		err := Stats(AMP, cmd, args)
 		if err != nil {
-			fmt.Println(err)
+			if AMP.Verbose() {
+				log.Println(err)
+			}
+			log.Fatal("Failed to display stats")
 		}
 	},
 }
@@ -152,7 +156,7 @@ func backQuoteDash(val string) string {
 
 func validateQuery(query *stats.StatsRequest) error {
 	if query.Period != "" && (query.Since != "" || query.Until != "") {
-		return errors.New("--period can't be used with --since or --until")
+		log.Fatal("--period can't be used with --since or --until")
 	}
 	return nil
 }
