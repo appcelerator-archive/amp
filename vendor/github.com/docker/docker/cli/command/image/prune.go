@@ -22,7 +22,7 @@ func NewPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var opts pruneOptions
 
 	cmd := &cobra.Command{
-		Use:   "prune",
+		Use:   "prune [OPTIONS]",
 		Short: "Remove unused images",
 		Args:  cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -83,7 +83,7 @@ func runPrune(dockerCli *command.DockerCli, opts pruneOptions) (spaceReclaimed u
 	return
 }
 
-// RunPrune call the Image Prune API
+// RunPrune calls the Image Prune API
 // This returns the amount of space reclaimed and a detailed output string
 func RunPrune(dockerCli *command.DockerCli, all bool) (uint64, string, error) {
 	return runPrune(dockerCli, pruneOptions{force: true, all: all})

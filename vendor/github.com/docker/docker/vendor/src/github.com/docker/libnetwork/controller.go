@@ -53,9 +53,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/discovery"
 	"github.com/docker/docker/pkg/locker"
+	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/plugins"
 	"github.com/docker/docker/pkg/stringid"
-	"github.com/docker/docker/plugin/getter"
 	"github.com/docker/libnetwork/cluster"
 	"github.com/docker/libnetwork/config"
 	"github.com/docker/libnetwork/datastore"
@@ -74,6 +74,9 @@ import (
 type NetworkController interface {
 	// ID provides a unique identity for the controller
 	ID() string
+
+	// BuiltinDrivers returns list of builtin drivers
+	BuiltinDrivers() []string
 
 	// Config method returns the bootup configuration for the controller
 	Config() config.Config
@@ -324,27 +327,7 @@ func (c *controller) clusterAgentInit() {
 			c.agentClose()
 			c.cleanupServiceBindings("")
 
-			c.Lock()
-			ingressSandbox := c.ingressSandbox
-			c.ingressSandbox = nil
-			c.Unlock()
-
-			if ingressSandbox != nil {
-				if err := ingressSandbox.Delete(); err != nil {
-					log.Warnf("Could not delete ingress sandbox while leaving: %v", err)
-				}
-			}
-
-			n, err := c.NetworkByName("ingress")
-			if err != nil {
-				log.Warnf("Could not find ingress network while leaving: %v", err)
-			}
-
-			if n != nil {
-				if err := n.Delete(); err != nil {
-					log.Warnf("Could not delete ingress network while leaving: %v", err)
-				}
-			}
+			c.clearIngress(true)
 
 			return
 		}
@@ -483,6 +466,17 @@ func (c *controller) ID() string {
 	return c.id
 }
 
+func (c *controller) BuiltinDrivers() []string {
+	drivers := []string{}
+	for _, i := range getInitializers() {
+		if i.ntype == "remote" {
+			continue
+		}
+		drivers = append(drivers, i.ntype)
+	}
+	return drivers
+}
+
 func (c *controller) validateHostDiscoveryConfig() bool {
 	if c.cfg == nil || c.cfg.Cluster.Discovery == "" || c.cfg.Cluster.Address == "" {
 		return false
@@ -602,7 +596,7 @@ func (c *controller) isDistributedControl() bool {
 	return !c.isManager() && !c.isAgent()
 }
 
-func (c *controller) GetPluginGetter() getter.PluginGetter {
+func (c *controller) GetPluginGetter() plugingetter.PluginGetter {
 	return c.drvRegistry.GetPluginGetter()
 }
 
@@ -1079,7 +1073,7 @@ func (c *controller) loadDriver(networkType string) error {
 }
 
 func (c *controller) loadIPAMDriver(name string) error {
-	if _, err := c.GetPluginGetter().Get(name, ipamapi.PluginEndpointType, getter.LOOKUP); err != nil {
+	if _, err := c.GetPluginGetter().Get(name, ipamapi.PluginEndpointType, plugingetter.LOOKUP); err != nil {
 		if err == plugins.ErrNotFound {
 			return types.NotFoundErrorf(err.Error())
 		}
@@ -1108,7 +1102,32 @@ func (c *controller) getIPAMDriver(name string) (ipamapi.Ipam, *ipamapi.Capabili
 }
 
 func (c *controller) Stop() {
+	c.clearIngress(false)
 	c.closeStores()
 	c.stopExternalKeyListener()
 	osl.GC()
+}
+
+func (c *controller) clearIngress(clusterLeave bool) {
+	c.Lock()
+	ingressSandbox := c.ingressSandbox
+	c.ingressSandbox = nil
+	c.Unlock()
+
+	if ingressSandbox != nil {
+		if err := ingressSandbox.Delete(); err != nil {
+			log.Warnf("Could not delete ingress sandbox while leaving: %v", err)
+		}
+	}
+
+	n, err := c.NetworkByName("ingress")
+	if err != nil && clusterLeave {
+		log.Warnf("Could not find ingress network while leaving: %v", err)
+	}
+
+	if n != nil {
+		if err := n.Delete(); err != nil {
+			log.Warnf("Could not delete ingress network while leaving: %v", err)
+		}
+	}
 }

@@ -11,7 +11,7 @@ parent = "smn_cli"
 # volume prune
 
 ```markdown
-Usage:	docker volume prune
+Usage:	docker volume prune [OPTIONS]
 
 Remove all unused volumes
 
@@ -44,5 +44,5 @@ Total reclaimed space: 36 B
 * [Understand Data Volumes](../../tutorials/dockervolumes.md)
 * [system df](system_df.md)
 * [container prune](container_prune.md)
-* [image prune](container_prune.md)
+* [image prune](image_prune.md)
 * [system prune](system_prune.md)
