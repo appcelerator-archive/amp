@@ -10,41 +10,38 @@
 set -euo pipefail
 # INFLUXDATA_VERSION should be the Major.minor version, e.g 0.13 or 1.0
 INFLUXDATA_VERSION=1.0
-KAFKA_VERSION=0.10.0.1
-ZOOKEEPER_VERSION=3.4.9
-ETCD_VERSION=3.0
+ETCD_VERSION=3.0.10
+NATS_VERSION=latest
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amplifier:latest
-  appcelerator/amp-agent:latest
-  appcelerator/amp-log-worker:latest
+  appcelerator/amplifier:nats
+  appcelerator/amp-agent:nats
+  appcelerator/amp-log-worker:nats
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
   appcelerator/haproxy:1.0.1
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
-  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
-  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   appcelerator/etcd:${ETCD_VERSION}
   appcelerator/pinger:latest
+  appcelerator/amp-nats-streaming:${NATS_VERSION}
 )
 
 MINIMAGES=(
-  appcelerator/amplifier:latest
-  appcelerator/amp-agent:latest
-  appcelerator/amp-log-worker:latest
+  appcelerator/amplifier:nats
+  appcelerator/amp-agent:nats
+  appcelerator/amp-log-worker:nats
   appcelerator/elasticsearch-amp:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
-  appcelerator/kafka:${KAFKA_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
   registry:2
-  appcelerator/zookeeper:${ZOOKEEPER_VERSION}
   appcelerator/etcd:${ETCD_VERSION}
   appcelerator/pinger:latest
+  appcelerator/amp-nats-streaming:${NATS_VERSION}
 )
 
 # please keep sorted
@@ -58,11 +55,10 @@ SERVICES=(
   grafana
   haproxy
   influxdb
-  kafka
   kapacitor
+  nats
   telegrafagent
   registry
-  zookeeper
 )
 
 MINSERVICES=(
@@ -71,11 +67,10 @@ MINSERVICES=(
   amplogworker
   etcd
   elasticsearch
-  kafka
   influxdb
+  nats
   telegrafagent
   registry
-  zookeeper
 )
 
 ROLE=infrastructure
@@ -124,9 +119,6 @@ main() {
         startservices "${@:2}"
       ;;
       stop)
-        if [[ -x $(dirname $0)/advertise_service ]]; then
-           $(dirname $0)/advertise_service -r kafka &
-        fi
         removeservices
       ;;
       pull)
@@ -234,9 +226,6 @@ startservices() {
   fi
 
   for i in $services; do $i; done
-  if [[ -x $(dirname $0)/advertise_service ]]; then
-    $(dirname $0)/advertise_service kafka &
-  fi
 }
 
 ls() {
@@ -262,7 +251,7 @@ amplifier() {
     --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amplifier:latest
+    appcelerator/amplifier:nats
 }
 
 ampagent() { # Owner: freignat91
@@ -270,14 +259,14 @@ ampagent() { # Owner: freignat91
     --mode global \
     --label io.amp.role="infrastructure" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amp-agent:latest
+    appcelerator/amp-agent:nats
 }
 
 # DEPENDENCIES kafka
 amplogworker() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-infra --name amp-log-worker \
     --label io.amp.role="infrastructure" \
-    appcelerator/amp-log-worker:latest
+    appcelerator/amp-log-worker:nats
 }
 
 ampui() { # Owner: freignat91
@@ -330,16 +319,6 @@ influxdb() { # Owner: ndegory
     appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
 }
 
-# DEPENDENCIES zookeepeer
-kafka() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-infra --name kafka \
-    --label io.amp.role="infrastructure" \
-    -p 9092:9092 \
-    -e ZOOKEEPER_CONNECT=zookeeper:2181 \
-    -e TOPIC_LIST="amp-logs amp-docker-events telegraf" \
-    appcelerator/kafka:${KAFKA_VERSION}
-}
-
 kapacitor() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-infra --name kapacitor \
     --label io.amp.role="infrastructure" \
@@ -363,6 +342,14 @@ haproxy() { # Owner: freignat91
     appcelerator/haproxy:1.0.1
 }
 
+nats() { # Owner: bertrand-quenin
+  docker service create --with-registry-auth --network amp-infra --name nats \
+    --label io.amp.role="infrastructure" \
+    -p 4222:4222 \
+    -p 8222:8222 \
+    appcelerator/amp-nats-streaming:${NATS_VERSION}
+}
+
 telegrafagent() { # Owner: ndegory
   docker service create --with-registry-auth --network amp-infra --name telegraf-agent \
     --mode global \
@@ -384,15 +371,6 @@ telegrafagent() { # Owner: ndegory
     --mount type=bind,source=/var/run/utmp,target=/var/run/utmp \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
     appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
-}
-
-zookeeper() { # Owner: bertrand-quenin
-  docker service create --with-registry-auth --network amp-infra --name zookeeper \
-    --label io.amp.role="infrastructure" \
-    -p 2181:2181 \
-    -p 2888:2888 \
-    -p 3888:3888 \
-    appcelerator/zookeeper:${ZOOKEEPER_VERSION}
 }
 
 main $@

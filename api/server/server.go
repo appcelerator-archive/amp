@@ -7,6 +7,7 @@ import (
 	"time"
 
 	// "github.com/appcelerator/amp/api/rpc/build"
+	"fmt"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -16,18 +17,45 @@ import (
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/client"
+	"github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/nats"
 	"google.golang.org/grpc"
+	"math/rand"
+	"strconv"
 )
+
+const (
+	defaultTimeOut = 5 * time.Minute
+	natsClusterID  = "test-cluster"
+	natsClientID   = "amplifier"
+)
+
+func initDependencies(config Config) error {
+	// ensure all initialization code fails fast on errors; there is no point in
+	// attempting to continue in a degraded state if there are problems at start up
+	if err := initEtcd(config); err != nil {
+		return err
+	}
+	if err := initElasticsearch(config); err != nil {
+		return err
+	}
+	if err := initNats(config); err != nil {
+		return err
+	}
+	if err := initInfluxDB(config); err != nil {
+		return err
+	}
+	if err := initDocker(config); err != nil {
+		return err
+	}
+	return nil
+}
 
 // Start starts the server
 func Start(config Config) {
-	// ensure all initialization code fails fast on errors; there is no point in
-	// attempting to continue in a degraded state if there are problems at start up
-	initEtcd(config)
-	initElasticsearch(config)
-	initKafka(config)
-	initInfluxDB(config)
-	initDocker(config)
+	if err := initDependencies(config); err != nil {
+		panic(err)
+	}
 
 	// register services
 	s := grpc.NewServer()
@@ -35,7 +63,7 @@ func Start(config Config) {
 	logs.RegisterLogsServer(s, &logs.Logs{
 		Es:    runtime.Elasticsearch,
 		Store: runtime.Store,
-		Kafka: runtime.Kafka,
+		Nats:  runtime.Nats,
 	})
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: runtime.Influx,
@@ -63,49 +91,60 @@ func Start(config Config) {
 	s.Serve(lis)
 }
 
-func initEtcd(config Config) {
+func initEtcd(config Config) error {
 	log.Printf("connecting to etcd at %v", strings.Join(config.EtcdEndpoints, ","))
 	runtime.Store = etcd.New(config.EtcdEndpoints, "amp")
-	if err := runtime.Store.Connect(5 * time.Second); err != nil {
-		panic(err)
+	if err := runtime.Store.Connect(defaultTimeOut); err != nil {
+		return fmt.Errorf("amplifer is unable to connect to etcd on: %s\n%v", config.EtcdEndpoints, err)
 	}
 	log.Printf("connected to etcd at %v", strings.Join(runtime.Store.Endpoints(), ","))
+	return nil
 }
 
-func initElasticsearch(config Config) {
+func initElasticsearch(config Config) error {
 	log.Printf("connecting to elasticsearch at %s\n", config.ElasticsearchURL)
-	err := runtime.Elasticsearch.Connect(config.ElasticsearchURL)
-	if err != nil {
-		log.Panicf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
+	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
+		return fmt.Errorf("amplifer is unable to connect to elasticsearch on: %s\n%v", config.ElasticsearchURL, err)
 	}
 	log.Printf("connected to elasticsearch at %s\n", config.ElasticsearchURL)
+	return nil
 }
 
-func initKafka(config Config) {
-	log.Printf("connecting to kafka at %s\n", config.KafkaURL)
-	err := runtime.Kafka.Connect(config.KafkaURL)
-	if err != nil {
-		log.Panicf("amplifer is unable to connect to kafka on: %s\n%v", config.KafkaURL, err)
-	}
-	log.Printf("connected to kafka at %s\n", config.KafkaURL)
-}
-
-func initInfluxDB(config Config) {
+func initInfluxDB(config Config) error {
 	log.Printf("connecting to InfluxDB at %s\n", config.InfluxURL)
 	runtime.Influx = influx.New(config.InfluxURL, "telegraf", "", "")
-	if err := runtime.Influx.Connect(5 * time.Second); err != nil {
-		log.Panicf("amplifer is unable to connect to influxDB on: %s\n%v", config.InfluxURL, err)
+	if err := runtime.Influx.Connect(defaultTimeOut); err != nil {
+		return fmt.Errorf("amplifer is unable to connect to influxDB on: %s\n%v", config.InfluxURL, err)
 	}
 	log.Printf("connected to influxDB at %s\n", config.InfluxURL)
+	return nil
 }
 
-func initDocker(config Config) {
+func initNats(config Config) error {
+	log.Printf("Connecting to NATS-Streaming at %s\n", config.NatsURL)
+	var err error
+
+	nc, err := nats.Connect(config.NatsURL, nats.Timeout(defaultTimeOut))
+	if err != nil {
+		fmt.Errorf("amplifer is unable to connect to NATS on: %s\n%v", config.NatsURL, err)
+	}
+
+	runtime.Nats, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
+	if err != nil {
+		return fmt.Errorf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", config.NatsURL, err)
+	}
+	log.Printf("Connected to NATS-Streaming at %s\n", config.NatsURL)
+	return nil
+}
+
+func initDocker(config Config) error {
 	log.Printf("connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
 	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
-	cli, err := client.NewClient(config.DockerURL, config.DockerVersion, nil, defaultHeaders)
+	var err error
+	runtime.Docker, err = client.NewClient(config.DockerURL, config.DockerVersion, nil, defaultHeaders)
 	if err != nil {
-		log.Panicf("amplifer is unable to connect to Docker on: %s\n%v", config.DockerURL, err)
+		return fmt.Errorf("amplifer is unable to connect to Docker on: %s\n%v", config.DockerURL, err)
 	}
-	runtime.Docker = cli
 	log.Printf("connected to Docker at %s\n", config.DockerURL)
+	return nil
 }

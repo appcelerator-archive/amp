@@ -14,10 +14,10 @@ const (
 )
 
 var (
-	etcdDefaultEndpoints    = "http://localhost:2379"
-	elasticsearchDefaultURL = "http://localhost:9200"
-	kafkaDefaultURL         = "localhost:9092"
-	influxDefaultURL        = "http://localhost:8086"
+	etcdDefaultEndpoints    = "http://127.0.0.1:2379"
+	elasticsearchDefaultURL = "http://127.0.0.1:9200"
+	natsDefaultURL          = "nats://127.0.0.1:4222"
+	influxDefaultURL        = "http://127.0.0.1:8086"
 	dockerDefaultURL        = "unix:///var/run/docker.sock"
 	dockerDefaultVersion    = "1.24"
 )
@@ -39,7 +39,7 @@ var (
 	elasticsearchURL string
 	clientID         string
 	clientSecret     string
-	kafkaURL         string
+	natsURL          string
 	influxURL        string
 	dockerURL        string
 	dockerVersion    string
@@ -54,7 +54,7 @@ func parseFlags() {
 	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", elasticsearchDefaultURL, "elasticsearch URL (default '"+elasticsearchDefaultURL+"')")
 	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
-	flag.StringVarP(&kafkaURL, "kafkaURL", "k", kafkaDefaultURL, "kafka URL (default '"+kafkaDefaultURL+"')")
+	flag.StringVarP(&natsURL, "natsURL", "", natsDefaultURL, "Nats URL (default '"+natsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influxURL", "", influxDefaultURL, "InfluxDB URL (default '"+influxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "dockerURL", dockerDefaultURL, "Docker URL (default '"+dockerDefaultURL+"')")
 
@@ -65,7 +65,7 @@ func parseFlags() {
 	if isService {
 		etcdEndpoints = "http://etcd:2379"
 		elasticsearchURL = "http://elasticsearch:9200"
-		kafkaURL = "kafka:9092"
+		natsURL = "nats://nats:4222"
 		influxURL = "http://influxdb:8086"
 	}
 
@@ -77,7 +77,7 @@ func parseFlags() {
 		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
 	}
 	config.ElasticsearchURL = elasticsearchURL
-	config.KafkaURL = kafkaURL
+	config.NatsURL = natsURL
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = dockerDefaultVersion

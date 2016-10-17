@@ -3,9 +3,9 @@ package runtime
 import (
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
-	"github.com/appcelerator/amp/data/kafka"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/client"
+	"github.com/nats-io/go-nats-streaming"
 )
 
 var (
@@ -16,11 +16,14 @@ var (
 	Elasticsearch elasticsearch.Elasticsearch
 
 	// Kafka is the kafka client
-	Kafka kafka.Kafka
+	//Kafka kafka.Kafka
 
 	// Influx is the influxDB client
 	Influx influx.Influx
 
 	// Docker is the Docker client
 	Docker *client.Client
+
+	//Nats is the nats client
+	Nats stan.Conn
 )

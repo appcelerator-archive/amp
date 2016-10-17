@@ -67,6 +67,7 @@ func (s *Influx) Connect(timeout time.Duration) error {
 		Addr:     s.conn,
 		Username: s.u,
 		Password: s.p,
+		Timeout:  timeout,
 	})
 
 	if err != nil {

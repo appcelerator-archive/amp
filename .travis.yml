@@ -1,0 +1,28 @@
+sudo: required
+
+services:
+  - docker
+
+language: go
+
+go:
+  - 1.7.1
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install docker-engine
+  - docker swarm init --advertise-addr 127.0.0.1
+  - ./swarm pull --min
+  - ./swarm start --min
+
+install:
+  - go get -u github.com/golang/lint/golint
+
+script:
+  - make test
+  - export DOCKER_TAG=$TRAVIS_BRANCH
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then export DOCKER_TAG="latest"; fi
+  - "echo DOCKER_TAG: $DOCKER_TAG"
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - ./shrink.sh "$DOCKER_TAG"
+  - docker push appcelerator/amplifier:"$DOCKER_TAG"
