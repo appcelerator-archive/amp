@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/data/storage"
@@ -237,7 +238,7 @@ func (s *Server) addHAProxyService(ctx context.Context, stack *Stack) (string, e
 func (s *Server) createStackNetwork(ctx context.Context, name string) (string, error) {
 	fmt.Printf("Create network %s\n", name)
 	rep, err := s.Docker.NetworkCreate(ctx, name, types.NetworkCreate{
-		CheckDuplicate: false,
+		CheckDuplicate: true,
 		Driver:         "overlay",
 		EnableIPv6:     false,
 		Internal:       true,
@@ -387,7 +388,20 @@ func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []
 		if err != nil {
 			removeErr = err
 		}
-		fmt.Printf("Remove network %s\n", key)
+		fmt.Printf("Removing network: %s\n", key)
+		var existErr error
+		nn := 0
+		//allowing 1min to remove network
+		for existErr== nil && nn < 20 {
+			_, existErr = s.Docker.NetworkInspect(ctx, key)
+			time.Sleep(3 * time.Second)
+			nn++
+		}
+		if existErr != nil {
+			fmt.Printf("network removed: %s\n", key)
+		} else {
+			removeErr = fmt.Errorf("network remove timeout: %s\n", key)
+		}
 	}
 	if removeErr != nil {
 		return removeErr
@@ -508,6 +522,5 @@ func newStackFromYaml(ctx context.Context, config string) (stack *Stack, err err
 	if err = stackStateMachine.CreateState(stack.Id, int32(StackState_Stopped)); err != nil {
 		return
 	}
-
 	return
 }
