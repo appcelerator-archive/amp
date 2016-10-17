@@ -76,6 +76,10 @@ var (
 			}
 		},
 	}
+	listQuiet  *bool
+	listAll    *bool
+	listLast   *int64
+	listLatest *bool
 )
 
 func init() {
@@ -83,7 +87,10 @@ func init() {
 	flags := upCmd.Flags()
 	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
 	rmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
-	listCmd.Flags().BoolP("quiet", "q", false, "return only stack id to be use with grep")
+	listQuiet = listCmd.Flags().BoolP("quiet", "q", false, "Only display numeric IDs")
+	listAll = listCmd.Flags().BoolP("all", "a", false, "Show all stacks (default shows just running)")
+	listLast = listCmd.Flags().Int64P("last", "n", 0, "Show n last created stacks (includes all states)")
+	listLatest = listCmd.Flags().BoolP("latest", "l", false, "Show the latest created stack (includes all states)")
 	StackCmd.AddCommand(upCmd)
 	StackCmd.AddCommand(startCmd)
 	StackCmd.AddCommand(stopCmd)
@@ -204,7 +211,14 @@ func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 }
 
 func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
-	request := &stack.ListRequest{}
+	var limit = *listLast
+	if *listLatest {
+		limit = 1
+	}
+	request := &stack.ListRequest{
+		All:   *listAll,
+		Limit: limit,
+	}
 	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.List(context.Background(), request)
 	if err != nil {
@@ -215,7 +229,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	//Manage -q
-	if cmd.Flag("quiet").Value.String() == "true" {
+	if *listQuiet {
 		for _, info := range reply.List {
 			fmt.Println(info.Id)
 		}
