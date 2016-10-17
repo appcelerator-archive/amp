@@ -10,14 +10,22 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type stackSpec struct {
+	Services map[string]serviceSpec `yaml:"services"`
+	Networks map[string]networkSpec `yaml:"networks"`
+}
+
 type serviceSpec struct {
-	Image           string        `yaml:"image"`
-	Public          []publishSpec `yaml:"public"`
-	Mode            string        `yaml:"mode"`
-	Replicas        uint64        `yaml:"replicas"`
-	Environment     interface{}   `yaml:"environment"`
-	Labels          interface{}   `yaml:"labels"`
-	ContainerLabels interface{}   `yaml:"container_labels"`
+	Image           string                    `yaml:"image"`
+	Public          []publishSpec             `yaml:"public"`
+	Mode            string                    `yaml:"mode"`
+	Replicas        uint64                    `yaml:"replicas"`
+	Args            interface{}               `yaml:"args"`
+	Environment     interface{}               `yaml:"environment"`
+	Labels          interface{}               `yaml:"labels"`
+	ContainerLabels interface{}               `yaml:"container_labels"`
+	Networks        map[string]networkAliases `yaml:"networks"`
+	Mounts          []string                  `yaml:"volumes"`
 }
 
 type publishSpec struct {
@@ -27,15 +35,114 @@ type publishSpec struct {
 	InternalPort uint32 `yaml:"internal_port"`
 }
 
-// ParseStackfile create a new stack from yaml
-func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
-	stack = &Stack{}
+type networkAliases struct {
+	Aliases []string `yaml:"aliases"`
+}
+
+type networkSpec struct {
+	Driver     string            `yaml:"driver"`
+	EnableIPv6 bool              `yaml:"enable_ipv6"`
+	IPAM       *networkIPAM      `yaml:"ipam"`
+	Internal   bool              `yaml:"internal"`
+	Options    map[string]string `yaml:"driver_opts"`
+	Labels     map[string]string `yaml:"labels"`
+}
+
+// IPAM represents IP Address Management
+type networkIPAM struct {
+	Driver  string            `yaml:"driver"`
+	Options map[string]string `yaml:"options"`
+	Config  []ipamConfig      `yaml:"config"`
+}
+
+// IPAMConfig represents IPAM configurations
+type ipamConfig struct {
+	Subnet     string            `yaml:"subnet"`
+	IPRange    string            `yaml:"ip_range"`
+	Gateway    string            `yaml:"gateway"`
+	AuxAddress map[string]string `yaml:"aux_address"`
+}
+
+func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
+	var stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
-	serviceMap, err := parseServiceMap([]byte(in))
+	specs, err := parseStack([]byte(in))
 	if err != nil {
-		return
+		return nil, err
 	}
-	for name, spec := range serviceMap {
+	fmt.Printf("parsedStack %+v\n", specs)
+	copyNetworks(stack, specs.Networks)
+	if err := copyServices(stack, specs.Services); err != nil {
+		return nil, err
+	}
+	fmt.Printf("Stack %+v\n", stack)
+	return stack, err
+}
+
+func parseStack(b []byte) (*stackSpec, error) {
+	var specs stackSpec
+	if err := yaml.Unmarshal(b, &specs); err != nil {
+		return nil, err
+	}
+	return &specs, nil
+}
+
+func copyNetworks(stack *Stack, specs map[string]networkSpec) {
+	for name, spec := range specs {
+		stack.Networks = append(stack.Networks, &NetworkSpec{
+			Name:       name,
+			Driver:     spec.Driver,
+			EnableIpv6: spec.EnableIPv6,
+			Ipam:       copyIPAM(spec.IPAM),
+			Internal:   spec.Internal,
+			Options:    spec.Options,
+			Labels:     spec.Labels,
+		})
+	}
+
+}
+
+func copyIPAM(ipam *networkIPAM) *NetworkIPAM {
+	if ipam == nil {
+		return nil
+	}
+	return &NetworkIPAM{
+		Driver:  ipam.Driver,
+		Options: ipam.Options,
+		Config:  copyIPAMConfig(ipam.Config),
+	}
+}
+
+func copyIPAMConfig(config []ipamConfig) []*NetworkIPAMConfig {
+	configList := []*NetworkIPAMConfig{}
+	if config != nil {
+		for _, conf := range config {
+			configList = append(configList, &NetworkIPAMConfig{
+				Subnet:     conf.Subnet,
+				IpRange:    conf.IPRange,
+				Gateway:    conf.Gateway,
+				AuxAddress: conf.AuxAddress,
+			})
+		}
+	}
+	return configList
+}
+
+func copyServices(stack *Stack, specs map[string]serviceSpec) error {
+	for name, spec := range specs {
+		// try to parse arguments entries as a map
+		// else try to parse environment as string entries
+		args := []string{}
+		if argMap, ok := spec.Args.(map[interface{}]interface{}); ok {
+			for k, v := range argMap {
+				args = append(args, k.(string)+"="+v.(string))
+			}
+		} else if argList, ok := spec.Args.([]interface{}); ok {
+			for _, e := range argList {
+				args = append(args, e.(string))
+			}
+		}
+
 		// try to parse environment entries as a map
 		// else try to parse environment as string entries
 		env := []string{}
@@ -48,10 +155,9 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 				env = append(env, e.(string))
 			}
 		}
-
 		// try to parse labels as a map
 		// else try to parse labels as string entries
-		labels := map[string]string{}
+		var labels = map[string]string{}
 		if labelMap, ok := spec.Labels.(map[interface{}]interface{}); ok {
 			for k, v := range labelMap {
 				labels[k.(string)] = v.(string)
@@ -59,12 +165,9 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 		} else if labelList, ok := spec.Labels.([]interface{}); ok {
 			for _, s := range labelList {
 				a := strings.Split(s.(string), "=")
-				k := a[0]
-				v := a[1]
-				labels[k] = v
+				labels[a[0]] = a[1]
 			}
 		}
-
 		// try to parse container labels as a map
 		// else try to parse container labels as string entries
 		containerLabels := map[string]string{}
@@ -75,12 +178,9 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 		} else if labelList, ok := spec.ContainerLabels.([]interface{}); ok {
 			for _, s := range labelList {
 				a := strings.Split(s.(string), "=")
-				k := a[0]
-				v := a[1]
-				containerLabels[k] = v
+				containerLabels[a[0]] = a[1]
 			}
 		}
-
 		publishSpecs := []*service.PublishSpec{}
 		for _, p := range spec.Public {
 			publishSpecs = append(publishSpecs, &service.PublishSpec{
@@ -90,7 +190,6 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 				InternalPort: p.InternalPort,
 			})
 		}
-
 		// add service mode and replicas to spec
 		var swarmMode service.SwarmMode
 		replicas := spec.Replicas
@@ -113,15 +212,24 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 		case "global":
 			if replicas != 0 {
 				// global mode can't specify replicas (only allowed 1 per node)
-				err = fmt.Errorf("replicas can only be used with replicated mode")
-				return
+				return fmt.Errorf("replicas can only be used with replicated mode")
 			}
 			swarmMode = &service.ServiceSpec_Global{
 				Global: &service.GlobalService{},
 			}
 		default:
-			err = fmt.Errorf("invalid option for mode: %s", mode)
-			return
+			return fmt.Errorf("invalid option for mode: %s", mode)
+		}
+
+		// add custom network connection
+		networkAttachment := []*service.NetworkAttachment{}
+		if spec.Networks != nil {
+			for name, data := range spec.Networks {
+				networkAttachment = append(networkAttachment, &service.NetworkAttachment{
+					Target:  name,
+					Aliases: data.Aliases,
+				})
+			}
 		}
 
 		stack.Services = append(stack.Services, &service.ServiceSpec{
@@ -130,14 +238,11 @@ func ParseStackfile(ctx context.Context, in string) (stack *Stack, err error) {
 			PublishSpecs:    publishSpecs,
 			Mode:            swarmMode,
 			Env:             env,
+			Args:            args,
 			Labels:          labels,
 			ContainerLabels: containerLabels,
+			Networks:        networkAttachment,
 		})
 	}
-	return
-}
-
-func parseServiceMap(b []byte) (out map[string]serviceSpec, err error) {
-	err = yaml.Unmarshal(b, &out)
-	return
+	return nil
 }

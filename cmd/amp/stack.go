@@ -224,15 +224,15 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if reply == nil || len(reply.List) == 0 {
-		fmt.Println("No stack is available")
-		return nil
-	}
 	//Manage -q
 	if *listQuiet {
 		for _, info := range reply.List {
 			fmt.Println(info.Id)
 		}
+		return nil
+	}
+	if reply == nil || len(reply.List) == 0 {
+		fmt.Println("No stack is available")
 		return nil
 	}
 	//Format output

@@ -1,14 +1,22 @@
-web:
-  image: appcelerator/amp-demo-service
-  public:
-  - name: www
-    protocol: tcp
-    publish_port: 90
-    internal_port: 3000
-  replicas: 3
-  environment:
-    REDIS_PASSWORD: password
-redis:
-  image: redis
-  environment:
-  - PASSWORD=password
+services:
+  web:
+    image: appcelerator/amp-demo-service
+    public:
+    - name: www
+      protocol: tcp
+      publish_port: 90
+      internal_port: 3000
+    replicas: 3
+    environment:
+      REDIS_PASSWORD: password
+  redis:
+    image: redis
+    environment:
+    - PASSWORD=password
+    networks:
+      app-net:
+        aliases:
+         - stack1-redis
+networks:
+  app-net:
+     driver: overlay

@@ -36,24 +36,25 @@ pingerExt2:
       publish_port: 3001
       internal_port: 3000`
 	example2 = `
-pinger:
-  image: appcelerator/pinger
-  replicas: 2
-pingerExt1:
-  image: appcelerator/pinger
-  replicas: 2
-  public:
-    - name: www1
-      protocol: tcp
-      internal_port: 3000
-pingerExt2:
-  image: appcelerator/pinger
-  replicas: 2
-  public:
-    - name: www2
-      protocol: tcp
-      publish_port: 3002
-      internal_port: 3000`
+services:
+  pinger:
+    image: appcelerator/pinger
+    replicas: 2
+  pingerExt1:
+    image: appcelerator/pinger
+    replicas: 2
+    public:
+      - name: www1
+        protocol: tcp
+        internal_port: 3000
+  pingerExt2:
+    image: appcelerator/pinger
+    replicas: 2
+    public:
+      - name: www2
+        protocol: tcp
+        publish_port: 3002
+        internal_port: 3000`
 )
 
 var (

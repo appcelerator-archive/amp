@@ -1,8 +1,9 @@
-pinger:
-  image: appcelerator/pinger
-  replicas: 2
-  public:
-    - name: www
-      publish_port: 90
-      internal_port: 3000
-      protocol: tcp
+services:
+  pinger:
+    image: appcelerator/pinger
+    replicas: 2
+    public:
+      - name: www
+        publish_port: 90
+        internal_port: 3000
+        protocol: tcp

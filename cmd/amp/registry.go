@@ -3,11 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
-	"net/http"
-	"io/ioutil"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ var RegCmd = &cobra.Command{
 }
 
 var (
-	domain = "local.appcelerator.io"
+	domain  = "local.appcelerator.io"
 	pushCmd = &cobra.Command{
 		Use:   "push [image]",
 		Short: "Push an image to the amp registry",
@@ -43,10 +43,8 @@ var (
 				fmt.Println(err)
 			}
 		},
-	}	
+	}
 )
-
-
 
 func init() {
 	RootCmd.AddCommand(RegCmd)
@@ -75,10 +73,10 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	taggedImage := image
 	if !strings.HasPrefix(image, "registry."+domain) {
 		nn := strings.Index(image, "/")
-		if (nn < 0) {
+		if nn < 0 {
 			return fmt.Errorf("Invalid image name %s", image)
 		}
-		taggedImage = "registry."+domain+"/"+image[nn+1:]
+		taggedImage = "registry." + domain + "/" + image[nn+1:]
 		fmt.Printf("Tag image from %s to %s\n", image, taggedImage)
 		cmdexe := exec.Command("docker", "tag", image, taggedImage)
 		cmdexe.Stdout = os.Stdout
@@ -105,7 +103,7 @@ func RegistryLs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get("http://registry."+domain+"/v2/_catalog")
+	resp, err := http.Get("http://registry." + domain + "/v2/_catalog")
 	if err != nil {
 		return err
 	}

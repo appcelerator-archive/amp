@@ -6,14 +6,16 @@ message ServiceSpec {
   string image = 1;
   string name = 2;
   oneof mode {
-      ReplicatedService replicated = 3;
-      GlobalService global = 4;
+    ReplicatedService replicated = 3;
+    GlobalService global = 4;
   }
   repeated string env = 5;
   repeated NetworkAttachment networks= 6;
   map<string, string> labels = 7;
   map<string, string> container_labels = 8;
   repeated PublishSpec publish_specs = 9;
+  repeated string args = 10;
+  repeated string mounts = 11;
 
 }
 

@@ -4,11 +4,11 @@ import (
 	"os"
 	"strings"
 
+	"context"
+	"github.com/appcelerator/amp/api/rpc/logs"
 	"google.golang.org/grpc"
 	"log"
 	"time"
-	"github.com/appcelerator/amp/api/rpc/logs"
-	"context"
 )
 
 const (
@@ -97,10 +97,10 @@ func StartTestServer() (Config, *grpc.ClientConn) {
 	// Use the connection to amplifier
 	logsClient := logs.NewLogsClient(conn)
 	for i := 0; i < 60; i++ {
-		_, err :=logsClient.Get(context.Background(), &logs.GetRequest{})
+		_, err := logsClient.Get(context.Background(), &logs.GetRequest{})
 		if err != nil {
 			log.Println("Connection to amplifier not ready yet: ", err)
-			time.Sleep(100 *time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		break
