@@ -1,0 +1,9 @@
+remove-service:
+  cmd: amp service rm
+  args:
+    - pinger
+  options:
+list-service:
+  cmd: docker service ls
+  args:
+  options:

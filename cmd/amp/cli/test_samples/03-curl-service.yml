@@ -1,0 +1,5 @@
+curl-service:
+  cmd: curl
+  args:
+    - localhost:90/ping
+  options:

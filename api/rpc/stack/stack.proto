@@ -40,7 +40,9 @@ message StackReply {
 }
 
 // struct for list request function
-message ListRequest {  
+message ListRequest {
+  bool all = 1;
+  int64 limit = 2;
 }
 
 // struct for list reply function
