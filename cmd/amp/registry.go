@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Registry is the main command for attaching registry subcommands.
+// RegCmd is the main command for attaching registry subcommands.
 var RegCmd = &cobra.Command{
 	Use:   "registry operations",
 	Short: "Registry operations",
@@ -29,7 +30,10 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			err := RegistryPush(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Could not push image")
 			}
 		},
 	}
@@ -40,7 +44,10 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			err := RegistryLs(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Could not list images")
 			}
 		},
 	}
@@ -97,7 +104,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return err
 }
 
-// RegistryPush displays resource usage statistics: localhost:5000/v2/_catalog
+// RegistryLs lists images
 func RegistryLs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {

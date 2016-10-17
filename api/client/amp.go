@@ -2,16 +2,54 @@ package client
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
-	"log"
 )
 
 const (
 	//DefaultServerAddress amplifier address + port default
 	DefaultServerAddress = "localhost:50101"
 )
+
+var (
+	verbose = false
+)
+
+func init() {
+	grpclog.SetLogger(logger{})
+}
+
+type logger struct{}
+
+func (l logger) Fatal(args ...interface{}) {
+	log.Fatal(args...)
+}
+func (l logger) Fatalf(format string, args ...interface{}) {
+	log.Fatalf(format, args...)
+}
+func (l logger) Fatalln(args ...interface{}) {
+	log.Fatalln(args...)
+}
+func (l logger) Print(args ...interface{}) {
+	if verbose {
+		log.Print(args...)
+	}
+}
+func (l logger) Printf(format string, args ...interface{}) {
+	if verbose {
+		log.Printf(format, args...)
+	}
+}
+func (l logger) Println(args ...interface{}) {
+	if verbose {
+		log.Println(args...)
+	}
+}
 
 // Configuration is for all configurable client settings
 type Configuration struct {
@@ -32,9 +70,15 @@ type AMP struct {
 
 // Connect to amplifier
 func (a *AMP) Connect() *grpc.ClientConn {
-	conn, err := grpc.Dial(a.Configuration.ServerAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(a.Configuration.ServerAddress,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(time.Second))
 	if err != nil {
-		log.Panic(err)
+		if a.Verbose() {
+			log.Println(err)
+		}
+		log.Fatal("Failed to connect to server")
 	}
 	a.Conn = conn
 	return conn
@@ -42,6 +86,9 @@ func (a *AMP) Connect() *grpc.ClientConn {
 
 // Disconnect from amplifier
 func (a *AMP) Disconnect() {
+	if a.Conn == nil {
+		return
+	}
 	err := a.Conn.Close()
 	if err != nil {
 		log.Panic(err)
@@ -67,6 +114,7 @@ func (a *AMP) Verbose() bool {
 
 // NewAMP creates a new AMP instance
 func NewAMP(c *Configuration) *AMP {
+	verbose = c.Verbose
 	return &AMP{Configuration: c}
 }
 

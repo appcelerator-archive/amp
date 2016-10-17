@@ -77,35 +77,6 @@ var service6 = service.ServiceSpec{
 	},
 }
 
-var service7 = service.ServiceSpec{
-	Image: "appcelerator/pinger",
-	Args: []string{
-		"arg1=value1",
-		"arg2=value2",
-	},
-}
-
-var service8 = service.ServiceSpec{
-	Image: "appcelerator/pinger",
-	Mounts: []string{
-		"/tmp",
-	},
-}
-
-var service9 = service.ServiceSpec{
-	Image: "appcelerator/pinger",
-	Mounts: []string{
-		"/tmp:/tmp2",
-	},
-}
-
-var service10 = service.ServiceSpec{
-	Image: "appcelerator/pinger",
-	Mounts: []string{
-		"essai:/tmp2",
-	},
-}
-
 var serviceList = []*service.ServiceSpec{
 	&service1,
 	&service2,

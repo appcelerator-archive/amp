@@ -42,7 +42,6 @@ func main() {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
 		AMP = client.NewAMP(&Config)
-		AMP.Connect()
 		cli.AtExit(func() {
 			if AMP != nil {
 				AMP.Disconnect()
