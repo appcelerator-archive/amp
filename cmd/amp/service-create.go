@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/appcelerator/amp/api/client"
@@ -16,9 +17,13 @@ var (
 		Short: "Create a new service",
 		Long:  `Create a new service`,
 		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
 			err := create(AMP, cmd, args)
 			if err != nil {
-				fmt.Println(err)
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to create service")
 			}
 		},
 	}
@@ -68,7 +73,7 @@ func init() {
 func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		return fmt.Errorf("\"amp service create\" requires at least 1 argument(s)")
+		log.Fatal("\"amp service create\" requires at least 1 argument(s)")
 	}
 
 	image = args[0]
@@ -97,13 +102,13 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	case "global":
 		if replicas != 0 {
 			// global mode can't specify replicas (only allowed 1 per node)
-			return fmt.Errorf("replicas can only be used with replicated mode")
+			log.Fatal("replicas can only be used with replicated mode")
 		}
 		swarmMode = &service.ServiceSpec_Global{
 			Global: &service.GlobalService{},
 		}
 	default:
-		return fmt.Errorf("invalid option for mode: %s", mode)
+		log.Fatalf("invalid option for mode: %s", mode)
 	}
 
 	spec := &service.ServiceSpec{
@@ -127,7 +132,7 @@ func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(reply)
+	fmt.Println(reply.Id)
 	return nil
 }
 
