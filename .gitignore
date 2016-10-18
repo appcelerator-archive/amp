@@ -1,4 +1,4 @@
 /amp
 /amplifier
-.glide/
-*.iml
+/amp-agent
+/amp-log-worker
