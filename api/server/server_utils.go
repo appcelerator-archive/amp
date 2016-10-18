@@ -4,8 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"context"
-	"github.com/appcelerator/amp/api/rpc/logs"
 	"google.golang.org/grpc"
 	"log"
 	"time"
