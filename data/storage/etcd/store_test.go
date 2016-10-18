@@ -239,8 +239,8 @@ func TestCompareAndSet(t *testing.T) {
 	defer cancel()
 
 	key := "state"
-	expect := &state.State{Value: 0}
-	update := &state.State{Value: 42}
+	expect := &state.State{Value: "hello"}
+	update := &state.State{Value: "world"}
 
 	store.Delete(ctx, key, false, &state.State{})
 	store.Create(ctx, key, expect, nil, 0)
@@ -261,8 +261,8 @@ func TestWatch(t *testing.T) {
 	defer cancel()
 
 	key := "watch"
-	expect := &state.State{Value: 0}
-	update := &state.State{Value: 42}
+	expect := &state.State{Value: "hello"}
+	update := &state.State{Value: "world"}
 
 	watch, err := store.Watch(ctx, key, 0, storage.Everything)
 	if err != nil {

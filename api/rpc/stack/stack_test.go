@@ -162,20 +162,20 @@ func TestTransitionsFromStopped(t *testing.T) {
 	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
 
 	id := stringid.GenerateNonCryptoID()
-	machine.CreateState(id, int32(stack.StackState_Stopped))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.CreateState(id, stack.StackState_Stopped.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Stopped.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Stopped))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.CreateState(id, stack.StackState_Stopped.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Starting.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Stopped))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.CreateState(id, stack.StackState_Stopped.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Running.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Stopped))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.CreateState(id, stack.StackState_Stopped.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Redeploying.String()))
 	machine.DeleteState(id)
 }
 
@@ -183,20 +183,20 @@ func TestTransitionsFromStarting(t *testing.T) {
 	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
 	id := stringid.GenerateNonCryptoID()
 
-	machine.CreateState(id, int32(stack.StackState_Starting))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.CreateState(id, stack.StackState_Starting.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Stopped.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Starting))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.CreateState(id, stack.StackState_Starting.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Starting.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Starting))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.CreateState(id, stack.StackState_Starting.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Running.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Starting))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.CreateState(id, stack.StackState_Starting.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Redeploying.String()))
 	machine.DeleteState(id)
 }
 
@@ -204,20 +204,20 @@ func TestTransitionsFromRunning(t *testing.T) {
 	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
 	id := stringid.GenerateNonCryptoID()
 
-	machine.CreateState(id, int32(stack.StackState_Running))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.CreateState(id, stack.StackState_Running.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Stopped.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Running))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.CreateState(id, stack.StackState_Running.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Starting.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Running))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.CreateState(id, stack.StackState_Running.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Running.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Running))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.CreateState(id, stack.StackState_Running.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Redeploying.String()))
 	machine.DeleteState(id)
 }
 
@@ -225,19 +225,19 @@ func TestTransitionsFromRedeploying(t *testing.T) {
 	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
 	id := stringid.GenerateNonCryptoID()
 
-	machine.CreateState(id, int32(stack.StackState_Redeploying))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Stopped)))
+	machine.CreateState(id, stack.StackState_Redeploying.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Stopped.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Redeploying))
-	assert.NoError(t, machine.TransitionTo(id, int32(stack.StackState_Starting)))
+	machine.CreateState(id, stack.StackState_Redeploying.String())
+	assert.NoError(t, machine.TransitionTo(id, stack.StackState_Starting.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Redeploying))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Running)))
+	machine.CreateState(id, stack.StackState_Redeploying.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Running.String()))
 	machine.DeleteState(id)
 
-	machine.CreateState(id, int32(stack.StackState_Redeploying))
-	assert.Error(t, machine.TransitionTo(id, int32(stack.StackState_Redeploying)))
+	machine.CreateState(id, stack.StackState_Redeploying.String())
+	assert.Error(t, machine.TransitionTo(id, stack.StackState_Redeploying.String()))
 	machine.DeleteState(id)
 }

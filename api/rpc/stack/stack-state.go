@@ -7,11 +7,30 @@ import (
 
 // StackRuleSet defines possible transitions for stack states
 var StackRuleSet = state.RuleSet{
-	//   | Stopped   | Starting  | Running   | Redeploying
-	[]bool{false /**/, true /* */, false /**/, true /* */}, // Stopped (initial state)
-	[]bool{false /**/, false /**/, true /* */, false /**/}, // Starting
-	[]bool{true /* */, false /**/, false /**/, true /* */}, // Running
-	[]bool{true /* */, true /* */, false /**/, false /**/}, // Redeploying
+	StackState_Stopped.String(): {
+		StackState_Stopped.String():     false,
+		StackState_Starting.String():    true,
+		StackState_Running.String():     false,
+		StackState_Redeploying.String(): true,
+	},
+	StackState_Starting.String(): {
+		StackState_Stopped.String():     false,
+		StackState_Starting.String():    false,
+		StackState_Running.String():     true,
+		StackState_Redeploying.String(): false,
+	},
+	StackState_Running.String(): {
+		StackState_Stopped.String():     true,
+		StackState_Starting.String():    false,
+		StackState_Running.String():     false,
+		StackState_Redeploying.String(): true,
+	},
+	StackState_Redeploying.String(): {
+		StackState_Stopped.String():     true,
+		StackState_Starting.String():    true,
+		StackState_Running.String():     false,
+		StackState_Redeploying.String(): false,
+	},
 }
 
 var stackStateMachine = state.NewMachine(StackRuleSet, runtime.Store)

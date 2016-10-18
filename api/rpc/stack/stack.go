@@ -377,7 +377,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 	if stack.Services == nil || len(stack.Services) == 0 {
 		return nil, fmt.Errorf("No services found for the stack %s \n", in.StackIdent)
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Starting)); err != nil {
+	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Starting.String()); err != nil {
 		return nil, err
 	}
 	fmt.Printf("Starting stack %s\n", in.StackIdent)
@@ -417,7 +417,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 			return nil, createErr
 		}
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Running)); err != nil {
+	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Running.String()); err != nil {
 		return nil, err
 	}
 	reply := StackReply{
@@ -433,7 +433,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	if errIdent != nil {
 		return nil, errIdent
 	}
-	if running, err := stackStateMachine.Is(stack.Id, int32(StackState_Running)); err != nil {
+	if running, err := stackStateMachine.Is(stack.Id, StackState_Running.String()); err != nil {
 		return nil, err
 	} else if !running {
 		return nil, errors.New("Stack is not running")
@@ -448,7 +448,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	if err := s.removeCustomNetworks(ctx, stack, false); err != nil {
 		fmt.Printf("catch error during remove custom networks: %v", err)
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, int32(StackState_Stopped)); err != nil {
+	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Stopped.String()); err != nil {
 		fmt.Printf("catch error during stack state transition: %v", err)
 	}
 	reply := StackReply{
@@ -583,7 +583,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 		return nil, errIdent
 	}
 	if !in.Force {
-		if stopped, err := stackStateMachine.Is(stack.Id, int32(StackState_Stopped)); err != nil {
+		if stopped, err := stackStateMachine.Is(stack.Id, StackState_Stopped.String()); err != nil {
 			return nil, err
 		} else if !stopped {
 			return nil, errors.New("The stack is not stopped")
@@ -640,19 +640,9 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 		info.Name = stack.Name
 		info.Id = stack.Id
 	}
-	state, errGet := stackStateMachine.GetState(stack.Id)
-	info.State = "nc"
-	if errGet == nil {
-		switch state {
-		case 0:
-			info.State = "Stopped"
-		case 1:
-			info.State = "Starting"
-		case 2:
-			info.State = "Running"
-		case 3:
-			info.State = "Redeploying"
-		}
+	info.State, err = stackStateMachine.GetState(stack.Id)
+	if err != nil {
+		info.State = "N/A"
 	}
 	return &info
 }
@@ -665,7 +655,7 @@ func newStackFromYaml(ctx context.Context, config string) (stack *Stack, err err
 	}
 
 	// Create stack state
-	if err = stackStateMachine.CreateState(stack.Id, int32(StackState_Stopped)); err != nil {
+	if err = stackStateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
 		return
 	}
 
