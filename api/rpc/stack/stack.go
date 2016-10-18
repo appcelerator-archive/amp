@@ -52,11 +52,6 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	stackID := StackID{Id: stack.Id}
 	s.Store.Create(ctx, path.Join(stackRootNameKey, stack.Name), &stackID, nil, 0)
 
-	//create custom networks
-	if err := s.createCustomNetworks(ctx, stack); err != nil {
-		return nil, err
-	}
-
 	//start the stack
 	startRequest := StackRequest{
 		StackIdent: stack.Id,
@@ -335,9 +330,12 @@ func (s *Server) createCustomNetworks(ctx context.Context, stack *Stack) error {
 		return nil
 	}
 	for _, network := range stack.Networks {
-		if err := s.createCustomNetwork(ctx, network); err != nil {
-			s.removeCustomNetworks(ctx, stack, true)
-			return err
+		fmt.Printf("external: <%s>\n", network.External)
+		if network.External == "false" {
+			if err := s.createCustomNetwork(ctx, network); err != nil {
+				s.removeCustomNetworks(ctx, stack, true)
+				return err
+			}
 		}
 	}
 	return nil
@@ -348,13 +346,17 @@ func (s *Server) createCustomNetworks(ctx context.Context, stack *Stack) error {
 func (s *Server) createCustomNetwork(ctx context.Context, data *NetworkSpec) error {
 	customNetwork := &CustomNetwork{}
 	s.Store.Get(ctx, path.Join(networksRootKey, data.Name), customNetwork, true)
+	fmt.Printf("create custom network: %s (%s)\n", data.Name, customNetwork.Id)
+	fmt.Printf("Owner number: %d\n", customNetwork.OwnerNumber)
 	if customNetwork.Id != "" {
 		customNetwork.OwnerNumber++
 		if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
 			return err
 		}
+		fmt.Println("updated")
 		return nil
 	}
+	fmt.Println("initial create owner number=1")
 	id, err := s.createNetwork(ctx, data)
 	if err != nil {
 		return err
@@ -381,11 +383,13 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 		return nil, err
 	}
 	fmt.Printf("Starting stack %s\n", in.StackIdent)
+	if err := s.createCustomNetworks(ctx, stack); err != nil {
+		return nil, err
+	}
 	err := s.createStackNetworks(ctx, stack)
 	if err != nil {
 		return nil, err
 	}
-
 	serviceIDList := []string{}
 	if stack.IsPublic {
 		serviceID, err := s.addHAProxyService(ctx, stack)
@@ -471,26 +475,33 @@ func (s *Server) removeStackNetworks(ctx context.Context, ID string, force bool)
 	return s.removeStackNetworksFromList(ctx, networkList.List)
 }
 
-func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []string) error {
-	var removeErr error
-	for _, key := range networkList {
-
-		err := s.Docker.NetworkRemove(ctx, key)
-		if err != nil {
-			removeErr = err
-		}
-		fmt.Printf("Removing network: %s\n", key)
+func (s *Server) removeNetwork(ctx context.Context, id string) error {
+	err := s.Docker.NetworkRemove(ctx, id)
+	if err != nil {
+		return err
+	} else {
 		var existErr error
 		nn := 0
-		//allowing 1min to remove network
+		//allowing 1 min to remove network
 		for existErr == nil && nn < 20 {
-			_, existErr = s.Docker.NetworkInspect(ctx, key)
+			_, existErr = s.Docker.NetworkInspect(ctx, id)
 			time.Sleep(3 * time.Second)
 			nn++
 		}
 		if existErr != nil {
-			fmt.Printf("network removed: %s\n", key)
+			fmt.Printf("network removed: %s\n", id)
 		} else {
+			return fmt.Errorf("network remove timeout: %s\n", id)
+		}
+	}
+	return err
+}
+
+func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []string) error {
+	var removeErr error
+	for _, key := range networkList {
+		err := s.removeNetwork(ctx, key)
+		if err != nil {
 			removeErr = fmt.Errorf("network remove timeout: %s\n", key)
 		}
 	}
@@ -501,45 +512,39 @@ func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []
 }
 
 func (s *Server) removeCustomNetworks(ctx context.Context, stack *Stack, force bool) error {
+	fmt.Printf("removeCustomNetwork stack.network: %v\n", stack.Networks)
 	if stack.Networks == nil {
 		return nil
 	}
 	var removeErr error
 	customNetwork := &CustomNetwork{}
+	fmt.Printf("stack.network: %+v\n", stack.Networks)
 	for _, data := range stack.Networks {
 		s.Store.Get(ctx, path.Join(networksRootKey, data.Name), customNetwork, true)
-		if customNetwork.Id != "" {
-			customNetwork.OwnerNumber--
-			if customNetwork.OwnerNumber == 0 {
-				err := s.Docker.NetworkRemove(ctx, data.Name)
+		if data.External == "false" {
+			fmt.Printf("deleting custom network: %s (%d)\n", data.Name, customNetwork.OwnerNumber)
+			if customNetwork.Id != "" {
+				customNetwork.OwnerNumber--
+				if customNetwork.OwnerNumber == 0 {
+					fmt.Println("remove eff owner=0")
+					err := s.Docker.NetworkRemove(ctx, data.Name)
+					if err != nil {
+						removeErr = err
+					}
+					s.Store.Delete(ctx, path.Join(networksRootKey, data.Name), false, nil)
+					fmt.Printf("Remove custom network %s\n", data.Name)
+				} else {
+					fmt.Println("update network record")
+					if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
+						removeErr = err
+					}
+					fmt.Printf("Decr. custom network %s owner number to %d\n", data.Name, customNetwork.OwnerNumber)
+				}
+			} else {
+				err := s.removeNetwork(ctx, data.Name)
 				if err != nil {
 					removeErr = err
 				}
-				s.Store.Delete(ctx, path.Join(networksRootKey, data.Name), false, nil)
-				fmt.Printf("Remove custom network %s\n", data.Name)
-			} else {
-				if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
-					removeErr = err
-				}
-				fmt.Printf("Decr. custom network %s owner number to %d\n", data.Name, customNetwork.OwnerNumber)
-			}
-		} else {
-			err := s.Docker.NetworkRemove(ctx, data.Name)
-			if err != nil {
-				removeErr = err
-			}
-			fmt.Printf("Removing curstom network: %s\n", data.Name)
-			var existErr error
-			nn := 0
-			for existErr == nil && nn < 20 {
-				_, existErr = s.Docker.NetworkInspect(ctx, data.Name)
-				time.Sleep(3 * time.Second)
-				nn++
-			}
-			if existErr != nil {
-				fmt.Printf("network removed: %s\n", data.Name)
-			} else {
-				removeErr = fmt.Errorf("network remove timeout: %s\n", data.Name)
 			}
 		}
 	}
@@ -589,10 +594,12 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 			return nil, errors.New("The stack is not stopped")
 		}
 	} else {
-		fmt.Printf("Removing services stack %s\n", in.StackIdent)
-		s.stopStackServices(ctx, stack.Id, true)
-		fmt.Printf("Removing networks stack %s\n", in.StackIdent)
-		s.removeStackNetworks(ctx, stack.Id, true)
+		_, err := s.Stop(ctx, &StackRequest{
+			StackIdent: in.StackIdent,
+		})
+		if err != nil {
+			fmt.Printf("Catch error stoopping stack: %v", err)
+		}
 	}
 	fmt.Printf("Removing stack %s\n", in.StackIdent)
 	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)

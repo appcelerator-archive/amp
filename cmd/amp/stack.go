@@ -30,7 +30,7 @@ var (
 				if AMP.Verbose() {
 					log.Println(err)
 				}
-				log.Fatal("Failed to create and deploy stack")
+				log.Fatal("Failed to create and deploy stack: ", err)
 			}
 		},
 	}
@@ -47,7 +47,7 @@ var (
 				if AMP.Verbose() {
 					log.Println(err)
 				}
-				log.Fatal("Failed to start stack")
+				log.Fatal("Failed to start stack: ", err)
 			}
 		},
 	}
@@ -62,7 +62,7 @@ var (
 				if AMP.Verbose() {
 					log.Println(err)
 				}
-				log.Fatal("Failed to stop stack")
+				log.Fatal("Failed to stop stack: ", err)
 			}
 		},
 	}
@@ -77,7 +77,7 @@ var (
 				if AMP.Verbose() {
 					log.Println(err)
 				}
-				log.Fatal("Failed to remove stack")
+				log.Fatal("Failed to remove stack: ", err)
 			}
 		},
 	}
@@ -92,7 +92,7 @@ var (
 				if AMP.Verbose() {
 					log.Println(err)
 				}
-				log.Fatal("Failed to list stacks")
+				log.Fatal("Failed to list stacks: ", err)
 			}
 		},
 	}

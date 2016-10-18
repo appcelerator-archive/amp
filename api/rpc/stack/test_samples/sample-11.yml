@@ -3,21 +3,17 @@ services:
     image: appcelerator/pinger
     replicas: 1
     networks:
-      app_net:
+      net-test11:
         aliases:
           - test2-pinger
 networks:
-  net_test:
-    driver: bridge
-    driver_opts:
-      com.docker.network.enable_ipv6: "true"
+  net-test11:
+    driver: overlay
     ipam:
       driver: default
       config:
-      - subnet: 172.16.238.0/24
-        gateway: 172.16.238.1
-      - subnet: 2001:3984:3989::/64
-        gateway: 2001:3984:3989::1
+      - subnet: 10.16.238.0/24
+        gateway: 10.16.238.1
 
 
 
