@@ -1,6 +1,4 @@
 *.pb.go
-vendor
-.glide
 Dockerfile
 Dockerfile.*
 docker-compose.*.yml
