@@ -1,5 +1,5 @@
 
-.PHONY: all clean build build-cli build-server install install-server install-cli fmt simplify check version build-image run
+.PHONY: all clean build build-cli build-server build-agent build-log-worker install install-server install-cli install-agent install-log-worker fmt simplify check version build-image run
 .PHONY: test
 
 SHELL := /bin/bash
@@ -35,6 +35,8 @@ REPO := github.com/$(OWNER)/amp
 CMDDIR := cmd
 CLI := amp
 SERVER := amplifier
+AGENT := amp-agent
+LOGWORKER := amp-log-worker
 
 TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -76,7 +78,7 @@ install-deps:
 update-deps:
 	@$(GLIDE_UPDATE)
 
-install: install-cli install-server
+install: install-cli install-server install-agent install-log-worker
 
 install-cli: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
@@ -84,13 +86,25 @@ install-cli: proto
 install-server: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 
-build: build-cli build-server
+install-agent: proto
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
+
+install-log-worker: proto
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
+
+build: build-cli build-server build-agent build-log-worker
 
 build-cli: proto
 	@hack/build $(CLI)
 
 build-server: proto
 	@hack/build $(SERVER)
+
+build-agent: proto
+	@hack/build $(AGENT)
+
+build-log-worker: proto
+	@hack/build $(LOGWORKER)
 
 build-server-image:
 	@docker build -t appcelerator/$(SERVER):$(TAG) .
@@ -102,6 +116,8 @@ proto: $(PROTOFILES)
 install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
 
 # used to run protoc when you're already inside a container
 proto-host: $(PROTOFILES)

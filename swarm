@@ -14,12 +14,11 @@ ETCD_VERSION=3.0
 NATS_VERSION=latest
 HAPROXY_VERSION=1.0.1
 TICK_CONFIG_VERSION=0.3.0
+AMP_VERSION=latest
 
 # please keep sorted
 IMAGES=(
-  appcelerator/amplifier:nats
-  appcelerator/amp-agent:nats
-  appcelerator/amp-log-worker:nats
+  appcelerator/amp:${AMP_VERSION}
   appcelerator/amp-ui:latest
   appcelerator/elasticsearch-amp:latest
   appcelerator/grafana:latest
@@ -34,9 +33,7 @@ IMAGES=(
 )
 
 MINIMAGES=(
-  appcelerator/amplifier:nats
-  appcelerator/amp-agent:nats
-  appcelerator/amp-log-worker:nats
+  appcelerator/amp:${AMP_VERSION}
   appcelerator/elasticsearch-amp:latest
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
   appcelerator/telegraf:telegraf-${INFLUXDATA_VERSION}
@@ -255,22 +252,25 @@ amplifier() {
     --label io.amp.role="infrastructure" \
     --constraint "node.role == manager" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amplifier:nats
+    appcelerator/amp:${AMP_VERSION}
 }
 
+# DEPENDENCIES nats
 ampagent() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-infra --name amp-agent \
     --mode global \
     --label io.amp.role="infrastructure" \
     --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock \
-    appcelerator/amp-agent:nats
+    appcelerator/amp:${AMP_VERSION} \
+    amp-agent
 }
 
-# DEPENDENCIES kafka
+# DEPENDENCIES nats, elasticsearch
 amplogworker() { # Owner: bertrand-quenin
   docker service create --with-registry-auth --network amp-infra --name amp-log-worker \
     --label io.amp.role="infrastructure" \
-    appcelerator/amp-log-worker:nats
+    appcelerator/amp:${AMP_VERSION} \
+    amp-log-worker
 }
 
 ampui() { # Owner: freignat91

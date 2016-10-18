@@ -29,7 +29,22 @@ fi
 echo "OK"
 
 echo -n "copy binary from container... "
+$DOCKER cp amp-builder:/go/bin/amp ./amp >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
 $DOCKER cp amp-builder:/go/bin/amplifier ./amplifier >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
+$DOCKER cp amp-builder:/go/bin/amp-agent ./amp-agent >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
+$DOCKER cp amp-builder:/go/bin/amp-log-worker ./amp-log-worker >&2
 if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
@@ -37,7 +52,7 @@ fi
 echo "OK"
 
 echo -n "building shrinked image... "
-$DOCKER build -f $SHRINKED_DOCKER_FILE -t appcelerator/amplifier:$TAG . >&2
+$DOCKER build -f $SHRINKED_DOCKER_FILE -t appcelerator/amp:$TAG . >&2
 if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
@@ -45,7 +60,7 @@ fi
 echo "OK"
 
 echo -n "cleanup... "
-rm -f amplifier
+rm -f amp amplifier amp-agent amp-log-worker
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1
 $DOCKER rmi $REPOSITORY_NAME:builder
