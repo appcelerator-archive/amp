@@ -88,24 +88,14 @@ func StartTestServer() (Config, *grpc.ClientConn) {
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
-	conn, err := grpc.Dial(serverAddress, grpc.WithInsecure(), grpc.WithTimeout(60*time.Second))
+	conn, err := grpc.Dial(serverAddress,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second))
 	if err != nil {
-		log.Panicln("Amplifier is not ready", err)
+		log.Panicln("Cannot connect to amplifier", err)
 	}
 	log.Println("Connected to amplifier")
-
-	// Use the connection to amplifier
-	logsClient := logs.NewLogsClient(conn)
-	for i := 0; i < 60; i++ {
-		_, err := logsClient.Get(context.Background(), &logs.GetRequest{})
-		if err != nil {
-			log.Println("Connection to amplifier not ready yet: ", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		break
-	}
-	log.Println("Ready")
 
 	return config, conn
 }
