@@ -1,7 +1,6 @@
 package stack_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -16,28 +15,47 @@ import (
 )
 
 const (
-	example1 = `
+example1                = `
 services:
   pinger:
     image: appcelerator/pinger
-    replicas: 1
+    replicas: 2
   pingerExt1:
     image: appcelerator/pinger
-    replicas: 1
+    replicas: 2
+    public:
+      - name: www1
+        protocol: tcp
+        internal_port: 3000
   pingerExt2:
     image: appcelerator/pinger
-    replicas: 1`
-	example2 = `
+    replicas: 2
+    public:
+      - name: www2
+        protocol: tcp
+        publish_port: 3001
+        internal_port: 3000`
+
+example2 = `
 services:
   pinger:
     image: appcelerator/pinger
-    replicas: 1
+    replicas: 2
   pingerExt1:
     image: appcelerator/pinger
-    replicas: 1
+    replicas: 2
+    public:
+      - name: www1
+        protocol: tcp
+        internal_port: 3000
   pingerExt2:
     image: appcelerator/pinger
-    replicas: 1`
+    replicas: 2
+    public:
+      - name: www2
+        protocol: tcp
+        publish_port: 3002
+        internal_port: 3000`
 )
 
 var (
@@ -55,7 +73,8 @@ func TestMain(m *testing.M) {
 //Test two stacks life cycle in the same time
 func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	//Start stack essai1
-	name := fmt.Sprintf("test-%d", time.Now().Unix())
+	//name := fmt.Sprintf("test-%d", time.Now().Unix())
+	name := "stacktest"
 	//Start stack test
 	t.Log("start stack " + name)
 	rUp, errUp := client.Up(ctx, &stack.UpRequest{StackName: name, Stackfile: example1})
@@ -76,6 +95,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 		StackIdent: rUp.StackId,
 	}
 	//Stop stack test
+	time.Sleep(1 * time.Second)
 	t.Log("stop stack " + name)
 	rStop, errStop := client.Stop(ctx, &stackRequest)
 	if errStop != nil {
