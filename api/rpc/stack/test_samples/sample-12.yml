@@ -3,12 +3,12 @@ services:
     image: appcelerator/pinger
     replicas: 1
     networks:
-      app_net10:
+      amp-infra:
         aliases:
-          - test1-pinger
+          - ext1-pinger
 networks:
-  app_net10:
-    driver: overlay
+  amp-infra: 
+    external: true
 
 
 

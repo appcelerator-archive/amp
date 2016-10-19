@@ -91,6 +91,7 @@ message NetworkSpec {
   bool internal = 5;
   map<string, string> options = 6;
   map<string, string> labels = 7;
+  string external = 8;
 }
 
 message NetworkIPAM {

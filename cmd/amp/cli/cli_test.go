@@ -23,7 +23,7 @@ type commandSpec struct {
 }
 
 var (
-	testDir          = "./test_samples"
+	testDir = "./test_samples"
 )
 
 func TestMain(t *testing.T) {

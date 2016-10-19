@@ -40,6 +40,7 @@ type networkAliases struct {
 }
 
 type networkSpec struct {
+	External   interface{}       `yaml:"external"`
 	Driver     string            `yaml:"driver"`
 	EnableIPv6 bool              `yaml:"enable_ipv6"`
 	IPAM       *networkIPAM      `yaml:"ipam"`
@@ -71,8 +72,11 @@ func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
 		return nil, err
 	}
 	fmt.Printf("parsedStack %+v\n", specs)
-	copyNetworks(stack, specs.Networks)
-	if err := copyServices(stack, specs.Services); err != nil {
+	networkMap, err := copyNetworks(stack, specs.Networks)
+	if err != nil {
+		return nil, err
+	}
+	if err := copyServices(stack, specs.Services, networkMap); err != nil {
 		return nil, err
 	}
 	fmt.Printf("Stack %+v\n", stack)
@@ -87,9 +91,20 @@ func parseStack(b []byte) (*stackSpec, error) {
 	return &specs, nil
 }
 
-func copyNetworks(stack *Stack, specs map[string]networkSpec) {
+func copyNetworks(stack *Stack, specs map[string]networkSpec) (map[string]string, error) {
+	networkMap := make(map[string]string)
 	for name, spec := range specs {
+		external := "false"
+		if extMap, ok := spec.External.(map[interface{}]interface{}); ok {
+			external = extMap["name"].(string)
+			networkMap[name] = external
+		} else if ext, ok := spec.External.(bool); ok {
+			external = fmt.Sprintf("%t", ext)
+		} else if spec.External != nil {
+			return networkMap, fmt.Errorf("Invalid syntax near networks: %s: external\n", name)
+		}
 		stack.Networks = append(stack.Networks, &NetworkSpec{
+			External:   external,
 			Name:       name,
 			Driver:     spec.Driver,
 			EnableIpv6: spec.EnableIPv6,
@@ -99,6 +114,7 @@ func copyNetworks(stack *Stack, specs map[string]networkSpec) {
 			Labels:     spec.Labels,
 		})
 	}
+	return networkMap, nil
 
 }
 
@@ -128,7 +144,7 @@ func copyIPAMConfig(config []ipamConfig) []*NetworkIPAMConfig {
 	return configList
 }
 
-func copyServices(stack *Stack, specs map[string]serviceSpec) error {
+func copyServices(stack *Stack, specs map[string]serviceSpec, networkMap map[string]string) error {
 	for name, spec := range specs {
 		// try to parse arguments entries as a map
 		// else try to parse environment as string entries
@@ -225,8 +241,12 @@ func copyServices(stack *Stack, specs map[string]serviceSpec) error {
 		networkAttachment := []*service.NetworkAttachment{}
 		if spec.Networks != nil {
 			for name, data := range spec.Networks {
+				trueName, ok := networkMap[name]
+				if !ok {
+					trueName = name
+				}
 				networkAttachment = append(networkAttachment, &service.NetworkAttachment{
-					Target:  name,
+					Target:  trueName,
 					Aliases: data.Aliases,
 				})
 			}
