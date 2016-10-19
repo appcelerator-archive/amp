@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
+	"github.com/docker/docker/api/types/filters"
 )
 
 const stackRootKey = "stacks"
@@ -115,8 +116,6 @@ func (s *Server) getStack(ctx context.Context, in *StackRequest) (*Stack, error)
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
 func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDList []string) {
-	fmt.Printf("removing created networks %s\n", stackID)
-	s.removeStackNetworks(ctx, stackID, true)
 	fmt.Printf("removing created services %s\n", stackID)
 	server := service.Service{
 		Docker: s.Docker,
@@ -129,7 +128,8 @@ func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDLis
 			s.Store.Delete(ctx, path.Join(servicesRootKey, ID), true, nil)
 		}
 	}
-	fmt.Printf("Services removed %s\n", stackID)
+	fmt.Printf("removing created networks %s\n", stackID)
+	s.removeStackNetworks(ctx, stackID, true)
 }
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
@@ -245,6 +245,11 @@ func (s *Server) addHAProxyService(ctx context.Context, stack *Stack) (string, e
 // create network
 func (s *Server) createNetwork(ctx context.Context, data *NetworkSpec) (string, error) {
 	fmt.Printf("Create network %s\n", data.Name)
+	//----workarround for docker 1.12.2 issue (we don't delete network and reclycle)
+	if id, exist := s.isNetworkExit(ctx, data.Name); exist {
+		return id, nil
+	}
+	//----
 	configs := []network.IPAMConfig{}
 	if data.Ipam != nil && data.Ipam.Config != nil {
 		for _, conf := range data.Ipam.Config {
@@ -258,6 +263,7 @@ func (s *Server) createNetwork(ctx context.Context, data *NetworkSpec) (string, 
 	}
 	IPAM := network.IPAM{
 		Driver: "default",
+		Options: make(map[string]string),
 	}
 	if data.Ipam != nil {
 		IPAM = network.IPAM{
@@ -281,9 +287,23 @@ func (s *Server) createNetwork(ctx context.Context, data *NetworkSpec) (string, 
 	networkCreate.Labels[serviceRoleLabelName] = "user"
 	rep, err := s.Docker.NetworkCreate(ctx, data.Name, networkCreate)
 	if err != nil {
+
 		return "", err
 	}
 	return rep.ID, nil
+}
+
+func (s *Server) isNetworkExit(ctx context.Context, name string) (string, bool) {
+	filter := filters.NewArgs()
+	filter.Add("name", name)
+	list, err := s.Docker.NetworkList(ctx, types.NetworkListOptions{
+		Filters: filter,
+	})
+	if err != nil || len(list) == 0 {
+		return "", false
+	}
+	fmt.Printf("Network %s exists, reuse it\n", name)
+	return list[0].ID, true
 }
 
 func (s *Server) createStackNetworks(ctx context.Context, stack *Stack) error {
@@ -475,34 +495,45 @@ func (s *Server) removeStackNetworks(ctx context.Context, ID string, force bool)
 	return s.removeStackNetworksFromList(ctx, networkList.List)
 }
 
-func (s *Server) removeNetwork(ctx context.Context, id string) error {
+func (s *Server) removeNetwork(ctx context.Context, id string, byName bool) error {
+	//Concidering Docker 1.12.2 network issue, the networks are not deleted
+	/*
+	fmt.Printf("removing network: %s\n", id)
 	err := s.Docker.NetworkRemove(ctx, id)
 	if err != nil {
 		return err
-	} else {
-		var existErr error
-		nn := 0
-		//allowing 1 min to remove network
-		for existErr == nil && nn < 20 {
-			_, existErr = s.Docker.NetworkInspect(ctx, id)
-			time.Sleep(3 * time.Second)
-			nn++
-		}
-		if existErr != nil {
-			fmt.Printf("network removed: %s\n", id)
-		} else {
-			return fmt.Errorf("network remove timeout: %s\n", id)
-		}
 	}
-	return err
+	nn := 0
+	filter := filters.NewArgs()
+	if byName {
+		filter.Add("name", id)
+	} else {
+		filter.Add("id", id)
+	}
+	//allowing 1 min to remove network
+	for nn < 20 {
+		list, err := s.Docker.NetworkList(ctx, types.NetworkListOptions{
+			Filters: filter,
+		})
+		if err == nil && len(list) == 0 {
+			fmt.Printf("network removed: %s\n", id)
+			return nil
+		}
+		fmt.Println("still there")
+		time.Sleep(3 * time.Second)
+		nn++
+	}
+	return fmt.Errorf("network remove timeout: %s\n", id)
+	*/
+	return nil
 }
 
 func (s *Server) removeStackNetworksFromList(ctx context.Context, networkList []string) error {
 	var removeErr error
 	for _, key := range networkList {
-		err := s.removeNetwork(ctx, key)
+		err := s.removeNetwork(ctx, key, false)
 		if err != nil {
-			removeErr = fmt.Errorf("network remove timeout: %s\n", key)
+			removeErr = err
 		}
 	}
 	if removeErr != nil {
@@ -522,26 +553,21 @@ func (s *Server) removeCustomNetworks(ctx context.Context, stack *Stack, force b
 	for _, data := range stack.Networks {
 		s.Store.Get(ctx, path.Join(networksRootKey, data.Name), customNetwork, true)
 		if data.External == "false" {
-			fmt.Printf("deleting custom network: %s (%d)\n", data.Name, customNetwork.OwnerNumber)
 			if customNetwork.Id != "" {
 				customNetwork.OwnerNumber--
 				if customNetwork.OwnerNumber == 0 {
-					fmt.Println("remove eff owner=0")
-					err := s.Docker.NetworkRemove(ctx, data.Name)
+					err := s.removeNetwork(ctx, data.Name, true)
 					if err != nil {
 						removeErr = err
 					}
 					s.Store.Delete(ctx, path.Join(networksRootKey, data.Name), false, nil)
-					fmt.Printf("Remove custom network %s\n", data.Name)
 				} else {
-					fmt.Println("update network record")
 					if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
 						removeErr = err
 					}
-					fmt.Printf("Decr. custom network %s owner number to %d\n", data.Name, customNetwork.OwnerNumber)
 				}
 			} else {
-				err := s.removeNetwork(ctx, data.Name)
+				err := s.removeNetwork(ctx, data.Name, true)
 				if err != nil {
 					removeErr = err
 				}
@@ -560,14 +586,9 @@ func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) e
 	if err != nil && !force {
 		return err
 	}
-	server := service.Service{
-		Docker: s.Docker,
-	}
 	var removeErr error
 	for _, key := range listKeys.List {
-		_, err := server.Remove(ctx, &service.RemoveRequest{
-			Ident: key,
-		})
+		err = s.removeService(ctx, key)
 		if err != nil {
 			removeErr = err
 		}
@@ -578,6 +599,36 @@ func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) e
 		return removeErr
 	}
 	return nil
+}
+
+
+func (s *Server) removeService(ctx context.Context, id string) error {
+	fmt.Printf("removing service: %s\n", id)
+	server := service.Service{
+		Docker: s.Docker,
+	}
+	_, err := server.Remove(ctx, &service.RemoveRequest{
+		Ident: id,
+	})
+	if err != nil {
+		return err
+	}
+	nn := 0
+	filter := filters.NewArgs()
+	filter.Add("id", id)
+	//allowing 1 min to remove network
+	for nn < 20 {
+		list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
+			Filter: filter,
+		})
+		if err == nil && len(list) == 0 {
+			fmt.Printf("service removed: %s\n", id)
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+		nn++
+	}
+	return fmt.Errorf("service remove timeout: %s\n", id)
 }
 
 // Remove implements stack.ServerService Remove
@@ -668,3 +719,4 @@ func newStackFromYaml(ctx context.Context, config string) (stack *Stack, err err
 
 	return
 }
+
