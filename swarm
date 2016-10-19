@@ -151,7 +151,7 @@ main() {
 
 # initialize / join swarm as manager
 initswarm() {
-  docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init)
+  docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init --advertise-addr 127.0.0.1)
 }
 
 # set up the amp-infra overlay network
