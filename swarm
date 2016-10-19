@@ -324,17 +324,24 @@ influxdb() { # Owner: ndegory
 }
 
 kapacitor() { # Owner: ndegory
+  if [[ -n "${AMP_SLACK_ALERTS_WEBHOOK_URL-}" ]]; then
+    SLACK_OPTIONS="-e OUTPUT_SLACK_ENABLED=true \
+    -e OUTPUT_SLACK_WEBHOOK_URL=${AMP_SLACK_ALERTS_WEBHOOK_URL} \
+    -e OUTPUT_SLACK_GLOBAL=true \
+    -e OUTPUT_SLACK_STATE_CHANGE_ONLY=true"
+    if [[ -n "${AMP_SLACK_ALERTS_CHANNEL-}" ]]; then
+      SLACK_OPTIONS="$SLACK_OPTIONS -e OUTPUT_SLACK_CHANNEL=${AMP_SLACK_ALERTS_CHANNEL}"
+    fi
+  else
+    SLACK_OPTIONS='-e OUTPUT_SLACK_ENABLED=false'
+  fi
   docker service create --with-registry-auth --network amp-infra --name kapacitor \
     --label io.amp.role="infrastructure" \
     -e INFLUXDB_URL=http://influxdb:8086 \
     -e KAPACITOR_HOSTNAME=auto \
     -e SUBSCRIPTION_PROTOCOL="udp" \
-    -e OUTPUT_SLACK_ENABLED="true" \
-    -e OUTPUT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/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 \
-    -e OUTPUT_SLACK_CHANNEL=kapacitor-test \
-    -e OUTPUT_SLACK_GLOBAL="true" \
-    -e OUTPUT_SLACK_STATE_CHANGE_ONLY="true" \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/${TICK_CONFIG_VERSION}.tar.gz" \
+    $SLACK_OPTIONS \
     appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
 }
 
