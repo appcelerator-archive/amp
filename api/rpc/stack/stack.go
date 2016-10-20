@@ -303,8 +303,13 @@ func (s *Server) isNetworkExit(ctx context.Context, name string) (string, bool) 
 	if err != nil || len(list) == 0 {
 		return "", false
 	}
-	fmt.Printf("Network %s exists, reuse it\n", name)
-	return list[0].ID, true
+	for _, net := range list {
+		if net.Name == name {
+			fmt.Printf("Network %s exists, reuse it\n", name)
+			return net.ID, true
+		}
+	}
+	return "", false
 }
 
 // create the private stack network and if needed the public stack network
