@@ -15,7 +15,7 @@ import (
 )
 
 const (
-example1                = `
+	example1 = `
 services:
   pinger:
     image: appcelerator/pinger
@@ -36,7 +36,7 @@ services:
         publish_port: 3001
         internal_port: 3000`
 
-example2 = `
+	example2 = `
 services:
   pinger:
     image: appcelerator/pinger
