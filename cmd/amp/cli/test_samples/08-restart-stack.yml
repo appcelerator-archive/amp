@@ -1,0 +1,11 @@
+restart-stack:
+  cmd: amp stack restart
+  args:
+    - stack1
+  options:
+  expectation: ([a-z0-9]{64})
+list-stack:
+  cmd: amp stack ls
+  args:
+  options:
+  expectation: ((NAME)(\s)+(ID)(\s)+(STATE)((.)|(\s))+(stack1)(\s)+([a-z0-9]{64})(\s)+(Running)((.)|(\s))(.)*)

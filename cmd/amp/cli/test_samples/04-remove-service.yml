@@ -3,7 +3,9 @@ remove-service:
   args:
     - pinger
   options:
+  expectation: (pinger)
 list-service:
   cmd: docker service ls
   args:
   options:
+  expectation: ((ID)(\s)+(NAME)(\s)+(REPLICAS)(\s)+(IMAGE)(\s)+(COMMAND)((.)|(\s))+)

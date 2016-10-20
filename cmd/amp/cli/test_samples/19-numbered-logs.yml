@@ -1,0 +1,7 @@
+numbered-logs:
+  cmd: amp logs
+  args:
+    -
+  options:
+    - -n 10
+  expectation:

@@ -1,0 +1,7 @@
+net-stats:
+  cmd: amp stats
+  args:
+    -
+  options:
+    - --net
+  expectation: ((Service name)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)

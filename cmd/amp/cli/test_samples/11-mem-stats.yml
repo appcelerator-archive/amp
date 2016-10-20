@@ -1,0 +1,7 @@
+mem-stats:
+  cmd: amp stats
+  args:
+    -
+  options:
+    - --mem
+  expectation: ((Service name)(\s)+(Mem usage)(\s)+(Mem %%)((.)|(\s))+((.)|(\s)){1,}(.)*)
