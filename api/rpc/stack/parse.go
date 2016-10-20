@@ -263,6 +263,7 @@ func copyServices(stack *Stack, specs map[string]serviceSpec, networkMap map[str
 			Labels:          labels,
 			ContainerLabels: containerLabels,
 			Networks:        networkAttachment,
+			Mounts:          spec.Mounts,
 		})
 	}
 	return nil
