@@ -19,13 +19,28 @@ var StackCmd = &cobra.Command{
 }
 
 var (
-	upCmd = &cobra.Command{
+	stackCreateCmd = &cobra.Command{
+		Use:   "create [-f FILE] [name]",
+		Short: "Create a stack",
+		Long:  `Create a stack.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			AMP.Connect()
+			err := stackCreate(AMP, cmd, args)
+			if err != nil {
+				if AMP.Verbose() {
+					log.Println(err)
+				}
+				log.Fatal("Failed to create and deploy stack: ", err)
+			}
+		},
+	}
+	stackUpCmd = &cobra.Command{
 		Use:   "up [-f FILE] [name]",
 		Short: "Create and deploy a stack",
 		Long:  `Create and deploy a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := up(AMP, cmd, args)
+			err := stackUp(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -35,14 +50,14 @@ var (
 		},
 	}
 	// stack configuration file
-	stackfile string
-	startCmd  = &cobra.Command{
-		Use:   "restart [stack name or id]",
+	stackfile     string
+	stackStartCmd = &cobra.Command{
+		Use:   "start [stack name or id]",
 		Short: "Start a stopped stack",
 		Long:  `Start a stopped stack`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := start(AMP, cmd, args)
+			err := stackStart(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -51,13 +66,13 @@ var (
 			}
 		},
 	}
-	stopCmd = &cobra.Command{
+	stackStopCmd = &cobra.Command{
 		Use:   "stop [stack name or id]",
 		Short: "Stop a stack",
 		Long:  `Stop all services of a stack.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := stop(AMP, cmd, args)
+			err := stackStop(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -66,13 +81,13 @@ var (
 			}
 		},
 	}
-	rmCmd = &cobra.Command{
+	stackRmCmd = &cobra.Command{
 		Use:   "rm [stack name or id]",
 		Short: "Remove a stack",
 		Long:  `Remove a stack completly including ETCD data.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := remove(AMP, cmd, args)
+			err := stackRm(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -81,13 +96,13 @@ var (
 			}
 		},
 	}
-	listCmd = &cobra.Command{
+	stackListCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List available stacks",
 		Long:  `List available stacks.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := list(AMP, cmd, args)
+			err := stackList(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -104,21 +119,22 @@ var (
 
 func init() {
 	RootCmd.AddCommand(StackCmd)
-	flags := upCmd.Flags()
-	flags.StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
-	rmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
-	listQuiet = listCmd.Flags().BoolP("quiet", "q", false, "Only display numeric IDs")
-	listAll = listCmd.Flags().BoolP("all", "a", false, "Show all stacks (default shows just running)")
-	listLast = listCmd.Flags().Int64P("last", "n", 0, "Show n last created stacks (includes all states)")
-	listLatest = listCmd.Flags().BoolP("latest", "l", false, "Show the latest created stack (includes all states)")
-	StackCmd.AddCommand(upCmd)
-	StackCmd.AddCommand(startCmd)
-	StackCmd.AddCommand(stopCmd)
-	StackCmd.AddCommand(rmCmd)
-	StackCmd.AddCommand(listCmd)
+	stackCreateCmd.Flags().StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
+	stackUpCmd.Flags().StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
+	stackRmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
+	listQuiet = stackListCmd.Flags().BoolP("quiet", "q", false, "Only display numeric IDs")
+	listAll = stackListCmd.Flags().BoolP("all", "a", false, "Show all stacks (default shows just running)")
+	listLast = stackListCmd.Flags().Int64P("last", "n", 0, "Show n last created stacks (includes all states)")
+	listLatest = stackListCmd.Flags().BoolP("latest", "l", false, "Show the latest created stack (includes all states)")
+	StackCmd.AddCommand(stackCreateCmd)
+	StackCmd.AddCommand(stackUpCmd)
+	StackCmd.AddCommand(stackStartCmd)
+	StackCmd.AddCommand(stackStopCmd)
+	StackCmd.AddCommand(stackRmCmd)
+	StackCmd.AddCommand(stackListCmd)
 }
 
-func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackCreate(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	stackfile, err := cmd.Flags().GetString("file")
 	if err != nil {
 		return err
@@ -143,7 +159,44 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	contents := string(b)
-	request := &stack.UpRequest{StackName: name, Stackfile: contents}
+	request := &stack.StackFileRequest{StackName: name, Stackfile: contents}
+
+	client := stack.NewStackServiceClient(amp.Conn)
+	reply, err := client.Create(context.Background(), request)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(reply.StackId)
+	return nil
+}
+
+func stackUp(amp *client.AMP, cmd *cobra.Command, args []string) error {
+	stackfile, err := cmd.Flags().GetString("file")
+	if err != nil {
+		return err
+	}
+
+	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
+	if stackfile == "" {
+		log.Fatal("Specify the stackfile with the --flag option")
+	}
+
+	if len(args) == 0 {
+		log.Fatal("Must specify stack name")
+	}
+	name := args[0]
+	if name == "" {
+		log.Fatal("Must specify stack name")
+	}
+
+	b, err := ioutil.ReadFile(stackfile)
+	if err != nil {
+		return err
+	}
+
+	contents := string(b)
+	request := &stack.StackFileRequest{StackName: name, Stackfile: contents}
 
 	client := stack.NewStackServiceClient(amp.Conn)
 	reply, err := client.Up(context.Background(), request)
@@ -155,7 +208,7 @@ func up(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackStart(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
@@ -177,7 +230,7 @@ func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackStop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
@@ -199,7 +252,7 @@ func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackRm(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
@@ -230,7 +283,7 @@ func remove(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackList(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	var limit = *listLast
 	if *listLatest {
 		limit = 1

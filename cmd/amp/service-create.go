@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	createCmd = &cobra.Command{
+	serviceCreateCmd = &cobra.Command{
 		Use:   "create [OPTIONS] IMAGE [CMD] [ARG...]",
 		Short: "Create a new service",
 		Long:  `Create a new service`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := create(AMP, cmd, args)
+			err := serviceCreate(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -57,7 +57,7 @@ var (
 )
 
 func init() {
-	flags := createCmd.Flags()
+	flags := serviceCreateCmd.Flags()
 	flags.StringVar(&name, "name", name, "Service name")
 	flags.StringSliceVarP(&publishSpecs, "publish", "p", publishSpecs, "Publish a service externally. Format: [published-name|published-port:]internal-service-port[/protocol], ex: '80:3000/tcp' or 'admin:3000'")
 	flags.StringVar(&mode, "mode", mode, "Service mode (replicated or global)")
@@ -67,10 +67,10 @@ func init() {
 	flags.StringSliceVar(&containerLabels, "container-label", containerLabels, "Set container labels for service replicas (default [])")
 	flags.StringSliceVar(&networks, "network", networks, "Set service networks attachment (default [])")
 
-	ServiceCmd.AddCommand(createCmd)
+	ServiceCmd.AddCommand(serviceCreateCmd)
 }
 
-func create(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func serviceCreate(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service create\" requires at least 1 argument(s)")

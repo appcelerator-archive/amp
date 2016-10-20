@@ -31,7 +31,33 @@ type Server struct {
 }
 
 // Up implements stack.ServerService Up
-func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
+func (s *Server) Up(ctx context.Context, in *StackFileRequest) (*StackReply, error) {
+	r, err := s.Create(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	//start the stack
+	startRequest := StackRequest{
+		StackIdent: r.StackId,
+	}
+	if _, err := s.Start(ctx, &startRequest); err != nil {
+		fmt.Printf("Error found during stack up: %v \n", err)
+		rollbackErr := s.rollbackETCDStack(ctx, r.StackId)
+		if rollbackErr != nil {
+			fmt.Println("Error during rollback, ETCD in unknown state")
+			panic(rollbackErr)
+		}
+		return nil, err
+	}
+
+	//return the reply
+	fmt.Printf("Stack is up: %s\n", r.StackId)
+	return r, nil
+}
+
+// Create implements stack.ServerService Create
+func (s *Server) Create(ctx context.Context, in *StackFileRequest) (*StackReply, error) {
 	//verify the stack name doesn't already exist
 	stackByName := s.getStackByName(ctx, in.StackName)
 	if stackByName.Id != "" {
@@ -52,20 +78,9 @@ func (s *Server) Up(ctx context.Context, in *UpRequest) (*UpReply, error) {
 	}
 	stackID := StackID{Id: stack.Id}
 	s.Store.Create(ctx, path.Join(stackRootNameKey, stack.Name), &stackID, nil, 0)
+	fmt.Println("Stack is created", stack.Id)
 
-	//start the stack
-	startRequest := StackRequest{
-		StackIdent: stack.Id,
-	}
-	if _, err := s.Start(ctx, &startRequest); err != nil {
-		fmt.Printf("Error found during stack up: %v \n", err)
-		s.rollbackETCDStack(ctx, stack)
-		return nil, err
-	}
-
-	//return the reply
-	fmt.Printf("Stack is up: %s\n", stack.Id)
-	reply := UpReply{
+	reply := StackReply{
 		StackId: stack.Id,
 	}
 	return &reply, nil
@@ -133,11 +148,23 @@ func (s *Server) rollbackStack(ctx context.Context, stackID string, serviceIDLis
 }
 
 // clean up if error happended during stack creation, delete all created services and all etcd data
-func (s *Server) rollbackETCDStack(ctx context.Context, stack *Stack) {
-	fmt.Printf("Cleanning up ETCD storage %s\n", stack.Id)
-	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)
-	s.Store.Delete(ctx, path.Join(stackRootNameKey, stack.Name), true, nil)
-	fmt.Printf("ETCD cleaned %s\n", stack.Id)
+func (s *Server) rollbackETCDStack(ctx context.Context, stackID string) (err error) {
+	fmt.Printf("Cleanning up ETCD storage %s\n", stackID)
+	var stack = &Stack{}
+	err = s.Store.Get(ctx, path.Join(stackRootKey, stackID), stack, false)
+	if err != nil {
+		return
+	}
+	err = s.Store.Delete(ctx, path.Join(stackRootKey, stackID), true, nil)
+	if err != nil {
+		return
+	}
+	err = s.Store.Delete(ctx, path.Join(stackRootNameKey, stack.Name), true, nil)
+	if err != nil {
+		return
+	}
+	fmt.Printf("ETCD cleaned %s\n", stackID)
+	return
 }
 
 // start one service and if ok store it in ETCD:
@@ -397,7 +424,7 @@ func (s *Server) createCustomNetwork(ctx context.Context, data *NetworkSpec) err
 	return nil
 }
 
-// Start implements stack.ServerService Stop
+// Start implements stack.ServerService Start
 func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, error) {
 	stack, errIdent := s.getStack(ctx, in)
 	if errIdent != nil {
