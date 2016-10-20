@@ -214,6 +214,182 @@ var (
 		},
 	}
 
+	sample9 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image: "appcelerator/pinger",
+				Networks: map[string]networkAliases{
+					"app_net": {
+						Aliases: []string{"test-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"app_net": {
+				Driver: "bridge",
+				Options: map[string]string{
+					"com.docker.network.enable_ipv6": "true",
+				},
+				IPAM: &networkIPAM{
+					Driver: "default",
+					Config: []ipamConfig{
+						{
+							Subnet:  "172.16.238.0/24",
+							Gateway: "172.16.238.1",
+						},
+						{
+							Subnet:  "1 2001:3984:3989::/64",
+							Gateway: "12001:3984:3989::1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	sample10_1 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Networks: map[string]networkAliases{
+					"app_net10": {
+						Aliases: []string{"test1-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"app_net10": {
+				Driver: "overlay",
+			},
+		},
+	}
+
+	sample10_2 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Networks: map[string]networkAliases{
+					"app_net": {
+						Aliases: []string{"test2-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"app_net": {
+				Driver: "overlay",
+			},
+		},
+	}
+
+	sample11 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Networks: map[string]networkAliases{
+					"net-test11": {
+						Aliases: []string{"test2-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"net-test11": {
+				Driver: "overlay",
+				IPAM: &networkIPAM{
+					Driver: "default",
+					Config: []ipamConfig{
+						{
+							Subnet:  "10.16.238.0/24",
+							Gateway: "10.16.238.1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	sample12 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Networks: map[string]networkAliases{
+					"amp-infra": {
+						Aliases: []string{"ext1-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"amp-infra": {
+				External: true,
+			},
+		},
+	}
+
+	sample13 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Networks: map[string]networkAliases{
+					"my-net": {
+						Aliases: []string{"ext2-pinger"},
+					},
+				},
+			},
+		},
+		Networks: map[string]networkSpec{
+			"my-net": {
+				External: map[string]string{
+					"name": "amp-infra",
+				},
+			},
+		},
+	}
+
+	sample14 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Mounts: []string{
+					"/tmp2",
+				},
+			},
+		},
+	}
+
+	sample15 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Mounts: []string{
+					"/tmp:/tmp2",
+				},
+			},
+		},
+	}
+
+	sample16 = stackSpec{
+		Services: map[string]serviceSpec{
+			"pinger": {
+				Image:    "appcelerator/pinger",
+				Replicas: 1,
+				Mounts: []string{
+					"myvolume:/tmp2",
+				},
+			},
+		},
+	}
+
 	// map of filenames to a map of serviceSpec elements (each file has one or more)
 	compareSpecs = map[string]stackSpec{
 		"sample-01.yml":                    sample1,
@@ -229,6 +405,15 @@ var (
 		"sample-07-2-container-labels.yml": sample7,
 		"sample-08-1-mode.yml":             sample8_1,
 		"sample-08-2-mode.yml":             sample8_2,
+		"sample-10-1.yml":                  sample10_1,
+		"sample-10-2.yml":                  sample10_2,
+		"sample-09-network.yml":            sample9,
+		"sample-11-network.yml":            sample11,
+		"sample-12-network.yml":            sample12,
+		"sample-13-network.yml":            sample13,
+		"sample-14-volume.yml":             sample14,
+		"sample-15-volume.yml":             sample15,
+		"sample-16-volume.yml":             sample16,
 	}
 )
 
@@ -273,10 +458,10 @@ func parse(t *testing.T, test *TestSpec) {
 func (a stackSpec) extractDiff(t *testing.T, b stackSpec) ([2]string, bool) {
 	//t.Log("process file")
 	sa := fmt.Sprintf("%+v", a)
-	la := explodeExtend(t, simplifyString(sa))
+	la := explodeExtend(t, simplifyString(t, sa))
 	//t.Log("process ref")
 	sb := fmt.Sprintf("%+v", b)
-	lb := explodeExtend(t, simplifyString(sb))
+	lb := explodeExtend(t, simplifyString(t, sb))
 	if len(la) != len(lb) {
 		return [2]string{
 			getDiff(la, lb),
@@ -292,7 +477,7 @@ func (a stackSpec) extractDiff(t *testing.T, b stackSpec) ([2]string, bool) {
 }
 
 // supress not useful charactere and normalize map syntax
-func simplifyString(line string) string {
+func simplifyString(t *testing.T, line string) string {
 	line = line[1 : len(line)-1]
 	line = strings.Replace(line, "map[", "[", -1)
 	line = strings.Replace(line, "{", "[", -1)
@@ -300,6 +485,15 @@ func simplifyString(line string) string {
 	line = strings.Replace(line, "=", ":", -1)
 	line = strings.Replace(line, "&", "", -1)
 	line = strings.Replace(line, "[]", "<nil>", -1)
+	//supression of the pointor addresses
+	ll := strings.Index(line, ":0x")
+	for ll >= 0 {
+		l2 := strings.Index(line[ll:], " ")
+		if l2 > 0 {
+			line = line[:ll] + line[ll+l2:]
+		}
+		ll = strings.Index(line, ":0x")
+	}
 	return line
 }
 

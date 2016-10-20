@@ -1,12 +1,7 @@
 services:
   pinger:
     image: appcelerator/pinger
-    replicas: 2
-    public:
-      - name: www
-        protocol: tcp
-        internal_port: 3000
-    network:
+    networks:
       app_net:
         aliases:
           - test-pinger
