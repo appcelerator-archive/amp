@@ -91,9 +91,15 @@ func (s *Stats) combineStats(req *StatsRequest, list *[4]*StatsReply) *StatsRepl
 		if list[i] != nil {
 			ret := list[i]
 			for _, frow := range finalRet.Entries {
-				for _, row := range ret.Entries {
-					if s.isRowsMatch(req, frow, row) {
-						s.updateRow(frow, row)
+				//warning in some weird cases frow can be nil
+				if frow != nil {
+					for _, row := range ret.Entries {
+						//warning in some weird cases row can be nil
+						if row != nil {
+							if s.isRowsMatch(req, frow, row) {
+								s.updateRow(frow, row)
+							}
+						}
 					}
 				}
 			}
