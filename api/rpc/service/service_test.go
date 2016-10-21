@@ -10,20 +10,11 @@ import (
 	"github.com/appcelerator/amp/api/server"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 var (
-	config           server.Config
-	port             string
-	etcdEndpoints    string
-	elasticsearchURL string
-	kafkaURL         string
-	influxURL        string
-	dockerURL        string
-	dockerVersion    string
-	client           service.ServiceClient
-	ctx              context.Context
+	client service.ServiceClient
+	ctx    context.Context
 )
 
 var service1 = service.ServiceSpec{
@@ -122,13 +113,6 @@ var serviceList = []*service.ServiceSpec{
 func TestMain(m *testing.M) {
 	ctx = context.Background()
 	_, conn := server.StartTestServer()
-	// there is no event when the server starts listening, so we just wait a second
-	time.Sleep(1 * time.Second)
-	conn, err := grpc.Dial("localhost:50101", grpc.WithInsecure())
-	if err != nil {
-		fmt.Println("connection failure")
-		os.Exit(1)
-	}
 	client = service.NewServiceClient(conn)
 	os.Exit(m.Run())
 }

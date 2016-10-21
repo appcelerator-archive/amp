@@ -59,9 +59,9 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
     $ amp logs --help
 
     Usage:  amp logs [OPTIONS] [SERVICE]
-    
+
     Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.
-    
+
     Options:
           --config string      Config file (default is $HOME/.amp.yaml)
           --container string   Filter by the given container
@@ -147,9 +147,9 @@ A few useful examples:
   $ amp stats --service -f
 ```
 
-* To display last 10 minutes of historic of the containers of service kafka with cpu, mem, io, net metrics and follow them:
+* To display last 10 minutes of historic of the containers of service nats with cpu, mem, io, net metrics and follow them:
 ```
-  $ amp stats --container --service-name=kafka --period=10m  -f
+  $ amp stats --container --service-name=nats --period=10m  -f
 ```
 
 * To display list of tasks with only cpu and mem metrics
