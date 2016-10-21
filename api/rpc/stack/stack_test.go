@@ -77,7 +77,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	name := "stacktest"
 	//Start stack test
 	t.Log("start stack " + name)
-	rUp, errUp := client.Up(ctx, &stack.UpRequest{StackName: name, Stackfile: example1})
+	rUp, errUp := client.Up(ctx, &stack.StackFileRequest{StackName: name, Stackfile: example1})
 	if errUp != nil {
 		t.Fatal(errUp)
 	}
