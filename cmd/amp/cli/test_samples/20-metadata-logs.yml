@@ -1,0 +1,7 @@
+metadata-logs:
+  cmd: amp logs
+  args:
+    -
+  options:
+    - -m
+  expectation:

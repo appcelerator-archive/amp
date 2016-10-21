@@ -1,0 +1,7 @@
+cpu-stats:
+  cmd: amp stats
+  args:
+    -
+  options:
+    - --cpu
+  expectation: ((Service name)(\s)+(CPU %%)((.)|(\s))+((.)|(\s)){1,}(.)*)

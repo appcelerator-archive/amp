@@ -3,3 +3,4 @@ curl-service:
   args:
     - localhost:90/ping
   options:
+  expectation: ((.)|(\s))*(pong)((.)|(\s))*
