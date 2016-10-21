@@ -43,7 +43,7 @@ func TestLessorGrant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not grant lease 1 (%v)", err)
 	}
-	gl := le.get(l.ID)
+	gl := le.Lookup(l.ID)
 
 	if !reflect.DeepEqual(gl, l) {
 		t.Errorf("lease = %v, want %v", gl, l)
@@ -107,7 +107,7 @@ func TestLessorRevoke(t *testing.T) {
 		t.Fatal("failed to revoke lease:", err)
 	}
 
-	if le.get(l.ID) != nil {
+	if le.Lookup(l.ID) != nil {
 		t.Errorf("got revoked lease %x", l.ID)
 	}
 
@@ -140,16 +140,18 @@ func TestLessorRenew(t *testing.T) {
 	}
 
 	// manually change the ttl field
-	l.TTL = 10
+	le.mu.Lock()
+	l.ttl = 10
+	le.mu.Unlock()
 	ttl, err := le.Renew(l.ID)
 	if err != nil {
 		t.Fatalf("failed to renew lease (%v)", err)
 	}
-	if ttl != l.TTL {
-		t.Errorf("ttl = %d, want %d", ttl, l.TTL)
+	if ttl != l.ttl {
+		t.Errorf("ttl = %d, want %d", ttl, l.ttl)
 	}
 
-	l = le.get(l.ID)
+	l = le.Lookup(l.ID)
 	if l.expiry.Sub(time.Now()) < 9*time.Second {
 		t.Errorf("failed to renew the lease")
 	}
@@ -210,14 +212,116 @@ func TestLessorRecover(t *testing.T) {
 
 	// Create a new lessor with the same backend
 	nle := newLessor(be, minLeaseTTL)
-	nl1 := nle.get(l1.ID)
-	if nl1 == nil || nl1.TTL != l1.TTL {
-		t.Errorf("nl1 = %v, want nl1.TTL= %d", nl1.TTL, l1.TTL)
+	nl1 := nle.Lookup(l1.ID)
+	if nl1 == nil || nl1.ttl != l1.ttl {
+		t.Errorf("nl1 = %v, want nl1.ttl= %d", nl1.ttl, l1.ttl)
 	}
 
-	nl2 := nle.get(l2.ID)
-	if nl2 == nil || nl2.TTL != l2.TTL {
-		t.Errorf("nl2 = %v, want nl2.TTL= %d", nl2.TTL, l2.TTL)
+	nl2 := nle.Lookup(l2.ID)
+	if nl2 == nil || nl2.ttl != l2.ttl {
+		t.Errorf("nl2 = %v, want nl2.ttl= %d", nl2.ttl, l2.ttl)
+	}
+}
+
+func TestLessorExpire(t *testing.T) {
+	dir, be := NewTestBackend(t)
+	defer os.RemoveAll(dir)
+	defer be.Close()
+
+	testMinTTL := int64(1)
+
+	le := newLessor(be, testMinTTL)
+	defer le.Stop()
+
+	le.Promote(1 * time.Second)
+	l, err := le.Grant(1, testMinTTL)
+	if err != nil {
+		t.Fatalf("failed to create lease: %v", err)
+	}
+
+	select {
+	case el := <-le.ExpiredLeasesC():
+		if el[0].ID != l.ID {
+			t.Fatalf("expired id = %x, want %x", el[0].ID, l.ID)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatalf("failed to receive expired lease")
+	}
+
+	donec := make(chan struct{})
+	go func() {
+		// expired lease cannot be renewed
+		if _, err := le.Renew(l.ID); err != ErrLeaseNotFound {
+			t.Fatalf("unexpected renew")
+		}
+		donec <- struct{}{}
+	}()
+
+	select {
+	case <-donec:
+		t.Fatalf("renew finished before lease revocation")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// expired lease can be revoked
+	if err := le.Revoke(l.ID); err != nil {
+		t.Fatalf("failed to revoke expired lease: %v", err)
+	}
+
+	select {
+	case <-donec:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("renew has not returned after lease revocation")
+	}
+}
+
+func TestLessorExpireAndDemote(t *testing.T) {
+	dir, be := NewTestBackend(t)
+	defer os.RemoveAll(dir)
+	defer be.Close()
+
+	testMinTTL := int64(1)
+
+	le := newLessor(be, testMinTTL)
+	defer le.Stop()
+
+	le.Promote(1 * time.Second)
+	l, err := le.Grant(1, testMinTTL)
+	if err != nil {
+		t.Fatalf("failed to create lease: %v", err)
+	}
+
+	select {
+	case el := <-le.ExpiredLeasesC():
+		if el[0].ID != l.ID {
+			t.Fatalf("expired id = %x, want %x", el[0].ID, l.ID)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatalf("failed to receive expired lease")
+	}
+
+	donec := make(chan struct{})
+	go func() {
+		// expired lease cannot be renewed
+		if _, err := le.Renew(l.ID); err != ErrNotPrimary {
+			t.Fatalf("unexpected renew: %v", err)
+		}
+		donec <- struct{}{}
+	}()
+
+	select {
+	case <-donec:
+		t.Fatalf("renew finished before demotion")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// demote will cause the renew request to fail with ErrNotPrimary
+	le.Demote()
+
+	select {
+	case <-donec:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("renew has not returned after lessor demotion")
 	}
 }
 
