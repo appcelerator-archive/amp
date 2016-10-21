@@ -27,7 +27,7 @@ func updateEventsStream() {
 	}
 }
 
-//Start and read the docker event stream, send events to kafka and update container list accordingly
+// Start and read the docker event stream and update container list accordingly
 func startEventStream(stream <-chan events.Message, errs <-chan error) {
 	agent.eventStreamReading = true
 	fmt.Println("start events stream reader")

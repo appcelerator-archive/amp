@@ -23,9 +23,7 @@ type Agent struct {
 	containers         map[string]*ContainerData
 	eventStreamReading bool
 	lastUpdate         time.Time
-	//kafkaClient        Kafka
-	//kafkaProducer      sarama.AsyncProducer
-	natsClient stan.Conn
+	natsClient         stan.Conn
 }
 
 //ContainerData data
@@ -55,7 +53,6 @@ func AgentInit(version string, build string) error {
 	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
 	cli, err := client.NewClient(conf.dockerEngine, "v1.24", nil, defaultHeaders)
 	if err != nil {
-		//agent.kafkaClient.Close()
 		agent.natsClient.Close()
 		return err
 	}
@@ -67,7 +64,6 @@ func AgentInit(version string, build string) error {
 	ContainerListOptions := types.ContainerListOptions{All: true}
 	containers, err := agent.dockerClient.ContainerList(context.Background(), ContainerListOptions)
 	if err != nil {
-		//agent.kafkaClient.Close()
 		agent.natsClient.Close()
 		return err
 	}
@@ -167,8 +163,6 @@ func (agt *Agent) trapSignal() {
 		<-ch
 		fmt.Println("\namp-agent received SIGTERM signal")
 		closeLogsStreams()
-		//kafka.close()
-		//agt.kafkaClient.Close()
 		agent.natsClient.Close()
 		os.Exit(1)
 	}()
