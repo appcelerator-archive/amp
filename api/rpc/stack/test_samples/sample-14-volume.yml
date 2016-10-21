@@ -1,0 +1,9 @@
+services:
+  pinger:
+    image: appcelerator/pinger
+    replicas: 1
+    volumes:
+      - /tmp2
+
+
+
