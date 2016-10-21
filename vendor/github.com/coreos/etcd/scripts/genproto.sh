@@ -24,7 +24,7 @@ GOGO_PROTO_SHA="5f813990bfffa3c2f4414dbea480e705ab280358"
 GRPC_GATEWAY_SHA="c8ec92d0481dd77d9b8c1808eb6476d190aa039a"
 
 # set up self-contained GOPATH for building
-export GOPATH=${PWD}/gopath
+export GOPATH=${PWD}/gopath.proto
 export GOBIN=${PWD}/bin
 export PATH="${GOBIN}:${PATH}"
 
@@ -110,4 +110,3 @@ if [ "$1" = "-g" ]; then
 else
 	echo "skipping grpc API reference document auto-generation..."
 fi
-
