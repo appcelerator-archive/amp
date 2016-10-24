@@ -2,4 +2,4 @@ all-logs:
   cmd: amp logs
   args:
   options:
-  expectation:
+  expectation: ([a-z0-9A-Z\.\-:\"\s\_\t\n$&%?/\[\]\%\>\<\,\;]((.)|(\s)){1,})

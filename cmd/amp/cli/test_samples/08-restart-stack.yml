@@ -1,5 +1,5 @@
 restart-stack:
-  cmd: amp stack restart
+  cmd: amp stack start
   args:
     - stack1
   options:

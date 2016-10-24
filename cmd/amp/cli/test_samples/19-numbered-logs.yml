@@ -4,4 +4,4 @@ numbered-logs:
     -
   options:
     - -n 10
-  expectation:
+  expectation: ([a-z0-9A-Z\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]((.)|(\s)){10})
