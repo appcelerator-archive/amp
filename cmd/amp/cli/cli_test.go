@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -20,10 +22,17 @@ type TestSpec struct {
 
 type CommandSpec struct {
 	Cmd         string   `yaml:"cmd"`
+	Step        int      `yaml:"step"`
 	Args        []string `yaml:"args"`
 	Options     []string `yaml:"options"`
 	Expectation string   `yaml:"expectation"`
 }
+
+type CommandSpecByStep []CommandSpec
+
+func (a CommandSpecByStep) Len() int           { return len(a) }
+func (a CommandSpecByStep) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a CommandSpecByStep) Less(i, j int) bool { return a[i].Step < a[j].Step }
 
 var (
 	testDir = "./test_samples"
@@ -52,6 +61,10 @@ func loadFiles(t *testing.T) []*TestSpec {
 	}
 	for _, f := range files {
 		name := f.Name()
+		if filepath.Ext(name) != ".yml" {
+			t.Log("Ignoring file:", name)
+			continue
+		}
 		t.Log("Loading file:", name)
 		valid := false
 		if !strings.HasPrefix(name, "00-") {
@@ -72,12 +85,17 @@ func loadFiles(t *testing.T) []*TestSpec {
 }
 
 func parseCmd(t *testing.T, test *TestSpec) {
+	var sortedCmdSpecs []CommandSpec
 	commandMap, err := generateCmdSpec(test.contents)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	for _, cmdSpec := range commandMap {
+	for _, k := range commandMap {
+		sortedCmdSpecs = append(sortedCmdSpecs, k)
+	}
+	sort.Sort(CommandSpecByStep(sortedCmdSpecs))
+	for _, cmdSpec := range sortedCmdSpecs {
 		cmdString := generateCmdString(cmdSpec)
 		t.Log(cmdString, "Command passed.")
 		for i := 0; i < 10; i++ {

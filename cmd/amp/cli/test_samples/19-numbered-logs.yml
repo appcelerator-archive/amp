@@ -1,5 +1,6 @@
 numbered-logs:
   cmd: amp logs
+  step: 1
   args:
     -
   options:

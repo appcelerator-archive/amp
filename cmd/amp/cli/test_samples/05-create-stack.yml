@@ -1,5 +1,6 @@
 create-stack:
   cmd: amp stack up
+  step: 1
   args:
   options:
      - -f ../../../api/rpc/stack/test_samples/sample-04.yml

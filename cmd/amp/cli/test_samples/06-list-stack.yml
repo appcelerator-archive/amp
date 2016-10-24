@@ -1,5 +1,6 @@
 list-stack:
   cmd: amp stack ls
+  step: 1
   args:
   options:
   expectation: ((NAME)(\s)+(ID)(\s)+(STATE)((.)|(\s))+(stack1)(\s)+([a-z0-9]{64})(\s)+(Running)((.)|(\s))(.)*)

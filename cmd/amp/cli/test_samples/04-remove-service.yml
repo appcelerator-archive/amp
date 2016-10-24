@@ -1,11 +1,13 @@
 remove-service:
   cmd: amp service rm
+  step: 1
   args:
     - pinger
   options:
   expectation: (pinger)
 list-service:
   cmd: docker service ls
+  step: 2
   args:
   options:
   expectation: ((ID)(\s)+(NAME)(\s)+(REPLICAS)(\s)+(IMAGE)(\s)+(COMMAND)((.)|(\s))+)
