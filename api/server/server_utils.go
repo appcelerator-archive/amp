@@ -79,7 +79,7 @@ func StartTestServer() (Config, *grpc.ClientConn) {
 	go Start(config)
 
 	// Wait for swarm to be ready
-	log.Println("Waiting swarm to be ready")
+	log.Println("Waiting for swarm to be ready")
 	if err := initDependencies(config); err != nil {
 		log.Panicln("Dependencies are not ready", err)
 	}
