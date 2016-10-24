@@ -12,7 +12,7 @@ Want to contribute to AMP? We think you're awesome! This page should help you ge
 
 ## Code of Conduct
 
-Before becoming involved, please read our [CODE-OF-CONDUCT](CODE-OF-CONDUCT).
+Before becoming involved, please read our [CODE-OF-CONDUCT](CODE-OF-CONDUCT.md).
 
 ## Reporting security issues
 
@@ -44,8 +44,10 @@ Please include:
   * The output of `docker info`.
   * The output of `amp --version`.
   * Steps to reproduce the problem (if possible and applicable).
-  * If sending lengthy output such as logs, it is preferred that you create a [gist](https://gist.github.com) and provide the link.
-  * Remove any sensitive data before posting the issue (replace with "REDACTED").
+
+If sending lengthy output such as logs, it is preferred that you create a
+[gist](https://gist.github.com) and provide the link. Remove any sensitive data
+before posting anything (replace with "REDACTED").
 
 ## Quick contribution tips and guidelines
 
@@ -59,10 +61,10 @@ before work is started.
 
 Fork the repository and make changes on your fork in a feature branch:
 
-- If it's a bug fix branch, name it XXXX-something where XXXX is the number of
+- If it's a bug fix branch, name it `XXXX-something` where `XXXX` is the number of
 	the issue. 
 - If it's a feature branch, create an enhancement issue to announce
-	your intentions, and name it XXXX-something where XXXX is the number of the
+	your intentions, and name it `XXXX-something` where `XXXX` is the number of the
 	issue.
 
 Submit unit tests for your changes. Go has a great test framework built in; use
@@ -111,7 +113,7 @@ close an issue. Including references automatically closes the issue on a merge.
 Please do not add yourself to the `AUTHORS` file, as it is regenerated regularly
 from the Git history.
 
-Please see the [Coding Style](#coding-style) for further guidelines.
+Please see the [Coding Style](#coding-style) section for further guidelines.
 
 ### Merge approval
 
