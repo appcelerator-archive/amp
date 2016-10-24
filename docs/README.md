@@ -1,28 +1,4 @@
-# AMP - the open source CaaS & microsevice platform for Docker
-
-AMP is an open-source Container-as-a-Service ([CaaS](https://blog.docker.com/2016/02/containers-as-a-service-caas/))
-platform for managing and monitoring containerized applications,  microservices, and microservice workers as part
-of a unified [serverless computing](https://en.wikipedia.org/wiki/Serverless_computing) environment.
-It is based on the swarm mode features introduced with Docker 1.12, providing developers with
-a straightforward development strategy for building on these features without the need to stray from the
-core Docker ecosystem and adopt complex third party frameworks.
-
-There is a 5 minute introductory video under the `docs` directory.
-
-This current version of this project is only a few months old and under heavy development. It is not
-ready for production.
-
-## Join the conversation
-
-Talk to other AMP users and contributors
-
-## Contributing
-
-See [contributing](project/CONTRIBUTING.md)
-
-## Getting started
-
-See
+# Getting started
 
 ## Starting AMP
 
