@@ -4,13 +4,13 @@ The `project/` directory contains documentation regarding creation and distribut
 
 ## Guides
 
-If you're a *contributor* or aspiring contributor, you should read [CONTRIBUTORS.md](../CONTRIBUTING.md).
+If you're a *contributor* or aspiring contributor, you should read [CONTRIBUTING](CONTRIBUTING.md).
 
-If you're a *maintainer* or aspiring maintainer, you should read [MAINTAINERS](../MAINTAINERS).
+If you're a *maintainer* or aspiring maintainer, you should read [MAINTAINERS](MAINTAINERS).
 
-If you're a *packager* or aspiring packager, you should read [PACKAGERS.md](./PACKAGERS.md).
+If you're a *packager* or aspiring packager, you should read [PACKAGERS.md](PACKAGERS.md).
 
-If you're a maintainer in charge of a *release*, you should read [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md).
+If you're a maintainer in charge of a *release*, you should read [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md).
 
 ## Roadmap
 
@@ -28,5 +28,4 @@ The files in this directory are modified versions directly based on Docker's own
 for [hacking on Docker](https://github.com/docker/docker/tree/master/project).
 
 [docker/LICENSE](https://github.com/docker/docker/blob/master/LICENSE)
-
 
