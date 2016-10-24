@@ -7,14 +7,14 @@ It is based on the swarm mode features introduced with Docker 1.12, providing de
 a straightforward development strategy for building on these features without the need to stray from the
 core Docker ecosystem and adopt complex third party frameworks.
 
-There is a 5 minute introductory video under the `docs` directory.
+There is a 5 minute introductory video under the [docs](docs/).
 
 This current version of this project is only a few months old and under heavy development. It is not
 ready for production.
 
 ## Roadmap
 
-See [roadmap](project/ROADMAP.md).
+See [ROADMAP](project/ROADMAP.md).
 
 ## Join the conversation
 
@@ -22,11 +22,11 @@ Join the [AMP Community](https://amp.mobilize.io) and chat with other AMP users 
 
 ## Contributing
 
-We would love for you to get involved. See [contributing](project/CONTRIBUTING.md) and the other docs under [the project directory](project/).
+We would love for you to get involved. See [CONTRIBUTING](project/CONTRIBUTING.md) and the other docs under [the project directory](project/).
 
 ## Getting started
 
-See [docs](docs/)
+See [docs](docs/).
 
 ## License
 
