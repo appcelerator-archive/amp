@@ -1,0 +1,19 @@
+services:
+  db:
+    image: 'postgres:9.4'
+  redis:
+    image: 'redis:latest'
+  result:
+    image: 'danjng/example-voting-app-result:latest'
+    public:
+      - name: results
+        internal_port: 80
+  vote:
+    image: 'docker/example-voting-app-vote:latest'
+    replicas: 5
+    public:
+      - name: vote
+        internal_port: 80
+  worker:
+    image: 'docker/example-voting-app-worker:latest'
+    replicas: 3
