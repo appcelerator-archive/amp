@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 (2016-10-24)
+
+https://github.com/appcelerator/amp/milestone/5?closed=1
+
+## 0.2.0 (2016-10-20)
+
+https://github.com/appcelerator/amp/milestone/3?closed=1
+
 ## 0.1.1 (2016-10-10)
 
 ### Client
@@ -20,8 +28,9 @@
 
 * Documentation Update [#207](https://github.com/appcelerator/amp/pull/207)
 
-### Runtime
+### Platform
 
+* AMP Swarm stop also removes user services [#234](https://github.com/appcelerator/amp/pull/234)
 * Etcd ListRaw & Watch feature addition [#213](https://github.com/appcelerator/amp/pull/213)
 * Fix HAproxy [#231](https://github.com/appcelerator/amp/pull/231)
 * Add stack-id and stack-name as labels in containers [#237](https://github.com/appcelerator/amp/pull/237)
@@ -29,15 +38,8 @@
 * Add env support to service [#244](https://github.com/appcelerator/amp/pull/244)
 * Add replicated/global mode support for Service [#256](https://github.com/appcelerator/amp/pull/256)
 * Fix `~/registry/data` automated creation [#285](https://github.com/appcelerator/amp/pull/285)
-
-### Networking
-
 * Networking basis enhancement - all services attached to amp-public by default [#204](https://github.com/appcelerator/amp/pull/204)
 * Add Service network attachment [#266](https://github.com/appcelerator/amp/pull/266)
-
-### Swarm
-
-* AMP Swarm stop also removes user services [#234](https://github.com/appcelerator/amp/pull/234)
 
 ### Vendoring
 
@@ -68,8 +70,10 @@ Alpha release (limited Preview)
   * Service publication options [#197](https://github.com/appcelerator/amp/pull/197)
 * Helpers integration [#200](https://github.com/appcelerator/amp/pull/200)
 
-### Runtime
+### Platform
 
+* Swarm start/stop options [#16](https://github.com/appcelerator/amp/pull/16)
+* Swarm monitor option [#33](https://github.com/appcelerator/amp/pull/33)
 * HAproxy integration [#100](https://github.com/appcelerator/amp/pull/100)
 * Etcd integration [#2](https://github.com/appcelerator/amp/pull/2)
 * Kafka integration [#52](https://github.com/appcelerator/amp/pull/52)
@@ -78,12 +82,8 @@ Alpha release (limited Preview)
 * Telegraf/InfluxDB/Grafana/Kibana - TIGK stack integration for observability [#74](https://github.com/appcelerator/amp/pull/74)
 * Zookeeper integration [#294](https://github.com/appcelerator/amp/pull/294)
 
-### Swarm
-
-* Swarm start/stop options [#16](https://github.com/appcelerator/amp/pull/16)
-* Swarm monitor option [#33](https://github.com/appcelerator/amp/pull/33)
-
 ### Vendoring
 
 * Glide update [#37](https://github.com/appcelerator/amp/pull/37)
 * Add fixed dependencies support [#47](https://github.com/appcelerator/amp/pull/47)
+
