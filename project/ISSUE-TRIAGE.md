@@ -110,7 +110,7 @@ labels to issues. These labels prevent duplicating effort.
 | status/more-info-needed       | Apply this to issues that are missing information (e.g. no `docker version` or `docker info` output, or no steps to reproduce), or require feedback from the reporter. If the issue is not updated after a week, it can generally be closed.
 | status/needs-attention        | Apply this label if an issue (or PR) needs more eyes.
 
-### 3. Prioritizing issue
+### 3. Priorize the issue
 
 When, and only when, an issue is attached to a specific milestone, the issue can be labeled with the
 following labels to indicate their degree of priority (from more urgent to less urgent).
