@@ -424,6 +424,11 @@ func (epc *etcdProcessCluster) StopAll() (err error) {
 func (epc *etcdProcessCluster) Close() error {
 	err := epc.StopAll()
 	for _, p := range epc.procs {
+		// p is nil when newEtcdProcess fails in the middle
+		// Close still gets called to clean up test data
+		if p == nil {
+			continue
+		}
 		os.RemoveAll(p.cfg.dataDirPath)
 	}
 	return err
@@ -505,6 +510,7 @@ func spawnWithExpects(args []string, xs ...string) error {
 		for {
 			l, err := proc.ExpectFunc(lineFunc)
 			if err != nil {
+				proc.Close()
 				return fmt.Errorf("%v (expected %q, got %q)", err, txt, lines)
 			}
 			lines = append(lines, l)

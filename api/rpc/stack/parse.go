@@ -64,6 +64,7 @@ type ipamConfig struct {
 	AuxAddress map[string]string `yaml:"aux_address"`
 }
 
+// ParseStackfile main function to parse stackfile
 func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
 	var stack = &Stack{}
 	stack.Id = stringid.GenerateNonCryptoID()
@@ -262,6 +263,7 @@ func copyServices(stack *Stack, specs map[string]serviceSpec, networkMap map[str
 			Labels:          labels,
 			ContainerLabels: containerLabels,
 			Networks:        networkAttachment,
+			Mounts:          spec.Mounts,
 		})
 	}
 	return nil

@@ -1,0 +1,7 @@
+service-stats:
+  cmd: amp stats
+  args:
+    -
+  options:
+    - --service
+  expectation: ((Service name)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)

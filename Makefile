@@ -147,3 +147,4 @@ test:
 	@go test $(REPO)/api/rpc/stack
 	@go test $(REPO)/data/influx
 	@go test $(REPO)/api/rpc/stats
+	@go test $(REPO)/api/rpc/topic

@@ -1,8 +1,8 @@
-hash: 83b4c999e7e2be90dfa6e8209b91d5b30eb955c8b781b14c99b7da18c866d81a
-updated: 2016-10-13T16:48:49.283435123+02:00
+hash: 94282a3d4fec19079f680f7cc366c9493bbcf33236a7479e130030f0571df3dc
+updated: 2016-10-21T11:43:08.269620857+02:00
 imports:
 - name: github.com/coreos/etcd
-  version: 2469a9568548b3f8abc22f5a2462c3443823334a
+  version: 83347907774bf36cbb261c594a32fd7b0f5dd9f6
   subpackages:
   - auth/authpb
   - clientv3
@@ -57,7 +57,7 @@ imports:
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/fatih/color
-  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+  version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/fsnotify/fsnotify
   version: bd2828f9f176e52d7222e565abb2d338d3f3c103
 - name: github.com/ghodss/yaml
@@ -127,7 +127,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: a6ef2f080c66d0a2e94e97cf74f80f772855da63
 - name: github.com/nats-io/go-nats-streaming
-  version: 1875d675b301931c7037d118eac68dca8c99ceed
+  version: f0b13ceaf55c6d86604169520dfd8ee3c03e9524
   subpackages:
   - pb
 - name: github.com/nats-io/nats
@@ -210,7 +210,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/grpc
-  version: 231b4cfea0e79843053a33f5fe90bd4d84b23cd3
+  version: b1a2821ca5a4fd6b6e48ddfbb7d6d7584d839d21
   subpackages:
   - codes
   - credentials
@@ -221,12 +221,12 @@ imports:
   - peer
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: eaecbad7a83e6b60f131825553e5eb7fd5a50b41
+  version: 1ad75b5396674e9c783400e89106bc0c8da9d786
   subpackages:
   - backoff
   - uritemplates
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 testImports:
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d

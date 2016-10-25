@@ -1,0 +1,5 @@
+all-logs:
+  cmd: amp logs
+  args:
+  options:
+  expectation:

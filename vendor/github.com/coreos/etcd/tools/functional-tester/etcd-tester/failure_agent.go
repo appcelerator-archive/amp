@@ -139,3 +139,16 @@ func newFailureSlowNetworkAll() failure {
 		recoverMember: recoverLatency,
 	}
 }
+
+func newFailureNop() failure {
+	return &failureNop{
+		description: "no failure",
+	}
+}
+
+func newFailureExternal(scriptPath string) failure {
+	return &failureExternal{
+		description: fmt.Sprintf("external fault injector (script: %s)", scriptPath),
+		scriptPath:  scriptPath,
+	}
+}

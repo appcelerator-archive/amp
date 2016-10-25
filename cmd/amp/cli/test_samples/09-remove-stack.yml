@@ -1,0 +1,17 @@
+stop-stack:
+  cmd: amp stack stop
+  args:
+    - stack1
+  options:
+  expectation: ([a-z0-9]{64})
+remove-stack:
+  cmd: amp stack rm
+  args:
+    - stack1
+  options:
+  expectation: ([a-z0-9]{64})
+list-stack:
+  cmd: amp stack ls
+  args:
+  options:
+  expectation: "No stack is available"

@@ -2,3 +2,4 @@ list-service:
   cmd: docker service ls
   args:
   options:
+  expectation: ((ID)(\s)+(NAME)(\s)+(REPLICAS)(\s)+(IMAGE)(\s)+(COMMAND)((.)|(\s))+(pinger)(.)+(appcelerator/pinger)(\s)+(.)*)

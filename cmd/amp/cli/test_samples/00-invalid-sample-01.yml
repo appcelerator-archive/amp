@@ -1,0 +1,8 @@
+invalid-sample:
+  cmd: amp service creat
+  args:
+    - appcelerator/pinger
+  options:
+    - --name pinger
+    - -p www:90:3000
+  expectation:

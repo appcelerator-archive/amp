@@ -5,3 +5,4 @@ create-service:
   options:
     - --name pinger
     - -p www:90:3000
+  expectation: ([a-z0-9]{25})

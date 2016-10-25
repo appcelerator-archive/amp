@@ -8,15 +8,16 @@
 # 2. Create function for starting the service and add it to startservices()
 
 set -euo pipefail
-AMP_VERSION=0.2.0
+AMP_VERSION=0.2.1
 INFLUXDATA_VERSION=1.0.2
+KAPACITOR_VERSION=1.0.2-1
 TELEGRAF_VERSION=1.0.1
-GRAFANA_VERSION=3.1.1
+GRAFANA_VERSION=3.1.1-1
 ELASTICSEARCH_VERSION=2.3.3
-ETCD_VERSION=3.0.12
-NATS_VERSION=0.2.2
+ETCD_VERSION=3.1.0-rc.0
+NATS_VERSION=0.3.0
 HAPROXY_VERSION=1.0.1
-TICK_CONFIG_VERSION=0.3.0
+TICK_CONFIG_VERSION=0.4.0
 
 # please keep sorted
 IMAGES=(
@@ -26,7 +27,7 @@ IMAGES=(
   appcelerator/grafana:grafana-${GRAFANA_VERSION}
   appcelerator/haproxy:${HAPROXY_VERSION}
   appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
-  appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
+  appcelerator/kapacitor:kapacitor-${KAPACITOR_VERSION}
   appcelerator/telegraf:telegraf-${TELEGRAF_VERSION}
   registry:2.5.1
   appcelerator/etcd:${ETCD_VERSION}
@@ -152,7 +153,7 @@ main() {
 
 # initialize / join swarm as manager
 initswarm() {
-  docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init)
+  docker node inspect self > /dev/null 2>&1 || docker swarm inspect > /dev/null 2>&1 || (echo "> Initializing swarm" && docker swarm init --advertise-addr 127.0.0.1)
 }
 
 # set up the amp-infra overlay network
@@ -344,7 +345,7 @@ kapacitor() { # Owner: ndegory
     -e SUBSCRIPTION_PROTOCOL="udp" \
     -e CONFIG_ARCHIVE_URL="https://github.com/appcelerator/amp-config/archive/${TICK_CONFIG_VERSION}.tar.gz" \
     $SLACK_OPTIONS \
-    appcelerator/kapacitor:kapacitor-${INFLUXDATA_VERSION}
+    appcelerator/kapacitor:kapacitor-${KAPACITOR_VERSION}
 }
 
 haproxy() { # Owner: freignat91

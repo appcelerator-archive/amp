@@ -15,7 +15,7 @@ import (
 )
 
 const (
-example1                = `
+	example1 = `
 services:
   pinger:
     image: appcelerator/pinger
@@ -36,7 +36,7 @@ services:
         publish_port: 3001
         internal_port: 3000`
 
-example2 = `
+	example2 = `
 services:
   pinger:
     image: appcelerator/pinger
@@ -77,7 +77,7 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	name := "stacktest"
 	//Start stack test
 	t.Log("start stack " + name)
-	rUp, errUp := client.Up(ctx, &stack.UpRequest{StackName: name, Stackfile: example1})
+	rUp, errUp := client.Up(ctx, &stack.StackFileRequest{StackName: name, Stackfile: example1})
 	if errUp != nil {
 		t.Fatal(errUp)
 	}

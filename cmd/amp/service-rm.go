@@ -19,7 +19,7 @@ var (
 		Long:  `Remove one or more services`,
 		Run: func(cmd *cobra.Command, args []string) {
 			AMP.Connect()
-			err := rm(AMP, cmd, args)
+			err := serviceRm(AMP, cmd, args)
 			if err != nil {
 				if AMP.Verbose() {
 					log.Println(err)
@@ -37,7 +37,7 @@ func init() {
 	ServiceCmd.AddCommand(serviceRmCmd)
 }
 
-func rm(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func serviceRm(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
