@@ -1,5 +1,6 @@
 invalid-sample:
   cmd: curl
+  step: 1
   args:
     - localhost:90/ping
   options:

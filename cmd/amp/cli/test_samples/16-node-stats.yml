@@ -1,5 +1,6 @@
 node-stats:
   cmd: amp stats
+  step: 1
   args:
     -
   options:

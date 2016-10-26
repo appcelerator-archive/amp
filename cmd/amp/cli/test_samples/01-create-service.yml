@@ -1,5 +1,6 @@
 create-service:
   cmd: amp service create
+  step: 1
   args:
     - appcelerator/pinger
   options:

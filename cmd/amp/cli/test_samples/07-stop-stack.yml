@@ -1,11 +1,13 @@
 stop-stack:
   cmd: amp stack stop
+  step: 1
   args:
     - stack1
   options:
   expectation: ([a-z0-9]{64})
 list-stack:
   cmd: amp stack ls
+  step: 2
   args:
   options:
   expectation: "No stack is available"

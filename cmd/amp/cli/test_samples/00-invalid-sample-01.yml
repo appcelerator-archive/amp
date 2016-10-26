@@ -1,5 +1,6 @@
 invalid-sample:
   cmd: amp service creat
+  step: 1
   args:
     - appcelerator/pinger
   options:
