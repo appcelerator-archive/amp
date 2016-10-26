@@ -1,4 +1,4 @@
-numbered-logs:
+logs-numbered:
   cmd: amp logs
   args:
     -

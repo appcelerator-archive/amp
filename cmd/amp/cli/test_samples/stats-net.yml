@@ -1,4 +1,4 @@
-net-stats:
+stats-net:
   cmd: amp stats
   args:
     -

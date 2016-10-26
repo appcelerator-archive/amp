@@ -1,6 +1,0 @@
-invalid-sample:
-  cmd: curl
-  args:
-    - localhost:90/ping
-  options:
-  expectation:

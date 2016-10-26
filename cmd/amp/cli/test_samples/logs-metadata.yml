@@ -1,4 +1,4 @@
-metadata-logs:
+logs-metadata:
   cmd: amp logs
   args:
     -

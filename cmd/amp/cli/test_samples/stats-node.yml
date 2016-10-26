@@ -1,4 +1,4 @@
-node-stats:
+stats-node:
   cmd: amp stats
   args:
     -

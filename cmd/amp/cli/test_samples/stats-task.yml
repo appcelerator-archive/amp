@@ -1,4 +1,4 @@
-task-stats:
+stats-task:
   cmd: amp stats
   args:
     -

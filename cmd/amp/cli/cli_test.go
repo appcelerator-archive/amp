@@ -1,134 +1,116 @@
 package cli_test
 
 import (
+	"fmt"
 	"github.com/appcelerator/amp/api/server"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 )
 
 type TestSpec struct {
-	fileName string
-	contents []byte
-	valid    bool
+	Name     string
+	Commands []CommandSpec
 }
 
 type CommandSpec struct {
-	Cmd         string   `yaml:"cmd"`
-	Args        []string `yaml:"args"`
-	Options     []string `yaml:"options"`
-	Expectation string   `yaml:"expectation"`
+	Cmd               string   `yaml:"cmd"`
+	Args              []string `yaml:"args"`
+	Options           []string `yaml:"options"`
+	Expectation       string   `yaml:"expectation"`
+	ExpectErrorStatus bool     `yaml:"expectErrorStatus"`
 }
 
 var (
 	testDir = "./test_samples"
 )
 
-func TestMain(t *testing.T) {
-	_, conn := server.StartTestServer()
-	t.Log(conn)
+func TestMain(m *testing.M) {
+	server.StartTestServer()
+	os.Exit(m.Run())
 }
 
 func TestCmds(t *testing.T) {
-	tests := loadFiles(t)
-	for _, test := range tests {
-		t.Log("-----------------------------------------------------------------------------------------")
-		t.Logf("test %s\n", test.fileName)
-		parseCmd(t, test)
-	}
-}
-
-func loadFiles(t *testing.T) []*TestSpec {
-	tests := []*TestSpec{}
-	files, err := ioutil.ReadDir(testDir)
+	tests, err := loadTestSpecs()
 	if err != nil {
-		t.Error(err)
-		return nil
-	}
-	for _, f := range files {
-		name := f.Name()
-		t.Log("Loading file:", name)
-		valid := false
-		if !strings.HasPrefix(name, "00-") {
-			valid = true
-		}
-		contents, err := ioutil.ReadFile(path.Join(testDir, name))
-		if err != nil {
-			t.Errorf("unable to load test sample: %s. Error: %v", name, err)
-		}
-		testSpec := &TestSpec{
-			fileName: name,
-			contents: contents,
-			valid:    valid,
-		}
-		tests = append(tests, testSpec)
-	}
-	return tests
-}
-
-func parseCmd(t *testing.T, test *TestSpec) {
-	commandMap, err := generateCmdSpec(test.contents)
-	if err != nil {
-		t.Error(err)
+		t.Errorf("unable to load test specs, reason: %v", err)
 		return
 	}
-	for _, cmdSpec := range commandMap {
-		cmdString := generateCmdString(cmdSpec)
-		t.Log(cmdString, "Command passed.")
-		for i := 0; i < 10; i++ {
-			t.Log(cmdString, "Running...")
-			t.Log(cmdString, "Iteration:", i+1)
-			result, err := runCmd(cmdString)
-			validID := regexp.MustCompile(cmdSpec.Expectation)
-			if test.valid == false {
-				if err == nil {
-					t.Log(cmdString, "Error:", err)
-					t.Log(cmdString, "Invalid Sample Command has failed, retrying.")
-					time.Sleep(1 * time.Second)
-				} else {
-					if !validID.MatchString(string(result)) {
-						t.Log(cmdString, "Error: miss matched expectation")
-						t.Fail()
-						break
-					}
-					t.Log(cmdString, "Invalid Sample Command result:\n", string(result))
-					break
-				}
-			} else {
-				if err != nil {
-					t.Log(cmdString, "Error:", err)
-					t.Log(cmdString, "Command failed, retrying.")
-					time.Sleep(1 * time.Second)
-				} else {
-					if !validID.MatchString(string(result)) {
-						t.Log(cmdString, "Error: miss matched expectation")
-						t.Fail()
-						break
-					}
-					t.Log(cmdString, "Command result:\n", string(result))
-					break
-				}
-			}
-			if i >= 9 {
-				t.Log(cmdString, "Error:", err)
-				t.Log(cmdString, "Command has failed, exiting.")
-				t.Fail()
-			}
+
+	for _, test := range tests {
+		t.Log("-----------------------------------------------------------------------------------------")
+		t.Logf("Running spec: %s", test.Name)
+		if err := runTestSpec(t, test); err != nil {
+			t.Error(err)
+			return
 		}
 	}
 }
 
-func generateCmdSpec(b []byte) (out map[string]CommandSpec, err error) {
-	err = yaml.Unmarshal(b, &out)
-	return
+func loadTestSpecs() ([]*TestSpec, error) {
+	files, err := ioutil.ReadDir(testDir)
+	if err != nil {
+		return nil, err
+	}
+
+	tests := []*TestSpec{}
+	for _, file := range files {
+		test, err := loadTestSpec(path.Join(testDir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+		tests = append(tests, test)
+	}
+	return tests, nil
 }
 
-func generateCmdString(cmdSpec CommandSpec) (cmdString []string) {
+func loadTestSpec(fileName string) (*TestSpec, error) {
+	content, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load test spec: %s. Error: %v", fileName, err)
+	}
+	testSpec := &TestSpec{
+		Name: fileName,
+	}
+
+	commandMap := map[string]CommandSpec{}
+	if err := yaml.Unmarshal(content, &commandMap); err != nil {
+		return nil, fmt.Errorf("unable to parse test spec: %s. Error: %v", fileName, err)
+	}
+
+	// Keep values only
+	for _, command := range commandMap {
+		testSpec.Commands = append(testSpec.Commands, command)
+	}
+
+	return testSpec, nil
+}
+
+func runTestSpec(t *testing.T, test *TestSpec) error {
+	for _, cmdSpec := range test.Commands {
+		cmdString := generateCmdString(&cmdSpec)
+		t.Logf("Running: %s", strings.Join(cmdString, " "))
+		actualOutput, err := exec.Command(cmdString[0], cmdString[1:]...).CombinedOutput()
+		expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
+		if !expectedOutput.MatchString(string(actualOutput)) {
+			return fmt.Errorf("miss matched expected output: %s", actualOutput)
+		}
+		if err != nil && !cmdSpec.ExpectErrorStatus {
+			return fmt.Errorf("Command was expected to exit with zero status but got: %v", err)
+		}
+		if err == nil && cmdSpec.ExpectErrorStatus {
+			return fmt.Errorf("Command was expected to exit with error status but existed with zero")
+		}
+	}
+	return nil
+}
+
+func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	cmdSplit := strings.Fields(cmdSpec.Cmd)
 	optionsSplit := []string{}
 	for _, val := range cmdSpec.Options {
@@ -136,11 +118,5 @@ func generateCmdString(cmdSpec CommandSpec) (cmdString []string) {
 	}
 	cmdString = append(cmdSplit, cmdSpec.Args...)
 	cmdString = append(cmdString, optionsSplit...)
-	return
-}
-
-func runCmd(cmdString []string) (result []byte, err error) {
-	cmd := exec.Command(cmdString[0], cmdString[1:]...)
-	result, err = cmd.CombinedOutput()
 	return
 }

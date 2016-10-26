@@ -1,4 +1,4 @@
-all-logs:
+logs-all:
   cmd: amp logs
   args:
   options:

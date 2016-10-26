@@ -1,4 +1,4 @@
-create-service:
+service-create:
   cmd: amp service create
   args:
     - appcelerator/pinger
