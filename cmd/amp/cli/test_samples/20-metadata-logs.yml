@@ -4,4 +4,4 @@ metadata-logs:
     -
   options:
     - -m
-  expectation:
+  expectation:  ((timestamp:"[0-9A-Z\.\-:\"]{1,})(\s)(time_id:"[0-9A-Z\.\-:$\"]{1,})(\s)(service_id:"[a-z0-9$\"]{1,})(\s)(service_name:"[a-z0-9$\"]{1,})(\s)(message:"[a-zA-Z\./\-0-9:\s\_\t\n\$&%?/\[\]\%\>\<\,\;$\"]{1,})(\s)(container_id:"[a-z0-9$\"]{1,})(\s)(node_id:"[a-z0-9$\"]{1,})(\s)(task_id:"[a-z0-9$\"]{1,})(\s)(task_name:"[a-z\.0-9$\"]{1,})((.)|(\s)){1,}(.)*)
