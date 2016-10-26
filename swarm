@@ -8,7 +8,7 @@
 # 2. Create function for starting the service and add it to startservices()
 
 set -euo pipefail
-AMP_VERSION=0.2.1
+AMP_VERSION=latest
 UI_VERSION=0.2.0
 INFLUXDATA_VERSION=1.0.2
 KAPACITOR_VERSION=1.0.2-1
