@@ -139,12 +139,12 @@ run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
 test:
-#	@go test $(REPO)/api/rpc/build
-	@go test $(REPO)/api/rpc/logs
-#	@go test $(REPO)/api/rpc/project
-	@go test $(REPO)/api/rpc/service
-	@go test $(REPO)/data/storage/etcd
-	@go test $(REPO)/api/rpc/stack
-	@go test $(REPO)/data/influx
-	@go test $(REPO)/api/rpc/stats
-	@go test $(REPO)/api/rpc/topic
+#	@go test -v $(REPO)/api/rpc/build
+#	@go test -v $(REPO)/api/rpc/project
+	@go test -v $(REPO)/api/rpc/service
+	@go test -v $(REPO)/data/storage/etcd
+	@go test -v $(REPO)/api/rpc/stack
+	@go test -v $(REPO)/data/influx
+	@go test -v $(REPO)/api/rpc/stats
+	@go test -v $(REPO)/api/rpc/topic
+	@go test -v $(REPO)/api/rpc/logs
