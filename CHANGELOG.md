@@ -1,12 +1,77 @@
 # Changelog
 
+## 0.2.2 (2016-10-25)
+
+### Platform
+
+* Hotfix on v0.2.1 (locked versions of Docker images for the AMP swarm)
+
+
 ## 0.2.1 (2016-10-24)
 
 https://github.com/appcelerator/amp/milestone/5?closed=1
 
+### Client
+
+* Fix update amp stats [#357](https://github.com/appcelerator/amp/pull/357)
+* Stack create command [#362](https://github.com/appcelerator/amp/pull/362)
+* Add amp topic commands [#366](https://github.com/appcelerator/amp/pull/366)
+* Add more CLI tests [#368](https://github.com/appcelerator/amp/pull/368)
+* Add voting app as example [#379](https://github.com/appcelerator/amp/pull/379)
+* Add regexp for logs [#383](https://github.com/appcelerator/amp/pull/383)
+
+### Platform
+
+* Fix stack workaround upon docker 1.12.2 [#345](https://github.com/appcelerator/amp/pull/345)
+* Add stack volume support [#355](https://github.com/appcelerator/amp/pull/355)
+* Fix etcd version mismatch [#365](https://github.com/appcelerator/amp/pull/365)
+* Remove reference to Kafka [#367](https://github.com/appcelerator/amp/pull/367)
+* Swith to etcd 3.1 [#380](https://github.com/appcelerator/amp/pull/380)
+* Slack output for Kapacitor based on environment variables [#347](https://github.com/appcelerator/amp/pull/347)
+* Force swarm init on 127.0.0.1 [#349](https://github.com/appcelerator/amp/pull/349)
+* Fix make test [#352](https://github.com/appcelerator/amp/pull/352)
+* Update parse & networks tests [#356](https://github.com/appcelerator/amp/pull/356)
+* Reduce Kapacitor alerts noise [#358](https://github.com/appcelerator/amp/pull/358)
+* Use latest release of NATS streaming [#372](https://github.com/appcelerator/amp/pull/372)
+
+
 ## 0.2.0 (2016-10-20)
 
 https://github.com/appcelerator/amp/milestone/3?closed=1
+
+### Client
+
+* Enrich CLI command tests [#305](https://github.com/appcelerator/amp/pull/305)
+* Fix stack tests [#333](https://github.com/appcelerator/amp/pull/333)
+* Fix Stack listing quite mode [#326](https://github.com/appcelerator/amp/pull/327)
+* Add Stack listing options [#331](https://github.com/appcelerator/amp/pull/331)
+* Improve error messages, verbose mode & consistant ids [#332](https://github.com/appcelerator/amp/pull/332)
+* Fix log commands [#340](https://github.com/appcelerator/amp/pull/340)
+
+### Documentation
+
+* Documentation update [#300](https://github.com/appcelerator/amp/pull/300)
+
+### Platform
+
+* Add Network item for services in stack [#304](https://github.com/appcelerator/amp/pull/304)
+* Use external network in stacks [#341](https://github.com/appcelerator/amp/pull/341)
+* Add volumes/mount in stack file [#299](https://github.com/appcelerator/amp/issues/299)
+* Replaces Kafka and zookeeper messaging by NATS [#325](https://github.com/appcelerator/amp/pull/325)
+* Refactored state machine to use strings instead of integers [#335](https://github.com/appcelerator/amp/pull/335)
+* Remove volumes after removing the services [#297](https://github.com/appcelerator/amp/pull/297)
+* Fix Swarm monitor refresh [#308](https://github.com/appcelerator/amp/pull/308)
+* ETCD - switching to stable branch 3.0 [#312](https://github.com/appcelerator/amp/pull/312)
+* Add telegraf service and grafana dashboard for haproxy stats [#315](https://github.com/appcelerator/amp/pull/315)
+* Use nats streaming as messaging system [#318](https://github.com/appcelerator/amp/issues/318)
+* Fix explicit versions for images used by amp [#321](https://github.com/appcelerator/amp/pull/321)
+* Faster docker build of amp image [#334](https://github.com/appcelerator/amp/pull/334)
+* Moving amp-agent & amp-log-worker to amp [#337](https://github.com/appcelerator/amp/pull/337)
+
+### Vendoring
+
+* Updating vendor for nats streaming [#319](https://github.com/appcelerator/amp/pull/319)
+
 
 ## 0.1.1 (2016-10-10)
 
@@ -86,4 +151,3 @@ Alpha release (limited Preview)
 
 * Glide update [#37](https://github.com/appcelerator/amp/pull/37)
 * Add fixed dependencies support [#47](https://github.com/appcelerator/amp/pull/47)
-
