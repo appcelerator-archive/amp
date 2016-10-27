@@ -1,4 +1,4 @@
-cpu-stats:
+stats-cpu:
   cmd: amp stats
   args:
     -

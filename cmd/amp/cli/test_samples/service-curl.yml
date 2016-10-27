@@ -1,4 +1,4 @@
-curl-service:
+service-curl:
   cmd: curl
   args:
     - localhost:90/ping

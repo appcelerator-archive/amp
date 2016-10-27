@@ -1,4 +1,4 @@
-list-service:
+service-list:
   cmd: docker service ls
   args:
   options:

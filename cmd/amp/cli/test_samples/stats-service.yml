@@ -1,4 +1,4 @@
-service-stats:
+stats-service:
   cmd: amp stats
   args:
     -

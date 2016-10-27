@@ -1,4 +1,4 @@
-create-stack:
+stack-create:
   cmd: amp stack up
   args:
   options:

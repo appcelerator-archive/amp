@@ -1,4 +1,4 @@
-stack-logs:
+logs-stack:
   cmd: amp logs
   args:
     -

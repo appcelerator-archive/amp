@@ -1,10 +1,10 @@
-stop-stack:
+stack-stop:
   cmd: amp stack stop
   args:
     - stack1
   options:
   expectation: ([a-z0-9]{64})
-list-stack:
+stack-list:
   cmd: amp stack ls
   args:
   options:

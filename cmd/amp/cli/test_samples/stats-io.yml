@@ -1,4 +1,4 @@
-io-stats:
+stats-io:
   cmd: amp stats
   args:
     -
