@@ -288,6 +288,10 @@ func (s *ClusterServer) AmpStart(tx context.Context, req *servergrpc.AmpRequest)
 			logf.error("Error stopting amp at (1): %v\n", err)
 		}
 	}
+	if err := manager.systemPrerequisites(); err != nil {
+		logf.printf("Prerequisite error: %v\n", err)
+		return nil, grpc.Errorf(codes.Internal, "Prerequisite error: %v\n", err)
+	}
 	if err := manager.Start(stack); err != nil {
 		logf.error("Error starting amp: %v\n", err)
 		if err := manager.Stop(stack); err != nil {
