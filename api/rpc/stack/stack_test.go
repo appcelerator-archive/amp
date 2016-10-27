@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 	"time"
+        "fmt"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/runtime"
@@ -73,8 +74,7 @@ func TestMain(m *testing.M) {
 //Test two stacks life cycle in the same time
 func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	//Start stack essai1
-	//name := fmt.Sprintf("test-%d", time.Now().Unix())
-	name := "stacktest"
+	name := fmt.Sprintf("test-%d", time.Now().Unix())
 	//Start stack test
 	t.Log("start stack " + name)
 	rUp, errUp := client.Up(ctx, &stack.StackFileRequest{StackName: name, Stackfile: example1})
@@ -95,7 +95,6 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 		StackIdent: rUp.StackId,
 	}
 	//Stop stack test
-	time.Sleep(1 * time.Second)
 	t.Log("stop stack " + name)
 	rStop, errStop := client.Stop(ctx, &stackRequest)
 	if errStop != nil {
@@ -103,7 +102,6 @@ func TestShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	}
 	assert.NotEmpty(t, rStop.StackId, "Stack test StackId should not be empty")
 	//Restart stack test
-	time.Sleep(3 * time.Second)
 	t.Log("restart stack " + name)
 	rRestart, errRestart := client.Start(ctx, &stackRequest)
 	if errRestart != nil {
