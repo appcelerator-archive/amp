@@ -39,7 +39,7 @@ IMAGES=(
 MINIMAGES=(
   appcelerator/amp:${AMP_VERSION}
   appcelerator/elasticsearch-amp:${ELASTICSEARCH_VERSION}
-  appcelerator/influxdb:influxdb-${INFLUXDATA_VERSION}
+  appcelerator/influxdb-amp:${INFLUXDATA_VERSION}
   appcelerator/telegraf:telegraf-${TELEGRAF_VERSION}
   registry:2.5.1
   appcelerator/etcd:${ETCD_VERSION}
