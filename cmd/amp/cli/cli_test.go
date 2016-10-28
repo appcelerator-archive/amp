@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -64,12 +65,17 @@ func loadTestSpecs() ([]*TestSpec, error) {
 		if err != nil {
 			return nil, err
 		}
-		tests = append(tests, test)
+		if test != nil {
+			tests = append(tests, test)
+		}
 	}
 	return tests, nil
 }
 
 func loadTestSpec(fileName string) (*TestSpec, error) {
+	if filepath.Ext(fileName) != ".yml" {
+		return nil, nil
+	}
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load test spec: %s. Error: %v", fileName, err)
