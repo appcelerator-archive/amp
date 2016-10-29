@@ -4,4 +4,4 @@ stats-cpu:
     -
   options:
     - --cpu
-  expectation: ((Service name)(\s)+(CPU %%)((.)|(\s))+((.)|(\s)){1,}(.)*)
+  expectation: (?m)Service name\s+CPU %%\s*\n-+\s*\n[a-z]+\s+[0-9\.]+%
