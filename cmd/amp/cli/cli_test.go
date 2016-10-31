@@ -20,11 +20,11 @@ type TestSpec struct {
 }
 
 type CommandSpec struct {
-	Cmd               string   `yaml:"cmd"`
-	Args              []string `yaml:"args"`
-	Options           []string `yaml:"options"`
-	Expectation       string   `yaml:"expectation"`
-	ExpectErrorStatus bool     `yaml:"expectErrorStatus"`
+	Cmd                string   `yaml:"cmd"`
+	Args               []string `yaml:"args"`
+	Options            []string `yaml:"options"`
+	Expectation        string   `yaml:"expectation"`
+	ExpectErrorStatus  bool     `yaml:"expectErrorStatus"`
 }
 
 var (
@@ -84,7 +84,7 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 		Name: fileName,
 	}
 
-	commandMap := map[string]CommandSpec{}
+	var commandMap []CommandSpec
 	if err := yaml.Unmarshal(content, &commandMap); err != nil {
 		return nil, fmt.Errorf("unable to parse test spec: %s. Error: %v", fileName, err)
 	}
@@ -110,7 +110,7 @@ func runTestSpec(t *testing.T, test *TestSpec) error {
 			return fmt.Errorf("Command was expected to exit with zero status but got: %v", err)
 		}
 		if err == nil && cmdSpec.ExpectErrorStatus {
-			return fmt.Errorf("Command was expected to exit with error status but existed with zero")
+			return fmt.Errorf("Command was expected to exit with error status but exited with zero")
 		}
 	}
 	return nil
