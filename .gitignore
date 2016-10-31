@@ -2,3 +2,5 @@
 /amplifier
 /amp-agent
 /amp-log-worker
+coverage.out
+coverage-all.out
