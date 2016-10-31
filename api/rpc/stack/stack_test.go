@@ -1,10 +1,10 @@
 package stack_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
-        "fmt"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/runtime"

@@ -14,15 +14,12 @@ import (
 var logsCmd = &cobra.Command{
 	Use:   "logs [OPTIONS] [SERVICE]",
 	Short: "Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.",
-	Run: func(cmd *cobra.Command, args []string) {
-		AMP.Connect()
-		err := Logs(AMP, cmd, args)
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		_, err = AMP.Connect()
 		if err != nil {
-			if AMP.Verbose() {
-				log.Println(err)
-			}
-			log.Fatal("Failed to get logs")
+			return
 		}
+		return Logs(AMP, cmd, args)
 	},
 }
 

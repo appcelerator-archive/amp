@@ -31,7 +31,7 @@ The usual workflow looks like this:
 ### Running a stack
 
     amp stack ls
-    amp stack restart
+    amp stack start
     amp stack rm
     amp stack stop
     amp stack up

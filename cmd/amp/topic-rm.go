@@ -3,11 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"log"
 )
 
 var (
@@ -15,15 +15,8 @@ var (
 		Use:   "rm [OPTIONS] TOPIC",
 		Short: "Remove topic",
 		Long:  `Remove topic.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := removeTopic(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatalln("Failed to remove topic:", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return removeTopic(AMP, cmd, args)
 		},
 	}
 )

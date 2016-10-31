@@ -3,11 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"log"
 )
 
 var (
@@ -15,15 +15,8 @@ var (
 		Use:   "create [OPTIONS] NAME",
 		Short: "Create a topic",
 		Long:  `Create a topic.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := createTopic(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatalln("Failed to create topic:", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return createTopic(AMP, cmd, args)
 		},
 	}
 )

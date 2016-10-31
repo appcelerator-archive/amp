@@ -16,6 +16,10 @@ var StackCmd = &cobra.Command{
 	Use:   "stack operations",
 	Short: "Stack operations",
 	Long:  `Manage stack-related operations.`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+		_, err = AMP.Connect()
+		return
+	},
 }
 
 var (
@@ -23,30 +27,16 @@ var (
 		Use:   "create [-f FILE] [name]",
 		Short: "Create a stack",
 		Long:  `Create a stack.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackCreate(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to create and deploy stack: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackCreate(AMP, cmd, args)
 		},
 	}
 	stackUpCmd = &cobra.Command{
 		Use:   "up [-f FILE] [name]",
 		Short: "Create and deploy a stack",
 		Long:  `Create and deploy a stack.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackUp(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to create and deploy stack: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackUp(AMP, cmd, args)
 		},
 	}
 	// stack configuration file
@@ -55,60 +45,32 @@ var (
 		Use:   "start [stack name or id]",
 		Short: "Start a stopped stack",
 		Long:  `Start a stopped stack`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackStart(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to start stack: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackStart(AMP, cmd, args)
 		},
 	}
 	stackStopCmd = &cobra.Command{
 		Use:   "stop [stack name or id]",
 		Short: "Stop a stack",
 		Long:  `Stop all services of a stack.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackStop(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to stop stack: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackStop(AMP, cmd, args)
 		},
 	}
 	stackRmCmd = &cobra.Command{
 		Use:   "rm [stack name or id]",
 		Short: "Remove a stack",
 		Long:  `Remove a stack completly including ETCD data.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackRm(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to remove stack: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackRm(AMP, cmd, args)
 		},
 	}
 	stackListCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List available stacks",
 		Long:  `List available stacks.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := stackList(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to list stacks: ", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackList(AMP, cmd, args)
 		},
 	}
 	listQuiet  *bool

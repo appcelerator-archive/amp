@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"log"
-	"os"
-	"text/tabwriter"
 )
 
 const (
@@ -20,15 +20,8 @@ var (
 		Use:   "ls [OPTIONS]",
 		Short: "List topics",
 		Long:  `List topics.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := listTopic(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatalln("Failed to list topics:", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listTopic(AMP, cmd, args)
 		},
 	}
 )

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -27,28 +26,16 @@ var (
 		Use:   "push [image]",
 		Short: "Push an image to the amp registry",
 		Long:  `Push an image to the amp registry`,
-		Run: func(cmd *cobra.Command, args []string) {
-			err := RegistryPush(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Could not push image")
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return RegistryPush(AMP, cmd, args)
 		},
 	}
 	reglsCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List the amp registry images",
 		Long:  `List the amp registry images`,
-		Run: func(cmd *cobra.Command, args []string) {
-			err := RegistryLs(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Could not list images")
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return RegistryLs(AMP, cmd, args)
 		},
 	}
 )
