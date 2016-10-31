@@ -1,8 +1,0 @@
-service-create:
-  cmd: amp service create
-  args:
-    - appcelerator/pinger
-  options:
-    - --name pinger
-    - -p www:90:3000
-  expectation: ([a-z0-9]{25})

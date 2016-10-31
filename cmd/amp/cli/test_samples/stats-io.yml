@@ -1,7 +1,0 @@
-stats-io:
-  cmd: amp stats
-  args:
-    -
-  options:
-    - --io
-  expectation: (?m)Service name\s+Disk IO\s+read/write\s*\n-+\s*\n[a-z]+\s+[0-9]+.* / [0-9]+

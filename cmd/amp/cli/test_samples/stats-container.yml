@@ -1,7 +1,0 @@
-stats-container:
-  cmd: amp stats
-  args:
-    -
-  options:
-    - --container
-  expectation: ((Service name)(\s)+(Container name)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)

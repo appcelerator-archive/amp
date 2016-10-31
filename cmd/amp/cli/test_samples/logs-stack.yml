@@ -1,7 +1,0 @@
-logs-stack:
-  cmd: amp logs
-  args:
-    -
-  options:
-    - --stack stack1
-  expectation:

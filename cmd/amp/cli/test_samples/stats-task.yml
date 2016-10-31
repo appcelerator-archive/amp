@@ -1,7 +1,0 @@
-stats-task:
-  cmd: amp stats
-  args:
-    -
-  options:
-    - --task
-  expectation: ((Service name)(\s)+(Task name)(\s)+(Node id)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)
