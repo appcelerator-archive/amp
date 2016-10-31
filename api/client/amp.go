@@ -69,19 +69,16 @@ type AMP struct {
 }
 
 // Connect to amplifier
-func (a *AMP) Connect() *grpc.ClientConn {
-	conn, err := grpc.Dial(a.Configuration.ServerAddress,
+func (a *AMP) Connect() (conn *grpc.ClientConn, err error) {
+	conn, err = grpc.Dial(a.Configuration.ServerAddress,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second))
 	if err != nil {
-		if a.Verbose() {
-			log.Println(err)
-		}
-		log.Fatal("Failed to connect to server")
+		return nil, err
 	}
 	a.Conn = conn
-	return conn
+	return conn, err
 }
 
 // Disconnect from amplifier

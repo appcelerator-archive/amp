@@ -17,15 +17,8 @@ var (
 		Use:   "rm [OPTIONS] SERVICE [SERVICE...]",
 		Short: "Remove one or more services",
 		Long:  `Remove one or more services`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := serviceRm(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to remove service")
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return serviceRm(AMP, cmd, args)
 		},
 	}
 

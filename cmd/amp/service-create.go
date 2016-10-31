@@ -16,15 +16,8 @@ var (
 		Use:   "create [OPTIONS] IMAGE [CMD] [ARG...]",
 		Short: "Create a new service",
 		Long:  `Create a new service`,
-		Run: func(cmd *cobra.Command, args []string) {
-			AMP.Connect()
-			err := serviceCreate(AMP, cmd, args)
-			if err != nil {
-				if AMP.Verbose() {
-					log.Println(err)
-				}
-				log.Fatal("Failed to create service")
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return serviceCreate(AMP, cmd, args)
 		},
 	}
 

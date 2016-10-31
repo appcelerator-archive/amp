@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"os"
+
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
@@ -42,6 +44,10 @@ func main() {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
 		AMP = client.NewAMP(&Config)
+		if AMP.Verbose() == false {
+			RootCmd.SilenceErrors = true
+			RootCmd.SilenceUsage = true
+		}
 		cli.AtExit(func() {
 			if AMP != nil {
 				AMP.Disconnect()
@@ -76,9 +82,16 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
 	RootCmd.AddCommand(configCmd)
 	RootCmd.AddCommand(infoCmd)
-	if err := RootCmd.Execute(); err != nil {
+	cmd, _, err := RootCmd.Find(os.Args[1:])
+	if err != nil {
 		fmt.Println(err)
-		cli.Exit(-1)
+		cli.Exit(1)
+	}
+	if err := cmd.Execute(); err != nil {
+		if AMP.Verbose() == false {
+			fmt.Println("Error during: ", cmd.Short)
+		}
+		cli.Exit(1)
 	}
 	cli.Exit(0)
 }

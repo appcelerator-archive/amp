@@ -15,9 +15,13 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login via github",
 	Long:  `Create a github access token and store it in your Config file to authenticate further commands`,
-	Run: func(cmd *cobra.Command, args []string) {
-		AMP.Connect()
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		_, err = AMP.Connect()
+		if err != nil {
+			return
+		}
 		Login(AMP)
+		return
 	},
 }
 
