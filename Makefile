@@ -59,6 +59,9 @@ GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${HOME}/.glide:/
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
 
+# $(REPO)/api/rpc/build @go test -v $(REPO)/api/rpc/project
+PACKAGES = $(REPO)/api/rpc/service $(REPO)/data/storage/etcd $(REPO)/api/rpc/stack $(REPO)/data/influx $(REPO)/api/rpc/stats $(REPO)/api/rpc/topic $(REPO)/api/rpc/logs
+
 all: version check build
 
 arch:
@@ -71,6 +74,7 @@ clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which $(CLI)) ./$(CLI)
 	@rm -f $$(which $(SERVER)) ./$(SERVER)
+	@rm coverage.out coverage-all.out
 
 install-deps:
 	@$(GLIDE_INSTALL)
@@ -139,12 +143,12 @@ run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
 test:
-#	@go test -v $(REPO)/api/rpc/build
-#	@go test -v $(REPO)/api/rpc/project
-	@go test -v $(REPO)/api/rpc/service
-	@go test -v $(REPO)/data/storage/etcd
-	@go test -v $(REPO)/api/rpc/stack
-	@go test -v $(REPO)/data/influx
-	@go test -v $(REPO)/api/rpc/stats
-	@go test -v $(REPO)/api/rpc/topic
-	@go test -v $(REPO)/api/rpc/logs
+	$(foreach pkg,$(PACKAGES),\
+		go test -v $(pkg);)
+
+cover:
+	echo "mode: count" > coverage-all.out
+	$(foreach pkg,$(PACKAGES),\
+		go test -coverprofile=coverage.out -covermode=count $(pkg);\
+		tail -n +2 coverage.out >> coverage-all.out;)
+	go tool cover -html=coverage-all.out
