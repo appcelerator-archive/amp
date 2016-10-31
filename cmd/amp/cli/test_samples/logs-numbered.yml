@@ -1,7 +1,0 @@
-logs-numbered:
-  cmd: amp logs
-  args:
-    -
-  options:
-    - -n 10
-  expectation: ([a-z0-9A-Z\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]((.)|(\s)){10})

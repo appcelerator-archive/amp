@@ -1,7 +1,0 @@
-stack-create:
-  cmd: amp stack up
-  args:
-  options:
-     - -f ../../../api/rpc/stack/test_samples/sample-04.yml
-     - stack1
-  expectation: ([a-z0-9]{64})

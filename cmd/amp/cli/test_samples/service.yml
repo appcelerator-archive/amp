@@ -1,0 +1,35 @@
+- service-create:
+  cmd: amp service create
+  args:
+    - appcelerator/pinger
+  options:
+    - --name pinger
+    - -p www:90:3000
+  expectation: ([a-z0-9]{25})
+
+- service-list:
+  cmd: docker service ls
+  args:
+  options:
+  expectation: (?ms)ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND.+\n[a-z0-9]{12}\s+.+appcelerator/pinger
+
+# Commented out until Delay and APIcall (Blocking) implemented.
+# - service-curl:
+#   cmd: curl
+#   args:
+#     - localhost:90/ping
+#   options:
+#   expectation: ((.)|(\s))*(pong)((.)|(\s))*
+
+- service-remove:
+  cmd: amp service rm
+  args:
+    - pinger
+  options:
+  expectation: (pinger)
+
+- service-list:
+  cmd: docker service ls
+  args:
+  options:
+  expectation: ((ID)(\s)+(NAME)(\s)+(REPLICAS)(\s)+(IMAGE)(\s)+(COMMAND)((.)|(\s))+)

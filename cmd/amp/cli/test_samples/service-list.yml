@@ -1,5 +1,0 @@
-service-list:
-  cmd: docker service ls
-  args:
-  options:
-  expectation: (?ms)ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND.+\n[a-z0-9]{12}\s+.+appcelerator/pinger
