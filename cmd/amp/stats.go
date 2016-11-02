@@ -123,6 +123,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	query.FilterContainerName = backQuoteDash(cmd.Flag("container-name").Value.String())
 	query.FilterContainerImage = backQuoteDash(cmd.Flag("image").Value.String())
 	query.FilterServiceId = cmd.Flag("service-id").Value.String()
+	query.FilterServiceName = cmd.Flag("service-name").Value.String()
 	query.FilterTaskId = cmd.Flag("task-id").Value.String()
 	query.FilterTaskName = backQuoteDash(cmd.Flag("task-name").Value.String())
 	query.FilterNodeId = cmd.Flag("node-id").Value.String()
