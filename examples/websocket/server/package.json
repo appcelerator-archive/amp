@@ -1,0 +1,10 @@
+{
+  "name": "wstmp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "pty.js": "^0.3.1",
+    "ws": "^1.1.1"
+  }
+}
