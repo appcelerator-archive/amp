@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<title>websocket terminal</title>
+<style>
+  html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+  body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #333;
+    font-family: monospace;
+  }
+  #terminal {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+<div id="terminal"></div>
+<script src="/hterm_all.js"></script>
+<script>
+  let term, ws
+  (() => {
+    hterm.defaultStorage = new lib.Storage.Memory()
+    term = new hterm.Terminal()
+    term.onTerminalReady = () => {
+      const io = term.io.push()
+      io.onVTKeystroke = io.sendString = s => ws.send(s)
+      term.installKeyboard()
+      ws = new WebSocket("ws://ws.websocket.local.atomiq.io")
+      ws.onerror = e => {
+        console.error(e)
+        io.showOverlay("web socket error: " + e)
+      }
+      ws.onmessage = m => io.print(m.data)
+      ws.onclose = () => {
+        console.log("web socket closed")
+        io.showOverlay("web socket closed")
+      }
+    }
+    term.decorate(document.querySelector('#terminal'))
+  })()
+</script>

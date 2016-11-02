@@ -1,0 +1,11 @@
+services:
+  bash-server:
+    image: 'registry.local.appcelerator.io/ws-bash-server'
+    public:
+      - name: ws
+        internal_port: 4000
+  web:
+    image: 'registry.local.appcelerator.io/ws-bash-web'
+    public:
+      - name: web
+        internal_port: 80
