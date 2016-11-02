@@ -1,16 +1,13 @@
 Instavote
 =========
 
-Getting started
----------------
-
-Download [Docker for Mac or Windows](https://www.docker.com).
+Cannonical docker swarm example
 
 Run in this directory:
 
     $ amp stack up -f stack.yml instavote
 
-The app will be running at [.](http://vote.instavote.localhost.tv), and the results will be at [http://results.instavote.localhost.tv](http://results.instavote.localhost.tv).
+The app will be running at [http://vote.instavote.localhost.tv](http://vote.instavote.localhost.tv), and the results will be at [http://results.instavote.localhost.tv](http://results.instavote.localhost.tv).
 
 Architecture
 -----
