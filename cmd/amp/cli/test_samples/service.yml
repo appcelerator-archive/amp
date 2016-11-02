@@ -5,13 +5,15 @@
   options:
     - --name pinger
     - -p www:90:3000
-  expectation: ([a-z0-9]{25})
+  expectation: service-create
+  #retry: 5
 
 - service-list:
   cmd: docker service ls
   args:
   options:
-  expectation: (?ms)ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND.+\n[a-z0-9]{12}\s+.+appcelerator/pinger
+  expectation: docker-service-list
+  #retry: 5
 
 # Commented out until Delay and APIcall (Blocking) implemented.
 # - service-curl:
@@ -26,10 +28,13 @@
   args:
     - pinger
   options:
-  expectation: (pinger)
+    -
+  expectation: service-remove
+  #retry: 5
 
 - service-list:
   cmd: docker service ls
   args:
   options:
-  expectation: ((ID)(\s)+(NAME)(\s)+(REPLICAS)(\s)+(IMAGE)(\s)+(COMMAND)((.)|(\s))+)
+  expectation: docker-service-list
+  #retry: 5

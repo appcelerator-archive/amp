@@ -1,16 +1,21 @@
 - logs-all:
   cmd: amp logs
   args:
+    -
   options:
-  expectation: ([a-z0-9A-Z\.\-:\"\s\_\t\n$&%?/\[\]\%\>\<\,\;]((.)|(\s)){1,})
+    -
+  expectation: logs-all
+  #retry: 5
+  #timeout:
 
 - logs-metadata:
   cmd: amp logs
   args:
-    -
+    -  -m
   options:
-    - -m
-  expectation:  ((timestamp:"[0-9A-Z\.\-:\"]{1,})(\s)(time_id:"[0-9A-Z\.\-:\"]{1,})(\s)(service_id:"[a-z0-9$\"]{1,})(\s)(service_name:"[a-z0-9\-$\"]{1,})(\s)(message:"[a-zA-Z\./\-0-9:\s\_\"=\t\n\$\\&%?\[\]\%\>\<\,\;\+$\"]{1,})(\s)(container_id:"[a-z0-9$\"]{1,})(\s)(node_id:"[a-z0-9$\"]{1,})(\s)(task_id:"[a-z0-9$\"]{1,})(\s)(task_name:"[a-z\.0-9\-$\"]{1,})((.)|(\s)){1,}(.)*)
+    -
+  expectation: logs-metadata
+  #retry: 5
 
 - logs-numbered:
   cmd: amp logs
@@ -18,7 +23,8 @@
     -
   options:
     - -n 10
-  expectation: ([a-z0-9A-Z\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]((.)|(\s)){10})
+  expectation: logs-numbered
+  #retry: 5
 
 - logs-stack:
   cmd: amp logs
@@ -27,3 +33,4 @@
   options:
     - --stack stack1
   expectation:
+  #retry: 5

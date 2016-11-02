@@ -1,55 +1,62 @@
 - stats-container:
   cmd: amp stats
   args:
-    -
+    -  --container
   options:
-    - --container
-  expectation: ((Service name)(\s)+(Container name)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)
+    -
+  expectation: stats-container
+  #retry: 5
 
 - stats-cpu:
   cmd: amp stats
   args:
-    -
-  options:
     - --cpu
-  expectation: (?m)Service name\s+CPU %%\s*\n-+\s*\n[a-z]+\s+[0-9\.]+%
+  options:
+    -
+  expectation: stats-cpu
+  #retry: 5
 
 - stats-io:
   cmd: amp stats
   args:
-    -
-  options:
     - --io
-  expectation: (?m)Service name\s+Disk IO\s+read/write\s*\n-+\s*\n[a-z]+\s+[0-9]+.* / [0-9]+
+  options:
+    -
+  expectation: stats-io
+  #retry: 5
 
 - stats-net:
   cmd: amp stats
   args:
-    -
-  options:
     - --net
-  expectation: ((Service name)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)
+  options:
+    -
+  expectation: stats-net
+  #retry: 5
 
 - stats-node:
   cmd: amp stats
   args:
-    -
-  options:
     - --node
-  expectation: (?m)Node id\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO read/write\s+Net Rx/Tx\s*\n(-|\s)+\n[a-z0-9]{25}\s+
+  options:
+    -
+  expectation: stats-node
+  #retry: 5
 
 - stats-service:
   cmd: amp stats
   args:
-    -
-  options:
     - --service
-  expectation: ((Service name)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)
+  options:
+    -
+  expectation: stats-service
+  #retry: 5
 
 - stats-task:
   cmd: amp stats
   args:
-    -
-  options:
     - --task
-  expectation: ((Service name)(\s)+(Task name)(\s)+(Node id)(\s)+(CPU %%)(\s)+(Mem usage)(\s)+(Mem %%)(\s)+(Disk IO read/write)(\s)+(Net Rx/Tx)((.)|(\s))+((.)|(\s)){1,}(.)*)
+  options:
+    -
+  expectation: stats-task
+  #retry: 5
