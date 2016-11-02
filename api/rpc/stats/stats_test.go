@@ -2,6 +2,7 @@ package stats_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -42,6 +43,11 @@ func TestStatQueryService(t *testing.T) {
 	if len(res.Entries) == 0 {
 		t.Errorf("Unexpected empty answer from server")
 	}
+	for _,result := range(res.Entries) {
+		if !strings.HasPrefix(result.ServiceName, "amp") {
+			t.Errorf("Unexpected service selected: %s\n", result.ServiceName)
+		}
+	}
 }
 
 func TestStatQueryContainer(t *testing.T) {
@@ -60,6 +66,11 @@ func TestStatQueryContainer(t *testing.T) {
 	if len(res.Entries) == 0 {
 		t.Errorf("Unexpected empty answer from server")
 	}
+	for _,result := range(res.Entries) {
+		if !strings.HasPrefix(result.ContainerName, "amp") {
+			t.Errorf("Unexpected container selected: %s\n", result.ContainerName)
+		}
+	}
 }
 
 func TestStatQueryTask(t *testing.T) {
@@ -77,6 +88,11 @@ func TestStatQueryTask(t *testing.T) {
 	}
 	if len(res.Entries) == 0 {
 		t.Errorf("Unexpected empty answer from server")
+	}
+	for _,result := range(res.Entries) {
+		if !strings.HasPrefix(result.TaskName, "amp") {
+			t.Errorf("Unexpected task selected: %s\n", result.TaskName)
+		}
 	}
 }
 
@@ -112,5 +128,10 @@ func TestStatQueryServiceIdent(t *testing.T) {
 	}
 	if len(res.Entries) == 0 {
 		t.Errorf("Unexpected empty answer from server")
+	}
+	for _,result := range(res.Entries) {
+		if !strings.HasPrefix(result.ServiceName, "amp") {
+			t.Errorf("Unexpected service selected: %s\n", result.ServiceName)
+		}
 	}
 }
