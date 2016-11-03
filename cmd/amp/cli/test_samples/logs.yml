@@ -5,8 +5,6 @@
   options:
     -
   expectation: logs-all
-  #retry: 5
-  #timeout:
 
 - logs-metadata:
   cmd: amp logs
@@ -15,7 +13,6 @@
   options:
     -
   expectation: logs-metadata
-  #retry: 5
 
 - logs-numbered:
   cmd: amp logs
@@ -24,7 +21,6 @@
   options:
     - -n 10
   expectation: logs-numbered
-  #retry: 5
 
 - logs-stack:
   cmd: amp logs
@@ -33,4 +29,3 @@
   options:
     - --stack stack1
   expectation:
-  #retry: 5

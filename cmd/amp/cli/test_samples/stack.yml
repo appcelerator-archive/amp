@@ -4,7 +4,7 @@
      - stack1
   options:
      - -f ../../../api/rpc/stack/test_samples/sample-04.yml
-  expectation: stack-create
+  expectation: stack-id
 
 - stack-list:
   cmd: amp stack ls
@@ -20,7 +20,7 @@
     - stack1
   options:
     -
-  expectation: stack-stop
+  expectation: stack-id
 
 - stack-list:
   cmd: amp stack ls
@@ -36,7 +36,7 @@
     - stack1
   options:
     -
-  expectation: stack-restart
+  expectation: stack-id
 
 - stack-list:
   cmd: amp stack ls
@@ -52,7 +52,7 @@
     - stack1
   options:
     -
-  expectation: stack-stop
+  expectation: stack-id
 
 - stack-remove:
   cmd: amp stack rm
@@ -60,7 +60,7 @@
     - stack1
   options:
     -
-  expectation: stack-remove
+  expectation: stack-id
 
 - stack-list:
   cmd: amp stack ls
