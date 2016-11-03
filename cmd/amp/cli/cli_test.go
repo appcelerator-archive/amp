@@ -27,8 +27,14 @@ type CommandSpec struct {
 	ExpectErrorStatus  bool     `yaml:"expectErrorStatus"`
 }
 
+type LookupSpec struct {
+	Name string
+}
+
 var (
 	testDir = "./test_samples"
+	lookupDir = "./lookup"
+	regexMap map[string]string
 )
 
 func TestMain(m *testing.M) {
@@ -36,7 +42,14 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+
 func TestCmds(t *testing.T) {
+	err := loadRegexLookup()
+	if err != nil {
+		t.Errorf("Unable to load lookup specs, reason: %v", err)
+		return
+	}
+
 	tests, err := loadTestSpecs()
 	if err != nil {
 		t.Errorf("unable to load test specs, reason: %v", err)
@@ -124,5 +137,42 @@ func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	}
 	cmdString = append(cmdSplit, cmdSpec.Args...)
 	cmdString = append(cmdString, optionsSplit...)
+	cmdSpec.Expectation = regexMap[cmdSpec.Expectation]
+
 	return
+}
+
+func loadRegexLookup() error {
+
+	files, err := ioutil.ReadDir(lookupDir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		err := parseLookup(path.Join(lookupDir, file.Name()))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func parseLookup(file string) error {
+
+	if filepath.Ext(file) != ".yml" {
+		return nil
+	}
+	pairs, err := ioutil.ReadFile(file)
+
+	if err != nil {
+		return fmt.Errorf("Unable to load regex lookup: %s. Error: %v", file, err)
+	}
+
+	if err := yaml.Unmarshal(pairs, &regexMap); err != nil {
+		return fmt.Errorf("Unable to parse regex lookup: %s. Error: %v", file, err)
+	}
+
+	return nil
 }
