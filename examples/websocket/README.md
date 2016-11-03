@@ -16,14 +16,12 @@ Test using
 
 You can then check the logs with
 
-    $ amp logs websocket
+    $ amp logs websocket --server localhost:8080
 
 And stats with
 
-    $ amp stats websocket
+    $ amp stats websocket --server localhost:8080
 
-For extra fun try
+For extra fun try the following from within a bash session
 
     $ node client.js
-
-From within a bash session
