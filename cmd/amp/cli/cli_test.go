@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 
 
 func TestCmds(t *testing.T) {
-	_, err := loadRegexLookup()
+	err := loadRegexLookup()
 	if err != nil {
 		t.Errorf("Unable to load lookup specs, reason: %v", err)
 		return
@@ -142,42 +142,37 @@ func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	return
 }
 
-func loadRegexLookup() ([]*LookupSpec, error) {
+func loadRegexLookup() error {
 
 	files, err := ioutil.ReadDir(lookupDir)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	lookupFiles := []*LookupSpec{}
 	for _, file := range files {
-		lookupFile, err := parseLookup(path.Join(lookupDir, file.Name()))
+		err := parseLookup(path.Join(lookupDir, file.Name()))
 		if err != nil {
-			return nil, err
-		}
-		if lookupFile != nil {
-			lookupFiles = append(lookupFiles, lookupFile)
+			return err
 		}
 	}
 
-	return lookupFiles, nil
+	return nil
 }
 
-//Parse regex-lookup.yml using a map
-func parseLookup(file string) (*LookupSpec, error) {
+func parseLookup(file string) error {
 
 	if filepath.Ext(file) != ".yml" {
-		return nil, nil
+		return nil
 	}
 	pairs, err := ioutil.ReadFile(file)
 
 	if err != nil {
-		return nil, fmt.Errorf("Unable to load regex lookup: %s. Error: %v", file, err)
+		return fmt.Errorf("Unable to load regex lookup: %s. Error: %v", file, err)
 	}
 
 	if err := yaml.Unmarshal(pairs, &regexMap); err != nil {
-		return nil, fmt.Errorf("Unable to parse regex lookup: %s. Error: %v", file, err)
+		return fmt.Errorf("Unable to parse regex lookup: %s. Error: %v", file, err)
 	}
 
-	return nil, nil
+	return nil
 }
