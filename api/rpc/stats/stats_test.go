@@ -7,7 +7,6 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/server"
-	//"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
 
