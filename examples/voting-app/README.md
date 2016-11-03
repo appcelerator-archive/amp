@@ -1,7 +1,7 @@
 Instavote
 =========
 
-An voting application based on the canonical Docker swarm example.
+A voting application based on the canonical Docker swarm example.
 
 Run in this directory:
 
