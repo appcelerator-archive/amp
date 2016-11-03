@@ -1,16 +1,22 @@
 Instavote
 =========
 
-Cannonical docker swarm example
+An voting application based on the canonical Docker swarm example.
 
 Run in this directory:
 
     $ amp stack up -f stack.yml instavote
 
-The app will be running at [http://vote.instavote.localhost.tv](http://vote.instavote.localhost.tv), and the results will be at [http://results.instavote.localhost.tv](http://results.instavote.localhost.tv).
+Depending on your configuration, you may need to explicitly specify the server address as shown below:
+
+    $ amp stack up -f stack.yml instavote --server localhost:8080
+
+The voting app will be available at [http://vote.instavote.local.atomiq.io](http://vote.instavote.local.atomiq.io).
+
+The results app will be available at [http://results.instavote.local.atomiq.io](http://results.instavote.local.atomiq.io).
 
 Architecture
------
+------------
 
 ![Architecture diagram](architecture.png)
 
@@ -19,4 +25,6 @@ Architecture
 * A .NET worker which consumes votes and stores them in…
 * A Postgres database backed by a Docker volume
 * A Node.js webapp which shows the results of the voting in real time
+
+Credit: Docker ([LICENSE](https://github.com/docker/example-voting-app/blob/master/LICENSE))
 
