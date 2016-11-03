@@ -10,3 +10,4 @@ ADD . /app
 EXPOSE 3000
 
 CMD /app/node_modules/.bin/micro
+
