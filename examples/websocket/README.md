@@ -8,7 +8,7 @@ Run in this directory:
     $ ./deploy.sh
 
 The app will be serving a websocket at [http://ws.websocket.local.atomiq.io/](http://ws.websocket.local.atomiq.io/)
-And a web interface at [http://web.websocket.local.atomiq.io/](http://web.websocket.local.atomiq.io/)
+and a web interface at [http://web.websocket.local.atomiq.io/](http://web.websocket.local.atomiq.io/)
 
 Test using
 
