@@ -27,7 +27,7 @@
     - "{{call .uniq `pinger`}}"
   options:
     -
-  expectation: service-id
+  expectation: service-name
 
 - service-list:
   cmd: docker service ls
