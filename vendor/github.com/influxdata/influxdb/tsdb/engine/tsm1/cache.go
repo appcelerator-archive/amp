@@ -12,13 +12,17 @@ import (
 	"time"
 
 	"github.com/influxdata/influxdb/models"
+	"github.com/influxdata/influxdb/tsdb"
 )
 
 var (
-	ErrCacheMemoryExceeded    = fmt.Errorf("cache maximum memory size exceeded")
 	ErrCacheInvalidCheckpoint = fmt.Errorf("invalid checkpoint")
 	ErrSnapshotInProgress     = fmt.Errorf("snapshot in progress")
 )
+
+func ErrCacheMemorySizeLimitExceeded(n, limit uint64) error {
+	return fmt.Errorf("cache-max-memory-size exceeded: (%d/%d)", n, limit)
+}
 
 // entry is a set of values and some metadata.
 type entry struct {
@@ -29,11 +33,40 @@ type entry struct {
 
 // newEntry returns a new instance of entry.
 func newEntry() *entry {
-	return &entry{}
+	return &entry{
+		values: make(Values, 0, 32),
+	}
+}
+
+// newEntryValues returns a new instance of entry with the given values.  If the
+// values are not valid, an error is returned.
+func newEntryValues(values []Value) (*entry, error) {
+	e := &entry{values: values}
+
+	// No values, don't check types and ordering
+	if len(values) == 0 {
+		return e, nil
+	}
+
+	var prevTime int64
+	et := valueType(values[0])
+	for _, v := range values {
+		if v.UnixNano() <= prevTime {
+			e.needSort = true
+		}
+		prevTime = v.UnixNano()
+
+		// Make sure all the values are the same type
+		if et != valueType(v) {
+			return nil, tsdb.ErrFieldTypeConflict
+		}
+	}
+
+	return e, nil
 }
 
 // add adds the given values to the entry.
-func (e *entry) add(values []Value) {
+func (e *entry) add(values []Value) error {
 	// See if the new values are sorted or contain duplicate timestamps
 	var (
 		prevTime int64
@@ -57,6 +90,14 @@ func (e *entry) add(values []Value) {
 	if len(e.values) == 0 {
 		e.values = values
 	} else {
+		// Make sure the new values are the same type as the exiting values
+		et := valueType(e.values[0])
+		for _, v := range values {
+			if et != valueType(v) {
+				e.mu.Unlock()
+				return tsdb.ErrFieldTypeConflict
+			}
+		}
 		l := len(e.values)
 		lastValTime := e.values[l-1].UnixNano()
 		if lastValTime >= values[0].UnixNano() {
@@ -65,6 +106,7 @@ func (e *entry) add(values []Value) {
 		e.values = append(e.values, values...)
 	}
 	e.mu.Unlock()
+	return nil
 }
 
 // deduplicate sorts and orders the entry's values. If values are already deduped and
@@ -117,8 +159,9 @@ const (
 	statCachedBytes         = "cachedBytes"         // counter: Total number of bytes written into snapshots.
 	statWALCompactionTimeMs = "WALCompactionTimeMs" // counter: Total number of milliseconds spent compacting snapshots
 
-	writeOK  = "writeOk"
-	writeErr = "writeErr"
+	statCacheWriteOK      = "writeOk"
+	statCacheWriteErr     = "writeErr"
+	statCacheWriteDropped = "writeDropped"
 )
 
 // Cache maintains an in-memory store of Values for a set of keys.
@@ -170,6 +213,7 @@ type CacheStatistics struct {
 	WALCompactionTimeMs int64
 	WriteOK             int64
 	WriteErr            int64
+	WriteDropped        int64
 }
 
 // Statistics returns statistics for periodic monitoring.
@@ -184,26 +228,34 @@ func (c *Cache) Statistics(tags map[string]string) []models.Statistic {
 			statCacheAgeMs:          atomic.LoadInt64(&c.stats.CacheAgeMs),
 			statCachedBytes:         atomic.LoadInt64(&c.stats.CachedBytes),
 			statWALCompactionTimeMs: atomic.LoadInt64(&c.stats.WALCompactionTimeMs),
+			statCacheWriteOK:        atomic.LoadInt64(&c.stats.WriteOK),
+			statCacheWriteErr:       atomic.LoadInt64(&c.stats.WriteErr),
+			statCacheWriteDropped:   atomic.LoadInt64(&c.stats.WriteDropped),
 		},
 	}}
 }
 
 // Write writes the set of values for the key to the cache. This function is goroutine-safe.
-// It returns an error if the cache has exceeded its max size.
+// It returns an error if the cache will exceeded its max size by adding the new values.
 func (c *Cache) Write(key string, values []Value) error {
-	c.mu.Lock()
+	addedSize := uint64(Values(values).Size())
 
 	// Enough room in the cache?
-	addedSize := Values(values).Size()
-	newSize := c.size + uint64(addedSize)
-	if c.maxSize > 0 && newSize+c.snapshotSize > c.maxSize {
+	c.mu.Lock()
+	limit := c.maxSize
+	n := c.size + c.snapshotSize + addedSize
+	if limit > 0 && n > limit {
 		c.mu.Unlock()
 		atomic.AddInt64(&c.stats.WriteErr, 1)
-		return ErrCacheMemoryExceeded
+		return ErrCacheMemorySizeLimitExceeded(n, limit)
 	}
 
-	c.write(key, values)
-	c.size = newSize
+	if err := c.write(key, values); err != nil {
+		c.mu.Unlock()
+		atomic.AddInt64(&c.stats.WriteErr, 1)
+		return err
+	}
+	c.size += addedSize
 	c.mu.Unlock()
 
 	// Update the memory size stat
@@ -214,35 +266,49 @@ func (c *Cache) Write(key string, values []Value) error {
 }
 
 // WriteMulti writes the map of keys and associated values to the cache. This function is goroutine-safe.
-// It returns an error if the cache has exceeded its max size.
+// It returns an error if the cache will exceeded its max size by adding the new values.  The write attempts
+// to write as many values as possible.  If one key fails, the others can still succeed and an error will
+// be returned.
 func (c *Cache) WriteMulti(values map[string][]Value) error {
-	totalSz := 0
+	var totalSz uint64
 	for _, v := range values {
-		totalSz += Values(v).Size()
+		totalSz += uint64(Values(v).Size())
 	}
 
 	// Enough room in the cache?
-	c.mu.RLock()
-	newSize := c.size + uint64(totalSz)
-	if c.maxSize > 0 && newSize+c.snapshotSize > c.maxSize {
-		c.mu.RUnlock()
-		atomic.AddInt64(&c.stats.WriteErr, 1)
-		return ErrCacheMemoryExceeded
-	}
-	c.mu.RUnlock()
-
-	for k, v := range values {
-		c.entry(k).add(v)
-	}
 	c.mu.Lock()
-	c.size += uint64(totalSz)
+	limit := c.maxSize
+	n := c.size + c.snapshotSize + totalSz
+	if limit > 0 && n > limit {
+		c.mu.Unlock()
+		atomic.AddInt64(&c.stats.WriteErr, 1)
+		return ErrCacheMemorySizeLimitExceeded(n, limit)
+	}
+
+	var werr error
+	for k, v := range values {
+		if err := c.write(k, v); err != nil {
+			// write failed, hold onto the error and adjust
+			// the size delta
+			werr = err
+			totalSz -= uint64(Values(v).Size())
+		}
+	}
+	c.size += totalSz
 	c.mu.Unlock()
+
+	// Some points in the batch were dropped.  An error is returned so
+	// error stat is incremented as well.
+	if werr != nil {
+		atomic.AddInt64(&c.stats.WriteDropped, 1)
+		atomic.AddInt64(&c.stats.WriteErr, 1)
+	}
 
 	// Update the memory size stat
 	c.updateMemSize(int64(totalSz))
 	atomic.AddInt64(&c.stats.WriteOK, 1)
 
-	return nil
+	return werr
 }
 
 // Snapshot will take a snapshot of the current cache, add it to the slice of caches that
@@ -261,7 +327,7 @@ func (c *Cache) Snapshot() (*Cache, error) {
 	// If no snapshot exists, create a new one, otherwise update the existing snapshot
 	if c.snapshot == nil {
 		c.snapshot = &Cache{
-			store: make(map[string]*entry),
+			store: make(map[string]*entry, len(c.store)),
 		}
 	}
 
@@ -282,8 +348,7 @@ func (c *Cache) Snapshot() (*Cache, error) {
 
 	snapshotSize := c.size // record the number of bytes written into a snapshot
 
-	// Reset the cache
-	c.store = make(map[string]*entry)
+	c.store = make(map[string]*entry, len(c.store))
 	c.size = 0
 	c.lastSnapshot = time.Now()
 
@@ -336,74 +401,28 @@ func (c *Cache) MaxSize() uint64 {
 // Keys returns a sorted slice of all keys under management by the cache.
 func (c *Cache) Keys() []string {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
 
 	var a []string
 	for k, _ := range c.store {
 		a = append(a, k)
 	}
+	c.mu.RUnlock()
 	sort.Strings(a)
 	return a
 }
 
 // Values returns a copy of all values, deduped and sorted, for the given key.
 func (c *Cache) Values(key string) Values {
+	var snapshotEntries *entry
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.merged(key)
-}
-
-// Delete will remove the keys from the cache
-func (c *Cache) Delete(keys []string) {
-	c.DeleteRange(keys, math.MinInt64, math.MaxInt64)
-}
-
-// DeleteRange will remove the values for all keys containing points
-// between min and max from the cache.
-func (c *Cache) DeleteRange(keys []string, min, max int64) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for _, k := range keys {
-		// Make sure key exist in the cache, skip if it does not
-		e, ok := c.store[k]
-		if !ok {
-			continue
-		}
-
-		origSize := e.size()
-		if min == math.MinInt64 && max == math.MaxInt64 {
-			c.size -= uint64(origSize)
-			delete(c.store, k)
-			continue
-		}
-
-		e.filter(min, max)
-		if e.count() == 0 {
-			delete(c.store, k)
-			c.size -= uint64(origSize)
-			continue
-		}
-
-		c.size -= uint64(origSize - e.size())
-	}
-	atomic.StoreInt64(&c.stats.MemSizeBytes, int64(c.size))
-}
-
-func (c *Cache) SetMaxSize(size uint64) {
-	c.mu.Lock()
-	c.maxSize = size
-	c.mu.Unlock()
-}
-
-// merged returns a copy of hot and snapshot values. The copy will be merged, deduped, and
-// sorted. It assumes all necessary locks have been taken. If the caller knows that the
-// the hot source data for the key will not be changed, it is safe to call this function
-// with a read-lock taken. Otherwise it must be called with a write-lock taken.
-func (c *Cache) merged(key string) Values {
 	e := c.store[key]
+	if c.snapshot != nil {
+		snapshotEntries = c.snapshot.store[key]
+	}
+	c.mu.RUnlock()
+
 	if e == nil {
-		if c.snapshot == nil {
+		if snapshotEntries == nil {
 			// No values in hot cache or snapshots.
 			return nil
 		}
@@ -416,13 +435,10 @@ func (c *Cache) merged(key string) Values {
 	var entries []*entry
 	sz := 0
 
-	if c.snapshot != nil {
-		snapshotEntries := c.snapshot.store[key]
-		if snapshotEntries != nil {
-			snapshotEntries.deduplicate() // guarantee we are deduplicated
-			entries = append(entries, snapshotEntries)
-			sz += snapshotEntries.count()
-		}
+	if snapshotEntries != nil {
+		snapshotEntries.deduplicate() // guarantee we are deduplicated
+		entries = append(entries, snapshotEntries)
+		sz += snapshotEntries.count()
 	}
 
 	if e != nil {
@@ -458,6 +474,49 @@ func (c *Cache) merged(key string) Values {
 	return values
 }
 
+// Delete will remove the keys from the cache
+func (c *Cache) Delete(keys []string) {
+	c.DeleteRange(keys, math.MinInt64, math.MaxInt64)
+}
+
+// DeleteRange will remove the values for all keys containing points
+// between min and max from the cache.
+func (c *Cache) DeleteRange(keys []string, min, max int64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, k := range keys {
+		// Make sure key exist in the cache, skip if it does not
+		e, ok := c.store[k]
+		if !ok {
+			continue
+		}
+
+		origSize := uint64(e.size())
+		if min == math.MinInt64 && max == math.MaxInt64 {
+			c.size -= origSize
+			delete(c.store, k)
+			continue
+		}
+
+		e.filter(min, max)
+		if e.count() == 0 {
+			delete(c.store, k)
+			c.size -= origSize
+			continue
+		}
+
+		c.size -= origSize - uint64(e.size())
+	}
+	atomic.StoreInt64(&c.stats.MemSizeBytes, int64(c.size))
+}
+
+func (c *Cache) SetMaxSize(size uint64) {
+	c.mu.Lock()
+	c.maxSize = size
+	c.mu.Unlock()
+}
+
 // Store returns the underlying cache store. This is not goroutine safe!
 // Protect access by using the Lock and Unlock functions on Cache.
 func (c *Cache) Store() map[string]*entry {
@@ -484,13 +543,18 @@ func (c *Cache) values(key string) Values {
 
 // write writes the set of values for the key to the cache. This function assumes
 // the lock has been taken and does not enforce the cache size limits.
-func (c *Cache) write(key string, values []Value) {
+func (c *Cache) write(key string, values []Value) error {
 	e, ok := c.store[key]
 	if !ok {
-		e = newEntry()
+		var err error
+		e, err = newEntryValues(values)
+		if err != nil {
+			return err
+		}
 		c.store[key] = e
+		return nil
 	}
-	e.add(values)
+	return e.add(values)
 }
 
 func (c *Cache) entry(key string) *entry {
@@ -615,6 +679,21 @@ func (c *Cache) updateCachedBytes(b uint64) {
 // Update the memSize level
 func (c *Cache) updateMemSize(b int64) {
 	atomic.AddInt64(&c.stats.MemSizeBytes, b)
+}
+
+func valueType(v Value) int {
+	switch v.(type) {
+	case *FloatValue:
+		return 1
+	case *IntegerValue:
+		return 2
+	case *StringValue:
+		return 3
+	case *BooleanValue:
+		return 4
+	default:
+		return 0
+	}
 }
 
 // Update the snapshotsCount and the diskSize levels

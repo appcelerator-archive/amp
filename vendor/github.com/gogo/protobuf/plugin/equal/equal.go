@@ -1,4 +1,6 @@
-// Copyright (c) 2013, Vastech SA (PTY) LTD. All rights reserved.
+// Protocol Buffers for Go with Gadgets
+//
+// Copyright (c) 2013, The GoGo Authors. All rights reserved.
 // http://github.com/gogo/protobuf
 //
 // Redistribution and use in source and binary forms, with or without
@@ -375,7 +377,7 @@ func (p *plugin) generateField(file *generator.FileDescriptor, message *generato
 		p.P(`}`)
 		p.P(`for i := range this.`, fieldname, ` {`)
 		p.In()
-		if ctype {
+		if ctype && !p.IsMap(field) {
 			p.P(`if !this.`, fieldname, `[i].Equal(that1.`, fieldname, `[i]) {`)
 		} else {
 			if p.IsMap(field) {
@@ -406,7 +408,15 @@ func (p *plugin) generateField(file *generator.FileDescriptor, message *generato
 						}
 					}
 				} else if mapValue.IsBytes() {
-					p.P(`if !`, p.bytesPkg.Use(), `.Equal(this.`, fieldname, `[i], that1.`, fieldname, `[i]) {`)
+					if ctype {
+						if nullable {
+							p.P(`if !this.`, fieldname, `[i].Equal(*that1.`, fieldname, `[i]) { //nullable`)
+						} else {
+							p.P(`if !this.`, fieldname, `[i].Equal(that1.`, fieldname, `[i]) { //not nullable`)
+						}
+					} else {
+						p.P(`if !`, p.bytesPkg.Use(), `.Equal(this.`, fieldname, `[i], that1.`, fieldname, `[i]) {`)
+					}
 				} else if mapValue.IsString() {
 					p.P(`if this.`, fieldname, `[i] != that1.`, fieldname, `[i] {`)
 				} else {

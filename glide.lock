@@ -1,5 +1,5 @@
-hash: 94282a3d4fec19079f680f7cc366c9493bbcf33236a7479e130030f0571df3dc
-updated: 2016-10-21T11:43:08.269620857+02:00
+hash: ea9bf5e67e05faf905fd8cbe25ad6f1693553757e037eb20d17a93870ee9d7a3
+updated: 2016-11-04T15:14:41.294105016+01:00
 imports:
 - name: github.com/coreos/etcd
   version: 83347907774bf36cbb261c594a32fd7b0f5dd9f6
@@ -63,7 +63,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
-  version: 6abcf94fd4c97dcb423fdafd42fe9f96ca7e421b
+  version: 0394392b81058a7f972029451f06e528bb18ba50
   subpackages:
   - gogoproto
   - proto
@@ -105,7 +105,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: ff307047057b7797418998a4ed709b0c0f346324
+  version: dd8caa750a7bb0b1df638b6e3126fd2229997082
   subpackages:
   - client/v2
   - models
@@ -185,6 +185,7 @@ imports:
   - internal/timeseries
   - proxy
   - trace
+  - websocket
 - name: golang.org/x/oauth2
   version: 1e695b1c8febf17aad3bfa7bf0a819ef94b98ad5
   subpackages:

@@ -25,25 +25,19 @@ var (
 	// ErrQueryInterrupted is an error returned when the query is interrupted.
 	ErrQueryInterrupted = errors.New("query interrupted")
 
-	// ErrMaxConcurrentQueriesReached is an error when a query cannot be run
-	// because the maximum number of queries has been reached.
-	ErrMaxConcurrentQueriesReached = errors.New("max concurrent queries reached")
-
 	// ErrQueryEngineShutdown is an error sent when the query cannot be
 	// created because the query engine was shutdown.
 	ErrQueryEngineShutdown = errors.New("query engine shutdown")
 
-	// ErrMaxPointsReached is an error when a query hits the maximum number of
-	// points.
-	ErrMaxPointsReached = errors.New("max number of points reached")
-
-	// ErrQueryTimeoutReached is an error when a query hits the timeout.
-	ErrQueryTimeoutReached = errors.New("query timeout reached")
+	// ErrQueryTimeoutLimitExceeded is an error when a query hits the max time allowed to run.
+	ErrQueryTimeoutLimitExceeded = errors.New("query-timeout limit exceeded")
 )
 
 // Statistics for the QueryExecutor
 const (
 	statQueriesActive          = "queriesActive"   // Number of queries currently being executed
+	statQueriesExecuted        = "queriesExecuted" // Number of queries that have been executed (started).
+	statQueriesFinished        = "queriesFinished" // Number of queries that have finished.
 	statQueryExecutionDuration = "queryDurationNs" // Total (wall) time spent executing queries
 )
 
@@ -52,6 +46,17 @@ func ErrDatabaseNotFound(name string) error { return fmt.Errorf("database not fo
 
 // ErrMeasurementNotFound returns a measurement not found error for the given measurement name.
 func ErrMeasurementNotFound(name string) error { return fmt.Errorf("measurement not found: %s", name) }
+
+// ErrMaxSelectPointsLimitExceeded is an error when a query hits the maximum number of points.
+func ErrMaxSelectPointsLimitExceeded(n, limit int) error {
+	return fmt.Errorf("max-select-point limit exceeed: (%d/%d)", n, limit)
+}
+
+// ErrMaxConcurrentQueriesLimitExceeded is an error when a query cannot be run
+// because the maximum number of queries has been reached.
+func ErrMaxConcurrentQueriesLimitExceeded(n, limit int) error {
+	return fmt.Errorf("max-concurrent-queries limit exceeded(%d, %d)", n, limit)
+}
 
 // ExecutionOptions contains the options for executing a query.
 type ExecutionOptions struct {
@@ -137,6 +142,8 @@ func NewQueryExecutor() *QueryExecutor {
 // QueryStatistics keeps statistics related to the QueryExecutor.
 type QueryStatistics struct {
 	ActiveQueries          int64
+	ExecutedQueries        int64
+	FinishedQueries        int64
 	QueryExecutionDuration int64
 }
 
@@ -147,6 +154,8 @@ func (e *QueryExecutor) Statistics(tags map[string]string) []models.Statistic {
 		Tags: tags,
 		Values: map[string]interface{}{
 			statQueriesActive:          atomic.LoadInt64(&e.stats.ActiveQueries),
+			statQueriesExecuted:        atomic.LoadInt64(&e.stats.ExecutedQueries),
+			statQueriesFinished:        atomic.LoadInt64(&e.stats.FinishedQueries),
 			statQueryExecutionDuration: atomic.LoadInt64(&e.stats.QueryExecutionDuration),
 		},
 	}}
@@ -176,8 +185,10 @@ func (e *QueryExecutor) executeQuery(query *Query, opt ExecutionOptions, closing
 	defer e.recover(query, results)
 
 	atomic.AddInt64(&e.stats.ActiveQueries, 1)
+	atomic.AddInt64(&e.stats.ExecutedQueries, 1)
 	defer func(start time.Time) {
 		atomic.AddInt64(&e.stats.ActiveQueries, -1)
+		atomic.AddInt64(&e.stats.FinishedQueries, 1)
 		atomic.AddInt64(&e.stats.QueryExecutionDuration, time.Since(start).Nanoseconds())
 	}(time.Now())
 
@@ -281,6 +292,21 @@ LOOP:
 				Err:         err,
 			}
 			// Stop after the first error.
+			break
+		}
+
+		// Check if the query was interrupted during an uninterruptible statement.
+		interrupted := false
+		if ctx.InterruptCh != nil {
+			select {
+			case <-ctx.InterruptCh:
+				interrupted = true
+			default:
+				// Query has not been interrupted.
+			}
+		}
+
+		if interrupted {
 			break
 		}
 	}

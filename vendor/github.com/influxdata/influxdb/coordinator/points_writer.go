@@ -84,7 +84,7 @@ type WritePointsRequest struct {
 // AddPoint adds a point to the WritePointRequest with field key 'value'
 func (w *WritePointsRequest) AddPoint(name string, value interface{}, timestamp time.Time, tags map[string]string) {
 	pt, err := models.NewPoint(
-		name, tags, map[string]interface{}{"value": value}, timestamp,
+		name, models.NewTags(tags), map[string]interface{}{"value": value}, timestamp,
 	)
 	if err != nil {
 		return
@@ -118,12 +118,7 @@ func NewShardMapping() *ShardMapping {
 
 // MapPoint maps a point to shard
 func (s *ShardMapping) MapPoint(shardInfo *meta.ShardInfo, p models.Point) {
-	points, ok := s.Points[shardInfo.ID]
-	if !ok {
-		s.Points[shardInfo.ID] = []models.Point{p}
-	} else {
-		s.Points[shardInfo.ID] = append(points, p)
-	}
+	s.Points[shardInfo.ID] = append(s.Points[shardInfo.ID], p)
 	s.Shards[shardInfo.ID] = shardInfo
 }
 
@@ -267,7 +262,9 @@ func (l sgList) ShardGroupAt(t time.Time) *meta.ShardGroupInfo {
 	//  - (assuming identical end times) the shard group with the earliest start
 	//    time.
 	idx := sort.Search(len(l), func(i int) bool { return l[i].EndTime.After(t) })
-	if idx == len(l) {
+
+	// We couldn't find a shard group the point falls into.
+	if idx == len(l) || t.Before(l[idx].StartTime) {
 		return nil
 	}
 	return &l[idx]
@@ -304,8 +301,7 @@ func (w *PointsWriter) WritePoints(database, retentionPolicy string, consistency
 		return err
 	}
 
-	// Write each shard in it's own goroutine and return as soon
-	// as one fails.
+	// Write each shard in it's own goroutine and return as soon as one fails.
 	ch := make(chan error, len(shardMappings.Points))
 	for shardID, points := range shardMappings.Points {
 		go func(shard *meta.ShardInfo, database, retentionPolicy string, points []models.Point) {

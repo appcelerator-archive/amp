@@ -13,6 +13,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/influxdata/influxdb/coordinator"
 	"github.com/influxdata/influxdb/influxql"
+	"github.com/influxdata/influxdb/internal"
 	"github.com/influxdata/influxdb/models"
 	"github.com/influxdata/influxdb/services/meta"
 	"github.com/influxdata/influxdb/tsdb"
@@ -100,10 +101,76 @@ func TestQueryExecutor_ExecuteQuery_MaxSelectBucketsN(t *testing.T) {
 	if a := ReadAllResults(e.ExecuteQuery(`SELECT count(value) FROM cpu WHERE time >= '2000-01-01T00:00:05Z' AND time < '2000-01-01T00:00:35Z' GROUP BY time(10s)`, "db0", 0)); !reflect.DeepEqual(a, []*influxql.Result{
 		{
 			StatementID: 0,
-			Err:         errors.New("max select bucket count exceeded: 4 buckets"),
+			Err:         errors.New("max-select-buckets limit exceeded: (4/3)"),
 		},
 	}) {
 		t.Fatalf("unexpected results: %s", spew.Sdump(a))
+	}
+}
+
+func TestStatementExecutor_NormalizeDropSeries(t *testing.T) {
+	q, err := influxql.ParseQuery("DROP SERIES FROM cpu")
+	if err != nil {
+		t.Fatalf("unexpected error parsing query: %v", err)
+	}
+
+	stmt := q.Statements[0].(*influxql.DropSeriesStatement)
+
+	s := &coordinator.StatementExecutor{
+		MetaClient: &internal.MetaClientMock{
+			DatabaseFn: func(name string) *meta.DatabaseInfo {
+				t.Fatal("meta client should not be called")
+				return nil
+			},
+		},
+	}
+	if err := s.NormalizeStatement(stmt, "foo"); err != nil {
+		t.Fatalf("unexpected error normalizing statement: %v", err)
+	}
+
+	m := stmt.Sources[0].(*influxql.Measurement)
+	if m.Database != "" {
+		t.Fatalf("database rewritten when not supposed to: %v", m.Database)
+	}
+	if m.RetentionPolicy != "" {
+		t.Fatalf("database rewritten when not supposed to: %v", m.RetentionPolicy)
+	}
+
+	if exp, got := "DROP SERIES FROM cpu", q.String(); exp != got {
+		t.Fatalf("generated query does match parsed: exp %v, got %v", exp, got)
+	}
+}
+
+func TestStatementExecutor_NormalizeDeleteSeries(t *testing.T) {
+	q, err := influxql.ParseQuery("DELETE FROM cpu")
+	if err != nil {
+		t.Fatalf("unexpected error parsing query: %v", err)
+	}
+
+	stmt := q.Statements[0].(*influxql.DeleteSeriesStatement)
+
+	s := &coordinator.StatementExecutor{
+		MetaClient: &internal.MetaClientMock{
+			DatabaseFn: func(name string) *meta.DatabaseInfo {
+				t.Fatal("meta client should not be called")
+				return nil
+			},
+		},
+	}
+	if err := s.NormalizeStatement(stmt, "foo"); err != nil {
+		t.Fatalf("unexpected error normalizing statement: %v", err)
+	}
+
+	m := stmt.Sources[0].(*influxql.Measurement)
+	if m.Database != "" {
+		t.Fatalf("database rewritten when not supposed to: %v", m.Database)
+	}
+	if m.RetentionPolicy != "" {
+		t.Fatalf("database rewritten when not supposed to: %v", m.RetentionPolicy)
+	}
+
+	if exp, got := "DELETE FROM cpu", q.String(); exp != got {
+		t.Fatalf("generated query does match parsed: exp %v, got %v", exp, got)
 	}
 }
 
