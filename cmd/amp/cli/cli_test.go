@@ -1,10 +1,12 @@
 package cli_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/appcelerator/amp/api/server"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
@@ -12,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"text/template"
 )
 
 type TestSpec struct {
@@ -30,6 +33,8 @@ type CommandSpec struct {
 type LookupSpec struct {
 	Name string
 }
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var (
 	testDir = "./test_samples"
@@ -111,18 +116,24 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 }
 
 func runTestSpec(t *testing.T, test *TestSpec) error {
+	var cache = map[string]string{}
 	for _, cmdSpec := range test.Commands {
 		cmdString := generateCmdString(&cmdSpec)
-		t.Logf("Running: %s", strings.Join(cmdString, " "))
-		actualOutput, err := exec.Command(cmdString[0], cmdString[1:]...).CombinedOutput()
+		tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
+		if tmplErr != nil {
+			return fmt.Errorf("Executing templating failed: %s", tmplErr)
+		}
+		tmplString := strings.Fields(tmplOutput)
+		t.Logf("Running: %s", strings.Join(tmplString, " "))
+		actualOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
 		expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
 		if !expectedOutput.MatchString(string(actualOutput)) {
 			return fmt.Errorf("miss matched expected output: %s", actualOutput)
 		}
-		if err != nil && !cmdSpec.ExpectErrorStatus {
-			return fmt.Errorf("Command was expected to exit with zero status but got: %v", err)
+		if cmdErr != nil && !cmdSpec.ExpectErrorStatus {
+			return fmt.Errorf("Command was expected to exit with zero status but got: %v", cmdErr)
 		}
-		if err == nil && cmdSpec.ExpectErrorStatus {
+		if cmdErr == nil && cmdSpec.ExpectErrorStatus {
 			return fmt.Errorf("Command was expected to exit with error status but exited with zero")
 		}
 	}
@@ -138,41 +149,69 @@ func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	cmdString = append(cmdSplit, cmdSpec.Args...)
 	cmdString = append(cmdString, optionsSplit...)
 	cmdSpec.Expectation = regexMap[cmdSpec.Expectation]
-
 	return
 }
 
 func loadRegexLookup() error {
-
 	files, err := ioutil.ReadDir(lookupDir)
 	if err != nil {
 		return err
 	}
-
 	for _, file := range files {
 		err := parseLookup(path.Join(lookupDir, file.Name()))
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
 func parseLookup(file string) error {
-
 	if filepath.Ext(file) != ".yml" {
 		return nil
 	}
 	pairs, err := ioutil.ReadFile(file)
-
 	if err != nil {
 		return fmt.Errorf("Unable to load regex lookup: %s. Error: %v", file, err)
 	}
-
 	if err := yaml.Unmarshal(pairs, &regexMap); err != nil {
 		return fmt.Errorf("Unable to parse regex lookup: %s. Error: %v", file, err)
 	}
-
 	return nil
+}
+
+func performTemplating(s string, cache map[string]string) (output string, err error) {
+	fmt.Println(s)
+	var t *template.Template
+	t, err = template.New("Command").Parse(s)
+	if err != nil {
+		return
+	}
+	f := func(in string) string {
+		if val, ok := cache[in]; ok {
+			return val
+		}
+		out := in + "-" + randString(10)
+		cache[in] = out
+		return out
+	}
+	var doc bytes.Buffer
+	var fm = template.FuncMap{
+		"uniq": func(in string) string { return f(in) },
+	}
+	err = t.Execute(&doc, fm)
+	if err != nil {
+		return
+	}
+	output = doc.String()
+	fmt.Println(output)
+	return
+}
+
+func randString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

@@ -3,8 +3,8 @@
   args:
     - appcelerator/pinger
   options:
-    - --name pinger
-    - -p www:90:3000
+    - "--name {{call .uniq `pinger`}}"
+    - "-p www:90:3000"
   expectation: service-id
 
 - service-list:
@@ -24,7 +24,7 @@
 - service-remove:
   cmd: amp service rm
   args:
-    - pinger
+    - "{{call .uniq `pinger`}}"
   options:
     -
   expectation: service-id
