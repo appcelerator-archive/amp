@@ -1,20 +1,12 @@
-package service_test
+package tests
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/server"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
-)
-
-var (
-	client service.ServiceClient
-	ctx    context.Context
 )
 
 var service1 = service.ServiceSpec{
@@ -110,26 +102,19 @@ var serviceList = []*service.ServiceSpec{
 	&service10,
 }
 
-func TestMain(m *testing.M) {
-	ctx = context.Background()
-	_, conn := server.StartTestServer()
-	client = service.NewServiceClient(conn)
-	os.Exit(m.Run())
-}
-
 //Test two stacks life cycle in the same time
 func TestServices(t *testing.T) {
 	for i, serv := range serviceList {
 		name := fmt.Sprintf("service-test%d-%d", i+1, time.Now().Unix())
 		serv.Name = name
-		respc, errc := client.Create(ctx, &service.ServiceCreateRequest{
+		respc, errc := serviceClient.Create(ctx, &service.ServiceCreateRequest{
 			ServiceSpec: serv,
 		})
 		if errc != nil {
 			t.Fatal(errc)
 		}
 		assert.NotEmpty(t, respc.Id, "returned service id should not be empty after create")
-		respr, errr := client.Remove(ctx, &service.RemoveRequest{
+		respr, errr := serviceClient.Remove(ctx, &service.RemoveRequest{
 			Ident: respc.Id,
 		})
 		if errr != nil {
