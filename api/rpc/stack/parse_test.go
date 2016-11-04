@@ -418,7 +418,7 @@ var (
 )
 
 // test all test samples
-func TestSamples(t *testing.T) {
+func TestParserSamples(t *testing.T) {
 	tests := loadFiles(t)
 	for _, test := range tests {
 		t.Log("-----------------------------------------------------------------------------------------")

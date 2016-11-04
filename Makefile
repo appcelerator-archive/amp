@@ -59,7 +59,7 @@ GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${HOME}/.glide:/
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
 
-TEST_PACKAGES = $(REPO)/api/rpc/service $(REPO)/data/storage/etcd $(REPO)/api/rpc/stack $(REPO)/data/influx $(REPO)/api/rpc/stats $(REPO)/api/rpc/topic $(REPO)/api/rpc/logs
+TEST_PACKAGES = $(REPO)/data/storage/etcd $(REPO)/data/influx $(REPO)/api/rpc/stack
 # $(REPO)/api/rpc/build @go test -v $(REPO)/api/rpc/project
 
 all: version check build
@@ -143,6 +143,7 @@ run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
 test:
+	@go test -v ./api/rpc/tests
 	$(foreach pkg,$(TEST_PACKAGES),\
 		go test -v $(pkg);)
 

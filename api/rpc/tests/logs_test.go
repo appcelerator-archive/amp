@@ -1,19 +1,17 @@
-package logs_test
+package tests
 
 import (
-	"fmt"
-	"os"
+	"log"
 	"strings"
 	"testing"
 	"time"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/server"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/nats"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"math/rand"
 	"strconv"
 )
@@ -33,32 +31,34 @@ var (
 	testNodeId      = stringid.GenerateNonCryptoID()
 	testServiceId   = stringid.GenerateNonCryptoID()
 	testStackId     = stringid.GenerateNonCryptoID()
-	ctx             context.Context
-	client          LogsClient
 	sc              stan.Conn
+	err             error
 )
 
-func TestMain(m *testing.M) {
-	config, conn := server.StartTestServer()
-	ctx = context.Background()
-	client = NewLogsClient(conn)
-
+func TestLogsInit(t *testing.T) {
 	var err error
-	sc, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsURL(config.NatsURL), stan.ConnectWait(60*time.Second))
+	log.Printf("Connecting to nats: %s\n", config.NatsURL)
+	nc, err := nats.Connect(config.NatsURL, nats.Timeout(60*time.Second))
 	if err != nil {
-		fmt.Println("failed to connect to nats")
-		os.Exit(1)
+		t.Errorf("Unable to connect to NATS on: %s\n%v", config.NatsURL, err)
+		return
 	}
-	defer func() {
-		sc.Close()
-	}()
-
-	produceLogEntries(100)
-
+	//runtime.Nats, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
+	sc, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(60*time.Second))
+	if err != nil {
+		t.Errorf("failed to connect to nats: %v\n", err)
+		return
+	}
+	log.Println("Connected to nats")
+	err = produceLogEntries(110)
+	if err != nil {
+		t.Errorf("failed to produce log entries: %v\n", err)
+		return
+	}
 	// Wait for entries to be indexed
 	for {
 		time.Sleep(1 * time.Second)
-		r, err := client.Get(ctx, &GetRequest{Service: testServiceId})
+		r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceId})
 		if err != nil {
 			continue
 		}
@@ -66,15 +66,13 @@ func TestMain(m *testing.M) {
 			break
 		}
 	}
-
-	os.Exit(m.Run())
 }
 
-func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
+func TestLogsShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	expected := 100
 	actual := -1
 	for i := 0; i < 60; i++ {
-		r, err := client.Get(ctx, &GetRequest{})
+		r, err := logsClient.Get(ctx, &GetRequest{})
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -88,9 +86,9 @@ func TestShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestShouldFilterByContainer(t *testing.T) {
+func TestLogsShouldFilterByContainer(t *testing.T) {
 	// First, get a random container id
-	r, err := client.Get(ctx, &GetRequest{})
+	r, err := logsClient.Get(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -98,7 +96,7 @@ func TestShouldFilterByContainer(t *testing.T) {
 	randomContainerId := r.Entries[0].ContainerId
 
 	// Then filter by this container id
-	r, err = client.Get(ctx, &GetRequest{Container: randomContainerId})
+	r, err = logsClient.Get(ctx, &GetRequest{Container: randomContainerId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,9 +106,9 @@ func TestShouldFilterByContainer(t *testing.T) {
 	}
 }
 
-func TestShouldFilterByNode(t *testing.T) {
+func TestLogsShouldFilterByNode(t *testing.T) {
 	// First, get a random node id
-	r, err := client.Get(ctx, &GetRequest{})
+	r, err := logsClient.Get(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -118,7 +116,7 @@ func TestShouldFilterByNode(t *testing.T) {
 	randomNodeId := r.Entries[0].NodeId
 
 	// Then filter by this node id
-	r, err = client.Get(ctx, &GetRequest{Node: randomNodeId})
+	r, err = logsClient.Get(ctx, &GetRequest{Node: randomNodeId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -128,8 +126,8 @@ func TestShouldFilterByNode(t *testing.T) {
 	}
 }
 
-func TestShouldFilterByService(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Service: testServiceId})
+func TestLogsShouldFilterByService(t *testing.T) {
+	r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -138,7 +136,7 @@ func TestShouldFilterByService(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceId) || strings.HasPrefix(entry.ServiceId, testServiceId))
 	}
 
-	r, err = client.Get(ctx, &GetRequest{Service: testServiceName})
+	r, err = logsClient.Get(ctx, &GetRequest{Service: testServiceName})
 	if err != nil {
 		t.Error(err)
 	}
@@ -148,8 +146,8 @@ func TestShouldFilterByService(t *testing.T) {
 	}
 }
 
-func TestShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Message: "test"})
+func TestLogsShouldFilterByMessage(t *testing.T) {
+	r, err := logsClient.Get(ctx, &GetRequest{Message: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -159,8 +157,8 @@ func TestShouldFilterByMessage(t *testing.T) {
 	}
 }
 
-func TestShouldFilterByStack(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Stack: testStackId})
+func TestLogsShouldFilterByStack(t *testing.T) {
+	r, err := logsClient.Get(ctx, &GetRequest{Stack: testStackId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -169,7 +167,7 @@ func TestShouldFilterByStack(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.StackName, testStackId) || strings.HasPrefix(entry.StackId, testStackId))
 	}
 
-	r, err = client.Get(ctx, &GetRequest{Stack: testStackName})
+	r, err = logsClient.Get(ctx, &GetRequest{Stack: testStackName})
 	if err != nil {
 		t.Error(err)
 	}
@@ -179,9 +177,9 @@ func TestShouldFilterByStack(t *testing.T) {
 	}
 }
 
-func TestShouldFetchGivenNumberOfEntries(t *testing.T) {
+func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 100; i += 10 {
-		r, err := client.Get(ctx, &GetRequest{Size: i})
+		r, err := logsClient.Get(ctx, &GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
 		}
@@ -236,8 +234,8 @@ func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntr
 	}
 }
 
-func TestShouldStreamLogs(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{})
+func TestLogsShouldStreamLogs(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -247,8 +245,8 @@ func TestShouldStreamLogs(t *testing.T) {
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 }
 
-func TestShouldStreamAndFilterByContainer(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Container: testContainerId})
+func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Container: testContainerId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -261,8 +259,8 @@ func TestShouldStreamAndFilterByContainer(t *testing.T) {
 	}
 }
 
-func TestShouldStreamAndFilterByNode(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Node: testNodeId})
+func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Node: testNodeId})
 	if err != nil {
 		t.Error(err)
 	}
@@ -275,8 +273,8 @@ func TestShouldStreamAndFilterByNode(t *testing.T) {
 	}
 }
 
-func TestShouldStreamAndFilterByService(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Service: "testService"})
+func TestLogsShouldStreamAndFilterByService(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Service: "testService"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -289,8 +287,8 @@ func TestShouldStreamAndFilterByService(t *testing.T) {
 	}
 }
 
-func TestShouldStreamAndFilterByMessage(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Message: testMessage})
+func TestogsShouldStreamAndFilterByMessage(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Message: testMessage})
 	if err != nil {
 		t.Error(err)
 	}
@@ -303,8 +301,8 @@ func TestShouldStreamAndFilterByMessage(t *testing.T) {
 	}
 }
 
-func TestShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Message: strings.ToUpper(testMessage)})
+func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Message: strings.ToUpper(testMessage)})
 	if err != nil {
 		t.Error(err)
 	}
@@ -317,8 +315,8 @@ func TestShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 	}
 }
 
-func TestShouldStreamAndFilterByStack(t *testing.T) {
-	stream, err := client.GetStream(ctx, &GetRequest{Stack: "testStack"})
+func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Stack: "testStack"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -329,4 +327,8 @@ func TestShouldStreamAndFilterByStack(t *testing.T) {
 	for entry := range entries {
 		assert.True(t, strings.HasPrefix(entry.StackName, "testStack") || strings.HasPrefix(entry.StackId, "testStack"))
 	}
+}
+
+func TestLogsEnd(t *testing.T) {
+	sc.Close()
 }
