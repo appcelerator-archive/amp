@@ -17,7 +17,7 @@ import:
   - github
 - package: github.com/howeyc/gopass
 - package: github.com/influxdata/influxdb
-  version: ^1.0.2
+  version: ^1.1.0-rc1
   subpackages:
   - client/v2
 - package: github.com/mitchellh/go-homedir
