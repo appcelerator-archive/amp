@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 )
 
 type TestSpec struct {
@@ -28,10 +29,9 @@ type CommandSpec struct {
 	Options           []string `yaml:"options"`
 	Expectation       string   `yaml:"expectation"`
 	ExpectErrorStatus bool     `yaml:"expectErrorStatus"`
-}
-
-type LookupSpec struct {
-	Name string
+	Retry             int      `yaml:"retry"`
+	Timeout           int64    `yaml:"timeout"`
+	Delay             int64    `yaml:"delay"`
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -114,29 +114,51 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 	return testSpec, nil
 }
 
-func runTestSpec(t *testing.T, test *TestSpec) error {
+func runTestSpec(t *testing.T, test *TestSpec) (err error) {
+	var i int
+	var startTime, endTime int64
+	var tmplString []string
 	var cache = map[string]string{}
+
 	for _, cmdSpec := range test.Commands {
-		cmdString := generateCmdString(&cmdSpec)
-		tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
-		if tmplErr != nil {
-			return fmt.Errorf("Executing templating failed: %s", tmplErr)
+		startTime = time.Now().UnixNano() / 1000000
+		for i = -1; i < cmdSpec.Retry; i++ {
+			cmdString := generateCmdString(&cmdSpec)
+			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
+			if tmplErr != nil {
+				return fmt.Errorf("Executing templating failed: %s", tmplErr)
+			}
+			tmplString := strings.Fields(tmplOutput)
+			t.Logf("Running: %s", strings.Join(tmplString, " "))
+			actualOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
+			expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
+
+			if !expectedOutput.MatchString(string(actualOutput)) {
+				return fmt.Errorf("miss matched expected output: %s", actualOutput)
+			}
+			if cmdErr != nil && !cmdSpec.ExpectErrorStatus {
+				return fmt.Errorf("Command was expected to exit with zero status but got: %v", cmdErr)
+			}
+			if cmdErr == nil && cmdSpec.ExpectErrorStatus {
+				return fmt.Errorf("Command was expected to exit with error status but exited with zero")
+			}
+
+			endTime = time.Now().UnixNano() / 1000000
+			if cmdSpec.Timeout != 0 && endTime-startTime >= cmdSpec.Timeout {
+				return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
+			}
+			if err == nil {
+				break
+			}
+			time.Sleep(time.Duration(cmdSpec.Delay) * time.Millisecond)
 		}
-		tmplString := strings.Fields(tmplOutput)
-		t.Logf("Running: %s", strings.Join(tmplString, " "))
-		actualOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
-		expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
-		if !expectedOutput.MatchString(string(actualOutput)) {
-			return fmt.Errorf("miss matched expected output: %s, expectation was: %s\n", actualOutput, cmdSpec.Expectation)
-		}
-		if cmdErr != nil && !cmdSpec.ExpectErrorStatus {
-			return fmt.Errorf("Command was expected to exit with zero status but got: %v", cmdErr)
-		}
-		if cmdErr == nil && cmdSpec.ExpectErrorStatus {
-			return fmt.Errorf("Command was expected to exit with error status but exited with zero")
+
+		if i > 0 && i == cmdSpec.Retry {
+			t.Log("This command :", tmplString, "has re-run", i, "times.")
+
 		}
 	}
-	return nil
+	return
 }
 
 func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
