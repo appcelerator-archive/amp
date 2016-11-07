@@ -27,12 +27,11 @@ const (
 )
 
 var (
-	testContainerId = stringid.GenerateNonCryptoID()
-	testNodeId      = stringid.GenerateNonCryptoID()
-	testServiceId   = stringid.GenerateNonCryptoID()
-	testStackId     = stringid.GenerateNonCryptoID()
+	testContainerID = stringid.GenerateNonCryptoID()
+	testNodeID      = stringid.GenerateNonCryptoID()
+	testServiceID   = stringid.GenerateNonCryptoID()
+	testStackID     = stringid.GenerateNonCryptoID()
 	sc              stan.Conn
-	err             error
 )
 
 func TestLogsInit(t *testing.T) {
@@ -58,7 +57,7 @@ func TestLogsInit(t *testing.T) {
 	// Wait for entries to be indexed
 	for {
 		time.Sleep(1 * time.Second)
-		r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceId})
+		r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceID})
 		if err != nil {
 			continue
 		}
@@ -93,16 +92,16 @@ func TestLogsShouldFilterByContainer(t *testing.T) {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
-	randomContainerId := r.Entries[0].ContainerId
+	randomContainerID := r.Entries[0].ContainerId
 
 	// Then filter by this container id
-	r, err = logsClient.Get(ctx, &GetRequest{Container: randomContainerId})
+	r, err = logsClient.Get(ctx, &GetRequest{Container: randomContainerID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Equal(t, randomContainerId, entry.ContainerId)
+		assert.Equal(t, randomContainerID, entry.ContainerId)
 	}
 }
 
@@ -113,27 +112,27 @@ func TestLogsShouldFilterByNode(t *testing.T) {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
-	randomNodeId := r.Entries[0].NodeId
+	randomNodeID := r.Entries[0].NodeId
 
 	// Then filter by this node id
-	r, err = logsClient.Get(ctx, &GetRequest{Node: randomNodeId})
+	r, err = logsClient.Get(ctx, &GetRequest{Node: randomNodeID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Equal(t, randomNodeId, entry.NodeId)
+		assert.Equal(t, randomNodeID, entry.NodeId)
 	}
 }
 
 func TestLogsShouldFilterByService(t *testing.T) {
-	r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceId})
+	r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceId) || strings.HasPrefix(entry.ServiceId, testServiceId))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceID) || strings.HasPrefix(entry.ServiceId, testServiceID))
 	}
 
 	r, err = logsClient.Get(ctx, &GetRequest{Service: testServiceName})
@@ -158,13 +157,13 @@ func TestLogsShouldFilterByMessage(t *testing.T) {
 }
 
 func TestLogsShouldFilterByStack(t *testing.T) {
-	r, err := logsClient.Get(ctx, &GetRequest{Stack: testStackId})
+	r, err := logsClient.Get(ctx, &GetRequest{Stack: testStackID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, testStackId) || strings.HasPrefix(entry.StackId, testStackId))
+		assert.True(t, strings.HasPrefix(entry.StackName, testStackID) || strings.HasPrefix(entry.StackId, testStackID))
 	}
 
 	r, err = logsClient.Get(ctx, &GetRequest{Stack: testStackName})
@@ -190,12 +189,12 @@ func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 func produceLogEntries(howMany int) error {
 	for i := 0; i < howMany; i++ {
 		message, err := proto.Marshal(&LogEntry{
-			ContainerId: testContainerId,
+			ContainerId: testContainerID,
 			Message:     testMessage + strconv.Itoa(rand.Int()),
-			NodeId:      testNodeId,
-			ServiceId:   testServiceId,
+			NodeId:      testNodeID,
+			ServiceId:   testServiceID,
 			ServiceName: testServiceName,
-			StackId:     testStackId,
+			StackId:     testStackID,
 			StackName:   testStackName,
 			Timestamp:   time.Now().Format(time.RFC3339Nano),
 			TimeId:      time.Now().Format(time.RFC3339Nano),
@@ -246,7 +245,7 @@ func TestLogsShouldStreamLogs(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
-	stream, err := logsClient.GetStream(ctx, &GetRequest{Container: testContainerId})
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Container: testContainerID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -255,12 +254,12 @@ func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, testContainerId, entry.ContainerId)
+		assert.Equal(t, testContainerID, entry.ContainerId)
 	}
 }
 
 func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
-	stream, err := logsClient.GetStream(ctx, &GetRequest{Node: testNodeId})
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Node: testNodeID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -269,7 +268,7 @@ func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.Equal(t, testNodeId, entry.NodeId)
+		assert.Equal(t, testNodeID, entry.NodeId)
 	}
 }
 
@@ -287,7 +286,7 @@ func TestLogsShouldStreamAndFilterByService(t *testing.T) {
 	}
 }
 
-func TestogsShouldStreamAndFilterByMessage(t *testing.T) {
+func TestLogsShouldStreamAndFilterByMessage(t *testing.T) {
 	stream, err := logsClient.GetStream(ctx, &GetRequest{Message: testMessage})
 	if err != nil {
 		t.Error(err)
