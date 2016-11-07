@@ -43,14 +43,14 @@ for version in "${versions[@]}"; do
 
 	if [ "$distro" = "debian" ]; then
 		cat >> "$version/Dockerfile" <<-'EOF'
-			# allow replacing httpredir mirror
-			ARG APT_MIRROR=httpredir.debian.org
-			RUN sed -i s/httpredir.debian.org/$APT_MIRROR/g /etc/apt/sources.list
+			# allow replacing httpredir or deb mirror
+			ARG APT_MIRROR=deb.debian.org
+			RUN sed -ri "s/(httpredir|deb).debian.org/$APT_MIRROR/g" /etc/apt/sources.list
 		EOF
 
 		if [ "$suite" = "wheezy" ]; then
 			cat >> "$version/Dockerfile" <<-'EOF'
-				RUN sed -i s/httpredir.debian.org/$APT_MIRROR/g /etc/apt/sources.list.d/backports.list
+				RUN sed -ri "s/(httpredir|deb).debian.org/$APT_MIRROR/g" /etc/apt/sources.list.d/backports.list
 			EOF
 		fi
 
@@ -130,7 +130,7 @@ for version in "${versions[@]}"; do
 	echo >> "$version/Dockerfile"
 
 	awk '$1 == "ENV" && $2 == "GO_VERSION" { print; exit }' ../../../../Dockerfile >> "$version/Dockerfile"
-	echo 'RUN curl -fSL "https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz" | tar xzC /usr/local' >> "$version/Dockerfile"
+	echo 'RUN curl -fSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar xzC /usr/local' >> "$version/Dockerfile"
 	echo 'ENV PATH $PATH:/usr/local/go/bin' >> "$version/Dockerfile"
 
 	echo >> "$version/Dockerfile"

@@ -103,6 +103,7 @@ type DriverParameters struct {
 func init() {
 	for _, region := range []string{
 		"us-east-1",
+		"us-east-2",
 		"us-west-1",
 		"us-west-2",
 		"eu-west-1",
@@ -389,29 +390,19 @@ func New(params DriverParameters) (*Driver, error) {
 	}
 
 	awsConfig := aws.NewConfig()
-	var creds *credentials.Credentials
-	if params.RegionEndpoint == "" {
-		creds = credentials.NewChainCredentials([]credentials.Provider{
-			&credentials.StaticProvider{
-				Value: credentials.Value{
-					AccessKeyID:     params.AccessKey,
-					SecretAccessKey: params.SecretKey,
-				},
+	creds := credentials.NewChainCredentials([]credentials.Provider{
+		&credentials.StaticProvider{
+			Value: credentials.Value{
+				AccessKeyID:     params.AccessKey,
+				SecretAccessKey: params.SecretKey,
 			},
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(session.New())},
-		})
-	} else {
-		creds = credentials.NewChainCredentials([]credentials.Provider{
-			&credentials.StaticProvider{
-				Value: credentials.Value{
-					AccessKeyID:     params.AccessKey,
-					SecretAccessKey: params.SecretKey,
-				},
-			},
-			&credentials.EnvProvider{},
-		})
+		},
+		&credentials.EnvProvider{},
+		&credentials.SharedCredentialsProvider{},
+		&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(session.New())},
+	})
+
+	if params.RegionEndpoint != "" {
 		awsConfig.WithS3ForcePathStyle(true)
 		awsConfig.WithEndpoint(params.RegionEndpoint)
 	}

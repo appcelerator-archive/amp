@@ -1,12 +1,17 @@
-<!--[metadata]>
-+++
-title = "network ls"
-description = "The network ls command description and usage"
-keywords = ["network, list, user-defined"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "network ls"
+description: "The network ls command description and usage"
+keywords: "network, list, user-defined"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # docker network ls
 
@@ -179,7 +184,7 @@ Valid placeholders for the Go template are listed below:
 
 Placeholder | Description
 ------------|------------------------------------------------------------------------------------------
-`.ID`       | Network ID 
+`.ID`       | Network ID
 `.Name`     | Network name
 `.Driver`   | Network driver
 `.Scope`    | Network scope (local, global)
@@ -209,4 +214,5 @@ d1584f8dc718: host
 * [network create](network_create.md)
 * [network inspect](network_inspect.md)
 * [network rm](network_rm.md)
-* [Understand Docker container networks](../../userguide/networking/index.md)
+* [network prune](network_prune.md)
+* [Understand Docker container networks](https://docs.docker.com/engine/userguide/networking/)

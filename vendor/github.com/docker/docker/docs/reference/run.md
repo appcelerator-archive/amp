@@ -1,13 +1,17 @@
-<!--[metadata]>
-+++
-title = "Docker run reference"
-description = "Configure containers at runtime"
-keywords = ["docker, run, configure,  runtime"]
-[menu.main]
-parent = "engine_ref"
-weight=-80
-+++
-<![end-metadata]-->
+---
+title: "Docker run reference"
+description: "Configure containers at runtime"
+keywords: "docker, run, configure, runtime"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # Docker run reference
 
@@ -181,7 +185,7 @@ Images using the v2 or later image format have a content-addressable identifier
 called a digest. As long as the input used to generate the image is unchanged,
 the digest value is predictable and referenceable.
 
-The following example runs a container from the `alpine` image with the 
+The following example runs a container from the `alpine` image with the
 `sha256:9cacb71397b640eca97488cf08582ae4e4068513101088e9f96c9814bfda95e0` digest:
 
     $ docker run alpine@sha256:9cacb71397b640eca97488cf08582ae4e4068513101088e9f96c9814bfda95e0 date
@@ -239,7 +243,7 @@ $ docker run --name my-redis -d redis
 Debug the redis container by running another container that has strace in it:
 
 ```bash
-$ docker run --it --pid=container:my-redis bash
+$ docker run -it --pid=container:my-redis my_strace_docker_image bash
 $ strace -p 1
 ```
 
@@ -420,7 +424,7 @@ running the `redis-cli` command and connecting to the Redis server over the
 You can create a network using a Docker network driver or an external network
 driver plugin. You can connect multiple containers to the same network. Once
 connected to a user-defined network, the containers can communicate easily using
-only another container's IP address or name.  
+only another container's IP address or name.
 
 For `overlay` networks or custom plugins that support multi-host connectivity,
 containers connected to the same multi-host network but launched from different
@@ -537,13 +541,17 @@ will try forever to restart the container. The number of (attempted) restarts
 for a container can be obtained via [`docker inspect`](commandline/inspect.md). For example, to get the number of restarts
 for container "my-container";
 
+    {% raw %}
     $ docker inspect -f "{{ .RestartCount }}" my-container
     # 2
+    {% endraw %}
 
 Or, to get the last time the container was (re)started;
 
+    {% raw %}
     $ docker inspect -f "{{ .State.StartedAt }}" my-container
     # 2015-03-04T23:47:07.691840179Z
+    {% endraw %}
 
 
 Combining `--restart` (restart policy) with the `--rm` (clean up) flag results
@@ -678,10 +686,13 @@ container:
 | `--memory-reservation=""`  | Memory soft limit (format: `<number>[<unit>]`). Number is a positive integer. Unit can be one of `b`, `k`, `m`, or `g`.                         |
 | `--kernel-memory=""`       | Kernel memory limit (format: `<number>[<unit>]`). Number is a positive integer. Unit can be one of `b`, `k`, `m`, or `g`. Minimum is 4M.        |
 | `-c`, `--cpu-shares=0`     | CPU shares (relative weight)                                                                                                                    |
+| `--cpus=0.000`             | Number of CPUs. Number is a fractional number. 0.000 means no limit.                                                                            |
 | `--cpu-period=0`           | Limit the CPU CFS (Completely Fair Scheduler) period                                                                                            |
 | `--cpuset-cpus=""`         | CPUs in which to allow execution (0-3, 0,1)                                                                                                     |
 | `--cpuset-mems=""`         | Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.                                                     |
 | `--cpu-quota=0`            | Limit the CPU CFS (Completely Fair Scheduler) quota                                                                                             |
+| `--cpu-rt-period=0`        | Limit the CPU real-time period. In microseconds. Requires parent cgroups be set and cannot be higher than parent. Also check rtprio ulimits.    |
+| `--cpu-rt-runtime=0`       | Limit the CPU real-time runtime. In microseconds. Requires parent cgroups be set and cannot be higher than parent. Also check rtprio ulimits.   |
 | `--blkio-weight=0`         | Block IO weight (relative weight) accepts a weight value between 10 and 1000.                                                                   |
 | `--blkio-weight-device=""` | Block IO weight (relative device weight, format: `DEVICE_NAME:WEIGHT`)                                                                          |
 | `--device-read-bps=""`     | Limit read rate from a device (format: `<device-path>:<number>[<unit>]`). Number is a positive integer. Unit can be one of `kb`, `mb`, or `gb`. |
@@ -959,6 +970,13 @@ Examples:
     $ docker run -it --cpu-period=50000 --cpu-quota=25000 ubuntu:14.04 /bin/bash
 
 If there is 1 CPU, this means the container can get 50% CPU worth of run-time every 50ms.
+
+In addition to use `--cpu-period` and `--cpu-quota` for setting CPU period constraints,
+it is possible to specify `--cpus` with a float number to achieve the same purpose.
+For example, if there is 1 CPU, then `--cpus=0.5` will achieve the same result as
+setting `--cpu-period=50000` and `--cpu-quota=25000` (50% CPU).
+
+The default value for `--cpus` is `0.000`, which means there is no limit.
 
 For more information, see the [CFS documentation on bandwidth limiting](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt).
 
@@ -1243,7 +1261,7 @@ container's logging driver. The following options are supported:
 
 The `docker logs` command is available only for the `json-file` and `journald`
 logging drivers.  For detailed information on working with logging drivers, see
-[Configure a logging driver](../admin/logging/overview.md).
+[Configure a logging driver](https://docs.docker.com/engine/admin/logging/overview/).
 
 
 ## Overriding Dockerfile image defaults
@@ -1366,7 +1384,7 @@ If the operator uses `--link` when starting a new client container in the
 default bridge network, then the client container can access the exposed
 port via a private networking interface.
 If `--link` is used when starting a container in a user-defined network as
-described in [*Docker network overview*](../userguide/networking/index.md),
+described in [*Docker network overview*](https://docs.docker.com/engine/userguide/networking/),
 it will provide a named alias for the container being linked to.
 
 ### ENV (environment variables)
@@ -1374,34 +1392,12 @@ it will provide a named alias for the container being linked to.
 When a new container is created, Docker will set the following environment
 variables automatically:
 
-<table>
- <tr>
-  <th>Variable</th>
-  <th>Value</th>
- </tr>
- <tr>
-  <td><code>HOME</code></td>
-  <td>
-    Set based on the value of <code>USER</code>
-  </td>
- </tr>
- <tr>
-  <td><code>HOSTNAME</code></td>
-  <td>
-    The hostname associated with the container
-  </td>
- </tr>
- <tr>
-  <td><code>PATH</code></td>
-  <td>
-    Includes popular directories, such as :<br>
-    <code>/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</code>
-  </td>
- <tr>
-  <td><code>TERM</code></td>
-  <td><code>xterm</code> if the container is allocated a pseudo-TTY</td>
- </tr>
-</table>
+| Variable | Value |
+| -------- | ----- |
+| `HOME` | Set based on the value of `USER` |
+| `HOSTNAME` | The hostname associated with the container |
+| `PATH` | Includes popular directories, such as `:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` |
+| `TERM` | `xterm` if the container is allocated a pseudo-TTY |
 
 Additionally, the operator can **set any environment variable** in the
 container by using one or more `-e` flags, even overriding those mentioned
@@ -1430,6 +1426,7 @@ Similarly the operator can set the **hostname** with `-h`.
 
 Example:
 
+    {% raw %}
     $ docker run --name=test -d \
         --health-cmd='stat /etc/passwd || exit 1' \
         --health-interval=2s \
@@ -1474,6 +1471,7 @@ Example:
         }
       ]
     }
+    {% endraw %}
 
 The health status is also displayed in the `docker ps` output.
 
@@ -1517,7 +1515,7 @@ The example below mounts an empty tmpfs into the container with the `rw`,
 
 The volumes commands are complex enough to have their own documentation
 in section [*Manage data in
-containers*](../tutorials/dockervolumes.md). A developer can define
+containers*](https://docs.docker.com/engine/tutorials/dockervolumes/). A developer can define
 one or more `VOLUME`'s associated with an image, but only the operator
 can give access from one container to another (or from a container to a
 volume mounted on the host).

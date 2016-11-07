@@ -27,10 +27,13 @@ import (
 )
 
 const (
-	defaultNetworkSpace = "172.16.0.0/12"
-	platformSupported   = true
-	windowsMinCPUShares = 1
-	windowsMaxCPUShares = 10000
+	defaultNetworkSpace  = "172.16.0.0/12"
+	platformSupported    = true
+	windowsMinCPUShares  = 1
+	windowsMaxCPUShares  = 10000
+	windowsMinCPUPercent = 1
+	windowsMaxCPUPercent = 100
+	windowsMinCPUCount   = 1
 )
 
 func getBlkioWeightDevices(config *containertypes.HostConfig) ([]blkiodev.WeightDevice, error) {
@@ -80,6 +83,15 @@ func (daemon *Daemon) adaptContainerSettings(hostConfig *containertypes.HostConf
 		return nil
 	}
 
+	numCPU := int64(sysinfo.NumCPU())
+	if hostConfig.CPUCount < 0 {
+		logrus.Warnf("Changing requested CPUCount of %d to minimum allowed of %d", hostConfig.CPUCount, windowsMinCPUCount)
+		hostConfig.CPUCount = windowsMinCPUCount
+	} else if hostConfig.CPUCount > numCPU {
+		logrus.Warnf("Changing requested CPUCount of %d to current number of processors, %d", hostConfig.CPUCount, numCPU)
+		hostConfig.CPUCount = numCPU
+	}
+
 	if hostConfig.CPUShares < 0 {
 		logrus.Warnf("Changing requested CPUShares of %d to minimum allowed of %d", hostConfig.CPUShares, windowsMinCPUShares)
 		hostConfig.CPUShares = windowsMinCPUShares
@@ -88,19 +100,53 @@ func (daemon *Daemon) adaptContainerSettings(hostConfig *containertypes.HostConf
 		hostConfig.CPUShares = windowsMaxCPUShares
 	}
 
+	if hostConfig.CPUPercent < 0 {
+		logrus.Warnf("Changing requested CPUPercent of %d to minimum allowed of %d", hostConfig.CPUPercent, windowsMinCPUPercent)
+		hostConfig.CPUPercent = windowsMinCPUPercent
+	} else if hostConfig.CPUPercent > windowsMaxCPUPercent {
+		logrus.Warnf("Changing requested CPUPercent of %d to maximum allowed of %d", hostConfig.CPUPercent, windowsMaxCPUPercent)
+		hostConfig.CPUPercent = windowsMaxCPUPercent
+	}
+
 	return nil
 }
 
-func verifyContainerResources(resources *containertypes.Resources, sysInfo *sysinfo.SysInfo) ([]string, error) {
+func verifyContainerResources(resources *containertypes.Resources, isHyperv bool) ([]string, error) {
 	warnings := []string{}
 
-	// cpu subsystem checks and adjustments
-	if resources.CPUPercent < 0 || resources.CPUPercent > 100 {
-		return warnings, fmt.Errorf("Range of CPU percent is from 1 to 100")
+	if !isHyperv {
+		// The processor resource controls are mutually exclusive on
+		// Windows Server Containers, the order of precedence is
+		// CPUCount first, then CPUShares, and CPUPercent last.
+		if resources.CPUCount > 0 {
+			if resources.CPUShares > 0 {
+				warnings = append(warnings, "Conflicting options: CPU count takes priority over CPU shares on Windows Server Containers. CPU shares discarded")
+				logrus.Warn("Conflicting options: CPU count takes priority over CPU shares on Windows Server Containers. CPU shares discarded")
+				resources.CPUShares = 0
+			}
+			if resources.CPUPercent > 0 {
+				warnings = append(warnings, "Conflicting options: CPU count takes priority over CPU percent on Windows Server Containers. CPU percent discarded")
+				logrus.Warn("Conflicting options: CPU count takes priority over CPU percent on Windows Server Containers. CPU percent discarded")
+				resources.CPUPercent = 0
+			}
+		} else if resources.CPUShares > 0 {
+			if resources.CPUPercent > 0 {
+				warnings = append(warnings, "Conflicting options: CPU shares takes priority over CPU percent on Windows Server Containers. CPU percent discarded")
+				logrus.Warn("Conflicting options: CPU shares takes priority over CPU percent on Windows Server Containers. CPU percent discarded")
+				resources.CPUPercent = 0
+			}
+		}
 	}
 
-	if resources.CPUPercent > 0 && resources.CPUShares > 0 {
-		return warnings, fmt.Errorf("Conflicting options: CPU Shares and CPU Percent cannot both be set")
+	if resources.NanoCPUs > 0 && resources.CPUPercent > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Percent cannot both be set")
+	}
+
+	if resources.NanoCPUs > 0 && resources.CPUShares > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Shares cannot both be set")
+	}
+	if resources.NanoCPUs < 0 || resources.NanoCPUs > int64(sysinfo.NumCPU())*1e9 {
+		return warnings, fmt.Errorf("Range of Nano CPUs is from 1 to %d", int64(sysinfo.NumCPU())*1e9)
 	}
 
 	// TODO Windows: Add more validation of resource settings not supported on Windows
@@ -143,7 +189,7 @@ func verifyContainerResources(resources *containertypes.Resources, sysInfo *sysi
 func verifyPlatformContainerSettings(daemon *Daemon, hostConfig *containertypes.HostConfig, config *containertypes.Config, update bool) ([]string, error) {
 	warnings := []string{}
 
-	w, err := verifyContainerResources(&hostConfig.Resources, nil)
+	w, err := verifyContainerResources(&hostConfig.Resources, daemon.runAsHyperVContainer(hostConfig))
 	warnings = append(warnings, w...)
 	if err != nil {
 		return warnings, err
@@ -377,14 +423,14 @@ func setupDaemonRoot(config *Config, rootDir string, rootUID, rootGID int) error
 }
 
 // runasHyperVContainer returns true if we are going to run as a Hyper-V container
-func (daemon *Daemon) runAsHyperVContainer(container *container.Container) bool {
-	if container.HostConfig.Isolation.IsDefault() {
+func (daemon *Daemon) runAsHyperVContainer(hostConfig *containertypes.HostConfig) bool {
+	if hostConfig.Isolation.IsDefault() {
 		// Container is set to use the default, so take the default from the daemon configuration
 		return daemon.defaultIsolation.IsHyperV()
 	}
 
 	// Container is requesting an isolation mode. Honour it.
-	return container.HostConfig.Isolation.IsHyperV()
+	return hostConfig.Isolation.IsHyperV()
 
 }
 
@@ -392,7 +438,7 @@ func (daemon *Daemon) runAsHyperVContainer(container *container.Container) bool 
 // container start to call mount.
 func (daemon *Daemon) conditionalMountOnStart(container *container.Container) error {
 	// We do not mount if a Hyper-V container
-	if !daemon.runAsHyperVContainer(container) {
+	if !daemon.runAsHyperVContainer(container.HostConfig) {
 		return daemon.Mount(container)
 	}
 	return nil
@@ -402,7 +448,7 @@ func (daemon *Daemon) conditionalMountOnStart(container *container.Container) er
 // during the cleanup of a container to unmount.
 func (daemon *Daemon) conditionalUnmountOnCleanup(container *container.Container) error {
 	// We do not unmount if a Hyper-V container
-	if !daemon.runAsHyperVContainer(container) {
+	if !daemon.runAsHyperVContainer(container.HostConfig) {
 		return daemon.Unmount(container)
 	}
 	return nil
@@ -496,6 +542,8 @@ func (daemon *Daemon) setDefaultIsolation() error {
 			}
 			if containertypes.Isolation(val).IsProcess() {
 				if system.IsWindowsClient() {
+					// @engine maintainers. This block should not be removed. It partially enforces licensing
+					// restrictions on Windows. Ping @jhowardmsft if there are concerns or PRs to change this.
 					return fmt.Errorf("Windows client operating systems only support Hyper-V containers")
 				}
 				daemon.defaultIsolation = containertypes.Isolation("process")
@@ -528,5 +576,9 @@ func setupDaemonProcess(config *Config) error {
 // This is called during daemon initialization to migrate volumes from pre-1.7.
 // volumes were not supported on windows pre-1.7
 func (daemon *Daemon) verifyVolumesInfo(container *container.Container) error {
+	return nil
+}
+
+func (daemon *Daemon) setupSeccompProfile() error {
 	return nil
 }

@@ -41,10 +41,14 @@ Placement:
 {{- if .HasUpdateConfig }}
 UpdateConfig:
  Parallelism:	{{ .UpdateParallelism }}
-{{- if .HasUpdateDelay -}}
+{{- if .HasUpdateDelay}}
  Delay:		{{ .UpdateDelay }}
 {{- end }}
  On failure:	{{ .UpdateOnFailure }}
+{{- if .HasUpdateMonitor}}
+ Monitoring Period: {{ .UpdateMonitor }}
+{{- end }}
+ Max failure ratio: {{ .UpdateMaxFailureRatio }}
 {{- end }}
 ContainerSpec:
  Image:		{{ .ContainerImage }}
@@ -139,6 +143,10 @@ type serviceInspectContext struct {
 	subContext
 }
 
+func (ctx *serviceInspectContext) MarshalJSON() ([]byte, error) {
+	return marshalJSON(ctx)
+}
+
 func (ctx *serviceInspectContext) ID() string {
 	return ctx.Service.ID
 }
@@ -212,6 +220,18 @@ func (ctx *serviceInspectContext) UpdateDelay() time.Duration {
 
 func (ctx *serviceInspectContext) UpdateOnFailure() string {
 	return ctx.Service.Spec.UpdateConfig.FailureAction
+}
+
+func (ctx *serviceInspectContext) HasUpdateMonitor() bool {
+	return ctx.Service.Spec.UpdateConfig.Monitor.Nanoseconds() > 0
+}
+
+func (ctx *serviceInspectContext) UpdateMonitor() time.Duration {
+	return ctx.Service.Spec.UpdateConfig.Monitor
+}
+
+func (ctx *serviceInspectContext) UpdateMaxFailureRatio() float32 {
+	return ctx.Service.Spec.UpdateConfig.MaxFailureRatio
 }
 
 func (ctx *serviceInspectContext) ContainerImage() string {

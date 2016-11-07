@@ -12,8 +12,20 @@ import (
 
 // CheckpointCreateOptions holds parameters to create a checkpoint from a container
 type CheckpointCreateOptions struct {
-	CheckpointID string
-	Exit         bool
+	CheckpointID  string
+	CheckpointDir string
+	Exit          bool
+}
+
+// CheckpointListOptions holds parameters to list checkpoints for a container
+type CheckpointListOptions struct {
+	CheckpointDir string
+}
+
+// CheckpointDeleteOptions holds parameters to delete a checkpoint from a container
+type CheckpointDeleteOptions struct {
+	CheckpointID  string
+	CheckpointDir string
 }
 
 // ContainerAttachOptions holds parameters to attach to a container.
@@ -23,6 +35,7 @@ type ContainerAttachOptions struct {
 	Stdout     bool
 	Stderr     bool
 	DetachKeys string
+	Logs       bool
 }
 
 // ContainerCommitOptions holds parameters to commit changes into a container.
@@ -41,18 +54,19 @@ type ContainerExecInspect struct {
 	ContainerID string
 	Running     bool
 	ExitCode    int
+	Pid         int
 }
 
 // ContainerListOptions holds parameters to list containers with.
 type ContainerListOptions struct {
-	Quiet  bool
-	Size   bool
-	All    bool
-	Latest bool
-	Since  string
-	Before string
-	Limit  int
-	Filter filters.Args
+	Quiet   bool
+	Size    bool
+	All     bool
+	Latest  bool
+	Since   string
+	Before  string
+	Limit   int
+	Filters filters.Args
 }
 
 // ContainerLogsOptions holds parameters to filter logs with.
@@ -75,7 +89,8 @@ type ContainerRemoveOptions struct {
 
 // ContainerStartOptions holds parameters to start containers.
 type ContainerStartOptions struct {
-	CheckpointID string
+	CheckpointID  string
+	CheckpointDir string
 }
 
 // CopyToContainerOptions holds information
@@ -140,6 +155,7 @@ type ImageBuildOptions struct {
 	Memory         int64
 	MemorySwap     int64
 	CgroupParent   string
+	NetworkMode    string
 	ShmSize        int64
 	Dockerfile     string
 	Ulimits        []*units.Ulimit
@@ -251,7 +267,7 @@ func (v VersionResponse) ServerOK() bool {
 
 // NodeListOptions holds parameters to list nodes with.
 type NodeListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // NodeRemoveOptions holds parameters to remove nodes with.
@@ -275,6 +291,12 @@ type ServiceCreateResponse struct {
 	ID string
 }
 
+// Values for RegistryAuthFrom in ServiceUpdateOptions
+const (
+	RegistryAuthFromSpec         = "spec"
+	RegistryAuthFromPreviousSpec = "previous-spec"
+)
+
 // ServiceUpdateOptions contains the options to be used for updating services.
 type ServiceUpdateOptions struct {
 	// EncodedRegistryAuth is the encoded registry authorization credentials to
@@ -286,19 +308,33 @@ type ServiceUpdateOptions struct {
 	// TODO(stevvooe): Consider moving the version parameter of ServiceUpdate
 	// into this field. While it does open API users up to racy writes, most
 	// users may not need that level of consistency in practice.
+
+	// RegistryAuthFrom specifies where to find the registry authorization
+	// credentials if they are not given in EncodedRegistryAuth. Valid
+	// values are "spec" and "previous-spec".
+	RegistryAuthFrom string
 }
 
 // ServiceListOptions holds parameters to list  services with.
 type ServiceListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // TaskListOptions holds parameters to list  tasks with.
 type TaskListOptions struct {
-	Filter filters.Args
+	Filters filters.Args
 }
 
 // PluginRemoveOptions holds parameters to remove plugins.
 type PluginRemoveOptions struct {
 	Force bool
+}
+
+// PluginInstallOptions holds parameters to install a plugin.
+type PluginInstallOptions struct {
+	Disabled              bool
+	AcceptAllPermissions  bool
+	RegistryAuth          string // RegistryAuth is the base64 encoded credentials for the registry
+	PrivilegeFunc         RequestPrivilegeFunc
+	AcceptPermissionsFunc func(PluginPrivileges) (bool, error)
 }

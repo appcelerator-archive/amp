@@ -28,6 +28,7 @@ import (
 	"github.com/docker/docker/container"
 	"github.com/docker/docker/daemon/events"
 	"github.com/docker/docker/daemon/exec"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/libnetwork/cluster"
 	// register graph drivers
 	_ "github.com/docker/docker/daemon/graphdriver/register"
@@ -52,7 +53,6 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/runconfig"
-	"github.com/docker/docker/utils"
 	volumedrivers "github.com/docker/docker/volume/drivers"
 	"github.com/docker/docker/volume/local"
 	"github.com/docker/docker/volume/store"
@@ -103,31 +103,36 @@ type Daemon struct {
 	containerdRemote          libcontainerd.Remote
 	defaultIsolation          containertypes.Isolation // Default isolation mode on Windows
 	clusterProvider           cluster.Provider
+	cluster                   Cluster
+
+	seccompProfile     []byte
+	seccompProfilePath string
+}
+
+// HasExperimental returns whether the experimental features of the daemon are enabled or not
+func (daemon *Daemon) HasExperimental() bool {
+	if daemon.configStore != nil && daemon.configStore.Experimental {
+		return true
+	}
+	return false
 }
 
 func (daemon *Daemon) restore() error {
 	var (
-		debug         = utils.IsDebugEnabled()
 		currentDriver = daemon.GraphDriverName()
 		containers    = make(map[string]*container.Container)
 	)
 
-	if !debug {
-		logrus.Info("Loading containers: start.")
-	}
+	logrus.Info("Loading containers: start.")
+
 	dir, err := ioutil.ReadDir(daemon.repository)
 	if err != nil {
 		return err
 	}
 
-	containerCount := 0
 	for _, v := range dir {
 		id := v.Name()
 		container, err := daemon.load(id)
-		if !debug && logrus.GetLevel() == logrus.InfoLevel {
-			fmt.Print(".")
-			containerCount++
-		}
 		if err != nil {
 			logrus.Errorf("Failed to load container %v: %v", id, err)
 			continue
@@ -153,13 +158,15 @@ func (daemon *Daemon) restore() error {
 	removeContainers := make(map[string]*container.Container)
 	restartContainers := make(map[*container.Container]chan struct{})
 	activeSandboxes := make(map[string]interface{})
-	for _, c := range containers {
+	for id, c := range containers {
 		if err := daemon.registerName(c); err != nil {
 			logrus.Errorf("Failed to register container %s: %s", c.ID, err)
+			delete(containers, id)
 			continue
 		}
 		if err := daemon.Register(c); err != nil {
 			logrus.Errorf("Failed to register container %s: %s", c.ID, err)
+			delete(containers, id)
 			continue
 		}
 
@@ -186,12 +193,12 @@ func (daemon *Daemon) restore() error {
 		go func(c *container.Container) {
 			defer wg.Done()
 			if err := backportMountSpec(c); err != nil {
-				logrus.Errorf("Failed to migrate old mounts to use new spec format")
+				logrus.Error("Failed to migrate old mounts to use new spec format")
 			}
 
 			if c.IsRunning() || c.IsPaused() {
 				c.RestartManager().Cancel() // manually start containers because some need to wait for swarm networking
-				if err := daemon.containerd.Restore(c.ID); err != nil {
+				if err := daemon.containerd.Restore(c.ID, c.InitializeStdio); err != nil {
 					logrus.Errorf("Failed to restore %s with containerd: %s", c.ID, err)
 					return
 				}
@@ -301,7 +308,7 @@ func (daemon *Daemon) restore() error {
 
 			// Make sure networks are available before starting
 			daemon.waitForNetworks(c)
-			if err := daemon.containerStart(c, "", true); err != nil {
+			if err := daemon.containerStart(c, "", "", true); err != nil {
 				logrus.Errorf("Failed to start container %s: %s", c.ID, err)
 			}
 			close(chNotify)
@@ -350,12 +357,7 @@ func (daemon *Daemon) restore() error {
 
 	group.Wait()
 
-	if !debug {
-		if logrus.GetLevel() == logrus.InfoLevel && containerCount > 0 {
-			fmt.Println()
-		}
-		logrus.Info("Loading containers: done.")
-	}
+	logrus.Info("Loading containers: done.")
 
 	return nil
 }
@@ -373,7 +375,7 @@ func (daemon *Daemon) RestartSwarmContainers() {
 				group.Add(1)
 				go func(c *container.Container) {
 					defer group.Done()
-					if err := daemon.containerStart(c, "", true); err != nil {
+					if err := daemon.containerStart(c, "", "", true); err != nil {
 						logrus.Error(err)
 					}
 				}(c)
@@ -477,10 +479,6 @@ func NewDaemon(config *Config, registryService registry.Service, containerdRemot
 		return nil, err
 	}
 
-	// set up SIGUSR1 handler on Unix-like systems, or a Win32 global event
-	// on Windows to dump Go routine stacks
-	setupDumpStackTrap(config.Root)
-
 	uidMaps, gidMaps, err := setupRemappedRoot(config)
 	if err != nil {
 		return nil, err
@@ -530,6 +528,10 @@ func NewDaemon(config *Config, registryService registry.Service, containerdRemot
 			}
 		}
 	}()
+
+	if err := d.setupSeccompProfile(); err != nil {
+		return nil, err
+	}
 
 	// Set the default isolation mode (only applicable on Windows)
 	if err := d.setDefaultIsolation(); err != nil {
@@ -678,7 +680,7 @@ func NewDaemon(config *Config, registryService registry.Service, containerdRemot
 	}
 
 	// Plugin system initialization should happen before restore. Do not change order.
-	if err := pluginInit(d, config, containerdRemote); err != nil {
+	if err := d.pluginInit(config, containerdRemote); err != nil {
 		return nil, err
 	}
 
@@ -686,10 +688,29 @@ func NewDaemon(config *Config, registryService registry.Service, containerdRemot
 		return nil, err
 	}
 
+	// FIXME: this method never returns an error
+	info, _ := d.SystemInfo()
+
+	engineVersion.WithValues(
+		dockerversion.Version,
+		dockerversion.GitCommit,
+		info.Architecture,
+		info.Driver,
+		info.KernelVersion,
+		info.OperatingSystem,
+	).Set(1)
+	engineCpus.Set(float64(info.NCPU))
+	engineMemory.Set(float64(info.MemTotal))
+
+	// set up SIGUSR1 handler on Unix-like systems, or a Win32 global event
+	// on Windows to dump Go routine stacks
+	d.setupDumpStackTrap(config.Root)
+
 	return d, nil
 }
 
 func (daemon *Daemon) shutdownContainer(c *container.Container) error {
+	stopTimeout := c.StopTimeout()
 	// TODO(windows): Handle docker restart with paused containers
 	if c.IsPaused() {
 		// To terminate a process in freezer cgroup, we should send
@@ -706,8 +727,8 @@ func (daemon *Daemon) shutdownContainer(c *container.Container) error {
 		if err := daemon.containerUnpause(c); err != nil {
 			return fmt.Errorf("Failed to unpause container %s with error: %v", c.ID, err)
 		}
-		if _, err := c.WaitStop(10 * time.Second); err != nil {
-			logrus.Debugf("container %s failed to exit in 10 seconds of SIGTERM, sending SIGKILL to force", c.ID)
+		if _, err := c.WaitStop(time.Duration(stopTimeout) * time.Second); err != nil {
+			logrus.Debugf("container %s failed to exit in %d second of SIGTERM, sending SIGKILL to force", c.ID, stopTimeout)
 			sig, ok := signal.SignalMap["KILL"]
 			if !ok {
 				return fmt.Errorf("System does not support SIGKILL")
@@ -719,13 +740,37 @@ func (daemon *Daemon) shutdownContainer(c *container.Container) error {
 			return err
 		}
 	}
-	// If container failed to exit in 10 seconds of SIGTERM, then using the force
-	if err := daemon.containerStop(c, 10); err != nil {
+	// If container failed to exit in stopTimeout seconds of SIGTERM, then using the force
+	if err := daemon.containerStop(c, stopTimeout); err != nil {
 		return fmt.Errorf("Failed to stop container %s with error: %v", c.ID, err)
 	}
 
 	c.WaitStop(-1 * time.Second)
 	return nil
+}
+
+// ShutdownTimeout returns the shutdown timeout based on the max stopTimeout of the containers,
+// and is limited by daemon's ShutdownTimeout.
+func (daemon *Daemon) ShutdownTimeout() int {
+	// By default we use daemon's ShutdownTimeout.
+	shutdownTimeout := daemon.configStore.ShutdownTimeout
+
+	graceTimeout := 5
+	if daemon.containers != nil {
+		for _, c := range daemon.containers.List() {
+			if shutdownTimeout >= 0 {
+				stopTimeout := c.StopTimeout()
+				if stopTimeout < 0 {
+					shutdownTimeout = -1
+				} else {
+					if stopTimeout+graceTimeout > shutdownTimeout {
+						shutdownTimeout = stopTimeout + graceTimeout
+					}
+				}
+			}
+		}
+	}
+	return shutdownTimeout
 }
 
 // Shutdown stops the daemon.
@@ -742,7 +787,7 @@ func (daemon *Daemon) Shutdown() error {
 	}
 
 	if daemon.containers != nil {
-		logrus.Debug("starting clean shutdown of all containers...")
+		logrus.Debugf("start clean shutdown of all containers with a %d seconds timeout...", daemon.configStore.ShutdownTimeout)
 		daemon.containers.ApplyAll(func(c *container.Container) {
 			if !c.IsRunning() {
 				return
@@ -760,7 +805,7 @@ func (daemon *Daemon) Shutdown() error {
 	}
 
 	// Shutdown plugins after containers. Dont change the order.
-	pluginShutdown()
+	daemon.pluginShutdown()
 
 	// trigger libnetwork Stop only if it's initialized
 	if daemon.netController != nil {
@@ -964,10 +1009,12 @@ func (daemon *Daemon) initDiscovery(config *Config) error {
 // These are the settings that Reload changes:
 // - Daemon labels.
 // - Daemon debug log level.
+// - Daemon insecure registries.
 // - Daemon max concurrent downloads
 // - Daemon max concurrent uploads
 // - Cluster discovery (reconfigure and restart).
 // - Daemon live restore
+// - Daemon shutdown timeout (in seconds).
 func (daemon *Daemon) Reload(config *Config) (err error) {
 
 	daemon.configStore.reloadLock.Lock()
@@ -994,12 +1041,17 @@ func (daemon *Daemon) Reload(config *Config) (err error) {
 	if config.IsValueSet("debug") {
 		daemon.configStore.Debug = config.Debug
 	}
+	if config.IsValueSet("insecure-registries") {
+		daemon.configStore.InsecureRegistries = config.InsecureRegistries
+		if err := daemon.RegistryService.LoadInsecureRegistries(config.InsecureRegistries); err != nil {
+			return err
+		}
+	}
 	if config.IsValueSet("live-restore") {
 		daemon.configStore.LiveRestoreEnabled = config.LiveRestoreEnabled
 		if err := daemon.containerdRemote.UpdateOptions(libcontainerd.WithLiveRestore(config.LiveRestoreEnabled)); err != nil {
 			return err
 		}
-
 	}
 
 	// If no value is set for max-concurrent-downloads we assume it is the default value
@@ -1028,25 +1080,50 @@ func (daemon *Daemon) Reload(config *Config) (err error) {
 		daemon.uploadManager.SetConcurrency(*daemon.configStore.MaxConcurrentUploads)
 	}
 
+	if config.IsValueSet("shutdown-timeout") {
+		daemon.configStore.ShutdownTimeout = config.ShutdownTimeout
+		logrus.Debugf("Reset Shutdown Timeout: %d", daemon.configStore.ShutdownTimeout)
+	}
+
 	// We emit daemon reload event here with updatable configurations
 	attributes["debug"] = fmt.Sprintf("%t", daemon.configStore.Debug)
 	attributes["live-restore"] = fmt.Sprintf("%t", daemon.configStore.LiveRestoreEnabled)
+
+	if daemon.configStore.InsecureRegistries != nil {
+		insecureRegistries, err := json.Marshal(daemon.configStore.InsecureRegistries)
+		if err != nil {
+			return err
+		}
+		attributes["insecure-registries"] = string(insecureRegistries)
+	} else {
+		attributes["insecure-registries"] = "[]"
+	}
+
 	attributes["cluster-store"] = daemon.configStore.ClusterStore
 	if daemon.configStore.ClusterOpts != nil {
-		opts, _ := json.Marshal(daemon.configStore.ClusterOpts)
+		opts, err := json.Marshal(daemon.configStore.ClusterOpts)
+		if err != nil {
+			return err
+		}
 		attributes["cluster-store-opts"] = string(opts)
 	} else {
 		attributes["cluster-store-opts"] = "{}"
 	}
 	attributes["cluster-advertise"] = daemon.configStore.ClusterAdvertise
+
 	if daemon.configStore.Labels != nil {
-		labels, _ := json.Marshal(daemon.configStore.Labels)
+		labels, err := json.Marshal(daemon.configStore.Labels)
+		if err != nil {
+			return err
+		}
 		attributes["labels"] = string(labels)
 	} else {
 		attributes["labels"] = "[]"
 	}
+
 	attributes["max-concurrent-downloads"] = fmt.Sprintf("%d", *daemon.configStore.MaxConcurrentDownloads)
 	attributes["max-concurrent-uploads"] = fmt.Sprintf("%d", *daemon.configStore.MaxConcurrentUploads)
+	attributes["shutdown-timeout"] = fmt.Sprintf("%d", daemon.configStore.ShutdownTimeout)
 
 	return nil
 }
@@ -1178,4 +1255,14 @@ func copyBlkioEntry(entries []*containerd.BlkioStatsEntry) []types.BlkioStatEntr
 		}
 	}
 	return out
+}
+
+// GetCluster returns the cluster
+func (daemon *Daemon) GetCluster() Cluster {
+	return daemon.cluster
+}
+
+// SetCluster sets the cluster
+func (daemon *Daemon) SetCluster(cluster Cluster) {
+	daemon.cluster = cluster
 }

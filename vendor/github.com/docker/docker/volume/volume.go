@@ -68,14 +68,10 @@ type Volume interface {
 	Status() map[string]interface{}
 }
 
-// LabeledVolume wraps a Volume with user-defined labels
-type LabeledVolume interface {
+// DetailedVolume wraps a Volume with user-defined labels, options, and cluster scope (e.g., `local` or `global`)
+type DetailedVolume interface {
 	Labels() map[string]string
-	Volume
-}
-
-// ScopedVolume wraps a volume with a cluster scope (e.g., `local` or `global`)
-type ScopedVolume interface {
+	Options() map[string]string
 	Scope() string
 	Volume
 }
@@ -274,7 +270,6 @@ func ParseMountSpec(cfg mounttypes.Mount, options ...func(*validateOpts)) (*Moun
 		}
 		mp.CopyData = DefaultCopyMode
 
-		mp.Driver = DefaultDriverName
 		if cfg.VolumeOptions != nil {
 			if cfg.VolumeOptions.DriverConfig != nil {
 				mp.Driver = cfg.VolumeOptions.DriverConfig.Name
@@ -290,6 +285,8 @@ func ParseMountSpec(cfg mounttypes.Mount, options ...func(*validateOpts)) (*Moun
 				mp.Propagation = cfg.BindOptions.Propagation
 			}
 		}
+	case mounttypes.TypeTmpfs:
+		// NOP
 	}
 	return mp, nil
 }

@@ -119,6 +119,17 @@ func (s *DockerSuite) TestExecEnv(c *check.C) {
 	c.Assert(out, checker.Contains, "HOME=/root")
 }
 
+func (s *DockerSuite) TestExecSetEnv(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+	runSleepingContainer(c, "-e", "HOME=/root", "-d", "--name", "testing")
+	c.Assert(waitRun("testing"), check.IsNil)
+
+	out, _ := dockerCmd(c, "exec", "-e", "HOME=/another", "-e", "ABC=xyz", "testing", "env")
+	c.Assert(out, checker.Not(checker.Contains), "HOME=/root")
+	c.Assert(out, checker.Contains, "HOME=/another")
+	c.Assert(out, checker.Contains, "ABC=xyz")
+}
+
 func (s *DockerSuite) TestExecExitStatus(c *check.C) {
 	runSleepingContainer(c, "-d", "--name", "top")
 
@@ -127,11 +138,10 @@ func (s *DockerSuite) TestExecExitStatus(c *check.C) {
 }
 
 func (s *DockerSuite) TestExecPausedContainer(c *check.C) {
-	// Windows does not support pause
-	testRequires(c, DaemonIsLinux)
+	testRequires(c, IsPausable)
 	defer unpauseAllContainers()
 
-	out, _ := dockerCmd(c, "run", "-d", "--name", "testing", "busybox", "top")
+	out, _ := runSleepingContainer(c, "-d", "--name", "testing")
 	ContainerID := strings.TrimSpace(out)
 
 	dockerCmd(c, "pause", "testing")

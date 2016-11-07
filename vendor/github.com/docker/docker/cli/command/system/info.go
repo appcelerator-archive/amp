@@ -37,7 +37,7 @@ func NewInfoCommand(dockerCli *command.DockerCli) *cobra.Command {
 
 	flags := cmd.Flags()
 
-	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given go template")
+	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given Go template")
 
 	return cmd
 }
@@ -140,9 +140,20 @@ func prettyPrintInfo(dockerCli *command.DockerCli, info types.Info) error {
 	}
 
 	if info.OSType == "linux" {
-		fmt.Fprintf(dockerCli.Out(), "Security Options:")
-		ioutils.FprintfIfNotEmpty(dockerCli.Out(), " %s", strings.Join(info.SecurityOptions, " "))
-		fmt.Fprintf(dockerCli.Out(), "\n")
+		if len(info.SecurityOptions) != 0 {
+			fmt.Fprintf(dockerCli.Out(), "Security Options:\n")
+			for _, o := range info.SecurityOptions {
+				switch o.Key {
+				case "Name":
+					fmt.Fprintf(dockerCli.Out(), " %s\n", o.Value)
+				case "Profile":
+					if o.Value != "default" {
+						fmt.Fprintf(dockerCli.Err(), "  WARNING: You're not using the default seccomp profile\n")
+					}
+					fmt.Fprintf(dockerCli.Out(), "  %s: %s\n", o.Key, o.Value)
+				}
+			}
+		}
 	}
 
 	// Isolation only has meaning on a Windows daemon.
@@ -223,9 +234,24 @@ func prettyPrintInfo(dockerCli *command.DockerCli, info types.Info) error {
 		for _, attribute := range info.Labels {
 			fmt.Fprintf(dockerCli.Out(), " %s\n", attribute)
 		}
+		// TODO: Engine labels with duplicate keys has been deprecated in 1.13 and will be error out
+		// after 3 release cycles (1.16). For now, a WARNING will be generated. The following will
+		// be removed eventually.
+		labelMap := map[string]string{}
+		for _, label := range info.Labels {
+			stringSlice := strings.SplitN(label, "=", 2)
+			if len(stringSlice) > 1 {
+				// If there is a conflict we will throw out an warning
+				if v, ok := labelMap[stringSlice[0]]; ok && v != stringSlice[1] {
+					fmt.Fprintln(dockerCli.Err(), "WARNING: labels with duplicate keys and conflicting values have been deprecated")
+					break
+				}
+				labelMap[stringSlice[0]] = stringSlice[1]
+			}
+		}
 	}
 
-	ioutils.FprintfIfTrue(dockerCli.Out(), "Experimental: %v\n", info.ExperimentalBuild)
+	fmt.Fprintf(dockerCli.Out(), "Experimental: %v\n", info.ExperimentalBuild)
 	if info.ClusterStore != "" {
 		fmt.Fprintf(dockerCli.Out(), "Cluster Store: %s\n", info.ClusterStore)
 	}

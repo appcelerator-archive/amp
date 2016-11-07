@@ -102,7 +102,7 @@ func (sr *swarmRouter) getServices(ctx context.Context, w http.ResponseWriter, r
 		return err
 	}
 
-	services, err := sr.backend.GetServices(basictypes.ServiceListOptions{Filter: filter})
+	services, err := sr.backend.GetServices(basictypes.ServiceListOptions{Filters: filter})
 	if err != nil {
 		logrus.Errorf("Error getting services: %v", err)
 		return err
@@ -156,7 +156,9 @@ func (sr *swarmRouter) updateService(ctx context.Context, w http.ResponseWriter,
 	// Get returns "" if the header does not exist
 	encodedAuth := r.Header.Get("X-Registry-Auth")
 
-	if err := sr.backend.UpdateService(vars["id"], version, service, encodedAuth); err != nil {
+	registryAuthFrom := r.URL.Query().Get("registryAuthFrom")
+
+	if err := sr.backend.UpdateService(vars["id"], version, service, encodedAuth, registryAuthFrom); err != nil {
 		logrus.Errorf("Error updating service %s: %v", vars["id"], err)
 		return err
 	}
@@ -180,7 +182,7 @@ func (sr *swarmRouter) getNodes(ctx context.Context, w http.ResponseWriter, r *h
 		return err
 	}
 
-	nodes, err := sr.backend.GetNodes(basictypes.NodeListOptions{Filter: filter})
+	nodes, err := sr.backend.GetNodes(basictypes.NodeListOptions{Filters: filter})
 	if err != nil {
 		logrus.Errorf("Error getting nodes: %v", err)
 		return err
@@ -241,7 +243,7 @@ func (sr *swarmRouter) getTasks(ctx context.Context, w http.ResponseWriter, r *h
 		return err
 	}
 
-	tasks, err := sr.backend.GetTasks(basictypes.TaskListOptions{Filter: filter})
+	tasks, err := sr.backend.GetTasks(basictypes.TaskListOptions{Filters: filter})
 	if err != nil {
 		logrus.Errorf("Error getting tasks: %v", err)
 		return err
