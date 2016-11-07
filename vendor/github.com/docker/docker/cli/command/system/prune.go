@@ -39,7 +39,6 @@ const (
 	warning = `WARNING! This will remove:
 	- all stopped containers
 	- all volumes not used by at least one container
-	- all networks not used by at least one container
 	%s
 Are you sure you want to continue?`
 
@@ -65,14 +64,13 @@ func runPrune(dockerCli *command.DockerCli, opts pruneOptions) error {
 	for _, pruneFn := range []func(dockerCli *command.DockerCli) (uint64, string, error){
 		prune.RunContainerPrune,
 		prune.RunVolumePrune,
-		prune.RunNetworkPrune,
 	} {
 		spc, output, err := pruneFn(dockerCli)
 		if err != nil {
 			return err
 		}
-		spaceReclaimed += spc
-		if output != "" {
+		if spc > 0 {
+			spaceReclaimed += spc
 			fmt.Fprintln(dockerCli.Out(), output)
 		}
 	}

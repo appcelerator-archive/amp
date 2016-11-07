@@ -16,7 +16,6 @@ import (
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/docker/pkg/symlink"
-	"github.com/mrunalp/fileutils"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/label"
@@ -84,7 +83,7 @@ func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWrit
 	if config.NoPivotRoot {
 		err = msMoveRoot(config.Rootfs)
 	} else {
-		err = pivotRoot(config.Rootfs)
+		err = pivotRoot(config.Rootfs, config.PivotDir)
 	}
 	if err != nil {
 		return newSystemErrorWithCause(err, "jailing process inside rootfs")
@@ -153,40 +152,14 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 		}
 		return nil
 	case "tmpfs":
-		copyUp := m.Extensions&configs.EXT_COPYUP == configs.EXT_COPYUP
-		tmpDir := ""
 		stat, err := os.Stat(dest)
 		if err != nil {
 			if err := os.MkdirAll(dest, 0755); err != nil {
 				return err
 			}
 		}
-		if copyUp {
-			tmpDir, err = ioutil.TempDir("/tmp", "runctmpdir")
-			if err != nil {
-				return newSystemErrorWithCause(err, "tmpcopyup: failed to create tmpdir")
-			}
-			defer os.RemoveAll(tmpDir)
-			m.Destination = tmpDir
-		}
 		if err := mountPropagate(m, rootfs, mountLabel); err != nil {
 			return err
-		}
-		if copyUp {
-			if err := fileutils.CopyDirectory(dest, tmpDir); err != nil {
-				errMsg := fmt.Errorf("tmpcopyup: failed to copy %s to %s: %v", dest, tmpDir, err)
-				if err1 := syscall.Unmount(tmpDir, syscall.MNT_DETACH); err1 != nil {
-					return newSystemErrorWithCausef(err1, "tmpcopyup: %v: failed to unmount", errMsg)
-				}
-				return errMsg
-			}
-			if err := syscall.Mount(tmpDir, dest, "", syscall.MS_MOVE, ""); err != nil {
-				errMsg := fmt.Errorf("tmpcopyup: failed to move mount %s to %s: %v", tmpDir, dest, err)
-				if err1 := syscall.Unmount(tmpDir, syscall.MNT_DETACH); err1 != nil {
-					return newSystemErrorWithCausef(err1, "tmpcopyup: %v: failed to unmount", errMsg)
-				}
-				return errMsg
-			}
 		}
 		if stat != nil {
 			if err = os.Chmod(dest, stat.Mode()); err != nil {
@@ -563,12 +536,10 @@ func prepareRoot(config *configs.Config) error {
 	if err := syscall.Mount("", "/", "", uintptr(flag), ""); err != nil {
 		return err
 	}
-
-	// Make parent mount private to make sure following bind mount does
-	// not propagate in other namespaces. Also it will help with kernel
-	// check pass in pivot_root. (IS_SHARED(new_mnt->mnt_parent))
-	if err := rootfsParentMountPrivate(config.Rootfs); err != nil {
-		return err
+	if config.NoPivotRoot {
+		if err := rootfsParentMountPrivate(config.Rootfs); err != nil {
+			return err
+		}
 	}
 
 	return syscall.Mount(config.Rootfs, config.Rootfs, "bind", syscall.MS_BIND|syscall.MS_REC, "")
@@ -592,58 +563,48 @@ func setupPtmx(config *configs.Config, console *linuxConsole) error {
 	return nil
 }
 
-// pivotRoot will call pivot_root such that rootfs becomes the new root
-// filesystem, and everything else is cleaned up.
-func pivotRoot(rootfs string) error {
-	// While the documentation may claim otherwise, pivot_root(".", ".") is
-	// actually valid. What this results in is / being the new root but
-	// /proc/self/cwd being the old root. Since we can play around with the cwd
-	// with pivot_root this allows us to pivot without creating directories in
-	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
-
-	oldroot, err := syscall.Open("/", syscall.O_DIRECTORY|syscall.O_RDONLY, 0)
+func pivotRoot(rootfs, pivotBaseDir string) (err error) {
+	if pivotBaseDir == "" {
+		pivotBaseDir = "/"
+	}
+	tmpDir := filepath.Join(rootfs, pivotBaseDir)
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		return fmt.Errorf("can't create tmp dir %s, error %v", tmpDir, err)
+	}
+	pivotDir, err := ioutil.TempDir(tmpDir, ".pivot_root")
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create pivot_root dir %s, error %v", pivotDir, err)
 	}
-	defer syscall.Close(oldroot)
-
-	newroot, err := syscall.Open(rootfs, syscall.O_DIRECTORY|syscall.O_RDONLY, 0)
-	if err != nil {
-		return err
+	defer func() {
+		errVal := os.Remove(pivotDir)
+		if err == nil {
+			err = errVal
+		}
+	}()
+	if err := syscall.PivotRoot(rootfs, pivotDir); err != nil {
+		// Make the parent mount private
+		if err := rootfsParentMountPrivate(rootfs); err != nil {
+			return err
+		}
+		// Try again
+		if err := syscall.PivotRoot(rootfs, pivotDir); err != nil {
+			return fmt.Errorf("pivot_root %s", err)
+		}
 	}
-	defer syscall.Close(newroot)
-
-	// Change to the new root so that the pivot_root actually acts on it.
-	if err := syscall.Fchdir(newroot); err != nil {
-		return err
-	}
-
-	if err := syscall.PivotRoot(".", "."); err != nil {
-		return fmt.Errorf("pivot_root %s", err)
-	}
-
-	// Currently our "." is oldroot (according to the current kernel code).
-	// However, purely for safety, we will fchdir(oldroot) since there isn't
-	// really any guarantee from the kernel what /proc/self/cwd will be after a
-	// pivot_root(2).
-
-	if err := syscall.Fchdir(oldroot); err != nil {
-		return err
-	}
-
-	// Make oldroot rprivate to make sure our unmounts don't propagate to the
-	// host (and thus bork the machine).
-	if err := syscall.Mount("", ".", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
-		return err
-	}
-	// Preform the unmount. MNT_DETACH allows us to unmount /proc/self/cwd.
-	if err := syscall.Unmount(".", syscall.MNT_DETACH); err != nil {
-		return err
-	}
-
-	// Switch back to our shiny new root.
 	if err := syscall.Chdir("/"); err != nil {
 		return fmt.Errorf("chdir / %s", err)
+	}
+	// path to pivot dir now changed, update
+	pivotDir = filepath.Join(pivotBaseDir, filepath.Base(pivotDir))
+
+	// Make pivotDir rprivate to make sure any of the unmounts don't
+	// propagate to parent.
+	if err := syscall.Mount("", pivotDir, "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
+		return err
+	}
+
+	if err := syscall.Unmount(pivotDir, syscall.MNT_DETACH); err != nil {
+		return fmt.Errorf("unmount pivot_root dir %s", err)
 	}
 	return nil
 }
@@ -747,9 +708,7 @@ func mountPropagate(m *configs.Mount, rootfs string, mountLabel string) error {
 	if libcontainerUtils.CleanPath(dest) == "/dev" {
 		flags &= ^syscall.MS_RDONLY
 	}
-
-	copyUp := m.Extensions&configs.EXT_COPYUP == configs.EXT_COPYUP
-	if !(copyUp || strings.HasPrefix(dest, rootfs)) {
+	if !strings.HasPrefix(dest, rootfs) {
 		dest = filepath.Join(rootfs, dest)
 	}
 

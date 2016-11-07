@@ -69,10 +69,7 @@ type Manifest struct {
 
 // References returnes the descriptors of this manifests references.
 func (m Manifest) References() []distribution.Descriptor {
-	references := make([]distribution.Descriptor, 0, 1+len(m.Layers))
-	references = append(references, m.Config)
-	references = append(references, m.Layers...)
-	return references
+	return m.Layers
 }
 
 // Target returns the target of this signed manifest.

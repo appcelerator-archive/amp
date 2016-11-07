@@ -1,17 +1,12 @@
----
-title: "info"
-description: "The info command description and usage"
-keywords: "display, docker, information"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "info"
+description = "The info command description and usage"
+keywords = ["display, docker, information"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # info
 
@@ -21,7 +16,7 @@ Usage:  docker info [OPTIONS]
 Display system-wide information
 
 Options:
-  -f, --format string   Format the output using the given Go template
+  -f, --format string   Format the output using the given go template
       --help            Print usage
 ```
 
@@ -64,7 +59,7 @@ storage driver and a node that is part of a 2-node swarm:
     Plugins:
      Volume: local
      Network: bridge null host overlay
-    Swarm:
+    Swarm: 
      NodeID: 0gac67oclbxq7
      Is Manager: true
      Managers: 2
@@ -111,7 +106,7 @@ information about the devicemapper storage driver is shown:
      Running: 3
      Paused: 1
      Stopped: 10
-    Images: 52
+    Untagged Images: 52
     Server Version: 1.10.3
     Storage Driver: devicemapper
      Pool Name: docker-202:2-25583803-pool

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
+	"gopkg.in/fsnotify.v1"
 )
 
 func TestPollerAddRemove(t *testing.T) {

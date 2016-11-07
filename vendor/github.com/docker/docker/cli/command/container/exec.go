@@ -11,9 +11,7 @@ import (
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
 	apiclient "github.com/docker/docker/client"
-	options "github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/promise"
-	runconfigopts "github.com/docker/docker/runconfig/opts"
 	"github.com/spf13/cobra"
 )
 
@@ -24,19 +22,11 @@ type execOptions struct {
 	detach      bool
 	user        string
 	privileged  bool
-	env         *options.ListOpts
-}
-
-func newExecOptions() *execOptions {
-	var values []string
-	return &execOptions{
-		env: options.NewListOptsRef(&values, runconfigopts.ValidateEnv),
-	}
 }
 
 // NewExecCommand creats a new cobra.Command for `docker exec`
 func NewExecCommand(dockerCli *command.DockerCli) *cobra.Command {
-	opts := newExecOptions()
+	var opts execOptions
 
 	cmd := &cobra.Command{
 		Use:   "exec [OPTIONS] CONTAINER COMMAND [ARG...]",
@@ -45,7 +35,7 @@ func NewExecCommand(dockerCli *command.DockerCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			container := args[0]
 			execCmd := args[1:]
-			return runExec(dockerCli, opts, container, execCmd)
+			return runExec(dockerCli, &opts, container, execCmd)
 		},
 	}
 
@@ -58,7 +48,6 @@ func NewExecCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.BoolVarP(&opts.detach, "detach", "d", false, "Detached mode: run command in the background")
 	flags.StringVarP(&opts.user, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
 	flags.BoolVarP(&opts.privileged, "privileged", "", false, "Give extended privileges to the command")
-	flags.VarP(opts.env, "env", "e", "Set environment variables")
 
 	return cmd
 }
@@ -197,10 +186,6 @@ func parseExec(opts *execOptions, container string, execCmd []string) (*types.Ex
 		if opts.interactive {
 			execConfig.AttachStdin = true
 		}
-	}
-
-	if opts.env != nil {
-		execConfig.Env = opts.env.GetAll()
 	}
 
 	return execConfig, nil

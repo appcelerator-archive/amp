@@ -179,6 +179,13 @@ func createContainer(context *cli.Context, id string, spec *specs.Spec) (libcont
 		return nil, err
 	}
 
+	if _, err := os.Stat(config.Rootfs); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("rootfs (%q) does not exist", config.Rootfs)
+		}
+		return nil, err
+	}
+
 	factory, err := loadFactory(context)
 	if err != nil {
 		return nil, err
@@ -288,6 +295,7 @@ func startContainer(context *cli.Context, spec *specs.Spec, create bool) (int, e
 	if err != nil {
 		return -1, err
 	}
+	detach := context.Bool("detach")
 	// Support on-demand socket activation by passing file descriptors into the container init process.
 	listenFDs := []*os.File{}
 	if os.Getenv("LISTEN_FDS") != "" {
@@ -299,7 +307,7 @@ func startContainer(context *cli.Context, spec *specs.Spec, create bool) (int, e
 		container:       container,
 		listenFDs:       listenFDs,
 		console:         context.String("console"),
-		detach:          context.Bool("detach"),
+		detach:          detach,
 		pidFile:         context.String("pid-file"),
 		create:          create,
 	}

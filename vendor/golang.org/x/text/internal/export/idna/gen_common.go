@@ -50,10 +50,3 @@ func catFromEntry(p *ucd.Parser) (cat category) {
 	}
 	return cat
 }
-
-var joinType = map[string]info{
-	"L": joiningL,
-	"D": joiningD,
-	"T": joiningT,
-	"R": joiningR,
-}

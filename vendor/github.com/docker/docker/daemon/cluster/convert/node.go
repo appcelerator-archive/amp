@@ -20,7 +20,6 @@ func NodeFromGRPC(n swarmapi.Node) types.Node {
 		Status: types.NodeStatus{
 			State:   types.NodeState(strings.ToLower(n.Status.State.String())),
 			Message: n.Status.Message,
-			Addr:    n.Status.Addr,
 		},
 	}
 

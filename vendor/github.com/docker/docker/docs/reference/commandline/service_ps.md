@@ -1,36 +1,32 @@
----
-title: "service ps"
-description: "The service ps command description and usage"
-keywords: "service, tasks, ps"
-aliases: ["/engine/reference/commandline/service_tasks/"]
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "service ps"
+description = "The service ps command description and usage"
+keywords = ["service, tasks", "ps"]
+aliases = ["/engine/reference/commandline/service_tasks/"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # service ps
 
 ```Markdown
-Usage:  docker service ps [OPTIONS] SERVICE
+Usage:	docker service ps [OPTIONS] SERVICE
 
 List the tasks of a service
 
 Options:
-  -f, --filter filter   Filter output based on conditions provided
-      --help            Print usage
-      --no-resolve      Do not map IDs to Names
-      --no-trunc        Do not truncate output
-  -q, --quiet           Only display task IDs
+  -a, --all            Display all tasks
+  -f, --filter value   Filter output based on conditions provided
+      --help           Print usage
+      --no-resolve     Do not map IDs to Names
+      --no-trunc       Do not truncate output
 ```
 
 Lists the tasks that are running as part of the specified service. This command
 has to be run targeting a manager node.
+
 
 ## Examples
 

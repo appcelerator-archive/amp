@@ -83,7 +83,7 @@ func TestRepositoriesService_ListTrafficViews(t *testing.T) {
 		fmt.Fprintf(w, `{"count": 7,
 			"uniques": 6,
 			"views": [{
-				"timestamp": "2016-05-31T16:00:00.000Z",
+				"timestamp": 1464710400000,
 				"count": 7,
 				"uniques": 6
 		}]}`)
@@ -96,7 +96,7 @@ func TestRepositoriesService_ListTrafficViews(t *testing.T) {
 
 	want := &TrafficViews{
 		Views: []*TrafficData{{
-			Timestamp: &Timestamp{time.Date(2016, time.May, 31, 16, 0, 0, 0, time.UTC)},
+			Timestamp: &TimestampMS{time.Unix(1464710400, 0)},
 			Count:     Int(7),
 			Uniques:   Int(6),
 		}},
@@ -120,7 +120,7 @@ func TestRepositoriesService_ListTrafficClones(t *testing.T) {
 		fmt.Fprintf(w, `{"count": 7,
 			"uniques": 6,
 			"clones": [{
-				"timestamp": "2016-05-31T16:00:00.00Z",
+				"timestamp": 1464710400000,
 				"count": 7,
 				"uniques": 6
 		}]}`)
@@ -133,7 +133,7 @@ func TestRepositoriesService_ListTrafficClones(t *testing.T) {
 
 	want := &TrafficClones{
 		Clones: []*TrafficData{{
-			Timestamp: &Timestamp{time.Date(2016, time.May, 31, 16, 0, 0, 0, time.UTC)},
+			Timestamp: &TimestampMS{time.Unix(1464710400, 0)},
 			Count:     Int(7),
 			Uniques:   Int(6),
 		}},

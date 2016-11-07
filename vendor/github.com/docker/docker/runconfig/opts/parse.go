@@ -23,95 +23,89 @@ import (
 
 // ContainerOptions is a data object with all the options for creating a container
 type ContainerOptions struct {
-	attach             opts.ListOpts
-	volumes            opts.ListOpts
-	tmpfs              opts.ListOpts
-	mounts             opts.MountOpt
-	blkioWeightDevice  WeightdeviceOpt
-	deviceReadBps      ThrottledeviceOpt
-	deviceWriteBps     ThrottledeviceOpt
-	links              opts.ListOpts
-	aliases            opts.ListOpts
-	linkLocalIPs       opts.ListOpts
-	deviceReadIOps     ThrottledeviceOpt
-	deviceWriteIOps    ThrottledeviceOpt
-	env                opts.ListOpts
-	labels             opts.ListOpts
-	devices            opts.ListOpts
-	ulimits            *UlimitOpt
-	sysctls            *opts.MapOpts
-	publish            opts.ListOpts
-	expose             opts.ListOpts
-	dns                opts.ListOpts
-	dnsSearch          opts.ListOpts
-	dnsOptions         opts.ListOpts
-	extraHosts         opts.ListOpts
-	volumesFrom        opts.ListOpts
-	envFile            opts.ListOpts
-	capAdd             opts.ListOpts
-	capDrop            opts.ListOpts
-	groupAdd           opts.ListOpts
-	securityOpt        opts.ListOpts
-	storageOpt         opts.ListOpts
-	labelsFile         opts.ListOpts
-	loggingOpts        opts.ListOpts
-	privileged         bool
-	pidMode            string
-	utsMode            string
-	usernsMode         string
-	publishAll         bool
-	stdin              bool
-	tty                bool
-	oomKillDisable     bool
-	oomScoreAdj        int
-	containerIDFile    string
-	entrypoint         string
-	hostname           string
-	memoryString       string
-	memoryReservation  string
-	memorySwap         string
-	kernelMemory       string
-	user               string
-	workingDir         string
-	cpuCount           int64
-	cpuShares          int64
-	cpuPercent         int64
-	cpuPeriod          int64
-	cpuRealtimePeriod  int64
-	cpuRealtimeRuntime int64
-	cpuQuota           int64
-	cpus               opts.NanoCPUs
-	cpusetCpus         string
-	cpusetMems         string
-	blkioWeight        uint16
-	ioMaxBandwidth     string
-	ioMaxIOps          uint64
-	swappiness         int64
-	netMode            string
-	macAddress         string
-	ipv4Address        string
-	ipv6Address        string
-	ipcMode            string
-	pidsLimit          int64
-	restartPolicy      string
-	readonlyRootfs     bool
-	loggingDriver      string
-	cgroupParent       string
-	volumeDriver       string
-	stopSignal         string
-	stopTimeout        int
-	isolation          string
-	shmSize            string
-	noHealthcheck      bool
-	healthCmd          string
-	healthInterval     time.Duration
-	healthTimeout      time.Duration
-	healthRetries      int
-	runtime            string
-	autoRemove         bool
-	init               bool
-	initPath           string
-	credentialSpec     string
+	attach            opts.ListOpts
+	volumes           opts.ListOpts
+	tmpfs             opts.ListOpts
+	blkioWeightDevice WeightdeviceOpt
+	deviceReadBps     ThrottledeviceOpt
+	deviceWriteBps    ThrottledeviceOpt
+	links             opts.ListOpts
+	aliases           opts.ListOpts
+	linkLocalIPs      opts.ListOpts
+	deviceReadIOps    ThrottledeviceOpt
+	deviceWriteIOps   ThrottledeviceOpt
+	env               opts.ListOpts
+	labels            opts.ListOpts
+	devices           opts.ListOpts
+	ulimits           *UlimitOpt
+	sysctls           *opts.MapOpts
+	publish           opts.ListOpts
+	expose            opts.ListOpts
+	dns               opts.ListOpts
+	dnsSearch         opts.ListOpts
+	dnsOptions        opts.ListOpts
+	extraHosts        opts.ListOpts
+	volumesFrom       opts.ListOpts
+	envFile           opts.ListOpts
+	capAdd            opts.ListOpts
+	capDrop           opts.ListOpts
+	groupAdd          opts.ListOpts
+	securityOpt       opts.ListOpts
+	storageOpt        opts.ListOpts
+	labelsFile        opts.ListOpts
+	loggingOpts       opts.ListOpts
+	privileged        bool
+	pidMode           string
+	utsMode           string
+	usernsMode        string
+	publishAll        bool
+	stdin             bool
+	tty               bool
+	oomKillDisable    bool
+	oomScoreAdj       int
+	containerIDFile   string
+	entrypoint        string
+	hostname          string
+	memoryString      string
+	memoryReservation string
+	memorySwap        string
+	kernelMemory      string
+	user              string
+	workingDir        string
+	cpuShares         int64
+	cpuPercent        int64
+	cpuPeriod         int64
+	cpuQuota          int64
+	cpusetCpus        string
+	cpusetMems        string
+	blkioWeight       uint16
+	ioMaxBandwidth    string
+	ioMaxIOps         uint64
+	swappiness        int64
+	netMode           string
+	macAddress        string
+	ipv4Address       string
+	ipv6Address       string
+	ipcMode           string
+	pidsLimit         int64
+	restartPolicy     string
+	readonlyRootfs    bool
+	loggingDriver     string
+	cgroupParent      string
+	volumeDriver      string
+	stopSignal        string
+	isolation         string
+	shmSize           string
+	noHealthcheck     bool
+	healthCmd         string
+	healthInterval    time.Duration
+	healthTimeout     time.Duration
+	healthRetries     int
+	runtime           string
+	autoRemove        bool
+	init              bool
+	initPath          string
+	credentialSpec    string
 
 	Image string
 	Args  []string
@@ -167,7 +161,6 @@ func AddFlags(flags *pflag.FlagSet) *ContainerOptions {
 	flags.BoolVar(&copts.readonlyRootfs, "read-only", false, "Mount the container's root filesystem as read only")
 	flags.StringVar(&copts.restartPolicy, "restart", "no", "Restart policy to apply when a container exits")
 	flags.StringVar(&copts.stopSignal, "stop-signal", signal.DefaultStopSignal, fmt.Sprintf("Signal to stop a container, %v by default", signal.DefaultStopSignal))
-	flags.IntVar(&copts.stopTimeout, "stop-timeout", 0, "Timeout (in seconds) to stop a container")
 	flags.Var(copts.sysctls, "sysctl", "Sysctl options")
 	flags.BoolVarP(&copts.tty, "tty", "t", false, "Allocate a pseudo-TTY")
 	flags.Var(copts.ulimits, "ulimit", "Ulimit options")
@@ -213,7 +206,6 @@ func AddFlags(flags *pflag.FlagSet) *ContainerOptions {
 	flags.Var(&copts.tmpfs, "tmpfs", "Mount a tmpfs directory")
 	flags.Var(&copts.volumesFrom, "volumes-from", "Mount volumes from the specified container(s)")
 	flags.VarP(&copts.volumes, "volume", "v", "Bind mount a volume")
-	flags.Var(&copts.mounts, "mount", "Attach a filesystem mount to the container")
 
 	// Health-checking
 	flags.StringVar(&copts.healthCmd, "health-cmd", "", "Command to run to check health")
@@ -228,14 +220,10 @@ func AddFlags(flags *pflag.FlagSet) *ContainerOptions {
 	flags.StringVar(&copts.containerIDFile, "cidfile", "", "Write the container ID to the file")
 	flags.StringVar(&copts.cpusetCpus, "cpuset-cpus", "", "CPUs in which to allow execution (0-3, 0,1)")
 	flags.StringVar(&copts.cpusetMems, "cpuset-mems", "", "MEMs in which to allow execution (0-3, 0,1)")
-	flags.Int64Var(&copts.cpuCount, "cpu-count", 0, "CPU count (Windows only)")
 	flags.Int64Var(&copts.cpuPercent, "cpu-percent", 0, "CPU percent (Windows only)")
 	flags.Int64Var(&copts.cpuPeriod, "cpu-period", 0, "Limit CPU CFS (Completely Fair Scheduler) period")
 	flags.Int64Var(&copts.cpuQuota, "cpu-quota", 0, "Limit CPU CFS (Completely Fair Scheduler) quota")
-	flags.Int64Var(&copts.cpuRealtimePeriod, "cpu-rt-period", 0, "Limit CPU real-time period in microseconds")
-	flags.Int64Var(&copts.cpuRealtimeRuntime, "cpu-rt-runtime", 0, "Limit CPU real-time runtime in microseconds")
 	flags.Int64VarP(&copts.cpuShares, "cpu-shares", "c", 0, "CPU shares (relative weight)")
-	flags.Var(&copts.cpus, "cpus", "Number of CPUs")
 	flags.Var(&copts.deviceReadBps, "device-read-bps", "Limit read rate (bytes per second) from a device")
 	flags.Var(&copts.deviceReadIOps, "device-read-iops", "Limit read rate (IO per second) from a device")
 	flags.Var(&copts.deviceWriteBps, "device-write-bps", "Limit write rate (bytes per second) to a device")
@@ -353,19 +341,14 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 		}
 	}
 
-	mounts := copts.mounts.Value()
-
 	var binds []string
-	volumes := copts.volumes.GetMap()
 	// add any bind targets to the list of container volumes
 	for bind := range copts.volumes.GetMap() {
 		if arr := volumeSplitN(bind, 2); len(arr) > 1 {
 			// after creating the bind mount we want to delete it from the copts.volumes values because
 			// we do not want bind mounts being committed to image configs
 			binds = append(binds, bind)
-			// We should delete from the map (`volumes`) here, as deleting from copts.volumes will not work if
-			// there are duplicates entries.
-			delete(volumes, bind)
+			copts.volumes.Delete(bind)
 		}
 	}
 
@@ -438,13 +421,13 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 	}
 
 	// collect all the environment variables for the container
-	envVariables, err := ReadKVStrings(copts.envFile.GetAll(), copts.env.GetAll())
+	envVariables, err := readKVStrings(copts.envFile.GetAll(), copts.env.GetAll())
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// collect all the labels for the container
-	labels, err := ReadKVStrings(copts.labelsFile.GetAll(), copts.labels.GetAll())
+	labels, err := readKVStrings(copts.labelsFile.GetAll(), copts.labels.GetAll())
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -530,16 +513,12 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 		MemorySwappiness:     &copts.swappiness,
 		KernelMemory:         kernelMemory,
 		OomKillDisable:       &copts.oomKillDisable,
-		NanoCPUs:             copts.cpus.Value(),
-		CPUCount:             copts.cpuCount,
 		CPUPercent:           copts.cpuPercent,
 		CPUShares:            copts.cpuShares,
 		CPUPeriod:            copts.cpuPeriod,
 		CpusetCpus:           copts.cpusetCpus,
 		CpusetMems:           copts.cpusetMems,
 		CPUQuota:             copts.cpuQuota,
-		CPURealtimePeriod:    copts.cpuRealtimePeriod,
-		CPURealtimeRuntime:   copts.cpuRealtimeRuntime,
 		PidsLimit:            copts.pidsLimit,
 		BlkioWeight:          copts.blkioWeight,
 		BlkioWeightDevice:    copts.blkioWeightDevice.GetList(),
@@ -569,7 +548,7 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 		Env:             envVariables,
 		Cmd:             runCmd,
 		Image:           copts.Image,
-		Volumes:         volumes,
+		Volumes:         copts.volumes.GetMap(),
 		MacAddress:      copts.macAddress,
 		Entrypoint:      entrypoint,
 		WorkingDir:      copts.workingDir,
@@ -578,9 +557,6 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 	}
 	if flags.Changed("stop-signal") {
 		config.StopSignal = copts.stopSignal
-	}
-	if flags.Changed("stop-timeout") {
-		config.StopTimeout = &copts.stopTimeout
 	}
 
 	hostConfig := &container.HostConfig{
@@ -622,7 +598,6 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 		Tmpfs:          tmpfs,
 		Sysctls:        copts.sysctls.GetAll(),
 		Runtime:        copts.runtime,
-		Mounts:         mounts,
 	}
 
 	// only set this value if the user provided the flag, else it should default to nil
@@ -677,9 +652,9 @@ func Parse(flags *pflag.FlagSet, copts *ContainerOptions) (*container.Config, *c
 	return config, hostConfig, networkingConfig, nil
 }
 
-// ReadKVStrings reads a file of line terminated key=value pairs, and overrides any keys
+// reads a file of line terminated key=value pairs, and overrides any keys
 // present in the file with additional pairs specified in the override parameter
-func ReadKVStrings(files []string, override []string) ([]string, error) {
+func readKVStrings(files []string, override []string) ([]string, error) {
 	envVariables := []string{}
 	for _, ef := range files {
 		parsedVars, err := ParseEnvFile(ef)
@@ -722,7 +697,7 @@ func parseSecurityOpts(securityOpts []string) ([]string, error) {
 	for key, opt := range securityOpts {
 		con := strings.SplitN(opt, "=", 2)
 		if len(con) == 1 && con[0] != "no-new-privileges" {
-			if strings.Contains(opt, ":") {
+			if strings.Index(opt, ":") != -1 {
 				con = strings.SplitN(opt, ":", 2)
 			} else {
 				return securityOpts, fmt.Errorf("Invalid --security-opt: %q", opt)

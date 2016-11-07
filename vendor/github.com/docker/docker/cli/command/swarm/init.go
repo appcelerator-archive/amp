@@ -14,6 +14,13 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	generatedSecretEntropyBytes = 16
+	generatedSecretBase         = 36
+	// floor(log(2^128-1, 36)) + 1
+	maxGeneratedSecretLength = 25
+)
+
 type initOptions struct {
 	swarmOptions
 	listenAddr NodeAddrOption
@@ -39,7 +46,7 @@ func newInitCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags := cmd.Flags()
 	flags.Var(&opts.listenAddr, flagListenAddr, "Listen address (format: <ip|interface>[:port])")
 	flags.StringVar(&opts.advertiseAddr, flagAdvertiseAddr, "", "Advertised address (format: <ip|interface>[:port])")
-	flags.BoolVar(&opts.forceNewCluster, "force-new-cluster", false, "Force create a new cluster from current state")
+	flags.BoolVar(&opts.forceNewCluster, "force-new-cluster", false, "Force create a new cluster from current state.")
 	addSwarmFlags(flags, &opts.swarmOptions)
 	return cmd
 }

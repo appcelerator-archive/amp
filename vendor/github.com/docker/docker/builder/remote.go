@@ -33,7 +33,7 @@ var mimeRe = regexp.MustCompile(acceptableRemoteMIME)
 func MakeRemoteContext(remoteURL string, contentTypeHandlers map[string]func(io.ReadCloser) (io.ReadCloser, error)) (ModifiableContext, error) {
 	f, err := httputils.Download(remoteURL)
 	if err != nil {
-		return nil, fmt.Errorf("error downloading remote context %s: %v", remoteURL, err)
+		return nil, fmt.Errorf("Error downloading remote context %s: %v", remoteURL, err)
 	}
 	defer f.Body.Close()
 
@@ -44,7 +44,7 @@ func MakeRemoteContext(remoteURL string, contentTypeHandlers map[string]func(io.
 
 		contentType, contextReader, err = inspectResponse(contentType, f.Body, clen)
 		if err != nil {
-			return nil, fmt.Errorf("error detecting content type for remote %s: %v", remoteURL, err)
+			return nil, fmt.Errorf("Error detecting content type for remote %s: %v", remoteURL, err)
 		}
 		defer contextReader.Close()
 
@@ -89,12 +89,7 @@ func DetectContextFromRemoteURL(r io.ReadCloser, remoteURL string, createProgres
 				dockerfileName = DefaultDockerfileName
 
 				// TODO: return a context without tarsum
-				r, err := archive.Generate(dockerfileName, string(dockerfile))
-				if err != nil {
-					return nil, err
-				}
-
-				return ioutil.NopCloser(r), nil
+				return archive.Generate(dockerfileName, string(dockerfile))
 			},
 			// fallback handler (tar context)
 			"": func(rc io.ReadCloser) (io.ReadCloser, error) {
@@ -123,7 +118,7 @@ func inspectResponse(ct string, r io.ReadCloser, clen int64) (string, io.ReadClo
 	preamble := make([]byte, plen, plen)
 	rlen, err := r.Read(preamble)
 	if rlen == 0 {
-		return ct, r, errors.New("empty response")
+		return ct, r, errors.New("Empty response")
 	}
 	if err != nil && err != io.EOF {
 		return ct, r, err

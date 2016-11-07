@@ -26,7 +26,6 @@ func NewNetworkCommand(dockerCli *command.DockerCli) *cobra.Command {
 		newInspectCommand(dockerCli),
 		newListCommand(dockerCli),
 		newRemoveCommand(dockerCli),
-		NewPruneCommand(dockerCli),
 	)
 	return cmd
 }

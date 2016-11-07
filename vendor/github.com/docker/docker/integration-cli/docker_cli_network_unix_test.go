@@ -288,7 +288,9 @@ func (s *DockerSuite) TestNetworkLsFormat(c *check.C) {
 
 	expected := []string{"bridge", "host", "none"}
 	var names []string
-	names = append(names, lines...)
+	for _, l := range lines {
+		names = append(names, l)
+	}
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -310,7 +312,9 @@ func (s *DockerSuite) TestNetworkLsFormatDefaultFormat(c *check.C) {
 
 	expected := []string{"bridge default", "host default", "none default"}
 	var names []string
-	names = append(names, lines...)
+	for _, l := range lines {
+		names = append(names, l)
+	}
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -765,30 +769,6 @@ func (s *DockerNetworkSuite) TestDockerNetworkDriverOptions(c *check.C) {
 	c.Assert(opts["opt2"], checker.Equals, "drv2")
 	dockerCmd(c, "network", "rm", "testopt")
 	assertNwNotAvailable(c, "testopt")
-
-}
-
-func (s *DockerNetworkSuite) TestDockerPluginV2NetworkDriver(c *check.C) {
-	testRequires(c, DaemonIsLinux, ExperimentalDaemon, Network)
-
-	var (
-		npName        = "mavenugo/test-docker-netplugin"
-		npTag         = "latest"
-		npNameWithTag = npName + ":" + npTag
-	)
-	_, _, err := dockerCmdWithError("plugin", "install", "--grant-all-permissions", npNameWithTag)
-	c.Assert(err, checker.IsNil)
-
-	out, _, err := dockerCmdWithError("plugin", "ls")
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, npName)
-	c.Assert(out, checker.Contains, npTag)
-	c.Assert(out, checker.Contains, "true")
-
-	dockerCmd(c, "network", "create", "-d", npNameWithTag, "v2net")
-	assertNwIsAvailable(c, "v2net")
-	dockerCmd(c, "network", "rm", "v2net")
-	assertNwNotAvailable(c, "v2net")
 
 }
 
@@ -1655,16 +1635,17 @@ func (s *DockerSuite) TestDockerNetworkInternalMode(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
-// Test for special characters in network names. only [a-zA-Z0-9][a-zA-Z0-9_.-] are
-// valid characters
+// Test for #21401
 func (s *DockerNetworkSuite) TestDockerNetworkCreateDeleteSpecialCharacters(c *check.C) {
-	_, _, err := dockerCmdWithError("network", "create", "test@#$")
-	c.Assert(err, check.NotNil)
+	dockerCmd(c, "network", "create", "test@#$")
+	assertNwIsAvailable(c, "test@#$")
+	dockerCmd(c, "network", "rm", "test@#$")
+	assertNwNotAvailable(c, "test@#$")
 
-	dockerCmd(c, "network", "create", "test-1_0.net")
-	assertNwIsAvailable(c, "test-1_0.net")
-	dockerCmd(c, "network", "rm", "test-1_0.net")
-	assertNwNotAvailable(c, "test-1_0.net")
+	dockerCmd(c, "network", "create", "kiwl$%^")
+	assertNwIsAvailable(c, "kiwl$%^")
+	dockerCmd(c, "network", "rm", "kiwl$%^")
+	assertNwNotAvailable(c, "kiwl$%^")
 }
 
 func (s *DockerDaemonSuite) TestDaemonRestartRestoreBridgeNetwork(t *check.C) {

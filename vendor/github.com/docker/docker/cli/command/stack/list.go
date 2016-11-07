@@ -1,3 +1,5 @@
+// +build experimental
+
 package stack
 
 import (
@@ -87,7 +89,7 @@ func getStacks(
 
 	services, err := apiclient.ServiceList(
 		ctx,
-		types.ServiceListOptions{Filters: filter})
+		types.ServiceListOptions{Filter: filter})
 	if err != nil {
 		return nil, err
 	}

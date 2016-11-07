@@ -24,7 +24,6 @@ const (
 	portsHeader       = "PORTS"
 	mountsHeader      = "MOUNTS"
 	localVolumes      = "LOCAL VOLUMES"
-	networksHeader    = "NETWORKS"
 )
 
 // NewContainerFormat returns a Format for rendering using a Context
@@ -78,10 +77,6 @@ type containerContext struct {
 	HeaderContext
 	trunc bool
 	c     types.Container
-}
-
-func (c *containerContext) MarshalJSON() ([]byte, error) {
-	return marshalJSON(c)
 }
 
 func (c *containerContext) ID() string {
@@ -217,19 +212,4 @@ func (c *containerContext) LocalVolumes() string {
 	}
 
 	return fmt.Sprintf("%d", count)
-}
-
-func (c *containerContext) Networks() string {
-	c.AddHeader(networksHeader)
-
-	if c.c.NetworkSettings == nil {
-		return ""
-	}
-
-	networks := []string{}
-	for k := range c.c.NetworkSettings.Networks {
-		networks = append(networks, k)
-	}
-
-	return strings.Join(networks, ",")
 }

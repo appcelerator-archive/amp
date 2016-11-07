@@ -1,4 +1,4 @@
-// +build !windows
+// +build experimental
 
 package main
 
@@ -50,8 +50,7 @@ var (
 
 func (s *DockerNetworkSuite) TestDockerNetworkMacvlanPersistance(c *check.C) {
 	// verify the driver automatically provisions the 802.1q link (dm-dummy0.60)
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
-
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'dm' abbreviation represents 'docker macvlan'
 	master := "dm-dummy0"
 	// simulate the master link the vlan tagged subinterface parent link will use
@@ -70,7 +69,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkMacvlanPersistance(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanPersistance(c *check.C) {
 	// verify the driver automatically provisions the 802.1q link (di-dummy0.70)
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'di' notation represent 'docker ipvlan'
 	master := "di-dummy0"
 	// simulate the master link the vlan tagged subinterface parent link will use
@@ -89,7 +88,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanPersistance(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkMacvlanSubIntCreate(c *check.C) {
 	// verify the driver automatically provisions the 802.1q link (dm-dummy0.50)
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'dm' abbreviation represents 'docker macvlan'
 	master := "dm-dummy0"
 	// simulate the master link the vlan tagged subinterface parent link will use
@@ -104,7 +103,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkMacvlanSubIntCreate(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanSubIntCreate(c *check.C) {
 	// verify the driver automatically provisions the 802.1q link (di-dummy0.50)
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'dm' abbreviation represents 'docker ipvlan'
 	master := "di-dummy0"
 	// simulate the master link the vlan tagged subinterface parent link will use
@@ -119,7 +118,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanSubIntCreate(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkMacvlanOverlapParent(c *check.C) {
 	// verify the same parent interface cannot be used if already in use by an existing network
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'dm' abbreviation represents 'docker macvlan'
 	master := "dm-dummy0"
 	out, err := createMasterDummy(c, master)
@@ -139,7 +138,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkMacvlanOverlapParent(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanOverlapParent(c *check.C) {
 	// verify the same parent interface cannot be used if already in use by an existing network
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	// master dummy interface 'dm' abbreviation represents 'docker ipvlan'
 	master := "di-dummy0"
 	out, err := createMasterDummy(c, master)
@@ -159,7 +158,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanOverlapParent(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkMacvlanMultiSubnet(c *check.C) {
 	// create a dual stack multi-subnet Macvlan bridge mode network and validate connectivity between four containers, two on each subnet
-	testRequires(c, DaemonIsLinux, IPv6, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IPv6, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=macvlan", "--ipv6", "--subnet=172.28.100.0/24", "--subnet=172.28.102.0/24", "--gateway=172.28.102.254",
 		"--subnet=2001:db8:abc2::/64", "--subnet=2001:db8:abc4::/64", "--gateway=2001:db8:abc4::254", "dualstackbridge")
 	// Ensure the network was created
@@ -214,7 +213,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkMacvlanMultiSubnet(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanL2MultiSubnet(c *check.C) {
 	// create a dual stack multi-subnet Ipvlan L2 network and validate connectivity within the subnets, two on each subnet
-	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "--ipv6", "--subnet=172.28.200.0/24", "--subnet=172.28.202.0/24", "--gateway=172.28.202.254",
 		"--subnet=2001:db8:abc8::/64", "--subnet=2001:db8:abc6::/64", "--gateway=2001:db8:abc6::254", "dualstackl2")
 	// Ensure the network was created
@@ -268,7 +267,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanL2MultiSubnet(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanL3MultiSubnet(c *check.C) {
 	// create a dual stack multi-subnet Ipvlan L3 network and validate connectivity between all four containers per L3 mode
-	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm, IPv6, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm, IPv6)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "--ipv6", "--subnet=172.28.10.0/24", "--subnet=172.28.12.0/24", "--gateway=172.28.12.254",
 		"--subnet=2001:db8:abc9::/64", "--subnet=2001:db8:abc7::/64", "--gateway=2001:db8:abc7::254", "-o", "ipvlan_mode=l3", "dualstackl3")
 	// Ensure the network was created
@@ -327,7 +326,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanL3MultiSubnet(c *check.C) {
 
 func (s *DockerNetworkSuite) TestDockerNetworkIpvlanAddressing(c *check.C) {
 	// Ensure the default gateways, next-hops and default dev devices are properly set
-	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IPv6, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=macvlan", "--ipv6", "--subnet=172.28.130.0/24",
 		"--subnet=2001:db8:abca::/64", "--gateway=2001:db8:abca::254", "-o", "macvlan_mode=bridge", "dualstackbridge")
 	assertNwIsAvailable(c, "dualstackbridge")
@@ -373,7 +372,7 @@ func (s *DockerNetworkSuite) TestDockerNetworkIpvlanAddressing(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkMacVlanBridgeNilParent(c *check.C) {
 	// macvlan bridge mode - dummy parent interface is provisioned dynamically
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=macvlan", "dm-nil-parent")
 	assertNwIsAvailable(c, "dm-nil-parent")
 
@@ -390,7 +389,7 @@ func (s *DockerSuite) TestDockerNetworkMacVlanBridgeNilParent(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkMacVlanBridgeInternalMode(c *check.C) {
 	// macvlan bridge mode --internal containers can communicate inside the network but not externally
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=macvlan", "--internal", "dm-internal")
 	assertNwIsAvailable(c, "dm-internal")
 	nr := getNetworkResource(c, "dm-internal")
@@ -413,7 +412,7 @@ func (s *DockerSuite) TestDockerNetworkMacVlanBridgeInternalMode(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkIpvlanL2NilParent(c *check.C) {
 	// ipvlan l2 mode - dummy parent interface is provisioned dynamically
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "di-nil-parent")
 	assertNwIsAvailable(c, "di-nil-parent")
 
@@ -430,7 +429,7 @@ func (s *DockerSuite) TestDockerNetworkIpvlanL2NilParent(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkIpvlanL2InternalMode(c *check.C) {
 	// ipvlan l2 mode --internal containers can communicate inside the network but not externally
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "--internal", "di-internal")
 	assertNwIsAvailable(c, "di-internal")
 	nr := getNetworkResource(c, "di-internal")
@@ -452,7 +451,7 @@ func (s *DockerSuite) TestDockerNetworkIpvlanL2InternalMode(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkIpvlanL3NilParent(c *check.C) {
 	// ipvlan l3 mode - dummy parent interface is provisioned dynamically
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "--subnet=172.28.230.0/24",
 		"--subnet=172.28.220.0/24", "-o", "ipvlan_mode=l3", "di-nil-parent-l3")
 	assertNwIsAvailable(c, "di-nil-parent-l3")
@@ -470,7 +469,7 @@ func (s *DockerSuite) TestDockerNetworkIpvlanL3NilParent(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkIpvlanL3InternalMode(c *check.C) {
 	// ipvlan l3 mode --internal containers can communicate inside the network but not externally
-	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, IpvlanKernelSupport, NotUserNamespace, NotArm)
 	dockerCmd(c, "network", "create", "--driver=ipvlan", "--subnet=172.28.230.0/24",
 		"--subnet=172.28.220.0/24", "-o", "ipvlan_mode=l3", "--internal", "di-internal-l3")
 	assertNwIsAvailable(c, "di-internal-l3")
@@ -493,7 +492,7 @@ func (s *DockerSuite) TestDockerNetworkIpvlanL3InternalMode(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkMacVlanExistingParent(c *check.C) {
 	// macvlan bridge mode - empty parent interface containers can reach each other internally but not externally
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	netName := "dm-parent-exists"
 	out, err := createMasterDummy(c, "dm-dummy0")
 	//out, err := createVlanInterface(c, "dm-parent", "dm-slave", "macvlan", "bridge")
@@ -513,7 +512,7 @@ func (s *DockerSuite) TestDockerNetworkMacVlanExistingParent(c *check.C) {
 
 func (s *DockerSuite) TestDockerNetworkMacVlanSubinterface(c *check.C) {
 	// macvlan bridge mode -  empty parent interface containers can reach each other internally but not externally
-	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm, ExperimentalDaemon)
+	testRequires(c, DaemonIsLinux, MacvlanKernelSupport, NotUserNamespace, NotArm)
 	netName := "dm-subinterface"
 	out, err := createMasterDummy(c, "dm-dummy0")
 	c.Assert(err, check.IsNil, check.Commentf(out))

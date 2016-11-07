@@ -56,6 +56,15 @@ echo
 
 # List of bundles to create when no argument is passed
 DEFAULT_BUNDLES=(
+	validate-dco
+	validate-default-seccomp
+	validate-gofmt
+	validate-lint
+	validate-pkg
+	validate-test
+	validate-toml
+	validate-vet
+
 	binary-client
 	binary-daemon
 	dynbinary
@@ -76,7 +85,7 @@ if command -v git &> /dev/null && [ -d .git ] && git rev-parse &> /dev/null; the
 		echo "#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 		echo "# GITCOMMIT = $GITCOMMIT"
 		echo "# The version you are building is listed as unsupported because"
-		echo "# there are some files in the git repository that are in an uncommitted state."
+		echo "# there are some files in the git repository that are in an uncommited state."
 		echo "# Commit these changes, or add to .gitignore to remove the -unsupported from the version."
 		echo "# Here is the current list:"
 		git status --porcelain --untracked-files=no
@@ -101,7 +110,7 @@ if [ "$AUTO_GOPATH" ]; then
 	rm -rf .gopath
 	mkdir -p .gopath/src/"$(dirname "${DOCKER_PKG}")"
 	ln -sf ../../../.. .gopath/src/"${DOCKER_PKG}"
-	export GOPATH="${PWD}/.gopath"
+	export GOPATH="${PWD}/.gopath:${PWD}/vendor"
 
 	if [ "$(go env GOOS)" = 'solaris' ]; then
 		# sys/unix is installed outside the standard library on solaris
@@ -115,6 +124,12 @@ if [ ! "$GOPATH" ]; then
 	echo >&2 'error: missing GOPATH; please see https://golang.org/doc/code.html#GOPATH'
 	echo >&2 '  alternatively, set AUTO_GOPATH=1'
 	exit 1
+fi
+
+if [ "$DOCKER_EXPERIMENTAL" ]; then
+	echo >&2 '# WARNING! DOCKER_EXPERIMENTAL is set: building experimental features'
+	echo >&2
+	DOCKER_BUILDTAGS+=" experimental"
 fi
 
 DOCKER_BUILDTAGS+=" daemon"
@@ -248,7 +263,7 @@ copy_binaries() {
 	if [ "$(go env GOOS)/$(go env GOARCH)" == "$(go env GOHOSTOS)/$(go env GOHOSTARCH)" ]; then
 		if [ -x /usr/local/bin/docker-runc ]; then
 			echo "Copying nested executables into $dir"
-			for file in containerd containerd-shim containerd-ctr runc init proxy; do
+			for file in containerd containerd-shim containerd-ctr runc init; do
 				cp `which "docker-$file"` "$dir/"
 				if [ "$2" == "hash" ]; then
 					hash_files "$dir/docker-$file"
