@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"os"
 
 	"github.com/appcelerator/amp/api/client"
@@ -21,7 +20,7 @@ var (
 	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config     client.Configuration
+	Config     = &client.Configuration{}
 	configFile string
 	verbose    bool
 	serverAddr string
@@ -36,14 +35,14 @@ var (
 // All main does is process commands and flags and invoke the app
 func main() {
 	cobra.OnInitialize(func() {
-		InitConfig(configFile, &Config, verbose, serverAddr)
+		InitConfig(configFile, Config, verbose, serverAddr)
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
 			Config.ServerAddress = addr
 		}
 		if Config.ServerAddress == "" {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
-		AMP = client.NewAMP(&Config)
+		AMP = client.NewAMP(Config)
 		if AMP.Verbose() == false {
 			RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
@@ -55,15 +54,6 @@ func main() {
 		})
 	})
 
-	// configCmd represents the Config command
-	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Display the current configuration",
-		Long:  `Display the current configuration.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(Config)
-		},
-	}
 	// infoCmd represents the amp information
 	infoCmd := &cobra.Command{
 		Use:   "info",
@@ -80,7 +70,6 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
-	RootCmd.AddCommand(configCmd)
 	RootCmd.AddCommand(infoCmd)
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {

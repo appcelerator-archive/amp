@@ -1265,49 +1265,6 @@ func (s *DockerDaemonSuite) TestDaemonLoggingDriverNoneLogsError(c *check.C) {
 	c.Assert(out, checker.Contains, expected)
 }
 
-func (s *DockerDaemonSuite) TestDaemonDots(c *check.C) {
-	if err := s.d.StartWithBusybox(); err != nil {
-		c.Fatal(err)
-	}
-
-	// Now create 4 containers
-	if _, err := s.d.Cmd("create", "busybox"); err != nil {
-		c.Fatalf("Error creating container: %q", err)
-	}
-	if _, err := s.d.Cmd("create", "busybox"); err != nil {
-		c.Fatalf("Error creating container: %q", err)
-	}
-	if _, err := s.d.Cmd("create", "busybox"); err != nil {
-		c.Fatalf("Error creating container: %q", err)
-	}
-	if _, err := s.d.Cmd("create", "busybox"); err != nil {
-		c.Fatalf("Error creating container: %q", err)
-	}
-
-	s.d.Stop()
-
-	s.d.Start("--log-level=debug")
-	s.d.Stop()
-	content, _ := ioutil.ReadFile(s.d.logFile.Name())
-	if strings.Contains(string(content), "....") {
-		c.Fatalf("Debug level should not have ....\n%s", string(content))
-	}
-
-	s.d.Start("--log-level=error")
-	s.d.Stop()
-	content, _ = ioutil.ReadFile(s.d.logFile.Name())
-	if strings.Contains(string(content), "....") {
-		c.Fatalf("Error level should not have ....\n%s", string(content))
-	}
-
-	s.d.Start("--log-level=info")
-	s.d.Stop()
-	content, _ = ioutil.ReadFile(s.d.logFile.Name())
-	if !strings.Contains(string(content), "....") {
-		c.Fatalf("Info level should have ....\n%s", string(content))
-	}
-}
-
 func (s *DockerDaemonSuite) TestDaemonUnixSockCleanedUp(c *check.C) {
 	dir, err := ioutil.TempDir("", "socket-cleanup-test")
 	if err != nil {
@@ -2919,4 +2876,58 @@ func (s *DockerDaemonSuite) TestDaemonWithUserlandProxyPath(c *check.C) {
 	c.Assert(err, checker.NotNil, check.Commentf(out))
 	c.Assert(out, checker.Contains, "driver failed programming external connectivity on endpoint")
 	c.Assert(out, checker.Contains, "/does/not/exist: no such file or directory")
+}
+
+// Test case for #22471
+func (s *DockerDaemonSuite) TestDaemonShutdownTimeout(c *check.C) {
+	testRequires(c, SameHostDaemon)
+
+	c.Assert(s.d.StartWithBusybox("--shutdown-timeout=3"), check.IsNil)
+
+	_, err := s.d.Cmd("run", "-d", "busybox", "top")
+	c.Assert(err, check.IsNil)
+
+	syscall.Kill(s.d.cmd.Process.Pid, syscall.SIGINT)
+
+	select {
+	case <-s.d.wait:
+	case <-time.After(5 * time.Second):
+	}
+
+	expectedMessage := `level=debug msg="start clean shutdown of all containers with a 3 seconds timeout..."`
+	content, _ := ioutil.ReadFile(s.d.logFile.Name())
+	c.Assert(string(content), checker.Contains, expectedMessage)
+}
+
+// Test case for #22471
+func (s *DockerDaemonSuite) TestDaemonShutdownTimeoutWithConfigFile(c *check.C) {
+	testRequires(c, SameHostDaemon)
+
+	// daemon config file
+	configFilePath := "test.json"
+	configFile, err := os.Create(configFilePath)
+	c.Assert(err, checker.IsNil)
+	defer os.Remove(configFilePath)
+
+	daemonConfig := `{ "shutdown-timeout" : 8 }`
+	fmt.Fprintf(configFile, "%s", daemonConfig)
+	configFile.Close()
+	c.Assert(s.d.Start(fmt.Sprintf("--config-file=%s", configFilePath)), check.IsNil)
+
+	configFile, err = os.Create(configFilePath)
+	c.Assert(err, checker.IsNil)
+	daemonConfig = `{ "shutdown-timeout" : 5 }`
+	fmt.Fprintf(configFile, "%s", daemonConfig)
+	configFile.Close()
+
+	syscall.Kill(s.d.cmd.Process.Pid, syscall.SIGHUP)
+
+	select {
+	case <-s.d.wait:
+	case <-time.After(3 * time.Second):
+	}
+
+	expectedMessage := `level=debug msg="Reset Shutdown Timeout: 5"`
+	content, _ := ioutil.ReadFile(s.d.logFile.Name())
+	c.Assert(string(content), checker.Contains, expectedMessage)
 }

@@ -1,13 +1,17 @@
-<!--[metadata]>
-+++
-title = "Remote API v1.25"
-description = "API Documentation for Docker"
-keywords = ["API, Docker, rcli, REST,  documentation"]
-[menu.main]
-parent="engine_remoteapi"
-weight=-6
-+++
-<![end-metadata]-->
+---
+title: "Remote API v1.25"
+description: "API Documentation for Docker"
+keywords: "API, Docker, rcli, REST, documentation"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # Docker Remote API v1.25
 
@@ -237,7 +241,8 @@ List containers
   -   `since`=(`<container id>` or `<container name>`)
   -   `volume`=(`<volume name>` or `<mount point destination>`)
   -   `network`=(`<network id>` or `<network name>`)
-
+  -   `health`=(`starting`|`healthy`|`unhealthy`|`none`)
+ 
 **Status codes**:
 
 -   **200** – no error
@@ -289,6 +294,7 @@ Create a container
                    "22/tcp": {}
            },
            "StopSignal": "SIGTERM",
+           "StopTimeout": 10,
            "HostConfig": {
              "Binds": ["/tmp:/tmp"],
              "Links": ["redis3:redis"],
@@ -296,9 +302,13 @@ Create a container
              "MemorySwap": 0,
              "MemoryReservation": 0,
              "KernelMemory": 0,
+             "NanoCPUs": 500000,
+             "CpuCount": 4,
              "CpuPercent": 80,
              "CpuShares": 512,
              "CpuPeriod": 100000,
+             "CpuRealtimePeriod": 1000000,
+             "CpuRealtimeRuntime": 10000,
              "CpuQuota": 50000,
              "CpusetCpus": "0,1",
              "CpusetMems": "0,1",
@@ -379,8 +389,8 @@ Create a container
 -   **Tty** - Boolean value, Attach standard streams to a `tty`, including `stdin` if it is not closed.
 -   **OpenStdin** - Boolean value, opens `stdin`,
 -   **StdinOnce** - Boolean value, close `stdin` after the 1 attached client disconnects.
--   **Env** - A list of environment variables in the form of `["VAR=value"[,"VAR2=value2"]]`
--   **Labels** - Adds a map of labels to a container. To specify a map: `{"key":"value"[,"key2":"value2"]}`
+-   **Env** - A list of environment variables in the form of `["VAR=value", ...]`
+-   **Labels** - Adds a map of labels to a container. To specify a map: `{"key":"value", ... }`
 -   **Cmd** - Command to run specified as a string or an array of strings.
 -   **Entrypoint** - Set the entry point for the container as a string or an array
       of strings. If the array consists of exactly one empty string (`[""]`) then the entry point
@@ -396,6 +406,7 @@ Create a container
 -   **ExposedPorts** - An object mapping ports to an empty object in the form of:
       `"ExposedPorts": { "<port>/<tcp|udp>: {}" }`
 -   **StopSignal** - Signal to stop a container as a string or unsigned integer. `SIGTERM` by default.
+-   **StopTimeout** - Timeout (in seconds) to stop a container. 10 by default.
 -   **HostConfig**
     -   **Binds** – A list of volume bindings for this container. Each volume binding is a string in one of these forms:
            + `host-src:container-dest` to bind-mount a host path into the
@@ -416,10 +427,20 @@ Create a container
           You must use this with `memory` and make the swap value larger than `memory`.
     -   **MemoryReservation** - Memory soft limit in bytes.
     -   **KernelMemory** - Kernel memory limit in bytes.
-    -   **CpuPercent** - An integer value containing the usable percentage of the available CPUs. (Windows daemon only)
+    -   **NanoCPUs** - CPU quota in units of 10<sup>-9</sup> CPUs. The default value is 0, which means there is no limit.
+    -   **CpuCount** - An integer value containing the number of usable CPUs.
+          Windows daemon only. On Windows Server containers,
+          the processor resource controls are mutually exclusive, the order of precedence
+          is CPUCount first, then CPUShares, and CPUPercent last.
+    -   **CpuPercent** - An integer value containing the usable percentage of
+          the available CPUs. Windows daemon only. On Windows Server containers,
+          the processor resource controls are mutually exclusive, the order of precedence
+          is CPUCount first, then CPUShares, and CPUPercent last.
     -   **CpuShares** - An integer value containing the container's CPU Shares
           (ie. the relative weight vs other containers).
     -   **CpuPeriod** - The length of a CPU period in microseconds.
+    -   **CpuRealtimePeriod** - The length of a CPU real-time period in microseconds (0=no time allocated for rt tasks)
+    -   **CpuRealtimeRuntime** - The length of a CPU real-time runtime in microseconds (0=no time allocated for rt tasks)
     -   **CpuQuota** - Microseconds of CPU time that the container can get in a CPU period.
     -   **CpusetCpus** - String value containing the `cgroups CpusetCpus` to use.
     -   **CpusetMems** - Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.
@@ -501,10 +522,11 @@ Create a container
     -   **Mounts** – Specification for mounts to be added to the container.
         - **Target** – Container path.
         - **Source** – Mount source (e.g. a volume name, a host path).
-        - **Type** – The mount type (`bind`, or `volume`).
+        - **Type** – The mount type (`bind`, `volume`, or `tmpfs`).
           Available types (for the `Type` field):
           - **bind** - Mounts a file or directory from the host into the container. Must exist prior to creating the container.
           - **volume** - Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed.
+          - **tmpfs** - Create a tmpfs with the given options. The mount source cannot be specified for tmpfs.
         - **ReadOnly** – A boolean indicating whether the mount should be read-only.
         - **BindOptions** - Optional configuration for the `bind` type.
           - **Propagation** – A propagation mode with the value `[r]private`, `[r]shared`, or `[r]slave`.
@@ -515,6 +537,9 @@ Create a container
             - **DriverConfig** – Map of driver-specific options.
               - **Name** - Name of the driver to use to create the volume.
               - **Options** - key/value map of driver specific options.
+        - **TmpfsOptions** – Optional configuration for the `tmpfs` type.
+            - **SizeBytes** – The size for the tmpfs mount in bytes.
+            - **Mode** – The permission mode for the tmpfs mount in an integer.
 
 
 **Query parameters**:
@@ -585,7 +610,8 @@ Return low-level information on the container `id`
 				"/volumes/data": {}
 			},
 			"WorkingDir": "",
-			"StopSignal": "SIGTERM"
+			"StopSignal": "SIGTERM",
+			"StopTimeout": 10
 		},
 		"Created": "2015-01-06T15:47:31.485331387Z",
 		"Driver": "devicemapper",
@@ -605,9 +631,12 @@ Return low-level information on the container `id`
 			"ContainerIDFile": "",
 			"CpusetCpus": "",
 			"CpusetMems": "",
+			"CpuCount": 4,
 			"CpuPercent": 80,
 			"CpuShares": 0,
 			"CpuPeriod": 100000,
+			"CpuRealtimePeriod": 1000000,
+			"CpuRealtimeRuntime": 10000,
 			"Devices": [],
 			"Dns": null,
 			"DnsOptions": null,
@@ -827,7 +856,9 @@ Get `stdout` and `stderr` logs from the container ``id``
      Connection: Upgrade
      Upgrade: tcp
 
+     {% raw %}
      {{ STREAM }}
+     {% endraw %}
 
 **Query parameters**:
 
@@ -905,7 +936,9 @@ Export the contents of container `id`
     HTTP/1.1 200 OK
     Content-Type: application/octet-stream
 
+    {% raw %}
     {{ TAR STREAM }}
+    {% endraw %}
 
 **Status codes**:
 
@@ -1180,6 +1213,8 @@ Update configuration of one or more containers.
          "BlkioWeight": 300,
          "CpuShares": 512,
          "CpuPeriod": 100000,
+         "CpuRealtimePeriod": 1000000,
+         "CpuRealtimeRuntime": 10000,
          "CpuQuota": 50000,
          "CpusetCpus": "0,1",
          "CpusetMems": "0",
@@ -1291,7 +1326,9 @@ Attach to the container `id`
     Connection: Upgrade
     Upgrade: tcp
 
+    {% raw %}
     {{ STREAM }}
+    {% endraw %}
 
 **Query parameters**:
 
@@ -1375,7 +1412,9 @@ Implements websocket protocol handshake according to [RFC 6455](http://tools.iet
 
 **Example response**
 
+    {% raw %}
     {{ STREAM }}
+    {% endraw %}
 
 **Query parameters**:
 
@@ -1489,7 +1528,9 @@ Get a tar archive of a resource in the filesystem of container `id`.
     Content-Type: application/x-tar
     X-Docker-Container-Path-Stat: eyJuYW1lIjoicm9vdCIsInNpemUiOjQwOTYsIm1vZGUiOjIxNDc0ODQwOTYsIm10aW1lIjoiMjAxNC0wMi0yN1QyMDo1MToyM1oiLCJsaW5rVGFyZ2V0IjoiIn0=
 
+    {% raw %}
     {{ TAR STREAM }}
+    {% endraw %}
 
 On success, a response header `X-Docker-Container-Path-Stat` will be set to a
 base64-encoded JSON object containing some filesystem header information about
@@ -1544,7 +1585,9 @@ Upload a tar archive to be extracted to a path in the filesystem of container
     PUT /containers/8cce319429b2/archive?path=/vol1 HTTP/1.1
     Content-Type: application/x-tar
 
+    {% raw %}
     {{ TAR STREAM }}
+    {% endraw %}
 
 **Example response**:
 
@@ -1704,14 +1747,16 @@ Build an image from a Dockerfile
 
     POST /build HTTP/1.1
 
+    {% raw %}
     {{ TAR STREAM }}
+    {% endraw %}
 
 **Example response**:
 
     HTTP/1.1 200 OK
     Content-Type: application/json
 
-    {"stream": "Step 1..."}
+    {"stream": "Step 1/5..."}
     {"stream": "..."}
     {"error": "Error...", "errorDetail": {"code": 123, "message": "Error..."}}
 
@@ -1766,7 +1811,13 @@ or being killed.
         variable expansion in other Dockerfile instructions. This is not meant for
         passing secret values. [Read more about the buildargs instruction](../../reference/builder.md#arg)
 -   **shmsize** - Size of `/dev/shm` in bytes. The size must be greater than 0.  If omitted the system uses 64MB.
+-   **squash** - squash the resulting images layers into a single layer (boolean) **Experimental Only**
 -   **labels** – JSON map of string pairs for labels to set on the image.
+-   **networkmode** - Sets the networking mode for the run commands during
+        build. Supported standard values are: `bridge`, `host`, `none`, and
+        `container:<name|id>`. Any other value is taken as a custom network's
+        name to which this container should connect to.
+
 
 **Request Headers**:
 
@@ -1863,7 +1914,7 @@ a base64-encoded AuthConfig object.
 
         ```
     {
-            "registrytoken": "9cbaf023786cd7..."
+            "identitytoken": "9cbaf023786cd7..."
     }
         ```
 
@@ -2467,9 +2518,26 @@ Display system-wide information
             ]
         },
         "SecurityOptions": [
-            "apparmor",
-            "seccomp",
-            "selinux"
+            {
+                "Key": "Name",
+                "Value": "seccomp"
+            },
+            {
+                "Key": "Profile",
+                "Value": "default"
+            },
+            {
+                "Key": "Name",
+                "Value": "apparmor"
+            },
+            {
+                "Key": "Name",
+                "Value": "selinux"
+            },
+            {
+                "Key": "Name",
+                "Value": "userns"
+            }
         ],
         "ServerVersion": "1.9.0",
         "SwapLimit": false,
@@ -2663,6 +2731,7 @@ Return docker data usage information
                     "Mountpoint": "",
                     "Labels": null,
                     "Scope": "",
+                    "Options": null
                     "UsageData": {
                         "Size": 0,
                         "RefCount": 0
@@ -3095,7 +3164,7 @@ See the [image tarball format](#image-tarball-format) for more details.
 
 **Example response**:
 
-If the "quiet" query parameter is set to `true` / `1` (`?quiet=1`), progress 
+If the "quiet" query parameter is set to `true` / `1` (`?quiet=1`), progress
 details are suppressed, and only a confirmation message is returned once the
 action completes.
 
@@ -3153,6 +3222,10 @@ Sets up an exec instance in a running container `id`
       "AttachStderr": true,
       "Cmd": ["sh"],
       "DetachKeys": "ctrl-p,ctrl-q",
+      "Env": [
+        "FOO=bar",
+        "BAZ=quux"
+      ],
       "Privileged": true,
       "Tty": true,
       "User": "123:456"
@@ -3177,6 +3250,7 @@ Sets up an exec instance in a running container `id`
         container. Format is a single character `[a-Z]` or `ctrl-<value>`
         where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.
 -   **Tty** - Boolean value to allocate a pseudo-TTY.
+-   **Env** - A list of environment variables in the form of `["VAR=value", ...]`
 -   **Cmd** - Command to run specified as a string or an array of strings.
 -   **Privileged** - Boolean value, runs the exec process with extended privileges.
 -   **User** - A string value specifying the user, and optionally, group to run
@@ -3213,7 +3287,9 @@ interactive session with the `exec` command.
     HTTP/1.1 200 OK
     Content-Type: application/vnd.docker.raw-stream
 
+    {% raw %}
     {{ STREAM }}
+    {% endraw %}
 
 **JSON parameters**:
 
@@ -3291,7 +3367,8 @@ Return low-level information about the `exec` command `id`.
         "tty": true,
         "user": "1000"
       },
-      "Running": false
+      "Running": false,
+      "Pid": "42000"
     }
 
 **Status codes**:
@@ -3325,7 +3402,12 @@ Return low-level information about the `exec` command `id`.
             "com.example.some-label": "some-value",
             "com.example.some-other-label": "some-other-value"
           },
-          "Scope": "local"
+          "Scope": "local",
+          "Options": {
+            "device": "tmpfs",
+            "o": "size=100m,uid=1000",
+            "type": "tmpfs"
+          }
         }
       ],
       "Warnings": []
@@ -3379,7 +3461,8 @@ Create a volume
         "com.example.some-label": "some-value",
         "com.example.some-other-label": "some-other-value"
       },
-      "Scope": "local"
+      "Scope": "local",
+      "Options": null
     }
 
 **Status codes**:
@@ -3426,7 +3509,11 @@ Return low-level information on the volume `name`
           "com.example.some-label": "some-value",
           "com.example.some-other-label": "some-other-value"
       },
-      "Scope": "local"
+      "Scope": "local",
+      "Options": {
+          "some-key": "some-value",
+          "some-other-key": "some-other-value"
+      },
     }
 
 **Status codes**:
@@ -3451,6 +3538,7 @@ response.
 - **Labels** - Labels set on the volume, specified as a map: `{"key":"value","key2":"value2"}`.
 - **Scope** - Scope describes the level at which the volume exists, can be one of
     `global` for cluster-wide or `local` for machine level. The default is `local`.
+- **Options** - Options holds the driver specific options to use for when creating the volume.
 
 ### Remove a volume
 
@@ -3530,6 +3618,7 @@ Content-Type: application/json
   {
     "Name": "bridge",
     "Id": "f2de39df4171b0dc801e8002d1d999b77256983dfc63041c0f34030aa3977566",
+    "Created": "2016-10-19T06:21:00.416543526Z",
     "Scope": "local",
     "Driver": "bridge",
     "EnableIPv6": false,
@@ -3562,6 +3651,7 @@ Content-Type: application/json
   {
     "Name": "none",
     "Id": "e086a3893b05ab69242d3c44e49483a3bbbd3a26b46baa8f61ab797c1088d794",
+    "Created": "0001-01-01T00:00:00Z",
     "Scope": "local",
     "Driver": "null",
     "EnableIPv6": false,
@@ -3576,6 +3666,7 @@ Content-Type: application/json
   {
     "Name": "host",
     "Id": "13e871235c677f196c4e1ecebb9dc733b9b2d2ab589e30c539efeda84a24215e",
+    "Created": "0001-01-01T00:00:00Z",
     "Scope": "local",
     "Driver": "host",
     "EnableIPv6": false,
@@ -3621,6 +3712,7 @@ Content-Type: application/json
 {
   "Name": "net01",
   "Id": "7d86d31b1478e7cca9ebed7e73aa0fdeec46c5ca29497431d3007d2d9e15ed99",
+  "Created": "2016-10-19T04:33:30.360899459Z",
   "Scope": "local",
   "Driver": "bridge",
   "EnableIPv6": false,
@@ -3680,10 +3772,11 @@ Content-Type: application/json
 
 {
   "Name":"isolated_nw",
-  "CheckDuplicate":false,
+  "CheckDuplicate":true,
   "Driver":"bridge",
   "EnableIPv6": true,
   "IPAM":{
+    "Driver": "default",
     "Config":[
       {
         "Subnet":"172.20.0.0/16",
@@ -3736,10 +3829,14 @@ Content-Type: application/json
 **JSON parameters**:
 
 - **Name** - The new network's name. this is a mandatory field
-- **CheckDuplicate** - Requests daemon to check for networks with same name
+- **CheckDuplicate** - Requests daemon to check for networks with same name. Defaults to `false`
 - **Driver** - Name of the network driver plugin to use. Defaults to `bridge` driver
 - **Internal** - Restrict external access to the network
 - **IPAM** - Optional custom IP scheme for the network
+  - **Driver** - Name of the IPAM driver to use. Defaults to `default` driver
+  - **Config** - List of IPAM configuration options, specified as a map:
+      `{"Subnet": <CIDR>, "IPRange": <CIDR>, "Gateway": <IP address>, "AuxAddress": <device_name:IP address>}`
+  - **Options** - Driver-specific options, specified as a map: `{"option":"value" [,"option2":"value2"]}`
 - **EnableIPv6** - Enable IPv6 on the network
 - **Options** - Network specific options to be used by the drivers
 - **Labels** - Labels to set on the network, specified as a map: `{"key":"value" [,"key2":"value2"]}`
@@ -3835,6 +3932,36 @@ Instruct the driver to remove the network (`id`).
 -   **204** - no error
 -   **404** - no such network
 -   **500** - server error
+
+### Prune unused networks
+
+`POST /networks/prune`
+
+Delete unused networks
+
+**Example request**:
+
+    POST /networks/prune HTTP/1.1
+    Content-Type: application/json
+
+    {
+    }
+
+**Example response**:
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+        "NetworksDeleted": [
+            "n1"
+        ],
+    }
+
+**Status codes**:
+
+-   **200** – no error
+-   **500** – server error
 
 ## 3.6 Plugins
 
@@ -4364,7 +4491,8 @@ List nodes
           }
         },
         "Status": {
-          "State": "ready"
+          "State": "ready",
+          "Addr": "172.17.0.2"
         },
         "ManagerStatus": {
           "Leader": true,
@@ -4455,7 +4583,8 @@ Return low-level information on the node `id`
         }
       },
       "Status": {
-        "State": "ready"
+        "State": "ready",
+        "Addr": "172.17.0.2"
       },
       "ManagerStatus": {
         "Leader": true,
@@ -4489,7 +4618,7 @@ Remove a node [`id`] from the swarm.
 
 **Query parameters**:
 
--   **force** - 1/True/true or 0/False/false, Force remove an active node.
+-   **force** - 1/True/true or 0/False/false, Force remove a node from the swarm.
         Default `false`.
 
 **Status codes**:
@@ -4542,7 +4671,7 @@ JSON Parameters:
 - **Annotations** – Optional medata to associate with the service.
     - **Name** – User-defined name for the service.
     - **Labels** – A map of labels to associate with the service (e.g.,
-      `{"key":"value"[,"key2":"value2"]}`).
+      `{"key":"value", "key2":"value2"}`).
 - **Role** - Role of the node (worker/manager).
 - **Availability** - Availability of the node (active/pause/drain).
 
@@ -4870,7 +4999,8 @@ List services
               "Condition": "any",
               "MaxAttempts": 0
             },
-            "Placement": {}
+            "Placement": {},
+            "ForceUpdate": 0
           },
           "Mode": {
             "Replicated": {
@@ -4879,7 +5009,9 @@ List services
           },
           "UpdateConfig": {
             "Parallelism": 1,
-            "FailureAction": "pause"
+            "FailureAction": "pause",
+            "Monitor": 15000000000,
+            "MaxFailureRatio": 0.15
           },
           "EndpointSpec": {
             "Mode": "vip",
@@ -4991,7 +5123,8 @@ image](#create-an-image) section for more details.
           "Condition": "on-failure",
           "Delay": 10000000000.0,
           "MaxAttempts": 10
-        }
+        },
+        "ForceUpdate": 0
       },
       "Mode": {
         "Replicated": {
@@ -5035,7 +5168,7 @@ image](#create-an-image) section for more details.
 **JSON Parameters**:
 
 - **Name** – User-defined name for the service.
-- **Labels** – A map of labels to associate with the service (e.g., `{"key":"value"[,"key2":"value2"]}`).
+- **Labels** – A map of labels to associate with the service (e.g., `{"key":"value", "key2":"value2"}`).
 - **TaskTemplate** – Specification of the tasks to start as part of the new service.
     - **ContainerSpec** - Container settings for containers started as part of this task.
         - **Image** – A string specifying the image name to use for the container.
@@ -5045,7 +5178,7 @@ image](#create-an-image) section for more details.
         - **Dir** – A string specifying the working directory for commands to run in.
         - **User** – A string value specifying the user inside the container.
         - **Labels** – A map of labels to associate with the service (e.g.,
-          `{"key":"value"[,"key2":"value2"]}`).
+          `{"key":"value", "key2":"value2"}`).
         - **Mounts** – Specification for mounts to be added to containers
           created as part of the service.
             - **Target** – Container path.
@@ -5079,19 +5212,23 @@ image](#create-an-image) section for more details.
     - **RestartPolicy** – Specification for the restart policy which applies to containers created
       as part of this service.
         - **Condition** – Condition for restart (`none`, `on-failure`, or `any`).
-        - **Delay** – Delay between restart attempts.
-        - **Attempts** – Maximum attempts to restart a given container before giving up (default value
+        - **Delay** – Delay between restart attempts, in nanoseconds.
+        - **MaxAttempts** – Maximum attempts to restart a given container before giving up (default value
           is 0, which is ignored).
         - **Window** – Windows is the time window used to evaluate the restart policy (default value is
           0, which is unbounded).
     - **Placement** – An array of constraints.
+    - **ForceUpdate**: A counter that triggers an update even if no relevant parameters have been changed.
 - **Mode** – Scheduling mode for the service (`replicated` or `global`, defaults to `replicated`).
 - **UpdateConfig** – Specification for the update strategy of the service.
     - **Parallelism** – Maximum number of tasks to be updated in one iteration (0 means unlimited
       parallelism).
-    - **Delay** – Amount of time between updates.
+    - **Delay** – Amount of time between updates, in nanoseconds.
     - **FailureAction** - Action to take if an updated task fails to run, or stops running during the
       update. Values are `continue` and `pause`.
+    - **Monitor** - Amount of time to monitor each updated task for failures, in nanoseconds.
+    - **MaxFailureRatio** - The fraction of tasks that may fail during an update before the
+      failure action is invoked, specified as a floating point number between 0 and 1. The default is 0.
 - **Networks** – Array of network names or IDs to attach the service to.
 - **EndpointSpec** – Properties that can be configured to access and load balance a service.
     - **Mode** – The mode of resolution to use for internal load balancing
@@ -5253,7 +5390,8 @@ image](#create-an-image) section for more details.
           "Condition": "any",
           "MaxAttempts": 0
         },
-        "Placement": {}
+        "Placement": {},
+        "ForceUpdate": 0
       },
       "Mode": {
         "Replicated": {
@@ -5261,7 +5399,9 @@ image](#create-an-image) section for more details.
         }
       },
       "UpdateConfig": {
-        "Parallelism": 1
+        "Parallelism": 1,
+        "Monitor": 15000000000,
+        "MaxFailureRatio": 0.15
       },
       "EndpointSpec": {
         "Mode": "vip"
@@ -5276,8 +5416,8 @@ image](#create-an-image) section for more details.
 
 **JSON Parameters**:
 
-- **Name** – User-defined name for the service.
-- **Labels** – A map of labels to associate with the service (e.g., `{"key":"value"[,"key2":"value2"]}`).
+- **Name** – User-defined name for the service. Note that renaming services is not supported.
+- **Labels** – A map of labels to associate with the service (e.g., `{"key":"value", "key2":"value2"}`).
 - **TaskTemplate** – Specification of the tasks to start as part of the new service.
     - **ContainerSpec** - Container settings for containers started as part of this task.
         - **Image** – A string specifying the image name to use for the container.
@@ -5287,7 +5427,7 @@ image](#create-an-image) section for more details.
         - **Dir** – A string specifying the working directory for commands to run in.
         - **User** – A string value specifying the user inside the container.
         - **Labels** – A map of labels to associate with the service (e.g.,
-          `{"key":"value"[,"key2":"value2"]}`).
+          `{"key":"value", "key2":"value2"}`).
         - **Mounts** – Specification for mounts to be added to containers created as part of the new
           service.
             - **Target** – Container path.
@@ -5316,17 +5456,23 @@ image](#create-an-image) section for more details.
     - **RestartPolicy** – Specification for the restart policy which applies to containers created
       as part of this service.
         - **Condition** – Condition for restart (`none`, `on-failure`, or `any`).
-        - **Delay** – Delay between restart attempts.
+        - **Delay** – Delay between restart attempts, in nanoseconds.
         - **MaxAttempts** – Maximum attempts to restart a given container before giving up (default value
           is 0, which is ignored).
         - **Window** – Windows is the time window used to evaluate the restart policy (default value is
           0, which is unbounded).
     - **Placement** – An array of constraints.
+    - **ForceUpdate**: A counter that triggers an update even if no relevant parameters have been changed.
 - **Mode** – Scheduling mode for the service (`replicated` or `global`, defaults to `replicated`).
 - **UpdateConfig** – Specification for the update strategy of the service.
     - **Parallelism** – Maximum number of tasks to be updated in one iteration (0 means unlimited
       parallelism).
-    - **Delay** – Amount of time between updates.
+    - **Delay** – Amount of time between updates, in nanoseconds.
+    - **FailureAction** - Action to take if an updated task fails to run, or stops running during the
+      update. Values are `continue` and `pause`.
+    - **Monitor** - Amount of time to monitor each updated task for failures, in nanoseconds.
+    - **MaxFailureRatio** - The fraction of tasks that may fail during an update before the
+      failure action is invoked, specified as a floating point number between 0 and 1. The default is 0.
 - **Networks** – Array of network names or IDs to attach the service to.
 - **EndpointSpec** – Properties that can be configured to access and load balance a service.
     - **Mode** – The mode of resolution to use for internal load balancing
@@ -5340,6 +5486,10 @@ image](#create-an-image) section for more details.
 
 - **version** – The version number of the service object being updated. This is
   required to avoid conflicting writes.
+- **registryAuthFrom** - If the X-Registry-Auth header is not specified, this
+  parameter indicates where to find registry authorization credentials. The
+  valid values are `spec` and `previous-spec`. If unspecified, the default is
+  `spec`.
 
 **Request Headers**:
 

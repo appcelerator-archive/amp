@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -106,9 +107,7 @@ func (s *DockerSuite) TestVolumeLsFormat(c *check.C) {
 
 	expected := []string{"aaa", "soo", "test"}
 	var names []string
-	for _, l := range lines {
-		names = append(names, l)
-	}
+	names = append(names, lines...)
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -132,9 +131,7 @@ func (s *DockerSuite) TestVolumeLsFormatDefaultFormat(c *check.C) {
 
 	expected := []string{"aaa default", "soo default", "test default"}
 	var names []string
-	for _, l := range lines {
-		names = append(names, l)
-	}
+	names = append(names, lines...)
 	c.Assert(expected, checker.DeepEquals, names, check.Commentf("Expected array with truncated names: %v, got: %v", expected, names))
 }
 
@@ -421,4 +418,25 @@ func (s *DockerSuite) TestVolumeCLIRmForce(c *check.C) {
 	dockerCmd(c, "volume", "create", "test")
 	out, _ = dockerCmd(c, "volume", "ls")
 	c.Assert(out, checker.Contains, name)
+}
+
+func (s *DockerSuite) TestVolumeCliInspectWithVolumeOpts(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	// Without options
+	name := "test1"
+	dockerCmd(c, "volume", "create", "-d", "local", name)
+	out, _ := dockerCmd(c, "volume", "inspect", "--format={{ .Options }}", name)
+	c.Assert(strings.TrimSpace(out), checker.Contains, "map[]")
+
+	// With options
+	name = "test2"
+	k1, v1 := "type", "tmpfs"
+	k2, v2 := "device", "tmpfs"
+	k3, v3 := "o", "size=1m,uid=1000"
+	dockerCmd(c, "volume", "create", "-d", "local", name, "--opt", fmt.Sprintf("%s=%s", k1, v1), "--opt", fmt.Sprintf("%s=%s", k2, v2), "--opt", fmt.Sprintf("%s=%s", k3, v3))
+	out, _ = dockerCmd(c, "volume", "inspect", "--format={{ .Options }}", name)
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k1, v1))
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k2, v2))
+	c.Assert(strings.TrimSpace(out), checker.Contains, fmt.Sprintf("%s:%s", k3, v3))
 }

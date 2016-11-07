@@ -1,12 +1,17 @@
-<!--[metadata]>
-+++
-title = "create"
-description = "The create command description and usage"
-keywords = ["docker, create, container"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "create"
+description: "The create command description and usage"
+keywords: "docker, create, container"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # create
 
@@ -26,10 +31,16 @@ Options:
       --cap-drop value              Drop Linux capabilities (default [])
       --cgroup-parent string        Optional parent cgroup for the container
       --cidfile string              Write the container ID to the file
+      --cpu-count int               The number of CPUs available for execution by the container.
+                                    Windows daemon only. On Windows Server containers, this is
+                                    approximated as a percentage of total CPU usage.
       --cpu-percent int             CPU percent (Windows only)
       --cpu-period int              Limit CPU CFS (Completely Fair Scheduler) period
       --cpu-quota int               Limit CPU CFS (Completely Fair Scheduler) quota
   -c, --cpu-shares int              CPU shares (relative weight)
+      --cpus NanoCPUs               Number of CPUs (default 0.000)
+      --cpu-rt-period int           Limit the CPU real-time period in microseconds
+      --cpu-rt-runtime int          Limit the CPU real-time runtime in microseconds
       --cpuset-cpus string          CPUs in which to allow execution (0-3, 0,1)
       --cpuset-mems string          MEMs in which to allow execution (0-3, 0,1)
       --device value                Add a host device to the container (default [])
@@ -71,6 +82,7 @@ Options:
       --memory-reservation string   Memory soft limit
       --memory-swap string          Swap limit equal to memory plus swap: '-1' to enable unlimited swap
       --memory-swappiness int       Tune container memory swappiness (0 to 100) (default -1)
+      --mount value                 Attach a filesytem mount to the container (default [])
       --name string                 Assign a name to the container
       --network-alias value         Add network-scoped alias for the container (default [])
       --network string              Connect a container to a network (default "default")
@@ -98,6 +110,7 @@ Options:
                                     Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes),
                                     or `g` (gigabytes). If you omit the unit, the system uses bytes.
       --stop-signal string          Signal to stop a container, SIGTERM by default (default "SIGTERM")
+      --stop-timeout=10             Timeout (in seconds) to stop a container
       --storage-opt value           Storage driver options for the container (default [])
       --sysctl value                Sysctl options (default map[])
       --tmpfs value                 Mount a tmpfs directory (default [])
@@ -170,9 +183,14 @@ Set storage driver options per container.
 
     $ docker create -it --storage-opt size=120G fedora /bin/bash
 
-This (size) will allow to set the container rootfs size to 120G at creation time. 
-User cannot pass a size less than the Default BaseFS Size. This option is only 
-available for the `devicemapper`, `btrfs`, `windowsfilter`, and `zfs` graph drivers.
+This (size) will allow to set the container rootfs size to 120G at creation time.
+This option is only available for the `devicemapper`, `btrfs`, `overlay2`,
+`windowsfilter` and `zfs` graph drivers.
+For the `devicemapper`, `btrfs`, `windowsfilter` and `zfs` graph drivers,
+user cannot pass a size less than the Default BaseFS Size.
+For the `overlay2` storage driver, the size option is only available if the
+backing fs is `xfs` and mounted with the `pquota` mount option.
+Under these conditions, user can pass any size less then the backing fs size.
 
 ### Specify isolation technology for container (--isolation)
 

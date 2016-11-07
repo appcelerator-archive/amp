@@ -187,6 +187,9 @@ func CreateLibcontainerConfig(opts *CreateOpts) (*configs.Config, error) {
 		if !exists {
 			return nil, fmt.Errorf("namespace %q does not exist", ns)
 		}
+		if config.Namespaces.Contains(t) {
+			return nil, fmt.Errorf("malformed spec file: duplicated ns %q", ns)
+		}
 		config.Namespaces.Add(t, ns.Path)
 	}
 	if config.Namespaces.Contains(configs.NEWNET) {
@@ -234,7 +237,7 @@ func CreateLibcontainerConfig(opts *CreateOpts) (*configs.Config, error) {
 }
 
 func createLibcontainerMount(cwd string, m specs.Mount) *configs.Mount {
-	flags, pgflags, data := parseMountOptions(m.Options)
+	flags, pgflags, data, ext := parseMountOptions(m.Options)
 	source := m.Source
 	if m.Type == "bind" {
 		if !filepath.IsAbs(source) {
@@ -248,6 +251,7 @@ func createLibcontainerMount(cwd string, m specs.Mount) *configs.Mount {
 		Data:             data,
 		Flags:            flags,
 		PropagationFlags: pgflags,
+		Extensions:       ext,
 	}
 }
 
@@ -373,7 +377,7 @@ func createCgroupConfig(name string, useSystemdCgroup bool, spec *specs.Spec) (*
 			c.Resources.CpusetMems = *r.CPU.Mems
 		}
 	}
-	if r.Pids != nil {
+	if r.Pids != nil && r.Pids.Limit != nil {
 		c.Resources.PidsLimit = *r.Pids.Limit
 	}
 	if r.BlockIO != nil {
@@ -438,6 +442,9 @@ func createCgroupConfig(name string, useSystemdCgroup bool, spec *specs.Spec) (*
 		}
 	}
 	for _, l := range r.HugepageLimits {
+		if l.Pagesize == nil || l.Limit == nil {
+			return nil, fmt.Errorf("pagesize and limit can not be empty")
+		}
 		c.Resources.HugetlbLimit = append(c.Resources.HugetlbLimit, &configs.HugepageLimit{
 			Pagesize: *l.Pagesize,
 			Limit:    *l.Limit,
@@ -534,6 +541,8 @@ func createDevices(spec *specs.Spec, config *configs.Config) error {
 	// merge in additional devices from the spec
 	for _, d := range spec.Linux.Devices {
 		var uid, gid uint32
+		var filemode os.FileMode = 0666
+
 		if d.UID != nil {
 			uid = *d.UID
 		}
@@ -544,12 +553,15 @@ func createDevices(spec *specs.Spec, config *configs.Config) error {
 		if err != nil {
 			return err
 		}
+		if d.FileMode != nil {
+			filemode = *d.FileMode
+		}
 		device := &configs.Device{
 			Type:     dt,
 			Path:     d.Path,
 			Major:    d.Major,
 			Minor:    d.Minor,
-			FileMode: *d.FileMode,
+			FileMode: filemode,
 			Uid:      uid,
 			Gid:      gid,
 		}
@@ -592,11 +604,12 @@ func setupUserNamespace(spec *specs.Spec, config *configs.Config) error {
 
 // parseMountOptions parses the string and returns the flags, propagation
 // flags and any mount data that it contains.
-func parseMountOptions(options []string) (int, []int, string) {
+func parseMountOptions(options []string) (int, []int, string, int) {
 	var (
-		flag   int
-		pgflag []int
-		data   []string
+		flag     int
+		pgflag   []int
+		data     []string
+		extFlags int
 	)
 	flags := map[string]struct {
 		clear bool
@@ -638,6 +651,12 @@ func parseMountOptions(options []string) (int, []int, string) {
 		"rslave":      syscall.MS_SLAVE | syscall.MS_REC,
 		"runbindable": syscall.MS_UNBINDABLE | syscall.MS_REC,
 	}
+	extensionFlags := map[string]struct {
+		clear bool
+		flag  int
+	}{
+		"tmpcopyup": {false, configs.EXT_COPYUP},
+	}
 	for _, o := range options {
 		// If the option does not exist in the flags table or the flag
 		// is not supported on the platform,
@@ -650,11 +669,17 @@ func parseMountOptions(options []string) (int, []int, string) {
 			}
 		} else if f, exists := propagationFlags[o]; exists && f != 0 {
 			pgflag = append(pgflag, f)
+		} else if f, exists := extensionFlags[o]; exists && f.flag != 0 {
+			if f.clear {
+				extFlags &= ^f.flag
+			} else {
+				extFlags |= f.flag
+			}
 		} else {
 			data = append(data, o)
 		}
 	}
-	return flag, pgflag, strings.Join(data, ",")
+	return flag, pgflag, strings.Join(data, ","), extFlags
 }
 
 func setupSeccomp(config *specs.Seccomp) (*configs.Seccomp, error) {

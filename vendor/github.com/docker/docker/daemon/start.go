@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -18,7 +19,11 @@ import (
 )
 
 // ContainerStart starts a container.
-func (daemon *Daemon) ContainerStart(name string, hostConfig *containertypes.HostConfig, validateHostname bool, checkpoint string) error {
+func (daemon *Daemon) ContainerStart(name string, hostConfig *containertypes.HostConfig, validateHostname bool, checkpoint string, checkpointDir string) error {
+	if checkpoint != "" && !daemon.HasExperimental() {
+		return errors.NewBadRequestError(fmt.Errorf("checkpoint is only supported in experimental mode"))
+	}
+
 	container, err := daemon.GetContainer(name)
 	if err != nil {
 		return err
@@ -73,23 +78,26 @@ func (daemon *Daemon) ContainerStart(name string, hostConfig *containertypes.Hos
 	}
 	// Adapt for old containers in case we have updates in this function and
 	// old containers never have chance to call the new function in create stage.
-	if err := daemon.adaptContainerSettings(container.HostConfig, false); err != nil {
-		return err
+	if hostConfig != nil {
+		if err := daemon.adaptContainerSettings(container.HostConfig, false); err != nil {
+			return err
+		}
 	}
 
-	return daemon.containerStart(container, checkpoint, true)
+	return daemon.containerStart(container, checkpoint, checkpointDir, true)
 }
 
 // Start starts a container
 func (daemon *Daemon) Start(container *container.Container) error {
-	return daemon.containerStart(container, "", true)
+	return daemon.containerStart(container, "", "", true)
 }
 
 // containerStart prepares the container to run by setting up everything the
 // container needs, such as storage and networking, as well as links
 // between containers. The container is left waiting for a signal to
 // begin running.
-func (daemon *Daemon) containerStart(container *container.Container, checkpoint string, resetRestartManager bool) (err error) {
+func (daemon *Daemon) containerStart(container *container.Container, checkpoint string, checkpointDir string, resetRestartManager bool) (err error) {
+	start := time.Now()
 	container.Lock()
 	defer container.Unlock()
 
@@ -149,7 +157,11 @@ func (daemon *Daemon) containerStart(container *container.Container, checkpoint 
 		container.ResetRestartManager(true)
 	}
 
-	if err := daemon.containerd.Create(container.ID, checkpoint, container.CheckpointDir(), *spec, createOptions...); err != nil {
+	if checkpointDir == "" {
+		checkpointDir = container.CheckpointDir()
+	}
+
+	if err := daemon.containerd.Create(container.ID, checkpoint, checkpointDir, *spec, container.InitializeStdio, createOptions...); err != nil {
 		errDesc := grpc.ErrorDesc(err)
 		logrus.Errorf("Create container failed with error: %s", errDesc)
 		// if we receive an internal error from the initial start of a container then lets
@@ -176,6 +188,8 @@ func (daemon *Daemon) containerStart(container *container.Container, checkpoint 
 
 		return fmt.Errorf("%s", errDesc)
 	}
+
+	containerActions.WithValues("start").UpdateSince(start)
 
 	return nil
 }

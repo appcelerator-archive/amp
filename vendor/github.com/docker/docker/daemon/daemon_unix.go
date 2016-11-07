@@ -4,6 +4,7 @@ package daemon
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
@@ -36,10 +38,11 @@ import (
 	"github.com/docker/libnetwork/options"
 	lntypes "github.com/docker/libnetwork/types"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/label"
 	rsystem "github.com/opencontainers/runc/libcontainer/system"
-	"github.com/opencontainers/runc/libcontainer/user"
-	"github.com/opencontainers/runtime-spec/specs-go"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pkg/errors"
 	"github.com/vishvananda/netlink"
 )
 
@@ -108,6 +111,16 @@ func getCPUResources(config containertypes.Resources) *specs.CPU {
 		cpu.Mems = &cpuset
 	}
 
+	if config.NanoCPUs > 0 {
+		// Use the default setting of 100ms, as is specified in:
+		// https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt
+		//    	cpu.cfs_period_us=100ms
+		period := uint64(100 * time.Millisecond / time.Microsecond)
+		quota := uint64(config.NanoCPUs) * period / 1e9
+		cpu.Period = &period
+		cpu.Quota = &quota
+	}
+
 	if config.CPUPeriod != 0 {
 		period := uint64(config.CPUPeriod)
 		cpu.Period = &period
@@ -116,6 +129,16 @@ func getCPUResources(config containertypes.Resources) *specs.CPU {
 	if config.CPUQuota != 0 {
 		quota := uint64(config.CPUQuota)
 		cpu.Quota = &quota
+	}
+
+	if config.CPURealtimePeriod != 0 {
+		period := uint64(config.CPURealtimePeriod)
+		cpu.RealtimePeriod = &period
+	}
+
+	if config.CPURealtimeRuntime != 0 {
+		runtime := uint64(config.CPURealtimeRuntime)
+		cpu.RealtimeRuntime = &runtime
 	}
 
 	return &cpu
@@ -148,29 +171,30 @@ func parseSecurityOpt(container *container.Container, config *containertypes.Hos
 	for _, opt := range config.SecurityOpt {
 		if opt == "no-new-privileges" {
 			container.NoNewPrivileges = true
-		} else {
-			var con []string
-			if strings.Contains(opt, "=") {
-				con = strings.SplitN(opt, "=", 2)
-			} else if strings.Contains(opt, ":") {
-				con = strings.SplitN(opt, ":", 2)
-				logrus.Warn("Security options with `:` as a separator are deprecated and will be completely unsupported in 1.13, use `=` instead.")
-			}
+			continue
+		}
 
-			if len(con) != 2 {
-				return fmt.Errorf("Invalid --security-opt 1: %q", opt)
-			}
+		var con []string
+		if strings.Contains(opt, "=") {
+			con = strings.SplitN(opt, "=", 2)
+		} else if strings.Contains(opt, ":") {
+			con = strings.SplitN(opt, ":", 2)
+			logrus.Warn("Security options with `:` as a separator are deprecated and will be completely unsupported in 1.14, use `=` instead.")
+		}
 
-			switch con[0] {
-			case "label":
-				labelOpts = append(labelOpts, con[1])
-			case "apparmor":
-				container.AppArmorProfile = con[1]
-			case "seccomp":
-				container.SeccompProfile = con[1]
-			default:
-				return fmt.Errorf("Invalid --security-opt 2: %q", opt)
-			}
+		if len(con) != 2 {
+			return fmt.Errorf("invalid --security-opt 1: %q", opt)
+		}
+
+		switch con[0] {
+		case "label":
+			labelOpts = append(labelOpts, con[1])
+		case "apparmor":
+			container.AppArmorProfile = con[1]
+		case "seccomp":
+			container.SeccompProfile = con[1]
+		default:
+			return fmt.Errorf("invalid --security-opt 2: %q", opt)
 		}
 	}
 
@@ -236,12 +260,11 @@ func (daemon *Daemon) adaptContainerSettings(hostConfig *containertypes.HostConf
 		hostConfig.ShmSize = container.DefaultSHMSize
 	}
 	var err error
-	if hostConfig.SecurityOpt == nil {
-		hostConfig.SecurityOpt, err = daemon.generateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode, hostConfig.Privileged)
-		if err != nil {
-			return err
-		}
+	opts, err := daemon.generateSecurityOpt(hostConfig.IpcMode, hostConfig.PidMode, hostConfig.Privileged)
+	if err != nil {
+		return err
 	}
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, opts...)
 	if hostConfig.MemorySwappiness == nil {
 		defaultSwappiness := int64(-1)
 		hostConfig.MemorySwappiness = &defaultSwappiness
@@ -329,6 +352,19 @@ func verifyContainerResources(resources *containertypes.Resources, sysInfo *sysi
 	}
 
 	// cpu subsystem checks and adjustments
+	if resources.NanoCPUs > 0 && resources.CPUPeriod > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Period cannot both be set")
+	}
+	if resources.NanoCPUs > 0 && resources.CPUQuota > 0 {
+		return warnings, fmt.Errorf("Conflicting options: Nano CPUs and CPU Quota cannot both be set")
+	}
+	if resources.NanoCPUs > 0 && (!sysInfo.CPUCfsPeriod || !sysInfo.CPUCfsQuota) {
+		return warnings, fmt.Errorf("NanoCPUs can not be set, as your kernel does not support CPU cfs period/quota or the cgroup is not mounted")
+	}
+	if resources.NanoCPUs < 0 || resources.NanoCPUs > int64(sysinfo.NumCPU())*1e9 {
+		return warnings, fmt.Errorf("Range of Nano CPUs is from 1 to %d", int64(sysinfo.NumCPU())*1e9)
+	}
+
 	if resources.CPUShares > 0 && !sysInfo.CPUShares {
 		warnings = append(warnings, "Your kernel does not support CPU shares or the cgroup is not mounted. Shares discarded.")
 		logrus.Warn("Your kernel does not support CPU shares or the cgroup is not mounted. Shares discarded.")
@@ -351,7 +387,7 @@ func verifyContainerResources(resources *containertypes.Resources, sysInfo *sysi
 		return warnings, fmt.Errorf("CPU cfs quota can not be less than 1ms (i.e. 1000)")
 	}
 	if resources.CPUPercent > 0 {
-		warnings = append(warnings, "%s does not support CPU percent. Percent discarded.", runtime.GOOS)
+		warnings = append(warnings, fmt.Sprintf("%s does not support CPU percent. Percent discarded.", runtime.GOOS))
 		logrus.Warnf("%s does not support CPU percent. Percent discarded.", runtime.GOOS)
 		resources.CPUPercent = 0
 	}
@@ -624,7 +660,7 @@ func (daemon *Daemon) initNetworkController(config *Config, activeSandboxes map[
 	}
 
 	if len(activeSandboxes) > 0 {
-		logrus.Infof("There are old running containers, the network config will not take affect")
+		logrus.Info("There are old running containers, the network config will not take affect")
 		return controller, nil
 	}
 
@@ -699,13 +735,30 @@ func initBridgeDriver(controller libnetwork.NetworkController, config *Config) e
 
 	ipamV4Conf = &libnetwork.IpamConf{AuxAddresses: make(map[string]string)}
 
-	nw, nw6List, err := netutils.ElectInterfaceAddresses(bridgeName)
-	if err == nil {
-		ipamV4Conf.PreferredPool = lntypes.GetIPNetCanonical(nw).String()
-		hip, _ := lntypes.GetHostPartIP(nw.IP, nw.Mask)
-		if hip.IsGlobalUnicast() {
-			ipamV4Conf.Gateway = nw.IP.String()
+	nwList, nw6List, err := netutils.ElectInterfaceAddresses(bridgeName)
+	if err != nil {
+		return errors.Wrap(err, "list bridge addresses failed")
+	}
+
+	nw := nwList[0]
+	if len(nwList) > 1 && config.bridgeConfig.FixedCIDR != "" {
+		_, fCIDR, err := net.ParseCIDR(config.bridgeConfig.FixedCIDR)
+		if err != nil {
+			return errors.Wrap(err, "parse CIDR failed")
 		}
+		// Iterate through in case there are multiple addresses for the bridge
+		for _, entry := range nwList {
+			if fCIDR.Contains(entry.IP) {
+				nw = entry
+				break
+			}
+		}
+	}
+
+	ipamV4Conf.PreferredPool = lntypes.GetIPNetCanonical(nw).String()
+	hip, _ := lntypes.GetHostPartIP(nw.IP, nw.Mask)
+	if hip.IsGlobalUnicast() {
+		ipamV4Conf.Gateway = nw.IP.String()
 	}
 
 	if config.bridgeConfig.IP != "" {
@@ -883,7 +936,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 	if uid, err := strconv.ParseInt(idparts[0], 10, 32); err == nil {
 		// must be a uid; take it as valid
 		userID = int(uid)
-		luser, err := user.LookupUid(userID)
+		luser, err := idtools.LookupUID(userID)
 		if err != nil {
 			return "", "", fmt.Errorf("Uid %d has no entry in /etc/passwd: %v", userID, err)
 		}
@@ -891,7 +944,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if len(idparts) == 1 {
 			// if the uid was numeric and no gid was specified, take the uid as the gid
 			groupID = userID
-			lgrp, err := user.LookupGid(groupID)
+			lgrp, err := idtools.LookupGID(groupID)
 			if err != nil {
 				return "", "", fmt.Errorf("Gid %d has no entry in /etc/group: %v", groupID, err)
 			}
@@ -904,7 +957,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if lookupName == defaultIDSpecifier {
 			lookupName = defaultRemappedID
 		}
-		luser, err := user.LookupUser(lookupName)
+		luser, err := idtools.LookupUser(lookupName)
 		if err != nil && idparts[0] != defaultIDSpecifier {
 			// error if the name requested isn't the special "dockremap" ID
 			return "", "", fmt.Errorf("Error during uid lookup for %q: %v", lookupName, err)
@@ -921,7 +974,7 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		username = luser.Name
 		if len(idparts) == 1 {
 			// we only have a string username, and no group specified; look up gid from username as group
-			group, err := user.LookupGroup(lookupName)
+			group, err := idtools.LookupGroup(lookupName)
 			if err != nil {
 				return "", "", fmt.Errorf("Error during gid lookup for %q: %v", lookupName, err)
 			}
@@ -936,14 +989,14 @@ func parseRemappedRoot(usergrp string) (string, string, error) {
 		if gid, err := strconv.ParseInt(idparts[1], 10, 32); err == nil {
 			// must be a gid, take it as valid
 			groupID = int(gid)
-			lgrp, err := user.LookupGid(groupID)
+			lgrp, err := idtools.LookupGID(groupID)
 			if err != nil {
 				return "", "", fmt.Errorf("Gid %d has no entry in /etc/passwd: %v", groupID, err)
 			}
 			groupname = lgrp.Name
 		} else {
 			// not a number; attempt a lookup
-			if _, err := user.LookupGroup(idparts[1]); err != nil {
+			if _, err := idtools.LookupGroup(idparts[1]); err != nil {
 				return "", "", fmt.Errorf("Error during groupname lookup for %q: %v", idparts[1], err)
 			}
 			groupname = idparts[1]
@@ -1183,4 +1236,52 @@ func setupOOMScoreAdj(score int) error {
 	}
 	f.Close()
 	return err
+}
+
+func (daemon *Daemon) initCgroupsPath(path string) error {
+	if path == "/" || path == "." {
+		return nil
+	}
+
+	daemon.initCgroupsPath(filepath.Dir(path))
+
+	_, root, err := cgroups.FindCgroupMountpointAndRoot("cpu")
+	if err != nil {
+		return err
+	}
+
+	path = filepath.Join(root, path)
+	sysinfo := sysinfo.New(false)
+	if err := os.MkdirAll(path, 0755); err != nil && !os.IsExist(err) {
+		return err
+	}
+	if sysinfo.CPURealtimePeriod && daemon.configStore.CPURealtimePeriod != 0 {
+		if err := ioutil.WriteFile(filepath.Join(path, "cpu.rt_period_us"), []byte(strconv.FormatInt(daemon.configStore.CPURealtimePeriod, 10)), 0700); err != nil {
+			return err
+		}
+	}
+	if sysinfo.CPURealtimeRuntime && daemon.configStore.CPURealtimeRuntime != 0 {
+		if err := ioutil.WriteFile(filepath.Join(path, "cpu.rt_runtime_us"), []byte(strconv.FormatInt(daemon.configStore.CPURealtimeRuntime, 10)), 0700); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (daemon *Daemon) setupSeccompProfile() error {
+	if daemon.configStore.SeccompProfile != "" {
+		daemon.seccompProfilePath = daemon.configStore.SeccompProfile
+		b, err := ioutil.ReadFile(daemon.configStore.SeccompProfile)
+		if err != nil {
+			return fmt.Errorf("opening seccomp profile (%s) failed: %v", daemon.configStore.SeccompProfile, err)
+		}
+		daemon.seccompProfile = b
+		p := struct {
+			DefaultAction string `json:"defaultAction"`
+		}{}
+		if err := json.Unmarshal(daemon.seccompProfile, &p); err != nil {
+			return err
+		}
+	}
+	return nil
 }

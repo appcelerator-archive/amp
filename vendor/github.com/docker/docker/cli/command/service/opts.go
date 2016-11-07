@@ -1,14 +1,12 @@
 package service
 
 import (
-	"encoding/csv"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
 
-	mounttypes "github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
@@ -41,31 +39,23 @@ func (m *memBytes) Value() int64 {
 	return int64(*m)
 }
 
-type nanoCPUs int64
-
-func (c *nanoCPUs) String() string {
-	return big.NewRat(c.Value(), 1e9).FloatString(3)
+// PositiveDurationOpt is an option type for time.Duration that uses a pointer.
+// It bahave similarly to DurationOpt but only allows positive duration values.
+type PositiveDurationOpt struct {
+	DurationOpt
 }
 
-func (c *nanoCPUs) Set(value string) error {
-	cpu, ok := new(big.Rat).SetString(value)
-	if !ok {
-		return fmt.Errorf("Failed to parse %v as a rational number", value)
+// Set a new value on the option. Setting a negative duration value will cause
+// an error to be returned.
+func (d *PositiveDurationOpt) Set(s string) error {
+	err := d.DurationOpt.Set(s)
+	if err != nil {
+		return err
 	}
-	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
-	if !nano.IsInt() {
-		return fmt.Errorf("value is too precise")
+	if *d.DurationOpt.value < 0 {
+		return fmt.Errorf("duration cannot be negative")
 	}
-	*c = nanoCPUs(nano.Num().Int64())
 	return nil
-}
-
-func (c *nanoCPUs) Type() string {
-	return "NanoCPUs"
-}
-
-func (c *nanoCPUs) Value() int64 {
-	return int64(*c)
 }
 
 // DurationOpt is an option type for time.Duration that uses a pointer. This
@@ -129,153 +119,18 @@ func (i *Uint64Opt) Value() *uint64 {
 	return i.value
 }
 
-// MountOpt is a Value type for parsing mounts
-type MountOpt struct {
-	values []mounttypes.Mount
-}
-
-// Set a new mount value
-func (m *MountOpt) Set(value string) error {
-	csvReader := csv.NewReader(strings.NewReader(value))
-	fields, err := csvReader.Read()
-	if err != nil {
-		return err
-	}
-
-	mount := mounttypes.Mount{}
-
-	volumeOptions := func() *mounttypes.VolumeOptions {
-		if mount.VolumeOptions == nil {
-			mount.VolumeOptions = &mounttypes.VolumeOptions{
-				Labels: make(map[string]string),
-			}
-		}
-		if mount.VolumeOptions.DriverConfig == nil {
-			mount.VolumeOptions.DriverConfig = &mounttypes.Driver{}
-		}
-		return mount.VolumeOptions
-	}
-
-	bindOptions := func() *mounttypes.BindOptions {
-		if mount.BindOptions == nil {
-			mount.BindOptions = new(mounttypes.BindOptions)
-		}
-		return mount.BindOptions
-	}
-
-	setValueOnMap := func(target map[string]string, value string) {
-		parts := strings.SplitN(value, "=", 2)
-		if len(parts) == 1 {
-			target[value] = ""
-		} else {
-			target[parts[0]] = parts[1]
-		}
-	}
-
-	mount.Type = mounttypes.TypeVolume // default to volume mounts
-	// Set writable as the default
-	for _, field := range fields {
-		parts := strings.SplitN(field, "=", 2)
-		key := strings.ToLower(parts[0])
-
-		if len(parts) == 1 {
-			switch key {
-			case "readonly", "ro":
-				mount.ReadOnly = true
-				continue
-			case "volume-nocopy":
-				volumeOptions().NoCopy = true
-				continue
-			}
-		}
-
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid field '%s' must be a key=value pair", field)
-		}
-
-		value := parts[1]
-		switch key {
-		case "type":
-			mount.Type = mounttypes.Type(strings.ToLower(value))
-		case "source", "src":
-			mount.Source = value
-		case "target", "dst", "destination":
-			mount.Target = value
-		case "readonly", "ro":
-			mount.ReadOnly, err = strconv.ParseBool(value)
-			if err != nil {
-				return fmt.Errorf("invalid value for %s: %s", key, value)
-			}
-		case "bind-propagation":
-			bindOptions().Propagation = mounttypes.Propagation(strings.ToLower(value))
-		case "volume-nocopy":
-			volumeOptions().NoCopy, err = strconv.ParseBool(value)
-			if err != nil {
-				return fmt.Errorf("invalid value for populate: %s", value)
-			}
-		case "volume-label":
-			setValueOnMap(volumeOptions().Labels, value)
-		case "volume-driver":
-			volumeOptions().DriverConfig.Name = value
-		case "volume-opt":
-			if volumeOptions().DriverConfig.Options == nil {
-				volumeOptions().DriverConfig.Options = make(map[string]string)
-			}
-			setValueOnMap(volumeOptions().DriverConfig.Options, value)
-		default:
-			return fmt.Errorf("unexpected key '%s' in '%s'", key, field)
-		}
-	}
-
-	if mount.Type == "" {
-		return fmt.Errorf("type is required")
-	}
-
-	if mount.Target == "" {
-		return fmt.Errorf("target is required")
-	}
-
-	if mount.Type == mounttypes.TypeBind && mount.VolumeOptions != nil {
-		return fmt.Errorf("cannot mix 'volume-*' options with mount type '%s'", mounttypes.TypeBind)
-	}
-	if mount.Type == mounttypes.TypeVolume && mount.BindOptions != nil {
-		return fmt.Errorf("cannot mix 'bind-*' options with mount type '%s'", mounttypes.TypeVolume)
-	}
-
-	m.values = append(m.values, mount)
-	return nil
-}
-
-// Type returns the type of this option
-func (m *MountOpt) Type() string {
-	return "mount"
-}
-
-// String returns a string repr of this option
-func (m *MountOpt) String() string {
-	mounts := []string{}
-	for _, mount := range m.values {
-		repr := fmt.Sprintf("%s %s %s", mount.Type, mount.Source, mount.Target)
-		mounts = append(mounts, repr)
-	}
-	return strings.Join(mounts, ", ")
-}
-
-// Value returns the mounts
-func (m *MountOpt) Value() []mounttypes.Mount {
-	return m.values
-}
-
 type updateOptions struct {
-	parallelism uint64
-	delay       time.Duration
-	onFailure   string
+	parallelism     uint64
+	delay           time.Duration
+	monitor         time.Duration
+	onFailure       string
+	maxFailureRatio float32
 }
 
 type resourceOptions struct {
-	limitCPU      nanoCPUs
+	limitCPU      opts.NanoCPUs
 	limitMemBytes memBytes
-	resCPU        nanoCPUs
+	resCPU        opts.NanoCPUs
 	resMemBytes   memBytes
 }
 
@@ -375,6 +230,47 @@ func (ldo *logDriverOptions) toLogDriver() *swarm.Driver {
 	}
 }
 
+type healthCheckOptions struct {
+	cmd           string
+	interval      PositiveDurationOpt
+	timeout       PositiveDurationOpt
+	retries       int
+	noHealthcheck bool
+}
+
+func (opts *healthCheckOptions) toHealthConfig() (*container.HealthConfig, error) {
+	var healthConfig *container.HealthConfig
+	haveHealthSettings := opts.cmd != "" ||
+		opts.interval.Value() != nil ||
+		opts.timeout.Value() != nil ||
+		opts.retries != 0
+	if opts.noHealthcheck {
+		if haveHealthSettings {
+			return nil, fmt.Errorf("--%s conflicts with --health-* options", flagNoHealthcheck)
+		}
+		healthConfig = &container.HealthConfig{Test: []string{"NONE"}}
+	} else if haveHealthSettings {
+		var test []string
+		if opts.cmd != "" {
+			test = []string{"CMD-SHELL", opts.cmd}
+		}
+		var interval, timeout time.Duration
+		if ptr := opts.interval.Value(); ptr != nil {
+			interval = *ptr
+		}
+		if ptr := opts.timeout.Value(); ptr != nil {
+			timeout = *ptr
+		}
+		healthConfig = &container.HealthConfig{
+			Test:     test,
+			Interval: interval,
+			Timeout:  timeout,
+			Retries:  opts.retries,
+		}
+	}
+	return healthConfig, nil
+}
+
 // ValidatePort validates a string is in the expected format for a port definition
 func ValidatePort(value string) (string, error) {
 	portMappings, err := nat.ParsePortSpec(value)
@@ -392,11 +288,13 @@ type serviceOptions struct {
 	containerLabels opts.ListOpts
 	image           string
 	args            []string
+	hostname        string
 	env             opts.ListOpts
+	envFile         opts.ListOpts
 	workdir         string
 	user            string
 	groups          []string
-	mounts          MountOpt
+	mounts          opts.MountOpt
 
 	resources resourceOptions
 	stopGrace DurationOpt
@@ -413,6 +311,8 @@ type serviceOptions struct {
 	registryAuth bool
 
 	logDriver logDriverOptions
+
+	healthcheck healthCheckOptions
 }
 
 func newServiceOptions() *serviceOptions {
@@ -420,6 +320,7 @@ func newServiceOptions() *serviceOptions {
 		labels:          opts.NewListOpts(runconfigopts.ValidateEnv),
 		containerLabels: opts.NewListOpts(runconfigopts.ValidateEnv),
 		env:             opts.NewListOpts(runconfigopts.ValidateEnv),
+		envFile:         opts.NewListOpts(nil),
 		endpoint: endpointOptions{
 			ports: opts.NewListOpts(ValidatePort),
 		},
@@ -430,6 +331,25 @@ func newServiceOptions() *serviceOptions {
 func (opts *serviceOptions) ToService() (swarm.ServiceSpec, error) {
 	var service swarm.ServiceSpec
 
+	envVariables, err := runconfigopts.ReadKVStrings(opts.envFile.GetAll(), opts.env.GetAll())
+	if err != nil {
+		return service, err
+	}
+
+	currentEnv := make([]string, 0, len(envVariables))
+	for _, env := range envVariables { // need to process each var, in order
+		k := strings.SplitN(env, "=", 2)[0]
+		for i, current := range currentEnv { // remove duplicates
+			if current == env {
+				continue // no update required, may hide this behind flag to preserve order of envVariables
+			}
+			if strings.HasPrefix(current, k+"=") {
+				currentEnv = append(currentEnv[:i], currentEnv[i+1:]...)
+			}
+		}
+		currentEnv = append(currentEnv, env)
+	}
+
 	service = swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name:   opts.name,
@@ -439,7 +359,8 @@ func (opts *serviceOptions) ToService() (swarm.ServiceSpec, error) {
 			ContainerSpec: swarm.ContainerSpec{
 				Image:           opts.image,
 				Args:            opts.args,
-				Env:             opts.env.GetAll(),
+				Env:             currentEnv,
+				Hostname:        opts.hostname,
 				Labels:          runconfigopts.ConvertKVStringsToMap(opts.containerLabels.GetAll()),
 				Dir:             opts.workdir,
 				User:            opts.user,
@@ -458,12 +379,20 @@ func (opts *serviceOptions) ToService() (swarm.ServiceSpec, error) {
 		Networks: convertNetworks(opts.networks),
 		Mode:     swarm.ServiceMode{},
 		UpdateConfig: &swarm.UpdateConfig{
-			Parallelism:   opts.update.parallelism,
-			Delay:         opts.update.delay,
-			FailureAction: opts.update.onFailure,
+			Parallelism:     opts.update.parallelism,
+			Delay:           opts.update.delay,
+			Monitor:         opts.update.monitor,
+			FailureAction:   opts.update.onFailure,
+			MaxFailureRatio: opts.update.maxFailureRatio,
 		},
 		EndpointSpec: opts.endpoint.ToEndpointSpec(),
 	}
+
+	healthConfig, err := opts.healthcheck.toHealthConfig()
+	if err != nil {
+		return service, err
+	}
+	service.TaskTemplate.ContainerSpec.Healthcheck = healthConfig
 
 	switch opts.mode {
 	case "global":
@@ -486,11 +415,9 @@ func (opts *serviceOptions) ToService() (swarm.ServiceSpec, error) {
 // Any flags that are not common are added separately in the individual command
 func addServiceFlags(cmd *cobra.Command, opts *serviceOptions) {
 	flags := cmd.Flags()
-	flags.StringVar(&opts.name, flagName, "", "Service name")
 
 	flags.StringVarP(&opts.workdir, flagWorkdir, "w", "", "Working directory inside the container")
 	flags.StringVarP(&opts.user, flagUser, "u", "", "Username or UID (format: <name|uid>[:<group|gid>])")
-	flags.StringSliceVar(&opts.groups, flagGroupAdd, []string{}, "Add additional user groups to the container")
 
 	flags.Var(&opts.resources.limitCPU, flagLimitCPU, "Limit CPUs")
 	flags.Var(&opts.resources.limitMemBytes, flagLimitMemory, "Limit Memory")
@@ -507,7 +434,9 @@ func addServiceFlags(cmd *cobra.Command, opts *serviceOptions) {
 
 	flags.Uint64Var(&opts.update.parallelism, flagUpdateParallelism, 1, "Maximum number of tasks updated simultaneously (0 to update all at once)")
 	flags.DurationVar(&opts.update.delay, flagUpdateDelay, time.Duration(0), "Delay between updates")
+	flags.DurationVar(&opts.update.monitor, flagUpdateMonitor, time.Duration(0), "Duration after each task update to monitor for failure")
 	flags.StringVar(&opts.update.onFailure, flagUpdateFailureAction, "pause", "Action on update failure (pause|continue)")
+	flags.Float32Var(&opts.update.maxFailureRatio, flagUpdateMaxFailureRatio, 0, "Failure rate to tolerate during an update")
 
 	flags.StringVar(&opts.endpoint.mode, flagEndpointMode, "", "Endpoint mode (vip or dnsrr)")
 
@@ -515,49 +444,65 @@ func addServiceFlags(cmd *cobra.Command, opts *serviceOptions) {
 
 	flags.StringVar(&opts.logDriver.name, flagLogDriver, "", "Logging driver for service")
 	flags.Var(&opts.logDriver.opts, flagLogOpt, "Logging driver options")
+
+	flags.StringVar(&opts.healthcheck.cmd, flagHealthCmd, "", "Command to run to check health")
+	flags.Var(&opts.healthcheck.interval, flagHealthInterval, "Time between running the check")
+	flags.Var(&opts.healthcheck.timeout, flagHealthTimeout, "Maximum time to allow one check to run")
+	flags.IntVar(&opts.healthcheck.retries, flagHealthRetries, 0, "Consecutive failures needed to report unhealthy")
+	flags.BoolVar(&opts.healthcheck.noHealthcheck, flagNoHealthcheck, false, "Disable any container-specified HEALTHCHECK")
 }
 
 const (
-	flagConstraint           = "constraint"
-	flagConstraintRemove     = "constraint-rm"
-	flagConstraintAdd        = "constraint-add"
-	flagContainerLabel       = "container-label"
-	flagContainerLabelRemove = "container-label-rm"
-	flagContainerLabelAdd    = "container-label-add"
-	flagEndpointMode         = "endpoint-mode"
-	flagEnv                  = "env"
-	flagEnvRemove            = "env-rm"
-	flagEnvAdd               = "env-add"
-	flagGroupAdd             = "group-add"
-	flagGroupRemove          = "group-rm"
-	flagLabel                = "label"
-	flagLabelRemove          = "label-rm"
-	flagLabelAdd             = "label-add"
-	flagLimitCPU             = "limit-cpu"
-	flagLimitMemory          = "limit-memory"
-	flagMode                 = "mode"
-	flagMount                = "mount"
-	flagMountRemove          = "mount-rm"
-	flagMountAdd             = "mount-add"
-	flagName                 = "name"
-	flagNetwork              = "network"
-	flagPublish              = "publish"
-	flagPublishRemove        = "publish-rm"
-	flagPublishAdd           = "publish-add"
-	flagReplicas             = "replicas"
-	flagReserveCPU           = "reserve-cpu"
-	flagReserveMemory        = "reserve-memory"
-	flagRestartCondition     = "restart-condition"
-	flagRestartDelay         = "restart-delay"
-	flagRestartMaxAttempts   = "restart-max-attempts"
-	flagRestartWindow        = "restart-window"
-	flagStopGracePeriod      = "stop-grace-period"
-	flagUpdateDelay          = "update-delay"
-	flagUpdateFailureAction  = "update-failure-action"
-	flagUpdateParallelism    = "update-parallelism"
-	flagUser                 = "user"
-	flagWorkdir              = "workdir"
-	flagRegistryAuth         = "with-registry-auth"
-	flagLogDriver            = "log-driver"
-	flagLogOpt               = "log-opt"
+	flagConstraint            = "constraint"
+	flagConstraintRemove      = "constraint-rm"
+	flagConstraintAdd         = "constraint-add"
+	flagContainerLabel        = "container-label"
+	flagContainerLabelRemove  = "container-label-rm"
+	flagContainerLabelAdd     = "container-label-add"
+	flagEndpointMode          = "endpoint-mode"
+	flagHostname              = "hostname"
+	flagEnv                   = "env"
+	flagEnvFile               = "env-file"
+	flagEnvRemove             = "env-rm"
+	flagEnvAdd                = "env-add"
+	flagGroup                 = "group"
+	flagGroupAdd              = "group-add"
+	flagGroupRemove           = "group-rm"
+	flagLabel                 = "label"
+	flagLabelRemove           = "label-rm"
+	flagLabelAdd              = "label-add"
+	flagLimitCPU              = "limit-cpu"
+	flagLimitMemory           = "limit-memory"
+	flagMode                  = "mode"
+	flagMount                 = "mount"
+	flagMountRemove           = "mount-rm"
+	flagMountAdd              = "mount-add"
+	flagName                  = "name"
+	flagNetwork               = "network"
+	flagPublish               = "publish"
+	flagPublishRemove         = "publish-rm"
+	flagPublishAdd            = "publish-add"
+	flagReplicas              = "replicas"
+	flagReserveCPU            = "reserve-cpu"
+	flagReserveMemory         = "reserve-memory"
+	flagRestartCondition      = "restart-condition"
+	flagRestartDelay          = "restart-delay"
+	flagRestartMaxAttempts    = "restart-max-attempts"
+	flagRestartWindow         = "restart-window"
+	flagStopGracePeriod       = "stop-grace-period"
+	flagUpdateDelay           = "update-delay"
+	flagUpdateFailureAction   = "update-failure-action"
+	flagUpdateMaxFailureRatio = "update-max-failure-ratio"
+	flagUpdateMonitor         = "update-monitor"
+	flagUpdateParallelism     = "update-parallelism"
+	flagUser                  = "user"
+	flagWorkdir               = "workdir"
+	flagRegistryAuth          = "with-registry-auth"
+	flagLogDriver             = "log-driver"
+	flagLogOpt                = "log-opt"
+	flagHealthCmd             = "health-cmd"
+	flagHealthInterval        = "health-interval"
+	flagHealthRetries         = "health-retries"
+	flagHealthTimeout         = "health-timeout"
+	flagNoHealthcheck         = "no-healthcheck"
 )

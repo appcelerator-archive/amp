@@ -70,12 +70,19 @@ func (p *preProcessor) Size() bool {
 	return true
 }
 
+// Networks does nothing but return true.
+// It is needed to avoid the template check to fail as this field
+// doesn't exist in `types.Container`
+func (p *preProcessor) Networks() bool {
+	return true
+}
+
 func buildContainerListOptions(opts *psOptions) (*types.ContainerListOptions, error) {
 	options := &types.ContainerListOptions{
-		All:    opts.all,
-		Limit:  opts.last,
-		Size:   opts.size,
-		Filter: opts.filter.Value(),
+		All:     opts.all,
+		Limit:   opts.last,
+		Size:    opts.size,
+		Filters: opts.filter.Value(),
 	}
 
 	if opts.nLatest && opts.last == -1 {

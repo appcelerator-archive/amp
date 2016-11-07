@@ -1,12 +1,17 @@
-<!--[metadata]>
-+++
-title = "swarm init"
-description = "The swarm init command description and usage"
-keywords = ["swarm, init"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "swarm init"
+description: "The swarm init command description and usage"
+keywords: "swarm, init"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # swarm init
 
@@ -20,7 +25,7 @@ Options:
       --cert-expiry duration            Validity period for node certificates (default 2160h0m0s)
       --dispatcher-heartbeat duration   Dispatcher heartbeat period (default 5s)
       --external-ca value               Specifications of one or more certificate signing endpoints
-      --force-new-cluster               Force create a new cluster from current state.
+      --force-new-cluster               Force create a new cluster from current state
       --help                            Print usage
       --listen-addr value               Listen address (format: <ip|interface>[:port])
       --task-history-limit int          Task history retention limit (default 5)

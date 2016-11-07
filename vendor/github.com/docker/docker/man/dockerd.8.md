@@ -27,6 +27,7 @@ dockerd - Enable daemon mode
 [**--dns-search**[=*[]*]]
 [**--exec-opt**[=*[]*]]
 [**--exec-root**[=*/var/run/docker*]]
+[**--experimental**[=*false*]]
 [**--fixed-cidr**[=*FIXED-CIDR*]]
 [**--fixed-cidr-v6**[=*FIXED-CIDR-V6*]]
 [**-G**|**--group**[=*docker*]]
@@ -55,7 +56,9 @@ dockerd - Enable daemon mode
 [**--raw-logs**]
 [**--registry-mirror**[=*[]*]]
 [**-s**|**--storage-driver**[=*STORAGE-DRIVER*]]
+[**--seccomp-profile**[=*SECCOMP-PROFILE-PATH*]]
 [**--selinux-enabled**]
+[**--shutdown-timeout**[=*15*]]
 [**--storage-opt**[=*[]*]]
 [**--swarm-default-advertise-addr**[=*IP|INTERFACE*]]
 [**--tls**]
@@ -144,6 +147,9 @@ format.
 
 **--exec-root**=""
   Path to use as the root of the Docker execution state files. Default is `/var/run/docker`.
+
+**--experimental**=""
+  Enable the daemon experimental features.
 
 **--fixed-cidr**=""
   IPv4 subnet for fixed IPs (e.g., 10.20.0.0/16); this subnet must be nested in the bridge subnet (which is defined by \-b or \-\-bip)
@@ -243,8 +249,14 @@ output otherwise.
 **-s**, **--storage-driver**=""
   Force the Docker runtime to use a specific storage driver.
 
+**--seccomp-profile**=""
+  Path to seccomp profile.
+
 **--selinux-enabled**=*true*|*false*
   Enable selinux support. Default is false.
+
+**--shutdown-timeout**=*15*
+  Set the shutdown timeout value in seconds. Default is `15`.
 
 **--storage-opt**=[]
   Set storage driver options. See STORAGE DRIVER OPTIONS.

@@ -1,15 +1,18 @@
-<!--[metadata]>
-+++
-title = "Access authorization plugin"
-description = "How to create authorization plugins to manage access control to your Docker daemon."
-keywords = ["security, authorization, authentication, docker, documentation, plugin, extend"]
-aliases = ["/engine/extend/authorization/"]
-[menu.main]
-parent = "engine_extend"
-weight = 4
-+++
-<![end-metadata]-->
+---
+title: "Access authorization plugin"
+description: "How to create authorization plugins to manage access control to your Docker daemon."
+keywords: "security, authorization, authentication, docker, documentation, plugin, extend"
+aliases: ["/engine/extend/authorization/"]
+---
 
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # Create an authorization plugin
 
@@ -55,7 +58,7 @@ respectively.
 
 ## Default user authorization mechanism
 
-If TLS is enabled in the [Docker daemon](../security/https.md), the default user authorization flow extracts the user details from the certificate subject name.
+If TLS is enabled in the [Docker daemon](https://docs.docker.com/engine/security/https/), the default user authorization flow extracts the user details from the certificate subject name.
 That is, the `User` field is set to the client certificate subject common name, and the `AuthenticationMethod` field is set to `TLS`.
 
 ## Basic architecture
