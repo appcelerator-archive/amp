@@ -119,7 +119,7 @@ following labels to indicate their degree of priority (from more urgent to less 
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | priority/P0 | Urgent: Security, critical bugs, blocking issues. P0 basically means drop everything you are doing until this issue is addressed. |
 | priority/P1 | Important: P1 issues are a top priority and a must-have for the next release.                                                     |
-| priority/P2 | Normal priority: default priority applied.                                                                                        |
+| priority/P2 | Normal priority: this is the default.                                                                                         |
 | priority/P3 | Best effort: those are nice to have / minor issues.                                                                               |
 
 And that's it. That should be all the information required for a new or existing contributor to come in an resolve an issue.
