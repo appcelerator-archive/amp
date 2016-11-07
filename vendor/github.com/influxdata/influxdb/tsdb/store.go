@@ -229,11 +229,13 @@ func (s *Store) Close() error {
 	}
 	s.wg.Wait()
 
-	for _, sh := range s.shards {
-		if err := sh.Close(); err != nil {
-			return err
-		}
+	// Close all the shards in parallel.
+	if err := s.walkShards(s.shardsSlice(), func(sh *Shard) error {
+		return sh.Close()
+	}); err != nil {
+		return err
 	}
+
 	s.opened = false
 	s.shards = nil
 	s.databaseIndexes = nil
@@ -818,8 +820,8 @@ func (s *Store) WriteToShard(shardID uint64, points []models.Point) error {
 	default:
 	}
 
-	sh, ok := s.shards[shardID]
-	if !ok {
+	sh := s.shards[shardID]
+	if sh == nil {
 		s.mu.RUnlock()
 		return ErrShardNotFound
 	}
@@ -934,13 +936,13 @@ func (s *Store) TagValues(database string, cond influxql.Expr) ([]TagValues, err
 		// Loop over all keys for each series.
 		m := make(map[KeyValue]struct{}, len(ss))
 		for _, series := range ss {
-			for key, value := range series.Tags {
+			for _, t := range series.Tags {
 				if !ok {
 					// nop
-				} else if _, exists := keySet[key]; !exists {
+				} else if _, exists := keySet[string(t.Key)]; !exists {
 					continue
 				}
-				m[KeyValue{key, value}] = struct{}{}
+				m[KeyValue{string(t.Key), string(t.Value)}] = struct{}{}
 			}
 		}
 

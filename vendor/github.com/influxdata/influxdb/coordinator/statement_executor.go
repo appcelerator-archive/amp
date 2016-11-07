@@ -464,7 +464,7 @@ func (e *StatementExecutor) executeSelectStatement(stmt *influxql.SelectStatemen
 		emitted = true
 	}
 
-	// Flush remaing points and emit write count if an INTO statement.
+	// Flush remaining points and emit write count if an INTO statement.
 	if stmt.Target != nil {
 		if err := pointsWriter.Flush(); err != nil {
 			return err
@@ -529,7 +529,13 @@ func (e *StatementExecutor) createIterators(stmt *influxql.SelectStatement, ctx 
 		if influxql.Sources(stmt.Sources).HasSystemSource() {
 			opt.MaxTime = time.Unix(0, influxql.MaxTime).UTC()
 		} else {
-			opt.MaxTime = now
+			if interval, err := stmt.GroupByInterval(); err != nil {
+				return nil, stmt, err
+			} else if interval > 0 {
+				opt.MaxTime = now
+			} else {
+				opt.MaxTime = time.Unix(0, influxql.MaxTime).UTC()
+			}
 		}
 	}
 	if opt.MinTime.IsZero() {
@@ -541,6 +547,9 @@ func (e *StatementExecutor) createIterators(stmt *influxql.SelectStatement, ctx 
 
 	// Remove "time" from fields list.
 	stmt.RewriteTimeFields()
+
+	// Rewrite any regex conditions that could make use of the index.
+	stmt.RewriteRegexConditions()
 
 	// Create an iterator creator based on the shards in the cluster.
 	ic, err := e.iteratorCreator(stmt, &opt)
@@ -578,7 +587,7 @@ func (e *StatementExecutor) createIterators(stmt *influxql.SelectStatement, ctx 
 			// Determine the number of buckets by finding the time span and dividing by the interval.
 			buckets := int64(max.Sub(min)) / int64(interval)
 			if int(buckets) > e.MaxSelectBucketsN {
-				return nil, stmt, fmt.Errorf("max select bucket count exceeded: %d buckets", buckets)
+				return nil, stmt, fmt.Errorf("max-select-buckets limit exceeded: (%d/%d)", buckets, e.MaxSelectBucketsN)
 			}
 		}
 	}
@@ -672,11 +681,11 @@ func (e *StatementExecutor) executeShowGrantsForUserStatement(q *influxql.ShowGr
 }
 
 func (e *StatementExecutor) executeShowMeasurementsStatement(q *influxql.ShowMeasurementsStatement, ctx *influxql.ExecutionContext) error {
-	if ctx.Database == "" {
+	if q.Database == "" {
 		return ErrDatabaseNameRequired
 	}
 
-	measurements, err := e.TSDBStore.Measurements(ctx.Database, q.Condition)
+	measurements, err := e.TSDBStore.Measurements(q.Database, q.Condition)
 	if err != nil || len(measurements) == 0 {
 		ctx.Results <- &influxql.Result{
 			StatementID: ctx.StatementID,
@@ -723,6 +732,10 @@ func (e *StatementExecutor) executeShowMeasurementsStatement(q *influxql.ShowMea
 }
 
 func (e *StatementExecutor) executeShowRetentionPoliciesStatement(q *influxql.ShowRetentionPoliciesStatement) (models.Rows, error) {
+	if q.Database == "" {
+		return nil, ErrDatabaseNameRequired
+	}
+
 	di := e.MetaClient.Database(q.Database)
 	if di == nil {
 		return nil, influxdb.ErrDatabaseNotFound(q.Database)
@@ -844,11 +857,11 @@ func (e *StatementExecutor) executeShowSubscriptionsStatement(stmt *influxql.Sho
 }
 
 func (e *StatementExecutor) executeShowTagValues(q *influxql.ShowTagValuesStatement, ctx *influxql.ExecutionContext) error {
-	if ctx.Database == "" {
+	if q.Database == "" {
 		return ErrDatabaseNameRequired
 	}
 
-	tagValues, err := e.TSDBStore.TagValues(ctx.Database, q.Condition)
+	tagValues, err := e.TSDBStore.TagValues(q.Database, q.Condition)
 	if err != nil {
 		ctx.Results <- &influxql.Result{
 			StatementID: ctx.StatementID,
@@ -1049,7 +1062,7 @@ func convertRowToPoints(measurementName string, row *models.Row) ([]models.Point
 			}
 		}
 
-		p, err := models.NewPoint(measurementName, row.Tags, vals, v[timeIndex].(time.Time))
+		p, err := models.NewPoint(measurementName, models.NewTags(row.Tags), vals, v[timeIndex].(time.Time))
 		if err != nil {
 			// Drop points that can't be stored
 			continue
@@ -1068,8 +1081,26 @@ func (e *StatementExecutor) NormalizeStatement(stmt influxql.Statement, defaultD
 			return
 		}
 		switch node := node.(type) {
+		case *influxql.ShowRetentionPoliciesStatement:
+			if node.Database == "" {
+				node.Database = defaultDatabase
+			}
+		case *influxql.ShowMeasurementsStatement:
+			if node.Database == "" {
+				node.Database = defaultDatabase
+			}
+		case *influxql.ShowTagValuesStatement:
+			if node.Database == "" {
+				node.Database = defaultDatabase
+			}
 		case *influxql.Measurement:
-			err = e.normalizeMeasurement(node, defaultDatabase)
+			switch stmt.(type) {
+			case *influxql.DropSeriesStatement, *influxql.DeleteSeriesStatement:
+			// DB and RP not supported by these statements so don't rewrite into invalid
+			// statements
+			default:
+				err = e.normalizeMeasurement(node, defaultDatabase)
+			}
 		}
 	})
 	return

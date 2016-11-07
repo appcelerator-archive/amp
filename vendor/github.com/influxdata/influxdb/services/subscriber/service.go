@@ -201,7 +201,7 @@ func (s *Service) createSubscription(se subEntry, mode string, destinations []st
 		bm:      bm,
 		writers: writers,
 		stats:   stats,
-		tags: map[string]string{
+		defaultTags: models.StatisticTags{
 			"database":         se.db,
 			"retention_policy": se.rp,
 			"name":             se.name,
@@ -327,8 +327,13 @@ func (s *Service) newPointsWriter(u url.URL) (PointsWriter, error) {
 	switch u.Scheme {
 	case "udp":
 		return NewUDP(u.Host), nil
-	case "http", "https":
+	case "http":
 		return NewHTTP(u.String(), time.Duration(s.conf.HTTPTimeout))
+	case "https":
+		if s.conf.InsecureSkipVerify {
+			s.Logger.Println("WARNING: 'insecure-skip-verify' is true. This will skip all certificate verifications.")
+		}
+		return NewHTTPS(u.String(), time.Duration(s.conf.HTTPTimeout), s.conf.InsecureSkipVerify, s.conf.CaCerts)
 	default:
 		return nil, fmt.Errorf("unknown destination scheme %s", u.Scheme)
 	}
@@ -386,11 +391,11 @@ type writerStats struct {
 
 // balances writes across PointsWriters according to BalanceMode
 type balancewriter struct {
-	bm      BalanceMode
-	writers []PointsWriter
-	stats   []writerStats
-	tags    map[string]string
-	i       int
+	bm          BalanceMode
+	writers     []PointsWriter
+	stats       []writerStats
+	defaultTags models.StatisticTags
+	i           int
 }
 
 func (b *balancewriter) WritePoints(p *coordinator.WritePointsRequest) error {
@@ -418,13 +423,13 @@ func (b *balancewriter) WritePoints(p *coordinator.WritePointsRequest) error {
 
 // Statistics returns statistics for periodic monitoring.
 func (b *balancewriter) Statistics(tags map[string]string) []models.Statistic {
-	tags = models.Tags(tags).Merge(b.tags)
-
 	statistics := make([]models.Statistic, len(b.stats))
 	for i := range b.stats {
+		subTags := b.defaultTags.Merge(tags)
+		subTags["destination"] = b.stats[i].dest
 		statistics[i] = models.Statistic{
 			Name: "subscriber",
-			Tags: models.Tags(tags).Merge(map[string]string{"destination": b.stats[i].dest}),
+			Tags: subTags,
 			Values: map[string]interface{}{
 				statPointsWritten: atomic.LoadInt64(&b.stats[i].pointsWritten),
 				statWriteFailures: atomic.LoadInt64(&b.stats[i].failures),

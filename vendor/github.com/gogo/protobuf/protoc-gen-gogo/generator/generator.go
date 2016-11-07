@@ -1,7 +1,7 @@
-// Extensions for Protocol Buffers to create more go like structures.
+// Protocol Buffers for Go with Gadgets
 //
-// Copyright (c) 2013, Vastech SA (PTY) LTD. All rights reserved.
-// http://github.com/gogo/protobuf/gogoproto
+// Copyright (c) 2013, The GoGo Authors. All rights reserved.
+// http://github.com/gogo/protobuf
 //
 // Go support for Protocol Buffers - Google's data interchange format
 //
@@ -1594,7 +1594,9 @@ func (g *Generator) generateEnum(enum *EnumDescriptor) {
 	}
 	indexes = append(indexes, strconv.Itoa(enum.index))
 	g.P("func (", ccTypeName, ") EnumDescriptor() ([]byte, []int) { return ", g.file.VarName(), ", []int{", strings.Join(indexes, ", "), "} }")
-
+	if enum.file.GetPackage() == "google.protobuf" && enum.GetName() == "NullValue" {
+		g.P("func (", ccTypeName, `) XXX_WellKnownType() string { return "`, enum.GetName(), `" }`)
+	}
 	g.P()
 }
 
@@ -1938,7 +1940,14 @@ func (g *Generator) GoMapType(d *Descriptor, field *descriptor.FieldDescriptorPr
 		}
 		g.RecordTypeUse(m.ValueAliasField.GetTypeName())
 	default:
-		valType = strings.TrimPrefix(valType, "*")
+		if gogoproto.IsCustomType(m.ValueAliasField) {
+			if !gogoproto.IsNullable(m.ValueAliasField) {
+				valType = strings.TrimPrefix(valType, "*")
+			}
+			g.RecordTypeUse(m.ValueAliasField.GetTypeName())
+		} else {
+			valType = strings.TrimPrefix(valType, "*")
+		}
 	}
 
 	m.GoType = fmt.Sprintf("map[%s]%s", keyType, valType)
@@ -1970,6 +1979,28 @@ var methodNames = [...]string{
 	"VerboseEqual",
 	"GoString",
 	"ProtoSize",
+}
+
+// Names of messages in the `google.protobuf` package for which
+// we will generate XXX_WellKnownType methods.
+var wellKnownTypes = map[string]bool{
+	"Any":       true,
+	"Duration":  true,
+	"Empty":     true,
+	"Struct":    true,
+	"Timestamp": true,
+
+	"Value":       true,
+	"ListValue":   true,
+	"DoubleValue": true,
+	"FloatValue":  true,
+	"Int64Value":  true,
+	"UInt64Value": true,
+	"Int32Value":  true,
+	"UInt32Value": true,
+	"BoolValue":   true,
+	"StringValue": true,
+	"BytesValue":  true,
 }
 
 // Generate the type and default constant definitions for this Descriptor.
@@ -2166,7 +2197,11 @@ func (g *Generator) generateMessage(message *Descriptor) {
 		indexes = append([]string{strconv.Itoa(m.index)}, indexes...)
 	}
 	g.P("func (*", ccTypeName, ") Descriptor() ([]byte, []int) { return ", g.file.VarName(), ", []int{", strings.Join(indexes, ", "), "} }")
-
+	// TODO: Revisit the decision to use a XXX_WellKnownType method
+	// if we change proto.MessageName to work with multiple equivalents.
+	if message.file.GetPackage() == "google.protobuf" && wellKnownTypes[message.GetName()] {
+		g.P("func (*", ccTypeName, `) XXX_WellKnownType() string { return "`, message.GetName(), `" }`)
+	}
 	// Extension support methods
 	var hasExtensions, isMessageSet bool
 	if len(message.ExtensionRange) > 0 {
@@ -2205,7 +2240,7 @@ func (g *Generator) generateMessage(message *Descriptor) {
 		g.In()
 		for _, r := range message.ExtensionRange {
 			end := fmt.Sprint(*r.End - 1) // make range inclusive on both ends
-			g.P("{", r.Start, ", ", end, "},")
+			g.P("{Start: ", r.Start, ", End: ", end, "},")
 		}
 		g.Out()
 		g.P("}")
