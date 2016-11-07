@@ -23,7 +23,7 @@ you can still offer to help.
 
 | Milestone          | Target date | Release captain                                |
 |--------------------|-------------|------------------------------------------------|
-| [AMP 0.3.0][0.3.0] | 11/07/2016  | **[@subfuzion](https://github.com/subfuzion)**
+| [AMP 0.3.0][0.3.0] | 11/07/2016  | **[@ndegory](https://github.com/ndegory)**
 | [AMP 0.2.1][0.2.1] | 10/24/2016  | **[@subfuzion](https://github.com/subfuzion)**
 | [AMP 0.1.1][0.1.1] | 10/10/2016  | **[@subfuzion](https://github.com/subfuzion)**
 | [AMP 0.1.0][0.1.0] | 09/26/2016  | **[@subfuzion](https://github.com/subfuzion)**
