@@ -127,7 +127,7 @@ func runTestSpec(t *testing.T, test *TestSpec) error {
 		actualOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
 		expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
 		if !expectedOutput.MatchString(string(actualOutput)) {
-			return fmt.Errorf("miss matched expected output: %s", actualOutput)
+			return fmt.Errorf("miss matched expected output: %s, expectation was: %s\n", actualOutput, cmdSpec.Expectation)
 		}
 		if cmdErr != nil && !cmdSpec.ExpectErrorStatus {
 			return fmt.Errorf("Command was expected to exit with zero status but got: %v", cmdErr)
@@ -147,7 +147,9 @@ func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	}
 	cmdString = append(cmdSplit, cmdSpec.Args...)
 	cmdString = append(cmdString, optionsSplit...)
-	cmdSpec.Expectation = regexMap[cmdSpec.Expectation]
+	if regexMap[cmdSpec.Expectation] != "" {
+		cmdSpec.Expectation = regexMap[cmdSpec.Expectation]
+	}
 	return
 }
 
