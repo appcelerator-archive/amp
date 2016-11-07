@@ -74,7 +74,7 @@ clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which $(CLI)) ./$(CLI)
 	@rm -f $$(which $(SERVER)) ./$(SERVER)
-	@rm coverage.out coverage-all.out
+	@rm -f coverage.out coverage-all.out
 
 install-deps:
 	@$(GLIDE_INSTALL)
