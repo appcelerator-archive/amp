@@ -1,14 +1,13 @@
 package cli_test
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/appcelerator/amp/api/server"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"math/rand"
 	"os"
 	"os/exec"
+
+	"bytes"
+	"io/ioutil"
+	"math/rand"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -16,6 +15,9 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	"github.com/appcelerator/amp/api/server"
+	"gopkg.in/yaml.v2"
 )
 
 type TestSpec struct {
@@ -28,7 +30,6 @@ type CommandSpec struct {
 	Args              []string `yaml:"args"`
 	Options           []string `yaml:"options"`
 	Expectation       string   `yaml:"expectation"`
-	ExpectErrorStatus bool     `yaml:"expectErrorStatus"`
 	Retry             int      `yaml:"retry"`
 	Timeout           int64    `yaml:"timeout"`
 	Delay             int64    `yaml:"delay"`
@@ -53,13 +54,11 @@ func TestCmds(t *testing.T) {
 		t.Errorf("Unable to load lookup specs, reason: %v", err)
 		return
 	}
-
 	tests, err := loadTestSpecs()
 	if err != nil {
 		t.Errorf("unable to load test specs, reason: %v", err)
 		return
 	}
-
 	for _, test := range tests {
 		t.Log("-----------------------------------------------------------------------------------------")
 		t.Logf("Running spec: %s", test.Name)
@@ -75,7 +74,6 @@ func loadTestSpecs() ([]*TestSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	tests := []*TestSpec{}
 	for _, file := range files {
 		test, err := loadTestSpec(path.Join(testDir, file.Name()))
@@ -106,44 +104,38 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 		return nil, fmt.Errorf("unable to parse test spec: %s. Error: %v", fileName, err)
 	}
 
-	// Keep values only
 	for _, command := range commandMap {
 		testSpec.Commands = append(testSpec.Commands, command)
 	}
-
 	return testSpec, nil
 }
 
 func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 	var i int
-	var startTime, endTime int64
-	var tmplString []string
 	var cache = map[string]string{}
 
 	for _, cmdSpec := range test.Commands {
-		startTime = time.Now().UnixNano() / 1000000
+		var tmplString []string
+		startTime := time.Now().UnixNano() / 1000000
+
 		for i = -1; i < cmdSpec.Retry; i++ {
 			cmdString := generateCmdString(&cmdSpec)
 			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
-				return fmt.Errorf("Executing templating failed: %s", tmplErr)
+				err = fmt.Errorf("Executing templating failed: %s", tmplErr)
+				t.Log(err)
 			}
 			tmplString := strings.Fields(tmplOutput)
+
 			t.Logf("Running: %s", strings.Join(tmplString, " "))
-			actualOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
+			cmdOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
 			expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
-
-			if !expectedOutput.MatchString(string(actualOutput)) {
-				return fmt.Errorf("miss matched expected output: %s", actualOutput)
-			}
-			if cmdErr != nil && !cmdSpec.ExpectErrorStatus {
-				return fmt.Errorf("Command was expected to exit with zero status but got: %v", cmdErr)
-			}
-			if cmdErr == nil && cmdSpec.ExpectErrorStatus {
-				return fmt.Errorf("Command was expected to exit with error status but exited with zero")
+			if !expectedOutput.MatchString(string(cmdOutput)) {
+				err = fmt.Errorf("miss matched expected output: %s : Error: %v", cmdOutput, cmdErr)
+				t.Log(err)
 			}
 
-			endTime = time.Now().UnixNano() / 1000000
+			endTime := time.Now().UnixNano() / 1000000
 			if cmdSpec.Timeout != 0 && endTime-startTime >= cmdSpec.Timeout {
 				return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
 			}
@@ -152,10 +144,8 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 			}
 			time.Sleep(time.Duration(cmdSpec.Delay) * time.Millisecond)
 		}
-
 		if i > 0 && i == cmdSpec.Retry {
 			t.Log("This command :", tmplString, "has re-run", i, "times.")
-
 		}
 	}
 	return
