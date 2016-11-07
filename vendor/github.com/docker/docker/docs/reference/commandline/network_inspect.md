@@ -1,17 +1,12 @@
----
-title: "network inspect"
-description: "The network inspect command description and usage"
-keywords: "network, inspect, user-defined"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "network inspect"
+description = "The network inspect command description and usage"
+keywords = ["network, inspect, user-defined"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # network inspect
 
@@ -21,7 +16,7 @@ Usage:  docker network inspect [OPTIONS] NETWORK [NETWORK...]
 Display detailed information on one or more networks
 
 Options:
-  -f, --format string   Format the output using the given Go template
+  -f, --format string   Format the output using the given go template
       --help            Print usage
 ```
 
@@ -39,9 +34,6 @@ The `network inspect` command shows the containers, by id, in its
 results. For networks backed by multi-host network driver, such as Overlay,
 this command also shows the container endpoints in other hosts in the
 cluster. These endpoints are represented as "ep-{endpoint-id}" in the output.
-However, for swarm-scoped networks, only the endpoints that are local to the
-node are shown.
-
 You can specify an alternate format to execute a given
 template for each result. Go's
 [text/template](http://golang.org/pkg/text/template/) package describes all the
@@ -53,7 +45,6 @@ $ sudo docker network inspect bridge
     {
         "Name": "bridge",
         "Id": "b2b1a2cba717161d984383fd68218cf70bbbd17d328496885f7c921333228b0f",
-        "Created": "2016-10-19T04:33:30.360899459Z",
         "Scope": "local",
         "Driver": "bridge",
         "IPAM": {
@@ -105,7 +96,6 @@ $ docker network inspect simple-network
     {
         "Name": "simple-network",
         "Id": "69568e6336d8c96bbf57869030919f7c69524f71183b44d80948bd3927c87f6a",
-        "Created": "2016-10-19T04:33:30.360899459Z",
         "Scope": "local",
         "Driver": "bridge",
         "IPAM": {
@@ -131,5 +121,4 @@ $ docker network inspect simple-network
 * [network create](network_create.md)
 * [network ls](network_ls.md)
 * [network rm](network_rm.md)
-* [network prune](network_prune.md)
-* [Understand Docker container networks](https://docs.docker.com/engine/userguide/networking/)
+* [Understand Docker container networks](../../userguide/networking/index.md)

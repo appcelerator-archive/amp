@@ -49,21 +49,22 @@ func newListCommand(dockerCli *command.DockerCli) *cobra.Command {
 func runList(dockerCli *command.DockerCli, opts listOptions) error {
 	ctx := context.Background()
 	client := dockerCli.Client()
-	out := dockerCli.Out()
 
-	services, err := client.ServiceList(ctx, types.ServiceListOptions{Filters: opts.filter.Value()})
+	services, err := client.ServiceList(ctx, types.ServiceListOptions{Filter: opts.filter.Value()})
 	if err != nil {
 		return err
 	}
 
-	if len(services) > 0 && !opts.quiet {
-		// only non-empty services and not quiet, should we call TaskList and NodeList api
+	out := dockerCli.Out()
+	if opts.quiet {
+		PrintQuiet(out, services)
+	} else {
 		taskFilter := filters.NewArgs()
 		for _, service := range services {
 			taskFilter.Add("service", service.ID)
 		}
 
-		tasks, err := client.TaskList(ctx, types.TaskListOptions{Filters: taskFilter})
+		tasks, err := client.TaskList(ctx, types.TaskListOptions{Filter: taskFilter})
 		if err != nil {
 			return err
 		}
@@ -74,13 +75,7 @@ func runList(dockerCli *command.DockerCli, opts listOptions) error {
 		}
 
 		PrintNotQuiet(out, services, nodes, tasks)
-	} else if !opts.quiet {
-		// no services and not quiet, print only one line with columns ID, NAME, REPLICAS...
-		PrintNotQuiet(out, services, []swarm.Node{}, []swarm.Task{})
-	} else {
-		PrintQuiet(out, services)
 	}
-
 	return nil
 }
 

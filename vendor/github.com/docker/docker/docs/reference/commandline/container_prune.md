@@ -1,17 +1,12 @@
----
-title: "container prune"
-description: "Remove all stopped containers"
-keywords: container, prune, delete, remove
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "container prune"
+description = "Remove all stopped containers"
+keywords = [container, prune, delete, remove]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # container prune
 
@@ -43,5 +38,4 @@ Total reclaimed space: 212 B
 * [system df](system_df.md)
 * [volume prune](volume_prune.md)
 * [image prune](image_prune.md)
-* [network prune](network_prune.md)
 * [system prune](system_prune.md)

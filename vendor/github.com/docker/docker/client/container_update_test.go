@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"golang.org/x/net/context"
 )
@@ -32,7 +33,7 @@ func TestContainerUpdate(t *testing.T) {
 				return nil, fmt.Errorf("Expected URL '%s', got '%s'", expectedURL, req.URL)
 			}
 
-			b, err := json.Marshal(container.ContainerUpdateOKBody{})
+			b, err := json.Marshal(types.ContainerUpdateResponse{})
 			if err != nil {
 				return nil, err
 			}

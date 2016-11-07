@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"strings"
 
 	"golang.org/x/net/context"
 
@@ -29,28 +28,19 @@ func newRemoveCommand(dockerCli *command.DockerCli) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.BoolVar(&opts.force, "force", false, "Force remove a node from the swarm")
+	flags.BoolVar(&opts.force, "force", false, "Force remove an active node")
 	return cmd
 }
 
 func runRemove(dockerCli *command.DockerCli, args []string, opts removeOptions) error {
 	client := dockerCli.Client()
 	ctx := context.Background()
-
-	var errs []string
-
 	for _, nodeID := range args {
 		err := client.NodeRemove(ctx, nodeID, types.NodeRemoveOptions{Force: opts.force})
 		if err != nil {
-			errs = append(errs, err.Error())
-			continue
+			return err
 		}
 		fmt.Fprintf(dockerCli.Out(), "%s\n", nodeID)
 	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("%s", strings.Join(errs, "\n"))
-	}
-
 	return nil
 }

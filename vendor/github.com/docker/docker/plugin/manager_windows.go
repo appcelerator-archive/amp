@@ -1,4 +1,4 @@
-// +build windows
+// +build windows,experimental
 
 package plugin
 
@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/plugin/v2"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func (pm *Manager) enable(p *v2.Plugin, force bool) error {

@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/dockerversion"
+	"github.com/docker/docker/utils"
 	"github.com/docker/docker/utils/templates"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +21,8 @@ var versionTemplate = `Client:
  Go version:   {{.Client.GoVersion}}
  Git commit:   {{.Client.GitCommit}}
  Built:        {{.Client.BuildTime}}
- OS/Arch:      {{.Client.Os}}/{{.Client.Arch}}{{if .ServerOK}}
+ OS/Arch:      {{.Client.Os}}/{{.Client.Arch}}{{if .Client.Experimental}}
+ Experimental: {{.Client.Experimental}}{{end}}{{if .ServerOK}}
 
 Server:
  Version:      {{.Server.Version}}
@@ -28,8 +30,8 @@ Server:
  Go version:   {{.Server.GoVersion}}
  Git commit:   {{.Server.GitCommit}}
  Built:        {{.Server.BuildTime}}
- OS/Arch:      {{.Server.Os}}/{{.Server.Arch}}
- Experimental: {{.Server.Experimental}}{{end}}`
+ OS/Arch:      {{.Server.Os}}/{{.Server.Arch}}{{if .Server.Experimental}}
+ Experimental: {{.Server.Experimental}}{{end}}{{end}}`
 
 type versionOptions struct {
 	format string
@@ -50,7 +52,7 @@ func NewVersionCommand(dockerCli *command.DockerCli) *cobra.Command {
 
 	flags := cmd.Flags()
 
-	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given Go template")
+	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given go template")
 
 	return cmd
 }
@@ -71,13 +73,14 @@ func runVersion(dockerCli *command.DockerCli, opts *versionOptions) error {
 
 	vd := types.VersionResponse{
 		Client: &types.Version{
-			Version:    dockerversion.Version,
-			APIVersion: dockerCli.Client().ClientVersion(),
-			GoVersion:  runtime.Version(),
-			GitCommit:  dockerversion.GitCommit,
-			BuildTime:  dockerversion.BuildTime,
-			Os:         runtime.GOOS,
-			Arch:       runtime.GOARCH,
+			Version:      dockerversion.Version,
+			APIVersion:   dockerCli.Client().ClientVersion(),
+			GoVersion:    runtime.Version(),
+			GitCommit:    dockerversion.GitCommit,
+			BuildTime:    dockerversion.BuildTime,
+			Os:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
+			Experimental: utils.ExperimentalBuild(),
 		},
 	}
 

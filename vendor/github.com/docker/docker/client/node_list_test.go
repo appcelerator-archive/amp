@@ -45,7 +45,7 @@ func TestNodeList(t *testing.T) {
 		},
 		{
 			options: types.NodeListOptions{
-				Filters: filters,
+				Filter: filters,
 			},
 			expectedQueryParams: map[string]string{
 				"filters": `{"label":{"label1":true,"label2":true}}`,

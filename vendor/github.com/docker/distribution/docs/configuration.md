@@ -1,8 +1,13 @@
----
-title: "Configuring a registry"
-description: "Explains how to configure a registry"
-keywords: ["registry, on-prem, images, tags, repository, distribution, configuration"]
----
+<!--[metadata]>
++++
+title = "Configuring a registry"
+description = "Explains how to configure a registry"
+keywords = ["registry, on-prem, images, tags, repository, distribution, configuration"]
+[menu.main]
+parent="smn_registry"
+weight=4
++++
+<![end-metadata]-->
 
 # Registry Configuration Reference
 

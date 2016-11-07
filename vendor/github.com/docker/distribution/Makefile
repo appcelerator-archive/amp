@@ -13,7 +13,7 @@ endif
 
 GO_LDFLAGS=-ldflags "-X `go list ./version`.Version=$(VERSION)"
 
-.PHONY: all build binaries clean dep-restore dep-save dep-validate fmt lint test test-full vet
+.PHONY: clean all fmt vet lint build test binaries
 .DEFAULT: all
 all: fmt vet lint build test binaries
 

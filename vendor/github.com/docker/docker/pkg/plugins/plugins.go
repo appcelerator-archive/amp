@@ -41,14 +41,9 @@ type plugins struct {
 	plugins map[string]*Plugin
 }
 
-type extpointHandlers struct {
-	sync.RWMutex
-	extpointHandlers map[string][]func(string, *Client)
-}
-
 var (
-	storage  = plugins{plugins: make(map[string]*Plugin)}
-	handlers = extpointHandlers{extpointHandlers: make(map[string][]func(string, *Client))}
+	storage          = plugins{plugins: make(map[string]*Plugin)}
+	extpointHandlers = make(map[string]func(string, *Client))
 )
 
 // Manifest lists what a plugin implements.
@@ -133,17 +128,13 @@ func (p *Plugin) activateWithLock() error {
 
 	p.Manifest = m
 
-	handlers.RLock()
 	for _, iface := range m.Implements {
-		hdlrs, handled := handlers.extpointHandlers[iface]
+		handler, handled := extpointHandlers[iface]
 		if !handled {
 			continue
 		}
-		for _, handler := range hdlrs {
-			handler(p.name, p.client)
-		}
+		handler(p.name, p.client)
 	}
-	handlers.RUnlock()
 	return nil
 }
 
@@ -235,18 +226,7 @@ func Get(name, imp string) (*Plugin, error) {
 
 // Handle adds the specified function to the extpointHandlers.
 func Handle(iface string, fn func(string, *Client)) {
-	handlers.Lock()
-	hdlrs, ok := handlers.extpointHandlers[iface]
-	if !ok {
-		hdlrs = []func(string, *Client){}
-	}
-
-	hdlrs = append(hdlrs, fn)
-	handlers.extpointHandlers[iface] = hdlrs
-	for _, p := range storage.plugins {
-		p.activated = false
-	}
-	handlers.Unlock()
+	extpointHandlers[iface] = fn
 }
 
 // GetAll returns all the plugins for the specified implementation

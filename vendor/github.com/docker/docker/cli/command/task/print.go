@@ -2,7 +2,6 @@ package task
 
 import (
 	"fmt"
-	"io"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -41,9 +40,7 @@ func (t tasksBySlot) Less(i, j int) bool {
 	return t[j].Meta.CreatedAt.Before(t[i].CreatedAt)
 }
 
-// Print task information in a table format.
-// Besides this, command `docker node ps <node>`
-// and `docker stack ps` will call this, too.
+// Print task information in a table format
 func Print(dockerCli *command.DockerCli, ctx context.Context, tasks []swarm.Task, resolver *idresolver.IDResolver, noTrunc bool) error {
 	sort.Stable(tasksBySlot(tasks))
 
@@ -53,27 +50,6 @@ func Print(dockerCli *command.DockerCli, ctx context.Context, tasks []swarm.Task
 	defer writer.Flush()
 	fmt.Fprintln(writer, strings.Join([]string{"NAME", "IMAGE", "NODE", "DESIRED STATE", "CURRENT STATE", "ERROR"}, "\t"))
 
-	if err := print(writer, ctx, tasks, resolver, noTrunc); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// PrintQuiet shows task list in a quiet way.
-func PrintQuiet(dockerCli *command.DockerCli, tasks []swarm.Task) error {
-	sort.Stable(tasksBySlot(tasks))
-
-	out := dockerCli.Out()
-
-	for _, task := range tasks {
-		fmt.Fprintln(out, task.ID)
-	}
-
-	return nil
-}
-
-func print(out io.Writer, ctx context.Context, tasks []swarm.Task, resolver *idresolver.IDResolver, noTrunc bool) error {
 	prevServiceName := ""
 	prevSlot := 0
 	for _, task := range tasks {
@@ -118,7 +94,7 @@ func print(out io.Writer, ctx context.Context, tasks []swarm.Task, resolver *idr
 		}
 
 		fmt.Fprintf(
-			out,
+			writer,
 			psTaskItemFmt,
 			indentedName,
 			task.Spec.ContainerSpec.Image,
@@ -129,5 +105,6 @@ func print(out io.Writer, ctx context.Context, tasks []swarm.Task, resolver *idr
 			taskErr,
 		)
 	}
+
 	return nil
 }

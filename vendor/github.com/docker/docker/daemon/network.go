@@ -178,10 +178,6 @@ func (daemon *Daemon) SetupIngress(create clustertypes.NetworkCreateRequest, nod
 		if err := ep.Join(sb, nil); err != nil {
 			logrus.Errorf("Failed joining ingress sandbox to ingress endpoint: %v", err)
 		}
-
-		if err := sb.EnableService(); err != nil {
-			logrus.WithError(err).Error("Failed enabling service for ingress sandbox")
-		}
 	}()
 
 	return nil
@@ -296,7 +292,6 @@ func (daemon *Daemon) createNetwork(create types.NetworkCreateRequest, id string
 	}
 
 	daemon.LogNetworkEvent(n, "create")
-
 	return &types.NetworkCreateResponse{
 		ID:      n.ID(),
 		Warning: warning,
@@ -367,11 +362,9 @@ func (daemon *Daemon) GetNetworkDriverList() []string {
 		return nil
 	}
 
-	pluginList := daemon.netController.BuiltinDrivers()
-	pluginMap := make(map[string]bool)
-	for _, plugin := range pluginList {
-		pluginMap[plugin] = true
-	}
+	// TODO: Replace this with proper libnetwork API
+	pluginList := []string{"overlay"}
+	pluginMap := map[string]bool{"overlay": true}
 
 	networks := daemon.netController.Networks()
 

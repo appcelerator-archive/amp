@@ -165,7 +165,7 @@ func (filters Args) MatchKVList(field string, sources map[string]string) bool {
 		return true
 	}
 
-	if len(sources) == 0 {
+	if sources == nil || len(sources) == 0 {
 		return false
 	}
 

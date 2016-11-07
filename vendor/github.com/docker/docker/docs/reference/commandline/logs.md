@@ -1,17 +1,12 @@
----
-title: "logs"
-description: "The logs command description and usage"
-keywords: "logs, retrieve, docker"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "logs"
+description = "The logs command description and usage"
+keywords = ["logs, retrieve, docker"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # logs
 
@@ -35,7 +30,7 @@ The `docker logs` command batch-retrieves logs present at the time of execution.
 > the `json-file` or `journald` logging driver.
 
 For more information about selecting and configuring login-drivers, refer to
-[Configure logging drivers](https://docs.docker.com/engine/admin/logging/overview/).
+[Configure logging drivers](../../admin/logging/overview.md).
 
 The `docker logs --follow` command will continue streaming the new output from
 the container's `STDOUT` and `STDERR`.

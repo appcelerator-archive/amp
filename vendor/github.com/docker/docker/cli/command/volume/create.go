@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	volumetypes "github.com/docker/docker/api/types/volume"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/opts"
@@ -17,13 +17,12 @@ type createOptions struct {
 	name       string
 	driver     string
 	driverOpts opts.MapOpts
-	labels     opts.ListOpts
+	labels     []string
 }
 
 func newCreateCommand(dockerCli *command.DockerCli) *cobra.Command {
 	opts := createOptions{
 		driverOpts: *opts.NewMapOpts(nil, nil),
-		labels:     opts.NewListOpts(runconfigopts.ValidateEnv),
 	}
 
 	cmd := &cobra.Command{
@@ -47,7 +46,7 @@ func newCreateCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.StringVar(&opts.name, "name", "", "Specify volume name")
 	flags.Lookup("name").Hidden = true
 	flags.VarP(&opts.driverOpts, "opt", "o", "Set driver specific options")
-	flags.Var(&opts.labels, "label", "Set metadata for a volume")
+	flags.StringSliceVar(&opts.labels, "label", []string{}, "Set metadata for a volume")
 
 	return cmd
 }
@@ -55,11 +54,11 @@ func newCreateCommand(dockerCli *command.DockerCli) *cobra.Command {
 func runCreate(dockerCli *command.DockerCli, opts createOptions) error {
 	client := dockerCli.Client()
 
-	volReq := volumetypes.VolumesCreateBody{
+	volReq := types.VolumeCreateRequest{
 		Driver:     opts.driver,
 		DriverOpts: opts.driverOpts.GetAll(),
 		Name:       opts.name,
-		Labels:     runconfigopts.ConvertKVStringsToMap(opts.labels.GetAll()),
+		Labels:     runconfigopts.ConvertKVStringsToMap(opts.labels),
 	}
 
 	vol, err := client.VolumeCreate(context.Background(), volReq)

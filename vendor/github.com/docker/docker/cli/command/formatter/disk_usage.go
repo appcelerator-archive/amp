@@ -31,7 +31,7 @@ type DiskUsageContext struct {
 	Context
 	Verbose    bool
 	LayersSize int64
-	Images     []*types.ImageSummary
+	Images     []*types.Image
 	Containers []*types.Container
 	Volumes    []*types.Volume
 }
@@ -155,7 +155,7 @@ func (ctx *DiskUsageContext) Write() {
 type diskUsageImagesContext struct {
 	HeaderContext
 	totalSize int64
-	images    []*types.ImageSummary
+	images    []*types.Image
 }
 
 func (c *diskUsageImagesContext) Type() string {

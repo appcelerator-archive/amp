@@ -61,10 +61,6 @@ var (
 	volumesConfigPath    string
 	containerStoragePath string
 
-	// experimentalDaemon tell whether the main daemon has
-	// experimental features enabled or not
-	experimentalDaemon bool
-
 	// daemonStorageDriver is held globally so that tests can know the storage
 	// driver of the daemon. This is initialized in docker_utils by sending
 	// a version call to the daemon and examining the response header.
@@ -72,7 +68,7 @@ var (
 
 	// WindowsBaseImage is the name of the base image for Windows testing
 	// Environment variable WINDOWS_BASE_IMAGE can override this
-	WindowsBaseImage = "microsoft/windowsservercore"
+	WindowsBaseImage = "windowsservercore"
 
 	// isolation is the isolation mode of the daemon under test
 	isolation container.Isolation
@@ -132,15 +128,13 @@ func init() {
 	// /info endpoint for the specific root dir
 	dockerBasePath = "/var/lib/docker"
 	type Info struct {
-		DockerRootDir     string
-		ExperimentalBuild bool
+		DockerRootDir string
 	}
 	var i Info
 	status, b, err := sockRequest("GET", "/info", nil)
 	if err == nil && status == 200 {
 		if err = json.Unmarshal(b, &i); err == nil {
 			dockerBasePath = i.DockerRootDir
-			experimentalDaemon = i.ExperimentalBuild
 		}
 	}
 	volumesConfigPath = dockerBasePath + "/volumes"

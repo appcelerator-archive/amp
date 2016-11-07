@@ -6,7 +6,6 @@ import (
 
 	"github.com/docker/docker/api/server/httputils"
 	"github.com/docker/docker/api/types"
-	volumetypes "github.com/docker/docker/api/types/volume"
 	"golang.org/x/net/context"
 )
 
@@ -19,7 +18,7 @@ func (v *volumeRouter) getVolumesList(ctx context.Context, w http.ResponseWriter
 	if err != nil {
 		return err
 	}
-	return httputils.WriteJSON(w, http.StatusOK, &volumetypes.VolumesListOKBody{Volumes: volumes, Warnings: warnings})
+	return httputils.WriteJSON(w, http.StatusOK, &types.VolumesListResponse{Volumes: volumes, Warnings: warnings})
 }
 
 func (v *volumeRouter) getVolumeByName(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
@@ -43,7 +42,7 @@ func (v *volumeRouter) postVolumesCreate(ctx context.Context, w http.ResponseWri
 		return err
 	}
 
-	var req volumetypes.VolumesCreateBody
+	var req types.VolumeCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return err
 	}

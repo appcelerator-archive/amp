@@ -103,7 +103,7 @@ $ docker network inspect simple-network
 
 # OPTIONS
 **-f**, **--format**=""
-  Format the output using the given Go template.
+  Format the output using the given go template.
 
 **--help**
   Print usage statement

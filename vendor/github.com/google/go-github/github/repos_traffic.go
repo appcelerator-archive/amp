@@ -5,7 +5,11 @@
 
 package github
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
 // TrafficReferrer represent information about traffic from a referrer .
 type TrafficReferrer struct {
@@ -22,11 +26,30 @@ type TrafficPath struct {
 	Uniques *int    `json:"uniques,omitempty"`
 }
 
+// TimestampMS represents a timestamp as used in datapoint.
+//
+// It's only used to parse the result given by the API which are unix timestamp in milliseonds.
+type TimestampMS struct {
+	time.Time
+}
+
+// UnmarshalJSON parse unix timestamp.
+func (t *TimestampMS) UnmarshalJSON(b []byte) error {
+	s := string(b)
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return err
+	}
+	// We can drop the reaminder as returned values are days and it will always be 0
+	*t = TimestampMS{time.Unix(i/1000, 0)}
+	return nil
+}
+
 // TrafficData represent information about a specific timestamp in views or clones list.
 type TrafficData struct {
-	Timestamp *Timestamp `json:"timestamp,omitempty"`
-	Count     *int       `json:"count,omitempty"`
-	Uniques   *int       `json:"uniques,omitempty"`
+	Timestamp *TimestampMS `json:"timestamp,omitempty"`
+	Count     *int         `json:"count,omitempty"`
+	Uniques   *int         `json:"uniques,omitempty"`
 }
 
 // TrafficViews represent information about the number of views in the last 14 days.

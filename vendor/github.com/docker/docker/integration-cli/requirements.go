@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/utils"
 	"github.com/go-check/check"
 )
 
@@ -30,11 +31,11 @@ var (
 		"Test requires a Linux daemon",
 	}
 	ExperimentalDaemon = testRequirement{
-		func() bool { return experimentalDaemon },
+		func() bool { return utils.ExperimentalBuild() },
 		"Test requires an experimental daemon",
 	}
 	NotExperimentalDaemon = testRequirement{
-		func() bool { return !experimentalDaemon },
+		func() bool { return !utils.ExperimentalBuild() },
 		"Test requires a non experimental daemon",
 	}
 	IsAmd64 = testRequirement{
@@ -199,36 +200,6 @@ var (
 			return true
 		},
 		"Test cannot be run when remapping root",
-	}
-	IsPausable = testRequirement{
-		func() bool {
-			if daemonPlatform == "windows" {
-				return isolation == "hyperv"
-			}
-			return true
-		},
-		"Test requires containers are pausable.",
-	}
-	NotPausable = testRequirement{
-		func() bool {
-			if daemonPlatform == "windows" {
-				return isolation == "process"
-			}
-			return false
-		},
-		"Test requires containers are not pausable.",
-	}
-	IsolationIsHyperv = testRequirement{
-		func() bool {
-			return daemonPlatform == "windows" && isolation == "hyperv"
-		},
-		"Test requires a Windows daemon running default isolation mode of hyperv.",
-	}
-	IsolationIsProcess = testRequirement{
-		func() bool {
-			return daemonPlatform == "windows" && isolation == "process"
-		},
-		"Test requires a Windows daemon running default isolation mode of process.",
 	}
 )
 

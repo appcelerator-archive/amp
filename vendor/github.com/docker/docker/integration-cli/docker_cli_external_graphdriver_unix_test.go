@@ -1,3 +1,4 @@
+// +build experimental
 // +build !windows
 
 package main
@@ -286,7 +287,7 @@ func (s *DockerExternalGraphdriverSuite) setUpPlugin(c *check.C, name string, ex
 
 	mux.HandleFunc("/GraphDriver.ApplyDiff", func(w http.ResponseWriter, r *http.Request) {
 		s.ec[ext].applydiff++
-		diff := r.Body
+		var diff archive.Reader = r.Body
 		defer r.Body.Close()
 
 		id := r.URL.Query().Get("id")
@@ -337,8 +338,6 @@ func (s *DockerExternalGraphdriverSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *DockerExternalGraphdriverSuite) TestExternalGraphDriver(c *check.C) {
-	testRequires(c, ExperimentalDaemon)
-
 	s.testExternalGraphDriver("test-external-graph-driver", "spec", c)
 	s.testExternalGraphDriver("json-external-graph-driver", "json", c)
 }
@@ -379,7 +378,7 @@ func (s *DockerExternalGraphdriverSuite) testExternalGraphDriver(name string, ex
 	c.Assert(s.ec[ext].removals >= 1, check.Equals, true)
 	c.Assert(s.ec[ext].gets >= 1, check.Equals, true)
 	c.Assert(s.ec[ext].puts >= 1, check.Equals, true)
-	c.Assert(s.ec[ext].stats, check.Equals, 5)
+	c.Assert(s.ec[ext].stats, check.Equals, 3)
 	c.Assert(s.ec[ext].cleanups, check.Equals, 2)
 	c.Assert(s.ec[ext].applydiff >= 1, check.Equals, true)
 	c.Assert(s.ec[ext].changes, check.Equals, 1)
@@ -389,8 +388,7 @@ func (s *DockerExternalGraphdriverSuite) testExternalGraphDriver(name string, ex
 }
 
 func (s *DockerExternalGraphdriverSuite) TestExternalGraphDriverPull(c *check.C) {
-	testRequires(c, Network, ExperimentalDaemon)
-
+	testRequires(c, Network)
 	c.Assert(s.d.Start(), check.IsNil)
 
 	out, err := s.d.Cmd("pull", "busybox:latest")

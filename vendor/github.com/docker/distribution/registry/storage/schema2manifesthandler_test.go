@@ -57,10 +57,9 @@ func TestVerifyManifestForeignLayer(t *testing.T) {
 			errMissingURL,
 		},
 		{
-			// regular layers may have foreign urls
 			layer,
 			[]string{"http://foo/bar"},
-			nil,
+			errUnexpectedURL,
 		},
 		{
 			foreignLayer,

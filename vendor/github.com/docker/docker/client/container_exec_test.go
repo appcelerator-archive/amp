@@ -45,7 +45,7 @@ func TestContainerExecCreate(t *testing.T) {
 			if execConfig.User != "user" {
 				return nil, fmt.Errorf("expected an execConfig with User == 'user', got %v", execConfig)
 			}
-			b, err := json.Marshal(types.IDResponse{
+			b, err := json.Marshal(types.ContainerExecCreateResponse{
 				ID: "exec_id",
 			})
 			if err != nil {

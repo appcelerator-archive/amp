@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync"
@@ -49,7 +48,6 @@ func (s *DockerSuite) TearDownTest(c *check.C) {
 	deleteAllImages()
 	deleteAllVolumes()
 	deleteAllNetworks()
-	deleteAllPlugins()
 }
 
 func init() {
@@ -242,7 +240,6 @@ func init() {
 }
 
 type DockerSwarmSuite struct {
-	server      *httptest.Server
 	ds          *DockerSuite
 	daemons     []*SwarmDaemon
 	daemonsLock sync.Mutex // protect access to daemons
@@ -267,11 +264,7 @@ func (s *DockerSwarmSuite) AddDaemon(c *check.C, joinSwarm, manager bool) *Swarm
 		port:   defaultSwarmPort + s.portIndex,
 	}
 	d.listenAddr = fmt.Sprintf("0.0.0.0:%d", d.port)
-	args := []string{"--iptables=false", "--swarm-default-advertise-addr=lo"} // avoid networking conflicts
-	if experimentalDaemon {
-		args = append(args, "--experimental")
-	}
-	err := d.StartWithBusybox(args...)
+	err := d.StartWithBusybox("--iptables=false", "--swarm-default-advertise-addr=lo") // avoid networking conflicts
 	c.Assert(err, check.IsNil)
 
 	if joinSwarm == true {

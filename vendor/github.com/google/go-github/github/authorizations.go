@@ -346,6 +346,9 @@ func (s *AuthorizationsService) ListGrants() ([]*Grant, *Response, error) {
 		return nil, nil, err
 	}
 
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeOAuthGrantAuthorizationsPreview)
+
 	grants := []*Grant{}
 	resp, err := s.client.Do(req, &grants)
 	if err != nil {
@@ -364,6 +367,9 @@ func (s *AuthorizationsService) GetGrant(id int) (*Grant, *Response, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeOAuthGrantAuthorizationsPreview)
 
 	grant := new(Grant)
 	resp, err := s.client.Do(req, grant)
@@ -385,6 +391,9 @@ func (s *AuthorizationsService) DeleteGrant(id int) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeOAuthGrantAuthorizationsPreview)
 
 	return s.client.Do(req, nil)
 }

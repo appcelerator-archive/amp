@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     gawk \
     iptables \
-    jq \
     pkg-config \
     libaio-dev \
     libcap-dev \

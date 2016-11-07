@@ -1,17 +1,13 @@
----
-title: "Remote API v1.23"
-description: "API Documentation for Docker"
-keywords: "API, Docker, rcli, REST, documentation"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "Remote API v1.23"
+description = "API Documentation for Docker"
+keywords = ["API, Docker, rcli, REST,  documentation"]
+[menu.main]
+parent="engine_remoteapi"
+weight=-4
++++
+<![end-metadata]-->
 
 # Docker Remote API v1.23
 
@@ -361,8 +357,8 @@ Create a container
 -   **Tty** - Boolean value, Attach standard streams to a `tty`, including `stdin` if it is not closed.
 -   **OpenStdin** - Boolean value, opens `stdin`,
 -   **StdinOnce** - Boolean value, close `stdin` after the 1 attached client disconnects.
--   **Env** - A list of environment variables in the form of `["VAR=value", ...]`
--   **Labels** - Adds a map of labels to a container. To specify a map: `{"key":"value", ... }`
+-   **Env** - A list of environment variables in the form of `["VAR=value"[,"VAR2=value2"]]`
+-   **Labels** - Adds a map of labels to a container. To specify a map: `{"key":"value"[,"key2":"value2"]}`
 -   **Cmd** - Command to run specified as a string or an array of strings.
 -   **Entrypoint** - Set the entry point for the container as a string or an array
       of strings.
@@ -770,9 +766,7 @@ Get `stdout` and `stderr` logs from the container ``id``
      Connection: Upgrade
      Upgrade: tcp
 
-     {% raw %}
      {{ STREAM }}
-     {% endraw %}
 
 **Query parameters**:
 
@@ -849,9 +843,7 @@ Export the contents of container `id`
     HTTP/1.1 200 OK
     Content-Type: application/octet-stream
 
-    {% raw %}
     {{ TAR STREAM }}
-    {% endraw %}
 
 **Status codes**:
 
@@ -1241,9 +1233,7 @@ Attach to the container `id`
     Connection: Upgrade
     Upgrade: tcp
 
-    {% raw %}
     {{ STREAM }}
-    {% endraw %}
 
 **Query parameters**:
 
@@ -1327,9 +1317,7 @@ Implements websocket protocol handshake according to [RFC 6455](http://tools.iet
 
 **Example response**
 
-    {% raw %}
     {{ STREAM }}
-    {% endraw %}
 
 **Query parameters**:
 
@@ -1427,9 +1415,7 @@ Copy files or folders of container `id`
     HTTP/1.1 200 OK
     Content-Type: application/x-tar
 
-    {% raw %}
     {{ TAR STREAM }}
-    {% endraw %}
 
 **Status codes**:
 
@@ -1475,9 +1461,7 @@ Get a tar archive of a resource in the filesystem of container `id`.
     Content-Type: application/x-tar
     X-Docker-Container-Path-Stat: eyJuYW1lIjoicm9vdCIsInNpemUiOjQwOTYsIm1vZGUiOjIxNDc0ODQwOTYsIm10aW1lIjoiMjAxNC0wMi0yN1QyMDo1MToyM1oiLCJsaW5rVGFyZ2V0IjoiIn0=
 
-    {% raw %}
     {{ TAR STREAM }}
-    {% endraw %}
 
 On success, a response header `X-Docker-Container-Path-Stat` will be set to a
 base64-encoded JSON object containing some filesystem header information about
@@ -1532,9 +1516,7 @@ Upload a tar archive to be extracted to a path in the filesystem of container
     PUT /containers/8cce319429b2/archive?path=/vol1 HTTP/1.1
     Content-Type: application/x-tar
 
-    {% raw %}
     {{ TAR STREAM }}
-    {% endraw %}
 
 **Example response**:
 
@@ -1660,16 +1642,14 @@ Build an image from a Dockerfile
 
     POST /build HTTP/1.1
 
-    {% raw %}
     {{ TAR STREAM }}
-    {% endraw %}
 
 **Example response**:
 
     HTTP/1.1 200 OK
     Content-Type: application/json
 
-    {"stream": "Step 1/5..."}
+    {"stream": "Step 1..."}
     {"stream": "..."}
     {"error": "Error...", "errorDetail": {"code": 123, "message": "Error..."}}
 
@@ -1811,7 +1791,7 @@ a base64-encoded AuthConfig object.
 
         ```
     {
-            "identitytoken": "9cbaf023786cd7..."
+            "registrytoken": "9cbaf023786cd7..."
     }
         ```
 
@@ -2708,7 +2688,7 @@ See the [image tarball format](#image-tarball-format) for more details.
 
 **Example response**:
 
-If the "quiet" query parameter is set to `true` / `1` (`?quiet=1`), progress
+If the "quiet" query parameter is set to `true` / `1` (`?quiet=1`), progress 
 details are suppressed, and only a confirmation message is returned once the
 action completes.
 
@@ -2826,9 +2806,7 @@ interactive session with the `exec` command.
     HTTP/1.1 200 OK
     Content-Type: application/vnd.docker.raw-stream
 
-    {% raw %}
     {{ STREAM }}
-    {% endraw %}
 
 **JSON parameters**:
 
@@ -3217,11 +3195,10 @@ Content-Type: application/json
 
 {
   "Name":"isolated_nw",
-  "CheckDuplicate":true,
+  "CheckDuplicate":false,
   "Driver":"bridge",
   "EnableIPv6": true,
   "IPAM":{
-    "Driver": "default",
     "Config":[
       {
         "Subnet":"172.20.0.0/16",
@@ -3274,14 +3251,10 @@ Content-Type: application/json
 **JSON parameters**:
 
 - **Name** - The new network's name. this is a mandatory field
-- **CheckDuplicate** - Requests daemon to check for networks with same name. Defaults to `false`
+- **CheckDuplicate** - Requests daemon to check for networks with same name
 - **Driver** - Name of the network driver plugin to use. Defaults to `bridge` driver
 - **Internal** - Restrict external access to the network
 - **IPAM** - Optional custom IP scheme for the network
-  - **Driver** - Name of the IPAM driver to use. Defaults to `default` driver
-  - **Config** - List of IPAM configuration options, specified as a map:
-      `{"Subnet": <CIDR>, "IPRange": <CIDR>, "Gateway": <IP address>, "AuxAddress": <device_name:IP address>}`
-  - **Options** - Driver-specific options, specified as a map: `{"option":"value" [,"option2":"value2"]}`
 - **EnableIPv6** - Enable IPv6 on the network
 - **Options** - Network specific options to be used by the drivers
 - **Labels** - Labels to set on the network, specified as a map: `{"key":"value" [,"key2":"value2"]}`

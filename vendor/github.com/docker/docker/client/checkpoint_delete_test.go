@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
 )
 
@@ -17,10 +16,7 @@ func TestCheckpointDeleteError(t *testing.T) {
 		client: newMockClient(errorMock(http.StatusInternalServerError, "Server error")),
 	}
 
-	err := client.CheckpointDelete(context.Background(), "container_id", types.CheckpointDeleteOptions{
-		CheckpointID: "checkpoint_id",
-	})
-
+	err := client.CheckpointDelete(context.Background(), "container_id", "checkpoint_id")
 	if err == nil || err.Error() != "Error response from daemon: Server error" {
 		t.Fatalf("expected a Server Error, got %v", err)
 	}
@@ -44,10 +40,7 @@ func TestCheckpointDelete(t *testing.T) {
 		}),
 	}
 
-	err := client.CheckpointDelete(context.Background(), "container_id", types.CheckpointDeleteOptions{
-		CheckpointID: "checkpoint_id",
-	})
-
+	err := client.CheckpointDelete(context.Background(), "container_id", "checkpoint_id")
 	if err != nil {
 		t.Fatal(err)
 	}

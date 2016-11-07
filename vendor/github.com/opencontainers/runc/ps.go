@@ -51,10 +51,9 @@ var psCommand = cli.Command{
 			psArgs = []string{"-ef"}
 		}
 
-		cmd := exec.Command("ps", psArgs...)
-		output, err := cmd.CombinedOutput()
+		output, err := exec.Command("ps", psArgs...).Output()
 		if err != nil {
-			return fmt.Errorf("%s: %s", err, output)
+			return err
 		}
 
 		lines := strings.Split(string(output), "\n")
