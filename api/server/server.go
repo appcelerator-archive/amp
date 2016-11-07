@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	defaultTimeOut = 5 * time.Minute
+	defaultTimeOut = 30 * time.Second
 	natsClusterID  = "test-cluster"
 	natsClientID   = "amplifier"
 )
