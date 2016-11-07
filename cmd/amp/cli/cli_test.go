@@ -23,11 +23,11 @@ type TestSpec struct {
 }
 
 type CommandSpec struct {
-	Cmd                string   `yaml:"cmd"`
-	Args               []string `yaml:"args"`
-	Options            []string `yaml:"options"`
-	Expectation        string   `yaml:"expectation"`
-	ExpectErrorStatus  bool     `yaml:"expectErrorStatus"`
+	Cmd               string   `yaml:"cmd"`
+	Args              []string `yaml:"args"`
+	Options           []string `yaml:"options"`
+	Expectation       string   `yaml:"expectation"`
+	ExpectErrorStatus bool     `yaml:"expectErrorStatus"`
 }
 
 type LookupSpec struct {
@@ -37,16 +37,15 @@ type LookupSpec struct {
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var (
-	testDir = "./test_samples"
+	testDir   = "./test_samples"
 	lookupDir = "./lookup"
-	regexMap map[string]string
+	regexMap  map[string]string
 )
 
 func TestMain(m *testing.M) {
 	server.StartTestServer()
 	os.Exit(m.Run())
 }
-
 
 func TestCmds(t *testing.T) {
 	err := loadRegexLookup()
