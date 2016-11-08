@@ -26,13 +26,13 @@ type TestSpec struct {
 }
 
 type CommandSpec struct {
-	Cmd               string   `yaml:"cmd"`
-	Args              []string `yaml:"args"`
-	Options           []string `yaml:"options"`
-	Expectation       string   `yaml:"expectation"`
-	Retry             int      `yaml:"retry"`
-	Timeout           int64    `yaml:"timeout"`
-	Delay             int64    `yaml:"delay"`
+	Cmd         string   `yaml:"cmd"`
+	Args        []string `yaml:"args"`
+	Options     []string `yaml:"options"`
+	Expectation string   `yaml:"expectation"`
+	Retry       int      `yaml:"retry"`
+	Timeout     int64    `yaml:"timeout"`
+	Delay       int64    `yaml:"delay"`
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
