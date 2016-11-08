@@ -2,5 +2,7 @@
 /amplifier
 /amp-agent
 /amp-log-worker
+/dist
+/*.exe
 coverage.out
 coverage-all.out
