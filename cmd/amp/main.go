@@ -78,7 +78,7 @@ func main() {
 	}
 	if err := cmd.Execute(); err != nil {
 		if AMP.Verbose() == false {
-			fmt.Println("Error during: ", cmd.Short)
+			fmt.Printf("Error during: amp %s, reason: %v\n", cmd.Name(), err)
 		}
 		cli.Exit(1)
 	}

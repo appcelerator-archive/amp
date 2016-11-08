@@ -9,9 +9,8 @@ var ServiceCmd = &cobra.Command{
 	Use:   "service",
 	Short: "Manage services",
 	Long:  `Manage services.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		_, err = AMP.Connect()
-		return
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return AMP.Connect()
 	},
 }
 

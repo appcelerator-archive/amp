@@ -16,9 +16,8 @@ var StackCmd = &cobra.Command{
 	Use:   "stack operations",
 	Short: "Stack operations",
 	Long:  `Manage stack-related operations.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		_, err = AMP.Connect()
-		return
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return AMP.Connect()
 	},
 }
 
