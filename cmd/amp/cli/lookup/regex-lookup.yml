@@ -3,6 +3,7 @@ logs-metadata: (timestamp:"[A-Z0-9\.\-:\"]+\s+time_id:"[A-Z0-9\.\-:\"]+\s+servic
 logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
 docker-service-list: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}
 service-id: ([a-z0-9]){25}
+service-curl: ((.)|(\s))*(pong)((.)|(\s))*
 stack-list: NAME\s+ID\s+STATE\s*-+\s*\n+([a-z0-9A-Z\s]*){1,}
 stack-id: ([a-z0-9]){64}
 stack-unavailable: No stack is available
