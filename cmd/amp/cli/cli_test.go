@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"strconv"
 	"testing"
 	"text/template"
 	"time"
@@ -119,6 +120,8 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 		startTime := time.Now().UnixNano() / 1000000
 
 		for i = -1; i < cmdSpec.Retry; i++ {
+			err = nil
+
 			cmdString := generateCmdString(&cmdSpec)
 			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
@@ -148,7 +151,7 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 			t.Log("This command :", tmplString, "has re-run", i, "times.")
 		}
 	}
-	return
+	return err
 }
 
 func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
@@ -208,9 +211,18 @@ func performTemplating(s string, cache map[string]string) (output string, err er
 		cache[in] = out
 		return out
 	}
+	p := func(in string, min, max int) string {
+		if val, ok := cache[in]; ok {
+			return val
+		}
+		out := strconv.Itoa(rand.Intn(max - min) + min)
+		cache[in] = out
+		return out
+	}
 	var doc bytes.Buffer
 	var fm = template.FuncMap{
 		"uniq": func(in string) string { return f(in) },
+		"port": func(in string, min, max int) string { return p(in, min, max) },
 	}
 	err = t.Execute(&doc, fm)
 	if err != nil {

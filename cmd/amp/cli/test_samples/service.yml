@@ -4,7 +4,7 @@
     - appcelerator/pinger
   options:
     - "--name {{call .uniq `pinger`}}"
-    - "-p www:90:3000"
+    - "-p www:{{call .port `pinger1` 1100 1200}}:3000"
   expectation: service-id
 
 - service-list:
@@ -13,13 +13,15 @@
   options:
   expectation: docker-service-list
 
-# Commented out until Delay and APIcall (Blocking) implemented.
-# - service-curl:
-#   cmd: curl
-#   args:
-#     - localhost:90/ping
-#   options:
-#   expectation: ((.)|(\s))*(pong)((.)|(\s))*
+# Should use API call as a form of blocking.
+- service-curl:
+  cmd: curl
+  args:
+    - localhost:{{call .port `pinger1` 1100 1200}}/ping
+  options:
+  expectation: service-curl
+  retry: 3
+  delay: 2500
 
 - service-remove:
   cmd: amp service rm
