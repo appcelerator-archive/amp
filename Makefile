@@ -1,12 +1,13 @@
 
-.PHONY: all clean build build-cli build-server build-agent build-log-worker install install-server install-cli install-agent install-log-worker fmt simplify check version build-image run
+.PHONY: all clean build build-cli build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows dist-linux dist-darwin dist-windows dist build-agent build-log-worker install install-server install-cli install-agent install-log-worker fmt simplify check version build-image run
 .PHONY: test
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
 
+VERSION_FILE=VERSION
 # build variables (provided to binaries by linker LDFLAGS below)
-VERSION := 1.0.0
+VERSION := $(shell cat $(VERSION_FILE))
 BUILD := $(shell git rev-parse HEAD | cut -c1-8)
 
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
@@ -113,6 +114,47 @@ build-log-worker: proto
 build-server-image:
 	@docker build -t appcelerator/$(SERVER):$(TAG) .
 
+build-cli-linux:
+	@rm -f $(CLI)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+
+build-cli-darwin:
+	@rm -f $(CLI)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+
+build-cli-windows:
+	@rm -f $(CLI).exe
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+
+build-server-linux:
+	@rm -f $(SERVER)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+
+build-server-darwin:
+	@rm -f $(SERVER)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+
+build-server-windows:
+	@rm -f $(SERVER).exe
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+
+dist-linux: build-cli-linux build-server-linux
+	@rm -f dist/Linux/x86_64/amp-$(VERSION).tgz
+	@mkdir -p dist/Linux/x86_64
+	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+
+dist-darwin: build-cli-darwin build-server-darwin
+	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
+	@mkdir -p dist/Darwin/x86_64
+	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+	
+dist-windows: build-cli-windows build-server-windows
+	@rm -f dist/Windows/x86_64/amp-$(VERSION).zip
+	@mkdir -p dist/Windows/x86_64
+	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe
+	
+dist: dist-linux dist-darwin dist-windows
+	
 proto: $(PROTOFILES)
 	@go run hack/proto.go
 
