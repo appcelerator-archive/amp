@@ -125,7 +125,7 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 				err = fmt.Errorf("Executing templating failed: %s", tmplErr)
 				t.Log(err)
 			}
-			tmplString := strings.Fields(tmplOutput)
+			tmplString = strings.Fields(tmplOutput)
 
 			t.Logf("Running: %s", strings.Join(tmplString, " "))
 			cmdOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
