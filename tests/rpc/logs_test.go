@@ -197,7 +197,7 @@ func produceLogEntries(howMany int) error {
 			StackId:     testStackID,
 			StackName:   testStackName,
 			Timestamp:   time.Now().Format(time.RFC3339Nano),
-			TimeId:      time.Now().Format(time.RFC3339Nano),
+			TimeId:      time.Now().UTC().Format(time.RFC3339Nano),
 		})
 		err = sc.Publish(NatsLogTopic, message)
 		if err != nil {

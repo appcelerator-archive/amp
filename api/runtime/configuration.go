@@ -8,6 +8,11 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 )
 
+const (
+	// NatsClusterID is the cluster name for the infrastructure
+	NatsClusterID = "test-cluster"
+)
+
 var (
 	// Store is the interface used to access the key/value storage backend
 	Store storage.Interface

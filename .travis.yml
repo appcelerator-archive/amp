@@ -17,6 +17,7 @@ install:
   - ./swarm start --min
 
 script:
+  - make install
   - make test
 
 after_success:

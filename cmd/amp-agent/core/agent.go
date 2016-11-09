@@ -8,22 +8,31 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/nats"
 	"golang.org/x/net/context"
 	"log"
 	"math/rand"
 	"strconv"
 )
 
+const (
+	defaultTimeOut = 30 * time.Second
+	natsClientID   = "amp-agent"
+)
+
 //Agent data
 type Agent struct {
-	dockerClient       *client.Client
-	containers         map[string]*ContainerData
-	eventStreamReading bool
-	lastUpdate         time.Time
-	natsClient         stan.Conn
+	dockerClient        *client.Client
+	containers          map[string]*ContainerData
+	eventStreamReading  bool
+	lastUpdate          time.Time
+	natsClient          stan.Conn
+	elasticsearchClient elasticsearch.Elasticsearch
 }
 
 //ContainerData data
@@ -43,13 +52,26 @@ func AgentInit(version string, build string) error {
 	agent.trapSignal()
 	conf.init(version, build)
 
-	var err error
-	agent.natsClient, err = stan.Connect(conf.clusterID, conf.clientID+strconv.Itoa(rand.Int()), stan.NatsURL(conf.natsURL))
-	if err != nil {
-		return err
+	// Connection to Elasticsearch
+	log.Printf("Connecting to elasticsearch at %s\n", conf.elasticsearchURL)
+	if err := agent.elasticsearchClient.Connect(conf.elasticsearchURL, defaultTimeOut); err != nil {
+		return fmt.Errorf("amplifer is unable to connect to elasticsearch on: %s\n%v", conf.elasticsearchURL, err)
 	}
-	log.Println("Connected to NATS-Streaming")
+	log.Printf("Connected to elasticsearch at %s\n", conf.elasticsearchURL)
 
+	// Connection to NATS
+	log.Printf("Connecting to NATS-Streaming at %s\n", conf.natsURL)
+	nc, err := nats.Connect(conf.natsURL, nats.Timeout(defaultTimeOut))
+	if err != nil {
+		fmt.Errorf("amp-agent is unable to connect to NATS on: %s\n%v", conf.natsURL, err)
+	}
+	agent.natsClient, err = stan.Connect(runtime.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
+	if err != nil {
+		return fmt.Errorf("amp-agent is unable to connect to NATS-Streaming on: %s\n%v", conf.natsURL, err)
+	}
+	log.Printf("Connected to NATS-Streaming at %s\n", conf.natsURL)
+
+	// Connection to Docker
 	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
 	cli, err := client.NewClient(conf.dockerEngine, "v1.24", nil, defaultHeaders)
 	if err != nil {
