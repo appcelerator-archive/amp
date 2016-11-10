@@ -51,9 +51,13 @@ func main() {
 		"appcelerator/protoc",
 	}
 	protocArgs := []string{
-		"--go_out=plugins=grpc:/go/src/",
+		"--go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:/go/src/",
+		"--grpc-gateway_out=logtostderr=true:/go/src",
+		"--swagger_out=logtostderr=true:/go/src/",
 		"-I",
 		"/go/src/",
+		"-I",
+		"/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis",
 	}
 	if protoc {
 		for _, path := range paths {
