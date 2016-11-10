@@ -1,3 +1,5 @@
+// +build experimental
+
 package plugin
 
 import (
@@ -30,7 +32,7 @@ func newInspectCommand(dockerCli *command.DockerCli) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given Go template")
+	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given go template")
 	return cmd
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	containerd "github.com/docker/containerd/api/grpc/types"
 	"github.com/docker/docker/pkg/idtools"
-	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -31,25 +30,22 @@ type client struct {
 	liveRestore   bool
 }
 
-// AddProcess is the handler for adding a process to an already running
-// container. It's called through docker exec. It returns the system pid of the
-// exec'd process.
-func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendlyName string, specp Process, attachStdio StdioCallback) (int, error) {
+func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendlyName string, specp Process) error {
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
 	container, err := clnt.getContainer(containerID)
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	spec, err := container.spec()
 	if err != nil {
-		return -1, err
+		return err
 	}
 	sp := spec.Process
 	sp.Args = specp.Args
 	sp.Terminal = specp.Terminal
-	if len(specp.Env) > 0 {
+	if specp.Env != nil {
 		sp.Env = specp.Env
 	}
 	if specp.Cwd != nil {
@@ -92,36 +88,25 @@ func (clnt *client) AddProcess(ctx context.Context, containerID, processFriendly
 
 	iopipe, err := p.openFifos(sp.Terminal)
 	if err != nil {
-		return -1, err
-	}
-
-	resp, err := clnt.remote.apiClient.AddProcess(ctx, r)
-	if err != nil {
-		p.closeFifos(iopipe)
-		return -1, err
-	}
-
-	var stdinOnce sync.Once
-	stdin := iopipe.Stdin
-	iopipe.Stdin = ioutils.NewWriteCloserWrapper(stdin, func() error {
-		var err error
-		stdinOnce.Do(func() { // on error from attach we don't know if stdin was already closed
-			err = stdin.Close()
-			if err2 := p.sendCloseStdin(); err == nil {
-				err = err2
-			}
-		})
 		return err
-	})
+	}
+
+	if _, err := clnt.remote.apiClient.AddProcess(ctx, r); err != nil {
+		p.closeFifos(iopipe)
+		return err
+	}
 
 	container.processes[processFriendlyName] = p
 
-	if err := attachStdio(*iopipe); err != nil {
-		p.closeFifos(iopipe)
-		return -1, err
-	}
+	clnt.unlock(containerID)
 
-	return int(resp.SystemPid), nil
+	if err := clnt.backend.AttachStreams(processFriendlyName, *iopipe); err != nil {
+		clnt.lock(containerID)
+		return err
+	}
+	clnt.lock(containerID)
+
+	return nil
 }
 
 func (clnt *client) prepareBundleDir(uid, gid int) (string, error) {
@@ -149,7 +134,7 @@ func (clnt *client) prepareBundleDir(uid, gid int) (string, error) {
 	return p, nil
 }
 
-func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec specs.Spec, attachStdio StdioCallback, options ...CreateOption) (err error) {
+func (clnt *client) Create(containerID string, checkpoint string, checkpointDir string, spec specs.Spec, options ...CreateOption) (err error) {
 	clnt.lock(containerID)
 	defer clnt.unlock(containerID)
 
@@ -191,7 +176,7 @@ func (clnt *client) Create(containerID string, checkpoint string, checkpointDir 
 		return err
 	}
 
-	return container.start(checkpoint, checkpointDir, attachStdio)
+	return container.start(checkpoint, checkpointDir)
 }
 
 func (clnt *client) Signal(containerID string, sig int) error {
@@ -400,7 +385,7 @@ func (clnt *client) getOrCreateExitNotifier(containerID string) *exitNotifier {
 	return w
 }
 
-func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Event, attachStdio StdioCallback, options ...CreateOption) (err error) {
+func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Event, options ...CreateOption) (err error) {
 	clnt.lock(cont.Id)
 	defer clnt.unlock(cont.Id)
 
@@ -431,18 +416,8 @@ func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Ev
 	if err != nil {
 		return err
 	}
-	var stdinOnce sync.Once
-	stdin := iopipe.Stdin
-	iopipe.Stdin = ioutils.NewWriteCloserWrapper(stdin, func() error {
-		var err error
-		stdinOnce.Do(func() { // on error from attach we don't know if stdin was already closed
-			err = stdin.Close()
-		})
-		return err
-	})
 
-	if err := attachStdio(*iopipe); err != nil {
-		container.closeFifos(iopipe)
+	if err := clnt.backend.AttachStreams(containerID, *iopipe); err != nil {
 		return err
 	}
 
@@ -455,7 +430,6 @@ func (clnt *client) restore(cont *containerd.Container, lastEvent *containerd.Ev
 		}})
 
 	if err != nil {
-		container.closeFifos(iopipe)
 		return err
 	}
 
@@ -533,7 +507,7 @@ func (clnt *client) getContainerLastEvent(id string) (*containerd.Event, error) 
 	return ev, err
 }
 
-func (clnt *client) Restore(containerID string, attachStdio StdioCallback, options ...CreateOption) error {
+func (clnt *client) Restore(containerID string, options ...CreateOption) error {
 	// Synchronize with live events
 	clnt.remote.Lock()
 	defer clnt.remote.Unlock()
@@ -581,7 +555,7 @@ func (clnt *client) Restore(containerID string, attachStdio StdioCallback, optio
 
 	// container is still alive
 	if clnt.liveRestore {
-		if err := clnt.restore(cont, ev, attachStdio, options...); err != nil {
+		if err := clnt.restore(cont, ev, options...); err != nil {
 			logrus.Errorf("libcontainerd: error restoring %s: %v", containerID, err)
 		}
 		return nil

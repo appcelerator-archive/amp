@@ -19,7 +19,7 @@ func (s *DefaultService) lookupV1Endpoints(hostname string) (endpoints []APIEndp
 		return endpoints, nil
 	}
 
-	tlsConfig, err = s.tlsConfig(hostname)
+	tlsConfig, err = s.TLSConfig(hostname)
 	if err != nil {
 		return nil, err
 	}

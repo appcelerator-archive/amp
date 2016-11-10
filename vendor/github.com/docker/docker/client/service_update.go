@@ -22,10 +22,6 @@ func (cli *Client) ServiceUpdate(ctx context.Context, serviceID string, version 
 		}
 	}
 
-	if options.RegistryAuthFrom != "" {
-		query.Set("registryAuthFrom", options.RegistryAuthFrom)
-	}
-
 	query.Set("version", strconv.FormatUint(version.Index, 10))
 
 	resp, err := cli.post(ctx, "/services/"+serviceID+"/update", query, service, headers)

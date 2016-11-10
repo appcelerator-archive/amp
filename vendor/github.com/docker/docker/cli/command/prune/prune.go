@@ -4,7 +4,6 @@ import (
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/command/container"
 	"github.com/docker/docker/cli/command/image"
-	"github.com/docker/docker/cli/command/network"
 	"github.com/docker/docker/cli/command/volume"
 	"github.com/spf13/cobra"
 )
@@ -24,11 +23,6 @@ func NewImagePruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 	return image.NewPruneCommand(dockerCli)
 }
 
-// NewNetworkPruneCommand returns a cobra prune command for Networks
-func NewNetworkPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
-	return network.NewPruneCommand(dockerCli)
-}
-
 // RunContainerPrune executes a prune command for containers
 func RunContainerPrune(dockerCli *command.DockerCli) (uint64, string, error) {
 	return container.RunPrune(dockerCli)
@@ -42,9 +36,4 @@ func RunVolumePrune(dockerCli *command.DockerCli) (uint64, string, error) {
 // RunImagePrune executes a prune command for images
 func RunImagePrune(dockerCli *command.DockerCli, all bool) (uint64, string, error) {
 	return image.RunPrune(dockerCli, all)
-}
-
-// RunNetworkPrune executes a prune command for networks
-func RunNetworkPrune(dockerCli *command.DockerCli) (uint64, string, error) {
-	return network.RunPrune(dockerCli)
 }

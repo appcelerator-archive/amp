@@ -3,7 +3,6 @@ package xfer
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -30,10 +29,6 @@ type mockLayer struct {
 
 func (ml *mockLayer) TarStream() (io.ReadCloser, error) {
 	return ioutil.NopCloser(bytes.NewBuffer(ml.layerData.Bytes())), nil
-}
-
-func (ml *mockLayer) TarStreamFrom(layer.ChainID) (io.ReadCloser, error) {
-	return nil, fmt.Errorf("not implemented")
 }
 
 func (ml *mockLayer) ChainID() layer.ChainID {

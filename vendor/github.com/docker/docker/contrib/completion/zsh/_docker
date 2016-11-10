@@ -57,7 +57,7 @@ __docker_get_containers() {
     type=$1; shift
     [[ $kind = (stopped|all) ]] && args=($args -a)
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options ps --format 'table' --no-trunc $args)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options ps --format 'table' --no-trunc $args)"})
 
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
@@ -153,7 +153,7 @@ __docker_images() {
     [[ $PREFIX = -* ]] && return 1
     integer ret=1
     declare -a images
-    images=(${${${(f)${:-"$(_call_program commands docker $docker_options images)"$'\n'}}[2,-1]}/(#b)([^ ]##) ##([^ ]##) ##([^ ]##)*/${match[3]}:${(r:15:: :::)match[2]} in ${match[1]}})
+    images=(${${${(f)"$(_call_program commands docker $docker_options images)"}[2,-1]}/(#b)([^ ]##) ##([^ ]##) ##([^ ]##)*/${match[3]}:${(r:15:: :::)match[2]} in ${match[1]}})
     _describe -t docker-images "images" images && ret=0
     __docker_repositories_with_tags && ret=0
     return ret
@@ -162,7 +162,7 @@ __docker_images() {
 __docker_repositories() {
     [[ $PREFIX = -* ]] && return 1
     declare -a repos
-    repos=(${${${(f)${:-"$(_call_program commands docker $docker_options images)"$'\n'}}%% *}[2,-1]})
+    repos=(${${${(f)"$(_call_program commands docker $docker_options images)"}%% *}[2,-1]})
     repos=(${repos#<none>})
     _describe -t docker-repos "repositories" repos
 }
@@ -172,7 +172,7 @@ __docker_repositories_with_tags() {
     integer ret=1
     declare -a repos onlyrepos matched
     declare m
-    repos=(${${${${(f)${:-"$(_call_program commands docker $docker_options images)"$'\n'}}[2,-1]}/ ##/:::}%% *})
+    repos=(${${${${(f)"$(_call_program commands docker $docker_options images)"}[2,-1]}/ ##/:::}%% *})
     repos=(${${repos%:::<none>}#<none>})
     # Check if we have a prefix-match for the current prefix.
     onlyrepos=(${repos%::*})
@@ -208,7 +208,7 @@ __docker_search() {
     if ( [[ ${(P)+cachename} -eq 0 ]] || _cache_invalid ${cachename#_} ) \
         && ! _retrieve_cache ${cachename#_}; then
         _message "Searching for ${searchterm}..."
-        result=(${${${(f)${:-"$(_call_program commands docker $docker_options search $searchterm)"$'\n'}}%% *}[2,-1]})
+        result=(${${${(f)"$(_call_program commands docker $docker_options search $searchterm)"}%% *}[2,-1]})
         _store_cache ${cachename#_} result
     fi
     _wanted dockersearch expl 'available images' compadd -a result
@@ -219,7 +219,7 @@ __docker_get_log_options() {
 
     integer ret=1
     local log_driver=${opt_args[--log-driver]:-"all"}
-    local -a awslogs_options fluentd_options gelf_options journald_options json_file_options logentries_options syslog_options splunk_options
+    local -a awslogs_options fluentd_options gelf_options journald_options json_file_options syslog_options splunk_options
 
     awslogs_options=("awslogs-region" "awslogs-group" "awslogs-stream")
     fluentd_options=("env" "fluentd-address" "fluentd-async-connect" "fluentd-buffer-limit" "fluentd-retry-wait" "fluentd-max-retries" "labels" "tag")
@@ -227,7 +227,6 @@ __docker_get_log_options() {
     gelf_options=("env" "gelf-address" "gelf-compression-level" "gelf-compression-type" "labels" "tag")
     journald_options=("env" "labels" "tag")
     json_file_options=("env" "labels" "max-file" "max-size")
-    logentries_options=("logentries-token")
     syslog_options=("env" "labels" "syslog-address" "syslog-facility" "syslog-format" "syslog-tls-ca-cert" "syslog-tls-cert" "syslog-tls-key" "syslog-tls-skip-verify" "tag")
     splunk_options=("env" "labels" "splunk-caname" "splunk-capath" "splunk-format" "splunk-gzip" "splunk-gzip-level" "splunk-index" "splunk-insecureskipverify" "splunk-source" "splunk-sourcetype" "splunk-token" "splunk-url" "splunk-verify-connection" "tag")
 
@@ -237,7 +236,6 @@ __docker_get_log_options() {
     [[ $log_driver = (gelf|all) ]] && _describe -t gelf-options "gelf options" gelf_options "$@" && ret=0
     [[ $log_driver = (journald|all) ]] && _describe -t journald-options "journald options" journald_options "$@" && ret=0
     [[ $log_driver = (json-file|all) ]] && _describe -t json-file-options "json-file options" json_file_options "$@" && ret=0
-    [[ $log_driver = (logentries|all) ]] && _describe -t logentries-options "logentries options" logentries_options "$@" && ret=0
     [[ $log_driver = (syslog|all) ]] && _describe -t syslog-options "syslog options" syslog_options "$@" && ret=0
     [[ $log_driver = (splunk|all) ]] && _describe -t splunk-options "splunk options" splunk_options "$@" && ret=0
 
@@ -332,10 +330,6 @@ __docker_complete_ps_filters() {
             (before|since)
                 __docker_containers && ret=0
                 ;;
-            (health)
-                health_opts=('healthy' 'none' 'starting' 'unhealthy')
-                _describe -t health-filter-opts "health filter options" health_opts && ret=0
-                ;;
             (id)
                 __docker_containers_ids && ret=0
                 ;;
@@ -350,7 +344,7 @@ __docker_complete_ps_filters() {
                 ;;
             (status)
                 status_opts=('created' 'dead' 'exited' 'paused' 'restarting' 'running' 'removing')
-                _describe -t status-filter-opts "status filter options" status_opts && ret=0
+                _describe -t status-filter-opts "Status Filter Options" status_opts && ret=0
                 ;;
             (volume)
                 __docker_volumes && ret=0
@@ -360,7 +354,7 @@ __docker_complete_ps_filters() {
                 ;;
         esac
     else
-        opts=('ancestor' 'before' 'exited' 'health' 'id' 'label' 'name' 'network' 'since' 'status' 'volume')
+        opts=('ancestor' 'before' 'exited' 'id' 'label' 'name' 'network' 'since' 'status' 'volume')
         _describe -t filter-opts "Filter Options" opts -qS "=" && ret=0
     fi
 
@@ -513,7 +507,7 @@ __docker_get_networks() {
 
     type=$1; shift
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options network ls)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options network ls)"})
 
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
@@ -729,7 +723,7 @@ __docker_nodes() {
     filter=$1; shift
     [[ $filter != "none" ]] && args=("-f $filter")
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options node ls $args)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options node ls $args)"})
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
     declare -A begin end
@@ -818,7 +812,7 @@ __docker_node_subcommand() {
         (rm|remove)
              _arguments $(__docker_arguments) \
                 $opts_help \
-                "($help)--force[Force remove a node from the swarm]" \
+                "($help)--force[Force remove an active node]" \
                 "($help -)*:node:__docker_complete_pending_nodes" && ret=0
             ;;
         (demote)
@@ -890,7 +884,7 @@ __docker_complete_plugins() {
     local line s
     declare -a lines plugins
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options plugin ls)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options plugin ls)"})
 
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
@@ -1016,7 +1010,7 @@ __docker_services() {
 
     type=$1; shift
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options service ls)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options service ls)"})
 
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
@@ -1075,7 +1069,7 @@ __docker_service_commands() {
         "inspect:Display detailed information on one or more services"
         "ls:List services"
         "rm:Remove one or more services"
-        "scale:Scale one or multiple replicated services"
+        "scale:Scale one or multiple services"
         "ps:List the tasks of a service"
         "update:Update a service"
     )
@@ -1092,18 +1086,15 @@ __docker_service_subcommand() {
         "($help)*--constraint=[Placement constraints]:constraint: "
         "($help)--endpoint-mode=[Placement constraints]:mode:(dnsrr vip)"
         "($help)*"{-e=,--env=}"[Set environment variables]:env: "
-        "($help)--health-cmd=[Command to run to check health]:command: "
-        "($help)--health-interval=[Time between running the check]:time: "
-        "($help)--health-retries=[Consecutive failures needed to report unhealthy]:retries:(1 2 3 4 5)"
-        "($help)--health-timeout=[Maximum time to allow one check to run]:time: "
+        "($help)*--group-add=[Add additional user groups to the container]:group:_groups"
         "($help)*--label=[Service labels]:label: "
         "($help)--limit-cpu=[Limit CPUs]:value: "
         "($help)--limit-memory=[Limit Memory]:value: "
         "($help)--log-driver=[Logging driver for service]:logging driver:__docker_log_drivers"
         "($help)*--log-opt=[Logging driver options]:log driver options:__docker_log_options"
-        "($help)*--mount=[Attach a filesystem mount to the service]:mount: "
+        "($help)*--mount=[Attach a mount to the service]:mount: "
+        "($help)--name=[Service name]:name: "
         "($help)*--network=[Network attachments]:network: "
-        "($help)--no-healthcheck[Disable any container-specified HEALTHCHECK]"
         "($help)*"{-p=,--publish=}"[Publish a port as a node port]:port: "
         "($help)--replicas=[Number of tasks]:replicas: "
         "($help)--reserve-cpu=[Reserve CPUs]:value: "
@@ -1115,8 +1106,6 @@ __docker_service_subcommand() {
         "($help)--stop-grace-period=[Time to wait before force killing a container]:grace period: "
         "($help)--update-delay=[Delay between updates]:delay: "
         "($help)--update-failure-action=[Action on update failure]:mode:(pause continue)"
-        "($help)--update-max-failure-ratio=[Failure rate to tolerate during an update]:fraction: "
-        "($help)--update-monitor=[Duration after each task update to monitor for failure]:window: "
         "($help)--update-parallelism=[Maximum number of tasks updated simultaneously]:number: "
         "($help -u --user)"{-u=,--user=}"[Username or UID]:user:_users"
         "($help)--with-registry-auth[Send registry authentication details to swarm agents]"
@@ -1129,9 +1118,7 @@ __docker_service_subcommand() {
                 $opts_help \
                 $opts_create_update \
                 "($help)*--container-label=[Container labels]:label: " \
-                "($help)*--env-file=[Read environment variables from a file]:environment file:_files" \
                 "($help)--mode=[Service Mode]:mode:(global replicated)" \
-                "($help)--name=[Service name]:name: " \
                 "($help -): :__docker_images" \
                 "($help -):command: _command_names -e" \
                 "($help -)*::arguments: _normal" && ret=0
@@ -1176,10 +1163,10 @@ __docker_service_subcommand() {
         (ps)
             _arguments $(__docker_arguments) \
                 $opts_help \
+                "($help -a --all)"{-a,--all}"[Display all tasks]" \
                 "($help)*"{-f=,--filter=}"[Provide filter values]:filter:->filter-options" \
                 "($help)--no-resolve[Do not map IDs to Names]" \
                 "($help)--no-trunc[Do not truncate output]" \
-                "($help -q --quiet)"{-q,--quiet}"[Only display task IDs]" \
                 "($help -)1:service:__docker_complete_services" && ret=0
             case $state in
                 (filter-options)
@@ -1194,11 +1181,8 @@ __docker_service_subcommand() {
                 "($help)--arg=[Service command args]:arguments: _normal" \
                 "($help)*--container-label-add=[Add or update container labels]:label: " \
                 "($help)*--container-label-rm=[Remove a container label by its key]:label: " \
-                "($help)--force[Force update]" \
-                "($help)*--group-add=[Add additional supplementary user groups to the container]:group:_groups" \
-                "($help)*--group-rm=[Remove previously added supplementary user groups from the container]:group:_groups" \
+                "($help)*--group-rm=[Remove previously added user groups from the container]:group:_groups" \
                 "($help)--image=[Service image tag]:image:__docker_repositories" \
-                "($help)--rollback[Rollback to previous specification]" \
                 "($help -)1:service:__docker_complete_services" && ret=0
             ;;
         (help)
@@ -1312,7 +1296,7 @@ __docker_volumes() {
     integer ret=1
     declare -a lines volumes
 
-    lines=(${(f)${:-"$(_call_program commands docker $docker_options volume ls)"$'\n'}})
+    lines=(${(f)"$(_call_program commands docker $docker_options volume ls)"})
 
     # Parse header line to find columns
     local i=1 j=1 k header=${lines[1]}
@@ -1443,8 +1427,6 @@ __docker_subcommand() {
         "($help -c --cpu-shares)"{-c=,--cpu-shares=}"[CPU shares (relative weight)]:CPU shares:(0 10 100 200 500 800 1000)"
         "($help)--cpu-period=[Limit the CPU CFS (Completely Fair Scheduler) period]:CPU period: "
         "($help)--cpu-quota=[Limit the CPU CFS (Completely Fair Scheduler) quota]:CPU quota: "
-        "($help)--cpu-rt-period=[Limit the CPU real-time period]:CPU real-time period in microseconds: "
-        "($help)--cpu-rt-runtime=[Limit the CPU real-time runtime]:CPU real-time runtime in microseconds: "
         "($help)--cpuset-cpus=[CPUs in which to allow execution]:CPUs: "
         "($help)--cpuset-mems=[MEMs in which to allow execution]:MEMs: "
         "($help -m --memory)"{-m=,--memory=}"[Memory limit]:Memory limit: "
@@ -1469,7 +1451,7 @@ __docker_subcommand() {
         "($help)--entrypoint=[Overwrite the default entrypoint of the image]:entry point: "
         "($help)*--env-file=[Read environment variables from a file]:environment file:_files"
         "($help)*--expose=[Expose a port from the container without publishing it]: "
-        "($help)*--group=[Set one or more supplementary user groups for the container]:group:_groups"
+        "($help)*--group-add=[Add additional groups to run as]:group:_groups"
         "($help -h --hostname)"{-h=,--hostname=}"[Container host name]:hostname:_hosts"
         "($help -i --interactive)"{-i,--interactive}"[Keep stdin open even if not attached]"
         "($help)--ip=[Container IPv4 address]:IPv4: "
@@ -1481,7 +1463,6 @@ __docker_subcommand() {
         "($help)--log-driver=[Default driver for container logs]:logging driver:__docker_log_drivers"
         "($help)*--log-opt=[Log driver specific options]:log driver options:__docker_log_options"
         "($help)--mac-address=[Container MAC address]:MAC address: "
-        "($help)*--mount=[Attach a filesystem mount to the container]:mount: "
         "($help)--name=[Container name]:name: "
         "($help)--network=[Connect a container to a network]:network mode:(bridge none container host)"
         "($help)*--network-alias=[Add network-scoped alias for the container]:alias: "
@@ -1494,7 +1475,6 @@ __docker_subcommand() {
         "($help)--privileged[Give extended privileges to this container]"
         "($help)--read-only[Mount the container's root filesystem as read only]"
         "($help)*--security-opt=[Security options]:security option: "
-        "($help)--stop-timeout=[Timeout (in seconds) to stop a container]:time: "
         "($help)*--sysctl=-[sysctl options]:sysctl: "
         "($help -t --tty)"{-t,--tty}"[Allocate a pseudo-tty]"
         "($help -u --user)"{-u=,--user=}"[Username or UID]:user:_users"
@@ -1597,22 +1577,21 @@ __docker_subcommand() {
                 "($help -b --bridge)"{-b=,--bridge=}"[Attach containers to a network bridge]:bridge:_net_interfaces" \
                 "($help)--bip=[Network bridge IP]:IP address: " \
                 "($help)--cgroup-parent=[Parent cgroup for all containers]:cgroup: " \
-                "($help)--cluster-advertise=[Address or interface name to advertise]:Instance to advertise (host\:port): " \
-                "($help)--cluster-store=[URL of the distributed storage backend]:Cluster Store:->cluster-store" \
-                "($help)*--cluster-store-opt=[Cluster store options]:Cluster options:->cluster-store-options" \
                 "($help)--config-file=[Path to daemon configuration file]:Config File:_files" \
                 "($help)--containerd=[Path to containerd socket]:socket:_files -g \"*.sock\"" \
                 "($help -D --debug)"{-D,--debug}"[Enable debug mode]" \
                 "($help)--default-gateway[Container default gateway IPv4 address]:IPv4 address: " \
                 "($help)--default-gateway-v6[Container default gateway IPv6 address]:IPv6 address: " \
+                "($help)--cluster-store=[URL of the distributed storage backend]:Cluster Store:->cluster-store" \
+                "($help)--cluster-advertise=[Address or interface name to advertise]:Instance to advertise (host\:port): " \
+                "($help)*--cluster-store-opt=[Cluster store options]:Cluster options:->cluster-store-options" \
+                "($help)*--dns=[DNS server to use]:DNS: " \
+                "($help)*--dns-search=[DNS search domains to use]:DNS search: " \
+                "($help)*--dns-opt=[DNS options to use]:DNS option: " \
                 "($help)*--default-ulimit=[Default ulimits for containers]:ulimit: " \
                 "($help)--disable-legacy-registry[Disable contacting legacy registries]" \
-                "($help)*--dns=[DNS server to use]:DNS: " \
-                "($help)*--dns-opt=[DNS options to use]:DNS option: " \
-                "($help)*--dns-search=[DNS search domains to use]:DNS search: " \
                 "($help)*--exec-opt=[Runtime execution options]:runtime execution options: " \
                 "($help)--exec-root=[Root directory for execution state files]:path:_directories" \
-                "($help)--experimental[Enable experimental features]" \
                 "($help)--fixed-cidr=[IPv4 subnet for fixed IPs]:IPv4 subnet: " \
                 "($help)--fixed-cidr-v6=[IPv6 subnet for fixed IPs]:IPv6 subnet: " \
                 "($help -G --group)"{-G=,--group=}"[Group for the unix socket]:group:_groups" \
@@ -1640,7 +1619,6 @@ __docker_subcommand() {
                 "($help)*--registry-mirror=[Preferred Docker registry mirror]:registry mirror: " \
                 "($help -s --storage-driver)"{-s=,--storage-driver=}"[Storage driver to use]:driver:(aufs btrfs devicemapper overlay overlay2 vfs zfs)" \
                 "($help)--selinux-enabled[Enable selinux support]" \
-                "($help)--shutdown-timeout=[Set the shutdown timeout value in seconds]:time: " \
                 "($help)*--storage-opt=[Storage driver options]:storage driver options: " \
                 "($help)--tls[Use TLS]" \
                 "($help)--tlscacert=[Trust certs signed only by this CA]:PEM file:_files -g \"*.(pem|crt)\"" \
@@ -1696,7 +1674,6 @@ __docker_subcommand() {
                 $opts_help \
                 $opts_attach_exec_run_start \
                 "($help -d --detach)"{-d,--detach}"[Detached mode: leave the container running in the background]" \
-                "($help)*"{-e=,--env=}"[Set environment variables]:environment variable: " \
                 "($help -i --interactive)"{-i,--interactive}"[Keep stdin open even if not attached]" \
                 "($help)--privileged[Give extended Linux capabilities to the command]" \
                 "($help -t --tty)"{-t,--tty}"[Allocate a pseudo-tty]" \

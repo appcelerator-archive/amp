@@ -1,8 +1,9 @@
+// +build experimental
+
 package stack
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -33,10 +34,9 @@ func newDeployCommand(dockerCli *command.DockerCli) *cobra.Command {
 		Short:   "Create and update a stack from a Distributed Application Bundle (DAB)",
 		Args:    cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.namespace = strings.TrimSuffix(args[0], ".dab")
+			opts.namespace = args[0]
 			return runDeploy(dockerCli, opts)
 		},
-		Tags: map[string]string{"experimental": ""},
 	}
 
 	flags := cmd.Flags()

@@ -18,11 +18,7 @@ func TestInit(t *testing.T) {
 			t.Log("InitLabels Failed")
 			t.Fatal(err)
 		}
-		testDisabled := []string{"label=disable"}
-		roMountLabel := GetROMountLabel()
-		if roMountLabel == "" {
-			t.Errorf("GetROMountLabel Failed")
-		}
+		testDisabled := []string{"disable"}
 		plabel, mlabel, err = InitLabels(testDisabled)
 		if err != nil {
 			t.Log("InitLabels Disabled Failed")
@@ -32,7 +28,7 @@ func TestInit(t *testing.T) {
 			t.Log("InitLabels Disabled Failed")
 			t.FailNow()
 		}
-		testUser := []string{"label=user:user_u", "label=role:user_r", "label=type:user_t", "label=level:s0:c1,c15"}
+		testUser := []string{"user:user_u", "role:user_r", "type:user_t", "level:s0:c1,c15"}
 		plabel, mlabel, err = InitLabels(testUser)
 		if err != nil {
 			t.Log("InitLabels User Failed")
@@ -44,7 +40,7 @@ func TestInit(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		testBadData := []string{"label=user", "label=role:user_r", "label=type:user_t", "label=level:s0:c1,c15"}
+		testBadData := []string{"user", "role:user_r", "type:user_t", "level:s0:c1,c15"}
 		if _, _, err = InitLabels(testBadData); err == nil {
 			t.Log("InitLabels Bad Failed")
 			t.Fatal(err)
@@ -98,7 +94,7 @@ func TestRelabel(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(testdir)
-	label := "system_u:object_r:svirt_sandbox_file_t:s0:c1,c2"
+	label := "system_u:system_r:svirt_sandbox_file_t:s0:c1,c2"
 	if err := Relabel(testdir, "", true); err != nil {
 		t.Fatalf("Relabel with no label failed: %v", err)
 	}

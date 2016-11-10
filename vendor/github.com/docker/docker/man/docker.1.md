@@ -5,7 +5,7 @@
 docker \- Docker image and container command line interface
 
 # SYNOPSIS
-**docker** [OPTIONS] COMMAND [ARG...]
+**docker** [OPTIONS] COMMAND [arg...]
 
 **docker** daemon [--help|...]
 

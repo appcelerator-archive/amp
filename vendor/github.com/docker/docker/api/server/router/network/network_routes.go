@@ -27,7 +27,9 @@ func (n *networkRouter) getNetworksList(ctx context.Context, w http.ResponseWrit
 	list := []types.NetworkResource{}
 
 	if nr, err := n.clusterProvider.GetNetworks(); err == nil {
-		list = append(list, nr...)
+		for _, nw := range nr {
+			list = append(list, nw)
+		}
 	}
 
 	// Combine the network list returned by Docker daemon if it is not already
@@ -159,7 +161,6 @@ func (n *networkRouter) buildNetworkResource(nw libnetwork.Network) *types.Netwo
 	info := nw.Info()
 	r.Name = nw.Name()
 	r.ID = nw.ID()
-	r.Created = info.Created()
 	r.Scope = info.Scope()
 	if n.clusterProvider.IsManager() {
 		if _, err := n.clusterProvider.GetNetwork(nw.Name()); err == nil {
@@ -273,25 +274,4 @@ func buildEndpointResource(id string, name string, info libnetwork.EndpointInfo)
 		}
 	}
 	return er
-}
-
-func (n *networkRouter) postNetworksPrune(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
-	if err := httputils.ParseForm(r); err != nil {
-		return err
-	}
-
-	if err := httputils.CheckForJSON(r); err != nil {
-		return err
-	}
-
-	var cfg types.NetworksPruneConfig
-	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		return err
-	}
-
-	pruneReport, err := n.backend.NetworksPrune(&cfg)
-	if err != nil {
-		return err
-	}
-	return httputils.WriteJSON(w, http.StatusOK, pruneReport)
 }

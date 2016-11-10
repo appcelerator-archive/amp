@@ -18,7 +18,7 @@ daemon.
     Print usage statement
 
 **-f**, **--format**=""
-    Format the output using the given Go template.
+    Format the output using the given go template.
 
 # EXAMPLES
 

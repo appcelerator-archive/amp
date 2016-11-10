@@ -18,7 +18,7 @@ func (s *DockerSuite) TestAPIImagesFilter(c *check.C) {
 	for _, n := range []string{name, name2, name3} {
 		dockerCmd(c, "tag", "busybox", n)
 	}
-	type image types.ImageSummary
+	type image types.Image
 	getImages := func(filter string) []image {
 		v := url.Values{}
 		v.Set("filter", filter)

@@ -80,16 +80,6 @@ func runStats(dockerCli *command.DockerCli, opts *statsOptions) error {
 		}
 	}
 
-	// Get the daemonOSType if not set already
-	if daemonOSType == "" {
-		svctx := context.Background()
-		sv, err := dockerCli.Client().ServerVersion(svctx)
-		if err != nil {
-			return err
-		}
-		daemonOSType = sv.Os
-	}
-
 	// waitFirst is a WaitGroup to wait first stat data's reach for each container
 	waitFirst := &sync.WaitGroup{}
 
@@ -173,10 +163,11 @@ func runStats(dockerCli *command.DockerCli, opts *statsOptions) error {
 		var errs []string
 		cStats.mu.Lock()
 		for _, c := range cStats.cs {
-			cErr := c.GetError()
-			if cErr != nil {
-				errs = append(errs, fmt.Sprintf("%s: %v", c.Name, cErr))
+			c.Mu.Lock()
+			if c.Err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", c.Name, c.Err))
 			}
+			c.Mu.Unlock()
 		}
 		cStats.mu.Unlock()
 		if len(errs) > 0 {
@@ -186,19 +177,16 @@ func runStats(dockerCli *command.DockerCli, opts *statsOptions) error {
 
 	// before print to screen, make sure each container get at least one valid stat data
 	waitFirst.Wait()
-	format := opts.format
-	if len(format) == 0 {
-		if len(dockerCli.ConfigFile().StatsFormat) > 0 {
-			format = dockerCli.ConfigFile().StatsFormat
-		} else {
-			format = formatter.TableFormatKey
-		}
+	f := "table"
+	if len(opts.format) > 0 {
+		f = opts.format
 	}
 	statsCtx := formatter.Context{
 		Output: dockerCli.Out(),
-		Format: formatter.NewStatsFormat(format, daemonOSType),
+		Format: formatter.NewStatsFormat(f, daemonOSType),
 	}
-	cleanScreen := func() {
+
+	cleanHeader := func() {
 		if !opts.noStream {
 			fmt.Fprint(dockerCli.Out(), "\033[2J")
 			fmt.Fprint(dockerCli.Out(), "\033[H")
@@ -207,17 +195,14 @@ func runStats(dockerCli *command.DockerCli, opts *statsOptions) error {
 
 	var err error
 	for range time.Tick(500 * time.Millisecond) {
-		cleanScreen()
-		ccstats := []formatter.StatsEntry{}
-		cStats.mu.Lock()
-		for _, c := range cStats.cs {
-			ccstats = append(ccstats, c.GetStatistics())
-		}
-		cStats.mu.Unlock()
-		if err = formatter.ContainerStatsWrite(statsCtx, ccstats); err != nil {
+		cleanHeader()
+		cStats.mu.RLock()
+		csLen := len(cStats.cs)
+		if err = formatter.ContainerStatsWrite(statsCtx, cStats.cs); err != nil {
 			break
 		}
-		if len(cStats.cs) == 0 && !showAll {
+		cStats.mu.RUnlock()
+		if csLen == 0 && !showAll {
 			break
 		}
 		if opts.noStream {

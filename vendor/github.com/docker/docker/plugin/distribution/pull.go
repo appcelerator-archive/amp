@@ -1,3 +1,5 @@
+// +build experimental
+
 package distribution
 
 import (
@@ -113,7 +115,7 @@ func Pull(ref reference.Named, rs registry.Service, metaheader http.Header, auth
 			return nil, err
 		}
 		if !confirmedV2 {
-			logrus.Debug("pull.go: !confirmedV2")
+			logrus.Debugf("pull.go: !confirmedV2")
 			return nil, ErrUnsupportedRegistry
 		}
 		logrus.Debugf("Trying to pull %s from %s %s", repoInfo.Name(), endpoint.URL, endpoint.Version)

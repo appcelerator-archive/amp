@@ -127,7 +127,7 @@ func (d *Daemon) ContainerExecCreate(name string, config *types.ExecConfig) (str
 	if err != nil {
 		return "", err
 	}
-	execConfig.Env = utils.ReplaceOrAppendEnvValues(container.CreateDaemonEnvironment(config.Tty, linkedEnv), config.Env)
+	execConfig.Env = utils.ReplaceOrAppendEnvValues(container.CreateDaemonEnvironment(config.Tty, linkedEnv), execConfig.Env)
 	if len(execConfig.User) == 0 {
 		execConfig.User = container.Config.User
 	}
@@ -212,13 +212,9 @@ func (d *Daemon) ContainerExecStart(ctx context.Context, name string, stdin io.R
 
 	attachErr := container.AttachStreams(ctx, ec.StreamConfig, ec.OpenStdin, true, ec.Tty, cStdin, cStdout, cStderr, ec.DetachKeys)
 
-	systemPid, err := d.containerd.AddProcess(ctx, c.ID, name, p, ec.InitializeStdio)
-	if err != nil {
+	if err := d.containerd.AddProcess(ctx, c.ID, name, p); err != nil {
 		return err
 	}
-	ec.Lock()
-	ec.Pid = systemPid
-	ec.Unlock()
 
 	select {
 	case <-ctx.Done():

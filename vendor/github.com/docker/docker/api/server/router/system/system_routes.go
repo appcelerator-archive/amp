@@ -13,7 +13,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/registry"
 	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/pkg/ioutils"
@@ -39,23 +38,13 @@ func (s *systemRouter) getInfo(ctx context.Context, w http.ResponseWriter, r *ht
 		info.Swarm = s.clusterProvider.Info()
 	}
 
-	if versions.LessThan(httputils.VersionFromContext(ctx), "1.25") {
+	if versions.LessThan("1.25", httputils.VersionFromContext(ctx)) {
 		// TODO: handle this conversion in engine-api
 		type oldInfo struct {
-			*types.InfoBase
+			*types.Info
 			ExecutionDriver string
-			SecurityOptions []string
 		}
-		old := &oldInfo{
-			InfoBase:        info.InfoBase,
-			ExecutionDriver: "<not supported>",
-		}
-		for _, s := range info.SecurityOptions {
-			if s.Key == "Name" {
-				old.SecurityOptions = append(old.SecurityOptions, s.Value)
-			}
-		}
-		return httputils.WriteJSON(w, http.StatusOK, old)
+		return httputils.WriteJSON(w, http.StatusOK, &oldInfo{Info: info, ExecutionDriver: "<not supported>"})
 	}
 	return httputils.WriteJSON(w, http.StatusOK, info)
 }
@@ -165,7 +154,7 @@ func (s *systemRouter) postAuth(ctx context.Context, w http.ResponseWriter, r *h
 	if err != nil {
 		return err
 	}
-	return httputils.WriteJSON(w, http.StatusOK, &registry.AuthenticateOKBody{
+	return httputils.WriteJSON(w, http.StatusOK, &types.AuthResponse{
 		Status:        status,
 		IdentityToken: token,
 	})

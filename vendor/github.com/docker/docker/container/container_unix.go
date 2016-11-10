@@ -12,7 +12,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	containertypes "github.com/docker/docker/api/types/container"
-	mounttypes "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/chrootarchive"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/pkg/symlink"
@@ -407,7 +406,7 @@ func copyOwnership(source, destination string) error {
 }
 
 // TmpfsMounts returns the list of tmpfs mounts
-func (container *Container) TmpfsMounts() ([]Mount, error) {
+func (container *Container) TmpfsMounts() []Mount {
 	var mounts []Mount
 	for dest, data := range container.HostConfig.Tmpfs {
 		mounts = append(mounts, Mount{
@@ -416,20 +415,7 @@ func (container *Container) TmpfsMounts() ([]Mount, error) {
 			Data:        data,
 		})
 	}
-	for dest, mnt := range container.MountPoints {
-		if mnt.Type == mounttypes.TypeTmpfs {
-			data, err := volume.ConvertTmpfsOptions(mnt.Spec.TmpfsOptions)
-			if err != nil {
-				return nil, err
-			}
-			mounts = append(mounts, Mount{
-				Source:      "tmpfs",
-				Destination: dest,
-				Data:        data,
-			})
-		}
-	}
-	return mounts, nil
+	return mounts
 }
 
 // cleanResourcePath cleans a resource path and prepares to combine with mnt path

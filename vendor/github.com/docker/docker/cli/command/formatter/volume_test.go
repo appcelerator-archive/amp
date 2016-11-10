@@ -2,7 +2,6 @@ package formatter
 
 import (
 	"bytes"
-	"encoding/json"
 	"strings"
 	"testing"
 
@@ -23,7 +22,7 @@ func TestVolumeContext(t *testing.T) {
 	}{
 		{volumeContext{
 			v: types.Volume{Name: volumeName},
-		}, volumeName, volumeNameHeader, ctx.Name},
+		}, volumeName, nameHeader, ctx.Name},
 		{volumeContext{
 			v: types.Volume{Driver: "driver_name"},
 		}, "driver_name", driverHeader, ctx.Driver},
@@ -77,7 +76,7 @@ func TestVolumeContextWrite(t *testing.T) {
 		// Table format
 		{
 			Context{Format: NewVolumeFormat("table", false)},
-			`DRIVER              VOLUME NAME
+			`DRIVER              NAME
 foo                 foobar_baz
 bar                 foobar_bar
 `,
@@ -90,14 +89,14 @@ foobar_bar
 		},
 		{
 			Context{Format: NewVolumeFormat("table {{.Name}}", false)},
-			`VOLUME NAME
+			`NAME
 foobar_baz
 foobar_bar
 `,
 		},
 		{
 			Context{Format: NewVolumeFormat("table {{.Name}}", true)},
-			`VOLUME NAME
+			`NAME
 foobar_baz
 foobar_bar
 `,
@@ -141,49 +140,5 @@ foobar_bar
 		} else {
 			assert.Equal(t, out.String(), testcase.expected)
 		}
-	}
-}
-
-func TestVolumeContextWriteJSON(t *testing.T) {
-	volumes := []*types.Volume{
-		{Driver: "foo", Name: "foobar_baz"},
-		{Driver: "bar", Name: "foobar_bar"},
-	}
-	expectedJSONs := []map[string]interface{}{
-		{"Driver": "foo", "Labels": "", "Links": "N/A", "Mountpoint": "", "Name": "foobar_baz", "Scope": "", "Size": "N/A"},
-		{"Driver": "bar", "Labels": "", "Links": "N/A", "Mountpoint": "", "Name": "foobar_bar", "Scope": "", "Size": "N/A"},
-	}
-	out := bytes.NewBufferString("")
-	err := VolumeWrite(Context{Format: "{{json .}}", Output: out}, volumes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i, line := range strings.Split(strings.TrimSpace(out.String()), "\n") {
-		t.Logf("Output: line %d: %s", i, line)
-		var m map[string]interface{}
-		if err := json.Unmarshal([]byte(line), &m); err != nil {
-			t.Fatal(err)
-		}
-		assert.DeepEqual(t, m, expectedJSONs[i])
-	}
-}
-
-func TestVolumeContextWriteJSONField(t *testing.T) {
-	volumes := []*types.Volume{
-		{Driver: "foo", Name: "foobar_baz"},
-		{Driver: "bar", Name: "foobar_bar"},
-	}
-	out := bytes.NewBufferString("")
-	err := VolumeWrite(Context{Format: "{{json .Name}}", Output: out}, volumes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i, line := range strings.Split(strings.TrimSpace(out.String()), "\n") {
-		t.Logf("Output: line %d: %s", i, line)
-		var s string
-		if err := json.Unmarshal([]byte(line), &s); err != nil {
-			t.Fatal(err)
-		}
-		assert.Equal(t, s, volumes[i].Name)
 	}
 }

@@ -17,6 +17,9 @@ import (
 type Container struct {
 	CommonContainer
 
+	HostnamePath   string
+	HostsPath      string
+	ResolvConfPath string
 	// Fields below here are platform specific.
 }
 
@@ -82,9 +85,9 @@ func (container *Container) UnmountVolumes(forceSyscall bool, volumeEventLog fun
 }
 
 // TmpfsMounts returns the list of tmpfs mounts
-func (container *Container) TmpfsMounts() ([]Mount, error) {
+func (container *Container) TmpfsMounts() []Mount {
 	var mounts []Mount
-	return mounts, nil
+	return mounts
 }
 
 // UpdateContainer updates configuration of a container

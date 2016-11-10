@@ -625,7 +625,7 @@ func (s *Server) removeService(ctx context.Context, id string) error {
 	//allowing 1 min to remove service
 	for nn < 20 {
 		list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
-			Filters: filters,
+			Filter: filters,
 		})
 		if err == nil && len(list) == 0 {
 			fmt.Printf("service removed: %s\n", id)

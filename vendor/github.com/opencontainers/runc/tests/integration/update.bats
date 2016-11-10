@@ -47,7 +47,6 @@ function check_cgroup_value() {
     [ "$current" -eq "$expected" ]
 }
 
-# TODO: test rt cgroup updating
 @test "update" {
     requires cgroups_kmem
     # run a few busyboxes detached
