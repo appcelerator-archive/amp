@@ -21,11 +21,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+//TestSpec contains all the CommandSpec objects
 type TestSpec struct {
 	Name     string
 	Commands []CommandSpec
 }
 
+//CommandSpec defines the commands with arguments and options
 type CommandSpec struct {
 	Cmd         string   `yaml:"cmd"`
 	Args        []string `yaml:"args"`
@@ -44,11 +46,13 @@ var (
 	regexMap  map[string]string
 )
 
+//start amplifier
 func TestMain(m *testing.M) {
 	server.StartTestServer()
 	os.Exit(m.Run())
 }
 
+//read, parse and execute test commands
 func TestCmds(t *testing.T) {
 	err := loadRegexLookup()
 	if err != nil {
@@ -70,6 +74,7 @@ func TestCmds(t *testing.T) {
 	}
 }
 
+//read test_samples directory by parsing its contents
 func loadTestSpecs() ([]*TestSpec, error) {
 	files, err := ioutil.ReadDir(testDir)
 	if err != nil {
@@ -88,6 +93,7 @@ func loadTestSpecs() ([]*TestSpec, error) {
 	return tests, nil
 }
 
+//parse test_samples directory and unmarshal its contents
 func loadTestSpec(fileName string) (*TestSpec, error) {
 	if filepath.Ext(fileName) != ".yml" {
 		return nil, nil
@@ -111,6 +117,7 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 	return testSpec, nil
 }
 
+//execute commands and check for timeout, delay and retries.
 func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 	var i int
 	var cache = map[string]string{}
@@ -139,12 +146,15 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 			}
 
 			endTime := time.Now().UnixNano() / 1000000
+			
+			//timeout in Millisecond
 			if cmdSpec.Timeout != 0 && endTime-startTime >= cmdSpec.Timeout {
 				return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
 			}
 			if err == nil {
 				break
 			}
+			//delay in Millisecond
 			time.Sleep(time.Duration(cmdSpec.Delay) * time.Millisecond)
 		}
 		if i > 0 && i == cmdSpec.Retry {
@@ -154,6 +164,8 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 	return err
 }
 
+//create an array of strings representing the commands by concatenating
+//all the fields from the yml files in test_samples directory
 func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	cmdSplit := strings.Fields(cmdSpec.Cmd)
 	optionsSplit := []string{}
