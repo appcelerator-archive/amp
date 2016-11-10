@@ -21,7 +21,7 @@
   options:
   expectation: service-curl
   retry: 3
-  delay: 2500
+  delay: 2500ms
 
 - service-remove:
   cmd: amp service rm
