@@ -117,18 +117,23 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 	return testSpec, nil
 }
 
-//execute commands and check for timeout, delay and retries.
+//execute commands and check for timeout, delay and retry
 func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 	var i int
 	var cache = map[string]string{}
 
+	//iterate through all the testSpec
 	for _, cmdSpec := range test.Commands {
 		var tmplString []string
 		startTime := time.Now().UnixNano() / 1000000
 
 		for i = -1; i < cmdSpec.Retry; i++ {
+			//err is set to nil a the beginning of the loop to ensure that each time a
+			//command is retried or executed atleast once without the error assigned
+			//from the previous executions
 			err = nil
 
+			//generate command string from yml file and perform templating
 			cmdString := generateCmdString(&cmdSpec)
 			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
@@ -136,8 +141,9 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 				t.Log(err)
 			}
 			tmplString = strings.Fields(tmplOutput)
-
 			t.Logf("Running: %s", strings.Join(tmplString, " "))
+
+			//execute commands and check if output matches the expected RegEx
 			cmdOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
 			expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
 			if !expectedOutput.MatchString(string(cmdOutput)) {
@@ -146,15 +152,17 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 			}
 
 			endTime := time.Now().UnixNano() / 1000000
-			
-			//timeout in Millisecond
+
+			//check if command execution has exceeded timeout (in Millisecond)
 			if cmdSpec.Timeout != 0 && endTime-startTime >= cmdSpec.Timeout {
 				return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
 			}
+
+			//if no error after retries, break the loop to continue command execution
 			if err == nil {
 				break
 			}
-			//delay in Millisecond
+			//add delay (in Millisecond) to wait for command execution
 			time.Sleep(time.Duration(cmdSpec.Delay) * time.Millisecond)
 		}
 		if i > 0 && i == cmdSpec.Retry {
