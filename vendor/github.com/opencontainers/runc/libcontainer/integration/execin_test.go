@@ -61,9 +61,6 @@ func TestExecIn(t *testing.T) {
 	if !strings.Contains(out, "cat") || !strings.Contains(out, "ps") {
 		t.Fatalf("unexpected running process, output %q", out)
 	}
-	if strings.Contains(out, "\r") {
-		t.Fatalf("unexpected carriage-return in output")
-	}
 }
 
 func TestExecInUsernsRlimit(t *testing.T) {
@@ -299,11 +296,8 @@ func TestExecInTTY(t *testing.T) {
 	waitProcess(process, t)
 
 	out := stdout.String()
-	if !strings.Contains(out, "cat") || !strings.Contains(out, "ps") {
+	if !strings.Contains(out, "cat") || !strings.Contains(string(out), "ps") {
 		t.Fatalf("unexpected running process, output %q", out)
-	}
-	if strings.Contains(out, "\r") {
-		t.Fatalf("unexpected carriage-return in output")
 	}
 }
 

@@ -13,6 +13,54 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+// ContainerCreateResponse contains the information returned to a client on the
+// creation of a new container.
+type ContainerCreateResponse struct {
+	// ID is the ID of the created container.
+	ID string `json:"Id"`
+
+	// Warnings are any warnings encountered during the creation of the container.
+	Warnings []string `json:"Warnings"`
+}
+
+// ContainerExecCreateResponse contains response of Remote API:
+// POST "/containers/{name:.*}/exec"
+type ContainerExecCreateResponse struct {
+	// ID is the exec ID.
+	ID string `json:"Id"`
+}
+
+// ContainerUpdateResponse contains response of Remote API:
+// POST "/containers/{name:.*}/update"
+type ContainerUpdateResponse struct {
+	// Warnings are any warnings encountered during the updating of the container.
+	Warnings []string `json:"Warnings"`
+}
+
+// AuthResponse contains response of Remote API:
+// POST "/auth"
+type AuthResponse struct {
+	// Status is the authentication status
+	Status string `json:"Status"`
+
+	// IdentityToken is an opaque token used for authenticating
+	// a user after a successful login.
+	IdentityToken string `json:"IdentityToken,omitempty"`
+}
+
+// ContainerWaitResponse contains response of Remote API:
+// POST "/containers/"+containerID+"/wait"
+type ContainerWaitResponse struct {
+	// StatusCode is the status code of the wait job
+	StatusCode int `json:"StatusCode"`
+}
+
+// ContainerCommitResponse contains response of Remote API:
+// POST "/commit?container="+containerID
+type ContainerCommitResponse struct {
+	ID string `json:"Id"`
+}
+
 // ContainerChange contains response of Remote API:
 // GET "/containers/{name:.*}/changes"
 type ContainerChange struct {
@@ -36,6 +84,21 @@ type ImageHistory struct {
 type ImageDelete struct {
 	Untagged string `json:",omitempty"`
 	Deleted  string `json:",omitempty"`
+}
+
+// Image contains response of Remote API:
+// GET "/images/json"
+type Image struct {
+	ID          string `json:"Id"`
+	ParentID    string `json:"ParentId"`
+	RepoTags    []string
+	RepoDigests []string
+	Created     int64
+	Size        int64
+	SharedSize  int64
+	VirtualSize int64
+	Labels      map[string]string
+	Containers  int64
 }
 
 // GraphDriverData returns Image's graph driver config info
@@ -73,6 +136,15 @@ type ImageInspect struct {
 	VirtualSize     int64
 	GraphDriver     GraphDriverData
 	RootFS          RootFS
+}
+
+// Port stores open ports info of container
+// e.g. {"PrivatePort": 8080, "PublicPort": 80, "Type": "tcp"}
+type Port struct {
+	IP          string `json:",omitempty"`
+	PrivatePort int
+	PublicPort  int `json:",omitempty"`
+	Type        string
 }
 
 // Container contains response of Remote API:
@@ -142,9 +214,9 @@ type Version struct {
 	BuildTime     string `json:",omitempty"`
 }
 
-// InfoBase contains the base response of Remote API:
+// Info contains response of Remote API:
 // GET "/info"
-type InfoBase struct {
+type Info struct {
 	ID                 string
 	Containers         int
 	ContainersRunning  int
@@ -191,6 +263,7 @@ type InfoBase struct {
 	ServerVersion      string
 	ClusterStore       string
 	ClusterAdvertise   string
+	SecurityOptions    []string
 	Runtimes           map[string]Runtime
 	DefaultRuntime     string
 	Swarm              swarm.Info
@@ -199,18 +272,6 @@ type InfoBase struct {
 	// running containers are detected
 	LiveRestoreEnabled bool
 	Isolation          container.Isolation
-}
-
-// SecurityOpt holds key/value pair about a security option
-type SecurityOpt struct {
-	Key, Value string
-}
-
-// Info contains response of Remote API:
-// GET "/info"
-type Info struct {
-	*InfoBase
-	SecurityOptions []SecurityOpt
 }
 
 // PluginsInfo is a temp struct holding Plugins name
@@ -243,10 +304,9 @@ type HealthcheckResult struct {
 
 // Health states
 const (
-	NoHealthcheck = "none"      // Indicates there is no healthcheck
-	Starting      = "starting"  // Starting indicates that the container is not yet ready
-	Healthy       = "healthy"   // Healthy indicates that the container is running correctly
-	Unhealthy     = "unhealthy" // Unhealthy indicates that the container has a problem
+	Starting  = "starting"  // Starting indicates that the container is not yet ready
+	Healthy   = "healthy"   // Healthy indicates that the container is running correctly
+	Unhealthy = "unhealthy" // Unhealthy indicates that the container has a problem
 )
 
 // Health stores information about the container's healthcheck results
@@ -373,11 +433,43 @@ type MountPoint struct {
 	Propagation mount.Propagation
 }
 
+// VolumeUsageData holds information regarding the volume usage
+type VolumeUsageData struct {
+	Size     int64 // Size holds how much disk space is used by the (local driver only). Sets to -1 if not provided.
+	RefCount int   // RefCount holds the number of containers having this volume attached to them. Sets to -1 if not provided.
+}
+
+// Volume represents the configuration of a volume for the remote API
+type Volume struct {
+	Name       string                 // Name is the name of the volume
+	Driver     string                 // Driver is the Driver name used to create the volume
+	Mountpoint string                 // Mountpoint is the location on disk of the volume
+	Status     map[string]interface{} `json:",omitempty"` // Status provides low-level status information about the volume
+	Labels     map[string]string      // Labels is metadata specific to the volume
+	Scope      string                 // Scope describes the level at which the volume exists (e.g. `global` for cluster-wide or `local` for machine level)
+	UsageData  *VolumeUsageData       `json:",omitempty"`
+}
+
+// VolumesListResponse contains the response for the remote API:
+// GET "/volumes"
+type VolumesListResponse struct {
+	Volumes  []*Volume // Volumes is the list of volumes being returned
+	Warnings []string  // Warnings is a list of warnings that occurred when getting the list from the volume drivers
+}
+
+// VolumeCreateRequest contains the request for the remote API:
+// POST "/volumes/create"
+type VolumeCreateRequest struct {
+	Name       string            // Name is the requested name of the volume
+	Driver     string            // Driver is the name of the driver that should be used to create the volume
+	DriverOpts map[string]string // DriverOpts holds the driver specific options to use for when creating the volume.
+	Labels     map[string]string // Labels holds metadata specific to the volume being created.
+}
+
 // NetworkResource is the body of the "get network" http response message
 type NetworkResource struct {
 	Name       string                      // Name is the requested name of the network
 	ID         string                      `json:"Id"` // ID uniquely identifies a network on a single machine
-	Created    time.Time                   // Created is the time the network created
 	Scope      string                      // Scope describes the level at which the network exists (e.g. `global` for cluster-wide or `local` for machine level)
 	Driver     string                      // Driver is the Driver name used to create the network (e.g. `bridge`, `overlay`)
 	EnableIPv6 bool                        // EnableIPv6 represents whether to enable IPv6
@@ -449,7 +541,7 @@ type Runtime struct {
 // GET "/system/df"
 type DiskUsage struct {
 	LayersSize int64
-	Images     []*ImageSummary
+	Images     []*Image
 	Containers []*Container
 	Volumes    []*Volume
 }
@@ -468,11 +560,6 @@ type ContainersPruneConfig struct {
 // VolumesPruneConfig contains the configuration for Remote API:
 // POST "/images/prune"
 type VolumesPruneConfig struct {
-}
-
-// NetworksPruneConfig contains the configuration for Remote API:
-// POST "/networks/prune"
-type NetworksPruneConfig struct {
 }
 
 // ContainersPruneReport contains the response for Remote API:
@@ -494,10 +581,4 @@ type VolumesPruneReport struct {
 type ImagesPruneReport struct {
 	ImagesDeleted  []ImageDelete
 	SpaceReclaimed uint64
-}
-
-// NetworksPruneReport contains the response for Remote API:
-// POST "/networks/prune"
-type NetworksPruneReport struct {
-	NetworksDeleted []string
 }

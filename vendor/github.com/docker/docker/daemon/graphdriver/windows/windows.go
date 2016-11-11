@@ -37,6 +37,10 @@ import (
 const filterDriver = 1
 
 var (
+	vmcomputedll            = syscall.NewLazyDLL("vmcompute.dll")
+	hcsExpandSandboxSize    = vmcomputedll.NewProc("ExpandSandboxSize")
+	hcsSandboxSizeSupported = hcsExpandSandboxSize.Find() == nil
+
 	// mutatedFiles is a list of files that are mutated by the import process
 	// and must be backed up and restored.
 	mutatedFiles = map[string]string{
@@ -208,7 +212,7 @@ func (d *Driver) create(id, parent, mountLabel string, readOnly bool, storageOpt
 			return fmt.Errorf("Failed to parse storage options - %s", err)
 		}
 
-		if storageOptions.size != 0 {
+		if hcsSandboxSizeSupported {
 			if err := hcsshim.ExpandSandboxSize(d.info, id, storageOptions.size); err != nil {
 				return err
 			}
@@ -243,18 +247,8 @@ func (d *Driver) Remove(id string) error {
 	if err != nil {
 		return err
 	}
-
-	layerPath := filepath.Join(d.info.HomeDir, rID)
-	tmpID := fmt.Sprintf("%s-removing", rID)
-	tmpLayerPath := filepath.Join(d.info.HomeDir, tmpID)
-	if err := os.Rename(layerPath, tmpLayerPath); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if err := hcsshim.DestroyLayer(d.info, tmpID); err != nil {
-		logrus.Errorf("Failed to DestroyLayer %s: %s", id, err)
-	}
-
-	return nil
+	os.RemoveAll(filepath.Join(d.info.HomeDir, "sysfile-backups", rID)) // ok to fail
+	return hcsshim.DestroyLayer(d.info, rID)
 }
 
 // Get returns the rootfs path for the id. This will mount the dir at its given path.
@@ -341,7 +335,7 @@ func (d *Driver) Cleanup() error {
 // Diff produces an archive of the changes between the specified
 // layer and its parent layer which may be "".
 // The layer should be mounted when calling this function
-func (d *Driver) Diff(id, parent string) (_ io.ReadCloser, err error) {
+func (d *Driver) Diff(id, parent string) (_ archive.Archive, err error) {
 	rID, err := d.resolveID(id)
 	if err != nil {
 		return
@@ -376,7 +370,7 @@ func (d *Driver) Diff(id, parent string) (_ io.ReadCloser, err error) {
 
 // Changes produces a list of changes between the specified layer
 // and its parent layer. If parent is "", then all changes will be ADD changes.
-// The layer should not be mounted when calling this function.
+// The layer should be mounted when calling this function
 func (d *Driver) Changes(id, parent string) ([]archive.Change, error) {
 	rID, err := d.resolveID(id)
 	if err != nil {
@@ -387,12 +381,13 @@ func (d *Driver) Changes(id, parent string) ([]archive.Change, error) {
 		return nil, err
 	}
 
-	if err := hcsshim.ActivateLayer(d.info, rID); err != nil {
+	// this is assuming that the layer is unmounted
+	if err := hcsshim.UnprepareLayer(d.info, rID); err != nil {
 		return nil, err
 	}
 	defer func() {
-		if err2 := hcsshim.DeactivateLayer(d.info, rID); err2 != nil {
-			logrus.Errorf("changes() failed to DeactivateLayer %s %s: %s", id, rID, err2)
+		if err := hcsshim.PrepareLayer(d.info, rID, parentChain); err != nil {
+			logrus.Warnf("Failed to Deactivate %s: %s", rID, err)
 		}
 	}()
 
@@ -432,7 +427,7 @@ func (d *Driver) Changes(id, parent string) ([]archive.Change, error) {
 // layer with the specified id and parent, returning the size of the
 // new layer in bytes.
 // The layer should not be mounted when calling this function
-func (d *Driver) ApplyDiff(id, parent string, diff io.Reader) (int64, error) {
+func (d *Driver) ApplyDiff(id, parent string, diff archive.Reader) (int64, error) {
 	var layerChain []string
 	if parent != "" {
 		rPId, err := d.resolveID(parent)
@@ -523,7 +518,7 @@ func writeTarFromLayer(r hcsshim.LayerReader, w io.Writer) error {
 }
 
 // exportLayer generates an archive from a layer based on the given ID.
-func (d *Driver) exportLayer(id string, parentLayerPaths []string) (io.ReadCloser, error) {
+func (d *Driver) exportLayer(id string, parentLayerPaths []string) (archive.Archive, error) {
 	archive, w := io.Pipe()
 	go func() {
 		err := winio.RunWithPrivilege(winio.SeBackupPrivilege, func() error {
@@ -586,7 +581,7 @@ func writeBackupStreamFromTarAndSaveMutatedFiles(buf *bufio.Writer, w io.Writer,
 	return backuptar.WriteBackupStreamFromTarFile(buf, t, hdr)
 }
 
-func writeLayerFromTar(r io.Reader, w hcsshim.LayerWriter, root string) (int64, error) {
+func writeLayerFromTar(r archive.Reader, w hcsshim.LayerWriter, root string) (int64, error) {
 	t := tar.NewReader(r)
 	hdr, err := t.Next()
 	totalSize := int64(0)
@@ -631,7 +626,7 @@ func writeLayerFromTar(r io.Reader, w hcsshim.LayerWriter, root string) (int64, 
 }
 
 // importLayer adds a new layer to the tag and graph store based on the given data.
-func (d *Driver) importLayer(id string, layerData io.Reader, parentLayerPaths []string) (size int64, err error) {
+func (d *Driver) importLayer(id string, layerData archive.Reader, parentLayerPaths []string) (size int64, err error) {
 	cmd := reexec.Command(append([]string{"docker-windows-write-layer", d.info.HomeDir, id}, parentLayerPaths...)...)
 	output := bytes.NewBuffer(nil)
 	cmd.Stdin = layerData

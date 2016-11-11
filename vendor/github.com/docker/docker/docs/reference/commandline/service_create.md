@@ -1,17 +1,12 @@
----
-title: "service create"
-description: "The service create command description and usage"
-keywords: "service, create"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "service create"
+description = "The service create command description and usage"
+keywords = ["service, create"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # service create
 
@@ -21,45 +16,36 @@ Usage:  docker service create [OPTIONS] IMAGE [COMMAND] [ARG...]
 Create a new service
 
 Options:
-      --constraint value                 Placement constraints (default [])
-      --container-label value            Service container labels (default [])
-      --endpoint-mode string             Endpoint mode (vip or dnsrr)
-  -e, --env value                        Set environment variables (default [])
-      --env-file value                   Read in a file of environment variables (default [])
-      --group value                      Set one or more supplementary user groups for the container (default [])
-      --health-cmd string                Command to run to check health
-      --health-interval duration         Time between running the check
-      --health-retries int               Consecutive failures needed to report unhealthy
-      --health-timeout duration          Maximum time to allow one check to run
-      --help                             Print usage
-      --hostname                         Service containers hostname
-  -l, --label value                      Service labels (default [])
-      --limit-cpu value                  Limit CPUs (default 0.000)
-      --limit-memory value               Limit Memory (default 0 B)
-      --log-driver string                Logging driver for service
-      --log-opt value                    Logging driver options (default [])
-      --mode string                      Service mode (replicated or global) (default "replicated")
-      --mount value                      Attach a filesystem mount to the service
-      --name string                      Service name
-      --network value                    Network attachments (default [])
-      --no-healthcheck                   Disable any container-specified HEALTHCHECK
-  -p, --publish value                    Publish a port as a node port (default [])
-      --replicas value                   Number of tasks (default none)
-      --reserve-cpu value                Reserve CPUs (default 0.000)
-      --reserve-memory value             Reserve Memory (default 0 B)
-      --restart-condition string         Restart when condition is met (none, on-failure, or any)
-      --restart-delay value              Delay between restart attempts (default none)
-      --restart-max-attempts value       Maximum number of restarts before giving up (default none)
-      --restart-window value             Window used to evaluate the restart policy (default none)
-      --stop-grace-period value          Time to wait before force killing a container (default none)
-      --update-delay duration            Delay between updates
-      --update-failure-action string     Action on update failure (pause|continue) (default "pause")
-      --update-max-failure-ratio value   Failure rate to tolerate during an update
-      --update-monitor duration          Duration after each task update to monitor for failure (default 0s)
-      --update-parallelism uint          Maximum number of tasks updated simultaneously (0 to update all at once) (default 1)
-  -u, --user string                      Username or UID (format: <name|uid>[:<group|gid>])
-      --with-registry-auth               Send registry authentication details to Swarm agents
-  -w, --workdir string                   Working directory inside the container
+      --constraint value               Placement constraints (default [])
+      --container-label value          Service container labels (default [])
+      --endpoint-mode string           Endpoint mode (vip or dnsrr)
+  -e, --env value                      Set environment variables (default [])
+      --group-add value                Add additional user groups to the container (default [])
+      --help                           Print usage
+  -l, --label value                    Service labels (default [])
+      --limit-cpu value                Limit CPUs (default 0.000)
+      --limit-memory value             Limit Memory (default 0 B)
+      --log-driver string              Logging driver for service
+      --log-opt value                  Logging driver options (default [])
+      --mode string                    Service mode (replicated or global) (default "replicated")
+      --mount value                    Attach a mount to the service
+      --name string                    Service name
+      --network value                  Network attachments (default [])
+  -p, --publish value                  Publish a port as a node port (default [])
+      --replicas value                 Number of tasks (default none)
+      --reserve-cpu value              Reserve CPUs (default 0.000)
+      --reserve-memory value           Reserve Memory (default 0 B)
+      --restart-condition string       Restart when condition is met (none, on-failure, or any)
+      --restart-delay value            Delay between restart attempts (default none)
+      --restart-max-attempts value     Maximum number of restarts before giving up (default none)
+      --restart-window value           Window used to evaluate the restart policy (default none)
+      --stop-grace-period value        Time to wait before force killing a container (default none)
+      --update-delay duration          Delay between updates
+      --update-failure-action string   Action on update failure (pause|continue) (default "pause")
+      --update-parallelism uint        Maximum number of tasks updated simultaneously (0 to update all at once) (default 1)
+  -u, --user string                    Username or UID (format: <name|uid>[:<group|gid>])
+      --with-registry-auth             Send registry authentication details to Swarm agents
+  -w, --workdir string                 Working directory inside the container
 ```
 
 Creates a service as described by the specified parameters. You must run this
@@ -125,7 +111,7 @@ $ docker service create \
 When you run a [service update](service_update.md), the scheduler updates a
 maximum of 2 tasks at a time, with `10s` between updates. For more information,
 refer to the [rolling updates
-tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/rolling-update/).
+tutorial](../../swarm/swarm-tutorial/rolling-update.md).
 
 ### Set environment variables (-e, --env)
 
@@ -135,12 +121,6 @@ This sets environmental variables for all tasks in a service. For example:
 $ docker service create --name redis_2 --replicas 5 --env MYVAR=foo redis:3.0.6
 ```
 
-### Create a docker service with specific hostname (--hostname)
-
-This option sets the docker service containers hostname to a specific string. For example:
-```bash
-$ docker service create --name redis --hostname myredis redis:3.0.6
-```
 ### Set metadata on a service (-l, --label)
 
 A label is a `key=value` pair that applies metadata to a service. To label a
@@ -155,7 +135,7 @@ $ docker service create \
 ```
 
 For more information about labels, refer to [apply custom
-metadata](https://docs.docker.com/engine/userguide/labels-custom-metadata/).
+metadata](../../userguide/labels-custom-metadata.md).
 
 ### Add bind-mounts or volumes
 
@@ -244,7 +224,7 @@ The following options can only be used for named volumes (`type=volume`);
 | Option                | Description
 |:----------------------|:--------------------------------------------------------------------------------------------------------------------
 | **volume-driver**     | Name of the volume-driver plugin to use for the volume. Defaults to ``"local"``, to use the local volume driver to create the volume if the volume does not exist.
-| **volume-label**      | One or more custom metadata ("labels") to apply to the volume upon creation. For example, `volume-label=mylabel=hello-world,my-other-label=hello-mars`. For more information about labels, refer to [apply custom metadata](https://docs.docker.com/engine/userguide/labels-custom-metadata/).
+| **volume-label**      | One or more custom metadata ("labels") to apply to the volume upon creation. For example, `volume-label=mylabel=hello-world,my-other-label=hello-mars`. For more information about labels, refer to [apply custom metadata](../../userguide/labels-custom-metadata.md).
 | **volume-nocopy**     | By default, if you attach an empty volume to a container, and files or directories already existed at the mount-path in the container (`dst`), the Engine copies those files and directories into the volume, allowing the host to access them. Set `volume-nocopy` to disables copying files from the container's filesystem to the volume and mount the empty volume.<br /><br />A value is optional:<ul><li>`true` or `1`: Default if you do not provide a value. Disables copying.</li><li>`false` or `0`: Enables copying.</li></ul>
 | **volume-opt**        | Options specific to a given volume driver, which will be passed to the driver when creating the volume. Options are provided as a comma-separated list of key/value pairs, for example, `volume-opt=some-option=some-value,some-other-option=some-other-value`. For available options for a given driver, refer to that driver's documentation.
 
@@ -403,7 +383,7 @@ $ docker service create \
 The swarm extends my-network to each node running the service.
 
 Containers on the same network can access each other using
-[service discovery](https://docs.docker.com/engine/swarm/networking/#use-swarm-mode-service-discovery).
+[service discovery](../../swarm/networking.md#use-swarm-mode-service-discovery).
 
 ### Publish service ports externally to the swarm (-p, --publish)
 
@@ -423,7 +403,7 @@ $ docker service create --name my_web --replicas 3 --publish 8080:80 nginx
 When you publish a service port, the swarm routing mesh makes the service
 accessible at the target port on every node regardless if there is a task for
 the service running on the node. For more information refer to
-[Use swarm mode routing mesh](https://docs.docker.com/engine/swarm/ingress/).
+[Use swarm mode routing mesh](../../swarm/ingress.md).
 
 ## Related information
 

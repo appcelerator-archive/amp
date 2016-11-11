@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -65,12 +64,6 @@ func (s *DockerSuite) TestAPIClientVersionNewerThanServer(c *check.C) {
 }
 
 func (s *DockerSuite) TestAPIClientVersionOldNotSupported(c *check.C) {
-	if daemonPlatform != runtime.GOOS {
-		c.Skip("Daemon platform doesn't match test platform")
-	}
-	if api.MinVersion == api.DefaultVersion {
-		c.Skip("API MinVersion==DefaultVersion")
-	}
 	v := strings.Split(api.MinVersion, ".")
 	vMinInt, err := strconv.Atoi(v[1])
 	c.Assert(err, checker.IsNil)
@@ -82,7 +75,7 @@ func (s *DockerSuite) TestAPIClientVersionOldNotSupported(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusBadRequest)
 	expected := fmt.Sprintf("client version %s is too old. Minimum supported API version is %s, please upgrade your client to a newer version", version, api.MinVersion)
-	c.Assert(strings.TrimSpace(string(body)), checker.Contains, expected)
+	c.Assert(strings.TrimSpace(string(body)), checker.Equals, expected)
 }
 
 func (s *DockerSuite) TestAPIDockerAPIVersion(c *check.C) {
@@ -115,9 +108,6 @@ func (s *DockerSuite) TestAPIErrorJSON(c *check.C) {
 }
 
 func (s *DockerSuite) TestAPIErrorPlainText(c *check.C) {
-	// Windows requires API 1.25 or later. This test is validating a behaviour which was present
-	// in v1.23, but changed in 1.24, hence not applicable on Windows. See apiVersionSupportsJSONErrors
-	testRequires(c, DaemonIsLinux)
 	httpResp, body, err := sockRequestRaw("POST", "/v1.23/containers/create", strings.NewReader(`{}`), "application/json")
 	c.Assert(err, checker.IsNil)
 	c.Assert(httpResp.StatusCode, checker.Equals, http.StatusInternalServerError)

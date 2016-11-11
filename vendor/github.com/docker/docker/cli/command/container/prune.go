@@ -44,7 +44,7 @@ func NewPruneCommand(dockerCli *command.DockerCli) *cobra.Command {
 }
 
 const warning = `WARNING! This will remove all stopped containers.
-Are you sure you want to continue?`
+Are you sure you want to continue? [y/N] `
 
 func runPrune(dockerCli *command.DockerCli, opts pruneOptions) (spaceReclaimed uint64, output string, err error) {
 	if !opts.force && !command.PromptForConfirmation(dockerCli.In(), dockerCli.Out(), warning) {
@@ -57,7 +57,7 @@ func runPrune(dockerCli *command.DockerCli, opts pruneOptions) (spaceReclaimed u
 	}
 
 	if len(report.ContainersDeleted) > 0 {
-		output = "Deleted Containers:\n"
+		output = "Deleted Containers:"
 		for _, id := range report.ContainersDeleted {
 			output += id + "\n"
 		}

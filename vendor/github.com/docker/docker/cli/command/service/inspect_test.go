@@ -2,17 +2,15 @@ package service
 
 import (
 	"bytes"
-	"encoding/json"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command/formatter"
-	"github.com/docker/docker/pkg/testutil/assert"
 )
 
-func formatServiceInspect(t *testing.T, format formatter.Format, now time.Time) string {
+func TestPrettyPrintWithNoUpdateConfig(t *testing.T) {
 	b := new(bytes.Buffer)
 
 	endpointSpec := &swarm.EndpointSpec{
@@ -31,8 +29,8 @@ func formatServiceInspect(t *testing.T, format formatter.Format, now time.Time) 
 		ID: "de179gar9d0o7ltdybungplod",
 		Meta: swarm.Meta{
 			Version:   swarm.Version{Index: 315},
-			CreatedAt: now,
-			UpdatedAt: now,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		Spec: swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
@@ -75,14 +73,14 @@ func formatServiceInspect(t *testing.T, format formatter.Format, now time.Time) 
 			},
 		},
 		UpdateStatus: swarm.UpdateStatus{
-			StartedAt:   now,
-			CompletedAt: now,
+			StartedAt:   time.Now(),
+			CompletedAt: time.Now(),
 		},
 	}
 
 	ctx := formatter.Context{
 		Output: b,
-		Format: format,
+		Format: formatter.NewServiceFormat("pretty"),
 	}
 
 	err := formatter.ServiceInspectWrite(ctx, []string{"de179gar9d0o7ltdybungplod"}, func(ref string) (interface{}, []byte, error) {
@@ -91,39 +89,8 @@ func formatServiceInspect(t *testing.T, format formatter.Format, now time.Time) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	return b.String()
-}
 
-func TestPrettyPrintWithNoUpdateConfig(t *testing.T) {
-	s := formatServiceInspect(t, formatter.NewServiceFormat("pretty"), time.Now())
-	if strings.Contains(s, "UpdateStatus") {
+	if strings.Contains(b.String(), "UpdateStatus") {
 		t.Fatal("Pretty print failed before parsing UpdateStatus")
 	}
-}
-
-func TestJSONFormatWithNoUpdateConfig(t *testing.T) {
-	now := time.Now()
-	// s1: [{"ID":..}]
-	// s2: {"ID":..}
-	s1 := formatServiceInspect(t, formatter.NewServiceFormat(""), now)
-	t.Log("// s1")
-	t.Logf("%s", s1)
-	s2 := formatServiceInspect(t, formatter.NewServiceFormat("{{json .}}"), now)
-	t.Log("// s2")
-	t.Logf("%s", s2)
-	var m1Wrap []map[string]interface{}
-	if err := json.Unmarshal([]byte(s1), &m1Wrap); err != nil {
-		t.Fatal(err)
-	}
-	if len(m1Wrap) != 1 {
-		t.Fatalf("strange s1=%s", s1)
-	}
-	m1 := m1Wrap[0]
-	t.Logf("m1=%+v", m1)
-	var m2 map[string]interface{}
-	if err := json.Unmarshal([]byte(s2), &m2); err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("m2=%+v", m2)
-	assert.DeepEqual(t, m2, m1)
 }

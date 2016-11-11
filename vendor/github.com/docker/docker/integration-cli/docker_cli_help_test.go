@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/docker/docker/pkg/integration/checker"
 	icmd "github.com/docker/docker/pkg/integration/cmd"
+	"github.com/docker/docker/utils"
 	"github.com/go-check/check"
 )
 
@@ -116,7 +117,7 @@ func (s *DockerSuite) TestHelpTextVerify(c *check.C) {
 		cmdsToTest = append(cmdsToTest, "network ls")
 		cmdsToTest = append(cmdsToTest, "network rm")
 
-		if experimentalDaemon {
+		if utils.ExperimentalBuild() {
 			cmdsToTest = append(cmdsToTest, "checkpoint create")
 			cmdsToTest = append(cmdsToTest, "checkpoint ls")
 			cmdsToTest = append(cmdsToTest, "checkpoint rm")

@@ -1,24 +1,19 @@
----
-title: "service scale"
-description: "The service scale command description and usage"
-keywords: "service, scale"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "service scale"
+description = "The service scale command description and usage"
+keywords = ["service, scale"]
+[menu.main]
+parent = "smn_cli"
++++
+<![end-metadata]-->
 
 # service scale
 
 ```markdown
 Usage:  docker service scale SERVICE=REPLICAS [SERVICE=REPLICAS...]
 
-Scale one or multiple replicated services
+Scale one or multiple services
 
 Options:
       --help   Print usage
@@ -28,11 +23,8 @@ Options:
 
 ### Scale a service
 
-The scale command enables you to scale one or more replicated services either up 
-or down to the desired number of replicas. This command cannot be applied on 
-services which are global mode. The command will return immediately, but the
-actual scaling of the service may take some time. To stop all replicas of a
-service while keeping the service active in the swarm you can set the scale to 0.
+If you scale a service, you set the *desired* number of replicas. Even though
+the command returns directly, actual scaling of the service may take some time.
 
 For example, the following command scales the "frontend" service to 50 tasks.
 
@@ -41,17 +33,8 @@ $ docker service scale frontend=50
 frontend scaled to 50
 ```
 
-The following command tries to scale a global service to 10 tasks and returns an error.
-
-```
-$ docker service create --mode global --name backend backend:latest
-b4g08uwuairexjub6ome6usqh
-$ docker service scale backend=10
-backend: scale can only be used with replicated mode
-```
-
 Directly afterwards, run `docker service ls`, to see the actual number of
-replicas.
+replicas
 
 ```bash
 $ docker service ls --filter name=frontend
@@ -61,7 +44,7 @@ ID            NAME      REPLICAS  IMAGE         COMMAND
 ```
 
 You can also scale a service using the [`docker service update`](service_update.md)
-command. The following commands are equivalent:
+command. The following commands are therefore equivalent:
 
 ```bash
 $ docker service scale frontend=50

@@ -45,7 +45,7 @@ func TestTaskList(t *testing.T) {
 		},
 		{
 			options: types.TaskListOptions{
-				Filters: filters,
+				Filter: filters,
 			},
 			expectedQueryParams: map[string]string{
 				"filters": `{"label":{"label1":true,"label2":true}}`,

@@ -209,7 +209,6 @@ func (daemon *Daemon) ContainerExecInspect(id string) (*backend.ExecInspect, err
 		CanRemove:     e.CanRemove,
 		ContainerID:   e.ContainerID,
 		DetachKeys:    e.DetachKeys,
-		Pid:           e.Pid,
 	}, nil
 }
 

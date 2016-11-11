@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli"
@@ -60,10 +61,15 @@ func runJoin(dockerCli *command.DockerCli, opts joinOptions) error {
 		return err
 	}
 
-	if info.Swarm.ControlAvailable {
-		fmt.Fprintln(dockerCli.Out(), "This node joined a swarm as a manager.")
+	_, _, err = client.NodeInspectWithRaw(ctx, info.Swarm.NodeID)
+	if err != nil {
+		// TODO(aaronl): is there a better way to do this?
+		if strings.Contains(err.Error(), "This node is not a swarm manager.") {
+			fmt.Fprintln(dockerCli.Out(), "This node joined a swarm as a worker.")
+		}
 	} else {
-		fmt.Fprintln(dockerCli.Out(), "This node joined a swarm as a worker.")
+		fmt.Fprintln(dockerCli.Out(), "This node joined a swarm as a manager.")
 	}
+
 	return nil
 }

@@ -1,17 +1,13 @@
----
-title: "Use the Docker command line"
-description: "Docker's CLI command description and usage"
-keywords: "Docker, Docker documentation, CLI, command line"
----
-
-<!-- This file is maintained within the docker/docker Github
-     repository at https://github.com/docker/docker/. Make all
-     pull requests against that repo. If you see this file in
-     another repository, consider it read-only there, as it will
-     periodically be overwritten by the definitive file. Pull
-     requests which include edits to this file in other repositories
-     will be rejected.
--->
+<!--[metadata]>
++++
+title = "Use the Docker command line"
+description = "Docker's CLI command description and usage"
+keywords = ["Docker, Docker documentation, CLI,  command line"]
+[menu.main]
+parent = "smn_cli"
+weight = -2
++++
+<![end-metadata]-->
 
 # Use the Docker command line
 
@@ -20,7 +16,7 @@ or execute `docker help`:
 
 ```bash
 $ docker
-Usage: docker [OPTIONS] COMMAND [ARG...]
+Usage: docker [OPTIONS] COMMAND [arg...]
        docker [ --help | -v | --version ]
 
 A self-sufficient runtime for containers.
@@ -31,7 +27,7 @@ Options:
   -D, --debug              Enable debug mode
       --help               Print usage
   -H, --host value         Daemon socket(s) to connect to (default [])
-  -l, --log-level string   Set the logging level ("debug", "info", "warn", "error", "fatal") (default "info")
+  -l, --log-level string   Set the logging level (debug, info, warn, error, fatal) (default "info")
       --tls                Use TLS; implied by --tlsverify
       --tlscacert string   Trust certs signed only by this CA (default "/root/.docker/ca.pem")
       --tlscert string     Path to TLS certificate file (default "/root/.docker/cert.pem")
@@ -50,7 +46,7 @@ each `docker` command with `sudo`. To avoid having to use `sudo` with the
 `docker` and add users to it.
 
 For more information about installing Docker or `sudo` configuration, refer to
-the [installation](https://docs.docker.com/engine/installation/) instructions for your operating system.
+the [installation](../../installation/index.md) instructions for your operating system.
 
 ## Environment variables
 
@@ -123,30 +119,10 @@ falls back to the default table format. For a list of supported formatting
 directives, see the
 [**Formatting** section in the `docker ps` documentation](ps.md)
 
-The property `imagesFormat` specifies the default format for `docker images` output.
-When the `--format` flag is not provided with the `docker images` command,
-Docker's client uses this property. If this property is not set, the client
-falls back to the default table format. For a list of supported formatting
-directives, see the [**Formatting** section in the `docker images` documentation](images.md)
-
-The property `serviceInspectFormat` specifies the default format for `docker
-service inspect` output. When the `--format` flag is not provided with the
-`docker service inspect` command, Docker's client uses this property. If this
-property is not set, the client falls back to the default json format. For a
-list of supported formatting directives, see the
-[**Formatting** section in the `docker service inspect` documentation](service_inspect.md)
-
-The property `statsFormat` specifies the default format for `docker
-stats` output. When the `--format` flag is not provided with the
-`docker stats` command, Docker's client uses this property. If this
-property is not set, the client falls back to the default table
-format. For a list of supported formatting directives, see
-[**Formatting** section in the `docker stats` documentation](stats.md)
-
 Once attached to a container, users detach from it and leave it running using
 the using `CTRL-p CTRL-q` key sequence. This detach key sequence is customizable
 using the `detachKeys` property. Specify a `<sequence>` value for the
-property. The format of the `<sequence>` is a comma-separated list of either
+property. The format of the `<sequence>` is a comma-separated list of either 
 a letter [a-Z], or the `ctrl-` combined with any of the following:
 
 * `a-z` (a single lowercase alpha character )
@@ -161,20 +137,30 @@ Users can override your custom or the default key sequence on a per-container
 basis. To do this, the user specifies the `--detach-keys` flag with the `docker
 attach`, `docker exec`, `docker run` or `docker start` command.
 
+The property `imagesFormat` specifies the default format for `docker images` output.
+When the `--format` flag is not provided with the `docker images` command,
+Docker's client uses this property. If this property is not set, the client
+falls back to the default table format. For a list of supported formatting
+directives, see the [**Formatting** section in the `docker images` documentation](images.md)
+
+The property `serviceInspectFormat` specifies the default format for `docker
+service inspect` output. When the `--format` flag is not provided with the
+`docker service inspect` command, Docker's client uses this property. If this
+property is not set, the client falls back to the default json format. For a
+list of supported formatting directives, see the
+[**Formatting** section in the `docker service inspect` documentation](service_inspect.md)
+
 Following is a sample `config.json` file:
 
-    {% raw %}
     {
       "HttpHeaders": {
         "MyHeader": "MyValue"
       },
       "psFormat": "table {{.ID}}\\t{{.Image}}\\t{{.Command}}\\t{{.Labels}}",
       "imagesFormat": "table {{.ID}}\\t{{.Repository}}\\t{{.Tag}}\\t{{.CreatedAt}}",
-      "statsFormat": "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}",
       "serviceInspectFormat": "pretty",
       "detachKeys": "ctrl-e,e"
     }
-    {% endraw %}
 
 ### Notary
 

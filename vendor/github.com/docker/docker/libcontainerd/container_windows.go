@@ -3,7 +3,6 @@ package libcontainerd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"syscall"
 	"time"
@@ -40,7 +39,7 @@ func (ctr *container) newProcess(friendlyName string) *process {
 
 // start starts a created container.
 // Caller needs to lock container ID before calling this method.
-func (ctr *container) start(attachStdio StdioCallback) error {
+func (ctr *container) start() error {
 	var err error
 	isServicing := false
 
@@ -132,10 +131,10 @@ func (ctr *container) start(attachStdio StdioCallback) error {
 
 	// Convert io.ReadClosers to io.Readers
 	if stdout != nil {
-		iopipe.Stdout = ioutil.NopCloser(&autoClosingReader{ReadCloser: stdout})
+		iopipe.Stdout = openReaderFromPipe(stdout)
 	}
 	if stderr != nil {
-		iopipe.Stderr = ioutil.NopCloser(&autoClosingReader{ReadCloser: stderr})
+		iopipe.Stderr = openReaderFromPipe(stderr)
 	}
 
 	// Save the PID
@@ -147,7 +146,7 @@ func (ctr *container) start(attachStdio StdioCallback) error {
 
 	ctr.client.appendContainer(ctr)
 
-	if err := attachStdio(*iopipe); err != nil {
+	if err := ctr.client.backend.AttachStreams(ctr.containerID, *iopipe); err != nil {
 		// OK to return the error here, as waitExit will handle tear-down in HCS
 		return err
 	}

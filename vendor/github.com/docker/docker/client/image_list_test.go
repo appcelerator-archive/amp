@@ -93,7 +93,7 @@ func TestImageList(t *testing.T) {
 						return nil, fmt.Errorf("%s not set in URL query properly. Expected '%s', got %s", key, expected, actual)
 					}
 				}
-				content, err := json.Marshal([]types.ImageSummary{
+				content, err := json.Marshal([]types.Image{
 					{
 						ID: "image_id2",
 					},

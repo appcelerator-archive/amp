@@ -1,8 +1,13 @@
----
-title: "Token Scope Documentation"
-description: "Describes the scope and access fields used for registry authorization tokens"
-keywords: ["registry, on-prem, images, tags, repository, distribution, advanced, access, scope"]
----
+<!--[metadata]>
++++
+title = "Token Scope Documentation"
+description = "Describes the scope and access fields used for registry authorization tokens"
+keywords = ["registry, on-prem, images, tags, repository, distribution, advanced, access, scope"]
+[menu.main]
+parent="smn_registry_ref"
+weight=103
++++
+<![end-metadata]-->
 
 # Docker Registry Token Scope and Access
 
@@ -135,3 +140,4 @@ done by fetching an access token using the refresh token. Since the refresh
 token is not scoped to specific resources for an audience, extra care should
 be taken to only use the refresh token to negotiate new access tokens directly
 with the authorization server, and never with a resource provider.
+

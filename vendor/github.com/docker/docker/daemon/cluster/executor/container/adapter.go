@@ -12,7 +12,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/server/httputils"
 	"github.com/docker/docker/api/types"
-	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/versions"
 	executorpkg "github.com/docker/docker/daemon/cluster/executor"
@@ -188,7 +187,7 @@ func (c *containerAdapter) waitForDetach(ctx context.Context) error {
 }
 
 func (c *containerAdapter) create(ctx context.Context) error {
-	var cr containertypes.ContainerCreateCreatedBody
+	var cr types.ContainerCreateResponse
 	var err error
 	version := httputils.VersionFromContext(ctx)
 	validateHostname := versions.GreaterThanOrEqualTo(version, "1.24")
@@ -225,7 +224,7 @@ func (c *containerAdapter) create(ctx context.Context) error {
 func (c *containerAdapter) start(ctx context.Context) error {
 	version := httputils.VersionFromContext(ctx)
 	validateHostname := versions.GreaterThanOrEqualTo(version, "1.24")
-	return c.backend.ContainerStart(c.container.name(), nil, validateHostname, "", "")
+	return c.backend.ContainerStart(c.container.name(), nil, validateHostname, "")
 }
 
 func (c *containerAdapter) inspect(ctx context.Context) (types.ContainerJSON, error) {
@@ -280,12 +279,11 @@ func (c *containerAdapter) wait(ctx context.Context) error {
 }
 
 func (c *containerAdapter) shutdown(ctx context.Context) error {
-	// Default stop grace period to nil (daemon will use the stopTimeout of the container)
-	var stopgrace *int
+	// Default stop grace period to 10s.
+	stopgrace := 10
 	spec := c.container.spec()
 	if spec.StopGracePeriod != nil {
-		stopgraceValue := int(spec.StopGracePeriod.Seconds)
-		stopgrace = &stopgraceValue
+		stopgrace = int(spec.StopGracePeriod.Seconds)
 	}
 	return c.backend.ContainerStop(c.container.name(), stopgrace)
 }
@@ -329,14 +327,6 @@ func (c *containerAdapter) createVolumes(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (c *containerAdapter) activateServiceBinding() error {
-	return c.backend.ActivateContainerServiceBinding(c.container.name())
-}
-
-func (c *containerAdapter) deactivateServiceBinding() error {
-	return c.backend.DeactivateContainerServiceBinding(c.container.name())
 }
 
 // todo: typed/wrapped errors

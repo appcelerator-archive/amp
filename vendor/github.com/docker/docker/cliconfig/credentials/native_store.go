@@ -58,29 +58,17 @@ func (c *nativeStore) Get(serverAddress string) (types.AuthConfig, error) {
 
 // GetAll retrieves all the credentials from the native store.
 func (c *nativeStore) GetAll() (map[string]types.AuthConfig, error) {
-	auths, err := c.listCredentialsInStore()
-	if err != nil {
-		return nil, err
-	}
+	auths, _ := c.fileStore.GetAll()
 
-	// Emails are only stored in the file store.
-	// This call can be safely eliminated when emails are removed.
-	fileConfigs, _ := c.fileStore.GetAll()
-
-	authConfigs := make(map[string]types.AuthConfig)
-	for registry := range auths {
-		creds, err := c.getCredentialsFromStore(registry)
-		if err != nil {
-			return nil, err
-		}
-		ac, _ := fileConfigs[registry] // might contain Email
+	for s, ac := range auths {
+		creds, _ := c.getCredentialsFromStore(s)
 		ac.Username = creds.Username
 		ac.Password = creds.Password
 		ac.IdentityToken = creds.IdentityToken
-		authConfigs[registry] = ac
+		auths[s] = ac
 	}
 
-	return authConfigs, nil
+	return auths, nil
 }
 
 // Store saves the given credentials in the file store.
@@ -135,10 +123,4 @@ func (c *nativeStore) getCredentialsFromStore(serverAddress string) (types.AuthC
 
 	ret.ServerAddress = serverAddress
 	return ret, nil
-}
-
-// listCredentialsInStore returns a listing of stored credentials as a map of
-// URL -> username.
-func (c *nativeStore) listCredentialsInStore() (map[string]string, error) {
-	return client.List(c.programFunc)
 }

@@ -12,16 +12,16 @@ import (
 )
 
 // ContainerCommit applies changes into a container and creates a new tagged image.
-func (cli *Client) ContainerCommit(ctx context.Context, container string, options types.ContainerCommitOptions) (types.IDResponse, error) {
+func (cli *Client) ContainerCommit(ctx context.Context, container string, options types.ContainerCommitOptions) (types.ContainerCommitResponse, error) {
 	var repository, tag string
 	if options.Reference != "" {
 		distributionRef, err := distreference.ParseNamed(options.Reference)
 		if err != nil {
-			return types.IDResponse{}, err
+			return types.ContainerCommitResponse{}, err
 		}
 
 		if _, isCanonical := distributionRef.(distreference.Canonical); isCanonical {
-			return types.IDResponse{}, errors.New("refusing to create a tag with a digest reference")
+			return types.ContainerCommitResponse{}, errors.New("refusing to create a tag with a digest reference")
 		}
 
 		tag = reference.GetTagFromNamedRef(distributionRef)
@@ -41,7 +41,7 @@ func (cli *Client) ContainerCommit(ctx context.Context, container string, option
 		query.Set("pause", "0")
 	}
 
-	var response types.IDResponse
+	var response types.ContainerCommitResponse
 	resp, err := cli.post(ctx, "/commit", query, options.Config, nil)
 	if err != nil {
 		return response, err

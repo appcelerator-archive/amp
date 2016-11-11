@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	apierrors "github.com/docker/docker/api/errors"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/api/types/container"
@@ -19,7 +18,6 @@ import (
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/reference"
-	perrors "github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -79,7 +77,6 @@ type Builder struct {
 	id string
 
 	imageCache builder.ImageCache
-	from       builder.Image
 }
 
 // BuildManager implements builder.Backend and is shared across all Builder objects.
@@ -94,9 +91,6 @@ func NewBuildManager(b builder.Backend) (bm *BuildManager) {
 
 // BuildFromContext builds a new image from a given context.
 func (bm *BuildManager) BuildFromContext(ctx context.Context, src io.ReadCloser, remote string, buildOptions *types.ImageBuildOptions, pg backend.ProgressWriter) (string, error) {
-	if buildOptions.Squash && !bm.backend.HasExperimental() {
-		return "", apierrors.NewBadRequestError(errors.New("squash is only supported with experimental mode"))
-	}
 	buildContext, dockerfileName, err := builder.DetectContextFromRemoteURL(src, remote, pg.ProgressReaderFunc)
 	if err != nil {
 		return "", err
@@ -106,7 +100,6 @@ func (bm *BuildManager) BuildFromContext(ctx context.Context, src io.ReadCloser,
 			logrus.Debugf("[BUILDER] failed to remove temporary context: %v", err)
 		}
 	}()
-
 	if len(dockerfileName) > 0 {
 		buildOptions.Dockerfile = dockerfileName
 	}
@@ -236,9 +229,9 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 	if len(b.options.Labels) > 0 {
 		line := "LABEL "
 		for k, v := range b.options.Labels {
-			line += fmt.Sprintf("%q='%s' ", k, v)
+			line += fmt.Sprintf("%q=%q ", k, v)
 		}
-		_, node, err := parser.ParseLine(line, &b.directive, false)
+		_, node, err := parser.ParseLine(line, &b.directive)
 		if err != nil {
 			return "", err
 		}
@@ -278,31 +271,19 @@ func (b *Builder) build(stdout io.Writer, stderr io.Writer, out io.Writer) (stri
 	}
 
 	// check if there are any leftover build-args that were passed but not
-	// consumed during build. Return a warning, if there are any.
+	// consumed during build. Return an error, if there are any.
 	leftoverArgs := []string{}
 	for arg := range b.options.BuildArgs {
 		if !b.isBuildArgAllowed(arg) {
 			leftoverArgs = append(leftoverArgs, arg)
 		}
 	}
-
 	if len(leftoverArgs) > 0 {
-		fmt.Fprintf(b.Stderr, "[Warning] One or more build-args %v were not consumed\n", leftoverArgs)
+		return "", fmt.Errorf("One or more build-args %v were not consumed, failing build.", leftoverArgs)
 	}
 
 	if b.image == "" {
 		return "", fmt.Errorf("No image was generated. Is your Dockerfile empty?")
-	}
-
-	if b.options.Squash {
-		var fromID string
-		if b.from != nil {
-			fromID = b.from.ImageID()
-		}
-		b.image, err = b.docker.SquashImage(b.image, fromID)
-		if err != nil {
-			return "", perrors.Wrap(err, "error squashing image")
-		}
 	}
 
 	imageID := image.ID(b.image)

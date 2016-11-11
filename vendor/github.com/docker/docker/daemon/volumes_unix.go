@@ -24,11 +24,7 @@ func (daemon *Daemon) setupMounts(c *container.Container) ([]container.Mount, er
 	var mounts []container.Mount
 	// TODO: tmpfs mounts should be part of Mountpoints
 	tmpfsMounts := make(map[string]bool)
-	tmpfsMountInfo, err := c.TmpfsMounts()
-	if err != nil {
-		return nil, err
-	}
-	for _, m := range tmpfsMountInfo {
+	for _, m := range c.TmpfsMounts() {
 		tmpfsMounts[m.Destination] = true
 	}
 	for _, m := range c.MountPoints {

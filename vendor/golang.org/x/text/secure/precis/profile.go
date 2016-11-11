@@ -5,7 +5,6 @@
 package precis
 
 import (
-	"bytes"
 	"errors"
 	"unicode/utf8"
 
@@ -93,32 +92,21 @@ type buffers struct {
 	next int
 }
 
-func (b *buffers) apply(t transform.SpanningTransformer) (err error) {
-	n, err := t.Span(b.src, true)
-	if err != transform.ErrEndOfSpan {
-		return err
-	}
+func (b *buffers) init(n int) {
+	b.buf[0] = make([]byte, 0, n)
+	b.buf[1] = make([]byte, 0, n)
+}
+
+func (b *buffers) apply(t transform.Transformer) (err error) {
+	// TODO: use Span, once available.
 	x := b.next & 1
-	if b.buf[x] == nil {
-		b.buf[x] = make([]byte, 0, 8+len(b.src)+len(b.src)>>2)
-	}
-	span := append(b.buf[x][:0], b.src[:n]...)
-	b.src, _, err = transform.Append(t, span, b.src[n:])
+	b.src, _, err = transform.Append(t, b.buf[x][:0], b.src)
 	b.buf[x] = b.src
 	b.next++
 	return err
 }
 
-// Pre-allocate transformers when possible. In some cases this avoids allocation.
-var (
-	foldWidthT transform.SpanningTransformer = width.Fold
-	lowerCaseT transform.SpanningTransformer = cases.Lower(language.Und, cases.HandleFinalSigma(false))
-)
-
-// TODO: make this a method on profile.
-
 func (b *buffers) enforce(p *Profile, src []byte, comparing bool) (str []byte, err error) {
-	// TODO: ASCII fast path, if options allow.
 	b.src = src
 
 	// These transforms are applied in the order defined in
@@ -126,7 +114,10 @@ func (b *buffers) enforce(p *Profile, src []byte, comparing bool) (str []byte, e
 
 	// TODO: allow different width transforms options.
 	if p.options.foldWidth || (p.options.ignorecase && comparing) {
-		b.apply(foldWidthT)
+		// TODO: use Span, once available.
+		if err = b.apply(width.Fold); err != nil {
+			return nil, err
+		}
 	}
 	for _, f := range p.options.additional {
 		if err = b.apply(f()); err != nil {
@@ -134,14 +125,29 @@ func (b *buffers) enforce(p *Profile, src []byte, comparing bool) (str []byte, e
 		}
 	}
 	if p.options.cases != nil {
-		b.apply(p.options.cases)
+		if err = b.apply(p.options.cases); err != nil {
+			return nil, err
+		}
 	}
 	if comparing && p.options.ignorecase {
-		b.apply(lowerCaseT)
+		if err = b.apply(cases.Lower(language.Und, cases.HandleFinalSigma(false))); err != nil {
+			return nil, err
+		}
 	}
-	b.apply(p.norm)
-	if p.options.bidiRule && !bidirule.Valid(b.src) {
-		return nil, bidirule.ErrInvalid
+	if n := p.norm.QuickSpan(b.src); n < len(b.src) {
+		x := b.next & 1
+		n = copy(b.buf[x], b.src[:n])
+		b.src, _, err = transform.Append(p.norm, b.buf[x][:n], b.src[n:])
+		b.buf[x] = b.src
+		b.next++
+		if err != nil {
+			return nil, err
+		}
+	}
+	if p.options.bidiRule {
+		if err := b.apply(bidirule.New()); err != nil {
+			return nil, err
+		}
 	}
 	c := checker{p: p}
 	if _, err := c.span(b.src, true); err != nil {
@@ -156,6 +162,9 @@ func (b *buffers) enforce(p *Profile, src []byte, comparing bool) (str []byte, e
 			i += size
 		}
 	}
+
+	// TODO: Add the disallow empty rule with a dummy transformer?
+
 	if p.options.disallowEmpty && len(b.src) == 0 {
 		return nil, errEmptyString
 	}
@@ -166,6 +175,7 @@ func (b *buffers) enforce(p *Profile, src []byte, comparing bool) (str []byte, e
 // It returns an error if the input string is invalid.
 func (p *Profile) Append(dst, src []byte) ([]byte, error) {
 	var buf buffers
+	buf.init(8 + len(src) + len(src)>>2)
 	b, err := buf.enforce(p, src, false)
 	if err != nil {
 		return nil, err
@@ -173,9 +183,11 @@ func (p *Profile) Append(dst, src []byte) ([]byte, error) {
 	return append(dst, b...), nil
 }
 
-func processBytes(p *Profile, b []byte, key bool) ([]byte, error) {
+// Bytes returns a new byte slice with the result of applying the profile to b.
+func (p *Profile) Bytes(b []byte) ([]byte, error) {
 	var buf buffers
-	b, err := buf.enforce(p, b, key)
+	buf.init(8 + len(b) + len(b)>>2)
+	b, err := buf.enforce(p, b, false)
 	if err != nil {
 		return nil, err
 	}
@@ -187,42 +199,15 @@ func processBytes(p *Profile, b []byte, key bool) ([]byte, error) {
 	return b, nil
 }
 
-// Bytes returns a new byte slice with the result of applying the profile to b.
-func (p *Profile) Bytes(b []byte) ([]byte, error) {
-	return processBytes(p, b, false)
-}
-
-// AppendCompareKey appends the result of applying p to src (including any
-// optional rules to make strings comparable or useful in a map key such as
-// applying lowercasing) writing the result to dst. It returns an error if the
-// input string is invalid.
-func (p *Profile) AppendCompareKey(dst, src []byte) ([]byte, error) {
+// String returns a string with the result of applying the profile to s.
+func (p *Profile) String(s string) (string, error) {
 	var buf buffers
-	b, err := buf.enforce(p, src, true)
-	if err != nil {
-		return nil, err
-	}
-	return append(dst, b...), nil
-}
-
-func processString(p *Profile, s string, key bool) (string, error) {
-	var buf buffers
-	b, err := buf.enforce(p, []byte(s), key)
+	buf.init(8 + len(s) + len(s)>>2)
+	b, err := buf.enforce(p, []byte(s), false)
 	if err != nil {
 		return "", err
 	}
 	return string(b), nil
-}
-
-// String returns a string with the result of applying the profile to s.
-func (p *Profile) String(s string) (string, error) {
-	return processString(p, s, false)
-}
-
-// CompareKey returns a string that can be used for comparison, hashing, or
-// collation.
-func (p *Profile) CompareKey(s string) (string, error) {
-	return processString(p, s, true)
 }
 
 // Compare enforces both strings, and then compares them for bit-string identity
@@ -231,18 +216,21 @@ func (p *Profile) CompareKey(s string) (string, error) {
 func (p *Profile) Compare(a, b string) bool {
 	var buf buffers
 
-	akey, err := buf.enforce(p, []byte(a), true)
+	buf.init(8 + len(a) + len(a)>>2)
+	str, err := buf.enforce(p, []byte(a), true)
 	if err != nil {
 		return false
 	}
+	a = string(str)
 
-	buf = buffers{}
-	bkey, err := buf.enforce(p, []byte(b), true)
+	buf.init(8 + len(b) + len(b)>>2)
+	str, err = buf.enforce(p, []byte(b), true)
 	if err != nil {
 		return false
 	}
+	b = string(str)
 
-	return bytes.Compare(akey, bkey) == 0
+	return a == b
 }
 
 // Allowed returns a runes.Set containing every rune that is a member of the

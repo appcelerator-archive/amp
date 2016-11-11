@@ -7,7 +7,6 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	networktypes "github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/pkg/sysinfo"
 	"github.com/docker/docker/volume"
 )
 
@@ -48,7 +47,7 @@ func DecodeContainerConfig(src io.Reader) (*container.Config, *container.HostCon
 		}
 
 		// Now validate all the volumes and binds
-		if err := validateMountSettings(w.Config, hc); err != nil {
+		if err := validateVolumesAndBindSettings(w.Config, hc); err != nil {
 			return nil, nil, nil, err
 		}
 	}
@@ -69,17 +68,25 @@ func DecodeContainerConfig(src io.Reader) (*container.Config, *container.HostCon
 		return nil, nil, nil, err
 	}
 
-	// Validate Resources
-	if err := ValidateResources(hc, sysinfo.New(true)); err != nil {
-		return nil, nil, nil, err
-	}
 	return w.Config, hc, w.NetworkingConfig, nil
 }
 
-// validateMountSettings validates each of the volumes and bind settings
+// validateVolumesAndBindSettings validates each of the volumes and bind settings
 // passed by the caller to ensure they are valid.
-func validateMountSettings(c *container.Config, hc *container.HostConfig) error {
-	// it is ok to have len(hc.Mounts) > 0 && (len(hc.Binds) > 0 || len (c.Volumes) > 0 || len (hc.Tmpfs) > 0 )
+func validateVolumesAndBindSettings(c *container.Config, hc *container.HostConfig) error {
+	if len(hc.Mounts) > 0 {
+		if len(hc.Binds) > 0 {
+			return conflictError(fmt.Errorf("must not specify both Binds and Mounts"))
+		}
+
+		if len(c.Volumes) > 0 {
+			return conflictError(fmt.Errorf("must not specify both Volumes and Mounts"))
+		}
+
+		if len(hc.VolumeDriver) > 0 {
+			return conflictError(fmt.Errorf("must not specify both VolumeDriver and Mounts"))
+		}
+	}
 
 	// Ensure all volumes and binds are valid.
 	for spec := range c.Volumes {

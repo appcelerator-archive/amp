@@ -4,7 +4,6 @@ package assert
 import (
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 )
@@ -42,14 +41,6 @@ func EqualStringSlice(t TestingT, actual, expected []string) {
 func NilError(t TestingT, err error) {
 	if err != nil {
 		fatal(t, "Expected no error, got: %s", err.Error())
-	}
-}
-
-// DeepEqual compare the actual value to the expected value and fails the test if
-// they are not "deeply equal".
-func DeepEqual(t TestingT, actual, expected interface{}) {
-	if !reflect.DeepEqual(actual, expected) {
-		fatal(t, "Expected '%v' (%T) got '%v' (%T)", expected, expected, actual, actual)
 	}
 }
 

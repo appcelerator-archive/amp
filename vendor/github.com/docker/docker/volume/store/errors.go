@@ -1,9 +1,8 @@
 package store
 
 import (
+	"errors"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 var (
@@ -65,12 +64,11 @@ func IsNameConflict(err error) bool {
 }
 
 func isErr(err error, expected error) bool {
-	err = errors.Cause(err)
 	switch pe := err.(type) {
 	case nil:
 		return false
 	case *OpErr:
-		err = errors.Cause(pe.Err)
+		err = pe.Err
 	}
 	return err == expected
 }

@@ -22,8 +22,8 @@ func newDockerCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var flags *pflag.FlagSet
 
 	cmd := &cobra.Command{
-		Use:              "docker [OPTIONS] COMMAND [ARG...]",
-		Short:            "A self-sufficient runtime for containers",
+		Use:              "docker [OPTIONS] COMMAND [arg...]",
+		Short:            "A self-sufficient runtime for containers.",
 		SilenceUsage:     true,
 		SilenceErrors:    true,
 		TraverseChildren: true,
@@ -33,8 +33,7 @@ func newDockerCommand(dockerCli *command.DockerCli) *cobra.Command {
 				showVersion()
 				return nil
 			}
-			cmd.SetOutput(dockerCli.Err())
-			cmd.HelpFunc()(cmd, args)
+			fmt.Fprintf(dockerCli.Err(), "\n"+cmd.UsageString())
 			return nil
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -45,22 +44,6 @@ func newDockerCommand(dockerCli *command.DockerCli) *cobra.Command {
 		},
 	}
 	cli.SetupRootCommand(cmd)
-
-	cmd.SetHelpFunc(func(ccmd *cobra.Command, args []string) {
-		var err error
-		if dockerCli.Client() == nil {
-			// flags must be the top-level command flags, not cmd.Flags()
-			opts.Common.SetDefaultOptions(flags)
-			dockerPreRun(opts)
-			err = dockerCli.Initialize(opts)
-		}
-		if err != nil || !dockerCli.HasExperimental() {
-			hideExperimentalFeatures(ccmd)
-		}
-		if err := ccmd.Help(); err != nil {
-			ccmd.Println(err)
-		}
-	})
 
 	flags = cmd.Flags()
 	flags.BoolVarP(&opts.Version, "version", "v", false, "Print version information and quit")
@@ -108,11 +91,15 @@ func main() {
 }
 
 func showVersion() {
-	fmt.Printf("Docker version %s, build %s\n", dockerversion.Version, dockerversion.GitCommit)
+	if utils.ExperimentalBuild() {
+		fmt.Printf("Docker version %s, build %s, experimental\n", dockerversion.Version, dockerversion.GitCommit)
+	} else {
+		fmt.Printf("Docker version %s, build %s\n", dockerversion.Version, dockerversion.GitCommit)
+	}
 }
 
 func dockerPreRun(opts *cliflags.ClientOptions) {
-	cliflags.SetLogLevel(opts.Common.LogLevel)
+	cliflags.SetDaemonLogLevel(opts.Common.LogLevel)
 
 	if opts.ConfigDir != "" {
 		cliconfig.SetConfigDir(opts.ConfigDir)
@@ -120,21 +107,5 @@ func dockerPreRun(opts *cliflags.ClientOptions) {
 
 	if opts.Common.Debug {
 		utils.EnableDebug()
-	}
-}
-
-func hideExperimentalFeatures(cmd *cobra.Command) {
-	// hide flags
-	cmd.Flags().VisitAll(func(f *pflag.Flag) {
-		if _, ok := f.Annotations["experimental"]; ok {
-			f.Hidden = true
-		}
-	})
-
-	for _, subcmd := range cmd.Commands() {
-		// hide subcommands
-		if _, ok := subcmd.Tags["experimental"]; ok {
-			subcmd.Hidden = true
-		}
 	}
 }

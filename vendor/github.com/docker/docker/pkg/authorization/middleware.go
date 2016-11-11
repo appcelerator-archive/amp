@@ -64,21 +64,15 @@ func (m *Middleware) WrapHandler(handler func(ctx context.Context, w http.Respon
 
 		rw := NewResponseModifier(w)
 
-		var errD error
-
-		if errD = handler(ctx, rw, r, vars); errD != nil {
-			logrus.Errorf("Handler for %s %s returned error: %s", r.Method, r.RequestURI, errD)
-		}
-
-		if err := authCtx.AuthZResponse(rw, r); errD == nil && err != nil {
-			logrus.Errorf("AuthZResponse for %s %s returned error: %s", r.Method, r.RequestURI, err)
+		if err := handler(ctx, rw, r, vars); err != nil {
+			logrus.Errorf("Handler for %s %s returned error: %s", r.Method, r.RequestURI, err)
 			return err
 		}
 
-		if errD != nil {
-			return errD
+		if err := authCtx.AuthZResponse(rw, r); err != nil {
+			logrus.Errorf("AuthZResponse for %s %s returned error: %s", r.Method, r.RequestURI, err)
+			return err
 		}
-
 		return nil
 	}
 }
