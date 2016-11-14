@@ -34,8 +34,8 @@ type CommandSpec struct {
 	Options     []string `yaml:"options"`
 	Expectation string   `yaml:"expectation"`
 	Retry       int      `yaml:"retry"`
-	Timeout     int64    `yaml:"timeout"`
-	Delay       int64    `yaml:"delay"`
+	Timeout     string    `yaml:"timeout"`
+	Delay       string    `yaml:"delay"`
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -61,7 +61,7 @@ func TestCmds(t *testing.T) {
 	}
 	tests, err := loadTestSpecs()
 	if err != nil {
-		t.Errorf("unable to load test specs, reason: %v", err)
+		t.Errorf("Unable to load test specs, reason: %v", err)
 		return
 	}
 	for _, test := range tests {
@@ -100,7 +100,7 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 	}
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load test spec: %s. Error: %v", fileName, err)
+		return nil, fmt.Errorf("Unable to load test spec: %s. Error: %v", fileName, err)
 	}
 	testSpec := &TestSpec{
 		Name: fileName,
@@ -108,7 +108,7 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 
 	var commandMap []CommandSpec
 	if err := yaml.Unmarshal(content, &commandMap); err != nil {
-		return nil, fmt.Errorf("unable to parse test spec: %s. Error: %v", fileName, err)
+		return nil, fmt.Errorf("Unable to parse test spec: %s. Error: %v", fileName, err)
 	}
 
 	for _, command := range commandMap {
@@ -147,23 +147,34 @@ func runTestSpec(t *testing.T, test *TestSpec) (err error) {
 			cmdOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
 			expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
 			if !expectedOutput.MatchString(string(cmdOutput)) {
-				err = fmt.Errorf("miss matched expected output: %s : Error: %v", cmdOutput, cmdErr)
+				err = fmt.Errorf("Mismatched expected output: %s : Error: %v", cmdOutput, cmdErr)
 				t.Log(err)
 			}
 
 			endTime := time.Now().UnixNano() / 1000000
 
 			//check if command execution has exceeded timeout (in Millisecond)
-			if cmdSpec.Timeout != 0 && endTime-startTime >= cmdSpec.Timeout {
-				return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
+			if cmdSpec.Timeout != "" {
+				dura, durErr := time.ParseDuration(cmdSpec.Timeout)
+				if durErr != nil {
+					return fmt.Errorf("Invalid timeout specified: %s : Error: %v", cmdSpec.Timeout, durErr)
+				}
+				if endTime-startTime >= int64(dura * time.Millisecond) {
+					return fmt.Errorf("Command execution has exceeded timeout : %s", tmplString)
+				}
 			}
-
 			//if no error after retries, break the loop to continue command execution
 			if err == nil {
 				break
 			}
 			//add delay (in Millisecond) to wait for command execution
-			time.Sleep(time.Duration(cmdSpec.Delay) * time.Millisecond)
+			if cmdSpec.Delay != "" {
+				del, delErr := time.ParseDuration(cmdSpec.Delay)
+				if delErr != nil {
+					return fmt.Errorf("Invalid delay specified: %s : Error: %v", cmdSpec.Delay, delErr)
+				}
+				time.Sleep(del)
+			}
 		}
 		if i > 0 && i == cmdSpec.Retry {
 			t.Log("This command :", tmplString, "has re-run", i, "times.")
@@ -188,6 +199,7 @@ func generateCmdString(cmdSpec *CommandSpec) (cmdString []string) {
 	return
 }
 
+//read lookup directory by parsing its contents
 func loadRegexLookup() error {
 	files, err := ioutil.ReadDir(lookupDir)
 	if err != nil {
@@ -202,6 +214,7 @@ func loadRegexLookup() error {
 	return nil
 }
 
+//parse lookup directory and unmarshal its contents
 func parseLookup(file string) error {
 	if filepath.Ext(file) != ".yml" {
 		return nil
@@ -216,14 +229,15 @@ func parseLookup(file string) error {
 	return nil
 }
 
+//create, parse and execute a template to generate unique values
 func performTemplating(s string, cache map[string]string) (output string, err error) {
-	fmt.Println(s)
 	var t *template.Template
 	t, err = template.New("Command").Parse(s)
 	if err != nil {
 		return
 	}
-	f := func(in string) string {
+	//custom function to create a unique name with a randomly generated string
+	name := func(in string) string {
 		if val, ok := cache[in]; ok {
 			return val
 		}
@@ -231,7 +245,8 @@ func performTemplating(s string, cache map[string]string) (output string, err er
 		cache[in] = out
 		return out
 	}
-	p := func(in string, min, max int) string {
+	//custom function to randomly generate a port number
+	port := func(in string, min, max int) string {
 		if val, ok := cache[in]; ok {
 			return val
 		}
@@ -240,19 +255,21 @@ func performTemplating(s string, cache map[string]string) (output string, err er
 		return out
 	}
 	var doc bytes.Buffer
-	var fm = template.FuncMap{
-		"uniq": func(in string) string { return f(in) },
-		"port": func(in string, min, max int) string { return p(in, min, max) },
+	//add the custom functions to template for execution
+	var fMap = template.FuncMap{
+		"uniq": func(in string) string { return name(in) },
+		"port": func(in string, min, max int) string { return port(in, min, max) },
 	}
-	err = t.Execute(&doc, fm)
+	//execute the parsed template
+	err = t.Execute(&doc, fMap)
 	if err != nil {
 		return
 	}
 	output = doc.String()
-	fmt.Println(output)
 	return
 }
 
+//generate a random string consisting of uppercase and lowercase characters
 func randString(n int) string {
 	b := make([]byte, n)
 	for i := range b {
