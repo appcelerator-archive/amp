@@ -61,7 +61,7 @@ Briefly describe the problem you are having in a few paragraphs.
 (paste your output here)
 ```
 
-**Output of `amp version`:**
+**Output of `amp info`:**
 
 ```
 (paste your output here)
