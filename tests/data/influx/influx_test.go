@@ -1,6 +1,7 @@
 package influx
 
 import (
+	. "github.com/appcelerator/amp/data/influx"
 	"os"
 	"testing"
 	"time"

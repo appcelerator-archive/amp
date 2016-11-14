@@ -1,4 +1,4 @@
-package etcd_test
+package etcd
 
 import (
 	"fmt"
@@ -13,7 +13,6 @@ import (
 	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
-	. "github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"

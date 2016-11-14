@@ -11,8 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"strconv"
+	"strings"
 	"testing"
 	"text/template"
 	"time"
@@ -41,7 +41,7 @@ type CommandSpec struct {
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var (
-	testDir   = "./test_samples"
+	testDir   = "./samples"
 	lookupDir = "./lookup"
 	regexMap  map[string]string
 )
@@ -235,7 +235,7 @@ func performTemplating(s string, cache map[string]string) (output string, err er
 		if val, ok := cache[in]; ok {
 			return val
 		}
-		out := strconv.Itoa(rand.Intn(max - min) + min)
+		out := strconv.Itoa(rand.Intn(max-min) + min)
 		cache[in] = out
 		return out
 	}

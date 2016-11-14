@@ -52,10 +52,10 @@ func openLogsStream(ID string, lastTimeID string) (io.ReadCloser, error) {
 	return agent.dockerClient.ContainerLogs(context.Background(), ID, containerLogsOptions)
 }
 
-//Use elasticsearch REST API directly
+// Use elasticsearch REST API directly
 func getLastTimeID(ID string) string {
 	request := strings.Replace(elasticSearchTimeIDQuery, "[container_id]", ID, 1)
-	req, err := http.NewRequest("POST", "http://"+conf.elasticsearchURL, bytes.NewBuffer([]byte(request)))
+	req, err := http.NewRequest("POST", conf.elasticsearchURL+"/amp-logs/_search", bytes.NewBuffer([]byte(request)))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -134,7 +134,7 @@ func startReadingLogs(ID string, data *ContainerData) {
 			ContainerId: ID,
 			Message:     slog,
 			Timestamp:   timestamp.Format(time.RFC3339Nano),
-			TimeId:      timestamp.Format(time.RFC3339Nano),
+			TimeId:      timestamp.UTC().Format(time.RFC3339Nano),
 		}
 
 		encoded, err := proto.Marshal(&logEntry)

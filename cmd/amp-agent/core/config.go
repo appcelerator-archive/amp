@@ -30,7 +30,7 @@ func (cfg *AgentConfig) init(version string, build string) {
 func (cfg *AgentConfig) setDefault() {
 	cfg.dockerEngine = "unix:///var/run/docker.sock"
 	cfg.natsURL = "nats://nats:4222"
-	cfg.elasticsearchURL = "elasticsearch:9200/amp-logs/_search"
+	cfg.elasticsearchURL = "http://elasticsearch:9200"
 	cfg.apiPort = "3000"
 	cfg.period = 1
 	cfg.clientID = "amp-agent-" + os.Getenv("HOSTNAME")

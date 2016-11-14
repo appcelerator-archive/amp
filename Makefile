@@ -19,6 +19,10 @@ SRC := $(shell find . -type f -name '*.go' -not -path './vendor/*' -not -path '.
 EXCLUDE_FILES_FILTER := -not -path './vendor/*' -not -path './.git/*' -not -path './.glide/*'
 EXCLUDE_DIRS_FILTER := $(EXCLUDE_FILES_FILTER) -not -path '.' -not -path './vendor' -not -path './.git' -not -path './.glide'
 
+# for tests
+UNIT_TEST_PACKAGES        := $(shell find .       -type f -name '*_test.go' -not -path './tests/*' $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
+INTEGRATION_TEST_PACKAGES := $(shell find ./tests -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
+
 DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 
 # generated file dependencies for proto rule
@@ -59,9 +63,6 @@ GLIDE_DIRS := $${HOME}/.glide $${PWD}/.glide vendor
 GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${HOME}/.glide:/root/.glide -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
-
-TEST_PACKAGES = $(REPO)/data/storage/etcd $(REPO)/data/influx $(REPO)/api/rpc/stack
-# $(REPO)/api/rpc/build @go test -v $(REPO)/api/rpc/project
 
 all: version check build
 
@@ -184,10 +185,17 @@ build-image:
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
-test:
-	@go test -v ./api/rpc/tests
-	$(foreach pkg,$(TEST_PACKAGES),\
-		go test -v $(pkg);)
+test-unit:
+	@for pkg in $(UNIT_TEST_PACKAGES) ; do \
+		go test $$pkg ; \
+	done
+
+test-integration:
+	@for pkg in $(INTEGRATION_TEST_PACKAGES) ; do \
+		go test $$pkg ; \
+	done
+
+test: test-unit test-integration
 
 cover:
 	echo "mode: count" > coverage-all.out
@@ -195,4 +203,3 @@ cover:
 		go test -coverprofile=coverage.out -covermode=count $(pkg);\
 		tail -n +2 coverage.out >> coverage-all.out;)
 	go tool cover -html=coverage-all.out
-
