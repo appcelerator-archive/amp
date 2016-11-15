@@ -24,11 +24,18 @@ var (
 	configFile string
 	verbose    bool
 	serverAddr string
+	listVersion = true
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
 		Use:   `amp [OPTIONS] COMMAND [arg...]`,
 		Short: "Appcelerator Microservice Platform.",
+		Run: func(cmd *cobra.Command, args []string) {
+			if listVersion {
+				fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+			}
+			fmt.Println(cmd.UsageString())
+		},
 	}
 )
 
@@ -54,6 +61,17 @@ func main() {
 		})
 	})
 
+	// versionCmd represents the amp version
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Display the version number of amp",
+		Long:  `Display the version number of amp`,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+		},
+	}
+	RootCmd.AddCommand(versionCmd)
+
 	// infoCmd represents the amp information
 	infoCmd := &cobra.Command{
 		Use:   "info",
@@ -70,6 +88,7 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
+	RootCmd.Flags().BoolVarP(&listVersion, "version", "V", false, "Version number")
 	RootCmd.AddCommand(infoCmd)
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
