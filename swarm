@@ -259,6 +259,14 @@ amplifier() {
     appcelerator/amp:${AMP_VERSION}
 }
 
+amplifiergateway() {
+  docker service create --with-registry-auth --network amp-infra,amp-public --name amplifier-gateway \
+    --label io.amp.role="infrastructure" \
+    appcelerator/amp:${AMP_VERSION} \
+    amplifier-gateway --amplifier_endpoint=amplifier:50101
+}
+
+
 # DEPENDENCIES nats
 ampagent() { # Owner: freignat91
   docker service create --with-registry-auth --network amp-infra --name amp-agent \

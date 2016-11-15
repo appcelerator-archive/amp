@@ -42,6 +42,7 @@ CLI := amp
 SERVER := amplifier
 AGENT := amp-agent
 LOGWORKER := amp-log-worker
+GATEWAY := amplifier-gateway
 
 TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -77,6 +78,9 @@ clean:
 	@rm -f $$(which $(CLI)) ./$(CLI)
 	@rm -f $$(which $(SERVER)) ./$(SERVER)
 	@rm -f coverage.out coverage-all.out
+	@rm -f $$(which $(AGENT)) ./$(AGENT)
+	@rm -f $$(which $(LOGWORKER)) ./$(LOGWORKER)
+	@rm -f $$(which $(GATEWAY)) ./$(GATEWAY)
 
 install-deps:
 	@$(GLIDE_INSTALL)
@@ -84,7 +88,7 @@ install-deps:
 update-deps:
 	@$(GLIDE_UPDATE)
 
-install: install-cli install-server install-agent install-log-worker
+install: install-cli install-server install-agent install-log-worker install-gateway
 
 install-cli: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
@@ -98,7 +102,10 @@ install-agent: proto
 install-log-worker: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
 
-build: build-cli build-server build-agent build-log-worker
+install-gateway: proto
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
+
+build: build-cli build-server build-agent build-log-worker build-gateway
 
 build-cli: proto
 	@hack/build $(CLI)
@@ -111,6 +118,9 @@ build-agent: proto
 
 build-log-worker: proto
 	@hack/build $(LOGWORKER)
+
+build-gateway: proto
+	@hack/build $(GATEWAY)
 
 build-server-image:
 	@docker build -t appcelerator/$(SERVER):$(TAG) .
@@ -165,6 +175,7 @@ install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
 
 # used to run protoc when you're already inside a container
 proto-host: $(PROTOFILES)
