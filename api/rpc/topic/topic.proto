@@ -2,10 +2,25 @@ syntax = "proto3";
 
 package topic;
 
+import "google/api/annotations.proto";
+
 service Topic {
-  rpc Create (CreateRequest) returns (CreateReply);
-  rpc List (ListRequest) returns (ListReply);
-  rpc Delete (DeleteRequest) returns (DeleteReply);
+  rpc Create (CreateRequest) returns (CreateReply) {
+    option (google.api.http) = {
+      post: "/v1/topic",
+      body: "*"
+    };
+  };
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/topic"
+    };
+  };
+  rpc Delete (DeleteRequest) returns (DeleteReply) {
+    option (google.api.http) = {
+      delete: "/v1/topic/{id}"
+    };
+  };
 }
 
 message TopicEntry {

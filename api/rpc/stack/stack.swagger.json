@@ -14,6 +14,241 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
-  "definitions": {}
+  "paths": {
+    "/v1/stack": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackListReply"
+            }
+          }
+        },
+        "tags": [
+          "StackService"
+        ]
+      },
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/stackStackFileRequest"
+            }
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/up": {
+      "post": {
+        "operationId": "Up",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/stackStackFileRequest"
+            }
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{stack_ident}": {
+      "delete": {
+        "operationId": "Remove",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{stack_ident}/start": {
+      "post": {
+        "operationId": "Start",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{stack_ident}/stop": {
+      "post": {
+        "operationId": "Stop",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "stackListReply": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackStackInfo"
+          }
+        }
+      },
+      "title": "struct for list reply function"
+    },
+    "stackListRequest": {
+      "type": "object",
+      "properties": {
+        "all": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "struct for list request function"
+    },
+    "stackRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "force": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stack_ident": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for remove request function"
+    },
+    "stackStackFileRequest": {
+      "type": "object",
+      "properties": {
+        "stack_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "stackfile": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for stackfile request"
+    },
+    "stackStackInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "state": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct part of ListReply Struct"
+    },
+    "stackStackReply": {
+      "type": "object",
+      "properties": {
+        "stack_id": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for stack id responses"
+    },
+    "stackStackRequest": {
+      "type": "object",
+      "properties": {
+        "stack_ident": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct stack name/id based requests"
+    }
+  }
 }

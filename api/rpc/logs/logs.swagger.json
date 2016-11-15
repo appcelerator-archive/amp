@@ -14,6 +14,129 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
-  "definitions": {}
+  "paths": {
+    "/v1/log": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/logsGetReply"
+            }
+          }
+        },
+        "tags": [
+          "Logs"
+        ]
+      }
+    },
+    "/v1/logStream": {
+      "get": {
+        "operationId": "GetStream",
+        "responses": {
+          "200": {
+            "description": "(streaming responses)",
+            "schema": {
+              "$ref": "#/definitions/logsLogEntry"
+            }
+          }
+        },
+        "tags": [
+          "Logs"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "logsGetReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/logsLogEntry"
+          }
+        }
+      }
+    },
+    "logsGetRequest": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "type": "string",
+          "format": "string"
+        },
+        "message": {
+          "type": "string",
+          "format": "string"
+        },
+        "node": {
+          "type": "string",
+          "format": "string"
+        },
+        "service": {
+          "type": "string",
+          "format": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        },
+        "stack": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "logsLogEntry": {
+      "type": "object",
+      "properties": {
+        "container_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "message": {
+          "type": "string",
+          "format": "string"
+        },
+        "node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "service_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "service_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "stack_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "stack_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "task_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "time_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }

@@ -2,9 +2,19 @@ syntax = "proto3";
 
 package logs;
 
+import "google/api/annotations.proto";
+
 service Logs {
-  rpc Get (GetRequest) returns (GetReply);
-  rpc GetStream (GetRequest) returns (stream LogEntry);
+  rpc Get (GetRequest) returns (GetReply) {
+    option (google.api.http) = {
+      get: "/v1/log"
+    };
+  };
+  rpc GetStream (GetRequest) returns (stream LogEntry) {
+    option (google.api.http) = {
+      get: "/v1/logStream"
+    };
+  };
 }
 
 message LogEntry {

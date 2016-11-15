@@ -2,8 +2,14 @@ syntax = "proto3";
 
 package stats;
 
+import "google/api/annotations.proto";
+
 service Stats {
-  rpc StatsQuery (StatsRequest) returns (StatsReply);
+  rpc StatsQuery (StatsRequest) returns (StatsReply) {
+    option (google.api.http) = {
+      get: "/v1/stats"
+    }; 
+  };
 }
 
 message StatsRequest {

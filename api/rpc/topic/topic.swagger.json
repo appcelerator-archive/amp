@@ -14,6 +14,133 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
-  "definitions": {}
+  "paths": {
+    "/v1/topic": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/topicListReply"
+            }
+          }
+        },
+        "tags": [
+          "Topic"
+        ]
+      },
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/topicCreateReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/topicCreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Topic"
+        ]
+      }
+    },
+    "/v1/topic/{id}": {
+      "delete": {
+        "operationId": "Delete",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/topicDeleteReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Topic"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "topicCreateReply": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "$ref": "#/definitions/topicTopicEntry"
+        }
+      }
+    },
+    "topicCreateRequest": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "$ref": "#/definitions/topicTopicEntry"
+        }
+      }
+    },
+    "topicDeleteReply": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "$ref": "#/definitions/topicTopicEntry"
+        }
+      }
+    },
+    "topicDeleteRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "topicListReply": {
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/topicTopicEntry"
+          }
+        }
+      }
+    },
+    "topicListRequest": {
+      "type": "object"
+    },
+    "topicTopicEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }

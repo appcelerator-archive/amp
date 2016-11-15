@@ -50,6 +50,7 @@ MINIMAGES=(
 # please keep sorted
 SERVICES=(
   amplifier
+  amplifiergateway
   ampagent
   amplogworker
   ampui
