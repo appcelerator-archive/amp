@@ -14,6 +14,209 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
-  "definitions": {}
+  "paths": {
+    "/v1/service": {
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/serviceServiceCreateResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serviceServiceCreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/v1/service/{ident}": {
+      "delete": {
+        "operationId": "Remove",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/serviceRemoveResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "serviceGlobalService": {
+      "type": "object"
+    },
+    "serviceNetworkAttachment": {
+      "type": "object",
+      "properties": {
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "target": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servicePublishSpec": {
+      "type": "object",
+      "properties": {
+        "internal_port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "protocol": {
+          "type": "string",
+          "format": "string"
+        },
+        "publish_port": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "serviceRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "ident": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "serviceRemoveResponse": {
+      "type": "object",
+      "properties": {
+        "ident": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "serviceReplicatedService": {
+      "type": "object",
+      "properties": {
+        "replicas": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "serviceServiceCreateRequest": {
+      "type": "object",
+      "properties": {
+        "service_spec": {
+          "$ref": "#/definitions/serviceServiceSpec"
+        }
+      }
+    },
+    "serviceServiceCreateResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "serviceServiceSpec": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "container_labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "global": {
+          "$ref": "#/definitions/serviceGlobalService"
+        },
+        "image": {
+          "type": "string",
+          "format": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceNetworkAttachment"
+          }
+        },
+        "publish_specs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/servicePublishSpec"
+          }
+        },
+        "replicated": {
+          "$ref": "#/definitions/serviceReplicatedService"
+        }
+      }
+    }
+  }
 }

@@ -14,6 +14,219 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
-  "definitions": {}
+  "paths": {
+    "/v1/stats": {
+      "get": {
+        "operationId": "StatsQuery",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/statsStatsReply"
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "statsStatsEntry": {
+      "type": "object",
+      "properties": {
+        "container_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "container_image": {
+          "type": "string",
+          "format": "string"
+        },
+        "container_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "cpu": {
+          "type": "number",
+          "format": "double"
+        },
+        "datacenter": {
+          "type": "string",
+          "format": "string"
+        },
+        "host": {
+          "type": "string",
+          "format": "string"
+        },
+        "io_read": {
+          "type": "number",
+          "format": "double"
+        },
+        "io_write": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem_limit": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem_usage": {
+          "type": "number",
+          "format": "double"
+        },
+        "net_rx_bytes": {
+          "type": "number",
+          "format": "double"
+        },
+        "net_tx_bytes": {
+          "type": "number",
+          "format": "double"
+        },
+        "node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "number": {
+          "type": "number",
+          "format": "double",
+          "title": "CPU Metrics fields"
+        },
+        "service_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "service_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "sort_type": {
+          "type": "string",
+          "format": "string"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "task_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "int64",
+          "title": "Common data"
+        },
+        "type": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "statsStatsReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/statsStatsEntry"
+          }
+        }
+      }
+    },
+    "statsStatsRequest": {
+      "type": "object",
+      "properties": {
+        "discriminator": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_container_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_container_image": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_container_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_datacenter": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_host": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_service_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_service_ident": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_service_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_task_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_task_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "period": {
+          "type": "string",
+          "format": "string"
+        },
+        "since": {
+          "type": "string",
+          "format": "string"
+        },
+        "stats_cpu": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_follow": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_io": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_mem": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_net": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "time_group": {
+          "type": "string",
+          "format": "string"
+        },
+        "until": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }

@@ -2,15 +2,42 @@ syntax = "proto3";
 
 package stack;
 
+import "google/api/annotations.proto";
 import "github.com/appcelerator/amp/api/rpc/service/service.proto";
 
 service StackService {
-  rpc Up (StackFileRequest) returns (StackReply);
-  rpc Create (StackFileRequest) returns (StackReply);
-  rpc Start (StackRequest) returns (StackReply);
-  rpc Stop (StackRequest) returns (StackReply);
-  rpc Remove (removeRequest) returns (StackReply);
-  rpc List(ListRequest) returns (ListReply);
+  rpc Up (StackFileRequest) returns (StackReply) {
+    option (google.api.http) = {
+      post: "/v1/stack/up",
+      body: "*"
+    };
+  };
+  rpc Create (StackFileRequest) returns (StackReply) {
+    option (google.api.http) = {
+      post: "/v1/stack",
+      body: "*"
+    };
+  };
+  rpc Start (StackRequest) returns (StackReply) {
+    option (google.api.http) = {
+      post: "/v1/stack/{stack_ident}/start"
+    };
+  };
+  rpc Stop (StackRequest) returns (StackReply) {
+    option (google.api.http) = {
+      post: "/v1/stack/{stack_ident}/stop"
+    };
+  };
+  rpc Remove (RemoveRequest) returns (StackReply) {
+    option (google.api.http) = {
+      delete: "/v1/stack/{stack_ident}"
+    };
+  };
+  rpc List(ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/stack"
+    };
+  };
 }
 
 // struct for stackfile request
@@ -25,7 +52,7 @@ message StackRequest {
 }
 
 // struct for remove request function
-message removeRequest {
+message RemoveRequest {
   string stack_ident = 1;  
   bool force = 2;
 }
@@ -111,5 +138,3 @@ message Stack {
   repeated NetworkSpec networks = 4;
   bool is_public = 5;
 }
-
-
