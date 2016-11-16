@@ -7,10 +7,6 @@ Run in this directory:
 
     $ amp stack up -f stack.yml instavote
 
-Depending on your configuration, you may need to explicitly specify the server address as shown below:
-
-    $ amp stack up -f stack.yml instavote --server localhost:8080
-
 The voting app will be available at [http://vote.instavote.local.atomiq.io](http://vote.instavote.local.atomiq.io).
 
 The results app will be available at [http://results.instavote.local.atomiq.io](http://results.instavote.local.atomiq.io).

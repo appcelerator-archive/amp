@@ -16,11 +16,11 @@ Test using
 
 You can then check the logs with
 
-    $ amp logs websocket --server localhost:8080
+    $ amp logs websocket
 
 And stats with
 
-    $ amp stats websocket --server localhost:8080
+    $ amp stats websocket
 
 For extra fun try the following from within a bash session
 

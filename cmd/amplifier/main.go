@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/appcelerator/amp/api/server"
 	flag "github.com/spf13/pflag"
-	"strings"
 )
 
 const (
