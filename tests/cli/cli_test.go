@@ -65,9 +65,10 @@ func TestCmds(t *testing.T) {
 		t.Errorf("Unable to generate suite timeout, reason: %v", err)
 		return
 	}
-	ctx1, cancel1 := context.WithTimeout(context.Background(), duration)
-	defer cancel1()
-	go checkTimeout(t, ctx1, "Suite")
+	//test suite context
+	ctxSuite, cancelSuite := context.WithTimeout(context.Background(), duration)
+	defer cancelSuite()
+	go checkTimeout(t, ctxSuite, "Suite")
 	err = loadRegexLookup()
 	if err != nil {
 		t.Errorf("Unable to load lookup specs, reason: %v", err)
@@ -82,9 +83,10 @@ func TestCmds(t *testing.T) {
 	for _, test := range tests {
 		t.Logf("-----------------------------------------------------------------------------------------")
 		t.Logf("Running spec: %s", test.Name)
-		ctx2, cancel2 := context.WithTimeout(context.Background(), test.Timeout)
-		defer cancel2()
-		go checkTimeout(t, ctx2, test.Name)
+		//test spec context
+		ctxSpec, cancelSpec := context.WithTimeout(context.Background(), test.Timeout)
+		defer cancelSpec()
+		go checkTimeout(t, ctxSpec, test.Name)
 		go runTestSpec(t, test)
 	}
 	wg.Wait()
@@ -139,12 +141,10 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 		}
 		testSpecTimeout := "1m"
 		duration, duraErr := time.ParseDuration(testSpecTimeout)
-		//duration, duraErr := time.ParseDuration(command.Timeout)
 		if duraErr != nil {
 			return nil, fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", fileName, err)
 		}
 		testSpec.Timeout = duration
-		// testSpec.Timeout += duration
 		testSpec.Commands = append(testSpec.Commands, command)
 	}
 	return testSpec, nil
@@ -164,6 +164,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			t.Log("Parsing duration failed: %v", err)
 			t.Fail()
 		}
+		//cmd Spec context
 		ctx, cancel := context.WithTimeout(context.Background(), duration)
 		go checkTimeout(t, ctx, cmdSpec.Cmd)
 		for i = -1; i < cmdSpec.Retry; i++ {
@@ -310,6 +311,7 @@ func randString(n int) string {
 	return string(b)
 }
 
+//repeatedly call the done() method for the context, fail if the deadline exceeds
 func checkTimeout(t *testing.T, ctx context.Context, name string){
   for {
     select {
