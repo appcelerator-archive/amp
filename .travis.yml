@@ -13,8 +13,9 @@ install:
   - sudo apt-get update
   - sudo apt-get install docker-engine
   - docker swarm init --advertise-addr 127.0.0.1
-  - ./swarm pull --min
-  - ./swarm start --min
+  - make install
+  - amp platform pull
+  - amp platform start
 
 script:
   - make install
@@ -26,3 +27,4 @@ after_success:
       timeout 120 ./shrink.sh latest &&
       timeout 30 docker push appcelerator/amp:latest
     fi
+
