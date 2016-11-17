@@ -2,22 +2,26 @@
 
 ## Starting AMP
 
-Use the `swarm` shell script to launch amp swarm services. Available commands are:
+Use the amp command `amp platform` or `amp pf` to launch amp swarm services. Available commands are:
 
  * pull
  * start
- * ls
- * restart
  * stop
+ * status
  * monitor
 
 The usual workflow looks like this:
 
-    $ ./swarm pull
-    $ sudo ./swarm start
-    $ ./swarm monitor
-    $ sudo ./swarm restart (equivalent to stop, pull, start)
-    $ sudo ./swarm stop
+    $ amp pf pull
+    $ amp pf start
+    $ amp pf monitor (better in a separate console)
+    $ amp pf stop
+
+Options:
+          -v --verbose         To have more information messages
+          -s --silence         To do not have message at all
+          -f --force           Only for 'start', to force amp restart if amp is already started or do not exit on error if a service doesn't start
+
 
 ## CLI
 
