@@ -12,7 +12,7 @@
     -
   options:
     -
-  expectation: stack-list
+  expectation: stack-list-running
 
 - stack-stop:
   cmd: amp stack stop
@@ -28,7 +28,7 @@
     -
   options:
     -
-  expectation: stack-unavailable
+  expectation: stack-list-unavailable
 
 - stack-restart:
   cmd: amp stack start
@@ -44,7 +44,7 @@
     -
   options:
     -
-  expectation: stack-list
+  expectation: stack-list-running
 
 - stack-stop:
   cmd: amp stack stop
@@ -68,4 +68,4 @@
     -
   options:
     -
-  expectation: stack-unavailable
+  expectation: stack-list-unavailable

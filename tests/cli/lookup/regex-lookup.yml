@@ -2,11 +2,14 @@ logs-all: ([a-zA-Z0-9\.\-:\"\s\_\t\n$&?/\[\]%><,;()+='*{}\\]*)
 logs-metadata: (timestamp:"[A-Z0-9\.\-:\"]+\s+time_id:"[A-Z0-9\.\-:\"]+\s+service_id:"[a-z0-9$\"]+\s+service_name:"[a-z0-9\-$\"]+\s+message:"[a-zA-Z0-9\./\-:\s\_\"=\t\n\$\\&%?\[\]\%\>\<\,\;\+$\"]+\s+container_id:"[a-z0-9$\"]+\s+node_id:"[a-z0-9$\"]+\s+task_id:"[a-z0-9$\"]+\s+task_name:"[a-z0-9\.\-$\"]+)
 logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
 docker-service-list: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}
+docker-service-list-valid-service: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}({{call .uniq `pinger`}})([a-zA-Z0-9\s\.\-:/]*){1,}
+docker-service-list-invalid-service: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}[^{{call .uniq `pinger`}}]([a-zA-Z0-9\s\.\-:/]*){1,}
 service-id: ([a-z0-9]){25}
 service-curl: ((.)|(\s))*(pong)((.)|(\s))*
-stack-list: NAME\s+ID\s+STATE\s*-+\s*\n+([a-z0-9A-Z\s]*){1,}
+service-remove: "{{call .uniq `pinger`}}"
+stack-list-running: NAME\s+ID\s+STATE\s*-+\s*\n+([a-z0-9A-Z\s]*){1,}({{call .uniq `stack1`}})([a-z0-9A-Z\s]*){1,}
+stack-list-unavailable: No stack is available
 stack-id: ([a-z0-9]){64}
-stack-unavailable: No stack is available
 stats-container: Service name\s+Container name\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*\n-+\s*\n([a-zA-Z0-9\-\.%\s/]*){1,}
 stats-cpu: Service name\s+CPU %%\s*\n-+\s*\n([a-z\-0-9\.%\s]*){1,}
 stats-io: Service name\s+Disk IO\s+read/write\s*\n-+\s*\n([a-z0-9A-Z\-\./\s]*){1,}
