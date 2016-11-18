@@ -40,6 +40,6 @@ func pullAMPImages(cmd *cobra.Command, args []string) error {
 		manager.printf(colError, "Pull error: %v\n", err)
 		os.Exit(1)
 	}
-	manager.printf(colWhite, "AMP platform images pulled\n")
+	manager.printf(colMagenta, "AMP platform images pulled\n")
 	return nil
 }

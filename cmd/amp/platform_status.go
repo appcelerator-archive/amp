@@ -37,7 +37,7 @@ func getAMPStatus(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 	manager.computeStatus(getAMPInfrastructureStack(manager))
-	manager.printf(colWhite, "status: %s\n", manager.status)
+	manager.printf(colMagenta, "status: %s\n", manager.status)
 	if manager.status != "running" {
 		os.Exit(1)
 	}
