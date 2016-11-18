@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 
 	"bytes"
 	"context"
@@ -47,6 +48,7 @@ var (
 	lookupDir    = "./lookup"
 	regexMap     map[string]string
 	suiteTimeout string
+	wg sync.WaitGroup
 )
 
 //start amplifier
@@ -57,13 +59,16 @@ func TestMain(m *testing.M) {
 
 //read, parse and execute test commands
 func TestCmds(t *testing.T) {
-	suiteTimeout = "30000ms"
+	suiteTimeout = "1m"
 	duration, err := time.ParseDuration(suiteTimeout)
 	if err != nil {
 		t.Errorf("Unable to generate suite timeout, reason: %v", err)
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), duration)
+	//test suite context
+	ctxSuite, cancelSuite := context.WithTimeout(context.Background(), duration)
+	defer cancelSuite()
+	go checkTimeout(t, ctxSuite, "Suite")
 	err = loadRegexLookup()
 	if err != nil {
 		t.Errorf("Unable to load lookup specs, reason: %v", err)
@@ -74,27 +79,18 @@ func TestCmds(t *testing.T) {
 		t.Errorf("Unable to load test specs, reason: %v", err)
 		return
 	}
+	wg.Add(len(tests))
 	for _, test := range tests {
-		t.Log("-----------------------------------------------------------------------------------------")
+		t.Logf("-----------------------------------------------------------------------------------------")
 		t.Logf("Running spec: %s", test.Name)
-		ctx, _ := context.WithTimeout(ctx, test.Timeout)
-		if err := runTestSpec(ctx, t, test); err != nil {
-			t.Error(err)
-			return
-		}
-		select {
-		case <-ctx.Done():
-			t.Log("TestSpec Timeout")
-			t.Fail()
-		default:
-		}
+		//test spec context
+		ctxSpec, cancelSpec := context.WithTimeout(context.Background(), test.Timeout)
+		defer cancelSpec()
+		go checkTimeout(t, ctxSpec, test.Name)
+		go runTestSpec(t, test)
 	}
-	select {
-	case <-ctx.Done():
-		t.Log("Suite Timeout")
-		t.Fail()
-	default:
-	}
+	wg.Wait()
+	t.Log("Finished!")
 }
 
 //read test_samples directory by parsing its contents
@@ -141,20 +137,22 @@ func loadTestSpec(fileName string) (*TestSpec, error) {
 
 	for _, command := range commandMap {
 		if command.Timeout == "" {
-			command.Timeout = "1000ms"
+			command.Timeout = "5000ms"
 		}
-		duration, duraErr := time.ParseDuration(command.Timeout)
+		testSpecTimeout := "1m"
+		duration, duraErr := time.ParseDuration(testSpecTimeout)
 		if duraErr != nil {
 			return nil, fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", fileName, err)
 		}
-		testSpec.Timeout += duration
+		testSpec.Timeout = duration
 		testSpec.Commands = append(testSpec.Commands, command)
 	}
 	return testSpec, nil
 }
 
 //execute commands and check for timeout, delay and retry
-func runTestSpec(ctx context.Context, t *testing.T, test *TestSpec) error {
+func runTestSpec(t *testing.T, test *TestSpec) {
+	defer wg.Done()
 	var i int
 	var cache = map[string]string{}
 	var err error
@@ -163,11 +161,12 @@ func runTestSpec(ctx context.Context, t *testing.T, test *TestSpec) error {
 		var tmplString []string
 		duration, duraErr := time.ParseDuration(cmdSpec.Timeout)
 		if duraErr != nil {
-			err = fmt.Errorf("Parsing duration failed: %v", err)
-			t.Log(err)
+			t.Log("Parsing duration failed: %v", err)
+			t.Fail()
 		}
-		ctx, _ := context.WithTimeout(ctx, duration)
-
+		//cmd Spec context
+		ctx, cancel := context.WithTimeout(context.Background(), duration)
+		go checkTimeout(t, ctx, cmdSpec.Cmd)
 		for i = -1; i < cmdSpec.Retry; i++ {
 			//err is set to nil a the beginning of the loop to ensure that each time a
 			//command is retried or executed atleast once without the error assigned
@@ -178,8 +177,8 @@ func runTestSpec(ctx context.Context, t *testing.T, test *TestSpec) error {
 			cmdString := generateCmdString(&cmdSpec)
 			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
-				err = fmt.Errorf("Executing templating failed: %v", tmplErr)
-				t.Log(err)
+				t.Log("Executing templating failed: %s", tmplErr)
+				t.Fail()
 			}
 			tmplString = strings.Fields(tmplOutput)
 			t.Logf("Running: %s", strings.Join(tmplString, " "))
@@ -192,14 +191,6 @@ func runTestSpec(ctx context.Context, t *testing.T, test *TestSpec) error {
 				t.Log(err)
 			}
 
-			//check if command execution has exceeded timeout (in Millisecond)
-			select {
-			case <-ctx.Done():
-				t.Log("Timeout:", tmplString)
-				t.Fail()
-			default:
-			}
-
 			//if no error after retries, break the loop to continue command execution
 			if err == nil {
 				break
@@ -208,16 +199,21 @@ func runTestSpec(ctx context.Context, t *testing.T, test *TestSpec) error {
 			if cmdSpec.Delay != "" {
 				del, delErr := time.ParseDuration(cmdSpec.Delay)
 				if delErr != nil {
-					return fmt.Errorf("Invalid delay specified: %s : Error: %v", cmdSpec.Delay, delErr)
+					t.Log("Invalid delay specified: %s : Error: %v", cmdSpec.Delay, delErr)
+					t.Fail()
 				}
 				time.Sleep(del)
 			}
 		}
-		if i > 0 && i == cmdSpec.Retry {
+		if i > 0 {
 			t.Log("This command :", tmplString, "has re-run", i, "times.")
 		}
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+		}
+		cancel()
 	}
-	return err
 }
 
 //create an array of strings representing the commands by concatenating
@@ -313,4 +309,17 @@ func randString(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
+}
+
+//repeatedly call the done() method for the context, fail if the deadline exceeds
+func checkTimeout(t *testing.T, ctx context.Context, name string){
+  for {
+    select {
+    case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				t.Fatal("Deadline exceeded:", name)
+			}
+			return
+    }
+  }
 }
