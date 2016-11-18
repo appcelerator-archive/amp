@@ -18,7 +18,7 @@ const (
 	telegrafVersion      = "1.1.1"
 	grafanaVersion       = "1.0.1"
 	elasticsearchVersion = "2.3.5"
-	etcdVersion          = "3.1.0-rc.0-2"
+	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
 	haproxyVersion       = "1.0.1"
 	registryVersion      = "2.5.1"
