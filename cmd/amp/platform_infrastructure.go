@@ -13,9 +13,9 @@ const (
 const (
 	ampVersion           = "latest"
 	uiVersion            = "0.2.0"
-	influxDBVersion      = "1.1.0"
+	influxDBVersion      = "1.1.2"
 	kapacitorVersion     = "1.1.0"
-	telegrafVersion      = "1.1.0-rc1"
+	telegrafVersion      = "1.1.1"
 	grafanaVersion       = "1.0.1"
 	elasticsearchVersion = "2.3.3"
 	etcdVersion          = "3.1.0-rc.0-2"
