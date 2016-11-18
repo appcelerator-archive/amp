@@ -35,7 +35,7 @@ func TestQuery(t *testing.T) {
 
 func influxInit() {
 	host := os.Getenv("influxhost")
-	cstr := "http://127.0.0.1:8086"
+	cstr := "http://influxdb:8086"
 	if host != "" {
 		cstr = "http://" + host + ":8086"
 	}

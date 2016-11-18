@@ -20,10 +20,10 @@ var (
 	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config     = &client.Configuration{}
-	configFile string
-	verbose    bool
-	serverAddr string
+	Config      = &client.Configuration{}
+	configFile  string
+	verbose     bool
+	serverAddr  string
 	listVersion = true
 
 	// RootCmd is the base command for the CLI.

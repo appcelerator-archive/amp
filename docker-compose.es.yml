@@ -1,8 +1,0 @@
-version: "2"
-
-services:
-  elasticsearch:
-    image: appcelerator/elasticsearch-amp:latest
-    ports:
-    - "9200:9200"
-    - "9300:9300"

@@ -1,0 +1,8 @@
+# appclerator/protoc is based on alpine and includes latest go and protoc
+FROM appcelerator/protoc
+RUN echo "@community http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk --no-cache add make bash git docker@community
+WORKDIR /go/src/github.com/appcelerator/amp
+COPY . /go/src/github.com/appcelerator/amp
+ENTRYPOINT []
+CMD [ "make", "docker-integration-test"]

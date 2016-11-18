@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
-	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
@@ -108,7 +107,7 @@ func TestStackShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 }
 
 func TestTransitionsFromStopped(t *testing.T) {
-	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	machine := state.NewMachine(stack.StackRuleSet, store)
 
 	id := stringid.GenerateNonCryptoID()
 	machine.CreateState(id, stack.StackState_Stopped.String())
@@ -129,7 +128,7 @@ func TestTransitionsFromStopped(t *testing.T) {
 }
 
 func TestTransitionsFromStarting(t *testing.T) {
-	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	machine := state.NewMachine(stack.StackRuleSet, store)
 	id := stringid.GenerateNonCryptoID()
 
 	machine.CreateState(id, stack.StackState_Starting.String())
@@ -150,7 +149,7 @@ func TestTransitionsFromStarting(t *testing.T) {
 }
 
 func TestTransitionsFromRunning(t *testing.T) {
-	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	machine := state.NewMachine(stack.StackRuleSet, store)
 	id := stringid.GenerateNonCryptoID()
 
 	machine.CreateState(id, stack.StackState_Running.String())
@@ -171,7 +170,7 @@ func TestTransitionsFromRunning(t *testing.T) {
 }
 
 func TestTransitionsFromRedeploying(t *testing.T) {
-	machine := state.NewMachine(stack.StackRuleSet, runtime.Store)
+	machine := state.NewMachine(stack.StackRuleSet, store)
 	id := stringid.GenerateNonCryptoID()
 
 	machine.CreateState(id, stack.StackState_Redeploying.String())
