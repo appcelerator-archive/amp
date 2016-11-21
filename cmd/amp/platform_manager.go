@@ -63,7 +63,7 @@ type ampService struct {
 }
 
 var (
-	colWhite   = 0
+	colMagenta = 0
 	colInfo    = 1
 	colWarn    = 2
 	colError   = 3
@@ -73,14 +73,14 @@ var (
 
 func (s *ampManager) init(firstMessage string) error {
 	s.ctx = context.Background()
-	s.printColor[0] = color.New(color.FgHiWhite)
+	s.printColor[0] = color.New(color.FgMagenta)
 	s.printColor[1] = color.New(color.FgHiBlack)
 	s.printColor[2] = color.New(color.FgYellow)
 	s.printColor[3] = color.New(color.FgRed)
 	s.printColor[4] = color.New(color.FgGreen)
 	s.printColor[5] = color.New(color.FgHiGreen)
 	if firstMessage != "" {
-		s.printf(colWhite, firstMessage+"\n")
+		s.printf(colMagenta, firstMessage+"\n")
 	}
 	if s.force {
 		s.printf(colWarn, "Force mode: on\n")
@@ -278,7 +278,7 @@ func (s *ampManager) monitor(stack *ampStack) {
 			} else if serv.status == "partially running" {
 				s.printf(colWarn, "%s\n", s.displayService(serv, cols))
 			} else if serv.status == "starting" {
-				s.printf(colWhite, "%s\n", s.displayService(serv, cols))
+				s.printf(colMagenta, "%s\n", s.displayService(serv, cols))
 			} else {
 				s.printf(colInfo, "%s\n", s.displayService(serv, cols))
 			}

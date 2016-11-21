@@ -39,13 +39,13 @@ func stopAMP(cmd *cobra.Command, args []string) error {
 	stack := getAMPInfrastructureStack(manager)
 	manager.computeStatus(stack)
 	if manager.status == "stopped" {
-		manager.printf(colWhite, "AMP platform already stopped\n")
+		manager.printf(colMagenta, "AMP platform already stopped\n")
 		return nil
 	}
 	if err := manager.stop(stack); err != nil {
 		manager.printf(colError, "Stop error: %v\n", err)
 		os.Exit(1)
 	}
-	manager.printf(colWhite, "AMP platform stopped\n")
+	manager.printf(colMagenta, "AMP platform stopped\n")
 	return nil
 }

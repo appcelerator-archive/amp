@@ -44,7 +44,7 @@ func startAMP(cmd *cobra.Command, args []string) error {
 	manager.computeStatus(stack)
 	if manager.status == "running" {
 		if !manager.force {
-			manager.printf(colWhite, "AMP platform already started (-f to force a re-start)\n")
+			manager.printf(colMagenta, "AMP platform already started (-f to force a re-start)\n")
 			return nil
 		}
 		if err := manager.stop(stack); err != nil {
@@ -59,6 +59,6 @@ func startAMP(cmd *cobra.Command, args []string) error {
 		}
 		os.Exit(1)
 	}
-	manager.printf(colWhite, "AMP platform started\n")
+	manager.printf(colMagenta, "AMP platform started\n")
 	return nil
 }
