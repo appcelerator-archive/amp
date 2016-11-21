@@ -158,7 +158,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 	var err error
 	//iterate through all the testSpec
 	for _, cmdSpec := range test.Commands {
-		var tmplString []string
+		var cmdTmplString []string
 		duration, duraErr := time.ParseDuration(cmdSpec.Timeout)
 		if duraErr != nil {
 			t.Log("Parsing duration failed: %v", err)
@@ -173,19 +173,30 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			//from the previous executions
 			err = nil
 
-			//generate command string from yml file and perform templating
+			//generate command string from cmdSpec
 			cmdString := generateCmdString(&cmdSpec)
-			tmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
+
+			//perform templating on cmdString
+			cmdTmplOutput, tmplErr := performTemplating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
 				t.Log("Executing templating failed: %s", tmplErr)
 				t.Fail()
 			}
-			tmplString = strings.Fields(tmplOutput)
-			t.Logf("Running: %s", strings.Join(tmplString, " "))
+			cmdTmplString = strings.Fields(cmdTmplOutput)
 
-			//execute commands and check if output matches the expected RegEx
-			cmdOutput, cmdErr := exec.Command(tmplString[0], tmplString[1:]...).CombinedOutput()
-			expectedOutput := regexp.MustCompile(cmdSpec.Expectation)
+			//execute command
+			cmdOutput, cmdErr := exec.Command(cmdTmplString[0], cmdTmplString[1:]...).CombinedOutput()
+			t.Logf("Running: %s", strings.Join(cmdTmplString, " "))
+
+			//perform templating on RegEx string
+			regexTmplOutput, tmplErr := performTemplating(cmdSpec.Expectation, cache)
+			if tmplErr != nil {
+					t.Log("Executing templating failed: %s", tmplErr)
+					t.Fail()
+			}
+
+			//check if the command output matches the RegEx
+			expectedOutput := regexp.MustCompile(regexTmplOutput)
 			if !expectedOutput.MatchString(string(cmdOutput)) {
 				err = fmt.Errorf("Mismatched expected output: %s : Error: %v", cmdOutput, cmdErr)
 				t.Log(err)
@@ -206,7 +217,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			}
 		}
 		if i > 0 {
-			t.Log("This command :", tmplString, "has re-run", i, "times.")
+			t.Log("This command :", cmdTmplString, "has re-run", i, "times.")
 		}
 		if err != nil {
 			t.Log(err)
@@ -274,7 +285,7 @@ func performTemplating(s string, cache map[string]string) (output string, err er
 		if val, ok := cache[in]; ok {
 			return val
 		}
-		out := in + "-" + randString(10)
+		out := in + randString(10)
 		cache[in] = out
 		return out
 	}
