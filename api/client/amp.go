@@ -13,7 +13,7 @@ import (
 
 const (
 	//DefaultServerAddress amplifier address + port default
-	DefaultServerAddress = "localhost:8080"
+	DefaultServerAddress = "127.0.0.1:8080"
 )
 
 var (

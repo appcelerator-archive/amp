@@ -1,8 +1,70 @@
-# Getting started
+AMP: A... Microservices Platform ![WIP](./static_files/amp--docs-WIP-yellow.svg)
+============================
 
-## Starting AMP
+AMP is currently under development and this section is here to help you get started based on latest stable tagged version of the project. If you're here, then you **ARE** pioneering with us and we encourage you to [get in touch](./contributing.md) !
 
-Use the amp command `amp platform` or `amp pf` to launch amp swarm services. Available commands are:
+# Installation
+
+AMP can be installed either on your computer for building solutions or on servers for running them. To get started, [check out the installation instructions in the documentation](./installation/index.md)
+
+# Configuration
+
+## Docker Swarm cluster
+
+AMP requires a Docker Swarm cluster to operate. Depending on your installation type, you may already have a swarm cluster available. If you installed AMP locally, here are the instructions to create a local Docker Swarm cluster:
+
+    $ docker swarm init
+    
+It should provide the following output:
+
+    Swarm initialized: current node (ej9yivb39rrq2iyk3itdqvcq1) is now a manager.
+      
+    To add a worker to this swarm, run the following command:
+      
+        docker swarm join \
+        --token SWMTKN-1-08xe2j6h2y812exq4rw5cj7j98112gn2ar88s9kkniimmn4i74-1bkwl472uc7llf4divn7k3bkv \
+        10.128.27.12:2377
+      
+    To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+ 
+Make sure you Docker Swarm cluster is up and ready by typing the following command:
+
+    $ docker node ls
+    
+## AMP CLI
+
+The AMP Command Line Interface is a gRPC client connecting to the AMP daemon on `127.0.0.1:8080` by default, which is fine if you're using AMP locally.
+If you have deployed your AMP Swarm cluster somewhere else and you want to control it remotely, please make sure to specify the valid AMP daemon address either:
+
+ * as a command line parameter:
+
+        $ amp --server amp.some.where:8080 [command]
+
+ * In the configuration file:
+
+        $ cat ~/.amp.yaml
+        ServerAddress: amp.some.where:8080
+        $ amp [command]
+  
+# Starting AMP
+
+Use the AMP command `amp platform` (or the `amp pf` short version) to manipulate AMP swarm services.
+
+On first usage, you need to pull AMP images to your local docker installation using:
+    
+    $ amp pf pull
+    
+After this step, you can start AMP with the following command:
+                                                                                    
+    $ amp pf start
+
+Finally, you can monitor AMP status by using:
+
+    $ amp pf monitor
+
+## AMP platform commands
+
+AMP platform commands are useful to manage your AMP swarm deployment:
 
  * pull
  * start
@@ -18,9 +80,10 @@ The usual workflow looks like this:
     $ amp pf stop
 
 Options:
-          -v --verbose         To have more information messages
-          -s --silence         To do not have message at all
-          -f --force           Only for 'start', to force amp restart if amp is already started or do not exit on error if a service doesn't start
+
+    -v --verbose    To have more information messages
+    -s --silence    To not have message at all
+    -f --force      Only for 'start', to force amp restart if amp is already started or do not exit on error if a service doesn't start
 
 
 ## CLI
