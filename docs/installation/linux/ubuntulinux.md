@@ -287,19 +287,6 @@ Verify your work by running `docker` without `sudo`.
   Check that the `DOCKER_HOST` environment variable is not set for your shell.
   If it is, unset it.
 
-### Install Glide
-
-In this early adopter phase, and as you'll be working from sources, you will need to retrieve all dependencies to properly run AMP. We currently use [Glide](https://glide.sh/) to manage all associated packages. Installing Glide is a pretty straight forward process detailed below:
-
-1. Log into your machine as a user with `sudo` or `root` privileges.
-
-2. Open a terminal window.
-
-3. Get Glide
-
-		$ sudo curl https://glide.sh/get | sh
-
-
 ## Install AMP
 
 Hang in there, you are now ready to install AMP on your system, just a few more steps:
@@ -307,12 +294,29 @@ Hang in there, you are now ready to install AMP on your system, just a few more 
 
 ### Retrieve latest build on GitHub
 
-1. Log into your machine as a user with `sudo` or `root` privileges.
+1. Log into your machine.
 
 2. Open a terminal window.
 
 3. Create your workspace directory:
 
-		$ sudo mkdir -p /go/src/github.com/appcelerator
+        $ mkdir -p $GOROOT/src/github.com/appcelerator
+        $ cd $GOROOT/src/github.com/appcelerator 
 
+4. Clone AMP git repository.
 
+    > To use the master (unstable), type the following command:  
+
+        $ git clone git@github.com:appcelerator/amp.git
+
+    > To use a specific release (stable), type the following command:  
+
+        $ git clone --branch v0.4.0 git@github.com:appcelerator/amp.git
+
+4. Build AMP from source
+ 
+         $ make install
+    
+You how have AMP installed locally! Please check the [getting started](../../README.md#configuration) section to start playing with AMP.
+        
+    
