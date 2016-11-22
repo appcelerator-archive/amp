@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -26,8 +27,20 @@ const serviceRoleLabelName = "io.amp.role"
 
 // Server is used to implement stack.StackService
 type Server struct {
-	Store  storage.Interface
-	Docker *client.Client
+	Store        storage.Interface
+	Docker       *client.Client
+	StateMachine state.Machine
+}
+
+// NewServer instantiates a server
+func NewServer(store storage.Interface, docker *client.Client) (s *Server) {
+	var stackStateMachine = state.NewMachine(StackRuleSet, store)
+	s = &Server{
+		Store:        store,
+		Docker:       docker,
+		StateMachine: stackStateMachine,
+	}
+	return
 }
 
 // Up implements stack.ServerService Up
@@ -65,7 +78,7 @@ func (s *Server) Create(ctx context.Context, in *StackFileRequest) (*StackReply,
 	}
 
 	//parse the stack file
-	stack, err := newStackFromYaml(ctx, in.Stackfile)
+	stack, err := s.newStackFromYaml(ctx, in.Stackfile)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +443,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 	if stack.Services == nil || len(stack.Services) == 0 {
 		return nil, fmt.Errorf("No services found for the stack %s \n", in.StackIdent)
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Starting.String()); err != nil {
+	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Starting.String()); err != nil {
 		return nil, err
 	}
 	fmt.Printf("Starting stack %s\n", in.StackIdent)
@@ -472,7 +485,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 			return nil, createErr
 		}
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Running.String()); err != nil {
+	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Running.String()); err != nil {
 		return nil, err
 	}
 	reply := StackReply{
@@ -488,7 +501,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	if errIdent != nil {
 		return nil, errIdent
 	}
-	if running, err := stackStateMachine.Is(stack.Id, StackState_Running.String()); err != nil {
+	if running, err := s.StateMachine.Is(stack.Id, StackState_Running.String()); err != nil {
 		return nil, err
 	} else if !running {
 		return nil, errors.New("Stack is not running")
@@ -497,7 +510,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 	if err := s.stopStackServices(ctx, stack.Id, false); err != nil {
 		fmt.Printf("catch error during stop services: %v", err)
 	}
-	if err := stackStateMachine.TransitionTo(stack.Id, StackState_Stopped.String()); err != nil {
+	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Stopped.String()); err != nil {
 		fmt.Printf("catch error during stack state transition: %v", err)
 	}
 	reply := StackReply{
@@ -645,7 +658,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 		return nil, errIdent
 	}
 	if !in.Force {
-		if stopped, err := stackStateMachine.Is(stack.Id, StackState_Stopped.String()); err != nil {
+		if stopped, err := s.StateMachine.Is(stack.Id, StackState_Stopped.String()); err != nil {
 			return nil, err
 		} else if !stopped {
 			return nil, errors.New("The stack is not stopped")
@@ -667,7 +680,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 	}
 	s.Store.Delete(ctx, path.Join(stackRootKey, stack.Id), true, nil)
 	s.Store.Delete(ctx, path.Join(stackRootNameKey, stack.Name), true, nil)
-	err := stackStateMachine.DeleteState(stack.Id)
+	err := s.StateMachine.DeleteState(stack.Id)
 	if err != nil {
 		fmt.Printf("catching error: %v\n", err)
 	}
@@ -711,7 +724,7 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 		info.Name = stack.Name
 		info.Id = stack.Id
 	}
-	info.State, err = stackStateMachine.GetState(stack.Id)
+	info.State, err = s.StateMachine.GetState(stack.Id)
 	if err != nil {
 		info.State = "N/A"
 	}
@@ -719,14 +732,14 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 }
 
 // newStackFromYaml create a new stack from yaml
-func newStackFromYaml(ctx context.Context, config string) (stack *Stack, err error) {
+func (s *Server) newStackFromYaml(ctx context.Context, config string) (stack *Stack, err error) {
 	stack, err = ParseStackfile(ctx, config)
 	if err != nil {
 		return
 	}
 
 	// Create stack state
-	if err = stackStateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
+	if err = s.StateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
 		return
 	}
 

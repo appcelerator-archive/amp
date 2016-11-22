@@ -1,9 +1,6 @@
 package stack
 
-import (
-	"github.com/appcelerator/amp/api/runtime"
-	"github.com/appcelerator/amp/api/state"
-)
+import "github.com/appcelerator/amp/api/state"
 
 // StackRuleSet defines possible transitions for stack states
 var StackRuleSet = state.RuleSet{
@@ -32,5 +29,3 @@ var StackRuleSet = state.RuleSet{
 		StackState_Redeploying.String(): false,
 	},
 }
-
-var stackStateMachine = state.NewMachine(StackRuleSet, runtime.Store)

@@ -8,6 +8,9 @@ import (
 
 	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
+	"math/rand"
+	"strconv"
+
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -21,8 +24,6 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/nats-io/nats"
 	"google.golang.org/grpc"
-	"math/rand"
-	"strconv"
 )
 
 const (
@@ -77,10 +78,10 @@ func Start(config Config) {
 	service.RegisterServiceServer(s, &service.Service{
 		Docker: runtime.Docker,
 	})
-	stack.RegisterStackServiceServer(s, &stack.Server{
-		Store:  runtime.Store,
-		Docker: runtime.Docker,
-	})
+	stack.RegisterStackServiceServer(s, stack.NewServer(
+		runtime.Store,
+		runtime.Docker,
+	))
 	topic.RegisterTopicServer(s, &topic.Server{
 		Store: runtime.Store,
 		Nats:  runtime.Nats,
