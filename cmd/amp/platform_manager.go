@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"sort"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
@@ -9,8 +12,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"golang.org/x/net/context"
-	"sort"
-	"time"
 )
 
 const (
@@ -31,6 +32,7 @@ type ampManager struct {
 	silence    bool
 	verbose    bool
 	force      bool
+	local      bool
 	status     string
 	printColor [6]*color.Color
 }
@@ -153,6 +155,9 @@ func (s *ampManager) stop(stack *ampStack) error {
 
 func (s *ampManager) pull(stack *ampStack) error {
 	for _, image := range stack.imageMap {
+		if s.local && image == "appcelerator/amp:local" {
+			continue
+		}
 		s.printf(colInfo, "Pulling image %s\n", image)
 		options := types.ImagePullOptions{}
 		if RegistryToken != "" {
