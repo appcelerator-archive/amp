@@ -32,6 +32,7 @@ DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 PROTOFILES = $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
 
 # generated files that can be cleaned
+
 GENERATED := $(shell find . -type f -name '*.pb.go' $(EXCLUDE_FILES_FILTER))
 
 # ignore generated files when formatting/linting/vetting
@@ -48,6 +49,9 @@ SERVER := amplifier
 AGENT := amp-agent
 LOGWORKER := amp-log-worker
 GATEWAY := amplifier-gateway
+CLUSTERSERVER := cluster-server
+CLUSTERAGENT := cluster-agent
+AMPCLUSTER := amp-cluster
 
 TAG := latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -99,6 +103,9 @@ clean:
 	@rm -f $$(which $(AGENT)) ./$(AGENT)
 	@rm -f $$(which $(LOGWORKER)) ./$(LOGWORKER)
 	@rm -f $$(which $(GATEWAY)) ./$(GATEWAY)
+	@rm -f $$(which $(CLUSTERSERVER)) ./$(CLUSTERSERVER)
+	@rm -f $$(which $(CLUSTERAGENT)) ./$(CLUSTERAGENT)
+	@rm -f $$(which $(AMPCLUSTER)) ./$(AMPCLUSTER)
 
 install:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
@@ -106,6 +113,9 @@ install:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AMPCLUSTER)
 
 build:
 	@hack/build $(CLI)
@@ -113,6 +123,9 @@ build:
 	@hack/build $(AGENT)
 	@hack/build $(LOGWORKER)
 	@hack/build $(GATEWAY)
+	@hack/build $(CLUSTERAGENT)
+	@hack/build $(CLUSTERSERVER)
+	@hack/build $(AMPCLUSTER)
 
 build-server-image:
 	@docker build -t appcelerator/$(SERVER):$(TAG) .
@@ -141,20 +154,32 @@ build-server-windows:
 	@rm -f $(SERVER).exe
 	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
 
-dist-linux: build-cli-linux build-server-linux
+build-clustercli-linux:
+	@rm -f $(CLI)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
+
+build-clustercli-darwin:
+	@rm -f $(CLI)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
+
+build-clustercli-windows:
+	@rm -f $(CLI).exe
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
+	
+dist-linux: build-cli-linux build-server-linux build-clustercli-linux
 	@rm -f dist/Linux/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Linux/x86_64
-	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPCLUSTER)
 
-dist-darwin: build-cli-darwin build-server-darwin
+dist-darwin: build-cli-darwin build-server-darwin build-clustercli-derwing
 	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Darwin/x86_64
-	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPCLUSTER)
 
-dist-windows: build-cli-windows build-server-windows
+dist-windows: build-cli-windows build-server-windows build-clustercli-windows
 	@rm -f dist/Windows/x86_64/amp-$(VERSION).zip
 	@mkdir -p dist/Windows/x86_64
-	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe
+	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe $(AMPCLUSTER).exe
 
 dist: dist-linux dist-darwin dist-windows
 

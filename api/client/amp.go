@@ -53,13 +53,14 @@ func (l logger) Println(args ...interface{}) {
 
 // Configuration is for all configurable client settings
 type Configuration struct {
-	Verbose       bool
-	Github        string
-	Target        string
-	Images        []string
-	Port          string
-	ServerAddress string
-	CmdTheme      string
+	Verbose              bool
+	Github               string
+	Target               string
+	Images               []string
+	Port                 string
+	ServerAddress        string
+	ClusterServerAddress string
+	CmdTheme             string
 }
 
 // AMP holds the state for the current environment

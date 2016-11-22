@@ -54,6 +54,17 @@ if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
 fi
+$DOCKER cp amp-builder:/go/bin/cluster-server ./cluster-server >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
+$DOCKER cp amp-builder:/go/bin/cluster-agent ./cluster-agent >&2
+
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
 echo "OK"
 
 echo "building shrunk image... "
@@ -64,8 +75,8 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo "cleanup... "
-rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway
+echo -n "cleanup... "
+rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway cluster-server cluster-agent
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1
 $DOCKER rmi $REPOSITORY_NAME:builder
