@@ -3,8 +3,9 @@ package state
 import (
 	"context"
 	"fmt"
-	"github.com/appcelerator/amp/data/storage"
 	"path"
+
+	"github.com/appcelerator/amp/data/storage"
 )
 
 const statesRootKey = "states"
