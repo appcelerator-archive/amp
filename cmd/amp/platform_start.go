@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // PlatformStart is the main command for attaching platform subcommands.
@@ -18,6 +19,7 @@ var PlatformStart = &cobra.Command{
 func init() {
 	PlatformStart.Flags().BoolP("force", "f", false, "Start all possible services, do not stop on error")
 	PlatformStart.Flags().BoolP("silence", "s", false, "no console output at all")
+	PlatformStart.Flags().BoolP("local", "l", false, "use local amp image")
 	PlatformCmd.AddCommand(PlatformStart)
 }
 
@@ -31,6 +33,9 @@ func startAMP(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flag("verbose").Value.String() == "true" {
 		manager.verbose = true
+	}
+	if cmd.Flag("local").Value.String() == "true" {
+		manager.local = true
 	}
 	if err := manager.init("Starting AMP platform"); err != nil {
 		manager.printf(colError, "Start error: %v\n", err)

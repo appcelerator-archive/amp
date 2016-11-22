@@ -50,6 +50,12 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "OK"
+$DOCKER cp amp-builder:/go/bin/amplifier-gateway ./amplifier-gateway >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
+echo "OK"
 
 echo -n "building shrinked image... "
 $DOCKER build -f $SHRINKED_DOCKER_FILE -t appcelerator/amp:$TAG . >&2

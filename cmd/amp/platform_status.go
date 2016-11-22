@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // PlatformStatus is the main command for attaching platform subcommands.
@@ -17,6 +18,7 @@ var PlatformStatus = &cobra.Command{
 
 func init() {
 	PlatformStatus.Flags().BoolP("silence", "s", false, "no console output at all")
+	PlatformStatus.Flags().BoolP("local", "l", false, "use local amp image")
 	PlatformCmd.AddCommand(PlatformStatus)
 }
 
@@ -27,6 +29,9 @@ func getAMPStatus(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flag("verbose").Value.String() == "true" {
 		manager.verbose = true
+	}
+	if cmd.Flag("local").Value.String() == "true" {
+		manager.local = true
 	}
 	if err := manager.init(""); err != nil {
 		manager.printf(colError, "Compute status error: %v\n", err)

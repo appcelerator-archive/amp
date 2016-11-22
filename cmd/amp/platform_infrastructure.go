@@ -31,7 +31,11 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 	stack.init()
 
 	//add images
-	stack.addImage("amp", "appcelerator/amp:"+ampVersion)
+	if m.local {
+		stack.addImage("amp", "appcelerator/amp:local")
+	} else {
+		stack.addImage("amp", "appcelerator/amp:"+ampVersion)
+	}
 	stack.addImage("amp-ui", "appcelerator/amp-ui:"+uiVersion)
 	stack.addImage("elasticsearch", "appcelerator/elasticsearch-amp:"+elasticsearchVersion)
 	stack.addImage("grafana", "appcelerator/grafana-amp:"+grafanaVersion)

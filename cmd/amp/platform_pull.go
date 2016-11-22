@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // PlatformPull is the main command for attaching platform subcommands.
@@ -17,6 +18,7 @@ var PlatformPull = &cobra.Command{
 
 func init() {
 	PlatformPull.Flags().BoolP("silence", "s", false, "no console output at all")
+	PlatformPull.Flags().BoolP("local", "l", false, "use local amp image")
 	PlatformCmd.AddCommand(PlatformPull)
 }
 
@@ -27,6 +29,9 @@ func pullAMPImages(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flag("verbose").Value.String() == "true" {
 		manager.verbose = true
+	}
+	if cmd.Flag("local").Value.String() == "true" {
+		manager.local = true
 	}
 	if err := manager.init("Pulling AMP images"); err != nil {
 		manager.printf(colError, "Pull error: %v\n", err)
