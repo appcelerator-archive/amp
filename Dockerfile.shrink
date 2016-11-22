@@ -4,6 +4,8 @@ COPY ./amplifier /usr/local/bin/amplifier
 COPY ./amp-agent /usr/local/bin/amp-agent
 COPY ./amp-log-worker /usr/local/bin/amp-log-worker
 COPY ./amplifier-gateway /usr/local/bin/amplifier-gateway
+COPY ./adm-server /usr/local/bin/adm-server
+COPY ./adm-agent /usr/local/bin/adm-agent
 EXPOSE 50101
 ENTRYPOINT []
 CMD [ "amplifier" ]

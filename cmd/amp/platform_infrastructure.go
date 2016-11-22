@@ -13,7 +13,7 @@ const (
 
 const (
 	ampVersion           = "latest"
-	uiVersion            = "0.2.0"
+	uiVersion            = "0.3.0"
 	influxDBVersion      = "1.1.2"
 	kapacitorVersion     = "1.1.2"
 	telegrafVersion      = "1.1.1"

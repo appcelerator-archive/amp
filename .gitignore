@@ -3,6 +3,7 @@
 /amplifier-gateway
 /amp-agent
 /amp-log-worker
+/amp-cluster
 /dist
 /*.exe
 coverage.out
