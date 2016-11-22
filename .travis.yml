@@ -21,7 +21,7 @@ script:
   - make test
 
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
       docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
       timeout 120 ./shrink.sh latest &&
       timeout 30 docker push appcelerator/amp:latest
