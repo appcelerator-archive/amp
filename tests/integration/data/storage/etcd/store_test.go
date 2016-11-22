@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp/api/runtime"
-	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
+	"strings"
 )
 
 const (
@@ -35,8 +35,13 @@ func TestMain(m *testing.M) {
 	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("test: ")
 
-	server.StartTestServer()
-	store = runtime.Store
+	etcdEndpoints := []string{"http://etcd:2379"}
+	log.Printf("connecting to etcd at %s", strings.Join(etcdEndpoints, ","))
+	store = etcd.New(etcdEndpoints, "amp")
+	if err := store.Connect(defTimeout); err != nil {
+		log.Panicln("Unable to connect to etcd on: %s\n%v", etcdEndpoints, err)
+	}
+	log.Printf("connected to etcd at %v", strings.Join(store.Endpoints(), ","))
 	os.Exit(m.Run())
 }
 

@@ -2,7 +2,6 @@ package cli_test
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"sync"
 
@@ -19,7 +18,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/appcelerator/amp/api/server"
 	"gopkg.in/yaml.v2"
 )
 
@@ -50,12 +48,6 @@ var (
 	suiteTimeout string
 	wg sync.WaitGroup
 )
-
-//start amplifier
-func TestMain(m *testing.M) {
-	server.StartTestServer()
-	os.Exit(m.Run())
-}
 
 //read, parse and execute test commands
 func TestCmds(t *testing.T) {

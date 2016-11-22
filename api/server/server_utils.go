@@ -3,25 +3,19 @@ package server
 import (
 	"os"
 	"strings"
-
-	"google.golang.org/grpc"
-	"log"
-	"time"
 )
 
 const (
 	defaultPort             = ":50101"
-	etcdDefaultEndpoints    = "http://127.0.0.1:2379"
-	serverAddress           = "127.0.0.1" + defaultPort
-	elasticsearchDefaultURL = "http://127.0.0.1:9200"
-	natsDefaultURL          = "nats://127.0.0.1:4222"
-	influxDefaultURL        = "http://127.0.0.1:8086"
+	etcdDefaultEndpoints    = "http://etcd:2379"
+	elasticsearchDefaultURL = "http://elasticsearch:9200"
+	natsDefaultURL          = "nats://nats:4222"
+	influxDefaultURL        = "http://influxdb:8086"
 	dockerDefaultURL        = "unix:///var/run/docker.sock"
 	dockerDefaultVersion    = "1.24"
 )
 
 var (
-	config           Config
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
@@ -31,7 +25,9 @@ var (
 	dockerVersion    string
 )
 
-func parseEnv() {
+// ConfigFromEnv returns configuration from environment
+func ConfigFromEnv() Config {
+	config := Config{}
 	port = os.Getenv("port")
 	if port == "" {
 		port = defaultPort
@@ -70,30 +66,5 @@ func parseEnv() {
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = dockerVersion
-}
-
-// StartTestServer start a server for test
-func StartTestServer() (Config, *grpc.ClientConn) {
-	parseEnv()
-
-	go Start(config)
-
-	// Wait for swarm to be ready
-	log.Println("Waiting for swarm to be ready")
-	if err := initDependencies(config); err != nil {
-		log.Panicln("Dependencies are not ready", err)
-	}
-
-	// Connect to amplifier
-	log.Println("Connecting to amplifier")
-	conn, err := grpc.Dial(serverAddress,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second))
-	if err != nil {
-		log.Panicln("Cannot connect to amplifier", err)
-	}
-	log.Println("Connected to amplifier")
-
-	return config, conn
+	return config
 }

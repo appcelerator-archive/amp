@@ -81,19 +81,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Constraints: nil,
 				},
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    2379,
-						PublishedPort: 2379,
-					},
-					{
-						TargetPort:    2380,
-						PublishedPort: 2380,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
@@ -206,19 +194,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Constraints: nil,
 				},
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    4222,
-						PublishedPort: 4222,
-					},
-					{
-						TargetPort:    8222,
-						PublishedPort: 8222,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
@@ -248,19 +224,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Constraints: nil,
 				},
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    8086,
-						PublishedPort: 8086,
-					},
-					{
-						TargetPort:    8083,
-						PublishedPort: 8083,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
@@ -290,19 +254,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Constraints: nil,
 				},
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    9200,
-						PublishedPort: 9200,
-					},
-					{
-						TargetPort:    9300,
-						PublishedPort: 9300,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
@@ -371,15 +323,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 				},
 				Placement: nil,
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    5000,
-						PublishedPort: 5000,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
@@ -440,15 +384,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 				},
 				Placement: nil,
 			},
-			EndpointSpec: &swarm.EndpointSpec{
-				Mode: swarm.ResolutionModeVIP,
-				Ports: []swarm.PortConfig{
-					{
-						TargetPort:    3000,
-						PublishedPort: 6001,
-					},
-				},
-			},
+			EndpointSpec: nil,
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,

@@ -1,6 +1,6 @@
 
 .PHONY: all clean build build-cli build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows dist-linux dist-darwin dist-windows dist build-agent build-log-worker install install-server install-cli install-agent install-log-worker fmt simplify check version build-image run
-.PHONY: test
+.PHONY: test test-unit test-cli test-integration docker-integration-test
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -20,8 +20,9 @@ EXCLUDE_FILES_FILTER := -not -path './vendor/*' -not -path './.git/*' -not -path
 EXCLUDE_DIRS_FILTER := $(EXCLUDE_FILES_FILTER) -not -path '.' -not -path './vendor' -not -path './.git' -not -path './.glide'
 
 # for tests
-UNIT_TEST_PACKAGES        := $(shell find .       -type f -name '*_test.go' -not -path './tests/*' $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
-INTEGRATION_TEST_PACKAGES := $(shell find ./tests -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
+UNIT_TEST_PACKAGES        := $(shell find .                   -type f -name '*_test.go' -not -path './tests/*' $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
+CLI_TEST_PACKAGES         := $(shell find ./tests/cli         -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
+INTEGRATION_TEST_PACKAGES := $(shell find ./tests/integration -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
 
 DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 
@@ -158,14 +159,14 @@ dist-darwin: build-cli-darwin build-server-darwin
 	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Darwin/x86_64
 	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
-	
+
 dist-windows: build-cli-windows build-server-windows
 	@rm -f dist/Windows/x86_64/amp-$(VERSION).zip
 	@mkdir -p dist/Windows/x86_64
 	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe
-	
+
 dist: dist-linux dist-darwin dist-windows
-	
+
 proto: $(PROTOFILES)
 	@go run hack/proto.go
 
@@ -196,17 +197,34 @@ build-image:
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 
+test-cli:
+	@for pkg in $(CLI_TEST_PACKAGES) ; do \
+		go test $$pkg ; \
+	done
+
 test-unit:
 	@for pkg in $(UNIT_TEST_PACKAGES) ; do \
 		go test $$pkg ; \
 	done
 
 test-integration:
+	@docker service rm amp-integration-test 2> /dev/null || true
+	@docker build -f Dockerfile.test -t appcelerator/amp-integration-test .
+	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test
+	@containerid=""; \
+	while [[ $${containerid} == "" ]] ; do \
+		containerid=`docker ps -qf 'name=amp-integration'`; \
+		sleep 1 ; \
+	done; \
+	docker logs -f $$containerid; \
+	exit `docker inspect --format='{{.State.ExitCode}}' $$containerid`
+
+docker-integration-test:
 	@for pkg in $(INTEGRATION_TEST_PACKAGES) ; do \
 		go test $$pkg ; \
 	done
 
-test: test-unit test-integration
+test: test-unit test-integration test-cli
 
 cover:
 	echo "mode: count" > coverage-all.out

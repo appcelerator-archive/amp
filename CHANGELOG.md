@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+### Tests
+
+* Dockerized integration tests [#479](https://github.com/appcelerator/amp/pull/479)
+
+
 ## 0.2.2 (2016-10-25)
 
 ### Platform
