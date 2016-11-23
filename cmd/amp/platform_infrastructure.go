@@ -20,7 +20,7 @@ const (
 	elasticsearchVersion = "2.3.5"
 	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
-	haproxyVersion       = "1.0.1"
+	haproxyVersion       = "1.0.2"
 	registryVersion      = "2.5.1"
 	tickConfigVersion    = "0.4.0"
 )
@@ -568,6 +568,37 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 			},
 		},
 		"etcd", "nats", "elasticsearch", "influxdb")
+
+	//add amplifier-gateway
+	stack.addService(m, "amplifier-gateway", "amp", 1,
+		&swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Labels: map[string]string{
+					"io.amp.role": "infrastructure",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Args: []string{
+						"amplifier-gateway",
+						"--amplifier_endpoint",
+						"amplifier:50101",
+					},
+					Env: nil,
+					Labels: map[string]string{
+						"io.amp.role": "infrastructure",
+					},
+				},
+			},
+			EndpointSpec: nil,
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  infraPublicNetwork,
+					Aliases: []string{"amplifier-gateway"},
+				},
+			},
+		},
+		"amplifier")
 
 	//return stack
 	return &stack
