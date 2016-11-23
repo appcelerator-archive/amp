@@ -7,7 +7,7 @@ else
   DOCKER=docker
 fi
 BUILDER_DOCKER_FILE=Dockerfile
-SHRINKED_DOCKER_FILE=Dockerfile.shrink
+SHRINK_DOCKER_FILE=Dockerfile.shrink
 REPOSITORY_NAME=appcelerator/amp
 TAG=${1:-latest}
 
@@ -49,7 +49,6 @@ if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
 fi
-echo "OK"
 $DOCKER cp amp-builder:/go/bin/amplifier-gateway ./amplifier-gateway >&2
 if [ $? -ne 0 ]; then
   echo "failed"
@@ -57,8 +56,8 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo -n "building shrinked image... "
-$DOCKER build -f $SHRINKED_DOCKER_FILE -t appcelerator/amp:$TAG . >&2
+echo -n "building shrunk image... "
+$DOCKER build -f $SHRINK_DOCKER_FILE -t appcelerator/amp:$TAG . >&2
 if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
@@ -66,7 +65,7 @@ fi
 echo "OK"
 
 echo -n "cleanup... "
-rm -f amp amplifier amp-agent amp-log-worker
+rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1
 $DOCKER rmi $REPOSITORY_NAME:builder

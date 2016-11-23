@@ -1,5 +1,5 @@
 FROM appcelerator/alpine:20160726
-COPY ./amp /usr/bin/amp
+COPY ./amp /usr/local/bin/amp
 COPY ./amplifier /usr/local/bin/amplifier
 COPY ./amp-agent /usr/local/bin/amp-agent
 COPY ./amp-log-worker /usr/local/bin/amp-log-worker
