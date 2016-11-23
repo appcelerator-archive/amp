@@ -64,8 +64,9 @@ type ampService struct {
 	user            bool
 }
 
+var currentColorTheme = "default"
 var (
-	colMagenta = 0
+	colRegular = 0
 	colInfo    = 1
 	colWarn    = 2
 	colError   = 3
@@ -75,14 +76,9 @@ var (
 
 func (s *ampManager) init(firstMessage string) error {
 	s.ctx = context.Background()
-	s.printColor[0] = color.New(color.FgMagenta)
-	s.printColor[1] = color.New(color.FgHiBlack)
-	s.printColor[2] = color.New(color.FgYellow)
-	s.printColor[3] = color.New(color.FgRed)
-	s.printColor[4] = color.New(color.FgGreen)
-	s.printColor[5] = color.New(color.FgHiGreen)
+	s.setColors()
 	if firstMessage != "" {
-		s.printf(colMagenta, firstMessage+"\n")
+		s.printf(colRegular, firstMessage+"\n")
 	}
 	if s.force {
 		s.printf(colWarn, "Force mode: on\n")
@@ -283,7 +279,7 @@ func (s *ampManager) monitor(stack *ampStack) {
 			} else if serv.status == "partially running" {
 				s.printf(colWarn, "%s\n", s.displayService(serv, cols))
 			} else if serv.status == "starting" {
-				s.printf(colMagenta, "%s\n", s.displayService(serv, cols))
+				s.printf(colRegular, "%s\n", s.displayService(serv, cols))
 			} else {
 				s.printf(colInfo, "%s\n", s.displayService(serv, cols))
 			}
@@ -613,6 +609,27 @@ func (s *ampManager) printf(col int, format string, args ...interface{}) {
 
 func (s *ampManager) close() {
 	//s.docker.Close()
+}
+
+func (s *ampManager) setColors() {
+	//theme := s.getTheme()
+	theme := AMP.Configuration.CmdTheme
+	if theme == "dark" {
+		s.printColor[0] = color.New(color.FgHiWhite)
+		s.printColor[1] = color.New(color.FgHiBlack)
+		s.printColor[2] = color.New(color.FgYellow)
+		s.printColor[3] = color.New(color.FgRed)
+		s.printColor[4] = color.New(color.FgGreen)
+		s.printColor[5] = color.New(color.FgHiGreen)
+	} else {
+		s.printColor[0] = color.New(color.FgMagenta)
+		s.printColor[1] = color.New(color.FgHiBlack)
+		s.printColor[2] = color.New(color.FgYellow)
+		s.printColor[3] = color.New(color.FgRed)
+		s.printColor[4] = color.New(color.FgGreen)
+		s.printColor[5] = color.New(color.FgHiGreen)
+	}
+	//add theme as you want.
 }
 
 //ampStack & ampService

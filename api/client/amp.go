@@ -59,6 +59,7 @@ type Configuration struct {
 	Images        []string
 	Port          string
 	ServerAddress string
+	CmdTheme      string
 }
 
 // AMP holds the state for the current environment
