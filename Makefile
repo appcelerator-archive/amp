@@ -208,7 +208,7 @@ test-unit:
 	done
 
 test-integration:
-	@docker service rm amp-integration-test 2> /dev/null || true
+	@docker service rm amp-integration-test > /dev/null 2>&1 || true
 	@docker build -f Dockerfile.test -t appcelerator/amp-integration-test .
 	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test
 	@containerid=""; \
@@ -217,6 +217,7 @@ test-integration:
 		sleep 1 ; \
 	done; \
 	docker logs -f $$containerid; \
+	docker service rm amp-integration-test > /dev/null 2>&1 || true \
 	exit `docker inspect --format='{{.State.ExitCode}}' $$containerid`
 
 docker-integration-test:

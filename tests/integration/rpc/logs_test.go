@@ -22,8 +22,9 @@ const (
 	defaultNumberOfEntries = 50
 
 	testMessage     = "test message "
-	testServiceName = "testServiceName"
-	testStackName   = "testStackName"
+	testServiceName = "testservice"
+	testStackName   = "teststack"
+	testTaskName    = "test.0"
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 	testNodeID      = stringid.GenerateNonCryptoID()
 	testServiceID   = stringid.GenerateNonCryptoID()
 	testStackID     = stringid.GenerateNonCryptoID()
+	testTaskID      = stringid.GenerateNonCryptoID()
 	sc              stan.Conn
 )
 
@@ -126,13 +128,13 @@ func TestLogsShouldFilterByNode(t *testing.T) {
 }
 
 func TestLogsShouldFilterByService(t *testing.T) {
-	r, err := logsClient.Get(ctx, &GetRequest{Service: testServiceID})
+	r, err := logsClient.Get(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceID) || strings.HasPrefix(entry.ServiceId, testServiceID))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
 	}
 
 	r, err = logsClient.Get(ctx, &GetRequest{Service: testServiceName})
@@ -141,7 +143,7 @@ func TestLogsShouldFilterByService(t *testing.T) {
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceName))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
 	}
 }
 
@@ -157,13 +159,13 @@ func TestLogsShouldFilterByMessage(t *testing.T) {
 }
 
 func TestLogsShouldFilterByStack(t *testing.T) {
-	r, err := logsClient.Get(ctx, &GetRequest{Stack: testStackID})
+	r, err := logsClient.Get(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, testStackID) || strings.HasPrefix(entry.StackId, testStackID))
+		assert.True(t, strings.HasPrefix(entry.StackName, testStackName) || strings.HasPrefix(entry.StackId, testStackID))
 	}
 
 	r, err = logsClient.Get(ctx, &GetRequest{Stack: testStackName})
@@ -172,7 +174,7 @@ func TestLogsShouldFilterByStack(t *testing.T) {
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, testStackName) || strings.HasPrefix(entry.StackId, testStackName))
+		assert.True(t, strings.HasPrefix(entry.StackName, testStackName) || strings.HasPrefix(entry.StackId, testStackID))
 	}
 }
 
@@ -183,53 +185,6 @@ func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 			t.Error(err)
 		}
 		assert.Equal(t, i, int64(len(r.Entries)))
-	}
-}
-
-func produceLogEntries(howMany int) error {
-	for i := 0; i < howMany; i++ {
-		message, err := proto.Marshal(&LogEntry{
-			ContainerId: testContainerID,
-			Message:     testMessage + strconv.Itoa(rand.Int()),
-			NodeId:      testNodeID,
-			ServiceId:   testServiceID,
-			ServiceName: testServiceName,
-			StackId:     testStackID,
-			StackName:   testStackName,
-			Timestamp:   time.Now().Format(time.RFC3339Nano),
-			TimeId:      time.Now().UTC().Format(time.RFC3339Nano),
-		})
-		err = sc.Publish(NatsLogTopic, message)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntry, error) {
-	entries := make(chan *LogEntry, howMany)
-	entryCount := 0
-	timeout := time.After(5 * time.Second)
-
-	defer func() {
-		close(entries)
-	}()
-
-	for {
-		entry, err := stream.Recv()
-		select {
-		case entries <- entry:
-			if err != nil {
-				return nil, err
-			}
-			entryCount++
-			if entryCount == howMany {
-				return entries, nil
-			}
-		case <-timeout:
-			return entries, nil
-		}
 	}
 }
 
@@ -273,7 +228,7 @@ func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByService(t *testing.T) {
-	stream, err := logsClient.GetStream(ctx, &GetRequest{Service: "testService"})
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -282,7 +237,7 @@ func TestLogsShouldStreamAndFilterByService(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, "testService") || strings.HasPrefix(entry.ServiceId, "testService"))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
 	}
 }
 
@@ -315,7 +270,7 @@ func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
-	stream, err := logsClient.GetStream(ctx, &GetRequest{Stack: "testStack"})
+	stream, err := logsClient.GetStream(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -324,10 +279,59 @@ func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
 	for entry := range entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, "testStack") || strings.HasPrefix(entry.StackId, "testStack"))
+		assert.True(t, strings.HasPrefix(entry.StackName, testStackName) || strings.HasPrefix(entry.StackId, testStackID))
 	}
 }
 
 func TestLogsEnd(t *testing.T) {
 	sc.Close()
+}
+
+func produceLogEntries(howMany int) error {
+	for i := 0; i < howMany; i++ {
+		message, err := proto.Marshal(&LogEntry{
+			ContainerId: testContainerID,
+			Message:     testMessage + strconv.Itoa(rand.Int()),
+			NodeId:      testNodeID,
+			ServiceId:   testServiceID,
+			ServiceName: testServiceName,
+			StackId:     testStackID,
+			StackName:   testStackName,
+			TaskName:    testTaskName,
+			TaskId:      testTaskID,
+			Timestamp:   time.Now().Format(time.RFC3339Nano),
+			TimeId:      time.Now().UTC().Format(time.RFC3339Nano),
+		})
+		err = sc.Publish(NatsLogTopic, message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntry, error) {
+	entries := make(chan *LogEntry, howMany)
+	entryCount := 0
+	timeout := time.After(5 * time.Second)
+
+	defer func() {
+		close(entries)
+	}()
+
+	for {
+		entry, err := stream.Recv()
+		select {
+		case entries <- entry:
+			if err != nil {
+				return nil, err
+			}
+			entryCount++
+			if entryCount == howMany {
+				return entries, nil
+			}
+		case <-timeout:
+			return entries, nil
+		}
+	}
 }

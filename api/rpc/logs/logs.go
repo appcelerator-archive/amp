@@ -20,14 +20,14 @@ const (
 )
 
 // Logs is used to implement log.LogServer
-type Logs struct {
-	Es    elasticsearch.Elasticsearch
+type Server struct {
+	Es    *elasticsearch.Elasticsearch
 	Store storage.Interface
 	Nats  stan.Conn
 }
 
 // Get implements log.LogServer
-func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// TODO: Authentication is disabled in order to allow tests. Re-enable this as soon as we have a way to auth in tests.
 	//_, err := oauth.CheckAuthorization(ctx, logs.Store)
 	//if err != nil {
@@ -35,7 +35,7 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//}
 	log.Printf("log requested: [%v]", in)
 	// Prepare request to elasticsearch
-	request := logs.Es.GetClient().Search().Index(esIndex)
+	request := s.Es.GetClient().Search().Index(esIndex)
 	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
@@ -92,9 +92,9 @@ func (logs *Logs) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 }
 
 // GetStream implements log.LogServer
-func (logs *Logs) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
+func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	log.Printf("log stream requested: [%v]", in)
-	sub, err := logs.Nats.Subscribe(NatsLogTopic, func(msg *stan.Msg) {
+	sub, err := s.Nats.Subscribe(NatsLogTopic, func(msg *stan.Msg) {
 		entry, err := parseProtoLogEntry(msg.Data)
 		if err != nil {
 			return
