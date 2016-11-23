@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // PlatformStop is the main command for attaching platform subcommands.
@@ -17,6 +18,7 @@ var PlatformStop = &cobra.Command{
 
 func init() {
 	PlatformStop.Flags().BoolP("silence", "s", false, "no console output at all")
+	PlatformStop.Flags().BoolP("local", "l", false, "use local amp image")
 	PlatformCmd.AddCommand(PlatformStop)
 }
 
@@ -27,6 +29,9 @@ func stopAMP(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flag("verbose").Value.String() == "true" {
 		manager.verbose = true
+	}
+	if cmd.Flag("local").Value.String() == "true" {
+		manager.local = true
 	}
 	if err := manager.init("Stopping AMP platform"); err != nil {
 		manager.printf(colError, "Start error: %v\n", err)

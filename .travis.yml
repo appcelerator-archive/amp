@@ -14,8 +14,9 @@ install:
   - sudo apt-get install docker-engine
   - docker swarm init --advertise-addr 127.0.0.1
   - make install
-  - amp platform pull
-  - amp platform start
+  - ./shrink.sh local
+  - amp platform pull --local
+  - amp platform start --local
 
 script:
   - make test
