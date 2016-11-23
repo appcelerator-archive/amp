@@ -5,20 +5,17 @@ import (
 	"time"
 )
 
-var (
+// Elasticsearch wrapper
+type Elasticsearch struct {
 	// elasticsearch client
 	client *elastic.Client
-)
-
-// Elasticsearch singleton
-type Elasticsearch struct {
 }
 
 // Connect to the elastic search server
 func (es *Elasticsearch) Connect(url string, timeout time.Duration) error {
 	// Create ES client
 	var err error
-	client, err = elastic.NewClient(
+	es.client, err = elastic.NewClient(
 		elastic.SetURL(url),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(true),
@@ -32,19 +29,19 @@ func (es *Elasticsearch) Connect(url string, timeout time.Duration) error {
 
 // GetClient returns the native elastic search client
 func (es *Elasticsearch) GetClient() *elastic.Client {
-	return client
+	return es.client
 }
 
 // CreateIndexIfNotExists Creates an index if it doesn't already exists
 func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, mapping string) error {
 	// Use the IndexExists service to check if the index exists
-	exists, err := client.IndexExists(esIndex).Do()
+	exists, err := es.client.IndexExists(esIndex).Do()
 	if err != nil {
 		return err
 	}
 	if !exists {
 		// Create a new index.
-		createIndex, err := client.CreateIndex(esIndex).Do()
+		createIndex, err := es.client.CreateIndex(esIndex).Do()
 		if err != nil {
 			return err
 		}
@@ -52,7 +49,7 @@ func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, m
 			return err
 		}
 
-		response, err := client.PutMapping().Index(esIndex).Type(esType).BodyString(mapping).Do()
+		response, err := es.client.PutMapping().Index(esIndex).Type(esType).BodyString(mapping).Do()
 		if err != nil {
 			return err
 		}
@@ -66,7 +63,7 @@ func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, m
 // Index store a document inside elastic search
 func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) error {
 	// Add a document to the index
-	_, err := client.Index().
+	_, err := es.client.Index().
 		Index(esIndex).
 		Type(esType).
 		BodyJson(body).
