@@ -12,6 +12,9 @@
   args:
   options:
   expectation: docker-service-list-valid-service
+  retry: 15
+  delay: 1000ms
+  timeout: 15000ms
 
 # Should use API call as a form of blocking.
 - service-curl:
@@ -20,8 +23,8 @@
     - localhost:{{call .port `pinger1` 49152 65535}}/ping
   options:
   expectation: service-curl
-  retry: 3
-  delay: 2500ms
+  retry: 15
+  delay: 1000ms
   timeout: 15000ms
 
 - service-remove:
