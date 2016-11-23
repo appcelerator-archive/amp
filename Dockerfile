@@ -4,7 +4,7 @@ RUN echo "@community http://nl.alpinelinux.org/alpine/edge/community" >> /etc/ap
 RUN apk --no-cache add make bash git docker@community
 WORKDIR /go/src/github.com/appcelerator/amp
 COPY . /go/src/github.com/appcelerator/amp
-RUN make install-host
+RUN make install
 EXPOSE 50101
 ENTRYPOINT []
 CMD [ "/go/bin/amplifier", "--service"]

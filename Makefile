@@ -1,6 +1,8 @@
 
-.PHONY: all clean build build-cli build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows dist-linux dist-darwin dist-windows dist build-agent build-log-worker install install-server install-cli install-agent install-log-worker fmt simplify check version build-image run
-.PHONY: test test-unit test-cli test-integration docker-integration-test
+.PHONY: all clean install fmt simplify check version build-image run
+.PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
+.PHONY: dist dist-linux dist-darwin dist-windows
+.PHONY: test test-unit test-cli test-integration test-integration-host
 
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
@@ -39,6 +41,8 @@ OWNER := appcelerator
 REPO := github.com/$(OWNER)/amp
 
 CMDDIR := cmd
+
+# Binaries
 CLI := amp
 SERVER := amplifier
 AGENT := amp-agent
@@ -74,6 +78,19 @@ arch:
 version:
 	@echo "version: $(VERSION) (build: $(BUILD))"
 
+install-deps:
+	@$(GLIDE_INSTALL)
+
+update-deps:
+	@$(GLIDE_UPDATE)
+
+proto: $(PROTOFILES)
+	@go run hack/proto.go
+
+# used to run protoc when you're already inside a container
+proto-host: $(PROTOFILES)
+	@go run hack/proto.go -protoc
+
 clean:
 	@rm -rf $(GENERATED)
 	@rm -f $$(which $(CLI)) ./$(CLI)
@@ -83,44 +100,18 @@ clean:
 	@rm -f $$(which $(LOGWORKER)) ./$(LOGWORKER)
 	@rm -f $$(which $(GATEWAY)) ./$(GATEWAY)
 
-install-deps:
-	@$(GLIDE_INSTALL)
-
-update-deps:
-	@$(GLIDE_UPDATE)
-
-install: install-cli install-server install-agent install-log-worker install-gateway
-
-install-cli: proto
+install:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
-
-install-server: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
-
-install-agent: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
-
-install-log-worker: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
-
-install-gateway: proto
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
 
-build: build-cli build-server build-agent build-log-worker build-gateway
-
-build-cli: proto
+build:
 	@hack/build $(CLI)
-
-build-server: proto
 	@hack/build $(SERVER)
-
-build-agent: proto
 	@hack/build $(AGENT)
-
-build-log-worker: proto
 	@hack/build $(LOGWORKER)
-
-build-gateway: proto
 	@hack/build $(GATEWAY)
 
 build-server-image:
@@ -167,21 +158,6 @@ dist-windows: build-cli-windows build-server-windows
 
 dist: dist-linux dist-darwin dist-windows
 
-proto: $(PROTOFILES)
-	@go run hack/proto.go
-
-# used to install when you're already inside a container
-install-host: proto-host
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
-
-# used to run protoc when you're already inside a container
-proto-host: $(PROTOFILES)
-	@go run hack/proto.go -protoc
-
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 fmt:
 	@gofmt -s -l -w $(CHECKSRC)
@@ -220,7 +196,7 @@ test-integration:
 	docker service rm amp-integration-test > /dev/null 2>&1 || true \
 	exit `docker inspect --format='{{.State.ExitCode}}' $$containerid`
 
-docker-integration-test:
+test-integration-host:
 	@for pkg in $(INTEGRATION_TEST_PACKAGES) ; do \
 		go test $$pkg ; \
 	done
