@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -225,9 +226,10 @@ func TestRepositoriesService_Get(t *testing.T) {
 	setup()
 	defer teardown()
 
+	acceptHeader := []string{mediaTypeLicensesPreview, mediaTypeSquashPreview}
 	mux.HandleFunc("/repos/o/r", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		testHeader(t, r, "Accept", mediaTypeLicensesPreview)
+		testHeader(t, r, "Accept", strings.Join(acceptHeader, ", "))
 		fmt.Fprint(w, `{"id":1,"name":"n","description":"d","owner":{"login":"l"},"license":{"key":"mit"}}`)
 	})
 
@@ -517,7 +519,7 @@ func TestRepositoriesService_License(t *testing.T) {
 
 	mux.HandleFunc("/repos/o/r/license", func(w http.ResponseWriter, r *http.Request) {
 		testMethod(t, r, "GET")
-		fmt.Fprint(w, `{"license":{"key":"mit","name":"MIT License","url":"https://api.github.com/licenses/mit","featured":true}}`)
+		fmt.Fprint(w, `{"name": "LICENSE", "path": "LICENSE", "license":{"key":"mit","name":"MIT License","spdx_id":"MIT","url":"https://api.github.com/licenses/mit","featured":true}}`)
 	})
 
 	got, _, err := client.Repositories.License("o", "r")
@@ -525,12 +527,18 @@ func TestRepositoriesService_License(t *testing.T) {
 		t.Errorf("Repositories.License returned error: %v", err)
 	}
 
-	want := &License{
-		Name:     String("MIT License"),
-		Key:      String("mit"),
-		URL:      String("https://api.github.com/licenses/mit"),
-		Featured: Bool(true),
+	want := &RepositoryLicense{
+		Name: String("LICENSE"),
+		Path: String("LICENSE"),
+		License: &License{
+			Name:     String("MIT License"),
+			Key:      String("mit"),
+			SPDXID:   String("MIT"),
+			URL:      String("https://api.github.com/licenses/mit"),
+			Featured: Bool(true),
+		},
 	}
+
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Repositories.License returned %+v, want %+v", got, want)
 	}

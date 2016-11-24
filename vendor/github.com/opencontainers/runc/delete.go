@@ -14,10 +14,10 @@ import (
 )
 
 func killContainer(container libcontainer.Container) error {
-	container.Signal(syscall.SIGKILL)
+	container.Signal(syscall.SIGKILL, false)
 	for i := 0; i < 100; i++ {
 		time.Sleep(100 * time.Millisecond)
-		if err := container.Signal(syscall.Signal(0)); err != nil {
+		if err := container.Signal(syscall.Signal(0), false); err != nil {
 			destroy(container)
 			return nil
 		}
@@ -27,8 +27,8 @@ func killContainer(container libcontainer.Container) error {
 
 var deleteCommand = cli.Command{
 	Name:  "delete",
-	Usage: "delete any resources held by one container or more containers often used with detached containers",
-	ArgsUsage: `container-id [container-id...]
+	Usage: "delete any resources held by one or more containers often used with detached containers",
+	ArgsUsage: `<container-id> [container-id...]
 
 Where "<container-id>" is the name for the instance of the container.
 
@@ -41,7 +41,7 @@ status of "ubuntu01" as "stopped" the following will delete resources held for
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "force, f",
-			Usage: "Forcibly kills the container if it is still running",
+			Usage: "Forcibly deletes the container if it is still running (uses SIGKILL)",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -64,7 +64,7 @@ status of "ubuntu01" as "stopped" the following will delete resources held for
 					if err := os.RemoveAll(path); err != nil {
 						fmt.Fprintf(os.Stderr, "remove %s: %v\n", path, err)
 					}
-					fmt.Fprintf(os.Stderr, "container %s is not exist\n", id)
+					fmt.Fprintf(os.Stderr, "container %s does not exist\n", id)
 				}
 				hasError = true
 				continue

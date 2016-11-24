@@ -1,12 +1,17 @@
-<!--[metadata]>
-+++
-title = "swarm join"
-description = "The swarm join command description and usage"
-keywords = ["swarm, join"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "swarm join"
+description: "The swarm join command description and usage"
+keywords: "swarm, join"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # swarm join
 
@@ -72,7 +77,7 @@ This flag is generally not necessary when joining an existing swarm.
 
 This flag specifies the address that will be advertised to other members of the
 swarm for API access. If unspecified, Docker will check if the system has a
-single IP address, and use that IP address with with the listening port (see
+single IP address, and use that IP address with the listening port (see
 `--listen-addr`). If the system has multiple IP addresses, `--advertise-addr`
 must be specified so that the correct address is chosen for inter-manager
 communication and overlay networking.

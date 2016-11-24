@@ -45,6 +45,7 @@ for version in "${versions[@]}"; do
 		bash-completion # for bash-completion debhelper integration
 		btrfs-tools # for "btrfs/ioctl.h" (and "version.h" if possible)
 		build-essential # "essential for building Debian packages"
+		cmake # tini dep
 		curl ca-certificates # for downloading Go
 		debhelper # for easy ".deb" building
 		dh-apparmor # for apparmor debhelper
@@ -55,6 +56,7 @@ for version in "${versions[@]}"; do
 		libltdl-dev # for pkcs11 "ltdl.h"
 		libsqlite3-dev # for "sqlite3.h"
 		pkg-config # for detecting things like libsystemd-journal dynamically
+		vim-common # tini dep
 	)
 
 	# trusty uses a different go package name then xenial and newer, so track that for later
@@ -99,12 +101,12 @@ for version in "${versions[@]}"; do
 	# ppc64le doesn't have an official downloadable binary as of go 1.6.2. so use the
 	# older packaged go(v1.6.1) to bootstrap latest go, then remove the packaged go
 	echo "# Install Go" >> "$version/Dockerfile"
-	echo "# ppc64le doesn't have official go binaries, so use the version of go installed from the image" >> "$version/Dockerfile"
+	echo "# ppc64le doesn't have official go binaries, so use a distro packaged version of go" >> "$version/Dockerfile"
 	echo "# to build go from source." >> "$version/Dockerfile"
 	echo "# NOTE: ppc64le has compatibility issues with older versions of go, so make sure the version >= 1.6" >> "$version/Dockerfile"
 	
 	awk '$1 == "ENV" && $2 == "GO_VERSION" { print; exit }' ../../../../Dockerfile.ppc64le >> "$version/Dockerfile"
-	echo 'ENV GO_DOWNLOAD_URL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz' >> "$version/Dockerfile"
+	echo 'ENV GO_DOWNLOAD_URL https://golang.org/dl/go${GO_VERSION}.src.tar.gz' >> "$version/Dockerfile"
 	echo 'ENV GOROOT_BOOTSTRAP /usr/lib/go-1.6' >> "$version/Dockerfile"
 	echo >> "$version/Dockerfile"
 	

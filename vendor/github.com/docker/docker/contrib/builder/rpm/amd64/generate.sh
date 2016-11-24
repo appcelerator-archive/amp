@@ -22,6 +22,7 @@ for version in "${versions[@]}"; do
 	suite="${version##*-}"
 	from="${distro}:${suite}"
 	installer=yum
+
 	if [[ "$distro" == "fedora" ]]; then
 		installer=dnf
 	fi
@@ -81,7 +82,6 @@ for version in "${versions[@]}"; do
 			;;
 	esac
 
-	# this list is sorted alphabetically; please keep it that way
 	packages=(
 		btrfs-progs-devel # for "btrfs/ioctl.h" (and "version.h" if possible)
 		device-mapper-devel # for "libdevmapper.h"
@@ -96,6 +96,8 @@ for version in "${versions[@]}"; do
 		systemd-devel # for "sd-journal.h" and libraries
 		tar # older versions of dev-tools do not have tar
 		git # required for containerd and runc clone
+		cmake # tini build
+		vim-common # tini build
 	)
 
 	case "$from" in
@@ -128,6 +130,7 @@ for version in "${versions[@]}"; do
 		opensuse:*)
 			packages=( "${packages[@]/btrfs-progs-devel/libbtrfs-devel}" )
 			packages=( "${packages[@]/pkgconfig/pkg-config}" )
+			packages=( "${packages[@]/vim-common/vim}" )
 			if [[ "$from" == "opensuse:13."* ]]; then
 				packages+=( systemd-rpm-macros )
 			fi
@@ -148,7 +151,7 @@ for version in "${versions[@]}"; do
 
 
 	awk '$1 == "ENV" && $2 == "GO_VERSION" { print; exit }' ../../../../Dockerfile >> "$version/Dockerfile"
-	echo 'RUN curl -fSL "https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz" | tar xzC /usr/local' >> "$version/Dockerfile"
+	echo 'RUN curl -fSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar xzC /usr/local' >> "$version/Dockerfile"
 	echo 'ENV PATH $PATH:/usr/local/go/bin' >> "$version/Dockerfile"
 
 	echo >> "$version/Dockerfile"

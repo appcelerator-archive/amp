@@ -27,7 +27,7 @@ const termProcessTimeout = 10
 func (d *Daemon) registerExecCommand(container *container.Container, config *exec.Config) {
 	// Storing execs in container in order to kill them gracefully whenever the container is stopped or removed.
 	container.ExecCommands.Add(config.ID, config)
-	// Storing execs in daemon for easy access via remote API.
+	// Storing execs in daemon for easy access via Engine API.
 	d.execCommands.Add(config.ID, config)
 }
 
@@ -127,7 +127,7 @@ func (d *Daemon) ContainerExecCreate(name string, config *types.ExecConfig) (str
 	if err != nil {
 		return "", err
 	}
-	execConfig.Env = utils.ReplaceOrAppendEnvValues(container.CreateDaemonEnvironment(config.Tty, linkedEnv), execConfig.Env)
+	execConfig.Env = utils.ReplaceOrAppendEnvValues(container.CreateDaemonEnvironment(config.Tty, linkedEnv), config.Env)
 	if len(execConfig.User) == 0 {
 		execConfig.User = container.Config.User
 	}
@@ -195,9 +195,9 @@ func (d *Daemon) ContainerExecStart(ctx context.Context, name string, stdin io.R
 	}
 
 	if ec.OpenStdin {
-		ec.NewInputPipes()
+		ec.StreamConfig.NewInputPipes()
 	} else {
-		ec.NewNopInputPipe()
+		ec.StreamConfig.NewNopInputPipe()
 	}
 
 	p := libcontainerd.Process{
@@ -212,9 +212,13 @@ func (d *Daemon) ContainerExecStart(ctx context.Context, name string, stdin io.R
 
 	attachErr := container.AttachStreams(ctx, ec.StreamConfig, ec.OpenStdin, true, ec.Tty, cStdin, cStdout, cStderr, ec.DetachKeys)
 
-	if err := d.containerd.AddProcess(ctx, c.ID, name, p); err != nil {
+	systemPid, err := d.containerd.AddProcess(ctx, c.ID, name, p, ec.InitializeStdio)
+	if err != nil {
 		return err
 	}
+	ec.Lock()
+	ec.Pid = systemPid
+	ec.Unlock()
 
 	select {
 	case <-ctx.Done():

@@ -55,6 +55,83 @@ func (m *LogEntry) String() string            { return proto.CompactTextString(m
 func (*LogEntry) ProtoMessage()               {}
 func (*LogEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *LogEntry) GetTimestamp() string {
+	if m != nil {
+		return m.Timestamp
+	}
+	return ""
+}
+
+func (m *LogEntry) GetTimeId() string {
+	if m != nil {
+		return m.TimeId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetServiceId() string {
+	if m != nil {
+		return m.ServiceId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetServiceName() string {
+	if m != nil {
+		return m.ServiceName
+	}
+	return ""
+}
+
+func (m *LogEntry) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
+
+func (m *LogEntry) GetContainerId() string {
+	if m != nil {
+		return m.ContainerId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetNodeId() string {
+	if m != nil {
+		return m.NodeId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetTaskId() string {
+	if m != nil {
+		return m.TaskId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetTaskName() string {
+	if m != nil {
+		return m.TaskName
+	}
+	return ""
+}
+
+func (m *LogEntry) GetStackId() string {
+	if m != nil {
+		return m.StackId
+	}
+	return ""
+}
+
+func (m *LogEntry) GetStackName() string {
+	if m != nil {
+		return m.StackName
+	}
+	return ""
+}
+
 type GetRequest struct {
 	Container string `protobuf:"bytes,1,opt,name=container" json:"container,omitempty"`
 	Message   string `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
@@ -68,6 +145,48 @@ func (m *GetRequest) Reset()                    { *m = GetRequest{} }
 func (m *GetRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetRequest) ProtoMessage()               {}
 func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *GetRequest) GetContainer() string {
+	if m != nil {
+		return m.Container
+	}
+	return ""
+}
+
+func (m *GetRequest) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
+
+func (m *GetRequest) GetNode() string {
+	if m != nil {
+		return m.Node
+	}
+	return ""
+}
+
+func (m *GetRequest) GetSize() int64 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
+}
+
+func (m *GetRequest) GetService() string {
+	if m != nil {
+		return m.Service
+	}
+	return ""
+}
+
+func (m *GetRequest) GetStack() string {
+	if m != nil {
+		return m.Stack
+	}
+	return ""
+}
 
 type GetReply struct {
 	Entries []*LogEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
@@ -97,7 +216,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Logs service
 
@@ -221,7 +340,7 @@ var _Logs_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/logs/logs.proto",
 }
 
 func init() {

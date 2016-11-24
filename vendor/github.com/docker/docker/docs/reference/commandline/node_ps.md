@@ -1,13 +1,18 @@
-<!--[metadata]>
-+++
-title = "node ps"
-description = "The node ps command description and usage"
-keywords = ["node, tasks", "ps"]
-aliases = ["/engine/reference/commandline/node_tasks/"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "node ps"
+description: "The node ps command description and usage"
+keywords: node, tasks, ps
+aliases: ["/engine/reference/commandline/node_tasks/"]
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # node ps
 
@@ -17,7 +22,7 @@ Usage:  docker node ps [OPTIONS] [NODE...]
 List tasks running on one or more nodes, defaults to current node.
 
 Options:
-  -a, --all            Display all instances
+  -a, --all            Show all tasks (default shows tasks that are or will be running)
   -f, --filter value   Filter output based on conditions provided
       --help           Print usage
       --no-resolve     Do not map IDs to Names

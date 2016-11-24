@@ -25,8 +25,8 @@ func NewInspectCommand(dockerCli *command.DockerCli) *cobra.Command {
 	var opts inspectOptions
 
 	cmd := &cobra.Command{
-		Use:   "inspect [OPTIONS] CONTAINER|IMAGE|TASK [CONTAINER|IMAGE|TASK...]",
-		Short: "Return low-level information on a container, image or task",
+		Use:   "inspect [OPTIONS] NAME|ID [NAME|ID...]",
+		Short: "Return low-level information on Docker objects",
 		Args:  cli.RequiresMinArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.ids = args
@@ -35,7 +35,7 @@ func NewInspectCommand(dockerCli *command.DockerCli) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given go template")
+	flags.StringVarP(&opts.format, "format", "f", "", "Format the output using the given Go template")
 	flags.StringVar(&opts.inspectType, "type", "", "Return JSON for specified type")
 	flags.BoolVarP(&opts.size, "size", "s", false, "Display total file sizes if the type is container")
 

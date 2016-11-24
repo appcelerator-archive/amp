@@ -69,6 +69,10 @@ func (s *DockerSuite) TestExecAPIStart(c *check.C) {
 	id := createExec(c, "test")
 	startExec(c, id, http.StatusOK)
 
+	var execJSON struct{ PID int }
+	inspectExec(c, id, &execJSON)
+	c.Assert(execJSON.PID, checker.GreaterThan, 1)
+
 	id = createExec(c, "test")
 	dockerCmd(c, "stop", "test")
 
@@ -86,6 +90,7 @@ func (s *DockerSuite) TestExecAPIStart(c *check.C) {
 }
 
 func (s *DockerSuite) TestExecAPIStartBackwardsCompatible(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	runSleepingContainer(c, "-d", "--name", "test")
 	id := createExec(c, "test")
 

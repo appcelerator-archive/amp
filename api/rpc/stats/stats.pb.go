@@ -65,6 +65,153 @@ func (m *StatsRequest) String() string            { return proto.CompactTextStri
 func (*StatsRequest) ProtoMessage()               {}
 func (*StatsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *StatsRequest) GetStatsCpu() bool {
+	if m != nil {
+		return m.StatsCpu
+	}
+	return false
+}
+
+func (m *StatsRequest) GetStatsMem() bool {
+	if m != nil {
+		return m.StatsMem
+	}
+	return false
+}
+
+func (m *StatsRequest) GetStatsIo() bool {
+	if m != nil {
+		return m.StatsIo
+	}
+	return false
+}
+
+func (m *StatsRequest) GetStatsNet() bool {
+	if m != nil {
+		return m.StatsNet
+	}
+	return false
+}
+
+func (m *StatsRequest) GetStatsFollow() bool {
+	if m != nil {
+		return m.StatsFollow
+	}
+	return false
+}
+
+func (m *StatsRequest) GetDiscriminator() string {
+	if m != nil {
+		return m.Discriminator
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterDatacenter() string {
+	if m != nil {
+		return m.FilterDatacenter
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterHost() string {
+	if m != nil {
+		return m.FilterHost
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterContainerId() string {
+	if m != nil {
+		return m.FilterContainerId
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterContainerName() string {
+	if m != nil {
+		return m.FilterContainerName
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterContainerImage() string {
+	if m != nil {
+		return m.FilterContainerImage
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterServiceId() string {
+	if m != nil {
+		return m.FilterServiceId
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterServiceName() string {
+	if m != nil {
+		return m.FilterServiceName
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterTaskId() string {
+	if m != nil {
+		return m.FilterTaskId
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterTaskName() string {
+	if m != nil {
+		return m.FilterTaskName
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterNodeId() string {
+	if m != nil {
+		return m.FilterNodeId
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetFilterServiceIdent() string {
+	if m != nil {
+		return m.FilterServiceIdent
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetSince() string {
+	if m != nil {
+		return m.Since
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetUntil() string {
+	if m != nil {
+		return m.Until
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetPeriod() string {
+	if m != nil {
+		return m.Period
+	}
+	return ""
+}
+
+func (m *StatsRequest) GetTimeGroup() string {
+	if m != nil {
+		return m.TimeGroup
+	}
+	return ""
+}
+
 type StatsEntry struct {
 	// Common data
 	Time           int64  `protobuf:"varint,1,opt,name=time" json:"time,omitempty"`
@@ -97,6 +244,160 @@ func (m *StatsEntry) String() string            { return proto.CompactTextString
 func (*StatsEntry) ProtoMessage()               {}
 func (*StatsEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
+func (m *StatsEntry) GetTime() int64 {
+	if m != nil {
+		return m.Time
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetDatacenter() string {
+	if m != nil {
+		return m.Datacenter
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetHost() string {
+	if m != nil {
+		return m.Host
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetContainerId() string {
+	if m != nil {
+		return m.ContainerId
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetContainerName() string {
+	if m != nil {
+		return m.ContainerName
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetContainerImage() string {
+	if m != nil {
+		return m.ContainerImage
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetServiceId() string {
+	if m != nil {
+		return m.ServiceId
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetServiceName() string {
+	if m != nil {
+		return m.ServiceName
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetTaskId() string {
+	if m != nil {
+		return m.TaskId
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetTaskName() string {
+	if m != nil {
+		return m.TaskName
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetNodeId() string {
+	if m != nil {
+		return m.NodeId
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetType() string {
+	if m != nil {
+		return m.Type
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetSortType() string {
+	if m != nil {
+		return m.SortType
+	}
+	return ""
+}
+
+func (m *StatsEntry) GetNumber() float64 {
+	if m != nil {
+		return m.Number
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetCpu() float64 {
+	if m != nil {
+		return m.Cpu
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetMem() float64 {
+	if m != nil {
+		return m.Mem
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetMemUsage() float64 {
+	if m != nil {
+		return m.MemUsage
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetMemLimit() float64 {
+	if m != nil {
+		return m.MemLimit
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetIoRead() float64 {
+	if m != nil {
+		return m.IoRead
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetIoWrite() float64 {
+	if m != nil {
+		return m.IoWrite
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetNetTxBytes() float64 {
+	if m != nil {
+		return m.NetTxBytes
+	}
+	return 0
+}
+
+func (m *StatsEntry) GetNetRxBytes() float64 {
+	if m != nil {
+		return m.NetRxBytes
+	}
+	return 0
+}
+
 type StatsReply struct {
 	Entries []*StatsEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
 }
@@ -125,7 +426,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Stats service
 
@@ -188,7 +489,7 @@ var _Stats_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/stats/stats.proto",
 }
 
 func init() {

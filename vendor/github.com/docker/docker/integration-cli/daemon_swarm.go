@@ -139,8 +139,8 @@ func (d *SwarmDaemon) getServiceTasks(c *check.C, service string) []swarm.Task {
 	return tasks
 }
 
-func (d *SwarmDaemon) checkServiceRunningTasks(c *check.C, service string) func(*check.C) (interface{}, check.CommentInterface) {
-	return func(*check.C) (interface{}, check.CommentInterface) {
+func (d *SwarmDaemon) checkServiceRunningTasks(service string) func(*check.C) (interface{}, check.CommentInterface) {
+	return func(c *check.C) (interface{}, check.CommentInterface) {
 		tasks := d.getServiceTasks(c, service)
 		var runningCount int
 		for _, task := range tasks {
@@ -152,8 +152,15 @@ func (d *SwarmDaemon) checkServiceRunningTasks(c *check.C, service string) func(
 	}
 }
 
-func (d *SwarmDaemon) checkServiceTasks(c *check.C, service string) func(*check.C) (interface{}, check.CommentInterface) {
-	return func(*check.C) (interface{}, check.CommentInterface) {
+func (d *SwarmDaemon) checkServiceUpdateState(service string) func(*check.C) (interface{}, check.CommentInterface) {
+	return func(c *check.C) (interface{}, check.CommentInterface) {
+		service := d.getService(c, service)
+		return service.UpdateStatus.State, nil
+	}
+}
+
+func (d *SwarmDaemon) checkServiceTasks(service string) func(*check.C) (interface{}, check.CommentInterface) {
+	return func(c *check.C) (interface{}, check.CommentInterface) {
 		tasks := d.getServiceTasks(c, service)
 		return len(tasks), nil
 	}
@@ -275,6 +282,42 @@ func (d *SwarmDaemon) listServices(c *check.C) []swarm.Service {
 	services := []swarm.Service{}
 	c.Assert(json.Unmarshal(out, &services), checker.IsNil)
 	return services
+}
+
+func (d *SwarmDaemon) createSecret(c *check.C, secretSpec swarm.SecretSpec) string {
+	status, out, err := d.SockRequest("POST", "/secrets/create", secretSpec)
+
+	c.Assert(err, checker.IsNil, check.Commentf(string(out)))
+	c.Assert(status, checker.Equals, http.StatusCreated, check.Commentf("output: %q", string(out)))
+
+	var scr types.SecretCreateResponse
+	c.Assert(json.Unmarshal(out, &scr), checker.IsNil)
+	return scr.ID
+}
+
+func (d *SwarmDaemon) listSecrets(c *check.C) []swarm.Secret {
+	status, out, err := d.SockRequest("GET", "/secrets", nil)
+	c.Assert(err, checker.IsNil, check.Commentf(string(out)))
+	c.Assert(status, checker.Equals, http.StatusOK, check.Commentf("output: %q", string(out)))
+
+	secrets := []swarm.Secret{}
+	c.Assert(json.Unmarshal(out, &secrets), checker.IsNil)
+	return secrets
+}
+
+func (d *SwarmDaemon) getSecret(c *check.C, id string) *swarm.Secret {
+	var secret swarm.Secret
+	status, out, err := d.SockRequest("GET", "/secrets/"+id, nil)
+	c.Assert(err, checker.IsNil, check.Commentf(string(out)))
+	c.Assert(status, checker.Equals, http.StatusOK, check.Commentf("output: %q", string(out)))
+	c.Assert(json.Unmarshal(out, &secret), checker.IsNil)
+	return &secret
+}
+
+func (d *SwarmDaemon) deleteSecret(c *check.C, id string) {
+	status, out, err := d.SockRequest("DELETE", "/secrets/"+id, nil)
+	c.Assert(err, checker.IsNil, check.Commentf(string(out)))
+	c.Assert(status, checker.Equals, http.StatusOK, check.Commentf("output: %q", string(out)))
 }
 
 func (d *SwarmDaemon) getSwarm(c *check.C) swarm.Swarm {

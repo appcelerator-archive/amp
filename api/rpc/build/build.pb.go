@@ -51,6 +51,13 @@ func (m *Ping) String() string            { return proto.CompactTextString(m) }
 func (*Ping) ProtoMessage()               {}
 func (*Ping) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *Ping) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
+
 type Pong struct {
 	Message string `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
 }
@@ -59,6 +66,13 @@ func (m *Pong) Reset()                    { *m = Pong{} }
 func (m *Pong) String() string            { return proto.CompactTextString(m) }
 func (*Pong) ProtoMessage()               {}
 func (*Pong) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Pong) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
 
 type ProjectRequest struct {
 	Owner string `protobuf:"bytes,1,opt,name=owner" json:"owner,omitempty"`
@@ -70,6 +84,20 @@ func (m *ProjectRequest) String() string            { return proto.CompactTextSt
 func (*ProjectRequest) ProtoMessage()               {}
 func (*ProjectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
+func (m *ProjectRequest) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *ProjectRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 type ProjectQuery struct {
 	Organization string `protobuf:"bytes,1,opt,name=organization" json:"organization,omitempty"`
 	Latest       bool   `protobuf:"varint,2,opt,name=latest" json:"latest,omitempty"`
@@ -79,6 +107,20 @@ func (m *ProjectQuery) Reset()                    { *m = ProjectQuery{} }
 func (m *ProjectQuery) String() string            { return proto.CompactTextString(m) }
 func (*ProjectQuery) ProtoMessage()               {}
 func (*ProjectQuery) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *ProjectQuery) GetOrganization() string {
+	if m != nil {
+		return m.Organization
+	}
+	return ""
+}
+
+func (m *ProjectQuery) GetLatest() bool {
+	if m != nil {
+		return m.Latest
+	}
+	return false
+}
 
 type ProjectList struct {
 	Projects []*Project `protobuf:"bytes,1,rep,name=projects" json:"projects,omitempty"`
@@ -108,6 +150,34 @@ func (m *Project) String() string            { return proto.CompactTextString(m)
 func (*Project) ProtoMessage()               {}
 func (*Project) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
+func (m *Project) GetId() uint32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *Project) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *Project) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Project) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
 type BuildRequest struct {
 	Owner string `protobuf:"bytes,1,opt,name=owner" json:"owner,omitempty"`
 	Name  string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
@@ -118,6 +188,27 @@ func (m *BuildRequest) Reset()                    { *m = BuildRequest{} }
 func (m *BuildRequest) String() string            { return proto.CompactTextString(m) }
 func (*BuildRequest) ProtoMessage()               {}
 func (*BuildRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *BuildRequest) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *BuildRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *BuildRequest) GetSha() string {
+	if m != nil {
+		return m.Sha
+	}
+	return ""
+}
 
 type BuildList struct {
 	Builds []*Build `protobuf:"bytes,1,rep,name=builds" json:"builds,omitempty"`
@@ -148,6 +239,41 @@ func (m *Build) String() string            { return proto.CompactTextString(m) }
 func (*Build) ProtoMessage()               {}
 func (*Build) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
+func (m *Build) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *Build) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Build) GetSha() string {
+	if m != nil {
+		return m.Sha
+	}
+	return ""
+}
+
+func (m *Build) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *Build) GetCommitMessage() string {
+	if m != nil {
+		return m.CommitMessage
+	}
+	return ""
+}
+
 type Log struct {
 	Message string `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
 }
@@ -156,6 +282,13 @@ func (m *Log) Reset()                    { *m = Log{} }
 func (m *Log) String() string            { return proto.CompactTextString(m) }
 func (*Log) ProtoMessage()               {}
 func (*Log) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *Log) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*Ping)(nil), "build.Ping")
@@ -176,7 +309,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for AmpBuild service
 
@@ -465,7 +598,7 @@ var _AmpBuild_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/build/build.proto",
 }
 
 func init() {

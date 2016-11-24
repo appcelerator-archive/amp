@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     gawk \
     iptables \
+    jq \
     pkg-config \
     libaio-dev \
     libcap-dev \
@@ -34,6 +35,15 @@ RUN mkdir -p /usr/src/criu \
     && curl -sSL https://github.com/xemul/criu/archive/v${CRIU_VERSION}.tar.gz | tar -v -C /usr/src/criu/ -xz --strip-components=1 \
     && cd /usr/src/criu \
     && make install-criu
+
+# install shfmt
+RUN mkdir -p /go/src/github.com/mvdan \
+    && cd /go/src/github.com/mvdan \
+    && git clone https://github.com/mvdan/sh \
+    && cd sh \
+    && git checkout -f v0.4.0 \
+    && go install ./cmd/shfmt \
+    && rm -rf /go/src/github.com/mvdan
 
 # setup a playground for us to spawn containers in
 ENV ROOTFS /busybox

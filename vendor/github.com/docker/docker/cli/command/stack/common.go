@@ -1,5 +1,3 @@
-// +build experimental
-
 package stack
 
 import (
@@ -36,7 +34,7 @@ func getServices(
 ) ([]swarm.Service, error) {
 	return apiclient.ServiceList(
 		ctx,
-		types.ServiceListOptions{Filter: getStackFilter(namespace)})
+		types.ServiceListOptions{Filters: getStackFilter(namespace)})
 }
 
 func getNetworks(
@@ -47,4 +45,12 @@ func getNetworks(
 	return apiclient.NetworkList(
 		ctx,
 		types.NetworkListOptions{Filters: getStackFilter(namespace)})
+}
+
+type namespace struct {
+	name string
+}
+
+func (n namespace) scope(name string) string {
+	return n.name + "_" + name
 }

@@ -1,22 +1,27 @@
-<!--[metadata]>
-+++
-title = "swarm leave"
-description = "The swarm leave command description and usage"
-keywords = ["swarm, leave"]
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "swarm leave"
+description: "The swarm leave command description and usage"
+keywords: "swarm, leave"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # swarm leave
 
 ```markdown
-Usage:  docker swarm leave [OPTIONS]
+Usage:	docker swarm leave [OPTIONS]
 
-Leave the swarm (workers only).
+Leave the swarm (workers only)
 
 Options:
-      --force   Force this node to leave the swarm, ignoring warnings
+  -f, --force   Force this node to leave the swarm, ignoring warnings
       --help    Print usage
 ```
 

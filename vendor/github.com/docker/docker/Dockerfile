@@ -25,15 +25,14 @@
 
 FROM debian:jessie
 
+# allow replacing httpredir or deb mirror
+ARG APT_MIRROR=deb.debian.org
+RUN sed -ri "s/(httpredir|deb).debian.org/$APT_MIRROR/g" /etc/apt/sources.list
+
 # Add zfs ppa
 RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E871F18B51E0147C77796AC81196BA81F6B0FC61 \
 	|| apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys E871F18B51E0147C77796AC81196BA81F6B0FC61
 RUN echo deb http://ppa.launchpad.net/zfs-native/stable/ubuntu trusty main > /etc/apt/sources.list.d/zfs.list
-
-
-# Allow replacing httpredir mirror
-ARG APT_MIRROR=httpredir.debian.org
-RUN sed -i s/httpredir.debian.org/$APT_MIRROR/g /etc/apt/sources.list
 
 # Packaged dependencies
 RUN apt-get update && apt-get install -y \
@@ -47,6 +46,7 @@ RUN apt-get update && apt-get install -y \
 	btrfs-tools \
 	build-essential \
 	clang \
+	cmake \
 	createrepo \
 	curl \
 	dpkg-sig \
@@ -74,6 +74,7 @@ RUN apt-get update && apt-get install -y \
 	python-websocket \
 	ubuntu-zfs \
 	xfsprogs \
+	vim-common \
 	libzfs-dev \
 	tar \
 	zip \
@@ -125,19 +126,20 @@ RUN set -x \
 # IMPORTANT: If the version of Go is updated, the Windows to Linux CI machines
 #            will need updating, to avoid errors. Ping #docker-maintainers on IRC
 #            with a heads-up.
-ENV GO_VERSION 1.7.1
-RUN curl -fsSL "https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz" \
+ENV GO_VERSION 1.7.3
+RUN curl -fsSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" \
 	| tar -xzC /usr/local
 
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
-ENV GOPATH /go:/go/src/github.com/docker/docker/vendor
+ENV GOPATH /go
 
 # Compile Go for cross compilation
 ENV DOCKER_CROSSPLATFORMS \
 	linux/386 linux/arm \
 	darwin/amd64 \
 	freebsd/amd64 freebsd/386 freebsd/arm \
-	windows/amd64 windows/386
+	windows/amd64 windows/386 \
+	solaris/amd64
 
 # Dependency for golint
 ENV GO_TOOLS_COMMIT 823804e1ae08dbb14eb807afc7db9993bc9e3cc3
@@ -176,7 +178,7 @@ RUN set -x \
 	&& rm -rf "$GOPATH"
 
 # Install notary and notary-server
-ENV NOTARY_VERSION v0.3.0
+ENV NOTARY_VERSION v0.4.2
 RUN set -x \
 	&& export GOPATH="$(mktemp -d)" \
 	&& git clone https://github.com/docker/notary.git "$GOPATH/src/github.com/docker/notary" \
@@ -193,6 +195,15 @@ RUN git clone https://github.com/docker/docker-py.git /docker-py \
 	&& cd /docker-py \
 	&& git checkout -q $DOCKER_PY_COMMIT \
 	&& pip install -r test-requirements.txt
+
+# Install yamllint for validating swagger.yaml
+RUN pip install yamllint==1.5.0
+
+# Install go-swagger for validating swagger.yaml
+ENV GO_SWAGGER_COMMIT c28258affb0b6251755d92489ef685af8d4ff3eb
+RUN git clone https://github.com/go-swagger/go-swagger.git /go/src/github.com/go-swagger/go-swagger \
+	&& (cd /go/src/github.com/go-swagger/go-swagger && git checkout -q $GO_SWAGGER_COMMIT) \
+	&& go install -v github.com/go-swagger/go-swagger/cmd/swagger
 
 # Set user.email so crosbymichael's in-container merge commits go smoothly
 RUN git config --global user.email 'docker-dummy@example.com'
@@ -222,10 +233,11 @@ RUN ./contrib/download-frozen-image-v2.sh /docker-frozen-images \
 	hello-world:latest@sha256:8be990ef2aeb16dbcb9271ddfe2610fa6658d13f6dfb8bc72074cc1ca36966a7
 # See also "hack/make/.ensure-frozen-images" (which needs to be updated any time this list is)
 
-# Install tomlv, runc, containerd and grimes
+# Install tomlv, vndr, runc, containerd, tini, docker-proxy
 # Please edit hack/dockerfile/install-binaries.sh to update them.
+COPY hack/dockerfile/binaries-commits /tmp/binaries-commits
 COPY hack/dockerfile/install-binaries.sh /tmp/install-binaries.sh
-RUN /tmp/install-binaries.sh tomlv runc containerd grimes
+RUN /tmp/install-binaries.sh tomlv vndr runc containerd tini proxy
 
 # Wrap all commands in the "docker-in-docker" script to allow nested containers
 ENTRYPOINT ["hack/dind"]

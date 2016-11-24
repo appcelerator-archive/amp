@@ -17,10 +17,11 @@ import (
 )
 
 type startOptions struct {
-	attach     bool
-	openStdin  bool
-	detachKeys string
-	checkpoint string
+	attach        bool
+	openStdin     bool
+	detachKeys    string
+	checkpoint    string
+	checkpointDir string
 
 	containers []string
 }
@@ -44,8 +45,10 @@ func NewStartCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.BoolVarP(&opts.openStdin, "interactive", "i", false, "Attach container's STDIN")
 	flags.StringVar(&opts.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
 
-	addExperimentalStartFlags(flags, &opts)
-
+	flags.StringVar(&opts.checkpoint, "checkpoint", "", "Restore from this checkpoint")
+	flags.SetAnnotation("checkpoint", "experimental", nil)
+	flags.StringVar(&opts.checkpointDir, "checkpoint-dir", "", "Use a custom checkpoint storage directory")
+	flags.SetAnnotation("checkpoint-dir", "experimental", nil)
 	return cmd
 }
 
@@ -108,9 +111,10 @@ func runStart(dockerCli *command.DockerCli, opts *startOptions) error {
 
 		// 3. We should open a channel for receiving status code of the container
 		// no matter it's detached, removed on daemon side(--rm) or exit normally.
-		statusChan := waitExitOrRemoved(dockerCli, ctx, c.ID, c.HostConfig.AutoRemove)
+		statusChan := waitExitOrRemoved(ctx, dockerCli, c.ID, c.HostConfig.AutoRemove)
 		startOptions := types.ContainerStartOptions{
-			CheckpointID: opts.checkpoint,
+			CheckpointID:  opts.checkpoint,
+			CheckpointDir: opts.checkpointDir,
 		}
 
 		// 4. Start the container.
@@ -143,20 +147,21 @@ func runStart(dockerCli *command.DockerCli, opts *startOptions) error {
 		}
 		container := opts.containers[0]
 		startOptions := types.ContainerStartOptions{
-			CheckpointID: opts.checkpoint,
+			CheckpointID:  opts.checkpoint,
+			CheckpointDir: opts.checkpointDir,
 		}
 		return dockerCli.Client().ContainerStart(ctx, container, startOptions)
 
 	} else {
 		// We're not going to attach to anything.
 		// Start as many containers as we want.
-		return startContainersWithoutAttachments(dockerCli, ctx, opts.containers)
+		return startContainersWithoutAttachments(ctx, dockerCli, opts.containers)
 	}
 
 	return nil
 }
 
-func startContainersWithoutAttachments(dockerCli *command.DockerCli, ctx context.Context, containers []string) error {
+func startContainersWithoutAttachments(ctx context.Context, dockerCli *command.DockerCli, containers []string) error {
 	var failedContainers []string
 	for _, container := range containers {
 		if err := dockerCli.Client().ContainerStart(ctx, container, types.ContainerStartOptions{}); err != nil {
