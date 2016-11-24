@@ -17,7 +17,7 @@ import:
   - github
 - package: github.com/howeyc/gopass
 - package: github.com/influxdata/influxdb
-  version: ^1.1.0-rc1
+  version: ^1.1.0
   subpackages:
   - client/v2
 - package: github.com/mitchellh/go-homedir
@@ -32,9 +32,11 @@ import:
   version: ^3.0.55
 - package: gopkg.in/yaml.v2
 - package: github.com/docker/docker
+  version: 1.13.x
 - package: google.golang.org/grpc
+  version: v1.0.4
 - package: github.com/nats-io/go-nats-streaming
-  version: ^0.2.0
+  version: ^0.3.0
 - package: github.com/fatih/structs
 - package: github.com/grpc-ecosystem/grpc-gateway
   version: ^1.1.0

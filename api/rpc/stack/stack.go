@@ -635,10 +635,10 @@ func (s *Server) removeService(ctx context.Context, id string) error {
 	nn := 0
 	filters := filters.NewArgs()
 	filters.Add("id", id)
-	//allowing 1 min to remove service
+	// allowing 20 sec to remove service
 	for nn < 20 {
 		list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
-			Filter: filters,
+			Filters: filters,
 		})
 		if err == nil && len(list) == 0 {
 			fmt.Printf("service removed: %s\n", id)
