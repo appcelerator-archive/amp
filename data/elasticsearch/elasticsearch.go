@@ -67,7 +67,6 @@ func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) 
 		Index(esIndex).
 		Type(esType).
 		BodyJson(body).
-		Refresh(true).
 		Do()
 	if err != nil {
 		return err
