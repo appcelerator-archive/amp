@@ -7,6 +7,7 @@ import (
 	"time"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/runtime"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
@@ -17,7 +18,6 @@ import (
 )
 
 const (
-	natsClusterID          = "test-cluster"
 	natsClientID           = "amplifier-log-test"
 	defaultNumberOfEntries = 50
 
@@ -44,8 +44,7 @@ func TestLogsInit(t *testing.T) {
 		t.Errorf("Unable to connect to NATS on: %s\n%v", config.NatsURL, err)
 		return
 	}
-	//runtime.Nats, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
-	sc, err = stan.Connect(natsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(60*time.Second))
+	sc, err = stan.Connect(runtime.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(60*time.Second))
 	if err != nil {
 		t.Errorf("failed to connect to nats: %v\n", err)
 		return

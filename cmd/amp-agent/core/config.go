@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/appcelerator/amp/api/runtime"
 	"os"
 	"strconv"
 )
@@ -34,7 +35,7 @@ func (cfg *AgentConfig) setDefault() {
 	cfg.apiPort = "3000"
 	cfg.period = 1
 	cfg.clientID = "amp-agent-" + os.Getenv("HOSTNAME")
-	cfg.clusterID = "test-cluster"
+	cfg.clusterID = runtime.NatsClusterID
 }
 
 //Update config with env variables
