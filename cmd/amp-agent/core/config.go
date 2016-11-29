@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/config"
 	"os"
 	"strconv"
 )
@@ -29,13 +29,13 @@ func (cfg *AgentConfig) init(version string, build string) {
 
 //Set default value of configuration
 func (cfg *AgentConfig) setDefault() {
-	cfg.dockerEngine = "unix:///var/run/docker.sock"
-	cfg.natsURL = "nats://nats:4222"
-	cfg.elasticsearchURL = "http://elasticsearch:9200"
+	cfg.dockerEngine = amp.DockerDefaultURL
+	cfg.natsURL = amp.NatsDefaultURL
+	cfg.elasticsearchURL = amp.ElasticsearchDefaultURL
 	cfg.apiPort = "3000"
 	cfg.period = 1
 	cfg.clientID = "amp-agent-" + os.Getenv("HOSTNAME")
-	cfg.clusterID = runtime.NatsClusterID
+	cfg.clusterID = amp.NatsClusterID
 }
 
 //Update config with env variables

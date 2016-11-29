@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 )
@@ -67,7 +68,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{
 						"--name etcd",
 						"--listen-client-urls http://0.0.0.0:2379",
-						"--advertise-client-urls http://etcd:2379",
+						"--advertise-client-urls " + amp.EtcdDefaultEndpoint,
 					},
 					Env: nil,
 					Labels: map[string]string{
@@ -440,7 +441,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env: []string{
 						"OUTPUT_INFLUXDB_ENABLED=true",
-						"INFLUXDB_URL=http://influxdb:8086",
+						"INFLUXDB_URL=" + amp.InfluxDefaultURL,
 						"TAG_datacenter=dc1",
 						"TAG_type=core",
 						"INPUT_DOCKER_ENABLED=true",
@@ -496,7 +497,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env: []string{
 						"OUTPUT_INFLUXDB_ENABLED=true",
-						"INFLUXDB_URL=http://influxdb:8086",
+						"INFLUXDB_URL=" + amp.InfluxDefaultURL,
 						"INPUT_DOCKER_ENABLED=false",
 						"INPUT_CPU_ENABLED=false",
 						"INPUT_NET_ENABLED=false",
@@ -582,7 +583,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{
 						"amplifier-gateway",
 						"--amplifier_endpoint",
-						"amplifier:50101",
+						amp.AmplifierDefaultEndpoint,
 					},
 					Env: nil,
 					Labels: map[string]string{

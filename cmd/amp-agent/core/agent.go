@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -65,7 +65,7 @@ func AgentInit(version string, build string) error {
 	if err != nil {
 		fmt.Errorf("amp-agent is unable to connect to NATS on: %s\n%v", conf.natsURL, err)
 	}
-	agent.natsClient, err = stan.Connect(runtime.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
+	agent.natsClient, err = stan.Connect(amp.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
 	if err != nil {
 		return fmt.Errorf("amp-agent is unable to connect to NATS-Streaming on: %s\n%v", conf.natsURL, err)
 	}

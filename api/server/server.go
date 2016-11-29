@@ -18,6 +18,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/client"
@@ -134,7 +135,7 @@ func initNats(config Config) error {
 		fmt.Errorf("amplifer is unable to connect to NATS on: %s\n%v", config.NatsURL, err)
 	}
 
-	runtime.Nats, err = stan.Connect(runtime.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
+	runtime.Nats, err = stan.Connect(amp.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
 	if err != nil {
 		return fmt.Errorf("amplifer is unable to connect to NATS-Streaming on: %s\n%v", config.NatsURL, err)
 	}

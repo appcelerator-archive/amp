@@ -6,7 +6,6 @@ import (
 	"testing"
 	//"time"
 
-	"github.com/appcelerator/amp/api/server"
 	"golang.org/x/net/context"
 	//"google.golang.org/grpc"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"google.golang.org/grpc"
@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	config        server.Config
 	ctx           context.Context
 	statsClient   stats.StatsClient
 	stackClient   stack.StackServiceClient
@@ -34,23 +33,20 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	// Get configuration
-	config = server.ConfigFromEnv()
-
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
-	conn, err := grpc.Dial("amplifier:50101",
+	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second))
 	if err != nil {
-		log.Panicln("Cannot connect to amplifier", err)
+		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)
 	}
 	log.Println("Connected to amplifier")
 
-	store = etcd.New(config.EtcdEndpoints, "amp")
+	store = etcd.New([]string{amp.EtcdDefaultEndpoint}, "amp")
 	if err := store.Connect(5 * time.Second); err != nil {
-		log.Panicf("Unable to connect to etcd on: %s\n%v", config.EtcdEndpoints, err)
+		log.Panicf("Unable to connect to etcd on: %s\n%v", amp.EtcdDefaultEndpoint, err)
 	}
 
 	ctx = context.Background()

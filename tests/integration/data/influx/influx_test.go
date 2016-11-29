@@ -1,6 +1,7 @@
 package influx
 
 import (
+	"github.com/appcelerator/amp/config"
 	. "github.com/appcelerator/amp/data/influx"
 	"os"
 	"testing"
@@ -12,7 +13,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	influxInit()
+	influx = New(amp.InfluxDefaultURL, "_internal", "admin", "changme")
+	influx.Connect(60 * time.Second)
 	defer influx.Close()
 	os.Exit(m.Run())
 }
@@ -31,14 +33,4 @@ func TestQuery(t *testing.T) {
 	if res.Results[0].Series[0].Name != "measurements" {
 		t.Errorf("Expected name to be %s, actual=%s \n", "measurement", res.Results[0].Series[0].Name)
 	}
-}
-
-func influxInit() {
-	host := os.Getenv("influxhost")
-	cstr := "http://influxdb:8086"
-	if host != "" {
-		cstr = "http://" + host + ":8086"
-	}
-	influx = New(cstr, "_internal", "admin", "changme")
-	influx.Connect(60 * time.Second)
 }
