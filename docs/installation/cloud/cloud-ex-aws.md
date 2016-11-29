@@ -53,7 +53,7 @@ The instance is now up-and-running. The menu path to get back to your EC2 instan
 To get help with your private key file, instance IP address, and how to log into the instance via SSH, click the **Connect** button at the top of the AWS instance dashboard.
 
 
-### Step 3. Log in from a terminal, configure apt, and get packages
+### Step 3. Log in from a terminal and verify proper installation
 
 1. Log in to the EC2 instance from a command line terminal.
 
@@ -73,90 +73,23 @@ To get help with your private key file, instance IP address, and how to log into
         ubuntu@ip-xxx-xx-x-xxx:~$ uname -r
         3.13.0-48-generic
 
-3. Add the new `gpg` key.
 
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-        Executing: gpg --ignore-time-conflict --no-options --no-default-keyring --homedir /tmp/tmp.jNZLKNnKte --no-auto-check-trustdb --trust-model always --keyring /etc/apt/trusted.gpg --primary-keyring /etc/apt/trusted.gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-        gpg: requesting key 2C52609D from hkp server p80.pool.sks-keyservers.net
-        gpg: key 2C52609D: public key "Docker Release Tool (releasedocker) <docker@docker.com>" imported
-        gpg: Total number processed: 1
-        gpg:               imported: 1  (RSA: 1)
+### Step 4. Install Docker Engine on the remote instance
 
-4. Create a `docker.list` file, and add an entry for our OS, Ubuntu Trusty 14.04 (LTS).
+1. Download the Docker install script and pipe to shell.
 
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo vi /etc/apt/sources.list.d/docker.list
+        ubuntu@ip-xxx-xx-x-xxx:~$ curl -sSL https://get.docker.com/ | sh
 
-    If we were updating an existing file, we'd delete any existing entries.
 
-5. Update the `apt` package index.
-
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-get update
-
-6. Purge the old repo if it exists.
-
-    In our case the repo doesn't because this is a new VM, but let's run it anyway just to be sure.
-
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-get purge lxc-docker
-        Reading package lists... Done
-        Building dependency tree       
-        Reading state information... Done
-        Package 'lxc-docker' is not installed, so not removed
-        0 upgraded, 0 newly installed, 0 to remove and 139 not upgraded.
-
-7.  Verify that `apt` is pulling from the correct repository.
-
-        ubuntu@ip-172-31-0-151:~$ sudo apt-cache policy docker-engine
-        docker-engine:
-        Installed: (none)
-        Candidate: 1.9.1-0~trusty
-        Version table:
-        1.9.1-0~trusty 0
-        500 https://apt.dockerproject.org/repo/ ubuntu-trusty/main amd64 Packages
-        1.9.0-0~trusty 0
-        500 https://apt.dockerproject.org/repo/ ubuntu-trusty/main amd64 Packages
-            . . .
-
-    From now on when you run `apt-get upgrade`, `apt` pulls from the new repository.
-
-### Step 4. Install recommended prerequisites for the OS
-
-For Ubuntu Trusty (and some other versions), it’s recommended to install the `linux-image-extra` kernel package, which allows you use the `aufs` storage driver, so we'll do that now.
-
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-get update
-        ubuntu@ip-172-31-0-151:~$ sudo apt-get install linux-image-extra-$(uname -r)
-
-### Step 5. Install Docker Engine on the remote instance
-
-1. Update the apt package index.
-
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-get update
-
-2. Install Docker Engine.
-
-        ubuntu@ip-xxx-xx-x-xxx:~$ sudo apt-get install docker-engine
-        Reading package lists... Done
-        Building dependency tree       
-        Reading state information... Done
-        The following extra packages will be installed:
-        aufs-tools cgroup-lite git git-man liberror-perl
-        Suggested packages:
-        git-daemon-run git-daemon-sysvinit git-doc git-el git-email git-gui gitk
-        gitweb git-arch git-bzr git-cvs git-mediawiki git-svn
-        The following NEW packages will be installed:
-        aufs-tools cgroup-lite docker-engine git git-man liberror-perl
-        0 upgraded, 6 newly installed, 0 to remove and 139 not upgraded.
-        Need to get 11.0 MB of archives.
-        After this operation, 60.3 MB of additional disk space will be used.
-        Do you want to continue? [Y/n] y
-        Get:1 http://us-west-1.ec2.archive.ubuntu.com/ubuntu/ trusty/universe aufs-tools amd64 1:3.2+20130722-1.1 [92.3 kB]
-        Get:2 http://us-west-1.ec2.archive.ubuntu.com/ubuntu/ trusty/main liberror-perl all 0.17-1.1 [21.1 kB]
-        . . .
-
-3. Start the Docker daemon.
+2. Start the Docker daemon.
 
         ubuntu@ip-xxx-xx-x-xxx:~$ sudo service docker start
 
-4. Verify Docker Engine is installed correctly by running `docker run hello-world`.
+3. Verify Docker Engine is installed correctly by running `docker run hello-world`.
+
+**Note:** docker command will need to be run as sudo, unless user is added to docker group. eq.,
+`sudo usermod -aG docker ubuntu `
+
 
         ubuntu@ip-xxx-xx-x-xxx:~$ sudo docker run hello-world
         ubuntu@ip-172-31-0-151:~$ sudo docker run hello-world
@@ -185,7 +118,7 @@ For Ubuntu Trusty (and some other versions), it’s recommended to install the `
         For more examples and ideas, visit:
         https://docs.docker.com/userguide/
 
-### Step 6. Install AMP on the remote instance
+### Step 5. Install AMP on the remote instance
 
 1. Step 1
 
