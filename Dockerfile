@@ -7,4 +7,4 @@ COPY . /go/src/github.com/appcelerator/amp
 RUN make install
 EXPOSE 50101
 ENTRYPOINT []
-CMD [ "/go/bin/amplifier", "--service"]
+CMD [ "/go/bin/amplifier"]

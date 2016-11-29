@@ -6,4 +6,4 @@ COPY ./amp-log-worker /usr/local/bin/amp-log-worker
 COPY ./amplifier-gateway /usr/local/bin/amplifier-gateway
 EXPOSE 50101
 ENTRYPOINT []
-CMD [ "amplifier", "--service"]
+CMD [ "amplifier" ]

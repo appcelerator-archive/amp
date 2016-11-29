@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
@@ -25,13 +25,11 @@ var (
 )
 
 const (
-	clientID         = "amp-log-worker"
-	natsURL          = "nats://nats:4222"
-	natsTopic        = "amp-logs"
-	elasticsearchURL = "http://elasticsearch:9200"
-	esIndex          = "amp-logs"
-	esType           = "amp-log-entry"
-	esMapping        = `{
+	clientID  = "amp-log-worker"
+	natsTopic = "amp-logs"
+	esIndex   = "amp-logs"
+	esType    = "amp-log-entry"
+	esMapping = `{
 		 "amp-log-entry": {
             "properties": {
               "timestamp": {
@@ -81,11 +79,11 @@ const (
 func main() {
 	log.Printf("amp-log-worker (version: %s, build: %s)\n", Version, Build)
 
-	err := es.Connect(elasticsearchURL, 60*time.Second)
+	err := es.Connect(amp.ElasticsearchDefaultURL, 60*time.Second)
 	if err != nil {
-		log.Fatalf("Unable to connect to elasticsearch on %s: %s", elasticsearchURL, err)
+		log.Fatalf("Unable to connect to elasticsearch on %s: %s", amp.ElasticsearchDefaultURL, err)
 	}
-	log.Printf("Connected to elasticsearch at %s\n", elasticsearchURL)
+	log.Printf("Connected to elasticsearch at %s\n", amp.ElasticsearchDefaultURL)
 
 	es.CreateIndexIfNotExists(esIndex, esType, esMapping)
 	if err != nil {
@@ -93,11 +91,11 @@ func main() {
 	}
 	log.Printf("Created index %s\n", esIndex)
 
-	sc, err := stan.Connect(runtime.NatsClusterID, clientID, stan.NatsURL(natsURL))
+	sc, err := stan.Connect(amp.NatsClusterID, clientID, stan.NatsURL(amp.NatsDefaultURL))
 	if err != nil {
-		log.Fatalf("Unable to connect to nats on %s: %s", natsURL, err)
+		log.Fatalf("Unable to connect to nats on %s: %s", amp.NatsDefaultURL, err)
 	}
-	log.Printf("Connected to NATS-Streaming at %s\n", natsURL)
+	log.Printf("Connected to NATS-Streaming at %s\n", amp.NatsDefaultURL)
 
 	_, err = sc.Subscribe(natsTopic, messageHandler, stan.DeliverAllAvailable(), stan.DurableName("amp-logs-durable"))
 	if err != nil {

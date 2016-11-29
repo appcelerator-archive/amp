@@ -3,4 +3,3 @@ Dockerfile
 Dockerfile.*
 docker-compose.*.yml
 shrink.sh
-swarm

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
@@ -16,9 +17,9 @@ import (
 
 const (
 	//DockerURL docker url
-	DockerURL = "unix:///var/run/docker.sock"
+	DockerURL = amp.DockerDefaultURL
 	//DockerVersion docker version
-	DockerVersion = "1.24"
+	DockerVersion = amp.DockerDefaultVersion
 	//RegistryToken token used for registry
 	RegistryToken = ""
 	//ServiceFailedTimeout max time allowed to start a service
