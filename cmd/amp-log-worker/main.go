@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
@@ -24,7 +25,6 @@ var (
 )
 
 const (
-	clusterID        = "test-cluster"
 	clientID         = "amp-log-worker"
 	natsURL          = "nats://nats:4222"
 	natsTopic        = "amp-logs"
@@ -93,7 +93,7 @@ func main() {
 	}
 	log.Printf("Created index %s\n", esIndex)
 
-	sc, err := stan.Connect(clusterID, clientID, stan.NatsURL(natsURL))
+	sc, err := stan.Connect(runtime.NatsClusterID, clientID, stan.NatsURL(natsURL))
 	if err != nil {
 		log.Fatalf("Unable to connect to nats on %s: %s", natsURL, err)
 	}

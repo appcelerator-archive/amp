@@ -46,7 +46,7 @@ var (
 	lookupDir    = "./lookup"
 	regexMap     map[string]string
 	suiteTimeout string
-	wg sync.WaitGroup
+	wg           sync.WaitGroup
 )
 
 //read, parse and execute test commands
@@ -183,8 +183,8 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			//perform templating on RegEx string
 			regexTmplOutput, tmplErr := performTemplating(cmdSpec.Expectation, cache)
 			if tmplErr != nil {
-					t.Log("Executing templating failed: %s", tmplErr)
-					t.Fail()
+				t.Log("Executing templating failed: %s", tmplErr)
+				t.Fail()
 			}
 
 			//check if the command output matches the RegEx
@@ -315,14 +315,14 @@ func randString(n int) string {
 }
 
 //repeatedly call the done() method for the context, fail if the deadline exceeds
-func checkTimeout(t *testing.T, ctx context.Context, name string){
-  for {
-    select {
-    case <-ctx.Done():
+func checkTimeout(t *testing.T, ctx context.Context, name string) {
+	for {
+		select {
+		case <-ctx.Done():
 			if ctx.Err() == context.DeadlineExceeded {
 				t.Fatal("Deadline exceeded:", name)
 			}
 			return
-    }
-  }
+		}
+	}
 }
