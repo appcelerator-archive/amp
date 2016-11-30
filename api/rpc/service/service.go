@@ -128,7 +128,9 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 			}
 		}
 	}
-	options := types.ServiceCreateOptions{}
+	options := types.ServiceCreateOptions{
+		EncodedRegistryAuth: serv.RegistryAuth,
+	}
 
 	r, err := s.Docker.ServiceCreate(ctx, service, options)
 	if err != nil {

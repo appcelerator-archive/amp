@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/docker/docker/cli/command"
+	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -47,6 +50,9 @@ var (
 
 	// network
 	networks = []string{}
+
+	// send registry auth
+	registryAuth = false
 )
 
 func init() {
@@ -59,6 +65,7 @@ func init() {
 	flags.StringSliceVarP(&serviceLabels, "label", "l", serviceLabels, "Set service labels (default [])")
 	flags.StringSliceVar(&containerLabels, "container-label", containerLabels, "Set container labels for service replicas (default [])")
 	flags.StringSliceVar(&networks, "network", networks, "Set service networks attachment (default [])")
+	flags.BoolVar(&registryAuth, "with-registry-auth", false, "Send registry authentication details to Swarm agents")
 
 	ServiceCmd.AddCommand(serviceCreateCmd)
 }
@@ -119,8 +126,26 @@ func serviceCreate(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		ServiceSpec: spec,
 	}
 
+	ctx := context.Background()
+
+	// only send auth if flag was set
+	if registryAuth {
+		dockerCli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr)
+		opts := cliflags.NewClientOptions()
+		err := dockerCli.Initialize(opts)
+		if err != nil {
+			return err
+		}
+		// Retrieve encoded auth token from the image reference
+		encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, image)
+		if err != nil {
+			return err
+		}
+		spec.RegistryAuth = encodedAuth
+	}
+
 	client := service.NewServiceClient(amp.Conn)
-	reply, err := client.Create(context.Background(), request)
+	reply, err := client.Create(ctx, request)
 	if err != nil {
 		return err
 	}
