@@ -1,0 +1,73 @@
+- kv-put:
+  cmd: amp kv put
+  args:
+     - foo
+     - bar
+  options:
+     -
+  expectation: kv-put
+
+- kv-get:
+  cmd: amp kv get
+  args:
+     - foo
+  options:
+     -
+  expectation: kv-get
+
+- kv-ls:
+  cmd: amp kv ls
+  args:
+     -
+  options:
+     -
+  expectation: kv-ls
+
+- kv-del:
+  cmd: amp kv del
+  args:
+     - foo
+  options:
+     -
+  expectation: kv-del
+
+- kv-ls:
+  cmd: amp kv ls
+  args:
+     -
+  options:
+     -
+  expectation: kv-unavailable
+
+- kv-put:
+  cmd: amp kv put
+  args:
+     - foo
+     - bar
+  options:
+     -
+  expectation: kv-put
+
+- kv-get:
+  cmd: amp kv get
+  args:
+     - foo
+  options:
+     -
+  expectation: kv-get
+
+- kv-rm:
+  cmd: amp kv rm
+  args:
+     - foo
+  options:
+     -
+  expectation: kv-rm
+
+- kv-ls:
+  cmd: amp kv ls
+  args:
+     -
+  options:
+     -
+  expectation: kv-unavailable  

@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package storage;
+
+import "google/api/annotations.proto";
+
+service Storage {
+  rpc Put (PutStorage) returns (StorageResponse) {
+    option (google.api.http) = {
+      put: "/v1/storage/{key}",
+      body: "*"
+    };
+  };
+  rpc Get (GetStorage) returns (StorageResponse) {
+    option (google.api.http) = {
+      get: "/v1/storage/{key}"
+    };
+  };
+  rpc Delete (DeleteStorage) returns (StorageResponse) {
+    option (google.api.http) = {
+      delete: "/v1/storage/{key}"
+    };
+  };
+  rpc List (ListStorage) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v1/storage"
+    };
+  };
+}
+
+// struct for get storage request function
+message GetStorage {
+  string key = 1;
+}
+
+// struct for delete storage request function
+message DeleteStorage {
+  string key = 1;
+}
+
+// struct for put storage request function
+message PutStorage {
+  string key = 1;
+  string val = 2;
+}
+
+// struct for list storage request function
+message ListStorage {
+
+}
+
+// struct for storage object key response
+message StorageResponse {
+  string key = 1;
+  string val = 2;
+}
+
+// struct for list storage response function
+message ListResponse {
+  repeated StorageInfo list = 1;
+}
+
+// struct part of ListResponse Struct
+message StorageInfo {
+  string key = 1;
+  string val = 2;
+}
+
+// struct to store Storage Key in ETCD
+message StorageKey {
+  string key = 1;
+}
