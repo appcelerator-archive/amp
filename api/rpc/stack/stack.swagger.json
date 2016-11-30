@@ -158,6 +158,125 @@
     }
   },
   "definitions": {
+    "serviceGlobalService": {
+      "type": "object"
+    },
+    "serviceNetworkAttachment": {
+      "type": "object",
+      "properties": {
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "target": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servicePublishSpec": {
+      "type": "object",
+      "properties": {
+        "internal_port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "protocol": {
+          "type": "string",
+          "format": "string"
+        },
+        "publish_port": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "serviceReplicatedService": {
+      "type": "object",
+      "properties": {
+        "replicas": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "serviceServiceSpec": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "container_labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "global": {
+          "$ref": "#/definitions/serviceGlobalService"
+        },
+        "image": {
+          "type": "string",
+          "format": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceNetworkAttachment"
+          }
+        },
+        "publish_specs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/servicePublishSpec"
+          }
+        },
+        "registry_auth": {
+          "type": "string",
+          "format": "string"
+        },
+        "replicated": {
+          "$ref": "#/definitions/serviceReplicatedService"
+        }
+      }
+    },
     "stackListReply": {
       "type": "object",
       "properties": {
@@ -184,6 +303,94 @@
       },
       "title": "struct for list request function"
     },
+    "stackNetworkIPAM": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackNetworkIPAMConfig"
+          }
+        },
+        "driver": {
+          "type": "string",
+          "format": "string"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      }
+    },
+    "stackNetworkIPAMConfig": {
+      "type": "object",
+      "properties": {
+        "aux_address": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "gateway": {
+          "type": "string",
+          "format": "string"
+        },
+        "ip_range": {
+          "type": "string",
+          "format": "string"
+        },
+        "subnet": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "stackNetworkSpec": {
+      "type": "object",
+      "properties": {
+        "driver": {
+          "type": "string",
+          "format": "string"
+        },
+        "enable_ipv6": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "external": {
+          "type": "string",
+          "format": "string"
+        },
+        "internal": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "ipam": {
+          "$ref": "#/definitions/stackNetworkIPAM"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      }
+    },
     "stackRemoveRequest": {
       "type": "object",
       "properties": {
@@ -198,16 +405,41 @@
       },
       "title": "struct for remove request function"
     },
-    "stackStackFileRequest": {
+    "stackStack": {
       "type": "object",
       "properties": {
-        "stack_name": {
+        "id": {
           "type": "string",
           "format": "string"
         },
-        "stackfile": {
+        "is_public": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "name": {
           "type": "string",
           "format": "string"
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackNetworkSpec"
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceServiceSpec"
+          }
+        }
+      },
+      "title": "Stack struct"
+    },
+    "stackStackFileRequest": {
+      "type": "object",
+      "properties": {
+        "stack": {
+          "$ref": "#/definitions/stackStack"
         }
       },
       "title": "struct for stackfile request"

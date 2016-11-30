@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/docker/docker/pkg/stringid"
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
 )
@@ -67,12 +66,10 @@ type ipamConfig struct {
 // ParseStackfile main function to parse stackfile
 func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
 	var stack = &Stack{}
-	stack.Id = stringid.GenerateNonCryptoID()
 	specs, err := parseStack([]byte(in))
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("parsedStack %+v\n", specs)
 	networkMap, err := copyNetworks(stack, specs.Networks)
 	if err != nil {
 		return nil, err
@@ -80,7 +77,6 @@ func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
 	if err := copyServices(stack, specs.Services, networkMap); err != nil {
 		return nil, err
 	}
-	fmt.Printf("Stack %+v\n", stack)
 	return stack, err
 }
 
