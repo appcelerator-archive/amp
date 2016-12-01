@@ -2,11 +2,10 @@ package bench
 
 import (
 	"fmt"
+	"github.com/nats-io/nats"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/nats-io/go-nats"
 )
 
 const (

@@ -1,47 +1,63 @@
 package: github.com/appcelerator/amp
 import:
-- package: github.com/Shopify/sarama
-  version: ^1.10.1
 - package: github.com/coreos/etcd
-  version: ^3.1.0-rc.0
+  version: ^3.1.0-rc.1
   subpackages:
   - clientv3
   - mvcc/mvccpb
+- package: github.com/docker/docker
+  version: 1.13.x
+  subpackages:
+  - api/types
+  - api/types/events
+  - api/types/filters
+  - api/types/mount
+  - api/types/network
+  - api/types/swarm
+  - client
+  - pkg/stringid
 - package: github.com/fatih/color
-  version: ^1.0.0
+  version: ^1.1.0
+- package: github.com/fatih/structs
 - package: github.com/golang/protobuf
   subpackages:
   - proto
 - package: github.com/google/go-github
   subpackages:
   - github
+- package: github.com/grpc-ecosystem/grpc-gateway
+  version: ^1.1.0
+  subpackages:
+  - runtime
+  - third_party/googleapis/google/api
+  - utilities
 - package: github.com/howeyc/gopass
 - package: github.com/influxdata/influxdb
   version: ^1.1.0
   subpackages:
   - client/v2
 - package: github.com/mitchellh/go-homedir
+- package: github.com/nats-io/go-nats-streaming
+  version: ^0.3.0
+- package: github.com/nats-io/nats
+  version: ^1.2.2
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
 - package: golang.org/x/net
   subpackages:
   - context
+  - websocket
 - package: golang.org/x/oauth2
-- package: gopkg.in/olivere/elastic.v3
-  version: ^3.0.55
-- package: gopkg.in/yaml.v2
-- package: github.com/docker/docker
-  version: 1.13.x
 - package: google.golang.org/grpc
-  version: v1.0.4
-- package: github.com/nats-io/go-nats-streaming
-  version: ^0.3.0
-- package: github.com/fatih/structs
-- package: github.com/grpc-ecosystem/grpc-gateway
-  version: ^1.1.0
+  version: ^1.0.4
   subpackages:
-  - runtime
+  - codes
+  - grpclog
+  - metadata
+- package: gopkg.in/olivere/elastic.v3
+  version: ^5.0.13
+- package: gopkg.in/yaml.v2
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4

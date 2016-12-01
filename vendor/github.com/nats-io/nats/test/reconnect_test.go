@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/nats-io/gnatsd/server"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 func startReconnectServer(t *testing.T) *server.Server {

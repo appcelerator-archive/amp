@@ -67,7 +67,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// TODO timestamp queries
 
 	// Perform request
-	searchResult, err := request.Query(masterQuery).Do()
+	searchResult, err := request.Query(masterQuery).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
