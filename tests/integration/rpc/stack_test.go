@@ -61,7 +61,12 @@ func TestStackShouldManageStackLifeCycleSuccessfully(t *testing.T) {
 	name := fmt.Sprintf("test-%d", time.Now().Unix())
 	//Start stack test
 	t.Log("start stack " + name)
-	rUp, errUp := stackClient.Up(ctx, &stack.StackFileRequest{StackName: name, Stackfile: example1})
+	s, errP := stack.ParseStackfile(ctx, example1)
+	if errP != nil {
+		t.Fatal(errP)
+	}
+	s.Name = name
+	rUp, errUp := stackClient.Up(ctx, &stack.StackFileRequest{Stack: s})
 	if errUp != nil {
 		t.Fatal(errUp)
 	}

@@ -18,7 +18,7 @@ message ServiceSpec {
   repeated PublishSpec publish_specs = 9;
   repeated string args = 10;
   repeated string mounts = 11;
-
+  string registry_auth = 12;
 }
 
 message NetworkAttachment {
