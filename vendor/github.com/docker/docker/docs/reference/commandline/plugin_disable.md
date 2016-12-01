@@ -1,15 +1,19 @@
-<!--[metadata]>
-+++
-title = "plugin disable"
-description = "the plugin disable command description and usage"
-keywords = ["plugin, disable"]
-advisory = "experimental"
-[menu.main]
-parent = "smn_cli"
-+++
-<![end-metadata]-->
+---
+title: "plugin disable"
+description: "the plugin disable command description and usage"
+keywords: "plugin, disable"
+---
 
-# plugin disable (experimental)
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
+
+# plugin disable
 
 ```markdown
 Usage:  docker plugin disable PLUGIN
@@ -49,8 +53,11 @@ tiborvass/no-remove   latest              A test plugin for Docker   false
 
 ## Related information
 
-* [plugin ls](plugin_ls.md)
+* [plugin create](plugin_create.md)
 * [plugin enable](plugin_enable.md)
 * [plugin inspect](plugin_inspect.md)
 * [plugin install](plugin_install.md)
+* [plugin ls](plugin_ls.md)
+* [plugin push](plugin_push.md)
 * [plugin rm](plugin_rm.md)
+* [plugin set](plugin_set.md)

@@ -292,10 +292,13 @@ The protobuf encoding of the Txn [RPC response][etcdrpc].
 txn in interactive mode:
 ```bash
 ./etcdctl txn -i
+# compares:
 mod("key1") > "0"
 
+# success requests (get, put, delete):
 put key1 "overwrote-key1"
 
+# failure requests (get, put, delete):
 put key1 "created-key1"
 put key2 "some extra key"
 
@@ -326,7 +329,7 @@ put key2 "some extra key"
 
 ### WATCH [options] [key or prefix] [range_end]
 
-Watch watches events stream on keys or prefixes, [key or prefix, range_end) if `range-end` is given. The watch command runs until it encounters an error or is terminated by the user.
+Watch watches events stream on keys or prefixes, [key or prefix, range_end) if `range-end` is given. The watch command runs until it encounters an error or is terminated by the user.  If range_end is given, it must be lexicographically greater than key or "\x00".
 
 #### Options
 
@@ -1071,7 +1074,7 @@ ROLE is used to specify differnt roles which can be assigned to etcd user(s).
 
 USER provides commands for managing users of etcd.
 
-### USER ADD \<user name\> [options]
+### USER ADD \<user name or user:password\> [options]
 
 `user add` creates a user.
 

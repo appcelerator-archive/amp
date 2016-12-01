@@ -44,6 +44,20 @@ func (m *CreateRequest) String() string            { return proto.CompactTextStr
 func (*CreateRequest) ProtoMessage()               {}
 func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *CreateRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *CreateRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 type CreateReply struct {
 	Message string `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
 }
@@ -52,6 +66,13 @@ func (m *CreateReply) Reset()                    { *m = CreateReply{} }
 func (m *CreateReply) String() string            { return proto.CompactTextString(m) }
 func (*CreateReply) ProtoMessage()               {}
 func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *CreateReply) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*CreateRequest)(nil), "project.CreateRequest")
@@ -64,7 +85,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Project service
 
@@ -127,7 +148,7 @@ var _Project_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/project/project.proto",
 }
 
 func init() {

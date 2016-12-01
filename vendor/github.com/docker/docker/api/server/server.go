@@ -102,7 +102,7 @@ func (s *Server) serveAPI() error {
 }
 
 // HTTPServer contains an instance of http server and the listener.
-// srv *http.Server, contains configuration to create a http server and a mux router with all api end points.
+// srv *http.Server, contains configuration to create an http server and a mux router with all api end points.
 // l   net.Listener, is a TCP or Socket listener that dispatches incoming request to the router.
 type HTTPServer struct {
 	srv *http.Server
@@ -128,7 +128,7 @@ func (s *Server) makeHTTPHandler(handler httputils.APIFunc) http.HandlerFunc {
 		// apply to all requests. Data that is specific to the
 		// immediate function being called should still be passed
 		// as 'args' on the function call.
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), httputils.UAStringKey, r.Header.Get("User-Agent"))
 		handlerFunc := s.handlerWithGlobalMiddlewares(handler)
 
 		vars := mux.Vars(r)
@@ -146,9 +146,7 @@ func (s *Server) makeHTTPHandler(handler httputils.APIFunc) http.HandlerFunc {
 // InitRouter initializes the list of routers for the server.
 // This method also enables the Go profiler if enableProfiler is true.
 func (s *Server) InitRouter(enableProfiler bool, routers ...router.Router) {
-	for _, r := range routers {
-		s.routers = append(s.routers, r)
-	}
+	s.routers = append(s.routers, routers...)
 
 	m := s.createMux()
 	if enableProfiler {

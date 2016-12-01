@@ -11,7 +11,7 @@ SHRINK_DOCKER_FILE=Dockerfile.shrink
 REPOSITORY_NAME=appcelerator/amp
 TAG=${1:-latest}
 
-echo -n "building builder image... "
+echo "building builder image... "
 $DOCKER build -f $BUILDER_DOCKER_FILE -t $REPOSITORY_NAME:builder . >&2
 if [ $? -ne 0 ]; then
   echo "failed"
@@ -19,7 +19,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo -n "running builder container... "
+echo "running builder container... "
 $DOCKER kill amp-builder >/dev/null 2>&1; $DOCKER rm amp-builder >/dev/null 2>&1
 $DOCKER run -d --name amp-builder $REPOSITORY_NAME:builder >&2
 if [ $? -ne 0 ]; then
@@ -28,7 +28,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo -n "copy binary from container... "
+echo "copy binary from container... "
 $DOCKER cp amp-builder:/go/bin/amp ./amp >&2
 if [ $? -ne 0 ]; then
   echo "failed"
@@ -56,7 +56,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo -n "building shrunk image... "
+echo "building shrunk image... "
 $DOCKER build -f $SHRINK_DOCKER_FILE -t appcelerator/amp:$TAG . >&2
 if [ $? -ne 0 ]; then
   echo "failed"
@@ -64,7 +64,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "OK"
 
-echo -n "cleanup... "
+echo "cleanup... "
 rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1

@@ -329,7 +329,7 @@ func TestStoreCompact(t *testing.T) {
 	fi := s.kvindex.(*fakeIndex)
 
 	s.currentRev = revision{3, 0}
-	fi.indexCompactRespc <- map[revision]struct{}{revision{1, 0}: {}}
+	fi.indexCompactRespc <- map[revision]struct{}{{1, 0}: {}}
 	key1 := newTestKeyBytes(revision{1, 0}, false)
 	key2 := newTestKeyBytes(revision{2, 0}, false)
 	b.tx.rangeRespc <- rangeResp{[][]byte{key1, key2}, nil}
@@ -405,9 +405,14 @@ func TestStoreRestore(t *testing.T) {
 	if g := b.tx.Action(); !reflect.DeepEqual(g, wact) {
 		t.Errorf("tx actions = %+v, want %+v", g, wact)
 	}
+
+	gens := []generation{
+		{created: revision{4, 0}, ver: 2, revs: []revision{{3, 0}, {5, 0}}},
+		{created: revision{0, 0}, ver: 0, revs: nil},
+	}
+	ki := &keyIndex{key: []byte("foo"), modified: revision{5, 0}, generations: gens}
 	wact = []testutil.Action{
-		{"restore", []interface{}{[]byte("foo"), revision{4, 0}, revision{3, 0}, int64(1)}},
-		{"tombstone", []interface{}{[]byte("foo"), revision{5, 0}}},
+		{"insert", []interface{}{ki}},
 	}
 	if g := fi.Action(); !reflect.DeepEqual(g, wact) {
 		t.Errorf("index action = %+v, want %+v", g, wact)
@@ -532,6 +537,20 @@ func newTestKeyBytes(rev revision, tombstone bool) []byte {
 	return bytes
 }
 
+// TestStoreHashAfterForceCommit ensures that later Hash call to
+// closed backend with ForceCommit does not panic.
+func TestStoreHashAfterForceCommit(t *testing.T) {
+	be, tmpPath := backend.NewDefaultTmpBackend()
+	kv := NewStore(be, &lease.FakeLessor{}, nil)
+	defer os.Remove(tmpPath)
+
+	// as in EtcdServer.HardStop
+	kv.Close()
+	be.Close()
+
+	kv.Hash()
+}
+
 func newFakeStore() *store {
 	b := &fakeBackend{&fakeBatchTx{
 		Recorder:   &testutil.RecorderBuffered{},
@@ -653,6 +672,10 @@ func (i *fakeIndex) Compact(rev int64) map[revision]struct{} {
 	return <-i.indexCompactRespc
 }
 func (i *fakeIndex) Equal(b index) bool { return false }
+
+func (i *fakeIndex) Insert(ki *keyIndex) {
+	i.Recorder.Record(testutil.Action{Name: "insert", Params: []interface{}{ki}})
+}
 
 func createBytesSlice(bytesN, sliceN int) [][]byte {
 	rs := [][]byte{}

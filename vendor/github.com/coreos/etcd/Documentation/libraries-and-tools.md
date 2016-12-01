@@ -37,6 +37,7 @@
 
 **Python libraries**
 
+- [kragniz/python-etcd3](https://github.com/kragniz/python-etcd3) - Work in progress client for v3
 - [jplana/python-etcd](https://github.com/jplana/python-etcd) - Supports v2
 - [russellhaering/txetcd](https://github.com/russellhaering/txetcd) - a Twisted Python library
 - [cholcombe973/autodock](https://github.com/cholcombe973/autodock) - A docker deployment automation tool
@@ -92,6 +93,10 @@
 **R libraries**
 
 - [ropensci/etseed](https://github.com/ropensci/etseed)
+
+**Nim libraries**
+
+- [etcd_client](https://github.com/FedericoCeratto/nim-etcd-client)
 
 **Tcl libraries**
 

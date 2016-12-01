@@ -62,6 +62,12 @@ For example, if the container id is "ubuntu01" the following will send a "KILL"
 signal to the init process of the "ubuntu01" container:
 	 
        # runc kill ubuntu01 KILL`,
+	Flags: []cli.Flag{
+		cli.BoolFlag{
+			Name:  "all, a",
+			Usage: "send the specified signal to all processes inside the container",
+		},
+	},
 	Action: func(context *cli.Context) error {
 		container, err := getContainer(context)
 		if err != nil {
@@ -77,8 +83,7 @@ signal to the init process of the "ubuntu01" container:
 		if err != nil {
 			return err
 		}
-
-		if err := container.Signal(signal); err != nil {
+		if err := container.Signal(signal, context.Bool("all")); err != nil {
 			return err
 		}
 		return nil
@@ -88,7 +93,13 @@ signal to the init process of the "ubuntu01" container:
 func parseSignal(rawSignal string) (syscall.Signal, error) {
 	s, err := strconv.Atoi(rawSignal)
 	if err == nil {
-		return syscall.Signal(s), nil
+		sig := syscall.Signal(s)
+		for _, msig := range signalMap {
+			if sig == msig {
+				return sig, nil
+			}
+		}
+		return -1, fmt.Errorf("unknown signal %q", rawSignal)
 	}
 	signal, ok := signalMap[strings.TrimPrefix(strings.ToUpper(rawSignal), "SIG")]
 	if !ok {

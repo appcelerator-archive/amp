@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/cli/command/node"
 	"github.com/docker/docker/cli/command/plugin"
 	"github.com/docker/docker/cli/command/registry"
+	"github.com/docker/docker/cli/command/secret"
 	"github.com/docker/docker/cli/command/service"
 	"github.com/docker/docker/cli/command/stack"
 	"github.com/docker/docker/cli/command/swarm"
@@ -24,9 +25,8 @@ func AddCommands(cmd *cobra.Command, dockerCli *command.DockerCli) {
 	cmd.AddCommand(
 		node.NewNodeCommand(dockerCli),
 		service.NewServiceCommand(dockerCli),
-		stack.NewStackCommand(dockerCli),
-		stack.NewTopLevelDeployCommand(dockerCli),
 		swarm.NewSwarmCommand(dockerCli),
+		secret.NewSecretCommand(dockerCli),
 		container.NewContainerCommand(dockerCli),
 		image.NewImageCommand(dockerCli),
 		system.NewSystemCommand(dockerCli),
@@ -72,9 +72,12 @@ func AddCommands(cmd *cobra.Command, dockerCli *command.DockerCli) {
 		hide(image.NewSaveCommand(dockerCli)),
 		hide(image.NewTagCommand(dockerCli)),
 		hide(system.NewInspectCommand(dockerCli)),
+		stack.NewStackCommand(dockerCli),
+		stack.NewTopLevelDeployCommand(dockerCli),
 		checkpoint.NewCheckpointCommand(dockerCli),
 		plugin.NewPluginCommand(dockerCli),
 	)
+
 }
 
 func hide(cmd *cobra.Command) *cobra.Command {

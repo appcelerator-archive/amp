@@ -349,6 +349,9 @@ func putAndWatch(t *testing.T, wctx *watchctx, key, val string) {
 
 // TestWatchResumeComapcted checks that the watcher gracefully closes in case
 // that it tries to resume to a revision that's been compacted out of the store.
+// Since the watcher's server restarts with stale data, the watcher will receive
+// either a compaction error or all keys by staying in sync before the compaction
+// is finally applied.
 func TestWatchResumeCompacted(t *testing.T) {
 	defer testutil.AfterTest(t)
 
@@ -377,8 +380,9 @@ func TestWatchResumeCompacted(t *testing.T) {
 	}
 
 	// put some data and compact away
+	numPuts := 5
 	kv := clientv3.NewKV(clus.Client(1))
-	for i := 0; i < 5; i++ {
+	for i := 0; i < numPuts; i++ {
 		if _, err := kv.Put(context.TODO(), "foo", "bar"); err != nil {
 			t.Fatal(err)
 		}
@@ -389,17 +393,48 @@ func TestWatchResumeCompacted(t *testing.T) {
 
 	clus.Members[0].Restart(t)
 
-	// get compacted error message
-	wresp, ok := <-wch
-	if !ok {
-		t.Fatalf("expected wresp, but got closed channel")
+	// since watch's server isn't guaranteed to be synced with the cluster when
+	// the watch resumes, there is a window where the watch can stay synced and
+	// read off all events; if the watcher misses the window, it will go out of
+	// sync and get a compaction error.
+	wRev := int64(2)
+	for int(wRev) <= numPuts+1 {
+		var wresp clientv3.WatchResponse
+		var ok bool
+		select {
+		case wresp, ok = <-wch:
+			if !ok {
+				t.Fatalf("expected wresp, but got closed channel")
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("compacted watch timed out")
+		}
+		for _, ev := range wresp.Events {
+			if ev.Kv.ModRevision != wRev {
+				t.Fatalf("expected modRev %v, got %+v", wRev, ev)
+			}
+			wRev++
+		}
+		if wresp.Err() == nil {
+			continue
+		}
+		if wresp.Err() != rpctypes.ErrCompacted {
+			t.Fatalf("wresp.Err() expected %v, but got %v %+v", rpctypes.ErrCompacted, wresp.Err())
+		}
+		break
 	}
-	if wresp.Err() != rpctypes.ErrCompacted {
-		t.Fatalf("wresp.Err() expected %v, but got %v", rpctypes.ErrCompacted, wresp.Err())
+	if int(wRev) > numPuts+1 {
+		// got data faster than the compaction
+		return
 	}
-	// ensure the channel is closed
-	if wresp, ok = <-wch; ok {
-		t.Fatalf("expected closed channel, but got %v", wresp)
+	// received compaction error; ensure the channel closes
+	select {
+	case wresp, ok := <-wch:
+		if ok {
+			t.Fatalf("expected closed channel, but got %v", wresp)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatalf("timed out waiting for channel close")
 	}
 }
 
@@ -579,18 +614,19 @@ func TestWatchErrConnClosed(t *testing.T) {
 	defer clus.Terminate(t)
 
 	cli := clus.Client(0)
+	defer cli.Close()
 	wc := clientv3.NewWatcher(cli)
 
 	donec := make(chan struct{})
 	go func() {
 		defer close(donec)
-		wc.Watch(context.TODO(), "foo")
-		if err := wc.Close(); err != nil && err != grpc.ErrClientConnClosing {
-			t.Fatalf("expected %v, got %v", grpc.ErrClientConnClosing, err)
+		ch := wc.Watch(context.TODO(), "foo")
+		if wr := <-ch; grpc.ErrorDesc(wr.Err()) != grpc.ErrClientConnClosing.Error() {
+			t.Fatalf("expected %v, got %v", grpc.ErrClientConnClosing, grpc.ErrorDesc(wr.Err()))
 		}
 	}()
 
-	if err := cli.Close(); err != nil {
+	if err := cli.ActiveConnection().Close(); err != nil {
 		t.Fatal(err)
 	}
 	clus.TakeClient(0)
@@ -637,8 +673,12 @@ func TestWatchWithRequireLeader(t *testing.T) {
 	clus := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 3})
 	defer clus.Terminate(t)
 
-	// something for the non-require leader watch to read as an event
-	if _, err := clus.Client(1).Put(context.TODO(), "foo", "bar"); err != nil {
+	// Put a key for the non-require leader watch to read as an event.
+	// The watchers will be on member[0]; put key through member[0] to
+	// ensure that it receives the update so watching after killing quorum
+	// is guaranteed to have the key.
+	liveClient := clus.Client(0)
+	if _, err := liveClient.Put(context.TODO(), "foo", "bar"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -653,8 +693,8 @@ func TestWatchWithRequireLeader(t *testing.T) {
 	tickDuration := 10 * time.Millisecond
 	time.Sleep(time.Duration(3*clus.Members[0].ElectionTicks) * tickDuration)
 
-	chLeader := clus.Client(0).Watch(clientv3.WithRequireLeader(context.TODO()), "foo", clientv3.WithRev(1))
-	chNoLeader := clus.Client(0).Watch(context.TODO(), "foo", clientv3.WithRev(1))
+	chLeader := liveClient.Watch(clientv3.WithRequireLeader(context.TODO()), "foo", clientv3.WithRev(1))
+	chNoLeader := liveClient.Watch(context.TODO(), "foo", clientv3.WithRev(1))
 
 	select {
 	case resp, ok := <-chLeader:
@@ -733,6 +773,36 @@ func TestWatchWithCreatedNotification(t *testing.T) {
 
 	if !resp.Created {
 		t.Fatalf("expected created event, got %v", resp)
+	}
+}
+
+// TestWatchWithCreatedNotificationDropConn ensures that
+// a watcher with created notify does not post duplicate
+// created events from disconnect.
+func TestWatchWithCreatedNotificationDropConn(t *testing.T) {
+	cluster := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer cluster.Terminate(t)
+
+	client := cluster.RandClient()
+
+	wch := client.Watch(context.Background(), "a", clientv3.WithCreatedNotify())
+
+	resp := <-wch
+
+	if !resp.Created {
+		t.Fatalf("expected created event, got %v", resp)
+	}
+
+	cluster.Members[0].DropConnections()
+
+	// try to receive from watch channel again
+	// ensure it doesn't post another createNotify
+	select {
+	case wresp := <-wch:
+		t.Fatalf("got unexpected watch response: %+v\n", wresp)
+	case <-time.After(time.Second):
+		// watcher may not reconnect by the time it hits the select,
+		// so it wouldn't have a chance to filter out the second create event
 	}
 }
 
@@ -867,4 +937,46 @@ func TestWatchCancelAndCloseClient(t *testing.T) {
 	}
 	<-donec
 	clus.TakeClient(0)
+}
+
+// TestWatchStressResumeClose establishes a bunch of watchers, disconnects
+// to put them in resuming mode, cancels them so some resumes by cancel fail,
+// then closes the watcher interface to ensure correct clean up.
+func TestWatchStressResumeClose(t *testing.T) {
+	defer testutil.AfterTest(t)
+	clus := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer clus.Terminate(t)
+	cli := clus.Client(0)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	// add more watches than can be resumed before the cancel
+	wchs := make([]clientv3.WatchChan, 2000)
+	for i := range wchs {
+		wchs[i] = cli.Watch(ctx, "abc")
+	}
+	clus.Members[0].DropConnections()
+	cancel()
+	if err := cli.Close(); err != nil {
+		t.Fatal(err)
+	}
+	clus.TakeClient(0)
+}
+
+// TestWatchCancelDisconnected ensures canceling a watcher works when
+// its grpc stream is disconnected / reconnecting.
+func TestWatchCancelDisconnected(t *testing.T) {
+	defer testutil.AfterTest(t)
+	clus := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer clus.Terminate(t)
+	cli := clus.Client(0)
+	ctx, cancel := context.WithCancel(context.Background())
+	// add more watches than can be resumed before the cancel
+	wch := cli.Watch(ctx, "abc")
+	clus.Members[0].Stop(t)
+	cancel()
+	select {
+	case <-wch:
+	case <-time.After(time.Second):
+		t.Fatal("took too long to cancel disconnected watcher")
+	}
 }

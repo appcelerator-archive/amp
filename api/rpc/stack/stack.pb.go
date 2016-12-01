@@ -86,6 +86,20 @@ func (m *StackFileRequest) String() string            { return proto.CompactText
 func (*StackFileRequest) ProtoMessage()               {}
 func (*StackFileRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *StackFileRequest) GetStackName() string {
+	if m != nil {
+		return m.StackName
+	}
+	return ""
+}
+
+func (m *StackFileRequest) GetStackfile() string {
+	if m != nil {
+		return m.Stackfile
+	}
+	return ""
+}
+
 // struct stack name/id based requests
 type StackRequest struct {
 	StackIdent string `protobuf:"bytes,1,opt,name=stack_ident,json=stackIdent" json:"stack_ident,omitempty"`
@@ -95,6 +109,13 @@ func (m *StackRequest) Reset()                    { *m = StackRequest{} }
 func (m *StackRequest) String() string            { return proto.CompactTextString(m) }
 func (*StackRequest) ProtoMessage()               {}
 func (*StackRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *StackRequest) GetStackIdent() string {
+	if m != nil {
+		return m.StackIdent
+	}
+	return ""
+}
 
 // struct for remove request function
 type RemoveRequest struct {
@@ -107,6 +128,20 @@ func (m *RemoveRequest) String() string            { return proto.CompactTextStr
 func (*RemoveRequest) ProtoMessage()               {}
 func (*RemoveRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
+func (m *RemoveRequest) GetStackIdent() string {
+	if m != nil {
+		return m.StackIdent
+	}
+	return ""
+}
+
+func (m *RemoveRequest) GetForce() bool {
+	if m != nil {
+		return m.Force
+	}
+	return false
+}
+
 // struct for stack id responses
 type StackReply struct {
 	StackId string `protobuf:"bytes,1,opt,name=stack_id,json=stackId" json:"stack_id,omitempty"`
@@ -116,6 +151,13 @@ func (m *StackReply) Reset()                    { *m = StackReply{} }
 func (m *StackReply) String() string            { return proto.CompactTextString(m) }
 func (*StackReply) ProtoMessage()               {}
 func (*StackReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *StackReply) GetStackId() string {
+	if m != nil {
+		return m.StackId
+	}
+	return ""
+}
 
 // struct for list request function
 type ListRequest struct {
@@ -127,6 +169,20 @@ func (m *ListRequest) Reset()                    { *m = ListRequest{} }
 func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
 func (*ListRequest) ProtoMessage()               {}
 func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ListRequest) GetAll() bool {
+	if m != nil {
+		return m.All
+	}
+	return false
+}
+
+func (m *ListRequest) GetLimit() int64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
 
 // struct for list reply function
 type ListReply struct {
@@ -157,6 +213,27 @@ func (m *StackInfo) String() string            { return proto.CompactTextString(
 func (*StackInfo) ProtoMessage()               {}
 func (*StackInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
+func (m *StackInfo) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *StackInfo) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *StackInfo) GetState() string {
+	if m != nil {
+		return m.State
+	}
+	return ""
+}
+
 // struct to store Stack id in ETCD
 type StackID struct {
 	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
@@ -166,6 +243,13 @@ func (m *StackID) Reset()                    { *m = StackID{} }
 func (m *StackID) String() string            { return proto.CompactTextString(m) }
 func (*StackID) ProtoMessage()               {}
 func (*StackID) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *StackID) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
 
 // struct to store network info in ETCD
 type CustomNetwork struct {
@@ -178,6 +262,20 @@ func (m *CustomNetwork) Reset()                    { *m = CustomNetwork{} }
 func (m *CustomNetwork) String() string            { return proto.CompactTextString(m) }
 func (*CustomNetwork) ProtoMessage()               {}
 func (*CustomNetwork) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *CustomNetwork) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *CustomNetwork) GetOwnerNumber() int32 {
+	if m != nil {
+		return m.OwnerNumber
+	}
+	return 0
+}
 
 func (m *CustomNetwork) GetData() *NetworkSpec {
 	if m != nil {
@@ -196,6 +294,13 @@ func (m *IdList) String() string            { return proto.CompactTextString(m) 
 func (*IdList) ProtoMessage()               {}
 func (*IdList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
+func (m *IdList) GetList() []string {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
 type NetworkSpec struct {
 	Name       string            `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	Driver     string            `protobuf:"bytes,2,opt,name=driver" json:"driver,omitempty"`
@@ -212,11 +317,39 @@ func (m *NetworkSpec) String() string            { return proto.CompactTextStrin
 func (*NetworkSpec) ProtoMessage()               {}
 func (*NetworkSpec) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
+func (m *NetworkSpec) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *NetworkSpec) GetDriver() string {
+	if m != nil {
+		return m.Driver
+	}
+	return ""
+}
+
+func (m *NetworkSpec) GetEnableIpv6() bool {
+	if m != nil {
+		return m.EnableIpv6
+	}
+	return false
+}
+
 func (m *NetworkSpec) GetIpam() *NetworkIPAM {
 	if m != nil {
 		return m.Ipam
 	}
 	return nil
+}
+
+func (m *NetworkSpec) GetInternal() bool {
+	if m != nil {
+		return m.Internal
+	}
+	return false
 }
 
 func (m *NetworkSpec) GetOptions() map[string]string {
@@ -233,6 +366,13 @@ func (m *NetworkSpec) GetLabels() map[string]string {
 	return nil
 }
 
+func (m *NetworkSpec) GetExternal() string {
+	if m != nil {
+		return m.External
+	}
+	return ""
+}
+
 type NetworkIPAM struct {
 	Driver  string               `protobuf:"bytes,1,opt,name=driver" json:"driver,omitempty"`
 	Options map[string]string    `protobuf:"bytes,2,rep,name=options" json:"options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -243,6 +383,13 @@ func (m *NetworkIPAM) Reset()                    { *m = NetworkIPAM{} }
 func (m *NetworkIPAM) String() string            { return proto.CompactTextString(m) }
 func (*NetworkIPAM) ProtoMessage()               {}
 func (*NetworkIPAM) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *NetworkIPAM) GetDriver() string {
+	if m != nil {
+		return m.Driver
+	}
+	return ""
+}
 
 func (m *NetworkIPAM) GetOptions() map[string]string {
 	if m != nil {
@@ -270,6 +417,27 @@ func (m *NetworkIPAMConfig) String() string            { return proto.CompactTex
 func (*NetworkIPAMConfig) ProtoMessage()               {}
 func (*NetworkIPAMConfig) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
+func (m *NetworkIPAMConfig) GetSubnet() string {
+	if m != nil {
+		return m.Subnet
+	}
+	return ""
+}
+
+func (m *NetworkIPAMConfig) GetIpRange() string {
+	if m != nil {
+		return m.IpRange
+	}
+	return ""
+}
+
+func (m *NetworkIPAMConfig) GetGateway() string {
+	if m != nil {
+		return m.Gateway
+	}
+	return ""
+}
+
 func (m *NetworkIPAMConfig) GetAuxAddress() map[string]string {
 	if m != nil {
 		return m.AuxAddress
@@ -291,6 +459,20 @@ func (m *Stack) String() string            { return proto.CompactTextString(m) }
 func (*Stack) ProtoMessage()               {}
 func (*Stack) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
+func (m *Stack) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Stack) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 func (m *Stack) GetServices() []*service.ServiceSpec {
 	if m != nil {
 		return m.Services
@@ -303,6 +485,13 @@ func (m *Stack) GetNetworks() []*NetworkSpec {
 		return m.Networks
 	}
 	return nil
+}
+
+func (m *Stack) GetIsPublic() bool {
+	if m != nil {
+		return m.IsPublic
+	}
+	return false
 }
 
 func init() {
@@ -329,7 +518,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for StackService service
 
@@ -557,7 +746,7 @@ var _StackService_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/stack/stack.proto",
 }
 
 func init() {

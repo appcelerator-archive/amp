@@ -1,20 +1,25 @@
-<!--[metadata]>
-+++
-aliases = "/engine/extend/plugins/"
-title = "Use Docker Engine plugins"
-description = "How to add additional functionality to Docker with plugins extensions"
-keywords = ["Examples, Usage, plugins, docker, documentation, user guide"]
-[menu.main]
-parent = "engine_extend"
-weight=3
-+++
-<![end-metadata]-->
+---
+redirect_from:
+- "/engine/extend/plugins/"
+title: "Use Docker Engine plugins"
+description: "How to add additional functionality to Docker with plugins extensions"
+keywords: "Examples, Usage, plugins, docker, documentation, user guide"
+---
+
+<!-- This file is maintained within the docker/docker Github
+     repository at https://github.com/docker/docker/. Make all
+     pull requests against that repo. If you see this file in
+     another repository, consider it read-only there, as it will
+     periodically be overwritten by the definitive file. Pull
+     requests which include edits to this file in other repositories
+     will be rejected.
+-->
 
 # Use Docker Engine plugins
 
 This document describes the Docker Engine plugins generally available in Docker
-Engine. To view information on plugins managed by Docker Engine currently in
-experimental status, refer to [Docker Engine plugin system](index.md).
+Engine. To view information on plugins managed by Docker,
+refer to [Docker Engine plugin system](index.md).
 
 You can extend the capabilities of the Docker Engine by loading third-party
 plugins. This page explains the types of plugins and provides links to several

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/pkg/integration/checker"
-	"github.com/docker/docker/utils"
 	"github.com/go-check/check"
 )
 
@@ -37,15 +36,17 @@ func (s *DockerSuite) TestInfoEnsureSucceeds(c *check.C) {
 	}
 
 	if daemonPlatform == "linux" {
-		stringsToCheck = append(stringsToCheck, "Security Options:")
+		stringsToCheck = append(stringsToCheck, "Init Binary:", "Security Options:", "containerd version:", "runc version:", "init version:")
 	}
 
 	if DaemonIsLinux.Condition() {
 		stringsToCheck = append(stringsToCheck, "Runtimes:", "Default Runtime: runc")
 	}
 
-	if utils.ExperimentalBuild() {
+	if experimentalDaemon {
 		stringsToCheck = append(stringsToCheck, "Experimental: true")
+	} else {
+		stringsToCheck = append(stringsToCheck, "Experimental: false")
 	}
 
 	for _, linePrefix := range stringsToCheck {
@@ -138,9 +139,9 @@ func (s *DockerSuite) TestInfoDisplaysRunningContainers(c *check.C) {
 }
 
 func (s *DockerSuite) TestInfoDisplaysPausedContainers(c *check.C) {
-	testRequires(c, DaemonIsLinux)
+	testRequires(c, IsPausable)
 
-	out, _ := dockerCmd(c, "run", "-d", "busybox", "top")
+	out, _ := runSleepingContainer(c, "-d")
 	cleanedContainerID := strings.TrimSpace(out)
 
 	dockerCmd(c, "pause", cleanedContainerID)
@@ -218,4 +219,16 @@ func (s *DockerDaemonSuite) TestRegistryMirrors(c *check.C) {
 	c.Assert(out, checker.Contains, "Registry Mirrors:\n")
 	c.Assert(out, checker.Contains, fmt.Sprintf(" %s", registryMirror1))
 	c.Assert(out, checker.Contains, fmt.Sprintf(" %s", registryMirror2))
+}
+
+// Test case for #24392
+func (s *DockerDaemonSuite) TestInfoLabels(c *check.C) {
+	testRequires(c, SameHostDaemon, DaemonIsLinux)
+
+	err := s.d.Start("--label", `test.empty=`, "--label", `test.empty=`, "--label", `test.label="1"`, "--label", `test.label="2"`)
+	c.Assert(err, checker.IsNil)
+
+	out, err := s.d.Cmd("info")
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "WARNING: labels with duplicate keys and conflicting values have been deprecated")
 }

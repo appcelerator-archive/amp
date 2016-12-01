@@ -38,6 +38,20 @@ func (m *TestMessage) String() string            { return proto.CompactTextStrin
 func (*TestMessage) ProtoMessage()               {}
 func (*TestMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *TestMessage) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *TestMessage) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*TestMessage)(nil), "etcd.TestMessage")
 }

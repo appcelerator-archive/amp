@@ -84,6 +84,20 @@ func (m *ServiceSpec) GetMode() isServiceSpec_Mode {
 	return nil
 }
 
+func (m *ServiceSpec) GetImage() string {
+	if m != nil {
+		return m.Image
+	}
+	return ""
+}
+
+func (m *ServiceSpec) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func (m *ServiceSpec) GetReplicated() *ReplicatedService {
 	if x, ok := m.GetMode().(*ServiceSpec_Replicated); ok {
 		return x.Replicated
@@ -94,6 +108,13 @@ func (m *ServiceSpec) GetReplicated() *ReplicatedService {
 func (m *ServiceSpec) GetGlobal() *GlobalService {
 	if x, ok := m.GetMode().(*ServiceSpec_Global); ok {
 		return x.Global
+	}
+	return nil
+}
+
+func (m *ServiceSpec) GetEnv() []string {
+	if m != nil {
+		return m.Env
 	}
 	return nil
 }
@@ -122,6 +143,20 @@ func (m *ServiceSpec) GetContainerLabels() map[string]string {
 func (m *ServiceSpec) GetPublishSpecs() []*PublishSpec {
 	if m != nil {
 		return m.PublishSpecs
+	}
+	return nil
+}
+
+func (m *ServiceSpec) GetArgs() []string {
+	if m != nil {
+		return m.Args
+	}
+	return nil
+}
+
+func (m *ServiceSpec) GetMounts() []string {
+	if m != nil {
+		return m.Mounts
 	}
 	return nil
 }
@@ -210,6 +245,20 @@ func (m *NetworkAttachment) String() string            { return proto.CompactTex
 func (*NetworkAttachment) ProtoMessage()               {}
 func (*NetworkAttachment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
+func (m *NetworkAttachment) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+func (m *NetworkAttachment) GetAliases() []string {
+	if m != nil {
+		return m.Aliases
+	}
+	return nil
+}
+
 type PublishSpec struct {
 	Name         string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	Protocol     string `protobuf:"bytes,2,opt,name=protocol" json:"protocol,omitempty"`
@@ -222,6 +271,34 @@ func (m *PublishSpec) String() string            { return proto.CompactTextStrin
 func (*PublishSpec) ProtoMessage()               {}
 func (*PublishSpec) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
+func (m *PublishSpec) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *PublishSpec) GetProtocol() string {
+	if m != nil {
+		return m.Protocol
+	}
+	return ""
+}
+
+func (m *PublishSpec) GetPublishPort() uint32 {
+	if m != nil {
+		return m.PublishPort
+	}
+	return 0
+}
+
+func (m *PublishSpec) GetInternalPort() uint32 {
+	if m != nil {
+		return m.InternalPort
+	}
+	return 0
+}
+
 type ReplicatedService struct {
 	Replicas uint64 `protobuf:"varint,1,opt,name=replicas" json:"replicas,omitempty"`
 }
@@ -230,6 +307,13 @@ func (m *ReplicatedService) Reset()                    { *m = ReplicatedService{
 func (m *ReplicatedService) String() string            { return proto.CompactTextString(m) }
 func (*ReplicatedService) ProtoMessage()               {}
 func (*ReplicatedService) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *ReplicatedService) GetReplicas() uint64 {
+	if m != nil {
+		return m.Replicas
+	}
+	return 0
+}
 
 type GlobalService struct {
 }
@@ -264,6 +348,13 @@ func (m *ServiceCreateResponse) String() string            { return proto.Compac
 func (*ServiceCreateResponse) ProtoMessage()               {}
 func (*ServiceCreateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
+func (m *ServiceCreateResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 type RemoveRequest struct {
 	Ident string `protobuf:"bytes,1,opt,name=ident" json:"ident,omitempty"`
 }
@@ -273,6 +364,13 @@ func (m *RemoveRequest) String() string            { return proto.CompactTextStr
 func (*RemoveRequest) ProtoMessage()               {}
 func (*RemoveRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
+func (m *RemoveRequest) GetIdent() string {
+	if m != nil {
+		return m.Ident
+	}
+	return ""
+}
+
 type RemoveResponse struct {
 	Ident string `protobuf:"bytes,1,opt,name=ident" json:"ident,omitempty"`
 }
@@ -281,6 +379,13 @@ func (m *RemoveResponse) Reset()                    { *m = RemoveResponse{} }
 func (m *RemoveResponse) String() string            { return proto.CompactTextString(m) }
 func (*RemoveResponse) ProtoMessage()               {}
 func (*RemoveResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *RemoveResponse) GetIdent() string {
+	if m != nil {
+		return m.Ident
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*ServiceSpec)(nil), "service.ServiceSpec")
@@ -300,7 +405,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Service service
 
@@ -396,7 +501,7 @@ var _Service_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/service/service.proto",
 }
 
 func init() {

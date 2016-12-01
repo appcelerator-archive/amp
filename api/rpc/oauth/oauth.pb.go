@@ -46,6 +46,27 @@ func (m *AuthRequest) String() string            { return proto.CompactTextStrin
 func (*AuthRequest) ProtoMessage()               {}
 func (*AuthRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *AuthRequest) GetUsername() string {
+	if m != nil {
+		return m.Username
+	}
+	return ""
+}
+
+func (m *AuthRequest) GetPassword() string {
+	if m != nil {
+		return m.Password
+	}
+	return ""
+}
+
+func (m *AuthRequest) GetOtp() string {
+	if m != nil {
+		return m.Otp
+	}
+	return ""
+}
+
 type AuthReply struct {
 	SessionKey string `protobuf:"bytes,1,opt,name=sessionKey" json:"sessionKey,omitempty"`
 	Name       string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
@@ -55,6 +76,20 @@ func (m *AuthReply) Reset()                    { *m = AuthReply{} }
 func (m *AuthReply) String() string            { return proto.CompactTextString(m) }
 func (*AuthReply) ProtoMessage()               {}
 func (*AuthReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *AuthReply) GetSessionKey() string {
+	if m != nil {
+		return m.SessionKey
+	}
+	return ""
+}
+
+func (m *AuthReply) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
 
 type Token struct {
 	Id             int32  `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
@@ -66,6 +101,27 @@ func (m *Token) Reset()                    { *m = Token{} }
 func (m *Token) String() string            { return proto.CompactTextString(m) }
 func (*Token) ProtoMessage()               {}
 func (*Token) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *Token) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *Token) GetToken() string {
+	if m != nil {
+		return m.Token
+	}
+	return ""
+}
+
+func (m *Token) GetTokenLastEight() string {
+	if m != nil {
+		return m.TokenLastEight
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*AuthRequest)(nil), "oauth.AuthRequest")
@@ -79,7 +135,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Github service
 
@@ -142,7 +198,7 @@ var _Github_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/oauth/oauth.proto",
 }
 
 func init() {

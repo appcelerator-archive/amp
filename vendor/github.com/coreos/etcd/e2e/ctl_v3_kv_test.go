@@ -85,6 +85,7 @@ func getTest(cx ctlCtx) {
 		{[]string{"key", "--prefix", "--limit=2"}, kvs[:2]},
 		{[]string{"key", "--prefix", "--order=ASCEND", "--sort-by=MODIFY"}, kvs},
 		{[]string{"key", "--prefix", "--order=ASCEND", "--sort-by=VERSION"}, kvs},
+		{[]string{"key", "--prefix", "--sort-by=CREATE"}, kvs}, // ASCEND by default
 		{[]string{"key", "--prefix", "--order=DESCEND", "--sort-by=CREATE"}, revkvs},
 		{[]string{"key", "--prefix", "--order=DESCEND", "--sort-by=KEY"}, revkvs},
 	}
@@ -180,6 +181,16 @@ func delTest(cx ctlCtx) {
 
 		deletedNum int
 	}{
+		{ // delete all keys
+			[]kv{{"foo1", "bar"}, {"foo2", "bar"}, {"foo3", "bar"}},
+			[]string{"", "--prefix"},
+			3,
+		},
+		{ // delete all keys
+			[]kv{{"foo1", "bar"}, {"foo2", "bar"}, {"foo3", "bar"}},
+			[]string{"", "--from-key"},
+			3,
+		},
 		{
 			[]kv{{"this", "value"}},
 			[]string{"that"},

@@ -33,7 +33,7 @@ static: $(RUNC_LINK)
 	CGO_ENABLED=1 go build -i -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -o runc .
 
 release: $(RUNC_LINK)
-	@flag_list=(seccomp selinux apparmor static); \
+	@flag_list=(seccomp selinux apparmor static ambient); \
 	unset expression; \
 	for flag in "$${flag_list[@]}"; do \
 		expression+="' '{'',$${flag}}"; \
@@ -119,6 +119,7 @@ clean:
 
 validate:
 	script/validate-gofmt
+	script/validate-shfmt
 	go vet ./...
 
 ci: validate localtest

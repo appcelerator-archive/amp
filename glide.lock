@@ -1,8 +1,12 @@
-hash: 07fcf39bd02be9c83c2da288f845d06311af2074987cb4bfd1acdc38056ad0d6
-updated: 2016-11-10T14:36:51.42667945-08:00
+hash: ec02545304a5a3664049f9f779d5edaa8aea90e0a7ab3a2413088b0fe0b1de3c
+updated: 2016-12-01T09:57:27.183114315+01:00
 imports:
+- name: github.com/beorn7/perks
+  version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
+  subpackages:
+  - quantile
 - name: github.com/coreos/etcd
-  version: 83347907774bf36cbb261c594a32fd7b0f5dd9f6
+  version: 3d5ba43211beec7fbb1472634a9c3b464581658a
   subpackages:
   - auth/authpb
   - clientv3
@@ -15,12 +19,12 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 252cc27ab1272108bfd74cf939d354db77862d93
+  version: 38fbd03266d86923d963566a6565c3fa01f496d8
   subpackages:
   - digest
   - reference
 - name: github.com/docker/docker
-  version: 535f52c932c24056cf535f0f7aa8cadc880b2194
+  version: 005a5428ee1b3f7f2efca2d761f27bd168356fa1
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -35,19 +39,20 @@ imports:
   - api/types/swarm
   - api/types/time
   - api/types/versions
+  - api/types/volume
   - client
   - pkg/random
   - pkg/stringid
   - pkg/testutil/assert
   - pkg/tlsconfig
 - name: github.com/docker/go-connections
-  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
   - nat
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: f2145db703495b2e525c59662db69a7344b00bb8
+  version: 8a7beacffa3009a9ac66bad506b18ffdd110cf97
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
@@ -61,7 +66,7 @@ imports:
 - name: github.com/fatih/structs
   version: dc3312cb1a4513a366c4c9e622ad55c32df12ed3
 - name: github.com/fsnotify/fsnotify
-  version: bd2828f9f176e52d7222e565abb2d338d3f3c103
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
@@ -71,28 +76,32 @@ imports:
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/google/go-github
-  version: 93d3f730320429a6e1ecf2ac1778db832930948a
+  version: d4f1b2d029be1730fd349ca929cc9c0da4a27007
   subpackages:
   - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
   - query
+- name: github.com/grpc-ecosystem/go-grpc-prometheus
+  version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
   version: a8f25bd1ab549f8b87afd48aa9181221e9d439bb
   subpackages:
   - runtime
   - runtime/internal
+  - third_party/googleapis/google/api
   - utilities
 - name: github.com/hashicorp/hcl
-  version: 6f5bfed9a0a22222fbe4e731ae3481730ba41e93
+  version: 7cb7455c285ca3bf3362aa4ba6a06a6d6f5c3ba0
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -107,49 +116,68 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: d04ccbab67491e23dae215c9734f421d152eadbe
+  version: 800da5732b91c816b0a097acf8887fa2af1efa1a
   subpackages:
   - client/v2
   - models
   - pkg/escape
 - name: github.com/klauspost/crc32
-  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
-- name: github.com/kr/fs
-  version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
+  version: cb6bfca970f6908083f26f39a79009d608efd5cd
 - name: github.com/magiconair/properties
   version: 0723e352fa358f9322c938cc2dadda874e9151a9
 - name: github.com/mattn/go-colorable
-  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+  version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
 - name: github.com/Microsoft/go-winio
-  version: ce2922f643c8fd76b46cadc7f404a06282678b34
+  version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/mitchellh/mapstructure
-  version: a6ef2f080c66d0a2e94e97cf74f80f772855da63
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/nats-io/go-nats
+  version: 6b6bf392d34d01f57cc563ae123f00c13778bd57
+  subpackages:
+  - encoders/builtin
+  - util
 - name: github.com/nats-io/go-nats-streaming
   version: f0b13ceaf55c6d86604169520dfd8ee3c03e9524
   subpackages:
   - pb
 - name: github.com/nats-io/nats
-  version: 6fb7c9f736bfbbf5757b5886eaa1b03e5331fef2
-  subpackages:
-  - encoders/builtin
+  version: 6b6bf392d34d01f57cc563ae123f00c13778bd57
 - name: github.com/nats-io/nuid
   version: 289cccf02c178dc782430d534e3c1f5b72af807f
 - name: github.com/opencontainers/runc
-  version: 3b4ff53867e49156326d80ccd57efadd4ba60504
+  version: f156f73c2aab1b735df23c9323c976ad5dca1d78
   subpackages:
   - libcontainer/user
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
-  version: 45932ad32dfdd20826f5671da37a5f3ce9f26a8d
+  version: 7cb988051d5045890cb91402a0b5fddc76c627bc
 - name: github.com/pkg/errors
-  version: 839d9e913e063e28dfd0e6c7b7512793e0a48be9
-- name: github.com/pkg/sftp
-  version: 4d0e916071f68db74f8a73926335f809396d6b42
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+- name: github.com/prometheus/client_golang
+  version: e51041b3fa41cece0dca035740ba6411905be473
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: fa8ad6fec33561be4280a8f0514318c79d7f6cb6
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: 0d5de9d6d8629cb8bee6d4674da4127cd8b615a3
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: abf152e5f3e97f2fafac028d2cc06c1feb87ffa5
 - name: github.com/Shopify/sarama
   version: bd61cae2be85fa6ff40eb23dcdd24567967ac2ae
 - name: github.com/Sirupsen/logrus
@@ -157,25 +185,22 @@ imports:
   subpackages:
   - formatters/logstash
 - name: github.com/spf13/afero
-  version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
+  version: 06b7e5f50606ecd49148a01a6008942d9b669217
   subpackages:
   - mem
-  - sftp
 - name: github.com/spf13/cast
-  version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
+  version: 24b6558033ffe202bf42f0f3b870dcc798dd2ba8
 - name: github.com/spf13/cobra
-  version: ec2fe7859914a5106dcab4e7901633d959bfc2f4
+  version: 9495bc009a56819bdb0ddbc1a373e29c140bc674
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: bf8481a6aebc13a8aab52e699ffe2e79771f5a3f
+  version: 5ccb023bc27df288a957c5e994cd44fd19619465
 - name: github.com/spf13/viper
-  version: 44208030b391907a5ec5c5658470bdb6e6169073
+  version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: golang.org/x/crypto
-  version: c197bcf24cde29d3f73c7b4ac6fd41f4384e8af6
+  version: ede567c8e044a5913dad1d1af3696d9da953104c
   subpackages:
-  - curve25519
-  - ssh
   - ssh/terminal
 - name: golang.org/x/net
   version: 6acef71eb69611914f7a30939ea9f6e194c78172
@@ -189,16 +214,16 @@ imports:
   - trace
   - websocket
 - name: golang.org/x/oauth2
-  version: 1e695b1c8febf17aad3bfa7bf0a819ef94b98ad5
+  version: d5040cddfc0da40b408c9a1da4728662435176a9
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 9c60d1c508f5134d1ca726b4641db998f2523357
+  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: c745997bb18563e8788428768ce0f034f2b663df
+  version: b01949dc0793a9af5e4cb3fce4d42999e76e8ca1
   subpackages:
   - transform
   - unicode/norm
@@ -213,7 +238,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/grpc
-  version: b1a2821ca5a4fd6b6e48ddfbb7d6d7584d839d21
+  version: 777daa17ff9b5daef1cfdf915088a2ada3332bf0
   subpackages:
   - codes
   - credentials
@@ -224,7 +249,7 @@ imports:
   - peer
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: 1ad75b5396674e9c783400e89106bc0c8da9d786
+  version: 060365a7e27c56c938b234824ef7f9a3a7834b99
   subpackages:
   - backoff
   - uritemplates

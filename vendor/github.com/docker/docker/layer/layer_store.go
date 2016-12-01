@@ -11,7 +11,6 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/daemon/graphdriver"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/plugingetter"
 	"github.com/docker/docker/pkg/stringid"
@@ -221,7 +220,7 @@ func (ls *layerStore) applyTar(tx MetadataTransaction, ts io.Reader, parent stri
 		return err
 	}
 
-	applySize, err := ls.driver.ApplyDiff(layer.cacheID, parent, archive.Reader(rdr))
+	applySize, err := ls.driver.ApplyDiff(layer.cacheID, parent, rdr)
 	if err != nil {
 		return err
 	}
@@ -278,7 +277,7 @@ func (ls *layerStore) registerWithDescriptor(ts io.Reader, parent ChainID, descr
 		descriptor:     descriptor,
 	}
 
-	if err = ls.driver.Create(layer.cacheID, pid, "", nil); err != nil {
+	if err = ls.driver.Create(layer.cacheID, pid, nil); err != nil {
 		return nil, err
 	}
 
@@ -489,7 +488,11 @@ func (ls *layerStore) CreateRWLayer(name string, parent ChainID, mountLabel stri
 		m.initID = pid
 	}
 
-	if err = ls.driver.CreateReadWrite(m.mountID, pid, "", storageOpt); err != nil {
+	createOpts := &graphdriver.CreateOpts{
+		StorageOpt: storageOpt,
+	}
+
+	if err = ls.driver.CreateReadWrite(m.mountID, pid, createOpts); err != nil {
 		return nil, err
 	}
 
@@ -599,7 +602,12 @@ func (ls *layerStore) initMount(graphID, parent, mountLabel string, initFunc Mou
 	// then the initID should be randomly generated.
 	initID := fmt.Sprintf("%s-init", graphID)
 
-	if err := ls.driver.CreateReadWrite(initID, parent, mountLabel, storageOpt); err != nil {
+	createOpts := &graphdriver.CreateOpts{
+		MountLabel: mountLabel,
+		StorageOpt: storageOpt,
+	}
+
+	if err := ls.driver.CreateReadWrite(initID, parent, createOpts); err != nil {
 		return "", err
 	}
 	p, err := ls.driver.Get(initID, "")

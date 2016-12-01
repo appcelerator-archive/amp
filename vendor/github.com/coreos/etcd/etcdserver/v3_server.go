@@ -17,6 +17,7 @@ package etcdserver
 import (
 	"bytes"
 	"encoding/binary"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +47,7 @@ const (
 	// the applied index and committed index.
 	// However, if the committed entries are very heavy to apply, the gap might grow.
 	// We should stop accepting new proposals if the gap growing to a certain point.
-	maxGapBetweenApplyAndCommitIndex = 1000
+	maxGapBetweenApplyAndCommitIndex = 5000
 )
 
 var (
@@ -326,6 +327,7 @@ func (s *EtcdServer) LeaseRenew(id lease.LeaseID) (int64, error) {
 		if err == nil {
 			break
 		}
+		err = convertEOFToNoLeader(err)
 	}
 	return ttl, err
 }
@@ -363,8 +365,21 @@ func (s *EtcdServer) LeaseTimeToLive(ctx context.Context, r *pb.LeaseTimeToLiveR
 		if err == nil {
 			return iresp.LeaseTimeToLiveResponse, nil
 		}
+		err = convertEOFToNoLeader(err)
 	}
 	return nil, err
+}
+
+// convertEOFToNoLeader converts EOF erros to ErrNoLeader because
+// lease renew, timetolive requests to followers are forwarded to leader,
+// and follower might not be able to reach leader from transient network
+// errors (often EOF errors). By returning ErrNoLeader, signal clients
+// to retry its requests.
+func convertEOFToNoLeader(err error) error {
+	if err == io.EOF || err == io.ErrUnexpectedEOF {
+		return ErrNoLeader
+	}
+	return err
 }
 
 func (s *EtcdServer) waitLeader() (*membership.Member, error) {
@@ -419,24 +434,47 @@ func (s *EtcdServer) AuthDisable(ctx context.Context, r *pb.AuthDisableRequest) 
 }
 
 func (s *EtcdServer) Authenticate(ctx context.Context, r *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
-	st, err := s.AuthStore().GenSimpleToken()
+	var result *applyResult
+
+	err := s.linearizableReadNotify(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	internalReq := &pb.InternalAuthenticateRequest{
-		Name:        r.Name,
-		Password:    r.Password,
-		SimpleToken: st,
+	for {
+		checkedRevision, err := s.AuthStore().CheckPassword(r.Name, r.Password)
+		if err != nil {
+			plog.Errorf("invalid authentication request to user %s was issued", r.Name)
+			return nil, err
+		}
+
+		st, err := s.AuthStore().GenSimpleToken()
+		if err != nil {
+			return nil, err
+		}
+
+		internalReq := &pb.InternalAuthenticateRequest{
+			Name:        r.Name,
+			Password:    r.Password,
+			SimpleToken: st,
+		}
+
+		result, err = s.processInternalRaftRequestOnce(ctx, pb.InternalRaftRequest{Authenticate: internalReq})
+		if err != nil {
+			return nil, err
+		}
+		if result.err != nil {
+			return nil, result.err
+		}
+
+		if checkedRevision != s.AuthStore().Revision() {
+			plog.Infof("revision when password checked is obsolete, retrying")
+			continue
+		}
+
+		break
 	}
 
-	result, err := s.processInternalRaftRequestOnce(ctx, pb.InternalRaftRequest{Authenticate: internalReq})
-	if err != nil {
-		return nil, err
-	}
-	if result.err != nil {
-		return nil, result.err
-	}
 	return result.resp.(*pb.AuthenticateResponse), nil
 }
 

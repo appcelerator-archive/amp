@@ -493,16 +493,22 @@ func (s *ampManager) doesServiceExist(name string) (string, bool) {
 
 // verify if image exist locally
 func (s *ampManager) doesImageExist(image string) (string, bool) {
-	options := types.ImageListOptions{
-		MatchName: image,
-	}
+	filter := filters.NewArgs()
+	filter.Add("reference", image)
+	filter.Add("dangling", "false")
+	options := types.ImageListOptions{All: false, Filters: filter}
+
 	list, err := s.docker.ImageList(s.ctx, options)
-	if err != nil || len(list) == 0 {
+	if err != nil {
+		fmt.Println(err)
+		return "", false
+	}
+	if len(list) == 0 {
 		return "", false
 	}
 	//fmt.Printf("images: %+v\n", list)
 	for _, ima := range list {
-		if ima.RepoTags[0] == image {
+		if len(ima.RepoTags) > 0 && ima.RepoTags[0] == image {
 			return list[0].ID, true
 		}
 	}

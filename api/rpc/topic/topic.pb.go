@@ -50,6 +50,20 @@ func (m *TopicEntry) String() string            { return proto.CompactTextString
 func (*TopicEntry) ProtoMessage()               {}
 func (*TopicEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *TopicEntry) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *TopicEntry) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 type CreateRequest struct {
 	Topic *TopicEntry `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
 }
@@ -115,6 +129,13 @@ func (m *DeleteRequest) String() string            { return proto.CompactTextStr
 func (*DeleteRequest) ProtoMessage()               {}
 func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
+func (m *DeleteRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 type DeleteReply struct {
 	Topic *TopicEntry `protobuf:"bytes,1,opt,name=topic" json:"topic,omitempty"`
 }
@@ -147,7 +168,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for Topic service
 
@@ -276,7 +297,7 @@ var _Topic_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "github.com/appcelerator/amp/api/rpc/topic/topic.proto",
 }
 
 func init() {

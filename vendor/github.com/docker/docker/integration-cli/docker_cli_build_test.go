@@ -590,6 +590,39 @@ ADD %s/file /`
 
 }
 
+// Regression for https://github.com/docker/docker/pull/27805
+// Makes sure that we don't use the cache if the contents of
+// a file in a subfolder of the context is modified and we re-build.
+func (s *DockerSuite) TestBuildModifyFileInFolder(c *check.C) {
+	name := "testbuildmodifyfileinfolder"
+
+	ctx, err := fakeContext(`FROM busybox
+RUN ["mkdir", "/test"]
+ADD folder/file /test/changetarget`,
+		map[string]string{})
+	if err != nil {
+		c.Fatal(err)
+	}
+	defer ctx.Close()
+	if err := ctx.Add("folder/file", "first"); err != nil {
+		c.Fatal(err)
+	}
+	id1, err := buildImageFromContext(name, ctx, true)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if err := ctx.Add("folder/file", "second"); err != nil {
+		c.Fatal(err)
+	}
+	id2, err := buildImageFromContext(name, ctx, true)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if id1 == id2 {
+		c.Fatal("cache was used even though file contents in folder was changed")
+	}
+}
+
 func (s *DockerSuite) TestBuildAddSingleFileToRoot(c *check.C) {
 	testRequires(c, DaemonIsLinux) // Linux specific test
 	name := "testaddimg"
@@ -1845,8 +1878,8 @@ func (s *DockerSuite) TestBuildWindowsAddCopyPathProcessing(c *check.C) {
 			WORKDIR /wc2
 			ADD wc2 c:/wc2
 			WORKDIR c:/
-			RUN sh -c "[ $(cat c:/wc1) = 'hellowc1' ]"
-			RUN sh -c "[ $(cat c:/wc2) = 'worldwc2' ]"
+			RUN sh -c "[ $(cat c:/wc1/wc1) = 'hellowc1' ]"
+			RUN sh -c "[ $(cat c:/wc2/wc2) = 'worldwc2' ]"
 
 			# Trailing slash on COPY/ADD, Windows-style path.
 			WORKDIR /wd1
@@ -3577,8 +3610,8 @@ RUN [ "$(id -u):$(id -g)/$(id -un):$(id -gn)/$(id -G):$(id -Gn)" = '1001:1001/do
 
 # Switch back to root and double check that worked exactly as we might expect it to
 USER root
+# Add a "supplementary" group for our dockerio user
 RUN [ "$(id -u):$(id -g)/$(id -un):$(id -gn)/$(id -G):$(id -Gn)" = '0:0/root:root/0 10:root wheel' ] && \
-	# Add a "supplementary" group for our dockerio user \
 	echo 'supplementary:x:1002:dockerio' >> /etc/group
 
 # ... and then go verify that we get it like we expect
@@ -6027,11 +6060,12 @@ func (s *DockerSuite) TestBuildBuildTimeArgUnconsumedArg(c *check.C) {
 		RUN echo $%s
 		CMD echo $%s`, envKey, envKey)
 
-	errStr := "One or more build-args"
-	if _, out, err := buildImageWithOut(imgName, dockerfile, true, args...); err == nil {
-		c.Fatalf("build succeeded, expected to fail. Output: %v", out)
-	} else if !strings.Contains(out, errStr) {
-		c.Fatalf("Unexpected error. output: %q, expected error: %q", out, errStr)
+	warnStr := "[Warning] One or more build-args"
+
+	if _, out, err := buildImageWithOut(imgName, dockerfile, true, args...); !strings.Contains(out, warnStr) {
+		c.Fatalf("build completed without warning: %q %q", out, err)
+	} else if err != nil {
+		c.Fatalf("build failed to complete: %q %q", out, err)
 	}
 
 }
@@ -6632,6 +6666,19 @@ func (s *DockerSuite) TestBuildLabelsOverride(c *check.C) {
 		c.Fatalf("Labels %s, expected %s", res, expected)
 	}
 
+	// Command line option labels with env var
+	name = "scratchz"
+	expected = `{"bar":"$PATH"}`
+	_, err = buildImage(name,
+		`FROM `+minimalBaseImage(),
+		true, "--label", "bar=$PATH")
+	c.Assert(err, check.IsNil)
+
+	res = inspectFieldJSON(c, name, "Config.Labels")
+	if res != expected {
+		c.Fatalf("Labels %s, expected %s", res, expected)
+	}
+
 }
 
 // Test case for #22855
@@ -6871,6 +6918,42 @@ func (s *DockerSuite) TestBuildShellWindowsPowershell(c *check.C) {
 	}
 }
 
+// Verify that escape is being correctly applied to words when escape directive is not \.
+// Tests WORKDIR, ADD
+func (s *DockerSuite) TestBuildEscapeNotBackslashWordTest(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	name := "testbuildescapenotbackslashwordtesta"
+	_, out, err := buildImageWithOut(name,
+		`# escape= `+"`"+`
+		FROM `+minimalBaseImage()+`
+        WORKDIR c:\windows
+		RUN dir /w`,
+		true)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if !strings.Contains(strings.ToLower(out), "[system32]") {
+		c.Fatalf("Line with '[windows]' not found in output %q", out)
+	}
+
+	name = "testbuildescapenotbackslashwordtestb"
+	_, out, err = buildImageWithOut(name,
+		`# escape= `+"`"+`
+		FROM `+minimalBaseImage()+`
+		SHELL ["powershell.exe"]
+        WORKDIR c:\foo
+		ADD Dockerfile c:\foo\
+		RUN dir Dockerfile`,
+		true)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if !strings.Contains(strings.ToLower(out), "-a----") {
+		c.Fatalf("Line with '-a----' not found in output %q", out)
+	}
+
+}
+
 // #22868. Make sure shell-form CMD is marked as escaped in the config of the image
 func (s *DockerSuite) TestBuildCmdShellArgsEscaped(c *check.C) {
 	testRequires(c, DaemonIsWindows)
@@ -7028,4 +7111,203 @@ func (s *DockerSuite) TestBuildCacheFrom(c *check.C) {
 		c.Assert(layers1[i], checker.Equals, layers2[i])
 	}
 	c.Assert(layers1[len(layers1)-1], checker.Not(checker.Equals), layers2[len(layers1)-1])
+}
+
+func (s *DockerSuite) TestBuildNetNone(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	name := "testbuildnetnone"
+	_, out, err := buildImageWithOut(name, `
+  FROM busybox
+  RUN ping -c 1 8.8.8.8
+  `, true, "--network=none")
+	c.Assert(err, checker.NotNil)
+	c.Assert(out, checker.Contains, "unreachable")
+}
+
+func (s *DockerSuite) TestBuildNetContainer(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	id, _ := dockerCmd(c, "run", "--hostname", "foobar", "-d", "busybox", "nc", "-ll", "-p", "1234", "-e", "hostname")
+
+	name := "testbuildnetcontainer"
+	out, err := buildImage(name, `
+  FROM busybox
+  RUN nc localhost 1234 > /otherhost
+  `, true, "--network=container:"+strings.TrimSpace(id))
+	c.Assert(err, checker.IsNil, check.Commentf("out: %v", out))
+
+	host, _ := dockerCmd(c, "run", "testbuildnetcontainer", "cat", "/otherhost")
+	c.Assert(strings.TrimSpace(host), check.Equals, "foobar")
+}
+
+// Test case for #24693
+func (s *DockerSuite) TestBuildRunEmptyLineAfterEscape(c *check.C) {
+	name := "testbuildemptylineafterescape"
+	_, out, err := buildImageWithOut(name,
+		`
+FROM busybox
+RUN echo x \
+
+RUN echo y
+RUN echo z
+# Comment requires the '#' to start from position 1
+# RUN echo w
+`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/4 : FROM busybox")
+	c.Assert(out, checker.Contains, "Step 2/4 : RUN echo x")
+	c.Assert(out, checker.Contains, "Step 3/4 : RUN echo y")
+	c.Assert(out, checker.Contains, "Step 4/4 : RUN echo z")
+
+	// With comment, see #24693
+	name = "testbuildcommentandemptylineafterescape"
+	_, out, err = buildImageWithOut(name,
+		`
+FROM busybox
+RUN echo grafana && \
+    echo raintank \
+#echo env-load
+RUN echo vegeta
+`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/3 : FROM busybox")
+	c.Assert(out, checker.Contains, "Step 2/3 : RUN echo grafana &&     echo raintank")
+	c.Assert(out, checker.Contains, "Step 3/3 : RUN echo vegeta")
+}
+
+func (s *DockerSuite) TestBuildSquashParent(c *check.C) {
+	testRequires(c, ExperimentalDaemon)
+	dockerFile := `
+		FROM busybox
+		RUN echo hello > /hello
+		RUN echo world >> /hello
+		RUN echo hello > /remove_me
+		ENV HELLO world
+		RUN rm /remove_me
+		`
+	// build and get the ID that we can use later for history comparison
+	origID, err := buildImage("test", dockerFile, false)
+	c.Assert(err, checker.IsNil)
+
+	// build with squash
+	id, err := buildImage("test", dockerFile, true, "--squash")
+	c.Assert(err, checker.IsNil)
+
+	out, _ := dockerCmd(c, "run", "--rm", id, "/bin/sh", "-c", "cat /hello")
+	c.Assert(strings.TrimSpace(out), checker.Equals, "hello\nworld")
+
+	dockerCmd(c, "run", "--rm", id, "/bin/sh", "-c", "[ ! -f /remove_me ]")
+	dockerCmd(c, "run", "--rm", id, "/bin/sh", "-c", `[ "$(echo $HELLO)" == "world" ]`)
+
+	// make sure the ID produced is the ID of the tag we specified
+	inspectID, err := inspectImage("test", ".ID")
+	c.Assert(err, checker.IsNil)
+	c.Assert(inspectID, checker.Equals, id)
+
+	origHistory, _ := dockerCmd(c, "history", origID)
+	testHistory, _ := dockerCmd(c, "history", "test")
+
+	splitOrigHistory := strings.Split(strings.TrimSpace(origHistory), "\n")
+	splitTestHistory := strings.Split(strings.TrimSpace(testHistory), "\n")
+	c.Assert(len(splitTestHistory), checker.Equals, len(splitOrigHistory)+1)
+
+	out, err = inspectImage(id, "len .RootFS.Layers")
+	c.Assert(err, checker.IsNil)
+	c.Assert(strings.TrimSpace(out), checker.Equals, "3")
+}
+
+func (s *DockerSuite) TestBuildContChar(c *check.C) {
+	name := "testbuildcontchar"
+
+	_, out, err := buildImageWithOut(name,
+		`FROM busybox\`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/1 : FROM busybox")
+
+	_, out, err = buildImageWithOut(name,
+		`FROM busybox
+		 RUN echo hi \`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/2 : FROM busybox")
+	c.Assert(out, checker.Contains, "Step 2/2 : RUN echo hi\n")
+
+	_, out, err = buildImageWithOut(name,
+		`FROM busybox
+		 RUN echo hi \\`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/2 : FROM busybox")
+	c.Assert(out, checker.Contains, "Step 2/2 : RUN echo hi \\\n")
+
+	_, out, err = buildImageWithOut(name,
+		`FROM busybox
+		 RUN echo hi \\\`, true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Step 1/2 : FROM busybox")
+	c.Assert(out, checker.Contains, "Step 2/2 : RUN echo hi \\\\\n")
+}
+
+// TestBuildOpaqueDirectory tests that a build succeeds which
+// creates opaque directories.
+// See https://github.com/docker/docker/issues/25244
+func (s *DockerSuite) TestBuildOpaqueDirectory(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	dockerFile := `
+		FROM busybox
+		RUN mkdir /dir1 && touch /dir1/f1
+		RUN rm -rf /dir1 && mkdir /dir1 && touch /dir1/f2
+		RUN touch /dir1/f3
+		RUN [ -f /dir1/f2 ]
+		`
+
+	// Test that build succeeds, last command fails if opaque directory
+	// was not handled correctly
+	_, err := buildImage("testopaquedirectory", dockerFile, false)
+	c.Assert(err, checker.IsNil)
+}
+
+// Windows test for USER in dockerfile
+func (s *DockerSuite) TestBuildWindowsUser(c *check.C) {
+	testRequires(c, DaemonIsWindows)
+	name := "testbuildwindowsuser"
+	_, out, err := buildImageWithOut(name,
+		`FROM `+WindowsBaseImage+`
+		RUN net user user /add
+		USER user
+		RUN set username
+		`,
+		true)
+	if err != nil {
+		c.Fatal(err)
+	}
+	c.Assert(strings.ToLower(out), checker.Contains, "username=user")
+}
+
+// Verifies if COPY file . when WORKDIR is set to a non-existing directory,
+// the directory is created and the file is copied into the directory,
+// as opposed to the file being copied as a file with the name of the
+// directory. Fix for 27545 (found on Windows, but regression good for Linux too).
+// Note 27545 was reverted in 28505, but a new fix was added subsequently in 28514.
+func (s *DockerSuite) TestBuildCopyFileDotWithWorkdir(c *check.C) {
+	name := "testbuildcopyfiledotwithworkdir"
+	ctx, err := fakeContext(`FROM busybox 
+WORKDIR /foo 
+COPY file . 
+RUN ["cat", "/foo/file"] 
+`,
+		map[string]string{})
+
+	if err != nil {
+		c.Fatal(err)
+	}
+	defer ctx.Close()
+
+	if err := ctx.Add("file", "content"); err != nil {
+		c.Fatal(err)
+	}
+
+	if _, err = buildImageFromContext(name, ctx, true); err != nil {
+		c.Fatal(err)
+	}
 }

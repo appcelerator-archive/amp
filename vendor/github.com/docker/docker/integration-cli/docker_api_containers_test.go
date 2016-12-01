@@ -574,7 +574,7 @@ func (s *DockerSuite) TestContainerAPICreateWithHostName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -597,7 +597,7 @@ func (s *DockerSuite) TestContainerAPICreateWithDomainName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -632,7 +632,7 @@ func UtilCreateNetworkMode(c *check.C, networkMode string) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -657,7 +657,7 @@ func (s *DockerSuite) TestContainerAPICreateWithCpuSharesCpuset(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(status, checker.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), checker.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -957,9 +957,9 @@ func (s *DockerSuite) TestContainerAPIWait(c *check.C) {
 	c.Assert(status, checker.Equals, http.StatusOK)
 	c.Assert(waitInspect(name, "{{ .State.Running  }}", "false", 60*time.Second), checker.IsNil)
 
-	var waitres types.ContainerWaitResponse
+	var waitres containertypes.ContainerWaitOKBody
 	c.Assert(json.Unmarshal(body, &waitres), checker.IsNil)
-	c.Assert(waitres.StatusCode, checker.Equals, 0)
+	c.Assert(waitres.StatusCode, checker.Equals, int64(0))
 }
 
 func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
@@ -976,7 +976,7 @@ func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
-
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -1006,6 +1006,7 @@ func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy-resource-empty"
 	dockerCmd(c, "run", "--name", name, "busybox", "touch", "/test.txt")
 
@@ -1020,6 +1021,7 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
 }
 
 func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	name := "test-container-api-copy-resource-not-found"
 	dockerCmd(c, "run", "--name", name, "busybox")
 
@@ -1034,6 +1036,7 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C)
 }
 
 func (s *DockerSuite) TestContainerAPICopyContainerNotFoundPr124(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 	postData := types.CopyConfig{
 		Resource: "/something",
 	}
@@ -1245,6 +1248,7 @@ func (s *DockerSuite) TestPostContainersCreateWithStringOrSliceCapAddDrop(c *che
 
 // #14915
 func (s *DockerSuite) TestContainerAPICreateNoHostConfig118(c *check.C) {
+	testRequires(c, DaemonIsLinux) // Windows only support 1.25 or later
 	config := struct {
 		Image string
 	}{"busybox"}
@@ -1349,7 +1353,7 @@ func (s *DockerSuite) TestPostContainersCreateShmSizeHostConfigOmitted(c *check.
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1381,7 +1385,7 @@ func (s *DockerSuite) TestPostContainersCreateShmSizeOmitted(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1413,7 +1417,7 @@ func (s *DockerSuite) TestPostContainersCreateWithShmSize(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1443,7 +1447,7 @@ func (s *DockerSuite) TestPostContainersCreateMemorySwappinessHostConfigOmitted(
 	c.Assert(err, check.IsNil)
 	c.Assert(status, check.Equals, http.StatusCreated)
 
-	var container types.ContainerCreateResponse
+	var container containertypes.ContainerCreateCreatedBody
 	c.Assert(json.Unmarshal(body, &container), check.IsNil)
 
 	status, body, err = sockRequest("GET", "/containers/"+container.ID+"/json", nil)
@@ -1569,13 +1573,80 @@ func (s *DockerSuite) TestContainersAPICreateMountsValidation(c *check.C) {
 	notExistPath := prefix + slash + "notexist"
 
 	cases := []testCase{
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "notreal", Target: destPath}}}}, http.StatusBadRequest, "mount type unknown"},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "bind"}}}}, http.StatusBadRequest, "Target must not be empty"},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "bind", Target: destPath}}}}, http.StatusBadRequest, "Source must not be empty"},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "bind", Source: notExistPath, Target: destPath}}}}, http.StatusBadRequest, "bind source path does not exist"},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "volume"}}}}, http.StatusBadRequest, "Target must not be empty"},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "volume", Source: "hello", Target: destPath}}}}, http.StatusCreated, ""},
-		{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "volume", Source: "hello2", Target: destPath, VolumeOptions: &mounttypes.VolumeOptions{DriverConfig: &mounttypes.Driver{Name: "local"}}}}}}, http.StatusCreated, ""},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type:   "notreal",
+						Target: destPath}}}},
+			status: http.StatusBadRequest,
+			msg:    "mount type unknown",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type: "bind"}}}},
+			status: http.StatusBadRequest,
+			msg:    "Target must not be empty",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type:   "bind",
+						Target: destPath}}}},
+			status: http.StatusBadRequest,
+			msg:    "Source must not be empty",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type:   "bind",
+						Source: notExistPath,
+						Target: destPath}}}},
+			status: http.StatusBadRequest,
+			msg:    "bind source path does not exist",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type: "volume"}}}},
+			status: http.StatusBadRequest,
+			msg:    "Target must not be empty",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type:   "volume",
+						Source: "hello",
+						Target: destPath}}}},
+			status: http.StatusCreated,
+			msg:    "",
+		},
+		{
+			config: cfg{
+				Image: "busybox",
+				HostConfig: hc{
+					Mounts: []m{{
+						Type:   "volume",
+						Source: "hello2",
+						Target: destPath,
+						VolumeOptions: &mounttypes.VolumeOptions{
+							DriverConfig: &mounttypes.Driver{
+								Name: "local"}}}}}},
+			status: http.StatusCreated,
+			msg:    "",
+		},
 	}
 
 	if SameHostDaemon.Condition() {
@@ -1583,14 +1654,85 @@ func (s *DockerSuite) TestContainersAPICreateMountsValidation(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		defer os.RemoveAll(tmpDir)
 		cases = append(cases, []testCase{
-			{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "bind", Source: tmpDir, Target: destPath}}}}, http.StatusCreated, ""},
-			{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "bind", Source: tmpDir, Target: destPath, VolumeOptions: &mounttypes.VolumeOptions{}}}}}, http.StatusBadRequest, "VolumeOptions must not be specified"},
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:   "bind",
+							Source: tmpDir,
+							Target: destPath}}}},
+				status: http.StatusCreated,
+				msg:    "",
+			},
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:          "bind",
+							Source:        tmpDir,
+							Target:        destPath,
+							VolumeOptions: &mounttypes.VolumeOptions{}}}}},
+				status: http.StatusBadRequest,
+				msg:    "VolumeOptions must not be specified",
+			},
 		}...)
 	}
 
 	if DaemonIsLinux.Condition() {
 		cases = append(cases, []testCase{
-			{cfg{Image: "busybox", HostConfig: hc{Mounts: []m{{Type: "volume", Source: "hello3", Target: destPath, VolumeOptions: &mounttypes.VolumeOptions{DriverConfig: &mounttypes.Driver{Name: "local", Options: map[string]string{"o": "size=1"}}}}}}}, http.StatusCreated, ""},
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:   "volume",
+							Source: "hello3",
+							Target: destPath,
+							VolumeOptions: &mounttypes.VolumeOptions{
+								DriverConfig: &mounttypes.Driver{
+									Name:    "local",
+									Options: map[string]string{"o": "size=1"}}}}}}},
+				status: http.StatusCreated,
+				msg:    "",
+			},
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:   "tmpfs",
+							Target: destPath}}}},
+				status: http.StatusCreated,
+				msg:    "",
+			},
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:   "tmpfs",
+							Target: destPath,
+							TmpfsOptions: &mounttypes.TmpfsOptions{
+								SizeBytes: 4096 * 1024,
+								Mode:      0700,
+							}}}}},
+				status: http.StatusCreated,
+				msg:    "",
+			},
+
+			{
+				config: cfg{
+					Image: "busybox",
+					HostConfig: hc{
+						Mounts: []m{{
+							Type:   "tmpfs",
+							Source: "/shouldnotbespecified",
+							Target: destPath}}}},
+				status: http.StatusBadRequest,
+				msg:    "Source must not be specified",
+			},
 		}...)
 
 	}
@@ -1756,6 +1898,48 @@ func (s *DockerSuite) TestContainersAPICreateMountsCreate(c *check.C) {
 			// This should be removed automatically when we removed the container
 			out, _, err := dockerCmdWithError("volume", "inspect", mps[0].Name)
 			c.Assert(err, checker.NotNil, check.Commentf(out))
+		}
+	}
+}
+
+func (s *DockerSuite) TestContainersAPICreateMountsTmpfs(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+	type testCase struct {
+		cfg             map[string]interface{}
+		expectedOptions []string
+	}
+	target := "/foo"
+	cases := []testCase{
+		{
+			cfg: map[string]interface{}{
+				"Type":   "tmpfs",
+				"Target": target},
+			expectedOptions: []string{"rw", "nosuid", "nodev", "noexec", "relatime"},
+		},
+		{
+			cfg: map[string]interface{}{
+				"Type":   "tmpfs",
+				"Target": target,
+				"TmpfsOptions": map[string]interface{}{
+					"SizeBytes": 4096 * 1024, "Mode": 0700}},
+			expectedOptions: []string{"rw", "nosuid", "nodev", "noexec", "relatime", "size=4096k", "mode=700"},
+		},
+	}
+
+	for i, x := range cases {
+		cName := fmt.Sprintf("test-tmpfs-%d", i)
+		data := map[string]interface{}{
+			"Image": "busybox",
+			"Cmd": []string{"/bin/sh", "-c",
+				fmt.Sprintf("mount | grep 'tmpfs on %s'", target)},
+			"HostConfig": map[string]interface{}{"Mounts": []map[string]interface{}{x.cfg}},
+		}
+		status, resp, err := sockRequest("POST", "/containers/create?name="+cName, data)
+		c.Assert(err, checker.IsNil, check.Commentf(string(resp)))
+		c.Assert(status, checker.Equals, http.StatusCreated, check.Commentf(string(resp)))
+		out, _ := dockerCmd(c, "start", "-a", cName)
+		for _, option := range x.expectedOptions {
+			c.Assert(out, checker.Contains, option)
 		}
 	}
 }

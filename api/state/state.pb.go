@@ -37,6 +37,13 @@ func (m *State) String() string            { return proto.CompactTextString(m) }
 func (*State) ProtoMessage()               {}
 func (*State) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *State) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*State)(nil), "state.State")
 }
