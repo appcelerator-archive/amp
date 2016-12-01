@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/nats-io/gnatsd/auth"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 func TestAuth(t *testing.T) {

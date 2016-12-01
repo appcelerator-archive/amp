@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 // More advanced tests on subscriptions

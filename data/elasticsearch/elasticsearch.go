@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"gopkg.in/olivere/elastic.v3"
 	"time"
 )
@@ -33,15 +34,15 @@ func (es *Elasticsearch) GetClient() *elastic.Client {
 }
 
 // CreateIndexIfNotExists Creates an index if it doesn't already exists
-func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, mapping string) error {
+func (es *Elasticsearch) CreateIndexIfNotExists(ctx context.Context, esIndex string, esType string, mapping string) error {
 	// Use the IndexExists service to check if the index exists
-	exists, err := es.client.IndexExists(esIndex).Do()
+	exists, err := es.client.IndexExists(esIndex).Do(ctx)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		// Create a new index.
-		createIndex, err := es.client.CreateIndex(esIndex).Do()
+		createIndex, err := es.client.CreateIndex(esIndex).Do(ctx)
 		if err != nil {
 			return err
 		}
@@ -49,7 +50,7 @@ func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, m
 			return err
 		}
 
-		response, err := es.client.PutMapping().Index(esIndex).Type(esType).BodyString(mapping).Do()
+		response, err := es.client.PutMapping().Index(esIndex).Type(esType).BodyString(mapping).Do(ctx)
 		if err != nil {
 			return err
 		}
@@ -61,13 +62,13 @@ func (es *Elasticsearch) CreateIndexIfNotExists(esIndex string, esType string, m
 }
 
 // Index store a document inside elastic search
-func (es *Elasticsearch) Index(esIndex string, esType string, body interface{}) error {
+func (es *Elasticsearch) Index(ctx context.Context, esIndex string, esType string, body interface{}) error {
 	// Add a document to the index
 	_, err := es.client.Index().
 		Index(esIndex).
 		Type(esType).
 		BodyJson(body).
-		Do()
+		Do(ctx)
 	if err != nil {
 		return err
 	}

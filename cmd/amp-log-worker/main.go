@@ -6,6 +6,7 @@ import (
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
+	"golang.org/x/net/context"
 	"log"
 	"os"
 	"os/signal"
@@ -85,7 +86,7 @@ func main() {
 	}
 	log.Printf("Connected to elasticsearch at %s\n", amp.ElasticsearchDefaultURL)
 
-	es.CreateIndexIfNotExists(esIndex, esType, esMapping)
+	es.CreateIndexIfNotExists(context.Background(), esIndex, esType, esMapping)
 	if err != nil {
 		log.Fatalf("Unable to create index: %s", err)
 	}
@@ -130,7 +131,7 @@ func messageHandler(msg *stan.Msg) {
 		log.Printf("error parsing timestamp: %v", err)
 	}
 	logEntry.Timestamp = timestamp.Format("2006-01-02T15:04:05.999")
-	err = es.Index(esIndex, esType, logEntry)
+	err = es.Index(context.Background(), esIndex, esType, logEntry) // TODO: Should we use a timeout context ?
 	if err != nil {
 		log.Printf("error indexing log entry: %v", err)
 	}
