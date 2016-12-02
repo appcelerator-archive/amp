@@ -12,30 +12,38 @@ import (
 )
 
 // read lookup directory by parsing its contents
-func parseLookup(directory string) (regexMap map[string]string, err error) {
+func parseLookup(directory string) (map[string]string, error) {
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
 		return nil, err
 	}
+	rgxMap := make(map[string]string)
 	for _, file := range files {
-		regexMap, err = generateRegexes(path.Join(directory, file.Name()))
+		regexes, err := generateRegexes(path.Join(directory, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+		for expectation, regex := range regexes {
+			rgxMap[expectation] = regex
+		}
 	}
-	return
+	return rgxMap, nil
 }
 
 // parse lookup directory and unmarshal its contents
-func generateRegexes(fileName string) (regexMap map[string]string, err error) {
+func generateRegexes(fileName string) (map[string]string, error) {
 	if filepath.Ext(fileName) != ".yml" {
 		return nil, fmt.Errorf("Cannot parse non-yaml file: %s", fileName)
 	}
-	pairs, err := ioutil.ReadFile(fileName)
+	contents, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read yaml regex lookup: %s. Error: %v", fileName, err)
 	}
-	if err := yaml.Unmarshal(pairs, &regexMap); err != nil {
+	regexes := make(map[string]string)
+	if err := yaml.Unmarshal(contents, &regexes); err != nil {
 		return nil, fmt.Errorf("Unable to unmarshal yaml lookup: %s. Error: %v", fileName, err)
 	}
-	return
+	return regexes, nil
 }
 
 // read specs from directory by parsing its contents

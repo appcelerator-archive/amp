@@ -1,7 +1,7 @@
 - stack-create:
   cmd: amp stack up
   args:
-     - "{{call .uniq `stack1`}}"
+     - "{{call .uniq `stack`}}"
   options:
      - -f ../../api/rpc/stack/test_samples/sample-01.yml
   expectation: stack-id
@@ -18,7 +18,7 @@
 - stack-stop:
   cmd: amp stack stop
   args:
-    - "{{call .uniq `stack1`}}"
+    - "{{call .uniq `stack`}}"
   options:
     -
   expectation: stack-id
@@ -34,7 +34,7 @@
 - stack-restart:
   cmd: amp stack start
   args:
-    - "{{call .uniq `stack1`}}"
+    - "{{call .uniq `stack`}}"
   options:
     -
   expectation: stack-id
@@ -51,7 +51,7 @@
 - stack-stop:
   cmd: amp stack stop
   args:
-    - "{{call .uniq `stack1`}}"
+    - "{{call .uniq `stack`}}"
   options:
     -
   expectation: stack-id
@@ -59,7 +59,7 @@
 - stack-remove:
   cmd: amp stack rm
   args:
-    - "{{call .uniq `stack1`}}"
+    - "{{call .uniq `stack`}}"
   options:
     -
   expectation: stack-id
