@@ -13,10 +13,9 @@
   options:
   expectation: docker-service-list-valid-service
   retry: 15
-  delay: 1000ms
-  timeout: 15000ms
+  delay: 1s
+  timeout: 15s
 
-# Should use API call as a form of blocking.
 - service-curl:
   cmd: curl
   args:
@@ -24,8 +23,8 @@
   options:
   expectation: service-curl
   retry: 15
-  delay: 1000ms
-  timeout: 15000ms
+  delay: 1s
+  timeout: 15s
 
 - service-remove:
   cmd: amp service rm
@@ -34,7 +33,6 @@
   options:
     -
   expectation: service-remove
-    # "pinger-[[:alpha:]]+"
 
 - service-list:
   cmd: docker service ls
