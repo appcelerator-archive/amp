@@ -4,16 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
+	distreference "github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/cli/command/idresolver"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stringid"
+	units "github.com/docker/go-units"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -731,4 +738,145 @@ func (s *Server) getStackInfo(ctx context.Context, ID string) *StackInfo {
 		info.State = "N/A"
 	}
 	return &info
+}
+
+type portStatus swarm.PortStatus
+
+func (ps portStatus) String() string {
+	if len(ps.Ports) == 0 {
+		return ""
+	}
+
+	str := fmt.Sprintf("*:%d->%d/%s", ps.Ports[0].PublishedPort, ps.Ports[0].TargetPort, ps.Ports[0].Protocol)
+	for _, pConfig := range ps.Ports[1:] {
+		str += fmt.Sprintf(",*:%d->%d/%s", pConfig.PublishedPort, pConfig.TargetPort, pConfig.Protocol)
+	}
+
+	return str
+}
+
+type tasksBySlot []swarm.Task
+
+func (t tasksBySlot) Len() int {
+	return len(t)
+}
+
+func (t tasksBySlot) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func (t tasksBySlot) Less(i, j int) bool {
+	// Sort by service
+	if t[i].ServiceID != t[j].ServiceID {
+		return t[i].ServiceID < t[j].ServiceID
+	}
+
+	// Sort by slot.
+	if t[i].Slot != t[j].Slot {
+		return t[i].Slot < t[j].Slot
+	}
+
+	// If same slot, sort by most recent.
+	return t[j].Meta.CreatedAt.Before(t[i].CreatedAt)
+}
+
+// Tasks list the tasks of a service
+func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
+	stackRequest := &StackRequest{
+		StackIdent: in.StackIdent,
+	}
+	stack, errIdent := s.getStack(ctx, stackRequest)
+	if errIdent != nil {
+		return nil, errIdent
+	}
+	filter := filters.NewArgs()
+	for _, serviceSpec := range stack.Services {
+		service, _, err := s.Docker.ServiceInspectWithRaw(ctx, fmt.Sprintf("%s-%s", stack.Name, serviceSpec.Name))
+		if err != nil {
+			return nil, err
+		}
+		filter.Add("service", service.ID)
+	}
+	tasks, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: filter})
+	if err != nil {
+		return nil, err
+	}
+	resolver := idresolver.New(s.Docker, false)
+	noTrunc := false
+	psTaskItemFmt := "%s\t%s\t%s\t%s\t%s %s ago\t%s\t%s\n"
+	maxErrLength := 30
+	sort.Stable(tasksBySlot(tasks))
+	message := strings.Join([]string{"NAME", "IMAGE", "NODE", "DESIRED STATE", "CURRENT STATE", "ERROR", "PORTS"}, "\t") + "\n"
+	prevService := ""
+	prevSlot := 0
+	for _, task := range tasks {
+		name, err := resolver.Resolve(ctx, task, task.ID)
+
+		nodeValue, err := resolver.Resolve(ctx, swarm.Node{}, task.NodeID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Indent the name if necessary
+		indentedName := strings.Replace(name, stack.Name+"-", "", 1)
+		// Since the new format of the task name is <ServiceName>.<Slot>.<taskID>, we should only compare
+		// <ServiceName> and <Slot> here.
+		if prevService == task.ServiceID && prevSlot == task.Slot {
+			indentedName = fmt.Sprintf(" \\_ %s", indentedName)
+		}
+		prevService = task.ServiceID
+		prevSlot = task.Slot
+
+		// Trim and quote the error message.
+		taskErr := task.Status.Err
+		if !noTrunc && len(taskErr) > maxErrLength {
+			taskErr = fmt.Sprintf("%s…", taskErr[:maxErrLength-1])
+		}
+		if len(taskErr) > 0 {
+			taskErr = fmt.Sprintf("\"%s\"", taskErr)
+		}
+
+		image := task.Spec.ContainerSpec.Image
+		if !noTrunc {
+			ref, err := distreference.ParseNamed(image)
+			if err == nil {
+				// update image string for display
+				namedTagged, ok := ref.(distreference.NamedTagged)
+				if ok {
+					image = namedTagged.Name() + ":" + namedTagged.Tag()
+				}
+			}
+		}
+
+		message += fmt.Sprintf(
+			psTaskItemFmt,
+			indentedName,
+			image,
+			nodeValue,
+			command.PrettyPrint(task.DesiredState),
+			command.PrettyPrint(task.Status.State),
+			strings.ToLower(units.HumanDuration(time.Since(task.Status.Timestamp))),
+			taskErr,
+			portStatus(task.Status.PortStatus),
+		)
+	}
+	reply := TasksReply{
+		Message: message,
+	}
+	return &reply, nil
+}
+
+// newStackFromYaml create a new stack from yaml
+func (s *Server) newStackFromYaml(ctx context.Context, config string) (stack *Stack, err error) {
+	stack, err = ParseStackfile(ctx, config)
+	if err != nil {
+		return
+	}
+
+	// Create stack state
+	if err = s.StateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
+		return
+	}
+
+	return
 }

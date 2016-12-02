@@ -38,6 +38,11 @@ service StackService {
       get: "/v1/stack"
     };
   };
+  rpc Tasks(TasksRequest) returns (TasksReply) {
+    option (google.api.http) = {
+      get: "/v1/stack/{stack_ident}/tasks"
+    };
+  };
 }
 
 // struct for stackfile request
@@ -70,6 +75,16 @@ message ListRequest {
 // struct for list reply function
 message ListReply {
   repeated StackInfo list = 1;
+}
+
+// struct for tasks request function
+message TasksRequest {
+  string stack_ident = 1;
+}
+
+// struct for tasks reply function
+message TasksReply {
+  string message = 1;
 }
 
 // struct part of ListReply Struct

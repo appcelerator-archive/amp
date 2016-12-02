@@ -75,6 +75,14 @@ var (
 			return stackList(AMP, cmd, args)
 		},
 	}
+	stackTasksCmd = &cobra.Command{
+		Use:   "ps [stack name or id]",
+		Short: "List the tasks of a stack",
+		Long:  `List the tasks of a stack.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackTasks(AMP, cmd, args)
+		},
+	}
 	listQuiet  *bool
 	listAll    *bool
 	listLast   *int64
@@ -98,6 +106,7 @@ func init() {
 	StackCmd.AddCommand(stackStopCmd)
 	StackCmd.AddCommand(stackRmCmd)
 	StackCmd.AddCommand(stackListCmd)
+	StackCmd.AddCommand(stackTasksCmd)
 }
 
 func stackCreate(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
@@ -346,5 +355,28 @@ func stackList(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	for _, info := range reply.List {
 		fmt.Printf("%s%s%s\n", col(info.Name, col1), col(info.Id, col2), col(info.State, col3))
 	}
+	return nil
+}
+
+func stackTasks(amp *client.AMP, cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		log.Fatal("Must specify stack name or id")
+	}
+	if len(args) > 1 {
+		log.Fatal("Must specify single stack name or id")
+	}
+	ident := args[0]
+	if ident == "" {
+		log.Fatal("Must specify stack name or id")
+	}
+	request := &stack.TasksRequest{
+		StackIdent: ident,
+	}
+	client := stack.NewStackServiceClient(amp.Conn)
+	reply, err := client.Tasks(context.Background(), request)
+	if err != nil {
+		return err
+	}
+	fmt.Print(reply.Message)
 	return nil
 }

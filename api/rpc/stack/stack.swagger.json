@@ -155,6 +155,31 @@
           "StackService"
         ]
       }
+    },
+    "/v1/stack/{stack_ident}/tasks": {
+      "get": {
+        "operationId": "Tasks",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackTasksReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -481,6 +506,26 @@
         }
       },
       "title": "struct stack name/id based requests"
+    },
+    "stackTasksReply": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for tasks reply function"
+    },
+    "stackTasksRequest": {
+      "type": "object",
+      "properties": {
+        "stack_ident": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for tasks request function"
     }
   }
 }

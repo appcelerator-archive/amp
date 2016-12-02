@@ -17,13 +17,12 @@ const (
 	influxDBVersion      = "1.1.2"
 	kapacitorVersion     = "1.1.2"
 	telegrafVersion      = "1.1.1"
-	grafanaVersion       = "1.0.1"
+	grafanaVersion       = "1.1.0"
 	elasticsearchVersion = "2.3.5"
 	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
 	haproxyVersion       = "1.0.2"
 	registryVersion      = "2.5.1"
-	tickConfigVersion    = "0.4.0"
 )
 
 func getAMPInfrastructureStack(m *ampManager) *ampStack {
