@@ -25,18 +25,19 @@ type CommandSpec struct {
 	Args        []string `yaml:"args"`
 	Options     []string `yaml:"options"`
 	Expectation string   `yaml:"expectation"`
+	Skip        bool     `yaml:"skip"`
 	Retry       int      `yaml:"retry"`
 	Timeout     string   `yaml:"timeout"`
 	Delay       string   `yaml:"delay"`
 }
 
 var (
-	lookupDir    = "./lookup"
-	setupDir     = "./setup"
-	sampleDir    = "./samples"
-	tearDownDir  = "./tearDown"
-	wg           sync.WaitGroup
-	regexMap     map[string]string
+	lookupDir   = "./lookup"
+	setupDir    = "./setup"
+	sampleDir   = "./samples"
+	tearDownDir = "./tearDown"
+	wg          sync.WaitGroup
+	regexMap    map[string]string
 )
 
 // read, parse and execute test commands

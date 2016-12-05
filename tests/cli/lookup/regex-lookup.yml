@@ -4,13 +4,7 @@ logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
 docker-service-list: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}
 docker-service-list-valid-service:   .*({{call .uniq `pinger`}}).*
 docker-service-list-invalid-service: .*[^{{call .uniq `pinger`}}].*
-docker-swarm-initialize: Swarm initialized(:) current node \(([a-z0-9A-Z]{25})\) is now a manager.\n+To add a worker to this swarm, run the following command:\n+\s+docker swarm join\s+\\\n\s+--token\s+SWMTKN-1-([a-z0-9A-Z]{50})-([a-z0-9A-Z]{25})\s+\\\n\s+192.168.65.2(:)2377\n+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions
-docker-swarm-leave: "Node left the swarm."
-platform-pull: Pulling AMP images\n(image (appcelerator/(haproxy:|pinger:|amp-nats-streaming:|amp:|amp-ui:|elasticsearch-amp:|grafana-amp:|influxdb-amp:|kapacitor-amp:|telegraf:|etcd:)|registry:)([a-zA-Z0-9\s\.\-:]*) pulled\n)*AMP platform images pulled
-platform-start: "Starting AMP platform\n((Service|Warning: Service) (nats|registry|amp-ui|influxdb|etcd|elasticsearch|telegraf-agent|kapacitor|amp-agent|amp-log-worker|amplifier|haproxy|amplifier-gateway|grafana|telegraf-haproxy) (is ready|is failing)\n)+AMP platform started"
 platform-status-running: "status: running"
-platform-status-stopped: "status: stopped"
-platform-stop: Stopping AMP platform\n(Service (nats|registry|amp-ui|influxdb|etcd|elasticsearch|telegraf-agent|kapacitor|amp-agent|amp-log-worker|amplifier|haproxy|amplifier-gateway|grafana|telegraf-haproxy) removed\n){15}AMP platform stopped
 service-id: ([a-z0-9]){25}
 service-curl: ((.)|(\s))*(pong)((.)|(\s))*
 service-remove: "{{call .uniq `pinger`}}"

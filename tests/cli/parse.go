@@ -87,7 +87,9 @@ func generateTestSpecs(fileName string, timeout time.Duration) (*TestSpec, error
 			// default command spec timeout
 			command.Timeout = "30s"
 		}
-		testSpec.Commands = append(testSpec.Commands, command)
+		if command.Skip != true {
+			testSpec.Commands = append(testSpec.Commands, command)
+		}
 	}
 	return testSpec, nil
 }
