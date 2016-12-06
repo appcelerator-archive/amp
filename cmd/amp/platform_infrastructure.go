@@ -600,6 +600,78 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		},
 		"amplifier")
 
+	//add amp-function-listener
+	stack.addService(m, "amp-function-listener", "amp", 1,
+		&swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Labels: map[string]string{
+					"io.amp.role": "infrastructure",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Args: []string{"amp-function-listener"},
+					Env:  nil,
+					Labels: map[string]string{
+						"io.amp.role": "infrastructure",
+					},
+					Mounts: nil,
+				},
+				Placement: nil,
+			},
+			EndpointSpec: &swarm.EndpointSpec{
+				Mode: swarm.ResolutionModeVIP,
+				Ports: []swarm.PortConfig{
+					{
+						TargetPort:    80,
+						PublishedPort: 4242,
+					},
+				},
+			},
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  infraPrivateNetwork,
+					Aliases: []string{"amp-function-listener"},
+				},
+			},
+		},
+		"nats", "etcd")
+
+	//add amp-function-worker
+	stack.addService(m, "amp-function-worker", "amp", 1,
+		&swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Labels: map[string]string{
+					"io.amp.role": "infrastructure",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Args: []string{"amp-function-worker"},
+					Env:  nil,
+					Labels: map[string]string{
+						"io.amp.role": "infrastructure",
+					},
+					Mounts: []mount.Mount{
+						{
+							Type:   mount.TypeBind,
+							Source: "/var/run/docker.sock",
+							Target: "/var/run/docker.sock",
+						},
+					},
+				},
+				Placement: nil,
+			},
+			EndpointSpec: nil,
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  infraPrivateNetwork,
+					Aliases: []string{"amp-function-worker"},
+				},
+			},
+		},
+		"nats")
+
 	//return stack
 	return &stack
 }

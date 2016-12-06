@@ -109,6 +109,8 @@ imports:
   - client/v2
   - models
   - pkg/escape
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/magiconair/properties
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mattn/go-colorable

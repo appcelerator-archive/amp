@@ -301,7 +301,7 @@ func produceLogEntries(howMany int) error {
 			Timestamp:   time.Now().Format(time.RFC3339Nano),
 			TimeId:      time.Now().UTC().Format(time.RFC3339Nano),
 		})
-		err = sc.Publish(NatsLogTopic, message)
+		err = sc.Publish(amp.NatsLogsTopic, message)
 		if err != nil {
 			return err
 		}

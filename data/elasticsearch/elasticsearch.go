@@ -21,6 +21,7 @@ func (es *Elasticsearch) Connect(url string, timeout time.Duration) error {
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(true),
 		elastic.SetHealthcheckTimeoutStartup(timeout),
+		elastic.SetMaxRetries(10),
 		//elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		//elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)),
 		//elastic.SetTraceLog(log.New(os.Stdout, "", log.LstdFlags)),

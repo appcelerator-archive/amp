@@ -10,6 +10,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	tablePadding = 3
+)
+
+const (
+	tablePadding = 3
+)
+
 var (
 	// Version is set with a linker flag (see Makefile)
 	Version string

@@ -4,6 +4,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
@@ -21,13 +22,14 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 
-	// Elasticsearch
+	// es is the elasticsearch client
 	es elasticsearch.Elasticsearch
+
+	// natsStreaming is the nats streaming client
+	natsStreaming ns.NatsStreaming
 )
 
 const (
-	clientID  = "amp-log-worker"
-	natsTopic = "amp-logs"
 	esIndex   = "amp-logs"
 	esType    = "amp-log-entry"
 	esMapping = `{
@@ -92,18 +94,23 @@ func main() {
 	}
 	log.Printf("Created index %s\n", esIndex)
 
-	sc, err := stan.Connect(amp.NatsClusterID, clientID, stan.NatsURL(amp.NatsDefaultURL))
+	// NATS Connect
+	hostname, err := os.Hostname()
 	if err != nil {
-		log.Fatalf("Unable to connect to nats on %s: %s", amp.NatsDefaultURL, err)
+		log.Fatalf("Unable to get hostname: %s", err)
 	}
-	log.Printf("Connected to NATS-Streaming at %s\n", amp.NatsDefaultURL)
+	if natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+		log.Fatal(err)
+	}
 
-	_, err = sc.Subscribe(natsTopic, messageHandler, stan.DeliverAllAvailable(), stan.DurableName("amp-logs-durable"))
+	// NATS, subscribe to function topic
+	log.Println("Subscribing to topic:", amp.NatsLogsTopic)
+	_, err = natsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, messageHandler, stan.DeliverAllAvailable())
 	if err != nil {
-		sc.Close()
-		log.Fatalf("Unable to subscribe to %s topic: %s", natsTopic, err)
+		natsStreaming.Close()
+		log.Fatalln("Unable to subscribe to topic", err)
 	}
-	log.Printf("Listening on amp-logs\n")
+	log.Println("Subscribed to topic:", amp.NatsLogsTopic)
 
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
 	// Run cleanup when signal is received
@@ -112,8 +119,8 @@ func main() {
 	signal.Notify(signalChan, os.Interrupt)
 	go func() {
 		for range signalChan {
-			log.Printf("\nReceived an interrupt, unsubscribing and closing connection...\n\n")
-			sc.Close()
+			log.Println("\nReceived an interrupt, unsubscribing and closing connection...")
+			natsStreaming.Close()
 			cleanupDone <- true
 		}
 	}()
@@ -124,15 +131,15 @@ func messageHandler(msg *stan.Msg) {
 	logEntry := logs.LogEntry{}
 	err := proto.Unmarshal(msg.Data, &logEntry)
 	if err != nil {
-		log.Printf("error unmarshalling log entry: %v", err)
+		log.Printf("Error unmarshalling log entry: %v", err)
 	}
 	timestamp, err := time.Parse(time.RFC3339Nano, logEntry.Timestamp)
 	if err != nil {
-		log.Printf("error parsing timestamp: %v", err)
+		log.Printf("Error parsing timestamp: %v", err)
 	}
 	logEntry.Timestamp = timestamp.Format("2006-01-02T15:04:05.999")
 	err = es.Index(context.Background(), esIndex, esType, logEntry) // TODO: Should we use a timeout context ?
 	if err != nil {
-		log.Printf("error indexing log entry: %v", err)
+		log.Printf("Error indexing log entry: %v", err)
 	}
 }
