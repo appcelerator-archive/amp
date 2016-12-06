@@ -213,6 +213,10 @@
             "$ref": "#/definitions/servicePublishSpec"
           }
         },
+        "registry_auth": {
+          "type": "string",
+          "format": "string"
+        },
         "replicated": {
           "$ref": "#/definitions/serviceReplicatedService"
         }

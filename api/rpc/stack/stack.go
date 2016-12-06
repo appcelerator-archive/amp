@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/command/idresolver"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stringid"
 	units "github.com/docker/go-units"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
@@ -79,18 +80,19 @@ func (s *Server) Up(ctx context.Context, in *StackFileRequest) (*StackReply, err
 // Create implements stack.ServerService Create
 func (s *Server) Create(ctx context.Context, in *StackFileRequest) (*StackReply, error) {
 	//verify the stack name doesn't already exist
-	stackByName := s.getStackByName(ctx, in.StackName)
+	stackByName := s.getStackByName(ctx, in.Stack.Name)
 	if stackByName.Id != "" {
-		return nil, fmt.Errorf("Stack %s already exists", in.StackName)
+		return nil, fmt.Errorf("Stack %s already exists", in.Stack.Name)
 	}
 
-	//parse the stack file
-	stack, err := s.newStackFromYaml(ctx, in.Stackfile)
-	if err != nil {
+	stack := in.Stack
+	stack.Id = stringid.GenerateNonCryptoID()
+	stack.IsPublic = s.isPublic(stack)
+
+	// Create stack state
+	if err := s.StateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
 		return nil, err
 	}
-	stack.Name = in.StackName
-	stack.IsPublic = s.isPublic(stack)
 
 	//save stack data in ETCD
 	if err := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0); err != nil {

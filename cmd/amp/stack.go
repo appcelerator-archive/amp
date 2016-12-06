@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/docker/docker/cli/command"
+	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -89,7 +92,9 @@ var (
 func init() {
 	RootCmd.AddCommand(StackCmd)
 	stackCreateCmd.Flags().StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
+	stackCreateCmd.Flags().BoolVar(&registryAuth, "with-registry-auth", false, "Send registry authentication details to Swarm agents")
 	stackUpCmd.Flags().StringVarP(&stackfile, "file", "f", stackfile, "The name of the stackfile")
+	stackUpCmd.Flags().BoolVar(&registryAuth, "with-registry-auth", false, "Send registry authentication details to Swarm agents")
 	stackRmCmd.Flags().BoolP("force", "f", false, "Remove the stack whatever condition")
 	listQuiet = stackListCmd.Flags().BoolP("quiet", "q", false, "Only display numeric IDs")
 	listAll = stackListCmd.Flags().BoolP("all", "a", false, "Show all stacks (default shows just running)")
@@ -129,10 +134,36 @@ func stackCreate(amp *client.AMP, cmd *cobra.Command, args []string) (err error)
 	}
 
 	contents := string(b)
-	request := &stack.StackFileRequest{StackName: name, Stackfile: contents}
+	ctx := context.Background()
+
+	s, err := stack.ParseStackfile(ctx, contents)
+	if err != nil {
+		return err
+	}
+	s.Name = name
+
+	request := &stack.StackFileRequest{Stack: s}
+
+	// only send auth if flag was set
+	if registryAuth {
+		dockerCli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr)
+		opts := cliflags.NewClientOptions()
+		err = dockerCli.Initialize(opts)
+		if err != nil {
+			return err
+		}
+		for _, service := range s.Services {
+			// Retrieve encoded auth token from the image reference
+			encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
+			if err != nil {
+				return err
+			}
+			service.RegistryAuth = encodedAuth
+		}
+	}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, err := client.Create(context.Background(), request)
+	reply, err := client.Create(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -166,10 +197,36 @@ func stackUp(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	contents := string(b)
-	request := &stack.StackFileRequest{StackName: name, Stackfile: contents}
+	ctx := context.Background()
+
+	s, err := stack.ParseStackfile(ctx, contents)
+	if err != nil {
+		return err
+	}
+	s.Name = name
+
+	request := &stack.StackFileRequest{Stack: s}
+
+	// only send auth if flag was set
+	if registryAuth {
+		dockerCli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr)
+		opts := cliflags.NewClientOptions()
+		err = dockerCli.Initialize(opts)
+		if err != nil {
+			return err
+		}
+		for _, service := range s.Services {
+			// Retrieve encoded auth token from the image reference
+			encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
+			if err != nil {
+				return err
+			}
+			service.RegistryAuth = encodedAuth
+		}
+	}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, err := client.Up(context.Background(), request)
+	reply, err := client.Up(ctx, request)
 	if err != nil {
 		return err
 	}

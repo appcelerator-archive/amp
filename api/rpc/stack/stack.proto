@@ -47,8 +47,7 @@ service StackService {
 
 // struct for stackfile request
 message StackFileRequest {
-  string stack_name = 1;
-  string stackfile = 2;
+  Stack stack = 1;
 }
 
 // struct stack name/id based requests
