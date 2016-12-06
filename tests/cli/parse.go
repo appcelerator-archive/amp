@@ -80,7 +80,7 @@ func generateTestSpecs(fileName string, timeout time.Duration) (*TestSpec, error
 	for _, command := range commandMap {
 		if command.Timeout == "" {
 			// command spec timeout
-			command.Timeout = "5s"
+			command.Timeout = "30s"
 		}
 		testSpec.Commands = append(testSpec.Commands, command)
 	}

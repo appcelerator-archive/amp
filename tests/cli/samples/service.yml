@@ -4,7 +4,7 @@
     - appcelerator/pinger
   options:
     - "--name {{call .uniq `pinger`}}"
-    - "-p www:{{call .port `pinger1` 49152 65535}}:3000"
+    - "-p www:{{call .port `pinger1` 30000 32767}}:3000"
   expectation: service-id
 
 - service-list:
@@ -12,19 +12,19 @@
   args:
   options:
   expectation: docker-service-list-valid-service
-  retry: 15
+  retry: 30
   delay: 1s
-  timeout: 15s
+  timeout: 30s
 
 - service-curl:
-  cmd: curl
+  cmd: curl -s
   args:
-    - localhost:{{call .port `pinger1` 49152 65535}}/ping
+    - 127.0.0.1:{{call .port `pinger1` 30000 32767}}/ping
   options:
   expectation: service-curl
-  retry: 15
+  retry: 30
   delay: 1s
-  timeout: 15s
+  timeout: 30s
 
 - service-remove:
   cmd: amp service rm

@@ -175,7 +175,7 @@ run: build-image
 
 test-cli:
 	@for pkg in $(CLI_TEST_PACKAGES) ; do \
-		go test $$pkg ; \
+		go test -v $$pkg ; \
 	done
 
 test-unit:
@@ -185,8 +185,8 @@ test-unit:
 
 test-integration:
 	@docker service rm amp-integration-test > /dev/null 2>&1 || true
-	@docker build -f Dockerfile.test -t appcelerator/amp-integration-test .
-	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test
+	@docker build -t appcelerator/amp-integration-test .
+	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test make test-integration-host
 	@containerid=""; \
 	while [[ $${containerid} == "" ]] ; do \
 		containerid=`docker ps -qf 'name=amp-integration'`; \

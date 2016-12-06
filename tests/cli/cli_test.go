@@ -40,7 +40,7 @@ var (
 // read, parse and execute test commands
 func TestCmds(t *testing.T) {
 	// test suite timeout
-	suiteTimeout = "25s"
+	suiteTimeout = "120s"
 	duration, err := time.ParseDuration(suiteTimeout)
 	if err != nil {
 		t.Errorf("Unable to create duration for timeout: Suite. Error: %v", err)
@@ -76,7 +76,7 @@ func TestCmds(t *testing.T) {
 func runTestSpec(t *testing.T, test *TestSpec) {
 	defer wg.Done()
 	// test spec timeout
-	testSpecTimeout := "20s"
+	testSpecTimeout := "60s"
 	duration, duraErr := time.ParseDuration(testSpecTimeout)
 	if duraErr != nil {
 		t.Errorf("Unable to create duration for timeout: TestSpec. Error: %v", duraErr)
