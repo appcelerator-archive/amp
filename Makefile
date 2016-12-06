@@ -59,7 +59,7 @@ UG := $(shell echo "$$(id -u $${USER}):$$(id -g $${USER})")
 
 DOCKER_RUN := docker run -t --rm -u $(UG)
 
-GOTOOLS := appcelerator/gotools2
+GOTOOLS := appcelerator/gotools2:1.0.0
 GOOS := $(shell uname | tr [:upper:] [:lower:])
 GOARCH := amd64
 GO := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) $(GOTOOLS) go
