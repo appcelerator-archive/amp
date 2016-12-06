@@ -1,0 +1,58 @@
+<h1>Stacks</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Service</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each stacks as stack}}
+      <tr on:click='displayTasks(event, stack)'>
+        <td>{{stack.name}}</td>
+        <td>{{stack.state}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+<pre>{{tasks}}</pre>
+
+<script>
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+
+  export default {
+    onrender () {
+      api.stacks().then(stacks => this.set({stacks}))
+    },
+    data () {
+      return {
+        stacks: [],
+        tasks: ''
+      }
+    },
+    methods: {
+      displayTasks (event, stack) {
+        event.preventDefault()
+        stack.tasks().then(tasks => this.set({tasks}))
+      }
+    }
+  }
+</script>
+
+<style>
+  body {
+    padding: 2em;
+  }
+  table {
+    text-align: left;
+    font-family: monospace;
+    border-collapse: collapse;
+  }
+  table tbody tr {
+    cursor: pointer;
+  }
+  table tbody tr:focus, table tbody tr:hover {
+    background-color: #eee;
+  }
+</style>

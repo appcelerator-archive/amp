@@ -1,0 +1,66 @@
+<nav>
+  {{#each sections as section}}
+    <a
+      on:click="select(event, section)"
+      href="{{section.url}}"
+      class="{{section.active}}">
+      {{section.name}}
+    </a>
+  {{/each}}
+</nav>
+
+<script>
+  class Section {
+    constructor (url, name) {
+      this.url = url
+      this.name = name
+      this.setActive()
+    }
+    setActive() {
+      this.active = location.pathname === this.url ?
+        'active' : ''
+    }
+  }
+  export default {
+    data() {
+      const sections = [
+        new Section('/', 'Home'),
+        new Section('/stacks/', 'Stacks'),
+        new Section('/topics/', 'Topics'),
+      ]
+      const active = sections.reduce((a, s)=> a || (s.active ? s.name : false), false)
+      return {
+        active,
+        sections,
+      }
+    },
+    methods: {
+      select(event, section) {
+        history.pushState({}, section.name, section.url)
+        event.preventDefault()
+        const sections = this.get('sections')
+        for (const section of sections) {
+          section.setActive()
+        }
+        const active = sections.reduce((a, s)=> a || (s.active ? s.name : false), false)
+        this.set({ active, sections})
+      }
+    }
+  }
+</script>
+
+<style>
+  nav {
+    padding: 0.5em;
+    background-color: #178acc;
+  }
+  a {
+    color: #eee;
+    text-decoration: none;
+    padding: 0.5em 2em;
+    border-radius: 0.25em;
+  }
+  a:hover, a:focus, a.active {
+    background-color: #126b9e;
+  }
+</style>

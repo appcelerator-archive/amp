@@ -1,0 +1,36 @@
+<table>
+  <thead>
+    <th>Service Name</th>
+    <th>Message</th>
+  </thead>
+  <tbody>
+    {{#each logs as log}}
+      <tr>
+          <td>{{log.service_name}}</td>
+          <td>{{log.message}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+<script>
+  export default {
+    data () {
+      return {
+        logs: []
+      }
+    }
+  }
+</script>
+
+<style>
+  table {
+    color: #eee;
+    background-color: #222;
+    font-family: monospace;
+    border-collapse: collapse;
+  }
+  thead {
+    white-space: nowrap;
+  }
+</style>
