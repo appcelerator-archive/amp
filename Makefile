@@ -155,15 +155,15 @@ build-server-windows:
 	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
 
 build-clustercli-linux:
-	@rm -f $(CLI)
+	@rm -f $(AMPCLUSTER)
 	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
 
 build-clustercli-darwin:
-	@rm -f $(CLI)
+	@rm -f $(AMPCLUSTER)
 	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
 
 build-clustercli-windows:
-	@rm -f $(CLI).exe
+	@rm -f $(AMPCLUSTER).exe
 	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(AMPCLUSTER)
 	
 dist-linux: build-cli-linux build-server-linux build-clustercli-linux
@@ -171,7 +171,7 @@ dist-linux: build-cli-linux build-server-linux build-clustercli-linux
 	@mkdir -p dist/Linux/x86_64
 	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPCLUSTER)
 
-dist-darwin: build-cli-darwin build-server-darwin build-clustercli-derwing
+dist-darwin: build-cli-darwin build-server-darwin build-clustercli-darwin
 	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Darwin/x86_64
 	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPCLUSTER)
