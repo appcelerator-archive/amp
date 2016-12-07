@@ -28,7 +28,7 @@ func (g *clusterClient) cli() {
 		g.initConfiguration(configFile, serverAddr)
 	})
 
-	// versionCmd represents the agrid version
+	// versionCmd displays the agreed version
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Display the version number of cluster-server",
@@ -39,7 +39,7 @@ func (g *clusterClient) cli() {
 	}
 	RootCmd.AddCommand(versionCmd)
 
-	//Execute commad
+	//Execute command
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
 		g.fatalc("Arg error: %v\n", err)

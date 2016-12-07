@@ -4,6 +4,7 @@ import (
 	"fmt"
 	ampClient "github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/cluster-server/servergrpc"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -38,6 +39,8 @@ type clusterClient struct {
 	printColor    [7]*color.Color
 	fcolTitle     func(...interface{}) string
 	fcolLines     func(...interface{}) string
+	// bootstrap properties
+	dockerClient *dockerclient.Client
 }
 
 var currentColorTheme = "default"
