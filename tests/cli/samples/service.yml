@@ -12,9 +12,9 @@
   args:
   options:
   expectation: docker-service-list-valid-service
-  retry: 15
+  retry: 20
   delay: 1s
-  timeout: 15s
+  timeout: 20s
 
 - service-curl:
   cmd: curl
@@ -22,9 +22,9 @@
     - localhost:{{call .port `pinger1` 49152 65535}}/ping
   options:
   expectation: service-curl
-  retry: 15
+  retry: 20
   delay: 1s
-  timeout: 15s
+  timeout: 20s
 
 - service-remove:
   cmd: amp service rm

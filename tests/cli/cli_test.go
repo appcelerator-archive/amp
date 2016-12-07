@@ -1,10 +1,10 @@
 package cli
 
 import (
-	"fmt"
 	"os/exec"
 	"sync"
 
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
@@ -40,7 +40,7 @@ var (
 // read, parse and execute test commands
 func TestCmds(t *testing.T) {
 	// test suite timeout
-	suiteTimeout = "25s"
+	suiteTimeout = "10m"
 	duration, err := time.ParseDuration(suiteTimeout)
 	if err != nil {
 		t.Errorf("Unable to create duration for timeout: Suite. Error: %v", err)
@@ -50,7 +50,7 @@ func TestCmds(t *testing.T) {
 	cancelSuite := createTimeout(t, duration, "Suite")
 	defer cancelSuite()
 	// parse regexes
-	err = parseLookup(lookupDir)
+	regexMap, err = parseLookup(lookupDir)
 	if err != nil {
 		t.Errorf("Unable to load lookup specs, reason: %v", err)
 		return
@@ -62,25 +62,20 @@ func TestCmds(t *testing.T) {
 		return
 	}
 	wg.Add(len(tests))
-	t.Logf("-----------------------------------------------------------------------------------------")
 	for _, test := range tests {
-		t.Logf("Running spec: %s", test.Name)
 		go runTestSpec(t, test)
 	}
 	wg.Wait()
-	t.Logf("-----------------------------------------------------------------------------------------")
-	t.Log("Finished!")
 }
 
 // execute commands and check for timeout, delay and retry
 func runTestSpec(t *testing.T, test *TestSpec) {
 	defer wg.Done()
 	// test spec timeout
-	testSpecTimeout := "20s"
+	testSpecTimeout := "2m"
 	duration, duraErr := time.ParseDuration(testSpecTimeout)
 	if duraErr != nil {
-		t.Errorf("Unable to create duration for timeout: TestSpec. Error: %v", duraErr)
-		return
+		t.Fatal("Unable to create duration for timeout: TestSpec. Error: %v", duraErr)
 	}
 	// create test spec context
 	cancelTestSpec := createTimeout(t, duration, test.Name)
@@ -93,8 +88,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 		var cmdTmplString []string
 		duration, duraErr = time.ParseDuration(cmdSpec.Timeout)
 		if duraErr != nil {
-			t.Log("Unable to create duration for timeout: %s. Error: %v", cmdSpec.Cmd, duraErr)
-			t.Fatal()
+			t.Fatal("Unable to create duration for timeout: %s. Error: %v", cmdSpec.Cmd, duraErr)
 		}
 		// cmd Spec context
 		cancelCmdSpec := createTimeout(t, duration, cmdSpec.Cmd)
@@ -110,27 +104,23 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			// perform templating on cmdString
 			cmdTmplOutput, tmplErr := templating(strings.Join(cmdString, " "), cache)
 			if tmplErr != nil {
-				t.Log("Executing templating failed: %s. Error: %v", cmdString, tmplErr)
-				t.Fatal()
+				t.Fatal("Executing templating failed: %s. Error: %v", cmdString, tmplErr)
 			}
 			cmdTmplString = strings.Fields(cmdTmplOutput)
 
 			// execute command
-			cmdOutput, cmdErr := exec.Command(cmdTmplString[0], cmdTmplString[1:]...).CombinedOutput()
-			t.Logf("Running: %s", strings.Join(cmdTmplString, " "))
+			cmdOutput, _ := exec.Command(cmdTmplString[0], cmdTmplString[1:]...).CombinedOutput()
 
 			//perform templating on RegEx string
 			regexTmplOutput, tmplErr := templating(regexMap[cmdSpec.Expectation], cache)
 			if tmplErr != nil {
-				t.Log("Executing templating failed: %s. Error: %v", cmdSpec.Expectation, tmplErr)
-				t.Fatal()
+				t.Fatal("Executing templating failed: %s. Error: %v", cmdSpec.Expectation, tmplErr)
 			}
 
 			// check if the command output matches the RegEx
 			expectedOutput := regexp.MustCompile(regexTmplOutput)
 			if !expectedOutput.MatchString(string(cmdOutput)) {
-				err = fmt.Errorf("Mismatched expected output: %s : Error: %v", cmdOutput, cmdErr)
-				t.Log(err)
+				err = fmt.Errorf("Mismatched expected output: %s", string(cmdOutput))
 			}
 
 			// if no error after retries, break the loop to continue command execution
@@ -141,8 +131,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			if cmdSpec.Delay != "" {
 				del, delErr := time.ParseDuration(cmdSpec.Delay)
 				if delErr != nil {
-					t.Log("Invalid delay specified: %s : Error: %v", cmdSpec.Delay, delErr)
-					t.Fatal()
+					t.Fatal("Invalid delay specified: %s : Error: %v", cmdSpec.Delay, delErr)
 				}
 				time.Sleep(del)
 			}
@@ -151,8 +140,7 @@ func runTestSpec(t *testing.T, test *TestSpec) {
 			t.Log("This command :", cmdTmplString, "has re-run", i, "times.")
 		}
 		if err != nil {
-			t.Log(err)
-			t.Fatal()
+			t.Fatal(err)
 		}
 		cancelCmdSpec()
 	}
