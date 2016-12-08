@@ -1,5 +1,5 @@
 
-.PHONY: all clean install fmt simplify check version build-image run
+.PHONY: all clean proto-clean install fmt simplify check version build-image run proto proto-host
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
 .PHONY: test test-unit test-cli test-integration test-integration-host
@@ -91,8 +91,10 @@ proto: $(PROTOFILES)
 proto-host: $(PROTOFILES)
 	@go run hack/proto.go -protoc
 
-clean:
+proto-clean:
 	@rm -rf $(GENERATED)
+
+clean:
 	@rm -f $$(which $(CLI)) ./$(CLI)
 	@rm -f $$(which $(SERVER)) ./$(SERVER)
 	@rm -f coverage.out coverage-all.out
