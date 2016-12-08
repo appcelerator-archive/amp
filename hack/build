@@ -6,7 +6,9 @@ APP=$1
 
 # build variables (injected into binaries by linker -ldflags below)
 VERSION="${VERSION:-1.0.0}"
-BUILD=$(git rev-parse HEAD | cut -c1-8)
+if [[ -z "$BUILD" ]]; then
+  BUILD=$(git rev-parse HEAD | cut -c1-8)
+fi
 
 OWNER=appcelerator
 REPO=github.com/$OWNER/amp
