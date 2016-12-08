@@ -5,7 +5,7 @@
   options:
      - -f ../../api/rpc/stack/test_samples/sample-01.yml
   expectation: stack-id
-  timeout: 10s
+  timeout: 20s
 
 - stack-list:
   cmd: amp stack ls
@@ -38,7 +38,7 @@
   options:
     -
   expectation: stack-id
-  timeout: 10s
+  timeout: 20s
 
 - stack-list:
   cmd: amp stack ls
