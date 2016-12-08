@@ -1,4 +1,4 @@
-FROM appcelerator/alpine:20160726
+FROM appcelerator/alpine:20160928
 COPY ./amp /usr/local/bin/amp
 COPY ./amplifier /usr/local/bin/amplifier
 COPY ./amp-agent /usr/local/bin/amp-agent

@@ -10,7 +10,7 @@ BASEDIR := $(shell echo $${PWD})
 VERSION_FILE=VERSION
 # build variables (provided to binaries by linker LDFLAGS below)
 VERSION := $(shell cat $(VERSION_FILE))
-BUILD := $(shell git rev-parse HEAD | cut -c1-8)
+BUILD ?= $(shell git rev-parse HEAD | cut -c1-8)
 
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
@@ -115,7 +115,7 @@ build:
 	@hack/build $(GATEWAY)
 
 build-server-image:
-	@docker build -t appcelerator/$(SERVER):$(TAG) .
+	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/$(SERVER):$(TAG) .
 
 build-cli-linux:
 	@rm -f $(CLI)
@@ -168,7 +168,7 @@ check:
 	@go tool vet ${CHECKSRC}
 
 build-image:
-	@docker build -t $(IMAGE) .
+	@docker build --build-arg BUILD=$(BUILD) -t $(IMAGE) .
 
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
@@ -185,8 +185,8 @@ test-unit:
 
 test-integration:
 	@docker service rm amp-integration-test > /dev/null 2>&1 || true
-	@docker build -f Dockerfile.test -t appcelerator/amp-integration-test .
-	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test
+	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/amp-integration-test .
+	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test make BUILD=$(BUILD) test-integration-host
 	@containerid=""; \
 	while [[ $${containerid} == "" ]] ; do \
 		containerid=`docker ps -qf 'name=amp-integration'`; \
