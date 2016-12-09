@@ -65,8 +65,9 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 		}
 		return ret, nil
 	}
-	sort.Sort(s.cleanUp(result))
-	return result, nil
+	clean := s.cleanUp(result)
+	sort.Sort(clean)
+	return clean, nil
 }
 
 func (s *Stats) addStatsResult(list *[4]*StatsReply, ret *StatsReply) {
