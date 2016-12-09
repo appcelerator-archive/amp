@@ -312,7 +312,7 @@ func produceLogEntries(howMany int) error {
 func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntry, error) {
 	entries := make(chan *LogEntry, howMany)
 	entryCount := 0
-	timeout := time.After(5 * time.Second)
+	timeout := time.After(30 * time.Second)
 
 	defer func() {
 		close(entries)
