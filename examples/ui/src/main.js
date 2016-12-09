@@ -4,8 +4,9 @@ import Menu from './components/Menu.html'
 import Home from './components/Home.html'
 import Stacks from './components/Stacks.html'
 import Topics from './components/Topics.html'
+import StackEdit from './components/StackEdit.html'
 
-const sections = { Home, Stacks, Topics }
+const sections = { Home, Stacks, Topics, StackEdit }
 
 const MenuComponent = new Menu({
   target: document.querySelector('#menu'),
@@ -21,15 +22,3 @@ MenuComponent.observe('active', active => {
     target: document.querySelector('main')
   })
 })
-
-// const api = new AmpApi()
-
-// const LogDisplayComponent = new LogDisplay({
-//   target: document.querySelector('.log-display'),
-// })
-
-// api.logs({
-//   service: 'amplifier'
-// }).then(logs => {
-//   LogDisplayComponent.set({logs})
-// })

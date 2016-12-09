@@ -1,0 +1,109 @@
+<link rel="stylesheet" href="/codemirror.css">
+<input bind:value='name'>
+<div id='code'></div>
+{{#if stackSpec.parseError}}
+  <div class='error'>
+    {{stackSpec.parseError.message}}
+    {{stackSpec.parseError.parsedLine ? `on line ${stackSpec.parseError.parsedLine}` : ''}}
+  </div>
+{{else}}
+  <button on:click='create()'>Create</button>
+{{/if}}
+
+
+<script>
+  import CodeMirror from 'codemirror'
+  import 'codemirror/mode/yaml/yaml.js'
+  import yaml from 'yamljs'
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+
+  const stackyaml = `services:
+  python:
+    image: tutum/quickstart-python
+    public:
+    - name: python
+      internal_port: 80
+    replicas: 3
+  go:
+    image: htilford/go-redis-counter
+    public:
+    - name: go
+      internal_port: 80
+    replicas: 3
+  redis:
+    image: redis`
+
+  export default {
+    onrender () {
+      this.cm = CodeMirror(document.querySelector('#code'), {
+        value: this.get('stackyaml'),
+        mode: 'yaml'
+      })
+      this.cm.on('changes', () => {
+        this.set({stackyaml: this.cm.doc.getValue()})
+      })
+    },
+
+    data () {
+      return {
+        name: 'myCounter',
+        stackyaml: stackyaml
+      };
+    },
+
+    computed: {
+      stackSpec: (name, stackyaml) => {
+        try {
+          const spec = yaml.parse(stackyaml)
+          const stackSpec = {
+            name,
+            services: [],
+            networks: [],
+            is_public: true
+          }
+
+          for (const serviceName in spec.services) {
+            const service = spec.services[serviceName]
+            if (!service) {
+              throw new Error('Error processing: ' + serviceName)
+            }
+            const serviceSpec = {
+              image: service.image,
+              name: serviceName
+            }
+            if (service.replicas) {
+              serviceSpec.replicated = {
+                replicas: service.replicas
+              }
+            }
+            if (service.public) {
+              serviceSpec.publish_specs = service.public
+            }
+            stackSpec.services.push(serviceSpec)
+          }
+          console.log(stackSpec)
+          return stackSpec
+        } catch (parseError) {
+          console.log(parseError)
+          return {parseError}
+        }
+      }
+    },
+
+    methods: {
+      create () {
+        api.createStack(this.get('stackSpec')).then(stack => console.log(stack))
+      }
+    }
+  };
+</script>
+
+<style>
+  .error {
+    color: indianred;
+  }
+  button {
+    cursor: pointer;
+  }
+</style>

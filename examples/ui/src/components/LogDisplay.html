@@ -1,17 +1,19 @@
-<table>
-  <thead>
-    <th>Service Name</th>
-    <th>Message</th>
-  </thead>
-  <tbody>
-    {{#each logs as log}}
-      <tr>
-          <td>{{log.service_name}}</td>
-          <td>{{log.message}}</td>
-      </tr>
-    {{/each}}
-  </tbody>
-</table>
+<div>
+  <table>
+    <thead>
+      <th>Service Name</th>
+      <th>Message</th>
+    </thead>
+    <tbody>
+      {{#each logs as log}}
+        <tr>
+            <td>{{log.service_name}}</td>
+            <td>{{log.message}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
 
 <script>
   export default {
@@ -24,10 +26,14 @@
 </script>
 
 <style>
-  table {
+  div {
     color: #eee;
     background-color: #222;
     font-family: monospace;
+    padding: 0.5em;
+    border-radius: 0.25em;
+  }
+  table {
     border-collapse: collapse;
   }
   thead {

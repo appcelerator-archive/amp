@@ -27,6 +27,7 @@
         new Section('/', 'Home'),
         new Section('/stacks/', 'Stacks'),
         new Section('/topics/', 'Topics'),
+        new Section('/stackEdit/', 'StackEdit'),
       ]
       const active = sections.reduce((a, s)=> a || (s.active ? s.name : false), false)
       return {
