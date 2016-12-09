@@ -20,6 +20,7 @@ install:
 
 script:
   - make test
+  - amp logs amplifier
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
