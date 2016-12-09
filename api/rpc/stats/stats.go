@@ -65,8 +65,9 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 		}
 		return ret, nil
 	}
-	sort.Sort(result)
-	return result, nil
+	clean := s.cleanUp(result)
+	sort.Sort(clean)
+	return clean, nil
 }
 
 func (s *Stats) addStatsResult(list *[4]*StatsReply, ret *StatsReply) {
@@ -105,6 +106,7 @@ func (s *Stats) combineStats(req *StatsRequest, list *[4]*StatsReply) *StatsRepl
 			}
 		}
 	}
+
 	return finalRet
 
 }
@@ -159,6 +161,17 @@ func (s *Stats) updateRow(ref *StatsEntry, row *StatsEntry) {
 		ref.NetTxBytes = row.NetTxBytes
 		ref.NetRxBytes = row.NetRxBytes
 	}
+}
+
+func (s *Stats) cleanUp(result *StatsReply) *StatsReply {
+	ret := &StatsReply{}
+	for _, row := range result.Entries {
+		if row != nil {
+			ret.Entries = append(ret.Entries, row)
+		}
+	}
+	return ret
+
 }
 
 // statsQueryMetric extracts stat information according to StatsRequest for one  metric (cpu | mem | io | net)
