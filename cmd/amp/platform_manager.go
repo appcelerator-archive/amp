@@ -111,23 +111,27 @@ func (s *ampManager) start(stack *ampStack) error {
 	}
 	for {
 		serviceReady := 0
+		serviceTotal := 0
 		for _, service := range stack.serviceMap {
-			if err := s.updateServiceStates(service); err != nil {
-				return err
-			}
-			if err := s.updateServiceDependencies(service); err != nil {
-				return err
-			}
-			if !service.ready && !service.starting && service.readyToStart {
-				if err := s.createService(service); err != nil {
+			if !service.user {
+				serviceTotal++
+				if err := s.updateServiceStates(service); err != nil {
 					return err
 				}
-			}
-			if service.ready {
-				serviceReady++
+				if err := s.updateServiceDependencies(service); err != nil {
+					return err
+				}
+				if !service.ready && !service.starting && service.readyToStart {
+					if err := s.createService(service); err != nil {
+						return err
+					}
+				}
+				if service.ready {
+					serviceReady++
+				}
 			}
 		}
-		if serviceReady == len(stack.serviceMap) {
+		if serviceReady == serviceTotal {
 			return nil
 		}
 		time.Sleep(1 * time.Second)
@@ -378,6 +382,7 @@ func (s *ampManager) updateServiceStates(service *ampService) error {
 				if time.Now().Sub(service.failedTime) > ServiceFailedTimeout*time.Second {
 					if s.force {
 						s.forceService(service)
+						return nil
 					} else {
 						return fmt.Errorf("Service %s startup timeout", service.name)
 					}
@@ -460,6 +465,7 @@ func (s *ampManager) createService(service *ampService) error {
 		if s.force {
 			s.printf(colWarn, "Service %s image %s doesn't exist\n", service.name, service.image)
 			s.forceService(service)
+			return nil
 		} else {
 			return fmt.Errorf("Service %s image %s doesn't exist", service.name, service.image)
 		}
