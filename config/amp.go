@@ -4,7 +4,7 @@ const (
 	// AmplifierDefaultEndpoint is the default amplifier endpoint
 	AmplifierDefaultEndpoint = "amplifier:50101"
 
-	// EtcdDefaultEndpoints is the default etcd endpoint
+	// EtcdDefaultEndpoint is the default etcd endpoint
 	EtcdDefaultEndpoint = "http://etcd:2379"
 
 	// ElasticsearchDefaultURL is the default elasticsearch endpoint

@@ -383,9 +383,8 @@ func (s *ampManager) updateServiceStates(service *ampService) error {
 					if s.force {
 						s.forceService(service)
 						return nil
-					} else {
-						return fmt.Errorf("Service %s startup timeout", service.name)
 					}
+					return fmt.Errorf("Service %s startup timeout", service.name)
 				}
 			}
 			service.ready = false
@@ -410,7 +409,7 @@ func (s *ampManager) updateServiceDependencies(service *ampService) error {
 	for _, depName := range service.dependencies {
 		serv, ok := s.stack.serviceMap[depName]
 		if !ok {
-			return fmt.Errorf("The dependency %s doesn't exist for the service %s\n", depName, service.name)
+			return fmt.Errorf("the dependency %s doesn't exist for the service %s", depName, service.name)
 		}
 		if !serv.ready {
 			service.readyToStart = false
@@ -466,9 +465,8 @@ func (s *ampManager) createService(service *ampService) error {
 			s.printf(colWarn, "Service %s image %s doesn't exist\n", service.name, service.image)
 			s.forceService(service)
 			return nil
-		} else {
-			return fmt.Errorf("Service %s image %s doesn't exist", service.name, service.image)
 		}
+		return fmt.Errorf("Service %s image %s doesn't exist", service.name, service.image)
 	}
 	r, err := s.docker.ServiceCreate(s.ctx, *service.spec, options)
 	if err != nil {
@@ -587,7 +585,7 @@ func (s *ampManager) cleanVolume(name string) error {
 		s.docker.VolumeRemove(s.ctx, name, true)
 		ret, err := s.docker.VolumeList(s.ctx, filter)
 		if err == nil {
-			return fmt.Errorf("Failed to get volume list: %v\n", err)
+			return fmt.Errorf("failed to get volume list: %v", err)
 		}
 		list := ret.Volumes
 		ok := true

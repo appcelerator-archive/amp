@@ -19,7 +19,7 @@ const (
 	NatsLogTopic = "amp-logs"
 )
 
-// Logs is used to implement log.LogServer
+// Server is used to implement log.LogServer
 type Server struct {
 	Es    *elasticsearch.Elasticsearch
 	Store storage.Interface

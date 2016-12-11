@@ -450,7 +450,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 		return nil, errIdent
 	}
 	if stack.Services == nil || len(stack.Services) == 0 {
-		return nil, fmt.Errorf("No services found for the stack %s \n", in.StackIdent)
+		return nil, fmt.Errorf("no services found for the stack %s", in.StackIdent)
 	}
 	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Starting.String()); err != nil {
 		return nil, err
@@ -656,7 +656,7 @@ func (s *Server) removeService(ctx context.Context, id string) error {
 		time.Sleep(1 * time.Second)
 		nn++
 	}
-	return fmt.Errorf("service remove timeout: %s\n", id)
+	return fmt.Errorf("service remove timeout: %s", id)
 }
 
 // Remove implements stack.ServerService Remove
