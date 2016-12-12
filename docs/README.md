@@ -5,13 +5,15 @@ AMP is currently under development and this section is here to help you get star
 
 # Installation
 
-AMP can be installed either on your computer for building solutions or on servers for running them. To get started, [check out the installation instructions in the documentation](./installation/index.md)
+AMP can be installed either on your computer for building solutions or on a cluster of servers for running them. To get started, [check out the installation instructions in the documentation](./installation/index.md)
 
 # Configuration
 
 ## Docker Swarm cluster
 
-AMP requires a Docker Swarm cluster to operate. Depending on your installation type, you may already have a swarm cluster available. If you installed AMP locally, here are the instructions to create a local Docker Swarm cluster:
+AMP requires a Docker Swarm cluster to operate.
+If you use an automated way to deploy AMP in a cluster, this step is already done, you can skip this paragraf.
+If you installed AMP locally, here are the instructions to create a local Docker Swarm cluster:
 
     $ docker swarm init
     
