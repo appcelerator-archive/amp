@@ -2,6 +2,7 @@
 
 AMP is supported on these Ubuntu operating systems:
 
+- Ubuntu Yakkety 16.10
 - Ubuntu Xenial 16.04 (LTS)
 - Ubuntu Wily 15.10
 - Ubuntu Trusty 14.04 (LTS)
@@ -41,13 +42,13 @@ In this early adopter phase, AMP project still requires you to build **Go** scri
 
 > **Note:** Installation flow below is based on current recommendation which is to install Go tools under `/go`.
 
-1. Download [latest Go release](https://golang.org/dl/) (1.7.1 or higher) and extract it into `/go`. For example:
+1. Download [latest Go release](https://golang.org/dl/) (1.7.3 or higher) and extract it into `/usr/local/go`. For example:
 
-	    sudo tar -C /go -xzf go$VERSION.$OS-$ARCH.tar.gz
+	    sudo tar -C /usr/local xzf go$VERSION.$OS-$ARCH.tar.gz
 
 2. You must now set the **GOROOT** environment variable to point to the directory in which it was installed. You can do this by adding this line to your `/etc/profile` (for a system-wide installation) or `$HOME/.profile` (or preferentially `$HOME/.bashrc`)
 
-	    export GOROOT=/go
+	    export GOROOT=/usr/local/go
 
 3. Add `$GOROOT/bin` to your **PATH** environment variable. You can do this by adding this line to your `/etc/profile` (for a system-wide installation) or `$HOME/.profile` (or preferentially `$HOME/.bashrc`)
 
@@ -56,129 +57,12 @@ In this early adopter phase, AMP project still requires you to build **Go** scri
 4. Set the **GOPATH** environment variable to point to the working directory holding go sources for AMP project. You can do this by adding this line to your `/etc/profile` (for a system-wide installation) or `$HOME/.profile` (or preferentially `$HOME/.bashrc`)
 
 	    export GOPATH=/go
+	    export PATH=$PATH:$GOPATH/bin
 
 
 ### Install Docker
 
-Kernels older than 3.10 lack some of the features required to run Docker containers. These older versions are known to have bugs which cause data loss and frequently panic under certain conditions. Find all information related to [Docker](https://docs.docker.com/engine/installation/linux/ubuntulinux/)
-
-To check your current kernel version, open a terminal and use `uname -r` to display your kernel version:
-
-    $ uname -r
-    3.11.0-15-generic
-
->**Note**: If you previously installed Docker using `APT`, make sure you update your `APT` sources to the new Docker repository.
-
-#### Update your apt sources
-
-Docker's `APT` repository contains Docker 1.7.1 and higher. To set `APT` to use packages from the new repository:
-
-1. Log into your machine as a user with `sudo` or `root` privileges.
-
-2. Open a terminal window.
-
-3. Update package information, ensure that APT works with the `https` method, and that CA certificates are installed.
-
-	    sudo apt-get update
-	    sudo apt-get install apt-transport-https ca-certificates
-
-4. Add the new `GPG` key.
-
-		sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D`
-
-5. Open the `/etc/apt/sources.list.d/docker.list` file in your favorite editor.
-
-    If the file doesn't exist, create it.
-
-6. Remove any existing entries.
-
-7. Add an entry for your Ubuntu operating system.
-
-    The possible entries are:
-
-    - On Ubuntu Trusty 14.04 (LTS)
-
-            deb https://apt.dockerproject.org/repo ubuntu-trusty main
-
-    - Ubuntu Wily 15.10
-
-            deb https://apt.dockerproject.org/repo ubuntu-wily main
-
-    - Ubuntu Xenial 16.04 (LTS)
-
-            deb https://apt.dockerproject.org/repo ubuntu-xenial main
-
-    > **Note**: Docker does not provide packages for all architectures. You can find
-  > nightly built binaries in https://master.dockerproject.org. To install docker on
-    > a multi-architecture system, add an `[arch=...]` clause to the entry. Refer to the
-    > [Debian Multiarch wiki](https://wiki.debian.org/Multiarch/HOWTO#Setting_up_apt_sources)
-    > for details.
-
-8. Save and close the `/etc/apt/sources.list.d/docker.list` file.
-
-9. Update the `APT` package index.
-
-```
-    $ sudo apt-get update
-```
-
-10. Purge the old repo if it exists.
-
-```
-    $ sudo apt-get purge lxc-docker
-```
-
-11. Verify that `APT` is pulling from the right repository.
-
-```
-    $ apt-cache policy docker-engine
-```
-
-    From now on when you run `apt-get upgrade`, `APT` pulls from the new repository.
-
-#### Prerequisites by Ubuntu Version
-
-- Ubuntu Xenial 16.04 (LTS)
-- Ubuntu Wily 15.10
-- Ubuntu Trusty 14.04 (LTS)
-
-For Ubuntu Trusty, Wily, and Xenial, it's recommended to install the `linux-image-extra-*` kernel packages. The `linux-image-extra-*` packages allows you use the `aufs` storage driver.
-
-To install the `linux-image-extra-*` packages:
-
-1. Open a terminal on your Ubuntu host.
-
-2. Update your package manager.
-
-	    $ sudo apt-get update
-
-3. Install the recommended packages.
-
-	    $ sudo apt-get install linux-image-extra-$(uname -r) linux-image-extra-virtual
-
-4. Go ahead and install Docker.
-
-
-#### Install
-
-Make sure you have installed the prerequisites for your Ubuntu version.
-
-Then, install Docker using the following:
-
-1. Log into your Ubuntu installation as a user with `sudo` privileges.
-
-2. Update your `APT` package index.
-
-        $ sudo apt-get update
-
-3. Install Docker.
-
-        $ sudo apt-get install docker-engine
-
-4. Start the `docker` daemon.
-
-        $ sudo service docker start
-
+You can use the upstream script from Docker, it works with a large range of Linux distributions: https://get.docker.com/
 
 #### Create a Docker group    
 
@@ -311,12 +195,11 @@ Hang in there, you are now ready to install AMP on your system, just a few more 
 
     > To use a specific release (stable), type the following command:  
 
-        $ git clone --branch v0.4.0 git@github.com:appcelerator/amp.git
+        $ git checkout v0.4.0
+	# you can check the available releases here: https://github.com/appcelerator/amp/releases
 
 4. Build AMP from source
  
          $ make install
     
-You how have AMP installed locally! Please check the [getting started](../../README.md#configuration) section to start playing with AMP.
-        
-    
+You now have AMP installed locally! Please check the [getting started](../../README.md#configuration) section to start playing with AMP.
