@@ -1,0 +1,108 @@
+<h1>Stacks</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Service</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each stacks as stack}}
+      <tr on:click='displayDetails(stack)'>
+        <td>{{stack.name}}</td>
+        <td>{{stack.state}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{#if stack}}
+  {{#if stack.state == "Stopped"}}
+    <button on:click="start(stack)">start</button>
+    <button on:click="remove(stack)">remove</button>
+  {{/if}}
+  {{#if stack.state == "Running"}}
+    <button on:click="stop(stack)">stop</button>
+  {{/if}}
+  {{#if stack.state == "Running"}}
+    <pre>{{tasks}}</pre>
+  {{/if}}
+{{/if}}
+
+{{#if logs.length}}
+  <LogDisplay logs='{{logs}}'></LogDisplay>
+{{/if}}
+
+<script>
+  import LogDisplay from './LogDisplay.html';
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+
+  export default {
+    onrender () {
+      this.getStacks().then(stacks => this.set({stacks}))
+    },
+    data () {
+      return {
+        stacks: [],
+        tasks: '',
+        logs: [],
+        stack: null
+      }
+    },
+    methods: {
+      async getStacks() {
+        return await api.stacks({
+          all: true
+        })
+      },
+      displayDetails (stack) {
+        this.set({stack})
+        if (stack.state == "Running") {
+          stack.tasks().then(tasks => this.set({tasks}))
+        }
+        stack.logs().then(logs => this.set({logs}))
+      },
+      start (stack) {
+        stack.start().then(() => {
+          this.getStacks().then(stacks => this.set({stacks}))
+          this.displayDetails(stack)
+        })
+      },
+      stop (stack) {
+        stack.stop().then(() => {
+          this.getStacks().then(stacks => this.set({stacks}))
+          this.displayDetails(stack)
+        })
+      },
+      remove (stack) {
+        stack.remove().then(() => {
+          this.getStacks().then(stacks => this.set({stacks}))
+          this.set({stack: null})
+        })
+      }
+    },
+    components: {
+      LogDisplay
+    }
+  }
+</script>
+
+<style>
+  body {
+    padding: 2em;
+  }
+  table {
+    text-align: left;
+    font-family: monospace;
+    border-collapse: collapse;
+  }
+  tbody tr {
+    cursor: pointer;
+  }
+  tbody tr:focus, tbody tr:hover {
+    background-color: #eee;
+  }
+  button {
+    cursor: pointer;
+  }
+</style>

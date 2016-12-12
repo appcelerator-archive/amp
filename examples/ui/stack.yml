@@ -1,0 +1,6 @@
+services:
+  ui:
+    image: registry.local.appcelerator.io/gw-ui
+    public:
+      - name: www
+        internal_port: 3000

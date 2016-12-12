@@ -1,0 +1,47 @@
+<div>Topics</div>
+<form on:submit='create(event)'>
+  <input bind:value='name'>
+  <button type='submit'>Create new Topic</button>
+</form>
+{{#each topics as topic}}
+  <div>{{topic.name}} <button on:click='remove(topic)'>remove</button></div>
+{{/each}}
+
+<script>
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+
+  export default {
+    onrender () {
+      this.getTopics().then(topics => {
+        console.log({topics})
+        this.set({topics})
+      })
+    },
+    data () {
+      return {
+        topics: [],
+        name: '',
+      }
+    },
+    methods: {
+      async getTopics() {
+        return await api.topics()
+      },
+      remove (topic) {
+        topic.remove()
+          .then(() => this.getTopics()
+            .then(topics => this.set({topics})))
+      },
+      create (event) {
+        if (event) {
+          event.preventDefault()
+        }
+        api.createTopic(this.get('name'))
+          .then(() => this.getTopics()
+            .then(topics => this.set({topics})))
+        this.set({name:''})
+      }
+    }
+  }
+</script>

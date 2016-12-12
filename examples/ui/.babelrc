@@ -1,0 +1,8 @@
+{
+  "env": {
+    "production": {
+      "presets": ["babili"]
+    }
+  },
+  "plugins": ["transform-async-to-generator", "external-helpers"]
+}

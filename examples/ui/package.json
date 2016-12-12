@@ -1,0 +1,43 @@
+{
+  "name": "amp-ui",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "rollup -c",
+    "build:watch": "npm run build -- -w",
+    "clean": "npm run clean:dist && rimraf node_modules",
+    "clean:dist": "rimraf dist",
+    "lint": "eslint ./src/**"
+  },
+  "author": "Henry Allen-Tilford",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-plugin-external-helpers": "^6.18.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-preset-babili": "^0.0.9",
+    "codemirror": "^5.21.0",
+    "eslint": "^3.11.1",
+    "eslint-config-airbnb": "^13.0.0",
+    "eslint-config-standard": "^6.2.1",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-react": "^6.7.1",
+    "eslint-plugin-standard": "^2.0.1",
+    "query-string": "^4.2.3",
+    "rimraf": "^2.5.4",
+    "rollup": "^0.36.4",
+    "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-commonjs": "^5.0.5",
+    "rollup-plugin-eslint": "^3.0.0",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-svelte": "^1.0.0",
+    "rollup-watch": "^2.5.0",
+    "yamljs": "^0.2.8"
+  },
+  "dependencies": {
+    "express": "^4.14.0"
+  }
+}
