@@ -240,8 +240,7 @@ func TestList(t *testing.T) {
 }
 
 func TestCompareAndSet(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
-	defer cancel()
+	ctx := context.Background()
 
 	key := "state"
 	expect := &state.State{Value: "hello"}
@@ -262,8 +261,7 @@ func TestCompareAndSet(t *testing.T) {
 }
 
 func TestWatch(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), defTimeout)
-	defer cancel()
+	ctx := context.Background()
 
 	key := "watch"
 	expect := &state.State{Value: "hello"}
@@ -290,7 +288,7 @@ WatchLoop:
 		select {
 		case event := <-watch.ResultChan():
 			events = append(events, event)
-		case <-time.After(time.Second):
+		case <-time.After(5 * time.Second):
 			break WatchLoop
 		}
 	}

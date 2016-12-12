@@ -195,12 +195,13 @@ test-integration:
 		sleep 1 ; \
 	done; \
 	docker logs -f $$containerid; \
-	docker service rm amp-integration-test > /dev/null 2>&1 || true \
-	exit `docker inspect --format='{{.State.ExitCode}}' $$containerid`
+	rc=`docker inspect --format='{{.State.ExitCode}}' $$containerid` ; \
+	docker service rm amp-integration-test > /dev/null 2>&1 || true ; \
+	exit $$rc
 
 test-integration-host:
 	@for pkg in $(INTEGRATION_TEST_PACKAGES) ; do \
-		go test $$pkg ; \
+		go test $$pkg || exit 1 ; \
 	done
 
 test: test-unit test-integration test-cli
