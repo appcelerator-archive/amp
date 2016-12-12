@@ -1,4 +1,4 @@
-AMP: A... Microservices Platform ![WIP](./static_files/amp--docs-WIP-yellow.svg)
+AMP: A... Microservices Platform ![WIP](static_files/amp--docs-WIP-yellow.svg)
 ============================
 
 AMP is currently under development and this section is here to help you get started based on latest stable tagged version of the project. If you're here, then you **ARE** pioneering with us and we encourage you to [get in touch](./contributing.md) !
@@ -207,3 +207,10 @@ A few useful examples:
 ```
   $ amp stats --task --cpu --mem
 ```
+
+### Managing Docker images
+
+    amp registry ls
+    amp registry push
+
+More details in the [userguide](userguide/registry.md)
