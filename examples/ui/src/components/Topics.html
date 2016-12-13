@@ -1,27 +1,37 @@
-<div>Topics</div>
+<h1>Topics</h1>
+{{#each topics as topic}}
+  <div>{{topic.name}} <button on:click='remove(topic)'>remove</button></div>
+{{/each}}
 <form on:submit='create(event)'>
   <input bind:value='name'>
   <button type='submit'>Create new Topic</button>
 </form>
-{{#each topics as topic}}
-  <div>{{topic.name}} <button on:click='remove(topic)'>remove</button></div>
-{{/each}}
+{{#if error}}
+  <DisplayError message='{{error}}'></DisplayError>
+{{/if}}
 
 <script>
+  import DisplayError from './DisplayError.html'
   import AmpApi from '../api/index.js'
   const api = new AmpApi()
 
   export default {
+    components: {
+      DisplayError
+    },
     onrender () {
       this.getTopics().then(topics => {
-        console.log({topics})
         this.set({topics})
+      })
+      this.observe('name', () => {
+        this.set({error:''})
       })
     },
     data () {
       return {
         topics: [],
         name: '',
+        error: '',
       }
     },
     methods: {
@@ -33,14 +43,20 @@
           .then(() => this.getTopics()
             .then(topics => this.set({topics})))
       },
-      create (event) {
+      async create (event) {
         if (event) {
           event.preventDefault()
         }
-        api.createTopic(this.get('name'))
-          .then(() => this.getTopics()
-            .then(topics => this.set({topics})))
-        this.set({name:''})
+        try {
+          await api.createTopic(this.get('name'))
+          const topics = await this.getTopics()
+          this.set({topics})
+          this.set({name:''})
+        } catch (error) {
+          this.set({
+            error: error.message
+          })
+        }
       }
     }
   }

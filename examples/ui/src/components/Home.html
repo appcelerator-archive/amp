@@ -1,1 +1,38 @@
-<div>Home</div>
+<h1>Stats</h1>
+<StatDisplay stats='{{stats}}'></StatDisplay>
+
+<script>
+  import StatDisplay from './StatDisplay.html';
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+  export default {
+    onrender () {
+      this.getStats().then(stats => this.set({stats}))
+      this.interval = setInterval(() => {
+        this.getStats().then(stats => this.set({stats}))
+      }, 3000)
+    },
+    onteardown () {
+      clearInterval(this.interval)
+    },
+    data () {
+      return {
+        stats: []
+      }
+    },
+    components: {
+      StatDisplay
+    },
+    methods: {
+      async getStats () {
+        return api.stats({
+          stats_cpu: true,
+          stats_mem: true,
+          stats_io: true,
+          stats_net: true,
+          discriminator: 'service',
+        })
+      }
+    }
+  }
+</script>

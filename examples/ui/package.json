@@ -17,6 +17,7 @@
     "babel-plugin-external-helpers": "^6.18.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-preset-babili": "^0.0.9",
+    "bytes": "^2.4.0",
     "codemirror": "^5.21.0",
     "eslint": "^3.11.1",
     "eslint-config-airbnb": "^13.0.0",
@@ -33,7 +34,7 @@
     "rollup-plugin-commonjs": "^5.0.5",
     "rollup-plugin-eslint": "^3.0.0",
     "rollup-plugin-node-resolve": "^2.0.0",
-    "rollup-plugin-svelte": "^1.0.0",
+    "rollup-plugin-svelte": "^1.2.0",
     "rollup-watch": "^2.5.0",
     "yamljs": "^0.2.8"
   },

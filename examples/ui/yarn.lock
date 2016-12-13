@@ -434,6 +434,10 @@ builtin-modules@^1.1.0, builtin-modules@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-1.1.1.tgz#270f076c5a72c02f5b65a47df94c5fe3a278892f"
 
+bytes:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/bytes/-/bytes-2.4.0.tgz#7d97196f9d5baf7f6935e25985549edd2a6c2339"
+
 caller-path@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/caller-path/-/caller-path-0.1.0.tgz#94085ef63581ecd3daa92444a8fe94e82577751f"
@@ -1150,6 +1154,12 @@ magic-string@^0.16.0:
   dependencies:
     vlq "^0.2.1"
 
+magic-string@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.19.0.tgz#198948217254e3e0b93080e01146b7c73b2a06b2"
+  dependencies:
+    vlq "^0.2.1"
+
 media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"
@@ -1442,12 +1452,12 @@ rollup-plugin-node-resolve:
     builtin-modules "^1.1.0"
     resolve "^1.1.6"
 
-rollup-plugin-svelte@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-svelte/-/rollup-plugin-svelte-1.0.0.tgz#c86b7cbc0844df9f1e6401522c01c5fc440fe0cf"
+rollup-plugin-svelte:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-svelte/-/rollup-plugin-svelte-1.2.0.tgz#456c8c722ca497bfacad045092e6a221d72eb1ca"
   dependencies:
     rollup-pluginutils "^1.5.2"
-    svelte "^1.0.0"
+    svelte "^1.2.0"
 
 rollup-pluginutils@^1.3.1, rollup-pluginutils@^1.5.0, rollup-pluginutils@^1.5.1, rollup-pluginutils@^1.5.2:
   version "1.5.2"
@@ -1588,9 +1598,11 @@ supports-color@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-2.0.0.tgz#535d045ce6b6363fa40117084629995e9df324c7"
 
-svelte@^1.0.0:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/svelte/-/svelte-1.0.7.tgz#a36f1f52ead9d83ace95fe5ad361977510af8909"
+svelte@^1.2.0:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/svelte/-/svelte-1.2.3.tgz#540bf8c29a23e98d1dfb44496782e51ddfc32939"
+  dependencies:
+    magic-string "^0.19.0"
 
 table@^3.7.8:
   version "3.8.3"
