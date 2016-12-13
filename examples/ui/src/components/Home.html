@@ -1,15 +1,19 @@
 <h1>Stats</h1>
 <StatDisplay stats='{{stats}}'></StatDisplay>
+{{#if error}}
+  <DisplayError bind:error></DisplayError>
+{{/if}}
 
 <script>
-  import StatDisplay from './StatDisplay.html';
+  import StatDisplay from './StatDisplay.html'
+  import DisplayError from './DisplayError.html'
   import AmpApi from '../api/index.js'
   const api = new AmpApi()
   export default {
     onrender () {
-      this.getStats().then(stats => this.set({stats}))
+      this.setStats()
       this.interval = setInterval(() => {
-        this.getStats().then(stats => this.set({stats}))
+        this.setStats()
       }, 3000)
     },
     onteardown () {
@@ -17,21 +21,31 @@
     },
     data () {
       return {
-        stats: []
+        stats: [],
+        error: '',
       }
     },
     components: {
-      StatDisplay
+      StatDisplay,
+      DisplayError,
     },
     methods: {
       async getStats () {
-        return api.stats({
+        return await api.stats({
           stats_cpu: true,
           stats_mem: true,
           stats_io: true,
           stats_net: true,
           discriminator: 'service',
         })
+      },
+      async setStats () {
+        try {
+          const stats = await this.getStats()
+          this.set({stats})
+        } catch (error) {
+          this.set({error: error.message})
+        }
       }
     }
   }

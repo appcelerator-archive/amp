@@ -15,6 +15,11 @@
         const yaml = this.cm.doc.getValue()
         this.set({yaml})
       })
+      this.observe('yaml', yaml => {
+        if (yaml != this.cm.doc.getValue()) {
+          this.cm.doc.setValue(yaml)
+        }
+      })
     },
 
     data () {

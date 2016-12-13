@@ -2,7 +2,7 @@
 <label>Name: <input bind:value='name'></label>
 <CodeMirrorYaml bind:yaml></CodeMirrorYaml>
 {{#if error}}
-  <DisplayError message='{{error}}'></DisplayError>
+  <DisplayError bind:error></DisplayError>
 {{else}}
   <button on:click='create()'>Create</button>
 {{/if}}
@@ -15,22 +15,6 @@
   import AmpApi from '../api/index.js'
   const api = new AmpApi()
 
-  const stackyaml = `services:
-  python:
-    image: tutum/quickstart-python
-    public:
-    - name: python
-      internal_port: 80
-    replicas: 3
-  go:
-    image: htilford/go-redis-counter
-    public:
-    - name: go
-      internal_port: 80
-    replicas: 3
-  redis:
-    image: redis`
-
   export default {
     components: {
       CodeMirrorYaml,
@@ -39,13 +23,17 @@
 
     data () {
       return {
-        name: 'counter',
-        yaml: stackyaml,
+        name: '',
+        yaml: '',
+        createError: null,
       };
     },
 
     computed: {
       stackSpec: (name, yaml) => {
+        if (yaml === '') {
+          return {}
+        }
         try {
           const spec = yamlParser.parse(yaml)
           const stackSpec = {
@@ -79,15 +67,30 @@
           return {parseError}
         }
       },
-      error (stackSpec) {
-        return stackSpec.parseError ?
-          `${stackSpec.parseError.message} on line ${stackSpec.parseError.parsedLine}` : ''
+
+      error (stackSpec, createError) {
+        if (stackSpec.parseError) {
+          return `${stackSpec.parseError.message} on line ${stackSpec.parseError.parsedLine}`
+        }
+        if (createError) {
+          return createError.message
+        }
+        return ''
       }
     },
 
     methods: {
-      create () {
-        api.createStack(this.get('stackSpec')).then(stack => console.log(stack))
+      async create () {
+        this.set({createError: null})
+        try {
+          await api.createStack(this.get('stackSpec'))
+          this.set({
+            name: '',
+            yaml: '',
+          })
+        } catch (createError) {
+          this.set({createError})
+        }
       }
     }
   };

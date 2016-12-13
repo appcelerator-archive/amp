@@ -1,10 +1,16 @@
-<div>{{message}}</div>
+<div>{{error}}<button on:click='dismiss()'>×</button></div>
 
 <script>
   export default {
     data () {
       return {
-        message: ''
+        error: ''
+      }
+    },
+
+    methods: {
+      dismiss () {
+        this.set({error:''})
       }
     }
   }
@@ -13,5 +19,11 @@
 <style>
   div {
     color: indianred;
+  }
+  button {
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    font-size: 2em;
   }
 </style>

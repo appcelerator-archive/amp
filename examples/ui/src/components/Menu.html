@@ -22,6 +22,10 @@
     }
   }
   export default {
+    onrender () {
+      document.querySelector('title').innerText = 'AMP ' + this.get('active')
+    },
+
     data() {
       const sections = [
         new Section('/', 'Home'),
@@ -44,6 +48,7 @@
           section.setActive()
         }
         const active = sections.reduce((a, s)=> a || (s.active ? s.name : false), false)
+        document.querySelector('title').innerText = 'AMP ' + active
         this.set({ active, sections})
       }
     }

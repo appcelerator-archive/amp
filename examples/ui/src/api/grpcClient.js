@@ -3,7 +3,7 @@ import queryString from 'query-string'
 const codes = [
   'Ok',
   'Canceled',
-  'Unkown',
+  'Unknown',
   'Invalid argument',
   'Deadline exceeded',
   'Not found',
@@ -33,6 +33,10 @@ export default class GrpcClient {
       path += '?' + queryString.stringify(query)
     }
     const request = await fetch(this.base + path)
+      .catch(error => {
+        console.error(error)
+        throw new Error('Network error getting from ' + this.base + path)
+      })
     const json = await request.json()
     this.handleError(json)
     return json
@@ -44,6 +48,9 @@ export default class GrpcClient {
     const request = await fetch(this.base + path, {
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined
+    }).catch(error => {
+      console.error(error)
+      throw new Error('Network error putting to ' + this.base + path)
     })
     const json = await request.json()
     this.handleError(json)
@@ -56,6 +63,9 @@ export default class GrpcClient {
     const request = await fetch(this.base + path, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined
+    }).catch(error => {
+      console.error(error)
+      throw new Error('Network error posting to ' + this.base + path)
     })
     const json = await request.json()
     this.handleError(json)
@@ -67,6 +77,9 @@ export default class GrpcClient {
     }
     const request = await fetch(this.base + path, {
       method: 'DELETE'
+    }).catch(error => {
+      console.error(error)
+      throw new Error('Network error deleting ' + this.base + path)
     })
     const json = await request.json()
     this.handleError(json)

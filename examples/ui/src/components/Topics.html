@@ -7,7 +7,7 @@
   <button type='submit'>Create new Topic</button>
 </form>
 {{#if error}}
-  <DisplayError message='{{error}}'></DisplayError>
+  <DisplayError bind:error></DisplayError>
 {{/if}}
 
 <script>
@@ -20,12 +20,7 @@
       DisplayError
     },
     onrender () {
-      this.getTopics().then(topics => {
-        this.set({topics})
-      })
-      this.observe('name', () => {
-        this.set({error:''})
-      })
+      this.setTopics()
     },
     data () {
       return {
@@ -38,10 +33,21 @@
       async getTopics() {
         return await api.topics()
       },
-      remove (topic) {
-        topic.remove()
-          .then(() => this.getTopics()
-            .then(topics => this.set({topics})))
+      async setTopics() {
+        try {
+          const topics = await this.getTopics()
+          this.set({topics})
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async remove (topic) {
+        try {
+          await topic.remove()
+          await this.setTopics()
+        } catch (error) {
+          this.set({error: error.message})
+        }
       },
       async create (event) {
         if (event) {
@@ -49,8 +55,7 @@
         }
         try {
           await api.createTopic(this.get('name'))
-          const topics = await this.getTopics()
-          this.set({topics})
+          await this.setTopics()
           this.set({name:''})
         } catch (error) {
           this.set({
