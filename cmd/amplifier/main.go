@@ -7,6 +7,7 @@ import (
 	"github.com/appcelerator/amp/api/server"
 	"github.com/appcelerator/amp/config"
 	flag "github.com/spf13/pflag"
+	"os"
 )
 
 const (
@@ -39,6 +40,9 @@ var (
 )
 
 func parseFlags() {
+	var displayVersion bool
+
+	//
 	// set up flags
 	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "etcd comma-separated endpoints")
@@ -48,9 +52,22 @@ func parseFlags() {
 	flag.StringVarP(&natsURL, "natsURL", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influxURL", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "dockerURL", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
+	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
 	flag.Parse()
+
+	// Check if command if version
+	for _, arg := range os.Args {
+		if arg == "version" {
+			displayVersion = true
+			break
+		}
+	}
+
+	if displayVersion {
+		os.Exit(0)
+	}
 
 	// update config
 	config.Port = port
