@@ -2,6 +2,8 @@ package logs
 
 import (
 	"encoding/json"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"strings"
 
 	"github.com/appcelerator/amp/data/elasticsearch"
@@ -69,7 +71,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Perform request
 	searchResult, err := request.Query(masterQuery).Do(ctx)
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.FailedPrecondition, "%v", err)
 	}
 
 	// Build reply (from elasticsearch response)
@@ -78,7 +80,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	for i, hit := range searchResult.Hits.Hits {
 		entry, err := parseJSONLogEntry(*hit.Source)
 		if err != nil {
-			return nil, err
+			return nil, grpc.Errorf(codes.Internal, "%v", err)
 		}
 		reply.Entries[i] = &entry
 	}
@@ -105,7 +107,7 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	})
 	if err != nil {
 		sub.Unsubscribe()
-		return err
+		return grpc.Errorf(codes.Internal, "%v", err)
 	}
 	for {
 		select {
