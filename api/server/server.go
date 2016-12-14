@@ -25,6 +25,7 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/nats-io/nats"
 	"google.golang.org/grpc"
+	"sync"
 )
 
 const (
@@ -32,32 +33,31 @@ const (
 	natsClientID   = "amplifier"
 )
 
-func initDependencies(config Config) error {
+func initDependencies(config Config) {
 	// ensure all initialization code fails fast on errors; there is no point in
 	// attempting to continue in a degraded state if there are problems at start up
-	if err := initEtcd(config); err != nil {
-		return err
+
+	var wg sync.WaitGroup
+	type initFunc func(Config) error
+
+	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
+	for _, f := range initFuncs {
+		wg.Add(1)
+		go func(f initFunc) {
+			defer wg.Done()
+			if err := f(config); err != nil {
+				log.Fatalln(err)
+			}
+		}(f)
 	}
-	if err := initElasticsearch(config); err != nil {
-		return err
-	}
-	if err := initNats(config); err != nil {
-		return err
-	}
-	if err := initInfluxDB(config); err != nil {
-		return err
-	}
-	if err := initDocker(config); err != nil {
-		return err
-	}
-	return nil
+
+	// Wait for all inits to complete.
+	wg.Wait()
 }
 
 // Start starts the server
 func Start(config Config) {
-	if err := initDependencies(config); err != nil {
-		panic(err)
-	}
+	initDependencies(config)
 
 	// register services
 	s := grpc.NewServer()
@@ -94,7 +94,7 @@ func Start(config Config) {
 		log.Fatalf("amplifer is unable to listen on: %s\n%v", config.Port[1:], err)
 	}
 	log.Printf("amplifier is listening on port %s\n", config.Port[1:])
-	s.Serve(lis)
+	log.Fatalln(s.Serve(lis))
 }
 
 func initEtcd(config Config) error {
