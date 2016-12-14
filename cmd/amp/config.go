@@ -15,8 +15,8 @@ func init() {
 	// configCmd represents the Config command
 	configCmd := &cobra.Command{
 		Use:   "config",
-		Short: "Display the current configuration",
-		Long:  `Display the current configuration.`,
+		Short: "Display or update the current configuration",
+		Long:  `Display or update the current configuration.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:

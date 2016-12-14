@@ -87,7 +87,7 @@ func (s *ampManager) init(firstMessage string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amplifier"}
 	cli, err := client.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
-		return fmt.Errorf("impossible to connect to Docker on: %s\n%v", DockerURL, err)
+		return fmt.Errorf("Impossible to connect to Docker on: %s\n%v", DockerURL, err)
 	}
 	s.docker = cli
 	return nil

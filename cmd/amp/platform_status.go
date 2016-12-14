@@ -17,14 +17,14 @@ var PlatformStatus = &cobra.Command{
 }
 
 func init() {
-	PlatformStatus.Flags().BoolP("silence", "s", false, "No console output at all")
+	PlatformPull.Flags().BoolP("quiet", "q", false, "Suppress terminal outpu")
 	PlatformStatus.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformStatus)
 }
 
 func getAMPStatus(cmd *cobra.Command, args []string) error {
 	manager := &ampManager{}
-	if cmd.Flag("silence").Value.String() == "true" {
+	if cmd.Flag("quiet").Value.String() == "true" {
 		manager.silence = true
 	}
 	if cmd.Flag("verbose").Value.String() == "true" {
