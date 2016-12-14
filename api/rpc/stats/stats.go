@@ -8,6 +8,8 @@ import (
 
 	"github.com/appcelerator/amp/data/influx"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 // Stats structure to implement StatsServer interface
@@ -181,7 +183,7 @@ func (s *Stats) statQueryMetric(req *StatsRequest, metric string) (*StatsReply, 
 	fmt.Println("Influx query: " + query)
 	res, err := s.Influx.Query(query)
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "InfluxDB Query error: %v", err)
 	}
 	if len(res.Results[0].Series) == 0 {
 		ret := &StatsReply{

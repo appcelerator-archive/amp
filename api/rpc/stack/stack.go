@@ -23,6 +23,8 @@ import (
 	units "github.com/docker/go-units"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 const stackRootKey = "stacks"
@@ -59,6 +61,7 @@ func (s *Server) Up(ctx context.Context, in *StackFileRequest) (*StackReply, err
 	}
 
 	//start the stack
+	//start the stack
 	startRequest := StackRequest{
 		StackIdent: r.StackId,
 	}
@@ -67,6 +70,7 @@ func (s *Server) Up(ctx context.Context, in *StackFileRequest) (*StackReply, err
 		rollbackErr := s.rollbackETCDStack(ctx, r.StackId)
 		if rollbackErr != nil {
 			fmt.Println("Error during rollback, ETCD in unknown state")
+			//Should restart amplifier to give a chance to reconnect to ETCD
 			panic(rollbackErr)
 		}
 		return nil, err
@@ -82,7 +86,7 @@ func (s *Server) Create(ctx context.Context, in *StackFileRequest) (*StackReply,
 	//verify the stack name doesn't already exist
 	stackByName := s.getStackByName(ctx, in.Stack.Name)
 	if stackByName.Id != "" {
-		return nil, fmt.Errorf("Stack %s already exists", in.Stack.Name)
+		return nil, grpc.Errorf(codes.AlreadyExists, "Stack %s already exists", in.Stack.Name)
 	}
 
 	stack := in.Stack
@@ -91,12 +95,11 @@ func (s *Server) Create(ctx context.Context, in *StackFileRequest) (*StackReply,
 
 	// Create stack state
 	if err := s.StateMachine.CreateState(stack.Id, StackState_Stopped.String()); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
-
 	//save stack data in ETCD
 	if err := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id), stack, nil, 0); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	stackID := StackID{Id: stack.Id}
 	s.Store.Create(ctx, path.Join(stackRootNameKey, stack.Name), &stackID, nil, 0)
@@ -146,7 +149,7 @@ func (s *Server) getStack(ctx context.Context, in *StackRequest) (*Stack, error)
 		stack = s.getStackByID(ctx, in.StackIdent)
 	}
 	if stack.Id == "" {
-		return nil, fmt.Errorf("The stack %s doesn't exist", in.StackIdent)
+		return nil, grpc.Errorf(codes.NotFound, "The stack %s doesn't exist", in.StackIdent)
 	}
 	return stack, nil
 }
@@ -237,12 +240,12 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 	}
 	reply, err := server.Create(ctx, request)
 	if err != nil {
-		return "", err
+		return "", grpc.Errorf(codes.Internal, "%v", err)
 	}
 	//Save service defintion in ETCD
 	createErr := s.Store.Create(ctx, path.Join(servicesRootKey, reply.Id), serv, nil, 0)
 	if createErr != nil {
-		return "", createErr
+		return "", grpc.Errorf(codes.Internal, "%v", createErr)
 	}
 	return reply.Id, nil
 }
@@ -333,8 +336,7 @@ func (s *Server) createNetwork(ctx context.Context, data *NetworkSpec) (string, 
 	networkCreate.Labels[serviceRoleLabelName] = "user"
 	rep, err := s.Docker.NetworkCreate(ctx, data.Name, networkCreate)
 	if err != nil {
-
-		return "", err
+		return "", grpc.Errorf(codes.Internal, "%v", err)
 	}
 	return rep.ID, nil
 }
@@ -391,7 +393,7 @@ func (s *Server) createStackNetworks(ctx context.Context, stack *Stack) error {
 	if uerr := s.Store.Update(ctx, path.Join(stackRootKey, stack.Id, networksRootKey), &list, 0); uerr != nil {
 		if cerr := s.Store.Create(ctx, path.Join(stackRootKey, stack.Id, networksRootKey), &list, nil, 0); cerr != nil {
 			s.removeStackNetworksFromList(ctx, networkList)
-			return cerr
+			return grpc.Errorf(codes.Internal, "%v", cerr)
 		}
 	}
 	return nil
@@ -424,7 +426,7 @@ func (s *Server) createCustomNetwork(ctx context.Context, data *NetworkSpec) err
 	if customNetwork.Id != "" {
 		customNetwork.OwnerNumber++
 		if err := s.Store.Update(ctx, path.Join(networksRootKey, data.Name), customNetwork, 0); err != nil {
-			return err
+			return grpc.Errorf(codes.Internal, "%v", err)
 		}
 		fmt.Println("updated")
 		return nil
@@ -438,7 +440,7 @@ func (s *Server) createCustomNetwork(ctx context.Context, data *NetworkSpec) err
 	customNetwork.OwnerNumber = 1
 	customNetwork.Data = data
 	if cerr := s.Store.Create(ctx, path.Join(networksRootKey, data.Name), customNetwork, nil, 0); cerr != nil {
-		return cerr
+		return grpc.Errorf(codes.Internal, "%v", cerr)
 	}
 	return nil
 }
@@ -450,10 +452,10 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 		return nil, errIdent
 	}
 	if stack.Services == nil || len(stack.Services) == 0 {
-		return nil, fmt.Errorf("no services found for the stack %s", in.StackIdent)
+		return nil, grpc.Errorf(codes.FailedPrecondition, "No services found for the stack %s \n", in.StackIdent)
 	}
 	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Starting.String()); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.FailedPrecondition, "%v", err)
 	}
 	fmt.Printf("Starting stack %s\n", in.StackIdent)
 	if err := s.createCustomNetworks(ctx, stack); err != nil {
@@ -495,7 +497,7 @@ func (s *Server) Start(ctx context.Context, in *StackRequest) (*StackReply, erro
 		}
 	}
 	if err := s.StateMachine.TransitionTo(stack.Id, StackState_Running.String()); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.FailedPrecondition, "%v", err)
 	}
 	reply := StackReply{
 		StackId: stack.Id,
@@ -511,7 +513,7 @@ func (s *Server) Stop(ctx context.Context, in *StackRequest) (*StackReply, error
 		return nil, errIdent
 	}
 	if running, err := s.StateMachine.Is(stack.Id, StackState_Running.String()); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.FailedPrecondition, "%v", err)
 	} else if !running {
 		return nil, errors.New("Stack is not running")
 	}
@@ -538,7 +540,7 @@ func (s *Server) removeStackNetworks(ctx context.Context, ID string, force bool)
 	networkList := &IdList{}
 	err := s.Store.Get(ctx, path.Join(stackRootKey, ID, networksRootKey), networkList, true)
 	if err != nil && !force {
-		return err
+		return grpc.Errorf(codes.Internal, "%v", err)
 	}
 	return s.removeStackNetworksFromList(ctx, networkList.List)
 }
@@ -548,7 +550,7 @@ func (s *Server) removeNetwork(ctx context.Context, id string, byName bool) erro
 	fmt.Printf("removing network: %s\n", id)
 	err := s.Docker.NetworkRemove(ctx, id)
 	if err != nil {
-		return err
+		return grpc.Errorf(codes.Internal, "%v", err)
 	}
 	return nil
 }
@@ -612,7 +614,7 @@ func (s *Server) stopStackServices(ctx context.Context, ID string, force bool) e
 	listKeys := &IdList{}
 	err := s.Store.Get(ctx, path.Join(stackRootKey, ID, servicesRootKey), listKeys, true)
 	if err != nil && !force {
-		return err
+		return grpc.Errorf(codes.Internal, "%v", err)
 	}
 	var removeErr error
 	for _, key := range listKeys.List {
@@ -639,7 +641,7 @@ func (s *Server) removeService(ctx context.Context, id string) error {
 		Ident: id,
 	})
 	if err != nil {
-		return err
+		return grpc.Errorf(codes.Internal, "%v", err)
 	}
 	nn := 0
 	filters := filters.NewArgs()
@@ -656,7 +658,7 @@ func (s *Server) removeService(ctx context.Context, id string) error {
 		time.Sleep(1 * time.Second)
 		nn++
 	}
-	return fmt.Errorf("service remove timeout: %s", id)
+	return grpc.Errorf(codes.DeadlineExceeded, "service remove timeout: %s\n", id)
 }
 
 // Remove implements stack.ServerService Remove
@@ -670,7 +672,8 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 		if stopped, err := s.StateMachine.Is(stack.Id, StackState_Stopped.String()); err != nil {
 			return nil, err
 		} else if !stopped {
-			return nil, errors.New("The stack is not stopped")
+			return nil, grpc.Errorf(codes.FailedPrecondition, "The stack is not stopped")
+
 		}
 	} else {
 		_, err := s.Stop(ctx, &StackRequest{
@@ -793,13 +796,13 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 	for _, serviceSpec := range stack.Services {
 		service, _, err := s.Docker.ServiceInspectWithRaw(ctx, fmt.Sprintf("%s-%s", stack.Name, serviceSpec.Name))
 		if err != nil {
-			return nil, err
+			return nil, grpc.Errorf(codes.Internal, "%v", err)
 		}
 		filter.Add("service", service.ID)
 	}
 	tasks, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: filter})
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	resolver := idresolver.New(s.Docker, false)
 	noTrunc := false
@@ -814,7 +817,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 
 		nodeValue, err := resolver.Resolve(ctx, swarm.Node{}, task.NodeID)
 		if err != nil {
-			return nil, err
+			return nil, grpc.Errorf(codes.Internal, "%v", err)
 		}
 
 		// Indent the name if necessary
