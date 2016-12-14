@@ -18,8 +18,8 @@ var PlatformStart = &cobra.Command{
 
 func init() {
 	PlatformStart.Flags().BoolP("force", "f", false, "Start all possible services, do not stop on error")
-	PlatformStart.Flags().BoolP("silence", "s", false, "no console output at all")
-	PlatformStart.Flags().BoolP("local", "l", false, "use local amp image")
+	PlatformStart.Flags().BoolP("silence", "s", false, "No console output at all")
+	PlatformStart.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformStart)
 }
 

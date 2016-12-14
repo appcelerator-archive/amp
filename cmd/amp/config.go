@@ -62,7 +62,7 @@ func init() {
 				}
 				fmt.Println(f.Value())
 			default:
-				log.Fatal("too many arguments")
+				log.Fatal("Too many arguments")
 			}
 		},
 	}

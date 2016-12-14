@@ -6,8 +6,8 @@ import (
 
 // TopicCmd is the main command for attaching topic subcommands.
 var TopicCmd = &cobra.Command{
-	Use:   "topic operations",
-	Short: "topic operations",
+	Use:   "topic",
+	Short: "Topic operations",
 	Long:  `Manage topic-related operations.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()

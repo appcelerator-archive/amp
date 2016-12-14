@@ -42,17 +42,16 @@ var (
 func parseFlags() {
 	var displayVersion bool
 
-	//
 	// set up flags
-	flag.StringVarP(&port, "port", "p", defaultPort, "server port (default '"+defaultPort+"')")
-	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "etcd comma-separated endpoints")
-	flag.StringVarP(&elasticsearchURL, "elasticsearchURL", "s", amp.ElasticsearchDefaultURL, "elasticsearch URL (default '"+amp.ElasticsearchDefaultURL+"')")
-	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "github app clientid (default '"+defaultClientID+"')")
-	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "github app clientsecret (default '"+defaultClientSecret+"')")
-	flag.StringVarP(&natsURL, "natsURL", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
-	flag.StringVarP(&influxURL, "influxURL", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
-	flag.StringVar(&dockerURL, "dockerURL", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
-	flag.BoolVarP(&displayVersion, "version", "V", false, "Print version information and quit")
+	flag.StringVarP(&port, "port", "p", defaultPort, "Server port (default '"+defaultPort+"')")
+	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "Etcd comma-separated endpoints")
+	flag.StringVarP(&elasticsearchURL, "elasticsearch-url", "s", amp.ElasticsearchDefaultURL, "Elasticsearch URL (default '"+amp.ElasticsearchDefaultURL+"')")
+	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "GitHub app clientid (default '"+defaultClientID+"')")
+	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "GitHub app clientsecret (default '"+defaultClientSecret+"')")
+	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
+	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
+	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
+	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
 	flag.Parse()

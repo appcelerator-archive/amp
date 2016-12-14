@@ -19,7 +19,7 @@ import (
 
 // RegCmd is the main command for attaching registry subcommands.
 var RegCmd = &cobra.Command{
-	Use:   "registry operations",
+	Use:   "registry",
 	Short: "Registry operations",
 	Long:  `Manage registry-related operations.`,
 }
@@ -31,7 +31,7 @@ var (
 	pushCmd  = &cobra.Command{
 		Use:   "push [image]",
 		Short: "Push an image to the amp registry",
-		Long:  `Push an image to the amp registry`,
+		Long:  `Push an image to the amp registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryPush(AMP, cmd, args)
 		},
@@ -39,7 +39,7 @@ var (
 	reglsCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List the amp registry images",
-		Long:  `List the amp registry images`,
+		Long:  `List the amp registry images.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryLs(AMP, cmd, args)
 		},
@@ -94,7 +94,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Error parsing reference: %q is not a valid repository/tag", image)
 	}
 	if _, isCanonical := distributionRef.(distreference.Canonical); isCanonical {
-		return errors.New("refusing to create a tag with a digest reference")
+		return errors.New("Refusing to create a tag with a digest reference")
 	}
 	tag := reference.GetTagFromNamedRef(distributionRef)
 	hostname, name := distreference.SplitHostname(distributionRef)
@@ -112,7 +112,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Printf("push image %s\n", taggedImage)
+	fmt.Printf("Push image %s\n", taggedImage)
 	resp, err := dclient.ImagePush(ctx, taggedImage, imagePushOptions)
 	if err != nil {
 		return err

@@ -33,6 +33,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			if listVersion {
 				fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+				cli.Exit(0)
 			}
 			fmt.Println(cmd.UsageString())
 		},
@@ -64,8 +65,8 @@ func main() {
 	// versionCmd represents the amp version
 	versionCmd := &cobra.Command{
 		Use:   "version",
-		Short: "Display the version number of amp",
-		Long:  `Display the version number of amp`,
+		Short: "Display amp version",
+		Long:  `Display amp version.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 		},
@@ -82,14 +83,17 @@ func main() {
 			fmt.Printf("Server: %s\n", Config.ServerAddress)
 		},
 	}
+	RootCmd.AddCommand(infoCmd)
+
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
-	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.config/amp/amp.yaml)")
-	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, `Verbose output`)
+	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
+	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
-	RootCmd.Flags().BoolVarP(&listVersion, "version", "V", false, "Version number")
-	RootCmd.AddCommand(infoCmd)
+	RootCmd.PersistentFlags().BoolVarP(&listVersion, "version", "V", false, "Version number")
+	RootCmd.PersistentFlags().BoolP("help", "h", false, "Display help")
+
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
 		fmt.Println(err)

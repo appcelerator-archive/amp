@@ -10,15 +10,15 @@ import (
 var PlatformPull = &cobra.Command{
 	Use:   "pull",
 	Short: "Pull platform images",
-	Long:  `Pull all AMP platform images`,
+	Long:  `Pull all AMP platform images.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		pullAMPImages(cmd, args)
 	},
 }
 
 func init() {
-	PlatformPull.Flags().BoolP("silence", "s", false, "no console output at all")
-	PlatformPull.Flags().BoolP("local", "l", false, "use local amp image")
+	PlatformPull.Flags().BoolP("silence", "s", false, "No console output at all")
+	PlatformPull.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformPull)
 }
 
