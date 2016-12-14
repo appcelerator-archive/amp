@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path"
 
 	"github.com/appcelerator/amp/api/client"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -13,7 +16,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	config.Verbose = verbose
 	config.ServerAddress = serverAddr
 
-	// Add matching envirionment variables - will be first in precedence.
+	// Add matching environment variables - will be first in precedence.
 	viper.AutomaticEnv()
 
 	// Add config file specified using flag - will be next in precedence.
@@ -22,10 +25,13 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	}
 
 	// Add default config file (without extension) - will be last in precedence.
-	// First search home directory; if not found, then attempt to also search working
+	// First search .config/amp directory; if not found, then attempt to also search working
 	// directory (will only succeed if process was started from application directory).
-	viper.SetConfigName(".amp")
-	viper.AddConfigPath("$HOME")
+	viper.SetConfigName("amp")
+	if os.Getenv("XDG_CONFIG_HOME") != "" {
+		viper.AddConfigPath("$XDG_CONFIG_HOME/amp")
+	}
+	viper.AddConfigPath("$HOME/.config/amp")
 	viper.AddConfigPath(".")
 
 	// If a config file is found, read it in.
@@ -37,7 +43,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 		}
 	} else {
 		if verbose || viper.GetBool("Verbose") {
-			fmt.Println("Warning: no valid configuration file (.amp.yaml) found in home or current directory")
+			fmt.Println("Warning: no valid configuration file (amp.yaml) found in ~/.config/amp/ or current directory")
 		}
 	}
 
@@ -46,6 +52,13 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	if err != nil {
 		fmt.Println(err)
 		panic("Unable to process config")
+	}
+
+	// check for legacy configuration file for warning
+	homedir, err := homedir.Dir()
+	legacyConfig := path.Join(homedir, ".amp.yaml")
+	if _, err := os.Stat(legacyConfig); err == nil {
+		fmt.Printf("Warning: legacy configuration file found (%s)\nIt won't be read, consider moving it to $HOME/.config/amp/amp.yaml or removing it\n", legacyConfig)
 	}
 }
 
