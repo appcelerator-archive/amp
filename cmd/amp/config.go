@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -16,12 +17,21 @@ func init() {
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Display or update the current configuration",
-		Long:  `Display or update the current configuration.`,
+		Long: `No arguments: display the current configuration.
+One argument: display the configuration key value.
+Two arguments: set the key to the value.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:
-				fmt.Println(Config)
+				// Display the full configuration
+				j, err := json.MarshalIndent(structs.Map(Config), "", "  ")
+				if err != nil {
+					fmt.Println("error: ", err)
+				} else {
+					fmt.Println(string(j))
+				}
 			case 1:
+				// Display key
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
@@ -29,6 +39,7 @@ func init() {
 				}
 				fmt.Println(f.Value())
 			case 2:
+				// Update key
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {

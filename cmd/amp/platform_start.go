@@ -18,7 +18,7 @@ var PlatformStart = &cobra.Command{
 
 func init() {
 	PlatformStart.Flags().BoolP("force", "f", false, "Start all possible services, do not stop on error")
-	PlatformPull.Flags().BoolP("quiet", "q", false, "Suppress terminal outpu")
+	PlatformStart.Flags().BoolP("quiet", "q", false, "Suppress terminal outpu")
 	PlatformStart.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformStart)
 }

@@ -1,4 +1,4 @@
-tack.ackage main
+package main
 
 import (
 	"fmt"

@@ -17,7 +17,7 @@ var PlatformPull = &cobra.Command{
 }
 
 func init() {
-	PlatformPull.Flags().BoolP("quiet", "q", false, "Suppress terminal outpu")
+	PlatformPull.Flags().BoolP("quiet", "q", false, "Suppress terminal output")
 	PlatformPull.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformPull)
 }
