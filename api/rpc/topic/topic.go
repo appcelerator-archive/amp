@@ -1,12 +1,13 @@
 package topic
 
 import (
-	"fmt"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"path"
 	"strings"
 )
@@ -29,7 +30,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 	}
 	for _, topic := range reply.Topics {
 		if strings.EqualFold(topic.Name, in.Topic.Name) {
-			return nil, fmt.Errorf("Topic already exists: %s", in.Topic.Name)
+			return nil, grpc.Errorf(codes.AlreadyExists, "Topic already exists: %s", in.Topic.Name)
 		}
 	}
 	topic := &TopicEntry{
@@ -37,7 +38,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 		Name: in.Topic.Name,
 	}
 	if err := s.Store.Create(ctx, path.Join(topicsRootKey, topic.Id), topic, nil, 0); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	return &CreateReply{Topic: topic}, nil
 }
@@ -46,7 +47,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	var topics []proto.Message
 	if err := s.Store.List(ctx, topicsRootKey, storage.Everything, &TopicEntry{}, &topics); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	reply := &ListReply{}
 	for _, topic := range topics {
@@ -59,11 +60,11 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*DeleteReply, error) {
 	topic := &TopicEntry{}
 	if err := s.Store.Get(ctx, path.Join(topicsRootKey, in.Id), topic, false); err != nil {
-		return nil, fmt.Errorf("Topic not found: %s", in.Id)
+		return nil, grpc.Errorf(codes.NotFound, "Topic not found: %s", in.Id)
 	}
 
 	if err := s.Store.Delete(ctx, path.Join(topicsRootKey, in.Id), false, nil); err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 
 	return &DeleteReply{Topic: topic}, nil
