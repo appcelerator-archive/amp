@@ -98,7 +98,7 @@ func copyNetworks(stack *Stack, specs map[string]networkSpec) (map[string]string
 		} else if ext, ok := spec.External.(bool); ok {
 			external = fmt.Sprintf("%t", ext)
 		} else if spec.External != nil {
-			return networkMap, fmt.Errorf("Invalid syntax near networks: %s: external\n", name)
+			return networkMap, fmt.Errorf("invalid syntax near networks: %s: external", name)
 		}
 		stack.Networks = append(stack.Networks, &NetworkSpec{
 			External:   external,

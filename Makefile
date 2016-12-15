@@ -32,10 +32,10 @@ DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 PROTOFILES = $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
 
 # generated files that can be cleaned
-GENERATED := $(shell find . -type f -name '*.pb.go' $(EXCLUDE_FILES_FILTER))
+GENERATED := $(shell find . -type f \( -name '*.pb.go' -o -name '*.pb.gw.go' \) $(EXCLUDE_FILES_FILTER))
 
 # ignore generated files when formatting/linting/vetting
-CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' $(EXCLUDE_FILES_FILTER))
+CHECKSRC := $(shell find . -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go' $(EXCLUDE_FILES_FILTER))
 
 OWNER := appcelerator
 REPO := github.com/$(OWNER)/amp
@@ -166,7 +166,7 @@ fmt:
 
 check:
 	@test -z $(shell gofmt -l ${CHECKSRC} | tee /dev/stderr) || echo "[WARN] Fix formatting issues with 'make fmt'"
-	@$(DOCKER_RUN) -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) bash -c 'for p in $$(go list ./... | grep -v /vendor/); do golint $${p} | sed "/pb\.go/d"; done'
+	@$(DOCKER_RUN) -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) bash -c 'for p in $$(go list ./... | grep -v /vendor/); do golint $${p} | sed "/pb\.\(gw\.\)*go/d"; done'
 	@go tool vet ${CHECKSRC}
 
 build-image:
