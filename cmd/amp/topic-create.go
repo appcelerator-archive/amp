@@ -27,11 +27,11 @@ func init() {
 
 func createTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		return errors.New("Must specify topic name")
+		return errors.New("must specify topic name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("Must specify topic name")
+		return errors.New("must specify topic name")
 	}
 
 	request := &topic.CreateRequest{Topic: &topic.TopicEntry{

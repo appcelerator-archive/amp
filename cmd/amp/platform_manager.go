@@ -87,7 +87,7 @@ func (s *ampManager) init(firstMessage string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amplifier"}
 	cli, err := client.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
-		return fmt.Errorf("Impossible to connect to Docker on: %s\n%v", DockerURL, err)
+		return fmt.Errorf("impossible to connect to Docker on: %s\n%v", DockerURL, err)
 	}
 	s.docker = cli
 	return nil
@@ -384,7 +384,7 @@ func (s *ampManager) updateServiceStates(service *ampService) error {
 						s.forceService(service)
 						return nil
 					}
-					return fmt.Errorf("Service %s startup timeout", service.name)
+					return fmt.Errorf("service %s startup timeout", service.name)
 				}
 			}
 			service.ready = false
@@ -466,7 +466,7 @@ func (s *ampManager) createService(service *ampService) error {
 			s.forceService(service)
 			return nil
 		}
-		return fmt.Errorf("Service %s image %s doesn't exist", service.name, service.image)
+		return fmt.Errorf("service %s image %s doesn't exist", service.name, service.image)
 	}
 	r, err := s.docker.ServiceCreate(s.ctx, *service.spec, options)
 	if err != nil {
@@ -598,7 +598,7 @@ func (s *ampManager) cleanVolume(name string) error {
 			return nil
 		}
 		if time.Now().Sub(started) > 30*time.Second {
-			return fmt.Errorf("Timeout waiting for all services removed")
+			return fmt.Errorf("timeout waiting for all services removed")
 		}
 		time.Sleep(1 * time.Second)
 	}

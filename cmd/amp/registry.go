@@ -81,7 +81,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	ac := types.AuthConfig{Username: "none"}
 	jsonString, err := json.Marshal(ac)
 	if err != nil {
-		return errors.New("Failed to marshal authconfig")
+		return errors.New("failed to marshal authconfig")
 	}
 	dst := make([]byte, base64.URLEncoding.EncodedLen(len(jsonString)))
 	base64.URLEncoding.Encode(dst, jsonString)
@@ -91,10 +91,10 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	image := args[0]
 	distributionRef, err := distreference.ParseNamed(image)
 	if err != nil {
-		return fmt.Errorf("Error parsing reference: %q is not a valid repository/tag", image)
+		return fmt.Errorf("error parsing reference: %q is not a valid repository/tag", image)
 	}
 	if _, isCanonical := distributionRef.(distreference.Canonical); isCanonical {
-		return errors.New("Refusing to create a tag with a digest reference")
+		return errors.New("refusing to create a tag with a digest reference")
 	}
 	tag := reference.GetTagFromNamedRef(distributionRef)
 	hostname, name := distreference.SplitHostname(distributionRef)
@@ -124,7 +124,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	re := regexp.MustCompile(`: digest: sha256:`)
 	if !re.Match(body) {
 		fmt.Print(string(body))
-		return errors.New("Push failed")
+		return errors.New("push failed")
 	}
 	return nil
 }
