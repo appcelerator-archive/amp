@@ -9,6 +9,8 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 var (
@@ -134,7 +136,7 @@ func (s *Service) Create(ctx context.Context, req *ServiceCreateRequest) (*Servi
 
 	r, err := s.Docker.ServiceCreate(ctx, service, options)
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 
 	resp := &ServiceCreateResponse{
@@ -189,7 +191,7 @@ func (s *Service) processMounts(service *swarm.ServiceSpec, mounts []string) {
 func (s *Service) Remove(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
 	err := s.Docker.ServiceRemove(ctx, req.Ident)
 	if err != nil {
-		return nil, err
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	fmt.Printf("Service removed %s\n", req.Ident)
 	response := &RemoveResponse{
