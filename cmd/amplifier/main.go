@@ -52,7 +52,7 @@ func parseFlags() {
 	flag.StringVarP(&natsURL, "natsURL", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influxURL", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "dockerURL", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
-	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
+	flag.BoolVarP(&displayVersion, "version", "V", false, "Print version information and quit")
 
 	// parse command line flags
 	flag.Parse()
