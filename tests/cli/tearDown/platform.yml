@@ -1,0 +1,5 @@
+- platform-status:
+  cmd: amp platform status
+  args:
+  options:
+  expectation: platform-status-running

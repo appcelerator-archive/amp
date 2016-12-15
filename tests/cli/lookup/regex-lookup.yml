@@ -4,10 +4,11 @@ logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
 docker-service-list: ID\s+NAME\s+REPLICAS\s+IMAGE\s+COMMAND\s*\n([a-zA-Z0-9\s\.\-:/]*){1,}
 docker-service-list-valid-service:   .*({{call .uniq `pinger`}}).*
 docker-service-list-invalid-service: .*[^{{call .uniq `pinger`}}].*
+platform-status-running: "status: running"
 service-id: ([a-z0-9]){25}
 service-curl: ((.)|(\s))*(pong)((.)|(\s))*
 service-remove: "{{call .uniq `pinger`}}"
-stack-list-running: NAME\s+ID\s+STATE\s*-+\s*\n+([a-z0-9A-Z\s]*){1,}({{call .uniq `stack1`}})([a-z0-9A-Z\s]*){1,}
+stack-list-running: NAME\s+ID\s+STATE\s*-+\s*\n+([a-z0-9A-Z\s]*){1,}({{call .uniq `stack`}})([a-z0-9A-Z\s]*){1,}
 stack-list-unavailable: No stack is available
 stack-id: ([a-z0-9]){64}
 stats-container: Service name\s+Container name\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*\n-+\s*\n([a-zA-Z0-9\-\.%\s/]*){1,}
