@@ -7,8 +7,8 @@
     <tbody>
       {{#each logs as log}}
         <tr>
-            <td>{{log.service_name}}</td>
-            <td>{{log.message}}</td>
+            <td class='service'>{{log.service_name}}</td>
+            <td class='message'>{{log.message}}</td>
         </tr>
       {{/each}}
     </tbody>
@@ -38,5 +38,13 @@
   }
   thead {
     white-space: nowrap;
+  }
+  .service {
+    white-space: nowrap;
+    padding-right: 2em;
+  }
+  .message {
+    white-space: pre;
+    height: 1em;
   }
 </style>

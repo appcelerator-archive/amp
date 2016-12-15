@@ -15,6 +15,9 @@
     {{/each}}
   </tbody>
 </table>
+{{#if error}}
+  <DisplayError bind:error></DisplayError>
+{{/if}}
 {{#if stack}}
   {{#if stack.state == "Stopped"}}
     <button on:click="start(stack)">start</button>
@@ -33,20 +36,22 @@
 {{/if}}
 
 <script>
-  import LogDisplay from './LogDisplay.html';
+  import LogDisplay from './LogDisplay.html'
+  import DisplayError from './DisplayError.html'
   import AmpApi from '../api/index.js'
   const api = new AmpApi()
 
   export default {
     onrender () {
-      this.getStacks().then(stacks => this.set({stacks}))
+      this.setStacks()
     },
     data () {
       return {
         stacks: [],
         tasks: '',
         logs: [],
-        stack: null
+        stack: null,
+        error: '',
       }
     },
     methods: {
@@ -55,46 +60,85 @@
           all: true
         })
       },
-      displayDetails (stack) {
-        this.set({stack})
-        if (stack.state == "Running") {
-          stack.tasks().then(tasks => this.set({tasks}))
+      async setStacks () {
+        try {
+          const stacks = await this.getStacks()
+          this.set({stacks})
+        } catch (error) {
+          this.set({error: error.message})
         }
-        stack.logs().then(logs => this.set({logs}))
       },
-      start (stack) {
-        stack.start().then(() => {
-          this.getStacks().then(stacks => this.set({stacks}))
-          this.displayDetails(stack)
-        })
+      async setTasks (stack) {
+        const tasks = await stack.tasks()
+        this.set({tasks})
       },
-      stop (stack) {
-        stack.stop().then(() => {
-          this.getStacks().then(stacks => this.set({stacks}))
-          this.displayDetails(stack)
-        })
+      async setLogs (stack) {
+        const logs = await stack.logs()
+        this.set({logs})
       },
-      remove (stack) {
-        stack.remove().then(() => {
-          this.getStacks().then(stacks => this.set({stacks}))
-          this.set({stack: null})
-        })
+      async displayDetails (stack) {
+        this.set({stack})
+        const promises = []
+        if (stack.state == "Running") {
+          promises.push(this.setTasks(stack))
+        }
+        promises.push(this.setLogs(stack))
+        try {
+          await Promise.all(promises)
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async start (stack) {
+        try {
+          await stack.start()
+          const stacks = await this.getStacks()
+          this.set({stacks})
+          await this.displayDetails(stack)
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async stop (stack) {
+        try {
+          await stack.stop()
+          const stacks = await this.getStacks()
+          this.set({stacks})
+          await this.displayDetails(stack)
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async remove (stack) {
+        try {
+          await stack.remove()
+          const stacks = await this.getStacks()
+          this.set({
+            stacks,
+            tasks: '',
+            logs: [],
+            stack: null,
+          })
+        } catch (error) {
+          this.set({error: error.message})
+        }
       }
     },
     components: {
-      LogDisplay
+      LogDisplay,
+      DisplayError,
     }
   }
 </script>
 
 <style>
-  body {
-    padding: 2em;
-  }
   table {
     text-align: left;
     font-family: monospace;
     border-collapse: collapse;
+  }
+  td {
+    padding-right: 1em;
   }
   tbody tr {
     cursor: pointer;

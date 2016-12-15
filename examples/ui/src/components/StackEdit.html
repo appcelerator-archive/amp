@@ -1,61 +1,41 @@
-<link rel="stylesheet" href="/codemirror.css">
-<input bind:value='name'>
-<div id='code'></div>
-{{#if stackSpec.parseError}}
-  <div class='error'>
-    {{stackSpec.parseError.message}}
-    {{stackSpec.parseError.parsedLine ? `on line ${stackSpec.parseError.parsedLine}` : ''}}
-  </div>
+<h1>Stack Edit</h1>
+<label>Name: <input bind:value='name'></label>
+<CodeMirrorYaml bind:yaml></CodeMirrorYaml>
+{{#if error}}
+  <DisplayError bind:error></DisplayError>
 {{else}}
   <button on:click='create()'>Create</button>
 {{/if}}
 
 
 <script>
-  import CodeMirror from 'codemirror'
-  import 'codemirror/mode/yaml/yaml.js'
-  import yaml from 'yamljs'
+  import CodeMirrorYaml from './CodeMirrorYaml.html'
+  import DisplayError from './DisplayError.html'
+  import yamlParser from 'yamljs'
   import AmpApi from '../api/index.js'
   const api = new AmpApi()
 
-  const stackyaml = `services:
-  python:
-    image: tutum/quickstart-python
-    public:
-    - name: python
-      internal_port: 80
-    replicas: 3
-  go:
-    image: htilford/go-redis-counter
-    public:
-    - name: go
-      internal_port: 80
-    replicas: 3
-  redis:
-    image: redis`
-
   export default {
-    onrender () {
-      this.cm = CodeMirror(document.querySelector('#code'), {
-        value: this.get('stackyaml'),
-        mode: 'yaml'
-      })
-      this.cm.on('changes', () => {
-        this.set({stackyaml: this.cm.doc.getValue()})
-      })
+    components: {
+      CodeMirrorYaml,
+      DisplayError,
     },
 
     data () {
       return {
-        name: 'myCounter',
-        stackyaml: stackyaml
+        name: '',
+        yaml: '',
+        createError: null,
       };
     },
 
     computed: {
-      stackSpec: (name, stackyaml) => {
+      stackSpec: (name, yaml) => {
+        if (yaml === '') {
+          return {}
+        }
         try {
-          const spec = yaml.parse(stackyaml)
+          const spec = yamlParser.parse(yaml)
           const stackSpec = {
             name,
             services: [],
@@ -82,28 +62,49 @@
             }
             stackSpec.services.push(serviceSpec)
           }
-          console.log(stackSpec)
           return stackSpec
         } catch (parseError) {
-          console.log(parseError)
           return {parseError}
         }
+      },
+
+      error (stackSpec, createError) {
+        if (stackSpec.parseError) {
+          return `${stackSpec.parseError.message} on line ${stackSpec.parseError.parsedLine}`
+        }
+        if (createError) {
+          return createError.message
+        }
+        return ''
       }
     },
 
     methods: {
-      create () {
-        api.createStack(this.get('stackSpec')).then(stack => console.log(stack))
+      async create () {
+        this.set({createError: null})
+        try {
+          await api.createStack(this.get('stackSpec'))
+          this.set({
+            name: '',
+            yaml: '',
+          })
+        } catch (createError) {
+          this.set({createError})
+        }
       }
     }
   };
 </script>
 
 <style>
-  .error {
-    color: indianred;
-  }
   button {
     cursor: pointer;
+  }
+  label, input {
+    vertical-align: middle;
+  }
+  input {
+    padding: 0.25em;
+    border-radius: 0.5em;
   }
 </style>

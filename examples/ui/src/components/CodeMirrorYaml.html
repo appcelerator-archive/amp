@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="/codemirror.css">
+<div ref:code></div>
+
+<script>
+  import CodeMirror from 'codemirror'
+  import 'codemirror/mode/yaml/yaml.js'
+
+  export default {
+    onrender () {
+      this.cm = CodeMirror(this.refs.code, {
+        value: this.get('yaml'),
+        mode: 'yaml'
+      })
+      this.cm.on('changes', () => {
+        const yaml = this.cm.doc.getValue()
+        this.set({yaml})
+      })
+      this.observe('yaml', yaml => {
+        if (yaml != this.cm.doc.getValue()) {
+          this.cm.doc.setValue(yaml)
+        }
+      })
+    },
+
+    data () {
+      return {
+        yaml: '',
+      };
+    },
+
+    methods: {
+      getCodeMirror () {
+        return this.cm
+      }
+    }
+  };
+</script>

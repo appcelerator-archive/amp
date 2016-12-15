@@ -1,0 +1,74 @@
+<div>
+  <table>
+    <thead>
+      <th class='service'>Service Name</th>
+      <th class='cpu'>CPU %</th>
+      <th class='mem_usage'>Mem usage</th>
+      <th class='mem'>Mem %</th>
+      <th class='io'>Disk IO read/write</th>
+      <th class='net'>Net Rx/Tx</th>
+    </thead>
+    <tbody>
+      {{#each stats as stat}}
+        <tr>
+            <td class='service'>{{stat.service_name}}</td>
+            <td class='cpu'>{{stat.cpu ? stat.cpu.toFixed(2) : '0.00'}}%</td>
+            <td class='mem_usage'>{{formatBytes(stat.mem_usage)}}</td>
+            <td class='mem'>{{stat.mem.toFixed(2)}}%</td>
+            <td class='io'>
+              {{stat.io_read ? formatBytes(stat.io_read) : 0}}
+              /
+              {{stat.io_write ? formatBytes(stat.io_write) : 0}}
+            </td>
+            <td class='net'>
+              {{stat.net_rx_bytes ? formatBytes(stat.net_rx_bytes) : 0}}
+              /
+              {{stat.net_tx_bytes ? formatBytes(stat.net_tx_bytes) : 0}}
+            </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  import bytes from 'bytes'
+  export default {
+    data () {
+      return {
+        stats: []
+      }
+    },
+    helpers: {
+      formatBytes (number) {
+        return bytes.format(number)
+      }
+    }
+  }
+</script>
+
+<style>
+  div {
+    color: #eee;
+    background-color: #222;
+    font-family: monospace;
+    padding: 0.5em;
+    border-radius: 0.25em;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  thead {
+    white-space: nowrap;
+  }
+  .service {
+    text-align: left;
+  }
+  .cpu, .mem_usage, .mem {
+    text-align: right;
+    padding: 0 1em;
+  }
+  .io, .net {
+    text-align: center;
+  }
+</style>

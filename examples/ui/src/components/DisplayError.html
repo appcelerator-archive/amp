@@ -1,0 +1,29 @@
+<div>{{error}}<button on:click='dismiss()'>×</button></div>
+
+<script>
+  export default {
+    data () {
+      return {
+        error: ''
+      }
+    },
+
+    methods: {
+      dismiss () {
+        this.set({error:''})
+      }
+    }
+  }
+</script>
+
+<style>
+  div {
+    color: indianred;
+  }
+  button {
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    font-size: 2em;
+  }
+</style>
