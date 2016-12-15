@@ -36,9 +36,20 @@ func PrintErr(err error) {
 	os.Exit(1)
 }
 
-// SaveConfiguration saves the configuration to ~/.ampswarm.yaml
+// SaveConfiguration saves the configuration to ~/.config/amp/amp.yaml
 func SaveConfiguration(c interface{}) (err error) {
-	homedir, err := homedir.Dir()
+	var configdir string
+	xdgdir := os.Getenv("XDG_CONFIG_HOME")
+	if xdgdir != "" {
+		configdir = path.Join(xdgdir, "amp")
+	} else {
+		homedir, err := homedir.Dir()
+		if err != nil {
+			return err
+		}
+		configdir = path.Join(homedir, ".config/amp")
+	}
+	err = os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return
 	}
@@ -46,7 +57,7 @@ func SaveConfiguration(c interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile(path.Join(homedir, ".amp.yaml"), contents, os.ModePerm)
+	err = ioutil.WriteFile(path.Join(configdir, "amp.yaml"), contents, os.ModePerm)
 	if err != nil {
 		return
 	}
