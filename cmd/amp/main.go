@@ -96,7 +96,7 @@ func main() {
 		cli.Exit(1)
 	}
 	if err := cmd.Execute(); err != nil {
-		if AMP.Verbose() == false {
+		if verbose {
 			fmt.Printf("Error during: amp %s, reason: %v\n", cmd.Name(), err)
 		}
 		cli.Exit(1)
