@@ -703,6 +703,16 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*StackReply, er
 	return &reply, nil
 }
 
+// Get implements stack.ServerService Get
+func (s *Server) Get(ctx context.Context, in *StackRequest) (out *StackFileRequest, err error) {
+	stack, err := s.getStack(ctx, in)
+	if err != nil {
+		return
+	}
+	out = &StackFileRequest{Stack: stack}
+	return
+}
+
 // List list all available stack with there status
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	var idList []proto.Message

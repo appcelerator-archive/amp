@@ -33,6 +33,11 @@ service StackService {
       delete: "/v1/stack/{stack_ident}"
     };
   };
+  rpc Get (StackRequest) returns (StackFileRequest) {
+    option (google.api.http) = {
+      get: "/v1/stack/{stack_ident}"
+    };
+  };
   rpc List(ListRequest) returns (ListReply) {
     option (google.api.http) = {
       get: "/v1/stack"
@@ -52,12 +57,12 @@ message StackFileRequest {
 
 // struct stack name/id based requests
 message StackRequest {
-  string stack_ident = 1;  
+  string stack_ident = 1;
 }
 
 // struct for remove request function
 message RemoveRequest {
-  string stack_ident = 1;  
+  string stack_ident = 1;
   bool force = 2;
 }
 
@@ -144,7 +149,7 @@ message NetworkIPAMConfig {
   map<string, string> aux_address =4;
 }
 
-// Stack struct 
+// Stack struct
 message Stack {
   string name = 1;
   string id = 2;

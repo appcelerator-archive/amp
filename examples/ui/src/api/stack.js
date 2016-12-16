@@ -34,4 +34,8 @@ export default class Stack {
     await sleep(100)
     return results
   }
+  async details () {
+    const results = await this.api.getJson(`stack/${this.id}`)
+    return results.stack
+  }
 }

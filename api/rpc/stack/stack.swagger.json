@@ -82,6 +82,29 @@
       }
     },
     "/v1/stack/{stack_ident}": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackFileRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_ident",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      },
       "delete": {
         "operationId": "Remove",
         "responses": {

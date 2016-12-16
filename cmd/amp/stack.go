@@ -83,6 +83,14 @@ var (
 			return stackTasks(AMP, cmd, args)
 		},
 	}
+	stackUrlsCmd = &cobra.Command{
+		Use:   "urls [stack name or id . . .]",
+		Short: "List the urls for a stack",
+		Long:  `List the urls for a stack.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return stackUrls(AMP, cmd, args)
+		},
+	}
 	listQuiet  *bool
 	listAll    *bool
 	listLast   *int64
@@ -107,6 +115,7 @@ func init() {
 	StackCmd.AddCommand(stackRmCmd)
 	StackCmd.AddCommand(stackListCmd)
 	StackCmd.AddCommand(stackTasksCmd)
+	StackCmd.AddCommand(stackUrlsCmd)
 }
 
 func stackCreate(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
@@ -378,5 +387,30 @@ func stackTasks(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return err
 	}
 	fmt.Print(reply.Message)
+	return nil
+}
+
+func stackUrls(amp *client.AMP, cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		log.Fatal("Must specify stack name or id")
+	}
+	for _, ident := range args {
+		if ident == "" {
+			log.Fatal("Must specify stack name or id")
+		}
+		request := &stack.StackRequest{
+			StackIdent: ident,
+		}
+		client := stack.NewStackServiceClient(amp.Conn)
+		reply, err := client.Get(context.Background(), request)
+		if err != nil {
+			return err
+		}
+		for _, service := range reply.Stack.Services {
+			for _, spec := range service.PublishSpecs {
+				fmt.Printf("http://%s.%s.local.atomiq.io/\n", spec.Name, reply.Stack.Name)
+			}
+		}
+	}
 	return nil
 }

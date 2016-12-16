@@ -25,9 +25,15 @@
   {{/if}}
   {{#if stack.state == "Running"}}
     <button on:click="stop(stack)">stop</button>
-  {{/if}}
-  {{#if stack.state == "Running"}}
     <pre>{{tasks}}</pre>
+    {{#if links.length}}
+      <div class='links'>
+        <h3>Links</h3>
+        {{#each links as link}}
+        <div><a href="{{link.href}}">{{link.text}}</a></div>
+        {{/each}}
+      </div>
+    {{/if}}
   {{/if}}
 {{/if}}
 
@@ -51,6 +57,7 @@
         tasks: '',
         logs: [],
         stack: null,
+        details: null,
         error: '',
       }
     },
@@ -76,12 +83,17 @@
         const logs = await stack.logs()
         this.set({logs})
       },
+      async setDetails (stack) {
+        const details = await stack.details()
+        this.set({details})
+      },
       async displayDetails (stack) {
         this.set({stack})
         const promises = []
         if (stack.state == "Running") {
           promises.push(this.setTasks(stack))
         }
+        promises.push(this.setDetails(stack))
         promises.push(this.setLogs(stack))
         try {
           await Promise.all(promises)
@@ -118,6 +130,7 @@
             tasks: '',
             logs: [],
             stack: null,
+            details: null,
           })
         } catch (error) {
           this.set({error: error.message})
@@ -127,6 +140,24 @@
     components: {
       LogDisplay,
       DisplayError,
+    },
+    computed: {
+      links (details) {
+        const links = []
+        if (details && details.services) {
+          for (const service of details.services) {
+            if (service.publish_specs) {
+              for (const spec of service.publish_specs) {
+                links.push({
+                  href: `http://${spec.name}.${details.name}.local.atomiq.io/`,
+                  text: `${service.name} - ${spec.name}`,
+                })
+              }
+            }
+          }
+        }
+        return links
+      }
     }
   }
 </script>
@@ -148,5 +179,8 @@
   }
   button {
     cursor: pointer;
+  }
+  .links {
+    padding-bottom: 1em;
   }
 </style>
