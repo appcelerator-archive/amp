@@ -7,6 +7,7 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -20,17 +21,27 @@ var (
 	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config      = &client.Configuration{}
-	configFile  string
-	verbose     bool
-	serverAddr  string
-	listVersion = true
+	Config                = &client.Configuration{}
+	configFile            string
+	verbose               bool
+	serverAddr            string
+	listVersion           = true
+	displayConfigFilePath = false
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
 		Use:   `amp [OPTIONS] COMMAND [arg...]`,
 		Short: "Appcelerator Microservice Platform.",
 		Run: func(cmd *cobra.Command, args []string) {
+			if displayConfigFilePath {
+				configFilePath := viper.ConfigFileUsed()
+				if configFilePath == "" {
+					fmt.Println("No configuration file used (using default configuration)")
+				} else {
+					fmt.Println(configFilePath)
+				}
+				cli.Exit(0)
+			}
 			if listVersion {
 				fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 				cli.Exit(0)
@@ -89,6 +100,7 @@ func main() {
 	RootCmd.SetHelpTemplate(helpTemplate)
 
 	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
+	RootCmd.PersistentFlags().BoolVar(&displayConfigFilePath, "config-file", false, "Display the location of the config file used (if any)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
 	RootCmd.PersistentFlags().BoolVarP(&listVersion, "version", "V", false, "Version number")
