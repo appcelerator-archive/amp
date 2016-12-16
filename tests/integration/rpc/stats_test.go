@@ -19,17 +19,17 @@ func TestStatsQueryService(t *testing.T) {
 	query.StatsIo = true
 	query.StatsNet = true
 	query.Period = "5m"
-	query.FilterServiceName = "amp"
+	query.FilterServiceName = `^amp`
 	res, err := statsClient.StatsQuery(ctx, &query)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Unexpected empty answer from server")
+		t.Errorf("unexpected empty answer from server")
 	}
 	for _, result := range res.Entries {
 		if !strings.HasPrefix(result.ServiceName, "amp") {
-			t.Errorf("Unexpected service selected: %s\n", result.ServiceName)
+			t.Errorf("unexpected service selected: %s", result.ServiceName)
 		}
 	}
 }
@@ -42,17 +42,17 @@ func TestStatsQueryContainer(t *testing.T) {
 	query.StatsIo = true
 	query.StatsNet = true
 	query.Period = "5m"
-	query.FilterContainerName = "amp"
+	query.FilterContainerName = `^amp`
 	res, err := statsClient.StatsQuery(ctx, &query)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Unexpected empty answer from server")
+		t.Errorf("unexpected empty answer from server")
 	}
 	for _, result := range res.Entries {
 		if !strings.HasPrefix(result.ContainerName, "amp") {
-			t.Errorf("Unexpected container selected: %s\n", result.ContainerName)
+			t.Errorf("unexpected container selected: %s", result.ContainerName)
 		}
 	}
 }
@@ -65,17 +65,17 @@ func TestStatsQueryTask(t *testing.T) {
 	query.StatsIo = true
 	query.StatsNet = true
 	query.Period = "5m"
-	query.FilterTaskName = "amp"
+	query.FilterTaskName = "^amp"
 	res, err := statsClient.StatsQuery(ctx, &query)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Unexpected empty answer from server")
+		t.Errorf("unexpected empty answer from server")
 	}
 	for _, result := range res.Entries {
 		if !strings.HasPrefix(result.TaskName, "amp") {
-			t.Errorf("Unexpected task selected: %s\n", result.TaskName)
+			t.Errorf("unexpected task selected: %s", result.TaskName)
 		}
 	}
 }
@@ -93,7 +93,7 @@ func TestStatsQueryNode(t *testing.T) {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Unexpected empty answer from server")
+		t.Errorf("unexpected empty answer from server")
 	}
 }
 
@@ -105,17 +105,17 @@ func TestStatsQueryServiceIdent(t *testing.T) {
 	query.StatsIo = true
 	query.StatsNet = true
 	query.Period = "5m"
-	query.FilterServiceIdent = "amp"
+	query.FilterServiceIdent = "^amp"
 	res, err := statsClient.StatsQuery(ctx, &query)
 	if err != nil {
 		t.Error(err)
 	}
 	if len(res.Entries) == 0 {
-		t.Errorf("Unexpected empty answer from server")
+		t.Errorf("unexpected empty answer from server")
 	}
 	for _, result := range res.Entries {
 		if !strings.HasPrefix(result.ServiceName, "amp") {
-			t.Errorf("Unexpected service selected: %s\n", result.ServiceName)
+			t.Errorf("unexpected service selected: %s", result.ServiceName)
 		}
 	}
 }
