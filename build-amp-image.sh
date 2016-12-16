@@ -59,7 +59,7 @@ echo "OK"
 echo "building shrunk image... "
 cp -p .dockerignore .dockerignore.bak
 echo "vendor" >> .dockerignore
-$DOCKER build -f $SHRINK_DOCKER_FILE -t appcelerator/amp:$TAG . >&2
+$DOCKER build -f $SHRINK_DOCKER_FILE -t $REPOSITORY_NAME:$TAG . >&2
 if [ $? -ne 0 ]; then
   mv .dockerignore.bak .dockerignore
   echo "failed"
@@ -73,4 +73,4 @@ rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1
 $DOCKER rmi $REPOSITORY_NAME:builder
-echo "OK"
+echo "OK, image is $REPOSITORY_NAME:$TAG"

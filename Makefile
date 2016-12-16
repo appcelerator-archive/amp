@@ -49,7 +49,7 @@ AGENT := amp-agent
 LOGWORKER := amp-log-worker
 GATEWAY := amplifier-gateway
 
-TAG := latest
+TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
@@ -174,7 +174,7 @@ check:
 	@go tool vet ${CHECKSRC}
 
 build-image:
-	@docker build --build-arg BUILD=$(BUILD) -t $(IMAGE) .
+	@BUILD=$(BUILD) $(PWD)/build-amp-image.sh $(TAG)
 
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
