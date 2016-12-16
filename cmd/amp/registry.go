@@ -19,7 +19,7 @@ import (
 
 // RegCmd is the main command for attaching registry subcommands.
 var RegCmd = &cobra.Command{
-	Use:   "registry operations",
+	Use:   "registry",
 	Short: "Registry operations",
 	Long:  `Manage registry-related operations.`,
 }
@@ -31,7 +31,7 @@ var (
 	pushCmd  = &cobra.Command{
 		Use:   "push [image]",
 		Short: "Push an image to the amp registry",
-		Long:  `Push an image to the amp registry`,
+		Long:  `Push an image to the amp registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryPush(AMP, cmd, args)
 		},
@@ -39,7 +39,7 @@ var (
 	reglsCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List the amp registry images",
-		Long:  `List the amp registry images`,
+		Long:  `List the amp registry images.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryLs(AMP, cmd, args)
 		},
@@ -81,7 +81,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	ac := types.AuthConfig{Username: "none"}
 	jsonString, err := json.Marshal(ac)
 	if err != nil {
-		return errors.New("Failed to marshal authconfig")
+		return errors.New("failed to marshal authconfig")
 	}
 	dst := make([]byte, base64.URLEncoding.EncodedLen(len(jsonString)))
 	base64.URLEncoding.Encode(dst, jsonString)
@@ -91,7 +91,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	image := args[0]
 	distributionRef, err := distreference.ParseNamed(image)
 	if err != nil {
-		return fmt.Errorf("Error parsing reference: %q is not a valid repository/tag", image)
+		return fmt.Errorf("error parsing reference: %q is not a valid repository/tag", image)
 	}
 	if _, isCanonical := distributionRef.(distreference.Canonical); isCanonical {
 		return errors.New("refusing to create a tag with a digest reference")
@@ -112,7 +112,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Printf("push image %s\n", taggedImage)
+	fmt.Printf("Push image %s\n", taggedImage)
 	resp, err := dclient.ImagePush(ctx, taggedImage, imagePushOptions)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	re := regexp.MustCompile(`: digest: sha256:`)
 	if !re.Match(body) {
 		fmt.Print(string(body))
-		return errors.New("Push failed")
+		return errors.New("push failed")
 	}
 	return nil
 }

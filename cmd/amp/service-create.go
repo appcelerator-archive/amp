@@ -18,7 +18,7 @@ var (
 	serviceCreateCmd = &cobra.Command{
 		Use:   "create [OPTIONS] IMAGE [CMD] [ARG...]",
 		Short: "Create a new service",
-		Long:  `Create a new service`,
+		Long:  `Create a new service.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return serviceCreate(AMP, cmd, args)
 		},
@@ -102,13 +102,13 @@ func serviceCreate(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	case "global":
 		if replicas != 0 {
 			// global mode can't specify replicas (only allowed 1 per node)
-			log.Fatal("replicas can only be used with replicated mode")
+			log.Fatal("Replicas can only be used with replicated mode")
 		}
 		swarmMode = &service.ServiceSpec_Global{
 			Global: &service.GlobalService{},
 		}
 	default:
-		log.Fatalf("invalid option for mode: %s", mode)
+		log.Fatalf("Invalid option for mode: %s", mode)
 	}
 
 	spec := &service.ServiceSpec{

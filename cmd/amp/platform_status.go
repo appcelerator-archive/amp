@@ -10,15 +10,15 @@ import (
 var PlatformStatus = &cobra.Command{
 	Use:   "status",
 	Short: "Get AMP platform status",
-	Long:  `Get AMP platform global status (stopped, partially running, running command return 1 if status is not running`,
+	Long:  `Get AMP platform global status (stopped, partially running, running command return 1 if status is not running.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getAMPStatus(cmd, args)
 	},
 }
 
 func init() {
-	PlatformStatus.Flags().BoolP("silence", "s", false, "no console output at all")
-	PlatformStatus.Flags().BoolP("local", "l", false, "use local amp image")
+	PlatformStatus.Flags().BoolP("silence", "s", false, "No console output at all")
+	PlatformStatus.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformStatus)
 }
 

@@ -13,8 +13,8 @@ import (
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Login via github",
-	Long:  `Create a github access token and store it in your Config file to authenticate further commands`,
+	Short: "Login via GitHub",
+	Long:  `Create a github access token and store it in your Config file to authenticate further commands.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {

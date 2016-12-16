@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -16,21 +15,13 @@ func init() {
 	// configCmd represents the Config command
 	configCmd := &cobra.Command{
 		Use:   "config",
-		Short: "Display or update configuration",
-		Long: `With no argument, display the current configuration.
-			With one argument, display the value for this key
-			With two arguments, set the value for the key (respectively 2nd and 1st arg)`,
+		Short: "Display the current configuration",
+		Long:  `Display the current configuration.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:
-				// Display full configuration
-				j, err := json.MarshalIndent(structs.Map(Config), "", "  ")
-				if err != nil {
-					fmt.Println("error:", err)
-				}
-				fmt.Println(string(j))
+				fmt.Println(Config)
 			case 1:
-				// Display one key
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
@@ -38,7 +29,6 @@ func init() {
 				}
 				fmt.Println(f.Value())
 			case 2:
-				// Change one key
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
@@ -54,7 +44,7 @@ func init() {
 				case "string":
 					f.Set(args[1])
 				default:
-					log.Fatal("unsupported field type")
+					log.Fatal("Unsupported field type")
 				}
 				err := cli.SaveConfiguration(Config)
 				if err != nil {
@@ -62,7 +52,7 @@ func init() {
 				}
 				fmt.Println(f.Value())
 			default:
-				log.Fatal("too many arguments")
+				log.Fatal("Too many arguments")
 			}
 		},
 	}

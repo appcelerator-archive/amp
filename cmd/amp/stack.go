@@ -16,7 +16,7 @@ import (
 
 // StackCmd is the main command for attaching stack subcommands.
 var StackCmd = &cobra.Command{
-	Use:   "stack operations",
+	Use:   "stack",
 	Short: "Stack operations",
 	Long:  `Manage stack-related operations.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -46,7 +46,7 @@ var (
 	stackStartCmd = &cobra.Command{
 		Use:   "start [stack name or id]",
 		Short: "Start a stopped stack",
-		Long:  `Start a stopped stack`,
+		Long:  `Start a stopped stack.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStart(AMP, cmd, args)
 		},
