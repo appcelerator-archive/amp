@@ -83,12 +83,12 @@ var (
 			return stackTasks(AMP, cmd, args)
 		},
 	}
-	stackLinksCmd = &cobra.Command{
-		Use:   "links [stack name or id]",
-		Short: "List the links for a stack",
-		Long:  `List the links for a stack.`,
+	stackUrlsCmd = &cobra.Command{
+		Use:   "urls [stack name or id . . .]",
+		Short: "List the urls for a stack",
+		Long:  `List the urls for a stack.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackLinks(AMP, cmd, args)
+			return stackUrls(AMP, cmd, args)
 		},
 	}
 	listQuiet  *bool
@@ -115,7 +115,7 @@ func init() {
 	StackCmd.AddCommand(stackRmCmd)
 	StackCmd.AddCommand(stackListCmd)
 	StackCmd.AddCommand(stackTasksCmd)
-	StackCmd.AddCommand(stackLinksCmd)
+	StackCmd.AddCommand(stackUrlsCmd)
 }
 
 func stackCreate(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
@@ -390,7 +390,7 @@ func stackTasks(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func stackLinks(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stackUrls(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
 	}
