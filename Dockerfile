@@ -5,7 +5,7 @@ RUN apk --no-cache add bash alpine-sdk
 WORKDIR /go/src/github.com/appcelerator/amp
 COPY . /go/src/github.com/appcelerator/amp
 ARG BUILD=unknown
-RUN make BUILD=$BUILD install
+RUN make BUILD=$BUILD install-host
 EXPOSE 50101
 ENTRYPOINT []
 CMD [ "/go/bin/amplifier"]
