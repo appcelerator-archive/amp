@@ -1,0 +1,194 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/storage/storage.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/storage": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageListResponse"
+            }
+          }
+        },
+        "tags": [
+          "Storage"
+        ]
+      }
+    },
+    "/v1/storage/{key}": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageStorageResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      },
+      "delete": {
+        "operationId": "Delete",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageStorageResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      },
+      "put": {
+        "operationId": "Put",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageStorageResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/storagePutStorage"
+            }
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "storageDeleteStorage": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for delete storage request function"
+    },
+    "storageGetStorage": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for get storage request function"
+    },
+    "storageListResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/storageStorageInfo"
+          }
+        }
+      },
+      "title": "struct for list storage response function"
+    },
+    "storageListStorage": {
+      "type": "object",
+      "title": "struct for list storage request function"
+    },
+    "storagePutStorage": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "string"
+        },
+        "val": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for put storage request function"
+    },
+    "storageStorageInfo": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "string"
+        },
+        "val": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct part of ListResponse Struct"
+    },
+    "storageStorageResponse": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "string"
+        },
+        "val": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "struct for storage object key response"
+    }
+  }
+}

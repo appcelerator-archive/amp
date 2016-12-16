@@ -149,7 +149,7 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 
 	if !txn.Succeeded {
 		// TODO: implement guaranteed update support
-		return fmt.Errorf("Update for %s failed because of a conflict", key)
+		return fmt.Errorf("update for %s failed because of a conflict", key)
 	}
 
 	// TODO: save metatdata
@@ -214,7 +214,26 @@ func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj 
 	return nil
 }
 
-// Create implements storage.Interface.Create
+//Put implements storage.Interface.Put
+func (s *etcd) Put(ctx context.Context, key string, val proto.Message, ttl int64) error {
+	key = s.prefix(key)
+
+	data, _ := proto.Marshal(val)
+
+	txn, err := s.client.KV.Txn(ctx).
+		If().
+		Then(clientv3.OpPut(key, string(data))).
+		Commit()
+	if err != nil {
+		return err
+	}
+	if !txn.Succeeded {
+		return fmt.Errorf("transaction failed for key: %v", key)
+	}
+	return nil
+}
+
+//CompareAndSet implements storage.Interface.CompareAndSet
 func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error {
 	key = s.prefix(key)
 

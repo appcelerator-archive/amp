@@ -16,6 +16,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/config"
@@ -86,6 +87,10 @@ func Start(config Config) {
 	topic.RegisterTopicServer(s, &topic.Server{
 		Store: runtime.Store,
 		Nats:  runtime.Nats,
+	})
+	//register storage service
+	storage.RegisterStorageServer(s, &storage.Server{
+		Store: runtime.Store,
 	})
 
 	// start listening
