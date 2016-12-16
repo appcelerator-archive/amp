@@ -59,14 +59,14 @@ UG := $(shell echo "$$(id -u $${USER}):$$(id -g $${USER})")
 
 DOCKER_RUN := docker run -t --rm -u $(UG)
 
-GOTOOLS := appcelerator/gotools2:1.0.0
+GOTOOLS := appcelerator/gotools2:1.2.0
 GOOS := $(shell uname | tr [:upper:] [:lower:])
 GOARCH := amd64
-GO := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) $(GOTOOLS) go
-GOTEST := $(DOCKER_RUN) --name go -v $${HOME}/.ssh:/root/.ssh -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) go test -v
+GO := $(DOCKER_RUN) --name go -e HOME=$$HOME -v $${HOME}/.ssh:$$HOME/.ssh:ro -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) -e GOOS=$(GOOS) -e GOARCH=$(GOARCH) $(GOTOOLS) go
+GOTEST := $(DOCKER_RUN) --name go -e HOME=$$HOME -v $${HOME}/.ssh:$$HOME/.ssh:ro -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) go test -v
 
 GLIDE_DIRS := $${HOME}/.glide $${PWD}/.glide vendor
-GLIDE := $(DOCKER_RUN) -u $(UG) -v $${HOME}/.ssh:/root/.ssh -v $${HOME}/.glide:/root/.glide -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
+GLIDE := $(DOCKER_RUN) -e HOME=$$HOME -v $$HOME/.ssh:$$HOME/.ssh:ro  -v $$HOME/.gitconfig:$$HOME/.gitconfig -v $$HOME/.glide:$$HOME/.glide -e GLIDE_HOME=$$HOME/.glide -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
 
@@ -80,9 +80,13 @@ version:
 
 install-deps:
 	@$(GLIDE_INSTALL)
+    # temporary fix to trace conflict
+	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 update-deps:
 	@$(GLIDE_UPDATE)
+    # temporary fix to trace conflict
+	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 proto: $(PROTOFILES)
 	@go run hack/proto.go

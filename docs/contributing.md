@@ -35,8 +35,8 @@ vendor artifacts (the `vendor` directory and lock file (`glide.lock`), along wit
 
 When you want to add new dependencies to the project, run `glide get <package>`.
 
-When you want to reinstall dependencies, run `glide install` (or `make install-deps`).
+When you want to reinstall dependencies, run `make install-deps`.
 
-When you want to update to the latest versions, run `glide update` (or `make update-deps`). Run `make test` to ensure tests continue to pass after updates
+When you want to update to the latest versions, run `make update-deps`. Run `make test` to ensure tests continue to pass after updates
 before submitting a PR.
 
