@@ -1,5 +1,5 @@
 
-.PHONY: all clean proto-clean install fmt simplify check version build-image run proto proto-host
+.PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
 .PHONY: test test-unit test-cli test-integration test-integration-host
@@ -29,7 +29,10 @@ INTEGRATION_TEST_PACKAGES := $(shell find ./tests/integration -type f -name '*_t
 DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 
 # generated file dependencies for proto rule
-PROTOFILES = $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
+PROTOFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -print)
+PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
+PROTOGWTARGETS := api/rpc/logs/logs.pb.gw.go api/rpc/service/service.pb.gw.go api/rpc/stack/stack.pb.gw.go api/rpc/stats/stats.pb.gw.go api/rpc/topic/topic.pb.gw.go
+PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
 
 # generated files that can be cleaned
 GENERATED := $(shell find . -type f \( -name '*.pb.go' -o -name '*.pb.gw.go' \) $(EXCLUDE_FILES_FILTER))
@@ -49,7 +52,7 @@ AGENT := amp-agent
 LOGWORKER := amp-log-worker
 GATEWAY := amplifier-gateway
 
-TAG := latest
+TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
@@ -88,8 +91,22 @@ update-deps:
     # temporary fix to trace conflict
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
-proto: $(PROTOFILES)
+# explicit rule to compile protobuf files
+%.pb.go: %.proto
 	@go run hack/proto.go
+%.pb.gw.go: %.proto
+	@go run hack/proto.go
+
+# used to install when you're already inside a container
+install-host: proto-host
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
+
+proto:
+	@echo proto: $(PROTOALLTARGETS)
 
 # used to run protoc when you're already inside a container
 proto-host: $(PROTOFILES)
@@ -98,26 +115,50 @@ proto-host: $(PROTOFILES)
 proto-clean:
 	@rm -rf $(GENERATED)
 
-clean:
+bin-clean:
 	@rm -f $$(which $(CLI)) ./$(CLI)
 	@rm -f $$(which $(SERVER)) ./$(SERVER)
 	@rm -f coverage.out coverage-all.out
 	@rm -f $$(which $(AGENT)) ./$(AGENT)
 	@rm -f $$(which $(LOGWORKER)) ./$(LOGWORKER)
 	@rm -f $$(which $(GATEWAY)) ./$(GATEWAY)
+	@rm -f *.exe
 
-install:
+clean: proto-clean bin-clean
+
+install: install-cli install-server install-agent install-log-worker install-gateway
+
+DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+VENDORSRC := $(shell find ./vendor -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+# binaries are compiled as soon as their sources are newer than the existing binary
+CLISRC := $(shell find ./cmd/amp -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+SERVERSRC := $(shell find ./cmd/amplifier -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+AGENTSRC := $(shell find ./cmd/amp-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+LOGWORKERSRC := $(shell find ./cmd/amp-log-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+GATEWAYSRC := $(shell find ./cmd/amplifier-gateway -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
+install-server: $(SERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
+install-agent: $(AGENTSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
+install-log-worker: $(LOGWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
+install-gateway: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
 
-build:
+build: build-cli build-server build-agent build-log-worker build-gateway
+
+build-cli: proto $(CLISRC) $(APISRC) $(VENDORSRC) Makefile
 	@hack/build $(CLI)
+build-server: proto
 	@hack/build $(SERVER)
+build-agent: proto
 	@hack/build $(AGENT)
+build-log-worker: proto
 	@hack/build $(LOGWORKER)
+build-gateway: proto
 	@hack/build $(GATEWAY)
 
 build-server-image:
@@ -174,7 +215,7 @@ check:
 	@go tool vet ${CHECKSRC}
 
 build-image:
-	@docker build --build-arg BUILD=$(BUILD) -t $(IMAGE) .
+	@BUILD=$(BUILD) $(PWD)/build-amp-image.sh $(TAG)
 
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
