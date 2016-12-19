@@ -2,6 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
@@ -12,13 +20,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"time"
 )
 
 // ## `amp-function-listener`
