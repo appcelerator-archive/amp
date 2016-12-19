@@ -1,4 +1,4 @@
-  
+
 .PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host rules
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
