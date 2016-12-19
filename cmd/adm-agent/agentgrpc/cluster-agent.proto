@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package agentgrpc;
+
+import "google/api/annotations.proto";
+
+service ClusterAgentService {
+        rpc GetNodeInfo (GetNodeInfoRequest) returns (NodeInfo) {}
+        rpc PurgeNode (PurgeNodeRequest) returns (PurgeNodeAnswer) {}
+        rpc PullImage (PullImageRequest) returns (AgentRet) {}
+}
+
+message AgentRet{
+
+}
+
+message GetNodeInfoRequest{
+
+}
+
+message NodeInfo{
+        string id = 1;
+        string role = 2;
+        string availability = 3;
+        string hostname = 4;
+        string host_architecture = 5;
+        string host_os =6;
+        int64 cpu = 7;
+        int64 memory = 8;
+        string docker_version = 9;
+        string status = 10;
+        string address = 11;
+        int64 nb_containers = 12;
+        int64 nb_containers_running = 13;
+        int64 nb_containers_paused = 14;
+        int64 nb_containers_stopped = 15;
+        int64 images = 16;      
+}
+
+message PurgeNodeRequest{
+        string node = 1;
+        bool container = 2;
+        bool volume = 3;
+        bool image = 4;
+        bool force = 5;
+}
+
+message PurgeNodeAnswer{
+        int32 nb_containers = 1;
+        int32 nb_volumes = 2;
+        int32 nb_images = 3;
+}
+
+message PullImageRequest{
+        string image = 1;
+}
+
+
