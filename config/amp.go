@@ -1,5 +1,7 @@
 package amp
 
+import "time"
+
 const (
 	// AmplifierDefaultEndpoint is the default amplifier endpoint
 	AmplifierDefaultEndpoint = "amplifier:50101"
@@ -24,4 +26,16 @@ const (
 
 	// DockerDefaultVersion is the default docker version
 	DockerDefaultVersion = "1.24"
+
+	// DefaultTimeout is the default timeout
+	DefaultTimeout = time.Minute
+
+	// NatsFunctionTopic is the topic used for function calls
+	NatsFunctionTopic = "amp-function-calls"
+
+	// NatsLogsTopic is the topic used for log events
+	NatsLogsTopic = "amp-logs"
+
+	// EtcdFunctionRootKey is the root key used for functions in the storage
+	EtcdFunctionRootKey = "functions"
 )

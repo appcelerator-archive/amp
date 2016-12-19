@@ -3,6 +3,8 @@
 /amplifier-gateway
 /amp-agent
 /amp-log-worker
+/amp-function-listener
+/amp-function-worker
 /amp-cluster
 /dist
 /*.exe

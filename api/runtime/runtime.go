@@ -4,8 +4,8 @@ import (
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/client"
-	"github.com/nats-io/go-nats-streaming"
 )
 
 var (
@@ -21,6 +21,6 @@ var (
 	// Docker is the Docker client
 	Docker *client.Client
 
-	//Nats is the nats client
-	Nats stan.Conn
+	//NatsStreaming is the nats streaming client
+	NatsStreaming ns.NatsStreaming
 )
