@@ -16,10 +16,10 @@ Before becoming involved, please read our [CODE-OF-CONDUCT](CODE-OF-CONDUCT.md).
 
 ## Reporting security issues
 
-The project maintainers take security seriously. If you discover a security issue,please bring it to their
+The project maintainers take security seriously. If you discover a security issue, please bring it to their
 attention right away!
 
-Please **DO NOT** file a public issue. Instead, send your report privatgely to
+Please **DO NOT** file a public issue. Instead, send your report privately to
 [security@appcelerator.io](mailto:security@appcelerator.io).
 
 ## Reporting other issues
@@ -43,6 +43,7 @@ Please include:
   * The output of `docker version`.
   * The output of `docker info`.
   * The output of `amp --version`.
+  * The output of `amp --config`.
   * Steps to reproduce the problem (if possible and applicable).
 
 If sending lengthy output such as logs, it is preferred that you create a
