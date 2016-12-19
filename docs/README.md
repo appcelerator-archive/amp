@@ -1,7 +1,42 @@
 AMP: A... Microservices Platform ![WIP](https://cdn.rawgit.com/appcelerator/amp/master/docs/static_files/amp--docs-WIP-yellow.svg)
 ============================
 
-AMP is currently under development and this section is here to help you get started based on latest stable tagged version of the project. If you're here, then you **ARE** pioneering with us and we encourage you to [get in touch](./contributing.md) !
+AMP is currently under development and this section is here to help you get started based on latest stable tagged version of the project. If you're here, then you **ARE** pioneering with us and we encourage you to [get in touch](./development.md) !
+
+# Overview
+
+## What is AMP?
+
+AMP is the codename for a project that incubated at Atomiq, then became the Appcelerator Microservices Platform. Ultimately, the project's goal is to provide developers with facilities to deploy containerized microservices for what is now called "serverless computing" that can be activated
+
+* on demand (for example, in response to a message or an API request)
+* on schedule (think "cloud-based Cron")
+* on event (by monitoring realtime message streams)
+
+Microservices have access to system services that can help accelerate development. These services are automatically configured for high availablility and include:
+
+* distributed key/value store
+* high throughput, durable, ordered message queuing
+
+What is referred to as AMP today is actually just the foundation for serverless computing. This foundation provides a Container-as-a-Service (CaaS), which at a high level has three important aspects. It provides:
+
+* services for setting up and managing cluster infrastructure to host Docker containers;
+* services for registering, building, and deploying Docker images;
+* services for monitoring and querying multiplexed logs and metrics pertaining to cluster and application performance.
+
+These services are accessible via a CLI, a web UI, and client libraries for supported languages.
+
+This foundation allows developers to deploy complete containerized application stacks and manage, scale, and monitor their services running in a cluster.
+
+## What distinguishes the foundation platform from any other CaaS solution?
+
+AMP provides CaaS features, but it is also part of a bigger picture to support our enterprise customers in the API space. Axway and Appcelerator customers will reap the benefits of modern container technology while also enjoying the advantages of deep integration into our existing solutions for API gateways, federated security and policy enforcement, and analytics.
+
+AMP also provides developers with excellent insight into their application's behavior. Developers can create filtered queries for logs and metrics that can return results for a specific period or can be streamed for realtime monitoring. These filtered queries allow developers to focus on specific aspects of their application's behavior, and multiple queries can execute and stream simultaneously without impacting their application's performance.
+
+# Pre-requisites
+
+AMP only requires Docker with [Swarm mode enabled](./docker-swarm.md).
 
 # Installation
 
@@ -9,30 +44,6 @@ AMP can be installed either on your computer for building solutions or on a clus
 
 # Configuration
 
-## Docker Swarm cluster
-
-AMP requires a Docker Swarm cluster to operate.
-If you use an automated way to deploy AMP in a cluster, this step is already done, you can skip this paragraf.
-If you installed AMP locally, here are the instructions to create a local Docker Swarm cluster:
-
-    $ docker swarm init
-    
-It should provide the following output:
-
-    Swarm initialized: current node (ej9yivb39rrq2iyk3itdqvcq1) is now a manager.
-      
-    To add a worker to this swarm, run the following command:
-      
-        docker swarm join \
-        --token SWMTKN-1-08xe2j6h2y812exq4rw5cj7j98112gn2ar88s9kkniimmn4i74-1bkwl472uc7llf4divn7k3bkv \
-        10.128.27.12:2377
-      
-    To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
- 
-Make sure you Docker Swarm cluster is up and ready by typing the following command:
-
-    $ docker node ls
-    
 ## AMP CLI
 
 The AMP Command Line Interface is a gRPC client connecting to the AMP daemon on `127.0.0.1:8080` by default, which is fine if you're using AMP locally.
@@ -42,12 +53,22 @@ If you have deployed your AMP Swarm cluster somewhere else and you want to contr
 
         $ amp --server amp.some.where:8080 [command]
 
- * In the configuration file:
+ * In the configuration file ($HOME/.config/amp/amp.yaml):
 
-        $ cat ~/.amp.yaml
+        $ amp config
+        Verbose: false
+        Github: ""
+        Target: ""
+        Images: []
+        Port: ""
         ServerAddress: amp.some.where:8080
+        CmdTheme: ""
         $ amp [command]
-  
+
+* Update the configuration:
+
+        $ amp config ServerAddress an.other.place:8080
+
 # Starting AMP
 
 Use the AMP command `amp platform` (or the `amp pf` short version) to manipulate AMP swarm services.
@@ -104,6 +125,10 @@ Options:
     amp stack rm
     amp stack stop
     amp stack up
+
+Related pages:
+ - [Stack file reference](stackfile-reference.md)
+ - [Stack userguide](stacks-userguide.md)
 
 ### Logs
 
@@ -212,7 +237,7 @@ A few useful examples:
 
 ### Managing Docker images
 
+_Main page: [AMP registry](registry.md)_
+
     amp registry ls
     amp registry push
-
-More details in the [userguide](userguide/registry.md)

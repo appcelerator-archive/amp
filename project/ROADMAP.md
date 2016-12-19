@@ -23,6 +23,7 @@ you can still offer to help.
 
 | Milestone          | Target date | Release captain                                |
 |--------------------|-------------|------------------------------------------------|
+| [AMP 0.4.0][0.4.0] | dec 2016  | **[@ndegory](https://github.com/ndegory)**
 | [AMP 0.3.0][0.3.0] | 11/07/2016  | **[@ndegory](https://github.com/ndegory)**
 | [AMP 0.2.1][0.2.1] | 10/24/2016  | **[@subfuzion](https://github.com/subfuzion)**
 | [AMP 0.1.1][0.1.1] | 10/10/2016  | **[@subfuzion](https://github.com/subfuzion)**
@@ -46,9 +47,11 @@ The goal for the `0.3` milestone is to provide separation between stacks and
 the infrastructure services that launch and manage their lifecycles, and to lay
 the foundation for managing workers.
 
+### 0.4 TBD
 
 [0.1.0]: https://github.com/appcelerator/amp/milestone/1?closed=1
 [0.1.1]: https://github.com/appcelerator/amp/milestone/2?closed=1
 [0.2.0]: https://github.com/appcelerator/amp/milestone/3
 [0.2.1]: https://github.com/appcelerator/amp/milestone/5
 [0.3.0]: https://github.com/appcelerator/amp/milestone/4
+[0.4.0]: https://github.com/appcelerator/amp/milestone/6
