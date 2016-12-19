@@ -18,7 +18,7 @@
 * add cli color theme [#495](https://github.com/appcelerator/amp/pull/495)
 * Fix stats issues [#404](https://github.com/appcelerator/amp/pull/404) [#403](https://github.com/appcelerator/amp/pull/403)
 
-### Vendoringttps://github.com/appcelerator/amp/pull/586
+### Vendoring
 
 * Global update of vendors, based on tags instead of commits [#501](https://github.com/appcelerator/amp/pull/501), [#515](https://github.com/appcelerator/amp/pull/515)
 
@@ -33,7 +33,11 @@
 * Dockerized integration tests [#479](https://github.com/appcelerator/amp/pull/479)
 * refactor rpc tests [#416](https://github.com/appcelerator/amp/pull/416)
 * improve stats tests [#405](https://github.com/appcelerator/amp/pull/405)
-
+* CLI tests
+  * Synchronous setup and tearDown [#522](https://github.com/appcelerator/amp/pull/522)
+  * Asynchronous execution [#454](https://github.com/appcelerator/amp/pull/454)
+  * Templating regexes [#478](https://github.com/appcelerator/amp/pull/478)
+  * Templating ports [#441](https://github.com/appcelerator/amp/pull/441) [#445](https://github.com/appcelerator/amp/pull/445)
 
 ## 0.2.2 (2016-10-25)
 
