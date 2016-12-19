@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
+	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -68,6 +69,10 @@ func run() (err error) {
 		return
 	}
 	err = topic.RegisterTopicHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
+	if err != nil {
+		return
+	}
+	err = function.RegisterFunctionHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
 	if err != nil {
 		return
 	}

@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	"log"
 )
 
 const elasticSearchTimeIDQuery = `{"query":{"match":{"container_id":"[container_id]"}},"sort":{"time_id":{"order":"desc"}},"from":0,"size":1}`
@@ -139,12 +139,12 @@ func startReadingLogs(ID string, data *ContainerData) {
 
 		encoded, err := proto.Marshal(&logEntry)
 		if err != nil {
-			fmt.Printf("error marshalling log entry: %v", err)
+			fmt.Println("error marshalling log entry: %v", err)
 		}
 
-		_, err = agent.natsClient.PublishAsync("amp-logs", encoded, nil)
+		_, err = agent.natsStreaming.GetClient().PublishAsync(amp.NatsLogsTopic, encoded, nil)
 		if err != nil {
-			log.Printf("error sending log entry: %v", err)
+			fmt.Println("error sending log entry: %v", err)
 		}
 	}
 }

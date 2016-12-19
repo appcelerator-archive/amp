@@ -2,9 +2,9 @@ package topic
 
 import (
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -18,8 +18,8 @@ const (
 
 // Server is used to implement topic.TopicServer
 type Server struct {
-	Store storage.Interface
-	Nats  stan.Conn
+	Store         storage.Interface
+	NatsStreaming ns.NatsStreaming
 }
 
 // Create implements topic.TopicServer

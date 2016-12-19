@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package function;
+
+import "google/api/annotations.proto";
+
+service Function {
+  rpc Create (CreateRequest) returns (CreateReply) {
+    option (google.api.http) = {
+      post: "/v1/function",
+      body: "*"
+    };
+  };
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/function"
+    };
+  };
+  rpc Delete (DeleteRequest) returns (DeleteReply) {
+    option (google.api.http) = {
+      delete: "/v1/function/{id}"
+    };
+  };
+}
+
+message FunctionEntry {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+}
+
+message FunctionCall {
+  string callID = 1;
+  bytes input = 2;
+  FunctionEntry function = 3;
+  string returnTo = 4;
+}
+
+message FunctionReturn {
+  string callID = 1;
+  bytes output = 2;
+}
+
+message CreateRequest {
+  FunctionEntry function = 1;
+}
+
+message CreateReply {
+  FunctionEntry function = 1;
+}
+
+message ListRequest {
+}
+
+message ListReply {
+  repeated FunctionEntry functions = 1;
+}
+
+message DeleteRequest {
+  string id = 1;
+}
+
+message DeleteReply {
+}

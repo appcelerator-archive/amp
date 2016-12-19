@@ -10,6 +10,7 @@ import (
 	//"google.golang.org/grpc"
 
 	//tested packages
+	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -23,13 +24,14 @@ import (
 )
 
 var (
-	ctx           context.Context
-	statsClient   stats.StatsClient
-	stackClient   stack.StackServiceClient
-	topicClient   topic.TopicClient
-	serviceClient service.ServiceClient
-	logsClient    logs.LogsClient
-	store         storage.Interface
+	ctx            context.Context
+	functionClient function.FunctionClient
+	statsClient    stats.StatsClient
+	stackClient    stack.StackServiceClient
+	topicClient    topic.TopicClient
+	serviceClient  service.ServiceClient
+	logsClient     logs.LogsClient
+	store          storage.Interface
 )
 
 func TestMain(m *testing.M) {
@@ -52,6 +54,7 @@ func TestMain(m *testing.M) {
 	ctx = context.Background()
 
 	// init package clients
+	functionClient = function.NewFunctionClient(conn)
 	statsClient = stats.NewStatsClient(conn)
 	stackClient = stack.NewStackServiceClient(conn)
 	topicClient = topic.NewTopicClient(conn)
