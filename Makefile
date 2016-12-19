@@ -51,6 +51,9 @@ SERVER := amplifier
 AGENT := amp-agent
 LOGWORKER := amp-log-worker
 GATEWAY := amplifier-gateway
+CLUSTERSERVER := adm-server
+CLUSTERAGENT := adm-agent
+AMPADM := ampadm
 
 TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -125,7 +128,9 @@ bin-clean:
 
 clean: proto-clean bin-clean
 
-install: install-cli install-server install-agent install-log-worker install-gateway
+clean: proto-clean bin-clean
+
+install: install-cli install-server install-agent install-log-worker install-gateway install-adm-server install-adm-agent install-ampadm
 
 DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
@@ -136,6 +141,8 @@ SERVERSRC := $(shell find ./cmd/amplifier -type f -name '*.go' -not -name '*.pb.
 AGENTSRC := $(shell find ./cmd/amp-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 LOGWORKERSRC := $(shell find ./cmd/amp-log-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 GATEWAYSRC := $(shell find ./cmd/amplifier-gateway -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+
+
 install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 install-server: $(SERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
@@ -146,6 +153,12 @@ install-log-worker: $(LOGWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALL
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
 install-gateway: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
+install-adm-server: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
+install-adm-agent: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
+install-ampadm: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AMPADM)
 
 build: build-cli build-server build-agent build-log-worker build-gateway
 
@@ -159,48 +172,66 @@ build-log-worker: proto
 	@hack/build $(LOGWORKER)
 build-gateway: proto
 	@hack/build $(GATEWAY)
+build-adm-server: proto
+	@hack/build $(CLUSTERSERVER)
+build-adm-agent: proto
+	@hack/build $(CLUSTERAGENT)
+build-ampadm: proto	
+	@hack/build $(CLUSTERADM)
 
 build-server-image:
 	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/$(SERVER):$(TAG) .
 
 build-cli-linux:
 	@rm -f $(CLI)
-	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(CLI)
 
 build-cli-darwin:
 	@rm -f $(CLI)
-	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(CLI)
 
 build-cli-windows:
 	@rm -f $(CLI).exe
-	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(CLI)
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(CLI)
 
 build-server-linux:
 	@rm -f $(SERVER)
-	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(SERVER)
 
 build-server-darwin:
 	@rm -f $(SERVER)
-	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(SERVER)
 
 build-server-windows:
 	@rm -f $(SERVER).exe
-	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) hack/build $(SERVER)
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(SERVER)
 
-dist-linux: build-cli-linux build-server-linux
+build-ampadm-linux:
+	@rm -f $(AMPADM)
+	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
+
+build-ampadm-darwin:
+	@rm -f $(AMPADM)
+	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
+
+build-ampadm-windows:
+	@rm -f $(AMPADM).exe
+	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
+	
+dist-linux: build-cli-linux build-server-linux build-ampadm-linux
 	@rm -f dist/Linux/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Linux/x86_64
-	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPADM)
 
-dist-darwin: build-cli-darwin build-server-darwin
+dist-darwin: build-cli-darwin build-server-darwin build-ampadm-darwin
 	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Darwin/x86_64
-	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
+	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPADM)
 
-dist-windows: build-cli-windows build-server-windows
+dist-windows: build-cli-windows build-server-windows build-ampadm-windows
 	@rm -f dist/Windows/x86_64/amp-$(VERSION).zip
 	@mkdir -p dist/Windows/x86_64
-	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe
+	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe $(AMPADM).exe
 
 dist: dist-linux dist-darwin dist-windows
 
