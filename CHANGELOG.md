@@ -2,6 +2,25 @@
 
 ## 0.4.0
 
+### Client
+
+* Configuration file moved to $HOME/.config/amp/amp.yaml [#592](https://github.com/appcelerator/amp/pull/592)
+* Fix registry commands [#536](https://github.com/appcelerator/amp/pull/536)
+
+###  Platform
+
+* Grafana 4.0 [#518](https://github.com/appcelerator/amp/pull/518)
+* Influxdata stack version 1.1 [#443](https://github.com/appcelerator/amp/pull/443), [#474](https://github.com/appcelerator/amp/pull/474)
+* Robustness [#442](https://github.com/appcelerator/amp/pull/442), [#443](https://github.com/appcelerator/amp/pull/443), [#476](https://github.com/appcelerator/amp/pull/476)
+
+### Vendoring
+
+* Global update of vendors, based on tags instead of commits [#501](https://github.com/appcelerator/amp/pull/501), [#515](https://github.com/appcelerator/amp/pull/515)
+
+### Documentation
+
+* Documentation Update [#601](https://github.com/appcelerator/amp/pull/601)
+
 ### Tests
 
 * Dockerized integration tests [#479](https://github.com/appcelerator/amp/pull/479)
