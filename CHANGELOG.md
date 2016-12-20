@@ -44,6 +44,26 @@
 * AMP kv commands [#511](https://github.com/appcelerator/amp/pull/511)
 * Improved Regex [#544](https://github.com/appcelerator/amp/pull/544)
 
+## 0.3.0 (2016-11-08)
+
+### Client
+
+* AMP config get and set [#420](https://github.com/appcelerator/amp/pull/420)
+
+### Platform
+
+* InfluxData and Grafana images are now specialized for AMP [#394](https://github.com/appcelerator/amp/pull/394)
+
+### Tests
+
+* Refactored CLI tests [#386](https://github.com/appcelerator/amp/pull/386), [#398](https://github.com/appcelerator/amp/pull/398)
+* Regexp for tests [#383](https://github.com/appcelerator/amp/pull/383), [#387](https://github.com/appcelerator/amp/pull/387), [#397](https://github.com/appcelerator/amp/pull/397)
+* Timeout, retry and delay in CLI tests [#421](https://github.com/appcelerator/amp/pull/421)
+* Test coverage [#396](https://github.com/appcelerator/amp/pull/396)
+
+### Documentation
+
+* Stack documentation [#390](https://github.com/appcelerator/amp/pull/390), [#391](https://github.com/appcelerator/amp/pull/391)
 
 ## 0.2.2 (2016-10-25)
 
