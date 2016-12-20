@@ -52,7 +52,7 @@ AGENT := amp-agent
 LOGWORKER := amp-log-worker
 GATEWAY := amplifier-gateway
 
-TAG ?= latest
+TAG ?= 0.4.0
 IMAGE := $(OWNER)/amp:$(TAG)
 
 # tools
