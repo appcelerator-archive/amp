@@ -15,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/topic"
 )
 
@@ -73,6 +74,10 @@ func run() (err error) {
 		return
 	}
 	err = function.RegisterFunctionHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
+	if err != nil {
+		return
+	}
+	err = storage.RegisterStorageHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
 	if err != nil {
 		return
 	}
