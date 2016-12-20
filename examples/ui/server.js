@@ -7,6 +7,7 @@ app.use('/stacks', express.static('public'))
 app.use('/topics', express.static('public'))
 app.use('/stackEdit', express.static('public'))
 app.use('/functions', express.static('public'))
+app.use('/kv', express.static('public'))
 app.use('/dist', express.static('dist'))
 
 app.listen(3000)
