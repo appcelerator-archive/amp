@@ -100,8 +100,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	hostname, name := distreference.SplitHostname(distributionRef)
 
 	if amp.Verbose() {
-		fmt.Println("Registry push request with:")
-		fmt.Printf("  image: %s\n", image)
+		fmt.Printf("Registry push request with:\n  image: %s\n", image)
 	}
 
 	taggedImage := image

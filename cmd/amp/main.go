@@ -103,7 +103,7 @@ func main() {
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
-	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.amp.yaml)")
+	RootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file (default is $HOME/.config/amp/amp.yaml)")
 	RootCmd.PersistentFlags().BoolVar(&displayConfigFilePath, "config-file", false, "Display the location of the config file used (if any)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
