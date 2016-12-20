@@ -2,10 +2,68 @@
 
 ## 0.4.0
 
+### Client
+
+* Configuration file moved to $HOME/.config/amp/amp.yaml [#592](https://github.com/appcelerator/amp/pull/592)
+* Fix registry commands [#536](https://github.com/appcelerator/amp/pull/536)
+* add amp platform command [#455](https://github.com/appcelerator/amp/pull/455)
+* AMP version option [#462](https://github.com/appcelerator/amp/pull/462), [#589](https://github.com/appcelerator/amp/pull/589)
+* AMP kv commands [#511](https://github.com/appcelerator/amp/pull/511)
+
+###  Platform
+
+* Grafana 4.0 [#518](https://github.com/appcelerator/amp/pull/518)
+* Influxdata stack version 1.1 [#443](https://github.com/appcelerator/amp/pull/443), [#474](https://github.com/appcelerator/amp/pull/474)
+* Robustness [#442](https://github.com/appcelerator/amp/pull/442), [#443](https://github.com/appcelerator/amp/pull/443), [#476](https://github.com/appcelerator/amp/pull/476)
+* grpc code consistency [#586](https://github.com/appcelerator/amp/pull/586) [#585](https://github.com/appcelerator/amp/pull/585) [#584](https://github.com/appcelerator/amp/pull/584) [#583](https://github.com/appcelerator/amp/pull/583)
+* Fix amp stats panic [#533](https://github.com/appcelerator/amp/pull/533) [#534](https://github.com/appcelerator/amp/pull/534)
+* add cli color theme [#495](https://github.com/appcelerator/amp/pull/495)
+* Fix stats issues [#404](https://github.com/appcelerator/amp/pull/404) [#403](https://github.com/appcelerator/amp/pull/403)
+
+### Vendoring
+
+* Global update of vendors, based on tags instead of commits [#501](https://github.com/appcelerator/amp/pull/501), [#515](https://github.com/appcelerator/amp/pull/515)
+
+### Documentation
+
+* Documentation Update [#601](https://github.com/appcelerator/amp/pull/601)
+* amp platform commands doc [#473](https://github.com/appcelerator/amp/pull/473)
+* add stacks user guide [#391](https://github.com/appcelerator/amp/pull/391)
+
 ### Tests
 
 * Dockerized integration tests [#479](https://github.com/appcelerator/amp/pull/479)
+* refactor rpc tests [#416](https://github.com/appcelerator/amp/pull/416)
+* improve stats tests [#405](https://github.com/appcelerator/amp/pull/405)
+* CLI tests
+  * Synchronous setup and tearDown [#522](https://github.com/appcelerator/amp/pull/522)
+  * Asynchronous execution [#454](https://github.com/appcelerator/amp/pull/454)
+  * Templating regexes [#478](https://github.com/appcelerator/amp/pull/478)
+  * Templating ports [#441](https://github.com/appcelerator/amp/pull/441) [#445](https://github.com/appcelerator/amp/pull/445)
+* Updated Timeout and delay values [#451](https://github.com/appcelerator/amp/pull/451)
+* AMP kv commands [#511](https://github.com/appcelerator/amp/pull/511)
+* Improved Regex [#544](https://github.com/appcelerator/amp/pull/544)
 
+## 0.3.0 (2016-11-08)
+
+### Client
+
+* AMP config get and set [#420](https://github.com/appcelerator/amp/pull/420)
+
+### Platform
+
+* InfluxData and Grafana images are now specialized for AMP [#394](https://github.com/appcelerator/amp/pull/394)
+
+### Tests
+
+* Refactored CLI tests [#386](https://github.com/appcelerator/amp/pull/386), [#398](https://github.com/appcelerator/amp/pull/398)
+* Regexp for tests [#383](https://github.com/appcelerator/amp/pull/383), [#387](https://github.com/appcelerator/amp/pull/387), [#397](https://github.com/appcelerator/amp/pull/397)
+* Timeout, retry and delay in CLI tests [#421](https://github.com/appcelerator/amp/pull/421)
+* Test coverage [#396](https://github.com/appcelerator/amp/pull/396)
+
+### Documentation
+
+* Stack documentation [#390](https://github.com/appcelerator/amp/pull/390), [#391](https://github.com/appcelerator/amp/pull/391)
 
 ## 0.2.2 (2016-10-25)
 
