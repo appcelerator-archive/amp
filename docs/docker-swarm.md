@@ -1,7 +1,7 @@
 ## Docker Swarm cluster
 
 AMP requires a Docker Swarm cluster to operate.
-If you use an [automated way to deploy AMP in a cluster](/appcelerator/amp-swarm-deploy.git), this step is already done, you can skip this page.
+If you use an [automated way to deploy AMP in a cluster](https://github.com/appcelerator/amp-swarm-deploy), this step is already done, you can skip this page.
 If you installed AMP locally, here are the instructions to create a local Docker Swarm cluster:
 
     $ docker swarm init
