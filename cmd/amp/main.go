@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	tablePadding = 3
+)
+
 var (
 	// Version is set with a linker flag (see Makefile)
 	Version string
@@ -72,17 +76,6 @@ func main() {
 			}
 		})
 	})
-
-	// versionCmd represents the amp version
-	versionCmd := &cobra.Command{
-		Use:   "version",
-		Short: "Display amp version",
-		Long:  `Display amp version.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
-		},
-	}
-	RootCmd.AddCommand(versionCmd)
 
 	// infoCmd represents the amp information
 	infoCmd := &cobra.Command{

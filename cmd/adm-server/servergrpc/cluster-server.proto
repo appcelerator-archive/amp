@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package servergrpc;
+
+import "google/api/annotations.proto";
+
+service ClusterServerService {
+        rpc GetClientStream (stream ClientMes) returns (stream ClientMes) {}
+        rpc RegisterAgent (RegisterRequest) returns (ServerRet) {}
+        rpc AgentHealth (AgentHealthRequest) returns (ServerRet) {}
+        rpc GetNodesInfo (GetNodesInfoRequest) returns (NodesInfo) {}
+        rpc PurgeNodes (PurgeNodesRequest) returns (PurgeNodesAnswers) {}
+        rpc AmpMonitor (AmpRequest) returns (AmpMonitorAnswers) {}
+        rpc AmpPull (AmpRequest) returns (AmpRet) {}
+        rpc GetAmpStatus (AmpRequest) returns (AmpStatusAnswer) {}
+        rpc AmpStart (AmpRequest) returns (AmpRet) {}
+        rpc AmpStop (AmpRequest) returns (AmpRet) {}
+}
+
+message ClientMes {
+        string client_id = 1;
+        string function = 2;
+        TypedOutput output = 3;
+}
+
+message RegisterRequest{
+        string id = 1;
+        string node_id = 2;
+        string hostname = 3;
+        string address = 4;
+}
+
+message AgentHealthRequest{
+        string id = 1;
+}
+
+message ServerRet{
+        string agent_id = 1;
+        string error = 2; 
+}
+
+message ServerRets{
+        repeated ServerRet rets = 1;
+}
+
+message GetNodesInfoRequest{
+        string client_id = 1;
+        string node = 2;
+        bool more = 3;
+}
+
+message NodesInfo{
+        repeated NodeInfo nodes = 1;        
+}
+
+message NodeInfo{
+        string id = 1;
+        string role = 2;
+        string availability = 3;
+        string hostname = 4;
+        string host_architecture = 5;
+        string host_os =6;
+        int64 cpu = 7;
+        int64 memory = 8;
+        string docker_version = 9;
+        string status = 10;
+        bool leader = 11;
+        string reachability = 12;
+        string address = 13;
+        int64 nb_containers = 14;
+        int64 nb_containers_running = 15;
+        int64 nb_containers_paused = 16;
+        int64 nb_containers_stopped = 17;
+        int64 images = 18;
+        string error = 19;
+        string agentId = 20;
+        string nodeName = 21;
+}
+
+message PurgeNodesRequest{
+    string client_id = 1;
+    string node = 2;
+    bool container = 3;
+    bool volume = 4;
+    bool image = 5;
+    bool force = 6;
+}
+
+
+message PurgeNodeAnswer{
+    string client_id = 1;
+    string agent_id = 2;
+    int32 nb_containers = 3;
+    int32 nb_volumes = 4;
+    int32 nb_images = 5;
+    string error = 6;
+}
+
+message PurgeNodesAnswers{
+    repeated PurgeNodeAnswer agents = 1;
+}
+
+message AmpRequest{
+    string client_id = 1;
+    bool silence = 2;
+    bool verbose = 3;
+    bool force = 4;
+    bool local = 5;
+    string node = 6;
+}
+
+message AmpRet{
+    
+}
+
+message TypedOutput{
+    string output = 1;
+    int32 output_type = 2;
+}
+
+message AmpMonitorAnswers{
+    repeated TypedOutput outputs = 1;
+}
+
+message AmpStatusAnswer{
+    string status = 1;
+}
+

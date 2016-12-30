@@ -6,6 +6,7 @@ import (
 
 // Config is used for amplifier configuration settings
 type Config struct {
+	Version          string
 	Port             string
 	EtcdEndpoints    []string
 	ElasticsearchURL string

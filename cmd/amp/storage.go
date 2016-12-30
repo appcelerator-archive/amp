@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"errors"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/client"

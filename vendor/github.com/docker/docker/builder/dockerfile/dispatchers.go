@@ -71,14 +71,20 @@ func env(b *Builder, args []string, attributes map[string]bool, original string)
 		if len(args[j]) == 0 {
 			return errBlankCommandNames("ENV")
 		}
-
 		newVar := args[j] + "=" + args[j+1] + ""
 		commitStr += " " + newVar
 
 		gotOne := false
 		for i, envVar := range b.runConfig.Env {
 			envParts := strings.SplitN(envVar, "=", 2)
-			if envParts[0] == args[j] {
+			compareFrom := envParts[0]
+			compareTo := args[j]
+			if runtime.GOOS == "windows" {
+				// Case insensitive environment variables on Windows
+				compareFrom = strings.ToUpper(compareFrom)
+				compareTo = strings.ToUpper(compareTo)
+			}
+			if compareFrom == compareTo {
 				b.runConfig.Env[i] = newVar
 				gotOne = true
 				break
@@ -301,7 +307,7 @@ func workdir(b *Builder, args []string, attributes map[string]bool, original str
 		return nil
 	}
 
-	container, err := b.docker.ContainerCreate(types.ContainerCreateConfig{Config: b.runConfig}, true)
+	container, err := b.docker.ContainerCreate(types.ContainerCreateConfig{Config: b.runConfig})
 	if err != nil {
 		return err
 	}

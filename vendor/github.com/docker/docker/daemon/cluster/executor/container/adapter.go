@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/server/httputils"
+	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/daemon/cluster/convert"
 	executorpkg "github.com/docker/docker/daemon/cluster/executor"
 	"github.com/docker/docker/reference"
@@ -52,6 +51,11 @@ func newContainerAdapter(b executorpkg.Backend, task *api.Task, secrets exec.Sec
 
 func (c *containerAdapter) pullImage(ctx context.Context) error {
 	spec := c.container.spec()
+
+	// Skip pulling if the image is referenced by image ID.
+	if _, err := digest.ParseDigest(spec.Image); err == nil {
+		return nil
+	}
 
 	// Skip pulling if the image is referenced by digest and already
 	// exists locally.
@@ -209,8 +213,6 @@ func (c *containerAdapter) waitForDetach(ctx context.Context) error {
 func (c *containerAdapter) create(ctx context.Context) error {
 	var cr containertypes.ContainerCreateCreatedBody
 	var err error
-	version := httputils.VersionFromContext(ctx)
-	validateHostname := versions.GreaterThanOrEqualTo(version, "1.24")
 
 	if cr, err = c.backend.CreateManagedContainer(types.ContainerCreateConfig{
 		Name:       c.container.name(),
@@ -218,7 +220,7 @@ func (c *containerAdapter) create(ctx context.Context) error {
 		HostConfig: c.container.hostConfig(),
 		// Use the first network in container create
 		NetworkingConfig: c.container.createNetworkingConfig(),
-	}, validateHostname); err != nil {
+	}); err != nil {
 		return err
 	}
 
@@ -257,9 +259,7 @@ func (c *containerAdapter) create(ctx context.Context) error {
 }
 
 func (c *containerAdapter) start(ctx context.Context) error {
-	version := httputils.VersionFromContext(ctx)
-	validateHostname := versions.GreaterThanOrEqualTo(version, "1.24")
-	return c.backend.ContainerStart(c.container.name(), nil, validateHostname, "", "")
+	return c.backend.ContainerStart(c.container.name(), nil, "", "")
 }
 
 func (c *containerAdapter) inspect(ctx context.Context) (types.ContainerJSON, error) {

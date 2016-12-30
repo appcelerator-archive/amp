@@ -6,8 +6,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"strings"
 
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
@@ -17,15 +19,13 @@ import (
 
 const (
 	esIndex = "amp-logs"
-	// NatsLogTopic is the nats channel
-	NatsLogTopic = "amp-logs"
 )
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Es    *elasticsearch.Elasticsearch
-	Store storage.Interface
-	Nats  stan.Conn
+	Es            *elasticsearch.Elasticsearch
+	Store         storage.Interface
+	NatsStreaming ns.NatsStreaming
 }
 
 // Get implements log.LogServer
@@ -35,7 +35,9 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
-	log.Printf("log requested: [%v]", in)
+
+	log.Println("rpc-logs: Get", in.String())
+
 	// Prepare request to elasticsearch
 	request := s.Es.GetClient().Search().Index(esIndex)
 	request.Sort("time_id", false)
@@ -89,14 +91,15 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	for i, j := 0, len(reply.Entries)-1; i < j; i, j = i+1, j-1 {
 		reply.Entries[i], reply.Entries[j] = reply.Entries[j], reply.Entries[i]
 	}
-
+	log.Printf("rpc-logs: Get successful, returned %d entries\n", len(reply.Entries))
 	return &reply, nil
 }
 
 // GetStream implements log.LogServer
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	log.Printf("log stream requested: [%v]", in)
-	sub, err := s.Nats.Subscribe(NatsLogTopic, func(msg *stan.Msg) {
+	log.Println("rpc-logs: GetStream", in.String())
+
+	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, func(msg *stan.Msg) {
 		entry, err := parseProtoLogEntry(msg.Data)
 		if err != nil {
 			return
@@ -109,6 +112,7 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 		sub.Unsubscribe()
 		return grpc.Errorf(codes.Internal, "%v", err)
 	}
+
 	for {
 		select {
 		case <-stream.Context().Done():

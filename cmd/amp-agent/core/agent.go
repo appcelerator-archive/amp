@@ -10,14 +10,11 @@ import (
 
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/nats-io/go-nats-streaming"
-	"github.com/nats-io/nats"
 	"golang.org/x/net/context"
 	"log"
-	"math/rand"
-	"strconv"
 )
 
 const (
@@ -31,7 +28,7 @@ type Agent struct {
 	containers          map[string]*ContainerData
 	eventStreamReading  bool
 	lastUpdate          time.Time
-	natsClient          stan.Conn
+	natsStreaming       ns.NatsStreaming
 	elasticsearchClient elasticsearch.Elasticsearch
 }
 
@@ -55,27 +52,24 @@ func AgentInit(version string, build string) error {
 	// Connection to Elasticsearch
 	log.Printf("Connecting to elasticsearch at %s\n", conf.elasticsearchURL)
 	if err := agent.elasticsearchClient.Connect(conf.elasticsearchURL, defaultTimeOut); err != nil {
-		return fmt.Errorf("amplifer is unable to connect to elasticsearch on: %s\n%v", conf.elasticsearchURL, err)
+		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", conf.elasticsearchURL, err)
 	}
 	log.Printf("Connected to elasticsearch at %s\n", conf.elasticsearchURL)
 
-	// Connection to NATS
-	log.Printf("Connecting to NATS-Streaming at %s\n", conf.natsURL)
-	nc, err := nats.Connect(conf.natsURL, nats.Timeout(defaultTimeOut))
+	// NATS Connect
+	hostname, err := os.Hostname()
 	if err != nil {
-		fmt.Errorf("amp-agent is unable to connect to NATS on: %s\n%v", conf.natsURL, err)
+		log.Fatalln("Unable to get hostname:", err)
 	}
-	agent.natsClient, err = stan.Connect(amp.NatsClusterID, natsClientID+strconv.Itoa(rand.Int()), stan.NatsConn(nc), stan.ConnectWait(defaultTimeOut))
-	if err != nil {
-		return fmt.Errorf("amp-agent is unable to connect to NATS-Streaming on: %s\n%v", conf.natsURL, err)
+	if agent.natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+		return err
 	}
-	log.Printf("Connected to NATS-Streaming at %s\n", conf.natsURL)
 
 	// Connection to Docker
-	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
-	cli, err := client.NewClient(conf.dockerEngine, "v1.24", nil, defaultHeaders)
+	defaultHeaders := map[string]string{"User-Agent": "amp-agent-1.0"}
+	cli, err := client.NewClient(conf.dockerEngine, amp.DockerDefaultVersion, nil, defaultHeaders)
 	if err != nil {
-		agent.natsClient.Close()
+		agent.natsStreaming.Close()
 		return err
 	}
 	agent.dockerClient = cli
@@ -86,7 +80,7 @@ func AgentInit(version string, build string) error {
 	ContainerListOptions := types.ContainerListOptions{All: true}
 	containers, err := agent.dockerClient.ContainerList(context.Background(), ContainerListOptions)
 	if err != nil {
-		agent.natsClient.Close()
+		agent.natsStreaming.Close()
 		return err
 	}
 	for _, cont := range containers {
@@ -185,7 +179,7 @@ func (agt *Agent) trapSignal() {
 		<-ch
 		fmt.Println("\namp-agent received SIGTERM signal")
 		closeLogsStreams()
-		agent.natsClient.Close()
+		agent.natsStreaming.Close()
 		os.Exit(1)
 	}()
 }

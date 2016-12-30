@@ -20,7 +20,7 @@ imports:
   - digest
   - reference
 - name: github.com/docker/docker
-  version: 005a5428ee1b3f7f2efca2d761f27bd168356fa1
+  version: 4d92237de1b34c8bf99e549db27b83fd087cd765
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -49,6 +49,8 @@ imports:
   - tlsconfig
 - name: github.com/docker/go-units
   version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
+- name: github.com/blang/semver
+  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
 - name: github.com/fatih/color
   version: dea9d3a26a087187530244679c1cfb3a42937794
 - name: github.com/fatih/structs
@@ -107,6 +109,8 @@ imports:
   - client/v2
   - models
   - pkg/escape
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/magiconair/properties
   version: 9c47895dc1ce54302908ab8a43385d1f5df2c11c
 - name: github.com/mattn/go-colorable
