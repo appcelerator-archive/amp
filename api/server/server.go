@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net"
+	runInfo "runtime"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/influx"
@@ -91,6 +93,13 @@ func Start(config Config) {
 	//register storage service
 	storage.RegisterStorageServer(s, &storage.Server{
 		Store: runtime.Store,
+	})
+	version.RegisterVersionServer(s, &version.Server{
+		Version:   config.Version,
+		Port:      config.Port,
+		GoVersion: runInfo.Version(),
+		Os:        runInfo.GOOS,
+		Arch:      runInfo.GOARCH,
 	})
 
 	// start listening
