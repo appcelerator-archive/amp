@@ -65,8 +65,8 @@ func main() {
 		if Config.ServerAddress == "" {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
-		AMP = client.NewAMP(Config)
-		if AMP.Verbose() == false {
+		AMP = client.NewAMP(Config, cli.NewLogger(Config.Verbose))
+		if !Config.Verbose {
 			RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
 		}
