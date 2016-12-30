@@ -56,7 +56,6 @@ type Configuration struct {
 	Verbose            bool
 	Github             string
 	Target             string
-	Images             []string
 	Port               string
 	ServerAddress      string
 	AdminServerAddress string
