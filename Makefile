@@ -1,4 +1,3 @@
-
 .PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
@@ -88,12 +87,12 @@ version:
 
 install-deps:
 	@$(GLIDE_INSTALL)
-    # temporary fix to trace conflict
+# temporary fix to trace conflict
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 update-deps:
 	@$(GLIDE_UPDATE)
-    # temporary fix to trace conflict
+# temporary fix to trace conflict
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 # explicit rule to compile protobuf files
