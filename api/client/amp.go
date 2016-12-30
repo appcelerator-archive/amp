@@ -115,38 +115,3 @@ func NewAMP(c *Configuration) *AMP {
 	verbose = c.Verbose
 	return &AMP{Configuration: c}
 }
-
-// Create a new swarm
-func (a *AMP) Create() {
-	if a.Verbose() {
-		fmt.Println("Create")
-	}
-}
-
-// Start the swarm
-func (a *AMP) Start() {
-	if a.Verbose() {
-		fmt.Println("Start")
-	}
-}
-
-// Update the swarm
-func (a *AMP) Update() {
-	if a.Verbose() {
-		fmt.Println("Update")
-	}
-}
-
-// Stop the swarm
-func (a *AMP) Stop() {
-	if a.Verbose() {
-		fmt.Println("Stop")
-	}
-}
-
-// Status returns the current status
-func (a *AMP) Status() {
-	if a.Verbose() {
-		fmt.Println("Status")
-	}
-}
