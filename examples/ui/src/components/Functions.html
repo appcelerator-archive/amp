@@ -1,0 +1,96 @@
+<h1>Functions</h1>
+
+{{#each functions as func}}
+  <div>{{func.name}} {{func.image}} <button on:click='run(func)'>run</button><button on:click='remove(func)'>remove</button></div>
+{{/each}}
+
+<form on:submit='create(event)'>
+  <input bind:value='name'>
+  <input bind:value='image'>
+  <button type='submit'>Create new Function</button>
+</form>
+
+<label>
+  <h3>input</h3>
+  <textarea bind:value='input'></textarea>
+</label>
+
+<label>
+  <h3>output</h3>
+  <textarea disabled=true bind:value='output'></textarea>
+</label>
+
+
+{{#if error}}
+  <DisplayError bind:error></DisplayError>
+{{/if}}
+
+<script>
+  import DisplayError from './DisplayError.html'
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+  export default {
+    components: {
+      DisplayError,
+    },
+
+    data () {
+      return {
+        functions: [],
+        name: 'test',
+        image: 'appcelerator/amp-demo-function',
+        input: 'hello world',
+        output: '',
+        error: null,
+      }
+    },
+
+    onrender () {
+      this.setFunctions()
+    },
+
+    methods: {
+      async getFunctions() {
+        return await api.functions()
+      },
+      async setFunctions() {
+        try {
+          const functions = await this.getFunctions()
+          this.set({functions})
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async run (func) {
+        try {
+          const output = await func.run(this.get('input'))
+          this.set({output})
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async remove (func) {
+        try {
+          await func.remove()
+          await this.setFunctions()
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async create (event) {
+        if (event) {
+          event.preventDefault()
+        }
+        try {
+          await api.createFunction(this.get('name'), this.get('image'))
+          await this.setFunctions()
+          this.set({name: '', image: ''})
+        } catch (error) {
+          this.set({
+            error: error.message
+          })
+        }
+      }
+    }
+  }
+</script>
