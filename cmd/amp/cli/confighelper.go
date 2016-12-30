@@ -18,23 +18,28 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	config.Verbose = verbose
 	config.ServerAddress = serverAddr
 
-	// Add matching environment variables - will be first in precedence.
+	// Add matching environment variables - will take precedence over config files.
 	viper.AutomaticEnv()
 
-	// Add config file specified using flag - will be next in precedence.
+	// Add default config file search paths in order of decreasing precedence.
+	viper.SetConfigName("amp")
+	viper.AddConfigPath(".")
+	if os.Getenv("XDG_CONFIG_HOME") != "" {
+		viper.AddConfigPath("$XDG_CONFIG_HOME/amp")
+	} else {
+		homedir, err := homedir.Dir()
+		if err != nil {
+			return
+		}
+		viper.AddConfigPath(path.Join(homedir, ".config/amp"))
+	}
+	// last place to look: system dir on *nix
+	viper.AddConfigPath("/etc/amp/")
+
+	// this must be last: config file specified using --use-config option will take precedence over other paths.
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 	}
-
-	// Add default config file (without extension) - will be last in precedence.
-	// First search .config/amp directory; if not found, then attempt to also search working
-	// directory (will only succeed if process was started from application directory).
-	viper.SetConfigName("amp")
-	if os.Getenv("XDG_CONFIG_HOME") != "" {
-		viper.AddConfigPath("$XDG_CONFIG_HOME/amp")
-	}
-	viper.AddConfigPath("$HOME/.config/amp")
-	viper.AddConfigPath(".")
 
 	// If a config file is found, read it in.
 	// Extra check for verbose because it might not have been set by
@@ -45,7 +50,11 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 		}
 	} else {
 		if verbose || viper.GetBool("Verbose") {
-			fmt.Println("Warning: no valid configuration file (amp.yaml) found in ~/.config/amp/ or current directory")
+			if configFile != "" {
+				fmt.Printf("Warning: unable to load %s, using default configuration\n", configFile)
+			} else {
+				fmt.Println("Warning: no valid configuration file (amp.yaml) found in ~/.config/amp/ or current directory")
+			}
 		}
 	}
 
@@ -66,26 +75,33 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 
 // SaveConfiguration saves the configuration to ~/.config/amp/amp.yaml
 func SaveConfiguration(c interface{}) (err error) {
-	var configdir string
-	xdgdir := os.Getenv("XDG_CONFIG_HOME")
-	if xdgdir != "" {
-		configdir = path.Join(xdgdir, "amp")
-	} else {
-		homedir, err := homedir.Dir()
-		if err != nil {
-			return err
+	configFilePath := viper.ConfigFileUsed()
+
+	if configFilePath == "" {
+		var configdir string
+		xdgdir := os.Getenv("XDG_CONFIG_HOME")
+		if xdgdir != "" {
+			configdir = path.Join(xdgdir, "amp")
+		} else {
+			homedir, err := homedir.Dir()
+			if err != nil {
+				return err
+			}
+			configdir = path.Join(homedir, ".config/amp")
 		}
-		configdir = path.Join(homedir, ".config/amp")
+		err = os.MkdirAll(configdir, 0755)
+		if err != nil {
+			return
+		}
+		configFilePath = path.Join(configdir, "amp.yaml")
 	}
-	err = os.MkdirAll(configdir, 0755)
-	if err != nil {
-		return
-	}
+
 	contents, err := yaml.Marshal(c)
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile(path.Join(configdir, "amp.yaml"), contents, os.ModePerm)
+
+	err = ioutil.WriteFile(configFilePath, contents, os.ModePerm)
 	if err != nil {
 		return
 	}

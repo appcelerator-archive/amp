@@ -41,7 +41,7 @@ func Login(a *client.AMP) error {
 		}
 	}
 
-	a.Configuration.Github = lastEight
+	a.Configuration.GitHub = lastEight
 	cli.SaveConfiguration(a.Configuration)
 
 	welcomeUser(name)
