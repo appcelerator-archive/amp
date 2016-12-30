@@ -58,7 +58,7 @@ var (
 // All main does is process commands and flags and invoke the app
 func main() {
 	cobra.OnInitialize(func() {
-		InitConfig(configFile, Config, verbose, serverAddr)
+		cli.InitConfig(configFile, Config, verbose, serverAddr)
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
 			Config.ServerAddress = addr
 		}
@@ -67,7 +67,7 @@ func main() {
 		}
 		AMP = client.NewAMP(Config)
 		if AMP.Verbose() == false {
-			RootCmd.SilenceErrors = true
+			;RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
 		}
 		cli.AtExit(func() {

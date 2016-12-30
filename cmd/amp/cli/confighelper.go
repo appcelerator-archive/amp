@@ -1,13 +1,15 @@
-package main
+package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 // InitConfig reads in a config file and ENV variables if set.
@@ -62,15 +64,30 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 	}
 }
 
-// LoadImageList loads all the images in the config.
-func LoadImageList() (images []string, err error) {
-	viper.SetConfigName("images")
-	viper.AddConfigPath("config")
-	err = viper.ReadInConfig()
+// SaveConfiguration saves the configuration to ~/.config/amp/amp.yaml
+func SaveConfiguration(c interface{}) (err error) {
+	var configdir string
+	xdgdir := os.Getenv("XDG_CONFIG_HOME")
+	if xdgdir != "" {
+		configdir = path.Join(xdgdir, "amp")
+	} else {
+		homedir, err := homedir.Dir()
+		if err != nil {
+			return err
+		}
+		configdir = path.Join(homedir, ".config/amp")
+	}
+	err = os.MkdirAll(configdir, 0755)
 	if err != nil {
 		return
 	}
-
-	images = viper.GetStringSlice("images")
+	contents, err := yaml.Marshal(c)
+	if err != nil {
+		return
+	}
+	err = ioutil.WriteFile(path.Join(configdir, "amp.yaml"), contents, os.ModePerm)
+	if err != nil {
+		return
+	}
 	return
 }
