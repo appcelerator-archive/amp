@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "github.com/appcelerator/amp/cmd/cluster-agent/agentgrpc/cluster-agent.proto",
+    "title": "github.com/appcelerator/amp/cmd/adm-agent/agentgrpc/cluster-agent.proto",
     "version": "version not set"
   },
   "schemes": [
