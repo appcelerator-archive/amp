@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ampVersion          = "latest"
+	ampVersion          = "0.5.0"
 	infraPrivateNetwork = "amp-infra"
 	infraPublicNetwork  = "amp-public"
 )
