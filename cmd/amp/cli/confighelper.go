@@ -55,6 +55,7 @@ func InitConfig(configFile string, config *client.Configuration, verbose bool, s
 			} else {
 				fmt.Println("Warning: no valid configuration file (amp.yaml) found in ~/.config/amp/ or current directory")
 			}
+
 		}
 	}
 
@@ -100,7 +101,6 @@ func SaveConfiguration(c interface{}) (err error) {
 	if err != nil {
 		return
 	}
-
 	err = ioutil.WriteFile(configFilePath, contents, os.ModePerm)
 	if err != nil {
 		return

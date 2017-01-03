@@ -1,4 +1,5 @@
-.PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host
+  
+.PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host rules
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
 .PHONY: test test-unit test-cli test-integration test-integration-host
@@ -303,3 +304,7 @@ cover:
 		go test -coverprofile=coverage.out -covermode=count $(pkg);\
 		tail -n +2 coverage.out >> coverage-all.out;)
 	go tool cover -html=coverage-all.out
+
+rules:
+	@hack/print-make-rules
+
