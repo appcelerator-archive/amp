@@ -1,6 +1,39 @@
 # Changelog
 
-## 0.4.0
+## 0.5.0
+
+### Client
+
+* Add AMP cluster management features [#519](https://github.com/appcelerator/amp/pull/519)
+* Add Serverless features [#539](https://github.com/appcelerator/amp/pull/539)
+* Enhanced `amp version` outputs [#612](https://github.com/appcelerator/amp/pull/612)
+* Move confighelper from `amp/confighelper` to `amp/cli/confighelper` [#613](https://github.com/appcelerator/amp/pull/613)
+* Remove obsolete `Images` [#614](https://github.com/appcelerator/amp/pull/614)
+* Remove unused client functions [#615](https://github.com/appcelerator/amp/pull/615)
+* Refactor client logging [#616](https://github.com/appcelerator/amp/pull/616)
+* Update config and minor cleanup [#617](https://github.com/appcelerator/amp/pull/617)
+* Fix default value for AdminServerAddress [#627](https://github.com/appcelerator/amp/pull/627)
+* Prevent amp logs from crashing when Verbose flag is set [#630](https://github.com/appcelerator/amp/pull/630)
+
+### Documentation
+
+* Swarm Documentation Update [#609](https://github.com/appcelerator/amp/pull/609)
+* Add 0.4.0 changelog [#610](https://github.com/appcelerator/amp/pull/610)
+
+###  Platform
+
+* Add AMP Bootstrap features [#528](https://github.com/appcelerator/amp/pull/528)
+* Dynamic Makefile target list for gateway protobuf target [#622](https://github.com/appcelerator/amp/pull/622)
+* Add `make rules` to print all the make rules [#624](https://github.com/appcelerator/amp/pull/624)
+* Fix Make check errors [#625](https://github.com/appcelerator/amp/pull/625)
+* Update haproxy to version 1.0.3 [#626](https://github.com/appcelerator/amp/pull/626)
+
+### Examples
+
+* Add `functions` to the UI [#605](https://github.com/appcelerator/amp/pull/605)
+* Add `kv` to the UI [#606](https://github.com/appcelerator/amp/pull/606)
+
+## 0.4.0 (2016-12-20)
 
 ### Client
 
