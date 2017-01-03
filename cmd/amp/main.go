@@ -65,6 +65,9 @@ func main() {
 		if Config.ServerAddress == "" {
 			Config.ServerAddress = client.DefaultServerAddress
 		}
+		if Config.AdminServerAddress == "" {
+			Config.AdminServerAddress = client.DefaultAdminServerAddress
+		}
 		AMP = client.NewAMP(Config, cli.NewLogger(Config.Verbose))
 		if !Config.Verbose {
 			RootCmd.SilenceErrors = true
