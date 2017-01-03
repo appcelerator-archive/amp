@@ -1,6 +1,39 @@
 # Changelog
 
-## 0.4.0
+## 0.5.0 (2017-01-03)
+
+### Client
+
+* Add AMP cluster management features [#519](https://github.com/appcelerator/amp/pull/519)
+* Add Serverless features [#539](https://github.com/appcelerator/amp/pull/539)
+* Enhanced `amp version` outputs [#612](https://github.com/appcelerator/amp/pull/612)
+* Client refactoring [#613](https://github.com/appcelerator/amp/pull/613), [#614](https://github.com/appcelerator/amp/pull/614), [#615](https://github.com/appcelerator/amp/pull/615), [#616](https://github.com/appcelerator/amp/pull/616)
+* Update config loading precedence [#617](https://github.com/appcelerator/amp/pull/617)
+* Fix default value for AdminServerAddress [#627](https://github.com/appcelerator/amp/pull/627)
+* Prevent amp logs from crashing when Verbose flag is set [#630](https://github.com/appcelerator/amp/pull/630)
+
+### Documentation
+
+* Deployment documentation fix [#609](https://github.com/appcelerator/amp/pull/609)
+* Add 0.5.0 changelog [#628](https://github.com/appcelerator/amp/pull/628)
+
+###  Platform
+
+* Add AMP Bootstrap features [#528](https://github.com/appcelerator/amp/pull/528)
+* Makefile enhancements [#622](https://github.com/appcelerator/amp/pull/622)
+* Add `make rules` to print all the Makefile rules [#624](https://github.com/appcelerator/amp/pull/624)
+* Fix Make check warnings [#625](https://github.com/appcelerator/amp/pull/625)
+* Update haproxy to version 1.0.3 [#626](https://github.com/appcelerator/amp/pull/626)
+* Update elasticsearch to version 5.1.1 [#619](https://github.com/appcelerator/amp/pull/619)
+* Add GRPC rest gateway for browser-accessible API [#488](https://github.com/appcelerator/amp/pull/488)
+
+### Examples
+
+* Add GRPC rest gateway based UI [#527](https://github.com/appcelerator/amp/pull/527)
+* Add `functions` to the UI [#605](https://github.com/appcelerator/amp/pull/605)
+* Add `kv` to the UI [#606](https://github.com/appcelerator/amp/pull/606)
+
+## 0.4.0 (2016-12-20)
 
 ### Client
 
