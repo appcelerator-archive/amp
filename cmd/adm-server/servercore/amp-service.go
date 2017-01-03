@@ -414,9 +414,8 @@ func (s *AMPInfraManager) updateServiceStates(service *ampService) error {
 					if s.Force {
 						s.forceService(service)
 						return nil
-					} else {
-						return fmt.Errorf("Service %s startup timeout", service.name)
 					}
+					return fmt.Errorf("Service %s startup timeout", service.name)
 				}
 			}
 			service.ready = false
@@ -497,10 +496,9 @@ func (s *AMPInfraManager) createService(service *ampService) error {
 			s.printf(colWarn, "Service %s image %s doesn't exist", service.name, service.image)
 			s.forceService(service)
 			return nil
-		} else {
-			s.printf(colError, "Service %s image %s doesn't exist", service.name, service.image)
-			return fmt.Errorf("Service image error")
 		}
+		s.printf(colError, "Service %s image %s doesn't exist", service.name, service.image)
+		return fmt.Errorf("Service image error")
 	}
 	r, err := s.docker.ServiceCreate(s.ctx, *service.spec, options)
 	if err != nil {

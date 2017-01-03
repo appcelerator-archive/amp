@@ -16,15 +16,11 @@ import (
 	"strings"
 )
 
-var DockerChannels = [...]string{"main"}
-
-//var DockerChannels = [...]string{"main", "testing"}
-
 const (
 	minimumDockerEngineVersion = "1.12.3"
 	dockerAPIMinVersion        = "1.24"
-	dockerUrl                  = "unix:///var/run/docker.sock"
-	dockerGetUrl               = "http://get.docker.com"
+	dockerURL                  = "unix:///var/run/docker.sock"
+	dockerGetURL               = "http://get.docker.com"
 	dockerRemoteAPIPort        = "2375"
 )
 
@@ -35,7 +31,7 @@ func (c *clusterClient) getDockerServerVersion() (string, error) {
 	// first try the Docker api
 	if c.dockerClient == nil {
 		defaultHeaders := map[string]string{"User-Agent": "amp-bootstrap"}
-		c.dockerClient, _ = dockerclient.NewClient(dockerUrl, dockerAPIMinVersion, nil, defaultHeaders)
+		c.dockerClient, _ = dockerclient.NewClient(dockerURL, dockerAPIMinVersion, nil, defaultHeaders)
 	}
 	if c.dockerClient != nil {
 		version, err := c.dockerClient.ServerVersion(c.ctx)
@@ -165,7 +161,7 @@ func (c *clusterClient) startDockerEngine() error {
 
 // Use the official script to install Docker
 func (c *clusterClient) installDockerEngine() error {
-	resp, err := http.Get(dockerGetUrl)
+	resp, err := http.Get(dockerGetURL)
 	if err != nil {
 		return err
 	}
@@ -239,7 +235,7 @@ func (c *clusterClient) isSwarmInit() bool {
 func (c *clusterClient) joinSwarm() error {
 	if c.dockerClient == nil {
 		defaultHeaders := map[string]string{"User-Agent": "amp-bootstrap"}
-		dclient, err := dockerclient.NewClient(dockerUrl, dockerAPIMinVersion, nil, defaultHeaders)
+		dclient, err := dockerclient.NewClient(dockerURL, dockerAPIMinVersion, nil, defaultHeaders)
 		if err != nil {
 			return err
 		}

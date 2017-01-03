@@ -50,7 +50,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 	var doc bytes.Buffer
 
-	vd := version.VersionConfig{
+	vd := version.Config{
 		AMP: &version.Details{
 			Version:    Version,
 			Build:      Build,
@@ -67,14 +67,13 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		reply, err := client.List(context.Background(), request)
 		if err != nil {
 			return err
-		} else {
-			vd.Amplifier = &version.Details{
-				Version:   reply.Reply.Version,
-				Port:      reply.Reply.Port,
-				GoVersion: reply.Reply.Goversion,
-				Os:        reply.Reply.Os,
-				Arch:      reply.Reply.Arch,
-			}
+		}
+		vd.Amplifier = &version.Details{
+			Version:   reply.Reply.Version,
+			Port:      reply.Reply.Port,
+			GoVersion: reply.Reply.Goversion,
+			Os:        reply.Reply.Os,
+			Arch:      reply.Reply.Arch,
 		}
 	}
 
