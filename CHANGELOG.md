@@ -27,9 +27,11 @@
 * Add `make rules` to print all the make rules [#624](https://github.com/appcelerator/amp/pull/624)
 * Fix Make check errors [#625](https://github.com/appcelerator/amp/pull/625)
 * Update haproxy to version 1.0.3 [#626](https://github.com/appcelerator/amp/pull/626)
+* Add GRPC rest gateway for browser accessable API [#488](https://github.com/appcelerator/amp/pull/488)
 
 ### Examples
 
+* Add GRPC rest gateway based UI [#527](https://github.com/appcelerator/amp/pull/527)
 * Add `functions` to the UI [#605](https://github.com/appcelerator/amp/pull/605)
 * Add `kv` to the UI [#606](https://github.com/appcelerator/amp/pull/606)
 
