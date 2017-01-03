@@ -1,6 +1,7 @@
 package servercore
 
 import (
+	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 )
@@ -20,11 +21,10 @@ const (
 	elasticsearchVersion = "2.3.5"
 	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
-	haproxyVersion       = "1.0.2"
+	haproxyVersion       = "1.0.3"
 	registryVersion      = "2.5.1"
 )
 
-// GetAMPInfrastructureStack cluster stack
 func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 	//init stack
 	stack := ampStack{}
@@ -67,7 +67,7 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 					Args: []string{
 						"--name etcd",
 						"--listen-client-urls http://0.0.0.0:2379",
-						"--advertise-client-urls http://etcd:2379",
+						"--advertise-client-urls " + amp.EtcdDefaultEndpoint,
 					},
 					Env: nil,
 					Labels: map[string]string{
@@ -440,7 +440,7 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 					Args: nil,
 					Env: []string{
 						"OUTPUT_INFLUXDB_ENABLED=true",
-						"INFLUXDB_URL=http://influxdb:8086",
+						"INFLUXDB_URL=" + amp.InfluxDefaultURL,
 						"TAG_datacenter=dc1",
 						"TAG_type=core",
 						"INPUT_DOCKER_ENABLED=true",
@@ -496,7 +496,7 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 					Args: nil,
 					Env: []string{
 						"OUTPUT_INFLUXDB_ENABLED=true",
-						"INFLUXDB_URL=http://influxdb:8086",
+						"INFLUXDB_URL=" + amp.InfluxDefaultURL,
 						"INPUT_DOCKER_ENABLED=false",
 						"INPUT_CPU_ENABLED=false",
 						"INPUT_NET_ENABLED=false",
@@ -582,7 +582,7 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 					Args: []string{
 						"amplifier-gateway",
 						"--amplifier_endpoint",
-						"amplifier:50101",
+						amp.AmplifierDefaultEndpoint,
 					},
 					Env: nil,
 					Labels: map[string]string{
@@ -599,6 +599,78 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 			},
 		},
 		"amplifier")
+
+	//add amp-function-listener
+	stack.addService(m, "amp-function-listener", "amp", 1,
+		&swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Labels: map[string]string{
+					"io.amp.role": "infrastructure",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Args: []string{"amp-function-listener"},
+					Env:  nil,
+					Labels: map[string]string{
+						"io.amp.role": "infrastructure",
+					},
+					Mounts: nil,
+				},
+				Placement: nil,
+			},
+			EndpointSpec: &swarm.EndpointSpec{
+				Mode: swarm.ResolutionModeVIP,
+				Ports: []swarm.PortConfig{
+					{
+						TargetPort:    80,
+						PublishedPort: 4242,
+					},
+				},
+			},
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  infraPrivateNetwork,
+					Aliases: []string{"amp-function-listener"},
+				},
+			},
+		},
+		"nats", "etcd")
+
+	//add amp-function-worker
+	stack.addService(m, "amp-function-worker", "amp", 1,
+		&swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Labels: map[string]string{
+					"io.amp.role": "infrastructure",
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: swarm.ContainerSpec{
+					Args: []string{"amp-function-worker"},
+					Env:  nil,
+					Labels: map[string]string{
+						"io.amp.role": "infrastructure",
+					},
+					Mounts: []mount.Mount{
+						{
+							Type:   mount.TypeBind,
+							Source: "/var/run/docker.sock",
+							Target: "/var/run/docker.sock",
+						},
+					},
+				},
+				Placement: nil,
+			},
+			EndpointSpec: nil,
+			Networks: []swarm.NetworkAttachmentConfig{
+				{
+					Target:  infraPrivateNetwork,
+					Aliases: []string{"amp-function-worker"},
+				},
+			},
+		},
+		"nats")
 
 	//return stack
 	return &stack

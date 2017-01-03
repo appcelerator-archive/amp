@@ -21,7 +21,7 @@ const (
 	elasticsearchVersion = "2.3.5"
 	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
-	haproxyVersion       = "1.0.2"
+	haproxyVersion       = "1.0.3"
 	registryVersion      = "2.5.1"
 )
 
