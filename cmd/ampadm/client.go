@@ -18,7 +18,9 @@ import (
 )
 
 const (
-	ClearScreen    = "\033[2J\033[0;0H"
+	//ClearScreen ANSI Escape code
+	ClearScreen = "\033[2J\033[0;0H"
+	//MoveCursorHome ANSI Escape code
 	MoveCursorHome = "\033[0;0H"
 )
 

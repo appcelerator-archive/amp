@@ -97,6 +97,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(listenAddr, router))
 }
 
+// Index index
 func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Get the function id or name from the URL
 	idOrName := strings.TrimSpace(p.ByName("function"))

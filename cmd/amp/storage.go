@@ -101,7 +101,7 @@ func storagePut(amp *client.AMP, cmd *cobra.Command, args []string) error {
 //by invoking the corresponding rpc/storage method
 func storageGet(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		return errors.New("too many arguments - check again!")
+		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
 		return errors.New("must specify storage key")
 	}
@@ -126,7 +126,7 @@ func storageGet(amp *client.AMP, cmd *cobra.Command, args []string) error {
 // by invoking the corresponding rpc/storage method
 func storageDelete(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
-		return errors.New("too many arguments - check again!")
+		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
 		return errors.New("must specify storage key")
 	}
@@ -151,7 +151,7 @@ func storageDelete(amp *client.AMP, cmd *cobra.Command, args []string) error {
 // key-value pairs by invoking the corresponding rpc/storage method
 func storageList(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
-		return errors.New("too many arguments - check again!")
+		return errors.New("too many arguments - check again")
 	}
 	request := &storage.ListStorage{}
 	client := storage.NewStorageClient(amp.Conn)

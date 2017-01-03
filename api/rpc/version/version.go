@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+//Details detailled information
 type Details struct {
 	Version    string
 	Build      string
@@ -14,11 +15,13 @@ type Details struct {
 	Arch       string
 }
 
-type VersionConfig struct {
+// Config version information
+type Config struct {
 	AMP       *Details
 	Amplifier *Details
 }
 
+// Server server information
 type Server struct {
 	Version   string
 	Port      string
@@ -31,7 +34,7 @@ func init() {
 	// no setup
 }
 
-// Returns Amplifier info from Server.go
+// List Returns Amplifier info from Server.go
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 
 	response := &ListReply{
@@ -46,7 +49,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	return response, nil
 }
 
-// Checks if AMP is connected to Amplifier
-func (v VersionConfig) AmplifierOK() bool {
+// AmplifierOK Checks if AMP is connected to Amplifier
+func (v Config) AmplifierOK() bool {
 	return v.Amplifier != nil
 }
