@@ -69,7 +69,7 @@ func (l logger) Println(args ...interface{}) {
 // Configuration is for all configurable client settings
 type Configuration struct {
 	Verbose            bool
-	Github             string
+	GitHub             string
 	Target             string
 	Port               string
 	ServerAddress      string
@@ -120,7 +120,7 @@ func (a *AMP) GetAuthorizedContext() (ctx context.Context, err error) {
 	// if a.Configuration.Github == "" {
 	// 	return nil, fmt.Errorf("Requires login")
 	// }
-	md := metadata.Pairs("sessionkey", a.Configuration.Github)
+	md := metadata.Pairs("sessionkey", a.Configuration.GitHub)
 	ctx = metadata.NewContext(context.Background(), md)
 	return
 }
