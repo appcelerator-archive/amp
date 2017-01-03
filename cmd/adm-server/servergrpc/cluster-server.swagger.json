@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "github.com/appcelerator/amp/cmd/cluster-server/servergrpc/cluster-server.proto",
+    "title": "github.com/appcelerator/amp/cmd/adm-server/servergrpc/cluster-server.proto",
     "version": "version not set"
   },
   "schemes": [

@@ -30,8 +30,9 @@ DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 
 # generated file dependencies for proto rule
 PROTOFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -print)
+PROTOGWFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -exec grep -l google/api/annotations {} \;)
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
-PROTOGWTARGETS := api/rpc/logs/logs.pb.gw.go api/rpc/service/service.pb.gw.go api/rpc/stack/stack.pb.gw.go api/rpc/stats/stats.pb.gw.go api/rpc/topic/topic.pb.gw.go api/rpc/function/function.pb.gw.go api/rpc/version/version.pb.gw.go
+PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go)
 PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
 
 # generated files that can be cleaned
