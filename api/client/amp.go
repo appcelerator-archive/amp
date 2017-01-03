@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"golang.org/x/net/context"
@@ -17,37 +16,53 @@ const (
 )
 
 var (
-	verbose = false
+	// amp is a singleton
+	amp *AMP
 )
 
 func init() {
 	grpclog.SetLogger(logger{})
 }
 
+// Logger is a simple log interface that also implements grpclog.Logger
+type Logger interface {
+	grpclog.Logger
+	Panic(v ...interface{})
+	Panicf(format string, v ...interface{})
+	Panicln(v ...interface{})
+}
+
+// logger implements grpclog.Logger
 type logger struct{}
 
 func (l logger) Fatal(args ...interface{}) {
-	log.Fatal(args...)
+	if amp != nil {
+		amp.Log.Fatal(args...)
+	}
 }
 func (l logger) Fatalf(format string, args ...interface{}) {
-	log.Fatalf(format, args...)
+	if amp != nil {
+		amp.Log.Fatalf(format, args...)
+	}
 }
 func (l logger) Fatalln(args ...interface{}) {
-	log.Fatalln(args...)
+	if amp != nil {
+		amp.Log.Fatalln(args...)
+	}
 }
 func (l logger) Print(args ...interface{}) {
-	if verbose {
-		log.Print(args...)
+	if amp != nil {
+		amp.Log.Print(args...)
 	}
 }
 func (l logger) Printf(format string, args ...interface{}) {
-	if verbose {
-		log.Printf(format, args...)
+	if amp != nil {
+		amp.Log.Printf(format, args...)
 	}
 }
 func (l logger) Println(args ...interface{}) {
-	if verbose {
-		log.Println(args...)
+	if amp != nil {
+		amp.Log.Println(args...)
 	}
 }
 
@@ -66,7 +81,12 @@ type Configuration struct {
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
 	Configuration *Configuration
-	Conn          *grpc.ClientConn
+
+	// Conn is the gRPC connection to amplifier
+	Conn *grpc.ClientConn
+
+	// Log also implements the grpclog.Logger interface
+	Log Logger
 }
 
 // Connect to amplifier
@@ -89,7 +109,7 @@ func (a *AMP) Disconnect() {
 	}
 	err := a.Conn.Close()
 	if err != nil {
-		log.Panic(err)
+		a.Log.Panic(err)
 	}
 }
 
@@ -110,8 +130,11 @@ func (a *AMP) Verbose() bool {
 	return a.Configuration.Verbose
 }
 
-// NewAMP creates a new AMP instance
-func NewAMP(c *Configuration) *AMP {
-	verbose = c.Verbose
-	return &AMP{Configuration: c}
+// NewAMP creates an AMP singleton instance
+// (will only be configured with the first call)
+func NewAMP(c *Configuration, l Logger) *AMP {
+	if amp == nil {
+		amp = &AMP{Configuration: c, Log: l}
+	}
+	return amp
 }
