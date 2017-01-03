@@ -57,6 +57,10 @@ func startAMP(cmd *cobra.Command, args []string) error {
 			manager.printf(colWarn, "Mode force: start anyway\n")
 		}
 	}
+	if err := manager.systemPrerequisites(); err != nil {
+		manager.printf(colError, "Prerequisite error: %v\n", err)
+		os.Exit(1)
+	}
 	if err := manager.start(stack); err != nil {
 		manager.printf(colError, "Start error: %v\n", err)
 		if err := manager.stop(stack); err != nil {

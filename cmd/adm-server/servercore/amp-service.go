@@ -1,8 +1,14 @@
 package servercore
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"os/exec"
+	"os/user"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/cmd/adm-agent/agentgrpc"
@@ -113,6 +119,56 @@ func (s *AMPInfraManager) setStream(server *ClusterServer, clientID string) erro
 		return fmt.Errorf("Client %s is not register", clientID)
 	}
 	s.clientStream = cli.stream
+	return nil
+}
+
+// system prerequisites
+func (s *AMPInfraManager) systemPrerequisites() error {
+	sysctl := false
+	// checks if GOOS is set
+	goos := os.Getenv("GOOS")
+	if goos == "linux" {
+		sysctl = true
+	} else if goos == "" {
+		// check if sysctl exists on the system
+		if _, err := os.Stat("/etc/sysctl.conf"); err == nil {
+			sysctl = true
+		}
+	}
+	if sysctl {
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		mmcmin := 262144
+		cmd := exec.Command("sysctl", "-n", "vm.max_map_count")
+		cmd.Stdout = &out
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		mmc, err := strconv.Atoi(strings.TrimRight(out.String(), "\n"))
+		if err != nil {
+			return err
+		}
+		if mmc < mmcmin {
+			// admin rights are needed
+			u, err := user.Current()
+			if err != nil {
+				return err
+			}
+			uid, err := strconv.Atoi(u.Uid)
+			if err != nil {
+				return err
+			}
+			if uid != 0 {
+				return fmt.Errorf("vm.max_map_count should be at least 262144, admin rights are needed to update it")
+			}
+			if s.Verbose {
+				s.printf(colRegular, "setting max virtual memory areas\n")
+			}
+			cmd = exec.Command("sysctl", "-w", "vm.max_map_count=262144")
+			err = cmd.Run()
+		} else if s.Verbose {
+			s.printf(colRegular, "max virtual memory areas is already at a safe value\n")
+		}
+	}
 	return nil
 }
 

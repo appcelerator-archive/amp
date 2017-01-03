@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"os/exec"
+	"os/user"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/config"
@@ -641,6 +647,56 @@ func (s *ampManager) setColors() {
 		s.printColor[5] = color.New(color.FgHiGreen)
 	}
 	//add theme as you want.
+}
+
+// system prerequisites
+func (m *ampManager) systemPrerequisites() error {
+	sysctl := false
+	// checks if GOOS is set
+	goos := os.Getenv("GOOS")
+	if goos == "linux" {
+		sysctl = true
+	} else if goos == "" {
+		// check if sysctl exists on the system
+		if _, err := os.Stat("/etc/sysctl.conf"); err == nil {
+			sysctl = true
+		}
+	}
+	if sysctl {
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		mmcmin := 262144
+		cmd := exec.Command("sysctl", "-n", "vm.max_map_count")
+		cmd.Stdout = &out
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		mmc, err := strconv.Atoi(strings.TrimRight(out.String(), "\n"))
+		if err != nil {
+			return err
+		}
+		if mmc < mmcmin {
+			// admin rights are needed
+			u, err := user.Current()
+			if err != nil {
+				return err
+			}
+			uid, err := strconv.Atoi(u.Uid)
+			if err != nil {
+				return err
+			}
+			if uid != 0 {
+				return fmt.Errorf("vm.max_map_count should be at least 262144, admin rights are needed to update it")
+			}
+			if m.verbose {
+				m.printf(colRegular, "setting max virtual memory areas\n")
+			}
+			cmd = exec.Command("sysctl", "-w", "vm.max_map_count=262144")
+			err = cmd.Run()
+		} else if m.verbose {
+			m.printf(colRegular, "max virtual memory areas is already at a safe value\n")
+		}
+	}
+	return nil
 }
 
 //ampStack & ampService
