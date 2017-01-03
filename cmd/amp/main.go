@@ -67,7 +67,7 @@ func main() {
 		}
 		AMP = client.NewAMP(Config)
 		if AMP.Verbose() == false {
-			;RootCmd.SilenceErrors = true
+			RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
 		}
 		cli.AtExit(func() {
