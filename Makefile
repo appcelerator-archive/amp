@@ -1,4 +1,4 @@
-  
+
 .PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host rules
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
@@ -139,7 +139,7 @@ bin-clean:
 
 clean: proto-clean bin-clean
 
-install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-ampadm
+install: fmt check install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-ampadm
 
 DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
