@@ -650,7 +650,7 @@ func (s *ampManager) setColors() {
 }
 
 // system prerequisites
-func (m *ampManager) systemPrerequisites() error {
+func (s *ampManager) systemPrerequisites() error {
 	sysctl := false
 	// checks if GOOS is set
 	goos := os.Getenv("GOOS")
@@ -687,13 +687,13 @@ func (m *ampManager) systemPrerequisites() error {
 			if uid != 0 {
 				return fmt.Errorf("vm.max_map_count should be at least 262144, admin rights are needed to update it")
 			}
-			if m.verbose {
-				m.printf(colRegular, "setting max virtual memory areas\n")
+			if s.verbose {
+				s.printf(colRegular, "setting max virtual memory areas\n")
 			}
 			cmd = exec.Command("sysctl", "-w", "vm.max_map_count=262144")
 			err = cmd.Run()
-		} else if m.verbose {
-			m.printf(colRegular, "max virtual memory areas is already at a safe value\n")
+		} else if s.verbose {
+			s.printf(colRegular, "max virtual memory areas is already at a safe value\n")
 		}
 	}
 	return nil
