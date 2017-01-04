@@ -14,7 +14,7 @@ install:
   - sudo apt-get update
   - sudo apt-get install docker-engine
   - docker swarm init --advertise-addr 127.0.0.1
-  - make install
+  - make fmt check install
   - make TAG=local build-image
   - amp platform pull --local
   - amp platform start --local
