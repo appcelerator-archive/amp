@@ -1,4 +1,4 @@
-# AMP - the open source CaaS platform for Docker
+# AMP - the open source CaaS / FaaS platform for Docker
 
 AMP is an open-source Container-as-a-Service ([CaaS](https://blog.docker.com/2016/02/containers-as-a-service-caas/))
 platform for managing and monitoring containerized applications,  microservices, and microservice workers as part
