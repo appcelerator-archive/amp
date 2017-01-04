@@ -29,58 +29,8 @@ var (
 	natsStreaming ns.NatsStreaming
 )
 
-const (
-	esIndex   = "amp-logs"
-	esType    = "amp-log-entry"
-	esMapping = `{
-		 "amp-log-entry": {
-            "properties": {
-              "timestamp": {
-                "type": "date"
-              },
-              "time_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "container_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "node_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "service_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "service_name": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "task_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "task_name": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "stack_id": {
-                "type": "string",
-                "index": "not_analyzed"
-              },
-              "stack_name": {
-                "type": "string",
-                "index": "not_analyzed"
-              }
-            }
-          }
-        }`
-)
-
 func main() {
-	log.Printf("amp-log-worker (version: %s, build: %s)\n", Version, Build)
+	log.Printf("%s (version: %s, build: %s)\n", os.Args[0], Version, Build)
 
 	err := es.Connect(amp.ElasticsearchDefaultURL, 60*time.Second)
 	if err != nil {
@@ -88,11 +38,11 @@ func main() {
 	}
 	log.Printf("Connected to elasticsearch at %s\n", amp.ElasticsearchDefaultURL)
 
-	es.CreateIndexIfNotExists(context.Background(), esIndex, esType, esMapping)
+	es.CreateIndexIfNotExists(context.Background(), logs.EsIndex, logs.EsType, logs.EsMapping)
 	if err != nil {
 		log.Fatalf("Unable to create index: %s", err)
 	}
-	log.Printf("Created index %s\n", esIndex)
+	log.Printf("Created index %s\n", logs.EsIndex)
 
 	// NATS Connect
 	hostname, err := os.Hostname()
@@ -138,7 +88,7 @@ func messageHandler(msg *stan.Msg) {
 		log.Printf("Error parsing timestamp: %v", err)
 	}
 	logEntry.Timestamp = timestamp.Format("2006-01-02T15:04:05.999")
-	err = es.Index(context.Background(), esIndex, esType, logEntry) // TODO: Should we use a timeout context ?
+	err = es.Index(context.Background(), logs.EsIndex, logs.EsType, logEntry) // TODO: Should we use a timeout context ?
 	if err != nil {
 		log.Printf("Error indexing log entry: %v", err)
 	}

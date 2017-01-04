@@ -67,6 +67,10 @@
           "type": "string",
           "format": "string"
         },
+        "infra": {
+          "type": "boolean",
+          "format": "boolean"
+        },
         "message": {
           "type": "string",
           "format": "string"
@@ -101,6 +105,10 @@
           "format": "string"
         },
         "node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
           "type": "string",
           "format": "string"
         },

@@ -29,6 +29,7 @@ message LogEntry {
   string task_name = 9;
   string stack_id = 10;
   string stack_name = 11;
+  string role = 12;
 }
 
 message GetRequest {
@@ -38,6 +39,7 @@ message GetRequest {
   sint64 size = 4;
   string service = 5;
   string stack = 6;
+  bool infra = 7;
 }
 
 message GetReply {

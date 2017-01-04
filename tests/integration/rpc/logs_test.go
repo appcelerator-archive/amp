@@ -50,7 +50,7 @@ func TestLogsInit(t *testing.T) {
 		return
 	}
 	log.Println("Connected to nats")
-	err = produceLogEntries(110)
+	err = produceLogEntries(100, false)
 	if err != nil {
 		t.Errorf("failed to produce log entries: %v\n", err)
 		return
@@ -177,6 +177,31 @@ func TestLogsShouldFilterByStack(t *testing.T) {
 	}
 }
 
+func TestLogsShouldFilterByInfrastructureRole(t *testing.T) {
+	r, err := logsClient.Get(ctx, &GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.True(t, entry.Role != amp.InfrastructureRole)
+	}
+
+	r, err = logsClient.Get(ctx, &GetRequest{Service: "elastic", Infra: true})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
+	gotInfraEntry := false
+	for _, entry := range r.Entries {
+		if entry.Role == amp.InfrastructureRole {
+			gotInfraEntry = true
+			break
+		}
+	}
+	assert.True(t, gotInfraEntry)
+}
+
 func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 100; i += 10 {
 		r, err := logsClient.Get(ctx, &GetRequest{Size: i})
@@ -192,7 +217,7 @@ func TestLogsShouldStreamLogs(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -203,7 +228,7 @@ func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -217,7 +242,7 @@ func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -231,7 +256,7 @@ func TestLogsShouldStreamAndFilterByService(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -245,7 +270,7 @@ func TestLogsShouldStreamAndFilterByMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -259,7 +284,7 @@ func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -273,7 +298,7 @@ func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	go produceLogEntries(100)
+	go produceLogEntries(100, false)
 	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultNumberOfEntries, len(entries))
@@ -282,13 +307,45 @@ func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
 	}
 }
 
+func TestLogsShouldStreamAndFilterByInfrastructureRole(t *testing.T) {
+	stream, err := logsClient.GetStream(ctx, &GetRequest{})
+	if err != nil {
+		t.Error(err)
+	}
+	go produceLogEntries(100, false)
+	entries, err := listenToLogEntries(stream, defaultNumberOfEntries)
+	assert.NoError(t, err)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	for entry := range entries {
+		assert.True(t, entry.Role != amp.InfrastructureRole)
+	}
+	stream.CloseSend()
+
+	stream, err = logsClient.GetStream(ctx, &GetRequest{Infra: true})
+	if err != nil {
+		t.Error(err)
+	}
+	go produceLogEntries(100, true)
+	entries, err = listenToLogEntries(stream, defaultNumberOfEntries)
+	assert.NoError(t, err)
+	assert.Equal(t, defaultNumberOfEntries, len(entries))
+	gotInfraEntry := false
+	for entry := range entries {
+		if entry.Role == amp.InfrastructureRole {
+			gotInfraEntry = true
+			break
+		}
+	}
+	assert.True(t, gotInfraEntry)
+}
+
 func TestLogsEnd(t *testing.T) {
 	sc.Close()
 }
 
-func produceLogEntries(howMany int) error {
+func produceLogEntries(howMany int, generateInfrasRole bool) error {
 	for i := 0; i < howMany; i++ {
-		message, err := proto.Marshal(&LogEntry{
+		logEntry := &LogEntry{
 			ContainerId: testContainerID,
 			Message:     testMessage + strconv.Itoa(rand.Int()),
 			NodeId:      testNodeID,
@@ -300,9 +357,15 @@ func produceLogEntries(howMany int) error {
 			TaskId:      testTaskID,
 			Timestamp:   time.Now().Format(time.RFC3339Nano),
 			TimeId:      time.Now().UTC().Format(time.RFC3339Nano),
-		})
-		err = sc.Publish(amp.NatsLogsTopic, message)
+		}
+		if i%5 == 0 && generateInfrasRole {
+			logEntry.Role = amp.InfrastructureRole
+		}
+		message, err := proto.Marshal(logEntry)
 		if err != nil {
+			return err
+		}
+		if err = sc.Publish(amp.NatsLogsTopic, message); err != nil {
 			return err
 		}
 	}

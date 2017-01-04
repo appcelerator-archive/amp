@@ -100,6 +100,7 @@ func startReadingLogs(ID string, data *ContainerData) {
 	nodeID := data.labels["com.docker.swarm.node.id"]
 	stackID := data.labels["io.amp.stack.id"]
 	stackName := data.labels["io.amp.stack.name"]
+	role := data.labels["io.amp.role"]
 	reader := bufio.NewReader(stream)
 	fmt.Printf("start reading logs on container: %s\n", data.name)
 	for {
@@ -135,6 +136,7 @@ func startReadingLogs(ID string, data *ContainerData) {
 			Message:     slog,
 			Timestamp:   timestamp.Format(time.RFC3339Nano),
 			TimeId:      timestamp.UTC().Format(time.RFC3339Nano),
+			Role:        role,
 		}
 
 		encoded, err := proto.Marshal(&logEntry)

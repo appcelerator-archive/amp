@@ -59,7 +59,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -71,7 +71,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					},
 					Env: nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -99,7 +99,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -107,7 +107,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -146,7 +146,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -154,7 +154,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -182,7 +182,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -190,7 +190,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -212,7 +212,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -220,7 +220,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -242,7 +242,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -250,7 +250,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -272,7 +272,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -280,7 +280,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{"amp-agent"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -307,7 +307,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -315,7 +315,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -345,7 +345,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -353,7 +353,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{"amp-log-worker"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -374,7 +374,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -382,7 +382,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -403,7 +403,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -411,7 +411,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -432,7 +432,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -457,7 +457,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 						"INFLUXDB_TIMEOUT=20",
 					},
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -488,7 +488,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -512,7 +512,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 						"INFLUXDB_TIMEOUT=20",
 					},
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -533,7 +533,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -541,7 +541,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: nil,
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -574,7 +574,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -586,7 +586,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					},
 					Env: nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 				},
 			},
@@ -605,7 +605,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -613,7 +613,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{"amp-function-listener"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: nil,
 				},
@@ -642,7 +642,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-					"io.amp.role": "infrastructure",
+					"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -650,7 +650,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Args: []string{"amp-function-worker"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
