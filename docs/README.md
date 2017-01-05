@@ -7,7 +7,7 @@ AMP is currently under development and this section is here to help you get star
 
 ## What is AMP?
 
-AMP is the codename for a project that incubated at Atomiq, then became the Appcelerator Microservices Platform. Ultimately, the project's goal is to provide developers with facilities to deploy containerized microservices for what is now called "serverless computing" that can be activated
+AMP is the codename for a project that incubated at Atomiq, then became the Appcelerator Microservices Platform. Ultimately, the project's goal is to provide developers with facilities to deploy containerized microservices for what is now called "[serverless computing](./serverless.md)" that can be activated
 
 * on demand (for example, in response to a message or an API request)
 * on schedule (think "cloud-based Cron")
@@ -18,7 +18,7 @@ Microservices have access to system services that can help accelerate developmen
 * distributed key/value store
 * high throughput, durable, ordered message queuing
 
-What is referred to as AMP today is actually just the foundation for serverless computing. This foundation provides a Container-as-a-Service (CaaS), which at a high level has three important aspects. It provides:
+What is referred to as AMP today is actually just the foundation for [serverless computing](./serverless.md). This foundation provides a Container-as-a-Service (CaaS), which at a high level has three important aspects. It provides:
 
 * services for setting up and managing cluster infrastructure to host Docker containers;
 * services for registering, building, and deploying Docker images;
@@ -74,11 +74,11 @@ If you have deployed your AMP Swarm cluster somewhere else and you want to contr
 Use the AMP command `amp platform` (or the `amp pf` short version) to manipulate AMP swarm services.
 
 On first usage, you need to pull AMP images to your local docker installation using:
-    
+
     $ amp pf pull
-    
+
 After this step, you can start AMP with the following command:
-                                                                                    
+
     $ amp pf start
 
 Finally, you can monitor AMP status by using:
@@ -241,3 +241,7 @@ _Main page: [AMP registry](registry.md)_
 
     amp registry ls
     amp registry push
+
+### Functions
+
+Check the [serverless computing](./serverless.md) section.
