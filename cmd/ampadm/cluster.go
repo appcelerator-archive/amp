@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 )
@@ -74,7 +75,7 @@ func (s *clusterStack) init(local bool, ampTag string) {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-				//"io.amp.role": "infrastructure",
+				//"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -82,7 +83,7 @@ func (s *clusterStack) init(local bool, ampTag string) {
 					Args: []string{"adm-server"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{
@@ -121,7 +122,7 @@ func (s *clusterStack) init(local bool, ampTag string) {
 		&swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
 				Labels: map[string]string{
-				//"io.amp.role": "infrastructure",
+				//"io.amp.role": amp.InfrastructureRole,
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{
@@ -129,7 +130,7 @@ func (s *clusterStack) init(local bool, ampTag string) {
 					Args: []string{"adm-agent"},
 					Env:  nil,
 					Labels: map[string]string{
-						"io.amp.role": "infrastructure",
+						"io.amp.role": amp.InfrastructureRole,
 					},
 					Mounts: []mount.Mount{
 						{

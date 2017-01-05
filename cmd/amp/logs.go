@@ -28,6 +28,7 @@ func init() {
 	// TODO logsCmd.Flags().String("timestamp", "", "filter by the given timestamp")
 	logsCmd.Flags().String("container", "", "Filter by the given container")
 	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
+	logsCmd.Flags().BoolP("infra", "i", false, "Include infrastructure logs")
 	logsCmd.Flags().String("message", "", "Filter the message content by the given pattern")
 	logsCmd.Flags().BoolP("meta", "m", false, "Display entry metadata")
 	logsCmd.Flags().String("node", "", "Filter by the given node")
@@ -47,6 +48,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		fmt.Println("Log flags:")
 		fmt.Printf("container: %v\n", cmd.Flag("container").Value)
 		fmt.Printf("follow: %v\n", cmd.Flag("follow").Value)
+		fmt.Printf("infra: %v\n", cmd.Flag("infra").Value)
 		fmt.Printf("message: %v\n", cmd.Flag("message").Value)
 		fmt.Printf("meta: %v\n", cmd.Flag("meta").Value)
 		fmt.Printf("node: %v\n", cmd.Flag("node").Value)
@@ -63,15 +65,18 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	request.Message = cmd.Flag("message").Value.String()
 	request.Stack = cmd.Flag("stack").Value.String()
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
-		log.Fatalf("Unable to convert n parameter: %v\n", cmd.Flag("n").Value.String())
+		log.Fatalf("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
 	}
-	var meta bool
+	meta := false
 	if meta, err = strconv.ParseBool(cmd.Flag("meta").Value.String()); err != nil {
 		log.Fatalf("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 	}
-	var follow bool
+	follow := false
 	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
-		log.Fatalf("Unable to convert f parameter: %v\n", cmd.Flag("f").Value.String())
+		log.Fatalf("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
+	}
+	if request.Infra, err = strconv.ParseBool(cmd.Flag("infra").Value.String()); err != nil {
+		log.Fatalf("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 
 	// Get logs from amplifier

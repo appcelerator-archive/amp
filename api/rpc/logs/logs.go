@@ -18,7 +18,52 @@ import (
 )
 
 const (
-	esIndex = "amp-logs"
+	// EsIndex is the name of the Elasticsearch index
+	EsIndex = "amp-logs"
+
+	// EsType is the name of the Elasticsearch type
+	EsType = "amp-log-entry"
+
+	// EsMapping is the name of the Elasticsearch type mapping
+	EsMapping = `{
+	 "amp-log-entry": {
+		"properties": {
+		  "timestamp": {
+			"type": "date"
+		  },
+		  "time_id": {
+			"type": "keyword",
+		  },
+		  "container_id": {
+			"type": "keyword",
+		  },
+		  "node_id": {
+			"type": "keyword",
+		  },
+		  "service_id": {
+			"type": "keyword",
+		  },
+		  "service_name": {
+			"type": "keyword",
+		  },
+		  "task_id": {
+			"type": "keyword",
+		  },
+		  "task_name": {
+			"type": "keyword",
+		  },
+		  "stack_id": {
+			"type": "keyword",
+		  },
+		  "stack_name": {
+			"type": "keyword",
+		  },
+		  "role": {
+			"type": "keyword",
+		  }
+		}
+	  }
+	}`
 )
 
 // Server is used to implement log.LogServer
@@ -39,7 +84,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	log.Println("rpc-logs: Get", in.String())
 
 	// Prepare request to elasticsearch
-	request := s.Es.GetClient().Search().Index(esIndex)
+	request := s.Es.GetClient().Search().Index(EsIndex)
 	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
@@ -49,24 +94,32 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 	masterQuery := elastic.NewBoolQuery()
 	if in.Container != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("container_id", in.Container))
+		masterQuery.Filter(elastic.NewPrefixQuery("container_id", in.Container))
 	}
 	if in.Message != "" {
-		queryString := elastic.NewQueryStringQuery(in.Message + "*")
+		queryString := elastic.NewSimpleQueryStringQuery(in.Message)
 		queryString.Field("message")
-		queryString.AnalyzeWildcard(true)
-		masterQuery.Must(queryString)
+		masterQuery.Filter(queryString)
 	}
 	if in.Node != "" {
-		masterQuery.Must(elastic.NewPrefixQuery("node_id", in.Node))
+		masterQuery.Filter(elastic.NewPrefixQuery("node_id", in.Node))
 	}
 	if in.Service != "" {
-		masterQuery.Should(elastic.NewPrefixQuery("service_id", in.Service))
-		masterQuery.Should(elastic.NewPrefixQuery("service_name", in.Service))
+		boolQuery := elastic.NewBoolQuery()
+		masterQuery.Filter(
+			boolQuery.Should(elastic.NewPrefixQuery("service_id", in.Service)),
+			boolQuery.Should(elastic.NewPrefixQuery("service_name", in.Service)),
+		)
 	}
 	if in.Stack != "" {
-		masterQuery.Should(elastic.NewPrefixQuery("stack_id", in.Stack))
-		masterQuery.Should(elastic.NewPrefixQuery("stack_name", in.Stack))
+		boolQuery := elastic.NewBoolQuery()
+		masterQuery.Filter(
+			boolQuery.Should(elastic.NewPrefixQuery("stack_id", in.Stack)),
+			boolQuery.Should(elastic.NewPrefixQuery("stack_name", in.Stack)),
+		)
+	}
+	if !in.Infra {
+		masterQuery.MustNot(elastic.NewTermQuery("role", amp.InfrastructureRole))
 	}
 	// TODO timestamp queries
 
@@ -152,6 +205,9 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		stackID := strings.ToLower(entry.StackId)
 		stackName := strings.ToLower(entry.StackName)
 		match = strings.HasPrefix(stackID, strings.ToLower(in.Stack)) || strings.HasPrefix(stackName, strings.ToLower(in.Stack))
+	}
+	if !in.Infra {
+		match = entry.Role != amp.InfrastructureRole
 	}
 	return match
 }
