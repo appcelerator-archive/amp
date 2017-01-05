@@ -14,7 +14,7 @@ var (
 	createTopicCmd = &cobra.Command{
 		Use:   "create [OPTIONS] NAME",
 		Short: "Create a topic",
-		Long:  `Create a topic.`,
+		Long:  `Create command creates a topic with specified name and options.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTopic(AMP, cmd, args)
 		},

@@ -10,7 +10,8 @@ import (
 var PlatformStatus = &cobra.Command{
 	Use:   "status",
 	Short: "Get AMP platform status",
-	Long:  `Get AMP platform global status (stopped, partially running, running command return 1 if status is not running.`,
+	Long: `Status command retrieves AMP platform global status (stopped, partially running, running)
+- the command returns 1 if status is not running.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getAMPStatus(cmd, args)
 	},

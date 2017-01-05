@@ -8,7 +8,7 @@ import (
 var ServiceCmd = &cobra.Command{
 	Use:   "service",
 	Short: "Manage services",
-	Long:  `Manage services.`,
+	Long:  `Service command manages all service-related operations.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},

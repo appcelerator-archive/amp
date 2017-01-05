@@ -10,7 +10,7 @@ import (
 var PlatformPull = &cobra.Command{
 	Use:   "pull",
 	Short: "Pull platform images",
-	Long:  `Pull all AMP platform images.`,
+	Long:  `Pull command pulls all the updated AMP platform images available from AMP Infrastructure stack.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		pullAMPImages(cmd, args)
 	},
