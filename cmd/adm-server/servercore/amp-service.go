@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"sort"
 	"strconv"
 	"strings"
@@ -127,6 +126,7 @@ func (s *AMPInfraManager) systemPrerequisites() error {
 	sysctl := false
 	// checks if GOOS is set
 	goos := os.Getenv("GOOS")
+	fmt.Printf("goos: %s\n")
 	if goos == "linux" {
 		sysctl = true
 	} else if goos == "" {
@@ -147,26 +147,9 @@ func (s *AMPInfraManager) systemPrerequisites() error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("mmc %d\n", mmc)
 		if mmc < mmcmin {
-			// admin rights are needed
-			u, err := user.Current()
-			if err != nil {
-				return err
-			}
-			uid, err := strconv.Atoi(u.Uid)
-			if err != nil {
-				return err
-			}
-			if uid != 0 {
-				return fmt.Errorf("vm.max_map_count should be at least 262144, admin rights are needed to update it")
-			}
-			if s.Verbose {
-				s.printf(colRegular, "setting max virtual memory areas\n")
-			}
-			cmd = exec.Command("sysctl", "-w", "vm.max_map_count=262144")
-			err = cmd.Run()
-		} else if s.Verbose {
-			s.printf(colRegular, "max virtual memory areas is already at a safe value\n")
+			return fmt.Errorf("vm.max_map_count should be at least 262144, admin rights are needed to update it")
 		}
 	}
 	return nil
