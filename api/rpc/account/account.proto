@@ -1,0 +1,248 @@
+syntax = "proto3";
+
+package account;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service AccountService {
+  rpc SignUp (SignUpRequest) returns (SessionReply) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/signup",
+      body: "*"
+    };
+  };
+  rpc Verify (VerificationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/verification/{code}",
+      body: "*"
+    };
+  };
+  rpc CreateOrganization (OrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/createOrganization",
+      body: "*"
+    };
+  };
+  rpc Login (LogInRequest) returns (SessionReply) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/login",
+      body: "*"
+    };
+  };
+  rpc Switch (TeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/account/{organization}/switch",
+      body: "*"
+    };
+  };
+  rpc ListAccounts (AccountsRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/account"
+    };
+  };
+  rpc GetAccountDetails (AccountRequest) returns (AccountReply) {
+    option (google.api.http) = {
+      get: "/v1/account/{name}"
+    };
+  };
+  rpc EditAccount (EditRequest) returns (AccountReply) {
+    option (google.api.http) = {
+      put: "/v1/account/{name}",
+      body: "*"
+    };
+  };
+  rpc DeleteAccount (AccountRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{name}"
+    };
+  };
+  rpc AddOrganizationMemberships (OrganizationMembershipsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      patch: "/v1/account/{name}/membership",
+      body: "*"
+    };
+  };
+  rpc DeleteOrganizationMemberships (OrganizationMembershipsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{name}/membership"
+    };
+  };
+  rpc CreateTeam (TeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{organization}/team/{name}",
+      body: "*"
+    };
+  };
+  rpc ListTeams (TeamRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/account/{organization}/team"
+    };
+  };
+  rpc EditTeam (TeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/account/{organization}/team/{name}",
+      body: "*"
+    };
+  };
+  rpc GetTeamDetails (TeamRequest) returns (TeamReply) {
+    option (google.api.http) = {
+      get: "/v1/account/{organization}/team/{name}"
+    };
+  };
+  rpc DeleteTeam (TeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{organization}/team/{name}"
+    };
+  };
+  rpc AddTeamMemberships (TeamMembershipsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      patch: "/v1/account/{organization}/team/{name}/membership",
+      body: "*"
+    };
+  };
+  rpc DeleteTeamMemberships (TeamMembershipsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{organization}/team/{name}/membership"
+    };
+  };
+  rpc GrantPermission (PermissionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{organization}/team/{team}/permission",
+      body: "*"
+    };
+  };
+  rpc ListPermissions (PermissionRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/account/{organization}/team/{team}/permission"
+    };
+  };
+  rpc EditPermission (PermissionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/account/{organization}/team/{team}/permission/{resource_id}",
+      body: "*"
+    };
+  };
+  rpc RevokePermission (PermissionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{organization}/team/{team}/permission/{resource_id}"
+    };
+  };
+  rpc TransferOwnership (PermissionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{organization}/team/{team}/transfer/{resource_id}",
+      body: "*"
+    };
+  };
+}
+
+message SignUpRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message VerificationRequest {
+  string name = 1;
+  string code = 2;
+}
+
+message LogInRequest {
+  string name = 1;
+  string password = 2;
+}
+
+message SessionReply {
+  string sessionKey = 1;
+}
+
+message OrganizationRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message AccountsRequest {
+  string type = 1;
+  string organization = 2;
+  string team = 3;
+}
+
+message AccountRequest {
+  string name = 1;
+}
+
+message Account {
+  string name = 1;
+  string email = 2;
+  bool email_verified = 3;
+  string account_type = 4;
+}
+
+message Billing {
+  string contact = 1;
+  string address_line_1 = 2;
+  string address_line_2 = 3;
+  string city = 4;
+  string state = 5;
+  string zip_code = 6;
+  string phone_number = 7;
+  string fax_number = 8;
+  string email = 9;
+  string card_type = 10;
+  string card_number = 11;
+}
+
+message Settings {
+  string plan = 1;
+}
+
+message AccountReply {
+  Account account = 1;
+  Billing billing = 2;
+  Settings settings = 3;
+}
+
+message ListReply {
+  repeated Account accounts = 1;
+  repeated TeamReply teams = 2;
+  repeated PermissionRequest permissions = 3;
+}
+
+message EditRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+  string new_password = 4;
+  Billing billing = 5;
+}
+
+message OrganizationMembershipsRequest {
+  string name = 1;
+  repeated string Members = 2;
+}
+
+message TeamRequest {
+  string name = 1;
+  string description = 2;
+  string organization = 3;
+}
+
+message TeamReply {
+  string name = 1;
+  string description = 2;
+  string organization = 3;
+  repeated string members = 4;
+}
+
+message TeamMembershipsRequest {
+  string name = 1;
+  string organization = 2;
+  repeated string Members = 3;
+}
+
+message PermissionRequest {
+  string team = 1;
+  string organization = 2;
+  string level = 3;
+  string resource_id = 4;
+}
