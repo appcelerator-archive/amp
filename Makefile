@@ -141,36 +141,29 @@ clean: proto-clean bin-clean
 
 install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-ampadm
 
-DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-VENDORSRC := $(shell find ./vendor -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-# binaries are compiled as soon as their sources are newer than the existing binary
 CLISRC := $(shell find ./cmd/amp -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-SERVERSRC := $(shell find ./cmd/amplifier -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-AGENTSRC := $(shell find ./cmd/amp-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-LOGWORKERSRC := $(shell find ./cmd/amp-log-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-GATEWAYSRC := $(shell find ./cmd/amplifier-gateway -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-FUNCTIONLISTENERSRC := $(shell find ./cmd/amp-function-listener -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-FUNCTIONWORKERSRC := $(shell find ./cmd/amp-function-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+VENDORSRC := $(shell find ./vendor -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+install-cli:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
-install-server: $(SERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-server:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
-install-agent: $(AGENTSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-agent:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
-install-log-worker: $(LOGWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-log-worker:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
-install-gateway: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-gateway:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
-install-fn-listener: $(FUNCTIONLISTENERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-fn-listener:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_LISTENER)
-install-fn-worker: $(FUNCTIONWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-fn-worker:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_WORKER)
-install-adm-server: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-adm-server:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
-install-adm-agent: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-adm-agent:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
-install-ampadm: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-ampadm:
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AMPADM)
 
 build: build-cli build-server build-agent build-log-worker build-gateway build-fn-listener build-fn-worker build-adm-server build-adm-agent build-ampadm
