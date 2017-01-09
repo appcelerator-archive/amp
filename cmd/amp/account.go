@@ -31,7 +31,7 @@ var (
 
 	switchRoleCmd = &cobra.Command{
 		Use:   "switch [ORGANIZATION]",
-		Short: "Switch primary organation",
+		Short: "Switch primary organization",
 	}
 
 	createOrganizationCmd = &cobra.Command{
@@ -41,7 +41,7 @@ var (
 
 	listUsersCmd = &cobra.Command{
 		Use:   "list users [ORGANIZATION] [TEAM]",
-		Short: "list users, optionally filter by organation and team",
+		Short: "list users, optionally filter by organization and team",
 	}
 
 	listOrganizationsCmd = &cobra.Command{
@@ -75,8 +75,8 @@ var (
 	}
 
 	addOrganizationMembersCmd = &cobra.Command{
-		Use:   "add organation members [ORGANIZATION] [MEMBERS...]",
-		Short: "Add users to an organation",
+		Use:   "add organization members [ORGANIZATION] [MEMBERS...]",
+		Short: "Add users to an organization",
 	}
 
 	addTeamMembersCmd = &cobra.Command{
@@ -85,8 +85,8 @@ var (
 	}
 
 	removeOrganizationMembersCmd = &cobra.Command{
-		Use:   "remove organation members [ORGANIZATION] [MEMBERS...]",
-		Short: "Remove users from an organation",
+		Use:   "remove organization members [ORGANIZATION] [MEMBERS...]",
+		Short: "Remove users from an organization",
 	}
 
 	removeTeamMembersCmd = &cobra.Command{
@@ -111,6 +111,6 @@ var (
 
 	transferOwnershipCmd = &cobra.Command{
 		Use:   "transfer [RESOURCE_ID] [ORGANIZATION] [TEAM]",
-		Short: "Transfer ownership of a resource to an organation or team",
+		Short: "Transfer ownership of a resource to an organization or team",
 	}
 )
