@@ -274,9 +274,9 @@
         ]
       }
     },
-    "/v1/account/{organization}/assumeRole": {
+    "/v1/account/{organization}/switch": {
       "put": {
-        "operationId": "AssumeRole",
+        "operationId": "Switch",
         "responses": {
           "200": {
             "description": "",

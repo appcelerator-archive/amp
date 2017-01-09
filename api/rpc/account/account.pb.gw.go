@@ -162,7 +162,7 @@ func request_AccountService_Login_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-func request_AccountService_AssumeRole_0(ctx context.Context, marshaler runtime.Marshaler, client AccountServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_AccountService_Switch_0(ctx context.Context, marshaler runtime.Marshaler, client AccountServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TeamRequest
 	var metadata runtime.ServerMetadata
 
@@ -188,7 +188,7 @@ func request_AccountService_AssumeRole_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, err
 	}
 
-	msg, err := client.AssumeRole(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.Switch(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -1053,7 +1053,7 @@ func RegisterAccountServiceHandler(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
-	mux.Handle("PUT", pattern_AccountService_AssumeRole_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_AccountService_Switch_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -1070,14 +1070,14 @@ func RegisterAccountServiceHandler(ctx context.Context, mux *runtime.ServeMux, c
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 		}
-		resp, md, err := request_AccountService_AssumeRole_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccountService_Switch_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_AccountService_AssumeRole_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccountService_Switch_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1597,7 +1597,7 @@ var (
 
 	pattern_AccountService_Login_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "name", "login"}, ""))
 
-	pattern_AccountService_AssumeRole_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "organization", "assumeRole"}, ""))
+	pattern_AccountService_Switch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "organization", "switch"}, ""))
 
 	pattern_AccountService_ListAccounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "account"}, ""))
 
@@ -1645,7 +1645,7 @@ var (
 
 	forward_AccountService_Login_0 = runtime.ForwardResponseMessage
 
-	forward_AccountService_AssumeRole_0 = runtime.ForwardResponseMessage
+	forward_AccountService_Switch_0 = runtime.ForwardResponseMessage
 
 	forward_AccountService_ListAccounts_0 = runtime.ForwardResponseMessage
 

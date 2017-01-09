@@ -30,9 +30,9 @@ service AccountService {
       body: "*"
     };
   };
-  rpc AssumeRole (TeamRequest) returns (google.protobuf.Empty) {
+  rpc Switch (TeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put: "/v1/account/{organization}/assumeRole",
+      put: "/v1/account/{organization}/switch",
       body: "*"
     };
   };

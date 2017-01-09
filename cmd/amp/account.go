@@ -29,9 +29,9 @@ var (
 		Short: "verify email using code",
 	}
 
-	assumeRoleCmd = &cobra.Command{
-		Use:   "assume [ORGANIZATION] [TEAM]",
-		Short: "assume role as organation or team",
+	switchRoleCmd = &cobra.Command{
+		Use:   "switch [ORGANIZATION]",
+		Short: "Switch primary organation",
 	}
 
 	createOrganizationCmd = &cobra.Command{
