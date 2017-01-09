@@ -1,15 +1,23 @@
 package main
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var (
 	// Interactive
-	loginCmd = &cobra.Command{
+	loginStubCmd = &cobra.Command{
 		Use:   "login",
 		Short: "log in to amp",
 	}
+	/*
+		     I am a user
+		     I want to login
+
+		     $ amp login
+			   username: {username}
+			   password: *{password}*
+
+		     result: session token set
+	*/
 
 	accountCmd = &cobra.Command{
 		Use:   "account",
