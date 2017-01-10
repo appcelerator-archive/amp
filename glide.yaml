@@ -62,6 +62,8 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.13
 - package: gopkg.in/yaml.v2
+- package: gopkg.in/hlandau/passlib.v1
+  version: ^1.0.9
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4
