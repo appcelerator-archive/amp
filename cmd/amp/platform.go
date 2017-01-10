@@ -8,7 +8,7 @@ import (
 var PlatformCmd = &cobra.Command{
 	Use:     "platform",
 	Short:   "Platform operations (alias: pf)",
-	Long:    `Manage platform-related operations.`,
+	Long:    `Platform command manages all platform-related operations.`,
 	Aliases: []string{"pf"},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return nil

@@ -14,7 +14,7 @@ import (
 var logsCmd = &cobra.Command{
 	Use:   "logs [OPTIONS] [SERVICE]",
 	Short: "Fetch log entries matching provided criteria",
-	Long:  `Fetch log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.`,
+	Long:  `Log command fetches log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {

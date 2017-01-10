@@ -22,7 +22,7 @@ const (
 var statsCmd = &cobra.Command{
 	Use:   "stats [service name or id] or --flags...",
 	Short: "Display resource usage statistics",
-	Long:  `Get statistics on containers, services, nodes about cpu, memory, io, net.`,
+	Long:  `Stats command manages all statistics-related operations on containers, services, nodes about cpu, memory, io, net.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {
