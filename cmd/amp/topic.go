@@ -8,7 +8,7 @@ import (
 var TopicCmd = &cobra.Command{
 	Use:   "topic",
 	Short: "Topic operations",
-	Long:  `Manage topic-related operations.`,
+	Long:  `Topic command manages all topic-related operations.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},
