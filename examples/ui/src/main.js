@@ -5,8 +5,9 @@ import Home from './components/Home.html'
 import Stacks from './components/Stacks.html'
 import Topics from './components/Topics.html'
 import StackEdit from './components/StackEdit.html'
+import Functions from './components/Functions.html'
 
-const sections = { Home, Stacks, Topics, StackEdit }
+const sections = { Home, Stacks, Topics, StackEdit, Functions }
 
 const MenuComponent = new Menu({
   target: document.querySelector('#menu'),

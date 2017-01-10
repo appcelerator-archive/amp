@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
