@@ -3,12 +3,15 @@ package server
 import (
 	"log"
 	"net"
-	runInfo "runtime"
 	"strings"
 	"time"
 
 	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
+	"os"
+	"sync"
+
+	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
@@ -17,15 +20,12 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/topic"
-	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
-	"os"
-	"sync"
 )
 
 const (
@@ -101,6 +101,7 @@ func Start(config Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
+	account.RegisterAccountServiceServer(s, &account.Server{})
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)

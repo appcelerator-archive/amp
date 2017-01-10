@@ -21,7 +21,7 @@ import (
 var RegCmd = &cobra.Command{
 	Use:   "registry",
 	Short: "Registry operations",
-	Long:  `Manage registry-related operations.`,
+	Long:  `Registry command manages all registry-related operations.`,
 }
 
 var (
@@ -31,7 +31,7 @@ var (
 	pushCmd  = &cobra.Command{
 		Use:   "push [image]",
 		Short: "Push an image to the amp registry",
-		Long:  `Push an image to the amp registry.`,
+		Long:  `Push command pushes an image to the amp registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryPush(AMP, cmd, args)
 		},
@@ -39,7 +39,7 @@ var (
 	reglsCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List the amp registry images",
-		Long:  `List the amp registry images.`,
+		Long:  `List command lists all the available amp registry images.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryLs(AMP, cmd, args)
 		},

@@ -16,7 +16,7 @@ import (
 var StorageCmd = &cobra.Command{
 	Use:   "kv",
 	Short: "Storage operations",
-	Long:  `Manage storage-related operations.`,
+	Long:  `KV command manages all key-value based storage operations in the ETCD.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},
@@ -27,7 +27,8 @@ var (
 	storagePutCmd = &cobra.Command{
 		Use:   "put [key] [val]",
 		Short: "Assign specified value with specified key",
-		Long:  `Assign specified value with specified key`,
+		Long: `Put command (amp kv put) creates a storage object with the key-value input if the key does not already exist.
+Else, it updates the existing key with the new input value.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storagePut(AMP, cmd, args)
 		},
@@ -36,16 +37,18 @@ var (
 	storageGetCmd = &cobra.Command{
 		Use:   "get [key]",
 		Short: "Retrieve a storage object",
-		Long:  `Retrieve a storage object`,
+		Long: `Get command (amp kv get) retrieves a key-value pair based on the specified input key.
+If not found, an appropriate message is returned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageGet(AMP, cmd, args)
 		},
 	}
 	// storageDeleteCmd represents the deletion of storage value based on key
 	storageDeleteCmd = &cobra.Command{
-		Use:     "del [key]",
-		Short:   "Delete a storage object (alias: rm)",
-		Long:    `Delete a storage object (alias: rm)`,
+		Use:   "del [key]",
+		Short: "Delete a storage object (alias: rm)",
+		Long: `Delete command (amp kv del or amp kv rm) deletes the key-value pair in storage based on the specified input key.
+If not found, an appropriate message is returned.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageDelete(AMP, cmd, args)
@@ -55,7 +58,8 @@ var (
 	storageListCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List all storage objects",
-		Long:  `List all storage objects`,
+		Long: `List command (amp kv ls) returns a list of all the key-value pair in storage.
+If no key-value pair is present, an appropriate message is returned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageList(AMP, cmd, args)
 		},

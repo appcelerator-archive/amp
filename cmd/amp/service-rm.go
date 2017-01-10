@@ -16,7 +16,7 @@ var (
 	serviceRmCmd = &cobra.Command{
 		Use:   "rm [OPTIONS] SERVICE [SERVICE...]",
 		Short: "Remove one or more services",
-		Long:  `Remove one or more services.`,
+		Long:  `Remove command removes one or more services based on specified options.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return serviceRm(AMP, cmd, args)
 		},

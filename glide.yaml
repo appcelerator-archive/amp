@@ -43,7 +43,7 @@ import:
 - package: github.com/mitchellh/go-homedir
 - package: github.com/nats-io/go-nats-streaming
   version: ^0.3.0
-- package: github.com/nats-io/nats
+- package: github.com/nats-io/go-nats
   version: ^1.2.2
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
@@ -62,6 +62,12 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.13
 - package: gopkg.in/yaml.v2
+- package: gopkg.in/hlandau/passlib.v1
+  version: ^1.0.9
+- package: gopkg.in/hlandau/easymetric.v1
+  version: ^1.0.0
+  subpackages:
+  - cexp
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4

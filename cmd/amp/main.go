@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
@@ -36,6 +37,9 @@ var (
 	RootCmd = &cobra.Command{
 		Use:   `amp [OPTIONS] COMMAND [arg...]`,
 		Short: "Appcelerator Microservice Platform.",
+		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform
+for managing and monitoring containerized applications and microservices
+as part of a unified serverless computing environment.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if displayConfigFilePath {
 				configFilePath := viper.ConfigFileUsed()
@@ -80,17 +84,46 @@ func main() {
 		})
 	})
 
+	// versionCmd represents the amp version
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Display amp version",
+		Long:  `Display amp version.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+		},
+	}
+	RootCmd.AddCommand(versionCmd)
+
 	// infoCmd represents the amp information
 	infoCmd := &cobra.Command{
 		Use:   "info",
-		Short: "Display amp version and server information",
-		Long:  `Display amp version and server information.`,
+		Short: "Display AMP version",
+		Long:  `Display the current amp version and server information.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 			fmt.Printf("Server: %s\n", Config.ServerAddress)
 		},
 	}
 	RootCmd.AddCommand(infoCmd)
+
+	// helpCmd displays help about amp Commands
+	var helpCmd = &cobra.Command{
+		Use:   "help [command]",
+		Short: "Help about the command",
+		Long:  `Display the help and usage information about AMP commands.`,
+		RunE: func(c *cobra.Command, args []string) error {
+			cmd, args, e := RootCmd.Find(os.Args[2:])
+			if cmd == nil || e != nil || len(args) > 0 {
+				return fmt.Errorf("unknown help topic: %v", strings.Join(args, " "))
+			}
+
+			helpFunc := cmd.HelpFunc()
+			helpFunc(cmd, args)
+			return nil
+		},
+	}
+	RootCmd.AddCommand(helpCmd)
 
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
@@ -116,7 +149,9 @@ func main() {
 
 var usageTemplate = `Usage:	{{if not .HasSubCommands}}{{.UseLine}}{{end}}{{if .HasSubCommands}}{{ .CommandPath}} COMMAND{{end}}
 
-{{ .Short | trim }}{{if gt .Aliases 0}}
+{{ .Short | trim }}
+
+{{ .Long | trim }}{{if gt .Aliases 0}}
 
 Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
