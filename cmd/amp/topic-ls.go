@@ -19,7 +19,7 @@ var (
 	listTopicCmd = &cobra.Command{
 		Use:   "ls [OPTIONS]",
 		Short: "List topics",
-		Long:  `List topics.`,
+		Long:  `List command returns all topics present.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTopic(AMP, cmd, args)
 		},

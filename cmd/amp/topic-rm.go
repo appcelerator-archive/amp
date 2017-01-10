@@ -14,7 +14,7 @@ var (
 	removeTopicCmd = &cobra.Command{
 		Use:   "rm [OPTIONS] TOPIC",
 		Short: "Remove topic",
-		Long:  `Remove topic.`,
+		Long:  `Remove command removes the specified topic and options.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTopic(AMP, cmd, args)
 		},

@@ -18,7 +18,7 @@ var (
 	serviceCreateCmd = &cobra.Command{
 		Use:   "create [OPTIONS] IMAGE [CMD] [ARG...]",
 		Short: "Create a new service",
-		Long:  `Create a new service.`,
+		Long:  `Create command creates a new service with a specified image and/or options and arguments.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return serviceCreate(AMP, cmd, args)
 		},
