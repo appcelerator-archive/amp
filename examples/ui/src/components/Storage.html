@@ -1,0 +1,76 @@
+<h1>KV</h1>
+{{#each objects as object}}
+  <div>{{object.key}} <input bind:value='object.val'> <button on:click='update(object)'>update</button><button on:click='remove(object)'>remove</button></div>
+{{/each}}
+<form on:submit='create(event)'>
+  <input bind:value='key'>
+  <input bind:value='val'>
+  <button type='submit'>Store a storage object</button>
+</form>
+{{#if error}}
+  <DisplayError bind:error></DisplayError>
+{{/if}}
+
+<script>
+  import DisplayError from './DisplayError.html'
+  import AmpApi from '../api/index.js'
+  const api = new AmpApi()
+
+  export default {
+    components: {
+      DisplayError
+    },
+    onrender () {
+      this.setObjects()
+    },
+    data () {
+      return {
+        objects: [],
+        key: '',
+        val: '',
+        error: '',
+      }
+    },
+    methods: {
+      async getObjects() {
+        return await api.storageObjects()
+      },
+      async setObjects() {
+        try {
+          const objects = await this.getObjects()
+          this.set({objects})
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async update (object) {
+        try {
+          await object.update()
+          await this.setObjects()
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async remove (object) {
+        try {
+          await object.remove()
+          await this.setObjects()
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      },
+      async create (event) {
+        if (event) {
+          event.preventDefault()
+        }
+        try {
+          await api.createStorageObject(this.get('key'), this.get('val'))
+          await this.setObjects()
+          this.set({ key: '', val: '' })
+        } catch (error) {
+          this.set({error: error.message})
+        }
+      }
+    }
+  }
+</script>
