@@ -1,4 +1,3 @@
-  
 .PHONY: all clean proto-clean bin-clean install install-host fmt simplify check version build-image run proto proto-host rules
 .PHONY: build build-cli-linux build-cli-darwin build-cli-windows build-server build-server-linux build-server-darwin build-server-windows
 .PHONY: dist dist-linux dist-darwin dist-windows
@@ -26,14 +25,10 @@ UNIT_TEST_PACKAGES        := $(shell find .                   -type f -name '*_t
 CLI_TEST_PACKAGES         := $(shell find ./tests/cli         -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
 INTEGRATION_TEST_PACKAGES := $(shell find ./tests/integration -type f -name '*_test.go'                        $(EXCLUDE_DIRS_FILTER) -exec dirname {} \; | sort -u)
 
-DIRS = $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
-
 # generated file dependencies for proto rule
 PROTOFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -print)
-PROTOGWFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -exec grep -l google/api/annotations {} \;)
-PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
-PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go)
-PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
+PROTOGWFILES := $(shell find . \( -path ./vendor -o -path ./.git -o -path ./.glide -o -path ./tests \) -prune -o -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
+PROTOALLTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go)
 
 # generated files that can be cleaned
 GENERATED := $(shell find . -type f \( -name '*.pb.go' -o -name '*.pb.gw.go' \) $(EXCLUDE_FILES_FILTER))
@@ -98,9 +93,7 @@ update-deps:
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 # explicit rule to compile protobuf files
-%.pb.go: %.proto
-	@go run hack/proto.go
-%.pb.gw.go: %.proto
+%.pb.go %.pb.gw.go: %.proto
 	@go run hack/proto.go
 
 # used to install when you're already inside a container
