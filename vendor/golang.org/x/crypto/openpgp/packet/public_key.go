@@ -193,7 +193,7 @@ func NewRSAPublicKey(creationTime time.Time, pub *rsa.PublicKey) *PublicKey {
 	return pk
 }
 
-// NewDSAPublicKey returns a PublicKey that wraps the given dsa.PublicKey.
+// NewDSAPublicKey returns a PublicKey that wraps the given rsa.PublicKey.
 func NewDSAPublicKey(creationTime time.Time, pub *dsa.PublicKey) *PublicKey {
 	pk := &PublicKey{
 		CreationTime: creationTime,
@@ -204,47 +204,6 @@ func NewDSAPublicKey(creationTime time.Time, pub *dsa.PublicKey) *PublicKey {
 		g:            fromBig(pub.G),
 		y:            fromBig(pub.Y),
 	}
-
-	pk.setFingerPrintAndKeyId()
-	return pk
-}
-
-// NewElGamalPublicKey returns a PublicKey that wraps the given elgamal.PublicKey.
-func NewElGamalPublicKey(creationTime time.Time, pub *elgamal.PublicKey) *PublicKey {
-	pk := &PublicKey{
-		CreationTime: creationTime,
-		PubKeyAlgo:   PubKeyAlgoElGamal,
-		PublicKey:    pub,
-		p:            fromBig(pub.P),
-		g:            fromBig(pub.G),
-		y:            fromBig(pub.Y),
-	}
-
-	pk.setFingerPrintAndKeyId()
-	return pk
-}
-
-func NewECDSAPublicKey(creationTime time.Time, pub *ecdsa.PublicKey) *PublicKey {
-	pk := &PublicKey{
-		CreationTime: creationTime,
-		PubKeyAlgo:   PubKeyAlgoECDSA,
-		PublicKey:    pub,
-		ec:           new(ecdsaKey),
-	}
-
-	switch pub.Curve {
-	case elliptic.P256():
-		pk.ec.oid = oidCurveP256
-	case elliptic.P384():
-		pk.ec.oid = oidCurveP384
-	case elliptic.P521():
-		pk.ec.oid = oidCurveP521
-	default:
-		panic("unknown elliptic curve")
-	}
-
-	pk.ec.p.bytes = elliptic.Marshal(pub.Curve, pub.X, pub.Y)
-	pk.ec.p.bitLength = uint16(8 * len(pk.ec.p.bytes))
 
 	pk.setFingerPrintAndKeyId()
 	return pk
