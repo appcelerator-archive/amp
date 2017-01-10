@@ -4,6 +4,8 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
 
 service AccountService {
   rpc SignUp (SignUpRequest) returns (SessionReply) {
@@ -171,7 +173,7 @@ message AccountRequest {
   string name = 1;
 }
 
-message Account {
+message AccountInfo {
   string name = 1;
   string email = 2;
   bool email_verified = 3;
@@ -245,4 +247,77 @@ message PermissionRequest {
   string organization = 2;
   string level = 3;
   string resource_id = 4;
+}
+
+// Storage Types
+//This is the storage object
+
+enum AccountType {
+  USER=0;
+  ORGANIZATION=1;
+}
+message Account {
+  int64  id=1;
+  string name =2;
+  AccountType type=3;
+  string email =4;
+  string pw_hashcode =5;
+  bool is_verified=6;
+  // TODO Billing Attributes;
+  google.protobuf.Timestamp create_dt=7;
+}
+message OrganizationMember {
+  int64 id=1;
+  int64 org_account_id=2;  //FK->AccountEntry.id (type=org)
+  int64 user_account_id=3; //FK->AccountEntry.id (type=user)
+  google.protobuf.Timestamp create_dt=4;
+}
+message Resource {
+  int64 id=1;
+  int64 org_account_id=2;  //FK->AccountEntry.id (type=org)
+  string name=3;
+  string type=4;
+  google.protobuf.Timestamp create_dt=5;
+}
+message ResourceSettings {
+  int64 id=1;
+  int64 resource_id=2; // FK->ResourceEntry.id
+  string key=3;
+  string value=4;
+  google.protobuf.Timestamp create_dt=5;
+}
+message Team {
+  int64 id=1;
+  int64 org_account_id=2; //FK->AccountEntry.id (type=org)
+  string name=3;
+  string desc=4;
+  google.protobuf.Timestamp create_dt=5;
+}
+message TeamMember {
+  int64 id=1;
+  int64 user_account_id=2; //FK->AccountEntry.id (type=user)
+  int64 team_id=3; //FK->TeamEntry.id
+  google.protobuf.Timestamp create_dt=5;
+}
+message Permission {
+  int64 id=1;
+  int64 team_id=2; //FK->TeamEntry.id
+  int64 resource_id=3; //FK->ResourceEntry.id
+  int64 grant_id=4;
+  google.protobuf.Timestamp create_dt=5;
+
+}
+// Reference Data
+message ResourceType {
+  int64 id=1;
+  string resource_name=3;
+  string resource_desc=4;
+  google.protobuf.Timestamp create_dt=5;
+}
+message GrantType {
+  int64 id=1;
+  int64 resource_type_id=2; //FK->ResourceTypeEntry.id
+  string grant_name=3;
+  string grant_desc=4;
+  google.protobuf.Timestamp create_dt=5;
 }

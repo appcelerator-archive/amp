@@ -708,21 +708,33 @@
     "accountAccount": {
       "type": "object",
       "properties": {
-        "account_type": {
+        "create_dt": {
           "type": "string",
-          "format": "string"
+          "format": "date-time",
+          "title": "TODO Billing Attributes;"
         },
         "email": {
           "type": "string",
           "format": "string"
         },
-        "email_verified": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "is_verified": {
           "type": "boolean",
           "format": "boolean"
         },
         "name": {
           "type": "string",
           "format": "string"
+        },
+        "pw_hashcode": {
+          "type": "string",
+          "format": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/accountAccountType"
         }
       }
     },
@@ -748,6 +760,14 @@
           "format": "string"
         }
       }
+    },
+    "accountAccountType": {
+      "type": "string",
+      "enum": [
+        "USER",
+        "ORGANIZATION"
+      ],
+      "default": "USER"
     },
     "accountAccountsRequest": {
       "type": "object",
