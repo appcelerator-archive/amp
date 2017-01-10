@@ -103,7 +103,7 @@ func Start(config Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
-	account.RegisterAccountServer(s, &account.Server{})
+	account.RegisterAccountServiceServer(s, &account.Server{})
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)

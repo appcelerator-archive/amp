@@ -1,5 +1,5 @@
-hash: 24cfc6cd5bb7d7c31a4cc9891198dee3e04e3ae581e82f6fec521805be24be07
-updated: 2017-01-09T17:03:00.715721694-08:00
+hash: 364b86bfef169fe5ab4bea688efc05f3f1ac30773b61a7a74fb0450d0d3b0d5d
+updated: 2017-01-10T11:30:44.599356388-08:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -197,10 +197,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 482a9fd5fa83e8c4e7817413b80f3eb8feec03ef
 - name: github.com/nats-io/go-nats
-  version: d3ba8c5599d8b24448dfc251ab7b1f7f4c8d3d9d
-  subpackages:
-  - encoders/builtin
-  - util
+  version: 61923ed1eaf8398000991fbbee2ef11ab5a5be0d
 - name: github.com/nats-io/go-nats-streaming
   version: 6e620057a207bd61e992c1c5b6a2de7b6a4cb010
   subpackages:
@@ -267,6 +264,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
   - ssh/terminal
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
@@ -316,10 +315,24 @@ imports:
   - stats
   - tap
   - transport
+- name: gopkg.in/hlandau/easymetric.v1
+  version: 1c173222e345c2ba115e0f483821c6da2d3b0fa9
+  subpackages:
+  - cexp
+- name: gopkg.in/hlandau/measurable.v1
+  version: d96a009bd9bda94dd1294105e67e8c1794e533d3
 - name: gopkg.in/hlandau/passlib.v1
   version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
+  subpackages:
+  - abstract
+  - hash/bcrypt
+  - hash/bcryptsha256
+  - hash/scrypt
+  - hash/scrypt/raw
+  - hash/sha2crypt
+  - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
-  version: 418a1d119623e824a563abf3cb2f560ac7184110
+  version: 044e48e014d78c704f7af2440a59e5b95c7f302c
 - name: gopkg.in/olivere/elastic.v5
   version: 0746557b3f90c3119b44e7d7ee0f76db3ff26acb
   subpackages:

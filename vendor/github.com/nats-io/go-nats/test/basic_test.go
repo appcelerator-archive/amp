@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 func TestCloseLeakingGoRoutines(t *testing.T) {

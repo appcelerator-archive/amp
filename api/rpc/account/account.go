@@ -1,10 +1,12 @@
 package account
 
 import (
-	"context"
 	"fmt"
 	"net/mail"
 
+	context "golang.org/x/net/context"
+
+	google_protobuf1 "github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"gopkg.in/hlandau/passlib.v1"
@@ -32,9 +34,9 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SessionReply, 
 		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
 	fmt.Println(in.Name, address, hash)
-	return nil, &SessionReply{
+	return &SessionReply{
 		SessionKey: in.Name,
-	}
+	}, nil
 }
 
 // Verify implements account.Verify
@@ -43,11 +45,11 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*google_p
 		return nil, grpc.Errorf(codes.InvalidArgument, "invalid verification code")
 	}
 	fmt.Println(in.Code)
-	return
+	return nil, nil
 }
 
 // CreateOrganization implements account.CreateOranization
-func CreateOrganization(ctx context.Context, in *OrganizationRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
@@ -56,11 +58,11 @@ func CreateOrganization(ctx context.Context, in *OrganizationRequest) (*google_p
 		return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 	fmt.Println(in.Name, address)
-	return
+	return nil, nil
 }
 
 // Login implements account.Login
-func Login(ctx context.Context, in *LogInRequest) (*SessionReply, error) {
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (*SessionReply, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
@@ -68,42 +70,42 @@ func Login(ctx context.Context, in *LogInRequest) (*SessionReply, error) {
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
-	return nil, &SessionReply{
+	return &SessionReply{
 		SessionKey: in.Name,
-	}
+	}, nil
 }
 
 // Switch implements account.Switch
-func Switch(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) Switch(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // ListAccounts implements account.ListAccounts
-func ListAccounts(ctx context.Context, in *AccountsRequest) (*ListReply, error) {
+func (s *Server) ListAccounts(ctx context.Context, in *AccountsRequest) (*ListReply, error) {
 	if in.Type != "individual" && in.Type != "organization" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "account type is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // GetAccountDetails implements account.GetAccountDetails
-func GetAccountDetails(ctx context.Context, in *AccountRequest) (*AccountReply, error) {
+func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (*AccountReply, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // EditAccount implements account.EditAccount
-func EditAccount(ctx context.Context, in *EditRequest) (*AccountReply, error) {
+func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (*AccountReply, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
 	if in.Email != "" {
-		address, err := mail.ParseAddress(in.Email)
+		_, err := mail.ParseAddress(in.Email)
 		if err != nil {
 			return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
 		}
@@ -116,98 +118,98 @@ func EditAccount(ctx context.Context, in *EditRequest) (*AccountReply, error) {
 		if len(in.NewPassword) < 8 {
 			return nil, grpc.Errorf(codes.InvalidArgument, "password too weak")
 		}
-		hash, err := passlib.Hash(in.NewPassword)
+		_, err = passlib.Hash(in.NewPassword)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Internal, "hashing error")
 		}
 	}
-	return
+	return nil, nil
 }
 
 // DeleteAccount implements account.DeleteAccount
-func DeleteAccount(ctx context.Context, in *AccountRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) DeleteAccount(ctx context.Context, in *AccountRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // AddOrganizationMemberships implements account.AddOrganizationMemberships
-func AddOrganizationMemberships(ctx context.Context, in *OrganizationMembershipsRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) AddOrganizationMemberships(ctx context.Context, in *OrganizationMembershipsRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
 	if len(in.Members) == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "members are mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // DeleteOrganizationMemberships implements account.DeleteOrganizationMemberships
-func DeleteOrganizationMemberships(ctx context.Context, in *OrganizationMembershipsRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) DeleteOrganizationMemberships(ctx context.Context, in *OrganizationMembershipsRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
 	if len(in.Members) == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "members are mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // CreateTeam implements account.CreateTeam
-func CreateTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) CreateTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // ListTeams implements account.ListTeams
-func ListTeams(ctx context.Context, in *TeamRequest) (*ListReply, error) {
+func (s *Server) ListTeams(ctx context.Context, in *TeamRequest) (*ListReply, error) {
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // EditTeam implements account.EditTeam
-func EditTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) EditTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // GetTeamDetails implements account.GetTeamDetails
-func GetTeamDetails(ctx context.Context, in *TeamRequest) (*TeamReply, error) {
+func (s *Server) GetTeamDetails(ctx context.Context, in *TeamRequest) (*TeamReply, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // DeleteTeam implements account.DeleteTeam
-func DeleteTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) DeleteTeam(ctx context.Context, in *TeamRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // AddTeamMemberships implements account.AddTeamMemberships
-func AddTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) AddTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
@@ -217,11 +219,11 @@ func AddTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*googl
 	if len(in.Members) == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "members are mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // DeleteTeamMemberships implements account.DeleteTeamMemberships
-func DeleteTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*google_protobuf1.Empty, error) {
+func (s *Server) DeleteTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*google_protobuf1.Empty, error) {
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
@@ -231,12 +233,12 @@ func DeleteTeamMemberships(ctx context.Context, in *TeamMembershipsRequest) (*go
 	if len(in.Members) == 0 {
 		return nil, grpc.Errorf(codes.InvalidArgument, "members are mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // GrantPermission implements account.GrantPermission
-func GrantPermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
-	if in.Name == "" {
+func (s *Server) GrantPermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
+	if in.Team == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
@@ -248,20 +250,20 @@ func GrantPermission(ctx context.Context, in *PermissionRequest) (*google_protob
 	if in.ResourceId == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "resource id is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // ListPermissions implements account.ListPermissions
-func ListPermissions(ctx context.Context, in *PermissionRequest) (*ListReply, error) {
-	if in.Name != "" && in.Organization == "" {
+func (s *Server) ListPermissions(ctx context.Context, in *PermissionRequest) (*ListReply, error) {
+	if in.Team != "" && in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // EditPermission implements account.EditPermission
-func EditPermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
-	if in.Name == "" {
+func (s *Server) EditPermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
+	if in.Team == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
@@ -273,12 +275,12 @@ func EditPermission(ctx context.Context, in *PermissionRequest) (*google_protobu
 	if in.ResourceId == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "resource id is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // RevokePermission implements account.RevokePermission
-func RevokePermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
-	if in.Name == "" {
+func (s *Server) RevokePermission(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
+	if in.Team == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
@@ -287,12 +289,12 @@ func RevokePermission(ctx context.Context, in *PermissionRequest) (*google_proto
 	if in.ResourceId == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "resource id is mandatory")
 	}
-	return
+	return nil, nil
 }
 
 // TransferOwnership implements account.TransferOwnership
-func TransferOwnership(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
-	if in.Name == "" {
+func (s *Server) TransferOwnership(ctx context.Context, in *PermissionRequest) (*google_protobuf1.Empty, error) {
+	if in.Team == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "team name is mandatory")
 	}
 	if in.Organization == "" {
@@ -301,5 +303,5 @@ func TransferOwnership(ctx context.Context, in *PermissionRequest) (*google_prot
 	if in.ResourceId == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "resource id is mandatory")
 	}
-	return
+	return nil, nil
 }

@@ -87,7 +87,7 @@ func run() (err error) {
 	if err != nil {
 		return
 	}
-	err = account.RegisterAccountHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
+	err = account.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
 	if err != nil {
 		return
 	}
