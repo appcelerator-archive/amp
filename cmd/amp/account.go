@@ -90,7 +90,6 @@ var (
 			* email
 			* Belongs to <organization>
 				* Belongs to <team>
-
 		*/
 	}
 
