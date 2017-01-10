@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"math/rand"
+	"strconv"
+
 	. "github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/pkg/stringid"
@@ -13,8 +16,6 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/nats-io/nats"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"strconv"
 )
 
 const (

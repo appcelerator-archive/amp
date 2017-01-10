@@ -69,7 +69,6 @@ func parseFlags() {
 	}
 
 	// update config
-	config.Version = Version
 	config.Port = port
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret

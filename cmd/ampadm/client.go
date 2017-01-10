@@ -2,6 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"sort"
+	"strings"
+	"text/tabwriter"
+	"time"
+
 	ampClient "github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/adm-server/servergrpc"
 	dockerclient "github.com/docker/docker/client"
@@ -9,12 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"io"
-	"os"
-	"sort"
-	"strings"
-	"text/tabwriter"
-	"time"
 )
 
 const (

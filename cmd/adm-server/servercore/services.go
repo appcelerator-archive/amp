@@ -2,14 +2,15 @@ package servercore
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/appcelerator/amp/cmd/adm-agent/agentgrpc"
 	"github.com/appcelerator/amp/cmd/adm-server/servergrpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"strings"
-	"time"
 )
 
 // GetClientStream connect a bidirectionnal-stream
