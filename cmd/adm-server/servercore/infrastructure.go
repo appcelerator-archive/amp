@@ -13,7 +13,6 @@ const (
 
 const (
 	ampVersion           = "latest"
-	uiVersion            = "0.3.0"
 	influxDBVersion      = "1.1.2"
 	kapacitorVersion     = "1.1.2"
 	telegrafVersion      = "1.1.1"
@@ -36,7 +35,6 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 	} else {
 		stack.addImage("amp", "appcelerator/amp:"+ampVersion)
 	}
-	stack.addImage("amp-ui", "appcelerator/amp-ui:"+uiVersion)
 	stack.addImage("elasticsearch", "appcelerator/elasticsearch-amp:"+elasticsearchVersion)
 	stack.addImage("grafana", "appcelerator/grafana-amp:"+grafanaVersion)
 	stack.addImage("haproxy", "appcelerator/haproxy:"+haproxyVersion)
@@ -140,42 +138,6 @@ func getAMPInfrastructureStack(m *AMPInfraManager) *ampStack {
 			},
 		},
 		"etcd")
-
-	//add amp-ui
-	stack.addService(m, "amp-ui", "amp-ui", 1,
-		&swarm.ServiceSpec{
-			Annotations: swarm.Annotations{
-				Labels: map[string]string{
-					"io.amp.role": amp.InfrastructureRole,
-				},
-			},
-			TaskTemplate: swarm.TaskSpec{
-				ContainerSpec: swarm.ContainerSpec{
-					Args: nil,
-					Env:  nil,
-					Labels: map[string]string{
-						"io.amp.role": amp.InfrastructureRole,
-					},
-					Mounts: []mount.Mount{
-						{
-							Type:   mount.TypeBind,
-							Source: "/var/run/docker.sock",
-							Target: "/var/run/docker.sock",
-						},
-					},
-				},
-				Placement: &swarm.Placement{
-					Constraints: []string{"node.role == manager"},
-				},
-			},
-			EndpointSpec: nil,
-			Networks: []swarm.NetworkAttachmentConfig{
-				{
-					Target:  infraPrivateNetwork,
-					Aliases: []string{"amp-ui"},
-				},
-			},
-		})
 
 	//add nats
 	stack.addService(m, "nats", "nats", 1,
