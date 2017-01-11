@@ -3,10 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"github.com/blang/semver"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/swarm"
-	dockerclient "github.com/docker/docker/client"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -14,6 +10,11 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/blang/semver"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/swarm"
+	dockerclient "github.com/docker/docker/client"
 )
 
 const (

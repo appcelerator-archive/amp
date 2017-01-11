@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "build": "rollup -c",
-    "build:watch": "npm run build -- -w",
-    "clean": "npm run clean:dist && rimraf node_modules",
+    "build:watch": "yarn build -- -w",
+    "clean": "yarn clean:dist && rimraf node_modules",
     "clean:dist": "rimraf dist",
     "lint": "eslint ./src/**"
   },
@@ -36,7 +36,8 @@
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-svelte": "^1.2.0",
     "rollup-watch": "^2.5.0",
-    "yamljs": "^0.2.8"
+    "yamljs": "^0.2.8",
+    "yarn": "^0.18.1"
   },
   "dependencies": {
     "express": "^4.14.0"

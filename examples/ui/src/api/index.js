@@ -1,6 +1,8 @@
 import GrpcClient from './grpcClient'
 import Stack from './stack'
 import Topic from './topic'
+import Func from './function'
+import Storage from './storage'
 
 export default class AmpApi extends GrpcClient {
   constructor (base) {
@@ -36,5 +38,22 @@ export default class AmpApi extends GrpcClient {
     const topic = {name}
     const result = await this.postJson('topic', {topic})
     return new Topic(result.topic, this)
+  }
+  async functions () {
+    const data = await this.getJson('function')
+    return data.functions ? data.functions.map(f => new Func(f, this)) : []
+  }
+  async createFunction (name, image) {
+    const func = {name, image}
+    const result = await this.postJson('function', {function: func})
+    return new Func(result.function, this)
+  }
+  async storageObjects () {
+    const data = await this.getJson('storage')
+    return data.list ? data.list.map(s => new Storage(s, this)) : []
+  }
+  async createStorageObject (key, val) {
+    const results = await this.putJson(`storage/${key}`, {val})
+    return new Storage(results, this)
   }
 }
