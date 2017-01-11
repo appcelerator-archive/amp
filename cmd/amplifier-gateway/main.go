@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
+	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -78,6 +79,10 @@ func run() (err error) {
 		return
 	}
 	err = storage.RegisterStorageHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
+	if err != nil {
+		return
+	}
+	err = account.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
 	if err != nil {
 		return
 	}
