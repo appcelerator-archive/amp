@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"golang.org/x/net/context"
+	"text/tabwriter"
 )
 
 const (
@@ -33,15 +34,21 @@ const (
 )
 
 type ampManager struct {
-	docker     *client.Client
-	ctx        context.Context
-	stack      *ampStack
-	silence    bool
-	verbose    bool
-	force      bool
-	local      bool
-	status     string
-	printColor [6]*color.Color
+	docker      *client.Client
+	ctx         context.Context
+	stack       *ampStack
+	silence     bool
+	verbose     bool
+	force       bool
+	local       bool
+	status      string
+	printColor  [6]*color.Color
+	fcolRegular func(...interface{}) string
+	fcolInfo    func(...interface{}) string
+	fcolWarn    func(...interface{}) string
+	fcolError   func(...interface{}) string
+	fcolSuccess func(...interface{}) string
+	fcolUser    func(...interface{}) string
 }
 
 type ampStack struct {
@@ -274,48 +281,46 @@ func (s *ampManager) monitor(stack *ampStack) {
 		listName := []string{}
 		listName = append(listName, infraListName...)
 		listName = append(listName, userListName...)
-		//fmt.Println("list: %v\n", listName)
-		fmt.Printf("%s%s%s%s%s%s\n", col("ID", cols[0]), col("SERVICE", cols[1]), col("STATUS", cols[2]), col("MODE", cols[3]), col("REPLICAS", cols[4]), col("TASK FAILED", cols[5]))
-		fmt.Printf("%s%s%s%s%s%s\n", col("-", cols[0]), col("-", cols[1]), col("-", cols[2]), col("-", cols[3]), col("-", cols[4]), col("-", cols[5]))
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+		fmt.Fprintf(w, "%s\n", s.fcolRegular("ID\tSERVICE\tSTATUS\tMODE\tREPLICAS\tTASK FAILED"))
 		for _, name := range listName {
 			serv := stack.serviceMap[name]
 			if serv.status == "running" {
 				if serv.user {
-					s.printf(colUser, "%s\n", s.displayService(serv, cols))
+					fmt.Fprintf(w, "%s\n", s.fcolUser(s.displayService(serv)))
 				} else {
-					s.printf(colSuccess, "%s\n", s.displayService(serv, cols))
+					fmt.Fprintf(w, "%s\n", s.fcolSuccess(s.displayService(serv)))
 				}
 			} else if serv.status == "failing" {
-				s.printf(colError, "%s\n", s.displayService(serv, cols))
+				fmt.Fprintf(w, "%s\n", s.fcolError(s.displayService(serv)))
 			} else if serv.status == "partially running" {
-				s.printf(colWarn, "%s\n", s.displayService(serv, cols))
+				fmt.Fprintf(w, "%s\n", s.fcolWarn(s.displayService(serv)))
 			} else if serv.status == "starting" {
-				s.printf(colRegular, "%s\n", s.displayService(serv, cols))
+				fmt.Fprintf(w, "%s\n", s.fcolRegular(s.displayService(serv)))
 			} else {
-				s.printf(colInfo, "%s\n", s.displayService(serv, cols))
+				fmt.Fprintf(w, "%s\n", s.fcolInfo(s.displayService(serv)))
 			}
 		}
+		w.Flush()
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func (s *ampManager) displayService(service *ampService, cols []int) string {
-	var dispID string
+func (s *ampManager) displayService(service *ampService) string {
+	var line string
 	if service.id == "" {
-		dispID = col("", cols[0])
+		line = "            "
 	} else {
-		dispID = col(service.id[0:12], cols[0])
+		line = service.id[0:12]
 	}
-	disp := fmt.Sprintf("%s%s%s", dispID, col(service.name, cols[1]), col(service.status, cols[2]))
+	line = fmt.Sprintf("%s\t%s\t%s", line, service.name, service.status)
 	if service.desiredReplicas == 0 {
-		disp += col("global", cols[3])
-		disp += col(fmt.Sprintf("%d", service.containerOk), cols[4])
+		line = fmt.Sprintf("%s\tglobal\t%d", line, service.containerOk)
 	} else {
-		disp += col("replicated", cols[3])
-		disp += col(fmt.Sprintf("%d/%d", service.containerOk, service.desiredReplicas), cols[4])
+		line = fmt.Sprintf("%s\treplicated\t%d/%d", line, service.containerOk, service.desiredReplicas)
 	}
-	disp += col(fmt.Sprintf("%d", service.containerFailed), cols[5])
-	return disp
+	line = fmt.Sprintf("%s\t%d", line, service.containerFailed)
+	return line + "                "
 }
 
 func (s *ampManager) updateServiceInformation() {
@@ -646,6 +651,12 @@ func (s *ampManager) setColors() {
 		s.printColor[4] = color.New(color.FgGreen)
 		s.printColor[5] = color.New(color.FgHiGreen)
 	}
+	s.fcolRegular = s.printColor[colRegular].SprintFunc()
+	s.fcolInfo = s.printColor[colInfo].SprintFunc()
+	s.fcolWarn = s.printColor[colWarn].SprintFunc()
+	s.fcolError = s.printColor[colError].SprintFunc()
+	s.fcolSuccess = s.printColor[colSuccess].SprintFunc()
+	s.fcolUser = s.printColor[colUser].SprintFunc()
 	//add theme as you want.
 }
 
