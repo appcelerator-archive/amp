@@ -79,7 +79,7 @@
         ]
       },
       "put": {
-        "operationId": "EditAccount",
+        "operationId": "UpdateAccount",
         "responses": {
           "200": {
             "description": "",
@@ -101,7 +101,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/accountEditRequest"
+              "$ref": "#/definitions/accountUpdateRequest"
             }
           }
         ],
@@ -113,6 +113,64 @@
     "/v1/account/{name}/createOrganization": {
       "post": {
         "operationId": "CreateOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/v1/account/{name}/deleteOrganization": {
+      "delete": {
+        "operationId": "DeleteOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/v1/account/{name}/editOrganization": {
+      "put": {
+        "operationId": "EditOrganization",
         "responses": {
           "200": {
             "description": "",
@@ -340,6 +398,78 @@
         ]
       }
     },
+    "/v1/account/{organization}/createTeam/{name}": {
+      "post": {
+        "operationId": "CreateTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountTeamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/v1/account/{organization}/deleteTeam/{name}": {
+      "delete": {
+        "operationId": "DeleteTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
     "/v1/account/{organization}/switch": {
       "put": {
         "operationId": "Switch",
@@ -423,74 +553,6 @@
             "required": true,
             "type": "string",
             "format": "string"
-          }
-        ],
-        "tags": [
-          "AccountService"
-        ]
-      },
-      "delete": {
-        "operationId": "DeleteTeam",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          }
-        ],
-        "tags": [
-          "AccountService"
-        ]
-      },
-      "post": {
-        "operationId": "CreateTeam",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountTeamRequest"
-            }
           }
         ],
         "tags": [
@@ -881,30 +943,6 @@
         }
       }
     },
-    "accountEditRequest": {
-      "type": "object",
-      "properties": {
-        "billing": {
-          "$ref": "#/definitions/accountBilling"
-        },
-        "email": {
-          "type": "string",
-          "format": "string"
-        },
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "new_password": {
-          "type": "string",
-          "format": "string"
-        },
-        "password": {
-          "type": "string",
-          "format": "string"
-        }
-      }
-    },
     "accountListReply": {
       "type": "object",
       "properties": {
@@ -1055,7 +1093,7 @@
     "accountTeamMembershipsRequest": {
       "type": "object",
       "properties": {
-        "Members": {
+        "members": {
           "type": "array",
           "items": {
             "type": "string",
@@ -1075,16 +1113,16 @@
     "accountTeamReply": {
       "type": "object",
       "properties": {
-        "description": {
-          "type": "string",
-          "format": "string"
-        },
-        "members": {
+        "Members": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "string"
           }
+        },
+        "description": {
+          "type": "string",
+          "format": "string"
         },
         "name": {
           "type": "string",
@@ -1110,6 +1148,33 @@
         "organization": {
           "type": "string",
           "format": "string"
+        }
+      }
+    },
+    "accountUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "billing": {
+          "$ref": "#/definitions/accountBilling"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "new_password": {
+          "type": "string",
+          "format": "string"
+        },
+        "password": {
+          "type": "string",
+          "format": "string"
+        },
+        "settings": {
+          "$ref": "#/definitions/accountSettings"
         }
       }
     },

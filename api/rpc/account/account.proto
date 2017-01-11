@@ -38,6 +38,17 @@ service AccountService {
       body: "*"
     };
   };
+  rpc DeleteOrganization (OrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{name}/deleteOrganization"
+    };
+  };
+  rpc EditOrganization (OrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/account/{name}/editOrganization",
+      body: "*"
+    };
+  };
   rpc Login (LogInRequest) returns (SessionReply) {
     option (google.api.http) = {
       post: "/v1/account/{name}/login",
@@ -60,7 +71,7 @@ service AccountService {
       get: "/v1/account/{name}"
     };
   };
-  rpc EditAccount (EditRequest) returns (AccountReply) {
+  rpc UpdateAccount (UpdateRequest) returns (AccountReply) {
     option (google.api.http) = {
       put: "/v1/account/{name}",
       body: "*"
@@ -84,8 +95,13 @@ service AccountService {
   };
   rpc CreateTeam (TeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{organization}/team/{name}",
+      post: "/v1/account/{organization}/createTeam/{name}",
       body: "*"
+    };
+  };
+  rpc DeleteTeam (TeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/account/{organization}/deleteTeam/{name}"
     };
   };
   rpc ListTeams (TeamRequest) returns (ListReply) {
@@ -102,11 +118,6 @@ service AccountService {
   rpc GetTeamDetails (TeamRequest) returns (TeamReply) {
     option (google.api.http) = {
       get: "/v1/account/{organization}/team/{name}"
-    };
-  };
-  rpc DeleteTeam (TeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/account/{organization}/team/{name}"
     };
   };
   rpc AddTeamMemberships (TeamMembershipsRequest) returns (google.protobuf.Empty) {
@@ -144,7 +155,7 @@ service AccountService {
   };
   rpc TransferOwnership (PermissionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{organization}/team/{team}/transfer/{resource_id}",
+      post: "/v1/account/{organization}/team/{team}/transfer/{resource_id}"
       body: "*"
     };
   };
@@ -222,17 +233,26 @@ message ListReply {
   repeated PermissionRequest permissions = 3;
 }
 
-message EditRequest {
+message UpdateRequest {
   string name = 1;
   string email = 2;
   string password = 3;
   string new_password = 4;
   Billing billing = 5;
+  Settings settings = 6;
 }
 
 message OrganizationMembershipsRequest {
   string name = 1;
   repeated string Members = 2;
+}
+
+message OrganizationListRequest {
+}
+
+message OrganizationReply {
+  repeated string name = 1;
+  repeated string email = 2;
 }
 
 message TeamRequest {
@@ -245,13 +265,13 @@ message TeamReply {
   string name = 1;
   string description = 2;
   string organization = 3;
-  repeated string members = 4;
+  repeated string Members = 4;
 }
 
 message TeamMembershipsRequest {
   string name = 1;
   string organization = 2;
-  repeated string Members = 3;
+  repeated string members = 3;
 }
 
 message PermissionRequest {
