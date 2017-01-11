@@ -719,7 +719,7 @@
         },
         "id": {
           "type": "string",
-          "format": "int64"
+          "format": "string"
         },
         "is_verified": {
           "type": "boolean",
