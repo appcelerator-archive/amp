@@ -21,7 +21,7 @@ func TestDefaultCiphersExist(t *testing.T) {
 }
 
 func TestPacketCiphers(t *testing.T) {
-	// Still test aes128cbc cipher although it's commented out.
+	// Still test aes128cbc cipher althought it's commented out.
 	cipherModes[aes128cbcID] = &streamCipherMode{16, aes.BlockSize, 0, nil}
 	defer delete(cipherModes, aes128cbcID)
 
@@ -120,7 +120,7 @@ func TestCBCOracleCounterMeasure(t *testing.T) {
 		}
 
 		if i > 0 && bytesRead != lastRead {
-			t.Errorf("corrupt byte %d: read %d bytes, want %d bytes read", i, bytesRead, lastRead)
+			t.Errorf("corrupt byte %d: want %d, got %d bytes read", bytesRead, lastRead)
 		}
 		lastRead = bytesRead
 	}
