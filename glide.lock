@@ -1,5 +1,5 @@
-hash: 364b86bfef169fe5ab4bea688efc05f3f1ac30773b61a7a74fb0450d0d3b0d5d
-updated: 2017-01-10T12:45:14.689970142-08:00
+hash: 6afc1b8312098ccd6c13526c550a782d03e9d01babda24577dae208199ecb894
+updated: 2017-01-10T16:29:02.176166717-08:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -264,6 +264,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
   - ssh/terminal
 - name: golang.org/x/net
   version: 4876518f9e71663000c348837735820161a42df7
@@ -317,8 +319,18 @@ imports:
   version: 1c173222e345c2ba115e0f483821c6da2d3b0fa9
   subpackages:
   - cexp
+- name: gopkg.in/hlandau/measurable.v1
+  version: d96a009bd9bda94dd1294105e67e8c1794e533d3
 - name: gopkg.in/hlandau/passlib.v1
   version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
+  subpackages:
+  - abstract
+  - hash/bcrypt
+  - hash/bcryptsha256
+  - hash/scrypt
+  - hash/scrypt/raw
+  - hash/sha2crypt
+  - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
   version: 044e48e014d78c704f7af2440a59e5b95c7f302c
 - name: gopkg.in/olivere/elastic.v5
