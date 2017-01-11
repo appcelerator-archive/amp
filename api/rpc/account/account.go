@@ -2,7 +2,6 @@ package account
 
 import (
 	"fmt"
-	"net/mail"
 
 	context "golang.org/x/net/context"
 
@@ -12,45 +11,7 @@ import (
 	"gopkg.in/hlandau/passlib.v1"
 )
 
-const codeLength = 8
 const hash = "$s2$16384$8$1$42JtddBgSqrJMwc3YuTNW+R+$ISfEF3jkvYQYk4AK/UFAxdqnmNFVeUw2gUVXEMBDAng=" // password
-
-// Validate validates SignUpRequest
-func (r *SignUpRequest) Validate() (err error) {
-	if r.Name == "" {
-		return grpc.Errorf(codes.InvalidArgument, "user name is mandatory")
-	}
-	address, err := mail.ParseAddress(r.Email)
-	if err != nil {
-		return grpc.Errorf(codes.InvalidArgument, err.Error())
-	}
-	r.Email = address.Address
-	if len(r.Password) < 8 {
-		return grpc.Errorf(codes.InvalidArgument, "password too weak")
-	}
-	return
-}
-
-// Validate validates VerificationRequest
-func (r *VerificationRequest) Validate() (err error) {
-	if len(r.Code) != codeLength {
-		return grpc.Errorf(codes.InvalidArgument, "invalid verification code")
-	}
-	return
-}
-
-// Validate validates OrganizationRequest
-func (r *OrganizationRequest) Validate() (err error) {
-	if r.Name == "" {
-		return grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
-	}
-	address, err := mail.ParseAddress(r.Email)
-	if err != nil {
-		return grpc.Errorf(codes.InvalidArgument, err.Error())
-	}
-	r.Email = address.Address
-	return
-}
 
 // Server is used to implement account.AccountServer
 type Server struct{}
@@ -94,8 +55,9 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 // Login implements account.Login
 func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply, err error) {
 	out = &SessionReply{}
-	if in.Name == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
+	err = in.Validate()
+	if err != nil {
+		return nil, err
 	}
 	_, err = passlib.Verify(in.Password, hash)
 	if err != nil {
@@ -136,22 +98,14 @@ func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (out
 // EditAccount implements account.EditAccount
 func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (out *AccountReply, err error) {
 	out = &AccountReply{}
-	if in.Name == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
-	}
-	if in.Email != "" {
-		_, err := mail.ParseAddress(in.Email)
-		if err != nil {
-			return nil, grpc.Errorf(codes.InvalidArgument, err.Error())
-		}
+	err = in.Validate()
+	if err != nil {
+		return
 	}
 	if in.NewPassword != "" {
 		_, err := passlib.Verify(in.Password, hash)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
-		}
-		if len(in.NewPassword) < 8 {
-			return nil, grpc.Errorf(codes.InvalidArgument, "password too weak")
 		}
 		_, err = passlib.Hash(in.NewPassword)
 		if err != nil {
