@@ -7,7 +7,7 @@ Run in this directory:
 
     $ amp stack up -f stack.yml pinger
 
-The app will be available at [http://www.pinger.local.atomiq.io](http://www.pinger.local.atomiq.io)
+The app will be available at [http://www.pinger.local.atomiq.io/ping](http://www.pinger.local.atomiq.io/ping)
 
 Test with
 
