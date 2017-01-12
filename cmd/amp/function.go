@@ -17,6 +17,7 @@ var (
 	functionCmd = &cobra.Command{
 		Use:     "function",
 		Short:   "function operations",
+		Long:    `Function command manages all function-related operations.`,
 		Aliases: []string{"fn"},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
@@ -26,6 +27,8 @@ var (
 	createFunctionCmd = &cobra.Command{
 		Use:   "create NAME IMAGE",
 		Short: "Create a function",
+		Long: `The create command registers a function with the specified name and image.
+	If successful, a function id is returned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createFunction(AMP, cmd, args)
 		},
@@ -34,14 +37,16 @@ var (
 	listFunctionCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List functions",
+		Long:  `The list command displays all registered functions.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listFunction(AMP, cmd, args)
 		},
 	}
 
 	removeFunctionCmd = &cobra.Command{
-		Use:   "rm FUNCTION",
+		Use:   "rm FUNC-ID",
 		Short: "Remove a function",
+		Long:  `The remove command unregisters the specified function.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeFunction(AMP, cmd, args)
 		},
