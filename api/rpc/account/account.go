@@ -2,9 +2,11 @@ package account
 
 import (
 	"fmt"
+	"strconv"
 
 	context "golang.org/x/net/context"
 
+	"github.com/appcelerator/amp/data/schema"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,6 +29,15 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionRep
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
+	account := &schema.Account{
+		Id:         strconv.Itoa(len(accounts)),
+		Name:       in.Name,
+		Type:       schema.AccountType_USER,
+		Email:      in.Email,
+		PwHashcode: hash,
+		IsVerified: false,
+	}
+	accounts = append(accounts, account)
 	out.SessionKey = in.Name
 	return
 }
@@ -37,6 +48,11 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (out *pb.E
 	err = in.Validate()
 	if err != nil {
 		return nil, err
+	}
+	for _, account := range accounts {
+		if account.Name == in.Name {
+			account.IsVerified = true
+		}
 	}
 	fmt.Println(in.Code)
 	return
@@ -49,6 +65,24 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	if err != nil {
 		return nil, err
 	}
+	organizationID := strconv.Itoa(len(accounts))
+	account := &schema.Account{
+		Id:         organizationID,
+		Name:       in.Name,
+		Type:       schema.AccountType_ORGANIZATION,
+		Email:      in.Email,
+		IsVerified: false,
+	}
+	accounts = append(accounts, account)
+	team := &schema.Team{
+		Id:           strconv.Itoa(len(teams)),
+		OrgAccountId: organizationID,
+		Name:         "owners",
+		Desc:         in.Name + " owners team",
+	}
+	teams = append(teams, team)
+	// create organization membership
+	// create team membership
 	return
 }
 
@@ -59,7 +93,16 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply
 	if err != nil {
 		return nil, err
 	}
-	_, err = passlib.Verify(in.Password, hash)
+	var account *schema.Account
+	for _, a := range accounts {
+		if a.Name == in.Name {
+			account = a
+		}
+	}
+	if account == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	_, err = passlib.Verify(in.Password, account.PwHashcode)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
@@ -74,7 +117,12 @@ func (s *Server) Switch(ctx context.Context, in *TeamRequest) (out *pb.Empty, er
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	return
+	for _, a := range accounts {
+		if a.Name == in.Organization {
+			return
+		}
+	}
+	return nil, grpc.Errorf(codes.NotFound, "organization not found")
 }
 
 // ListAccounts implements account.ListAccounts
@@ -82,6 +130,18 @@ func (s *Server) ListAccounts(ctx context.Context, in *AccountsRequest) (out *Li
 	out = &ListReply{}
 	if in.Type != "individual" && in.Type != "organization" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "account type is mandatory")
+	}
+	for _, account := range accounts {
+		if in.Type == "individual" && account.Type == schema.AccountType_USER {
+			out.Accounts = append(out.Accounts, &Account{
+				Name: account.Name,
+			})
+		}
+		if in.Type == "organization" && account.Type == schema.AccountType_ORGANIZATION {
+			out.Accounts = append(out.Accounts, &Account{
+				Name: account.Name,
+			})
+		}
 	}
 	return
 }
@@ -92,7 +152,14 @@ func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (out
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
-	return
+	for _, account := range accounts {
+		if account.Name == in.Name {
+			out.Account.Name = account.Name
+			out.Account.Email = account.Email
+			return
+		}
+	}
+	return nil, grpc.Errorf(codes.NotFound, "account not found")
 }
 
 // EditAccount implements account.EditAccount
@@ -102,16 +169,31 @@ func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (out *Account
 	if err != nil {
 		return
 	}
+	var account *schema.Account
+	for _, a := range accounts {
+		if a.Name == in.Name {
+			account = a
+		}
+	}
+	if account == nil {
+		return nil, grpc.Errorf(codes.NotFound, "account not found")
+	}
 	if in.NewPassword != "" {
-		_, err := passlib.Verify(in.Password, hash)
+		_, err := passlib.Verify(in.Password, account.PwHashcode)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 		}
-		_, err = passlib.Hash(in.NewPassword)
+		hash, err := passlib.Hash(in.NewPassword)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Internal, "hashing error")
 		}
+		account.PwHashcode = hash
 	}
+	if in.Email != "" {
+		account.Email = in.Email
+	}
+	out.Account.Name = account.Name
+	out.Account.Email = account.Email
 	return
 }
 
