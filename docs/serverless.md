@@ -45,7 +45,7 @@ func main() {
 	fmt.Println(strings.Title(string(input))) // Write the function output on the standard output
 }
 ```
-The source code of this demo function is available here: [amp-demo-function](https://github.com/appcelerator/amp/tree/serverless-proto/examples/functions/demo-function)
+The source code of this demo function is available here: [amp-demo-function](https://github.com/appcelerator/amp/tree/master/examples/functions/demo-function)
 
 ## Wrap your function inside a container
 
@@ -62,11 +62,11 @@ Here is the Dockerfile we use for the above demo function:
 # golang:alpine provides an up to date go build environment
 FROM golang:alpine
 RUN apk --no-cache add make
-WORKDIR /go/src/github.com/appcelerator/amp-demo-function
-COPY . /go/src/github.com/appcelerator/amp-demo-function
+WORKDIR /go/src/github.com/appcelerator/demo-function
+COPY . /go/src/github.com/appcelerator/demo-function
 RUN make
 ENTRYPOINT []
-CMD [ "/go/bin/amp-demo-function"]
+CMD [ "/go/bin/demo-function"]
 ```
 
 Build your container with the following command:
@@ -84,6 +84,11 @@ In order to invoke a function, you can POST an HTTP request to `localhost:4242/<
 Invoke your test function like this:
 
     $ cat Makefile | curl localhost:4242/test --data-binary @-
+    
+
+The `@-` parameter tells `curl` to read from the standard input but you can also invoke your function like this:
+
+    $ curl localhost:4242/test --data-binary @Makefile
 
 # Architecture
 ![Serverless prototype architecture](serverless-proto.png)
