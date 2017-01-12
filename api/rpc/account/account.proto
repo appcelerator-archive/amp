@@ -4,6 +4,8 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
 
 service AccountService {
   rpc SignUp (SignUpRequest) returns (SessionReply) {

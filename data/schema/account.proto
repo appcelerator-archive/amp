@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package schema;
+
+import "google/protobuf/timestamp.proto";
+
+// Account Schema Storage Types
+enum AccountType {
+  USER = 0;
+  ORGANIZATION = 1;
+}
+
+message Account {
+  string id = 1;
+  string name = 2;
+  AccountType type = 3;
+  string email = 4;
+  string pw_hashcode = 5;
+  bool is_verified = 6;
+  // TODO Billing Attributes;
+  google.protobuf.Timestamp create_dt = 7;
+}
+
+message OrganizationMember {
+  string id = 1;
+  string org_account_id = 2; //FK->AccountEntry.id (type=org)
+  string user_account_id = 3; //FK->AccountEntry.id (type=user)
+  google.protobuf.Timestamp create_dt = 4;
+}
+
+message Resource {
+  string id = 1;
+  string org_account_id = 2; //FK->AccountEntry.id (type=org)
+  string name = 3;
+  string type = 4;
+  google.protobuf.Timestamp create_dt = 5;
+}
+
+message ResourceSettings {
+  string id = 1;
+  string resource_id = 2; // FK->ResourceEntry.id
+  string key = 3;
+  string value = 4;
+  google.protobuf.Timestamp create_dt = 5;
+}
+
+message Team {
+  string id = 1;
+  string org_account_id = 2; //FK->AccountEntry.id (type=org)
+  string name = 3;
+  string desc = 4;
+  google.protobuf.Timestamp create_dt = 5;
+}
+
+message TeamMember {
+  string id = 1;
+  string user_account_id = 2; //FK->AccountEntry.id (type=user)
+  string team_id = 3; //FK->TeamEntry.id
+  google.protobuf.Timestamp create_dt = 4;
+}
+
+message Permission {
+  string id = 1;
+  string team_id = 2; //FK->TeamEntry.id
+  string resource_id = 3; //FK->ResourceEntry.id
+  string grant_id = 4;
+  google.protobuf.Timestamp create_dt = 5;
+
+}
+
+// Reference Data
+message ResourceType {
+  string id = 1;
+  string resource_name = 2;
+  string resource_desc = 3;
+  google.protobuf.Timestamp create_dt = 4;
+}
+
+message GrantType {
+  string id = 1;
+  string resource_type_id = 2; //FK->ResourceTypeEntry.id
+  string grant_name = 3;
+  string grant_desc = 4;
+  google.protobuf.Timestamp create_dt = 5;
+}
