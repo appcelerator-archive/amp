@@ -84,11 +84,13 @@ In order to invoke a function, you can POST an HTTP request to `localhost:4242/<
 Invoke your test function like this:
 
     $ cat Makefile | curl localhost:4242/test --data-binary @-
-    
 
 The `@-` parameter tells `curl` to read from the standard input but you can also invoke your function like this:
 
     $ curl localhost:4242/test --data-binary @Makefile
+
+The `--data-binary` parameter tells `curl` to POST the content of the file exactly as specified with no extra processing whatsoever.
+Without this parameter, `curl` would pass the content of the file to the server using the content-type `application/x-www-form-urlencoded` which is not expected for amp functions.
 
 # Architecture
 ![Serverless prototype architecture](serverless-proto.png)
