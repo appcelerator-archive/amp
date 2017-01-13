@@ -20,7 +20,7 @@ const (
 	elasticsearchVersion = "5.1.1"
 	etcdVersion          = "3.1.0-rc.1"
 	natsVersion          = "0.3.0"
-	haproxyVersion       = "1.0.3"
+	haproxyVersion       = "1.0.4"
 	registryVersion      = "2.5.1"
 )
 
@@ -137,7 +137,7 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 				},
 			},
 		},
-		"etcd")
+		"etcd", "amplifier-gateway", "amp-function-listener")
 
 	//add nats
 	stack.addService(m, "nats", "nats", 1,
