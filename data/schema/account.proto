@@ -15,7 +15,7 @@ message Account {
   string name = 2;
   AccountType type = 3;
   string email = 4;
-  string pw_hashcode = 5;
+  string password_hash = 5;
   bool is_verified = 6;
   // TODO Billing Attributes;
   google.protobuf.Timestamp create_dt = 7;
