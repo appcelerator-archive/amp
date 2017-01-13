@@ -1,5 +1,5 @@
-hash: 6afc1b8312098ccd6c13526c550a782d03e9d01babda24577dae208199ecb894
-updated: 2017-01-10T16:29:02.176166717-08:00
+hash: 590b0068143bd8b618981663cb514172a77f6829d227370e1d98df0951d9e92d
+updated: 2017-01-12T15:24:27.593413309-08:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -134,6 +134,7 @@ imports:
   - proto
   - protoc-gen-go/descriptor
   - ptypes/empty
+  - ptypes/timestamp
 - name: github.com/google/go-github
   version: 4e2c2aeb92b9a57d97165d1624ff66b2aabee111
   subpackages:
@@ -166,6 +167,8 @@ imports:
   - json/parser
   - json/scanner
   - json/token
+- name: github.com/holys/safe
+  version: 40a1d599da1188d48a032f27ac6ae1e38d79caee
 - name: github.com/howeyc/gopass
   version: f5387c492211eb133053880d23dfae62aa14123d
 - name: github.com/inconshreveable/mousetrap
@@ -332,7 +335,7 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
-  version: 044e48e014d78c704f7af2440a59e5b95c7f302c
+  version: f27a28dd68c359eb20ce5918a7d976f34c18cf03
 - name: gopkg.in/olivere/elastic.v5
   version: 0746557b3f90c3119b44e7d7ee0f76db3ff26acb
   subpackages:
