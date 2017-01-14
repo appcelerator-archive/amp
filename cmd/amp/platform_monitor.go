@@ -9,7 +9,7 @@ import (
 var PlatformMonitor = &cobra.Command{
 	Use:   "monitor",
 	Short: "Display AMP platform services",
-	Long:  `Monitor command displays information about AMP platform services and states.`,
+	Long:  `The monitor command displays information about AMP platform services and states.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		displayAMPServiceStatus(cmd, args)
 	},

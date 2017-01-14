@@ -30,7 +30,7 @@ Amplifier:
 var VersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display the version info for AMP and Amplifier",
-	Long:  `Version command displays the version info for AMP and Amplifier, including the current version and build.`,
+	Long:  `The version command displays the version info for AMP and Amplifier, including the current version and build.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return list(AMP, cmd, args)
 	},

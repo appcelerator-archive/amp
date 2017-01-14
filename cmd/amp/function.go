@@ -16,7 +16,7 @@ import (
 var (
 	functionCmd = &cobra.Command{
 		Use:     "function",
-		Short:   "function operations",
+		Short:   "Function operations",
 		Long:    `Function command manages all function-related operations.`,
 		Aliases: []string{"fn"},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -25,17 +25,17 @@ var (
 	}
 
 	createFunctionCmd = &cobra.Command{
-		Use:   "create NAME IMAGE",
+		Use:   "create FUNC-NAME IMAGE",
 		Short: "Create a function",
 		Long: `The create command registers a function with the specified name and image.
-	If successful, a function id is returned.`,
+If successful, a function id is returned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createFunction(AMP, cmd, args)
 		},
 	}
 
 	listFunctionCmd = &cobra.Command{
-		Use:   "ls",
+		Use:   "ls [OPTION]",
 		Short: "List functions",
 		Long:  `The list command displays all registered functions.`,
 		RunE: func(cmd *cobra.Command, args []string) error {

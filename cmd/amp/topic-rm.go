@@ -12,9 +12,9 @@ import (
 
 var (
 	removeTopicCmd = &cobra.Command{
-		Use:   "rm [OPTIONS] TOPIC",
+		Use:   "rm TOPIC-ID",
 		Short: "Remove topic",
-		Long:  `Remove command removes the specified topic and options.`,
+		Long:  `The remove command removes the specified topic id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTopic(AMP, cmd, args)
 		},

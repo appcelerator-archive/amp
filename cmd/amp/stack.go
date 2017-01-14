@@ -26,17 +26,17 @@ var StackCmd = &cobra.Command{
 
 var (
 	stackCreateCmd = &cobra.Command{
-		Use:   "create [-f FILE] [name]",
+		Use:   "create -f FILE-PATH STACK-NAME [OPTION...]",
 		Short: "Create a stack",
-		Long:  `Create command creates a stack according to the specified file path and name.`,
+		Long:  `The create command creates a stack according to the specified file path and name.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackCreate(AMP, cmd, args)
 		},
 	}
 	stackUpCmd = &cobra.Command{
-		Use:   "up [-f FILE] [name]",
+		Use:   "up -f FILE-PATH STACK-NAME [OPTION...]",
 		Short: "Create and deploy a stack",
-		Long:  `Up command creates and deploys a stack according to the specified file path and name.`,
+		Long:  `The up command creates and deploys a stack according to the specified file path and name.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUp(AMP, cmd, args)
 		},
@@ -44,49 +44,49 @@ var (
 	// stack configuration file
 	stackfile     string
 	stackStartCmd = &cobra.Command{
-		Use:   "start [stack name or id]",
+		Use:   "start STACK-NAME or STACK-ID [OPTION...]",
 		Short: "Start a stopped stack",
-		Long:  `Start command starts a stopped stack according to the specified stack name or id.`,
+		Long:  `The start command starts a stopped stack according to the specified stack name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStart(AMP, cmd, args)
 		},
 	}
 	stackStopCmd = &cobra.Command{
-		Use:   "stop [stack name or id]",
+		Use:   "stop STACK-NAME or STACK-ID [OPTION...]",
 		Short: "Stop a stack",
-		Long:  `Stop command stops all services of the specified stack name or id.`,
+		Long:  `The stop command stops all services of the specified stack name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStop(AMP, cmd, args)
 		},
 	}
 	stackRmCmd = &cobra.Command{
-		Use:   "rm [stack name or id]",
+		Use:   "rm STACK-NAME or STACK-ID",
 		Short: "Remove a stack",
-		Long:  `Remove command removes the specified stack name or id completely, including ETCD data.`,
+		Long:  `The remove command removes the specified stack name or id completely, including ETCD data.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackRm(AMP, cmd, args)
 		},
 	}
 	stackListCmd = &cobra.Command{
-		Use:   "ls",
+		Use:   "ls [OPTION...]",
 		Short: "List available stacks",
-		Long:  `List command lists all available stacks.`,
+		Long:  `The list command lists all available stacks, which are running.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackList(AMP, cmd, args)
 		},
 	}
 	stackTasksCmd = &cobra.Command{
-		Use:   "ps [stack name or id]",
+		Use:   "ps [STACK-NAME or STACK-ID] [OPTION...]",
 		Short: "List the tasks of a stack",
-		Long:  `PS command lists the tasks of a stack based on specified name or id.`,
+		Long:  `The ps command lists the tasks of a stack based on specified name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackTasks(AMP, cmd, args)
 		},
 	}
 	stackUrlsCmd = &cobra.Command{
-		Use:   "urls [stack name or id . . .]",
+		Use:   "urls [STACK-NAME... or STACK-ID...] [OPTION...]",
 		Short: "List the urls for a stack",
-		Long:  `URL command lists the urls for a stack based on specified name or id.`,
+		Long:  `The urls command lists the urls for a stack based on specified name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUrls(AMP, cmd, args)
 		},

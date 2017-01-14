@@ -8,9 +8,9 @@ import (
 
 // PlatformStart is the main command for attaching platform subcommands.
 var PlatformStart = &cobra.Command{
-	Use:   "start",
+	Use:   "start [OPTION...]",
 	Short: "Start platform",
-	Long: `Start command starts all AMP platform services available in the AMP Infrastructure stack.
+	Long: `The start command starts all AMP platform services available in the AMP Infrastructure stack.
 If the AMP platform is already running, it returns an appropriate message along with an option to force a re-start.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		startAMP(cmd, args)
