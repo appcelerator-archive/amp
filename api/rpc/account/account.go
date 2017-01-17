@@ -14,7 +14,16 @@ import (
 )
 
 // Server is used to implement account.AccountServer
-type Server struct{}
+type Server struct {
+	db data.Interface
+}
+
+// NewMockServer returns an instance of Server that uses a mock database
+func NewMockServer() *Server {
+	return &Server{
+		db: data.NewMock(),
+	}
+}
 
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionReply, err error) {
@@ -27,7 +36,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionRep
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
-	data.AddAccount(&schema.Account{
+	s.db.AddAccount(&schema.Account{
 		Name:         in.Name,
 		Type:         schema.AccountType_USER,
 		Email:        in.Email,
@@ -45,7 +54,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (out *pb.E
 	if err != nil {
 		return nil, err
 	}
-	data.Verify(in.Name)
+	s.db.Verify(in.Name)
 	fmt.Println(in.Code)
 	return
 }
@@ -57,7 +66,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	if err != nil {
 		return nil, err
 	}
-	organizationID, err := data.AddAccount(&schema.Account{
+	organizationID, err := s.db.AddAccount(&schema.Account{
 		Name:       in.Name,
 		Type:       schema.AccountType_ORGANIZATION,
 		Email:      in.Email,
@@ -66,7 +75,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	if err != nil {
 		return
 	}
-	data.AddTeam(&schema.Team{
+	s.db.AddTeam(&schema.Team{
 		OrgAccountId: organizationID,
 		Name:         "owners",
 		Desc:         in.Name + " owners team",
@@ -83,7 +92,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply
 	if err != nil {
 		return nil, err
 	}
-	account, err := data.GetAccount(in.Name)
+	account, err := s.db.GetAccount(in.Name)
 	if account == nil {
 		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
@@ -105,7 +114,7 @@ func (s *Server) Switch(ctx context.Context, in *TeamRequest) (out *pb.Empty, er
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	organization, err := data.GetAccount(in.Organization)
+	organization, err := s.db.GetAccount(in.Organization)
 	if err != nil {
 		return
 	}
@@ -126,7 +135,7 @@ func (s *Server) ListAccounts(ctx context.Context, in *AccountsRequest) (out *Li
 	} else {
 		return nil, grpc.Errorf(codes.InvalidArgument, "account type is mandatory")
 	}
-	accounts, err := data.GetAccounts(accountType)
+	accounts, err := s.db.GetAccounts(accountType)
 	if err != nil {
 		return
 	}
@@ -145,7 +154,7 @@ func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (out
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
-	account, err := data.GetAccount(in.Name)
+	account, err := s.db.GetAccount(in.Name)
 	if err != nil {
 		return
 	}
@@ -166,7 +175,7 @@ func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (out *Account
 	if err != nil {
 		return
 	}
-	account, err := data.GetAccount(in.Name)
+	account, err := s.db.GetAccount(in.Name)
 	if err != nil {
 		return
 	}

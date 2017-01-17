@@ -7,16 +7,16 @@ import (
 )
 
 // AddAccount adds a new account to the account table
-func AddAccount(account *schema.Account) (id string, err error) {
-	id = strconv.Itoa(len(mockAccounts))
+func (m *Mock) AddAccount(account *schema.Account) (id string, err error) {
+	id = strconv.Itoa(len(m.accounts))
 	account.Id = id
-	mockAccounts = append(mockAccounts, account)
+	m.accounts = append(m.accounts, account)
 	return
 }
 
 // Verify sets an account verification to true
-func Verify(name string) error {
-	for _, account := range mockAccounts {
+func (m *Mock) Verify(name string) error {
+	for _, account := range m.accounts {
 		if account.Name == name {
 			account.IsVerified = true
 		}
@@ -25,16 +25,16 @@ func Verify(name string) error {
 }
 
 // AddTeam adds a new team to the team table
-func AddTeam(team *schema.Team) (id string, err error) {
-	id = strconv.Itoa(len(mockTeams))
+func (m *Mock) AddTeam(team *schema.Team) (id string, err error) {
+	id = strconv.Itoa(len(m.teams))
 	team.Id = id
-	mockTeams = append(mockTeams, team)
+	m.teams = append(m.teams, team)
 	return
 }
 
 // GetAccount returns an account from the accounts table
-func GetAccount(name string) (account *schema.Account, err error) {
-	for _, account := range mockAccounts {
+func (m *Mock) GetAccount(name string) (account *schema.Account, err error) {
+	for _, account := range m.accounts {
 		if account.Name == name {
 			return account, nil
 		}
@@ -42,10 +42,10 @@ func GetAccount(name string) (account *schema.Account, err error) {
 	return
 }
 
-//
-func GetAccounts(accountType schema.AccountType) (accounts []*schema.Account, err error) {
+// GetAccounts implements Interface.GetAccounts
+func (m *Mock) GetAccounts(accountType schema.AccountType) (accounts []*schema.Account, err error) {
 	accounts = []*schema.Account{}
-	for _, account := range accounts {
+	for _, account := range m.accounts {
 		if account.Type == accountType {
 			accounts = append(accounts, account)
 		}
