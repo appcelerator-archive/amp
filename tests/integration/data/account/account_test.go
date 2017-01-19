@@ -1,29 +1,26 @@
 package account
 
 import (
+	"log"
 	"os"
 	"testing"
 	"time"
-	"log"
 
 	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/data/account"
+	"github.com/appcelerator/amp/data/schema"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"golang.org/x/net/context"
 	"strings"
-	"github.com/appcelerator/amp/data/account"
-	"github.com/appcelerator/amp/data/schema"
 )
 
 const (
 	defTimeout = 5 * time.Second
-
 )
 
-
 var (
-	acct account.Interface
+	acct     account.Interface
 	testAcct schema.Account
-
 )
 
 func newContext() (context.Context, context.CancelFunc) {
@@ -31,7 +28,7 @@ func newContext() (context.Context, context.CancelFunc) {
 }
 
 func initData() {
-	testAcct = schema.Account {
+	testAcct = schema.Account{
 		Id:         "1",
 		Name:       "axway",
 		Type:       schema.AccountType_ORGANIZATION,
@@ -62,8 +59,7 @@ func TestAddAccount(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if (s != testAcct.Id) {
+	if s != testAcct.Id {
 		t.Errorf("expected %v, got %v", testAcct.Id, s)
 	}
 }
-

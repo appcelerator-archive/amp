@@ -54,4 +54,3 @@ func (m *Mock) GetAccounts(accountType schema.AccountType) (accounts []*schema.A
 	}
 	return
 }
-
