@@ -1,10 +1,12 @@
-package data
+package account
 
 import (
 	"strconv"
 
 	"github.com/appcelerator/amp/data/schema"
 )
+
+const AccountRootNameKey = "accounts"
 
 // AddAccount adds a new account to the account table
 func (m *Mock) AddAccount(account *schema.Account) (id string, err error) {
@@ -52,3 +54,4 @@ func (m *Mock) GetAccounts(accountType schema.AccountType) (accounts []*schema.A
 	}
 	return
 }
+

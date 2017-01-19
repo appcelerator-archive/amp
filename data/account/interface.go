@@ -1,4 +1,4 @@
-package data
+package account
 
 import "github.com/appcelerator/amp/data/schema"
 
