@@ -22,6 +22,7 @@ RUN go-getter /go/Gofile
 # Install glide for vendoring support
 RUN curl https://glide.sh/get | sh
 # Use /tmp/glide for the glide cache
+RUN mkdir -p /tmp/glide && chmod 777 /tmp/glide
 VOLUME /tmp/glide
 
 # Customize the shell in root/.bashrc, add other shell support here, etc.
