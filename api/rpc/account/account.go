@@ -38,6 +38,10 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (out *pb.E
 	if err != nil {
 		return nil, err
 	}
+	_, err = passlib.Hash(in.Password)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "hashing error")
+	}
 	fmt.Println(in.Code)
 	return
 }
