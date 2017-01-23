@@ -71,7 +71,7 @@ GOTEST := $(DOCKER_RUN) --name go -e HOME=$$HOME -v $${HOME}/.ssh:$$HOME/.ssh:ro
 
 GLIDE_DIRS := $${HOME}/.glide $${PWD}/.glide vendor
 
-GLIDE := $(DOCKER_RUN) -e HOME=$$HOME -v $$HOME/.ssh:$$HOME/.ssh:ro  -v $$HOME/.gitconfig:$$HOME/.gitconfig -v $$HOME/.glide:/go/tmp -e GLIDE_HOME=/go/tmp -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
+GLIDE := $(DOCKER_RUN) -e HOME=$$HOME -v $$HOME/.ssh:$$HOME/.ssh:ro  -v $$HOME/.gitconfig:$$HOME/.gitconfig -v $$HOME/.glide:/tmp/glide -e GLIDE_HOME=/tmp/glide -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
 
