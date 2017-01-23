@@ -59,7 +59,7 @@ func getUsername() (username string) {
 }
 
 // GetPassword prompts for password and returns the result
-func getPassword() (password string, err error) {
+func GetPassword() (password string, err error) {
 	color.Set(color.FgMagenta, color.Bold)
 	defer color.Unset()
 	fmt.Print("GitHub password: ")
