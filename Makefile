@@ -70,7 +70,8 @@ GO := $(DOCKER_RUN) --name go -e HOME=$$HOME -v $${HOME}/.ssh:$$HOME/.ssh:ro -v 
 GOTEST := $(DOCKER_RUN) --name go -e HOME=$$HOME -v $${HOME}/.ssh:$$HOME/.ssh:ro -v $${GOPATH}/bin:/go/bin -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) go test -v
 
 GLIDE_DIRS := $${HOME}/.glide $${PWD}/.glide vendor
-GLIDE := $(DOCKER_RUN) -e HOME=$$HOME -v $$HOME/.ssh:$$HOME/.ssh:ro  -v $$HOME/.gitconfig:$$HOME/.gitconfig -v $$HOME/.glide:/tmp/.glide -e GLIDE_HOME=/tmp/.glide -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
+
+GLIDE := $(DOCKER_RUN) -e HOME=$$HOME -v $$HOME/.ssh:$$HOME/.ssh:ro  -v $$HOME/.gitconfig:$$HOME/.gitconfig -v $$HOME/.glide:/go/tmp -e GLIDE_HOME=/go/tmp -v $${PWD}:/go/src/$(REPO) -w /go/src/$(REPO) $(GOTOOLS) glide $${GLIDE_OPTS}
 GLIDE_INSTALL := $(GLIDE) install
 GLIDE_UPDATE := $(GLIDE) update
 
@@ -83,11 +84,13 @@ version:
 	@echo "version: $(VERSION) (build: $(BUILD))"
 
 install-deps:
+	@mkdir -p $$HOME/.glide/cache
 	@$(GLIDE_INSTALL)
 # temporary fix to trace conflict
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
 update-deps:
+	@mkdir -p $$HOME/.glide/cache
 	@$(GLIDE_UPDATE)
 # temporary fix to trace conflict
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
