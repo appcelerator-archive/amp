@@ -18,6 +18,8 @@ RUN go-getter /go/Gofile
 
 # Install glide for vendoring support
 RUN curl https://glide.sh/get | sh
+# Use /tmp/glide for the glide cache
+VOLUME /tmp/glide
 
 # Install protoc (download source, build and install -- required by protoc-gen-go and related tools)
 RUN install-protoc
