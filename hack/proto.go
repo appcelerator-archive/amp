@@ -1,83 +1,84 @@
 package main
 
-import "path/filepath"
-import "fmt"
-import "os"
-import "os/exec"
-import "strconv"
-import "flag"
+import (
+	"flag"
+	"fmt"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+)
 
-var protoc bool
+var (
+	verbose         bool
+	protocInstalled bool
+	dockerArgs      []string
+	protocArgs      []string
+)
 
 func init() {
-	flag.BoolVar(&protoc, "protoc", false, "protoc available, otherwise try docker")
-}
+	flag.BoolVar(&verbose, "v", false, "print matched proto files")
+	flag.BoolVar(&protocInstalled, "protoc", false, "if true, use system protoc, else run in a new container")
 
-func main() {
-	flag.Parse()
-	matches := []string{}
-	paths := []string{}
-	filepath.Walk(".", func(path string, info os.FileInfo, walkErr error) (err error) {
-		if walkErr != nil {
-			return walkErr
-		}
-		if path == "vendor" || path == ".git" || path == ".glide" {
-			return filepath.SkipDir
-		}
-		if filepath.Ext(path) == ".proto" {
-			matches = append(matches, path)
-		}
-		return
-	})
-	for _, match := range matches {
-		paths = append(paths, "/go/src/github.com/appcelerator/amp/"+match)
-	}
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	dockerArgs := []string{
-		"run",
-		"-u",
-		strconv.Itoa(os.Getgid()) + ":" + strconv.Itoa(os.Getgid()),
-		"--rm",
-		"--name",
-		"protoc",
-		"-t",
-		"-v",
-		wd + ":/go/src/github.com/appcelerator/amp",
-		"-v",
-		"/var/run/docker.sock:/var/run/docker.sock",
-		"appcelerator/protoc:0.3.0",
+
+	dockerArgs = []string{
+		"run", "-t", "--rm",
+		"--name", "protoc",
+		"-u", fmt.Sprintf("%s:%s", strconv.Itoa(os.Getuid()), strconv.Itoa(os.Getgid())),
+		"-v", fmt.Sprintf("%s:%s", wd, "/go/src/github.com/appcelerator/amp"),
+		"appcelerator/gotools", "protoc",
 	}
-	protocArgs := []string{
+
+	protocArgs = []string{
+		"-I", "/go/src/",
+		"-I", "/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis",
 		"--go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:/go/src/",
 		"--grpc-gateway_out=logtostderr=true:/go/src",
 		"--swagger_out=logtostderr=true:/go/src/",
-		"-I",
-		"/go/src/",
-		"-I",
-		"/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis",
 	}
-	if protoc {
-		for _, path := range paths {
-			args := append(protocArgs, path)
-			out, err := exec.Command("protoc", args...).CombinedOutput()
-			if err != nil {
-				fmt.Println(args)
-				fmt.Println(string(out))
-				panic(err)
-			}
+}
+
+func main() {
+	flag.Parse()
+
+	// find and compile all *.proto files not in excluded dirs
+	filepath.Walk(".", func(p string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
 		}
+		if p == "vendor" || p == ".git" || p == ".glide" {
+			return filepath.SkipDir
+		}
+		if filepath.Ext(p) == ".proto" {
+			protoc(path.Join("/go/src/github.com/appcelerator/amp/", p))
+		}
+		return nil
+	})
+}
+
+func protoc(p string) {
+	if verbose {
+		fmt.Println(p)
+	}
+
+	var cmd string
+	var args []string
+	if protocInstalled {
+		cmd = "protoc"
+		args = append(protocArgs, p)
 	} else {
-		for _, path := range paths {
-			args := append(append(dockerArgs, protocArgs...), path)
-			out, err := exec.Command("docker", args...).CombinedOutput()
-			if err != nil {
-				fmt.Println(args)
-				fmt.Println(string(out))
-				panic(err)
-			}
-		}
+		cmd = "docker"
+		args = append(append(dockerArgs, protocArgs...), p)
+	}
+
+	out, err := exec.Command(cmd, args...).CombinedOutput()
+	if err != nil {
+		fmt.Println(args)
+		fmt.Println(string(out))
+		panic(err)
 	}
 }
