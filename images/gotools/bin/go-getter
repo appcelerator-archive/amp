@@ -1,0 +1,41 @@
+#!/bin/sh
+# Like 'go get' but with pinned package versions. https://github.com/joewalnes/go-getter
+set -e
+: ${GOPATH?"GOPATH not set"}
+: ${1?"Usage: $0 [path-to-go-deps]"}
+sed -e 's/#.*//' $1 | grep -v -e '^[[:space:]]*$' | while read PKG HASH; do
+  echo "$PKG ($HASH)"
+  DEST=$GOPATH/src/$PKG
+  go get -d -u $PKG || true
+  FOUND_VCS=0
+  while [[ "$DEST" != "$GOPATH/src" ]] && [[ -d $DEST ]]
+  do
+    cd $DEST
+    if [ -d "$DEST/.git" ]; then
+      FOUND_VCS=1
+      echo "git checkout -q $HASH"
+      git checkout -q $HASH || true
+      git submodule update --init || true
+      echo "done"
+      break
+    elif [ -d "$DEST/.hg" ]; then
+      FOUND_VCS=1
+      hg update -q -c $HASH
+      break
+    elif [ -d "$DEST/.bzr" ]; then
+      FOUND_VCS=1
+      bzr update -q -r $HASH
+      break
+    elif [ -d "$DEST/.svn" ]; then
+      FOUND_VCS=1
+      svn update -q -r $HASH
+      break
+    else
+      DEST="$(readlink -f $DEST/..)"
+    fi
+  done
+  if [ $FOUND_VCS -eq 0 ]; then
+    echo "WARNING: Unrecognized VCS system for the golang package $PKG"
+  fi
+  go install $PKG || true
+done
