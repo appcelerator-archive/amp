@@ -1,5 +1,3 @@
-.PHONY: install-deps update-deps
-
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
 
@@ -66,4 +64,5 @@ update-deps:
 	@$(GLIDE_UPDATE_CMD)
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
+
 
