@@ -16,10 +16,6 @@ REPO := github.com/$(OWNER)/amp
 # =============================================================================
 # COMMON FILE AND DIRECTORY FILTERS AND GLOB VARS
 # =============================================================================
-# Everything that should be excluded when walking directory tree
-# EXCLUDE_FILES_FILTER := -not -path './.*' -not -path './vendor/*' -not -path './.test/*' -not -path './.git/*' -not -path './.glide/*'
-# EXCLUDE_DIRS_FILTER := $(EXCLUDE_FILES_FILTER) -not -path './.' -not -path './.test' -not -path './vendor' -not -path './.git' -not -path './.glide'
-
 EXCLUDE_DIRS_FILTER := -not -path './.*' -not -path './.*/*' \
 	-not -path './dist' -not -path './dist/*' \
 	-not -path './docs' -not -path './docs/*' \
