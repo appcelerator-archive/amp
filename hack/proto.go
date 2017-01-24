@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -46,19 +47,29 @@ func init() {
 func main() {
 	flag.Parse()
 
-	// find and compile all *.proto files not in excluded dirs
-	filepath.Walk(".", func(p string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
+	// run protoc on command line args if provided
+	if len(os.Args) > 0 {
+		for _, p := range os.Args[1:] {
+			// filter out options
+			if !strings.HasPrefix(p, "-") {
+				protoc(p)
+			}
 		}
-		if p == "vendor" || p == ".git" || p == ".glide" {
-			return filepath.SkipDir
-		}
-		if filepath.Ext(p) == ".proto" {
-			protoc(path.Join("/go/src/github.com/appcelerator/amp/", p))
-		}
-		return nil
-	})
+	} else {
+		// find and compile all *.proto files not in excluded dirs
+		filepath.Walk(".", func(p string, info os.FileInfo, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			if p == "vendor" || p == ".git" || p == ".glide" {
+				return filepath.SkipDir
+			}
+			if filepath.Ext(p) == ".proto" {
+				protoc(path.Join("/go/src/github.com/appcelerator/amp/", p))
+			}
+			return nil
+		})
+	}
 }
 
 func protoc(p string) {
@@ -77,9 +88,12 @@ func protoc(p string) {
 	}
 
 	out, err := exec.Command(cmd, args...).CombinedOutput()
+	s := strings.TrimSpace(string(out))
 	if err != nil {
 		fmt.Println(args)
-		fmt.Println(string(out))
+		fmt.Println(s)
 		panic(err)
+	} else if verbose && len(s) > 0 {
+		fmt.Println(s)
 	}
 }
