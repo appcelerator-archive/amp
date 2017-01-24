@@ -30,11 +30,11 @@ const (
 	// DefaultTimeout is the default timeout
 	DefaultTimeout = time.Minute
 
-	// NatsFunctionTopic is the topic used for function calls
-	NatsFunctionTopic = "amp-function-calls"
+	// FunctionCallsQueue is the topic used for function calls
+	FunctionCallsQueue = "amp-function-calls"
 
-	// NatsLogsTopic is the topic used for log events
-	NatsLogsTopic = "amp-logs"
+	// LogsQueue is the topic used for log events
+	LogsQueue = "amp-logs"
 
 	// EtcdFunctionRootKey is the root key used for functions in the storage
 	EtcdFunctionRootKey = "functions"

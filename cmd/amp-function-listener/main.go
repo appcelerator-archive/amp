@@ -14,11 +14,11 @@ import (
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/mq"
+	"github.com/appcelerator/amp/pkg/mq/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/julienschmidt/httprouter"
-	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 )
 
@@ -26,10 +26,10 @@ import (
 // This service role is to:
 // - listen to HTTP events:
 //    - Parse the HTTP body (if any) and use it as an input for the function
-//    - Publish function call to NATS "function call" topic
+//    - Publish function call to MQ "function call" topic
 //    - Wait on a channel with a timeout of one minute
 //
-// - listen to NATS for function returns on the "returnTo" topic. There is one "returnTo" topic per `amp-function-listener` used by workers to submit function return.
+// - listen to MQ for function returns on the "returnTo" topic. There is one "returnTo" topic per `amp-function-listener` used by workers to submit function return.
 //   - Store the function return in a map
 //   - Unblock the HTTP handler
 //   - Get the output of the function (if any) and write it as the HTTP body
@@ -43,8 +43,8 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 
-	// natsStreaming is the nats streaming client
-	natsStreaming ns.NatsStreaming
+	// MQ is the message queuer interface
+	MQ mq.Interface
 
 	// store is the interface used to access the key/value storage backend
 	store storage.Interface
@@ -92,21 +92,22 @@ func main() {
 	}
 	log.Println("Connected to etcd at", strings.Join(store.Endpoints(), ","))
 
-	// NATS Connect
+	// Connect to message queuer
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalln("Unable to get hostname:", err)
 	}
-	if natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
-		log.Fatalln(err)
+	MQ = ns.New(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname)
+	if err := MQ.Connect(amp.DefaultTimeout); err != nil {
+		log.Fatal(err)
 	}
 
-	// NATS, subscribe to returnTo topic
+	// Subscribe to returnTo topic
 	returnToTopic = "returnTo-" + hostname
 	log.Println("Subscribing to topic:", returnToTopic)
-	_, err = natsStreaming.GetClient().Subscribe(returnToTopic, messageHandler, stan.DeliverAllAvailable())
+	_, err = MQ.Subscribe(returnToTopic, messageHandler, &function.FunctionReturn{}, mq.DeliverAllAvailable())
 	if err != nil {
-		natsStreaming.Close()
+		MQ.Close()
 		log.Fatalln("Unable to subscribe to topic", err)
 	}
 	log.Println("Subscribed to topic:", returnToTopic)
@@ -169,7 +170,7 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		return
 	}
 
-	// Invoke the function by posting a function call to NATS
+	// Invoke the function by posting a function call to MQ
 	callID := stringid.GenerateNonCryptoID()
 	functionCall := function.FunctionCall{
 		CallID:   callID,
@@ -178,22 +179,15 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		ReturnTo: returnToTopic,
 	}
 
-	// Encode the proto object
-	encoded, err := proto.Marshal(&functionCall)
-	if err != nil {
-		httpError(w, http.StatusInternalServerError, fmt.Sprintf("error marshalling function call: %v", err))
-		return
-	}
-
-	// Publish to NATS
-	_, err = natsStreaming.GetClient().PublishAsync(amp.NatsFunctionTopic, encoded, nil)
+	// Publish to MQ
+	_, err = MQ.PublishAsync(amp.FunctionCallsQueue, &functionCall, nil)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, fmt.Sprintf("error publishing function call: %v", err))
 		return
 	}
 	log.Println("Function call successfuly submitted, call id:", functionCall.CallID)
 
-	// Wait for a NATS response
+	// Wait for a MQ response
 	locks[callID] = make(chan *function.FunctionReturn, 1) // Create the channel
 	select {
 	case functionReturn := <-locks[callID]: // Wait for the functionReturn on the channel
@@ -213,16 +207,19 @@ func httpError(w http.ResponseWriter, statusCode int, message string) {
 	fmt.Fprintln(w, message)
 }
 
-func messageHandler(msg *stan.Msg) {
-	// Parse function return message
-	functionReturn := &function.FunctionReturn{}
-	err := proto.Unmarshal(msg.Data, functionReturn)
+func messageHandler(msg proto.Message, err error) {
 	if err != nil {
-		log.Println("Error unmarshalling function return:", err)
+		log.Println("Error in message processing:", err)
 		return
 	}
-	log.Println("Function return received, call id:", functionReturn.CallID)
+
+	fr, ok := msg.(*function.FunctionReturn)
+	if !ok {
+		log.Println("Error in type assertion")
+		return
+	}
+	log.Println("Function return received, call id:", fr.CallID)
 
 	// Unlock the caller
-	locks[functionReturn.CallID] <- functionReturn
+	locks[fr.CallID] <- fr
 }
