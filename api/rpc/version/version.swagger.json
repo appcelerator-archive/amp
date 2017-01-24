@@ -47,7 +47,11 @@
     "versionVersionInfo": {
       "type": "object",
       "properties": {
-        "arch": {
+        "version": {
+          "type": "string",
+          "format": "string"
+        },
+        "port": {
           "type": "string",
           "format": "string"
         },
@@ -59,11 +63,7 @@
           "type": "string",
           "format": "string"
         },
-        "port": {
-          "type": "string",
-          "format": "string"
-        },
-        "version": {
+        "arch": {
           "type": "string",
           "format": "string"
         }

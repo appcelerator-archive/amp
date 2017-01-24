@@ -15,5 +15,132 @@
     "application/json"
   ],
   "paths": {},
-  "definitions": {}
+  "definitions": {
+    "agentgrpcAgentRet": {
+      "type": "object"
+    },
+    "agentgrpcGetNodeInfoRequest": {
+      "type": "object"
+    },
+    "agentgrpcNodeInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "type": "string",
+          "format": "string"
+        },
+        "availability": {
+          "type": "string",
+          "format": "string"
+        },
+        "hostname": {
+          "type": "string",
+          "format": "string"
+        },
+        "host_architecture": {
+          "type": "string",
+          "format": "string"
+        },
+        "host_os": {
+          "type": "string",
+          "format": "string"
+        },
+        "cpu": {
+          "type": "string",
+          "format": "int64"
+        },
+        "memory": {
+          "type": "string",
+          "format": "int64"
+        },
+        "docker_version": {
+          "type": "string",
+          "format": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "string"
+        },
+        "address": {
+          "type": "string",
+          "format": "string"
+        },
+        "nb_containers": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_running": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_paused": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_stopped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "images": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "agentgrpcPullImageRequest": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "agentgrpcPurgeNodeAnswer": {
+      "type": "object",
+      "properties": {
+        "nb_containers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nb_volumes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nb_images": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "agentgrpcPurgeNodeRequest": {
+      "type": "object",
+      "properties": {
+        "node": {
+          "type": "string",
+          "format": "string"
+        },
+        "container": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "volume": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "image": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "force": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    }
+  }
 }

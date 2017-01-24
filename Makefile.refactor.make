@@ -1,5 +1,3 @@
-.PHONY: install-deps update-deps
-
 SHELL := /bin/bash
 BASEDIR := $(shell echo $${PWD})
 
@@ -18,10 +16,17 @@ REPO := github.com/$(OWNER)/amp
 # =============================================================================
 # COMMON FILE AND DIRECTORY FILTERS AND GLOB VARS
 # =============================================================================
-# Everything that should be excluded when walking directory tree
-EXCLUDE_FILES_FILTER := -not -path './vendor/*' -not -path './.test/*' -not -path './.git/*' -not -path './.glide/*'
-EXCLUDE_DIRS_FILTER := $(EXCLUDE_FILES_FILTER) -not -path '.' -not -path './.test' -not -path './vendor' -not -path './.git' -not -path './.glide'
+EXCLUDE_DIRS_FILTER := -not -path './.*' -not -path './.*/*' \
+	-not -path './dist' -not -path './dist/*' \
+	-not -path './docs' -not -path './docs/*' \
+	-not -path './hack' -not -path './hack/*' \
+	-not -path './images' -not -path './images/*' \
+	-not -path './project' -not -path './project/*' \
+	-not -path './vendor' -not -path './vendor/*'
 
+INCLUDE_DIRS_FILTER := -path './*' -path './*/*' $(EXCLUDE_DIRS_FILTER)
+
+SRCDIRS := $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
 GOSRC := $(shell find . -type f -name '*.go' $(EXCLUDE_DIRS_FILTER))
 
 # =============================================================================
@@ -41,8 +46,15 @@ DOCKER_RUN_CMD := docker run -t --rm -u $(UG)
 GOTOOLS := appcelerator/gotools:latest
 
 # =============================================================================
+# DEFAULT TARGET
+# =============================================================================
+all: build
+
+# =============================================================================
 # VENDOR MANAGEMENT (GLIDE)
 # =============================================================================
+.PHONY: install-deps update-deps
+
 # Mount ~/.ssh (for access to private git repos), glide cache, and working directory (for ~/vendor)
 GLIDE_BASE_CMD := $(DOCKER_RUN_CMD) \
                   -e HOME=$${HOME} \
@@ -66,4 +78,47 @@ update-deps:
 	@$(GLIDE_UPDATE_CMD)
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
+
+# =============================================================================
+# PROTOC (PROTOCOL BUFFER COMPILER)
+# Generate *.pb.go, *.pb.gw.go files in any non-excluded directory
+# with *.proto files.
+# =============================================================================
+.PHONY: protoc protoc-clean
+
+PROTOFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
+PROTOGWFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER) -exec grep -l 'google.api.http' {} \;)
+# Generate swagger.json files for protobuf types even if only exposed over gRPC, not REST API
+PROTOTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOFILES:.proto=.swagger.json)
+
+%.pb.go %.pb.gw.go %.swagger.json: %.proto
+	@echo $@
+	@go run hack/proto.go "/go/src/$(REPO)/$<"
+
+protoc: $(PROTOTARGETS)
+
+protoc-clean:
+	@find . \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) \
+			$(EXCLUDE_DIRS_FILTER) -type f -delete
+
+# =============================================================================
+# CLEAN
+# =============================================================================
+.PHONY: clean
+clean: protoc-clean
+
+# =============================================================================
+# BUILD
+# =============================================================================
+build: $(PROTOTARGETS)
+	@echo To be implemented...
+
+# =============================================================================
+# MISC
+# =============================================================================
+# TODO: used for debugging makefile, will ultimately this remove when all finished
+.PHONY: dump
+dump:
+	@echo $(SRCDIRS)
+
 

@@ -67,10 +67,6 @@
           "type": "string",
           "format": "string"
         },
-        "infra": {
-          "type": "boolean",
-          "format": "boolean"
-        },
         "message": {
           "type": "string",
           "format": "string"
@@ -79,36 +75,32 @@
           "type": "string",
           "format": "string"
         },
-        "service": {
-          "type": "string",
-          "format": "string"
-        },
         "size": {
           "type": "string",
           "format": "int64"
         },
+        "service": {
+          "type": "string",
+          "format": "string"
+        },
         "stack": {
           "type": "string",
           "format": "string"
+        },
+        "infra": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
     "logsLogEntry": {
       "type": "object",
       "properties": {
-        "container_id": {
+        "timestamp": {
           "type": "string",
           "format": "string"
         },
-        "message": {
-          "type": "string",
-          "format": "string"
-        },
-        "node_id": {
-          "type": "string",
-          "format": "string"
-        },
-        "role": {
+        "time_id": {
           "type": "string",
           "format": "string"
         },
@@ -120,11 +112,15 @@
           "type": "string",
           "format": "string"
         },
-        "stack_id": {
+        "message": {
           "type": "string",
           "format": "string"
         },
-        "stack_name": {
+        "container_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "node_id": {
           "type": "string",
           "format": "string"
         },
@@ -136,11 +132,15 @@
           "type": "string",
           "format": "string"
         },
-        "time_id": {
+        "stack_id": {
           "type": "string",
           "format": "string"
         },
-        "timestamp": {
+        "stack_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
           "type": "string",
           "format": "string"
         }

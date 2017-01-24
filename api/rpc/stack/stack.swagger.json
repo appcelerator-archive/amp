@@ -212,26 +212,22 @@
     "serviceNetworkAttachment": {
       "type": "object",
       "properties": {
+        "target": {
+          "type": "string",
+          "format": "string"
+        },
         "aliases": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "string"
           }
-        },
-        "target": {
-          "type": "string",
-          "format": "string"
         }
       }
     },
     "servicePublishSpec": {
       "type": "object",
       "properties": {
-        "internal_port": {
-          "type": "integer",
-          "format": "int64"
-        },
         "name": {
           "type": "string",
           "format": "string"
@@ -241,6 +237,10 @@
           "format": "string"
         },
         "publish_port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "internal_port": {
           "type": "integer",
           "format": "int64"
         }
@@ -258,9 +258,36 @@
     "serviceServiceSpec": {
       "type": "object",
       "properties": {
-        "args": {
+        "image": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "replicated": {
+          "$ref": "#/definitions/serviceReplicatedService"
+        },
+        "global": {
+          "$ref": "#/definitions/serviceGlobalService"
+        },
+        "env": {
           "type": "array",
           "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceNetworkAttachment"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
             "type": "string",
             "format": "string"
           }
@@ -272,23 +299,15 @@
             "format": "string"
           }
         },
-        "env": {
+        "publish_specs": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "$ref": "#/definitions/servicePublishSpec"
           }
         },
-        "global": {
-          "$ref": "#/definitions/serviceGlobalService"
-        },
-        "image": {
-          "type": "string",
-          "format": "string"
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
+        "args": {
+          "type": "array",
+          "items": {
             "type": "string",
             "format": "string"
           }
@@ -300,28 +319,9 @@
             "format": "string"
           }
         },
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "networks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceNetworkAttachment"
-          }
-        },
-        "publish_specs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/servicePublishSpec"
-          }
-        },
         "registry_auth": {
           "type": "string",
           "format": "string"
-        },
-        "replicated": {
-          "$ref": "#/definitions/serviceReplicatedService"
         }
       }
     },
@@ -354,12 +354,6 @@
     "stackNetworkIPAM": {
       "type": "object",
       "properties": {
-        "config": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackNetworkIPAMConfig"
-          }
-        },
         "driver": {
           "type": "string",
           "format": "string"
@@ -370,20 +364,19 @@
             "type": "string",
             "format": "string"
           }
+        },
+        "config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackNetworkIPAMConfig"
+          }
         }
       }
     },
     "stackNetworkIPAMConfig": {
       "type": "object",
       "properties": {
-        "aux_address": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "string"
-          }
-        },
-        "gateway": {
+        "subnet": {
           "type": "string",
           "format": "string"
         },
@@ -391,15 +384,26 @@
           "type": "string",
           "format": "string"
         },
-        "subnet": {
+        "gateway": {
           "type": "string",
           "format": "string"
+        },
+        "aux_address": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
         }
       }
     },
     "stackNetworkSpec": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
         "driver": {
           "type": "string",
           "format": "string"
@@ -408,16 +412,19 @@
           "type": "boolean",
           "format": "boolean"
         },
-        "external": {
-          "type": "string",
-          "format": "string"
+        "ipam": {
+          "$ref": "#/definitions/stackNetworkIPAM"
         },
         "internal": {
           "type": "boolean",
           "format": "boolean"
         },
-        "ipam": {
-          "$ref": "#/definitions/stackNetworkIPAM"
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
         },
         "labels": {
           "type": "object",
@@ -426,29 +433,22 @@
             "format": "string"
           }
         },
-        "name": {
+        "external": {
           "type": "string",
           "format": "string"
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "string"
-          }
         }
       }
     },
     "stackRemoveRequest": {
       "type": "object",
       "properties": {
-        "force": {
-          "type": "boolean",
-          "format": "boolean"
-        },
         "stack_ident": {
           "type": "string",
           "format": "string"
+        },
+        "force": {
+          "type": "boolean",
+          "format": "boolean"
         }
       },
       "title": "struct for remove request function"
@@ -456,17 +456,19 @@
     "stackStack": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
         "id": {
           "type": "string",
           "format": "string"
         },
-        "is_public": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "name": {
-          "type": "string",
-          "format": "string"
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceServiceSpec"
+          }
         },
         "networks": {
           "type": "array",
@@ -474,11 +476,9 @@
             "$ref": "#/definitions/stackNetworkSpec"
           }
         },
-        "services": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceServiceSpec"
-          }
+        "is_public": {
+          "type": "boolean",
+          "format": "boolean"
         }
       },
       "title": "Stack struct"
@@ -495,11 +495,11 @@
     "stackStackInfo": {
       "type": "object",
       "properties": {
-        "id": {
+        "name": {
           "type": "string",
           "format": "string"
         },
-        "name": {
+        "id": {
           "type": "string",
           "format": "string"
         },

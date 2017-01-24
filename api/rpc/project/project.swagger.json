@@ -15,5 +15,28 @@
     "application/json"
   ],
   "paths": {},
-  "definitions": {}
+  "definitions": {
+    "projectCreateReply": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "projectCreateRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }
