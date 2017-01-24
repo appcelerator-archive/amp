@@ -15,5 +15,316 @@
     "application/json"
   ],
   "paths": {},
-  "definitions": {}
+  "definitions": {
+    "servergrpcAgentHealthRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcAmpMonitorAnswers": {
+      "type": "object",
+      "properties": {
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/servergrpcTypedOutput"
+          }
+        }
+      }
+    },
+    "servergrpcAmpRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "silence": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "verbose": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "force": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "local": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "node": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcAmpRet": {
+      "type": "object"
+    },
+    "servergrpcAmpStatusAnswer": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcClientMes": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "function": {
+          "type": "string",
+          "format": "string"
+        },
+        "output": {
+          "$ref": "#/definitions/servergrpcTypedOutput"
+        }
+      }
+    },
+    "servergrpcGetNodesInfoRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "node": {
+          "type": "string",
+          "format": "string"
+        },
+        "more": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "servergrpcNodeInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "type": "string",
+          "format": "string"
+        },
+        "availability": {
+          "type": "string",
+          "format": "string"
+        },
+        "hostname": {
+          "type": "string",
+          "format": "string"
+        },
+        "host_architecture": {
+          "type": "string",
+          "format": "string"
+        },
+        "host_os": {
+          "type": "string",
+          "format": "string"
+        },
+        "cpu": {
+          "type": "string",
+          "format": "int64"
+        },
+        "memory": {
+          "type": "string",
+          "format": "int64"
+        },
+        "docker_version": {
+          "type": "string",
+          "format": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "string"
+        },
+        "leader": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "reachability": {
+          "type": "string",
+          "format": "string"
+        },
+        "address": {
+          "type": "string",
+          "format": "string"
+        },
+        "nb_containers": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_running": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_paused": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nb_containers_stopped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "images": {
+          "type": "string",
+          "format": "int64"
+        },
+        "error": {
+          "type": "string",
+          "format": "string"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "string"
+        },
+        "nodeName": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcNodesInfo": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/servergrpcNodeInfo"
+          }
+        }
+      }
+    },
+    "servergrpcPurgeNodeAnswer": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "agent_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "nb_containers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nb_volumes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nb_images": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "error": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcPurgeNodesAnswers": {
+      "type": "object",
+      "properties": {
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/servergrpcPurgeNodeAnswer"
+          }
+        }
+      }
+    },
+    "servergrpcPurgeNodesRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "node": {
+          "type": "string",
+          "format": "string"
+        },
+        "container": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "volume": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "image": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "force": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "servergrpcRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "hostname": {
+          "type": "string",
+          "format": "string"
+        },
+        "address": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcServerRet": {
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "error": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "servergrpcTypedOutput": {
+      "type": "object",
+      "properties": {
+        "output": {
+          "type": "string",
+          "format": "string"
+        },
+        "output_type": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
 }

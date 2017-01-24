@@ -36,21 +36,10 @@
     "statsStatsEntry": {
       "type": "object",
       "properties": {
-        "container_id": {
+        "time": {
           "type": "string",
-          "format": "string"
-        },
-        "container_image": {
-          "type": "string",
-          "format": "string"
-        },
-        "container_name": {
-          "type": "string",
-          "format": "string"
-        },
-        "cpu": {
-          "type": "number",
-          "format": "double"
+          "format": "int64",
+          "title": "Common data"
         },
         "datacenter": {
           "type": "string",
@@ -60,52 +49,23 @@
           "type": "string",
           "format": "string"
         },
-        "io_read": {
-          "type": "number",
-          "format": "double"
-        },
-        "io_write": {
-          "type": "number",
-          "format": "double"
-        },
-        "mem": {
-          "type": "number",
-          "format": "double"
-        },
-        "mem_limit": {
-          "type": "number",
-          "format": "double"
-        },
-        "mem_usage": {
-          "type": "number",
-          "format": "double"
-        },
-        "net_rx_bytes": {
-          "type": "number",
-          "format": "double"
-        },
-        "net_tx_bytes": {
-          "type": "number",
-          "format": "double"
-        },
-        "node_id": {
+        "container_id": {
           "type": "string",
           "format": "string"
         },
-        "number": {
-          "type": "number",
-          "format": "double",
-          "title": "CPU Metrics fields"
+        "container_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "container_image": {
+          "type": "string",
+          "format": "string"
         },
         "service_id": {
           "type": "string",
           "format": "string"
         },
         "service_name": {
-          "type": "string",
-          "format": "string"
-        },
-        "sort_type": {
           "type": "string",
           "format": "string"
         },
@@ -117,14 +77,54 @@
           "type": "string",
           "format": "string"
         },
-        "time": {
+        "node_id": {
           "type": "string",
-          "format": "int64",
-          "title": "Common data"
+          "format": "string"
         },
         "type": {
           "type": "string",
           "format": "string"
+        },
+        "sort_type": {
+          "type": "string",
+          "format": "string"
+        },
+        "number": {
+          "type": "number",
+          "format": "double",
+          "title": "CPU Metrics fields"
+        },
+        "cpu": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem_usage": {
+          "type": "number",
+          "format": "double"
+        },
+        "mem_limit": {
+          "type": "number",
+          "format": "double"
+        },
+        "io_read": {
+          "type": "number",
+          "format": "double"
+        },
+        "io_write": {
+          "type": "number",
+          "format": "double"
+        },
+        "net_tx_bytes": {
+          "type": "number",
+          "format": "double"
+        },
+        "net_rx_bytes": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -142,19 +142,27 @@
     "statsStatsRequest": {
       "type": "object",
       "properties": {
+        "stats_cpu": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_mem": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_io": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_net": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_follow": {
+          "type": "boolean",
+          "format": "boolean"
+        },
         "discriminator": {
-          "type": "string",
-          "format": "string"
-        },
-        "filter_container_id": {
-          "type": "string",
-          "format": "string"
-        },
-        "filter_container_image": {
-          "type": "string",
-          "format": "string"
-        },
-        "filter_container_name": {
           "type": "string",
           "format": "string"
         },
@@ -166,15 +174,19 @@
           "type": "string",
           "format": "string"
         },
-        "filter_node_id": {
+        "filter_container_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_container_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_container_image": {
           "type": "string",
           "format": "string"
         },
         "filter_service_id": {
-          "type": "string",
-          "format": "string"
-        },
-        "filter_service_ident": {
           "type": "string",
           "format": "string"
         },
@@ -190,7 +202,11 @@
           "type": "string",
           "format": "string"
         },
-        "period": {
+        "filter_node_id": {
+          "type": "string",
+          "format": "string"
+        },
+        "filter_service_ident": {
           "type": "string",
           "format": "string"
         },
@@ -198,31 +214,15 @@
           "type": "string",
           "format": "string"
         },
-        "stats_cpu": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "stats_follow": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "stats_io": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "stats_mem": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "stats_net": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "time_group": {
+        "until": {
           "type": "string",
           "format": "string"
         },
-        "until": {
+        "period": {
+          "type": "string",
+          "format": "string"
+        },
+        "time_group": {
           "type": "string",
           "format": "string"
         }

@@ -88,9 +88,11 @@ update-deps:
 
 PROTOFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
 PROTOGWFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER) -exec grep -l 'google.api.http' {} \;)
-PROTOTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.proto=.swagger.json)
+# Generate swagger.json files for protobuf types even if only exposed over gRPC, not REST API
+PROTOTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOFILES:.proto=.swagger.json)
 
 %.pb.go %.pb.gw.go %.swagger.json: %.proto
+	@echo $@
 	@go run hack/proto.go "/go/src/$(REPO)/$<"
 
 protoc: $(PROTOTARGETS)

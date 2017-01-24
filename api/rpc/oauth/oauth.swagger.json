@@ -15,5 +15,36 @@
     "application/json"
   ],
   "paths": {},
-  "definitions": {}
+  "definitions": {
+    "oauthAuthReply": {
+      "type": "object",
+      "properties": {
+        "sessionKey": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "oauthAuthRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "format": "string"
+        },
+        "password": {
+          "type": "string",
+          "format": "string"
+        },
+        "otp": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }

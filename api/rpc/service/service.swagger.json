@@ -74,26 +74,22 @@
     "serviceNetworkAttachment": {
       "type": "object",
       "properties": {
+        "target": {
+          "type": "string",
+          "format": "string"
+        },
         "aliases": {
           "type": "array",
           "items": {
             "type": "string",
             "format": "string"
           }
-        },
-        "target": {
-          "type": "string",
-          "format": "string"
         }
       }
     },
     "servicePublishSpec": {
       "type": "object",
       "properties": {
-        "internal_port": {
-          "type": "integer",
-          "format": "int64"
-        },
         "name": {
           "type": "string",
           "format": "string"
@@ -103,6 +99,10 @@
           "format": "string"
         },
         "publish_port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "internal_port": {
           "type": "integer",
           "format": "int64"
         }
@@ -155,9 +155,36 @@
     "serviceServiceSpec": {
       "type": "object",
       "properties": {
-        "args": {
+        "image": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "replicated": {
+          "$ref": "#/definitions/serviceReplicatedService"
+        },
+        "global": {
+          "$ref": "#/definitions/serviceGlobalService"
+        },
+        "env": {
           "type": "array",
           "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "networks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceNetworkAttachment"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
             "type": "string",
             "format": "string"
           }
@@ -169,23 +196,15 @@
             "format": "string"
           }
         },
-        "env": {
+        "publish_specs": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "$ref": "#/definitions/servicePublishSpec"
           }
         },
-        "global": {
-          "$ref": "#/definitions/serviceGlobalService"
-        },
-        "image": {
-          "type": "string",
-          "format": "string"
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
+        "args": {
+          "type": "array",
+          "items": {
             "type": "string",
             "format": "string"
           }
@@ -197,28 +216,9 @@
             "format": "string"
           }
         },
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "networks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceNetworkAttachment"
-          }
-        },
-        "publish_specs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/servicePublishSpec"
-          }
-        },
         "registry_auth": {
           "type": "string",
           "format": "string"
-        },
-        "replicated": {
-          "$ref": "#/definitions/serviceReplicatedService"
         }
       }
     }

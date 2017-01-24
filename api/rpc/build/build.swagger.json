@@ -15,5 +15,144 @@
     "application/json"
   ],
   "paths": {},
-  "definitions": {}
+  "definitions": {
+    "buildBuild": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "sha": {
+          "type": "string",
+          "format": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "string"
+        },
+        "commit_message": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildBuildList": {
+      "type": "object",
+      "properties": {
+        "builds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/buildBuild"
+          }
+        }
+      }
+    },
+    "buildBuildRequest": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "sha": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildLog": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildPing": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildPong": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "owner": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "buildProjectList": {
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/buildProject"
+          }
+        }
+      }
+    },
+    "buildProjectQuery": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "type": "string",
+          "format": "string"
+        },
+        "latest": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "buildProjectRequest": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
 }
