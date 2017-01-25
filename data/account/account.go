@@ -1,4 +1,4 @@
-package data
+package account
 
 import (
 	"strconv"
@@ -29,6 +29,12 @@ func (m *Mock) AddTeam(team *schema.Team) (id string, err error) {
 	id = strconv.Itoa(len(m.teams))
 	team.Id = id
 	m.teams = append(m.teams, team)
+	return
+}
+
+// AddTeam adds a new team to the team table
+func (m *Mock) AddTeamMember(teamId string, userId string) (id string, err error) {
+
 	return
 }
 

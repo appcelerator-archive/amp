@@ -11,17 +11,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"gopkg.in/hlandau/passlib.v1"
+	//	"github.com/appcelerator/amp-client-lib/client/data"
 )
 
 // Server is used to implement account.AccountServer
 type Server struct {
-	db data.Interface
+	db account.Interface
 }
 
 // NewMockServer returns an instance of Server that uses a mock database
 func NewMockServer() *Server {
 	return &Server{
-		db: data.NewMock(),
+		db: account.NewMock(),
 	}
 }
 
