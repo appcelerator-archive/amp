@@ -253,7 +253,7 @@ func (s *Server) processService(ctx context.Context, stack *Stack, serv *service
 // add HAProxy service dedicated to the stack reverse proxy
 func (s *Server) addHAProxyService(ctx context.Context, stack *Stack) (string, error) {
 	serv := service.ServiceSpec{
-		Image: "appcelerator/haproxy:1.0.1",
+		Image: "appcelerator/haproxy:1.0.4", //TODO: use shared HAProxy image name when issue#674 will be done
 		Name:  "haproxy",
 		Env:   []string{"STACKNAME=" + stack.Name},
 		Networks: []*service.NetworkAttachment{
