@@ -83,3 +83,8 @@ message GrantType {
   string grant_desc = 4;
   google.protobuf.Timestamp create_dt = 5;
 }
+
+//Protobuf Type to store the foreign key relationships
+message ForeignKey {
+  string fk_id = 1;
+}

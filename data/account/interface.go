@@ -13,6 +13,9 @@ type Interface interface {
 	// AddTeam adds a new team to the team table
 	AddTeam(team *schema.Team) (id string, err error)
 
+	// AddTeamMember adds a new team to the team table
+	AddTeamMember(teamId string, memberId string) (id string, err error)
+
 	// GetAccount returns an account from the accounts table
 	GetAccount(name string) (*schema.Account, error)
 

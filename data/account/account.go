@@ -6,8 +6,6 @@ import (
 	"github.com/appcelerator/amp/data/schema"
 )
 
-const AccountRootNameKey = "accounts"
-
 // AddAccount adds a new account to the account table
 func (m *Mock) AddAccount(account *schema.Account) (id string, err error) {
 	id = strconv.Itoa(len(m.accounts))
@@ -31,6 +29,12 @@ func (m *Mock) AddTeam(team *schema.Team) (id string, err error) {
 	id = strconv.Itoa(len(m.teams))
 	team.Id = id
 	m.teams = append(m.teams, team)
+	return
+}
+
+// AddTeam adds a new team to the team table
+func (m *Mock) AddTeamMember(teamId string, userId string) (id string, err error) {
+
 	return
 }
 
