@@ -20,6 +20,12 @@ service AccountService {
       body: "*"
     };
   };
+  rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{username}/passwordReset",
+      body: "*"
+    };
+  };
   rpc CreateOrganization (OrganizationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/account/{name}/createOrganization",
@@ -247,4 +253,9 @@ message PermissionRequest {
   string organization = 2;
   string level = 3;
   string resource_id = 4;
+}
+
+message PasswordResetRequest {
+  string username = 1;
+  string email = 2;
 }

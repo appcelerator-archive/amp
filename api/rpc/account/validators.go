@@ -17,7 +17,7 @@ func checkName(name string) error {
 	return nil
 }
 
-func checkUserName(name string) error {
+func CheckUserName(name string) error {
 	if name == "" {
 		return grpc.Errorf(codes.InvalidArgument, "user name is mandatory")
 	}
@@ -31,7 +31,7 @@ func checkOrganizationName(name string) error {
 	return nil
 }
 
-func checkEmailAddress(email string) (processedEmail string, err error) {
+func CheckEmailAddress(email string) (processedEmail string, err error) {
 	address, err := mail.ParseAddress(email)
 	if err != nil {
 		return "", grpc.Errorf(codes.InvalidArgument, err.Error())
@@ -39,7 +39,7 @@ func checkEmailAddress(email string) (processedEmail string, err error) {
 	return address.Address, nil
 }
 
-func checkPasswordStrength(password string) error {
+func CheckPasswordStrength(password string) error {
 	if len(password) < minPasswordLength {
 		return grpc.Errorf(codes.InvalidArgument, "password too weak")
 	}
@@ -55,16 +55,16 @@ func checkVerificationCodeFormat(code string) error {
 
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
-	err = checkUserName(r.Name)
+	err = CheckUserName(r.Name)
 	if err != nil {
 		return
 	}
-	email, err := checkEmailAddress(r.Email)
+	email, err := CheckEmailAddress(r.Email)
 	if err != nil {
 		return
 	}
 	r.Email = email
-	err = checkPasswordStrength(r.Password)
+	err = CheckPasswordStrength(r.Password)
 	if err != nil {
 		return
 	}
@@ -82,7 +82,7 @@ func (r *OrganizationRequest) Validate() (err error) {
 	if err != nil {
 		return
 	}
-	email, err := checkEmailAddress(r.Email)
+	email, err := CheckEmailAddress(r.Email)
 	if err != nil {
 		return
 	}
@@ -92,7 +92,7 @@ func (r *OrganizationRequest) Validate() (err error) {
 
 // Validate validates LogInRequest
 func (r *LogInRequest) Validate() error {
-	return checkUserName(r.Name)
+	return CheckUserName(r.Name)
 }
 
 // Validate validates EditRequest
@@ -103,17 +103,31 @@ func (r *EditRequest) Validate() (err error) {
 	}
 	if r.Email != "" {
 		var email string
-		email, err = checkEmailAddress(r.Email)
+		email, err = CheckEmailAddress(r.Email)
 		if err != nil {
 			return
 		}
 		r.Email = email
 	}
 	if r.NewPassword != "" {
-		err = checkPasswordStrength(r.NewPassword)
+		err = CheckPasswordStrength(r.NewPassword)
 		if err != nil {
 			return
 		}
 	}
+	return
+}
+
+// Validate validates PasswordResetRequest
+func (r *PasswordResetRequest) Validate() (err error) {
+	err = CheckUserName(r.Username)
+	if err != nil {
+		return
+	}
+	email, err := CheckEmailAddress(r.Email)
+	if err != nil {
+		return
+	}
+	r.Email = email
 	return
 }
