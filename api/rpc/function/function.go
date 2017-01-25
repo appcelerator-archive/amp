@@ -3,7 +3,7 @@ package function
 import (
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/mq"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
@@ -16,8 +16,8 @@ import (
 
 // Server is used to implement function.FunctionServer
 type Server struct {
-	Store         storage.Interface
-	NatsStreaming ns.NatsStreaming
+	Store storage.Interface
+	MQ    mq.Interface
 }
 
 // Create implements function.Server

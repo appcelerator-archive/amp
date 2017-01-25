@@ -10,16 +10,12 @@ import (
 
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/mq"
+	"github.com/appcelerator/amp/pkg/mq/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 	"log"
-)
-
-const (
-	defaultTimeOut = 30 * time.Second
-	natsClientID   = "amp-agent"
 )
 
 //Agent data
@@ -28,7 +24,7 @@ type Agent struct {
 	containers          map[string]*ContainerData
 	eventStreamReading  bool
 	lastUpdate          time.Time
-	natsStreaming       ns.NatsStreaming
+	MQ                  mq.Interface
 	elasticsearchClient elasticsearch.Elasticsearch
 }
 
@@ -51,17 +47,18 @@ func AgentInit(version string, build string) error {
 
 	// Connection to Elasticsearch
 	log.Printf("Connecting to elasticsearch at %s\n", conf.elasticsearchURL)
-	if err := agent.elasticsearchClient.Connect(conf.elasticsearchURL, defaultTimeOut); err != nil {
+	if err := agent.elasticsearchClient.Connect(conf.elasticsearchURL, amp.DefaultTimeout); err != nil {
 		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", conf.elasticsearchURL, err)
 	}
 	log.Printf("Connected to elasticsearch at %s\n", conf.elasticsearchURL)
 
-	// NATS Connect
+	// Connect to message queuer
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalln("Unable to get hostname:", err)
 	}
-	if agent.natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+	agent.MQ = ns.New(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname)
+	if err := agent.MQ.Connect(amp.DefaultTimeout); err != nil {
 		return err
 	}
 
@@ -69,7 +66,7 @@ func AgentInit(version string, build string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amp-agent-1.0"}
 	cli, err := client.NewClient(conf.dockerEngine, amp.DockerDefaultVersion, nil, defaultHeaders)
 	if err != nil {
-		agent.natsStreaming.Close()
+		agent.MQ.Close()
 		return err
 	}
 	agent.dockerClient = cli
@@ -80,7 +77,7 @@ func AgentInit(version string, build string) error {
 	ContainerListOptions := types.ContainerListOptions{All: true}
 	containers, err := agent.dockerClient.ContainerList(context.Background(), ContainerListOptions)
 	if err != nil {
-		agent.natsStreaming.Close()
+		agent.MQ.Close()
 		return err
 	}
 	for _, cont := range containers {
@@ -179,7 +176,7 @@ func (agt *Agent) trapSignal() {
 		<-ch
 		fmt.Println("\namp-agent received SIGTERM signal")
 		closeLogsStreams()
-		agent.natsStreaming.Close()
+		agent.MQ.Close()
 		os.Exit(1)
 	}()
 }

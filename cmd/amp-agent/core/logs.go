@@ -13,7 +13,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/config"
 	"github.com/docker/docker/api/types"
-	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
@@ -139,12 +138,7 @@ func startReadingLogs(ID string, data *ContainerData) {
 			Role:        role,
 		}
 
-		encoded, err := proto.Marshal(&logEntry)
-		if err != nil {
-			fmt.Println("error marshalling log entry: %v", err)
-		}
-
-		_, err = agent.natsStreaming.GetClient().PublishAsync(amp.NatsLogsTopic, encoded, nil)
+		_, err = agent.MQ.PublishAsync(amp.LogsQueue, &logEntry, nil)
 		if err != nil {
 			fmt.Println("error sending log entry: %v", err)
 		}

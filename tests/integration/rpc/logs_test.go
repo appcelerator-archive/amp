@@ -366,7 +366,7 @@ func produceLogEntries(howMany int, generateInfrasRole bool) error {
 		if err != nil {
 			return err
 		}
-		if err = sc.Publish(amp.NatsLogsTopic, message); err != nil {
+		if err = sc.Publish(amp.LogsQueue, message); err != nil {
 			return err
 		}
 	}

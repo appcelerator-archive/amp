@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/config"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/mq"
+	"github.com/appcelerator/amp/pkg/mq/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -13,7 +14,6 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 	"io"
 	"log"
@@ -23,13 +23,13 @@ import (
 
 // ## `amp-function-worker`
 // This service role is to:
-// - listen to function calls on the "function call" NATS topic
+// - listen to function calls on the "function call" MQ topic
 // - create the corresponding function container
 // - attach to the created container (for stream management)
 // - pass the function call input parameter through standard input
 // - start the container
 // - read the standard output of the container and wait for it to close
-// - post the response back to NATS on the "returnTo" topic specified in the call
+// - post the response back to MQ on the "returnTo" topic specified in the call
 
 // build vars
 var (
@@ -39,8 +39,8 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 
-	// natsStreaming is the nats streaming client
-	natsStreaming ns.NatsStreaming
+	// MQ is the message queuer interface
+	MQ mq.Interface
 
 	// docker is the Docker client
 	docker *client.Client
@@ -49,23 +49,24 @@ var (
 func main() {
 	log.Printf("%s (version: %s, build: %s)\n", os.Args[0], Version, Build)
 
-	// NATS Connect
+	// Connect to message queuer
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Fatalln("Unable to get hostname:", err)
 	}
-	if natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
-		log.Fatalln(err)
+	MQ = ns.New(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname)
+	if err := MQ.Connect(amp.DefaultTimeout); err != nil {
+		log.Fatal(err)
 	}
 
-	// NATS, subscribe to function topic
-	log.Println("Subscribing to topic:", amp.NatsFunctionTopic)
-	_, err = natsStreaming.GetClient().Subscribe(amp.NatsFunctionTopic, messageHandler, stan.DeliverAllAvailable())
+	// Subscribe to function topic
+	log.Println("Subscribing to topic:", amp.FunctionCallsQueue)
+	_, err = MQ.Subscribe(amp.FunctionCallsQueue, messageHandler, &function.FunctionCall{}, mq.DeliverAllAvailable())
 	if err != nil {
-		natsStreaming.Close()
+		MQ.Close()
 		log.Fatalln("Unable to subscribe to topic", err)
 	}
-	log.Println("Subscribed to topic:", amp.NatsFunctionTopic)
+	log.Println("Subscribed to topic:", amp.FunctionCallsQueue)
 
 	// Docker
 	log.Printf("Connecting to Docker API at %s version API: %s\n", amp.DockerDefaultURL, amp.DockerDefaultVersion)
@@ -83,31 +84,35 @@ func main() {
 	go func() {
 		for range signalChan {
 			log.Println("\nReceived an interrupt, unsubscribing and closing connection...")
-			natsStreaming.Close()
+			MQ.Close()
 			cleanupDone <- true
 		}
 	}()
 	<-cleanupDone
 }
 
-func messageHandler(msg *stan.Msg) {
-	go processMessage(msg)
+func messageHandler(msg proto.Message, err error) {
+	go processMessage(msg, err)
 }
 
-func processMessage(msg *stan.Msg) {
-	// Parse function call message
-	functionCall := function.FunctionCall{}
-	err := proto.Unmarshal(msg.Data, &functionCall)
+func processMessage(msg proto.Message, err error) {
 	if err != nil {
-		log.Println("Error unmarshalling function call:", err)
+		log.Println("Error in message processing:", err)
 		return
 	}
-	log.Println("Function call received, call id:", functionCall.CallID)
+
+	fc, ok := msg.(*function.FunctionCall)
+	if !ok {
+		log.Println("Error in type assertion")
+		return
+	}
+
+	log.Println("Function call received, call id:", fc.CallID)
 
 	ctx := context.Background()
 
 	// Create container
-	container, err := containerCreate(ctx, functionCall.Function.Image)
+	container, err := containerCreate(ctx, fc.Function.Image)
 	if err != nil {
 		log.Println("Error creating container:", err)
 		return
@@ -131,7 +136,7 @@ func processMessage(msg *stan.Msg) {
 	log.Println("Container attached")
 
 	// Standard input
-	stdIn := bufio.NewReader(bytes.NewReader(functionCall.Input))
+	stdIn := bufio.NewReader(bytes.NewReader(fc.Input))
 
 	// Standard output
 	var stdOutBuffer bytes.Buffer
@@ -147,21 +152,14 @@ func processMessage(msg *stan.Msg) {
 	handleStreams(streamCtx, stdIn, stdOut, stdErr, attachment)
 	log.Println("Function call executed")
 
-	// Post response to NATS
+	// Post response to MQ
 	functionReturn := function.FunctionReturn{
-		CallID: functionCall.CallID,
+		CallID: fc.CallID,
 		Output: stdOutBuffer.Bytes(),
 	}
 
-	// Encode the proto object
-	encoded, err := proto.Marshal(&functionReturn)
-	if err != nil {
-		log.Println("Error marshalling function return:", err)
-		return
-	}
-
-	// Publish the return to NATS
-	_, err = natsStreaming.GetClient().PublishAsync(functionCall.ReturnTo, encoded, nil)
+	// Publish the return to MQ
+	_, err = MQ.PublishAsync(fc.ReturnTo, &functionReturn, nil)
 	if err != nil {
 		log.Println("Error publishing function return:", err)
 		return
