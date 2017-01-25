@@ -6,15 +6,13 @@ import (
 	"testing"
 	"time"
 
-
-	//"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/schema"
+	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"golang.org/x/net/context"
 	"strings"
-	"github.com/appcelerator/amp/config"
-	"github.com/appcelerator/amp/data/storage"
 )
 
 const (
@@ -24,11 +22,9 @@ const (
 var (
 	acct     account.Interface
 	testAcct schema.Account
+	testTeam schema.Team
 )
 
-func newContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), defTimeout)
-}
 
 func initData() {
 	testAcct = schema.Account{
@@ -38,10 +34,17 @@ func initData() {
 		Email:      "testowner@axway.com",
 		IsVerified: false,
 	}
+	testTeam = schema.Team{
+		Id:   "",
+		Name: "Falcons",
+		Desc: "The Falcons",
+	}
 	store.Delete(context.Background(), "/accounts", true, nil)
 
 }
+
 var store storage.Interface
+
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Lshortfile)
@@ -68,12 +71,37 @@ func TestAddAccount(t *testing.T) {
 		t.Errorf("expected %v, got %v", testAcct.Id, s)
 	}
 }
+func TestAddDuplicateAccount(t *testing.T) {
+	acct.AddAccount(&testAcct)
+	_, err := acct.AddAccount(&testAcct)
+	if err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("Expected \"already exists\" Errorv\n")
+	}
+}
+func TestAddTeam(t *testing.T) {
+	a, err := acct.GetAccount("axway")
+	if err != nil {
+		t.Error(err)
+	}
+	testTeam.OrgAccountId = a.Id
+	_, err = acct.AddTeam(&testTeam)
+	if err != nil {
+		t.Error(err)
+	}
+}
+func TestAddDuplicateTeam(t *testing.T) {
+	acct.AddTeam(&testTeam)
+	_, err := acct.AddTeam(&testTeam)
+	if err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("Expected \"already exists\" Errorv\n")
+	}
+}
 func TestListAccount(t *testing.T) {
 	acct.AddAccount(&testAcct)
 	testAcct.Name = "axway2"
-	testAcct.Id=""
+	testAcct.Id = ""
 	acct.AddAccount(&testAcct)
-	testAcct.Id=""
+	testAcct.Id = ""
 	testAcct.Name = "axway3"
 	testAcct.Type = schema.AccountType_USER
 	acct.AddAccount(&testAcct)
