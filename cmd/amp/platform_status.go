@@ -8,10 +8,10 @@ import (
 
 // PlatformStatus is the main command for attaching platform subcommands.
 var PlatformStatus = &cobra.Command{
-	Use:   "status",
+	Use:   "status [OPTION...]",
 	Short: "Get AMP platform status",
-	Long: `Status command retrieves AMP platform global status (stopped, partially running, running)
-- the command returns 1 if status is not running.`,
+	Long: `The status command retrieves current status of AMP platform (stopped, partially running, running).
+The command returns 1 if status is not running.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getAMPStatus(cmd, args)
 	},

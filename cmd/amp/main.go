@@ -35,11 +35,10 @@ var (
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
-		Use:   `amp [OPTIONS] COMMAND [arg...]`,
+		Use:   `amp [OPTION...] COMMAND [ARG...]`,
 		Short: "Appcelerator Microservice Platform.",
-		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform
-for managing and monitoring containerized applications and microservices
-as part of a unified serverless computing environment.`,
+		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform for managing and
+monitoring containerized applications and microservices as part of a unified serverless computing environment.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if displayConfigFilePath {
 				configFilePath := viper.ConfigFileUsed()

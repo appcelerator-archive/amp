@@ -20,7 +20,7 @@ const (
 )
 
 var statsCmd = &cobra.Command{
-	Use:   "stats [service name or id] or --flags...",
+	Use:   "stats [OPTION...] [SERVICE-NAME... or SERVICE-ID...]",
 	Short: "Display resource usage statistics",
 	Long:  `Stats command manages all statistics-related operations on containers, services, nodes about cpu, memory, io, net.`,
 	RunE: func(cmd *cobra.Command, args []string) error {

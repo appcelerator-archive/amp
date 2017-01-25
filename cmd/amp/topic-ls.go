@@ -17,9 +17,9 @@ const (
 
 var (
 	listTopicCmd = &cobra.Command{
-		Use:   "ls [OPTIONS]",
+		Use:   "ls",
 		Short: "List topics",
-		Long:  `List command returns all topics present.`,
+		Long:  `The list command returns all available topics.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTopic(AMP, cmd, args)
 		},
@@ -40,7 +40,8 @@ func listTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\t")
+	fmt.Fprintln(w, "ID\tNAME\t")
+	fmt.Fprintln(w, "--\t----\t")
 	for _, topic := range reply.Topics {
 		fmt.Fprintf(w, "%s\t%s\t\n", topic.Id, topic.Name)
 	}

@@ -25,9 +25,9 @@ var StorageCmd = &cobra.Command{
 var (
 	// storagePutCmd represents the creation of storage key-value pair
 	storagePutCmd = &cobra.Command{
-		Use:   "put [key] [val]",
+		Use:   "put KEY VALUE",
 		Short: "Assign specified value with specified key",
-		Long: `Put command (amp kv put) creates a storage object with the key-value input if the key does not already exist.
+		Long: `The put command creates a storage object with the key-value input if the key does not already exist.
 Else, it updates the existing key with the new input value.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storagePut(AMP, cmd, args)
@@ -35,20 +35,18 @@ Else, it updates the existing key with the new input value.`,
 	}
 	// storageGetCmd represents the retrieval of storage value based on key
 	storageGetCmd = &cobra.Command{
-		Use:   "get [key]",
+		Use:   "get KEY",
 		Short: "Retrieve a storage object",
-		Long: `Get command (amp kv get) retrieves a key-value pair based on the specified input key.
-If not found, an appropriate message is returned.`,
+		Long:  `The get command retrieves a key-value pair based on the specified input key.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageGet(AMP, cmd, args)
 		},
 	}
 	// storageDeleteCmd represents the deletion of storage value based on key
 	storageDeleteCmd = &cobra.Command{
-		Use:   "del [key]",
-		Short: "Delete a storage object (alias: rm)",
-		Long: `Delete command (amp kv del or amp kv rm) deletes the key-value pair in storage based on the specified input key.
-If not found, an appropriate message is returned.`,
+		Use:     "del KEY or rm KEY",
+		Short:   "Delete a storage object (alias: rm)",
+		Long:    `The delete command deletes the key-value pair in storage based on the specified input key.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageDelete(AMP, cmd, args)
@@ -58,8 +56,7 @@ If not found, an appropriate message is returned.`,
 	storageListCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List all storage objects",
-		Long: `List command (amp kv ls) returns a list of all the key-value pair in storage.
-If no key-value pair is present, an appropriate message is returned.`,
+		Long:  `The list command returns a list of all the key-value pair in storage.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageList(AMP, cmd, args)
 		},

@@ -29,17 +29,17 @@ var (
 	domain   string
 	insecure bool
 	pushCmd  = &cobra.Command{
-		Use:   "push [image]",
-		Short: "Push an image to the amp registry",
-		Long:  `Push command pushes an image to the amp registry.`,
+		Use:   "push IMAGE [OPTION...]",
+		Short: "Push an image to the AMP registry",
+		Long:  `The push command pushes an image to the AMP registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryPush(AMP, cmd, args)
 		},
 	}
 	reglsCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List the amp registry images",
-		Long:  `List command lists all the available amp registry images.`,
+		Use:   "ls [OPTION...]",
+		Short: "List the AMP registry images",
+		Long:  `The list command lists all the available images in the AMP registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryLs(AMP, cmd, args)
 		},
