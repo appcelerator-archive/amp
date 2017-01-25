@@ -94,7 +94,7 @@ func storagePut(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	client := storage.NewStorageClient(amp.Conn)
 	reply, err := client.Put(context.Background(), request)
 	if err != nil {
-		fmt.Println("key not found: " + k)
+		fmt.Println("Key not found: " + k)
 		return nil
 	}
 	fmt.Println(reply.Val)

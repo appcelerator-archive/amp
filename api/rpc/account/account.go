@@ -67,6 +67,16 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (o
 	return
 }
 
+// PasswordChange implements account.PasswordReset
+func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (out *pb.Empty, err error) {
+	out = &pb.Empty{}
+	err = in.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // CreateOrganization implements account.CreateOranization
 func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
 	out = &pb.Empty{}
