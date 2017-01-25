@@ -7,7 +7,6 @@ It is based on the swarm mode features introduced with Docker 1.12, providing de
 a straightforward development strategy for building on these features without the need to stray from the
 core Docker ecosystem and adopt complex third party frameworks.
 
-There is a 5 minute introductory video under [docs](docs/).
 
 This current version of this project is only a few months old and under heavy development. It is not
 ready for production.
