@@ -39,7 +39,9 @@ func initDependencies(config Config) {
 	var wg sync.WaitGroup
 	type initFunc func(Config) error
 
-	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
+	//For test
+	initFuncs := []initFunc{initEtcd, initNats, initDocker}
+	//initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
 	for _, f := range initFuncs {
 		wg.Add(1)
 		go func(f initFunc) {

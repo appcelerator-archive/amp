@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+
+    server:
+        image: appcelerator/amp:${ampVersion:-latest}
+        command: ["adm-server"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+                io.amp.mapping: "amplifier:tcp:31315:31315"
+            placement:
+                constraints: [node.role == manager]
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock                  
+        networks:
+            infra:
+                aliases:
+                    - adm-server
+            public:
+
+    agent:
+        image: appcelerator/amp:${ampVersion:-latest}
+        command: ["adm-agent"]
+        deploy:
+            mode: global
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock                
+        networks:
+            infra: 
+                aliases:
+                    - adm-agent
+
+networks:
+    infra:
+        external:
+            name: ampcore_infra
+    public:
+        external:
+            name: ampcore_public
+
+  
+

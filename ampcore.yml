@@ -1,0 +1,100 @@
+version: "3"
+services:
+
+    etcd:
+        image: appcelerator/etcd:${etcdVersion:-3.1.0-rc.1}
+        command: ["--name etcd", "--listen-client-urls http://0.0.0.0:2379", "--advertise-client-urls http://etcd:2379"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        volumes:
+            - amp-etcd:/data
+        networks:
+            - infra
+
+    nats:
+        image: appcelerator/amp-nats-streaming:${natsVersion:-0.3.0}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        networks:
+            - infra 
+
+    registry:
+        image: registry:${registryVersion:-2.5.1}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+                io.amp.mapping: "registry:5000"
+        volumes:
+            - amp-etcd:/var/lib/registry               
+        networks:
+            - infra 
+            - public
+
+    amplifier:
+        image: appcelerator/amp:${ampVersion:-latest}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+                io.amp.mapping: "amplifier:tcp:8080:50101"
+            placement:
+                constraints: [node.role == manager]
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - infra 
+        depends_on:
+            - etcd            
+            - nats
+
+    gateway:
+        image: appcelerator/amp:${ampVersion:-latest}
+        command: ["amplifier-gateway", "--amplifier_endpoint", "amplifier:50101"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+                io.amp.mapping: "gateway:80"
+        networks:
+            - infra 
+        depends_on:
+            - amplifier           
+
+    haproxy:
+        image: appcelerator/haproxy:${haproxyVersion:-1.0.4}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        ports:
+            - "80:80"
+            - "8080:8080"
+        networks:
+            - infra 
+            - public  
+        depends_on:
+            - etcd
+            - amplifier
+            - amplifier-gateway
+
+volumes:
+    amp-etcd:
+    amp-registry:
+networks:
+    infra:
+        driver: overlay
+    public:
+        driver: overlay
+  
+
