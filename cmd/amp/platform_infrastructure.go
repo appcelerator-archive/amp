@@ -13,12 +13,12 @@ const (
 
 const (
 	ampVersion           = "latest"
-	influxDBVersion      = "1.1.2"
-	kapacitorVersion     = "1.1.2"
-	telegrafVersion      = "1.1.1"
-	grafanaVersion       = "1.1.0"
-	elasticsearchVersion = "5.1.1"
-	etcdVersion          = "3.1.0-rc.1"
+	influxDBVersion      = "1.1.3"
+	kapacitorVersion     = "1.1.3"
+	telegrafVersion      = "1.1.2"
+	grafanaVersion       = "1.1.3"
+	elasticsearchVersion = "5.1.2"
+	etcdVersion          = "3.1.0"
 	natsVersion          = "0.3.0"
 	haproxyVersion       = "1.0.3"
 	registryVersion      = "2.5.1"
