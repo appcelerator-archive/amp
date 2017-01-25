@@ -12,6 +12,7 @@ import (
 	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"text/tabwriter"
 )
 
 // StackCmd is the main command for attaching stack subcommands.
@@ -345,25 +346,12 @@ func stackList(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	//Format output
-	col1 := 10
-	col2 := 20
-	col3 := 10
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "NAME\tID\tSTATE")
 	for _, info := range reply.List {
-		if len(info.Name) > col1 {
-			col1 = len(info.Name) + 2
-		}
-		if len(info.Id) > col2 {
-			col2 = len(info.Id) + 2
-		}
-		if len(info.State) > col3 {
-			col3 = len(info.State) + 2
-		}
+		fmt.Fprintf(w, "%s\t%s\t%s\n", info.Name, info.Id, info.State)
 	}
-	fmt.Printf("%s%s%s\n", col("NAME", col1), col("ID", col2), col("STATE", col3))
-	fmt.Printf("%s%s%s\n", col("-", col1), col("-", col2), col("-", col3))
-	for _, info := range reply.List {
-		fmt.Printf("%s%s%s\n", col(info.Name, col1), col(info.Id, col2), col(info.State, col3))
-	}
+	w.Flush()
 	return nil
 }
 
