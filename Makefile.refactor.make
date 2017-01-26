@@ -43,7 +43,7 @@ DOCKER_RUN_CMD := docker run -t --rm -u $(UG)
 # COMMON CONTAINER TOOLS
 # =============================================================================
 # Used by: glide, protoc, go
-GOTOOLS := appcelerator/gotools:latest
+GOTOOLS := appcelerator/gotools:1.3.0
 
 # =============================================================================
 # DEFAULT TARGET
