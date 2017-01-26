@@ -152,7 +152,8 @@ message SignUpRequest {
 
 message VerificationRequest {
   string name = 1;
-  string code = 2;
+  string password = 2;
+  string code = 3;
 }
 
 message LogInRequest {

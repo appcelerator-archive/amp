@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/fatih/color"
+	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -21,7 +23,7 @@ var (
 	AccountCmd = &cobra.Command{
 		Use:   "account",
 		Short: "Account operations",
-		Long:  `Account command manages all account-related operations.`,
+		Long:  `The account command manages all account-related operations.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -35,8 +37,13 @@ var (
 
 	// Interactive
 	verifyCmd = &cobra.Command{
-		Use:   "verify [CODE]",
-		Short: "verify email using code",
+		Use:   "verify",
+		Short: "Verify email using code",
+		Long: `The verify command is used to verify the users account using the code sent to them via email.
+		This is used if the user cannot access the verification link sent.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return verify(AMP)
+		},
 	}
 
 	pwdResetCmd = &cobra.Command{
@@ -136,7 +143,98 @@ var (
 
 func init() {
 	RootCmd.AddCommand(AccountCmd)
+	AccountCmd.AddCommand(verifyCmd)
 	AccountCmd.AddCommand(pwdResetCmd)
+}
+
+func verify(amp *client.AMP) (err error) {
+	fmt.Println("This will verify your account and confirm your password")
+	code := getCode()
+	username := getUserName()
+	password, err := getPassword()
+	if err != nil {
+		return fmt.Errorf("user error: %v", err)
+	}
+	request := &account.VerificationRequest{
+		Name: username,
+		Password: password,
+		Code: code,
+	}
+	client := account.NewAccountServiceClient(amp.Conn)
+	_, err = client.Verify(context.Background(), request)
+	if err != nil {
+		return fmt.Errorf("server error: %v", err)
+	}
+	fmt.Println("")
+	fmt.Println("Hi", username, "! Your account has now be activated")
+	return nil
+}
+
+func getCode() (code string) {
+	fmt.Print("Code: ")
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Scanln(&code)
+	color.Unset()
+	err := account.CheckVerificationCodeFormat(code)
+	if err != nil {
+		color.Set(color.FgRed, color.Bold)
+		fmt.Println("Code is incorrect. Code must be 8 characters long. Try again!")
+		color.Unset()
+		fmt.Println("")
+		return getCode()
+	}
+	return
+}
+
+func getUserName() (username string) {
+	fmt.Print("username: ")
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Scanln(&username)
+	color.Unset()
+	err := account.CheckUserName(username)
+	if err != nil {
+		color.Set(color.FgRed, color.Bold)
+		fmt.Println("Username is mandatory. Try again!")
+		color.Unset()
+		fmt.Println("")
+		return getUserName()
+	}
+	return
+}
+
+func getPassword() (password string, err error) {
+	fmt.Print("Password: ")
+	pw, err := gopass.GetPasswd()
+	if err != nil {
+		if err == gopass.ErrInterrupted {
+			err = fmt.Errorf(err.Error())
+			return
+		} else {
+			return
+		}
+	}
+	password = string(pw)
+	err = account.CheckPassword(password)
+	if err != nil {
+		color.Set(color.FgRed, color.Bold)
+		fmt.Println("Password is mandatory. Try again!")
+		color.Unset()
+		fmt.Println("")
+		return getPassword()
+	}
+	err = account.CheckPasswordStrength(password)
+	if err != nil {
+		if strings.Contains(err.Error(), "password too weak") {
+			color.Set(color.FgRed, color.Bold)
+			fmt.Println("Password entered is too weak. password must be at least 8 characters long. Try again!")
+			color.Unset()
+			fmt.Println("")
+			return getPassword()
+		} else {
+			return
+		}
+	}
+	return
 }
 
 // pwdReset validates the input command line arguments and resets the current password
@@ -160,22 +258,6 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	fmt.Println("Hi ", username, "! Please check your email to complete the password reset process.")
 	color.Unset()
 	return nil
-}
-
-func getUserName() (username string) {
-	fmt.Print("username: ")
-	color.Set(color.FgGreen, color.Bold)
-	fmt.Scanln(&username)
-	color.Unset()
-	err := account.CheckUserName(username)
-	if err != nil {
-		color.Set(color.FgRed, color.Bold)
-		fmt.Println("Username is mandatory. Try again!")
-		color.Unset()
-		fmt.Println("")
-		return getUserName()
-	}
-	return
 }
 
 func getEmailAddress() (email string, err error) {

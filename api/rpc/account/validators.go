@@ -3,6 +3,7 @@ package account
 import (
 	"net/mail"
 
+	"github.com/holys/safe"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -24,6 +25,13 @@ func CheckUserName(name string) error {
 	return nil
 }
 
+func CheckPassword(password string) error {
+	if password == "" {
+		return grpc.Errorf(codes.InvalidArgument, "password is mandatory")
+	}
+	return nil
+}
+
 func checkOrganizationName(name string) error {
 	if name == "" {
 		return grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
@@ -40,13 +48,19 @@ func CheckEmailAddress(email string) (processedEmail string, err error) {
 }
 
 func CheckPasswordStrength(password string) error {
-	if len(password) < minPasswordLength {
+	s := safe.New(8, 0, 0, safe.Simple)
+	err := s.SetWords("./vendor/github.com/holys/safe/words.dat")
+	if err != nil {
+		return grpc.Errorf(codes.NotFound, "cannot find common password data")
+	}
+	str := s.Check(password)
+	if str < 2 {
 		return grpc.Errorf(codes.InvalidArgument, "password too weak")
 	}
 	return nil
 }
 
-func checkVerificationCodeFormat(code string) error {
+func CheckVerificationCodeFormat(code string) error {
 	if len(code) != codeLength {
 		return grpc.Errorf(codes.InvalidArgument, "invalid verification code")
 	}
@@ -73,7 +87,7 @@ func (r *SignUpRequest) Validate() (err error) {
 
 // Validate validates VerificationRequest
 func (r *VerificationRequest) Validate() error {
-	return checkVerificationCodeFormat(r.Code)
+	return CheckVerificationCodeFormat(r.Code)
 }
 
 // Validate validates OrganizationRequest
