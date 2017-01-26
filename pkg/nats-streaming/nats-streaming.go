@@ -2,8 +2,8 @@ package ns
 
 import (
 	"fmt"
+	"github.com/nats-io/go-nats"
 	"github.com/nats-io/go-nats-streaming"
-	"github.com/nats-io/nats"
 	"log"
 	"time"
 )
