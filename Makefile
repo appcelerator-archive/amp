@@ -186,7 +186,7 @@ build-adm-server: proto
 build-adm-agent: proto
 	@hack/build $(CLUSTERAGENT)
 build-ampadm: proto
-	@hack/build $(CLUSTERADM)
+	@hack/build $(AMPADM)
 build-fn-listener: proto
 	@hack/build $(FUNCTION_LISTENER)
 build-fn-worker: proto

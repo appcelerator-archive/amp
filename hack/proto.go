@@ -48,7 +48,7 @@ func main() {
 	flag.Parse()
 
 	// run protoc on command line args if provided
-	if len(os.Args) > 0 {
+	if flag.NArg() > 0 {
 		for _, p := range os.Args[1:] {
 			// filter out options
 			if !strings.HasPrefix(p, "-") {

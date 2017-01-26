@@ -6,6 +6,9 @@
 /amp-function-listener
 /amp-function-worker
 /amp-cluster
+/adm-agent
+/adm-server
+/ampadm
 /dist
 /*.exe
 coverage.out
