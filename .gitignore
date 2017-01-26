@@ -13,3 +13,5 @@
 /*.exe
 coverage.out
 coverage-all.out
+.glide/
+*.alpine
