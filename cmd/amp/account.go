@@ -38,6 +38,10 @@ var (
 	signUpCmd = &cobra.Command{
 		Use:   "signup",
 		Short: "Create a new account and login",
+		Long:  `The signup command creates a new account and sends a verification link to their registered email address.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return signUp(AMP)
+		},
 	}
 
 	verifyCmd = &cobra.Command{
@@ -148,6 +152,7 @@ var (
 func init() {
 	RootCmd.AddCommand(LoginCmd)
 	RootCmd.AddCommand(AccountCmd)
+	AccountCmd.AddCommand(signUpCmd)
 	AccountCmd.AddCommand(verifyCmd)
 	AccountCmd.AddCommand(pwdResetCmd)
 }
@@ -225,6 +230,27 @@ func getPassword() (password string, err error) {
 		}
 	}
 	return
+}
+
+// signup signs up visitor for a new personal account.
+// Sends a verification link to their email address.
+func signUp(amp *client.AMP) error {
+	fmt.Println("This will sign you up for a new personal AMP account.")
+	username := getUserName()
+	email := getEmailAddress()
+	request := &account.SignUpRequest{
+		Name:  username,
+		Email: email,
+	}
+	client := account.NewAccountServiceClient(amp.Conn)
+	_, err := client.SignUp(context.Background(), request)
+	if err != nil {
+		return fmt.Errorf("Server error: %v", err)
+	}
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Println("Hi", username, "!, Please check your email to complete the signup process")
+	color.Unset()
+	return nil
 }
 
 // verify gets the unique code sent to the visitor in the email verification, registered username and new password,

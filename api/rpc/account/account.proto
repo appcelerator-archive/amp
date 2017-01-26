@@ -147,7 +147,6 @@ service AccountService {
 message SignUpRequest {
   string name = 1;
   string email = 2;
-  string password = 3;
 }
 
 message VerificationRequest {
