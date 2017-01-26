@@ -1,0 +1,21 @@
+version: '2'
+services:
+  telegraf:
+    extends:
+      file: docker-compose.yml
+      service: telegraf
+    environment:
+      INTERVAL: 3s
+      FLUSH_INTERVAL: 3s
+      FLUSH_JITTER: 0.2s
+  influxdb:
+    extends:
+      file: docker-compose.yml
+      service: influxdb
+  sut:
+    extends:
+      file: docker-compose.yml
+      service: sut
+    depends_on:
+      - telegraf
+      - influxdb

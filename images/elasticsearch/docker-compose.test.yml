@@ -1,0 +1,8 @@
+version: '2'
+services:
+  sut:
+    build: .
+    image: appcelerator/elasticsearch-amp
+    environment:
+      FORCE_HOSTNAME: 127.0.0.1
+    command: "--version"

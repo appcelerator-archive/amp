@@ -1,0 +1,13 @@
+version: '2'
+services:
+  nats:
+    build: .
+    image: appcelerator/amp-nats-streaming
+  sut:
+    image: appcelerator/sut
+    build:
+      context: ./sut
+      dockerfile: Dockerfile
+    depends_on:
+      - nats
+

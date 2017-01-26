@@ -1,0 +1,7 @@
+stream
+    |from()
+        .measurement('docker_container_cpu')
+        .where(lambda: "com.docker.swarm.service.name" == 'amplifier')
+    |deadman(1.0,60s)
+        .id('{{ index .Tags "io.appcelerator.amp.label" }}/amplifier')
+    |alert()
