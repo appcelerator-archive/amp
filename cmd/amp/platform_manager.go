@@ -564,6 +564,14 @@ func (s *ampManager) createNetwork(name string) error {
 		Driver:         "overlay",
 		IPAM:           &IPAM,
 	}
+
+	// TODO: this is pretty hackish for now until we support extended v3 compose definitions
+	// for platform stacks and associated resources
+	// Attachable so that the CLI container can attach to it for local development -- this is an interim solution!
+	// The next interim step will likely be to start the cli as a service with std_in open and tty set
+	if name == infraPublicNetwork {
+		networkCreate.Attachable = true
+	}
 	_, err := s.docker.NetworkCreate(s.ctx, name, networkCreate)
 	if err != nil {
 		return err

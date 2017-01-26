@@ -25,8 +25,8 @@ RUN curl https://glide.sh/get | sh
 RUN mkdir -p /tmp/glide && chmod 777 /tmp/glide
 VOLUME /tmp/glide
 
-# Customize the shell in root/.bashrc, add other shell support here, etc.
-ADD bash /root
+# Custom settings for interactive shell
+ADD etc/profile.d /etc/profile.d
 
 # TODO: might want to use /go as the work directory...
 WORKDIR /go/src
