@@ -22,7 +22,6 @@ Usage:  docker node ps [OPTIONS] [NODE...]
 List tasks running on one or more nodes, defaults to current node.
 
 Options:
-  -a, --all            Display all instances
   -f, --filter value   Filter output based on conditions provided
       --help           Print usage
       --no-resolve     Do not map IDs to Names
@@ -100,7 +99,9 @@ The `desired-state` filter can take the values `running`, `shutdown`, and `accep
 
 ## Related information
 
+* [node demote](node_demote.md)
 * [node inspect](node_inspect.md)
-* [node update](node_update.md)
 * [node ls](node_ls.md)
+* [node promote](node_promote.md)
 * [node rm](node_rm.md)
+* [node update](node_update.md)

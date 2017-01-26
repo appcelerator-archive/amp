@@ -1111,9 +1111,11 @@ func (c *Cluster) CreateService(s types.ServiceSpec, encodedAuth string) (*apity
 		if err != nil {
 			logrus.Warnf("unable to pin image %s to digest: %s", ctnr.Image, err.Error())
 			resp.Warnings = append(resp.Warnings, fmt.Sprintf("unable to pin image %s to digest: %s", ctnr.Image, err.Error()))
-		} else {
+		} else if ctnr.Image != digestImage {
 			logrus.Debugf("pinning image %s by digest: %s", ctnr.Image, digestImage)
 			ctnr.Image = digestImage
+		} else {
+			logrus.Debugf("creating service using supplied digest reference %s", ctnr.Image)
 		}
 	}
 
@@ -1223,6 +1225,8 @@ func (c *Cluster) UpdateService(serviceIDOrName string, version uint64, spec typ
 		} else if newCtnr.Image != digestImage {
 			logrus.Debugf("pinning image %s by digest: %s", newCtnr.Image, digestImage)
 			newCtnr.Image = digestImage
+		} else {
+			logrus.Debugf("updating service using supplied digest reference %s", newCtnr.Image)
 		}
 	}
 
@@ -1552,8 +1556,7 @@ func (c *Cluster) GetNetwork(input string) (apitypes.NetworkResource, error) {
 	return convert.BasicNetworkFromGRPC(*network), nil
 }
 
-// GetNetworks returns all current cluster managed networks.
-func (c *Cluster) GetNetworks() ([]apitypes.NetworkResource, error) {
+func (c *Cluster) getNetworks(filters *swarmapi.ListNetworksRequest_Filters) ([]apitypes.NetworkResource, error) {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -1564,7 +1567,7 @@ func (c *Cluster) GetNetworks() ([]apitypes.NetworkResource, error) {
 	ctx, cancel := c.getRequestContext()
 	defer cancel()
 
-	r, err := c.client.ListNetworks(ctx, &swarmapi.ListNetworksRequest{})
+	r, err := c.client.ListNetworks(ctx, &swarmapi.ListNetworksRequest{Filters: filters})
 	if err != nil {
 		return nil, err
 	}
@@ -1576,6 +1579,21 @@ func (c *Cluster) GetNetworks() ([]apitypes.NetworkResource, error) {
 	}
 
 	return networks, nil
+}
+
+// GetNetworks returns all current cluster managed networks.
+func (c *Cluster) GetNetworks() ([]apitypes.NetworkResource, error) {
+	return c.getNetworks(nil)
+}
+
+// GetNetworksByName returns cluster managed networks by name.
+// It is ok to have multiple networks here. #18864
+func (c *Cluster) GetNetworksByName(name string) ([]apitypes.NetworkResource, error) {
+	// Note that swarmapi.GetNetworkRequest.Name is not functional.
+	// So we cannot just use that with c.GetNetwork.
+	return c.getNetworks(&swarmapi.ListNetworksRequest_Filters{
+		Names: []string{name},
+	})
 }
 
 func attacherKey(target, containerID string) string {

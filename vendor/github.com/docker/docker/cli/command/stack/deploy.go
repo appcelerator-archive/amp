@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
-
 	"github.com/aanand/compose-file/loader"
 	composetypes "github.com/aanand/compose-file/types"
 	"github.com/docker/docker/api/types"
@@ -21,11 +18,12 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
-	servicecmd "github.com/docker/docker/cli/command/service"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
 	"github.com/docker/go-connections/nat"
+	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -124,7 +122,8 @@ func deployCompose(ctx context.Context, dockerCli *command.DockerCli, opts deplo
 
 	namespace := namespace{name: opts.namespace}
 
-	networks, externalNetworks := convertNetworks(namespace, config.Networks)
+	serviceNetworks := getServicesDeclaredNetworks(config.Services)
+	networks, externalNetworks := convertNetworks(namespace, config.Networks, serviceNetworks)
 	if err := validateExternalNetworks(ctx, dockerCli, externalNetworks); err != nil {
 		return err
 	}
@@ -136,6 +135,19 @@ func deployCompose(ctx context.Context, dockerCli *command.DockerCli, opts deplo
 		return err
 	}
 	return deployServices(ctx, dockerCli, services, namespace, opts.sendRegistryAuth)
+}
+func getServicesDeclaredNetworks(serviceConfigs []composetypes.ServiceConfig) map[string]struct{} {
+	serviceNetworks := map[string]struct{}{}
+	for _, serviceConfig := range serviceConfigs {
+		if len(serviceConfig.Networks) == 0 {
+			serviceNetworks["default"] = struct{}{}
+			continue
+		}
+		for network := range serviceConfig.Networks {
+			serviceNetworks[network] = struct{}{}
+		}
+	}
+	return serviceNetworks
 }
 
 func propertyWarnings(properties map[string]string) string {
@@ -183,18 +195,17 @@ func getConfigFile(filename string) (*composetypes.ConfigFile, error) {
 func convertNetworks(
 	namespace namespace,
 	networks map[string]composetypes.NetworkConfig,
+	servicesNetworks map[string]struct{},
 ) (map[string]types.NetworkCreate, []string) {
 	if networks == nil {
 		networks = make(map[string]composetypes.NetworkConfig)
 	}
 
-	// TODO: only add default network if it's used
-	networks["default"] = composetypes.NetworkConfig{}
-
 	externalNetworks := []string{}
 	result := make(map[string]types.NetworkCreate)
 
-	for internalName, network := range networks {
+	for internalName := range servicesNetworks {
+		network := networks[internalName]
 		if network.External.External {
 			externalNetworks = append(externalNetworks, network.External.Name)
 			continue
@@ -311,7 +322,7 @@ func convertServiceNetworks(
 		}
 		target := namespace.scope(networkName)
 		if networkConfig.External.External {
-			target = networkName
+			target = networkConfig.External.Name
 		}
 		nets = append(nets, swarm.NetworkAttachmentConfig{
 			Target:  target,
@@ -349,6 +360,12 @@ func convertVolumeToMount(
 	// TODO: split Windows path mappings properly
 	parts := strings.SplitN(volumeSpec, ":", 3)
 
+	for _, part := range parts {
+		if strings.TrimSpace(part) == "" {
+			return mount.Mount{}, fmt.Errorf("invalid volume: %s", volumeSpec)
+		}
+	}
+
 	switch len(parts) {
 	case 3:
 		source = parts[0]
@@ -359,8 +376,14 @@ func convertVolumeToMount(
 		target = parts[1]
 	case 1:
 		target = parts[0]
-	default:
-		return mount.Mount{}, fmt.Errorf("invald volume: %s", volumeSpec)
+	}
+
+	if source == "" {
+		// Anonymous volume
+		return mount.Mount{
+			Type:   mount.TypeVolume,
+			Target: target,
+		}, nil
 	}
 
 	// TODO: catch Windows paths here
@@ -567,6 +590,14 @@ func convertService(
 		return swarm.ServiceSpec{}, err
 	}
 
+	var logDriver *swarm.Driver
+	if service.Logging != nil {
+		logDriver = &swarm.Driver{
+			Name:    service.Logging.Driver,
+			Options: service.Logging.Options,
+		}
+	}
+
 	serviceSpec := swarm.ServiceSpec{
 		Annotations: swarm.Annotations{
 			Name:   name,
@@ -589,6 +620,7 @@ func convertService(
 				TTY:             service.Tty,
 				OpenStdin:       service.StdinOpen,
 			},
+			LogDriver:     logDriver,
 			Resources:     resources,
 			RestartPolicy: restartPolicy,
 			Placement: &swarm.Placement{
@@ -703,10 +735,14 @@ func convertUpdateConfig(source *composetypes.UpdateConfig) *swarm.UpdateConfig 
 
 func convertResources(source composetypes.Resources) (*swarm.ResourceRequirements, error) {
 	resources := &swarm.ResourceRequirements{}
+	var err error
 	if source.Limits != nil {
-		cpus, err := opts.ParseCPUs(source.Limits.NanoCPUs)
-		if err != nil {
-			return nil, err
+		var cpus int64
+		if source.Limits.NanoCPUs != "" {
+			cpus, err = opts.ParseCPUs(source.Limits.NanoCPUs)
+			if err != nil {
+				return nil, err
+			}
 		}
 		resources.Limits = &swarm.Resources{
 			NanoCPUs:    cpus,
@@ -714,9 +750,12 @@ func convertResources(source composetypes.Resources) (*swarm.ResourceRequirement
 		}
 	}
 	if source.Reservations != nil {
-		cpus, err := opts.ParseCPUs(source.Reservations.NanoCPUs)
-		if err != nil {
-			return nil, err
+		var cpus int64
+		if source.Reservations.NanoCPUs != "" {
+			cpus, err = opts.ParseCPUs(source.Reservations.NanoCPUs)
+			if err != nil {
+				return nil, err
+			}
 		}
 		resources.Reservations = &swarm.Resources{
 			NanoCPUs:    cpus,
@@ -736,7 +775,7 @@ func convertEndpointSpec(source []string) (*swarm.EndpointSpec, error) {
 	for port := range ports {
 		portConfigs = append(
 			portConfigs,
-			servicecmd.ConvertPortToPortConfig(port, portBindings)...)
+			opts.ConvertPortToPortConfig(port, portBindings)...)
 	}
 
 	return &swarm.EndpointSpec{Ports: portConfigs}, nil

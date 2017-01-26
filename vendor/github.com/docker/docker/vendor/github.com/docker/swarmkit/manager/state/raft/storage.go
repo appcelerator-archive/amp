@@ -52,19 +52,19 @@ func (n *Node) loadAndStart(ctx context.Context, forceNewCluster bool) error {
 		return err
 	}
 
-	if snapshot != nil {
-		// Load the snapshot data into the store
-		if err := n.restoreFromSnapshot(snapshot.Data, forceNewCluster); err != nil {
-			return err
-		}
-	}
-
 	// Read logs to fully catch up store
 	var raftNode api.RaftMember
 	if err := raftNode.Unmarshal(waldata.Metadata); err != nil {
 		return errors.Wrap(err, "failed to unmarshal WAL metadata")
 	}
 	n.Config.ID = raftNode.RaftID
+
+	if snapshot != nil {
+		// Load the snapshot data into the store
+		if err := n.restoreFromSnapshot(snapshot.Data, forceNewCluster); err != nil {
+			return err
+		}
+	}
 
 	ents, st := waldata.Entries, waldata.HardState
 
@@ -88,14 +88,14 @@ func (n *Node) loadAndStart(ctx context.Context, forceNewCluster bool) error {
 		// discard the previously uncommitted entries
 		for i, ent := range ents {
 			if ent.Index > st.Commit {
-				log.G(ctx).Infof("discarding %d uncommitted WAL entries ", len(ents)-i)
+				log.G(ctx).Infof("discarding %d uncommitted WAL entries", len(ents)-i)
 				ents = ents[:i]
 				break
 			}
 		}
 
 		// force append the configuration change entries
-		toAppEnts := createConfigChangeEnts(getIDs(snapshot, ents), uint64(n.Config.ID), st.Term, st.Commit)
+		toAppEnts := createConfigChangeEnts(getIDs(snapshot, ents), n.Config.ID, st.Term, st.Commit)
 
 		// All members that are being removed as part of the
 		// force-new-cluster process must be added to the
@@ -167,11 +167,11 @@ func (n *Node) doSnapshot(ctx context.Context, raftConfig api.RaftConfig) {
 
 	viewStarted := make(chan struct{})
 	n.asyncTasks.Add(1)
-	n.snapshotInProgress = make(chan uint64, 1) // buffered in case Shutdown is called during the snapshot
-	go func(appliedIndex, snapshotIndex uint64) {
+	n.snapshotInProgress = make(chan raftpb.SnapshotMetadata, 1) // buffered in case Shutdown is called during the snapshot
+	go func(appliedIndex uint64, snapshotMeta raftpb.SnapshotMetadata) {
 		defer func() {
 			n.asyncTasks.Done()
-			n.snapshotInProgress <- snapshotIndex
+			n.snapshotInProgress <- snapshotMeta
 		}()
 		var err error
 		n.memoryStore.View(func(tx store.ReadTx) {
@@ -197,7 +197,7 @@ func (n *Node) doSnapshot(ctx context.Context, raftConfig api.RaftConfig) {
 				log.G(ctx).WithError(err).Error("failed to save snapshot")
 				return
 			}
-			snapshotIndex = appliedIndex
+			snapshotMeta = snap.Metadata
 
 			if appliedIndex > raftConfig.LogEntriesForSlowFollowers {
 				err := n.raftStore.Compact(appliedIndex - raftConfig.LogEntriesForSlowFollowers)
@@ -205,14 +205,10 @@ func (n *Node) doSnapshot(ctx context.Context, raftConfig api.RaftConfig) {
 					log.G(ctx).WithError(err).Error("failed to compact snapshot")
 				}
 			}
-
-			if err := n.raftLogger.GC(snap.Metadata.Index, snap.Metadata.Term, raftConfig.KeepOldSnapshots); err != nil {
-				log.G(ctx).WithError(err).Error("failed to clean up old snapshots and WALs")
-			}
 		} else if err != raft.ErrSnapOutOfDate {
 			log.G(ctx).WithError(err).Error("failed to create snapshot")
 		}
-	}(n.appliedIndex, n.snapshotIndex)
+	}(n.appliedIndex, n.snapshotMeta)
 
 	// Wait for the goroutine to establish a read transaction, to make
 	// sure it sees the state as of this moment.
@@ -234,13 +230,15 @@ func (n *Node) restoreFromSnapshot(data []byte, forceNewCluster bool) error {
 
 	oldMembers := n.cluster.Members()
 
-	if !forceNewCluster {
-		for _, member := range snapshot.Membership.Members {
+	for _, member := range snapshot.Membership.Members {
+		if forceNewCluster && member.RaftID != n.Config.ID {
+			n.cluster.RemoveMember(member.RaftID)
+		} else {
 			if err := n.registerNode(&api.RaftMember{RaftID: member.RaftID, NodeID: member.NodeID, Addr: member.Addr}); err != nil {
 				return err
 			}
-			delete(oldMembers, member.RaftID)
 		}
+		delete(oldMembers, member.RaftID)
 	}
 
 	for _, removedMember := range snapshot.Membership.Removed {

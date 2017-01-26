@@ -80,7 +80,7 @@ func (n *networkRouter) postNetworkCreate(ctx context.Context, w http.ResponseWr
 		return err
 	}
 
-	if _, err := n.clusterProvider.GetNetwork(create.Name); err == nil {
+	if nws, err := n.clusterProvider.GetNetworksByName(create.Name); err == nil && len(nws) > 0 {
 		return libnetwork.NetworkNameError(create.Name)
 	}
 
@@ -259,6 +259,9 @@ func buildIpamResources(r *types.NetworkResource, nwInfo libnetwork.NetworkInfo)
 
 	if !hasIpv6Conf {
 		for _, ip6Info := range ipv6Info {
+			if ip6Info.IPAMData.Pool == nil {
+				continue
+			}
 			iData := network.IPAMConfig{}
 			iData.Subnet = ip6Info.IPAMData.Pool.String()
 			iData.Gateway = ip6Info.IPAMData.Gateway.String()
@@ -297,16 +300,7 @@ func (n *networkRouter) postNetworksPrune(ctx context.Context, w http.ResponseWr
 		return err
 	}
 
-	if err := httputils.CheckForJSON(r); err != nil {
-		return err
-	}
-
-	var cfg types.NetworksPruneConfig
-	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		return err
-	}
-
-	pruneReport, err := n.backend.NetworksPrune(&cfg)
+	pruneReport, err := n.backend.NetworksPrune(filters.Args{})
 	if err != nil {
 		return err
 	}

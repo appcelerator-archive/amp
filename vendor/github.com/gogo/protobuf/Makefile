@@ -62,6 +62,7 @@ regenerate:
 	make -C gogoproto regenerate
 	make -C proto/testdata regenerate
 	make -C jsonpb/jsonpb_test_proto regenerate
+	make -C _conformance regenerate
 	make -C types regenerate
 	make -C test regenerate
 	make -C test/example regenerate
@@ -99,6 +100,9 @@ regenerate:
 	make -C test/filedotname regenerate
 	make -C test/nopackage regenerate
 	make -C test/types regenerate
+	make -C test/proto3extension regenerate
+	make -C test/stdtypes regenerate
+	make -C test/data regenerate
 	make gofmt
 
 tests:
