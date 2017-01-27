@@ -13,8 +13,14 @@ type Interface interface {
 	// AddTeam adds a new team to the team table
 	AddTeam(team *schema.Team) (id string, err error)
 
+	//GetTeam returns a team from the team table
+	GetTeam(teamId string) (team *schema.Team, err error)
+
 	// AddTeamMember adds a new team to the team table
-	AddTeamMember(teamId string, memberId string) (id string, err error)
+	AddTeamMember(teamMember *schema.TeamMember) (id string, err error)
+
+	// GetTeamMember returns the TeamMember from the team_member table
+	GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error)
 
 	// GetAccount returns an account from the accounts table
 	GetAccount(name string) (*schema.Account, error)

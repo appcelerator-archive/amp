@@ -32,11 +32,6 @@ func (m *Mock) AddTeam(team *schema.Team) (id string, err error) {
 	return
 }
 
-// AddTeam adds a new team to the team table
-func (m *Mock) AddTeamMember(teamId string, userId string) (id string, err error) {
-
-	return
-}
 
 // GetAccount returns an account from the accounts table
 func (m *Mock) GetAccount(name string) (account *schema.Account, err error) {
@@ -58,3 +53,10 @@ func (m *Mock) GetAccounts(accountType schema.AccountType) (accounts []*schema.A
 	}
 	return
 }
+
+// AddTeamMember adds a new team to the team table
+func (m *Mock) AddTeamMember(teamMember *schema.TeamMember) (id string, err error){ return }
+
+// GetTeamMember returns the TeamMember from the team_member table
+func (m *Mock)GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error) { return }
+func (m *Mock)GetTeam(teamId string) (team *schema.Team, err error) { return }

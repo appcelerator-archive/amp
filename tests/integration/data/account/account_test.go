@@ -13,6 +13,7 @@ import (
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"golang.org/x/net/context"
 	"strings"
+
 )
 
 const (
@@ -39,11 +40,13 @@ func initData() {
 		Name: "Falcons",
 		Desc: "The Falcons",
 	}
-	store.Delete(context.Background(), "/accounts", true, nil)
-
+	// delete any data from previous unit tests OR from failed executions
+	// prefix is amp-test
+	deleteAll()
 }
 
 var store storage.Interface
+
 
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stdout)
@@ -61,7 +64,23 @@ func TestMain(m *testing.M) {
 	acct = account.NewStore(store, context.Background())
 	os.Exit(m.Run())
 }
+func deleteAll() {
+	store.Delete(context.Background(), "/accounts", true, nil)
+}
+func addAccounts() {
+	acct.AddAccount(&testAcct)
+	testAcct.Name = "axway2"
+	testAcct.Id = ""
+	acct.AddAccount(&testAcct)
+	testAcct.Id = ""
+	testAcct.Name = "theuser"
+	testAcct.Type = schema.AccountType_USER
+	acct.AddAccount(&testAcct)
+}
+func addTeam() {
+	addAccounts()
 
+}
 func TestAddAccount(t *testing.T) {
 	s, err := acct.AddAccount(&testAcct)
 	if err != nil {
@@ -79,6 +98,7 @@ func TestAddDuplicateAccount(t *testing.T) {
 	}
 }
 func TestAddTeam(t *testing.T) {
+	addAccounts()
 	a, err := acct.GetAccount("axway")
 	if err != nil {
 		t.Error(err)
@@ -89,6 +109,21 @@ func TestAddTeam(t *testing.T) {
 		t.Error(err)
 	}
 }
+func TestAddTeamMember(t *testing.T) {
+	addTeam()
+	tm, err := acct.GetTeam("Falcons")
+	if err != nil {
+		t.Error(err)
+	}
+	u, err := acct.GetAccount("theuser")
+	if err != nil {
+		t.Error(err)
+	}
+	mem := &schema.TeamMember{}
+	mem.UserAccountId = u.Id
+	mem.TeamId = tm.Id
+	acct.AddTeamMember(mem)
+}
 func TestAddDuplicateTeam(t *testing.T) {
 	acct.AddTeam(&testTeam)
 	_, err := acct.AddTeam(&testTeam)
@@ -97,14 +132,7 @@ func TestAddDuplicateTeam(t *testing.T) {
 	}
 }
 func TestListAccount(t *testing.T) {
-	acct.AddAccount(&testAcct)
-	testAcct.Name = "axway2"
-	testAcct.Id = ""
-	acct.AddAccount(&testAcct)
-	testAcct.Id = ""
-	testAcct.Name = "axway3"
-	testAcct.Type = schema.AccountType_USER
-	acct.AddAccount(&testAcct)
+	addAccounts()
 	accList, err := acct.GetAccounts(schema.AccountType_USER)
 	if err != nil {
 		log.Panicf("Unable to Fetch Account List: %v", err)

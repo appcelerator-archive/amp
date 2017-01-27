@@ -15,17 +15,22 @@ import (
 // AccountSchemaRootKey the base key for all object within the accounts schema
 const AccountSchemaRootKey = "accounts"
 
-// AccountUserByNameKey stores the alternate key value by name
-const AccountUserByNameKey = AccountSchemaRootKey + "/account/name"
+// AccountUserByAltKey stores the alternate key value by name
+const AccountUserByAltKey = AccountSchemaRootKey + "/account/name"
 
 // AccountUserByIdKey key used to store the account protobuf type
 const AccountUserByIdKey = AccountSchemaRootKey + "/account/id"
 
-//AccountTeamByNameKey key used to store the alternate key by name
-const AccountTeamByNameKey = AccountSchemaRootKey + "/team/name"
+//AccountTeamByAltKey key used to store the alternate key by name
+const AccountTeamByAltKey = AccountSchemaRootKey + "/team/name"
 
 //AccountTeamByIdKey key used to store the team protobuf type
 const AccountTeamByIdKey = AccountSchemaRootKey + "/team/id"
+
+
+//AccountTeamByIdKey key used to store the team protobuf type
+const AccountTeamMemberByIdKey = AccountSchemaRootKey + "/team/member"
+
 
 // Store impliments account data.Interface
 type Store struct {
@@ -42,8 +47,33 @@ func NewStore(store storage.Interface, c context.Context) Interface {
 }
 
 //AddTeamMember adds a user account to the team table
-func (s *Store) AddTeamMember(teamId string, memberId string) (id string, err error) {
-	return
+func (s *Store) AddTeamMember(member *schema.TeamMember) (id string, err error) {
+
+	if err = s.checkTeamMember(member); err == nil {
+		// Store the Account struct and the alternate key
+		err = s.Store.Create(s.ctx, path.Join(AccountTeamMemberByIdKey, member.TeamId+"/"+member.Id), member, nil, 0)
+	}
+	return member.Id, err
+
+}
+
+func (s *Store) checkTeamMember(member *schema.TeamMember) error {
+
+	mem, err := s.GetTeamMember(member.TeamId, member.Id)
+	if err == nil && member.Id == "" {
+		member.Id = generateUUID()
+
+	} else {
+		err = fmt.Errorf("TeamMember %s already exists", mem.Id)
+	}
+	return err
+}
+// GetTeamMember returns a TeamMember from the TeamMember table
+func (s *Store) GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error) {
+	member = &schema.TeamMember{}
+	fk := &schema.ForeignKey{FkId: memberId,}
+	err = s.Store.Get(s.ctx, path.Join(AccountTeamMemberByIdKey+"/"+teamId, fk.FkId), member, true)
+	return member, err
 }
 
 // generateUUID place holder until we standardize the approach we want to use
@@ -57,11 +87,12 @@ func (s *Store) AddAccount(account *schema.Account) (id string, err error) {
 	if err = s.checkAccount(account); err == nil {
 		// Store the Account struct and the alternate key
 		if err = s.Store.Create(s.ctx, path.Join(AccountUserByIdKey, account.Id), account, nil, 0); err == nil {
-			err = s.Store.Create(s.ctx, path.Join(AccountUserByNameKey, account.Name), &schema.ForeignKey{FkId: account.Id}, nil, 0)
+			err = s.Store.Create(s.ctx, path.Join(AccountUserByAltKey, account.Name), &schema.ForeignKey{FkId: account.Id}, nil, 0)
 		}
 	}
 	return account.Id, err
 }
+
 func (s *Store) checkAccount(account *schema.Account) error {
 
 	acct, err := s.GetAccount(account.Name)
@@ -70,17 +101,6 @@ func (s *Store) checkAccount(account *schema.Account) error {
 
 	} else {
 		err = fmt.Errorf("Account %s already exists", acct.Name)
-	}
-	return err
-}
-func (s *Store) checkTeam(team *schema.Team) error {
-
-	t, err := s.GetTeam(team.Name)
-	if err == nil && t.Id == "" {
-		team.Id = generateUUID()
-
-	} else {
-		err = fmt.Errorf("Team %s already exists", t.Name)
 	}
 	return err
 }
@@ -97,15 +117,24 @@ func (s *Store) Verify(name string) error {
 
 // AddTeam adds a new team to the team table
 func (s *Store) AddTeam(team *schema.Team) (id string, err error) {
-	//TODO Add data integrity checks
-	if team.Id == "" {
-		team.Id = generateUUID()
-	}
-	// Store Team struct and alternate Key
-	if err = s.Store.Create(s.ctx, path.Join(AccountTeamByIdKey, team.Id), team, nil, 0); err == nil {
-		err = s.Store.Create(s.ctx, path.Join(AccountTeamByNameKey, team.Name), &schema.ForeignKey{FkId: team.Id}, nil, 0)
+	if err = s.checkTeam(team); err == nil {
+		// Store Team struct and alternate Key
+		if err = s.Store.Create(s.ctx, path.Join(AccountTeamByIdKey, team.Id), team, nil, 0); err == nil {
+			err = s.Store.Create(s.ctx, path.Join(AccountTeamByAltKey, team.Name), &schema.ForeignKey{FkId: team.Id}, nil, 0)
+		}
 	}
 	return team.Id, err
+}
+func (s *Store) checkTeam(team *schema.Team) error {
+
+	t, err := s.GetTeam(team.Name)
+	if err == nil && t.Id == "" {
+		team.Id = generateUUID()
+
+	} else {
+		err = fmt.Errorf("Team %s already exists", t.Name)
+	}
+	return err
 }
 
 // GetTeam returns a Team from the Team table
@@ -113,7 +142,7 @@ func (s *Store) GetTeam(name string) (team *schema.Team, err error) {
 	team = &schema.Team{}
 	fk := &schema.ForeignKey{}
 	//Grab the ID
-	err = s.Store.Get(s.ctx, path.Join(AccountTeamByNameKey, name), fk, true)
+	err = s.Store.Get(s.ctx, path.Join(AccountTeamByAltKey, name), fk, true)
 	if err == nil && fk.FkId != "" {
 		err = s.Store.Get(s.ctx, path.Join(AccountTeamByIdKey, fk.FkId), team, true)
 	}
@@ -125,7 +154,7 @@ func (s *Store) GetAccount(name string) (account *schema.Account, err error) {
 	acct := &schema.Account{}
 	fk := &schema.ForeignKey{}
 	//Grab the ID
-	err = s.Store.Get(s.ctx, path.Join(AccountUserByNameKey, name), fk, true)
+	err = s.Store.Get(s.ctx, path.Join(AccountUserByAltKey, name), fk, true)
 	if err == nil && fk.FkId != "" {
 		err = s.Store.Get(s.ctx, path.Join(AccountUserByIdKey, fk.FkId), acct, true)
 	}
