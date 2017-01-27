@@ -14,7 +14,7 @@ keywords: "API, Usage, plugins, documentation, developer"
 -->
 
 
-# Plugin Config Version 0 of Plugin V2
+# Plugin Config Version 1 of Plugin V2
 
 This document outlines the format of the V0 plugin configuration. The plugin
 config described herein was introduced in the Docker daemon in the [v1.12.0
@@ -25,7 +25,7 @@ configs can be serialized to JSON format with the following media types:
 
 Config Type  | Media Type
 ------------- | -------------
-config  | "application/vnd.docker.plugin.v0+json"
+config  | "application/vnd.docker.plugin.v1+json"
 
 
 ## *Config* Field Descriptions
@@ -111,6 +111,10 @@ Config provides the base accessible fields for working with V0 plugin format
 
 	  options of the mount.
 
+- **`propagatedMount`** *string*
+
+   path to be mounted as rshared, so that mounts under that path are visible to docker. This is useful for volume plugins.
+
 - **`env`** *PluginEnv array*
 
    env of the plugin, struct consisting of the following fields
@@ -133,11 +137,11 @@ Config provides the base accessible fields for working with V0 plugin format
 
     - **`name`** *string*
 
-	  name of the env.
+	  name of the args.
 
     - **`description`** *string*
 
-      description of the env.
+      description of the args.
 
     - **`value`** *string array*
 
@@ -148,6 +152,10 @@ Config provides the base accessible fields for working with V0 plugin format
     - **`capabilities`** *string array*
 
           capabilities of the plugin (*Linux only*), see list [`here`](https://github.com/opencontainers/runc/blob/master/libcontainer/SPEC.md#security)
+
+    - **`allowAllDevices`** *boolean*
+
+	If `/dev` is bind mounted from the host, and allowAllDevices is set to true, the plugin will have `rwm` access to all devices on the host.
 
     - **`devices`** *PluginDevice array*
 
@@ -167,52 +175,49 @@ Config provides the base accessible fields for working with V0 plugin format
 
 ## Example Config
 
-*Example showing the 'tiborvass/no-remove' plugin config.*
+*Example showing the 'tiborvass/sample-volume-plugin' plugin config.*
 
 ```json
 {
-  "description": "A test plugin for Docker",
-  "documentation": "https://docs.docker.com/engine/extend/plugins/",
-  "entrypoint": ["plugin-no-remove", "/data"],
-  "interface": {
-    "types": ["docker.volumedriver/1.0"],
-    "socket": "plugins.sock"
-  },
-  "network": {
-    "type": "host"
-  },
-  "mounts": [
-    {
-      "source": "/data",
-      "destination": "/data",
-      "type": "bind",
-      "options": ["shared", "rbind"]
-    },
-    {
-      "destination": "/foobar",
-      "type": "tmpfs"
-    }
-  ],
-  "args": {
-    "name": "args",
-    "description": "command line arguments",
-    "value": []
-  },
-  "env": [
-    {
-      "name": "DEBUG",
-      "description": "If set, prints debug messages",
-      "value": "1"
-    }
-  ],
-  "linux": {
-    "devices": [
-      {
-        "name": "device",
-        "description": "a host device to mount",
-        "path": "/dev/cpu_dma_latency"
-      }
-    ]
-  }
+            "Args": {
+                "Description": "",
+                "Name": "",
+                "Settable": null,
+                "Value": null
+            },
+            "Description": "A sample volume plugin for Docker",
+            "Documentation": "https://docs.docker.com/engine/extend/plugins/",
+            "Entrypoint": [
+                "/usr/bin/sample-volume-plugin",
+                "/data"
+            ],
+            "Env": [
+                {
+                    "Description": "",
+                    "Name": "DEBUG",
+                    "Settable": [
+                        "value"
+                    ],
+                    "Value": "0"
+                }
+            ],
+            "Interface": {
+                "Socket": "plugin.sock",
+                "Types": [
+                    "docker.volumedriver/1.0"
+                ]
+            },
+            "Linux": {
+                "Capabilities": null,
+                "AllowAllDevices": false,
+                "Devices": null
+            },
+            "Mounts": null,
+            "Network": {
+                "Type": ""
+            },
+            "PropagatedMount": "/data",
+            "User": {},
+            "Workdir": ""
 }
 ```

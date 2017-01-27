@@ -45,11 +45,34 @@ func (e *executor) Describe(ctx context.Context) (*api.NodeDescription, error) {
 		}
 	}
 
+	// add v1 plugins
 	addPlugins("Volume", info.Plugins.Volume)
 	// Add builtin driver "overlay" (the only builtin multi-host driver) to
 	// the plugin list by default.
 	addPlugins("Network", append([]string{"overlay"}, info.Plugins.Network...))
 	addPlugins("Authorization", info.Plugins.Authorization)
+
+	// add v2 plugins
+	v2Plugins, err := e.backend.PluginManager().List()
+	if err == nil {
+		for _, plgn := range v2Plugins {
+			for _, typ := range plgn.Config.Interface.Types {
+				if typ.Prefix != "docker" || !plgn.Enabled {
+					continue
+				}
+				plgnTyp := typ.Capability
+				if typ.Capability == "volumedriver" {
+					plgnTyp = "Volume"
+				} else if typ.Capability == "networkdriver" {
+					plgnTyp = "Network"
+				}
+				plugins[api.PluginDescription{
+					Type: plgnTyp,
+					Name: plgn.Name,
+				}] = struct{}{}
+			}
+		}
+	}
 
 	pluginFields := make([]api.PluginDescription, 0, len(plugins))
 	for k := range plugins {

@@ -92,9 +92,7 @@ axqh55ipl40h  vossibility_vossibility-collector  replicated  1/1       icecrime/
 
 ## Related information
 
-* [stack config](stack_config.md)
 * [stack ls](stack_ls.md)
 * [stack ps](stack_ps.md)
 * [stack rm](stack_rm.md)
 * [stack services](stack_services.md)
-* [deploy](deploy.md)

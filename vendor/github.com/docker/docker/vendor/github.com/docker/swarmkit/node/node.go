@@ -22,6 +22,7 @@ import (
 	"github.com/docker/swarmkit/log"
 	"github.com/docker/swarmkit/manager"
 	"github.com/docker/swarmkit/manager/encryption"
+	"github.com/docker/swarmkit/manager/state/raft"
 	"github.com/docker/swarmkit/remotes"
 	"github.com/docker/swarmkit/xnet"
 	"github.com/pkg/errors"
@@ -329,6 +330,14 @@ func (n *Node) Stop(ctx context.Context) error {
 	default:
 		return errNodeNotStarted
 	}
+	// ask agent to clean up assignments
+	n.Lock()
+	if n.agent != nil {
+		if err := n.agent.Leave(ctx); err != nil {
+			log.G(ctx).WithError(err).Error("agent failed to clean up assignments")
+		}
+	}
+	n.Unlock()
 
 	n.stopOnce.Do(func() {
 		close(n.stopped)
@@ -718,7 +727,7 @@ func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig
 		case <-done:
 			// Fail out if m.Run() returns error, otherwise wait for
 			// role change.
-			if runErr != nil {
+			if runErr != nil && runErr != raft.ErrMemberRemoved {
 				err = runErr
 			} else {
 				err = <-roleChanged

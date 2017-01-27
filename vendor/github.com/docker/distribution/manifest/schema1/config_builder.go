@@ -240,13 +240,8 @@ func (mb *configManifestBuilder) emptyTar(ctx context.Context) (digest.Digest, e
 
 // AppendReference adds a reference to the current ManifestBuilder
 func (mb *configManifestBuilder) AppendReference(d distribution.Describable) error {
-	descriptor := d.Descriptor()
-
-	if err := descriptor.Digest.Validate(); err != nil {
-		return err
-	}
-
-	mb.descriptors = append(mb.descriptors, descriptor)
+	// todo: verification here?
+	mb.descriptors = append(mb.descriptors, d.Descriptor())
 	return nil
 }
 

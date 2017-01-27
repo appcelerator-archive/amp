@@ -240,9 +240,6 @@ func (g *Generator) GetMapKeyField(field, keyField *descriptor.FieldDescriptorPr
 }
 
 func (g *Generator) GetMapValueField(field, valField *descriptor.FieldDescriptorProto) *descriptor.FieldDescriptorProto {
-	if !gogoproto.IsCustomType(field) && !gogoproto.IsCastValue(field) && gogoproto.IsNullable(field) {
-		return valField
-	}
 	if gogoproto.IsCustomType(field) && gogoproto.IsCastValue(field) {
 		g.Fail("cannot have a customtype and casttype: ", field.String())
 	}
@@ -250,6 +247,21 @@ func (g *Generator) GetMapValueField(field, valField *descriptor.FieldDescriptor
 	if valField.Options == nil {
 		valField.Options = &descriptor.FieldOptions{}
 	}
+
+	stdtime := gogoproto.IsStdTime(field)
+	if stdtime {
+		if err := proto.SetExtension(valField.Options, gogoproto.E_Stdtime, &stdtime); err != nil {
+			g.Fail(err.Error())
+		}
+	}
+
+	stddur := gogoproto.IsStdDuration(field)
+	if stddur {
+		if err := proto.SetExtension(valField.Options, gogoproto.E_Stdduration, &stddur); err != nil {
+			g.Fail(err.Error())
+		}
+	}
+
 	if valType := gogoproto.GetCastValue(field); len(valType) > 0 {
 		if err := proto.SetExtension(valField.Options, gogoproto.E_Casttype, &valType); err != nil {
 			g.Fail(err.Error())
@@ -426,4 +438,10 @@ func (g *Generator) AllFiles() *descriptor.FileDescriptorSet {
 
 func (d *Descriptor) Path() string {
 	return d.path
+}
+
+func (g *Generator) useTypes() string {
+	pkg := strings.Map(badToUnderscore, "github.com/gogo/protobuf/types")
+	g.customImports = append(g.customImports, "github.com/gogo/protobuf/types")
+	return pkg
 }

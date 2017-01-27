@@ -137,4 +137,3 @@ Contributors
 - Stefan Majewsky <stefan.majewsky@sap.com>
 - Cezar Sa Espinola <cezarsa@gmail.com>
 - Sam Gunaratne <samgzeit@gmail.com>
-- Richard Scothern <richard.scothern@gmail.com>

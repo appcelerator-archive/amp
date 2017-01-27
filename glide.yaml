@@ -1,25 +1,38 @@
 package: github.com/appcelerator/amp
 import:
+- package: github.com/blang/semver
+  version: ^3.4.0
 - package: github.com/coreos/etcd
-  version: ^3.1.0-rc.1
+  version: ^3.1.0
   subpackages:
   - clientv3
   - mvcc/mvccpb
+- package: github.com/docker/distribution
+  version: ^2.6.0
+  subpackages:
+  - reference
 - package: github.com/docker/docker
-  version: 1.13.0-rc3
+  version: ^1.13.0
   subpackages:
   - api/types
+  - api/types/container
   - api/types/events
   - api/types/filters
   - api/types/mount
   - api/types/network
+  - api/types/reference
   - api/types/swarm
+  - cli/command
+  - cli/command/idresolver
+  - cli/flags
   - client
+  - pkg/stdcopy
   - pkg/stringid
-- package: github.com/blang/semver
-  version: ^3.3.0
+  - utils/templates
+- package: github.com/docker/go-units
+  version: ^0.3.1
 - package: github.com/fatih/color
-  version: ^1.1.0
+  version: ^1.2.0
 - package: github.com/fatih/structs
 - package: github.com/golang/protobuf
   subpackages:
@@ -35,16 +48,16 @@ import:
   - utilities
 - package: github.com/howeyc/gopass
 - package: github.com/influxdata/influxdb
-  version: ^1.1.0
+  version: ^1.1.1
   subpackages:
   - client/v2
 - package: github.com/julienschmidt/httprouter
   version: ^1.1.0
 - package: github.com/mitchellh/go-homedir
-- package: github.com/nats-io/go-nats-streaming
-  version: ^0.3.0
-- package: github.com/nats-io/nats
+- package: github.com/nats-io/go-nats
   version: ^1.2.2
+- package: github.com/nats-io/go-nats-streaming
+  version: ^0.3.4
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
 - package: github.com/spf13/viper
@@ -60,7 +73,7 @@ import:
   - grpclog
   - metadata
 - package: gopkg.in/olivere/elastic.v3
-  version: ^5.0.13
+  version: ^5.0.18
 - package: gopkg.in/yaml.v2
 testImport:
 - package: github.com/stretchr/testify
