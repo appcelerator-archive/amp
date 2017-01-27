@@ -14,7 +14,7 @@ type Interface interface {
 	AddTeam(team *schema.Team) (id string, err error)
 
 	//GetTeam returns a team from the team table
-	GetTeam(teamId string) (team *schema.Team, err error)
+	GetTeam(name string) (team *schema.Team, err error)
 
 	// AddTeamMember adds a new team to the team table
 	AddTeamMember(teamMember *schema.TeamMember) (id string, err error)
@@ -27,4 +27,17 @@ type Interface interface {
 
 	// GetAccounts returns accounts matching a query
 	GetAccounts(accountType schema.AccountType) ([]*schema.Account, error)
+
+	//AddResource Adds Resource to resource table
+	AddResource(resource *schema.Resource) (id string, err error)
+
+	//GetResource returns a team from the team table
+	GetResource(name string) (team *schema.Resource, err error)
+
+	//AddResource Adds Resource to resource table
+	AddResourceSettings(resource *schema.ResourceSettings) (id string, err error)
+
+	//GetResource returns a team from the team table
+	//GetResource(name string) (team *schema.Resource, err error)
+
 }

@@ -53,10 +53,20 @@ func (m *Mock) GetAccounts(accountType schema.AccountType) (accounts []*schema.A
 	}
 	return
 }
+//GetTeam
+func (m *Mock) GetTeam(name string) (team *schema.Team, err error) { return }
 
 // AddTeamMember adds a new team to the team table
 func (m *Mock) AddTeamMember(teamMember *schema.TeamMember) (id string, err error){ return }
 
 // GetTeamMember returns the TeamMember from the team_member table
 func (m *Mock)GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error) { return }
-func (m *Mock)GetTeam(teamId string) (team *schema.Team, err error) { return }
+
+//AddResource
+func (m *Mock)AddResource(resource *schema.Resource) (id string, err error) { return }
+
+//GetResource
+func (m *Mock) GetResource(name string) (team *schema.Resource, err error) { return }
+
+//AddResource
+func (m *Mock)AddResourceSettings(resource *schema.ResourceSettings) (id string, err error) { return }

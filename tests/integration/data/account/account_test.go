@@ -24,6 +24,7 @@ var (
 	acct     account.Interface
 	testAcct schema.Account
 	testTeam schema.Team
+	testResource schema.Resource
 )
 
 
@@ -39,6 +40,13 @@ func initData() {
 		Id:   "",
 		Name: "Falcons",
 		Desc: "The Falcons",
+	}
+	testResource = schema.Resource{
+		Id: "",
+		Name: "test-stack",
+		TeamId: "",
+		OrgAccountId: "",
+		Type: schema.ResourceType_STACK,
 	}
 	// delete any data from previous unit tests OR from failed executions
 	// prefix is amp-test
@@ -79,7 +87,6 @@ func addAccounts() {
 }
 func addTeam() {
 	addAccounts()
-
 }
 func TestAddAccount(t *testing.T) {
 	s, err := acct.AddAccount(&testAcct)
@@ -141,4 +148,40 @@ func TestListAccount(t *testing.T) {
 		t.Errorf("expected %v, got %v", 1, len(accList))
 	}
 
+}
+func TestAddResource(t *testing.T) {
+
+	addTeam()
+	team, _ :=acct.GetTeam("Falcons")
+	testResource.TeamId = team.Id
+	_, err := acct.AddResource(&testResource)
+	if (err!=nil){
+		log.Panicf("Unable to add Resource: %v", err)
+	}
+
+	res, _:=acct.GetResource(testResource.Name)
+	if (res.Id == "") {
+		log.Panicf("Expected Resource not saved")
+	}
+
+}
+func addResource() {
+	addTeam()
+	team, _ :=acct.GetTeam("Falcons")
+	testResource.TeamId = team.Id
+	acct.AddResource(&testResource)
+
+}
+func TestAddResourceSettings(t *testing.T) {
+
+	addResource()
+	resource, _ :=acct.GetResource("test-stack")
+	setting := &schema.ResourceSettings{}
+	setting.ResourceId=resource.Id
+	setting.Key="foo"
+	setting.Value="bar"
+	_, err := acct.AddResourceSettings(setting)
+	if (err!=nil){
+		log.Panicf("Unable to add Resource: %v", err)
+	}
 }

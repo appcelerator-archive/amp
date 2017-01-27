@@ -31,6 +31,16 @@ const AccountTeamByIdKey = AccountSchemaRootKey + "/team/id"
 //AccountTeamByIdKey key used to store the team protobuf type
 const AccountTeamMemberByIdKey = AccountSchemaRootKey + "/team/member"
 
+//AccountResourceByIdKey key used to store the Resource protobuf type
+const AccountResourceByIdKey = AccountSchemaRootKey + "/resource/id"
+
+//AccountResourceByIdKey key used to store the Resource protobuf type
+const AccountResourceByAltKey = AccountSchemaRootKey + "/resource/name"
+
+
+//AccountResourceSettingsByIdKey key used to store the ResourceSettings protobuf type
+const AccountResourceSettingsByIdKey = AccountSchemaRootKey + "/resource/settings/id"
+
 
 // Store impliments account data.Interface
 type Store struct {
@@ -44,6 +54,81 @@ func NewStore(store storage.Interface, c context.Context) Interface {
 		Store: store,
 		ctx:   c,
 	}
+}
+
+//AddResource adds a Resource to the resource table
+func (s *Store) AddResource(resource *schema.Resource) (id string, err error) {
+
+	if err = s.checkResource(resource); err == nil {
+		// Store the Account struct and the alternate key
+		if err = s.Store.Create(s.ctx, path.Join(AccountResourceByIdKey, resource.Id), resource, nil, 0); err == nil {
+			err = s.Store.Create(s.ctx, path.Join(AccountResourceByAltKey, resource.Name), &schema.ForeignKey{FkId: resource.Id}, nil, 0)
+		}
+	}
+	return resource.Id, err
+}
+
+func (s *Store) checkResource(resource *schema.Resource) error {
+
+	res, err := s.GetResource(resource.Id)
+	if err == nil && resource.Id == "" {
+		resource.Id = generateUUID()
+
+	} else {
+		err = fmt.Errorf("Resource %s already exists", res.Id)
+	}
+	return err
+}
+// GetResource returns a Resource from the Resource table
+func (s *Store) GetResource(name string) (resource *schema.Resource, err error) {
+	resource = &schema.Resource{}
+	fk := &schema.ForeignKey{}
+	//Grab the ID
+	err = s.Store.Get(s.ctx, path.Join(AccountResourceByAltKey, name), fk, true)
+	if err == nil && fk.FkId != "" {
+		err = s.Store.Get(s.ctx, path.Join(AccountResourceByIdKey + "/" + fk.FkId), resource, true)
+	}
+	return resource, err
+}
+// GetResourceSettings returns a List of ResourceSettings from the ResourceSettings table
+func (s *Store) GetResourceSettings(resourceId string) (rs []*schema.ResourceSettings, err error) {
+	var out []proto.Message
+	settings := &schema.ResourceSettings{}
+	err = s.Store.List(s.ctx, AccountResourceSettingsByIdKey+"/"+resourceId, storage.Everything, settings, &out)
+	if err == nil {
+		// Unfortunately we have to iterate and filter
+		for i := 0; i < len(out); i++ {
+			m, ok := out[i].(*schema.ResourceSettings)
+			if ok  {
+				rs = append(rs, m)
+			} else if !ok {
+				err = fmt.Errorf("Unexpected Type Encountered")
+				break
+			}
+		}
+	}
+	return
+}
+//AddTeamMember adds a user account to the team table
+func (s *Store) AddResourceSettings(rs *schema.ResourceSettings) (id string, err error) {
+
+	if err = s.checkResourceSettings(rs); err == nil {
+		// Store the Account struct and the alternate key
+		err = s.Store.Create(s.ctx, path.Join(AccountResourceSettingsByIdKey, rs.ResourceId+"/"+rs.Id), rs, nil, 0)
+	}
+	return rs.Id, err
+}
+
+func (s *Store) checkResourceSettings(rs *schema.ResourceSettings) error {
+
+	res, err := s.GetResource(rs.Id)
+	if err == nil && rs.Id == "" {
+		rs.Id = generateUUID()
+
+	} else {
+		err = fmt.Errorf("ResourceSetting %s already exists", res.Id)
+	}
+	return err
 }
 
 //AddTeamMember adds a user account to the team table
