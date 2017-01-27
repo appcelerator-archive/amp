@@ -19,7 +19,7 @@ const (
 	grafanaVersion       = "1.1.3"
 	elasticsearchVersion = "5.1.2"
 	etcdVersion          = "3.1.0"
-	natsVersion          = "0.3.0"
+	natsVersion          = "v0.3.8"
 	haproxyVersion       = "1.0.4"
 	registryVersion      = "2.5.1"
 )
