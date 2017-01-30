@@ -1,4 +1,4 @@
-FROM appcelerator/gotools:1.3.0
+FROM appcelerator/gotools:latest
 RUN apk --no-cache add sudo iproute2
 
 # Add Docker client from:
@@ -26,3 +26,4 @@ RUN adduser -S -s /bin/sh sudoer
 # it's fine to override entrypoint if not running a docker command
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["sh"]
+
