@@ -36,12 +36,6 @@ GOSRC := $(shell find . -type f -name '*.go' $(EXCLUDE_DIRS_FILTER))
 CMDDIR := cmd
 
 # =============================================================================
-# COMMON CONTAINER TOOLS
-# =============================================================================
-# Used by: glide, protoc, go
-BUILDTOOL := appcelerator/amptools:latest
-
-# =============================================================================
 # DEFAULT TARGET
 # =============================================================================
 all: build
@@ -49,7 +43,7 @@ all: build
 # =============================================================================
 # VENDOR MANAGEMENT (GLIDE)
 # =============================================================================
-GLIDETARGETS := glide.lock vendor
+GLIDETARGETS := vendor
 
 $(GLIDETARGETS): glide.yaml
 	@hack/amptools glide install
@@ -113,7 +107,7 @@ cleanall: clean cleanall-glide
 # =============================================================================
 CLI := amp
 CLIBINARY=$(CLI).alpine
-CLIIMG := appcelerator/aamp
+CLIIMG := appcelerator/amp
 CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
 CLISRC := $(shell find ./cmd/amp -type f -name '*.go' $(EXCLUDE_DIRS_FILTER))
 
