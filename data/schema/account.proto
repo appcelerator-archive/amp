@@ -12,7 +12,7 @@ enum AccountType {
 
 message Account {
   string id = 1;
-  string name = 2;
+  string name = 2; //Alt-Key
   AccountType type = 3;
   string email = 4;
   string password_hash = 5;
@@ -31,9 +31,10 @@ message OrganizationMember {
 message Resource {
   string id = 1;
   string org_account_id = 2; //FK->AccountEntry.id (type=org)
-  string name = 3;
-  string type = 4;
-  google.protobuf.Timestamp create_dt = 5;
+  string team_id=3;
+  string name = 4;
+  ResourceType type = 5;
+  google.protobuf.Timestamp create_dt = 6;
 }
 
 message ResourceSettings {
@@ -63,28 +64,25 @@ message Permission {
   string id = 1;
   string team_id = 2; //FK->TeamEntry.id
   string resource_id = 3; //FK->ResourceEntry.id
-  string grant_id = 4;
+  GrantType grant_type = 4;
   google.protobuf.Timestamp create_dt = 5;
-
 }
 
 // Reference Data
-message ResourceType {
-  string id = 1;
-  string resource_name = 2;
-  string resource_desc = 3;
-  google.protobuf.Timestamp create_dt = 4;
+enum ResourceType {
+  STACK=0;
+  SERVICE=1;
+  //TODO Add more types
 }
 
-message GrantType {
-  string id = 1;
-  string resource_type_id = 2; //FK->ResourceTypeEntry.id
-  string grant_name = 3;
-  string grant_desc = 4;
-  google.protobuf.Timestamp create_dt = 5;
+enum GrantType {
+  READ=0;
+  WRITE=1;
+  DELETE=3;
+  ALL=4;
 }
 
 //Protobuf Type to store the foreign key relationships
-message ForeignKey {
-  string fk_id = 1;
+message Key {
+  string key_id = 1;
 }
