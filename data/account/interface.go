@@ -22,6 +22,9 @@ type Interface interface {
 	// GetTeamMember returns the TeamMember from the team_member table
 	GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error)
 
+	//DeleteTeamMember
+	DeleteTeamMember(teamId string, memberId string) (err error)
+
 	// GetAccount returns an account from the accounts table
 	GetAccount(name string) (*schema.Account, error)
 
@@ -34,10 +37,21 @@ type Interface interface {
 	//GetResource returns a team from the team table
 	GetResource(name string) (team *schema.Resource, err error)
 
+	//DeleteResource removes the Resource entry for a given Id
+	DeleteResource(name string) (err error)
+
 	//AddResource Adds Resource to resource table
 	AddResourceSettings(resource *schema.ResourceSettings) (id string, err error)
 
-	//GetResource returns a team from the team table
-	//GetResource(name string) (team *schema.Resource, err error)
+	//GetResourceSettings returns a list of ResourceSettings for a given resource
+	GetResourceSettings(resourceId string) (rs []*schema.ResourceSettings, err error)
 
+	//DeleteResourceSettings removes the Resource entry for a given Id
+	DeleteResourceSettings(resourceId string) (err error)
+
+	//AddPermission Adds Permission to the Permission table
+	AddPermission(resource *schema.Permission) (id string, err error)
+
+	//GetPermission returns the permission record
+	GetPermission(resourceId string) (perm []*schema.Permission, err error)
 }

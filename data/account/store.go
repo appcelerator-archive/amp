@@ -27,9 +27,8 @@ const AccountTeamByAltKey = AccountSchemaRootKey + "/team/name"
 //AccountTeamByIdKey key used to store the team protobuf type
 const AccountTeamByIdKey = AccountSchemaRootKey + "/team/id"
 
-
 //AccountTeamByIdKey key used to store the team protobuf type
-const AccountTeamMemberByIdKey = AccountSchemaRootKey + "/team/member"
+const AccountTeamMemberByIdKey = AccountSchemaRootKey + "/team/member/id"
 
 //AccountResourceByIdKey key used to store the Resource protobuf type
 const AccountResourceByIdKey = AccountSchemaRootKey + "/resource/id"
@@ -37,10 +36,11 @@ const AccountResourceByIdKey = AccountSchemaRootKey + "/resource/id"
 //AccountResourceByIdKey key used to store the Resource protobuf type
 const AccountResourceByAltKey = AccountSchemaRootKey + "/resource/name"
 
-
 //AccountResourceSettingsByIdKey key used to store the ResourceSettings protobuf type
 const AccountResourceSettingsByIdKey = AccountSchemaRootKey + "/resource/settings/id"
 
+//AccountPermissionByIdKey key used to store the ResourceSettings protobuf type
+const AccountPermissionByIdKey = AccountSchemaRootKey + "/permission/id"
 
 // Store impliments account data.Interface
 type Store struct {
@@ -59,37 +59,46 @@ func NewStore(store storage.Interface, c context.Context) Interface {
 //AddResource adds a Resource to the resource table
 func (s *Store) AddResource(resource *schema.Resource) (id string, err error) {
 
+	// Integrity Check
 	if err = s.checkResource(resource); err == nil {
 		// Store the Account struct and the alternate key
 		if err = s.Store.Create(s.ctx, path.Join(AccountResourceByIdKey, resource.Id), resource, nil, 0); err == nil {
-			err = s.Store.Create(s.ctx, path.Join(AccountResourceByAltKey, resource.Name), &schema.ForeignKey{FkId: resource.Id}, nil, 0)
+			err = s.Store.Create(s.ctx, path.Join(AccountResourceByAltKey, resource.Name), &schema.Key{KeyId: resource.Id}, nil, 0)
 		}
 	}
 	return resource.Id, err
 }
 
-func (s *Store) checkResource(resource *schema.Resource) error {
+func (s *Store) checkResource(resource *schema.Resource) (err error) {
 
-	res, err := s.GetResource(resource.Id)
-	if err == nil && resource.Id == "" {
+	// Assign a new UUID if the resource does not exist
+	if resource.Id == "" {
 		resource.Id = generateUUID()
 
 	} else {
-		err = fmt.Errorf("Resource %s already exists", res.Id)
+		err = fmt.Errorf("Resource.Id must be blank/nil ")
 	}
 	return err
 }
+
 // GetResource returns a Resource from the Resource table
 func (s *Store) GetResource(name string) (resource *schema.Resource, err error) {
-	resource = &schema.Resource{}
-	fk := &schema.ForeignKey{}
+	key := &schema.Key{}
 	//Grab the ID
-	err = s.Store.Get(s.ctx, path.Join(AccountResourceByAltKey, name), fk, true)
-	if err == nil && fk.FkId != "" {
-		err = s.Store.Get(s.ctx, path.Join(AccountResourceByIdKey + "/" + fk.FkId), resource, true)
+	err = s.Store.Get(s.ctx, path.Join(AccountResourceByAltKey, name), key, true)
+	if err == nil && key.KeyId != "" {
+		resource, err = s.GetResourceById(key.KeyId)
 	}
 	return resource, err
 }
+
+// GetResource returns a Resource from the Resource table
+func (s *Store) GetResourceById(id string) (resource *schema.Resource, err error) {
+	resource = &schema.Resource{}
+	err = s.Store.Get(s.ctx, path.Join(AccountResourceByIdKey+"/"+id), resource, true)
+	return resource, err
+}
+
 // GetResourceSettings returns a List of ResourceSettings from the ResourceSettings table
 func (s *Store) GetResourceSettings(resourceId string) (rs []*schema.ResourceSettings, err error) {
 	var out []proto.Message
@@ -99,7 +108,7 @@ func (s *Store) GetResourceSettings(resourceId string) (rs []*schema.ResourceSet
 		// Unfortunately we have to iterate and filter
 		for i := 0; i < len(out); i++ {
 			m, ok := out[i].(*schema.ResourceSettings)
-			if ok  {
+			if ok {
 				rs = append(rs, m)
 			} else if !ok {
 				err = fmt.Errorf("Unexpected Type Encountered")
@@ -109,6 +118,7 @@ func (s *Store) GetResourceSettings(resourceId string) (rs []*schema.ResourceSet
 	}
 	return
 }
+
 //AddTeamMember adds a user account to the team table
 func (s *Store) AddResourceSettings(rs *schema.ResourceSettings) (id string, err error) {
 
@@ -135,11 +145,10 @@ func (s *Store) checkResourceSettings(rs *schema.ResourceSettings) error {
 func (s *Store) AddTeamMember(member *schema.TeamMember) (id string, err error) {
 
 	if err = s.checkTeamMember(member); err == nil {
-		// Store the Account struct and the alternate key
+		// Store the Account struct
 		err = s.Store.Create(s.ctx, path.Join(AccountTeamMemberByIdKey, member.TeamId+"/"+member.Id), member, nil, 0)
 	}
 	return member.Id, err
-
 }
 
 func (s *Store) checkTeamMember(member *schema.TeamMember) error {
@@ -153,11 +162,12 @@ func (s *Store) checkTeamMember(member *schema.TeamMember) error {
 	}
 	return err
 }
+
 // GetTeamMember returns a TeamMember from the TeamMember table
 func (s *Store) GetTeamMember(teamId string, memberId string) (member *schema.TeamMember, err error) {
 	member = &schema.TeamMember{}
-	fk := &schema.ForeignKey{FkId: memberId,}
-	err = s.Store.Get(s.ctx, path.Join(AccountTeamMemberByIdKey+"/"+teamId, fk.FkId), member, true)
+	key := &schema.Key{KeyId: memberId}
+	err = s.Store.Get(s.ctx, path.Join(AccountTeamMemberByIdKey+"/"+teamId, key.KeyId), member, true)
 	return member, err
 }
 
@@ -172,7 +182,7 @@ func (s *Store) AddAccount(account *schema.Account) (id string, err error) {
 	if err = s.checkAccount(account); err == nil {
 		// Store the Account struct and the alternate key
 		if err = s.Store.Create(s.ctx, path.Join(AccountUserByIdKey, account.Id), account, nil, 0); err == nil {
-			err = s.Store.Create(s.ctx, path.Join(AccountUserByAltKey, account.Name), &schema.ForeignKey{FkId: account.Id}, nil, 0)
+			err = s.Store.Create(s.ctx, path.Join(AccountUserByAltKey, account.Name), &schema.Key{KeyId: account.Id}, nil, 0)
 		}
 	}
 	return account.Id, err
@@ -205,7 +215,7 @@ func (s *Store) AddTeam(team *schema.Team) (id string, err error) {
 	if err = s.checkTeam(team); err == nil {
 		// Store Team struct and alternate Key
 		if err = s.Store.Create(s.ctx, path.Join(AccountTeamByIdKey, team.Id), team, nil, 0); err == nil {
-			err = s.Store.Create(s.ctx, path.Join(AccountTeamByAltKey, team.Name), &schema.ForeignKey{FkId: team.Id}, nil, 0)
+			err = s.Store.Create(s.ctx, path.Join(AccountTeamByAltKey, team.Name), &schema.Key{KeyId: team.Id}, nil, 0)
 		}
 	}
 	return team.Id, err
@@ -225,11 +235,11 @@ func (s *Store) checkTeam(team *schema.Team) error {
 // GetTeam returns a Team from the Team table
 func (s *Store) GetTeam(name string) (team *schema.Team, err error) {
 	team = &schema.Team{}
-	fk := &schema.ForeignKey{}
+	key := &schema.Key{}
 	//Grab the ID
-	err = s.Store.Get(s.ctx, path.Join(AccountTeamByAltKey, name), fk, true)
-	if err == nil && fk.FkId != "" {
-		err = s.Store.Get(s.ctx, path.Join(AccountTeamByIdKey, fk.FkId), team, true)
+	err = s.Store.Get(s.ctx, path.Join(AccountTeamByAltKey, name), key, true)
+	if err == nil && key.KeyId != "" {
+		err = s.Store.Get(s.ctx, path.Join(AccountTeamByIdKey, key.KeyId), team, true)
 	}
 	return team, err
 }
@@ -237,11 +247,11 @@ func (s *Store) GetTeam(name string) (team *schema.Team, err error) {
 // GetAccount returns an account from the accounts table
 func (s *Store) GetAccount(name string) (account *schema.Account, err error) {
 	acct := &schema.Account{}
-	fk := &schema.ForeignKey{}
+	key := &schema.Key{}
 	//Grab the ID
-	err = s.Store.Get(s.ctx, path.Join(AccountUserByAltKey, name), fk, true)
-	if err == nil && fk.FkId != "" {
-		err = s.Store.Get(s.ctx, path.Join(AccountUserByIdKey, fk.FkId), acct, true)
+	err = s.Store.Get(s.ctx, path.Join(AccountUserByAltKey, name), key, true)
+	if err == nil && key.KeyId != "" {
+		err = s.Store.Get(s.ctx, path.Join(AccountUserByIdKey, key.KeyId), acct, true)
 	}
 	return acct, err
 }
@@ -264,5 +274,70 @@ func (s *Store) GetAccounts(accountType schema.AccountType) (accounts []*schema.
 			}
 		}
 	}
+	return
+}
+
+//AddPermission adds a permission record to the Permission Table
+func (s *Store) AddPermission(perm *schema.Permission) (id string, err error) {
+
+	if err = s.checkPermission(perm); err == nil {
+		// Store the Permission struct and the alternate key
+		err = s.Store.Create(s.ctx, path.Join(AccountPermissionByIdKey, perm.ResourceId+"/"+perm.Id), perm, nil, 0)
+	}
+	return perm.Id, err
+}
+
+func (s *Store) checkPermission(perm *schema.Permission) (err error) {
+
+	if perm.Id == "" {
+		perm.Id = generateUUID()
+
+	} else {
+		err = fmt.Errorf("Perm ID must be blank/nil")
+	}
+	return err
+}
+
+//GetPermission retrieves a collection of permission records from the permission table
+func (s *Store) GetPermission(resourceId string) (perms []*schema.Permission, err error) {
+	var out []proto.Message
+	perm := &schema.Permission{}
+	err = s.Store.List(s.ctx, AccountPermissionByIdKey+"/"+perm.ResourceId, storage.Everything, perm, &out)
+	if err == nil {
+		// Unfortunately we have to iterate and filter
+		for i := 0; i < len(out); i++ {
+			m, ok := out[i].(*schema.Permission)
+			if ok {
+				perms = append(perms, m)
+			} else if !ok {
+				err = fmt.Errorf("Unexpected Type Encountered")
+				break
+			}
+		}
+	}
+	return
+}
+
+//DeleteResourceSettings removes the Resource entry for a given Id
+func (s *Store) DeleteResourceSettings(resourceId string) (err error) {
+
+	err = s.Store.Delete(s.ctx, AccountResourceSettingsByIdKey+"/"+resourceId, true, nil)
+	return err
+}
+
+//DeleteResource removes the Resource entry for a given Id
+func (s *Store) DeleteResource(name string) (err error) {
+
+	if resource, err := s.GetResource(name); err == nil && resource.Id != "" {
+		//Cascade delete
+		s.DeleteResourceSettings(resource.Id)
+		err = s.Store.Delete(s.ctx, AccountResourceByIdKey+"/"+resource.Id, false, nil)
+	}
+	return
+}
+
+//DeleteTeamMember
+func (s *Store) DeleteTeamMember(teamId string, memberId string) (err error) {
+	//TODO
 	return
 }

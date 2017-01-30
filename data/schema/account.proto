@@ -83,6 +83,6 @@ enum GrantType {
 }
 
 //Protobuf Type to store the foreign key relationships
-message ForeignKey {
-  string fk_id = 1;
+message Key {
+  string key_id = 1;
 }
