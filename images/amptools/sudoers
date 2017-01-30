@@ -1,0 +1,1 @@
+sudoer  ALL = NOPASSWD: ALL
