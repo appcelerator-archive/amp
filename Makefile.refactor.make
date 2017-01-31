@@ -97,7 +97,7 @@ CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
 CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
-	@go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
+	@GOPATH=/go go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
 	@docker build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 
 build-cli: $(CLITARGET)
