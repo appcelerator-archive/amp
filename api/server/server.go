@@ -26,6 +26,7 @@ import (
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/mq/nats-streaming"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
 )
@@ -41,7 +42,7 @@ func initDependencies(config Config) {
 	var wg sync.WaitGroup
 	type initFunc func(Config) error
 
-	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
+	initFuncs := []initFunc{initEtcd, initElasticsearch, initMQ, initInfluxDB, initDocker}
 	for _, f := range initFuncs {
 		wg.Add(1)
 		go func(f initFunc) {
@@ -64,9 +65,9 @@ func Start(config Config) {
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Server{
-		Es:            &runtime.Elasticsearch,
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Es:    &runtime.Elasticsearch,
+		Store: runtime.Store,
+		MQ:    runtime.MQ,
 	})
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: runtime.Influx,
@@ -85,12 +86,12 @@ func Start(config Config) {
 		runtime.Docker,
 	))
 	topic.RegisterTopicServer(s, &topic.Server{
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Store: runtime.Store,
+		MQ:    runtime.MQ,
 	})
 	function.RegisterFunctionServer(s, &function.Server{
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Store: runtime.Store,
+		MQ:    runtime.MQ,
 	})
 	//register storage service
 	storage.RegisterStorageServer(s, &storage.Server{
@@ -143,13 +144,13 @@ func initInfluxDB(config Config) error {
 	return nil
 }
 
-func initNats(config Config) error {
-	// NATS
+func initMQ(config Config) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	if runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+	runtime.MQ = ns.New(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname)
+	if err := runtime.MQ.Connect(amp.DefaultTimeout); err != nil {
 		return err
 	}
 	return nil

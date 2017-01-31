@@ -12,9 +12,8 @@ import (
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/mq"
 	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
 )
@@ -70,9 +69,9 @@ const (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Es            *elasticsearch.Elasticsearch
-	Store         storage.Interface
-	NatsStreaming ns.NatsStreaming
+	Es    *elasticsearch.Elasticsearch
+	Store storage.Interface
+	MQ    mq.Interface
 }
 
 // Get implements log.LogServer
@@ -154,15 +153,21 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	log.Println("rpc-logs: GetStream", in.String())
 
-	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, func(msg *stan.Msg) {
-		entry, err := parseProtoLogEntry(msg.Data)
+	sub, err := s.MQ.Subscribe(amp.LogsQueue, func(msg proto.Message, err error) {
 		if err != nil {
+			log.Println("Error in message processing:", err)
 			return
 		}
-		if filter(&entry, in) {
-			stream.Send(&entry)
+
+		entry, ok := msg.(*LogEntry)
+		if !ok {
+			log.Println("Error in type assertion")
+			return
 		}
-	})
+		if filter(entry, in) {
+			stream.Send(entry)
+		}
+	}, &LogEntry{})
 	if err != nil {
 		sub.Unsubscribe()
 		return grpc.Errorf(codes.Internal, "%v", err)

@@ -702,6 +702,39 @@
           "AccountService"
         ]
       }
+    },
+    "/v1/account/{username}/passwordReset": {
+      "post": {
+        "operationId": "PasswordReset",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordResetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -904,6 +937,19 @@
         }
       }
     },
+    "accountPasswordResetRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "string"
+        },
+        "username": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountPermissionRequest": {
       "type": "object",
       "properties": {
@@ -1029,6 +1075,10 @@
           "format": "string"
         },
         "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "password": {
           "type": "string",
           "format": "string"
         }
