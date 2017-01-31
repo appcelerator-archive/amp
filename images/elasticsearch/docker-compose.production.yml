@@ -1,0 +1,6 @@
+version: '2'
+services:
+  elasticsearch-amp:
+    build: .
+    image: appcelerator/elasticsearch-amp
+    command: "--version"

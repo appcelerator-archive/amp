@@ -1,0 +1,17 @@
+services:
+  - docker
+
+script:
+  - export NATS_VERSION=$TRAVIS_BRANCH
+  - export DOCKER_IMAGE="appcelerator/amp-nats-streaming"
+  - export DOCKER_TAG=$TRAVIS_BRANCH
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then export DOCKER_TAG="latest"; fi
+  - "echo NATS_VERSION: $NATS_VERSION"
+  - "echo DOCKER_IMAGE: $DOCKER_IMAGE"
+  - "echo DOCKER_TAG: $DOCKER_TAG"
+  - ./update.sh "$NATS_VERSION"
+
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker build -t "$DOCKER_IMAGE":"$DOCKER_TAG" .
+  - docker push "$DOCKER_IMAGE":"$DOCKER_TAG"

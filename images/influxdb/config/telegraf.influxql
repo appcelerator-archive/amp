@@ -1,0 +1,20 @@
+# pre 1.0
+ALTER  RETENTION POLICY "default" ON telegraf DURATION 1d SHARD DURATION 2h DEFAULT
+# since 1.0
+CREATE RETENTION POLICY "default" ON telegraf DURATION 1d REPLICATION 1 SHARD DURATION 2h DEFAULT
+CREATE RETENTION POLICY "warm"    ON telegraf DURATION 15d REPLICATION 1 SHARD DURATION 1d
+CREATE RETENTION POLICY "cold"    ON telegraf DURATION 51w REPLICATION 1 SHARD DURATION 7d
+
+CREATE CONTINUOUS QUERY cq_docker_cpu_1m         ON telegraf BEGIN SELECT  mean(usage_percent) AS mean_usage_percent INTO telegraf."warm".downsampled_docker_container_cpu FROM telegraf."default".docker_container_cpu GROUP BY time(1m), * END
+CREATE CONTINUOUS QUERY cq_docker_mem_1m         ON telegraf BEGIN SELECT  mean(usage_percent) AS mean_usage_percent INTO telegraf."warm".downsampled_docker_container_mem FROM telegraf."default".docker_container_mem GROUP BY time(1m), * END
+CREATE CONTINUOUS QUERY cq_docker_net_1m         ON telegraf BEGIN SELECT  mean(rx_bytes) AS mean_rx_bytes, mean(tx_bytes) AS mean_tx_bytes INTO telegraf."warm".downsampled_docker_container_net FROM telegraf."default".docker_container_net GROUP BY time(1m), * END
+CREATE CONTINUOUS QUERY cq_docker_1m             ON telegraf BEGIN SELECT  max(n_containers) AS max_n_containers, max(n_images) AS max_n_images INTO telegraf."warm".downsampled_docker FROM telegraf."default".docker GROUP BY time(1m), * END
+CREATE CONTINUOUS QUERY cq_docker_data_1m        ON telegraf BEGIN SELECT  100 *  mean(used) / mean(total) AS mean_usage_percent INTO telegraf."warm".downsampled_docker_data FROM telegraf."default".docker_data GROUP BY time(1m), * END
+CREATE CONTINUOUS QUERY cq_docker_metadata_1m    ON telegraf BEGIN SELECT  100 *  mean(used) / mean(total) AS mean_usage_percent INTO telegraf."warm".downsampled_docker_metadata FROM telegraf."default".docker_metadata GROUP BY time(1m), * END
+
+CREATE CONTINUOUS QUERY cq_docker_cpu_1h         ON telegraf BEGIN SELECT  mean(mean_usage_percent) AS mean_usage_percent INTO telegraf."cold".downsampled_docker_container_cpu FROM telegraf."warm".downsampled_docker_container_cpu_container_cpu GROUP BY time(1h), * END
+CREATE CONTINUOUS QUERY cq_docker_mem_1h         ON telegraf BEGIN SELECT  mean(mean_usage_percent) AS mean_usage_percent INTO telegraf."cold".downsampled_docker_container_mem FROM telegraf."warm".downsampled_docker_container_mem GROUP BY time(1h), * END
+CREATE CONTINUOUS QUERY cq_docker_net_1h         ON telegraf BEGIN SELECT  mean(mean_rx_bytes) AS mean_rx_bytes, mean(mean_tx_bytes) AS mean_tx_bytes INTO telegraf."cold".downsampled_docker_container_net FROM telegraf."warm".downsampled_docker_container_net GROUP BY time(1h), * END
+CREATE CONTINUOUS QUERY cq_docker_1h             ON telegraf BEGIN SELECT  max(max_n_containers) AS max_n_containers, max(max_n_images) AS max_n_images INTO telegraf."cold".downsampled_docker FROM telegraf."warm".downsampled_docker GROUP BY time(1h), * END
+CREATE CONTINUOUS QUERY cq_docker_data_1h        ON telegraf BEGIN SELECT  mean(mean_usage_percent) AS mean_usage_percent INTO telegraf."cold".downsampled_docker_data FROM telegraf."warm".downsampled_docker_data GROUP BY time(1h), * END
+CREATE CONTINUOUS QUERY cq_docker_metadata_1h    ON telegraf BEGIN SELECT  mean(mean_usage_percent) AS mean_usage_percent INTO telegraf."cold".downsampled_docker_metadata FROM telegraf."warm".downsampled_docker_metadata GROUP BY time(1h), * END

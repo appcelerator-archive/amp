@@ -1,0 +1,11 @@
+var warn =	2
+var crit =	3
+stream
+    |from()
+        .measurement('system')
+    |alert()
+        .id('{{ index .Tags "io.appcelerator.amp.label" }}/host/{{ .Name }}')
+        .message('{{ .ID }} is {{ .Level }} load: {{ index .Fields "load1" }}, {{ index .Fields "load5" }}, {{ index .Fields "load15" }}')
+        .warn(lambda: "load5" > warn)
+        .crit(lambda: "load15" > crit)
+    |httpOut('system')

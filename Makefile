@@ -260,6 +260,9 @@ check:
 build-image:
 	@BUILD=$(BUILD) $(PWD)/build-amp-image.sh $(TAG)
 
+build-all-images:
+	@BUILD=$(BUILD) $(PWD)/images/build-images.sh $(TAG)
+
 run: build-image
 	@CID=$(shell docker run --net=host -d --name $(SERVER) $(IMAGE)) && echo $${CID}
 

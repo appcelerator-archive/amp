@@ -1,0 +1,16 @@
+var info	= 60
+var warn	= 85
+var crit	= 95
+
+stream
+    |from()
+        .measurement('downsampled_docker_container_cpu')
+        .groupBy('container_name')
+        .where(lambda: "cpu" == 'cpu-total')
+    |alert()
+        .id('{{ index .Tags "io.appcelerator.amp.label" }}/{{ index .Tags "com.docker.swarm.service.name" }}{{ index .Tags "com.docker.compose.service" }}/{{ .Name }}')
+        .message('{{ .ID }} is {{ .Level }} usage percent: {{ index .Fields "mean_usage_percent" }}')
+        .info(lambda: "mean_usage_percent" > info)
+        .warn(lambda: "mean_usage_percent" > warn)
+        .crit(lambda: "mean_usage_percent" > crit)
+    |httpOut('cpu')
