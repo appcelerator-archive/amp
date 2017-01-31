@@ -11,7 +11,7 @@ export BUILD="${BUILD:-$(git rev-parse HEAD | cut -c1-8)}"
 export OWNER="${OWNER:-appcelerator}"
 export REPO="${REPO:-github.com/$OWNER/amp}"
 
-TOOLS_VERSION=1.0.0
+TOOLS_VERSION=1.1.0
 TOOLS=appcelerator/amptools:$TOOLS_VERSION
 LOCALTOOLS=amptools:$TOOLS_VERSION
 
