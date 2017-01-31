@@ -95,10 +95,16 @@ CLIBINARY=$(CLI).alpine
 CLIIMG := appcelerator/amp
 CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
 CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
+# to run the docker command with sudo, set the with_sudo variable
+ifdef with_sudo
+DOCKER_CMD := sudo docker
+else
+DOCKER_CMD := docker
+endif
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
 	@GOPATH=/go go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
-	@docker build -t $(CLIIMG) $(CMDDIR)/$(CLI)
+	@$(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 
 build-cli: $(CLITARGET)
 
