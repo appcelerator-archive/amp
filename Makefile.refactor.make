@@ -6,7 +6,7 @@ BASEDIR := $(shell echo $${PWD})
 # Variables declared here are used by this Makefile *and* are exported to
 # override default values used by supporting scripts in the hack directory
 # =============================================================================
-export UG := $(shell echo "$$(id -u $${USER}):$$(id -g $${USER})")
+export UG := $(shell echo "$$(id -u):$$(id -g)")
 
 export VERSION := $(shell cat VERSION)
 export BUILD := $(shell git rev-parse HEAD | cut -c1-8)
@@ -14,22 +14,6 @@ export LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 export OWNER := appcelerator
 export REPO := github.com/$(OWNER)/amp
-
-# =============================================================================
-# COMMON FILE AND DIRECTORY FILTERS AND GLOB VARS
-# =============================================================================
-EXCLUDE_DIRS_FILTER := -not -path './.*' -not -path './.*/*' \
-	-not -path './dist' -not -path './dist/*' \
-	-not -path './docs' -not -path './docs/*' \
-	-not -path './hack' -not -path './hack/*' \
-	-not -path './images' -not -path './images/*' \
-	-not -path './project' -not -path './project/*' \
-	-not -path './vendor' -not -path './vendor/*'
-
-INCLUDE_DIRS_FILTER := -path './*' -path './*/*' $(EXCLUDE_DIRS_FILTER)
-
-SRCDIRS := $(shell find . -type d $(EXCLUDE_DIRS_FILTER))
-GOSRC := $(shell find . -type f -name '*.go' $(EXCLUDE_DIRS_FILTER))
 
 # COMMON DIRECTORIES
 # =============================================================================
@@ -46,7 +30,7 @@ all: build
 GLIDETARGETS := vendor
 
 $(GLIDETARGETS): glide.yaml
-	@hack/amptools glide install
+	@glide install
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
@@ -54,7 +38,7 @@ install-deps: $(GLIDETARGETS)
 
 .PHONY: update-deps
 update-deps:
-	@hack/amptools glide update
+	@glide update
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
@@ -71,8 +55,9 @@ cleanall-glide: clean-glide
 # Generate *.pb.go, *.pb.gw.go files in any non-excluded directory
 # with *.proto files.
 # =============================================================================
-PROTOFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER))
-PROTOGWFILES := $(shell find . -type f -name '*.proto' $(EXCLUDE_DIRS_FILTER) -exec grep -l 'google.api.http' {} \;)
+PROTODIRS := api cmd data tests
+PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
+PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
 # Generate swagger.json files for protobuf types even if only exposed over gRPC, not REST API
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOFILES:.proto=.swagger.json)
 
@@ -85,7 +70,7 @@ PROTOOPTS := \
 
 %.pb.go %.pb.gw.go %.swagger.json: %.proto
 	@echo $<
-	@hack/amptools protoc $(PROTOOPTS) /go/src/$(REPO)/$<
+	@protoc $(PROTOOPTS) /go/src/$(REPO)/$<
 
 protoc: $(PROTOTARGETS)
 
@@ -109,10 +94,10 @@ CLI := amp
 CLIBINARY=$(CLI).alpine
 CLIIMG := appcelerator/amp
 CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
-CLISRC := $(shell find ./cmd/amp -type f -name '*.go' $(EXCLUDE_DIRS_FILTER))
+CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
-	@hack/amptools go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
+	@go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
 	@docker build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 
 build-cli: $(CLITARGET)
@@ -127,3 +112,5 @@ clean-cli:
 build: $(PROTOTARGETS)
 	@echo To be implemented...
 
+dump:
+	@echo $(CLISRC)
