@@ -11,7 +11,7 @@ export BUILD="${BUILD:-$(git rev-parse HEAD | cut -c1-8)}"
 export OWNER="${OWNER:-appcelerator}"
 export REPO="${REPO:-github.com/$OWNER/amp}"
 
-TOOLS_VERSION=1.0.0
+TOOLS_VERSION=1.1.0
 TOOLS=appcelerator/amptools:$TOOLS_VERSION
 LOCALTOOLS=amptools:$TOOLS_VERSION
 
@@ -32,6 +32,8 @@ EOF
 
 docker image list $LOCALTOOLS | grep -q "amptools" || map_user
 
+SUDOOPTS=""
+echo "$@" | grep -qv make || SUDOOPTS="-e with_sudo=1"
 docker run -it --rm --name amptools \
     -u $UG \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -42,6 +44,7 @@ docker run -it --rm --name amptools \
     -e BUILD=$BUILD \
     -e OWNER=$OWNER \
     -e REPO=$REPO \
+    $SUDOOPTS \
     $LOCALTOOLS "$@"
 
 cleanup() {
