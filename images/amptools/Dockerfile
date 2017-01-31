@@ -1,4 +1,4 @@
-FROM appcelerator/gotools
+FROM appcelerator/gotools:1.3.0
 RUN apk --no-cache add sudo iproute2
 
 # Add Docker client from:
