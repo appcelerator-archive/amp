@@ -57,6 +57,16 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (out *pb.E
 	return
 }
 
+// ForgotLogin implements account.ForgotLogin
+func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (out *pb.Empty, err error) {
+	out = &pb.Empty{}
+	err = in.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // PasswordReset implements account.PasswordReset
 func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (out *pb.Empty, err error) {
 	out = &pb.Empty{}

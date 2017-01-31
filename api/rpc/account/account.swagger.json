@@ -768,6 +768,22 @@
           "AccountService"
         ]
       }
+    },
+    "/v1/findAccount": {
+      "get": {
+        "operationId": "ForgotLogin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "tags": [
+          "AccountService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -900,6 +916,15 @@
           "format": "string"
         },
         "password": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountForgotLoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
           "type": "string",
           "format": "string"
         }

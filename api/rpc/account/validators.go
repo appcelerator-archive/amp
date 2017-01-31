@@ -49,10 +49,10 @@ func CheckEmailAddress(email string) (processedEmail string, err error) {
 
 func CheckPasswordStrength(password string) error {
 	s := safe.New(8, 0, 0, safe.Simple)
-	err := s.SetWords("./vendor/github.com/holys/safe/words.dat")
-	if err != nil {
-		return grpc.Errorf(codes.NotFound, "cannot find common password data")
-	}
+	// err = s.SetWords("./vendor/github.com/holys/safe/words.dat")
+	// if err != nil {
+	// 	return grpc.Errorf(codes.NotFound, err)
+	// }
 	str := s.Check(password)
 	if str < 2 {
 		return grpc.Errorf(codes.InvalidArgument, "password too weak")
@@ -149,6 +149,16 @@ func (r *EditRequest) Validate() (err error) {
 			return
 		}
 	}
+	return
+}
+
+//
+func (r *ForgotLoginRequest) Validate() (err error) {
+	email, err := CheckEmailAddress(r.Email)
+	if err != nil {
+		return
+	}
+	r.Email = email
 	return
 }
 

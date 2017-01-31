@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
+	"golang.org/x/net/context"
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/fatih/color"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
-	"strings"
 )
 
 var (
@@ -51,6 +52,16 @@ var (
 		This is used if the user cannot access the verification link sent.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP)
+		},
+	}
+
+	forgotLoginCmd = &cobra.Command{
+		Use:   "forgot-login",
+		Short: "Get username for an account",
+		Long: `The forgot login command is used when a user has forgotten their username.
+		An email is sent to the email entered with the username registered to it.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return forgotLogin(AMP)
 		},
 	}
 
@@ -163,6 +174,7 @@ func init() {
 	RootCmd.AddCommand(AccountCmd)
 	AccountCmd.AddCommand(signUpCmd)
 	AccountCmd.AddCommand(verifyCmd)
+	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdResetCmd)
 	AccountCmd.AddCommand(pwdChangeCmd)
 }
@@ -172,7 +184,7 @@ func init() {
 func login(amp *client.AMP) (err error) {
 	fmt.Println("This will login an existing personal AMP account.")
 	username := getUserName()
-	password, err := getPassword()
+	password, err := getPwd()
 	if err != nil {
 		return fmt.Errorf("user error: %v", err)
 	}
@@ -185,9 +197,8 @@ func login(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", err.Error())
 	}
-
 	color.Set(color.FgGreen, color.Bold)
-	fmt.Println("Welcome back, ", username)
+	fmt.Println("Welcome back,", username)
 	color.Unset()
 	return nil
 }
@@ -197,21 +208,18 @@ func login(amp *client.AMP) (err error) {
 func signUp(amp *client.AMP) error {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	username := getUserName()
-	email, err := getEmailAddress()
-	if err != nil {
-		return fmt.Errorf("user error: %v", err)
-	}
+	email := getEmailAddress()
 	request := &account.SignUpRequest{
 		Name:  username,
 		Email: email,
 	}
 	client := account.NewAccountServiceClient(amp.Conn)
-	_, err = client.SignUp(context.Background(), request)
+	_, err := client.SignUp(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("Server error: %v", err)
 	}
 	color.Set(color.FgGreen, color.Bold)
-	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
+	fmt.Println("Hi", username, "!, Please check your email to complete the signup process")
 	color.Unset()
 	return nil
 }
@@ -219,10 +227,10 @@ func signUp(amp *client.AMP) error {
 // verify gets the unique code sent to the visitor in the email verification, registered username and new password,
 // validates the command line inputs and activates their account.
 func verify(amp *client.AMP) (err error) {
-	fmt.Println("This will verify your account and confirm your password.")
+	fmt.Println("This will verify your account and confirm your password")
 	code := getCode()
 	username := getUserName()
-	password, err := getPassword()
+	password, err := getPwd()
 	if err != nil {
 		return fmt.Errorf("user error: %v", err)
 	}
@@ -237,7 +245,26 @@ func verify(amp *client.AMP) (err error) {
 		return fmt.Errorf("server error: %v", err)
 	}
 	color.Set(color.FgGreen, color.Bold)
-	fmt.Println("Hi", username, "! Your account has now be activated.")
+	fmt.Println("Hi", username, "! Your account has now be activated")
+	color.Unset()
+	return nil
+}
+
+// forgotLogin validates the input command line arguments and sends a users username
+// to their registered email address by invoking the corresponsind rpc/storage method
+func forgotLogin(amp *client.AMP) error {
+	fmt.Println("This will send your username to your registered email address")
+	email := getEmailAddress()
+	request := &account.ForgotLoginRequest{
+		Email: email,
+	}
+	client := account.NewAccountServiceClient(amp.Conn)
+	_, err := client.ForgotLogin(context.Background(), request)
+	if err != nil {
+		return fmt.Errorf("server error: %v", err)
+	}
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Println("Your login name has been sent to the address:", email)
 	color.Unset()
 	return nil
 }
@@ -245,18 +272,15 @@ func verify(amp *client.AMP) (err error) {
 // pwdReset validates the input command line arguments and resets the current password
 // by invoking the corresponding rpc/storage method
 func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) error {
-	fmt.Println("This will send a password reset email to your email address.")
+	fmt.Println("This will send a password reset email to your email address")
 	username := getUserName()
-	email, err := getEmailAddress()
-	if err != nil {
-		return fmt.Errorf("user error: %v", err)
-	}
+	email := getEmailAddress()
 	request := &account.PasswordResetRequest{
 		Name:  username,
 		Email: email,
 	}
 	client := account.NewAccountServiceClient(amp.Conn)
-	_, err = client.PasswordReset(context.Background(), request)
+	_, err := client.PasswordReset(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("server error: %v", err)
 	}
@@ -271,12 +295,17 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) error {
 func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
-	existingPwd := getExistingPwd()
+	fmt.Print("existing ")
+	existingPwd, err := getPwd()
+	if err != nil {
+		return fmt.Errorf("user error: %v", err)
+	}
+	fmt.Print("new ")
 	newPwd, err := getPwd()
 	if err != nil {
 		return fmt.Errorf("user error: %v", err)
 	}
-	getConfirmNewPwd(newPwd)
+	getConfirmPwd(newPwd)
 	request := &account.PasswordChangeRequest{
 		Name:             username,
 		ExistingPassword: existingPwd,
@@ -301,7 +330,7 @@ func getUserName() (username string) {
 	err := account.CheckUserName(username)
 	if err != nil {
 		color.Set(color.FgRed, color.Bold)
-		fmt.Println("Username is mandatory. Try again!")
+		fmt.Println("username is mandatory. Try again!")
 		color.Unset()
 		fmt.Println("")
 		return getUserName()
@@ -309,39 +338,7 @@ func getUserName() (username string) {
 	return
 }
 
-func getEmailAddress() (email string, err error) {
-	fmt.Print("email: ")
-	color.Set(color.FgGreen, color.Bold)
-	fmt.Scanln(&email)
-	color.Unset()
-	email, err = account.CheckEmailAddress(email)
-	if err != nil {
-		color.Set(color.FgRed, color.Bold)
-		fmt.Println("Email in incorrect format. Try again!")
-		color.Unset()
-		fmt.Println("")
-		return getEmailAddress()
-	}
-	return
-}
-
-func getCode() (code string) {
-	fmt.Print("code: ")
-	color.Set(color.FgGreen, color.Bold)
-	fmt.Scanln(&code)
-	color.Unset()
-	err := account.CheckVerificationCodeFormat(code)
-	if err != nil {
-		color.Set(color.FgRed, color.Bold)
-		fmt.Println("Code is invalid. Code must be 8 characters long. Try again!")
-		color.Unset()
-		fmt.Println("")
-		return getCode()
-	}
-	return
-}
-
-func getPassword() (password string, err error) {
+func getPwd() (password string, err error) {
 	fmt.Print("password: ")
 	pw, err := gopass.GetPasswd()
 	if err != nil {
@@ -356,32 +353,7 @@ func getPassword() (password string, err error) {
 	err = account.CheckPassword(password)
 	if err != nil {
 		color.Set(color.FgRed, color.Bold)
-		fmt.Println("Password is mandatory. Try again!")
-		color.Unset()
-		fmt.Println("")
-		return getPassword()
-	}
-	err = account.CheckPasswordStrength(password)
-	if err != nil {
-		if strings.Contains(err.Error(), "password too weak") {
-			color.Set(color.FgRed, color.Bold)
-			fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
-			color.Unset()
-			fmt.Println("")
-			return getPassword()
-		} else {
-			return
-		}
-	}
-	return
-}
-
-func getPwd() (password string, err error) {
-	fmt.Print("password: ")
-	password, err = checkPwd()
-	if err != nil {
-		color.Set(color.FgRed, color.Bold)
-		fmt.Println(err)
+		fmt.Println("password is mandatory. Try again!")
 		color.Unset()
 		fmt.Println("")
 		return getPwd()
@@ -390,7 +362,7 @@ func getPwd() (password string, err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "password too weak") {
 			color.Set(color.FgRed, color.Bold)
-			fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
+			fmt.Println("password entered is too weak. password must be at least 8 characters long. Try again!")
 			color.Unset()
 			fmt.Println("")
 			return getPwd()
@@ -401,42 +373,53 @@ func getPwd() (password string, err error) {
 	return
 }
 
-func getConfirmNewPwd(newPwd string) {
+func getConfirmPwd(newPwd string) error {
 	color.Set(color.FgGreen, color.Bold)
 	fmt.Println("Enter Password again for confirmation.")
 	color.Unset()
-	confirmNewPwd, _ := getPwd()
+	fmt.Print("confirm ")
+	confirmNewPwd, err := getPwd()
+	if err != nil {
+		return err
+	}
 	if confirmNewPwd != newPwd {
 		color.Set(color.FgRed, color.Bold)
 		fmt.Println("Password mismatch. Try again!")
 		color.Unset()
 		fmt.Println("")
-		getConfirmNewPwd(newPwd)
-	} else {
-		return
+		getConfirmPwd(newPwd)
 	}
-	return
+	return nil
 }
 
-func getExistingPwd() (existingPwd string) {
-	fmt.Print("existing password: ")
-	existingPwd, err := checkPwd()
+func getCode() (code string) {
+	fmt.Print("Code: ")
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Scanln(&code)
+	color.Unset()
+	err := account.CheckVerificationCodeFormat(code)
 	if err != nil {
 		color.Set(color.FgRed, color.Bold)
-		fmt.Println(err)
+		fmt.Println("code is invalid. Code must be 8 characters long. Try again!")
 		color.Unset()
 		fmt.Println("")
-		return getExistingPwd()
+		return getCode()
 	}
 	return
 }
 
-func checkPwd() (pwd string, err error) {
-	pw, err := gopass.GetPasswd()
+func getEmailAddress() (email string) {
+	fmt.Print("email: ")
+	color.Set(color.FgGreen, color.Bold)
+	fmt.Scanln(&email)
+	color.Unset()
+	email, err := account.CheckEmailAddress(email)
 	if err != nil {
-		return
+		color.Set(color.FgRed, color.Bold)
+		fmt.Println("email in incorrect format. Try again!")
+		color.Unset()
+		fmt.Println("")
+		return getEmailAddress()
 	}
-	pwd = string(pw)
-	err = account.CheckPassword(pwd)
-	return pwd, err
+	return
 }
