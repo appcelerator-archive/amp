@@ -67,9 +67,22 @@ func CheckVerificationCodeFormat(code string) error {
 	return nil
 }
 
+// Validate validates LogInRequest
+func (r *LogInRequest) Validate() (err error) {
+	err = CheckUserName(r.Name)
+	if err != nil {
+		return
+	}
+	err = CheckPassword(r.Password)
+	if err != nil {
+		return
+	}
+	return
+}
+
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
-	err = CheckUserName(r.Name)
+	err = checkName(r.Name)
 	if err != nil {
 		return
 	}
@@ -78,16 +91,28 @@ func (r *SignUpRequest) Validate() (err error) {
 		return
 	}
 	r.Email = email
+	return
+}
+
+// Validate validates VerificationRequest
+func (r *VerificationRequest) Validate() (err error) {
+	err = CheckVerificationCodeFormat(r.Code)
+	if err != nil {
+		return
+	}
+	err = CheckUserName(r.Name)
+	if err != nil {
+		return
+	}
+	err = CheckPassword(r.Password)
+	if err != nil {
+		return
+	}
 	err = CheckPasswordStrength(r.Password)
 	if err != nil {
 		return
 	}
 	return
-}
-
-// Validate validates VerificationRequest
-func (r *VerificationRequest) Validate() error {
-	return CheckVerificationCodeFormat(r.Code)
 }
 
 // Validate validates OrganizationRequest
@@ -102,11 +127,6 @@ func (r *OrganizationRequest) Validate() (err error) {
 	}
 	r.Email = email
 	return
-}
-
-// Validate validates LogInRequest
-func (r *LogInRequest) Validate() error {
-	return CheckUserName(r.Name)
 }
 
 // Validate validates EditRequest

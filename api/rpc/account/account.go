@@ -16,16 +16,27 @@ const hash = "$s2$16384$8$1$42JtddBgSqrJMwc3YuTNW+R+$ISfEF3jkvYQYk4AK/UFAxdqnmNF
 // Server is used to implement account.AccountServer
 type Server struct{}
 
+// Login implements account.Login
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply, err error) {
+	out = &SessionReply{}
+	err = in.Validate()
+	if err != nil {
+		return nil, err
+	}
+	_, err = passlib.Verify(in.Password, hash)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
+	}
+	out.SessionKey = in.Name
+	return
+}
+
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionReply, err error) {
 	out = &SessionReply{}
 	err = in.Validate()
 	if err != nil {
 		return nil, err
-	}
-	_, err = passlib.Hash(in.Password)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
 	out.SessionKey = in.Name
 	return
@@ -64,22 +75,6 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 		return nil, err
 	}
 	return
-}
-
-// Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply, err error) {
-	out = &SessionReply{}
-	err = in.Validate()
-	if err != nil {
-		return nil, err
-	}
-	_, err = passlib.Verify(in.Password, hash)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
-	}
-	out.SessionKey = in.Name
-	return
-
 }
 
 // Switch implements account.Switch
