@@ -103,7 +103,7 @@ func Start(config Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
-	account.RegisterAccountServiceServer(s, account.NewMockServer())
+	account.RegisterAccountServiceServer(s, account.NewServer(runtime.Store))
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)

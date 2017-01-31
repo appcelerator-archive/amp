@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-
 	//"github.com/appcelerator/amp/config"
+	"strings"
+
+	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/schema"
+	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"golang.org/x/net/context"
-	"strings"
-	"github.com/appcelerator/amp/config"
-	"github.com/appcelerator/amp/data/storage"
 )
 
 const (
@@ -26,8 +26,9 @@ var (
 	testAcct schema.Account
 )
 
-func newContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), defTimeout)
+func newContext() context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), defTimeout)
+	return ctx
 }
 
 func initData() {
@@ -41,7 +42,9 @@ func initData() {
 	store.Delete(context.Background(), "/accounts", true, nil)
 
 }
+
 var store storage.Interface
+
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Lshortfile)
@@ -55,12 +58,12 @@ func TestMain(m *testing.M) {
 	}
 	initData()
 	log.Printf("connected to etcd at %v", strings.Join(store.Endpoints(), ","))
-	acct = account.NewStore(store, context.Background())
+	acct = account.NewStore(store)
 	os.Exit(m.Run())
 }
 
 func TestAddAccount(t *testing.T) {
-	s, err := acct.AddAccount(&testAcct)
+	s, err := acct.AddAccount(newContext(), &testAcct)
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,15 +72,15 @@ func TestAddAccount(t *testing.T) {
 	}
 }
 func TestListAccount(t *testing.T) {
-	acct.AddAccount(&testAcct)
+	acct.AddAccount(newContext(), &testAcct)
 	testAcct.Name = "axway2"
-	testAcct.Id=""
-	acct.AddAccount(&testAcct)
-	testAcct.Id=""
+	testAcct.Id = ""
+	acct.AddAccount(newContext(), &testAcct)
+	testAcct.Id = ""
 	testAcct.Name = "axway3"
 	testAcct.Type = schema.AccountType_USER
-	acct.AddAccount(&testAcct)
-	accList, err := acct.GetAccounts(schema.AccountType_USER)
+	acct.AddAccount(newContext(), &testAcct)
+	accList, err := acct.GetAccounts(newContext(), schema.AccountType_USER)
 	if err != nil {
 		log.Panicf("Unable to Fetch Account List: %v", err)
 	}

@@ -5,8 +5,9 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"github.com/appcelerator/amp/data/account"
+	data "github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/schema"
+	"github.com/appcelerator/amp/data/storage"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,13 +17,13 @@ import (
 
 // Server is used to implement account.AccountServer
 type Server struct {
-	db account.Interface
+	db data.Interface
 }
 
-// NewMockServer returns an instance of Server that uses a mock database
-func NewMockServer() *Server {
+// NewServer returns an instance of Server
+func NewServer(store storage.Interface) *Server {
 	return &Server{
-		db: account.NewMock(),
+		db: data.NewStore(store),
 	}
 }
 
@@ -37,7 +38,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionRep
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
-	s.db.AddAccount(&schema.Account{
+	s.db.AddAccount(ctx, &schema.Account{
 		Name:         in.Name,
 		Type:         schema.AccountType_USER,
 		Email:        in.Email,
@@ -55,7 +56,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (out *pb.E
 	if err != nil {
 		return nil, err
 	}
-	s.db.Verify(in.Name)
+	s.db.Verify(ctx, in.Name)
 	fmt.Println(in.Code)
 	return
 }
@@ -67,7 +68,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	if err != nil {
 		return nil, err
 	}
-	organizationID, err := s.db.AddAccount(&schema.Account{
+	organizationID, err := s.db.AddAccount(ctx, &schema.Account{
 		Name:       in.Name,
 		Type:       schema.AccountType_ORGANIZATION,
 		Email:      in.Email,
@@ -76,7 +77,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	if err != nil {
 		return
 	}
-	s.db.AddTeam(&schema.Team{
+	s.db.AddTeam(ctx, &schema.Team{
 		OrgAccountId: organizationID,
 		Name:         "owners",
 		Desc:         in.Name + " owners team",
@@ -93,7 +94,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply
 	if err != nil {
 		return nil, err
 	}
-	account, err := s.db.GetAccount(in.Name)
+	account, err := s.db.GetAccount(ctx, in.Name)
 	if account == nil {
 		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
@@ -115,7 +116,7 @@ func (s *Server) Switch(ctx context.Context, in *TeamRequest) (out *pb.Empty, er
 	if in.Organization == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
-	organization, err := s.db.GetAccount(in.Organization)
+	organization, err := s.db.GetAccount(ctx, in.Organization)
 	if err != nil {
 		return
 	}
@@ -136,7 +137,7 @@ func (s *Server) ListAccounts(ctx context.Context, in *AccountsRequest) (out *Li
 	} else {
 		return nil, grpc.Errorf(codes.InvalidArgument, "account type is mandatory")
 	}
-	accounts, err := s.db.GetAccounts(accountType)
+	accounts, err := s.db.GetAccounts(ctx, accountType)
 	if err != nil {
 		return
 	}
@@ -155,7 +156,7 @@ func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (out
 	if in.Name == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
-	account, err := s.db.GetAccount(in.Name)
+	account, err := s.db.GetAccount(ctx, in.Name)
 	if err != nil {
 		return
 	}
@@ -176,7 +177,7 @@ func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (out *Account
 	if err != nil {
 		return
 	}
-	account, err := s.db.GetAccount(in.Name)
+	account, err := s.db.GetAccount(ctx, in.Name)
 	if err != nil {
 		return
 	}
