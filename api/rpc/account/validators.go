@@ -154,7 +154,7 @@ func (r *EditRequest) Validate() (err error) {
 
 // Validate validates PasswordResetRequest
 func (r *PasswordResetRequest) Validate() (err error) {
-	err = CheckUserName(r.Username)
+	err = CheckUserName(r.Name)
 	if err != nil {
 		return
 	}
@@ -163,5 +163,26 @@ func (r *PasswordResetRequest) Validate() (err error) {
 		return
 	}
 	r.Email = email
+	return
+}
+
+// Validate validates PasswordChangeRequest
+func (r *PasswordChangeRequest) Validate() (err error) {
+	err = CheckUserName(r.Name)
+	if err != nil {
+		return
+	}
+	if r.ExistingPassword != "" {
+		err = CheckPassword(r.ExistingPassword)
+		if err != nil {
+			return
+		}
+	}
+	if r.NewPassword != "" {
+		err = CheckPasswordStrength(r.NewPassword)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
