@@ -71,8 +71,11 @@ import:
 - package: gopkg.in/hlandau/measurable.v1
   version: ^1.0.1
 - package: github.com/holys/safe
+- package: github.com/ory-am/ladon
+  version: ^0.4.1
+- package: github.com/jmoiron/sqlx
 testImport:
 - package: github.com/stretchr/testify
-  version: ^1.1.4
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert
