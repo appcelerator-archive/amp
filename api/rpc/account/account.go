@@ -27,16 +27,27 @@ func NewServer(store storage.Interface) *Server {
 	}
 }
 
+// Login implements account.Login
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply, err error) {
+	out = &SessionReply{}
+	err = in.Validate()
+	if err != nil {
+		return nil, err
+	}
+	_, err = passlib.Verify(in.Password, hash)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
+	}
+	out.SessionKey = in.Name
+	return
+}
+
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (out *SessionReply, err error) {
 	out = &SessionReply{}
 	err = in.Validate()
 	if err != nil {
 		return nil, err
-	}
-	hash, err := passlib.Hash(in.Password)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "hashing error")
 	}
 	s.db.AddAccount(ctx, &schema.Account{
 		Name:         in.Name,
@@ -71,8 +82,8 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (o
 	return
 }
 
-// CreateOrganization implements account.CreateOranization
-func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
+// PasswordChange implements account.PasswordReset
+func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (out *pb.Empty, err error) {
 	out = &pb.Empty{}
 	err = in.Validate()
 	if err != nil {
@@ -97,13 +108,14 @@ func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest
 	return
 }
 
-// Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply, err error) {
-	out = &SessionReply{}
+// CreateOrganization implements account.CreateOranization
+func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
+	out = &pb.Empty{}
 	err = in.Validate()
 	if err != nil {
 		return nil, err
 	}
+<<<<<<< HEAD
 	account, err := s.db.GetAccount(ctx, in.Name)
 	if account == nil {
 		return nil, grpc.Errorf(codes.NotFound, "user not found")
@@ -116,8 +128,9 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (out *SessionReply
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
 	out.SessionKey = in.Name
+=======
+>>>>>>> origin/v0.6.x
 	return
-
 }
 
 // Switch implements account.Switch

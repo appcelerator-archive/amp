@@ -22,7 +22,13 @@ service AccountService {
   };
   rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{username}/passwordReset",
+      post: "/v1/account/{name}/passwordReset",
+      body: "*"
+    };
+  };
+  rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/passwordChange",
       body: "*"
     };
   };
@@ -147,7 +153,6 @@ service AccountService {
 message SignUpRequest {
   string name = 1;
   string email = 2;
-  string password = 3;
 }
 
 message VerificationRequest {
@@ -257,6 +262,12 @@ message PermissionRequest {
 }
 
 message PasswordResetRequest {
-  string username = 1;
+  string name = 1;
   string email = 2;
+}
+
+message PasswordChangeRequest {
+  string name = 1;
+  string existingPassword = 2;
+  string newPassword = 3;
 }

@@ -201,6 +201,72 @@
         ]
       }
     },
+    "/v1/account/{name}/passwordChange": {
+      "post": {
+        "operationId": "PasswordChange",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordChangeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/v1/account/{name}/passwordReset": {
+      "post": {
+        "operationId": "PasswordReset",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordResetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
     "/v1/account/{name}/signup": {
       "post": {
         "operationId": "SignUp",
@@ -702,39 +768,6 @@
           "AccountService"
         ]
       }
-    },
-    "/v1/account/{username}/passwordReset": {
-      "post": {
-        "operationId": "PasswordReset",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "username",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordResetRequest"
-            }
-          }
-        ],
-        "tags": [
-          "AccountService"
-        ]
-      }
     }
   },
   "definitions": {
@@ -937,6 +970,23 @@
         }
       }
     },
+    "accountPasswordChangeRequest": {
+      "type": "object",
+      "properties": {
+        "existingPassword": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "newPassword": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountPasswordResetRequest": {
       "type": "object",
       "properties": {
@@ -944,7 +994,7 @@
           "type": "string",
           "format": "string"
         },
-        "username": {
+        "name": {
           "type": "string",
           "format": "string"
         }
@@ -997,10 +1047,6 @@
           "format": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "password": {
           "type": "string",
           "format": "string"
         }
