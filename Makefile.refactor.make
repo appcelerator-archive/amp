@@ -87,6 +87,15 @@ clean: clean-glide clean-protoc clean-cli
 cleanall: clean cleanall-glide
 
 # =============================================================================
+# BUILD
+# =============================================================================
+#
+DOCKER_CMD := sudo docker
+
+build: $(PROTOTARGETS)
+	@echo To be implemented...
+
+# =============================================================================
 # BUILD CLI (`amp`)
 # Saves binary to `cmd/amp/amp.alpine`, then builds `appcelerator/amp` image
 # =============================================================================
@@ -96,11 +105,6 @@ CLIIMG := appcelerator/amp
 CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
 CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
 # to run the docker command with sudo, set the with_sudo variable
-ifdef with_sudo
-DOCKER_CMD := sudo docker
-else
-DOCKER_CMD := docker
-endif
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
 	@GOPATH=/go go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
@@ -113,10 +117,11 @@ clean-cli:
 	@rm -f $(CLITARGET)
 
 # =============================================================================
-# BUILD
+# BUILD AMPLIFIER (`amplifier`)
+# Saves binary to `cmd/amplifier/amplifier.alpine`,
+# then builds `appcelerator/amplifier` image
 # =============================================================================
-build: $(PROTOTARGETS)
-	@echo To be implemented...
 
 dump:
-	@echo $(CLISRC)
+	@echo $(DOCKER_CMD)
+

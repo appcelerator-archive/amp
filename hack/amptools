@@ -32,8 +32,6 @@ EOF
 
 docker image list $LOCALTOOLS | grep -q "amptools" || map_user
 
-SUDOOPTS=""
-echo "$@" | grep -qv make || SUDOOPTS="-e with_sudo=1"
 docker run -it --rm --name amptools \
     -u $UG \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -44,7 +42,6 @@ docker run -it --rm --name amptools \
     -e BUILD=$BUILD \
     -e OWNER=$OWNER \
     -e REPO=$REPO \
-    $SUDOOPTS \
     $LOCALTOOLS "$@"
 
 cleanup() {
