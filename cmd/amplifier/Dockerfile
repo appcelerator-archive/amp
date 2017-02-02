@@ -1,3 +1,3 @@
 FROM alpine
-COPY amplifier.alpine /usr/local/bin/amp
+COPY amplifier.alpine /usr/local/bin/amplifier
 ENTRYPOINT [ "amplifier" ]
