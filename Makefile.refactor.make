@@ -83,7 +83,7 @@ clean-protoc:
 # CLEAN
 # =============================================================================
 .PHONY: clean cleanall
-clean: clean-glide clean-protoc clean-cli
+clean: clean-glide clean-protoc clean-cli clean-server
 cleanall: clean cleanall-glide
 
 # =============================================================================
@@ -92,28 +92,58 @@ cleanall: clean cleanall-glide
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: $(PROTOTARGETS)
-	@echo To be implemented...
+build: install-deps protoc build-server build-cli
 
 # =============================================================================
 # BUILD CLI (`amp`)
 # Saves binary to `cmd/amp/amp.alpine`, then builds `appcelerator/amp` image
 # =============================================================================
-CLI := amp
-CLIBINARY=$(CLI).alpine
-CLIIMG := appcelerator/amp
-CLITARGET := $(CMDDIR)/$(CLI)/$(CLIBINARY)
-CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
+AMP := amp
+AMPBINARY=$(AMP).alpine
+AMPIMG := appcelerator/amp
+AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
+AMPDIRS := cmd/$(AMP) config tests
+AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 # to run the docker command with sudo, set the with_sudo variable
 
-$(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
-	@go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
-	@$(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
+$(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC)
+	@go build $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
+	@$(DOCKER_CMD) build -t $(AMPIMG) $(CMDDIR)/$(AMP)
 
-build-cli: $(CLITARGET)
+build-cli: $(AMPTARGET)
+
+rebuild-cli: clean-cli build-cli
 
 .PHONY: clean-cli
 clean-cli:
 	@rm -f $(CLITARGET)
 
+# =============================================================================
+# BUILD SERVER (`amplifier`)
+# Saves binary to `cmd/amplifier/amplifier.alpine`,
+# then builds `appcelerator/amplifier` image
+# =============================================================================
+AMPL := amplifier
+AMPLBINARY=$(AMPL).alpine
+AMPLIMG := appcelerator/amplifier
+AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
+AMPLDIRS := cmd/$(AMPL) config api data tests
+AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
+# to run the docker command with sudo, set the with_sudo variable
+
+$(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
+	@go build $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
+	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL)
+
+build-server: $(AMPLTARGET)
+
+rebuild-server: clean-server build-server
+
+.PHONY: clean-cli
+clean-server:
+	@rm -f $(AMPLTARGET)
+
+
+dump:
+	@echo $(DOCKER_CMD)
 
