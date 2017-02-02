@@ -108,7 +108,6 @@ CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
 	@go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
-	@ echo $(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 	@$(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 
 build-cli: $(CLITARGET)
@@ -117,12 +116,4 @@ build-cli: $(CLITARGET)
 clean-cli:
 	@rm -f $(CLITARGET)
 
-# =============================================================================
-# BUILD AMPLIFIER (`amplifier`)
-# Saves binary to `cmd/amplifier/amplifier.alpine`,
-# then builds `appcelerator/amplifier` image
-# =============================================================================
-
-dump:
-	@echo $(DOCKER_CMD)
 
