@@ -89,8 +89,8 @@ cleanall: clean cleanall-glide
 # =============================================================================
 # BUILD
 # =============================================================================
-#
-DOCKER_CMD := sudo docker
+# When running in the amptools container, set DOCKER_CMD="sudo docker"
+DOCKER_CMD ?= "docker"
 
 build: $(PROTOTARGETS)
 	@echo To be implemented...
@@ -107,7 +107,8 @@ CLISRC := $(shell find ./cmd/amp -type f -name '*.go')
 # to run the docker command with sudo, set the with_sudo variable
 
 $(CLITARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(CLISRC)
-	@GOPATH=/go go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
+	@go build $(LDFLAGS) -o $(CLITARGET) $(REPO)/$(CMDDIR)/$(CLI)
+	@ echo $(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 	@$(DOCKER_CMD) build -t $(CLIIMG) $(CMDDIR)/$(CLI)
 
 build-cli: $(CLITARGET)
