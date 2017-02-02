@@ -8,6 +8,12 @@ import "google/protobuf/timestamp.proto";
 
 
 service AccountService {
+  rpc Login (LogInRequest) returns (SessionReply) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/login",
+      body: "*"
+    };
+  };
   rpc SignUp (SignUpRequest) returns (SessionReply) {
     option (google.api.http) = {
       post: "/v1/account/{name}/signup",
@@ -19,6 +25,11 @@ service AccountService {
       post: "/v1/account/{name}/verification/{code}",
       body: "*"
     };
+  };
+  rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty) {
+   option (google.api.http) = {
+     get: "/v1/findAccount"
+   };
   };
   rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
@@ -35,12 +46,6 @@ service AccountService {
   rpc CreateOrganization (OrganizationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/account/{name}/createOrganization",
-      body: "*"
-    };
-  };
-  rpc Login (LogInRequest) returns (SessionReply) {
-    option (google.api.http) = {
-      post: "/v1/account/{name}/login",
       body: "*"
     };
   };
@@ -150,6 +155,11 @@ service AccountService {
   };
 }
 
+message LogInRequest {
+  string name = 1;
+  string password = 2;
+}
+
 message SignUpRequest {
   string name = 1;
   string email = 2;
@@ -161,13 +171,23 @@ message VerificationRequest {
   string code = 3;
 }
 
-message LogInRequest {
-  string name = 1;
-  string password = 2;
-}
-
 message SessionReply {
   string sessionKey = 1;
+}
+
+message ForgotLoginRequest {
+  string email = 1;
+}
+
+message PasswordResetRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message PasswordChangeRequest {
+  string name = 1;
+  string existingPassword = 2;
+  string newPassword = 3;
 }
 
 message OrganizationRequest {
@@ -259,15 +279,4 @@ message PermissionRequest {
   string organization = 2;
   string level = 3;
   string resource_id = 4;
-}
-
-message PasswordResetRequest {
-  string name = 1;
-  string email = 2;
-}
-
-message PasswordChangeRequest {
-  string name = 1;
-  string existingPassword = 2;
-  string newPassword = 3;
 }
