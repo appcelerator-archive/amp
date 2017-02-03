@@ -57,8 +57,7 @@
             "name": "ident",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -75,14 +74,12 @@
       "type": "object",
       "properties": {
         "target": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "aliases": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         }
       }
@@ -91,12 +88,10 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "protocol": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "publish_port": {
           "type": "integer",
@@ -112,8 +107,7 @@
       "type": "object",
       "properties": {
         "ident": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -121,8 +115,7 @@
       "type": "object",
       "properties": {
         "ident": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -147,8 +140,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -156,12 +148,10 @@
       "type": "object",
       "properties": {
         "image": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "replicated": {
           "$ref": "#/definitions/serviceReplicatedService"
@@ -172,8 +162,7 @@
         "env": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "networks": {
@@ -185,15 +174,13 @@
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "container_labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "publish_specs": {
@@ -205,20 +192,17 @@
         "args": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "mounts": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "registry_auth": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     }
