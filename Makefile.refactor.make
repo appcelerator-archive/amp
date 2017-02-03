@@ -108,7 +108,7 @@ AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 
 $(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC)
 	@go build $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
-	@$(DOCKER_CMD) build -t $(AMPIMG) $(CMDDIR)/$(AMP)
+	@$(DOCKER_CMD) build -t $(AMPIMG) $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
 
 build-cli: $(AMPTARGET)
 
@@ -116,7 +116,7 @@ rebuild-cli: clean-cli build-cli
 
 .PHONY: clean-cli
 clean-cli:
-	@rm -f $(CLITARGET)
+	@rm -f $(AMPTARGET)
 
 # =============================================================================
 # BUILD SERVER (`amplifier`)
@@ -133,7 +133,7 @@ AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 
 $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 	@go build $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
-	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL)
+	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
 
 build-server: $(AMPLTARGET)
 
