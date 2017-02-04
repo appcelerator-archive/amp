@@ -30,7 +30,7 @@ all: build
 GLIDETARGETS := vendor
 
 $(GLIDETARGETS): glide.yaml
-	@glide install
+	@glide install || (rm -rf vendor; exit 1)
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
