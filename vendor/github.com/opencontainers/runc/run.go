@@ -32,9 +32,9 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 			Usage: `path to the root of the bundle directory, defaults to the current directory`,
 		},
 		cli.StringFlag{
-			Name:  "console",
+			Name:  "console-socket",
 			Value: "",
-			Usage: "specify the pty slave path for use with the container",
+			Usage: "path to an AF_UNIX socket which will receive a file descriptor referencing the master end of the console's pseudoterminal",
 		},
 		cli.BoolFlag{
 			Name:  "detach, d",
@@ -59,6 +59,9 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
 		if err := revisePidFile(context); err != nil {
 			return err
 		}

@@ -23,7 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/nats-io/nats/util"
+	"github.com/nats-io/go-nats/util"
 	"github.com/nats-io/nuid"
 )
 
@@ -129,6 +129,11 @@ type Options struct {
 	MaxReconnect   int
 	ReconnectWait  time.Duration
 	Timeout        time.Duration
+
+	// FlusherTimeout is the maximum time to wait for the flusher loop
+	// to be able to finish writing to the underlying socket.
+	FlusherTimeout time.Duration
+
 	PingInterval   time.Duration // disabled if 0 or negative
 	MaxPingsOut    int
 	ClosedCB       ConnHandler
@@ -1006,12 +1011,7 @@ func (nc *Conn) processExpectedInfo() error {
 		return err
 	}
 
-	err = nc.checkForSecure()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return nc.checkForSecure()
 }
 
 // Sends a protocol control message by queuing into the bufio writer
@@ -1445,7 +1445,7 @@ func (nc *Conn) waitForMsgs(s *Subscription) {
 		}
 
 		// Deliver the message.
-		if m != nil && (max <= 0 || delivered <= max) {
+		if m != nil && (max == 0 || delivered <= max) {
 			mcb(m)
 		}
 		// If we have hit the max for delivered msgs, remove sub.
@@ -1580,6 +1580,7 @@ func (nc *Conn) flusher() {
 	bw := nc.bw
 	conn := nc.conn
 	fch := nc.fch
+	flusherTimeout := nc.Opts.FlusherTimeout
 	nc.mu.Unlock()
 
 	if conn == nil || bw == nil {
@@ -1598,11 +1599,18 @@ func (nc *Conn) flusher() {
 			return
 		}
 		if bw.Buffered() > 0 {
+			// Allow customizing how long we should wait for a flush to be done
+			// to prevent unhealthy connections blocking the client for too long.
+			if flusherTimeout > 0 {
+				conn.SetWriteDeadline(time.Now().Add(flusherTimeout))
+			}
+
 			if err := bw.Flush(); err != nil {
 				if nc.err == nil {
 					nc.err = err
 				}
 			}
+			conn.SetWriteDeadline(time.Time{})
 		}
 		nc.mu.Unlock()
 	}
@@ -1646,18 +1654,24 @@ func (nc *Conn) processInfo(info string) error {
 	if err := json.Unmarshal([]byte(info), &nc.info); err != nil {
 		return err
 	}
-	updated := false
 	urls := nc.info.ConnectURLs
-	for _, curl := range urls {
-		if _, present := nc.urls[curl]; !present {
-			if err := nc.addURLToPool(fmt.Sprintf("nats://%s", curl), true); err != nil {
-				continue
+	if len(urls) > 0 {
+		// If randomization is allowed, shuffle the received array, not the
+		// entire pool. We want to preserve the pool's order up to this point
+		// (this would otherwise be problematic for the (re)connect loop).
+		if !nc.Opts.NoRandomize {
+			for i := range urls {
+				j := rand.Intn(i + 1)
+				urls[i], urls[j] = urls[j], urls[i]
 			}
-			updated = true
 		}
-	}
-	if updated && !nc.Opts.NoRandomize {
-		nc.shufflePool()
+		for _, curl := range urls {
+			if _, present := nc.urls[curl]; !present {
+				if err := nc.addURLToPool(fmt.Sprintf("nats://%s", curl), true); err != nil {
+					continue
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -1806,7 +1820,6 @@ func (nc *Conn) publish(subj, reply string, data []byte) error {
 	msgh = append(msgh, b[i:]...)
 	msgh = append(msgh, _CRLF_...)
 
-	// FIXME, do deadlines here
 	_, err := nc.bw.Write(msgh)
 	if err == nil {
 		_, err = nc.bw.Write(data)

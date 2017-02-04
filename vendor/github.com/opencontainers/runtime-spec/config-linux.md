@@ -6,9 +6,9 @@ The Linux container specification uses various kernel features like namespaces, 
 ## Default Filesystems
 
 The Linux ABI includes both syscalls and several special file paths.
-Applications expecting a Linux environment will very likely expect these files paths to be setup correctly.
+Applications expecting a Linux environment will very likely expect these file paths to be setup correctly.
 
-The following filesystems MUST be made available in each application's filesystem
+The following filesystems MUST be made available in each application's filesystem:
 
 |   Path   |  Type  |
 | -------- | ------ |
@@ -26,7 +26,7 @@ For more information, see [the man page](http://man7.org/linux/man-pages/man7/na
 Namespaces are specified as an array of entries inside the `namespaces` root field.
 The following parameters can be specified to setup namespaces:
 
-* **`type`** *(string, REQUIRED)* - namespace type. The following namespaces types are supported:
+* **`type`** *(string, REQUIRED)* - namespace type. The following namespace types are supported:
     * **`pid`** processes inside the container will only be able to see other processes inside the same container.
     * **`network`** the container will have its own network stack.
     * **`mount`** the container will have an isolated mount table.
@@ -40,6 +40,7 @@ The following parameters can be specified to setup namespaces:
 If a path is specified, that particular file is used to join that type of namespace.
 If a namespace type is not specified in the `namespaces` array, the container MUST inherit the [runtime namespace](glossary.md#runtime-namespace) of that type.
 If a new namespace is not created (because the namespace type is not listed, or because it is listed with a `path`), runtimes MUST assume that the setup for that namespace has already been done and error out if the config specifies anything else related to that namespace.
+If a `namespaces` field contains duplicated namespaces with same `type`, the runtime MUST error out.
 
 ###### Example
 
@@ -73,6 +74,18 @@ If a new namespace is not created (because the namespace type is not listed, or 
 
 ## User namespace mappings
 
+**`uidMappings`** (array of objects, OPTIONAL) describes the user namespace uid mappings from the host to the container.
+**`gidMappings`** (array of objects, OPTIONAL) describes the user namespace gid mappings from the host to the container.
+
+Each entry has the following structure:
+
+* **`hostID`** (uint32, REQUIRED)* - is the starting uid/gid on the host to be mapped to *containerID*.
+* **`containerID`** (uint32, REQUIRED)* - is the starting uid/gid in the container.
+* **`size`** (uint32, REQUIRED)* - is the number of ids to be mapped.
+
+The runtime SHOULD NOT modify the ownership of referenced filesystems to realize the mapping.
+There is a limit of 5 mappings which is the Linux kernel hard limit.
+
 ###### Example
 
 ```json
@@ -80,29 +93,24 @@ If a new namespace is not created (because the namespace type is not listed, or 
         {
             "hostID": 1000,
             "containerID": 0,
-            "size": 10
+            "size": 32000
         }
     ],
     "gidMappings": [
         {
             "hostID": 1000,
             "containerID": 0,
-            "size": 10
+            "size": 32000
         }
     ]
 ```
 
-uid/gid mappings describe the user namespace mappings from the host to the container.
-The runtime SHOULD NOT modify the ownership of referenced filesystems to realize the mapping.
-*hostID* is the starting uid/gid on the host to be mapped to *containerID* which is the starting uid/gid in the container and *size* refers to the number of ids to be mapped.
-There is a limit of 5 mappings which is the Linux kernel hard limit.
-
 ## Devices
 
-**`devices`** (array, OPTIONAL) lists devices that MUST be available in the container.
+**`devices`** (array of objects, OPTIONAL) lists devices that MUST be available in the container.
 The runtime may supply them however it likes (with [mknod][mknod.2], by bind mounting from the runtime mount namespace, etc.).
 
-The following parameters can be specified:
+Each entry has the following structure:
 
 * **`type`** *(string, REQUIRED)* - type of device: `c`, `b`, `u` or `p`.
   More info in [mknod(1)][mknod.1].
@@ -148,7 +156,7 @@ In addition to any devices configured with this setting, the runtime MUST also s
 * [`/dev/random`][random.4]
 * [`/dev/urandom`][random.4]
 * [`/dev/tty`][tty.4]
-* [`/dev/console`][console.4]
+* [`/dev/console`][console.4] is setup if terminal is enabled in the config by bind mounting the pseudoterminal slave to /dev/console.
 * [`/dev/ptmx`][pts.4].
   A [bind-mount or symlink of the container's `/dev/pts/ptmx`][devpts].
 
@@ -199,10 +207,10 @@ However, a runtime MAY attach the container process to additional cgroup control
 
 #### Device whitelist
 
-**`devices`** (array, OPTIONAL) configures the [device whitelist][cgroup-v1-devices].
+**`devices`** (array of objects, OPTIONAL) configures the [device whitelist][cgroup-v1-devices].
 The runtime MUST apply entries in the listed order.
 
-The following parameters can be specified:
+Each entry has the following structure:
 
 * **`allow`** *(boolean, REQUIRED)* - whether the entry is allowed or denied.
 * **`type`** *(string, OPTIONAL)* - type of device: `a` (all), `c` (char), or `b` (block).
@@ -270,7 +278,7 @@ For more information on how these two settings work together, see [the memory cg
 
 #### Memory
 
-`memory` represents the cgroup subsystem `memory` and it's used to set limits on the container's memory usage.
+**`memory`** (object, OPTIONAL) represents the cgroup subsystem `memory` and it's used to set limits on the container's memory usage.
 For more information, see [the memory cgroup man page][cgroup-v1-memory].
 
 The following parameters can be specified to setup the controller:
@@ -302,7 +310,7 @@ The following parameters can be specified to setup the controller:
 
 #### CPU
 
-`cpu` represents the cgroup subsystems `cpu` and `cpusets`.
+**`cpu`** (object, OPTIONAL) represents the cgroup subsystems `cpu` and `cpusets`.
 For more information, see [the cpusets cgroup man page][cgroup-v1-cpusets].
 
 The following parameters can be specified to setup the controller:
@@ -337,7 +345,7 @@ The following parameters can be specified to setup the controller:
 
 #### Block IO Controller
 
-`blockIO` represents the cgroup subsystem `blkio` which implements the block io controller.
+**`blockIO`** (object, OPTIONAL) represents the cgroup subsystem `blkio` which implements the block IO controller.
 For more information, see [the kernel cgroups documentation about blkio][cgroup-v1-blkio].
 
 The following parameters can be specified to setup the controller:
@@ -353,7 +361,8 @@ The following parameters can be specified to setup the controller:
 
     You must specify at least one of `weight` or `leafWeight` in a given entry, and can specify both.
 
-* **`blkioThrottleReadBpsDevice`**, **`blkioThrottleWriteBpsDevice`**, **`blkioThrottleReadIOPSDevice`**, **`blkioThrottleWriteIOPSDevice`** *(array, OPTIONAL)* - specify the list of devices which will be IO rate limited. The following parameters can be specified per-device:
+* **`blkioThrottleReadBpsDevice`**, **`blkioThrottleWriteBpsDevice`**, **`blkioThrottleReadIOPSDevice`**, **`blkioThrottleWriteIOPSDevice`** *(array, OPTIONAL)* - specify the list of devices which will be IO rate limited.
+  The following parameters can be specified per-device:
     * **`major, minor`** *(int64, REQUIRED)* - major, minor numbers for device. More info in `man mknod`.
     * **`rate`** *(uint64, REQUIRED)* - IO rate limit for the device
 
@@ -395,11 +404,11 @@ The following parameters can be specified to setup the controller:
 
 #### Huge page limits
 
-`hugepageLimits` represents the `hugetlb` controller which allows to limit the
+**`hugepageLimits`** (array of objects, OPTIONAL) represents the `hugetlb` controller which allows to limit the
 HugeTLB usage per control group and enforces the controller limit during page fault.
 For more information, see the [kernel cgroups documentation about HugeTLB][cgroup-v1-hugetlb].
 
-`hugepageLimits` is an array of entries, each having the following structure:
+Each entry has the following structure:
 
 * **`pageSize`** *(string, REQUIRED)* - hugepage size
 
@@ -418,15 +427,15 @@ For more information, see the [kernel cgroups documentation about HugeTLB][cgrou
 
 #### Network
 
-`network` represents the cgroup subsystems `net_cls` and `net_prio`.
+**`network`** (object, OPTIONAL) represents the cgroup subsystems `net_cls` and `net_prio`.
 For more information, see [the net\_cls cgroup man page][cgroup-v1-net-cls] and [the net\_prio cgroup man page][cgroup-v1-net-prio].
 
-The following parameters can be specified to setup these cgroup controllers:
+The following parameters can be specified to setup the controller:
 
 * **`classID`** *(uint32, OPTIONAL)* - is the network class identifier the cgroup's network packets will be tagged with
 
-* **`priorities`** *(array, OPTIONAL)* - specifies a list of objects of the priorities assigned to traffic originating from
-processes in the group and egressing the system on various interfaces. The following parameters can be specified per-priority:
+* **`priorities`** *(array, OPTIONAL)* - specifies a list of objects of the priorities assigned to traffic originating from processes in the group and egressing the system on various interfaces.
+  The following parameters can be specified per-priority:
     * **`name`** *(string, REQUIRED)* - interface name
     * **`priority`** *(uint32, REQUIRED)* - priority applied to the interface
 
@@ -450,7 +459,7 @@ processes in the group and egressing the system on various interfaces. The follo
 
 #### PIDs
 
-`pids` represents the cgroup subsystem `pids`.
+**`pids`** (object, OPTIONAL) represents the cgroup subsystem `pids`.
 For more information, see [the pids cgroup man page][cgroup-v1-pids].
 
 The following parameters can be specified to setup the controller:
@@ -467,7 +476,7 @@ The following parameters can be specified to setup the controller:
 
 ## Sysctl
 
-`sysctl` allows kernel parameters to be modified at runtime for the container.
+**`sysctl`** (object, OPTIONAL) allows kernel parameters to be modified at runtime for the container.
 For more information, see [the man page](http://man7.org/linux/man-pages/man8/sysctl.8.html)
 
 ###### Example
@@ -540,7 +549,7 @@ Operator Constants:
 
 ## Rootfs Mount Propagation
 
-`rootfsPropagation` sets the rootfs's mount propagation.
+**`rootfsPropagation`** (string, OPTIONAL) sets the rootfs's mount propagation.
 Its value is either slave, private, or shared.
 [The kernel doc](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) has more information about mount propagation.
 
@@ -552,7 +561,8 @@ Its value is either slave, private, or shared.
 
 ## Masked Paths
 
-`maskedPaths` will mask over the provided paths inside the container so that they cannot be read.
+**`maskedPaths`** (array of strings, OPTIONAL) will mask over the provided paths inside the container so that they cannot be read.
+The values MUST be absolute paths in the [container namespace][container-namespace2].
 
 ###### Example
 
@@ -564,7 +574,8 @@ Its value is either slave, private, or shared.
 
 ## Readonly Paths
 
-`readonlyPaths` will set the provided paths as readonly inside the container.
+**`readonlyPaths`** (array of strings, OPTIONAL) will set the provided paths as readonly inside the container.
+The values MUST be absolute paths in the [container namespace][container-namespace2].
 
 ###### Example
 
@@ -576,7 +587,7 @@ Its value is either slave, private, or shared.
 
 ## Mount Label
 
-`mountLabel` will set the Selinux context for the mounts in the container.
+**`mountLabel`** (string, OPTIONAL) will set the Selinux context for the mounts in the container.
 
 ###### Example
 
@@ -584,6 +595,7 @@ Its value is either slave, private, or shared.
     "mountLabel": "system_u:object_r:svirt_sandbox_file_t:s0:c715,c811"
 ```
 
+[container-namespace2]: glossary.md#container_namespace
 [cgroup-v1]: https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt
 [cgroup-v1-blkio]: https://www.kernel.org/doc/Documentation/cgroup-v1/blkio-controller.txt
 [cgroup-v1-cpusets]: https://www.kernel.org/doc/Documentation/cgroup-v1/cpusets.txt

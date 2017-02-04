@@ -60,11 +60,13 @@ import:
   version: ^0.3.4
 - package: github.com/spf13/cobra
 - package: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - package: github.com/spf13/viper
 - package: golang.org/x/net
   subpackages:
   - context
   - websocket
+  - lex
 - package: golang.org/x/oauth2
 - package: google.golang.org/grpc
   version: ^1.0.4
@@ -75,6 +77,9 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.18
 - package: gopkg.in/yaml.v2
+- package: github.com/xeipuuv/gojsonschema
+- package: github.com/xeipuuv/gojsonreference
+- package: github.com/xeipuuv/gojsonpointer
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4
