@@ -89,8 +89,8 @@ func testExecInRlimit(t *testing.T, userns bool) {
 
 	config := newTemplateConfig(rootfs)
 	if userns {
-		config.UidMappings = []configs.IDMap{{0, 0, 1000}}
-		config.GidMappings = []configs.IDMap{{0, 0, 1000}}
+		config.UidMappings = []configs.IDMap{{HostID: 0, ContainerID: 0, Size: 1000}}
+		config.GidMappings = []configs.IDMap{{HostID: 0, ContainerID: 0, Size: 1000}}
 		config.Namespaces = append(config.Namespaces, configs.Namespace{Type: configs.NEWUSER})
 	}
 
@@ -279,14 +279,14 @@ func TestExecInTTY(t *testing.T) {
 		Args: []string{"ps"},
 		Env:  standardEnvironment,
 	}
-	console, err := ps.NewConsole(0, 0)
+	err = container.Run(ps)
+	ok(t, err)
+	console, err := ps.GetConsole()
 	copy := make(chan struct{})
 	go func() {
 		io.Copy(&stdout, console)
 		close(copy)
 	}()
-	ok(t, err)
-	err = container.Run(ps)
 	ok(t, err)
 	select {
 	case <-time.After(5 * time.Second):
@@ -503,8 +503,8 @@ func TestExecInUserns(t *testing.T) {
 	ok(t, err)
 	defer remove(rootfs)
 	config := newTemplateConfig(rootfs)
-	config.UidMappings = []configs.IDMap{{0, 0, 1000}}
-	config.GidMappings = []configs.IDMap{{0, 0, 1000}}
+	config.UidMappings = []configs.IDMap{{HostID: 0, ContainerID: 0, Size: 1000}}
+	config.GidMappings = []configs.IDMap{{HostID: 0, ContainerID: 0, Size: 1000}}
 	config.Namespaces = append(config.Namespaces, configs.Namespace{Type: configs.NEWUSER})
 	container, err := newContainer(config)
 	ok(t, err)

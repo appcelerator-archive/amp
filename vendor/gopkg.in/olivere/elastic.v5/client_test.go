@@ -159,6 +159,23 @@ func TestClientSniffFailure(t *testing.T) {
 	}
 }
 
+func TestClientSnifferCallback(t *testing.T) {
+	var calls int
+	cb := func(node *NodesInfoNode) bool {
+		calls++
+		return false
+	}
+	_, err := NewClient(
+		SetURL("http://127.0.0.1:19200", "http://127.0.0.1:9200"),
+		SetSnifferCallback(cb))
+	if err == nil {
+		t.Fatalf("expected cluster to fail with no nodes found")
+	}
+	if calls != 1 {
+		t.Fatalf("expected 1 call to the sniffer callback, got %d", calls)
+	}
+}
+
 func TestClientSniffDisabled(t *testing.T) {
 	client, err := NewClient(SetSniff(false), SetURL("http://127.0.0.1:9200", "http://127.0.0.1:9201"))
 	if err != nil {
@@ -1021,5 +1038,56 @@ func TestPerformRequestWithTimeout(t *testing.T) {
 		if err != context.DeadlineExceeded {
 			t.Fatalf("expected error context.DeadlineExceeded, got: %v", err)
 		}
+	}
+}
+
+// -- Compression --
+
+// Notice that the trace log does always print "Accept-Encoding: gzip"
+// regardless of whether compression is enabled or not. This is because
+// of the underlying "httputil.DumpRequestOut".
+//
+// Use a real HTTP proxy/recorder to convince yourself that
+// "Accept-Encoding: gzip" is NOT sent when DisableCompression
+// is set to true.
+//
+// See also:
+// https://groups.google.com/forum/#!topic/golang-nuts/ms8QNCzew8Q
+
+func TestPerformRequestWithCompressionEnabled(t *testing.T) {
+	testPerformRequestWithCompression(t, &http.Client{
+		Transport: &http.Transport{
+			DisableCompression: true,
+		},
+	})
+}
+
+func TestPerformRequestWithCompressionDisabled(t *testing.T) {
+	testPerformRequestWithCompression(t, &http.Client{
+		Transport: &http.Transport{
+			DisableCompression: false,
+		},
+	})
+}
+
+func testPerformRequestWithCompression(t *testing.T, hc *http.Client) {
+	client, err := NewClient(SetHttpClient(hc), SetSniff(false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := client.PerformRequest(context.TODO(), "GET", "/", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res == nil {
+		t.Fatal("expected response to be != nil")
+	}
+
+	ret := new(PingResult)
+	if err := json.Unmarshal(res.Body, ret); err != nil {
+		t.Fatalf("expected no error on decode; got: %v", err)
+	}
+	if ret.ClusterName == "" {
+		t.Errorf("expected cluster name; got: %q", ret.ClusterName)
 	}
 }

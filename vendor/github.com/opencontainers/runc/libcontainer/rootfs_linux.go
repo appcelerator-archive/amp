@@ -36,9 +36,11 @@ func needsSetupDev(config *configs.Config) bool {
 	return true
 }
 
-// setupRootfs sets up the devices, mount points, and filesystems for use inside a
-// new mount namespace.
-func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWriter) (err error) {
+// prepareRootfs sets up the devices, mount points, and filesystems for use
+// inside a new mount namespace. It doesn't set anything as ro or pivot_root,
+// because console setup happens inside the caller. You must call
+// finalizeRootfs in order to finish the rootfs setup.
+func prepareRootfs(pipe io.ReadWriter, config *configs.Config) (err error) {
 	if err := prepareRoot(config); err != nil {
 		return newSystemErrorWithCause(err, "preparing rootfs")
 	}
@@ -50,6 +52,7 @@ func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWrit
 				return newSystemErrorWithCause(err, "running premount command")
 			}
 		}
+
 		if err := mountToRootfs(m, config.Rootfs, config.MountLabel); err != nil {
 			return newSystemErrorWithCausef(err, "mounting %q to rootfs %q at %q", m.Source, config.Rootfs, m.Destination)
 		}
@@ -60,17 +63,19 @@ func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWrit
 			}
 		}
 	}
+
 	if setupDev {
 		if err := createDevices(config); err != nil {
 			return newSystemErrorWithCause(err, "creating device nodes")
 		}
-		if err := setupPtmx(config, console); err != nil {
+		if err := setupPtmx(config); err != nil {
 			return newSystemErrorWithCause(err, "setting up ptmx")
 		}
 		if err := setupDevSymlinks(config.Rootfs); err != nil {
 			return newSystemErrorWithCause(err, "setting up /dev symlinks")
 		}
 	}
+
 	// Signal the parent to run the pre-start hooks.
 	// The hooks are run after the mounts are setup, but before we switch to the new
 	// root, so that the old root is still available in the hooks for any mount
@@ -78,9 +83,19 @@ func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWrit
 	if err := syncParentHooks(pipe); err != nil {
 		return err
 	}
+
+	// The reason these operations are done here rather than in finalizeRootfs
+	// is because the console-handling code gets quite sticky if we have to set
+	// up the console before doing the pivot_root(2). This is because the
+	// Console API has to also work with the ExecIn case, which means that the
+	// API must be able to deal with being inside as well as outside the
+	// container. It's just cleaner to do this here (at the expense of the
+	// operation not being perfectly split).
+
 	if err := syscall.Chdir(config.Rootfs); err != nil {
 		return newSystemErrorWithCausef(err, "changing dir to %q", config.Rootfs)
 	}
+
 	if config.NoPivotRoot {
 		err = msMoveRoot(config.Rootfs)
 	} else {
@@ -89,28 +104,38 @@ func setupRootfs(config *configs.Config, console *linuxConsole, pipe io.ReadWrit
 	if err != nil {
 		return newSystemErrorWithCause(err, "jailing process inside rootfs")
 	}
+
 	if setupDev {
 		if err := reOpenDevNull(); err != nil {
 			return newSystemErrorWithCause(err, "reopening /dev/null inside container")
 		}
 	}
+
+	return nil
+}
+
+// finalizeRootfs actually switches the root of the process and sets anything
+// to ro if necessary. You must call prepareRootfs first.
+func finalizeRootfs(config *configs.Config) (err error) {
 	// remount dev as ro if specified
 	for _, m := range config.Mounts {
 		if libcontainerUtils.CleanPath(m.Destination) == "/dev" {
-			if m.Flags&syscall.MS_RDONLY != 0 {
-				if err := remountReadonly(m.Destination); err != nil {
+			if m.Flags&syscall.MS_RDONLY == syscall.MS_RDONLY {
+				if err := remountReadonly(m); err != nil {
 					return newSystemErrorWithCausef(err, "remounting %q as readonly", m.Destination)
 				}
 			}
 			break
 		}
 	}
+
 	// set rootfs ( / ) as readonly
 	if config.Readonlyfs {
 		if err := setReadonly(); err != nil {
 			return newSystemErrorWithCause(err, "setting rootfs as readonly")
 		}
 	}
+
 	syscall.Umask(0022)
 	return nil
 }
@@ -321,7 +346,7 @@ func getCgroupMounts(m *configs.Mount) ([]*configs.Mount, error) {
 		binds = append(binds, &configs.Mount{
 			Device:           "bind",
 			Source:           filepath.Join(mm.Mountpoint, relDir),
-			Destination:      filepath.Join(m.Destination, strings.Join(mm.Subsystems, ",")),
+			Destination:      filepath.Join(m.Destination, filepath.Base(mm.Mountpoint)),
 			Flags:            syscall.MS_BIND | syscall.MS_REC | m.Flags,
 			PropagationFlags: m.PropagationFlags,
 		})
@@ -578,16 +603,13 @@ func setReadonly() error {
 	return syscall.Mount("/", "/", "bind", syscall.MS_BIND|syscall.MS_REMOUNT|syscall.MS_RDONLY|syscall.MS_REC, "")
 }
 
-func setupPtmx(config *configs.Config, console *linuxConsole) error {
+func setupPtmx(config *configs.Config) error {
 	ptmx := filepath.Join(config.Rootfs, "dev/ptmx")
 	if err := os.Remove(ptmx); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err := os.Symlink("pts/ptmx", ptmx); err != nil {
 		return fmt.Errorf("symlink dev ptmx %s", err)
-	}
-	if console != nil {
-		return console.mount(config.Rootfs, config.MountLabel)
 	}
 	return nil
 }
@@ -678,17 +700,26 @@ func createIfNotExists(path string, isDir bool) error {
 	return nil
 }
 
-// remountReadonly will bind over the top of an existing path and ensure that it is read-only.
-func remountReadonly(path string) error {
+// readonlyPath will make a path read only.
+func readonlyPath(path string) error {
+	if err := syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REMOUNT|syscall.MS_RDONLY|syscall.MS_REC, "")
+}
+
+// remountReadonly will remount an existing mount point and ensure that it is read-only.
+func remountReadonly(m *configs.Mount) error {
+	var (
+		dest  = m.Destination
+		flags = m.Flags
+	)
 	for i := 0; i < 5; i++ {
-		if err := syscall.Mount("", path, "", syscall.MS_REMOUNT|syscall.MS_RDONLY, ""); err != nil && !os.IsNotExist(err) {
+		if err := syscall.Mount("", dest, "", uintptr(flags|syscall.MS_REMOUNT|syscall.MS_RDONLY), ""); err != nil {
 			switch err {
-			case syscall.EINVAL:
-				// Probably not a mountpoint, use bind-mount
-				if err := syscall.Mount(path, path, "", syscall.MS_BIND, ""); err != nil {
-					return err
-				}
-				return syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REMOUNT|syscall.MS_RDONLY|syscall.MS_REC|defaultMountFlags, "")
 			case syscall.EBUSY:
 				time.Sleep(100 * time.Millisecond)
 				continue
@@ -698,7 +729,7 @@ func remountReadonly(path string) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("unable to mount %s as readonly max retries reached", path)
+	return fmt.Errorf("unable to mount %s as readonly max retries reached", dest)
 }
 
 // maskPath masks the top of the specified path inside a container to avoid

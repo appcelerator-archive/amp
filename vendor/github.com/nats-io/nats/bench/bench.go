@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 	"github.com/nats-io/nuid"
 )
 
@@ -169,7 +169,7 @@ func (s *Sample) Seconds() float64 {
 // NewSampleGroup initializer
 func NewSampleGroup() *SampleGroup {
 	s := new(SampleGroup)
-	s.Samples = make([]*Sample, 0, 0)
+	s.Samples = make([]*Sample, 0)
 	return s
 }
 
