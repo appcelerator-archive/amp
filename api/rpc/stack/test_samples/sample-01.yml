@@ -1,9 +1,19 @@
+version: "3"
+
 services:
-  pinger:
-    image: appcelerator/pinger
-    replicas: 2
+    pinger:
+        image: appcelerator/pinger
+        deploy:
+            mode: replicated
+            replicas: 2
+            labels:
+                io.amp.mapping: "www:3000"
+        networks:
+        - public
+
+networks:
     public:
-      - name: www
-        publish_port: 90
-        internal_port: 3000
-        protocol: tcp
+        external:
+            name: ampcore_public               
+
+

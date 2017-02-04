@@ -4,22 +4,22 @@ import "time"
 
 const (
 	// AmplifierDefaultEndpoint is the default amplifier endpoint
-	AmplifierDefaultEndpoint = "amplifier:50101"
+	AmplifierDefaultEndpoint = "ampcore_amplifier:50101"
 
 	// EtcdDefaultEndpoint is the default etcd endpoint
-	EtcdDefaultEndpoint = "http://etcd:2379"
+	EtcdDefaultEndpoint = "http://ampcore_etcd:2379"
 
 	// ElasticsearchDefaultURL is the default elasticsearch endpoint
-	ElasticsearchDefaultURL = "http://elasticsearch:9200"
+	ElasticsearchDefaultURL = "http://amplog_elasticsearch:9200"
 
 	// NatsDefaultURL is the default nats endpoint
-	NatsDefaultURL = "nats://nats:4222"
+	NatsDefaultURL = "nats://ampcore_nats:4222"
 
 	// NatsClusterID is the id of the infrastructure nats cluster
 	NatsClusterID = "test-cluster"
 
 	// InfluxDefaultURL is the default influxdb endpoint
-	InfluxDefaultURL = "http://influxdb:8086"
+	InfluxDefaultURL = "http://ampmonitor_influxdb:8086"
 
 	// DockerDefaultURL is the default docker endpoint
 	DockerDefaultURL = "unix:///var/run/docker.sock"

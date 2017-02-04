@@ -131,10 +131,10 @@ func (agt *Agent) addContainer(ID string) {
 			if inspect.State.Health != nil {
 				data.health = inspect.State.Health.Status
 			}
-			if data.labels["io.amp.stack.name"] == "" {
+			if data.labels["com.docker.stack.namespace"] == "" {
 				fmt.Printf("add infrastructure container  %s\n", data.name)
 			} else {
-				fmt.Printf("add user container %s, stack=%s service=%s\n", data.name, data.labels["io.amp.stack.name"], data.labels["com.docker.swarm.service.name"])
+				fmt.Printf("add user container %s, stack=%s service=%s\n", data.name, data.labels["com.docker.stack.namespace"], data.labels["com.docker.swarm.service.name"])
 			}
 			agt.containers[ID] = &data
 		} else {

@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+
+    listener:
+        image: ${imageAmp}
+        command: ["amp-function-listener"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+                io.amp.mapping: "fn:80"
+        labels:
+            io.amp.role: "infrastructure"                                
+        networks:
+            - infra
+            - public
+
+    worker:
+        image: ${imageAmp}
+        command: ["amp-function-worker"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock                
+        networks:
+            - infra 
+
+networks:
+    infra:
+        external:
+            name: ampcore_infra
+    public:
+        external:
+            name: ampcore_public
+
+  
+

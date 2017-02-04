@@ -1,51 +1,107 @@
 package main
 
 import (
-	"os"
-
+	"fmt"
+	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
+	"os"
+	"sort"
+	"text/tabwriter"
 )
+
+type statusLine struct {
+	stackName string
+	status    string
+}
 
 // PlatformStatus is the main command for attaching platform subcommands.
 var PlatformStatus = &cobra.Command{
 	Use:   "status [OPTION...]",
-	Short: "Get AMP platform status",
+	Short: "Display infrastrucure stacks status",
 	Long: `The status command retrieves current status of AMP platform (stopped, partially running, running).
 The command returns 1 if status is not running.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		getAMPStatus(cmd, args)
+		getAMPStatus(AMP, cmd, args)
 	},
 }
 
 func init() {
-	PlatformStatus.Flags().BoolP("quiet", "q", false, "Suppress terminal output")
-	PlatformStatus.Flags().BoolP("local", "l", false, "Use local amp image")
 	PlatformCmd.AddCommand(PlatformStatus)
 }
 
-func getAMPStatus(cmd *cobra.Command, args []string) error {
-	manager := &ampManager{}
-	if cmd.Flag("quiet").Value.String() == "true" {
-		manager.silence = true
+func getAMPStatus(amp *client.AMP, cmd *cobra.Command, args []string) error {
+	manager := newManager(cmd.Flag("verbose").Value.String())
+	ctx, err := amp.GetAuthorizedContext()
+	if err != nil {
+		manager.fatalf("%v\n", err)
 	}
-	if cmd.Flag("verbose").Value.String() == "true" {
-		manager.verbose = true
+	statusList := []statusLine{}
+	local := false
+	if err := amp.Connect(); err != nil {
+		if !amp.IsLocalhost() {
+			manager.fatalf("Amp server is not available:\n", err)
+		}
+		if err := manager.connectDocker(); err != nil {
+			manager.fatalf("Docker connect error: %v\n", err)
+		}
+		line := getLocalAmpcoreStatus(ctx, manager)
+		statusList = append(statusList, line)
+		local = true
+	} else {
+		sort.Strings(stack.InfraStackList)
+		for _, stackName := range stack.InfraStackList {
+			request := &stack.StackRequest{Name: stackName}
+			client := stack.NewStackServiceClient(amp.Conn)
+			reply, err := client.GetStackStatus(ctx, request)
+			status := ""
+			if err != nil {
+				status = fmt.Sprintf("error: %v", err)
+			} else {
+				status = reply.Answer
+			}
+			statusList = append(statusList, statusLine{stackName: stackName, status: status})
+		}
 	}
-	if cmd.Flag("local").Value.String() == "true" {
-		manager.local = true
-	}
-	if err := manager.init(""); err != nil {
-		manager.printf(colError, "Compute status error: %v\n", err)
-		os.Exit(1)
-	}
-	if cmd.Flag("server").Value.String() != "" {
-		manager.printf(colWarn, "Error: --server has no effect for status command\n")
-		os.Exit(1)
-	}
-	manager.computeStatus(getAMPInfrastructureStack(manager))
-	manager.printf(colRegular, "status: %s\n", manager.status)
-	if manager.status != "running" {
-		os.Exit(1)
-	}
+	displayStatus(manager, statusList, local)
 	return nil
+}
+
+func getLocalAmpcoreStatus(ctx context.Context, manager *ampManager) statusLine {
+	request := &stack.StackRequest{Name: "ampcore"}
+	server := stack.NewServer(nil, manager.docker)
+	reply, err := server.GetStackStatus(ctx, request)
+	status := ""
+	if err != nil {
+		status = fmt.Sprintf("error: %v", err)
+	} else {
+		status = reply.Answer
+	}
+	return statusLine{stackName: "ampcore", status: status}
+}
+
+func displayStatus(manager *ampManager, statusList []statusLine, local bool) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+	if local {
+		fmt.Fprintf(w, "%s\n", manager.fcolRegular("STACK\tSTATUS (local)"))
+	} else {
+		fmt.Fprintf(w, "%s\n", manager.fcolRegular("STACK\tSTATUS"))
+	}
+	for _, line := range statusList {
+		status := line.status
+		stackName := line.stackName
+		if status == "running" {
+			fmt.Fprintf(w, "%s\n", manager.fcolSuccess(fmt.Sprintf("%s\t%s", stackName, status)))
+		} else if status == "starting" {
+			fmt.Fprintf(w, "%s\n", manager.fcolRegular(fmt.Sprintf("%s\t%s", stackName, status)))
+		} else if status == "failling" {
+			fmt.Fprintf(w, "%s\n", manager.fcolWarn(fmt.Sprintf("%s\t%s", stackName, status)))
+		} else if status == "stopped" {
+			fmt.Fprintf(w, "%s\n", manager.fcolInfo(fmt.Sprintf("%s\t%s", stackName, status)))
+		} else {
+			fmt.Fprintf(w, "%s\n", manager.fcolError(fmt.Sprintf("%s\t%s", stackName, status)))
+		}
+	}
+	w.Flush()
 }

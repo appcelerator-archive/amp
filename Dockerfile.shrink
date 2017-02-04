@@ -8,6 +8,8 @@ COPY ./amp-function-listener /usr/local/bin/amp-function-listener
 COPY ./amp-function-worker /usr/local/bin/amp-function-worker
 COPY ./adm-server /usr/local/bin/adm-server
 COPY ./adm-agent /usr/local/bin/adm-agent
+COPY amp*.yml /var/lib/amp/
+COPY amp.var /var/lib/amp/
 EXPOSE 50101
 ENTRYPOINT []
 CMD [ "amplifier" ]

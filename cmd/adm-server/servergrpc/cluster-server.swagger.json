@@ -24,55 +24,6 @@
         }
       }
     },
-    "servergrpcAmpMonitorAnswers": {
-      "type": "object",
-      "properties": {
-        "outputs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/servergrpcTypedOutput"
-          }
-        }
-      }
-    },
-    "servergrpcAmpRequest": {
-      "type": "object",
-      "properties": {
-        "client_id": {
-          "type": "string"
-        },
-        "silence": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "verbose": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "force": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "local": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "node": {
-          "type": "string"
-        }
-      }
-    },
-    "servergrpcAmpRet": {
-      "type": "object"
-    },
-    "servergrpcAmpStatusAnswer": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
-        }
-      }
-    },
     "servergrpcClientMes": {
       "type": "object",
       "properties": {

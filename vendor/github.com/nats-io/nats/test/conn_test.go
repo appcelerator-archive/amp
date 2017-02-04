@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 func TestDefaultConnection(t *testing.T) {
@@ -287,12 +287,13 @@ func TestServerTLSHintConnections(t *testing.T) {
 
 	nc, err := nats.Connect(secureURL, nats.RootCAs("./configs/certs/badca.pem"))
 	if err == nil {
+		nc.Close()
 		t.Fatal("Expected an error from bad RootCA file")
 	}
 
 	nc, err = nats.Connect(secureURL, nats.RootCAs("./configs/certs/ca.pem"))
 	if err != nil {
-		t.Fatal("Failed to create secure (TLS) connection", err)
+		t.Fatalf("Failed to create secure (TLS) connection: %v", err)
 	}
 	defer nc.Close()
 }
@@ -1293,5 +1294,89 @@ func TestUseCustomDialer(t *testing.T) {
 	defer nc3.Close()
 	if nc3.Opts.Dialer.Timeout != nats.DefaultTimeout {
 		t.Fatalf("Expected DialTimeout to be set to %v, got %v", nats.DefaultTimeout, nc.Opts.Dialer.Timeout)
+	}
+}
+
+func TestCustomFlusherTimeout(t *testing.T) {
+	s := RunDefaultServer()
+	defer s.Shutdown()
+
+	opts := &nats.Options{
+		Servers: []string{nats.DefaultURL},
+
+		// Reasonably large flusher timeout will not induce errors
+		// when we can flush fast
+		FlusherTimeout: 10 * time.Second,
+	}
+	nc1, err := opts.Connect()
+	if err != nil {
+		t.Fatalf("Expected to be able to connect, got: %s", err)
+	}
+	doneCh := make(chan struct{})
+	payload := ""
+	for i := 0; i < 8192; i++ {
+		payload += "A"
+	}
+	payloadBytes := []byte(payload)
+
+	go func() {
+		for {
+			select {
+			case <-time.After(200 * time.Millisecond):
+				err := nc1.Publish("hello", payloadBytes)
+				if err != nil {
+					t.Errorf("Error during publish: %s", err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Errorf("Timeout publishing messages")
+				return
+			case <-doneCh:
+				return
+			}
+		}
+	}()
+	defer nc1.Close()
+
+	opts = &nats.Options{
+		Servers: []string{nats.DefaultURL},
+
+		// Use short flusher timeout to trigger the error
+		FlusherTimeout: 1 * time.Microsecond,
+
+		// Upon failure to be able to exercice ping pong interval
+		// then we will hit this timeout and disconnect
+		PingInterval: 500 * time.Millisecond,
+	}
+
+	opts.DisconnectedCB = func(nc *nats.Conn) {
+		// Ping loops that test is done
+		doneCh <- struct{}{}
+	}
+
+	nc2, err := opts.Connect()
+	if err != nil {
+		t.Fatalf("Expected to be able to connect, got: %s", err)
+	}
+	defer nc2.Close()
+
+	// Consume messages to make the reading loop work
+	_, err = nc2.Subscribe(">", func(_ *nats.Msg) {})
+	if err != nil {
+		t.Fatalf("Expected to be able to create subscription, got: %s", err)
+	}
+
+	for {
+		select {
+		case <-time.After(100 * time.Millisecond):
+			// Some of the publishes will succeed and others fail with i/o timeout error
+			// but eventually ping interval will fail and close the connection.
+			err = nc2.Publish("world", payloadBytes)
+			if err == nats.ErrConnectionClosed {
+				return
+			}
+		case <-time.After(5 * time.Second):
+			t.Errorf("Timeout publishing messages")
+			return
+		}
 	}
 }

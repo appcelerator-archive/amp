@@ -1,0 +1,72 @@
+global
+    maxconn 256
+    stats socket /var/run/haproxy.sock mode 600 level admin
+    stats timeout 2m
+
+resolvers docker
+    nameserver dnsmasq 127.0.0.1:53
+    resolve_retries      6
+    timeout retry        3s
+    hold valid           10s    
+
+
+defaults
+    mode http
+    option dontlog-normal
+    option dontlognull
+    timeout connect 50000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+
+frontend monitoring
+    bind *:8082
+    default_backend private_monitoring
+
+frontend stack_http-in
+    bind *:80
+    monitor-uri /healthcheck
+[frontend]
+    default_backend controler_api    
+
+frontend main_http-in
+    bind *:80
+    #monitoring
+    monitor-uri /healthcheck
+    use_backend ampcore_registry if { hdr_beg(host) -i registry. }
+    use_backend ampcore_gateway if { hdr_beg(host) -i amplifier-api. }
+[frontendInline]
+    default_backend controler_api    
+
+frontend main_registry
+    bind *:5000
+    default_backend ampcore_registry
+
+frontend amplifier_grpc
+    mode tcp
+    #bind *:8080 alpn h2
+    #use_backend amplifier_server if { ssl_fc_alpn -i h2 }
+    bind *:8080 npn spdy/2 alpn h2,http/1.1
+    default_backend ampcore_amplifier
+
+[frontend]
+
+backend controler_api
+    server controler_api1 localhost:8090
+
+backend private_monitoring
+    stats enable
+    stats uri     /admin?stats
+    stats realm   Haproxy\ Statistics
+
+backend ampcore_amplifier
+    mode tcp
+    server amplifier_1 amplifier:50101 resolvers docker resolve-prefer ipv4    
+
+backend ampcore_registry
+    server ampcore_registry_1 ampcore_registry:5000 resolvers docker resolve-prefer ipv4
+
+backend ampcore_gateway
+    server ampcore_gateway_1 ampcore_gateway:3000 resolvers docker resolve-prefer ipv4
+
+[backends]    

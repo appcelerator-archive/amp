@@ -51,7 +51,6 @@ FUNCTION_LISTENER := amp-function-listener
 FUNCTION_WORKER := amp-function-worker
 CLUSTERSERVER := adm-server
 CLUSTERAGENT := adm-agent
-AMPADM := ampadm
 
 TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -135,7 +134,7 @@ bin-clean:
 
 clean: proto-clean bin-clean
 
-install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-ampadm
+install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent
 
 DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
@@ -148,6 +147,8 @@ LOGWORKERSRC := $(shell find ./cmd/amp-log-worker -type f -name '*.go' -not -nam
 GATEWAYSRC := $(shell find ./cmd/amplifier-gateway -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 FUNCTIONLISTENERSRC := $(shell find ./cmd/amp-function-listener -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 FUNCTIONWORKERSRC := $(shell find ./cmd/amp-function-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+ADMSERVERSRC := $(shell find ./cmd/adm-server -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+ADMAGENTSRC := $(shell find ./cmd/adm-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 install-server: $(SERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
@@ -162,14 +163,12 @@ install-fn-listener: $(FUNCTIONLISTENERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_LISTENER)
 install-fn-worker: $(FUNCTIONWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_WORKER)
-install-adm-server: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-adm-server: $(ADMSERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
-install-adm-agent: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+install-adm-agent: $(ADMAGENTSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
-install-ampadm: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AMPADM)
 
-build: build-cli build-server build-agent build-log-worker build-gateway build-fn-listener build-fn-worker build-adm-server build-adm-agent build-ampadm
+build: build-cli build-server build-agent build-log-worker build-gateway build-fn-listener build-fn-worker build-adm-server build-adm-agent
 
 build-cli: proto $(CLISRC) $(APISRC) $(VENDORSRC) Makefile
 	@hack/build $(CLI)
@@ -185,12 +184,11 @@ build-adm-server: proto
 	@hack/build $(CLUSTERSERVER)
 build-adm-agent: proto
 	@hack/build $(CLUSTERAGENT)
-build-ampadm: proto
-	@hack/build $(AMPADM)
 build-fn-listener: proto
 	@hack/build $(FUNCTION_LISTENER)
 build-fn-worker: proto
 	@hack/build $(FUNCTION_WORKER)
+
 
 build-server-image:
 	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/$(SERVER):$(TAG) .
@@ -219,32 +217,20 @@ build-server-windows:
 	@rm -f $(SERVER).exe
 	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(SERVER)
 
-build-ampadm-linux:
-	@rm -f $(AMPADM)
-	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
-
-build-ampadm-darwin:
-	@rm -f $(AMPADM)
-	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
-
-build-ampadm-windows:
-	@rm -f $(AMPADM).exe
-	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
-
-dist-linux: build-cli-linux build-server-linux build-ampadm-linux
+dist-linux: build-cli-linux build-server-linux
 	@rm -f dist/Linux/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Linux/x86_64
-	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPADM)
+	@tar czf dist/Linux/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
 
-dist-darwin: build-cli-darwin build-server-darwin build-ampadm-darwin
+dist-darwin: build-cli-darwin build-server-darwin
 	@rm -f dist/Darwin/x86_64/amp-$(VERSION).tgz
 	@mkdir -p dist/Darwin/x86_64
-	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER) $(AMPADM)
+	@tar czf dist/Darwin/x86_64/amp-$(VERSION).tgz $(CLI) $(SERVER)
 
-dist-windows: build-cli-windows build-server-windows build-ampadm-windows
+dist-windows: build-cli-windows build-server-windows
 	@rm -f dist/Windows/x86_64/amp-$(VERSION).zip
 	@mkdir -p dist/Windows/x86_64
-	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe $(AMPADM).exe
+	@zip -q dist/Windows/x86_64/amp-$(VERSION).zip $(CLI).exe $(SERVER).exe
 
 dist: dist-linux dist-darwin dist-windows
 
@@ -280,7 +266,7 @@ test-integration:
 	@docker service rm amp-integration-test > /dev/null 2>&1 || true
 	@docker build -t appcelerator/amp-demo-function examples/functions/demo-function
 	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/amp-integration-test .
-	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test make BUILD=$(BUILD) test-integration-host
+	@docker service create --network ampcore_infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test make BUILD=$(BUILD) test-integration-host
 	@containerid=""; \
 	while [[ $${containerid} == "" ]] ; do \
 		containerid=`docker ps -qf 'name=amp-integration'`; \

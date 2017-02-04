@@ -15,405 +15,29 @@ type TestSpec struct {
 	fileName string
 	valid    bool
 	contents []byte
-	ref      *stackSpec
+	ref      *Stack
 }
 
 var (
 	testDir = "./test_samples"
 
-	sample1 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 2,
-				Public: []publishSpec{
-					{
-						Name:         "www",
-						PublishPort:  90,
-						InternalPort: 3000,
-						Protocol:     "tcp",
-					},
-				},
-			},
-		},
-	}
-
-	sample2 = stackSpec{
-		Services: map[string]serviceSpec{
-			"web": {
-				Image:    "appcelerator/amp-demo-service",
-				Replicas: 3,
-				Public: []publishSpec{
-					{
-						Name:         "www",
-						PublishPort:  90,
-						InternalPort: 3000,
-						Protocol:     "tcp",
-					},
-				},
-				Environment: map[string]string{
-					"REDIS_PASSWORD": "password",
-				},
-			},
-			"redis": {
-				Image: "redis",
-				Environment: map[string]string{
-					"PASSWORD": "password",
-				},
-				Networks: map[string]networkAliases{
-					"app-net": {
-						Aliases: []string{"stack1-redis"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"app-net": {
-				Driver: "overlay",
-			},
-		},
-	}
-
-	sample3 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 2,
-			},
-			"pinger2": {
-				Image:    "appcelerator/pinger",
-				Replicas: 2,
-				Public: []publishSpec{
-					{
-						Name:         "www",
-						InternalPort: 3000,
-						Protocol:     "tcp",
-					},
-				},
-			},
-			"haproxy": {
-				Public: []publishSpec{
-					{
-						PublishPort:  83,
-						InternalPort: 80,
-					},
-				},
-			},
-		},
-	}
-
-	sample4 = stackSpec{
-		Services: map[string]serviceSpec{
-			"python": {
-				Image:    "tutum/quickstart-python",
-				Replicas: 3,
-				Public: []publishSpec{
-					{
-						Name:         "python",
-						InternalPort: 80,
-					},
-				},
-			},
-			"go": {
-				Image:    "htilford/go-redis-counter",
-				Replicas: 3,
-				Public: []publishSpec{
-					{
-						Name:         "go",
-						InternalPort: 80,
-					},
-				},
-			},
-			"redis": {
-				Image: "redis",
-			},
-		},
-	}
-
-	sample5 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image: "appcelerator/pinger",
-				Environment: map[string]string{
-					"foo": "bar",
-				},
-				Public: []publishSpec{
-					{
-						PublishPort:  3000,
-						InternalPort: 3000,
-					},
-				},
-			},
-		},
-	}
-
-	sample6 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
+	sample1 = Stack{
+		Services: []*ServiceSpec{
+			{
+				Name:  "pinger",
 				Image: "appcelerator/pinger",
 				Labels: map[string]string{
 					"foo":   "bar",
 					"hello": "world",
-				},
-				Public: []publishSpec{
-					{
-						PublishPort:  3000,
-						InternalPort: 3000,
-					},
-				},
-			},
-		},
-	}
-
-	sample7 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image: "appcelerator/pinger",
-				ContainerLabels: map[string]string{
-					"foo":   "bar",
-					"hello": "world",
-				},
-				Public: []publishSpec{
-					{
-						PublishPort:  3000,
-						InternalPort: 3000,
-					},
-				},
-			},
-		},
-	}
-
-	sample8_1 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Mode:     "replicated",
-				Replicas: 3,
-				Public: []publishSpec{
-					{
-						PublishPort:  3000,
-						InternalPort: 3000,
-					},
-				},
-			},
-		},
-	}
-
-	sample8_2 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image: "appcelerator/pinger",
-				Mode:  "global",
-				Public: []publishSpec{
-					{
-						PublishPort:  3000,
-						InternalPort: 3000,
-					},
-				},
-			},
-		},
-	}
-
-	sample9 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image: "appcelerator/pinger",
-				Networks: map[string]networkAliases{
-					"app_net": {
-						Aliases: []string{"test-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"app_net": {
-				Driver: "bridge",
-				Options: map[string]string{
-					"com.docker.network.enable_ipv6": "true",
-				},
-				IPAM: &networkIPAM{
-					Driver: "default",
-					Config: []ipamConfig{
-						{
-							Subnet:  "172.16.238.0/24",
-							Gateway: "172.16.238.1",
-						},
-						{
-							Subnet:  "1 2001:3984:3989::/64",
-							Gateway: "12001:3984:3989::1",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	sample10_1 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Networks: map[string]networkAliases{
-					"app_net10": {
-						Aliases: []string{"test1-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"app_net10": {
-				Driver: "overlay",
-			},
-		},
-	}
-
-	sample10_2 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Networks: map[string]networkAliases{
-					"app_net": {
-						Aliases: []string{"test2-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"app_net": {
-				Driver: "overlay",
-			},
-		},
-	}
-
-	sample11 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Networks: map[string]networkAliases{
-					"net-test11": {
-						Aliases: []string{"test2-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"net-test11": {
-				Driver: "overlay",
-				IPAM: &networkIPAM{
-					Driver: "default",
-					Config: []ipamConfig{
-						{
-							Subnet:  "10.16.238.0/24",
-							Gateway: "10.16.238.1",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	sample12 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Networks: map[string]networkAliases{
-					"amp-infra": {
-						Aliases: []string{"ext1-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"amp-infra": {
-				External: true,
-			},
-		},
-	}
-
-	sample13 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Networks: map[string]networkAliases{
-					"my-net": {
-						Aliases: []string{"ext2-pinger"},
-					},
-				},
-			},
-		},
-		Networks: map[string]networkSpec{
-			"my-net": {
-				External: map[string]string{
-					"name": "amp-infra",
-				},
-			},
-		},
-	}
-
-	sample14 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Mounts: []string{
-					"/tmp2",
-				},
-			},
-		},
-	}
-
-	sample15 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Mounts: []string{
-					"/tmp:/tmp2",
-				},
-			},
-		},
-	}
-
-	sample16 = stackSpec{
-		Services: map[string]serviceSpec{
-			"pinger": {
-				Image:    "appcelerator/pinger",
-				Replicas: 1,
-				Mounts: []string{
-					"myvolume:/tmp2",
 				},
 			},
 		},
 	}
 
 	// map of filenames to a map of serviceSpec elements (each file has one or more)
-	compareSpecs = map[string]stackSpec{
-		"sample-01.yml":                    sample1,
-		"sample-02.yml":                    sample2,
-		"sample-03.yml":                    sample3,
-		"sample-03.json":                   sample3,
-		"sample-04.yml":                    sample4,
-		"sample-05-1-env.yml":              sample5,
-		"sample-05-2-env.yml":              sample5,
-		"sample-06-1-service-labels.yml":   sample6,
-		"sample-06-2-service-labels.yml":   sample6,
-		"sample-07-1-container-labels.yml": sample7,
-		"sample-07-2-container-labels.yml": sample7,
-		"sample-08-1-mode.yml":             sample8_1,
-		"sample-08-2-mode.yml":             sample8_2,
-		"sample-10-1.yml":                  sample10_1,
-		"sample-10-2.yml":                  sample10_2,
-		"sample-09-network.yml":            sample9,
-		"sample-11-network.yml":            sample11,
-		"sample-12-network.yml":            sample12,
-		"sample-13-network.yml":            sample13,
-		"sample-14-volume.yml":             sample14,
-		"sample-15-volume.yml":             sample15,
-		"sample-16-volume.yml":             sample16,
+	compareSpecs = map[string]Stack{
+		"sample-05-1.service-lables.yml": sample1,
+		"sample-05-2.service-lables.yml": sample1,
 	}
 )
 
@@ -429,7 +53,10 @@ func TestParserSamples(t *testing.T) {
 
 // process one test and verify if ok or not
 func parse(t *testing.T, test *TestSpec) {
-	parsedStack, err := parseStack(test.contents)
+	parsedStack := &Stack{
+		FileData: string(test.contents),
+	}
+	err := parseStack(parsedStack)
 	//t.Logf("%+v\n", parsedStack)
 	//t.Logf("%+v\n", test.ref)
 	if err != nil {
@@ -455,7 +82,7 @@ func parse(t *testing.T, test *TestSpec) {
 }
 
 // return the most explicite two strings explaining the difference between the two structs
-func (a stackSpec) extractDiff(t *testing.T, b stackSpec) ([2]string, bool) {
+func (a Stack) extractDiff(t *testing.T, b Stack) ([2]string, bool) {
 	//t.Log("process file")
 	sa := fmt.Sprintf("%+v", a)
 	la := explodeExtend(t, simplifyString(t, sa))

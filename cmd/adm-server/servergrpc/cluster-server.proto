@@ -10,11 +10,6 @@ service ClusterServerService {
         rpc AgentHealth (AgentHealthRequest) returns (ServerRet) {}
         rpc GetNodesInfo (GetNodesInfoRequest) returns (NodesInfo) {}
         rpc PurgeNodes (PurgeNodesRequest) returns (PurgeNodesAnswers) {}
-        rpc AmpMonitor (AmpRequest) returns (AmpMonitorAnswers) {}
-        rpc AmpPull (AmpRequest) returns (AmpRet) {}
-        rpc GetAmpStatus (AmpRequest) returns (AmpStatusAnswer) {}
-        rpc AmpStart (AmpRequest) returns (AmpRet) {}
-        rpc AmpStop (AmpRequest) returns (AmpRet) {}
 }
 
 message ClientMes {

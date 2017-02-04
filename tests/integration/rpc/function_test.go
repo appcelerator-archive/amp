@@ -86,7 +86,7 @@ func TestFunctionShouldCreateInvokeAndDeleteAFunction(t *testing.T) {
 	assert.NoError(t, err)
 
 	testInput := "This is a test input that is supposed to be capitalized"
-	resp, err := http.Post("http://amp-function-listener/"+created.Function.Id, "text/plain;charset=utf-8", strings.NewReader(testInput))
+	resp, err := http.Post("http://ampfunction_listener/"+created.Function.Id, "text/plain;charset=utf-8", strings.NewReader(testInput))
 	assert.NoError(t, err)
 
 	output, err := ioutil.ReadAll(resp.Body)

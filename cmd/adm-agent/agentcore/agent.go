@@ -114,7 +114,7 @@ func (g *ClusterAgent) inspectContainer() {
 	}
 	g.realID = inspect.ID
 	g.nodeID = inspect.Config.Labels["com.docker.swarm.node.id"]
-	g.address = fmt.Sprintf("%s:%s", inspect.NetworkSettings.Networks["amp-infra"].IPAddress, conf.grpcPort)
+	g.address = fmt.Sprintf("%s:%s", inspect.NetworkSettings.Networks["ampcore_infra"].IPAddress, conf.grpcPort)
 	logf.debug("Agent: id=%s, address=%s nodeId=%s\n", g.id, g.address, g.nodeID)
 }
 
