@@ -26,6 +26,52 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "container",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "node",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "stack",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "infra",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          }
+        ],
         "tags": [
           "Logs"
         ]
@@ -42,6 +88,52 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "container",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "node",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "stack",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "infra",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          }
+        ],
         "tags": [
           "Logs"
         ]
@@ -64,28 +156,23 @@
       "type": "object",
       "properties": {
         "container": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "message": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "node": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "size": {
           "type": "string",
           "format": "int64"
         },
         "service": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "stack": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "infra": {
           "type": "boolean",
@@ -97,52 +184,40 @@
       "type": "object",
       "properties": {
         "timestamp": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "time_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "service_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "service_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "message": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "container_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "node_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "task_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "task_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "stack_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "stack_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "role": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     }
