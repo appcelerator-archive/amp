@@ -25,7 +25,7 @@ TMP=$(mktemp -d)
 # volumes with the correct owner on the host when not root.
 # Based on code thanks to @ndegory after brainstorming session about using sudo.
 map_user() {
-UG="$(id -u):$(id -g)}"
+UG="$(id -u):$(id -g)"
 cat > $TMP/Dockerfile << EOF
 FROM $TOOLS
 RUN sed -i "s/sudoer:x:[0-9]*:[0-9]*/sudoer:x:$UG/" /etc/passwd

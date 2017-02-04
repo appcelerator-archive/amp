@@ -1369,7 +1369,7 @@ func matchExactRegex(v string) (string, bool) {
 
 	if len(re.Sub) == 3 {
 		middle := re.Sub[1]
-		if middle.Op != syntax.OpLiteral {
+		if middle.Op != syntax.OpLiteral || middle.Flags^syntax.Perl != 0 {
 			// Regex does not contain a literal op.
 			return "", false
 		}
@@ -4490,7 +4490,7 @@ func EvalType(expr Expr, sources Sources, typmap TypeMapper) DataType {
 			return EvalType(expr.Args[0], sources, typmap)
 		}
 	case *ParenExpr:
-		return EvalType(expr, sources, typmap)
+		return EvalType(expr.Expr, sources, typmap)
 	case *NumberLiteral:
 		return Float
 	case *IntegerLiteral:
@@ -4547,13 +4547,10 @@ func FieldDimensions(sources Sources, m FieldMapper) (fields map[string]DataType
 				}
 			}
 
-			_, d, err := FieldDimensions(src.Statement.Sources, m)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			for k := range d {
-				dimensions[k] = struct{}{}
+			for _, d := range src.Statement.Dimensions {
+				if expr, ok := d.Expr.(*VarRef); ok {
+					dimensions[expr.Val] = struct{}{}
+				}
 			}
 		}
 	}

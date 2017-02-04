@@ -1,5 +1,5 @@
 hash: d4cac8e5797002ac757d23363a8cbebcd64d25aa2258464e6961c98e76dfe63d
-updated: 2017-01-26T10:20:03.018424244-08:00
+updated: 2017-02-03T19:52:44.888224394Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: 388960b655244e76e24c75f48631564eaefade62
@@ -10,7 +10,7 @@ imports:
   subpackages:
   - quantile
 - name: github.com/blang/semver
-  version: 57172d9388933074ce0fbba4e24fb287b6b57548
+  version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
 - name: github.com/coreos/etcd
   version: 8ba2897a21e4fc51b298ca553d251318425f93ae
   subpackages:
@@ -20,6 +20,10 @@ imports:
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
+- name: github.com/davecgh/go-spew
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  subpackages:
+  - spew
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -36,7 +40,7 @@ imports:
   - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
+  version: 2527cfcc49744f56a8d31c420a3ca4657f9fec2e
   subpackages:
   - api
   - api/server/httputils
@@ -172,7 +176,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: b7bb7e8359642b6e071735b50ae41f5eb343fd42
+  version: d5ac69be6fc1ff7305e436e3d8db1c120bd5dd27
   subpackages:
   - client/v2
   - models
@@ -256,7 +260,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: a9a634f3de0a7529baded7ad6b0c7467d5c6eca7
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - name: github.com/vbatts/tar-split
@@ -321,19 +325,14 @@ imports:
   - tap
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: f27a28dd68c359eb20ce5918a7d976f34c18cf03
+  version: 233bdd26c13dc9b7e764a8dd4e2e0711e8808cea
 - name: gopkg.in/olivere/elastic.v5
   version: 0746557b3f90c3119b44e7d7ee0f76db3ff26acb
   subpackages:
-  - backoff
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 testImports:
-- name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
-  subpackages:
-  - spew
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:

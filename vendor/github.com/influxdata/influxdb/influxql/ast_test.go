@@ -411,7 +411,7 @@ func TestSelectStatement_RewriteFields(t *testing.T) {
 		// Rewrite subquery
 		{
 			stmt:    `SELECT * FROM (SELECT mean(value1) FROM cpu GROUP BY host) GROUP BY *`,
-			rewrite: `SELECT mean::float FROM (SELECT mean(value1::float) FROM cpu GROUP BY host) GROUP BY host, region`,
+			rewrite: `SELECT mean::float FROM (SELECT mean(value1::float) FROM cpu GROUP BY host) GROUP BY host`,
 		},
 	}
 
@@ -1133,6 +1133,16 @@ func TestEvalType(t *testing.T) {
 			data: EvalFixture{
 				"cpu": map[string]influxql.DataType{
 					"value": influxql.Integer,
+				},
+			},
+		},
+		{
+			name: `value inside a parenthesis`,
+			in:   `(value)`,
+			typ:  influxql.Float,
+			data: EvalFixture{
+				"cpu": map[string]influxql.DataType{
+					"value": influxql.Float,
 				},
 			},
 		},
