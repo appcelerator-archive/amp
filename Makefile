@@ -51,6 +51,7 @@ FUNCTION_LISTENER := amp-function-listener
 FUNCTION_WORKER := amp-function-worker
 CLUSTERSERVER := adm-server
 CLUSTERAGENT := adm-agent
+HAPROXY := amp-haproxy
 
 TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -109,6 +110,7 @@ install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_WORKER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(HAPROXY)
 
 proto: $(PROTOALLTARGETS)
 
@@ -134,7 +136,7 @@ bin-clean:
 
 clean: proto-clean bin-clean
 
-install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent
+install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-haproxy
 
 DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
@@ -149,6 +151,7 @@ FUNCTIONLISTENERSRC := $(shell find ./cmd/amp-function-listener -type f -name '*
 FUNCTIONWORKERSRC := $(shell find ./cmd/amp-function-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 ADMSERVERSRC := $(shell find ./cmd/adm-server -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 ADMAGENTSRC := $(shell find ./cmd/adm-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
+HAPROXYSRC := $(shell find ./cmd/amp-haproxy -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLI)
 install-server: $(SERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
@@ -167,6 +170,8 @@ install-adm-server: $(ADMSERVERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALL
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
 install-adm-agent: $(ADMAGENTSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
+install-haproxy: $(HAPROXYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
+	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(HAPROXY)
 
 build: build-cli build-server build-agent build-log-worker build-gateway build-fn-listener build-fn-worker build-adm-server build-adm-agent
 

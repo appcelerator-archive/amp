@@ -19,6 +19,8 @@ type HAProxy struct {
 	dnsRetryLoopID     int
 	loadTry            int
 	dnsNotResolvedList []string
+	updateId           int
+	updateChannel      chan int
 }
 
 type publicMapping struct {
@@ -36,6 +38,7 @@ var (
 
 //Set app mate initial values
 func (app *HAProxy) init() {
+	app.updateChannel = make(chan int)
 	app.isLoadingConf = false
 	app.loadTry = 0
 	app.dnsNotResolvedList = []string{}
@@ -57,6 +60,7 @@ func (app *HAProxy) trapSignal() {
 
 //Launch HAProxy using cmd command
 func (app *HAProxy) start() {
+	//launch HAPRoxy
 	go func() {
 		fmt.Println("launching HAProxy on initial configuration")
 		app.exec = exec.Command("haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg")
@@ -67,6 +71,15 @@ func (app *HAProxy) start() {
 			fmt.Printf("HAProxy exit with error: %v\n", err)
 			etcdClient.Close()
 			os.Exit(1)
+		}
+	}()
+	//Lanch main update loop
+	go func() {
+		for {
+			uid := <-app.updateChannel
+			if uid == app.updateId {
+				app.updateConfiguration(true)
+			}
 		}
 	}()
 }
@@ -83,6 +96,10 @@ func (app *HAProxy) stop() {
 func (app *HAProxy) reloadConfiguration() {
 	app.isLoadingConf = true
 	fmt.Println("reloading HAProxy configuration")
+	if app.exec == nil {
+		fmt.Printf("HAProxy not started yet, waiting it started\n")
+		return
+	}
 	pid := app.exec.Process.Pid
 	fmt.Printf("Execute: %s %s %s %s %d\n", "haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-sf", pid)
 	app.exec = exec.Command("haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-sf", fmt.Sprintf("%d", pid))
@@ -95,13 +112,8 @@ func (app *HAProxy) reloadConfiguration() {
 			fmt.Println("HAProxy configuration reloaded")
 			return
 		}
-		app.loadTry++
 		fmt.Printf("HAProxy reload configuration error, try=%s: %v\n", app.loadTry, err)
-		if app.loadTry > 6 {
-			os.Exit(1)
-		}
-		time.Sleep(10 * time.Second)
-		app.updateConfiguration(true)
+		os.Exit(1)
 	}()
 }
 

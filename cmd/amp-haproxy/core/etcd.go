@@ -49,9 +49,8 @@ func (inst *ETCDClient) watchForServicesUpdate() {
 	for _, ev := range wresp.Events {
 		fmt.Printf("Key updated: %q\n", ev.Kv.Key)
 	}
-	time.Sleep(5 * time.Second)
-	haproxy.loadTry = 0
-	haproxy.updateConfiguration(true)
+	haproxy.updateId++
+	haproxy.updateChannel <- haproxy.updateId
 }
 
 func (inst *ETCDClient) getAllMappings() ([]*publicMapping, error) {

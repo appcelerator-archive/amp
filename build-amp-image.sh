@@ -78,6 +78,11 @@ if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
 fi
+$DOCKER cp amp-builder:/go/bin/amp-haproxy ./images/haproxy/amp-haproxy.alpine >&2
+if [ $? -ne 0 ]; then
+  echo "failed"
+  exit 1
+fi
 echo "OK"
 
 echo "building shrunk image... "
