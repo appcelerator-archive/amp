@@ -17,7 +17,6 @@ type HAProxy struct {
 	exec               *exec.Cmd
 	isLoadingConf      bool
 	dnsRetryLoopID     int
-	loadTry            int
 	dnsNotResolvedList []string
 	updateId           int
 	updateChannel      chan int
@@ -40,7 +39,6 @@ var (
 func (app *HAProxy) init() {
 	app.updateChannel = make(chan int)
 	app.isLoadingConf = false
-	app.loadTry = 0
 	app.dnsNotResolvedList = []string{}
 	haproxy.updateConfiguration(true)
 }
@@ -112,7 +110,7 @@ func (app *HAProxy) reloadConfiguration() {
 			fmt.Println("HAProxy configuration reloaded")
 			return
 		}
-		fmt.Printf("HAProxy reload configuration error, try=%s: %v\n", app.loadTry, err)
+		fmt.Printf("HAProxy reload configuration error: %v\n", err)
 		os.Exit(1)
 	}()
 }
