@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // More advanced tests on subscriptions
@@ -371,6 +371,9 @@ func TestIsValidSubscriber(t *testing.T) {
 	defer nc.Close()
 
 	sub, err := nc.SubscribeSync("foo")
+	if err != nil {
+		t.Fatalf("Error on subscribe: %v", err)
+	}
 	if !sub.IsValid() {
 		t.Fatalf("Subscription should be valid")
 	}

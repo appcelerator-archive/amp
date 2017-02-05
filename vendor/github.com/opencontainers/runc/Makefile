@@ -1,14 +1,14 @@
-.PHONY: dbuild man \
+.PHONY: all shell dbuild man \
 	    localtest localunittest localintegration \
 	    test unittest integration
 
+SOURCES := $(shell find . 2>&1 | grep -E '.*\.(c|h|go)$$')
 PREFIX := $(DESTDIR)/usr/local
 BINDIR := $(PREFIX)/sbin
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 GIT_BRANCH_CLEAN := $(shell echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
 RUNC_IMAGE := runc_dev$(if $(GIT_BRANCH_CLEAN),:$(GIT_BRANCH_CLEAN))
 PROJECT := github.com/opencontainers/runc
-TEST_DOCKERFILE := script/test_Dockerfile
 BUILDTAGS := seccomp
 COMMIT_NO := $(shell git rev-parse HEAD 2> /dev/null || true)
 COMMIT := $(if $(shell git status --porcelain --untracked-files=no),"${COMMIT_NO}-dirty","${COMMIT_NO}")
@@ -26,13 +26,23 @@ VERSION := ${shell cat ./VERSION}
 
 SHELL := $(shell command -v bash 2>/dev/null)
 
-all: $(RUNC_LINK)
+.DEFAULT: runc
+
+runc: $(SOURCES) | $(RUNC_LINK)
 	go build -i -ldflags "-X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -tags "$(BUILDTAGS)" -o runc .
 
-static: $(RUNC_LINK)
-	CGO_ENABLED=1 go build -i -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -o runc .
+all: runc recvtty
 
-release: $(RUNC_LINK)
+recvtty: contrib/cmd/recvtty/recvtty
+
+contrib/cmd/recvtty/recvtty: $(SOURCES) | $(RUNC_LINK)
+	go build -i -ldflags "-X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -tags "$(BUILDTAGS)" -o contrib/cmd/recvtty/recvtty ./contrib/cmd/recvtty
+
+static: $(SOURCES) | $(RUNC_LINK)
+	CGO_ENABLED=1 go build -i -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -o runc .
+	CGO_ENABLED=1 go build -i -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT} -X main.version=${VERSION}" -o contrib/cmd/recvtty/recvtty ./contrib/cmd/recvtty
+
+release: $(RUNC_LINK) | $(RUNC_LINK)
 	@flag_list=(seccomp selinux apparmor static ambient); \
 	unset expression; \
 	for flag in "$${flag_list[@]}"; do \
@@ -62,7 +72,7 @@ $(RUNC_LINK):
 	ln -sfn $(CURDIR) $(RUNC_LINK)
 
 dbuild: runcimage
-	docker run --rm -v $(CURDIR):/go/src/$(PROJECT) --privileged $(RUNC_IMAGE) make
+	docker run --rm -v $(CURDIR):/go/src/$(PROJECT) --privileged $(RUNC_IMAGE) make clean all
 
 lint:
 	go vet ./...
@@ -81,7 +91,7 @@ localtest:
 	make localunittest localintegration
 
 unittest: runcimage
-	docker run -e TESTFLAGS -ti --privileged --rm -v $(CURDIR):/go/src/$(PROJECT) $(RUNC_IMAGE) make localunittest
+	docker run -e TESTFLAGS -t --privileged --rm -v $(CURDIR):/go/src/$(PROJECT) $(RUNC_IMAGE) make localunittest
 
 localunittest: all
 	go test -timeout 3m -tags "$(BUILDTAGS)" ${TESTFLAGS} -v ./...
@@ -91,6 +101,9 @@ integration: runcimage
 
 localintegration: all
 	bats -t tests/integration${TESTFLAGS}
+
+shell: all
+	docker run -e TESTFLAGS -ti --privileged --rm -v $(CURDIR):/go/src/$(PROJECT) $(RUNC_IMAGE) bash
 
 install:
 	install -D -m0755 runc $(BINDIR)/runc
@@ -113,9 +126,11 @@ uninstall-man:
 
 clean:
 	rm -f runc
+	rm -f contrib/cmd/recvtty/recvtty
 	rm -f $(RUNC_LINK)
 	rm -rf $(GOPATH)/pkg
 	rm -rf $(RELEASE_DIR)
+	rm -rf $(MAN_DIR)
 
 validate:
 	script/validate-gofmt
