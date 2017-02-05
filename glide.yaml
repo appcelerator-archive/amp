@@ -63,6 +63,9 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.23
 - package: gopkg.in/yaml.v2
+- package: github.com/xeipuuv/gojsonschema
+- package: github.com/xeipuuv/gojsonreference
+- package: github.com/xeipuuv/gojsonpointer
 - package: github.com/docker/docker
   version: ^1.13.0
   subpackages:
