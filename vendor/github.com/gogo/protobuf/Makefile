@@ -44,7 +44,6 @@ install:
 	go install ./protoc-gen-gostring
 	go install ./protoc-min-version
 	go install ./protoc-gen-combo
-	go install ./gogoreplace
 
 clean:
 	go clean ./...
@@ -62,8 +61,6 @@ regenerate:
 	make -C gogoproto regenerate
 	make -C proto/testdata regenerate
 	make -C jsonpb/jsonpb_test_proto regenerate
-	make -C _conformance regenerate
-	make -C types regenerate
 	make -C test regenerate
 	make -C test/example regenerate
 	make -C test/unrecognized regenerate
@@ -99,10 +96,6 @@ regenerate:
 	make -C test/asymetric-issue125 regenerate
 	make -C test/filedotname regenerate
 	make -C test/nopackage regenerate
-	make -C test/types regenerate
-	make -C test/proto3extension regenerate
-	make -C test/stdtypes regenerate
-	make -C test/data regenerate
 	make gofmt
 
 tests:
@@ -133,5 +126,4 @@ bench:
 contributors:
 	git log --format='%aN <%aE>' | sort -fu > CONTRIBUTORS
 
-update:
-	(cd protobuf && make update)
+

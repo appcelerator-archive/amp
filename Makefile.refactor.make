@@ -48,7 +48,7 @@ clean-glide:
 
 .PHONY: cleanall-glide
 cleanall-glide: clean-glide
-	@rm -rf .glide
+	@rm -rf .glide glide.lock
 
 # =============================================================================
 # PROTOC (PROTOCOL BUFFER COMPILER)
@@ -76,9 +76,7 @@ protoc: $(PROTOTARGETS)
 
 .PHONY: clean-protoc
 clean-protoc:
-	@find . \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) \
-			-not -path './vendor/*' -not -path './.git/*' -not -path './.glide/*' \
-			-type f -delete
+	@find $(PROTODIRS) \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) -type f -delete
 
 # =============================================================================
 # CLEAN
@@ -164,3 +162,4 @@ build-haproxy: $(HAPROXYTARGET)
 .PHONY: clean-haproxy
 clean-haproxy:
 	@rm -f $(HAPROXYTARGET)
+

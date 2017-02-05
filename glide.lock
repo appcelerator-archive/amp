@@ -1,6 +1,10 @@
-hash: e4c0e0ab182cc4bc006ec0b44d0d093446794dbf1cbfac4b6ec970c0250a5519
-updated: 2017-02-04T02:31:46.043948032Z
+hash: 65fd984a87b02b4e2e8a90dc55dc77efced4436b25ceabae2b2afb77523a2974
+updated: 2017-02-05T04:17:41.207612672Z
 imports:
+- name: github.com/agl/ed25519
+  version: 5312a61534124124185d41f09206b9fef1d88403
+  subpackages:
+  - edwards25519
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
@@ -58,9 +62,16 @@ imports:
   - api/types/time
   - api/types/versions
   - api/types/volume
+  - cli
   - cli/command
+  - cli/command/formatter
   - cli/command/idresolver
+  - cli/command/inspect
+  - cli/command/node
+  - cli/command/service
+  - cli/command/task
   - cli/flags
+  - cli/trust
   - cliconfig
   - cliconfig/configfile
   - cliconfig/credentials
@@ -91,8 +102,10 @@ imports:
   - pkg/promise
   - pkg/random
   - pkg/reexec
+  - pkg/signal
   - pkg/stdcopy
   - pkg/stringid
+  - pkg/stringutils
   - pkg/system
   - pkg/tarsum
   - pkg/term
@@ -103,12 +116,17 @@ imports:
   - plugin/v2
   - reference
   - registry
+  - runconfig/opts
   - utils/templates
 - name: github.com/docker/docker-credential-helpers
   version: f72c04f1d8e71959a6d103f808c50ccbad79b9fd
   subpackages:
   - client
   - credentials
+- name: github.com/docker/go
+  version: d30aec9fd63c35133f8f79c3412ad91a3b08be06
+  subpackages:
+  - canonical/json
 - name: github.com/docker/go-connections
   version: 7da10c8c50cad14494ec818dcdfb6506265c0086
   subpackages:
@@ -119,16 +137,34 @@ imports:
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
+- name: github.com/docker/notary
+  version: 3f8c34e84a50dc77af4b5ea5bbfbb4b8198d63d8
+  subpackages:
+  - client
+  - client/changelist
+  - cryptoservice
+  - passphrase
+  - storage
+  - trustmanager
+  - trustmanager/yubikey
+  - trustpinning
+  - tuf
+  - tuf/data
+  - tuf/signed
+  - tuf/utils
+  - tuf/validation
 - name: github.com/fatih/color
   version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
+- name: github.com/flynn-archive/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsnotify/fsnotify
   version: a904159b9206978bb6d53fcc7a769e5cd726c737
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
-  version: a9cd0c35b97daf74d0ebf3514c5254814b2703b4
+  version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
   - gogoproto
   - proto
@@ -138,7 +174,6 @@ imports:
   subpackages:
   - jsonpb
   - proto
-  - protoc-gen-go/descriptor
 - name: github.com/google/go-github
   version: 27c7c32b6d369610435bd2ad7b4d8554f235eb01
   subpackages:
@@ -197,6 +232,8 @@ imports:
   - pbutil
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
+- name: github.com/miekg/pkcs11
+  version: 55e2b933bc6d828eca462bf6017215b96981342c
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
@@ -215,7 +252,7 @@ imports:
 - name: github.com/nats-io/nuid
   version: 289cccf02c178dc782430d534e3c1f5b72af807f
 - name: github.com/opencontainers/runc
-  version: 35356c4a1864b7ae5719fba0bb9a75390dca988d
+  version: 0c21b089e672982299403198dad524d4895bb049
   subpackages:
   - libcontainer/configs
   - libcontainer/devices
@@ -283,14 +320,15 @@ imports:
   - ocsp
   - ssh/terminal
 - name: golang.org/x/net
-  version: 4876518f9e71663000c348837735820161a42df7
+  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
   subpackages:
   - context
   - context/ctxhttp
   - http2
   - http2/hpack
+  - idna
   - internal/timeseries
-  - lex
+  - lex/httplex
   - proxy
   - trace
   - websocket
