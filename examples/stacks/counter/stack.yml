@@ -1,16 +1,24 @@
-services:
-  python:
-    image: tutum/quickstart-python
-    public:
-    - name: python
-      internal_port: 80
-    replicas: 3
-  go:
-    image: htilford/go-redis-counter
-    public:
-    - name: go
-      internal_port: 80
-    replicas: 3
-  redis:
-    image: redis
+version: "3"
 
+services:
+    python:
+        image: tutum/quickstart-python
+        deploy:
+            replicas: 3
+            labels:
+                 io.amp.mapping: "python:80"
+        networks:
+            - public
+
+    go:
+        image: htilford/go-redis-counter
+        deploy:
+            replicat: 3
+
+    redis:
+        image: redis
+
+networks:
+    public:
+        external:
+            name: ampcore_public    

@@ -1,0 +1,40 @@
+version: "2"
+services:
+  sut:
+    image: appcelerator/sut
+    build:
+      context: ./sut
+      dockerfile: Dockerfile
+    depends_on:
+      - haproxy
+
+  etcd:
+    image: appcelerator/etcd:3.1.0
+    command: ["--listen-client-urls", "http://0.0.0.0:2379", "--advertise-client-urls", "http://etcd:2379"]
+
+  amplifier:
+    image: alpine
+    command: ["nc", "-l", "50101"]
+
+  ampcore_registry:
+    image: alpine
+    command: ["nc", "-l", "5000"]
+
+  ampcore_gateway:
+    image: alpine
+    command: ["nc", "-l", "3000"]
+
+  haproxy:
+    image: appcelerator/haproxy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+    environment:
+      NO_DEFAULT_BACKEND: 'true'
+    depends_on:
+      - etcd
+      - amplifier
+      - ampcore_registry
+      - ampcore_gateway

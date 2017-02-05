@@ -1,15 +1,16 @@
+version: "3"
 services:
-  python:
-    image: tutum/quickstart-python
-    public:
-    - name: python
-      internal_port: 80
-    replicas: 3
-  go:
-    image: htilford/go-redis-counter
-    public:
-    - name: go
-      internal_port: 80
-    replicas: 3
-  redis:
-    image: redis
+    python:
+        image: tutum/quickstart-python
+        deploy:
+            mode: replicated
+        replicas: 3
+        labels:
+            io.amp.mapping: "python:80"
+    go:
+        image: htilford/go-redis-counter
+        deploy:
+            mode: replicated
+            replicas: 3
+    redis:
+        image: redis

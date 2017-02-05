@@ -1,11 +1,18 @@
+version: "3"
+
 services:
-  bash-server:
-    image: 'registry.local.appcelerator.io/ws-bash-server'
+    bash-server:
+        image: 'registry.local.appcelerator.io/ws-bash-server'
+        deploy:
+            labels:
+                io.amp.mapping: "ws:4000"
+    web:
+        image: 'registry.local.appcelerator.io/ws-bash-web'
+        deploy:
+            labels:
+                io.amp.mapping: "web:80"
+
+networks:
     public:
-      - name: ws
-        internal_port: 4000
-  web:
-    image: 'registry.local.appcelerator.io/ws-bash-web'
-    public:
-      - name: web
-        internal_port: 80
+        external:
+            name: ampcore_public

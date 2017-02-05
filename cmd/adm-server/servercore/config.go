@@ -38,7 +38,7 @@ func (c *ServerConfig) loadConfigUsingEnvVariable() {
 
 //display amp-pilot configuration
 func (c *ServerConfig) displayConfig(version string, build string) {
-	fmt.Printf("adm-server version: %v build: %s\n", version, build)
+	fmt.Printf("ampadmin_server version: %v\n", version)
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Println("Configuration:")
 	fmt.Printf("Docker-engine: %s\n", c.dockerEngine)

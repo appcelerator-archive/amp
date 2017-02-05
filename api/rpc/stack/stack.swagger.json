@@ -16,38 +16,8 @@
   ],
   "paths": {
     "/v1/stack": {
-      "get": {
-        "operationId": "List",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/stackListReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "all",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          }
-        ],
-        "tags": [
-          "StackService"
-        ]
-      },
       "post": {
-        "operationId": "Create",
+        "operationId": "Deploy",
         "responses": {
           "200": {
             "description": "",
@@ -62,7 +32,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/stackStackFileRequest"
+              "$ref": "#/definitions/stackStackDeployRequest"
             }
           }
         ],
@@ -71,9 +41,57 @@
         ]
       }
     },
-    "/v1/stack/up": {
-      "post": {
-        "operationId": "Up",
+    "/v1/stack/images": {
+      "get": {
+        "operationId": "GetImages",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackImagesReply"
+            }
+          }
+        },
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/list": {
+      "get": {
+        "operationId": "ListStacks",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/monitor": {
+      "get": {
+        "operationId": "Monitor",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackMonitorReply"
+            }
+          }
+        },
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/pull/{name}": {
+      "get": {
+        "operationId": "PullImage",
         "responses": {
           "200": {
             "description": "",
@@ -84,42 +102,110 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/stackStackFileRequest"
-            }
-          }
-        ],
-        "tags": [
-          "StackService"
-        ]
-      }
-    },
-    "/v1/stack/{stack_ident}": {
-      "get": {
-        "operationId": "Get",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/stackStackFileRequest"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "stack_ident",
+            "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
           "StackService"
         ]
-      },
+      }
+    },
+    "/v1/stack/status/{name}": {
+      "get": {
+        "operationId": "GetStackStatus",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{file_name}/restore": {
+      "post": {
+        "operationId": "RestoreFile",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "file_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/stackStackRestoreRequest"
+            }
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{file_name}/update": {
+      "post": {
+        "operationId": "UpdateFile",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "file_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/stackStackUpdateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{name}": {
       "delete": {
         "operationId": "Remove",
         "responses": {
@@ -132,10 +218,11 @@
         },
         "parameters": [
           {
-            "name": "stack_ident",
+            "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -143,71 +230,49 @@
         ]
       }
     },
-    "/v1/stack/{stack_ident}/start": {
-      "post": {
-        "operationId": "Start",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/stackStackReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "stack_ident",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "StackService"
-        ]
-      }
-    },
-    "/v1/stack/{stack_ident}/stop": {
-      "post": {
-        "operationId": "Stop",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/stackStackReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "stack_ident",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "StackService"
-        ]
-      }
-    },
-    "/v1/stack/{stack_ident}/tasks": {
+    "/v1/stack/{name}/services": {
       "get": {
-        "operationId": "Tasks",
+        "operationId": "Services",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/stackTasksReply"
+              "$ref": "#/definitions/stackStackReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "stack_ident",
+            "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "StackService"
+        ]
+      }
+    },
+    "/v1/stack/{name}/tasks": {
+      "get": {
+        "operationId": "ListTasks",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackStackReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -217,316 +282,206 @@
     }
   },
   "definitions": {
-    "serviceGlobalService": {
-      "type": "object"
-    },
-    "serviceNetworkAttachment": {
+    "stackMonitorService": {
       "type": "object",
       "properties": {
-        "target": {
-          "type": "string"
+        "stack": {
+          "type": "string",
+          "format": "string"
         },
-        "aliases": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "servicePublishSpec": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
+        "id": {
+          "type": "string",
+          "format": "string"
         },
-        "protocol": {
-          "type": "string"
+        "service": {
+          "type": "string",
+          "format": "string"
         },
-        "publish_port": {
-          "type": "integer",
-          "format": "int64"
+        "status": {
+          "type": "string",
+          "format": "string"
         },
-        "internal_port": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "serviceReplicatedService": {
-      "type": "object",
-      "properties": {
+        "mode": {
+          "type": "string",
+          "format": "string"
+        },
         "replicas": {
           "type": "string",
-          "format": "uint64"
-        }
-      }
-    },
-    "serviceServiceSpec": {
-      "type": "object",
-      "properties": {
-        "image": {
-          "type": "string"
+          "format": "string"
         },
-        "name": {
-          "type": "string"
-        },
-        "replicated": {
-          "$ref": "#/definitions/serviceReplicatedService"
-        },
-        "global": {
-          "$ref": "#/definitions/serviceGlobalService"
-        },
-        "env": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "networks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceNetworkAttachment"
-          }
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "container_labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "publish_specs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/servicePublishSpec"
-          }
-        },
-        "args": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "mounts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "registry_auth": {
-          "type": "string"
-        }
-      }
-    },
-    "stackListReply": {
-      "type": "object",
-      "properties": {
-        "list": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackStackInfo"
-          }
-        }
-      },
-      "title": "struct for list reply function"
-    },
-    "stackListRequest": {
-      "type": "object",
-      "properties": {
-        "all": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "limit": {
+        "failedTask": {
           "type": "string",
-          "format": "int64"
+          "format": "string"
         }
       },
-      "title": "struct for list request function"
+      "title": "struct for service in monitor"
     },
-    "stackNetworkIPAM": {
-      "type": "object",
-      "properties": {
-        "driver": {
-          "type": "string"
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "config": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackNetworkIPAMConfig"
-          }
-        }
-      }
-    },
-    "stackNetworkIPAMConfig": {
-      "type": "object",
-      "properties": {
-        "subnet": {
-          "type": "string"
-        },
-        "ip_range": {
-          "type": "string"
-        },
-        "gateway": {
-          "type": "string"
-        },
-        "aux_address": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "stackNetworkSpec": {
+    "stackServiceSpec": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
-        "driver": {
-          "type": "string"
-        },
-        "enable_ipv6": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "ipam": {
-          "$ref": "#/definitions/stackNetworkIPAM"
-        },
-        "internal": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
+        "image": {
+          "type": "string",
+          "format": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
-        },
-        "external": {
-          "type": "string"
-        }
-      }
-    },
-    "stackRemoveRequest": {
-      "type": "object",
-      "properties": {
-        "stack_ident": {
-          "type": "string"
-        },
-        "force": {
-          "type": "boolean",
-          "format": "boolean"
         }
       },
-      "title": "struct for remove request function"
+      "title": "Service spec restrict to amp need"
     },
     "stackStack": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
-        "id": {
-          "type": "string"
+        "file_data": {
+          "type": "string",
+          "format": "string"
         },
         "services": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/serviceServiceSpec"
+            "$ref": "#/definitions/stackServiceSpec"
           }
         },
-        "networks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackNetworkSpec"
-          }
-        },
-        "is_public": {
-          "type": "boolean",
-          "format": "boolean"
+        "amp_tag": {
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "Stack struct"
     },
-    "stackStackFileRequest": {
+    "stackStackDeployRequest": {
       "type": "object",
       "properties": {
         "stack": {
           "$ref": "#/definitions/stackStack"
+        },
+        "registry_auth": {
+          "type": "boolean",
+          "format": "boolean"
         }
       },
-      "title": "struct for stackfile request"
+      "title": "request struct for Deploy command"
     },
-    "stackStackInfo": {
+    "stackStackImagesReply": {
+      "type": "object",
+      "properties": {
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      },
+      "title": "struct for reply getImages"
+    },
+    "stackStackMonitorReply": {
+      "type": "object",
+      "properties": {
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackMonitorService"
+          }
+        }
+      },
+      "title": "struct for reply Monitor"
+    },
+    "stackStackPsRequest": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
-        "id": {
-          "type": "string"
+        "no_trunc": {
+          "type": "boolean",
+          "format": "boolean"
         },
-        "state": {
-          "type": "string"
+        "no_resolve": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "filter": {
+          "type": "string",
+          "format": "string"
         }
       },
-      "title": "struct part of ListReply Struct"
+      "title": "request struct for Ps command"
     },
     "stackStackReply": {
       "type": "object",
       "properties": {
-        "stack_id": {
-          "type": "string"
+        "answer": {
+          "type": "string",
+          "format": "string"
         }
       },
-      "title": "struct for stack id responses"
+      "title": "struct for stack commands reply"
     },
     "stackStackRequest": {
       "type": "object",
       "properties": {
-        "stack_ident": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "format": "string"
         }
       },
-      "title": "struct stack name/id based requests"
+      "title": "request struct for Rm, GetStack and List commands"
     },
-    "stackTasksReply": {
+    "stackStackRestoreRequest": {
       "type": "object",
       "properties": {
-        "message": {
-          "type": "string"
+        "file_name": {
+          "type": "string",
+          "format": "string"
         }
       },
-      "title": "struct for tasks reply function"
+      "title": "request struct for RestoreFile command"
     },
-    "stackTasksRequest": {
+    "stackStackServicesRequest": {
       "type": "object",
       "properties": {
-        "stack_ident": {
-          "type": "string"
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "quiet": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "filter": {
+          "type": "string",
+          "format": "string"
         }
       },
-      "title": "struct for tasks request function"
+      "title": "request struct for Services command"
+    },
+    "stackStackUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "file_data": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "request struct for UpdateFile command"
     }
   }
 }

@@ -1,0 +1,10 @@
+version: "3"
+services:
+    pinger:
+        image: appcelerator/pinger
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+            - "foo=bar"
+            - "hello=world"

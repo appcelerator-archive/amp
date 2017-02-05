@@ -1,4 +1,4 @@
-FROM golang:1.7.1
+FROM golang:1.7.4
 
 # libseccomp in jessie is not _quite_ new enough -- need backports version
 RUN echo 'deb http://httpredir.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/backports.list
@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     protobuf-c-compiler \
     protobuf-compiler \
     python-minimal \
-    --no-install-recommends
+    --no-install-recommends \
+    && apt-get clean
 
 # install bats
 RUN cd /tmp \
@@ -34,7 +35,8 @@ ENV CRIU_VERSION 1.7
 RUN mkdir -p /usr/src/criu \
     && curl -sSL https://github.com/xemul/criu/archive/v${CRIU_VERSION}.tar.gz | tar -v -C /usr/src/criu/ -xz --strip-components=1 \
     && cd /usr/src/criu \
-    && make install-criu
+    && make install-criu \
+    && rm -rf /usr/src/criu
 
 # install shfmt
 RUN mkdir -p /go/src/github.com/mvdan \
@@ -48,7 +50,8 @@ RUN mkdir -p /go/src/github.com/mvdan \
 # setup a playground for us to spawn containers in
 ENV ROOTFS /busybox
 RUN mkdir -p ${ROOTFS} \
-    && curl -o- -sSL 'https://github.com/jpetazzo/docker-busybox/raw/buildroot-2014.11/rootfs.tar' | tar -C ${ROOTFS} -xf -
+    && curl -o- -sSL 'https://github.com/docker-library/busybox/raw/a0558a9006ce0dd6f6ec5d56cfd3f32ebeeb815f/glibc/busybox.tar.xz' | tar xfJC - ${ROOTFS}
+
 
 COPY script/tmpmount /
 WORKDIR /go/src/github.com/opencontainers/runc

@@ -30,7 +30,7 @@ all: build
 GLIDETARGETS := vendor
 
 $(GLIDETARGETS): glide.yaml
-	@glide install
+	@glide install || (rm -rf vendor; exit 1)
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
@@ -48,7 +48,7 @@ clean-glide:
 
 .PHONY: cleanall-glide
 cleanall-glide: clean-glide
-	@rm -rf .glide
+	@rm -rf .glide glide.lock
 
 # =============================================================================
 # PROTOC (PROTOCOL BUFFER COMPILER)
@@ -76,14 +76,13 @@ protoc: $(PROTOTARGETS)
 
 .PHONY: clean-protoc
 clean-protoc:
-	@find . \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) \
-			$(EXCLUDE_DIRS_FILTER) -type f -delete
+	@find $(PROTODIRS) \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) -type f -delete
 
 # =============================================================================
 # CLEAN
 # =============================================================================
 .PHONY: clean cleanall
-clean: clean-glide clean-protoc clean-cli clean-server
+clean: clean-glide clean-protoc clean-cli clean-server clean-haproxy
 cleanall: clean cleanall-glide
 
 # =============================================================================
@@ -146,4 +145,21 @@ clean-server:
 
 dump:
 	@echo $(DOCKER_CMD)
+
+# =============================================================================
+# BUILD haproxy (`amp-haproxy`)
+# Saves binary to `cmd/amp-haproxy/amp-haproxy.alpine`
+# =============================================================================
+HAPROXY := amp-haproxy
+HAPROXYBINARY=$(HAPROXY).alpine
+HAPROXYTARGET := images/haproxy/$(HAPROXYBINARY)
+HAPROXYSRC := $(shell find ./cmd/amp-haproxy -type f -name '*.go')
+$(HAPROXYTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(HAPROXYSRC)
+	@GOPATH=/go go build $(LDFLAGS) -o $(HAPROXYTARGET) $(REPO)/$(CMDDIR)/$(HAPROXY)
+
+build-haproxy: $(HAPROXYTARGET)
+
+.PHONY: clean-haproxy
+clean-haproxy:
+	@rm -f $(HAPROXYTARGET)
 

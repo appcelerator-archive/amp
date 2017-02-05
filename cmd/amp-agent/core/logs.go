@@ -93,13 +93,13 @@ func extractTimeID(body string) string {
 
 func startReadingLogs(ID string, data *ContainerData) {
 	stream := data.logsStream
-	serviceName := data.labels["com.docker.swarm.service.name"]
+	serviceName := strings.TrimPrefix(data.labels["com.docker.swarm.service.name"], data.labels["com.docker.stack.namespace"]+"_") // Remove the stack prefix from the service name
 	serviceID := data.labels["com.docker.swarm.service.id"]
 	taskName := data.labels["com.docker.swarm.task.name"]
 	taskID := data.labels["com.docker.swarm.task.id"]
 	nodeID := data.labels["com.docker.swarm.node.id"]
 	stackID := data.labels["io.amp.stack.id"]
-	stackName := data.labels["io.amp.stack.name"]
+	stackName := data.labels["com.docker.stack.namespace"]
 	role := data.labels["io.amp.role"]
 	reader := bufio.NewReader(stream)
 	fmt.Printf("start reading logs on container: %s\n", data.name)

@@ -2,19 +2,21 @@ package logs
 
 import (
 	"encoding/json"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"strings"
-
+	"fmt"
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	dockerClient "github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"gopkg.in/olivere/elastic.v3"
 	"log"
+	"strings"
 )
 
 const (
@@ -68,9 +70,35 @@ const (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Es            *elasticsearch.Elasticsearch
-	Store         storage.Interface
-	NatsStreaming ns.NatsStreaming
+	ElasticsearchURL string
+	EsConnected      bool
+	Es               elasticsearch.Elasticsearch
+	Store            storage.Interface
+	NatsStreaming    ns.NatsStreaming
+	Docker           *dockerClient.Client
+}
+
+func (s *Server) isElasticsearch(ctx context.Context) *elastic.Client {
+	stackServer := stack.NewServer(nil, s.Docker)
+	_, exist := stackServer.DoesServiceExist(ctx, "amplog_elasticsearch")
+	if !exist {
+		s.EsConnected = false
+		return nil
+	}
+	if !s.EsConnected {
+		log.Println("Connecting to elasticsearch at", s.ElasticsearchURL)
+		if err := s.Es.Connect(s.ElasticsearchURL, amp.DefaultTimeout); err != nil {
+			log.Printf("unable to connect to elasticsearch at %s: %v", s.ElasticsearchURL, err)
+			return nil
+		}
+		s.EsConnected = true
+		log.Println("Connected to elasticsearch at", s.ElasticsearchURL)
+	}
+	client := s.Es.GetClient()
+	if client.IsRunning() {
+		return client
+	}
+	return nil
 }
 
 // Get implements log.LogServer
@@ -80,11 +108,15 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
+	client := s.isElasticsearch(ctx)
+	if client == nil {
+		return nil, fmt.Errorf("the amplog stack is not running. Please start it with command 'amp pf start amplog'")
+	}
 
-	log.Println("rpc-logs: Get", in.String())
+	log.Println("rpc-logs: Get ", in.String())
 
 	// Prepare request to elasticsearch
-	request := s.Es.GetClient().Search().Index(EsIndex)
+	request := client.Search().Index(EsIndex)
 	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
@@ -150,7 +182,12 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 // GetStream implements log.LogServer
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	log.Println("rpc-logs: GetStream", in.String())
+	client := s.isElasticsearch(context.Background())
+	if client == nil {
+		return fmt.Errorf("the amplog stack is not running. Please start it with command 'amp pf start amplog'")
+	}
+
+	log.Println("rpc-logs: GetStream ", in.String())
 
 	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, func(msg *stan.Msg) {
 		entry, err := parseProtoLogEntry(msg.Data)
