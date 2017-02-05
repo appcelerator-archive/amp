@@ -61,7 +61,7 @@ func (s *Server) WaitForServiceReady(ctx context.Context, serviceName string, ti
 		if exist {
 			ready, _, _ := s.getServiceStatus(ctx, id)
 			if ready > 0 {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 				return nil
 			}
 		}
