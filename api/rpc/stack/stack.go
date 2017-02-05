@@ -29,7 +29,7 @@ const (
 	//Path where the stack infrastructure compose files are stored in the amplifier container
 	stackFilePath = "/var/lib/amp"
 	//StackFileVarName Name of the file used to store the image names and the images version used in infratructure compose ymy files
-	StackFileVarName = "amp.var"
+	StackFileVarName = "amp.manifest"
 )
 
 // InfraStackList list of all the infrastructure amp stacks

@@ -66,8 +66,8 @@ func startAMP(amp *client.AMP, cmd *cobra.Command, args []string) error {
 				manager.fatalf("Prerequiste error: %v\n", err)
 			}
 			manager.printf(colRegular, "starting stack: ampcore\n")
-			//load ampcore compose file replacing first the variable names by their values using amp.var file
-			data, err = stack.ResolvedComposeFileVariables("ampcore.yml", "amp.var", ampTag)
+			//load ampcore compose file replacing first the variable names by their values using amp.manifest file
+			data, err = stack.ResolvedComposeFileVariables("ampcore.yml", "amp.manifest", ampTag)
 			if err != nil {
 				manager.fatalf("start ampCore error: %v\n", err)
 			}

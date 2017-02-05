@@ -98,7 +98,7 @@ func bootstrap(cmd *cobra.Command, args []string) {
 			smanager.fatalf("Prerequiste error: %v\n", err)
 		}
 		smanager.printf(colRegular, "starting stack: ampcore\n")
-		data, err := stack.ResolvedComposeFileVariables("ampcore.yml", "amp.var", "")
+		data, err := stack.ResolvedComposeFileVariables("ampcore.yml", "amp.manifest", "")
 		if err != nil {
 			smanager.fatalf("start ampCore error: %v\n", err)
 		}

@@ -52,14 +52,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "StackService"
         ]
@@ -76,14 +68,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "StackService"
         ]
@@ -100,14 +84,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "StackService"
         ]
@@ -129,7 +105,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -153,7 +130,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -177,7 +155,8 @@
             "name": "file_name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           },
           {
             "name": "body",
@@ -209,7 +188,8 @@
             "name": "file_name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           },
           {
             "name": "body",
@@ -241,7 +221,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -265,20 +246,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "quiet",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -302,27 +271,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "no_trunc",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "no_resolve",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -336,25 +286,32 @@
       "type": "object",
       "properties": {
         "stack": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "service": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "mode": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "replicas": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "failedTask": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct for service in monitor"
@@ -363,15 +320,18 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         }
       },
@@ -381,10 +341,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "file_data": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "services": {
           "type": "array",
@@ -393,7 +355,8 @@
           }
         },
         "amp_tag": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "Stack struct"
@@ -417,7 +380,8 @@
         "images": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         }
       },
@@ -439,7 +403,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "no_trunc": {
           "type": "boolean",
@@ -450,7 +415,8 @@
           "format": "boolean"
         },
         "filter": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "request struct for Ps command"
@@ -459,7 +425,8 @@
       "type": "object",
       "properties": {
         "answer": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct for stack commands reply"
@@ -468,7 +435,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "request struct for Rm, GetStack and List commands"
@@ -477,7 +445,8 @@
       "type": "object",
       "properties": {
         "file_name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "request struct for RestoreFile command"
@@ -486,14 +455,16 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "quiet": {
           "type": "boolean",
           "format": "boolean"
         },
         "filter": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "request struct for Services command"
@@ -502,10 +473,12 @@
       "type": "object",
       "properties": {
         "file_name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "file_data": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "request struct for UpdateFile command"

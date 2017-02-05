@@ -60,7 +60,7 @@ func parseStack(stack *Stack) error {
 	return nil
 }
 
-// LoadInfraVariables load variable from amp.var file to map
+// LoadInfraVariables load variable from amp.manifest file to map
 func LoadInfraVariables(varFilePath string, ampTag string) (map[string]string, error) {
 	data, err := ioutil.ReadFile(varFilePath)
 	if err != nil {
