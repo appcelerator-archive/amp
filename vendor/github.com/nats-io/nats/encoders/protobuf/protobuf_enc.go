@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // Additional index for registered Encoders.
@@ -58,9 +58,5 @@ func (pb *ProtobufEncoder) Decode(subject string, data []byte, vPtr interface{})
 		return ErrInvalidProtoMsgDecode
 	}
 
-	err := proto.Unmarshal(data, i)
-	if err != nil {
-		return err
-	}
-	return nil
+	return proto.Unmarshal(data, i)
 }

@@ -34,7 +34,15 @@ var (
 // InitArgs returns an options func to configure a LinuxFactory with the
 // provided init binary path and arguments.
 func InitArgs(args ...string) func(*LinuxFactory) error {
-	return func(l *LinuxFactory) error {
+	return func(l *LinuxFactory) (err error) {
+		if len(args) > 0 {
+			// Resolve relative paths to ensure that its available
+			// after directory changes.
+			if args[0], err = filepath.Abs(args[0]); err != nil {
+				return newGenericError(err, ConfigInvalid)
+			}
+		}
+
 		l.InitArgs = args
 		return nil
 	}
@@ -222,60 +230,61 @@ func (l *LinuxFactory) Type() string {
 // StartInitialization loads a container by opening the pipe fd from the parent to read the configuration and state
 // This is a low level implementation detail of the reexec and should not be consumed externally
 func (l *LinuxFactory) StartInitialization() (err error) {
-	var pipefd, rootfd int
-	for _, pair := range []struct {
-		k string
-		v *int
-	}{
-		{"_LIBCONTAINER_INITPIPE", &pipefd},
-		{"_LIBCONTAINER_STATEDIR", &rootfd},
-	} {
+	var (
+		pipefd, rootfd int
+		envInitPipe    = os.Getenv("_LIBCONTAINER_INITPIPE")
+		envStateDir    = os.Getenv("_LIBCONTAINER_STATEDIR")
+	)
 
-		s := os.Getenv(pair.k)
-
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			return fmt.Errorf("unable to convert %s=%s to int", pair.k, s)
-		}
-		*pair.v = i
+	// Get the INITPIPE.
+	pipefd, err = strconv.Atoi(envInitPipe)
+	if err != nil {
+		return fmt.Errorf("unable to convert _LIBCONTAINER_INITPIPE=%s to int: %s", envInitPipe, err)
 	}
+
 	var (
 		pipe = os.NewFile(uintptr(pipefd), "pipe")
 		it   = initType(os.Getenv("_LIBCONTAINER_INITTYPE"))
 	)
+	defer pipe.Close()
+
+	// Only init processes have STATEDIR.
+	rootfd = -1
+	if it == initStandard {
+		rootfd, err = strconv.Atoi(envStateDir)
+		if err != nil {
+			return fmt.Errorf("unable to convert _LIBCONTAINER_STATEDIR=%s to int: %s", envStateDir, err)
+		}
+	}
+
 	// clear the current process's environment to clean any libcontainer
 	// specific env vars.
 	os.Clearenv()
 
-	var i initer
 	defer func() {
 		// We have an error during the initialization of the container's init,
 		// send it back to the parent process in the form of an initError.
-		// If container's init successed, syscall.Exec will not return, hence
-		// this defer function will never be called.
-		if _, ok := i.(*linuxStandardInit); ok {
-			//  Synchronisation only necessary for standard init.
-			if werr := utils.WriteJSON(pipe, syncT{procError}); werr != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return
-			}
+		if werr := utils.WriteJSON(pipe, syncT{procError}); werr != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
 		}
 		if werr := utils.WriteJSON(pipe, newSystemError(err)); werr != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return
 		}
-		// ensure that this pipe is always closed
-		pipe.Close()
 	}()
 	defer func() {
 		if e := recover(); e != nil {
 			err = fmt.Errorf("panic from initialization: %v, %v", e, string(debug.Stack()))
 		}
 	}()
-	i, err = newContainerInit(it, pipe, rootfd)
+
+	i, err := newContainerInit(it, pipe, rootfd)
 	if err != nil {
 		return err
 	}
+
+	// If Init succeeds, syscall.Exec will not return, hence none of the defers will be called.
 	return i.Init()
 }
 

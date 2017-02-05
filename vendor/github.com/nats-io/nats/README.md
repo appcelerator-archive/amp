@@ -1,14 +1,14 @@
 # NATS - Go Client
 A [Go](http://golang.org) client for the [NATS messaging system](https://nats.io).
 
-[![License MIT](https://img.shields.io/npm/l/express.svg)](http://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nats-io/nats)](https://goreportcard.com/report/github.com/nats-io/nats) [![Build Status](https://travis-ci.org/nats-io/nats.svg?branch=master)](http://travis-ci.org/nats-io/nats) [![GoDoc](https://godoc.org/github.com/nats-io/nats?status.svg)](http://godoc.org/github.com/nats-io/nats) [![Coverage Status](https://coveralls.io/repos/nats-io/nats/badge.svg?branch=master)](https://coveralls.io/r/nats-io/nats?branch=master)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nats-io/go-nats)](https://goreportcard.com/report/github.com/nats-io/go-nats) [![Build Status](https://travis-ci.org/nats-io/go-nats.svg?branch=master)](http://travis-ci.org/nats-io/go-nats) [![GoDoc](https://godoc.org/github.com/nats-io/go-nats?status.svg)](http://godoc.org/github.com/nats-io/go-nats) [![Coverage Status](https://coveralls.io/repos/nats-io/go-nats/badge.svg?branch=master)](https://coveralls.io/r/nats-io/go-nats?branch=master)
 
 ## Installation
 
 ```bash
 # Go client
-go get github.com/nats-io/nats
+go get github.com/nats-io/go-nats
 
 # Server
 go get github.com/nats-io/gnatsd
@@ -49,7 +49,7 @@ nc.Subscribe("help", func(m *Msg) {
 })
 
 // Close connection
-nc := nats.Connect("nats://localhost:4222")
+nc, _ := nats.Connect("nats://localhost:4222")
 nc.Close();
 ```
 
