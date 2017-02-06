@@ -97,7 +97,7 @@ func welcomeUser(name string) {
 
 func basicLogin(a *client.AMP) (username, password, lastEight, name string, err error) {
 	username = getUsername()
-	password, err = getPassword()
+	password, err = GetPassword()
 	if err != nil {
 		return
 	}

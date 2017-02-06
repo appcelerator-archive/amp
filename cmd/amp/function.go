@@ -16,7 +16,7 @@ import (
 var (
 	functionCmd = &cobra.Command{
 		Use:     "function",
-		Short:   "function operations",
+		Short:   "Function operations",
 		Aliases: []string{"fn"},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()

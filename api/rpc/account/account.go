@@ -77,12 +77,31 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	return
 }
 
-// CreateOrganization implements account.CreateOranization
+// CreateOrganization implements account.CreateOrganization
 func (s *Server) CreateOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
 	out = &pb.Empty{}
 	err = in.Validate()
 	if err != nil {
 		return nil, err
+	}
+	return
+}
+
+// DeleteOrganization implements account.DeleteOrganization
+func (s *Server) DeleteOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
+	out = &pb.Empty{}
+	err = in.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// EditOrganization implements account.EditOrganization
+func (s *Server) EditOrganization(ctx context.Context, in *OrganizationRequest) (out *pb.Empty, err error) {
+	out = &pb.Empty{}
+	if in.Name == "" {
+		return nil, grpc.Errorf(codes.InvalidArgument, "organization name is mandatory")
 	}
 	return
 }
@@ -115,7 +134,7 @@ func (s *Server) GetAccountDetails(ctx context.Context, in *AccountRequest) (out
 }
 
 // EditAccount implements account.EditAccount
-func (s *Server) EditAccount(ctx context.Context, in *EditRequest) (out *AccountReply, err error) {
+func (s *Server) UpdateAccount(ctx context.Context, in *UpdateRequest) (out *AccountReply, err error) {
 	out = &AccountReply{}
 	err = in.Validate()
 	if err != nil {
