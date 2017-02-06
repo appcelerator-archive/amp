@@ -3,8 +3,8 @@
   args:
      - "{{call .uniq `stack`}}"
   options:
-     - -f ../../api/rpc/stack/test_samples/sample-01.yml
-  expectation: stack-id
+     - -c ../../api/rpc/stack/test_samples/sample-01.yml
+  expectation: stack-creating-service
   timeout: 20s
 
 - stack-list:
@@ -15,13 +15,14 @@
     -
   expectation: stack-list-running
 
-- stack-stop:
-  cmd: amp stack stop
+- stack-remove:
+  cmd: amp stack rm
   args:
     - "{{call .uniq `stack`}}"
   options:
     -
-  expectation: stack-id
+  expectation: stack-removing-service
+
 
 - stack-list:
   cmd: amp stack ls
@@ -30,39 +31,6 @@
   options:
     -
   expectation: stack-list-unavailable
-
-- stack-restart:
-  cmd: amp stack start
-  args:
-    - "{{call .uniq `stack`}}"
-  options:
-    -
-  expectation: stack-id
-  timeout: 20s
-
-- stack-list:
-  cmd: amp stack ls
-  args:
-    -
-  options:
-    -
-  expectation: stack-list-running
-
-- stack-stop:
-  cmd: amp stack stop
-  args:
-    - "{{call .uniq `stack`}}"
-  options:
-    -
-  expectation: stack-id
-
-- stack-remove:
-  cmd: amp stack rm
-  args:
-    - "{{call .uniq `stack`}}"
-  options:
-    -
-  expectation: stack-id
 
 - stack-list:
   cmd: amp stack ls

@@ -7,7 +7,6 @@ import "google/api/annotations.proto";
 service ClusterAgentService {
         rpc GetNodeInfo (GetNodeInfoRequest) returns (NodeInfo) {}
         rpc PurgeNode (PurgeNodeRequest) returns (PurgeNodeAnswer) {}
-        rpc PullImage (PullImageRequest) returns (AgentRet) {}
 }
 
 message AgentRet{

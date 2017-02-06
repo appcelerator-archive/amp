@@ -1,7 +1,13 @@
 services:
-  pinger:
-    image: appcelerator/pinger
-    public:
-      - name: www
-        internal_port: 3000
+    pinger:
+        image: appcelerator/pinger
+        deploy:
+            labels:
+                io.amp.mapping: "www:3000"
+        networks:
+            - public
 
+networks:
+    public:
+        external:
+            name: ampcore_public

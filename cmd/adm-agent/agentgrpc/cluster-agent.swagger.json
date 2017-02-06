@@ -16,9 +16,6 @@
   ],
   "paths": {},
   "definitions": {
-    "agentgrpcAgentRet": {
-      "type": "object"
-    },
     "agentgrpcGetNodeInfoRequest": {
       "type": "object"
     },
@@ -79,14 +76,6 @@
         "images": {
           "type": "string",
           "format": "int64"
-        }
-      }
-    },
-    "agentgrpcPullImageRequest": {
-      "type": "object",
-      "properties": {
-        "image": {
-          "type": "string"
         }
       }
     },

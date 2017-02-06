@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/data/influx"
+	dockerClient "github.com/docker/docker/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,7 +17,10 @@ import (
 
 // Stats structure to implement StatsServer interface
 type Stats struct {
-	Influx influx.Influx
+	InfluxURL       string
+	InfluxConnected bool
+	Influx          influx.Influx
+	Docker          *dockerClient.Client
 }
 
 const (
@@ -28,8 +34,33 @@ const (
 	metricsIO              = "io"
 )
 
+func (s *Stats) isInfluxDB(ctx context.Context) bool {
+	stackServer := stack.NewServer(nil, s.Docker)
+	_, exist := stackServer.DoesServiceExist(ctx, "ampmonitor_influxdb")
+	if !exist {
+		s.InfluxConnected = false
+		return false
+	}
+	if !s.InfluxConnected {
+		fmt.Println("Connecting to InfluxDB at", s.InfluxURL)
+		s.Influx = influx.New(s.InfluxURL, "telegraf", "", "")
+		if err := s.Influx.Connect(5 * time.Second); err != nil {
+			fmt.Printf("unable to connect to influxDB at %s: %v", s.InfluxURL, err)
+			return false
+		}
+		s.InfluxConnected = true
+		fmt.Println("Connected to influxDB at", s.InfluxURL)
+		return true
+	}
+	return true
+
+}
+
 // StatsQuery extracts stat information according to StatsRequest
 func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	if !s.isInfluxDB(ctx) {
+		return nil, fmt.Errorf("the ampmonitor stack is not running. Please start it with command 'amp pf start ampmonitor'")
+	}
 	var metricList [4]*StatsReply
 	if req.StatsCpu {
 		ret, err := s.statQueryMetric(req, metricsCPU)

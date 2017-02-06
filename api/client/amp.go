@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
@@ -87,8 +88,19 @@ type AMP struct {
 	// Conn is the gRPC connection to amplifier
 	Conn *grpc.ClientConn
 
+	// Conn is the gRPC connection to adm-server
+	ConnAdmServer *grpc.ClientConn
+
 	// Log also implements the grpclog.Logger interface
 	Log Logger
+}
+
+// IsLocalhost return true if the server address is localhost
+func (a *AMP) IsLocalhost() bool {
+	if strings.Index(a.Configuration.ServerAddress, "127.0.0.1:") >= 0 || strings.Index(a.Configuration.ServerAddress, "localhost:") >= 0 {
+		return true
+	}
+	return false
 }
 
 // Connect to amplifier
@@ -96,7 +108,7 @@ func (a *AMP) Connect() error {
 	conn, err := grpc.Dial(a.Configuration.ServerAddress,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
-		grpc.WithTimeout(time.Second))
+		grpc.WithTimeout(time.Second*3))
 	if err != nil {
 		return fmt.Errorf("Error connecting to amplifier @ %s: %v", a.Configuration.ServerAddress, err)
 	}
@@ -104,15 +116,31 @@ func (a *AMP) Connect() error {
 	return nil
 }
 
+// ConnectAdmServer Connect to ampadmin_server
+func (a *AMP) ConnectAdmServer() error {
+	conn, err := grpc.Dial(a.Configuration.AdminServerAddress,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(time.Second*3))
+	if err != nil {
+		return fmt.Errorf("Error connecting to ampadmin_server @ %s: %v", a.Configuration.AdminServerAddress, err)
+	}
+	a.ConnAdmServer = conn
+	return nil
+}
+
 // Disconnect from amplifier
 func (a *AMP) Disconnect() {
-	if a.Conn == nil {
+	if a.Conn != nil {
+		err := a.Conn.Close()
+		if err != nil {
+			a.Log.Panic(err)
+		}
+	}
+	if a.ConnAdmServer == nil {
 		return
 	}
-	err := a.Conn.Close()
-	if err != nil {
-		a.Log.Panic(err)
-	}
+	a.ConnAdmServer.Close()
 }
 
 // GetAuthorizedContext returns an authorized context

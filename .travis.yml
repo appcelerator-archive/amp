@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-  - 1.7.4
+  - 1.7.5
 
 install:
   - sudo sysctl -w vm.max_map_count=262144
@@ -18,8 +18,9 @@ install:
   - hack/amptools make -f Makefile.refactor.make build
   - make fmt check install
   - make TAG=local build-image
-  - amp platform pull --local
-  - amp platform start --local
+  - amp platform pull
+  - amp platform start all --local
+  - sleep 5
 
 script:
   - make test

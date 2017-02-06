@@ -30,7 +30,7 @@ func (c *AgentConfig) setDefault() {
 	c.dockerEngine = "unix:///var/run/docker.sock"
 	c.apiPort = "3000"
 	c.agentID = os.Getenv("HOSTNAME")
-	c.serverAddr = "adm-server"
+	c.serverAddr = "server"
 	c.serverPort = "31315"
 	c.grpcPort = "31316"
 }
@@ -46,7 +46,7 @@ func (c *AgentConfig) loadConfigUsingEnvVariable() {
 
 //display amp-pilot configuration
 func (c *AgentConfig) displayConfig(version string, build string) {
-	fmt.Printf("adl-agent version: %v build: %s\n", version, build)
+	fmt.Printf("ampadmin_agent version: %v\n", version)
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Println("Configuration:")
 	fmt.Printf("Docker-engine: %s\n", c.dockerEngine)

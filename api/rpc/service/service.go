@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	defaultNetwork = "amp-public"
+	defaultNetwork = "ampcore_public"
 	err            error
 )
 

@@ -2,265 +2,156 @@ package stack
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/appcelerator/amp/api/rpc/service"
-	"golang.org/x/net/context"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"strings"
 )
 
 type stackSpec struct {
 	Services map[string]serviceSpec `yaml:"services"`
-	Networks map[string]networkSpec `yaml:"networks"`
 }
 
 type serviceSpec struct {
-	Image           string                    `yaml:"image"`
-	Public          []publishSpec             `yaml:"public"`
-	Mode            string                    `yaml:"mode"`
-	Replicas        uint64                    `yaml:"replicas"`
-	Args            interface{}               `yaml:"args"`
-	Environment     interface{}               `yaml:"environment"`
-	Labels          interface{}               `yaml:"labels"`
-	ContainerLabels interface{}               `yaml:"container_labels"`
-	Networks        map[string]networkAliases `yaml:"networks"`
-	Mounts          []string                  `yaml:"volumes"`
+	Image  string     `yaml:"image"`
+	Deploy deploySpec `yaml:"deploy"`
 }
 
-type publishSpec struct {
-	Name         string `yaml:"name"`
-	Protocol     string `yaml:"protocol"`
-	PublishPort  uint32 `yaml:"publish_port"`
-	InternalPort uint32 `yaml:"internal_port"`
+type deploySpec struct {
+	Labels interface{} `yaml:"labels"`
 }
 
-type networkAliases struct {
-	Aliases []string `yaml:"aliases"`
-}
+// parseStackfile update stack structure with the services labels
+func parseStack(stack *Stack) error {
+	if stack.FileData == "" {
+		fullFileName := fmt.Sprintf("/var/lib/amp/%s.yml", stack.Name)
 
-type networkSpec struct {
-	External   interface{}       `yaml:"external"`
-	Driver     string            `yaml:"driver"`
-	EnableIPv6 bool              `yaml:"enable_ipv6"`
-	IPAM       *networkIPAM      `yaml:"ipam"`
-	Internal   bool              `yaml:"internal"`
-	Options    map[string]string `yaml:"driver_opts"`
-	Labels     map[string]string `yaml:"labels"`
-}
-
-// IPAM represents IP Address Management
-type networkIPAM struct {
-	Driver  string            `yaml:"driver"`
-	Options map[string]string `yaml:"options"`
-	Config  []ipamConfig      `yaml:"config"`
-}
-
-// IPAMConfig represents IPAM configurations
-type ipamConfig struct {
-	Subnet     string            `yaml:"subnet"`
-	IPRange    string            `yaml:"ip_range"`
-	Gateway    string            `yaml:"gateway"`
-	AuxAddress map[string]string `yaml:"aux_address"`
-}
-
-// ParseStackfile main function to parse stackfile
-func ParseStackfile(ctx context.Context, in string) (*Stack, error) {
-	var stack = &Stack{}
-	specs, err := parseStack([]byte(in))
-	if err != nil {
-		return nil, err
+		data, err := ResolvedComposeFileVariables(fullFileName, fmt.Sprintf("%s/%s", stackFilePath, StackFileVarName), stack.AmpTag)
+		if err != nil {
+			return err
+		}
+		stack.FileData = data
 	}
-	networkMap, err := copyNetworks(stack, specs.Networks)
-	if err != nil {
-		return nil, err
-	}
-	if err := copyServices(stack, specs.Services, networkMap); err != nil {
-		return nil, err
-	}
-	return stack, err
-}
-
-func parseStack(b []byte) (*stackSpec, error) {
 	var specs stackSpec
-	if err := yaml.Unmarshal(b, &specs); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal([]byte(stack.FileData), &specs); err != nil {
+		return err
 	}
-	return &specs, nil
-}
-
-func copyNetworks(stack *Stack, specs map[string]networkSpec) (map[string]string, error) {
-	networkMap := make(map[string]string)
-	for name, spec := range specs {
-		external := "false"
-		if extMap, ok := spec.External.(map[interface{}]interface{}); ok {
-			external = extMap["name"].(string)
-			networkMap[name] = external
-		} else if ext, ok := spec.External.(bool); ok {
-			external = fmt.Sprintf("%t", ext)
-		} else if spec.External != nil {
-			return networkMap, fmt.Errorf("invalid syntax near networks: %s: external", name)
-		}
-		stack.Networks = append(stack.Networks, &NetworkSpec{
-			External:   external,
-			Name:       name,
-			Driver:     spec.Driver,
-			EnableIpv6: spec.EnableIPv6,
-			Ipam:       copyIPAM(spec.IPAM),
-			Internal:   spec.Internal,
-			Options:    spec.Options,
-			Labels:     spec.Labels,
-		})
-	}
-	return networkMap, nil
-
-}
-
-func copyIPAM(ipam *networkIPAM) *NetworkIPAM {
-	if ipam == nil {
-		return nil
-	}
-	return &NetworkIPAM{
-		Driver:  ipam.Driver,
-		Options: ipam.Options,
-		Config:  copyIPAMConfig(ipam.Config),
-	}
-}
-
-func copyIPAMConfig(config []ipamConfig) []*NetworkIPAMConfig {
-	configList := []*NetworkIPAMConfig{}
-	if config != nil {
-		for _, conf := range config {
-			configList = append(configList, &NetworkIPAMConfig{
-				Subnet:     conf.Subnet,
-				IpRange:    conf.IPRange,
-				Gateway:    conf.Gateway,
-				AuxAddress: conf.AuxAddress,
-			})
-		}
-	}
-	return configList
-}
-
-func copyServices(stack *Stack, specs map[string]serviceSpec, networkMap map[string]string) error {
-	for name, spec := range specs {
-		// try to parse arguments entries as a map
-		// else try to parse environment as string entries
-		args := []string{}
-		if argMap, ok := spec.Args.(map[interface{}]interface{}); ok {
-			for k, v := range argMap {
-				args = append(args, k.(string)+"="+v.(string))
-			}
-		} else if argList, ok := spec.Args.([]interface{}); ok {
-			for _, e := range argList {
-				args = append(args, e.(string))
-			}
-		}
-
-		// try to parse environment entries as a map
-		// else try to parse environment as string entries
-		env := []string{}
-		if envMap, ok := spec.Environment.(map[interface{}]interface{}); ok {
-			for k, v := range envMap {
-				env = append(env, k.(string)+"="+v.(string))
-			}
-		} else if envList, ok := spec.Environment.([]interface{}); ok {
-			for _, e := range envList {
-				env = append(env, e.(string))
-			}
-		}
+	for name, spec := range specs.Services {
 		// try to parse labels as a map
 		// else try to parse labels as string entries
 		var labels = map[string]string{}
-		if labelMap, ok := spec.Labels.(map[interface{}]interface{}); ok {
+		labelSpec := spec.Deploy.Labels
+		if labelMap, ok := labelSpec.(map[interface{}]interface{}); ok {
 			for k, v := range labelMap {
 				labels[k.(string)] = v.(string)
 			}
-		} else if labelList, ok := spec.Labels.([]interface{}); ok {
+		} else if labelList, ok := labelSpec.([]interface{}); ok {
 			for _, s := range labelList {
 				a := strings.Split(s.(string), "=")
 				labels[a[0]] = a[1]
 			}
 		}
-		// try to parse container labels as a map
-		// else try to parse container labels as string entries
-		containerLabels := map[string]string{}
-		if labelMap, ok := spec.ContainerLabels.(map[interface{}]interface{}); ok {
-			for k, v := range labelMap {
-				containerLabels[k.(string)] = v.(string)
-			}
-		} else if labelList, ok := spec.ContainerLabels.([]interface{}); ok {
-			for _, s := range labelList {
-				a := strings.Split(s.(string), "=")
-				containerLabels[a[0]] = a[1]
-			}
-		}
-		publishSpecs := []*service.PublishSpec{}
-		for _, p := range spec.Public {
-			publishSpecs = append(publishSpecs, &service.PublishSpec{
-				Name:         p.Name,
-				Protocol:     p.Protocol,
-				PublishPort:  p.PublishPort,
-				InternalPort: p.InternalPort,
-			})
-		}
-		// add service mode and replicas to spec
-		var swarmMode service.SwarmMode
-		replicas := spec.Replicas
-		mode := spec.Mode
 
-		// supply a default value for mode
-		if mode == "" {
-			mode = "replicated"
-		}
-
-		switch mode {
-		case "replicated":
-			if replicas < 1 {
-				// if replicated then must have at least 1 replica
-				replicas = 1
-			}
-			swarmMode = &service.ServiceSpec_Replicated{
-				Replicated: &service.ReplicatedService{Replicas: replicas},
-			}
-		case "global":
-			if replicas != 0 {
-				// global mode can't specify replicas (only allowed 1 per node)
-				return fmt.Errorf("replicas can only be used with replicated mode")
-			}
-			swarmMode = &service.ServiceSpec_Global{
-				Global: &service.GlobalService{},
-			}
-		default:
-			return fmt.Errorf("invalid option for mode: %s", mode)
-		}
-
-		// add custom network connection
-		networkAttachment := []*service.NetworkAttachment{}
-		if spec.Networks != nil {
-			for name, data := range spec.Networks {
-				trueName, ok := networkMap[name]
-				if !ok {
-					trueName = name
-				}
-				networkAttachment = append(networkAttachment, &service.NetworkAttachment{
-					Target:  trueName,
-					Aliases: data.Aliases,
-				})
-			}
-		}
-
-		stack.Services = append(stack.Services, &service.ServiceSpec{
-			Name:            name,
-			Image:           spec.Image,
-			PublishSpecs:    publishSpecs,
-			Mode:            swarmMode,
-			Env:             env,
-			Args:            args,
-			Labels:          labels,
-			ContainerLabels: containerLabels,
-			Networks:        networkAttachment,
-			Mounts:          spec.Mounts,
+		stack.Services = append(stack.Services, &ServiceSpec{
+			Name:   name,
+			Image:  spec.Image,
+			Labels: labels,
 		})
 	}
 	return nil
+}
+
+// LoadInfraVariables load variable from amp.manifest file to map
+func LoadInfraVariables(varFilePath string, ampTag string) (map[string]string, error) {
+	data, err := ioutil.ReadFile(varFilePath)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(data), "\n")
+
+	//Load map
+	varMap := make(map[string]string)
+	for _, line := range lines {
+		cmd := strings.Split(line, "=")
+		if len(cmd) == 2 {
+			name := strings.Trim(cmd[0], " ")
+			val := strings.Trim(cmd[1], " ")
+			varMap[name] = val
+		}
+	}
+	if ampTag != "" {
+		varMap["versionAmp"] = ampTag
+	}
+
+	//update var
+	for name, val := range varMap {
+		if lb := strings.Index(val, "${"); lb >= 0 {
+			if le := strings.Index(val[lb+1:], "}"); le > 0 {
+				namer := val[lb+2 : lb+le+1]
+				if valv, ok := varMap[namer]; ok {
+					varMap[name] = strings.Replace(val, "${"+namer+"}", valv, -1)
+				}
+			}
+		}
+	}
+	return varMap, nil
+}
+
+// ResolvedComposeFileVariables replace variables by their values
+func ResolvedComposeFileVariables(filePath string, varFilePath string, ampTag string) (string, error) {
+	var varMap map[string]string
+	if varFilePath == "" {
+		varMap = make(map[string]string)
+	} else {
+		varm, errl := LoadInfraVariables(varFilePath, ampTag)
+		if errl != nil {
+			return "", errl
+		}
+		varMap = varm
+	}
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	retData := string(data)
+	lb := strings.Index(retData, "${")
+	var resolveErr error
+	for lb >= 0 {
+		if retData, resolveErr = ResolveVariableAt(retData, lb, varMap); resolveErr != nil {
+			return "", resolveErr
+		}
+		lb = strings.Index(retData, "${")
+	}
+	return retData, nil
+}
+
+// ResolveVariableAt Resolve compose file variable, compose format: ${variableName:-defaultValue} where :-defaultValue is optionnal
+func ResolveVariableAt(data string, lb int, varMap map[string]string) (string, error) {
+	if le := strings.Index(data[lb+1:], "}"); le > 0 {
+		varName := data[lb+2 : lb+le+1]
+		if strings.Index(varName, "${") > 0 {
+			le = lb + 30
+			if lb+30 > len(data) {
+				le = len(data)
+			}
+			return "", fmt.Errorf("bad formated compose file: finc '${' without '}' arround: ${%s", data[lb:le-1])
+		}
+		varList := strings.Split(varName, ":-")
+		if val, ok := varMap[varList[0]]; ok {
+			//replace variable by variable value
+			data = strings.Replace(data, "${"+varName+"}", val, -1)
+		} else if len(varList) > 1 {
+			//replace variable by default value
+			data = strings.Replace(data, "${"+varName+"}", varList[1], -1)
+		} else {
+			return "", fmt.Errorf("Found variable without value or default value %s", varName)
+		}
+
+	} else {
+		le = lb + 30
+		if lb+30 > len(data) {
+			le = len(data)
+		}
+		return "", fmt.Errorf("bad formated compose file2: finc '${' without '}' arround: %s", data[lb:le-1])
+	}
+	return data, nil
 }

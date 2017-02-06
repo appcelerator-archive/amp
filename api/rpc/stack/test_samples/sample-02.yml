@@ -1,22 +1,24 @@
+version: "3"
 services:
-  web:
-    image: appcelerator/amp-demo-service
-    public:
-    - name: www
-      protocol: tcp
-      publish_port: 90
-      internal_port: 3000
-    replicas: 3
-    environment:
-      REDIS_PASSWORD: password
-  redis:
-    image: redis
-    environment:
-    - PASSWORD=password
-    networks:
-      app-net:
-        aliases:
-         - stack1-redis
+    web:
+        image: appcelerator/amp-demo-service
+        deploy:
+            mode: replicated
+            replicas: 3
+            labels:
+            io.amp.mapping: "www:3000"
+        environment:
+            REDIS_PASSWORD: password
+        networks:
+            - public
+
+    redis:
+        image: redis
+        environment:
+            - PASSWORD=password
+                 
 networks:
-  app-net:
-     driver: overlay
+    public:
+        external:
+            name: ampcore_public            
+

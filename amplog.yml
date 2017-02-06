@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+
+    elasticsearch:
+        image: ${imageElasticsearch}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        networks:
+            - infra
+
+    agent:
+        image: ${imageAmp}
+        command: ["amp-agent"]
+        deploy:
+            mode: global
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock         
+        networks:
+            - infra 
+        depends_on:
+            - elasticsearch            
+
+    worker:
+        image: ${imageAmp}
+        command: ["amp-log-worker"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock                
+        networks:
+            - infra 
+        depends_on:
+            - elasticsearch           
+
+networks:
+    infra:
+        external:
+            name: ampcore_infra
+    public:
+        external:
+            name: ampcore_public
+
+  
+

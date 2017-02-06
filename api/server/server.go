@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -20,7 +19,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/config"
-	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
@@ -39,9 +37,9 @@ func initDependencies(config Config) {
 	var wg sync.WaitGroup
 	type initFunc func(Config) error
 
-	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
+	initFuncs := []initFunc{initEtcd, initNats, initDocker}
+	wg.Add(len(initFuncs))
 	for _, f := range initFuncs {
-		wg.Add(1)
 		go func(f initFunc) {
 			defer wg.Done()
 			if err := f(config); err != nil {
@@ -62,12 +60,15 @@ func Start(config Config) {
 	s := grpc.NewServer()
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Server{
-		Es:            &runtime.Elasticsearch,
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Docker:           runtime.Docker,
+		ElasticsearchURL: config.ElasticsearchURL,
+		Store:            runtime.Store,
+		NatsStreaming:    runtime.NatsStreaming,
 	})
 	stats.RegisterStatsServer(s, &stats.Stats{
-		Influx: runtime.Influx,
+		Docker:    runtime.Docker,
+		InfluxURL: config.InfluxURL,
+		Influx:    runtime.Influx,
 	})
 	oauth.RegisterGithubServer(s, &oauth.Oauth{
 		Store:        runtime.Store,
@@ -121,32 +122,13 @@ func initEtcd(config Config) error {
 	return nil
 }
 
-func initElasticsearch(config Config) error {
-	log.Println("Connecting to elasticsearch at", config.ElasticsearchURL)
-	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", config.ElasticsearchURL, err)
-	}
-	log.Println("Connected to elasticsearch at", config.ElasticsearchURL)
-	return nil
-}
-
-func initInfluxDB(config Config) error {
-	log.Println("Connecting to InfluxDB at", config.InfluxURL)
-	runtime.Influx = influx.New(config.InfluxURL, "telegraf", "", "")
-	if err := runtime.Influx.Connect(defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to influxDB at %s: %v", config.InfluxURL, err)
-	}
-	log.Println("Connected to influxDB at", config.InfluxURL)
-	return nil
-}
-
 func initNats(config Config) error {
 	// NATS
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	if runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+	if runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, defaultTimeOut) != nil {
 		return err
 	}
 	return nil

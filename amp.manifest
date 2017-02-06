@@ -1,0 +1,25 @@
+versionAmp           = latest
+versionInfluxDB      = 1.1.3
+versionKapacitor     = 1.1.3
+versionTelegraf      = 1.1.2
+versionGrafana       = 1.1.3
+versionElasticsearch = 5.1.2
+versionEtcd          = 3.1.0
+versionNats          = v0.3.8
+versionHaproxy       = 1.0.5
+versionRegistry      = 2.5.1
+
+
+imageAmp             = appcelerator/amp:${versionAmp}
+imageElasticsearch   = appcelerator/elasticsearch-amp:${versionElasticsearch}
+imageGrafana         = appcelerator/grafana-amp:${versionGrafana}
+imageHaproxy         = appcelerator/haproxy:${versionHaproxy}
+imageInfluxdb        = appcelerator/influxdb-amp:${versionInfluxDB}
+imageKapacitor       = appcelerator/kapacitor-amp:${versionKapacitor}
+imageTelegraf        = appcelerator/telegraf:telegraf-${versionTelegraf}
+imageRegistry        = registry:${versionRegistry}
+imageEtcd            = appcelerator/etcd:${versionEtcd}
+imagePinger          = appcelerator/pinger:latest
+imageNats            = appcelerator/amp-nats-streaming:${versionNats}
+
+stackAmpcore         = 

@@ -82,7 +82,7 @@ clean-protoc:
 # CLEAN
 # =============================================================================
 .PHONY: clean cleanall
-clean: clean-glide clean-protoc clean-cli clean-server
+clean: clean-glide clean-protoc clean-cli clean-server clean-haproxy
 cleanall: clean cleanall-glide
 
 # =============================================================================
@@ -145,4 +145,21 @@ clean-server:
 
 dump:
 	@echo $(DOCKER_CMD)
+
+# =============================================================================
+# BUILD haproxy (`amp-haproxy`)
+# Saves binary to `cmd/amp-haproxy/amp-haproxy.alpine`
+# =============================================================================
+HAPROXY := amp-haproxy
+HAPROXYBINARY=$(HAPROXY).alpine
+HAPROXYTARGET := images/haproxy/$(HAPROXYBINARY)
+HAPROXYSRC := $(shell find ./cmd/amp-haproxy -type f -name '*.go')
+$(HAPROXYTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(HAPROXYSRC)
+	@GOPATH=/go go build $(LDFLAGS) -o $(HAPROXYTARGET) $(REPO)/$(CMDDIR)/$(HAPROXY)
+
+build-haproxy: $(HAPROXYTARGET)
+
+.PHONY: clean-haproxy
+clean-haproxy:
+	@rm -f $(HAPROXYTARGET)
 

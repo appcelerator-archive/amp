@@ -1,0 +1,110 @@
+version: "3"
+services:
+
+    etcd:
+        image: ${imageEtcd}
+        command: ["--name etcd", "--listen-client-urls http://0.0.0.0:2379", "--advertise-client-urls http://etcd:2379"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                
+        volumes:
+            - etcd:/data
+        networks:
+            - infra
+
+    nats:
+        image: ${imageNats}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                
+        networks:
+            - infra 
+
+    registry:
+        image: ${imageRegistry}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        volumes:
+            - registry:/var/lib/registry               
+        networks:
+            - infra 
+            - public
+
+    amplifier:
+        image: ${imageAmp}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+            placement:
+                constraints: [node.role == manager]
+        labels:
+            io.amp.role: "infrastructure"                                
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - infra 
+        depends_on:
+            - etcd            
+            - nats
+
+    gateway:
+        image: ${imageAmp}
+        command: ["amplifier-gateway", "--amplifier_endpoint", "amplifier:50101"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                
+
+        networks:
+            - infra 
+        depends_on:
+            - amplifier           
+
+    haproxy:
+        image: ${imageHaproxy}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        ports:
+            - "80:80"
+            - "8080:8080"
+            - "8081:8081"
+        networks:
+            - infra 
+            - public  
+        depends_on:
+            - etcd
+            - amplifier
+            - amplifier-gateway
+
+volumes:
+    etcd:
+    registry:
+networks:
+    infra:
+        driver: overlay
+    public:
+        driver: overlay
+

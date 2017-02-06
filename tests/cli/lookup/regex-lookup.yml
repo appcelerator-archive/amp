@@ -3,13 +3,14 @@ logs-metadata: (timestamp:"[A-Z0-9\.\-:\"]+\s+time_id:"[A-Z0-9\.\-:\"]+\s+servic
 logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
 docker-service-list-valid-service:   .*({{call .uniq `pinger`}}).*
 docker-service-list-invalid-service: .*[^{{call .uniq `pinger`}}].*
-platform-status-running: "status: running"
+platform-status-running: STACK\s+STATUS\nampadmin\s+running\nampcore\s+running\nampfunction\s+running\namplog\s+running\nampmonitor\s+running
 service-id: ([a-z0-9]){25}
 service-curl: ((.)|(\s))*(pong)((.)|(\s))*
 service-remove: "{{call .uniq `pinger`}}"
-stack-list-running: NAME\s+ID\s+STATE\s*([a-z0-9A-Z\s]*){1,}({{call .uniq `stack`}})([a-z0-9A-Z\s]*){1,}
-stack-list-unavailable: No stack is available
-stack-id: ([a-z0-9]){64}
+stack-list-running: NAME\s+SERVICES\nampadmin\s+\d*\nampcore\s+\d*\nampfunction\s+\d*\namplog\s+\d*\nampmonitor\s+\d*\n[a-z0-9A-Z\s]*\d*\n?
+stack-list-unavailable: NAME\s+SERVICES\nampadmin\s+\d*\nampcore\s+\d*\nampfunction\s+\d*\namplog\s+\d*\nampmonitor\s+\d*\n?
+stack-creating-service: Creating service {{call .uniq `stack`}}_pinger
+stack-removing-service: Removing service {{call .uniq `stack`}}_pinger
 stats-container: Service name\s+Container name\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*-+\s*([a-zA-Z0-9\-\.%\s/]*){1,}
 stats-cpu: Service name\s+CPU %%\s*-+\s*([a-z\-0-9\.%\s]*){1,}
 stats-io: Service name\s+Disk IO\s+read/write\s*-+\s*([a-z0-9A-Z\-\./\s]*){1,}

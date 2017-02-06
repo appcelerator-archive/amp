@@ -1,0 +1,121 @@
+version: "3"
+
+services:
+
+    influxdb:
+        image: ${imageInfluxdb}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        networks:
+            - infra
+
+    telegraf-agent:
+        image: ${imageTelegraf}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        environment: [
+            "OUTPUT_INFLUXDB_ENABLED=true",
+            "INFLUXDB_URL=http://influxdb:8086",
+            "TAG_datacenter=dc1",
+            "TAG_type=core",
+            "INPUT_DOCKER_ENABLED=true",
+            "INPUT_CPU_ENABLED=true",
+            "INPUT_DISK_ENABLED=true",
+            "INPUT_DISKIO_ENABLED=true",
+            "INPUT_KERNEL_ENABLED=true",
+            "INPUT_MEM_ENABLED=true",
+            "INPUT_PROCESS_ENABLED=true",
+            "INPUT_SWAP_ENABLED=true",
+            "INPUT_SYSTEM_ENABLED=true",
+            "INPUT_NET_ENABLED=true",
+            "INPUT_HAPROXY_ENABLED=false",
+            "INFLUXDB_TIMEOUT=20",
+      ]                
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock  
+            - /var/run/utmp:/var/run/utmp                         
+        networks:
+            - infra 
+        depends_on:
+            - influxdb        
+
+    telegraf-haproxy:
+        image: ${imageTelegraf}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"
+        labels:
+            io.amp.role: "infrastructure"                                
+        environment: [
+            "OUTPUT_INFLUXDB_ENABLED=true",
+            "INFLUXDB_URL=http://influxdb:8086",
+            "INPUT_DOCKER_ENABLED=false",
+            "INPUT_CPU_ENABLED=false",
+            "INPUT_NET_ENABLED=false",
+            "INPUT_DISK_ENABLED=false",
+            "INPUT_DISKIO_ENABLED=false",
+            "INPUT_KERNEL_ENABLED=false",
+            "INPUT_MEM_ENABLED=false",
+            "INPUT_PROCESS_ENABLED=false",
+            "INPUT_SWAP_ENABLED=false",
+            "INPUT_SYSTEM_ENABLED=false",
+            "INPUT_HAPROXY_ENABLED=true",
+            "INPUT_HAPROXY_SERVER=http://haproxy:8082/admin?stats",
+            "INFLUXDB_TIMEOUT=20",
+      ]                                      
+        networks:
+            - infra 
+        depends_on:
+            - influxdb                  
+
+    grafana:
+        image: ${imageGrafana}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure" 
+                io.amp.mapping: "grafana:3000"            
+        labels:
+            io.amp.role: "infrastructure"                                
+        networks:
+            - infra 
+        depends_on:
+            - influxdb           
+
+    kapacitor:
+        image: ${imageKapacitor}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "infrastructure"            
+        labels:
+            io.amp.role: "infrastructure"                                 
+        networks:
+            - infra 
+        depends_on:
+            - influxdb  
+
+networks:
+    infra:
+        external:
+            name: ampcore_infra
+    public:
+        external:
+            name: ampcore_public
+
+  
+

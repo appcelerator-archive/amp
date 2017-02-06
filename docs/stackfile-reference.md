@@ -1,80 +1,56 @@
 # Stack file reference
 
 A stack is a collection of services that run in a specific environment on AMP under
-[Docker swarm mode](https://docs.docker.com/engine/swarm/). A stack file is used to
-define this environment in [YAML](http://yaml.org/) format. It is intentionally very
-similar to a [Compose file](https://docs.docker.com/compose/compose-file/)
-(`docker-compose.yml`) and to a Docker Cloud
-[stack file](https://docs.docker.com/docker-cloud/apps/stack-yaml-reference/)
-(`docker-cloud.yml`), but with a number of unique extensions.
+[Docker swarm mode](https://docs.docker.com/engine/swarm/). 
 
-## Example
+A stack file is used to define this environment in [YAML](http://yaml.org/) format. 
+The amp stack file is full compatible with docker compose file
+ [Compose file](https://docs.docker.com/compose/compose-file/)
+(`docker-compose.yml`)
 
-```
-version: '1'  # stack file version (default 1)
+However, it exists some setting to add specific amp behavior:
+
+
+## add an automated mapping between a service and haproxy
+
+
+an haproxy mapping allows to publish a service REST api. For instance if one wants url https://www.test.amp.appcelerator.io/myCommand to execute the REST api command "myCommand" using port 80 of service "myService" in stack "test", it can be done with a mapping between the logical name "www" used in the url with the internal port 80 of the service "myService".
+
+to do so, add a io.amp.mapping with the value "www:80", in the definition of the service, in the yml stack file, as for instance:
+
+
+version: "3"
+
 services:
-  web: # service name
-    image: appcelerator.io/amp-demo
-    public: # publication specification
-      - name: www
-        protocol: tcp
-        publish_port: 80
-        internal_port: 3000
-    replicas: 3
-    environment:
-      REDIS_PASSWORD: password
-    labels: # service labels
-      io.appcelerator.amp.label: amp-demo
-    container_labels:
-      io.appcelerator.amp.label: web
-  redis:
-    image: redis
-    mode: global # default replicated
-    environment:
-      - PASSWORD=password
-    labels:
-      - "io.appcelerator.amp.label=redis"
-    container_labels:
-      - "io.appcelerator.amp.label=db"
-    networks:
-      app-net:
-        aliases:
-         - stack1-redis
+    pinger:
+        image: appcelerator/pinger
+        deploy:
+            mode: replicated
+            replicas: 2
+            labels:
+                io.amp.mapping: "www:3000"
+        networks:
+        - public
+
 networks:
-  app-net:
-    driver: bridge
-    driver_opts:
-      com.docker.network.enable_ipv6: "true"
-    ipam:
-      driver: default
-      config:
-      - subnet: 172.16.238.0/24
-        gateway: 172.16.238.1
-      - subnet: 2001:3984:3989::/64
-        gateway: 2001:3984:3989::1  
-```
+    public:
+        external:
+     
 
-## Reference
+if one use this file to create a stack named "test": `amp stack deploy test -c [thisFilePath]`
+
+then the url: https://www.test.appcelerator.io/myCommand, will execute the command "myCommand" using the port "3000" of service "pinger" of stack "test".
+
+This label creates a new entry in haproxy which knows that all url starting by www.test. should be routed to the pinger service, port 3000.
+the rest of the url "amp.amplifier.io" leads to haproxy ifself directly (in dev env.) or through a load-balancer.
+
+So "amp.amplifier.io" should be an DNS entry in a public DNS domain such as Route53.
+
+to achieve the mapping, the amp public network should be declared in the networks section of the compose file like:
 
 
-## version
+networks:
+    public:
+        external:
 
-The stack file version. The default is "1".
-
-## services
-
-The `services` key is a map of names for each service specification.
-
-### image (required)
-
-The image used to deploy this service. This is the only mandatory key.
-
-### public
-
-The public specification for exposing this service externally.
-
-...
-
-## networks
-
-...
+and to attach the service to it in order to let him become visible by haproxy. All the other services not attached to public network stay hidden and private from outside.
