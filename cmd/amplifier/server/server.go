@@ -1,14 +1,15 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
-	runInfo "runtime"
+	"os"
+	rt "runtime"
 	"strings"
+	"sync"
 	"time"
 
-	// "github.com/appcelerator/amp/api/rpc/build"
-	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
@@ -24,43 +25,35 @@ import (
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
-	"os"
-	"sync"
 )
 
 const (
 	defaultTimeOut = 30 * time.Second
 )
 
-func initDependencies(config Config) {
-	// ensure all initialization code fails fast on errors; there is no point in
-	// attempting to continue in a degraded state if there are problems at start up
+type (
+	clientInitializer  func(Config) error
+	serviceInitializer func(*grpc.Server) error
+)
 
-	var wg sync.WaitGroup
-	type initFunc func(Config) error
-
-	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
-	for _, f := range initFuncs {
-		wg.Add(1)
-		go func(f initFunc) {
-			defer wg.Done()
-			if err := f(config); err != nil {
-				log.Fatalln(err)
-			}
-		}(f)
-	}
-
-	// Wait for all inits to complete.
-	wg.Wait()
+// Client initializers open connections to required backend services
+// Clients are stored as members of runtime
+var clientInitializers = []clientInitializer{
+	initEtcd,
+	initElasticsearch,
+	initNats,
+	initInfluxDB,
+	initDocker,
 }
 
-// Start starts the server
+// Start starts the amplifier server
 func Start(config Config) {
 	initDependencies(config)
 
+	// project.RegisterProjectServer(s, &project.Service{})
 	// register services
 	s := grpc.NewServer()
-	// project.RegisterProjectServer(s, &project.Service{})
+
 	logs.RegisterLogsServer(s, &logs.Server{
 		Es:            &runtime.Elasticsearch,
 		Store:         runtime.Store,
@@ -97,9 +90,9 @@ func Start(config Config) {
 	version.RegisterVersionServer(s, &version.Server{
 		Version:   config.Version,
 		Port:      config.Port,
-		GoVersion: runInfo.Version(),
-		Os:        runInfo.GOOS,
-		Arch:      runInfo.GOARCH,
+		GoVersion: rt.Version(),
+		Os:        rt.GOOS,
+		Arch:      rt.GOARCH,
 	})
 
 	// start listening
@@ -109,6 +102,25 @@ func Start(config Config) {
 	}
 	log.Println("Listening on port:", config.Port[1:])
 	log.Fatalln(s.Serve(lis))
+}
+
+func initDependencies(config Config) {
+	// ensure all initialization code fails fast on errors; there is no point in
+	// attempting to continue in a degraded state if there are problems at start up
+
+	var wg sync.WaitGroup
+	for _, f := range clientInitializers {
+		wg.Add(1)
+		go func(f clientInitializer) {
+			defer wg.Done()
+			if err := f(config); err != nil {
+				log.Fatalln(err)
+			}
+		}(f)
+	}
+
+	// Wait for all inits to complete.
+	wg.Wait()
 }
 
 func initEtcd(config Config) error {
