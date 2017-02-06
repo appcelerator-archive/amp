@@ -95,7 +95,7 @@ func (app *HAProxy) reloadConfiguration() {
 	app.isLoadingConf = true
 	fmt.Println("reloading HAProxy configuration")
 	if app.exec == nil {
-		fmt.Printf("HAProxy not started yet, waiting it started\n")
+		fmt.Printf("HAProxy is not started yet, waiting for it\n")
 		return
 	}
 	pid := app.exec.Process.Pid

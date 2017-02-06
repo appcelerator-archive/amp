@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -20,7 +19,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/config"
-	//"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
@@ -123,27 +121,6 @@ func initEtcd(config Config) error {
 	log.Println("Connected to etcd at", strings.Join(runtime.Store.Endpoints(), ","))
 	return nil
 }
-
-/*
-func initElasticsearch(config Config) error {
-	log.Println("Connecting to elasticsearch at", config.ElasticsearchURL)
-	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", config.ElasticsearchURL, err)
-	}
-	log.Println("Connected to elasticsearch at", config.ElasticsearchURL)
-	return nil
-}
-
-func initInfluxDB(config Config) error {
-	log.Println("Connecting to InfluxDB at", config.InfluxURL)
-	runtime.Influx = influx.New(config.InfluxURL, "telegraf", "", "")
-	if err := runtime.Influx.Connect(defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to influxDB at %s: %v", config.InfluxURL, err)
-	}
-	log.Println("Connected to influxDB at", config.InfluxURL)
-	return nil
-}
-*/
 
 func initNats(config Config) error {
 	// NATS

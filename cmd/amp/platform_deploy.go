@@ -84,7 +84,7 @@ func startAMP(amp *client.AMP, cmd *cobra.Command, args []string) error {
 			}
 			manager.printf(colSuccess, reply.Answer)
 			//wait for haproxy ready, if not, the other stacks won't be able to up because they use amplifier and so need to be route to it
-			manager.printf(colRegular, "Waiting for haproxy available\n")
+			manager.printf(colRegular, "Waiting for availability of haproxy\n")
 
 			if err := server.WaitForServiceReady(ctx, "ampcore_haproxy", 120); err != nil {
 				manager.printf(colWarn, "haproxy starting timeout\n")

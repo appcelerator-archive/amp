@@ -95,7 +95,7 @@ func bootstrap(cmd *cobra.Command, args []string) {
 			smanager.fatalf("Needs AMP installed to start ampcore")
 		}
 		if err := smanager.systemPrerequisites(); err != nil {
-			smanager.fatalf("Prerequiste error: %v\n", err)
+			smanager.fatalf("Prerequisite error: %v\n", err)
 		}
 		smanager.printf(colRegular, "starting stack: ampcore\n")
 		data, err := stack.ResolvedComposeFileVariables("ampcore.yml", "amp.manifest", "")
@@ -110,7 +110,7 @@ func bootstrap(cmd *cobra.Command, args []string) {
 		request := &stack.StackDeployRequest{Stack: stackInstance, RegistryAuth: false}
 		reply, err := server.Deploy(context.Background(), request)
 		if err != nil {
-			smanager.fatalf("start ampCore error: %v\n", err)
+			smanager.fatalf("ampCore start error: %v\n", err)
 		}
 		smanager.printf(colSuccess, reply.Answer)
 	}
