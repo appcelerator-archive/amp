@@ -7,7 +7,6 @@ DEST=$GOPATH/src/$REPO/bin
 TARGETS=(
     darwin amd64
     linux amd64
-    windows amd64
 )
 
 for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
