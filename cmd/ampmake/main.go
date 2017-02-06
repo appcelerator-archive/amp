@@ -49,10 +49,20 @@ func init() {
 }
 
 func main() {
-	fmt.Println(strings.Join(os.Args[1:], " "))
+	args := []string{
+		"make",
+		"-f",
+		"Makefile.refactor.make",
+	}
+
+	if len(os.Args) > 1 {
+		args = append(args, os.Args[1:]...)
+		fmt.Println(strings.Join(args, " "))
+	}
 
 	cmd := "docker"
-	args := append(dockerArgs, os.Args[1:]...)
+	args = append(dockerArgs, args...)
+	//fmt.Printf("%s %s\n", cmd, strings.Join(args, " "))
 
 	proc := exec.Command(cmd, args...)
 	out, err := proc.StdoutPipe()

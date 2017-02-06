@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+REPO=github.com/appcelerator/amp
+PKG=$REPO/cmd/ampmake
+DEST=$GOPATH/src/$REPO/bin
+
+TARGETS=(
+    darwin amd64
+    linux amd64
+    windows amd64
+)
+
+for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
+  GOOS="${TARGETS[i]}"
+  GOARCH="${TARGETS[i+1]}"
+  echo $DEST/$GOOS/$GOARCH/ampmake/ampmake
+  GOOS=$GOOS GOARCH=$GOARCH go build -o $DEST/$GOOS/$GOARCH/ampmake $PKG
+done
