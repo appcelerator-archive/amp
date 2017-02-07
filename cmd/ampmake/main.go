@@ -84,6 +84,10 @@ func main() {
 
 	err = proc.Wait()
 	if err != nil {
-		panic(err)
+		// Just pass along the information that the process exited with a failure;
+		// whatever error information it displayed is what the user will see.
+		// TODO: return the process exit code
+		os.Exit(1)
+
 	}
 }
