@@ -1,0 +1,22 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: swarmnet
+
+services:
+  amplifier:
+    image: appcelerator/amplifier:local
+    networks:
+    - default
+    ports:
+    - "50101:50101"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+        - node.role == manager
+
