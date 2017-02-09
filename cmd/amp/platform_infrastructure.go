@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 )

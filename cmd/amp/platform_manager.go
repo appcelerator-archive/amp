@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"

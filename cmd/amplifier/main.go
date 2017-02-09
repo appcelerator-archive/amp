@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/server"
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	flag "github.com/spf13/pflag"
 	"os"
 )

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/state"
-	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"

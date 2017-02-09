@@ -6,9 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"strings"
 
-	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"

@@ -16,9 +16,9 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
-	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/config"
 	"google.golang.org/grpc"
 	"time"
 )

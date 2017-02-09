@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"github.com/appcelerator/amp/api/rpc/function"
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
-	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"

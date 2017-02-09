@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/config"
 	"github.com/appcelerator/amp/data/elasticsearch"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
