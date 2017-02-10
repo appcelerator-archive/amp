@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	"os"
 	"strconv"
 )

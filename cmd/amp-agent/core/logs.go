@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/config"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/api/types"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
