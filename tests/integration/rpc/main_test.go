@@ -54,6 +54,9 @@ func TestMain(m *testing.M) {
 	}
 	accountStore = as.NewStore(store)
 
+	// Init mail
+	initMailServer()
+
 	// Clients init
 	functionClient = function.NewFunctionClient(conn)
 	statsClient = stats.NewStatsClient(conn)

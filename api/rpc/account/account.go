@@ -4,6 +4,7 @@ import (
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/ampmail"
 	"github.com/dgrijalva/jwt-go"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/hlandau/passlib"
@@ -84,8 +85,10 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	// TODO: send confirmation email with token
-
+	// Send the verification email
+	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, ss); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
 	return &SignUpReply{Id: id, Token: ss}, nil
 }
 
@@ -204,7 +207,10 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	}
 	log.Println("Successfully reset password for user", user.Name)
 
-	// TODO: send password reset email with token
+	// Send the password reset email
+	if err := ampmail.SendAccountResetPasswordEmail(user.Email, user.Name, ss); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
 
 	return &PasswordResetReply{Token: ss}, nil
 }
@@ -286,6 +292,30 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully updated the password for user", user.Name)
+
+	return &pb.Empty{}, nil
+}
+
+// ForgotLogin implements account.PasswordChange
+func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the user
+	user, err := s.accounts.GetUserByEmail(ctx, in.Email)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+
+	// Send the account name reminder email
+	if err := ampmail.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	log.Println("Successfully processed forgot login request for user", user.Name)
 
 	return &pb.Empty{}, nil
 }
