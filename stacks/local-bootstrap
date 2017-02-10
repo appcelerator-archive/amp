@@ -11,15 +11,16 @@ SWARMOPTS="$@"
 MANAGERS=${MANAGERS:-3}
 WORKERS=${WORKERS:-2}
 
-REGISTRY=registry_mirror
+REGISTRY=registry
 SWARMNET=swarmnet
 SWARMIP=""
 MTOKEN=""
 WTOKEN=""
+AMPNET=ampnet
 
 main() {
   init_overlay_network
-  init_registry_mirror
+  init_registry
   init_swarm
 }
 
@@ -29,7 +30,7 @@ init_overlay_network() {
     docker network create -d overlay --attachable ${SWARMNET} )
 }
 
-init_registry_mirror() {
+init_registry() {
   (docker service ls | grep ${REGISTRY} &> /dev/null ) || ( \
     echo start registry service: ${REGISTRY} && \
     docker service create \
@@ -37,8 +38,7 @@ init_registry_mirror() {
       --network=${SWARMNET} \
       -p=5000:5000 \
       --restart-condition=any \
-      -e=REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
-      registry
+      registry:2
     sleep 5 )
 }
 
@@ -75,13 +75,15 @@ start_node() {
     --label="ampswarm" \
     ${opts} \
     subfuzion/dind --registry-mirror=http://${REGISTRY}:5000
+#    subfuzion/dind
 }
 
 create_managers() {
   name=m1
   port="62001"
   echo starting manager: ${name} on port ${port}
-  start_node "${name}" "${port}" "-p=3000:3000" "${SWARMOPTS}"
+  # publish common default ports plus whatever got passed to this script as options
+  start_node "${name}" "${port}" "-p=3000:3000" "-p=80:80" "-p=8080:8080" "-p=50101:50101" "${SWARMOPTS}"
   SWARMIP=$(docker inspect "${name}" --format '{{ .NetworkSettings.Networks.swarmnet.IPAMConfig.IPv4Address }}')
 # SWARMIP=$(docker info --format "{{.Swarm.NodeAddr}}")
   echo "swarm manager ip (m1): ${SWARMIP}"
@@ -89,6 +91,7 @@ create_managers() {
   (docker --host="${host}" swarm init --advertise-addr="${SWARMIP}:2377") &> /dev/null
   MTOKEN=$(docker --host="${host}" swarm join-token -q manager)
   WTOKEN=$(docker --host="${host}" swarm join-token -q worker)
+  docker --host="${host}" network create -d overlay --attachable ${AMPNET}
 
   count=$((MANAGERS-1))
   for m in $(seq ${count}); do
