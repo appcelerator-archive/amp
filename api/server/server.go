@@ -22,6 +22,7 @@ import (
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/webmail"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
 	"os"
@@ -101,6 +102,7 @@ func Start(config Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
+	webmail.StartListener()
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)

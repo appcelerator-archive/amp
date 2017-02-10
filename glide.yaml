@@ -66,6 +66,7 @@ import:
 - package: github.com/xeipuuv/gojsonschema
 - package: github.com/xeipuuv/gojsonreference
 - package: github.com/xeipuuv/gojsonpointer
+- package: github.com/gorilla/mux
 - package: github.com/docker/docker
   version: ^1.13.0
   subpackages:
