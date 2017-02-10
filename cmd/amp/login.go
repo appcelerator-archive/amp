@@ -6,6 +6,7 @@ import (
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	conf "github.com/appcelerator/amp/pkg/config"
 	"github.com/fatih/color"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ func Login(a *client.AMP) error {
 	}
 
 	a.Configuration.GitHub = lastEight
-	cli.SaveConfiguration(a.Configuration)
+	conf.SaveConfiguration(a.Configuration)
 
 	welcomeUser(name)
 	return nil
