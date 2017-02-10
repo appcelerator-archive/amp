@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	conf "github.com/appcelerator/amp/pkg/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,7 +27,7 @@ var (
 	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config                = &client.Configuration{}
+	Config                = &conf.Configuration{}
 	configFile            string
 	verbose               bool
 	serverAddr            string
@@ -61,15 +62,9 @@ monitoring containerized applications and microservices as part of a unified ser
 // All main does is process commands and flags and invoke the app
 func main() {
 	cobra.OnInitialize(func() {
-		cli.InitConfig(configFile, Config, verbose, serverAddr)
+		conf.InitConfig(configFile, Config, verbose, serverAddr)
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
-			Config.ServerAddress = addr
-		}
-		if Config.ServerAddress == "" {
-			Config.ServerAddress = client.DefaultServerAddress
-		}
-		if Config.AdminServerAddress == "" {
-			Config.AdminServerAddress = client.DefaultAdminServerAddress
+			Config.AmpAddress = addr
 		}
 		AMP = client.NewAMP(Config, cli.NewLogger(Config.Verbose))
 		if !Config.Verbose {
@@ -90,7 +85,7 @@ func main() {
 		Long:  `Display the current amp version and server information.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
-			fmt.Printf("Server: %s\n", Config.ServerAddress)
+			fmt.Printf("Server: %s\n", Config.AmpAddress)
 		},
 	}
 	RootCmd.AddCommand(infoCmd)
