@@ -17,6 +17,9 @@ type Interface interface {
 	// GetUserByName fetches an user by name
 	GetUserByName(ctx context.Context, name string) (user *schema.User, err error)
 
+	// GetUserByEmail fetches an user by email
+	GetUserByEmail(ctx context.Context, email string) (user *schema.User, err error)
+
 	// ListUsers lists users
 	ListUsers(ctx context.Context) (users []*schema.User, err error)
 
