@@ -20,6 +20,7 @@ type Configuration struct {
 	AmpAddress         string
 	ServerPort         string
 	AdminServerPort    string
+	WebMailServerPort  string
 	CmdTheme           string
 	EmailServerAddress string
 	EmailServerPort    string
@@ -28,14 +29,17 @@ type Configuration struct {
 }
 
 const (
-	//DefaultAmpAddress amplifier address + port default
+	//DefaultServerAddress amplifier address
 	DefaultAmpAddress = "local.appcelerator.io"
 
-	//DefaultServerPort amplifier address + port default
+	//DefaultServerAddress amplifier address
 	DefaultServerPort = "8080"
 
-	//DefaultAdminServerPort adm-server address + port default
+	//DefaultAdminServerAddress adm-server address
 	DefaultAdminServerPort = "8081"
+
+	//DefaultWebServerAddress web address
+	DefaultWebMailServerPort = "8082"
 
 	//DefaultEmailServerAddress email server address
 	DefaultEmailServerAddress = "smtp.gmail.com"
@@ -68,6 +72,9 @@ func InitConfig(configFile string, config *Configuration, verbose bool, ampAddr 
 	}
 	if config.AdminServerPort == "" {
 		config.AdminServerPort = DefaultAdminServerPort
+	}
+	if config.WebMailServerPort == "" {
+		config.WebMailServerPort = DefaultWebMailServerPort
 	}
 	if config.EmailServerAddress == "" {
 		config.EmailServerAddress = DefaultEmailServerAddress
