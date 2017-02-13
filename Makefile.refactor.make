@@ -101,7 +101,7 @@ AMP := amp
 AMPBINARY=$(AMP).alpine
 AMPIMG := appcelerator/amp
 AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
-AMPDIRS := cmd/$(AMP) config tests
+AMPDIRS := cmd/$(AMP) tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 # to run the docker command with sudo, set the with_sudo variable
 
@@ -126,7 +126,7 @@ AMPL := amplifier
 AMPLBINARY=$(AMPL).alpine
 AMPLIMG := appcelerator/amplifier
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
-AMPLDIRS := cmd/$(AMPL) config api data tests
+AMPLDIRS := cmd/$(AMPL) api data tests
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 # to run the docker command with sudo, set the with_sudo variable
 

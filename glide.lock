@@ -1,5 +1,5 @@
 hash: 65fd984a87b02b4e2e8a90dc55dc77efced4436b25ceabae2b2afb77523a2974
-updated: 2017-02-05T02:48:55.055691858Z
+updated: 2017-02-13T19:46:25.286406173Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -40,7 +40,7 @@ imports:
   - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 2527cfcc49744f56a8d31c420a3ca4657f9fec2e
+  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
   subpackages:
   - api
   - api/server/httputils
@@ -120,7 +120,7 @@ imports:
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
 - name: github.com/fatih/color
-  version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
+  version: 5ec5d9d3c2cf82e9688b34e9bc27a94d616a7193
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/fsnotify/fsnotify
@@ -139,7 +139,7 @@ imports:
   - jsonpb
   - proto
 - name: github.com/google/go-github
-  version: 27c7c32b6d369610435bd2ad7b4d8554f235eb01
+  version: 9cb398ca482c8f7e59eecc0f6caf669a6256b01a
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -175,7 +175,7 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: d5ac69be6fc1ff7305e436e3d8db1c120bd5dd27
+  version: afbfa0086fc0d5b6e2755c5169a381186c27db86
   subpackages:
   - client/v2
   - models
@@ -185,9 +185,9 @@ imports:
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
-  version: d228849504861217f796da67fae4f6e347643f15
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
 - name: github.com/mattn/go-isatty
-  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  version: 281032e84ae07510239465db46bf442aa44b953a
 - name: github.com/mattn/go-shellwords
   version: 753a2322a99f87c0eff284980e77f53041555bc6
 - name: github.com/matttproud/golang_protobuf_extensions
@@ -214,7 +214,7 @@ imports:
 - name: github.com/nats-io/nuid
   version: 289cccf02c178dc782430d534e3c1f5b72af807f
 - name: github.com/opencontainers/runc
-  version: 0c21b089e672982299403198dad524d4895bb049
+  version: 4f21aea40d060d0171b1c94861f2f63f4a6029d0
   subpackages:
   - libcontainer/configs
   - libcontainer/devices
@@ -227,7 +227,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
-  version: d1fa2118c12c44e4f5004da216d1efad10cb4924
+  version: c9506ee96398e7571356462217b9e24d6a628d71
 - name: github.com/pkg/errors
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/prometheus/client_golang
@@ -273,7 +273,7 @@ imports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: f06f290571ce81ab347174c6f7ad2e1865af41a7
+  version: 6b67b3fab74d992bd07f72550006ab2c6907c416
 - name: golang.org/x/crypto
   version: c10c31b5e94b6f7a0283272dc2bb27163dcea24b
   subpackages:
@@ -295,16 +295,16 @@ imports:
   - trace
   - websocket
 - name: golang.org/x/oauth2
-  version: 314dd2c0bf3ebd592ec0d20847d27e79d0dbe8dd
+  version: de0725b330ab43c1a3d6c84d961cf01183783f1e
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 7a6e5648d140666db5d920909e082ca00a87ba2c
+  version: aaabbdc969c3935a2a7f61efac801e7163c73a2a
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 506f9d5c962f284575e88337e7d9296d27e729d3
+  version: 06d6eba81293389cafdff7fca90d75592194b2d9
   subpackages:
   - transform
   - unicode/norm
@@ -332,9 +332,9 @@ imports:
   - tap
   - transport
 - name: gopkg.in/olivere/elastic.v3
-  version: 233bdd26c13dc9b7e764a8dd4e2e0711e8808cea
+  version: 4f7c9774c6041d96b9c522cfcbb657a5a49dbbb2
 - name: gopkg.in/olivere/elastic.v5
-  version: 233bdd26c13dc9b7e764a8dd4e2e0711e8808cea
+  version: 4f7c9774c6041d96b9c522cfcbb657a5a49dbbb2
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
