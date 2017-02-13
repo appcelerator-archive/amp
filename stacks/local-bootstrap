@@ -53,7 +53,7 @@ init_swarm() {
 
 node_exists() {
   name=$1
-  docker ps -q --filter="name=${name}" | grep "${name}"
+  docker ps -aq --filter="name=${name}" | grep "${name}"
 }
 
 remove_node() {
@@ -61,7 +61,7 @@ remove_node() {
   # remove existing instances
   # TODO: don't just filter on name, also filter on label
   #docker node rm -f $(docker node ls --filter="name=$name" -q) &> /dev/null && true
-  (docker rm -f $(docker ps -q --filter="name=$name")) &> /dev/null || true
+  (docker rm -f $(docker ps -aq --filter="name=$name")) &> /dev/null || true
 }
 
 start_node() {
@@ -88,6 +88,7 @@ create_managers() {
 # SWARMIP=$(docker info --format "{{.Swarm.NodeAddr}}")
   echo "swarm manager ip (m1): ${SWARMIP}"
   host="127.0.0.1:${port}"
+  sleep 5
   (docker --host="${host}" swarm init --advertise-addr="${SWARMIP}:2377") &> /dev/null
   MTOKEN=$(docker --host="${host}" swarm join-token -q manager)
   WTOKEN=$(docker --host="${host}" swarm join-token -q worker)
