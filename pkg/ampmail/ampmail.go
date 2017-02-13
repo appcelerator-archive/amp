@@ -13,6 +13,7 @@ import (
 )
 
 var emailTemplateMap map[string]*emailTemplate
+var config *conf.Configuration
 
 type emailTemplate struct {
 	isHtml  bool
@@ -28,6 +29,7 @@ type pCipher struct {
 }
 
 func init() {
+	config = conf.GetRegularConfig(false)
 	emailTemplateMap = make(map[string]*emailTemplate)
 	AddEmailTemplate("AccountVerification", "AMP account activation", true, accountVerificationBody)
 	AddEmailTemplate("AccountResetPassword", "AMP account password reset", true, accountResetPasswordEmailBody)
@@ -36,7 +38,7 @@ func init() {
 
 // SendAccountVerificationEmail send a AccountVerification email template
 func SendAccountVerificationEmail(to string, accountName string, token string) error {
-	config := conf.GetRegularConfig(false)
+	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
@@ -50,7 +52,7 @@ func SendAccountVerificationEmail(to string, accountName string, token string) e
 
 // SendAccountResetPasswordEmail send a AccountResetPassword email template
 func SendAccountResetPasswordEmail(to string, accountName string, token string) error {
-	config := conf.GetRegularConfig(false)
+	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
@@ -88,7 +90,7 @@ func SendTemplateEmail(to string, templateEmailName string, variableMap map[stri
 
 // SendMail send an eamail to "to" with subject and body, use configuration
 func SendMail(to string, subject string, isHtml bool, body string) error {
-	config := conf.GetRegularConfig(false)
+	//config := conf.GetRegularConfig(false)
 	from := config.EmailSender
 	servername := config.EmailServerAddress
 	serverport := config.EmailServerPort
@@ -117,9 +119,17 @@ func SendMail(to string, subject string, isHtml bool, body string) error {
 	return nil
 }
 
+//UpdateAmpMailConfig update email config
+func UpdateAmpMailConfig(serverAddress string, port string, sender string, pwd string) {
+	config.EmailServerAddress=serverAddress
+	config.EmailServerPort=port
+	config.EmailSender=sender
+	config.EmailPwd=pwd
+}
+
 //DisplayEncryptedPwd encrypt a pwd to write it in configuration file
 func DisplayEncryptedPwd(pwd string) {
-	config := conf.GetRegularConfig(false)
+	//config := conf.GetRegularConfig(false)
 	p, err := newPCipher(config)
 	if err != nil {
 		log.Println(err)
