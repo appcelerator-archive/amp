@@ -4740,6 +4740,14 @@ func TestServer_Query_Subqueries(t *testing.T) {
 			command: `SELECT value FROM (SELECT max(usage_user), usage_user - usage_system AS value FROM cpu GROUP BY host) WHERE time >= '2000-01-01T00:00:00Z' AND time < '2000-01-01T00:00:30Z' AND value > 0`,
 			exp:     `{"results":[{"statement_id":0,"series":[{"name":"cpu","columns":["time","value"],"values":[["2000-01-01T00:00:00Z",40]]}]}]}`,
 		},
+		&Query{
+			params:  url.Values{"db": []string{"db0"}},
+			command: `SELECT mean, host FROM (SELECT mean(usage_user) FROM cpu GROUP BY host) WHERE time >= '2000-01-01T00:00:00Z' AND time < '2000-01-01T00:00:30Z'`,
+			// TODO(jsternberg): This should return the hosts for each mean()
+			// value. The query engine is currently limited in a way that
+			// doesn't allow that to work though so we have to do this.
+			exp: `{"results":[{"statement_id":0,"series":[{"name":"cpu","columns":["time","mean","host"],"values":[["2000-01-01T00:00:00Z",46,null],["2000-01-01T00:00:00Z",17,null]]}]}]}`,
+		},
 	}...)
 
 	for i, query := range test.queries {
@@ -6791,6 +6799,11 @@ func TestServer_Query_OrderByTime(t *testing.T) {
 		fmt.Sprintf(`power,presence=true value=2 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:02Z").UnixNano()),
 		fmt.Sprintf(`power,presence=true value=3 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:03Z").UnixNano()),
 		fmt.Sprintf(`power,presence=false value=4 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:04Z").UnixNano()),
+
+		fmt.Sprintf(`mem,host=server1 free=1 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:01Z").UnixNano()),
+		fmt.Sprintf(`mem,host=server1 free=2 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:02Z").UnixNano()),
+		fmt.Sprintf(`mem,host=server2 used=3 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:01Z").UnixNano()),
+		fmt.Sprintf(`mem,host=server2 used=4 %d`, mustParseTime(time.RFC3339Nano, "2000-01-01T00:00:02Z").UnixNano()),
 	}
 
 	test := NewTest("db0", "rp0")
@@ -6811,6 +6824,20 @@ func TestServer_Query_OrderByTime(t *testing.T) {
 			params:  url.Values{"db": []string{"db0"}},
 			command: `select value from "power" ORDER BY time DESC`,
 			exp:     `{"results":[{"statement_id":0,"series":[{"name":"power","columns":["time","value"],"values":[["2000-01-01T00:00:04Z",4],["2000-01-01T00:00:03Z",3],["2000-01-01T00:00:02Z",2],["2000-01-01T00:00:01Z",1]]}]}]}`,
+		},
+
+		&Query{
+			name:    "order desc with sparse data",
+			params:  url.Values{"db": []string{"db0"}},
+			command: `select used, free from "mem" ORDER BY time DESC`,
+			exp:     `{"results":[{"statement_id":0,"series":[{"name":"mem","columns":["time","used","free"],"values":[["2000-01-01T00:00:02Z",4,null],["2000-01-01T00:00:02Z",null,2],["2000-01-01T00:00:01Z",3,null],["2000-01-01T00:00:01Z",null,1]]}]}]}`,
+		},
+
+		&Query{
+			name:    "order desc with an aggregate and sparse data",
+			params:  url.Values{"db": []string{"db0"}},
+			command: `select first("used") AS "used", first("free") AS "free" from "mem" WHERE time >= '2000-01-01T00:00:01Z' AND time <= '2000-01-01T00:00:02Z' GROUP BY host, time(1s) FILL(none) ORDER BY time DESC`,
+			exp:     `{"results":[{"statement_id":0,"series":[{"name":"mem","tags":{"host":"server2"},"columns":["time","used","free"],"values":[["2000-01-01T00:00:02Z",4,null],["2000-01-01T00:00:01Z",3,null]]},{"name":"mem","tags":{"host":"server1"},"columns":["time","used","free"],"values":[["2000-01-01T00:00:02Z",null,2],["2000-01-01T00:00:01Z",null,1]]}]}]}`,
 		},
 	}...)
 

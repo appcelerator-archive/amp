@@ -230,7 +230,7 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 		// any previous mounts can invalidate the next mount's destination.
 		// this can happen when a user specifies mounts within other mounts to cause breakouts or other
 		// evil stuff to try to escape the container's rootfs.
-		if dest, err = symlink.FollowSymlinkInScope(filepath.Join(rootfs, m.Destination), rootfs); err != nil {
+		if dest, err = symlink.FollowSymlinkInScope(dest, rootfs); err != nil {
 			return err
 		}
 		if err := checkMountDestination(rootfs, dest); err != nil {
@@ -313,6 +313,19 @@ func mountToRootfs(m *configs.Mount, rootfs, mountLabel string) error {
 			}
 		}
 	default:
+		// ensure that the destination of the mount is resolved of symlinks at mount time because
+		// any previous mounts can invalidate the next mount's destination.
+		// this can happen when a user specifies mounts within other mounts to cause breakouts or other
+		// evil stuff to try to escape the container's rootfs.
+		var err error
+		if dest, err = symlink.FollowSymlinkInScope(dest, rootfs); err != nil {
+			return err
+		}
+		if err := checkMountDestination(rootfs, dest); err != nil {
+			return err
+		}
+		// update the mount with the correct dest after symlinks are resolved.
+		m.Destination = dest
 		if err := os.MkdirAll(dest, 0755); err != nil {
 			return err
 		}
@@ -497,10 +510,12 @@ func createDeviceNode(rootfs string, node *configs.Device, bind bool) error {
 func mknodDevice(dest string, node *configs.Device) error {
 	fileMode := node.FileMode
 	switch node.Type {
-	case 'c':
+	case 'c', 'u':
 		fileMode |= syscall.S_IFCHR
 	case 'b':
 		fileMode |= syscall.S_IFBLK
+	case 'p':
+		fileMode |= syscall.S_IFIFO
 	default:
 		return fmt.Errorf("%c is not a valid device type for device %s", node.Type, node.Path)
 	}
