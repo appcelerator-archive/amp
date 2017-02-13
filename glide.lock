@@ -1,5 +1,5 @@
-hash: 65fd984a87b02b4e2e8a90dc55dc77efced4436b25ceabae2b2afb77523a2974
-updated: 2017-02-13T19:46:25.286406173Z
+hash: 176511894e89acd44eb3253a0f47e18ea733a68c526cac9c43553db39f67b90f
+updated: 2017-02-13T22:39:09.88621482Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -138,8 +138,9 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
 - name: github.com/google/go-github
-  version: 9cb398ca482c8f7e59eecc0f6caf669a6256b01a
+  version: 30a21ee1a3839fb4a408efe331f226b73faac379
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -182,6 +183,10 @@ imports:
   - pkg/escape
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/kballard/go-shellquote
+  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
+- name: github.com/kr/pty
+  version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
@@ -262,6 +267,8 @@ imports:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: github.com/Thomasrooney/gexpect
+  version: 5482f03509440585d13d8f648989e05903001842
 - name: github.com/vbatts/tar-split
   version: bd4c5d64c3e9297f410025a3b1bd0c58f659e721
   subpackages:
@@ -299,7 +306,7 @@ imports:
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: aaabbdc969c3935a2a7f61efac801e7163c73a2a
+  version: 0ed46b70d91ba0ab7273e1aea3c89ccc9a9cc489
   subpackages:
   - unix
   - windows
