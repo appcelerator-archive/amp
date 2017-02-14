@@ -4,17 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	conf "github.com/appcelerator/amp/pkg/config"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
-)
-
-const (
-	//DefaultServerAddress amplifier address + port default
-	DefaultServerAddress = "127.0.0.1:8080"
-	//DefaultAdminServerAddress adm-server address + port default
-	DefaultAdminServerAddress = "127.0.0.1:31315"
 )
 
 var (
@@ -68,21 +62,10 @@ func (l logger) Println(args ...interface{}) {
 	}
 }
 
-// Configuration is for all configurable client settings
-type Configuration struct {
-	Verbose            bool
-	GitHub             string
-	Target             string
-	Port               string
-	ServerAddress      string
-	AdminServerAddress string
-	CmdTheme           string
-}
-
 // AMP holds the state for the current environment
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
-	Configuration *Configuration
+	Configuration *conf.Configuration
 
 	// Conn is the gRPC connection to amplifier
 	Conn *grpc.ClientConn
@@ -93,12 +76,13 @@ type AMP struct {
 
 // Connect to amplifier
 func (a *AMP) Connect() error {
-	conn, err := grpc.Dial(a.Configuration.ServerAddress,
+	ampAddr := fmt.Sprintf("%s:%s", a.Configuration.AmpAddress, a.Configuration.ServerPort)
+	conn, err := grpc.Dial(ampAddr,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second))
 	if err != nil {
-		return fmt.Errorf("Error connecting to amplifier @ %s: %v", a.Configuration.ServerAddress, err)
+		return fmt.Errorf("Error connecting to amplifier @ %s: %v", ampAddr, err)
 	}
 	a.Conn = conn
 	return nil
@@ -134,7 +118,7 @@ func (a *AMP) Verbose() bool {
 
 // NewAMP creates an AMP singleton instance
 // (will only be configured with the first call)
-func NewAMP(c *Configuration, l Logger) *AMP {
+func NewAMP(c *conf.Configuration, l Logger) *AMP {
 	if amp == nil {
 		amp = &AMP{Configuration: c, Log: l}
 	}

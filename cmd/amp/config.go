@@ -1,13 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
-	"github.com/appcelerator/amp/cmd/amp/cli"
+	conf "github.com/appcelerator/amp/pkg/config"
 	"github.com/fatih/structs"
 	"github.com/spf13/cobra"
 )
@@ -24,13 +25,18 @@ Two arguments: set the key to the value.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:
-				// Display the full configuration
-				j, err := json.MarshalIndent(structs.Map(Config), "", "  ")
-				if err != nil {
-					fmt.Println("error: ", err)
-				} else {
-					fmt.Println(string(j))
-				}
+				// Display the configuration (not all has to be displayed)
+				w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+				fmt.Fprintf(w, "%s\n", "PARAMETER\tVALUE")
+				fmt.Fprintf(w, "%s\t%s\n", "AmpAdress", Config.AmpAddress)
+				fmt.Fprintf(w, "%s\t%s\n", "ServerPort", Config.AdminServerPort)
+				fmt.Fprintf(w, "%s\t%s\n", "AdminServerPort", Config.ServerPort)
+				fmt.Fprintf(w, "%s\t%s\n", "CmdTheme", Config.CmdTheme)
+				fmt.Fprintf(w, "%s\t%t\n", "Verbose", Config.Verbose)
+				fmt.Fprintf(w, "%s\t%s\n", "EmailServerAddress", Config.EmailServerAddress)
+				fmt.Fprintf(w, "%s\t%s\n", "EmailServerPort", Config.EmailServerPort)
+				fmt.Fprintf(w, "%s\t%s\n", "EmailSender", Config.EmailSender)
+				w.Flush()
 			case 1:
 				// Display key
 				s := structs.New(Config)
@@ -58,7 +64,7 @@ Two arguments: set the key to the value.`,
 				default:
 					log.Fatal("Unsupported field type")
 				}
-				err := cli.SaveConfiguration(Config)
+				err := conf.SaveConfiguration(Config)
 				if err != nil {
 					log.Fatal("Failed to save config")
 				}
