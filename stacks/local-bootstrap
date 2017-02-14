@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+set -e
+trap 'onexit $LINENO' EXIT
+
+# These will be passed on as `docker run` options when creating the swarm manager
+# (mainly for exposing extra ports)
+# Use normal `docker run [OPTIONS]` syntax. Ex: `local-bootstrap -p=3000:3000 -p8000:8000`
+SWARMOPTS="$@"
+
+MANAGERS=${MANAGERS:-3}
+WORKERS=${WORKERS:-2}
+
+REGISTRY=registry
+SWARMNET=swarmnet
+SWARMIP=""
+MTOKEN=""
+WTOKEN=""
+AMPNET=ampnet
+
+main() {
+  init_overlay_network
+  init_registry
+  init_swarm
+}
+
+init_overlay_network() {
+  (docker network ls | grep ${SWARMNET} &> /dev/null) || ( \
+    echo "create overlay network: ${SWARMNET}" && \
+    docker network create -d overlay --attachable ${SWARMNET} )
+}
+
+init_registry() {
+  (docker service ls | grep ${REGISTRY} &> /dev/null ) || ( \
+    echo start registry service: ${REGISTRY} && \
+    docker service create \
+      --name=${REGISTRY} \
+      --network=${SWARMNET} \
+      -p=5000:5000 \
+      --restart-condition=any \
+      registry:2
+    sleep 5 )
+}
+
+init_swarm() {
+#  docker node inspect self &> /dev/null || docker swarm init &> /dev/null
+#  SWARMIP=$(docker info --format "{{.Swarm.NodeAddr}}")
+#  MTOKEN=$(docker swarm join-token -q manager)
+#  WTOKEN=$(docker swarm join-token -q worker)
+  create_managers
+  create_workers
+}
+
+node_exists() {
+  name=$1
+  docker ps -aq --filter="name=${name}" | grep "${name}"
+}
+
+remove_node() {
+  name=$1
+  # remove existing instances
+  # TODO: don't just filter on name, also filter on label
+  #docker node rm -f $(docker node ls --filter="name=$name" -q) &> /dev/null && true
+  (docker rm -f $(docker ps -aq --filter="name=$name")) &> /dev/null || true
+}
+
+start_node() {
+  node=$1
+  port=$2
+  opts="${@:3}"
+  remove_node $name
+  docker run --privileged --detach --name=$name --hostname=$name \
+    --network=${SWARMNET} \
+    -p="${port}":2375 \
+    --label="ampswarm" \
+    ${opts} \
+    subfuzion/dind --registry-mirror=http://${REGISTRY}:5000
+#    subfuzion/dind
+}
+
+create_managers() {
+  name=m1
+  port="62001"
+  echo starting manager: ${name} on port ${port}
+  # publish common default ports plus whatever got passed to this script as options
+  start_node "${name}" "${port}" "-p=3000:3000" "-p=80:80" "-p=8080:8080" "-p=50101:50101" "${SWARMOPTS}"
+  SWARMIP=$(docker inspect "${name}" --format '{{ .NetworkSettings.Networks.swarmnet.IPAMConfig.IPv4Address }}')
+# SWARMIP=$(docker info --format "{{.Swarm.NodeAddr}}")
+  echo "swarm manager ip (m1): ${SWARMIP}"
+  host="127.0.0.1:${port}"
+  sleep 5
+  (docker --host="${host}" swarm init --advertise-addr="${SWARMIP}:2377") &> /dev/null
+  MTOKEN=$(docker --host="${host}" swarm join-token -q manager)
+  WTOKEN=$(docker --host="${host}" swarm join-token -q worker)
+  docker --host="${host}" network create -d overlay --attachable ${AMPNET}
+
+  count=$((MANAGERS-1))
+  for m in $(seq ${count}); do
+    i=$((m+1))
+    name="m$i"
+    port="6200$i"
+    echo "starting manager $i: ${name} on port ${port}"
+    start_node $name $port
+    echo "joining manager ${name} to swarm at: m1:2377 (127.0.0.1:62001 on host)"
+    docker --host="127.0.0.1:${port}" swarm join --token "${MTOKEN}" m1:2377
+  done
+}
+
+create_workers() {
+  for w in $(seq "${WORKERS}"); do
+    name="w$w"
+    port="6300$w"
+    echo "starting worker $w: ${name} on port ${port}"
+    start_node $name $port
+    echo "joining worker ${name} to swarm at: m1:2377 (127.0.0.1:62001 on host)"
+    docker --host="127.0.0.1:${port}" swarm join --token "${WTOKEN}" m1:2377
+  done
+}
+
+onexit() {
+  if [[ "$?" -eq 0 ]]; then
+    echo "---------------------------------------------------------------------------"
+    echo "swarm running at 127.0.0.1:62001"
+    echo "---------------------------------------------------------------------------"
+    docker --host="127.0.0.1:62001" node ls
+  else
+    echo "bootstrap failed, line: $1"
+  fi
+}
+
+main
+
