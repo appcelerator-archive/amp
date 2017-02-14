@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package account;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "github.com/appcelerator/amp/data/account/schema/account.proto";
+
+service Account {
+  rpc SignUp (SignUpRequest) returns (SignUpReply) {
+    option (google.api.http) = {
+      post: "/v1/account/signup",
+      body: "*"
+    };
+  };
+  rpc Verify (VerificationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/verify",
+      body: "*"
+    };
+  };
+  rpc Login (LogInRequest) returns (LogInReply) {
+    option (google.api.http) = {
+      post: "/v1/account/login",
+      body: "*"
+    };
+  };
+  rpc PasswordReset (PasswordResetRequest) returns (PasswordResetReply) {
+    option (google.api.http) = {
+      post: "/v1/account/{user_name}/passwordReset",
+      body: "*"
+    };
+  };
+  rpc PasswordSet (PasswordSetRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/passwordSet",
+      body: "*"
+    };
+  };
+  rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{user_name}/passwordChange",
+      body: "*"
+    };
+  };
+}
+
+message AccountEntry {
+  string user_name = 1;
+  string email = 2;
+  bool email_verified = 3;
+  schema.AccountType account_type = 4;
+}
+
+message SignUpRequest {
+  string user_name = 1;
+  string password = 2;
+  string email = 3;
+  schema.AccountType account_type = 4;
+}
+
+message SignUpReply {
+  string token = 1;
+}
+
+message VerificationRequest {
+  string token = 1;
+}
+
+message LogInRequest {
+  string user_name = 1;
+  string password = 2;
+}
+
+message LogInReply {
+  string token = 1;
+}
+
+message PasswordResetRequest {
+  string user_name = 1;
+}
+
+message PasswordResetReply {
+  string token = 1;
+}
+
+message PasswordSetRequest {
+  string token = 1;
+  string password = 2;
+}
+
+message PasswordChangeRequest {
+  string user_name = 1;
+  string existingPassword = 2;
+  string newPassword = 3;
+}
