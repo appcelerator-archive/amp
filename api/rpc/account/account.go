@@ -19,12 +19,12 @@ import (
 // TODO: find a way to store this key secretly
 var secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
 
-type accountClaims struct {
-	AccountID string `json:"AccountID"`
+type userClaims struct {
+	UserID string `json:"UserID"`
 	jwt.StandardClaims
 }
 
-// Server is used to implement account.AccountServer
+// Server is used to implement account.UserServer
 type Server struct {
 	accounts account.Interface
 }
@@ -41,13 +41,13 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 		return nil, err
 	}
 
-	// Check if account already exists
-	alreadyExists, err := s.accounts.GetAccountByUserName(ctx, in.UserName)
+	// Check if user already exists
+	alreadyExists, err := s.accounts.GetUserByName(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	if alreadyExists != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "account already exists")
+		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists")
 	}
 
 	// Hash password
@@ -56,23 +56,22 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	// Create the new account
-	account := &schema.Account{
+	// Create the new user
+	user := &schema.User{
 		Email:        in.Email,
-		UserName:     in.UserName,
-		Type:         in.AccountType,
+		Name:         in.Name,
 		IsVerified:   false,
 		PasswordHash: passwordHash,
 	}
-	id, err := s.accounts.CreateAccount(ctx, account)
+	id, err := s.accounts.CreateUser(ctx, user)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
-	log.Println("Successfully created account", in.UserName)
+	log.Println("Successfully created user", in.Name)
 
 	// Forge the verification token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, accountClaims{
-		id, // The token contains the account id to verify
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
+		id, // The token contains the user id to verify
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -97,7 +96,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	}
 
 	// Validate the token
-	token, err := jwt.ParseWithClaims(in.Token, &accountClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(in.Token, &userClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
@@ -108,21 +107,21 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	}
 
 	// Get the claims
-	claims, ok := token.Claims.(*accountClaims)
+	claims, ok := token.Claims.(*userClaims)
 	if !ok {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, "invalid claims")
 	}
 
-	// Activate the account
-	account, err := s.accounts.GetAccount(ctx, claims.AccountID)
+	// Activate the user
+	user, err := s.accounts.GetUser(ctx, claims.UserID)
 	if err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	account.IsVerified = true
-	if err := s.accounts.UpdateAccount(ctx, account); err != nil {
+	user.IsVerified = true
+	if err := s.accounts.UpdateUser(ctx, user); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully verified account", account.UserName)
+	log.Println("Successfully verified user", user.Name)
 
 	return &pb.Empty{}, nil
 }
@@ -133,27 +132,27 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 		return nil, err
 	}
 
-	// Get the account
-	account, err := s.accounts.GetAccountByUserName(ctx, in.UserName)
+	// Get the user
+	user, err := s.accounts.GetUserByName(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if account == nil {
-		return nil, grpc.Errorf(codes.NotFound, "account not found")
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
-	if !account.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "account not verified")
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
 	}
 
 	// Check password
-	_, err = passlib.Verify(in.Password, account.PasswordHash)
+	_, err = passlib.Verify(in.Password, user.PasswordHash)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
 
 	// Forge the authentication token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, accountClaims{
-		account.Id, // The token contains the account id
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
+		user.Id, // The token contains the user id
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -165,7 +164,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully login for account", account.UserName)
+	log.Println("Successfully login for user", user.Name)
 
 	return &LogInReply{Token: ss}, nil
 }
@@ -176,22 +175,22 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, err
 	}
 
-	// Get the account
-	account, err := s.accounts.GetAccountByUserName(ctx, in.UserName)
+	// Get the user
+	user, err := s.accounts.GetUserByName(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if account == nil {
-		return nil, grpc.Errorf(codes.NotFound, "account not found")
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
-	// TODO: Do we need the account to be verified?
-	if !account.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "account not verified")
+	// TODO: Do we need the user to be verified?
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
 	}
 
 	// Forge the password reset token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, accountClaims{
-		account.Id, // The token contains the account id to reset
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
+		user.Id, // The token contains the user id to reset
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -203,7 +202,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully reset password for account", account.UserName)
+	log.Println("Successfully reset password for user", user.Name)
 
 	// TODO: send password reset email with token
 
@@ -217,7 +216,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Validate the token
-	token, err := jwt.ParseWithClaims(in.Token, &accountClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(in.Token, &userClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
@@ -228,13 +227,13 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Get the claims
-	claims, ok := token.Claims.(*accountClaims)
+	claims, ok := token.Claims.(*userClaims)
 	if !ok {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, "invalid claims")
 	}
 
-	// Get the account
-	account, err := s.accounts.GetAccount(ctx, claims.AccountID)
+	// Get the user
+	user, err := s.accounts.GetUser(ctx, claims.UserID)
 	if err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -244,11 +243,11 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	account.PasswordHash = passwordHash
-	if err := s.accounts.UpdateAccount(ctx, account); err != nil {
+	user.PasswordHash = passwordHash
+	if err := s.accounts.UpdateUser(ctx, user); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully set new password for account", account.UserName)
+	log.Println("Successfully set new password for user", user.Name)
 
 	return &pb.Empty{}, nil
 }
@@ -259,20 +258,20 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 		return nil, err
 	}
 
-	// Get the account
-	account, err := s.accounts.GetAccountByUserName(ctx, in.UserName)
+	// Get the user
+	user, err := s.accounts.GetUserByName(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if account == nil {
-		return nil, grpc.Errorf(codes.NotFound, "account not found")
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
-	if !account.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "account not verified")
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
 	}
 
 	// Check the existing password password
-	_, err = passlib.Verify(in.ExistingPassword, account.PasswordHash)
+	_, err = passlib.Verify(in.ExistingPassword, user.PasswordHash)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
@@ -282,11 +281,16 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	account.PasswordHash = newPasswordHash
-	if err := s.accounts.UpdateAccount(ctx, account); err != nil {
+	user.PasswordHash = newPasswordHash
+	if err := s.accounts.UpdateUser(ctx, user); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully updated the password for account", account.UserName)
+	log.Println("Successfully updated the password for user", user.Name)
 
+	return &pb.Empty{}, nil
+}
+
+// CreateOrganization implements account.CreateOrganization
+func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }

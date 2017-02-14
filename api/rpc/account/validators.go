@@ -49,7 +49,7 @@ func (r *SignUpRequest) Validate() (err error) {
 	if err = checkPassword(r.Password); err != nil {
 		return err
 	}
-	if err = checkUserName(r.UserName); err != nil {
+	if err = checkUserName(r.Name); err != nil {
 		return err
 	}
 	return nil
@@ -62,7 +62,7 @@ func (r *VerificationRequest) Validate() error {
 
 // Validate validates LogInRequest
 func (r *LogInRequest) Validate() error {
-	if err := checkUserName(r.UserName); err != nil {
+	if err := checkUserName(r.Name); err != nil {
 		return err
 	}
 	if err := checkPassword(r.Password); err != nil {
@@ -73,7 +73,7 @@ func (r *LogInRequest) Validate() error {
 
 // Validate validates PasswordResetRequest
 func (r *PasswordResetRequest) Validate() error {
-	if err := checkUserName(r.UserName); err != nil {
+	if err := checkUserName(r.Name); err != nil {
 		return err
 	}
 	return nil

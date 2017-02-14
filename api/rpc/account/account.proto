@@ -4,7 +4,6 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "github.com/appcelerator/amp/data/account/schema/account.proto";
 
 service Account {
   rpc SignUp (SignUpRequest) returns (SignUpReply) {
@@ -27,7 +26,7 @@ service Account {
   };
   rpc PasswordReset (PasswordResetRequest) returns (PasswordResetReply) {
     option (google.api.http) = {
-      post: "/v1/account/{user_name}/passwordReset",
+      post: "/v1/account/{name}/passwordReset",
       body: "*"
     };
   };
@@ -39,24 +38,22 @@ service Account {
   };
   rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{user_name}/passwordChange",
+      post: "/v1/account/{name}/passwordChange",
+      body: "*"
+    };
+  };
+  rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{owner}/organization/create",
       body: "*"
     };
   };
 }
 
-message AccountEntry {
-  string user_name = 1;
-  string email = 2;
-  bool email_verified = 3;
-  schema.AccountType account_type = 4;
-}
-
 message SignUpRequest {
-  string user_name = 1;
+  string name = 1;
   string password = 2;
   string email = 3;
-  schema.AccountType account_type = 4;
 }
 
 message SignUpReply {
@@ -68,7 +65,7 @@ message VerificationRequest {
 }
 
 message LogInRequest {
-  string user_name = 1;
+  string name = 1;
   string password = 2;
 }
 
@@ -77,7 +74,7 @@ message LogInReply {
 }
 
 message PasswordResetRequest {
-  string user_name = 1;
+  string name = 1;
 }
 
 message PasswordResetReply {
@@ -90,7 +87,13 @@ message PasswordSetRequest {
 }
 
 message PasswordChangeRequest {
-  string user_name = 1;
+  string name = 1;
   string existingPassword = 2;
   string newPassword = 3;
+}
+
+message CreateOrganizationRequest {
+  string owner = 1;
+  string name = 2;
+  string email = 3;
 }

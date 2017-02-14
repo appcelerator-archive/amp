@@ -119,7 +119,7 @@
         ]
       }
     },
-    "/v1/account/{user_name}/passwordChange": {
+    "/v1/account/{name}/passwordChange": {
       "post": {
         "operationId": "PasswordChange",
         "responses": {
@@ -132,7 +132,7 @@
         },
         "parameters": [
           {
-            "name": "user_name",
+            "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
@@ -152,7 +152,7 @@
         ]
       }
     },
-    "/v1/account/{user_name}/passwordReset": {
+    "/v1/account/{name}/passwordReset": {
       "post": {
         "operationId": "PasswordReset",
         "responses": {
@@ -165,7 +165,7 @@
         },
         "parameters": [
           {
-            "name": "user_name",
+            "name": "name",
             "in": "path",
             "required": true,
             "type": "string",
@@ -184,9 +184,59 @@
           "Account"
         ]
       }
+    },
+    "/v1/account/{owner}/organization/create": {
+      "post": {
+        "operationId": "CreateOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountCreateOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
     }
   },
   "definitions": {
+    "accountCreateOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountLogInReply": {
       "type": "object",
       "properties": {
@@ -199,7 +249,7 @@
     "accountLogInRequest": {
       "type": "object",
       "properties": {
-        "user_name": {
+        "name": {
           "type": "string",
           "format": "string"
         },
@@ -212,7 +262,7 @@
     "accountPasswordChangeRequest": {
       "type": "object",
       "properties": {
-        "user_name": {
+        "name": {
           "type": "string",
           "format": "string"
         },
@@ -238,7 +288,7 @@
     "accountPasswordResetRequest": {
       "type": "object",
       "properties": {
-        "user_name": {
+        "name": {
           "type": "string",
           "format": "string"
         }
@@ -269,7 +319,7 @@
     "accountSignUpRequest": {
       "type": "object",
       "properties": {
-        "user_name": {
+        "name": {
           "type": "string",
           "format": "string"
         },
@@ -280,9 +330,6 @@
         "email": {
           "type": "string",
           "format": "string"
-        },
-        "account_type": {
-          "$ref": "#/definitions/schemaAccountType"
         }
       }
     },
@@ -299,14 +346,6 @@
       "type": "object",
       "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
       "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
-    },
-    "schemaAccountType": {
-      "type": "string",
-      "enum": [
-        "USER",
-        "ORGANIZATION"
-      ],
-      "default": "USER"
     }
   }
 }

@@ -81,12 +81,12 @@ func request_Account_PasswordReset_0(ctx context.Context, marshaler runtime.Mars
 		_   = err
 	)
 
-	val, ok = pathParams["user_name"]
+	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
-	protoReq.UserName, err = runtime.String(val)
+	protoReq.Name, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, err
@@ -125,18 +125,49 @@ func request_Account_PasswordChange_0(ctx context.Context, marshaler runtime.Mar
 		_   = err
 	)
 
-	val, ok = pathParams["user_name"]
+	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
-	protoReq.UserName, err = runtime.String(val)
+	protoReq.Name, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, err
 	}
 
 	msg, err := client.PasswordChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func request_Account_CreateOrganization_0(ctx context.Context, marshaler runtime.Marshaler, client AccountClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateOrganizationRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["owner"]
+	if !ok {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "owner")
+	}
+
+	protoReq.Owner, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, err
+	}
+
+	msg, err := client.CreateOrganization(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -339,6 +370,34 @@ func RegisterAccountHandler(ctx context.Context, mux *runtime.ServeMux, conn *gr
 
 	})
 
+	mux.Handle("POST", pattern_Account_CreateOrganization_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_Account_CreateOrganization_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Account_CreateOrganization_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -349,11 +408,13 @@ var (
 
 	pattern_Account_Login_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "account", "login"}, ""))
 
-	pattern_Account_PasswordReset_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "user_name", "passwordReset"}, ""))
+	pattern_Account_PasswordReset_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "name", "passwordReset"}, ""))
 
 	pattern_Account_PasswordSet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "account", "passwordSet"}, ""))
 
-	pattern_Account_PasswordChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "user_name", "passwordChange"}, ""))
+	pattern_Account_PasswordChange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "name", "passwordChange"}, ""))
+
+	pattern_Account_CreateOrganization_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"v1", "account", "owner", "organization", "create"}, ""))
 )
 
 var (
@@ -368,4 +429,6 @@ var (
 	forward_Account_PasswordSet_0 = runtime.ForwardResponseMessage
 
 	forward_Account_PasswordChange_0 = runtime.ForwardResponseMessage
+
+	forward_Account_CreateOrganization_0 = runtime.ForwardResponseMessage
 )
