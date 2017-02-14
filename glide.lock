@@ -1,5 +1,5 @@
-hash: 176511894e89acd44eb3253a0f47e18ea733a68c526cac9c43553db39f67b90f
-updated: 2017-02-13T22:39:09.88621482Z
+hash: cdf3273113450fe37b4b71aef78b0c241878b10b36bd61c4b904094d8d3c6c2c
+updated: 2017-02-14T13:47:28.28915005Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -138,7 +138,6 @@ imports:
   subpackages:
   - jsonpb
   - proto
-  - protoc-gen-go/descriptor
 - name: github.com/google/go-github
   version: 30a21ee1a3839fb4a408efe331f226b73faac379
   subpackages:
@@ -199,6 +198,8 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/mhale/smtpd
+  version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/go-homedir
@@ -250,7 +251,9 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 1878d9fbb537119d24b21ca07effd591627cd160
+  version: 3c6d1cd72106fb2c83336c7766b365da0cf9574e
+  subpackages:
+  - xfs
 - name: github.com/Sirupsen/logrus
   version: 55eb11d21d2a31a3cc93838241d04800f52e823d
 - name: github.com/spf13/afero
@@ -306,7 +309,7 @@ imports:
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 0ed46b70d91ba0ab7273e1aea3c89ccc9a9cc489
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
   - windows
