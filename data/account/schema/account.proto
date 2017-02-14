@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package schema;
+
+enum AccountType {
+  USER = 0;
+  ORGANIZATION = 1;
+}
+
+message Account {
+  string id = 1;
+  string user_name = 2;
+  AccountType type = 3;
+  string email = 4;
+  string password_hash = 5;
+  bool is_verified = 6;
+  int64 create_dt = 7;
+}
