@@ -54,7 +54,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		AMP: &version.Details{
 			Version:    Version,
 			Build:      Build,
-			ConfigAddr: amp.Configuration.ServerAddress,
+			ConfigAddr: amp.Configuration.AmpAddress,
 			GoVersion:  runtime.Version(),
 			Os:         runtime.GOOS,
 			Arch:       runtime.GOARCH,

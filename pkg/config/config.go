@@ -1,4 +1,4 @@
-package cli
+package amp
 
 import (
 	"fmt"
@@ -6,18 +6,78 @@ import (
 	"os"
 	"path"
 
-	"github.com/appcelerator/amp/api/client"
+	//"github.com/appcelerator/amp/api/client"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
+// Configuration is for all configurable client settings
+type Configuration struct {
+	Verbose            bool
+	GitHub             string
+	Target             string
+	AmpAddress         string
+	ServerPort         string
+	AdminServerPort    string
+	CmdTheme           string
+	EmailServerAddress string
+	EmailServerPort    string
+	EmailSender        string
+	EmailPwd           string
+}
+
+const (
+	//DefaultAmpAddress amplifier address + port default
+	DefaultAmpAddress = "local.appcelerator.io"
+
+	//DefaultServerPort amplifier address + port default
+	DefaultServerPort = "8080"
+
+	//DefaultAdminServerPort adm-server address + port default
+	DefaultAdminServerPort = "8081"
+
+	//DefaultEmailServerAddress email server address
+	DefaultEmailServerAddress = "smtp.gmail.com"
+
+	//DefaultEmailServerPort email server port
+	DefaultEmailServerPort = "587"
+
+	//DefaultEmailSender email sender
+	DefaultEmailSender = "amp.appcelerator@gmail.com"
+)
+
+// GetRegularConfig return configuration struct load from its regular file (~/.config/amp/amp.yaml)
+func GetRegularConfig(verbose bool) *Configuration {
+	configFilePath := viper.ConfigFileUsed()
+	config := &Configuration{}
+	InitConfig(configFilePath, config, verbose, "")
+	return config
+}
+
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
-func InitConfig(configFile string, config *client.Configuration, verbose bool, serverAddr string) {
+func InitConfig(configFile string, config *Configuration, verbose bool, ampAddr string) {
 	config.Verbose = verbose
-	config.ServerAddress = serverAddr
-
+	config.AmpAddress = ampAddr
+	if config.AmpAddress == "" {
+		config.AmpAddress = DefaultAmpAddress
+	}
+	if config.ServerPort == "" {
+		config.ServerPort = DefaultServerPort
+	}
+	if config.AdminServerPort == "" {
+		config.AdminServerPort = DefaultAdminServerPort
+	}
+	if config.EmailServerAddress == "" {
+		config.EmailServerAddress = DefaultEmailServerAddress
+	}
+	if config.EmailServerPort == "" {
+		config.EmailServerPort = DefaultEmailServerPort
+	}
+	if config.EmailSender == "" {
+		config.EmailSender = DefaultEmailSender
+	}
 	// Add matching environment variables - will take precedence over config files.
 	viper.AutomaticEnv()
 
