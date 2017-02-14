@@ -30,7 +30,7 @@ type Configuration struct {
 
 const (
 	//DefaultServerAddress amplifier address
-	DefaultAmpAddress = "127.0.0.1"
+	DefaultAmpAddress = "local.appcelerator.io"
 
 	//DefaultServerAddress amplifier address
 	DefaultServerPort = "8080"
