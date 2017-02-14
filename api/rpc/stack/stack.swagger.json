@@ -26,22 +26,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "all",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          }
-        ],
         "tags": [
           "StackService"
         ]
@@ -113,7 +97,8 @@
             "name": "stack_ident",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -135,7 +120,8 @@
             "name": "stack_ident",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -159,7 +145,8 @@
             "name": "stack_ident",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -183,7 +170,8 @@
             "name": "stack_ident",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -207,7 +195,8 @@
             "name": "stack_ident",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -224,12 +213,14 @@
       "type": "object",
       "properties": {
         "target": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "aliases": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         }
       }
@@ -238,10 +229,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "protocol": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "publish_port": {
           "type": "integer",
@@ -266,10 +259,12 @@
       "type": "object",
       "properties": {
         "image": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "replicated": {
           "$ref": "#/definitions/serviceReplicatedService"
@@ -280,7 +275,8 @@
         "env": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "networks": {
@@ -292,13 +288,15 @@
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "container_labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "publish_specs": {
@@ -310,17 +308,20 @@
         "args": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "mounts": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "registry_auth": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -354,12 +355,14 @@
       "type": "object",
       "properties": {
         "driver": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "options": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "config": {
@@ -374,18 +377,22 @@
       "type": "object",
       "properties": {
         "subnet": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "ip_range": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "gateway": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "aux_address": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         }
       }
@@ -394,10 +401,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "driver": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "enable_ipv6": {
           "type": "boolean",
@@ -413,17 +422,20 @@
         "options": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "external": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -431,7 +443,8 @@
       "type": "object",
       "properties": {
         "stack_ident": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "force": {
           "type": "boolean",
@@ -444,10 +457,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "services": {
           "type": "array",
@@ -481,13 +496,16 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "state": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct part of ListReply Struct"
@@ -496,7 +514,8 @@
       "type": "object",
       "properties": {
         "stack_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct for stack id responses"
@@ -505,7 +524,8 @@
       "type": "object",
       "properties": {
         "stack_ident": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct stack name/id based requests"
@@ -514,7 +534,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct for tasks reply function"
@@ -523,7 +544,8 @@
       "type": "object",
       "properties": {
         "stack_ident": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "struct for tasks request function"
