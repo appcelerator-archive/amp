@@ -1,5 +1,5 @@
-hash: 54fce5aa0bdf0017e03ce5cfb39f9e872b3c8bbbaca209af0b5b1fc0ab871878
-updated: 2017-02-14T21:58:07.797541129+01:00
+hash: ac674487683cdc98733f3f50f8edf6e6f4bed86873da5d56ed7ccea32c96af08
+updated: 2017-02-15T11:03:07.707407391+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -204,6 +204,8 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/mhale/smtpd
+  version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/go-homedir
@@ -309,7 +311,7 @@ imports:
   - trace
   - websocket
 - name: golang.org/x/oauth2
-  version: e1e827deaadaeab882fc5bdb00e2c23fd9c568c2
+  version: b9780ec78894ab900c062d58ee3076cd9b2a4501
   subpackages:
   - internal
 - name: golang.org/x/sys
@@ -318,7 +320,7 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 06d6eba81293389cafdff7fca90d75592194b2d9
+  version: 85c29909967d7f171f821e7a42e7b7af76fb9598
   subpackages:
   - transform
   - unicode/norm
