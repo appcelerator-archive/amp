@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/api/server"
+	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/pkg/config"
 	flag "github.com/spf13/pflag"
-	"os"
 )
 
 const (

@@ -8,8 +8,12 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// Runtime access to initialized clients for various services
 var (
-	// Store is the interface used to access the key/value storage backend
+	// Docker is the Docker client
+	Docker *client.Client
+
+	// Store is the key/value storage client
 	Store storage.Interface
 
 	// Elasticsearch is the elasticsearch client
@@ -18,9 +22,6 @@ var (
 	// Influx is the influxDB client
 	Influx influx.Influx
 
-	// Docker is the Docker client
-	Docker *client.Client
-
-	//NatsStreaming is the nats streaming client
+	// NatsStreaming is the nats streaming client
 	NatsStreaming ns.NatsStreaming
 )

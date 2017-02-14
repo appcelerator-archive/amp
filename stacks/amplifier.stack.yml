@@ -1,0 +1,36 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  visualizer:
+    image: manomarks/visualizer
+    networks:
+    - default
+    ports:
+    - "8080:8080/tcp"
+    volumes:
+    - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  amplifier:
+    image: appcelerator/amplifier:local
+    networks:
+    - default
+    ports:
+    - "50101:50101"
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+        - node.role == manager
+
+

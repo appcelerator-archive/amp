@@ -8,13 +8,13 @@ import (
 type Config struct {
 	Version          string
 	Port             string
-	EtcdEndpoints    []string
-	ElasticsearchURL string
 	ClientID         string
 	ClientSecret     string
-	InfluxURL        string
 	DockerURL        string
 	DockerVersion    string
+	EtcdEndpoints    []string
+	ElasticsearchURL string
+	InfluxURL        string
 	NatsURL          string
 }
 

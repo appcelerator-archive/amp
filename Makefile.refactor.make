@@ -99,7 +99,8 @@ build: install-deps protoc build-server build-cli
 # =============================================================================
 AMP := amp
 AMPBINARY=$(AMP).alpine
-AMPIMG := appcelerator/amp
+AMPTAG := local
+AMPIMG := appcelerator/$(AMP):$(AMPTAG)
 AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
 AMPDIRS := cmd/$(AMP) tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
@@ -124,7 +125,8 @@ clean-cli:
 # =============================================================================
 AMPL := amplifier
 AMPLBINARY=$(AMPL).alpine
-AMPLIMG := appcelerator/amplifier
+AMPLTAG := local
+AMPLIMG := appcelerator/$(AMPL):$(AMPLTAG)
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
 AMPLDIRS := cmd/$(AMPL) api data tests
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
