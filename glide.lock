@@ -291,6 +291,7 @@ imports:
   version: aae62ebbdabd46754b041a12b9f74d2ffdfc49d7
   subpackages:
   - helpers/mail
+  version: a59ae619c824360be3641ceb5a456ff13dd58be6
 - name: github.com/Sirupsen/logrus
   version: 7f4b1adc791766938c29457bed0703fb9134421a
 - name: github.com/spf13/afero

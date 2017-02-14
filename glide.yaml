@@ -97,6 +97,11 @@ import:
 - package: github.com/kr/pty
 - package: github.com/ory-am/ladon
   version: ^0.4.2
+- package: github.com/hlandau/passlib
+  version: ^1.0.9
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/holys/safe
 testImport:
 - package: github.com/mhale/smtpd
 - package: github.com/stretchr/testify
