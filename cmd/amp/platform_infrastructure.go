@@ -517,7 +517,15 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 					Constraints: []string{"node.role == manager"},
 				},
 			},
-			EndpointSpec: nil,
+			EndpointSpec: &swarm.EndpointSpec{
+				Mode: swarm.ResolutionModeVIP,
+				Ports: []swarm.PortConfig{
+					{
+						TargetPort:    8082,
+						PublishedPort: 8082,
+					},
+				},
+			},
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  infraPrivateNetwork,
