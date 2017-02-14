@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+
+    elasticsearch:
+        image: appcelerator/elasticsearch-amp:${elasticsearchVersion:-5.1.1}
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        networks:
+            - infra
+
+    agent:
+        image: appcelerator/amp:${ampVersion:-latest}
+        command: ["amp-agent"]
+        deploy:
+            mode: global
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock         
+        networks:
+            - infra 
+        depends_on:
+            - elasticsearch            
+
+    worker:
+        image: appcelerator/amp:${ampVersion:-latest}
+        command: ["amp-log-worker"]
+        deploy:
+            mode: replicated
+            replicas: 1
+            labels:
+                io.amp.role: "amp.InfrastructureRole"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock                
+        networks:
+            - infra 
+        depends_on:
+            - elasticsearch           
+
+networks:
+    infra:
+        external:
+            name: ampcore_infra
+    public:
+        external:
+            name: ampcore_public
+
+  
+
