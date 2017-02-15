@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package account;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service Account {
+  rpc SignUp (SignUpRequest) returns (SignUpReply) {
+    option (google.api.http) = {
+      post: "/v1/account/signup",
+      body: "*"
+    };
+  };
+  rpc Verify (VerificationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/verify",
+      body: "*"
+    };
+  };
+  rpc Login (LogInRequest) returns (LogInReply) {
+    option (google.api.http) = {
+      post: "/v1/account/login",
+      body: "*"
+    };
+  };
+  rpc PasswordReset (PasswordResetRequest) returns (PasswordResetReply) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/passwordReset",
+      body: "*"
+    };
+  };
+  rpc PasswordSet (PasswordSetRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/passwordSet",
+      body: "*"
+    };
+  };
+  rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{name}/passwordChange",
+      body: "*"
+    };
+  };
+}
+
+message SignUpRequest {
+  string name = 1;
+  string password = 2;
+  string email = 3;
+}
+
+message SignUpReply {
+  string id = 1;
+  string token = 2;
+}
+
+message VerificationRequest {
+  string token = 1;
+}
+
+message LogInRequest {
+  string name = 1;
+  string password = 2;
+}
+
+message LogInReply {
+  string token = 1;
+}
+
+message PasswordResetRequest {
+  string name = 1;
+}
+
+message PasswordResetReply {
+  string token = 1;
+}
+
+message PasswordSetRequest {
+  string token = 1;
+  string password = 2;
+}
+
+message PasswordChangeRequest {
+  string name = 1;
+  string existingPassword = 2;
+  string newPassword = 3;
+}
