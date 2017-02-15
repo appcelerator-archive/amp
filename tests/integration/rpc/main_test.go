@@ -54,13 +54,13 @@ func TestMain(m *testing.M) {
 	ctx = context.Background()
 
 	// init package clients
+	initMailServer()
 	functionClient = function.NewFunctionClient(conn)
 	statsClient = stats.NewStatsClient(conn)
 	stackClient = stack.NewStackServiceClient(conn)
 	topicClient = topic.NewTopicClient(conn)
 	serviceClient = service.NewServiceClient(conn)
 	logsClient = logs.NewLogsClient(conn)
-
 	// start tests
 	os.Exit(m.Run())
 }
