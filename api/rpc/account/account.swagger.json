@@ -310,6 +310,10 @@
     "accountSignUpReply": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
         "token": {
           "type": "string",
           "format": "string"

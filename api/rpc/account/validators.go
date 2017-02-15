@@ -12,8 +12,8 @@ func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
 }
 
-func checkUserName(userName string) error {
-	if isEmpty(userName) {
+func checkName(name string) error {
+	if isEmpty(name) {
 		return grpc.Errorf(codes.InvalidArgument, "name is mandatory")
 	}
 	return nil
@@ -41,6 +41,13 @@ func checkEmail(email string) (string, error) {
 	return address.Address, nil
 }
 
+func checkOwner(owner string) error {
+	if isEmpty(owner) {
+		return grpc.Errorf(codes.InvalidArgument, "owner is mandatory")
+	}
+	return nil
+}
+
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
 	if r.Email, err = checkEmail(r.Email); err != nil {
@@ -49,7 +56,7 @@ func (r *SignUpRequest) Validate() (err error) {
 	if err = checkPassword(r.Password); err != nil {
 		return err
 	}
-	if err = checkUserName(r.Name); err != nil {
+	if err = checkName(r.Name); err != nil {
 		return err
 	}
 	return nil
@@ -62,7 +69,7 @@ func (r *VerificationRequest) Validate() error {
 
 // Validate validates LogInRequest
 func (r *LogInRequest) Validate() error {
-	if err := checkUserName(r.Name); err != nil {
+	if err := checkName(r.Name); err != nil {
 		return err
 	}
 	if err := checkPassword(r.Password); err != nil {
@@ -73,7 +80,7 @@ func (r *LogInRequest) Validate() error {
 
 // Validate validates PasswordResetRequest
 func (r *PasswordResetRequest) Validate() error {
-	if err := checkUserName(r.Name); err != nil {
+	if err := checkName(r.Name); err != nil {
 		return err
 	}
 	return nil
@@ -90,6 +97,20 @@ func (r *PasswordSetRequest) Validate() error {
 // Validate validates PasswordSetRequest
 func (r *PasswordChangeRequest) Validate() error {
 	if err := checkPassword(r.NewPassword); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Validate validates CreateOrganizationRequest
+func (r *CreateOrganizationRequest) Validate() (err error) {
+	if err = checkOwner(r.Owner); err != nil {
+		return err
+	}
+	if r.Email, err = checkEmail(r.Email); err != nil {
+		return err
+	}
+	if err = checkName(r.Name); err != nil {
 		return err
 	}
 	return nil

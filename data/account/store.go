@@ -28,8 +28,12 @@ func NewStore(store storage.Interface) *Store {
 
 // CreateUser creates a new user
 func (s *Store) CreateUser(ctx context.Context, in *schema.User) (string, error) {
+	if err := in.Validate(); err != nil {
+		return "", err
+	}
 	id := stringid.GenerateNonCryptoID()
 	in.Id = id
+	in.IsVerified = false
 	in.CreateDt = time.Now().Unix()
 	if err := s.Store.Create(ctx, path.Join(usersRootKey, id), in, nil, 0); err != nil {
 		return "", err
@@ -75,6 +79,9 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 
 // UpdateUser updates an user
 func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
 	if err := s.Store.Put(ctx, path.Join(usersRootKey, in.Id), in, 0); err != nil {
 		return err
 	}
@@ -83,6 +90,7 @@ func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
 
 // DeleteUser deletes an user by id
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
+	// TODO: check if user is owner of an organization
 	if err := s.Store.Delete(ctx, path.Join(usersRootKey, id), false, nil); err != nil {
 		return err
 	}
@@ -91,6 +99,9 @@ func (s *Store) DeleteUser(ctx context.Context, id string) error {
 
 // CreateOrganization creates a new organization
 func (s *Store) CreateOrganization(ctx context.Context, in *schema.Organization) (string, error) {
+	if err := in.Validate(); err != nil {
+		return "", err
+	}
 	id := stringid.GenerateNonCryptoID()
 	in.Id = id
 	in.CreateDt = time.Now().Unix()
@@ -138,6 +149,9 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, 
 
 // UpdateOrganization updates an organization
 func (s *Store) UpdateOrganization(ctx context.Context, in *schema.Organization) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
 	if err := s.Store.Put(ctx, path.Join(organizationsRootKey, in.Id), in, 0); err != nil {
 		return err
 	}

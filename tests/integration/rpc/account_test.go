@@ -13,6 +13,11 @@ var (
 		Password: "UserPassword",
 		Email:    "user@amp.io",
 	}
+
+	createOrganizationRequest = account.CreateOrganizationRequest{
+		Name:  "Organization",
+		Email: "organization@amp.io",
+	}
 )
 
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
@@ -448,4 +453,22 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 		Password: newPassword,
 	})
 	assert.Error(t, newLoginErr)
+}
+
+func TestOrganizationCreate(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Verify
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	assert.NoError(t, verifyErr)
+
+	// Create organization
+	createOrganizationRequest.Owner = signUpReply.Id
+	_, createOrganizationErr := accountClient.CreateOrganization(ctx, &createOrganizationRequest)
+	assert.NoError(t, createOrganizationErr)
 }

@@ -11,10 +11,20 @@ message User {
   int64 create_dt = 6;
 }
 
+enum OrganizationRole {
+  OWNER = 0;
+  MEMBER = 1;
+}
+
+message Member {
+  string id = 1;
+  OrganizationRole role = 2;
+}
+
 message Organization {
   string id = 1;
   string name = 2;
   string email = 3;
   int64 create_dt = 4;
-  repeated string owners = 5;
+  repeated Member members = 5;
 }

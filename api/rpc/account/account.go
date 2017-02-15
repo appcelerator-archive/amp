@@ -86,7 +86,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 
 	// TODO: send confirmation email with token
 
-	return &SignUpReply{Token: ss}, nil
+	return &SignUpReply{Id: id, Token: ss}, nil
 }
 
 // Verify implements account.Verify
@@ -292,5 +292,39 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 
 // CreateOrganization implements account.CreateOrganization
 func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*pb.Empty, error) {
+	// Validate input
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Check if owner exists
+	owner, err := s.accounts.GetUser(ctx, in.Owner)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if owner == nil {
+		return nil, grpc.Errorf(codes.NotFound, "owner not found")
+	}
+	if !owner.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "owner not verified")
+	}
+
+	// Create the new organization
+	organization := &schema.Organization{
+		Email: in.Email,
+		Name:  in.Name,
+		Members: []*schema.Member{
+			{
+				Id:   owner.Id,
+				Role: schema.OrganizationRole_OWNER,
+			},
+		},
+	}
+	_, err = s.accounts.CreateOrganization(ctx, organization)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "storage error")
+	}
+	log.Println("Successfully created organization", in.Name)
+
 	return &pb.Empty{}, nil
 }
