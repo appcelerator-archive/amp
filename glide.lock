@@ -1,5 +1,5 @@
-hash: 176511894e89acd44eb3253a0f47e18ea733a68c526cac9c43553db39f67b90f
-updated: 2017-02-13T22:39:09.88621482Z
+hash: 95ac5dfaa60e10d1efdc5c040d0a7aae288138f4126d341be51e3892315fbb82
+updated: 2017-02-16T17:11:42.567171653+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -24,6 +24,8 @@ imports:
   version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
   - spew
+- name: github.com/dgrijalva/jwt-go
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -139,6 +141,7 @@ imports:
   - jsonpb
   - proto
   - protoc-gen-go/descriptor
+  - ptypes/empty
 - name: github.com/google/go-github
   version: 30a21ee1a3839fb4a408efe331f226b73faac379
   subpackages:
@@ -171,12 +174,16 @@ imports:
   - json/parser
   - json/scanner
   - json/token
+- name: github.com/hlandau/passlib
+  version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
+- name: github.com/holys/safe
+  version: 40a1d599da1188d48a032f27ac6ae1e38d79caee
 - name: github.com/howeyc/gopass
   version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: afbfa0086fc0d5b6e2755c5169a381186c27db86
+  version: 0e0057d1da6080362957c7a7aa65c3787f924b18
   subpackages:
   - client/v2
   - models
@@ -189,6 +196,8 @@ imports:
   version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+- name: github.com/mailgun/mailgun-go
+  version: a4002e2df2e8ca2da6a6fbb4a72871b504e49f50
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
 - name: github.com/mattn/go-isatty
@@ -199,6 +208,8 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/mhale/smtpd
+  version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/go-homedir
@@ -250,7 +261,9 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 1878d9fbb537119d24b21ca07effd591627cd160
+  version: a59ae619c824360be3641ceb5a456ff13dd58be6
+  subpackages:
+  - xfs
 - name: github.com/Sirupsen/logrus
   version: 55eb11d21d2a31a3cc93838241d04800f52e823d
 - name: github.com/spf13/afero
@@ -287,6 +300,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
   - ssh/terminal
 - name: golang.org/x/net
   version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
@@ -302,16 +317,16 @@ imports:
   - trace
   - websocket
 - name: golang.org/x/oauth2
-  version: de0725b330ab43c1a3d6c84d961cf01183783f1e
+  version: b9780ec78894ab900c062d58ee3076cd9b2a4501
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 0ed46b70d91ba0ab7273e1aea3c89ccc9a9cc489
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 06d6eba81293389cafdff7fca90d75592194b2d9
+  version: 85c29909967d7f171f821e7a42e7b7af76fb9598
   subpackages:
   - transform
   - unicode/norm
@@ -338,6 +353,22 @@ imports:
   - stats
   - tap
   - transport
+- name: gopkg.in/hlandau/easymetric.v1
+  version: 1c173222e345c2ba115e0f483821c6da2d3b0fa9
+  subpackages:
+  - cexp
+- name: gopkg.in/hlandau/measurable.v1
+  version: d96a009bd9bda94dd1294105e67e8c1794e533d3
+- name: gopkg.in/hlandau/passlib.v1
+  version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
+  subpackages:
+  - abstract
+  - hash/bcrypt
+  - hash/bcryptsha256
+  - hash/scrypt
+  - hash/scrypt/raw
+  - hash/sha2crypt
+  - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
   version: 4f7c9774c6041d96b9c522cfcbb657a5a49dbbb2
 - name: gopkg.in/olivere/elastic.v5

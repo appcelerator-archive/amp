@@ -20,7 +20,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -39,7 +40,8 @@
       "type": "object",
       "properties": {
         "client_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "silence": {
           "type": "boolean",
@@ -58,7 +60,8 @@
           "format": "boolean"
         },
         "node": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -69,7 +72,8 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -77,10 +81,12 @@
       "type": "object",
       "properties": {
         "client_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "function": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "output": {
           "$ref": "#/definitions/servergrpcTypedOutput"
@@ -91,10 +97,12 @@
       "type": "object",
       "properties": {
         "client_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "node": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "more": {
           "type": "boolean",
@@ -106,22 +114,28 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "role": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "availability": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "hostname": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "host_architecture": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "host_os": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "cpu": {
           "type": "string",
@@ -132,20 +146,24 @@
           "format": "int64"
         },
         "docker_version": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "leader": {
           "type": "boolean",
           "format": "boolean"
         },
         "reachability": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "address": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "nb_containers": {
           "type": "string",
@@ -168,13 +186,16 @@
           "format": "int64"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "agentId": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "nodeName": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -193,10 +214,12 @@
       "type": "object",
       "properties": {
         "client_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "agent_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "nb_containers": {
           "type": "integer",
@@ -211,7 +234,8 @@
           "format": "int32"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -230,10 +254,12 @@
       "type": "object",
       "properties": {
         "client_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "node": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "container": {
           "type": "boolean",
@@ -257,16 +283,20 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "node_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "hostname": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "address": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -274,10 +304,12 @@
       "type": "object",
       "properties": {
         "agent_id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -285,7 +317,8 @@
       "type": "object",
       "properties": {
         "output": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "output_type": {
           "type": "integer",

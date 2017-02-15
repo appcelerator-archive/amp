@@ -87,6 +87,13 @@ import:
 - package: github.com/Thomasrooney/gexpect
 - package: github.com/kballard/go-shellquote
 - package: github.com/kr/pty
+- package: github.com/hlandau/passlib
+  version: ^1.0.9
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/holys/safe
+- package: github.com/mailgun/mailgun-go
+  version: ^1.1.0
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.1.4
