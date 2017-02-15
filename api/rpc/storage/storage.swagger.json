@@ -47,8 +47,7 @@
             "name": "key",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -70,8 +69,7 @@
             "name": "key",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -93,8 +91,7 @@
             "name": "key",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -116,8 +113,7 @@
       "type": "object",
       "properties": {
         "key": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "struct for delete storage request function"
@@ -126,8 +122,7 @@
       "type": "object",
       "properties": {
         "key": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "struct for get storage request function"
@@ -152,12 +147,10 @@
       "type": "object",
       "properties": {
         "key": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "val": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "struct for put storage request function"
@@ -166,12 +159,10 @@
       "type": "object",
       "properties": {
         "key": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "val": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "struct part of ListResponse Struct"
@@ -180,12 +171,10 @@
       "type": "object",
       "properties": {
         "key": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "val": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "struct for storage object key response"
