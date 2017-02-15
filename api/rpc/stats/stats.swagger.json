@@ -26,6 +26,139 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "stats_cpu",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "stats_mem",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "stats_io",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "stats_net",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "stats_follow",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "discriminator",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_datacenter",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_host",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_container_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_container_name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_container_image",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_service_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_service_name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_task_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_task_name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_node_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filter_service_ident",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "time_group",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Stats"
         ]
@@ -42,52 +175,40 @@
           "title": "Common data"
         },
         "datacenter": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "host": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "container_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "container_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "container_image": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "service_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "service_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "task_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "task_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "node_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "type": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "sort_type": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "number": {
           "type": "number",
@@ -163,68 +284,52 @@
           "format": "boolean"
         },
         "discriminator": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_datacenter": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_host": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_container_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_container_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_container_image": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_service_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_service_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_task_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_task_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_node_id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "filter_service_ident": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "since": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "until": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "period": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "time_group": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     }

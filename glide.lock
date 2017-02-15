@@ -1,5 +1,5 @@
-hash: 54fce5aa0bdf0017e03ce5cfb39f9e872b3c8bbbaca209af0b5b1fc0ab871878
-updated: 2017-02-14T21:58:07.797541129+01:00
+hash: 176511894e89acd44eb3253a0f47e18ea733a68c526cac9c43553db39f67b90f
+updated: 2017-02-13T22:39:09.88621482Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -24,8 +24,6 @@ imports:
   version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
   - spew
-- name: github.com/dgrijalva/jwt-go
-  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -140,6 +138,7 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
 - name: github.com/google/go-github
   version: 30a21ee1a3839fb4a408efe331f226b73faac379
   subpackages:
@@ -172,16 +171,12 @@ imports:
   - json/parser
   - json/scanner
   - json/token
-- name: github.com/hlandau/passlib
-  version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
-- name: github.com/holys/safe
-  version: 40a1d599da1188d48a032f27ac6ae1e38d79caee
 - name: github.com/howeyc/gopass
   version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/influxdata/influxdb
-  version: 0e0057d1da6080362957c7a7aa65c3787f924b18
+  version: afbfa0086fc0d5b6e2755c5169a381186c27db86
   subpackages:
   - client/v2
   - models
@@ -255,9 +250,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: a59ae619c824360be3641ceb5a456ff13dd58be6
-  subpackages:
-  - xfs
+  version: 1878d9fbb537119d24b21ca07effd591627cd160
 - name: github.com/Sirupsen/logrus
   version: 55eb11d21d2a31a3cc93838241d04800f52e823d
 - name: github.com/spf13/afero
@@ -309,11 +302,11 @@ imports:
   - trace
   - websocket
 - name: golang.org/x/oauth2
-  version: e1e827deaadaeab882fc5bdb00e2c23fd9c568c2
+  version: de0725b330ab43c1a3d6c84d961cf01183783f1e
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  version: 0ed46b70d91ba0ab7273e1aea3c89ccc9a9cc489
   subpackages:
   - unix
   - windows

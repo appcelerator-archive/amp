@@ -9,7 +9,6 @@ import (
 
 	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
-	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
@@ -61,7 +60,6 @@ func Start(config Config) {
 
 	// register services
 	s := grpc.NewServer()
-
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Server{
 		Es:            &runtime.Elasticsearch,
@@ -103,7 +101,6 @@ func Start(config Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
-	account.RegisterAccountServer(s, account.NewServer(runtime.Store))
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)
