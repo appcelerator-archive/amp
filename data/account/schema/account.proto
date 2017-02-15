@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package schema;
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string password_hash = 4;
+  bool is_verified = 5;
+  int64 create_dt = 6;
+}
+
+enum OrganizationRole {
+  OWNER = 0;
+  MEMBER = 1;
+}
+
+message Member {
+  string id = 1;
+  OrganizationRole role = 2;
+}
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int64 create_dt = 4;
+  repeated Member members = 5;
+}
