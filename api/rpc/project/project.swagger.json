@@ -20,7 +20,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -28,10 +29,12 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     }

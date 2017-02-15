@@ -48,19 +48,24 @@
       "type": "object",
       "properties": {
         "version": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "port": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "goversion": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "os": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "arch": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     }
