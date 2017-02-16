@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-  - 1.7.4
+  - 1.7.x
 
 install:
   - sudo sysctl -w vm.max_map_count=262144
