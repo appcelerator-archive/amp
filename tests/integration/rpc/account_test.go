@@ -449,3 +449,29 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	})
 	assert.Error(t, newLoginErr)
 }
+
+func TestUserForgotLogin(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// ForgotLogin
+	_, forgotLoginErr := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{Email: signUpRequest.Email})
+	assert.NoError(t, forgotLoginErr)
+}
+
+func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// ForgotLogin
+	_, forgotLoginErr := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{Email: "this is not a valid email"})
+	assert.Error(t, forgotLoginErr)
+}

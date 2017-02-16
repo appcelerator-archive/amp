@@ -37,7 +37,9 @@ func TestAmpMail(t *testing.T) {
 	emailReceived = nil
 	ampmail.SendAccountPasswordConfirmationEmail(to, accountName)
 	waitTestForEmail(t, "AccountPasswordConfirmation", "AMP account password confirmation")
-
+	emailReceived = nil
+	ampmail.SendAccountNameReminderEmail(to, accountName)
+	waitTestForEmail(t, "AccountNameReminder", "AMP account name reminder")
 }
 
 func initMailServer() {

@@ -42,6 +42,12 @@ service Account {
       body: "*"
     };
   };
+  rpc ForgotLogin(ForgotLoginRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/account/{email}/forgotLogin",
+      body: "*"
+    };
+  };
 }
 
 message SignUpRequest {
@@ -85,4 +91,8 @@ message PasswordChangeRequest {
   string name = 1;
   string existingPassword = 2;
   string newPassword = 3;
+}
+
+message ForgotLoginRequest {
+  string email = 1;
 }

@@ -64,6 +64,20 @@ func (s *Store) GetUserByName(ctx context.Context, name string) (*schema.User, e
 	return nil, nil
 }
 
+// GetUserByEmail fetches an user by email
+func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
+	users, err := s.ListUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		if strings.EqualFold(user.Email, email) {
+			return user, nil
+		}
+	}
+	return nil, nil
+}
+
 // ListUsers lists users
 func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	protos := []proto.Message{}
