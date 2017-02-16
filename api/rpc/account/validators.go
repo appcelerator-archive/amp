@@ -41,13 +41,6 @@ func checkEmail(email string) (string, error) {
 	return address.Address, nil
 }
 
-func checkOwner(owner string) error {
-	if isEmpty(owner) {
-		return grpc.Errorf(codes.InvalidArgument, "owner is mandatory")
-	}
-	return nil
-}
-
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
 	if r.Email, err = checkEmail(r.Email); err != nil {
@@ -94,9 +87,17 @@ func (r *PasswordSetRequest) Validate() error {
 	return nil
 }
 
-// Validate validates PasswordSetRequest
+// Validate validates PasswordChangeRequest
 func (r *PasswordChangeRequest) Validate() error {
 	if err := checkPassword(r.NewPassword); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Validate validates ForgotLoginRequest
+func (r *ForgotLoginRequest) Validate() (err error) {
+	if r.Email, err = checkEmail(r.Email); err != nil {
 		return err
 	}
 	return nil

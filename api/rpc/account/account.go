@@ -295,3 +295,27 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 
 	return &pb.Empty{}, nil
 }
+
+// ForgotLogin implements account.PasswordChange
+func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the user
+	user, err := s.accounts.GetUserByEmail(ctx, in.Email)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+
+	// Send the account name reminder email
+	if err := ampmail.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	log.Println("Successfully processed forgot login request for user", user.Name)
+
+	return &pb.Empty{}, nil
+}

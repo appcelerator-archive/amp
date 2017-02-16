@@ -34,6 +34,7 @@ func init() {
 	AddEmailTemplate("AccountVerification", "AMP account activation", true, accountVerificationBody)
 	AddEmailTemplate("AccountResetPassword", "AMP account password reset", true, accountResetPasswordEmailBody)
 	AddEmailTemplate("AccountPasswordConfirmation", "AMP account password confirmation", true, accountPasswordConfirmationEmailBody)
+	AddEmailTemplate("AccountNameReminder", "AMP account name reminder", true, accountNameReminderBody)
 }
 
 // SendAccountVerificationEmail send a AccountVerification email template
@@ -70,6 +71,17 @@ func SendAccountPasswordConfirmationEmail(to string, accountName string) error {
 		"accountName": accountName,
 	}
 	if err := SendTemplateEmail(to, "AccountPasswordConfirmation", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendAccountNameReminderEmail send a AccountNameReminder email template
+func SendAccountNameReminderEmail(to string, accountName string) error {
+	variables := map[string]string{
+		"accountName": accountName,
+	}
+	if err := SendTemplateEmail(to, "AccountNameReminder", variables); err != nil {
 		return err
 	}
 	return nil

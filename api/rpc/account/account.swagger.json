@@ -119,6 +119,39 @@
         ]
       }
     },
+    "/v1/account/{email}/forgotLogin": {
+      "post": {
+        "operationId": "ForgotLogin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountForgotLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/account/{name}/passwordChange": {
       "post": {
         "operationId": "PasswordChange",
@@ -187,6 +220,15 @@
     }
   },
   "definitions": {
+    "accountForgotLoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountLogInReply": {
       "type": "object",
       "properties": {
