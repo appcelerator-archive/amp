@@ -42,7 +42,7 @@ func CheckEmailAddress(email string) (string, error) {
 }
 
 func CheckVerificationCode(code string) error {
-	if code == "" {
+	if isEmpty(code) {
 		return grpc.Errorf(codes.InvalidArgument, "invalid verification code")
 	}
 	return nil

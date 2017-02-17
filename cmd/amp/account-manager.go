@@ -23,7 +23,7 @@ var (
 	verifyCmd = &cobra.Command{
 		Use:   "verify",
 		Short: "Verify account",
-		Long:  `The verify command creates a new account and sends a verification link to the registered email address.`,
+		Long:  `The verify command verifies an account by sending a verification code to their registered email address.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP)
 		},
@@ -37,12 +37,22 @@ var (
 			return login(AMP)
 		},
 	}
+
+	forgotLoginCmd = &cobra.Command{
+		Use:   "forgot-login",
+		Short: "Get username for an account",
+		Long:  `The forgot login command retrieves the account name, in case the user has forgotten it.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return forgotLogin(AMP)
+		},
+	}
 )
 
 func init() {
 	AccountCmd.AddCommand(signUpCmd)
 	AccountCmd.AddCommand(verifyCmd)
 	AccountCmd.AddCommand(loginCmd)
+	AccountCmd.AddCommand(forgotLoginCmd)
 }
 
 func signUp(amp *client.AMP) error {
@@ -96,7 +106,25 @@ func login(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", err.Error())
 	}
-	fmt.Println("Welcome back, ", username)
+	fmt.Println("Welcome back, ", username, "!")
+	return nil
+}
+
+func forgotLogin(amp *client.AMP) error {
+	fmt.Println("This will send your username to your registered email address")
+	email, err := getEmailAddress()
+	if err != nil {
+		return fmt.Errorf("user error: %v", err)
+	}
+	request := &account.ForgotLoginRequest{
+		Email: email,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	_, err = accClient.ForgotLogin(context.Background(), request)
+	if err != nil {
+		return fmt.Errorf("server error: %v", err)
+	}
+	fmt.Println("Your login name has been sent to the address: ", email)
 	return nil
 }
 
@@ -129,7 +157,7 @@ func getToken() (token string) {
 	fmt.Scanln(&token)
 	err := account.CheckVerificationCode(token)
 	if err != nil {
-		fmt.Errorf("Code is invalid. Try again!")
+		fmt.Println("Code is invalid. Try again!")
 		fmt.Println("")
 		return getToken()
 	}
