@@ -12,6 +12,7 @@ func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
 }
 
+// CheckUserName checks user name
 func CheckUserName(name string) error {
 	if isEmpty(name) {
 		return grpc.Errorf(codes.InvalidArgument, "user name is mandatory")
@@ -19,6 +20,7 @@ func CheckUserName(name string) error {
 	return nil
 }
 
+// CheckPassword checks password
 func CheckPassword(password string) error {
 	if isEmpty(password) {
 		return grpc.Errorf(codes.InvalidArgument, "password is mandatory")
@@ -30,6 +32,7 @@ func CheckPassword(password string) error {
 	return nil
 }
 
+// CheckEmailAddress checks email address
 func CheckEmailAddress(email string) (string, error) {
 	address, err := mail.ParseAddress(email)
 	if err != nil {
@@ -41,6 +44,7 @@ func CheckEmailAddress(email string) (string, error) {
 	return address.Address, nil
 }
 
+// CheckVerificationCode checks verification code
 func CheckVerificationCode(code string) error {
 	if isEmpty(code) {
 		return grpc.Errorf(codes.InvalidArgument, "invalid verification code")
