@@ -41,6 +41,13 @@ func CheckEmailAddress(email string) (string, error) {
 	return address.Address, nil
 }
 
+func CheckVerificationCode(code string) error {
+	if code == "" {
+		return grpc.Errorf(codes.InvalidArgument, "invalid verification code")
+	}
+	return nil
+}
+
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
 	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
