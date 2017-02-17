@@ -12,9 +12,9 @@ func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
 }
 
-func checkName(name string) error {
+func CheckUserName(name string) error {
 	if isEmpty(name) {
-		return grpc.Errorf(codes.InvalidArgument, "name is mandatory")
+		return grpc.Errorf(codes.InvalidArgument, "user name is mandatory")
 	}
 	return nil
 }
@@ -30,7 +30,7 @@ func checkPassword(password string) error {
 	return nil
 }
 
-func checkEmail(email string) (string, error) {
+func CheckEmailAddress(email string) (string, error) {
 	address, err := mail.ParseAddress(email)
 	if err != nil {
 		return "", grpc.Errorf(codes.InvalidArgument, err.Error())
@@ -43,13 +43,13 @@ func checkEmail(email string) (string, error) {
 
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
-	if r.Email, err = checkEmail(r.Email); err != nil {
+	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
 		return err
 	}
 	if err = checkPassword(r.Password); err != nil {
 		return err
 	}
-	if err = checkName(r.Name); err != nil {
+	if err = CheckUserName(r.Name); err != nil {
 		return err
 	}
 	return nil
@@ -62,7 +62,7 @@ func (r *VerificationRequest) Validate() error {
 
 // Validate validates LogInRequest
 func (r *LogInRequest) Validate() error {
-	if err := checkName(r.Name); err != nil {
+	if err := CheckUserName(r.Name); err != nil {
 		return err
 	}
 	if err := checkPassword(r.Password); err != nil {
@@ -73,7 +73,7 @@ func (r *LogInRequest) Validate() error {
 
 // Validate validates PasswordResetRequest
 func (r *PasswordResetRequest) Validate() error {
-	if err := checkName(r.Name); err != nil {
+	if err := CheckUserName(r.Name); err != nil {
 		return err
 	}
 	return nil
@@ -97,7 +97,7 @@ func (r *PasswordChangeRequest) Validate() error {
 
 // Validate validates ForgotLoginRequest
 func (r *ForgotLoginRequest) Validate() (err error) {
-	if r.Email, err = checkEmail(r.Email); err != nil {
+	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
 		return err
 	}
 	return nil
