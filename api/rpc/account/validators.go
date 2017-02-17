@@ -19,7 +19,7 @@ func CheckUserName(name string) error {
 	return nil
 }
 
-func checkPassword(password string) error {
+func CheckPassword(password string) error {
 	if isEmpty(password) {
 		return grpc.Errorf(codes.InvalidArgument, "password is mandatory")
 	}
@@ -53,7 +53,7 @@ func (r *SignUpRequest) Validate() (err error) {
 	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
 		return err
 	}
-	if err = checkPassword(r.Password); err != nil {
+	if err = CheckPassword(r.Password); err != nil {
 		return err
 	}
 	if err = CheckUserName(r.Name); err != nil {
@@ -72,7 +72,7 @@ func (r *LogInRequest) Validate() error {
 	if err := CheckUserName(r.Name); err != nil {
 		return err
 	}
-	if err := checkPassword(r.Password); err != nil {
+	if err := CheckPassword(r.Password); err != nil {
 		return err
 	}
 	return nil
@@ -88,7 +88,7 @@ func (r *PasswordResetRequest) Validate() error {
 
 // Validate validates PasswordSetRequest
 func (r *PasswordSetRequest) Validate() error {
-	if err := checkPassword(r.Password); err != nil {
+	if err := CheckPassword(r.Password); err != nil {
 		return err
 	}
 	return nil
@@ -96,7 +96,7 @@ func (r *PasswordSetRequest) Validate() error {
 
 // Validate validates PasswordChangeRequest
 func (r *PasswordChangeRequest) Validate() error {
-	if err := checkPassword(r.NewPassword); err != nil {
+	if err := CheckPassword(r.NewPassword); err != nil {
 		return err
 	}
 	return nil

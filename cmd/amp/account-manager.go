@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
-
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -28,15 +28,23 @@ var (
 			return verify(AMP)
 		},
 	}
+
+	loginCmd = &cobra.Command{
+		Use:   "login",
+		Short: "Login to account",
+		Long:  `The login command logs the user into their existing account.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return login(AMP)
+		},
+	}
 )
 
 func init() {
 	AccountCmd.AddCommand(signUpCmd)
 	AccountCmd.AddCommand(verifyCmd)
+	AccountCmd.AddCommand(loginCmd)
 }
 
-// signup signs up visitor for a new personal account.
-// Sends a verification link to their email address.
 func signUp(amp *client.AMP) error {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	username := getUserName()
@@ -57,8 +65,6 @@ func signUp(amp *client.AMP) error {
 	return nil
 }
 
-// verify gets the unique code sent to the visitor in the email verification, registered username and new password,
-// validates the command line inputs and activates their account.
 func verify(amp *client.AMP) error {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	token := getToken()
@@ -71,6 +77,26 @@ func verify(amp *client.AMP) error {
 		return fmt.Errorf("server error: %v", err)
 	}
 	fmt.Println("Your account has now been activated.")
+	return nil
+}
+
+func login(amp *client.AMP) (err error) {
+	fmt.Println("This will login to an existing AMP account.")
+	username := getUserName()
+	password, err := getPassword()
+	if err != nil {
+		return fmt.Errorf("user error: %v", err)
+	}
+	request := &account.LogInRequest{
+		Name:     username,
+		Password: password,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	_, err = accClient.Login(context.Background(), request)
+	if err != nil {
+		return fmt.Errorf("server error: %v", err.Error())
+	}
+	fmt.Println("Welcome back, ", username)
 	return nil
 }
 
@@ -106,6 +132,26 @@ func getToken() (token string) {
 		fmt.Errorf("Code is invalid. Try again!")
 		fmt.Println("")
 		return getToken()
+	}
+	return
+}
+
+func getPassword() (password string, err error) {
+	fmt.Print("password: ")
+	pw, err := gopass.GetPasswd()
+	if pw == nil || err != nil {
+		fmt.Println("Password is mandatory. Try again!")
+		fmt.Println("")
+		return getPassword()
+	}
+	password = string(pw)
+	err = account.CheckPassword(password)
+	if err != nil {
+		fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
+		fmt.Println("")
+		return getPassword()
+	} else {
+		return
 	}
 	return
 }
