@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -65,7 +65,7 @@ func init() {
 }
 
 // Stats displays resource usage statistcs
-func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

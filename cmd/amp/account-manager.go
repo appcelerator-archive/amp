@@ -3,11 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"strings"
 )
 
 // Cobra definitions for account management related commands
@@ -76,26 +80,28 @@ func init() {
 
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
-func signUp(amp *client.AMP) (err error) {
+func signUp(amp *cli.AMP) (err error) {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	username := getUserName()
 	email := getEmailAddress()
+	password := getPassword()
 	request := &account.SignUpRequest{
-		Name:  username,
-		Email: email,
+		Name:     username,
+		Email:    email,
+		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
+	fmt.Printf("Hi %s!, Please check your email to complete the signup process.\n", username)
 	return nil
 }
 
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
-func verify(amp *client.AMP) (err error) {
+func verify(amp *cli.AMP) (err error) {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	token := getToken()
 	request := &account.VerificationRequest{
@@ -104,7 +110,7 @@ func verify(amp *client.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.Verify(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Your account has now been activated.")
 	return nil
@@ -112,7 +118,7 @@ func verify(amp *client.AMP) (err error) {
 
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
-func login(amp *client.AMP) (err error) {
+func login(amp *cli.AMP) (err error) {
 	fmt.Println("This will login to an existing AMP account.")
 	username := getUserName()
 	password := getPassword()
@@ -121,17 +127,21 @@ func login(amp *client.AMP) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.Login(context.Background(), request)
+	header := metadata.MD{}
+	_, err = accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		return fmt.Errorf("server error: %v", err.Error())
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Welcome back, ", username, "!")
+	if err := cli.SaveToken(header); err != nil {
+		return err
+	}
+	fmt.Printf("Welcome back, %s!\n", username)
 	return nil
 }
 
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
-func forgotLogin(amp *client.AMP) (err error) {
+func forgotLogin(amp *cli.AMP) (err error) {
 	fmt.Println("This will send your username to your registered email address")
 	email := getEmailAddress()
 	request := &account.ForgotLoginRequest{
@@ -140,29 +150,29 @@ func forgotLogin(amp *client.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Your login name has been sent to the address: ", email)
+	fmt.Println("Your login name has been sent to the address:", email)
 	return nil
 }
 
 // pwd validates the input command line arguments and performs password-related operations
 // by invoking the corresponding rpc/storage method
-func pwd(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if reset {
-		pwdReset(amp, cmd, args)
-	} else if change {
-		pwdChange(amp, cmd, args)
-	} else {
-		fmt.Println("Choose a command for password operation")
-		fmt.Println("Use amp account password -h for help")
+		return pwdReset(amp, cmd, args)
 	}
+	if change {
+		return pwdChange(amp, cmd, args)
+	}
+	fmt.Println("Choose a command for password operation")
+	fmt.Println("Use amp account password -h for help")
 	return nil
 }
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
-func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	fmt.Println("This will send a password reset email to your email address.")
 	username := getUserName()
 	request := &account.PasswordResetRequest{
@@ -171,21 +181,25 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "! Please check your email to complete the password reset process.")
+	fmt.Printf("Hi %s! Please check your email to complete the password reset process.\n", username)
 	return nil
 }
 
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
-func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
 	fmt.Println("Enter your current password.")
 	existingPwd := getPassword()
 	fmt.Println("Enter new password.")
 	newPwd := getPassword()
+
+	// Call the backend
+	// Set the authN token on the request header
 	request := &account.PasswordChangeRequest{
 		Name:             username,
 		ExistingPassword: existingPwd,
@@ -194,16 +208,17 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error : %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi ", username, "! Your recent password change has been successful.")
+	fmt.Printf("Hi %s! Your recent password change has been successful.\n", username)
 	return nil
 }
 
 func getUserName() (username string) {
 	fmt.Print("username: ")
 	fmt.Scanln(&username)
-	err := account.CheckUserName(username)
+	username = strings.TrimSpace(username)
+	err := schema.CheckName(username)
 	if err != nil {
 		fmt.Println("Username is mandatory. Try again!")
 		fmt.Println("")
@@ -215,7 +230,8 @@ func getUserName() (username string) {
 func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
-	_, err := account.CheckEmailAddress(email)
+	email = strings.TrimSpace(email)
+	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
 		fmt.Println("Email in incorrect format. Try again!")
 		fmt.Println("")
@@ -227,6 +243,7 @@ func getEmailAddress() (email string) {
 func getToken() (token string) {
 	fmt.Print("token: ")
 	fmt.Scanln(&token)
+	token = strings.TrimSpace(token)
 	err := account.CheckVerificationCode(token)
 	if err != nil {
 		fmt.Println("Code is invalid. Try again!")
@@ -245,6 +262,7 @@ func getPassword() (password string) {
 		return getPassword()
 	}
 	password = string(pw)
+	password = strings.TrimSpace(password)
 	err = account.CheckPassword(password)
 	if err != nil {
 		fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -25,7 +25,7 @@ func init() {
 	TopicCmd.AddCommand(createTopicCmd)
 }
 
-func createTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func createTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return errors.New("must specify topic name")
 	}

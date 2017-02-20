@@ -1,16 +1,18 @@
 package tests
 
 import (
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 var (
 	signUpRequest = account.SignUpRequest{
-		Name:     "User",
-		Password: "UserPassword",
+		Name:     "user",
+		Password: "userPassword",
 		Email:    "user@amp.io",
 	}
 )
@@ -21,7 +23,7 @@ func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 
 	// SignUp
 	invalidSignUp := signUpRequest
-	invalidSignUp.Name = ""
+	invalidSignUp.Name = "UpperCaseIsNotAllowed"
 	_, signUpErr := accountClient.SignUp(ctx, &invalidSignUp)
 	assert.Error(t, signUpErr)
 }
@@ -53,11 +55,15 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 }
 
@@ -96,11 +102,15 @@ func TestUserLogin(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -144,11 +154,15 @@ func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -164,11 +178,15 @@ func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -184,11 +202,15 @@ func TestUserPasswordReset(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Password Reset
@@ -201,11 +223,15 @@ func TestUserPasswordResetNonExistingAccountShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Password Reset
@@ -218,20 +244,24 @@ func TestUserPasswordSet(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Password Reset
-	passwordResetReply, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
+	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
 	assert.NoError(t, passwordResetErr)
 
 	// Password Set
 	_, passwordSetErr := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
-		Token:    passwordResetReply.Token,
+		Token:    token,
 		Password: "newPassword",
 	})
 	assert.NoError(t, passwordSetErr)
@@ -249,11 +279,15 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Password Reset
@@ -280,20 +314,24 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Password Reset
-	passwordResetReply, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
+	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
 	assert.NoError(t, passwordResetErr)
 
 	// Password Set
 	_, passwordSetErr := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
-		Token:    passwordResetReply.Token,
+		Token:    token,
 		Password: "",
 	})
 	assert.Error(t, passwordSetErr)
@@ -311,11 +349,15 @@ func TestUserPasswordChange(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -347,11 +389,15 @@ func TestUserPasswordChangeNonExistingAccount(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -383,11 +429,15 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
@@ -419,11 +469,15 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	signUpReply, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: signUpReply.Token})
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
