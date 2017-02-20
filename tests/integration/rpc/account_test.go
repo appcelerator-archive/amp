@@ -9,8 +9,8 @@ import (
 
 var (
 	signUpRequest = account.SignUpRequest{
-		Name:     "User",
-		Password: "UserPassword",
+		Name:     "user",
+		Password: "userPassword",
 		Email:    "user@amp.io",
 	}
 )
@@ -21,7 +21,7 @@ func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 
 	// SignUp
 	invalidSignUp := signUpRequest
-	invalidSignUp.Name = ""
+	invalidSignUp.Name = "UpperCaseIsNotAllowed"
 	_, signUpErr := accountClient.SignUp(ctx, &invalidSignUp)
 	assert.Error(t, signUpErr)
 }

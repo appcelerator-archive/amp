@@ -57,8 +57,7 @@ message SignUpRequest {
 }
 
 message SignUpReply {
-  string id = 1;
-  string token = 2;
+  string token = 1;
 }
 
 message VerificationRequest {

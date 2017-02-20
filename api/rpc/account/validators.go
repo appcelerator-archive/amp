@@ -1,23 +1,15 @@
 package account
 
 import (
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/holys/safe"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"net/mail"
 	"strings"
 )
 
 func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
-}
-
-// CheckUserName checks user name
-func CheckUserName(name string) error {
-	if isEmpty(name) {
-		return grpc.Errorf(codes.InvalidArgument, "user name is mandatory")
-	}
-	return nil
 }
 
 // CheckPassword checks password
@@ -32,18 +24,6 @@ func CheckPassword(password string) error {
 	return nil
 }
 
-// CheckEmailAddress checks email address
-func CheckEmailAddress(email string) (string, error) {
-	address, err := mail.ParseAddress(email)
-	if err != nil {
-		return "", grpc.Errorf(codes.InvalidArgument, err.Error())
-	}
-	if isEmpty(address.Address) {
-		return "", grpc.Errorf(codes.InvalidArgument, "email is mandatory")
-	}
-	return address.Address, nil
-}
-
 // CheckVerificationCode checks verification code
 func CheckVerificationCode(code string) error {
 	if isEmpty(code) {
@@ -54,15 +34,16 @@ func CheckVerificationCode(code string) error {
 
 // Validate validates SignUpRequest
 func (r *SignUpRequest) Validate() (err error) {
-	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
-		return err
+	if err = schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if r.Email, err = schema.CheckEmailAddress(r.Email); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 	if err = CheckPassword(r.Password); err != nil {
 		return err
 	}
-	if err = CheckUserName(r.Name); err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -73,8 +54,8 @@ func (r *VerificationRequest) Validate() error {
 
 // Validate validates LogInRequest
 func (r *LogInRequest) Validate() error {
-	if err := CheckUserName(r.Name); err != nil {
-		return err
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 	if err := CheckPassword(r.Password); err != nil {
 		return err
@@ -84,8 +65,8 @@ func (r *LogInRequest) Validate() error {
 
 // Validate validates PasswordResetRequest
 func (r *PasswordResetRequest) Validate() error {
-	if err := CheckUserName(r.Name); err != nil {
-		return err
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 	return nil
 }
@@ -108,8 +89,8 @@ func (r *PasswordChangeRequest) Validate() error {
 
 // Validate validates ForgotLoginRequest
 func (r *ForgotLoginRequest) Validate() (err error) {
-	if r.Email, err = CheckEmailAddress(r.Email); err != nil {
-		return err
+	if r.Email, err = schema.CheckEmailAddress(r.Email); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
 	return nil
 }

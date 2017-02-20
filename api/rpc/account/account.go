@@ -21,7 +21,7 @@ import (
 var secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
 
 type userClaims struct {
-	UserID string `json:"UserID"`
+	AccountName string `json:"AccountName"`
 	jwt.StandardClaims
 }
 
@@ -43,12 +43,12 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	}
 
 	// Check if user already exists
-	alreadyExists, err := s.accounts.GetUserByName(ctx, in.Name)
+	alreadyExists, err := s.accounts.GetUser(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	if alreadyExists != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists")
+		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists: %v", alreadyExists)
 	}
 
 	// Hash password
@@ -64,15 +64,14 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 		IsVerified:   false,
 		PasswordHash: passwordHash,
 	}
-	id, err := s.accounts.CreateUser(ctx, user)
-	if err != nil {
+	if err := s.accounts.CreateUser(ctx, user); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
 	log.Println("Successfully created user", in.Name)
 
 	// Forge the verification token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		id, // The token contains the user id to verify
+		user.Name, // The token contains the user id to verify
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -89,7 +88,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, ss); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	return &SignUpReply{Id: id, Token: ss}, nil
+	return &SignUpReply{Token: ss}, nil
 }
 
 // Verify implements account.Verify
@@ -116,7 +115,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	}
 
 	// Activate the user
-	user, err := s.accounts.GetUser(ctx, claims.UserID)
+	user, err := s.accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -136,7 +135,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUserByName(ctx, in.Name)
+	user, err := s.accounts.GetUser(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -155,7 +154,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 
 	// Forge the authentication token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		user.Id, // The token contains the user id
+		user.Name, // The token contains the user name
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -179,7 +178,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUserByName(ctx, in.Name)
+	user, err := s.accounts.GetUser(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -193,7 +192,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 
 	// Forge the password reset token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		user.Id, // The token contains the user id to reset
+		user.Name, // The token contains the user name to reset
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 			Issuer:    os.Args[0],
@@ -239,7 +238,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, claims.UserID)
+	user, err := s.accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -265,7 +264,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUserByName(ctx, in.Name)
+	user, err := s.accounts.GetUser(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}

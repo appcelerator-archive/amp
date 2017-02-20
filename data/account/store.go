@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"path"
 	"strings"
@@ -27,41 +26,29 @@ func NewStore(store storage.Interface) *Store {
 }
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(ctx context.Context, in *schema.User) (string, error) {
+func (s *Store) CreateUser(ctx context.Context, in *schema.User) error {
 	if err := in.Validate(); err != nil {
-		return "", err
+		return err
 	}
-	id := stringid.GenerateNonCryptoID()
-	in.Id = id
 	in.IsVerified = false
 	in.CreateDt = time.Now().Unix()
-	if err := s.Store.Create(ctx, path.Join(usersRootKey, id), in, nil, 0); err != nil {
-		return "", err
+	if err := s.Store.Create(ctx, path.Join(usersRootKey, in.Name), in, nil, 0); err != nil {
+		return err
 	}
-	return id, nil
+	return nil
 }
 
-// GetUser fetches an user by id
-func (s *Store) GetUser(ctx context.Context, id string) (*schema.User, error) {
+// GetUser fetches an user by name
+func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
-	if err := s.Store.Get(ctx, path.Join(usersRootKey, id), user, false); err != nil {
+	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
+	}
+	// If there's no "name" in the answer, it means the user has not been found, so return nil
+	if user.GetName() == "" {
+		return nil, nil
 	}
 	return user, nil
-}
-
-// GetUserByName fetches an user by name
-func (s *Store) GetUserByName(ctx context.Context, name string) (*schema.User, error) {
-	users, err := s.ListUsers(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, user := range users {
-		if strings.EqualFold(user.Name, name) {
-			return user, nil
-		}
-	}
-	return nil, nil
 }
 
 // GetUserByEmail fetches an user by email
@@ -96,16 +83,16 @@ func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
 	if err := in.Validate(); err != nil {
 		return err
 	}
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, in.Id), in, 0); err != nil {
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, in.Name), in, 0); err != nil {
 		return err
 	}
 	return nil
 }
 
-// DeleteUser deletes an user by id
-func (s *Store) DeleteUser(ctx context.Context, id string) error {
+// DeleteUser deletes an user by name
+func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// TODO: check if user is owner of an organization
-	if err := s.Store.Delete(ctx, path.Join(usersRootKey, id), false, nil); err != nil {
+	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -113,10 +100,10 @@ func (s *Store) DeleteUser(ctx context.Context, id string) error {
 
 // Reset resets the account store
 func (s *Store) Reset(ctx context.Context) error {
-	if err := s.Store.Delete(ctx, path.Join(usersRootKey), true, nil); err != nil {
+	if err := s.Store.Delete(ctx, usersRootKey, true, nil); err != nil {
 		return err
 	}
-	if err := s.Store.Delete(ctx, path.Join(organizationsRootKey), true, nil); err != nil {
+	if err := s.Store.Delete(ctx, organizationsRootKey, true, nil); err != nil {
 		return err
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -206,7 +207,7 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 func getUserName() (username string) {
 	fmt.Print("username: ")
 	fmt.Scanln(&username)
-	err := account.CheckUserName(username)
+	err := schema.CheckName(username)
 	if err != nil {
 		fmt.Println("Username is mandatory. Try again!")
 		fmt.Println("")
@@ -218,7 +219,7 @@ func getUserName() (username string) {
 func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
-	_, err := account.CheckEmailAddress(email)
+	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
 		fmt.Println("Email in incorrect format. Try again!")
 		fmt.Println("")
