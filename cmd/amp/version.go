@@ -7,8 +7,8 @@ import (
 
 	"github.com/docker/docker/utils/templates"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/version"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -41,7 +41,7 @@ func init() {
 }
 
 // Lists version info of AMP and Amplifier
-func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func list(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)

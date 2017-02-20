@@ -5,8 +5,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -30,7 +30,7 @@ func init() {
 	TopicCmd.AddCommand(listTopicCmd)
 }
 
-func listTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func listTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request := &topic.ListRequest{}
 
 	client := topic.NewTopicClient(amp.Conn)

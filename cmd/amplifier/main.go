@@ -42,8 +42,6 @@ var (
 	emailServerAddress string
 	emailServerPort    string
 	emailSender        string
-	emailPwd           string
-	sendGridKey        string
 )
 
 func parseFlags(config *amp.Config) {

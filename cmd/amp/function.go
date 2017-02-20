@@ -3,8 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/function"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"os"
@@ -62,7 +62,7 @@ func init() {
 	RootCmd.AddCommand(functionCmd)
 }
 
-func createFunction(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify function name and docker image")
@@ -96,7 +96,7 @@ func createFunction(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func listFunction(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	// List functions
 	request := &function.ListRequest{}
 	reply, err := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
@@ -125,7 +125,7 @@ func listFunction(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func removeFunction(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return errors.New("rm requires at least one argument")
 	}

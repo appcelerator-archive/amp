@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service Account {
-  rpc SignUp (SignUpRequest) returns (SignUpReply) {
+  rpc SignUp (SignUpRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/account/signup",
       body: "*"
@@ -18,13 +18,13 @@ service Account {
       body: "*"
     };
   };
-  rpc Login (LogInRequest) returns (LogInReply) {
+  rpc Login (LogInRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/account/login",
       body: "*"
     };
   };
-  rpc PasswordReset (PasswordResetRequest) returns (PasswordResetReply) {
+  rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/account/{name}/passwordReset",
       body: "*"
@@ -56,11 +56,6 @@ message SignUpRequest {
   string email = 3;
 }
 
-message SignUpReply {
-  string id = 1;
-  string token = 2;
-}
-
 message VerificationRequest {
   string token = 1;
 }
@@ -70,16 +65,8 @@ message LogInRequest {
   string password = 2;
 }
 
-message LogInReply {
-  string token = 1;
-}
-
 message PasswordResetRequest {
   string name = 1;
-}
-
-message PasswordResetReply {
-  string token = 1;
 }
 
 message PasswordSetRequest {

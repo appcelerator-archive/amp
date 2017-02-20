@@ -6,8 +6,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func init() {
 }
 
 // Logs fetches the logs
-func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

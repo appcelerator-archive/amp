@@ -22,7 +22,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountLogInReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -74,7 +74,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountSignUpReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -192,7 +192,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountPasswordResetReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -229,15 +229,6 @@
         }
       }
     },
-    "accountLogInReply": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "format": "string"
-        }
-      }
-    },
     "accountLogInRequest": {
       "type": "object",
       "properties": {
@@ -268,15 +259,6 @@
         }
       }
     },
-    "accountPasswordResetReply": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "format": "string"
-        }
-      }
-    },
     "accountPasswordResetRequest": {
       "type": "object",
       "properties": {
@@ -294,19 +276,6 @@
           "format": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
-        }
-      }
-    },
-    "accountSignUpReply": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "string"
-        },
-        "token": {
           "type": "string",
           "format": "string"
         }
