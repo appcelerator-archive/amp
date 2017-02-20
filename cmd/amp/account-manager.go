@@ -5,9 +5,11 @@ import (
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // Cobra definitions for account management related commands
@@ -80,14 +82,16 @@ func signUp(amp *client.AMP) (err error) {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	username := getUserName()
 	email := getEmailAddress()
+	password := getPassword()
 	request := &account.SignUpRequest{
-		Name:  username,
-		Email: email,
+		Name:     username,
+		Email:    email,
+		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
 	return nil
@@ -104,7 +108,7 @@ func verify(amp *client.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.Verify(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Your account has now been activated.")
 	return nil
@@ -123,7 +127,7 @@ func login(amp *client.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.Login(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err.Error())
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Welcome back, ", username, "!")
 	return nil
@@ -140,7 +144,7 @@ func forgotLogin(amp *client.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Your login name has been sent to the address: ", email)
 	return nil
@@ -171,7 +175,7 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", err)
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi", username, "! Please check your email to complete the password reset process.")
 	return nil
@@ -194,7 +198,7 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error : %v", err)
+		return fmt.Errorf("server error : %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi ", username, "! Your recent password change has been successful.")
 	return nil
@@ -203,7 +207,7 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 func getUserName() (username string) {
 	fmt.Print("username: ")
 	fmt.Scanln(&username)
-	err := account.CheckUserName(username)
+	err := schema.CheckName(username)
 	if err != nil {
 		fmt.Println("Username is mandatory. Try again!")
 		fmt.Println("")
@@ -215,7 +219,7 @@ func getUserName() (username string) {
 func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
-	_, err := account.CheckEmailAddress(email)
+	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
 		fmt.Println("Email in incorrect format. Try again!")
 		fmt.Println("")
