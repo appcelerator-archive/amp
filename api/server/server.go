@@ -34,12 +34,12 @@ const (
 	defaultTimeOut = 30 * time.Second
 )
 
-func initDependencies(config Config) {
+func initDependencies(config *amp.Config) {
 	// ensure all initialization code fails fast on errors; there is no point in
 	// attempting to continue in a degraded state if there are problems at start up
 
 	var wg sync.WaitGroup
-	type initFunc func(Config) error
+	type initFunc func(*amp.Config) error
 
 	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
 	for _, f := range initFuncs {
@@ -57,7 +57,7 @@ func initDependencies(config Config) {
 }
 
 // Start starts the server
-func Start(config Config) {
+func Start(config *amp.Config) {
 	initDependencies(config)
 
 	// register services
@@ -116,7 +116,7 @@ func Start(config Config) {
 	log.Fatalln(s.Serve(lis))
 }
 
-func initEtcd(config Config) error {
+func initEtcd(config *amp.Config) error {
 	log.Println("Connecting to etcd at", strings.Join(config.EtcdEndpoints, ","))
 	runtime.Store = etcd.New(config.EtcdEndpoints, "amp")
 	if err := runtime.Store.Connect(defaultTimeOut); err != nil {
@@ -126,7 +126,7 @@ func initEtcd(config Config) error {
 	return nil
 }
 
-func initElasticsearch(config Config) error {
+func initElasticsearch(config *amp.Config) error {
 	log.Println("Connecting to elasticsearch at", config.ElasticsearchURL)
 	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
 		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", config.ElasticsearchURL, err)
@@ -135,7 +135,7 @@ func initElasticsearch(config Config) error {
 	return nil
 }
 
-func initInfluxDB(config Config) error {
+func initInfluxDB(config *amp.Config) error {
 	log.Println("Connecting to InfluxDB at", config.InfluxURL)
 	runtime.Influx = influx.New(config.InfluxURL, "telegraf", "", "")
 	if err := runtime.Influx.Connect(defaultTimeOut); err != nil {
@@ -145,7 +145,7 @@ func initInfluxDB(config Config) error {
 	return nil
 }
 
-func initNats(config Config) error {
+func initNats(config *amp.Config) error {
 	// NATS
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -157,7 +157,7 @@ func initNats(config Config) error {
 	return nil
 }
 
-func initDocker(config Config) error {
+func initDocker(config *amp.Config) error {
 	log.Printf("Connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
 	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
 	var err error

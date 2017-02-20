@@ -27,22 +27,30 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config           server.Config
-	port             string
-	etcdEndpoints    string
-	elasticsearchURL string
-	clientID         string
-	clientSecret     string
-	natsURL          string
-	influxURL        string
-	dockerURL        string
-	dockerVersion    string
+	config             *amp.Config
+	serverAddress      string
+	port               string
+	etcdEndpoints      string
+	elasticsearchURL   string
+	clientID           string
+	clientSecret       string
+	natsURL            string
+	influxURL          string
+	dockerURL          string
+	dockerVersion      string
+	webMailServerPort  string
+	emailServerAddress string
+	emailServerPort    string
+	emailSender        string
+	emailPwd           string
+	sendGridKey        string
 )
 
-func parseFlags() {
+func parseFlags(config *amp.Config) {
 	var displayVersion bool
 
 	// set up flags
+	flag.StringVarP(&serverAddress, "server-address", "a", amp.AmplifierDefaultAddress, "Amplifier server address")
 	flag.StringVarP(&port, "port", "p", defaultPort, "Server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "Etcd comma-separated endpoints")
 	flag.StringVarP(&elasticsearchURL, "elasticsearch-url", "s", amp.ElasticsearchDefaultURL, "Elasticsearch URL (default '"+amp.ElasticsearchDefaultURL+"')")
@@ -51,6 +59,10 @@ func parseFlags() {
 	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
+	flag.StringVar(&webMailServerPort, "webmail-port", amp.DefaultWebMailServerPort, "Webamail port (default '"+amp.DefaultWebMailServerPort+"')")
+	flag.StringVar(&emailServerAddress, "email-server-address", amp.DefaultEmailServerAddress, "Email Server address (default '"+amp.DefaultEmailServerAddress+"')")
+	flag.StringVar(&emailServerPort, "email-server-port", amp.DefaultEmailServerPort, "Email Server port (default '"+amp.DefaultEmailServerPort+"')")
+	flag.StringVar(&emailSender, "email-sender", amp.DefaultEmailSender, "Email senser (default '"+amp.DefaultEmailSender+"')")
 	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
@@ -70,6 +82,7 @@ func parseFlags() {
 
 	// update config
 	config.Version = Version
+	config.ServerAddress = serverAddress
 	config.Port = port
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret
@@ -81,10 +94,16 @@ func parseFlags() {
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = amp.DockerDefaultVersion
+	config.WebMailServerPort = webMailServerPort
+	config.EmailServerAddress = emailServerAddress
+	config.EmailServerPort = emailServerPort
+	config.EmailSender = emailSender
 }
 
 func main() {
 	fmt.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
-	parseFlags()
+	config = amp.GetConfig()
+	amp.InitConfig(config)
+	parseFlags(config)
 	server.Start(config)
 }

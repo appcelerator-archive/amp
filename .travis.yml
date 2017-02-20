@@ -15,6 +15,8 @@ install:
   - sudo apt-get install docker-engine
   - docker swarm init --advertise-addr 127.0.0.1
   - hack/amptools make -f Makefile.refactor.make cleanall
+  - mkdir -p $HOME/.config/amp
+  - echo SendGridKey:$SENDGRIDKEY >$HOME/.config/amp/amplifier.yaml
   - hack/amptools make -f Makefile.refactor.make build
   - make fmt check install
   - make TAG=local build-image
