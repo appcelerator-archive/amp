@@ -521,8 +521,8 @@ func getAMPInfrastructureStack(m *ampManager) *ampStack {
 				Mode: swarm.ResolutionModeVIP,
 				Ports: []swarm.PortConfig{
 					{
-						TargetPort:    8082,
-						PublishedPort: 8082,
+						TargetPort:    8085,
+						PublishedPort: 8085,
 					},
 				},
 			},

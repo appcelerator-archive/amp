@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	conf "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/fatih/structs"
 	"github.com/spf13/cobra"
 )
@@ -31,12 +31,8 @@ Two arguments: set the key to the value.`,
 				fmt.Fprintf(w, "%s\t%s\n", "AmpAddress", Config.AmpAddress)
 				fmt.Fprintf(w, "%s\t%s\n", "ServerPort", Config.ServerPort)
 				fmt.Fprintf(w, "%s\t%s\n", "AdminServerPort", Config.AdminServerPort)
-				fmt.Fprintf(w, "%s\t%s\n", "WebMailServerPort", Config.WebMailServerPort)
 				fmt.Fprintf(w, "%s\t%s\n", "CmdTheme", Config.CmdTheme)
 				fmt.Fprintf(w, "%s\t%t\n", "Verbose", Config.Verbose)
-				fmt.Fprintf(w, "%s\t%s\n", "EmailServerAddress", Config.EmailServerAddress)
-				fmt.Fprintf(w, "%s\t%s\n", "EmailServerPort", Config.EmailServerPort)
-				fmt.Fprintf(w, "%s\t%s\n", "EmailSender", Config.EmailSender)
 				w.Flush()
 			case 1:
 				// Display key
@@ -65,7 +61,7 @@ Two arguments: set the key to the value.`,
 				default:
 					log.Fatal("Unsupported field type")
 				}
-				err := conf.SaveConfiguration(Config)
+				err := cli.SaveConfiguration(Config)
 				if err != nil {
 					log.Fatal("Failed to save config")
 				}
