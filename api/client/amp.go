@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	conf "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -72,7 +72,7 @@ func (l logger) Println(args ...interface{}) {
 // AMP holds the state for the current environment
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
-	Configuration *conf.Configuration
+	Configuration *cli.Configuration
 
 	// Conn is the gRPC connection to amplifier
 	Conn *grpc.ClientConn
@@ -125,7 +125,7 @@ func (a *AMP) Verbose() bool {
 
 // NewAMP creates an AMP singleton instance
 // (will only be configured with the first call)
-func NewAMP(c *conf.Configuration, l Logger) *AMP {
+func NewAMP(c *cli.Configuration, l Logger) *AMP {
 	if amp == nil {
 		amp = &AMP{Configuration: c, Log: l}
 	}

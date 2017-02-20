@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	conf "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/config"
 	//"github.com/appcelerator/amp/api/rpc/account
 	"github.com/gorilla/mux"
 )
@@ -13,7 +13,7 @@ import (
 // StartListener start webmail listener
 func StartListener() {
 	fmt.Printf("init web\n")
-	config := conf.GetRegularConfig(false)
+	config := amp.GetConfig()
 	port := config.WebMailServerPort
 	go func() {
 		router := mux.NewRouter().StrictSlash(true)

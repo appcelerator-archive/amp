@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/appcelerator/amp/cmd/adm-server/servergrpc"
-	conf "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ type clusterClient struct {
 	debug         bool
 	nodeName      string
 	nodeHost      string
-	configuration *conf.Configuration
+	configuration *cli.Configuration
 	clusterLoader *ClusterLoader
 	recvChan      chan *servergrpc.ClientMes
 	printColor    [7]*color.Color
@@ -76,8 +76,8 @@ func (g *clusterClient) init() error {
 }
 
 func (g *clusterClient) initConfiguration(configFile string, serverAddr string) {
-	g.configuration = &conf.Configuration{}
-	conf.InitConfig(configFile, g.configuration, g.debug, serverAddr)
+	g.configuration = &cli.Configuration{}
+	cli.InitConfig(configFile, g.configuration, g.debug, serverAddr)
 	g.setColors()
 }
 

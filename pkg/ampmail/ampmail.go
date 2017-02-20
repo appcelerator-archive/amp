@@ -1,19 +1,18 @@
 package ampmail
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/smtp"
 	"strings"
 
-	conf "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/config"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 var emailTemplateMap map[string]*emailTemplate
-var config *conf.Configuration
+var config *amp.Config
 
 type emailTemplate struct {
 	isHTML  bool
@@ -21,15 +20,8 @@ type emailTemplate struct {
 	body    string
 }
 
-type pCipher struct {
-	key    []byte
-	nonce  []byte
-	block  cipher.Block
-	buffer []byte
-}
-
 func init() {
-	config = conf.GetRegularConfig(false)
+	config = amp.GetConfig()
 	emailTemplateMap = make(map[string]*emailTemplate)
 	AddEmailTemplate("AccountVerification", "AMP account activation", true, accountVerificationBody)
 	AddEmailTemplate("AccountResetPassword", "AMP account password reset", true, accountResetPasswordEmailBody)
@@ -43,7 +35,7 @@ func SendAccountVerificationEmail(to string, accountName string, token string) e
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
-		"ampAddress":  config.AmpAddress,
+		"ampAddress":  config.ServerAddress,
 	}
 	if err := SendTemplateEmail(to, "AccountVerification", variables); err != nil {
 		return err
@@ -57,7 +49,7 @@ func SendAccountResetPasswordEmail(to string, accountName string, token string) 
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
-		"ampAddress":  config.AmpAddress,
+		"ampAddress":  config.ServerAddress,
 	}
 	if err := SendTemplateEmail(to, "AccountResetPassword", variables); err != nil {
 		return err
@@ -102,23 +94,13 @@ func SendTemplateEmail(to string, templateEmailName string, variableMap map[stri
 
 // SendMail send an eamail to "to" with subject and body, use configuration
 func SendMail(to string, subject string, isHTML bool, body string) error {
-	//config := conf.GetRegularConfig(false)
+	if config.EmailServerAddress == "" {
+		return sendMailUsingSendGrid(to, subject, body)
+	}
 	from := config.EmailSender
 	servername := config.EmailServerAddress
 	serverport := config.EmailServerPort
 	pass := config.EmailPwd
-	if pass == "" {
-		p, err := newPCipher(config)
-		if err != nil {
-			return err
-		}
-		datah, _ := hex.DecodeString("94aacd567dff5c9bc02860") //Encrypted password
-		data, errd := p.decrypt(datah)
-		if errd != nil {
-			return errd
-		}
-		pass = string(data)
-	}
 	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n", from, to, subject, body)
 	if isHTML {
 		msg = fmt.Sprintf("From: %s\r\nTo: %s\r\nMIME-Version: 1.0\r\nContent-type: text/html\r\nSubject: %s\r\n\r\n%s\r\n", from, to, subject, body)
@@ -139,18 +121,20 @@ func UpdateAmpMailConfig(serverAddress string, port string, sender string, pwd s
 	config.EmailPwd = pwd
 }
 
-//DisplayEncryptedPwd encrypt a pwd to write it in configuration file
-func DisplayEncryptedPwd(pwd string) {
-	//config := conf.GetRegularConfig(false)
-	p, err := newPCipher(config)
-	if err != nil {
-		log.Println(err)
+func sendMailUsingSendGrid(to string, subject string, body string) error {
+	apiKey := config.SendGridKey
+	from := mail.NewEmail("amp", config.EmailSender)
+	target := mail.NewEmail(strings.Split(to, "@")[0], to)
+	content := mail.NewContent("text/html", body)
+	m := mail.NewV3MailInit(from, subject, target, content)
+
+	request := sendgrid.GetRequest(apiKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+	request.Body = mail.GetRequestBody(m)
+	if _, err := sendgrid.API(request); err != nil {
+		return err
 	}
-	data, errd := p.encrypt([]byte(pwd))
-	if errd != nil {
-		log.Println(errd)
-	}
-	fmt.Printf("Encrypted pwd: %x\n", string(data))
+	return nil
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -184,34 +168,4 @@ func (t *emailTemplate) setVariables(variableMap map[string]string) {
 		t.subject = strings.Replace(t.subject, fmt.Sprintf("{%s}", name), value, -1)
 		t.body = strings.Replace(t.body, fmt.Sprintf("{%s}", name), value, -1)
 	}
-}
-
-//----------------------------------------------------------------------------------------------------
-// pCipher function
-func newPCipher(config *conf.Configuration) (*pCipher, error) {
-	p := &pCipher{}
-	addr := config.EmailServerAddress
-	for len(addr) < 32 {
-		addr = fmt.Sprintf("%s%s", addr, addr)
-	}
-	addr = addr[0:32]
-	block, err := aes.NewCipher([]byte(addr))
-	if err != nil {
-		return nil, err
-	}
-	p.block = block
-	p.buffer = make([]byte, aes.BlockSize)
-	return p, nil
-}
-
-func (p *pCipher) encrypt(data []byte) ([]byte, error) {
-	stream := cipher.NewCFBEncrypter(p.block, p.buffer)
-	stream.XORKeyStream(data, data)
-	return data, nil
-}
-
-func (p *pCipher) decrypt(data []byte) ([]byte, error) {
-	stream := cipher.NewCFBDecrypter(p.block, p.buffer)
-	stream.XORKeyStream(data, data)
-	return data, nil
 }
