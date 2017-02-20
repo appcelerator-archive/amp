@@ -7,7 +7,6 @@ import (
 
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	conf "github.com/appcelerator/amp/pkg/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,7 +26,7 @@ var (
 	AMP *client.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config                = &conf.Configuration{}
+	Config                = &cli.Configuration{}
 	configFile            string
 	verbose               bool
 	serverAddr            string
@@ -62,7 +61,7 @@ monitoring containerized applications and microservices as part of a unified ser
 // All main does is process commands and flags and invoke the app
 func main() {
 	cobra.OnInitialize(func() {
-		conf.InitConfig(configFile, Config, verbose, serverAddr)
+		cli.InitConfig(configFile, Config, verbose, serverAddr)
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
 			Config.AmpAddress = addr
 		}
