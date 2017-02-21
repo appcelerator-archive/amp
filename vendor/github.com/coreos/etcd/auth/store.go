@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -29,6 +30,7 @@ import (
 	"github.com/coreos/pkg/capnslog"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -57,6 +59,7 @@ var (
 	ErrPermissionNotGranted = errors.New("auth: permission is not granted to the role")
 	ErrAuthNotEnabled       = errors.New("auth: authentication is not enabled")
 	ErrAuthOldRevision      = errors.New("auth: revision in header is old")
+	ErrInvalidAuthToken     = errors.New("auth: invalid auth token")
 
 	// BcryptCost is the algorithm cost / strength for hashing auth passwords
 	BcryptCost = bcrypt.DefaultCost
@@ -153,6 +156,9 @@ type AuthStore interface {
 
 	// Close does cleanup of AuthStore
 	Close() error
+
+	// AuthInfoFromCtx gets AuthInfo from gRPC's context
+	AuthInfoFromCtx(ctx context.Context) (*AuthInfo, error)
 }
 
 type authStore struct {
@@ -167,6 +173,19 @@ type authStore struct {
 	simpleTokenKeeper *simpleTokenTTLKeeper
 
 	revision uint64
+
+	indexWaiter func(uint64) <-chan struct{}
+}
+
+func newDeleterFunc(as *authStore) func(string) {
+	return func(t string) {
+		as.simpleTokensMu.Lock()
+		defer as.simpleTokensMu.Unlock()
+		if username, ok := as.simpleTokens[t]; ok {
+			plog.Infof("deleting token %s for user %s", t, username)
+			delete(as.simpleTokens, t)
+		}
+	}
 }
 
 func (as *authStore) AuthEnable() error {
@@ -197,15 +216,7 @@ func (as *authStore) AuthEnable() error {
 
 	as.enabled = true
 
-	tokenDeleteFunc := func(t string) {
-		as.simpleTokensMu.Lock()
-		defer as.simpleTokensMu.Unlock()
-		if username, ok := as.simpleTokens[t]; ok {
-			plog.Infof("deleting token %s for user %s", t, username)
-			delete(as.simpleTokens, t)
-		}
-	}
-	as.simpleTokenKeeper = NewSimpleTokenTTLKeeper(tokenDeleteFunc)
+	as.simpleTokenKeeper = NewSimpleTokenTTLKeeper(newDeleterFunc(as))
 
 	as.rangePermCache = make(map[string]*unifiedRangePermissions)
 
@@ -871,7 +882,7 @@ func (as *authStore) isAuthEnabled() bool {
 	return as.enabled
 }
 
-func NewAuthStore(be backend.Backend) *authStore {
+func NewAuthStore(be backend.Backend, indexWaiter func(uint64) <-chan struct{}) *authStore {
 	tx := be.BatchTx()
 	tx.Lock()
 
@@ -879,10 +890,25 @@ func NewAuthStore(be backend.Backend) *authStore {
 	tx.UnsafeCreateBucket(authUsersBucketName)
 	tx.UnsafeCreateBucket(authRolesBucketName)
 
+	enabled := false
+	_, vs := tx.UnsafeRange(authBucketName, enableFlagKey, nil, 0)
+	if len(vs) == 1 {
+		if bytes.Equal(vs[0], authEnabled) {
+			enabled = true
+		}
+	}
+
 	as := &authStore{
-		be:           be,
-		simpleTokens: make(map[string]string),
-		revision:     0,
+		be:             be,
+		simpleTokens:   make(map[string]string),
+		revision:       getRevision(tx),
+		indexWaiter:    indexWaiter,
+		enabled:        enabled,
+		rangePermCache: make(map[string]*unifiedRangePermissions),
+	}
+
+	if enabled {
+		as.simpleTokenKeeper = NewSimpleTokenTTLKeeper(newDeleterFunc(as))
 	}
 
 	as.commitRevision(tx)
@@ -912,7 +938,8 @@ func (as *authStore) commitRevision(tx backend.BatchTx) {
 func getRevision(tx backend.BatchTx) uint64 {
 	_, vs := tx.UnsafeRange(authBucketName, []byte(revisionKey), nil, 0)
 	if len(vs) != 1 {
-		plog.Panicf("failed to get the key of auth store revision")
+		// this can happen in the initialization phase
+		return 0
 	}
 
 	return binary.BigEndian.Uint64(vs[0])
@@ -920,4 +947,47 @@ func getRevision(tx backend.BatchTx) uint64 {
 
 func (as *authStore) Revision() uint64 {
 	return as.revision
+}
+
+func (as *authStore) isValidSimpleToken(token string, ctx context.Context) bool {
+	splitted := strings.Split(token, ".")
+	if len(splitted) != 2 {
+		return false
+	}
+	index, err := strconv.Atoi(splitted[1])
+	if err != nil {
+		return false
+	}
+
+	select {
+	case <-as.indexWaiter(uint64(index)):
+		return true
+	case <-ctx.Done():
+	}
+
+	return false
+}
+
+func (as *authStore) AuthInfoFromCtx(ctx context.Context) (*AuthInfo, error) {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return nil, nil
+	}
+
+	ts, tok := md["token"]
+	if !tok {
+		return nil, nil
+	}
+
+	token := ts[0]
+	if !as.isValidSimpleToken(token, ctx) {
+		return nil, ErrInvalidAuthToken
+	}
+
+	authInfo, uok := as.AuthInfoFromToken(token)
+	if !uok {
+		plog.Warningf("invalid auth token: %s", token)
+		return nil, ErrInvalidAuthToken
+	}
+	return authInfo, nil
 }
