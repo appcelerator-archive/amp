@@ -5,7 +5,7 @@ docker-service-list-valid-service:   .*({{call .uniq `pinger`}}).*
 docker-service-list-invalid-service: .*[^{{call .uniq `pinger`}}].*
 platform-status-running: "status: running"
 service-id: ([a-z0-9]){25}
-service-curl: ((.)|(\s))*(pong)((.)|(\s))*
+service-curl: .*(pong).*
 service-remove: "{{call .uniq `pinger`}}"
 stack-list-running: NAME\s+ID\s+STATE\s*([a-z0-9A-Z\s]*){1,}({{call .uniq `stack`}})([a-z0-9A-Z\s]*){1,}
 stack-list-unavailable: No stack is available

@@ -1,0 +1,59 @@
+name: stats
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - stats-container:
+    cmd: amp stats
+    args:
+      -  --container
+    options:
+      -
+    expectation: stats-container
+
+  - stats-cpu:
+    cmd: amp stats
+    args:
+      - --cpu
+    options:
+      -
+    expectation: stats-cpu
+
+  - stats-io:
+    cmd: amp stats
+    args:
+      - --io
+    options:
+      -
+    expectation: stats-io
+
+  - stats-net:
+    cmd: amp stats
+    args:
+      - --net
+    options:
+      -
+    expectation: stats-net
+
+  - stats-node:
+    cmd: amp stats
+    args:
+      - --node
+    options:
+      -
+    expectation: stats-node
+
+  - stats-service:
+    cmd: amp stats
+    args:
+      - --service
+    options:
+      -
+    expectation: stats-service
+
+  - stats-task:
+    cmd: amp stats
+    args:
+      - --task
+    options:
+      -
+    expectation: stats-task
