@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+DEST=$GOPATH/src/$1
+NAME=$2
+PKG=$3
+LDFLAGS=$4
+
+TARGETS=(
+    darwin amd64
+    linux amd64
+    alpine amd64
+)
+
+for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
+  GOOS="${TARGETS[i]}"
+  GOARCH="${TARGETS[i+1]}"
+  echo $DEST/$GOOS/$GOARCH/$NAME
+  if [[ $GOOS = "alpine" ]]; then
+    # build alpine as a special case
+    GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -installsuffix alpine -ldflags "$LDFLAGS" \
+      -o $DEST/alpine/$GOARCH/$NAME $PKG
+  else
+    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o $DEST/$GOOS/$GOARCH/$NAME $PKG
+  fi
+done
