@@ -7,7 +7,7 @@ go-github is a Go client library for accessing the [GitHub API][].
 **Build Status:** [![Build Status](https://travis-ci.org/google/go-github.svg?branch=master)](https://travis-ci.org/google/go-github)  
 **Test Coverage:** [![Test Coverage](https://coveralls.io/repos/google/go-github/badge.svg?branch=master)](https://coveralls.io/r/google/go-github?branch=master) ([gocov report](https://drone.io/github.com/google/go-github/files/coverage.html))
 
-go-github requires Go version 1.4 or greater.
+go-github requires Go version 1.7 or greater.
 
 ## Usage ##
 
@@ -37,7 +37,7 @@ repos, _, err := client.Repositories.ListByOrg("github", opt)
 
 The services of a client divide the API into logical chunks and correspond to
 the structure of the GitHub API documentation at
-http://developer.github.com/v3/.
+https://developer.github.com/v3/.
 
 ### Authentication ###
 
@@ -97,7 +97,7 @@ if _, ok := err.(*github.RateLimitError); ok {
 ```
 
 Learn more about GitHub rate limiting at
-http://developer.github.com/v3/#rate-limiting.
+https://developer.github.com/v3/#rate-limiting.
 
 ### Accepted Status ###
 

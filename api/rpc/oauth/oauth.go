@@ -27,7 +27,7 @@ type Oauth struct {
 // Create creates new oauth credencials and stores them
 func (o *Oauth) Create(ctx context.Context, in *AuthRequest) (out *AuthReply, err error) {
 	// try to create an authorization
-	auth, err := o.getAuth(in.Username, in.Password, in.Otp)
+	auth, err := o.getAuth(ctx, in.Username, in.Password, in.Otp)
 	if err != nil {
 		// handle user errors
 		badCredentials := regexp.MustCompile("401 Bad credentials")
@@ -57,11 +57,11 @@ func (o *Oauth) Create(ctx context.Context, in *AuthRequest) (out *AuthReply, er
 
 	// delete the authorization and create a new one
 	if token == "" {
-		err = deleteAuth(auth, in.Username, in.Password, in.Otp)
+		err = deleteAuth(ctx, auth, in.Username, in.Password, in.Otp)
 		if err != nil {
 			return
 		}
-		auth, err = o.getAuth(in.Username, in.Password, in.Otp)
+		auth, err = o.getAuth(ctx, in.Username, in.Password, in.Otp)
 		if err != nil {
 			return
 		}
@@ -73,7 +73,7 @@ func (o *Oauth) Create(ctx context.Context, in *AuthRequest) (out *AuthReply, er
 	}
 
 	// confirm organization
-	name, err := checkOrganization(token)
+	name, err := checkOrganization(ctx, token)
 	if err != nil {
 		return
 	}
@@ -99,9 +99,9 @@ func (o *Oauth) Create(ctx context.Context, in *AuthRequest) (out *AuthReply, er
 	return
 }
 
-func deleteAuth(auth *github.Authorization, username, password, otp string) (err error) {
+func deleteAuth(ctx context.Context, auth *github.Authorization, username, password, otp string) (err error) {
 	client := getBasicClient(username, password, otp)
-	_, err = client.Authorizations.Delete(*auth.ID)
+	_, err = client.Authorizations.Delete(ctx, *auth.ID)
 	return
 }
 
@@ -127,10 +127,10 @@ func getBasicClient(username, password, otp string) (client *github.Client) {
 	return
 }
 
-func (o *Oauth) getAuth(username, password, otp string) (auth *github.Authorization, err error) {
+func (o *Oauth) getAuth(ctx context.Context, username, password, otp string) (auth *github.Authorization, err error) {
 	client := getBasicClient(username, password, otp)
 	fingerPrint := "amplifier"
-	auth, _, err = client.Authorizations.GetOrCreateForApp(o.ClientID, &github.AuthorizationRequest{
+	auth, _, err = client.Authorizations.GetOrCreateForApp(ctx, o.ClientID, &github.AuthorizationRequest{
 		Scopes: []github.Scope{
 			github.ScopeRepo,
 			github.ScopeAdminRepoHook,
@@ -151,14 +151,14 @@ func getOauthClient(token string) (client *github.Client) {
 	return
 }
 
-func checkOrganization(token string) (name string, err error) {
+func checkOrganization(ctx context.Context, token string) (name string, err error) {
 	client := getOauthClient(token)
 
-	user, _, err := client.Users.Get("")
+	user, _, err := client.Users.Get(ctx, "")
 	if err != nil {
 		return
 	}
-	member, _, err := client.Organizations.IsMember(organization, *user.Login)
+	member, _, err := client.Organizations.IsMember(ctx, organization, *user.Login)
 	if err != nil {
 		return
 	}
@@ -188,5 +188,5 @@ func CheckAuthorization(ctx context.Context, store storage.Interface) (name stri
 	if err != nil {
 		return
 	}
-	return checkOrganization(token)
+	return checkOrganization(ctx, token)
 }
