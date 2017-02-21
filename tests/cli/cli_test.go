@@ -1,19 +1,8 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
-	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/docker/distribution/context"
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"os/exec"
 	"regexp"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -157,7 +146,7 @@ func runTestSpec(t *testing.T, testSpec TestSpec) error {
 	// Create testspec duration.
 	duration, err := time.ParseDuration(testSpec.TestTimeout)
 	if err != nil {
-		return fmt.Errorf("Unable to create duration for timeout:", testSpec.Name, "Error:", err)
+		return fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", testSpec.Name, err)
 	}
 	// Create testspec timeout.
 	cancel := createTimeout(t, duration, testSpec.Name)
@@ -167,7 +156,7 @@ func runTestSpec(t *testing.T, testSpec TestSpec) error {
 	for _, cmdSpec := range testSpec.Commands {
 		err = runCmdSpec(t, cmdSpec, testSpec.Cache)
 		if err != nil {
-			return fmt.Errorf("Test failed:", testSpec.Name, "Error:", err)
+			return fmt.Errorf("Test failed: %s. Error: %v",  testSpec.Name, err)
 		}
 	}
 	return nil
@@ -187,7 +176,7 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 	// Create commandspec duration.
 	duration, err := time.ParseDuration(cmdSpec.Timeout)
 	if err != nil {
-		return fmt.Errorf("Unable to create duration for timeout:", cmd, "Error:", err)
+		return fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", cmd, err)
 	}
 	// Create commandspec timeout.
 	cancel := createTimeout(t, duration, cmd)
@@ -196,18 +185,18 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 	// Template command string.
 	cmd, err = templating(cmd, cache)
 	if err != nil {
-		return fmt.Errorf("Executing templating failed:", cmd, "Error:", err)
+		return fmt.Errorf("Executing templating failed: %s. Error: %v",  cmd, err)
 	}
 
 	// Check if expectation has corresponding regex
 	if cmdSpec.Expectation != "" && regexMap[cmdSpec.Expectation] == "" {
-		return fmt.Errorf("Unable to fetch regex for command:", cmd, "reason: no regex for given expectation:", cmdSpec.Expectation)
+		return fmt.Errorf("Unable to fetch regex for command: %s. reason: no regex for given expectation: %s", cmd, cmdSpec.Expectation)
 	}
 
 	// Template regex.
 	regex, err := templating(regexMap[cmdSpec.Expectation], cache)
 	if err != nil {
-		return fmt.Errorf("Executing templating failed:", cmdSpec.Expectation, "Error:", err)
+		return fmt.Errorf("Executing templating failed: %s. Error: %v", cmdSpec.Expectation, err)
 	}
 
 	// Retry loop.
@@ -226,13 +215,13 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 		if cmdSpec.Delay != "" {
 			del, err := time.ParseDuration(cmdSpec.Delay)
 			if err != nil {
-				return fmt.Errorf("Invalid delay specified: ", cmdSpec.Delay, "Error:", err)
+				return fmt.Errorf("Invalid delay specified: %s. Error: %v", cmdSpec.Delay, err)
 			}
 			time.Sleep(del)
 		}
 	}
 	// Command fails as there is a mismatched output.
-	return fmt.Errorf("Error: mismatched return: command, " + cmd + ". regex, " + regex + ". ouput, " + output)
+	return fmt.Errorf("Error: mismatched return: command, %s. regex,  %s. ouput, %s", cmd, regex, output)
 }
 
 // runCmd executes the command, passing any inputs to it.
