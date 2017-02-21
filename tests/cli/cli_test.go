@@ -56,158 +56,121 @@ type CommandSpec struct {
 }
 
 var (
-	lookupDir   = "./lookup"
-	setupDir    = "./setup"
-	sampleDir   = "./samples"
-	tearDownDir = "./tearDown"
-	wg          sync.WaitGroup
-	regexMap    map[string]string
+	// Array of suite directories to run.
+	suiteDir = []string{"./suite"}
+
+	// Array of suites read
+	suites = []*SuiteSpec{}
+
+	// Map of all lookup regexes.
+	regexMap map[string]string
 )
 
-// read, parse and execute test commands
-func TestCliCmds(t *testing.T) {
-	ctx := context.Background()
-
-	// Connect to amplifier
-	conn, err := grpc.Dial("localhost:8080",
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-	)
-	assert.NoError(t, err)
-
-	accountClient := account.NewAccountClient(conn)
-
-	signUpRequest := account.SignUpRequest{
-		Name:     "cli",
-		Password: "cliPassword",
-		Email:    "cli@amp.io",
-	}
-
-	// SignUp
-	accountClient.SignUp(ctx, &signUpRequest)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-
-	// Login, somehow
-	md := metadata.Pairs(auth.TokenKey, token)
-	cli.SaveToken(md)
-
-	// test suite timeout
-	suiteTimeout := "10m"
-	duration, err := time.ParseDuration(suiteTimeout)
+// TestCli is the primary test func, tests all cli commands.
+func TestCli(t *testing.T) {
+	var err error
+	// Parse all suites specified in the array of suite directories.
+	suites, err = createSuite(suiteDir)
 	if err != nil {
-		t.Errorf("Unable to create duration for timeout: Suite. Error:", err)
-		return
+		t.Errorf("Unable to parse suites, reason: %v", err)
 	}
-	// create test suite context
-	cancel := createTimeout(t, duration, "Suite")
+
+	// Create all suites timeouts.
+	cancels := []func(){}
+	for _, suite := range suites {
+		// Create suite duration.
+		duration, err := time.ParseDuration(suite.Timeout)
+		if err != nil {
+			t.Fatal("Unable to create duration for timeout:", suite.Name, "Error:", err)
+		}
+		// Create suite timeout.
+		cancel := createTimeout(t, duration, suite.Name)
+		cancels = append(cancels, cancel)
+	}
+
+	// Run setup tests.
+	t.Run("Setup", testSetup)
+
+	// Run main tests in parallel.
+	t.Run("Cmds", testCmds)
+
+	// Run teardown tests.
+	t.Run("TearDown", testTearDown)
+
+	// End of suite timeouts.
+	for _, cancel := range cancels {
+		cancel()
+	}
+}
+
+// testSetup is the test func for the setup commands.
+func testSetup(t *testing.T) {
+	// Run setup files from each suite.
+	for _, suite := range suites {
+		for _, setup := range suite.Setup {
+			setup := setup
+			t.Run(setup.Name, func(t *testing.T) {
+				err := runTestSpec(t, setup)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// testCmds is the test func for the main commands.
+func testCmds(t *testing.T) {
+	// Run test files from each suite in parallel.
+	for _, suite := range suites {
+		for _, test := range suite.Tests {
+			test := test
+			t.Run(test.Name, func(t *testing.T) {
+				t.Parallel()
+				err := runTestSpec(t, test)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// testTearDown is the test func for the teardown commands.
+func testTearDown(t *testing.T) {
+	// Run teardown files from each suite.
+	for _, suite := range suites {
+		for _, teardown := range suite.TearDown {
+			teardown := teardown
+			t.Run(teardown.Name, func(t *testing.T) {
+				err := runTestSpec(t, teardown)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// runTestspec creates the testspec timeout and executes each of its commands.
+func runTestSpec(t *testing.T, testSpec TestSpec) error {
+	// Create testspec duration.
+	duration, err := time.ParseDuration(testSpec.TestTimeout)
+	if err != nil {
+		return fmt.Errorf("Unable to create duration for timeout:", testSpec.Name, "Error:", err)
+	}
+	// Create testspec timeout.
+	cancel := createTimeout(t, duration, testSpec.Name)
 	defer cancel()
 
-	// parse regexes
-	regexMap, err = parseLookup(lookupDir)
-	if err != nil {
-		t.Errorf("Unable to load lookup specs, reason:", err)
-		return
+	// Run all commands in testspec.
+	for _, cmdSpec := range testSpec.Commands {
+		err = runCmdSpec(t, cmdSpec, testSpec.Cache)
+		if err != nil {
+			return fmt.Errorf("Test failed:", testSpec.Name, "Error:", err)
+		}
 	}
-
-	// create setup timeout and parse setup specs
-	setupTimeout := "8m"
-	setup, err := createTestSpecs(setupDir, setupTimeout)
-	if err != nil {
-		t.Errorf("Unable to create setup specs, reason:", err)
-		return
-	}
-
-	// create samples timeout and parse sample specs
-	sampleTimeout := "30s"
-	samples, err := createTestSpecs(sampleDir, sampleTimeout)
-	if err != nil {
-		t.Errorf("Unable to create sample specs, reason:", err)
-		return
-	}
-
-	// create teardown timeout and parse tearDown specs
-	tearDownTimeout := "1.5m"
-	tearDown, err := createTestSpecs(tearDownDir, tearDownTimeout)
-	if err != nil {
-		t.Errorf("Unable to create tearDown specs, reason:", err)
-		return
-	}
-
-	noOfSpecs := len(samples)
-
-	runFramework(t, setup)
-	wg.Add(noOfSpecs)
-	runTests(t, samples)
-	wg.Wait()
-	runFramework(t, tearDown)
-}
-
-func createTestSpecs(directory string, timeout string) ([]*TestSpec, error) {
-	// test spec timeout
-	duration, err := time.ParseDuration(timeout)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", directory, err)
-	}
-	// parse tests
-	testSpecs, err := parseSpec(directory, duration)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to load test specs: %s. reason: %v", directory, err)
-	}
-	return testSpecs, nil
-}
-
-// runs a framework (setup/tearDown)
-func runFramework(t *testing.T, commands []*TestSpec) {
-	for _, command := range commands {
-		runFrameworkSpec(t, command)
-	}
-}
-
-// runs test commands
-func runTests(t *testing.T, samples []*TestSpec) {
-	for _, sample := range samples {
-		go runSampleSpec(t, sample)
-	}
-}
-
-// execute framework commands and check for timeout, delay and retry
-func runFrameworkSpec(t *testing.T, test *TestSpec) {
-
-	var cache = map[string]string{}
-
-	// create test spec context
-	cancel := createTimeout(t, test.Timeout, test.Name)
-	defer cancel()
-
-	// iterate through all the testSpec
-	for _, command := range test.Commands {
-		runCmdSpec(t, command, cache)
-	}
-}
-
-// execute sample commands and decrement waitgroup counter
-func runSampleSpec(t *testing.T, test *TestSpec) {
-
-	var cache = map[string]string{}
-
-	// decrements wg counter
-	defer wg.Done()
-
-	// create test spec context
-	cancel := createTimeout(t, test.Timeout, test.Name)
-	defer cancel()
-
-	// iterate through all the testSpec
-	for _, command := range test.Commands {
-		runCmdSpec(t, command, cache)
-	}
+	return nil
 }
 
 // runCmdSpec creates the CommandSpec timeout and executes the command.
