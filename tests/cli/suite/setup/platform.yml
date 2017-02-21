@@ -1,0 +1,9 @@
+name: setup
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - platform-status:
+    cmd: amp platform status
+    args:
+    options:
+    expectation: platform-status-running

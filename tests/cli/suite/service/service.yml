@@ -1,0 +1,43 @@
+name: service
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - service-create:
+    cmd: amp service create
+    args:
+      - appcelerator/pinger
+    options:
+      - "--name {{call .uniq `pinger`}}"
+      - "-p www:{{call .port `port` 49152 65535}}:3000"
+    expectation: service-id
+
+  - service-list:
+    cmd: docker service ls
+    args:
+    options:
+    expectation: docker-service-list-valid-service
+    retry: 20
+    delay: 1s
+
+  - service-curl:
+    cmd: curl
+    args:
+      - localhost:{{call .port `port` 49152 65535}}/ping
+    options:
+    expectation: service-curl
+    retry: 20
+    delay: 1s
+
+  - service-remove:
+    cmd: amp service rm
+    args:
+      - "{{call .uniq `pinger`}}"
+    options:
+      -
+    expectation: service-remove
+
+  - service-list:
+    cmd: docker service ls
+    args:
+    options:
+    expectation: docker-service-list-invalid-service

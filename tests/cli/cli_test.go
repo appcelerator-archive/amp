@@ -20,18 +20,34 @@ import (
 	gexpect "github.com/Thomasrooney/gexpect"
 )
 
-// TestSpec contains all the CommandSpec objects
-type TestSpec struct {
-	Name     string
-	Timeout  time.Duration
-	Commands []CommandSpec
+// SuiteSpec defines the suite fields and the suite data structures.
+type SuiteSpec struct {
+	Name        string   `yaml:"name"`
+	Timeout     string   `yaml:"timeout"`
+	LookupDir   string   `yaml:"lookupdir"`
+	SetupDir    string   `yaml:"setupdir"`
+	TestDirs    []string `yaml:"testdirs"`
+	TearDownDir string   `yaml:"teardowndir"`
+	Setup       []TestSpec
+	Tests       []TestSpec
+	TearDown    []TestSpec
 }
 
-// CommandSpec defines the commands with arguments and options
+// TestSpec defines the test fields and test data structures.
+type TestSpec struct {
+	Name        string        `yaml:"name"`
+	TestTimeout string        `yaml:"test-timeout"`
+	CmdTimeout  string        `yaml:"cmd-timeout"`
+	Commands    []CommandSpec `yaml:"commands"`
+	Cache       map[string]string
+}
+
+// CommandSpec defines the command fields and data types.
 type CommandSpec struct {
 	Cmd         string   `yaml:"cmd"`
 	Args        []string `yaml:"args"`
 	Options     []string `yaml:"options"`
+	Input       []string `yaml:"input"`
 	Expectation string   `yaml:"expectation"`
 	Skip        bool     `yaml:"skip"`
 	Retry       int      `yaml:"retry"`

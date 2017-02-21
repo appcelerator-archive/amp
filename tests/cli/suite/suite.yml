@@ -1,0 +1,11 @@
+name: suite
+timeout: 1m
+lookupdir: /lookup
+setupdir: /setup
+testdirs:
+  - /kv
+  - /logs
+  - /service
+  - /stack
+  - /stats
+teardowndir: /tearDown
