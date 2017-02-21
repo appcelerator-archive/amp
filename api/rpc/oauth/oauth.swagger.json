@@ -20,12 +20,10 @@
       "type": "object",
       "properties": {
         "sessionKey": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -33,16 +31,13 @@
       "type": "object",
       "properties": {
         "username": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "otp": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     }

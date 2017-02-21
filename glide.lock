@@ -236,7 +236,11 @@ imports:
 - name: github.com/oleiade/reflections
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/runc
+<<<<<<< HEAD
   version: bd2f9c52cd3b766d993924ae6eba72b82998f3bd
+=======
+  version: 6b1d0e76f239ffb435445e5ae316d2676c07c6e3
+>>>>>>> 2964bbef... fixes oauth service and vendor build (#767)
   subpackages:
   - libcontainer/configs
   - libcontainer/devices
@@ -345,6 +349,8 @@ imports:
   - websocket
 - name: golang.org/x/oauth2
   version: b9780ec78894ab900c062d58ee3076cd9b2a4501
+  subpackages:
+  - internal
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   repo: https://go.googlesource.com/sys
