@@ -10,6 +10,11 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"io/ioutil"
+	"os"
+	"os/user"
+	"path/filepath"
 )
 
 // Cobra definitions for account management related commands
@@ -89,11 +94,12 @@ func signUp(amp *client.AMP) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.SignUp(context.Background(), request)
+	reply, err := accClient.SignUp(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
+	fmt.Println("token", reply.Token)
 	return nil
 }
 
@@ -125,9 +131,26 @@ func login(amp *client.AMP) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.Login(context.Background(), request)
+	header := metadata.MD{}
+	_, err = accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+	}
+	token := header["token"][0]
+	if token == "" {
+		return fmt.Errorf("invalid token")
+	}
+
+	// Write the authentication token to file
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("cannot get current user")
+	}
+	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ".amp"), os.ModePerm); err != nil {
+		return fmt.Errorf("cannot create folder")
+	}
+	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ".amp", "token"), []byte(token), 0600); err != nil {
+		return fmt.Errorf("cannot write token")
 	}
 	fmt.Println("Welcome back, ", username, "!")
 	return nil
@@ -147,6 +170,7 @@ func forgotLogin(amp *client.AMP) (err error) {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Your login name has been sent to the address: ", email)
+
 	return nil
 }
 
@@ -154,13 +178,13 @@ func forgotLogin(amp *client.AMP) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwd(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	if reset {
-		pwdReset(amp, cmd, args)
-	} else if change {
-		pwdChange(amp, cmd, args)
-	} else {
-		fmt.Println("Choose a command for password operation")
-		fmt.Println("Use amp account password -h for help")
+		return pwdReset(amp, cmd, args)
 	}
+	if change {
+		return pwdChange(amp, cmd, args)
+	}
+	fmt.Println("Choose a command for password operation")
+	fmt.Println("Use amp account password -h for help")
 	return nil
 }
 
@@ -184,21 +208,38 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+	// Read the authentication token from file
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("cannot get current user")
+	}
+	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ".amp", "token"))
+	if err != nil {
+		return fmt.Errorf("cannot read token")
+	}
+	token := string(data)
+
+	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
 	fmt.Println("Enter your current password.")
 	existingPwd := getPassword()
 	fmt.Println("Enter new password.")
 	newPwd := getPassword()
+
+	// Call the backend
+	// Set the authN token on the request header
+	md := metadata.Pairs("amp.token", token)
+	ctx := metadata.NewContext(context.Background(), md)
 	request := &account.PasswordChangeRequest{
 		Name:             username,
 		ExistingPassword: existingPwd,
 		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.PasswordChange(context.Background(), request)
+	_, err = accClient.PasswordChange(ctx, request)
 	if err != nil {
-		return fmt.Errorf("server error : %v", grpc.ErrorDesc(err))
+		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi ", username, "! Your recent password change has been successful.")
 	return nil

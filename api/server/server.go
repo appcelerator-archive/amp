@@ -61,7 +61,10 @@ func Start(config *amp.Config) {
 	initDependencies(config)
 
 	// register services
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.StreamInterceptor(streamInterceptor),
+		grpc.UnaryInterceptor(unaryInterceptor),
+	)
 
 	// project.RegisterProjectServer(s, &project.Service{})
 	logs.RegisterLogsServer(s, &logs.Server{
