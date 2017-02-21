@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"os"
 	"time"
@@ -164,6 +165,12 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	// Sign the token
 	ss, err := token.SignedString(secretKey)
 	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
+	// Send the authN token to the client
+	md := metadata.Pairs("token", ss)
+	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully login for user", user.Name)
