@@ -12,6 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"strings"
 )
 
 // Cobra definitions for account management related commands
@@ -95,7 +96,7 @@ func signUp(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
+	fmt.Printf("Hi %s!, Please check your email to complete the signup process.\n", username)
 	return nil
 }
 
@@ -135,7 +136,7 @@ func login(amp *client.AMP) (err error) {
 	if err := SaveToken(header); err != nil {
 		return err
 	}
-	fmt.Println("Welcome back, ", username, "!")
+	fmt.Printf("Welcome back, %s!\n", username)
 	return nil
 }
 
@@ -152,8 +153,7 @@ func forgotLogin(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Your login name has been sent to the address: ", email)
-
+	fmt.Println("Your login name has been sent to the address:", email)
 	return nil
 }
 
@@ -184,7 +184,7 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "! Please check your email to complete the password reset process.")
+	fmt.Printf("Hi %s! Please check your email to complete the password reset process.\n", username)
 	return nil
 }
 
@@ -217,13 +217,14 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi ", username, "! Your recent password change has been successful.")
+	fmt.Printf("Hi %s! Your recent password change has been successful.\n", username)
 	return nil
 }
 
 func getUserName() (username string) {
 	fmt.Print("username: ")
 	fmt.Scanln(&username)
+	username = strings.TrimSpace(username)
 	err := schema.CheckName(username)
 	if err != nil {
 		fmt.Println("Username is mandatory. Try again!")
@@ -236,6 +237,7 @@ func getUserName() (username string) {
 func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
+	email = strings.TrimSpace(email)
 	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
 		fmt.Println("Email in incorrect format. Try again!")
@@ -248,6 +250,7 @@ func getEmailAddress() (email string) {
 func getToken() (token string) {
 	fmt.Print("token: ")
 	fmt.Scanln(&token)
+	token = strings.TrimSpace(token)
 	err := account.CheckVerificationCode(token)
 	if err != nil {
 		fmt.Println("Code is invalid. Try again!")
@@ -266,6 +269,7 @@ func getPassword() (password string) {
 		return getPassword()
 	}
 	password = string(pw)
+	password = strings.TrimSpace(password)
 	err = account.CheckPassword(password)
 	if err != nil {
 		fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
