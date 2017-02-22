@@ -6,15 +6,12 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"io/ioutil"
-	"os"
-	"os/user"
-	"path/filepath"
 )
 
 // Cobra definitions for account management related commands
@@ -136,21 +133,8 @@ func login(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	token := header["token"][0]
-	if token == "" {
-		return fmt.Errorf("invalid token")
-	}
-
-	// Write the authentication token to file
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("cannot get current user")
-	}
-	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ".amp"), os.ModePerm); err != nil {
-		return fmt.Errorf("cannot create folder")
-	}
-	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ".amp", "token"), []byte(token), 0600); err != nil {
-		return fmt.Errorf("cannot write token")
+	if err := SaveToken(header); err != nil {
+		return err
 	}
 	fmt.Println("Welcome back, ", username, "!")
 	return nil
@@ -208,17 +192,10 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
-	// Read the authentication token from file
-	usr, err := user.Current()
+	token, err := ReadToken()
 	if err != nil {
-		return fmt.Errorf("cannot get current user")
+		return err
 	}
-	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ".amp", "token"))
-	if err != nil {
-		return fmt.Errorf("cannot read token")
-	}
-	token := string(data)
-
 	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
@@ -229,7 +206,7 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 
 	// Call the backend
 	// Set the authN token on the request header
-	md := metadata.Pairs("amp.token", token)
+	md := metadata.Pairs(auth.TokenKey, token)
 	ctx := metadata.NewContext(context.Background(), md)
 	request := &account.PasswordChangeRequest{
 		Name:             username,
