@@ -26,6 +26,14 @@ import (
 
 func init() { BcryptCost = bcrypt.MinCost }
 
+func dummyIndexWaiter(index uint64) <-chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		ch <- struct{}{}
+	}()
+	return ch
+}
+
 func TestUserAdd(t *testing.T) {
 	b, tPath := backend.NewDefaultTmpBackend()
 	defer func() {
@@ -33,7 +41,7 @@ func TestUserAdd(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	ua := &pb.AuthUserAddRequest{Name: "foo"}
 	_, err := as.UserAdd(ua) // add a non-existing user
 	if err != nil {
@@ -80,7 +88,7 @@ func TestCheckPassword(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	defer as.Close()
 	err := enableAuthAndCreateRoot(as)
 	if err != nil {
@@ -125,7 +133,7 @@ func TestUserDelete(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	defer as.Close()
 	err := enableAuthAndCreateRoot(as)
 	if err != nil {
@@ -162,7 +170,7 @@ func TestUserChangePassword(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	defer as.Close()
 	err := enableAuthAndCreateRoot(as)
 	if err != nil {
@@ -208,7 +216,7 @@ func TestRoleAdd(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	defer as.Close()
 	err := enableAuthAndCreateRoot(as)
 	if err != nil {
@@ -229,7 +237,7 @@ func TestUserGrant(t *testing.T) {
 		os.Remove(tPath)
 	}()
 
-	as := NewAuthStore(b)
+	as := NewAuthStore(b, dummyIndexWaiter)
 	defer as.Close()
 	err := enableAuthAndCreateRoot(as)
 	if err != nil {
@@ -261,4 +269,93 @@ func TestUserGrant(t *testing.T) {
 	if err != ErrUserNotFound {
 		t.Fatalf("expected %v, got %v", ErrUserNotFound, err)
 	}
+
+	// non-admin user
+	err = as.IsAdminPermitted(&AuthInfo{Username: "foo", Revision: 1})
+	if err != ErrPermissionDenied {
+		t.Errorf("expected %v, got %v", ErrPermissionDenied, err)
+	}
+
+	// disabled auth should return nil
+	as.AuthDisable()
+	err = as.IsAdminPermitted(&AuthInfo{Username: "root", Revision: 1})
+	if err != nil {
+		t.Errorf("expected nil, got %v", err)
+	}
+}
+
+func TestRecoverFromSnapshot(t *testing.T) {
+	as, _ := setupAuthStore(t)
+
+	ua := &pb.AuthUserAddRequest{Name: "foo"}
+	_, err := as.UserAdd(ua) // add an existing user
+	if err == nil {
+		t.Fatalf("expected %v, got %v", ErrUserAlreadyExist, err)
+	}
+	if err != ErrUserAlreadyExist {
+		t.Fatalf("expected %v, got %v", ErrUserAlreadyExist, err)
+	}
+
+	ua = &pb.AuthUserAddRequest{Name: ""}
+	_, err = as.UserAdd(ua) // add a user with empty name
+	if err != ErrUserEmpty {
+		t.Fatal(err)
+	}
+
+	as.Close()
+
+	as2 := NewAuthStore(as.be, dummyIndexWaiter)
+	defer func(a *authStore) {
+		a.Close()
+	}(as2)
+
+	if !as2.isAuthEnabled() {
+		t.Fatal("recovering authStore from existing backend failed")
+	}
+
+	ul, err := as.UserList(&pb.AuthUserListRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !contains(ul.Users, "root") {
+		t.Errorf("expected %v in %v", "root", ul.Users)
+	}
+}
+
+func contains(array []string, str string) bool {
+	for _, s := range array {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
+func setupAuthStore(t *testing.T) (store *authStore, teardownfunc func(t *testing.T)) {
+	b, tPath := backend.NewDefaultTmpBackend()
+
+	as := NewAuthStore(b, dummyIndexWaiter)
+	err := enableAuthAndCreateRoot(as)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// adds a new role
+	_, err = as.RoleAdd(&pb.AuthRoleAddRequest{Name: "role-test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ua := &pb.AuthUserAddRequest{Name: "foo", Password: "bar"}
+	_, err = as.UserAdd(ua) // add a non-existing user
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tearDown := func(t *testing.T) {
+		b.Close()
+		os.Remove(tPath)
+		as.Close()
+	}
+	return as, tearDown
 }

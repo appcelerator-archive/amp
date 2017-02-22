@@ -71,8 +71,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -105,8 +104,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -114,16 +112,13 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "image": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
