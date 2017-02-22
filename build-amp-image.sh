@@ -80,6 +80,8 @@ if [ $? -ne 0 ]; then
 fi
 if [ -f ~/.config/amp/amplifier.yaml ]; then
   cp ~/.config/amp/amplifier.yaml .
+else 
+  touch ./amplifier.yaml
 fi
 echo "OK"
 
