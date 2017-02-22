@@ -12,7 +12,7 @@ However amp needs an SendGrid api key to be able to use it.
 
 To set the SendGrid apikey, create or update the file: `~/.config/amp/amplifier.yaml` and add this line inside:
 
-SendGridKey: xxxxx
+EmailKey: xxxxx
 
 where xxxxx is the SendGrid api key.
 
