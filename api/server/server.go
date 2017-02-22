@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/appcelerator/amp/api/rpc/build"
 	"fmt"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/oauth"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -22,7 +21,6 @@ import (
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/webmail"
 	"github.com/docker/docker/client"
@@ -63,8 +61,8 @@ func Start(config *amp.Config) {
 
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(auth.AuthStreamInterceptor),
-		grpc.UnaryInterceptor(auth.AuthInterceptor),
+		grpc.StreamInterceptor(auth.StreamInterceptor),
+		grpc.UnaryInterceptor(auth.Interceptor),
 	)
 
 	// project.RegisterProjectServer(s, &project.Service{})
@@ -75,11 +73,6 @@ func Start(config *amp.Config) {
 	})
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: runtime.Influx,
-	})
-	oauth.RegisterGithubServer(s, &oauth.Oauth{
-		Store:        runtime.Store,
-		ClientID:     config.ClientID,
-		ClientSecret: config.ClientSecret,
 	})
 	// build.RegisterAmpBuildServer(s, &build.Proxy{})
 	service.RegisterServiceServer(s, &service.Service{

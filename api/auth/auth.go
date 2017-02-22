@@ -17,6 +17,23 @@ type UserClaims struct {
 	jwt.StandardClaims
 }
 
+// LoginCreds represents login credentials
+type LoginCredentials struct {
+	Token string
+}
+
+// GetRequestMetadata implements credentials.PerRPCCredentials
+func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		TokenKey: c.Token,
+	}, nil
+}
+
+// RequireTransportSecurity implements credentials.PerRPCCredentials
+func (c *LoginCredentials) RequireTransportSecurity() bool {
+	return false
+}
+
 const (
 	TokenKey = "amp.token"
 )
@@ -28,55 +45,19 @@ var (
 
 	// TODO: there is probably a better way of achieving this
 	anonymousAllowed = []string{
-		// TODO: Temporarily allow access to everything
 		"/account.Account/SignUp",
 		"/account.Account/Verify",
 		"/account.Account/Login",
-		"/account.Account/PasswordChange",
 		"/account.Account/PasswordReset",
 		"/account.Account/PasswordSet",
 		"/account.Account/ForgotLogin",
-
-		"/function.Function/Create",
-		"/function.Function/List",
-		"/function.Function/Delete",
-
-		"/logs.Logs/Get",
-		"/logs.Logs/GetStream",
-
-		"/oauth.Github/Create",
-
-		"/service.Service/Create",
-		"/service.Service/Remove",
-
-		"/stack.StackService/Up",
-		"/stack.StackService/Create",
-		"/stack.StackService/Start",
-		"/stack.StackService/Stop",
-		"/stack.StackService/Remove",
-		"/stack.StackService/Get",
-		"/stack.StackService/List",
-		"/stack.StackService/Tasks",
-
-		"/stats.Stats/StatsQuery",
-
-		"/storage.Storage/Put",
-		"/storage.Storage/Get",
-		"/storage.Storage/Delete",
-		"/storage.Storage/List",
-
-		"/storage.Storage/List",
-
-		"/topic.Topic/Create",
-		"/topic.Topic/List",
-		"/topic.Topic/Delete",
 
 		"/version.Version/List",
 	}
 )
 
-// AuthStreamInterceptor is an interceptor checking for authentication tokens
-func AuthStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+// StreamInterceptor is an interceptor checking for authentication tokens
+func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	anonymous := false
 	for _, method := range anonymousAllowed {
 		if method == info.FullMethod {
@@ -92,8 +73,8 @@ func AuthStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc
 	return handler(srv, stream)
 }
 
-// AuthInterceptor is an interceptor checking for authentication tokens
-func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+// Interceptor is an interceptor checking for authentication tokens
+func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	anonymous := false
 	for _, method := range anonymousAllowed {
 		if method == info.FullMethod {

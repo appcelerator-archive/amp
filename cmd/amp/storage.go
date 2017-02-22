@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/storage"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -73,7 +73,7 @@ func init() {
 
 // storagePut validates the input command line arguments and creates or updates storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storagePut(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify storage key and storage value")
@@ -100,7 +100,7 @@ func storagePut(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 // storageGet validates the input command line arguments and retrieves storage key-value pair
 //by invoking the corresponding rpc/storage method
-func storageGet(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -125,7 +125,7 @@ func storageGet(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 // storageDelete validates the input command line arguments and deletes storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storageDelete(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -150,7 +150,7 @@ func storageDelete(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 // storageList validates the input command line arguments and lists all the storage
 // key-value pairs by invoking the corresponding rpc/storage method
-func storageList(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func storageList(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return errors.New("too many arguments - check again")
 	}

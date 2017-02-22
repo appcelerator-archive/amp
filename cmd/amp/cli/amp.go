@@ -1,13 +1,11 @@
-package client
+package cli
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/appcelerator/amp/cmd/amp/cli"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -16,62 +14,16 @@ var (
 	amp *AMP
 )
 
-func init() {
-	grpclog.SetLogger(logger{})
-}
-
-// Logger is a simple log interface that also implements grpclog.Logger
-type Logger interface {
-	grpclog.Logger
-	Panic(v ...interface{})
-	Panicf(format string, v ...interface{})
-	Panicln(v ...interface{})
-}
-
-// logger implements grpclog.Logger
-type logger struct{}
-
-func (l logger) Fatal(args ...interface{}) {
-	if amp != nil {
-		amp.Log.Fatal(args...)
-	}
-}
-func (l logger) Fatalf(format string, args ...interface{}) {
-	if amp != nil {
-		amp.Log.Fatalf(format, args...)
-	}
-}
-func (l logger) Fatalln(args ...interface{}) {
-	if amp != nil {
-		amp.Log.Fatalln(args...)
-	}
-}
-func (l logger) Print(args ...interface{}) {
-	if amp != nil {
-		amp.Log.Print(args...)
-	}
-}
-func (l logger) Printf(format string, args ...interface{}) {
-	if amp != nil {
-		amp.Log.Printf(format, args...)
-	}
-}
-func (l logger) Println(args ...interface{}) {
-	if amp != nil {
-		amp.Log.Println(args...)
-	}
-}
-
 // AMP holds the state for the current environment
 type AMP struct {
 	// Config contains all the configuration settings that were loaded
-	Configuration *cli.Configuration
+	Configuration *Configuration
 
 	// Conn is the gRPC connection to amplifier
 	Conn *grpc.ClientConn
 
 	// Log also implements the grpclog.Logger interface
-	Log Logger
+	Log *Logger
 }
 
 // Connect to amplifier
@@ -80,7 +32,9 @@ func (a *AMP) Connect() error {
 	conn, err := grpc.Dial(ampAddr,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
-		grpc.WithTimeout(time.Second))
+		grpc.WithTimeout(time.Second),
+		grpc.WithPerRPCCredentials(GetLoginCredentials()),
+	)
 	if err != nil {
 		return fmt.Errorf("Error connecting to amplifier @ %s: %v", ampAddr, err)
 	}
@@ -118,7 +72,7 @@ func (a *AMP) Verbose() bool {
 
 // NewAMP creates an AMP singleton instance
 // (will only be configured with the first call)
-func NewAMP(c *cli.Configuration, l Logger) *AMP {
+func NewAMP(c *Configuration, l *Logger) *AMP {
 	if amp == nil {
 		amp = &AMP{Configuration: c, Log: l}
 	}

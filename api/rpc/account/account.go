@@ -1,11 +1,11 @@
 package account
 
 import (
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/ampmail"
-	"github.com/appcelerator/amp/pkg/auth"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/hlandau/passlib"
 	"golang.org/x/net/context"

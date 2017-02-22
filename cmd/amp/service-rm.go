@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -30,7 +30,7 @@ func init() {
 	ServiceCmd.AddCommand(serviceRmCmd)
 }
 
-func serviceRm(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func serviceRm(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service rm\" requires at least 1 argument(s)")

@@ -1,8 +1,8 @@
-package main
+package cli
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/pkg/auth"
+	"github.com/appcelerator/amp/api/auth"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 	"os"
@@ -51,4 +51,12 @@ func ReadToken() (string, error) {
 		return "", fmt.Errorf("cannot read token")
 	}
 	return string(data), nil
+}
+
+func GetLoginCredentials() *auth.LoginCredentials {
+	token, err := ReadToken()
+	if err != nil {
+		return &auth.LoginCredentials{Token: ""}
+	}
+	return &auth.LoginCredentials{Token: token}
 }

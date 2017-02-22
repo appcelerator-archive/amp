@@ -3,10 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/appcelerator/amp/data/account/schema"
-	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -81,7 +80,7 @@ func init() {
 
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
-func signUp(amp *client.AMP) (err error) {
+func signUp(amp *cli.AMP) (err error) {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	username := getUserName()
 	email := getEmailAddress()
@@ -102,7 +101,7 @@ func signUp(amp *client.AMP) (err error) {
 
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
-func verify(amp *client.AMP) (err error) {
+func verify(amp *cli.AMP) (err error) {
 	fmt.Println("This will sign you up for a new personal AMP account.")
 	token := getToken()
 	request := &account.VerificationRequest{
@@ -119,7 +118,7 @@ func verify(amp *client.AMP) (err error) {
 
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
-func login(amp *client.AMP) (err error) {
+func login(amp *cli.AMP) (err error) {
 	fmt.Println("This will login to an existing AMP account.")
 	username := getUserName()
 	password := getPassword()
@@ -133,7 +132,7 @@ func login(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	if err := SaveToken(header); err != nil {
+	if err := cli.SaveToken(header); err != nil {
 		return err
 	}
 	fmt.Printf("Welcome back, %s!\n", username)
@@ -142,7 +141,7 @@ func login(amp *client.AMP) (err error) {
 
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
-func forgotLogin(amp *client.AMP) (err error) {
+func forgotLogin(amp *cli.AMP) (err error) {
 	fmt.Println("This will send your username to your registered email address")
 	email := getEmailAddress()
 	request := &account.ForgotLoginRequest{
@@ -159,7 +158,7 @@ func forgotLogin(amp *client.AMP) (err error) {
 
 // pwd validates the input command line arguments and performs password-related operations
 // by invoking the corresponding rpc/storage method
-func pwd(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if reset {
 		return pwdReset(amp, cmd, args)
 	}
@@ -173,7 +172,7 @@ func pwd(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
-func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	fmt.Println("This will send a password reset email to your email address.")
 	username := getUserName()
 	request := &account.PasswordResetRequest{
@@ -190,11 +189,7 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
-func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
-	token, err := ReadToken()
-	if err != nil {
-		return err
-	}
+func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
@@ -205,15 +200,13 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 
 	// Call the backend
 	// Set the authN token on the request header
-	md := metadata.Pairs(auth.TokenKey, token)
-	ctx := metadata.NewContext(context.Background(), md)
 	request := &account.PasswordChangeRequest{
 		Name:             username,
 		ExistingPassword: existingPwd,
 		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.PasswordChange(ctx, request)
+	_, err = accClient.PasswordChange(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}

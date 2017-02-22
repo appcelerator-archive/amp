@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,7 +22,7 @@ var (
 	Build string
 
 	// AMP manages the connection and state for the client
-	AMP *client.AMP
+	AMP *cli.AMP
 
 	// Config is used by command implementations to access the computed client configuration.
 	Config                = &cli.Configuration{}
@@ -65,7 +64,7 @@ func main() {
 		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
 			Config.AmpAddress = addr
 		}
-		AMP = client.NewAMP(Config, cli.NewLogger(Config.Verbose))
+		AMP = cli.NewAMP(Config, cli.NewLogger(Config.Verbose))
 		if !Config.Verbose {
 			RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
