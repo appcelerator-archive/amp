@@ -5,7 +5,7 @@ import (
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/ampmail"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/appcelerator/amp/pkg/auth"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/hlandau/passlib"
 	"golang.org/x/net/context"
@@ -13,18 +13,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"os"
 	"time"
 )
-
-// TODO: this MUST NOT be public
-// TODO: find a way to store this key secretly
-var secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
-
-type userClaims struct {
-	AccountName string `json:"AccountName"`
-	jwt.StandardClaims
-}
 
 // Server is used to implement account.UserServer
 type Server struct {
@@ -70,26 +60,17 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	}
 	log.Println("Successfully created user", in.Name)
 
-	// Forge the verification token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		user.Name, // The token contains the user id to verify
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
-
-	// Sign the token
-	ss, err := token.SignedString(secretKey)
+	// Create a verification token valid for an hour
+	token, err := auth.CreateUserToken(user.Name, time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
 	// Send the verification email
-	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, ss); err != nil {
+	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	return &SignUpReply{Token: ss}, nil
+	return &SignUpReply{Token: token}, nil
 }
 
 // Verify implements account.Verify
@@ -99,20 +80,9 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	}
 
 	// Validate the token
-	token, err := jwt.ParseWithClaims(in.Token, &userClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
+	claims, err := auth.ValidateUserToken(in.Token)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if !token.Valid {
-		return &pb.Empty{}, grpc.Errorf(codes.InvalidArgument, "invalid token")
-	}
-
-	// Get the claims
-	claims, ok := token.Claims.(*userClaims)
-	if !ok {
-		return &pb.Empty{}, grpc.Errorf(codes.Internal, "invalid claims")
 	}
 
 	// Activate the user
@@ -153,29 +123,20 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
 
-	// Forge the authentication token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		user.Name, // The token contains the user name
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
-
-	// Sign the token
-	ss, err := token.SignedString(secretKey)
+	// Create an authentication token valid for a day
+	token, err := auth.CreateUserToken(user.Name, 24*time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
 	// Send the authN token to the client
-	md := metadata.Pairs("token", ss)
+	md := metadata.Pairs(auth.TokenKey, token)
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully login for user", user.Name)
 
-	return &LogInReply{Token: ss}, nil
+	return &LogInReply{Token: token}, nil
 }
 
 // PasswordReset implements account.PasswordReset
@@ -192,33 +153,23 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	if user == nil {
 		return nil, grpc.Errorf(codes.NotFound, "user not found")
 	}
-	// TODO: Do we need the user to be verified?
 	if !user.IsVerified {
 		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
 	}
 
-	// Forge the password reset token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims{
-		user.Name, // The token contains the user name to reset
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
-
-	// Sign the token
-	ss, err := token.SignedString(secretKey)
+	// Create a password reset token valid for an hour
+	token, err := auth.CreateUserToken(user.Name, time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully reset password for user", user.Name)
 
 	// Send the password reset email
-	if err := ampmail.SendAccountResetPasswordEmail(user.Email, user.Name, ss); err != nil {
+	if err := ampmail.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	return &PasswordResetReply{Token: ss}, nil
+	return &PasswordResetReply{Token: token}, nil
 }
 
 // PasswordSet implements account.PasswordSet
@@ -228,26 +179,21 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Validate the token
-	token, err := jwt.ParseWithClaims(in.Token, &userClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
+	claims, err := auth.ValidateUserToken(in.Token)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if !token.Valid {
-		return &pb.Empty{}, grpc.Errorf(codes.InvalidArgument, "invalid token")
-	}
-
-	// Get the claims
-	claims, ok := token.Claims.(*userClaims)
-	if !ok {
-		return &pb.Empty{}, grpc.Errorf(codes.Internal, "invalid claims")
 	}
 
 	// Get the user
 	user, err := s.accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
 	}
 
 	// Sets the new password

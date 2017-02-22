@@ -22,6 +22,7 @@ import (
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/webmail"
 	"github.com/docker/docker/client"
@@ -62,8 +63,8 @@ func Start(config *amp.Config) {
 
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(streamInterceptor),
-		grpc.UnaryInterceptor(unaryInterceptor),
+		grpc.StreamInterceptor(auth.AuthStreamInterceptor),
+		grpc.UnaryInterceptor(auth.AuthInterceptor),
 	)
 
 	// project.RegisterProjectServer(s, &project.Service{})
