@@ -10,15 +10,15 @@ import (
 	"path/filepath"
 )
 
-const (
-	ampTokenFolder = ".amp"
-	ampTokenFile   = "token"
+var (
+	ampConfigFolder = filepath.Join(".config", "amp")
+	ampTokenFile    = "token"
 )
 
 // SaveToken saves the authentication token to file
-func SaveToken(header metadata.MD) error {
+func SaveToken(metadata metadata.MD) error {
 	// Extract token from header
-	tokens := header[auth.TokenKey]
+	tokens := metadata[auth.TokenKey]
 	if len(tokens) == 0 {
 		return fmt.Errorf("invalid token")
 	}
@@ -31,10 +31,10 @@ func SaveToken(header metadata.MD) error {
 	if err != nil {
 		return fmt.Errorf("cannot get current user")
 	}
-	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ampTokenFolder), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ampConfigFolder), os.ModePerm); err != nil {
 		return fmt.Errorf("cannot create folder")
 	}
-	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ampTokenFolder, ampTokenFile), []byte(token), 0600); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile), []byte(token), 0600); err != nil {
 		return fmt.Errorf("cannot write token")
 	}
 	return nil
@@ -46,7 +46,7 @@ func ReadToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot get current user")
 	}
-	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ampTokenFolder, ampTokenFile))
+	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile))
 	if err != nil {
 		return "", fmt.Errorf("cannot read token")
 	}
