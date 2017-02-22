@@ -3,8 +3,11 @@ package tests
 import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"testing"
 	"time"
 )
@@ -348,6 +351,17 @@ func TestUserPasswordChange(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
+	// Establish an anonymous connection
+	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second),
+	)
+	assert.NoError(t, err)
+
+	// Recreate the account client
+	accountClient := account.NewAccountClient(conn)
+
 	// SignUp
 	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
@@ -368,9 +382,10 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.NoError(t, loginErr)
 
 	// Password Change
+	md := metadata.Pairs(auth.TokenKey, token)
+	ctx = metadata.NewContext(ctx, md)
 	newPassword := "newPassword"
 	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		Name:             signUpRequest.Name,
 		ExistingPassword: signUpRequest.Password,
 		NewPassword:      newPassword,
 	})
@@ -384,50 +399,21 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.NoError(t, newLoginErr)
 }
 
-func TestUserPasswordChangeNonExistingAccount(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
-	})
-	assert.NoError(t, loginErr)
-
-	// Password Change
-	newPassword := "newPassword"
-	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		Name:             "this is not a valid user name",
-		ExistingPassword: signUpRequest.Password,
-		NewPassword:      newPassword,
-	})
-	assert.Error(t, passwordChangeErr)
-
-	// Login
-	_, newLoginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: newPassword,
-	})
-	assert.Error(t, newLoginErr)
-}
-
 func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
+	// Establish an anonymous connection
+	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second),
+	)
+	assert.NoError(t, err)
+
+	// Recreate the account client
+	accountClient := account.NewAccountClient(conn)
+
 	// SignUp
 	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
@@ -449,8 +435,9 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 
 	// Password Change
 	newPassword := "newPassword"
+	md := metadata.Pairs(auth.TokenKey, token)
+	ctx = metadata.NewContext(ctx, md)
 	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		Name:             signUpRequest.Name,
 		ExistingPassword: "this is not a valid password",
 		NewPassword:      newPassword,
 	})
@@ -467,6 +454,17 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
+
+	// Establish an anonymous connection
+	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second),
+	)
+	assert.NoError(t, err)
+
+	// Recreate the account client
+	accountClient := account.NewAccountClient(conn)
 
 	// SignUp
 	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
@@ -489,8 +487,9 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 
 	// Password Change
 	newPassword := ""
+	md := metadata.Pairs(auth.TokenKey, token)
+	ctx = metadata.NewContext(ctx, md)
 	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		Name:             signUpRequest.Name,
 		ExistingPassword: signUpRequest.Password,
 		NewPassword:      newPassword,
 	})

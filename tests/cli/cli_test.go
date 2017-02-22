@@ -1,35 +1,48 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
+	"github.com/ThomasRooney/gexpect"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"os/exec"
 	"regexp"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 )
 
-// TestSpec contains all the CommandSpec objects
-type TestSpec struct {
-	Name     string
-	Timeout  time.Duration
-	Commands []CommandSpec
+// SuiteSpec defines the suite fields and the suite data structures.
+type SuiteSpec struct {
+	Name        string   `yaml:"name"`
+	Timeout     string   `yaml:"timeout"`
+	LookupDir   string   `yaml:"lookupdir"`
+	SetupDir    string   `yaml:"setupdir"`
+	TestDirs    []string `yaml:"testdirs"`
+	TearDownDir string   `yaml:"teardowndir"`
+	Setup       []TestSpec
+	Tests       []TestSpec
+	TearDown    []TestSpec
 }
 
-// CommandSpec defines the commands with arguments and options
+// TestSpec defines the test fields and test data structures.
+type TestSpec struct {
+	Name        string        `yaml:"name"`
+	TestTimeout string        `yaml:"test-timeout"`
+	CmdTimeout  string        `yaml:"cmd-timeout"`
+	Commands    []CommandSpec `yaml:"commands"`
+	Cache       map[string]string
+}
+
+// CommandSpec defines the command fields and data types.
 type CommandSpec struct {
 	Cmd         string   `yaml:"cmd"`
 	Args        []string `yaml:"args"`
 	Options     []string `yaml:"options"`
+	Input       []string `yaml:"input"`
 	Expectation string   `yaml:"expectation"`
 	Skip        bool     `yaml:"skip"`
 	Retry       int      `yaml:"retry"`
@@ -38,20 +51,22 @@ type CommandSpec struct {
 }
 
 var (
-	lookupDir   = "./lookup"
-	setupDir    = "./setup"
-	sampleDir   = "./samples"
-	tearDownDir = "./tearDown"
-	wg          sync.WaitGroup
-	regexMap    map[string]string
+	// Array of suite directories to run.
+	suiteDir = []string{"./suite"}
+
+	// Array of suites read
+	suites = []*SuiteSpec{}
+
+	// Map of all lookup regexes.
+	regexMap map[string]string
 )
 
-// read, parse and execute test commands
-func TestCliCmds(t *testing.T) {
+// TestCli is the primary test func, tests all cli commands.
+func TestCli(t *testing.T) {
 	ctx := context.Background()
 
 	// Connect to amplifier
-	conn, err := grpc.Dial("localhost:8080",
+	conn, err := grpc.Dial("local.appcelerator.io:8080",
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
@@ -80,205 +95,212 @@ func TestCliCmds(t *testing.T) {
 	md := metadata.Pairs(auth.TokenKey, token)
 	cli.SaveToken(md)
 
-	// test suite timeout
-	suiteTimeout := "10m"
-	duration, err := time.ParseDuration(suiteTimeout)
+	// Parse all suites specified in the array of suite directories.
+	suites, err = createSuite(suiteDir)
 	if err != nil {
-		t.Errorf("Unable to create duration for timeout: Suite. Error:", err)
-		return
+		t.Errorf("Unable to parse suites, reason: %v", err)
 	}
-	// create test suite context
-	cancel := createTimeout(t, duration, "Suite")
+
+	// Create all suites timeouts.
+	cancels := []func(){}
+	for _, suite := range suites {
+		// Create suite duration.
+		duration, err := time.ParseDuration(suite.Timeout)
+		if err != nil {
+			t.Fatal("Unable to create duration for timeout:", suite.Name, "Error:", err)
+		}
+		// Create suite timeout.
+		cancel := createTimeout(t, duration, suite.Name)
+		cancels = append(cancels, cancel)
+	}
+
+	// Run setup tests.
+	t.Run("Setup", testSetup)
+
+	// Run main tests in parallel.
+	t.Run("Cmds", testCmds)
+
+	// Run teardown tests.
+	t.Run("TearDown", testTearDown)
+
+	// End of suite timeouts.
+	for _, cancel := range cancels {
+		cancel()
+	}
+}
+
+// testSetup is the test func for the setup commands.
+func testSetup(t *testing.T) {
+	// Run setup files from each suite.
+	for _, suite := range suites {
+		for _, setup := range suite.Setup {
+			setup := setup
+			t.Run(setup.Name, func(t *testing.T) {
+				err := runTestSpec(t, setup)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// testCmds is the test func for the main commands.
+func testCmds(t *testing.T) {
+	// Run test files from each suite in parallel.
+	for _, suite := range suites {
+		for _, test := range suite.Tests {
+			test := test
+			t.Run(test.Name, func(t *testing.T) {
+				t.Parallel()
+				err := runTestSpec(t, test)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// testTearDown is the test func for the teardown commands.
+func testTearDown(t *testing.T) {
+	// Run teardown files from each suite.
+	for _, suite := range suites {
+		for _, teardown := range suite.TearDown {
+			teardown := teardown
+			t.Run(teardown.Name, func(t *testing.T) {
+				err := runTestSpec(t, teardown)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+// runTestspec creates the testspec timeout and executes each of its commands.
+func runTestSpec(t *testing.T, testSpec TestSpec) error {
+	// Create testspec duration.
+	duration, err := time.ParseDuration(testSpec.TestTimeout)
+	if err != nil {
+		return fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", testSpec.Name, err)
+	}
+	// Create testspec timeout.
+	cancel := createTimeout(t, duration, testSpec.Name)
 	defer cancel()
 
-	// parse regexes
-	regexMap, err = parseLookup(lookupDir)
-	if err != nil {
-		t.Errorf("Unable to load lookup specs, reason:", err)
-		return
+	// Run all commands in testspec.
+	for _, cmdSpec := range testSpec.Commands {
+		err = runCmdSpec(t, cmdSpec, testSpec.Cache)
+		if err != nil {
+			return fmt.Errorf("Test failed: %s. Error: %v", testSpec.Name, err)
+		}
 	}
-
-	// create setup timeout and parse setup specs
-	setupTimeout := "8m"
-	setup, err := createTestSpecs(setupDir, setupTimeout)
-	if err != nil {
-		t.Errorf("Unable to create setup specs, reason:", err)
-		return
-	}
-
-	// create samples timeout and parse sample specs
-	sampleTimeout := "30s"
-	samples, err := createTestSpecs(sampleDir, sampleTimeout)
-	if err != nil {
-		t.Errorf("Unable to create sample specs, reason:", err)
-		return
-	}
-
-	// create teardown timeout and parse tearDown specs
-	tearDownTimeout := "1.5m"
-	tearDown, err := createTestSpecs(tearDownDir, tearDownTimeout)
-	if err != nil {
-		t.Errorf("Unable to create tearDown specs, reason:", err)
-		return
-	}
-
-	noOfSpecs := len(samples)
-
-	runFramework(t, setup)
-	wg.Add(noOfSpecs)
-	runTests(t, samples)
-	wg.Wait()
-	runFramework(t, tearDown)
+	return nil
 }
 
-func createTestSpecs(directory string, timeout string) ([]*TestSpec, error) {
-	// test spec timeout
-	duration, err := time.ParseDuration(timeout)
+// runCmdSpec creates the CommandSpec timeout and executes the command.
+func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) error {
+	// Retry counter.
+	i := 0
+
+	// Cmd output.
+	output := ""
+
+	// Generates the command string.
+	cmd := genCmdStr(cmdSpec)
+
+	// Create commandspec duration.
+	duration, err := time.ParseDuration(cmdSpec.Timeout)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", directory, err)
+		return fmt.Errorf("Unable to create duration for timeout: %s. Error: %v", cmd, err)
 	}
-	// parse tests
-	testSpecs, err := parseSpec(directory, duration)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to load test specs: %s. reason: %v", directory, err)
-	}
-	return testSpecs, nil
-}
-
-// runs a framework (setup/tearDown)
-func runFramework(t *testing.T, commands []*TestSpec) {
-	for _, command := range commands {
-		runFrameworkSpec(t, command)
-	}
-}
-
-// runs test commands
-func runTests(t *testing.T, samples []*TestSpec) {
-	for _, sample := range samples {
-		go runSampleSpec(t, sample)
-	}
-}
-
-// execute framework commands and check for timeout, delay and retry
-func runFrameworkSpec(t *testing.T, test *TestSpec) {
-
-	var cache = map[string]string{}
-
-	// create test spec context
-	cancel := createTimeout(t, test.Timeout, test.Name)
+	// Create commandspec timeout.
+	cancel := createTimeout(t, duration, cmd)
 	defer cancel()
 
-	// iterate through all the testSpec
-	for _, command := range test.Commands {
-		runCmdSpec(t, command, cache)
-	}
-}
-
-// execute sample commands and decrement waitgroup counter
-func runSampleSpec(t *testing.T, test *TestSpec) {
-
-	var cache = map[string]string{}
-
-	// decrements wg counter
-	defer wg.Done()
-
-	// create test spec context
-	cancel := createTimeout(t, test.Timeout, test.Name)
-	defer cancel()
-
-	// iterate through all the testSpec
-	for _, command := range test.Commands {
-		runCmdSpec(t, command, cache)
-	}
-}
-
-//
-func runCmdSpec(t *testing.T, cmd CommandSpec, cache map[string]string) {
-
-	var i int
-	var err error
-
-	// command Spec timeout
-	duration, duraErr := time.ParseDuration(cmd.Timeout)
-	if duraErr != nil {
-		t.Fatal("Unable to create duration for timeout:", cmd.Cmd, "Error:", duraErr)
-	}
-	// command Spec context
-	cancel := createTimeout(t, duration, cmd.Cmd)
-	defer cancel()
-
-	// generate command slice from cmdSpec
-	cmdSlice := generateCmdString(cmd)
-	cmdString := strings.Join(cmdSlice, " ")
-
-	// perform templating on command
-	cmdTmplOutput, tmplErr := templating(cmdString, cache)
-	if tmplErr != nil {
-		t.Fatal("Executing templating failed:", cmdString, "Error:", tmplErr)
-	}
-	cmdTmplString := strings.Fields(cmdTmplOutput)
-
-	// checks if the expectation has a corresponding regex
-	if cmd.Expectation != "" && regexMap[cmd.Expectation] == "" {
-		t.Fatal("Unable to fetch regex for command:", cmdTmplString, "reason: no regex for given expectation:", cmd.Expectation)
+	// Template command string.
+	cmd, err = templating(cmd, cache)
+	if err != nil {
+		return fmt.Errorf("Executing templating failed: %s. Error: %v", cmd, err)
 	}
 
-	// perform templating on RegEx string
-	regexTmplOutput, tmplErr := templating(regexMap[cmd.Expectation], cache)
-	if tmplErr != nil {
-		t.Fatal("Executing templating failed:", cmd.Expectation, "Error:", tmplErr)
+	// Check if expectation has corresponding regex
+	if cmdSpec.Expectation != "" && regexMap[cmdSpec.Expectation] == "" {
+		return fmt.Errorf("Unable to fetch regex for command: %s. reason: no regex for given expectation: %s", cmd, cmdSpec.Expectation)
 	}
 
-	for i = 0; i <= cmd.Retry; i++ {
-		// err is set to nil a the beginning of the loop to ensure that each time a
-		// command is retried or executed atleast once without the error assigned
-		// from the previous executions
-		err = nil
+	// Template regex.
+	regex, err := templating(regexMap[cmdSpec.Expectation], cache)
+	if err != nil {
+		return fmt.Errorf("Executing templating failed: %s. Error: %v", cmdSpec.Expectation, err)
+	}
 
-		// execute command
-		cmdOutput, _ := exec.Command(cmdTmplString[0], cmdTmplString[1:]...).CombinedOutput()
-
-		// check if the command output matches the RegEx
-		expectedOutput := regexp.MustCompile(regexTmplOutput)
-		if !expectedOutput.MatchString(string(cmdOutput)) {
-			errString := "Mismatched expected output: " + string(cmdOutput)
-			err = errors.New(errString)
+	// Retry loop.
+	for i = 0; i <= cmdSpec.Retry; i++ {
+		// Execute command.
+		output, err = runCmd(cmd, cmdSpec)
+		if err != nil {
+			return fmt.Errorf("Command execution failed: %s. Error: %v", cmd, err)
 		}
 
-		// add delay to wait after command execution
-		if cmd.Delay != "" {
-			del, delErr := time.ParseDuration(cmd.Delay)
-			if delErr != nil {
-				t.Fatal("Invalid delay specified: ", cmd.Delay, "Error:", delErr)
+		// Check ouptput against corresponding regex.
+		expectedOutput := regexp.MustCompile(regex)
+		if expectedOutput.MatchString(string(output)) {
+			// Passed
+			return nil
+		}
+
+		// Delay command execution if delay is set.
+		if cmdSpec.Delay != "" {
+			del, err := time.ParseDuration(cmdSpec.Delay)
+			if err != nil {
+				return fmt.Errorf("Invalid delay specified: %s. Error: %v", cmdSpec.Delay, err)
 			}
 			time.Sleep(del)
 		}
-
-		// If there is no error, break the retry loop as there is no need to continue
-		// If there is an error after all the retries have been used, fail the test
-		if err == nil {
-			break
-		}
 	}
-	// If the command did retry, log the no. of times it did
-	if i > 1 {
-		t.Log("The command :", cmdTmplString, "has re-run", i, "times.")
-	}
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Command fails as there is a mismatched output.
+	return fmt.Errorf("Error: mismatched return: command, %s. regex,  %s. output, %s", cmd, regex, output)
 }
 
-// create an array of strings representing the commands by concatenating
-// all the fields from the yml files in test_samples directory
-func generateCmdString(cmdSpec CommandSpec) (cmdString []string) {
-	cmdSplit := strings.Fields(cmdSpec.Cmd)
-	optionsSplit := []string{}
-	// Possible to have multiple options
-	for _, val := range cmdSpec.Options {
-		optionsSplit = append(optionsSplit, strings.Fields(val)...)
+// runCmd executes the command, passing any inputs to it.
+func runCmd(cmd string, spec CommandSpec) (string, error) {
+	// Spawns new execution of command.
+	child, err := gexpect.Spawn(cmd)
+	if err != nil {
+		return "", err
 	}
-	cmdString = append(cmdSplit, cmdSpec.Args...)
-	cmdString = append(cmdString, optionsSplit...)
-	return
+
+	// Sends each input to command.
+	for _, input := range spec.Input {
+		child.ReadUntil(':')
+		err := child.Send(input + "\r")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Reads output until return on cli.
+	output, _ := child.ReadUntil('$')
+
+	return string(output), nil
+}
+
+// genCmdStr creates the command by concatenating the cmd, args and options fields.
+func genCmdStr(cmdSpec CommandSpec) string {
+	// Get command string.
+	cmdStr := cmdSpec.Cmd
+
+	// Add arguments.
+	for _, arg := range cmdSpec.Args {
+		cmdStr = cmdStr + " " + arg
+	}
+
+	// Add options.
+	for _, opts := range cmdSpec.Options {
+		cmdStr = cmdStr + " " + opts
+	}
+
+	return cmdStr
 }

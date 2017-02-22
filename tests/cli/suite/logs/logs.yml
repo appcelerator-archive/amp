@@ -1,0 +1,35 @@
+name: logs
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - logs-all:
+    cmd: amp logs
+    args:
+      -
+    options:
+      -
+    expectation: logs-all
+
+  - logs-metadata:
+    cmd: amp logs
+    args:
+      -  -m
+    options:
+      -
+    expectation: logs-metadata
+
+  - logs-numbered:
+    cmd: amp logs
+    args:
+      -
+    options:
+      - -n 10
+    expectation: logs-numbered
+
+  - logs-stack:
+    cmd: amp logs
+    args:
+      -
+    options:
+      - --stack stack1
+    expectation:

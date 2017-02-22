@@ -34,9 +34,10 @@ func (c *LoginCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
+// Keys used in context metadata
 const (
-	// TokenKey is the key used in HTTP headers to transport the token
-	TokenKey = "amp.token"
+	TokenKey     = "amp.token"
+	RequesterKey = "amp.requester"
 )
 
 var (
@@ -56,17 +57,19 @@ var (
 	}
 )
 
-// StreamInterceptor is an interceptor checking for authentication tokens
-func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	anonymous := false
-	for _, method := range anonymousAllowed {
-		if method == info.FullMethod {
-			anonymous = true
-			break
+func isAnonymous(elem string) bool {
+	for _, e := range anonymousAllowed {
+		if e == elem {
+			return true
 		}
 	}
-	if !anonymous {
-		if err := authorize(stream.Context()); err != nil {
+	return false
+}
+
+// StreamInterceptor is an interceptor checking for authentication tokens
+func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+		if _, err := authorize(stream.Context()); err != nil {
 			return err
 		}
 	}
@@ -74,35 +77,35 @@ func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 }
 
 // Interceptor is an interceptor checking for authentication tokens
-func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	anonymous := false
-	for _, method := range anonymousAllowed {
-		if method == info.FullMethod {
-			anonymous = true
-			break
-		}
-	}
-	if !anonymous {
-		if err := authorize(ctx); err != nil {
+func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (i interface{}, err error) {
+	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+		if ctx, err = authorize(ctx); err != nil {
 			return nil, err
 		}
 	}
 	return handler(ctx, req)
 }
 
-func authorize(ctx context.Context) error {
+func authorize(ctx context.Context) (context.Context, error) {
 	if md, ok := metadata.FromContext(ctx); ok {
 		tokens := md[TokenKey]
 		if len(tokens) == 0 {
-			return grpc.Errorf(codes.Unauthenticated, "credentials required")
+			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 		}
 		token := tokens[0]
 		if token == "" {
-			return grpc.Errorf(codes.Unauthenticated, "credentials required")
+			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 		}
-		return nil
+		claims, err := ValidateUserToken(token)
+		if err != nil {
+			return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
+		}
+		// Enrich the context with the requester
+		md := metadata.Pairs(RequesterKey, claims.AccountName)
+		ctx = metadata.NewContext(ctx, md)
+		return ctx, nil
 	}
-	return grpc.Errorf(codes.Unauthenticated, "credentials required")
+	return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 }
 
 // CreateUserToken creates a token for a given user name

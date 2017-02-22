@@ -1,0 +1,18 @@
+name: setup
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - sign-up:
+    cmd: amp account signup
+    args:
+    options:
+    input:
+      - cliusername
+      - cli@amp.io
+      - cliPassword
+    expectation:
+  - platform-status:
+    cmd: amp platform status
+    args:
+    options:
+    expectation: platform-status-running

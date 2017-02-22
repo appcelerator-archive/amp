@@ -28,7 +28,6 @@ func NewServer(store storage.Interface) *Server {
 
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
-	// Validate input
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -86,15 +85,21 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	// Activate the user
+	// Get the user
 	user, err := s.accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
-		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+
+	// Activate the user
 	user.IsVerified = true
 	if err := s.accounts.UpdateUser(ctx, user); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
+	// TODO: We probably need to send an email ...
 	log.Println("Successfully verified user", user.Name)
 
 	return &pb.Empty{}, nil
@@ -218,7 +223,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, in.Name)
+	user, err := s.accounts.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
