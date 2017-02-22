@@ -18,6 +18,7 @@ func CheckName(name string) error {
 	if isEmpty(name) {
 		return fmt.Errorf("name is mandatory")
 	}
+	// TODO: minimum of 3 chars, maximum ??
 	if !nameFormat.MatchString(name) {
 		return fmt.Errorf("name is invlaid")
 	}

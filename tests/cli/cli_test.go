@@ -1,13 +1,19 @@
 package cli
 
 import (
-	"fmt"
-	"os/exec"
-	"sync"
-
 	"errors"
+	"fmt"
+	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/docker/distribution/context"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"os/exec"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -42,6 +48,37 @@ var (
 
 // read, parse and execute test commands
 func TestCliCmds(t *testing.T) {
+	ctx := context.Background()
+
+	// Connect to amplifier
+	conn, err := grpc.Dial("localhost:8080",
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second),
+	)
+	assert.NoError(t, err)
+
+	accountClient := account.NewAccountClient(conn)
+
+	signUpRequest := account.SignUpRequest{
+		Name:     "cli",
+		Password: "cliPassword",
+		Email:    "cli@amp.io",
+	}
+
+	// SignUp
+	accountClient.SignUp(ctx, &signUpRequest)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
+	// Verify
+	accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+
+	// Login, somehow
+	md := metadata.Pairs(auth.TokenKey, token)
+	cli.SaveToken(md)
 
 	// test suite timeout
 	suiteTimeout := "10m"

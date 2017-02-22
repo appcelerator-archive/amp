@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	ampTokenFolder = ".amp"
+	ampTokenFolder = ".config/amp"
 	ampTokenFile   = "token"
 )
 
 // SaveToken saves the authentication token to file
-func SaveToken(header metadata.MD) error {
+func SaveToken(metadata metadata.MD) error {
 	// Extract token from header
-	tokens := header[auth.TokenKey]
+	tokens := metadata[auth.TokenKey]
 	if len(tokens) == 0 {
 		return fmt.Errorf("invalid token")
 	}
