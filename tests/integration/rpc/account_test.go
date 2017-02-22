@@ -3,14 +3,14 @@ package tests
 import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"testing"
 	"time"
 )
+
+// Users
 
 var (
 	signUpRequest = account.SignUpRequest{
@@ -351,19 +351,8 @@ func TestUserPasswordChange(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Establish an anonymous connection
-	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-	)
-	assert.NoError(t, err)
-
-	// Recreate the account client
-	accountClient := account.NewAccountClient(conn)
-
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
 	// Create a token
@@ -371,11 +360,11 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.NoError(t, createTokenErr)
 
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: signUpRequest.Password,
 	})
@@ -385,14 +374,14 @@ func TestUserPasswordChange(t *testing.T) {
 	md := metadata.Pairs(auth.TokenKey, token)
 	ctx = metadata.NewContext(ctx, md)
 	newPassword := "newPassword"
-	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
+	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
 		ExistingPassword: signUpRequest.Password,
 		NewPassword:      newPassword,
 	})
 	assert.NoError(t, passwordChangeErr)
 
 	// Login
-	_, newLoginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: newPassword,
 	})
@@ -403,19 +392,8 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Establish an anonymous connection
-	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-	)
-	assert.NoError(t, err)
-
-	// Recreate the account client
-	accountClient := account.NewAccountClient(conn)
-
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
 	// Create a token
@@ -423,11 +401,11 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	assert.NoError(t, createTokenErr)
 
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: signUpRequest.Password,
 	})
@@ -437,14 +415,14 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	newPassword := "newPassword"
 	md := metadata.Pairs(auth.TokenKey, token)
 	ctx = metadata.NewContext(ctx, md)
-	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
+	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
 		ExistingPassword: "this is not a valid password",
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, passwordChangeErr)
 
 	// Login
-	_, newLoginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: newPassword,
 	})
@@ -455,19 +433,8 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Establish an anonymous connection
-	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-	)
-	assert.NoError(t, err)
-
-	// Recreate the account client
-	accountClient := account.NewAccountClient(conn)
-
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
 	assert.NoError(t, signUpErr)
 
 	// Create a token
@@ -475,11 +442,11 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	assert.NoError(t, createTokenErr)
 
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, verifyErr)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: signUpRequest.Password,
 	})
@@ -489,14 +456,14 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	newPassword := ""
 	md := metadata.Pairs(auth.TokenKey, token)
 	ctx = metadata.NewContext(ctx, md)
-	_, passwordChangeErr := accountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
+	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
 		ExistingPassword: signUpRequest.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, passwordChangeErr)
 
 	// Login
-	_, newLoginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
 		Name:     signUpRequest.Name,
 		Password: newPassword,
 	})
@@ -578,4 +545,79 @@ func TestUserList(t *testing.T) {
 	assert.Equal(t, listReply.Users[0].Name, signUpRequest.Name)
 	assert.Equal(t, listReply.Users[0].Email, signUpRequest.Email)
 	assert.NotEmpty(t, listReply.Users[0].CreateDt)
+}
+
+// Organizations
+
+var (
+	createOrganizationRequest = account.CreateOrganizationRequest{
+		Name:  "organization",
+		Email: "organization@amp.io",
+	}
+)
+
+func TestOrganizationCreate(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	md := metadata.Pairs(auth.TokenKey, token)
+	assert.NoError(t, createTokenErr)
+
+	// Verify
+	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, verifyErr)
+
+	// CreateOrganization
+	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, md), &createOrganizationRequest)
+	assert.NoError(t, createOrganizationErr)
+}
+
+func TestOrganizationCreateNotVerifiedUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	md := metadata.Pairs(auth.TokenKey, token)
+	assert.NoError(t, createTokenErr)
+
+	// CreateOrganization
+	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, md), &createOrganizationRequest)
+	assert.Error(t, createOrganizationErr)
+}
+
+func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	md := metadata.Pairs(auth.TokenKey, token)
+	assert.NoError(t, createTokenErr)
+
+	// Verify
+	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, verifyErr)
+
+	// CreateOrganization
+	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, md), &createOrganizationRequest)
+	assert.NoError(t, createOrganizationErr)
+
+	// CreateOrganization again
+	_, createOrganizationAgainErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, md), &createOrganizationRequest)
+	assert.Error(t, createOrganizationAgainErr)
 }
