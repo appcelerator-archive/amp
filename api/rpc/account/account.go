@@ -28,7 +28,6 @@ func NewServer(store storage.Interface) *Server {
 
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
-	// Validate input
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
