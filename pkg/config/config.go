@@ -12,6 +12,7 @@ var AmplifierConfig Config
 type Config struct {
 	Version            string
 	Port               string
+	ServerAddress      string
 	EtcdEndpoints      []string
 	ElasticsearchURL   string
 	ClientID           string
@@ -20,13 +21,14 @@ type Config struct {
 	DockerURL          string
 	DockerVersion      string
 	NatsURL            string
-	WebMailServerPort  string
 	EmailServerAddress string
 	EmailServerPort    string
 	EmailSender        string
 	EmailPwd           string
-	SendGridKey        string
-	ServerAddress      string
+	EmailKey           string
+	SmsAccountID       string
+	SmsSender          string
+	SmsKey             string
 }
 
 // String is used to display struct as a string
@@ -41,6 +43,8 @@ func GetConfig() *Config {
 
 // InitConfig reads secret variables in conffile
 func InitConfig(config *Config) {
+	// set the parameter(s) which have a default, but we don't want to set using amplifier arguments
+	config.EmailSender = DefaultEmailSender
 
 	// Add matching environment variables - will take precedence over config files.
 	viper.AutomaticEnv()

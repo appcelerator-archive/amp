@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9]+$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,32}$`)
 
 func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
@@ -18,9 +18,8 @@ func CheckName(name string) error {
 	if isEmpty(name) {
 		return fmt.Errorf("name is mandatory")
 	}
-	// TODO: minimum of 3 chars, maximum ??
 	if !nameFormat.MatchString(name) {
-		return fmt.Errorf("name is invlaid")
+		return fmt.Errorf("name is invalid")
 	}
 	return nil
 }

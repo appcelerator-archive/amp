@@ -38,7 +38,7 @@ func (s *Store) CreateUser(ctx context.Context, in *schema.User) error {
 	return nil
 }
 
-// GetUser fetches an user by name
+// GetUser fetches a user by name
 func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
@@ -51,7 +51,7 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 	return user, nil
 }
 
-// GetUserByEmail fetches an user by email
+// GetUserByEmail fetches a user by email
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
 	users, err := s.ListUsers(ctx)
 	if err != nil {
@@ -78,7 +78,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	return users, nil
 }
 
-// UpdateUser updates an user
+// UpdateUser updates a user
 func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
 	if err := in.Validate(); err != nil {
 		return err
@@ -89,7 +89,7 @@ func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
 	return nil
 }
 
-// DeleteUser deletes an user by name
+// DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// TODO: check if user is owner of an organization
 	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
@@ -99,12 +99,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 // Reset resets the account store
-func (s *Store) Reset(ctx context.Context) error {
-	if err := s.Store.Delete(ctx, usersRootKey, true, nil); err != nil {
-		return err
-	}
-	if err := s.Store.Delete(ctx, organizationsRootKey, true, nil); err != nil {
-		return err
-	}
-	return nil
+func (s *Store) Reset(ctx context.Context) {
+	s.Store.Delete(ctx, usersRootKey, true, nil)
+	s.Store.Delete(ctx, organizationsRootKey, true, nil)
 }
