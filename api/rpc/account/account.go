@@ -218,7 +218,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, in.Name)
+	user, err := s.accounts.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}

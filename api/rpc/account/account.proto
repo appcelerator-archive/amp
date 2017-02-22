@@ -38,7 +38,7 @@ service Account {
   };
   rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{name}/passwordChange",
+      post: "/v1/account/passwordChange",
       body: "*"
     };
   };
@@ -75,9 +75,8 @@ message PasswordSetRequest {
 }
 
 message PasswordChangeRequest {
-  string name = 1;
-  string existingPassword = 2;
-  string newPassword = 3;
+  string existingPassword = 1;
+  string newPassword = 2;
 }
 
 message ForgotLoginRequest {

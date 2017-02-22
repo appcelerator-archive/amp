@@ -41,6 +41,32 @@
         ]
       }
     },
+    "/v1/account/passwordChange": {
+      "post": {
+        "operationId": "PasswordChange",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordChangeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/account/passwordSet": {
       "post": {
         "operationId": "PasswordSet",
@@ -152,39 +178,6 @@
         ]
       }
     },
-    "/v1/account/{name}/passwordChange": {
-      "post": {
-        "operationId": "PasswordChange",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordChangeRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
     "/v1/account/{name}/passwordReset": {
       "post": {
         "operationId": "PasswordReset",
@@ -245,10 +238,6 @@
     "accountPasswordChangeRequest": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
         "existingPassword": {
           "type": "string",
           "format": "string"

@@ -192,16 +192,11 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
-	username := getUserName()
 	fmt.Println("Enter your current password.")
 	existingPwd := getPassword()
 	fmt.Println("Enter new password.")
 	newPwd := getPassword()
-
-	// Call the backend
-	// Set the authN token on the request header
 	request := &account.PasswordChangeRequest{
-		Name:             username,
 		ExistingPassword: existingPwd,
 		NewPassword:      newPwd,
 	}
@@ -210,7 +205,7 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Printf("Hi %s! Your recent password change has been successful.\n", username)
+	fmt.Printf("Your password change has been successful.\n")
 	return nil
 }
 
