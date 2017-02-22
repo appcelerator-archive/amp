@@ -43,6 +43,25 @@ func CheckEmailAddress(email string) (string, error) {
 	return address.Address, nil
 }
 
+func checkMember(member *Member) error {
+	if isEmpty(member.Name) {
+		return fmt.Errorf("member name is mandatory")
+	}
+	return nil
+}
+
+func checkMembers(members []*Member) error {
+	if len(members) == 0 {
+		return fmt.Errorf("members cannot be empty")
+	}
+	for _, member := range members {
+		if err := checkMember(member); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Validate validates User
 func (u *User) Validate() (err error) {
 	if err = CheckName(u.Name); err != nil {
@@ -52,6 +71,20 @@ func (u *User) Validate() (err error) {
 		return err
 	}
 	if err = checkPasswordHash(u.PasswordHash); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Validate validates Organization
+func (o *Organization) Validate() (err error) {
+	if err = CheckName(o.Name); err != nil {
+		return err
+	}
+	if o.Email, err = CheckEmailAddress(o.Email); err != nil {
+		return err
+	}
+	if err = checkMembers(o.Members); err != nil {
 		return err
 	}
 	return nil

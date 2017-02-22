@@ -26,6 +26,24 @@ type Interface interface {
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
 
-	// Reset resets the account store
+	// CreateOrganization creates a new organization
+	CreateOrganization(ctx context.Context, organization *schema.Organization) (err error)
+
+	// GetOrganization fetches a organization by name
+	GetOrganization(ctx context.Context, name string) (organization *schema.Organization, err error)
+
+	// GetOrganizationByEmail fetches a organization by email
+	GetOrganizationByEmail(ctx context.Context, email string) (organization *schema.Organization, err error)
+
+	// ListOrganizations lists organizations
+	ListOrganizations(ctx context.Context) (organizations []*schema.Organization, err error)
+
+	// UpdateOrganization updates a organization
+	UpdateOrganization(ctx context.Context, update *schema.Organization) (err error)
+
+	// DeleteOrganization deletes a organization by name
+	DeleteOrganization(ctx context.Context, name string) (err error)
+
+	// Reset resets the user store
 	Reset(ctx context.Context)
 }

@@ -111,6 +111,7 @@
     },
     "/v1/users/signup": {
       "post": {
+        "summary": "Users",
         "operationId": "SignUp",
         "responses": {
           "200": {
@@ -250,9 +251,84 @@
           "Account"
         ]
       }
+    },
+    "/v1/organization/create": {
+      "post": {
+        "summary": "Organizations",
+        "operationId": "CreateOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountCreateOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organization/{name}": {
+      "delete": {
+        "operationId": "DeleteOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
     }
   },
   "definitions": {
+    "accountCreateOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "Organizations"
+    },
+    "accountDeleteOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountForgotLoginRequest": {
       "type": "object",
       "properties": {
@@ -356,7 +432,8 @@
           "type": "string",
           "format": "string"
         }
-      }
+      },
+      "title": "Users"
     },
     "accountUser": {
       "type": "object",

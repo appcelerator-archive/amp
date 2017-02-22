@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service Account {
+  // Users
   rpc SignUp (SignUpRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/users/signup",
@@ -63,8 +64,22 @@ message User {
   string name = 1;
   string email = 2;
   int64 create_dt = 3;
+
+  // Organizations
+  rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/organization/create",
+      body: "*"
+    };
+  };
+  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/organization/{name}"
+    };
+  };
 }
 
+// Users
 message SignUpRequest {
   string name = 1;
   string password = 2;
@@ -115,4 +130,14 @@ message ListUsersRequest {
 
 message ListUsersReply {
   repeated User users = 1;
+}
+
+// Organizations
+message CreateOrganizationRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message DeleteOrganizationRequest {
+  string name = 1;
 }

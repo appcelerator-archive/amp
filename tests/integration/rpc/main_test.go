@@ -23,17 +23,18 @@ import (
 )
 
 var (
-	ctx            context.Context
-	store          storage.Interface
-	functionClient function.FunctionClient
-	statsClient    stats.StatsClient
-	stackClient    stack.StackServiceClient
-	topicClient    topic.TopicClient
-	serviceClient  service.ServiceClient
-	logsClient     logs.LogsClient
-	accountClient  account.AccountClient
-	accountStore   as.Interface
-	testUser       = schema.User{
+	ctx                    context.Context
+	store                  storage.Interface
+	functionClient         function.FunctionClient
+	statsClient            stats.StatsClient
+	stackClient            stack.StackServiceClient
+	topicClient            topic.TopicClient
+	serviceClient          service.ServiceClient
+	logsClient             logs.LogsClient
+	accountClient          account.AccountClient
+	anonymousAccountClient account.AccountClient
+	accountStore           as.Interface
+	testUser               = schema.User{
 		Email:        "test@amp.io",
 		Name:         "testUser",
 		IsVerified:   true,
@@ -51,17 +52,24 @@ func TestMain(m *testing.M) {
 	}
 	accountStore = as.NewStore(store)
 
-	// Create a test user
-	accountStore.CreateUser(ctx, &testUser)
+	// Create a valid user token
 	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
-	conn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+	authenticatedConn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
 		grpc.WithPerRPCCredentials(&auth.LoginCredentials{Token: token}),
+	)
+	if err != nil {
+		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)
+	}
+	anonymousConn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(60*time.Second),
 	)
 	if err != nil {
 		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)
@@ -72,13 +80,14 @@ func TestMain(m *testing.M) {
 	initMailServer()
 
 	// Clients init
-	functionClient = function.NewFunctionClient(conn)
-	statsClient = stats.NewStatsClient(conn)
-	stackClient = stack.NewStackServiceClient(conn)
-	topicClient = topic.NewTopicClient(conn)
-	serviceClient = service.NewServiceClient(conn)
-	logsClient = logs.NewLogsClient(conn)
-	accountClient = account.NewAccountClient(conn)
+	functionClient = function.NewFunctionClient(authenticatedConn)
+	statsClient = stats.NewStatsClient(authenticatedConn)
+	stackClient = stack.NewStackServiceClient(authenticatedConn)
+	topicClient = topic.NewTopicClient(authenticatedConn)
+	serviceClient = service.NewServiceClient(authenticatedConn)
+	logsClient = logs.NewLogsClient(authenticatedConn)
+	accountClient = account.NewAccountClient(authenticatedConn)
+	anonymousAccountClient = account.NewAccountClient(anonymousConn)
 
 	// Start tests
 	os.Exit(m.Run())

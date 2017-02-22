@@ -107,3 +107,22 @@ func (r *GetUserRequest) Validate() error {
 func (r *ListUsersRequest) Validate() error {
 	return nil
 }
+
+// Validate validates CreateOrganizationRequest
+func (r *CreateOrganizationRequest) Validate() (err error) {
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if r.Email, err = schema.CheckEmailAddress(r.Email); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates DeleteOrganizationRequest
+func (r *DeleteOrganizationRequest) Validate() error {
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}

@@ -25,6 +25,8 @@ func NewStore(store storage.Interface) *Store {
 	}
 }
 
+// Users
+
 // CreateUser creates a new user
 func (s *Store) CreateUser(ctx context.Context, in *schema.User) error {
 	if err := in.Validate(); err != nil {
@@ -93,6 +95,80 @@ func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// TODO: check if user is owner of an organization
 	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Organizations
+
+// CreateOrganization creates a new organization
+func (s *Store) CreateOrganization(ctx context.Context, in *schema.Organization) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
+	in.CreateDt = time.Now().Unix()
+	if err := s.Store.Create(ctx, path.Join(organizationsRootKey, in.Name), in, nil, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetOrganization fetches a organization by name
+func (s *Store) GetOrganization(ctx context.Context, name string) (*schema.Organization, error) {
+	organization := &schema.Organization{}
+	if err := s.Store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
+		return nil, err
+	}
+	// If there's no "name" in the answer, it means the organization has not been found, so return nil
+	if organization.GetName() == "" {
+		return nil, nil
+	}
+	return organization, nil
+}
+
+// GetOrganizationByEmail fetches a organization by email
+func (s *Store) GetOrganizationByEmail(ctx context.Context, email string) (*schema.Organization, error) {
+	organizations, err := s.ListOrganizations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, organization := range organizations {
+		if strings.EqualFold(organization.Email, email) {
+			return organization, nil
+		}
+	}
+	return nil, nil
+}
+
+// ListOrganizations lists organizations
+func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, error) {
+	protos := []proto.Message{}
+	if err := s.Store.List(ctx, organizationsRootKey, storage.Everything, &schema.Organization{}, &protos); err != nil {
+		return nil, err
+	}
+	organizations := []*schema.Organization{}
+	for _, proto := range protos {
+		organizations = append(organizations, proto.(*schema.Organization))
+	}
+	return organizations, nil
+}
+
+// UpdateOrganization updates a organization
+func (s *Store) UpdateOrganization(ctx context.Context, in *schema.Organization) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
+	if err := s.Store.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteOrganization deletes a organization by name
+func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
+	// TODO: check preconditions
+	if err := s.Store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil

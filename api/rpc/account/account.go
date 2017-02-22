@@ -28,6 +28,8 @@ func NewServer(store storage.Interface) *Server {
 	return &Server{accounts: account.NewStore(store)}
 }
 
+// Users
+
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
@@ -323,4 +325,91 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 	log.Println("Successfully list users")
 
 	return reply, nil
+}
+
+// Organizations
+
+// CreateOrganization implements account.CreateOrganization
+func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the user
+	user, err := s.accounts.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	}
+
+	// Check if organization already exists
+	alreadyExists, err := s.accounts.GetOrganization(ctx, in.Name)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if alreadyExists != nil {
+		return nil, grpc.Errorf(codes.AlreadyExists, "organization already exists")
+	}
+
+	// Create the new organization
+	organization := &schema.Organization{
+		Email: in.Email,
+		Name:  in.Name,
+		Members: []*schema.Member{
+			{
+				Name: user.Name,
+				Role: schema.OrganizationRole_OWNER,
+			},
+		},
+	}
+	if err := s.accounts.CreateOrganization(ctx, organization); err != nil {
+		return nil, grpc.Errorf(codes.Internal, "storage error")
+	}
+	log.Println("Successfully created organization", in.Name)
+
+	// TODO: We probably need to send an email ...
+	return &pb.Empty{}, nil
+}
+
+// DeleteOrganization implements account.DeleteOrganization
+func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the user
+	user, err := s.accounts.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	}
+
+	// Check if organization exists
+	organization, err := s.accounts.GetOrganization(ctx, in.Name)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+
+	// TODO: check if user is authorized to delete this organization
+
+	if err := s.accounts.DeleteOrganization(ctx, organization.Id); err != nil {
+		return nil, grpc.Errorf(codes.Internal, "storage error")
+	}
+	log.Println("Successfully deleted organization", in.Name)
+
+	// TODO: We probably need to send an email ...
+	return &pb.Empty{}, nil
 }
