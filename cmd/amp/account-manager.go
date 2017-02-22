@@ -91,12 +91,11 @@ func signUp(amp *client.AMP) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, err := accClient.SignUp(context.Background(), request)
+	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
 	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
-	fmt.Println("token", reply.Token)
 	return nil
 }
 

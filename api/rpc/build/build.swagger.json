@@ -20,19 +20,24 @@
       "type": "object",
       "properties": {
         "owner": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "sha": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "commit_message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -51,13 +56,16 @@
       "type": "object",
       "properties": {
         "owner": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "sha": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -65,7 +73,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -73,7 +82,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -81,7 +91,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -93,13 +104,16 @@
           "format": "int64"
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -118,7 +132,8 @@
       "type": "object",
       "properties": {
         "organization": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "latest": {
           "type": "boolean",
@@ -130,10 +145,12 @@
       "type": "object",
       "properties": {
         "owner": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     }

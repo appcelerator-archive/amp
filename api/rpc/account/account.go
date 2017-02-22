@@ -27,7 +27,7 @@ func NewServer(store storage.Interface) *Server {
 }
 
 // SignUp implements account.SignUp
-func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, error) {
+func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
 	// Validate input
 	if err := in.Validate(); err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	return &SignUpReply{Token: token}, nil
+	return &pb.Empty{}, nil
 }
 
 // Verify implements account.Verify
@@ -100,7 +100,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 }
 
 // Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, error) {
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -136,11 +136,11 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	}
 	log.Println("Successfully login for user", user.Name)
 
-	return &LogInReply{Token: token}, nil
+	return &pb.Empty{}, nil
 }
 
 // PasswordReset implements account.PasswordReset
-func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*PasswordResetReply, error) {
+func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	return &PasswordResetReply{Token: token}, nil
+	return &pb.Empty{}, nil
 }
 
 // PasswordSet implements account.PasswordSet
