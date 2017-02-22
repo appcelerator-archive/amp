@@ -22,7 +22,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountLogInReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -74,7 +74,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountSignUpReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -135,7 +135,8 @@
             "name": "email",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           },
           {
             "name": "body",
@@ -167,7 +168,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           },
           {
             "name": "body",
@@ -190,7 +192,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountPasswordResetReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -199,7 +201,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           },
           {
             "name": "body",
@@ -221,15 +224,8 @@
       "type": "object",
       "properties": {
         "email": {
-          "type": "string"
-        }
-      }
-    },
-    "accountLogInReply": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -237,10 +233,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "password": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -248,21 +246,16 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "existingPassword": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "newPassword": {
-          "type": "string"
-        }
-      }
-    },
-    "accountPasswordResetReply": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -270,7 +263,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -278,18 +272,12 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "password": {
-          "type": "string"
-        }
-      }
-    },
-    "accountSignUpReply": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -297,13 +285,16 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "password": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "email": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -311,7 +302,8 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     },

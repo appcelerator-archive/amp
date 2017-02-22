@@ -5,12 +5,12 @@ var accountVerificationBody = `
 <html>
     <body style="background-color:white">
         <div style="color:#404040;">
-             <h2>Thanks for joining AMP !</h2>
-            <h3>Your acount <b style="color:red">{accountName}</b> is about ready,</h3>
-            <h3>To finish, please clic below:</h3>
+            <h2>Hi <b style="color:red">{accountName}</b>, thanks for joining AMP!</h2>
+            <h3>You have successfully created an AMP account.</h3>
+            <h3>Please click on the link below to verify your email address and complete your registration.</h3>
             <div style="height:30px"></div>
-            <a 
-                href="http://account.{ampAddress}:8085/v1/ampaccount/{accountName}/confirm/{token}" 
+            <a
+                href="http://account.{ampAddress}:8085/v1/ampaccount/{accountName}/confirm/{token}"
                 style="font-family: arial;
                     font-weight: bold;
                     text-decoration: none;
@@ -24,6 +24,8 @@ var accountVerificationBody = `
             >
                 &nbsp CONFIRM EMAIL ADDRESS &nbsp
             </a>
+            <h3>You can also validate your AMP account using the following command line:</h3>
+            <h3>amp account verify {token}</h3>
         </div>
     </body>
 </html>

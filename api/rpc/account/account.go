@@ -27,7 +27,7 @@ func NewServer(store storage.Interface) *Server {
 }
 
 // SignUp implements account.SignUp
-func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, error) {
+func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
 	// Validate input
 	if err := in.Validate(); err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	if alreadyExists != nil {
-		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists: %v", alreadyExists)
+		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists")
 	}
 
 	// Hash password
@@ -58,7 +58,6 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	if err := s.accounts.CreateUser(ctx, user); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
-	log.Println("Successfully created user", in.Name)
 
 	// Create a verification token valid for an hour
 	token, err := auth.CreateUserToken(user.Name, time.Hour)
@@ -70,7 +69,9 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*SignUpReply, e
 	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	return &SignUpReply{Token: token}, nil
+	log.Println("Successfully created user", in.Name)
+
+	return &pb.Empty{}, nil
 }
 
 // Verify implements account.Verify
@@ -100,7 +101,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 }
 
 // Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, error) {
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -134,13 +135,13 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully login for user", user.Name)
+	log.Println("Successfully logged user in", user.Name)
 
-	return &LogInReply{Token: token}, nil
+	return &pb.Empty{}, nil
 }
 
 // PasswordReset implements account.PasswordReset
-func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*PasswordResetReply, error) {
+func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -162,14 +163,14 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully reset password for user", user.Name)
 
 	// Send the password reset email
 	if err := ampmail.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
+	log.Println("Successfully reset password for user", user.Name)
 
-	return &PasswordResetReply{Token: token}, nil
+	return &pb.Empty{}, nil
 }
 
 // PasswordSet implements account.PasswordSet

@@ -6,15 +6,13 @@ import (
 	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"io/ioutil"
-	"os"
-	"os/user"
-	"path/filepath"
+	"strings"
 )
 
 // Cobra definitions for account management related commands
@@ -94,12 +92,11 @@ func signUp(amp *client.AMP) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, err := accClient.SignUp(context.Background(), request)
+	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "!, Please check your email to complete the signup process.")
-	fmt.Println("token", reply.Token)
+	fmt.Printf("Hi %s!, Please check your email to complete the signup process.\n", username)
 	return nil
 }
 
@@ -136,23 +133,10 @@ func login(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	token := header["token"][0]
-	if token == "" {
-		return fmt.Errorf("invalid token")
+	if err := SaveToken(header); err != nil {
+		return err
 	}
-
-	// Write the authentication token to file
-	usr, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("cannot get current user")
-	}
-	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ".amp"), os.ModePerm); err != nil {
-		return fmt.Errorf("cannot create folder")
-	}
-	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ".amp", "token"), []byte(token), 0600); err != nil {
-		return fmt.Errorf("cannot write token")
-	}
-	fmt.Println("Welcome back, ", username, "!")
+	fmt.Printf("Welcome back, %s!\n", username)
 	return nil
 }
 
@@ -169,8 +153,7 @@ func forgotLogin(amp *client.AMP) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Your login name has been sent to the address: ", email)
-
+	fmt.Println("Your login name has been sent to the address:", email)
 	return nil
 }
 
@@ -201,24 +184,17 @@ func pwdReset(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi", username, "! Please check your email to complete the password reset process.")
+	fmt.Printf("Hi %s! Please check your email to complete the password reset process.\n", username)
 	return nil
 }
 
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
-	// Read the authentication token from file
-	usr, err := user.Current()
+	token, err := ReadToken()
 	if err != nil {
-		return fmt.Errorf("cannot get current user")
+		return err
 	}
-	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ".amp", "token"))
-	if err != nil {
-		return fmt.Errorf("cannot read token")
-	}
-	token := string(data)
-
 	// Get inputs
 	fmt.Println("This will allow you to update your existing password.")
 	username := getUserName()
@@ -229,7 +205,7 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 
 	// Call the backend
 	// Set the authN token on the request header
-	md := metadata.Pairs("amp.token", token)
+	md := metadata.Pairs(auth.TokenKey, token)
 	ctx := metadata.NewContext(context.Background(), md)
 	request := &account.PasswordChangeRequest{
 		Name:             username,
@@ -241,13 +217,14 @@ func pwdChange(amp *client.AMP, cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
 	}
-	fmt.Println("Hi ", username, "! Your recent password change has been successful.")
+	fmt.Printf("Hi %s! Your recent password change has been successful.\n", username)
 	return nil
 }
 
 func getUserName() (username string) {
 	fmt.Print("username: ")
 	fmt.Scanln(&username)
+	username = strings.TrimSpace(username)
 	err := schema.CheckName(username)
 	if err != nil {
 		fmt.Println("Username is mandatory. Try again!")
@@ -260,6 +237,7 @@ func getUserName() (username string) {
 func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
+	email = strings.TrimSpace(email)
 	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
 		fmt.Println("Email in incorrect format. Try again!")
@@ -272,6 +250,7 @@ func getEmailAddress() (email string) {
 func getToken() (token string) {
 	fmt.Print("token: ")
 	fmt.Scanln(&token)
+	token = strings.TrimSpace(token)
 	err := account.CheckVerificationCode(token)
 	if err != nil {
 		fmt.Println("Code is invalid. Try again!")
@@ -290,6 +269,7 @@ func getPassword() (password string) {
 		return getPassword()
 	}
 	password = string(pw)
+	password = strings.TrimSpace(password)
 	err = account.CheckPassword(password)
 	if err != nil {
 		fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
