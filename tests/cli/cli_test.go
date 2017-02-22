@@ -2,11 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"github.com/ThomasRooney/gexpect"
 	"regexp"
 	"testing"
 	"time"
-
-	gexpect "github.com/Thomasrooney/gexpect"
 )
 
 // SuiteSpec defines the suite fields and the suite data structures.
@@ -156,7 +155,7 @@ func runTestSpec(t *testing.T, testSpec TestSpec) error {
 	for _, cmdSpec := range testSpec.Commands {
 		err = runCmdSpec(t, cmdSpec, testSpec.Cache)
 		if err != nil {
-			return fmt.Errorf("Test failed: %s. Error: %v",  testSpec.Name, err)
+			return fmt.Errorf("Test failed: %s. Error: %v", testSpec.Name, err)
 		}
 	}
 	return nil
@@ -185,7 +184,7 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 	// Template command string.
 	cmd, err = templating(cmd, cache)
 	if err != nil {
-		return fmt.Errorf("Executing templating failed: %s. Error: %v",  cmd, err)
+		return fmt.Errorf("Executing templating failed: %s. Error: %v", cmd, err)
 	}
 
 	// Check if expectation has corresponding regex
