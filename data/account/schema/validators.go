@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"fmt"
+	"github.com/holys/safe"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -16,17 +16,10 @@ func isEmpty(s string) bool {
 // CheckName checks user name
 func CheckName(name string) error {
 	if isEmpty(name) {
-		return fmt.Errorf("name is mandatory")
+		return InvalidName
 	}
 	if !nameFormat.MatchString(name) {
-		return fmt.Errorf("name is invalid")
-	}
-	return nil
-}
-
-func checkPasswordHash(passwordHash string) error {
-	if isEmpty(passwordHash) {
-		return fmt.Errorf("password hash is mandatory")
+		return InvalidName
 	}
 	return nil
 }
@@ -35,12 +28,66 @@ func checkPasswordHash(passwordHash string) error {
 func CheckEmailAddress(email string) (string, error) {
 	address, err := mail.ParseAddress(email)
 	if err != nil {
-		return "", err
+		return "", InvalidEmail
 	}
 	if isEmpty(address.Address) {
-		return "", fmt.Errorf("email is mandatory")
+		return "", InvalidEmail
 	}
 	return address.Address, nil
+}
+
+// CheckPassword checks password
+func CheckPassword(password string) error {
+	if isEmpty(password) {
+		return PasswordTooWeak
+	}
+	safety := safe.New(8, 0, 0, safe.Simple)
+	if passwordStrength := safety.Check(password); passwordStrength <= safe.Simple {
+		return PasswordTooWeak
+	}
+	return nil
+}
+
+func checkOrganizationMember(member *OrganizationMember) error {
+	if isEmpty(member.Name) {
+		return InvalidName
+	}
+	return nil
+}
+
+func checkOrganizationMembers(members []*OrganizationMember) error {
+	if len(members) == 0 {
+		return InvalidName
+	}
+	haveAtLeastOneOwner := false
+	for _, member := range members {
+		if err := checkOrganizationMember(member); err != nil {
+			return err
+		}
+		if member.Role == OrganizationRole_ORGANIZATION_OWNER {
+			haveAtLeastOneOwner = true
+		}
+	}
+	if !haveAtLeastOneOwner {
+		return AtLeastOneOwner
+	}
+	return nil
+}
+
+func checkTeamMember(member *TeamMember) error {
+	if isEmpty(member.Name) {
+		return InvalidName
+	}
+	return nil
+}
+
+func checkTeamMembers(members []*TeamMember) error {
+	for _, member := range members {
+		if err := checkTeamMember(member); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Validate validates User
@@ -51,7 +98,34 @@ func (u *User) Validate() (err error) {
 	if u.Email, err = CheckEmailAddress(u.Email); err != nil {
 		return err
 	}
-	if err = checkPasswordHash(u.PasswordHash); err != nil {
+	return nil
+}
+
+// Validate validates Organization
+func (o *Organization) Validate() (err error) {
+	if err = CheckName(o.Name); err != nil {
+		return err
+	}
+	if o.Email, err = CheckEmailAddress(o.Email); err != nil {
+		return err
+	}
+	if err = checkOrganizationMembers(o.Members); err != nil {
+		return err
+	}
+	for _, team := range o.Teams {
+		if err := team.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Validate validates Team
+func (t *Team) Validate() error {
+	if err := CheckName(t.Name); err != nil {
+		return err
+	}
+	if err := checkTeamMembers(t.Members); err != nil {
 		return err
 	}
 	return nil

@@ -48,7 +48,7 @@ func templating(input string, cache map[string]string) (output string, err error
 
 	// Custom function to generate token for account verify command.
 	verify := func(in string) (string, error) {
-		token, err := auth.CreateUserToken(in, time.Hour)
+		token, err := auth.CreateToken(in, auth.TokenTypeVerify, time.Hour)
 		if err != nil {
 			return "", err
 		}
@@ -60,8 +60,8 @@ func templating(input string, cache map[string]string) (output string, err error
 
 	// Add custom functions to templates function map for execution.
 	var fMap = template.FuncMap{
-		"uniq": func(in string) string { return uniq(in) },
-		"port": func(in string, min, max int) string { return port(in, min, max) },
+		"uniq":   func(in string) string { return uniq(in) },
+		"port":   func(in string, min, max int) string { return port(in, min, max) },
 		"verify": func(in string) (string, error) { return verify(in) },
 	}
 

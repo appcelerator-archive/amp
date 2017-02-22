@@ -279,7 +279,7 @@ test-unit:
 test-integration:
 	@docker service rm amp-integration-test > /dev/null 2>&1 || true
 	@docker build -t appcelerator/amp-demo-function examples/functions/demo-function
-	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/amp-integration-test .
+	@docker build --build-arg BUILD=$(BUILD) -t appcelerator/amp-integration-test -f Dockerfile.test .
 	@docker service create --network amp-infra --name amp-integration-test --restart-condition none appcelerator/amp-integration-test make BUILD=$(BUILD) test-integration-host
 	@containerid=""; \
 	while [[ $${containerid} == "" ]] ; do \
