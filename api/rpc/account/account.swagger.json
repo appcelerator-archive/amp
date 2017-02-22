@@ -15,7 +15,23 @@
     "application/json"
   ],
   "paths": {
-    "/v1/account/login": {
+    "/v1/users": {
+      "get": {
+        "operationId": "ListUsers",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountListUsersReply"
+            }
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/login": {
       "post": {
         "operationId": "Login",
         "responses": {
@@ -41,7 +57,33 @@
         ]
       }
     },
-    "/v1/account/passwordSet": {
+    "/v1/users/passwordChange": {
+      "post": {
+        "operationId": "PasswordChange",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordChangeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/passwordSet": {
       "post": {
         "operationId": "PasswordSet",
         "responses": {
@@ -67,7 +109,7 @@
         ]
       }
     },
-    "/v1/account/signup": {
+    "/v1/users/signup": {
       "post": {
         "operationId": "SignUp",
         "responses": {
@@ -93,7 +135,7 @@
         ]
       }
     },
-    "/v1/account/verify": {
+    "/v1/users/verify": {
       "post": {
         "operationId": "Verify",
         "responses": {
@@ -119,7 +161,7 @@
         ]
       }
     },
-    "/v1/account/{email}/forgotLogin": {
+    "/v1/users/{email}/forgotLogin": {
       "post": {
         "operationId": "ForgotLogin",
         "responses": {
@@ -152,14 +194,14 @@
         ]
       }
     },
-    "/v1/account/{name}/passwordChange": {
-      "post": {
-        "operationId": "PasswordChange",
+    "/v1/users/{name}": {
+      "get": {
+        "operationId": "GetUser",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountGetUserReply"
             }
           }
         },
@@ -170,14 +212,6 @@
             "required": true,
             "type": "string",
             "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordChangeRequest"
-            }
           }
         ],
         "tags": [
@@ -185,7 +219,7 @@
         ]
       }
     },
-    "/v1/account/{name}/passwordReset": {
+    "/v1/users/{name}/passwordReset": {
       "post": {
         "operationId": "PasswordReset",
         "responses": {
@@ -229,6 +263,37 @@
         }
       }
     },
+    "accountGetUserReply": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/accountUser"
+        }
+      }
+    },
+    "accountGetUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountListUsersReply": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountUser"
+          }
+        }
+      }
+    },
+    "accountListUsersRequest": {
+      "type": "object"
+    },
     "accountLogInRequest": {
       "type": "object",
       "properties": {
@@ -245,10 +310,6 @@
     "accountPasswordChangeRequest": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
         "existingPassword": {
           "type": "string",
           "format": "string"
@@ -295,6 +356,23 @@
         "email": {
           "type": "string",
           "format": "string"
+        }
+      }
+    },
+    "accountUser": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

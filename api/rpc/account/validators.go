@@ -94,3 +94,16 @@ func (r *ForgotLoginRequest) Validate() (err error) {
 	}
 	return nil
 }
+
+// Validate validates GetUserRequest
+func (r *GetUserRequest) Validate() error {
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates ListUsersRequest
+func (r *ListUsersRequest) Validate() error {
+	return nil
+}

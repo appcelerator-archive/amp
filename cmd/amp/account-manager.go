@@ -63,6 +63,9 @@ var (
 
 	reset  bool
 	change bool
+
+	//TODO: pass verbose as arg
+	manager = NewCmdManager("")
 )
 
 //Adding account management commands to the account command
@@ -81,7 +84,7 @@ func init() {
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
 func signUp(amp *cli.AMP) (err error) {
-	fmt.Println("This will sign you up for a new personal AMP account.")
+	manager.printf(0, "This will sign you up for a new personal AMP account.\n")
 	username := getUserName()
 	email := getEmailAddress()
 	password := getPassword()
@@ -93,16 +96,17 @@ func signUp(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
-	fmt.Printf("Hi %s!, Please check your email to complete the signup process.\n", username)
+	manager.printf(4, "Hi %s! Please check your email to complete the signup process.\n", username)
 	return nil
 }
 
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
 func verify(amp *cli.AMP) (err error) {
-	fmt.Println("This will sign you up for a new personal AMP account.")
+	manager.printf(0, "This will verify an existing AMP account.\n")
 	token := getToken()
 	request := &account.VerificationRequest{
 		Token: token,
@@ -110,16 +114,17 @@ func verify(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.Verify(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
-	fmt.Println("Your account has now been activated.")
+	manager.printf(4, "Your account has now been activated.\n")
 	return nil
 }
 
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
 func login(amp *cli.AMP) (err error) {
-	fmt.Println("This will login to an existing AMP account.")
+	manager.printf(0, "This will login to an existing AMP account.\n")
 	username := getUserName()
 	password := getPassword()
 	request := &account.LogInRequest{
@@ -130,19 +135,20 @@ func login(amp *cli.AMP) (err error) {
 	header := metadata.MD{}
 	_, err = accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
 	if err := cli.SaveToken(header); err != nil {
 		return err
 	}
-	fmt.Printf("Welcome back, %s!\n", username)
+	manager.printf(4, "Welcome back, %s!\n", username)
 	return nil
 }
 
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
 func forgotLogin(amp *cli.AMP) (err error) {
-	fmt.Println("This will send your username to your registered email address")
+	manager.printf(0, "This will send your username to your registered email address.\n")
 	email := getEmailAddress()
 	request := &account.ForgotLoginRequest{
 		Email: email,
@@ -150,9 +156,10 @@ func forgotLogin(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
-	fmt.Println("Your login name has been sent to the address:", email)
+	manager.printf(4, "Your login name has been sent to the address: %s\n", email)
 	return nil
 }
 
@@ -165,15 +172,14 @@ func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if change {
 		return pwdChange(amp, cmd, args)
 	}
-	fmt.Println("Choose a command for password operation")
-	fmt.Println("Use amp account password -h for help")
+	manager.printf(2, "Choose a command for password operation.\nUse amp account password -h for help.\n")
 	return nil
 }
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
 func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
-	fmt.Println("This will send a password reset email to your email address.")
+	manager.printf(0, "This will send a password reset email to your email address.\n")
 	username := getUserName()
 	request := &account.PasswordResetRequest{
 		Name: username,
@@ -181,9 +187,10 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
-	fmt.Printf("Hi %s! Please check your email to complete the password reset process.\n", username)
+	manager.printf(4, "Hi %s! Please check your email to complete the password reset process.\n", username)
 	return nil
 }
 
@@ -191,26 +198,22 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	// Get inputs
-	fmt.Println("This will allow you to update your existing password.")
-	username := getUserName()
+	manager.printf(0, "This will allow you to update your existing password.\n")
 	fmt.Println("Enter your current password.")
 	existingPwd := getPassword()
 	fmt.Println("Enter new password.")
 	newPwd := getPassword()
-
-	// Call the backend
-	// Set the authN token on the request header
 	request := &account.PasswordChangeRequest{
-		Name:             username,
 		ExistingPassword: existingPwd,
 		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("server error: %v", grpc.ErrorDesc(err))
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
 	}
-	fmt.Printf("Hi %s! Your recent password change has been successful.\n", username)
+	manager.printf(4, "Your password change has been successful.\n")
 	return nil
 }
 
@@ -220,8 +223,7 @@ func getUserName() (username string) {
 	username = strings.TrimSpace(username)
 	err := schema.CheckName(username)
 	if err != nil {
-		fmt.Println("Username is mandatory. Try again!")
-		fmt.Println("")
+		manager.printf(2, "Username is invalid/incorrect. Try again!\n\n")
 		return getUserName()
 	}
 	return
@@ -233,8 +235,7 @@ func getEmailAddress() (email string) {
 	email = strings.TrimSpace(email)
 	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
-		fmt.Println("Email in incorrect format. Try again!")
-		fmt.Println("")
+		manager.printf(2, "Email in incorrect format. Try again!\n\n")
 		return getEmailAddress()
 	}
 	return
@@ -246,8 +247,7 @@ func getToken() (token string) {
 	token = strings.TrimSpace(token)
 	err := account.CheckVerificationCode(token)
 	if err != nil {
-		fmt.Println("Code is invalid. Try again!")
-		fmt.Println("")
+		manager.printf(2, "Code is invalid. Try again!\n\n")
 		return getToken()
 	}
 	return
@@ -257,16 +257,14 @@ func getPassword() (password string) {
 	fmt.Print("password: ")
 	pw, err := gopass.GetPasswd()
 	if pw == nil || err != nil {
-		fmt.Println("Password is mandatory. Try again!")
-		fmt.Println("")
+		manager.printf(2, "Password is mandatory. Try again!\n\n")
 		return getPassword()
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
 	err = account.CheckPassword(password)
 	if err != nil {
-		fmt.Println("Password entered is too weak. Password must be at least 8 characters long. Try again!")
-		fmt.Println("")
+		manager.printf(2, "Password entered is too weak. Password must be at least 8 characters long. Try again!\n\n")
 		return getPassword()
 	}
 	return
