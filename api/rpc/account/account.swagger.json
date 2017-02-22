@@ -135,8 +135,7 @@
             "name": "email",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -168,8 +167,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -201,8 +199,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -224,8 +221,7 @@
       "type": "object",
       "properties": {
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -233,8 +229,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -242,12 +237,10 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -255,16 +248,13 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "existingPassword": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "newPassword": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -272,8 +262,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -281,8 +270,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -290,12 +278,10 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -303,8 +289,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -312,16 +297,13 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -329,8 +311,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
