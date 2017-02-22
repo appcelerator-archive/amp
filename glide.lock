@@ -1,5 +1,5 @@
-hash: 61e551c42be26d00adbb2954c3389ecd87cce2a7bc199a1e4c88d22d72a8c089
-updated: 2017-02-22T12:51:08.936231832Z
+hash: 93148cde88ef87473df43a342fd10c0a9131626a08c9d5e1ceed86af7c1d169b
+updated: 2017-02-22T11:38:22.231601201-08:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -140,15 +140,12 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
   - ptypes/empty
 - name: github.com/google/go-github
   version: 28065814ab889552aebe99cd41b35bc5e31063fe
   subpackages:
   - github
-- name: github.com/google/go-querystring
-  version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
-  subpackages:
-  - query
 - name: github.com/gorilla/context
   version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
 - name: github.com/gorilla/mux
@@ -189,6 +186,10 @@ imports:
   - pkg/escape
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/kballard/go-shellquote
+  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
+- name: github.com/kr/pty
+  version: f7ee69f31298ecbe5d2b349c711e2547a617d398
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
@@ -223,7 +224,7 @@ imports:
 - name: github.com/nats-io/nuid
   version: 289cccf02c178dc782430d534e3c1f5b72af807f
 - name: github.com/opencontainers/runc
-  version: 3293874044dfc79fd71521417452a775c84904a3
+  version: bd2f9c52cd3b766d993924ae6eba72b82998f3bd
   subpackages:
   - libcontainer/configs
   - libcontainer/devices
@@ -264,7 +265,7 @@ imports:
   subpackages:
   - helpers/mail
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: 7f4b1adc791766938c29457bed0703fb9134421a
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -279,6 +280,8 @@ imports:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: github.com/ThomasRooney/gexpect
+  version: 5482f03509440585d13d8f648989e05903001842
 - name: github.com/vbatts/tar-split
   version: bd4c5d64c3e9297f410025a3b1bd0c58f659e721
   subpackages:
@@ -309,8 +312,6 @@ imports:
   - websocket
 - name: golang.org/x/oauth2
   version: b9780ec78894ab900c062d58ee3076cd9b2a4501
-  subpackages:
-  - internal
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   repo: https://go.googlesource.com/sys
@@ -322,16 +323,6 @@ imports:
   subpackages:
   - transform
   - unicode/norm
-- name: google.golang.org/appengine
-  version: 12d5545dc1cfa6047a286d5e853841b6471f4c19
-  subpackages:
-  - internal
-  - internal/base
-  - internal/datastore
-  - internal/log
-  - internal/remote_api
-  - internal/urlfetch
-  - urlfetch
 - name: google.golang.org/grpc
   version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
   subpackages:
@@ -368,7 +359,7 @@ imports:
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
-  version: bef53efd0c76e49e6de55ead051f886bea7e9420
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
 - name: github.com/mhale/smtpd
   version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f

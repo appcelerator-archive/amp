@@ -92,6 +92,9 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.25
 - package: gopkg.in/yaml.v2
+- package: github.com/ThomasRooney/gexpect
+- package: github.com/kballard/go-shellquote
+- package: github.com/kr/pty
 testImport:
 - package: github.com/mhale/smtpd
 - package: github.com/stretchr/testify
