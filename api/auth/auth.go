@@ -17,7 +17,7 @@ type UserClaims struct {
 	jwt.StandardClaims
 }
 
-// LoginCreds represents login credentials
+// LoginCredentials represents login credentials
 type LoginCredentials struct {
 	Token string
 }
@@ -35,6 +35,7 @@ func (c *LoginCredentials) RequireTransportSecurity() bool {
 }
 
 const (
+	// TokenKey is the key used in HTTP headers to transport the token
 	TokenKey = "amp.token"
 )
 
@@ -43,7 +44,6 @@ var (
 	// TODO: find a way to store this key secretly
 	secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
 
-	// TODO: there is probably a better way of achieving this
 	anonymousAllowed = []string{
 		"/account.Account/SignUp",
 		"/account.Account/Verify",
@@ -100,15 +100,14 @@ func authorize(ctx context.Context) error {
 		if token == "" {
 			return grpc.Errorf(codes.Unauthenticated, "credentials required")
 		}
-		fmt.Println("token", token)
 		return nil
 	}
-	return grpc.Errorf(codes.Internal, "empty metadata")
+	return grpc.Errorf(codes.Unauthenticated, "credentials required")
 }
 
 // CreateUserToken creates a token for a given user name
 func CreateUserToken(name string, validFor time.Duration) (string, error) {
-	// Forge the verification token
+	// Forge the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
 		name, // The token contains the user name to verify
 		jwt.StandardClaims{
@@ -116,8 +115,6 @@ func CreateUserToken(name string, validFor time.Duration) (string, error) {
 			Issuer:    os.Args[0],
 		},
 	})
-
-	// Sign the token
 	ss, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to issue verification token")
@@ -136,8 +133,6 @@ func ValidateUserToken(signedString string) (*UserClaims, error) {
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
-
-	// Get the claims
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")

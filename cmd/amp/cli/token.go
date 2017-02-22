@@ -53,6 +53,7 @@ func ReadToken() (string, error) {
 	return string(data), nil
 }
 
+// GetLoginCredentials returns the login credentials
 func GetLoginCredentials() *auth.LoginCredentials {
 	token, err := ReadToken()
 	if err != nil {

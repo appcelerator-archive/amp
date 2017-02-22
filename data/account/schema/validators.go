@@ -13,7 +13,7 @@ func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
 }
 
-// CheckUserName checks user name
+// CheckName checks user name
 func CheckName(name string) error {
 	if isEmpty(name) {
 		return fmt.Errorf("name is mandatory")
