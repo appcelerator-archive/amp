@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	//"github.com/appcelerator/amp/api/client"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"

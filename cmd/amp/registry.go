@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	distreference "github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/reference"
@@ -66,7 +66,7 @@ func registryEndpoint() (ep string) {
 }
 
 // RegistryPush displays resource usage statistics
-func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amp-cli"}
 	dclient, err := docker.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
@@ -129,7 +129,7 @@ func RegistryPush(amp *client.AMP, cmd *cobra.Command, args []string) error {
 }
 
 // RegistryLs lists images
-func RegistryLs(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func RegistryLs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

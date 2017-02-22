@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/service"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/docker/docker/cli/command"
 	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
@@ -70,7 +70,7 @@ func init() {
 	ServiceCmd.AddCommand(serviceCreateCmd)
 }
 
-func serviceCreate(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service create\" requires at least 1 argument(s)")

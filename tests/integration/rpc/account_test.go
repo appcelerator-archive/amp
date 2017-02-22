@@ -1,8 +1,8 @@
 package tests
 
 import (
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/pkg/auth"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
 	"testing"
