@@ -222,20 +222,24 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 		return nil, err
 	}
 
-	// Get the user
-	user, err := s.accounts.GetUserFromContext(ctx)
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
 	}
 
 	// Check the existing password password
-	_, err = passlib.Verify(in.ExistingPassword, user.PasswordHash)
+	_, err = passlib.Verify(in.ExistingPassword, requester.PasswordHash)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
@@ -245,11 +249,11 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	user.PasswordHash = newPasswordHash
-	if err := s.accounts.UpdateUser(ctx, user); err != nil {
+	requester.PasswordHash = newPasswordHash
+	if err := s.accounts.UpdateUser(ctx, requester); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully updated the password for user", user.Name)
+	log.Println("Successfully updated the password for user", requester.Name)
 
 	return &pb.Empty{}, nil
 }
