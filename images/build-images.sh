@@ -41,7 +41,7 @@ for image in $images; do
   case $method in
   docker)
     echo "Building image $name:$tag (docker build)..."
-    docker build -t appcelerator/$name:$tag .
+    docker build -t $name:$tag .
     if [ $? -ne 0 ]; then
       echo "Failed to build $name ($image)"
       exit 1
