@@ -13,6 +13,8 @@ import (
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/ThomasRooney/gexpect"
 )
 
 // SuiteSpec defines the suite fields and the suite data structures.
@@ -225,6 +227,15 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 		return fmt.Errorf("Executing templating failed: %s. Error: %v", cmd, err)
 	}
 
+	// Template inputs
+	for i, input := range cmdSpec.Input {
+		in, err := templating(input, cache)
+		if err != nil {
+			return fmt.Errorf("Executing templating failed: %s. Error: %v", input, err)
+		}
+		cmdSpec.Input[i] = in
+	}
+
 	// Check if expectation has corresponding regex
 	if cmdSpec.Expectation != "" && regexMap[cmdSpec.Expectation] == "" {
 		return fmt.Errorf("Unable to fetch regex for command: %s. reason: no regex for given expectation: %s", cmd, cmdSpec.Expectation)
@@ -261,7 +272,7 @@ func runCmdSpec(t *testing.T, cmdSpec CommandSpec, cache map[string]string) erro
 		}
 	}
 	// Command fails as there is a mismatched output.
-	return fmt.Errorf("Error: mismatched return: command, %s. regex,  %s. output, %s", cmd, regex, output)
+	return fmt.Errorf("Mismatched return: command: %s. regex:  %s. output: %s", cmd, regex, output)
 }
 
 // runCmd executes the command, passing any inputs to it.
@@ -279,6 +290,7 @@ func runCmd(cmd string, spec CommandSpec) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		child.ReadLine()
 	}
 
 	// Reads output until return on cli.

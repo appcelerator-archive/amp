@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"text/template"
 	"time"
+
+	"github.com/appcelerator/amp/api/auth"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -25,7 +27,7 @@ func templating(input string, cache map[string]string) (output string, err error
 	}
 
 	// Custom function to create a unique name with a randomly generated string.
-	name := func(in string) string {
+	uniq := func(in string) string {
 		if val, ok := cache[in]; ok {
 			return val
 		}
@@ -44,13 +46,24 @@ func templating(input string, cache map[string]string) (output string, err error
 		return out
 	}
 
+	// Custom function to generate token for account verify command.
+	verify := func(in string) (string, error) {
+		token, err := auth.CreateUserToken(in, time.Hour)
+		if err != nil {
+			return "", err
+		}
+		cache[in] = token
+		return token, nil
+	}
+
 	// Buffer to store output of template execution.
 	var doc bytes.Buffer
 
 	// Add custom functions to templates function map for execution.
 	var fMap = template.FuncMap{
-		"uniq": func(in string) string { return name(in) },
+		"uniq": func(in string) string { return uniq(in) },
 		"port": func(in string, min, max int) string { return port(in, min, max) },
+		"verify": func(in string) (string, error) { return verify(in) },
 	}
 
 	// Execute the parsed template.
