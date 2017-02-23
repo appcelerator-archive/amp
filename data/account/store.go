@@ -2,9 +2,11 @@ package account
 
 import (
 	"context"
+	"fmt"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
+	"github.com/hlandau/passlib"
 	"path"
 	"strings"
 	"time"
@@ -28,20 +30,23 @@ func NewStore(store storage.Interface) *Store {
 // Users
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(ctx context.Context, in *schema.User) error {
+func (s *Store) CreateUser(ctx context.Context, password string, in *schema.User) (err error) {
 	if err := in.Validate(); err != nil {
 		return err
 	}
 	in.IsVerified = false
 	in.CreateDt = time.Now().Unix()
+	in.PasswordHash, err = passlib.Hash(password)
+	if err != nil {
+		return err
+	}
 	if err := s.Store.Create(ctx, path.Join(usersRootKey, in.Name), in, nil, 0); err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetUser fetches a user by name
-func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
+func (s *Store) getRawUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
@@ -53,6 +58,60 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 	return user, nil
 }
 
+func secureUser(user *schema.User) *schema.User {
+	if user == nil {
+		return nil
+	}
+	// For security reasons, remove the password hash
+	user.PasswordHash = ""
+	return user
+}
+
+// GetUser fetches a user by name
+func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
+	user, err := s.getRawUser(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return secureUser(user), nil
+}
+
+// CheckUserPassword checks the given user password
+func (s *Store) CheckUserPassword(ctx context.Context, password string, name string) error {
+	user, err := s.getRawUser(ctx, name)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	// TODO: should we use the newHash ?
+	_, err = passlib.Verify(password, user.PasswordHash)
+	if err != nil {
+		return fmt.Errorf("invalid password")
+	}
+	return nil
+}
+
+// SetUserPassword sets the given user password
+func (s *Store) SetUserPassword(ctx context.Context, password string, name string) error {
+	user, err := s.getRawUser(ctx, name)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	user.PasswordHash, err = passlib.Hash(password)
+	if err != nil {
+		return err
+	}
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetUserByEmail fetches a user by email
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
 	users, err := s.ListUsers(ctx)
@@ -61,7 +120,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User,
 	}
 	for _, user := range users {
 		if strings.EqualFold(user.Email, email) {
-			return user, nil
+			return secureUser(user), nil
 		}
 	}
 	return nil, nil
@@ -75,17 +134,22 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	}
 	users := []*schema.User{}
 	for _, proto := range protos {
-		users = append(users, proto.(*schema.User))
+		users = append(users, secureUser(proto.(*schema.User)))
 	}
 	return users, nil
 }
 
 // UpdateUser updates a user
-func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
-	if err := in.Validate(); err != nil {
+func (s *Store) UpdateUser(ctx context.Context, update *schema.User) error {
+	if err := update.Validate(); err != nil {
 		return err
 	}
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, in.Name), in, 0); err != nil {
+	current, err := s.getRawUser(ctx, update.Name)
+	if err != nil {
+		return err
+	}
+	update.PasswordHash = current.PasswordHash
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, update.Name), update, 0); err != nil {
 		return err
 	}
 	return nil
@@ -141,6 +205,41 @@ func (s *Store) GetOrganizationByEmail(ctx context.Context, email string) (*sche
 	return nil, nil
 }
 
+// AddUserToOrganization adds a user to the given organization
+func (s *Store) AddUserToOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error) {
+	// Check if user is already a member
+	for _, member := range organization.Members {
+		if member.Name == user.Name {
+			return nil // User is already a member of the organization, return
+		}
+	}
+	// Add the user as a team member
+	organization.Members = append(organization.Members, &schema.OrganizationMember{
+		Name: user.Name,
+		Role: schema.OrganizationRole_ORGANIZATION_MEMBER,
+	})
+	return s.updateOrganization(ctx, organization)
+}
+
+// RemoveUserFromOrganization removes a user from the given organization
+func (s *Store) RemoveUserFromOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error) {
+	// Check if user is actually a member
+	memberIndex := -1
+	for i, member := range organization.Members {
+		if member.Name == user.Name {
+			memberIndex = i
+			break
+		}
+	}
+	if memberIndex == -1 {
+		return nil // User is not a member of the organization, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex + 1:]...)
+	return s.updateOrganization(ctx, organization)
+}
+
 // ListOrganizations lists organizations
 func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, error) {
 	protos := []proto.Message{}
@@ -154,8 +253,8 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, 
 	return organizations, nil
 }
 
-// UpdateOrganization updates a organization
-func (s *Store) UpdateOrganization(ctx context.Context, in *schema.Organization) error {
+// updateOrganization updates a organization
+func (s *Store) updateOrganization(ctx context.Context, in *schema.Organization) error {
 	if err := in.Validate(); err != nil {
 		return err
 	}
@@ -172,6 +271,105 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 		return err
 	}
 	return nil
+}
+
+// CreateTeam creates a new team
+func (s *Store) CreateTeam(ctx context.Context, organization *schema.Organization, team *schema.Team) error {
+	if err := team.Validate(); err != nil {
+		return err
+	}
+	// Check if team already exists
+	for _, t := range organization.Teams {
+		if t.Name == team.Name {
+			return fmt.Errorf("team already exists")
+		}
+	}
+	team.CreateDt = time.Now().Unix()
+	// Add the team to the organization
+	organization.Teams = append(organization.Teams, team)
+	return s.updateOrganization(ctx, organization)
+}
+
+// GetTeam fetches a team by name
+func (s *Store) GetTeam(ctx context.Context, organization *schema.Organization, name string) *schema.Team {
+	// Check if team already exists
+	for _, t := range organization.Teams {
+		if t.Name == name {
+			return t
+		}
+	}
+	return nil
+}
+
+// AddUserToTeam adds a user to the given team
+func (s *Store) AddUserToTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
+
+	// Check if user is already a member
+	for _, member := range team.Members {
+		if member.Name == user.Name {
+			return nil // User is already a member of the team, return
+		}
+	}
+
+	// Add the user as a team member
+	team.Members = append(team.Members, &schema.TeamMember{
+		Name: user.Name,
+		Role: schema.TeamRole_TEAM_MEMBER,
+	})
+
+	return s.updateOrganization(ctx, organization)
+}
+
+// RemoveUserFromTeam removes a user from the given team
+func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
+
+	// Check if user is actually a member
+	memberIndex := -1
+	for i, member := range team.Members {
+		if member.Name == user.Name {
+			memberIndex = i
+			break
+		}
+	}
+	if memberIndex == -1 {
+		return nil // User is not a member of the team, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex + 1:]...)
+	return s.updateOrganization(ctx, organization)
+}
+
+// DeleteTeam deletes a team by name
+func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organization, teamName string) error {
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
+
+	// Check if the team is actually a team in the organization
+	teamIndex := -1
+	for i, team := range team.Members {
+		if team.Name == teamName {
+			teamIndex = i
+			break
+		}
+	}
+	if teamIndex == -1 {
+		return nil // Team is not part of the organization team, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex + 1:]...)
+	return s.updateOrganization(ctx, organization)
 }
 
 // Reset resets the account store

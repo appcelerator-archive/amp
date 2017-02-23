@@ -10,7 +10,7 @@ var accountVerificationBody = `
             <h3>Please click on the link below to verify your email address and complete your registration.</h3>
             <div style="height:30px"></div>
             <a
-                href="http://amplifier-api.{ampAddress}/v1/users/verify/{token}"
+                href="http://amplifier-api.{ampAddress}/v1/users/{token}"
                 style="font-family: arial;
                     font-weight: bold;
                     text-decoration: none;

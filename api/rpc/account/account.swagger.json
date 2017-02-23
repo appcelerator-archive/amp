@@ -15,6 +15,351 @@
     "application/json"
   ],
   "paths": {
+    "/organizations/{organization_name}/teams": {
+      "get": {
+        "operationId": "ListTeams",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountListTeamsReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations": {
+      "get": {
+        "operationId": "ListOrganizations",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountListOrganizationsReply"
+            }
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      },
+      "post": {
+        "summary": "Organizations",
+        "operationId": "CreateOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountCreateOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{name}": {
+      "get": {
+        "operationId": "GetOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountGetOrganizationReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      },
+      "delete": {
+        "operationId": "DeleteOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{organization_name}/members": {
+      "post": {
+        "operationId": "AddUserToOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountAddUserToOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{organization_name}/members/{user_name}": {
+      "delete": {
+        "operationId": "RemoveUserFromOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "user_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{organization_name}/teams": {
+      "post": {
+        "summary": "Teams",
+        "operationId": "CreateTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountCreateTeamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{organization_name}/teams/{team_name}": {
+      "get": {
+        "operationId": "GetTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountGetTeamReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      },
+      "delete": {
+        "operationId": "DeleteTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organizations/{organization_name}/teams/{team_name}/members": {
+      "delete": {
+        "operationId": "RemoveUserFromTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      },
+      "post": {
+        "operationId": "AddUserToTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountAddUserToTeamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/users": {
       "get": {
         "operationId": "ListUsers",
@@ -26,6 +371,31 @@
             }
           }
         },
+        "tags": [
+          "Account"
+        ]
+      },
+      "post": {
+        "summary": "Users",
+        "operationId": "SignUp",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountSignUpRequest"
+            }
+          }
+        ],
         "tags": [
           "Account"
         ]
@@ -102,58 +472,6 @@
             "schema": {
               "$ref": "#/definitions/accountPasswordSetRequest"
             }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/signup": {
-      "post": {
-        "summary": "Users",
-        "operationId": "SignUp",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountSignUpRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/verify/{token}": {
-      "get": {
-        "operationId": "Verify",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/accountVerificationReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "token",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
           }
         ],
         "tags": [
@@ -252,47 +570,20 @@
         ]
       }
     },
-    "/v1/organization/create": {
-      "post": {
-        "summary": "Organizations",
-        "operationId": "CreateOrganization",
+    "/v1/users/{token}": {
+      "get": {
+        "operationId": "Verify",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountVerificationReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountCreateOrganizationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/organization/{name}": {
-      "delete": {
-        "operationId": "DeleteOrganization",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "name",
+            "name": "token",
             "in": "path",
             "required": true,
             "type": "string",
@@ -306,6 +597,36 @@
     }
   },
   "definitions": {
+    "accountAddUserToOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountAddUserToTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "team_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountCreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -320,10 +641,36 @@
       },
       "title": "Organizations"
     },
+    "accountCreateTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "team_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountDeleteOrganizationRequest": {
       "type": "object",
       "properties": {
         "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountDeleteTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "team_name": {
           "type": "string",
           "format": "string"
         }
@@ -338,11 +685,49 @@
         }
       }
     },
+    "accountGetOrganizationReply": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "$ref": "#/definitions/schemaOrganization"
+        }
+      }
+    },
+    "accountGetOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountGetTeamReply": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "$ref": "#/definitions/schemaTeam"
+        }
+      }
+    },
+    "accountGetTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "team_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountGetUserReply": {
       "type": "object",
       "properties": {
         "user": {
-          "$ref": "#/definitions/accountUser"
+          "$ref": "#/definitions/schemaUser"
         }
       }
     },
@@ -355,13 +740,47 @@
         }
       }
     },
+    "accountListOrganizationsReply": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemaOrganization"
+          }
+        }
+      }
+    },
+    "accountListOrganizationsRequest": {
+      "type": "object"
+    },
+    "accountListTeamsReply": {
+      "type": "object",
+      "properties": {
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemaTeam"
+          }
+        }
+      }
+    },
+    "accountListTeamsRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountListUsersReply": {
       "type": "object",
       "properties": {
         "users": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/accountUser"
+            "$ref": "#/definitions/schemaUser"
           }
         }
       }
@@ -417,6 +836,36 @@
         }
       }
     },
+    "accountRemoveUserFromOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "team_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountSignUpRequest": {
       "type": "object",
       "properties": {
@@ -434,23 +883,6 @@
         }
       },
       "title": "Users"
-    },
-    "accountUser": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "string"
-        },
-        "create_dt": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
     },
     "accountVerificationReply": {
       "type": "object",
@@ -474,6 +906,119 @@
       "type": "object",
       "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
       "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    },
+    "schemaOrganization": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemaOrganizationMember"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemaTeam"
+          }
+        }
+      }
+    },
+    "schemaOrganizationMember": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/schemaOrganizationRole"
+        }
+      }
+    },
+    "schemaOrganizationRole": {
+      "type": "string",
+      "enum": [
+        "ORGANIZATION_OWNER",
+        "ORGANIZATION_MEMBER"
+      ],
+      "default": "ORGANIZATION_OWNER"
+    },
+    "schemaTeam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemaTeamMember"
+          }
+        }
+      }
+    },
+    "schemaTeamMember": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/schemaTeamRole"
+        }
+      }
+    },
+    "schemaTeamRole": {
+      "type": "string",
+      "enum": [
+        "TEAM_OWNER",
+        "TEAM_MEMBER"
+      ],
+      "default": "TEAM_OWNER"
+    },
+    "schemaUser": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "string"
+        },
+        "password_hash": {
+          "type": "string",
+          "format": "string"
+        },
+        "is_verified": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
     }
   }
 }
