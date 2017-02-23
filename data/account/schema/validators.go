@@ -19,7 +19,7 @@ func CheckName(name string) error {
 		return fmt.Errorf("name is mandatory")
 	}
 	if !nameFormat.MatchString(name) {
-		return fmt.Errorf("name is invlaid")
+		return fmt.Errorf("name is invalid")
 	}
 	return nil
 }
