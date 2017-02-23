@@ -1,4 +1,4 @@
-FROM golang:1.7-alpine
+FROM golang:1.8-alpine
 # This builds a convenience "all-in-one" image for go development.
 # It intentionally does not remove any build prerequisites like most of our other
 # images since this image is meant strictly for building things.
