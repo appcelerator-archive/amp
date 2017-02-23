@@ -52,6 +52,8 @@ var (
 		"/account.Account/PasswordReset",
 		"/account.Account/PasswordSet",
 		"/account.Account/ForgotLogin",
+		"/account.Account/GetUser",
+		"/account.Account/ListUsers",
 
 		"/version.Version/List",
 	}

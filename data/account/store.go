@@ -116,12 +116,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 // Reset resets the account store
-func (s *Store) Reset(ctx context.Context) error {
-	if err := s.Store.Delete(ctx, usersRootKey, true, nil); err != nil {
-		return err
-	}
-	if err := s.Store.Delete(ctx, organizationsRootKey, true, nil); err != nil {
-		return err
-	}
-	return nil
+func (s *Store) Reset(ctx context.Context) {
+	s.Store.Delete(ctx, usersRootKey, true, nil)
+	s.Store.Delete(ctx, organizationsRootKey, true, nil)
 }
