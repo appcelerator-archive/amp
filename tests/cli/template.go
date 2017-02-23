@@ -27,11 +27,7 @@ func templating(input string, cache map[string]string) (output string, err error
 	}
 
 	// Custom function to create a unique name with a randomly generated string.
-<<<<<<< HEAD
 	uniq := func(in string) string {
-=======
-	name := func(in string) string {
->>>>>>> e665a904daddf7ede359528cb4cd0e44acf32d68
 		if val, ok := cache[in]; ok {
 			return val
 		}
@@ -50,7 +46,6 @@ func templating(input string, cache map[string]string) (output string, err error
 		return out
 	}
 
-<<<<<<< HEAD
 	// Custom function to generate token for account verify command.
 	verify := func(in string) (string, error) {
 		token, err := auth.CreateUserToken(in, time.Hour)
@@ -60,9 +55,6 @@ func templating(input string, cache map[string]string) (output string, err error
 		cache[in] = token
 		return token, nil
 	}
-
-=======
->>>>>>> e665a904daddf7ede359528cb4cd0e44acf32d68
 	// Buffer to store output of template execution.
 	var doc bytes.Buffer
 
