@@ -2,7 +2,7 @@ name: setup
 test-timeout: 1m
 cmd-timeout: 30s
 commands:
-  - sign-up:
+  - account-signup:
     cmd: amp account signup
     args:
     options:
@@ -10,7 +10,25 @@ commands:
       - cliusername
       - cli@amp.io
       - cliPassword
-    expectation:
+    expectation: account-signup
+
+  - account-verify:
+    cmd: amp account verify
+    args:
+    options:
+    input:
+      - "{{call .verify  `cliusername`}}"
+    expectation: account-verify
+
+  - account-login:
+    cmd: amp account login
+    args:
+    options:
+    input:
+      - cliusername
+      - cliPassword
+    expectation: account-login
+
   - platform-status:
     cmd: amp platform status
     args:

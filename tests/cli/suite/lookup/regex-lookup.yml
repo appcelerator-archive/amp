@@ -1,3 +1,9 @@
+account-forgot-login: "Your login name has been sent to the address: cli@amp.io"
+account-login: "Welcome back, cliusername"
+account-pwd-change: "Your password change has been successful."
+account-pwd-reset: "Hi cliusername! Please check your email to complete the password reset process."
+account-signup: "Hi cliusername! Please check your email to complete the signup process."
+account-verify: "Your account has now been activated."
 logs-all: ([a-zA-Z0-9\.\-:\"\s\_\t\n$&?/\[\]%><,;()+='*{}\\]*)
 logs-metadata: (timestamp:"[A-Z0-9\.\-:\"]+\s+time_id:"[A-Z0-9\.\-:\"]+\s+service_id:"[a-zA-Z0-9$\"]+\s+service_name:"[a-zA-Z0-9\-$\"]+\s+message:"[a-z0-9\./\-:\s\_\"=\t\n\$\\&%?\[\]\%\>\<\,\;\+$\"]+\s+container_id:"[a-z0-9$\"]+\s+node_id:"[a-z0-9$\"]+\s+task_id:"[a-z0-9$\"]+\s+task_name:"[a-zA-Z0-9\.\-$\"]+)
 logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
