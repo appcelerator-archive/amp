@@ -221,6 +221,7 @@ func (s *Store) CreateTeam(ctx context.Context, organization *schema.Organizatio
 			return fmt.Errorf("team already exists")
 		}
 	}
+	team.CreateDt = time.Now().Unix()
 	// Add the team to the organization
 	organization.Teams = append(organization.Teams, team)
 	return s.updateOrganization(ctx, organization)

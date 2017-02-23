@@ -148,3 +148,53 @@ func (r *DeleteOrganizationRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate validates CreateTeamRequest
+func (r *CreateTeamRequest) Validate() error {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.TeamName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates AddTeamMemberRequest
+func (r *AddUserToTeamRequest) Validate() (err error) {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.TeamName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.UserName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates RemoveUserFromTeamRequest
+func (r *RemoveUserFromTeamRequest) Validate() (err error) {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.TeamName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.UserName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates DeleteTeamRequest
+func (r *DeleteTeamRequest) Validate() (err error) {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.TeamName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
