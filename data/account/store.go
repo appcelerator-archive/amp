@@ -262,17 +262,50 @@ func (s *Store) AddUserToTeam(ctx context.Context, organization *schema.Organiza
 
 // RemoveUserFromTeam removes a user from the given team
 func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
-	return nil
-}
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
 
-// ListTeams lists teams
-func (s *Store) ListTeams(ctx context.Context, organization *schema.Organization) ([]*schema.Team, error) {
-	return nil, nil
+	// Check if user is actually a member
+	memberIndex := -1
+	for i, member := range team.Members {
+		if member.Name == user.Name {
+			memberIndex = i
+			break
+		}
+	}
+	if memberIndex == -1 {
+		return nil // User is not a member of the team, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
+	return s.updateOrganization(ctx, organization)
 }
 
 // DeleteTeam deletes a team by name
-func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organization, name string) error {
-	return nil
+func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organization, teamName string) error {
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
+
+	// Check if the team is actually a team in the organization
+	teamIndex := -1
+	for i, team := range team.Members {
+		if team.Name == teamName {
+			teamIndex = i
+			break
+		}
+	}
+	if teamIndex == -1 {
+		return nil // Team is not part of the organization team, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex+1:]...)
+	return s.updateOrganization(ctx, organization)
 }
 
 // Reset resets the account store

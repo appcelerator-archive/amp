@@ -59,9 +59,6 @@ type Interface interface {
 	// RemoveUserFromTeam removes a user from the given team
 	RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, name string, user *schema.User) (err error)
 
-	// ListTeams lists teams
-	ListTeams(ctx context.Context, organization *schema.Organization) (teams []*schema.Team, err error)
-
 	// DeleteTeam deletes a team by name
 	DeleteTeam(ctx context.Context, organization *schema.Organization, name string) (err error)
 
