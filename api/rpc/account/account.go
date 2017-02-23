@@ -5,7 +5,7 @@ import (
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/pkg/ampmail"
+	"github.com/appcelerator/amp/pkg/mail"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/hlandau/passlib"
 	"golang.org/x/net/context"
@@ -65,7 +65,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 	}
 
 	// Send the verification email
-	if err := ampmail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
+	if err := mail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully created user", in.Name)
@@ -170,7 +170,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	}
 
 	// Send the password reset email
-	if err := ampmail.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
+	if err := mail.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully reset password for user", user.Name)
@@ -274,7 +274,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.E
 	}
 
 	// Send the account name reminder email
-	if err := ampmail.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
+	if err := mail.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully processed forgot login request for user", user.Name)

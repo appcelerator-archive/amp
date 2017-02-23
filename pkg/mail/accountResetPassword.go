@@ -1,49 +1,34 @@
-package webmail
+package mail
 
-var accountVerificationBodyOk = `
+var accountResetPasswordEmailBody = `
 <!DOCTYPE html>
 <html>
-<body style="background-color:white">
-  <div style="color:#404040;">
-    <div style="height:30px"></div>
-  <h3>Your acount <b style="color:red">{accountName}</b> is ready</h3>
-</body>
-</html>
-
-`
-
-var accountVerificationBodyKo = `
-<!DOCTYPE html>
-<html>
-<body style="background-color:white">
-  <div style="color:#404040;">
-    <div style="height:30px"></div>
-  <h3 style="color:red">{accountName} confirmation error: {error}</h3>
-</body>
-</html>
-
-`
-
-var accountResetPasswordOk = `
-<!DOCTYPE html>
-<html>
-<body style="background-color:white">
-  <div style="color:#404040;">
-   <div style="height:30px"></div>
-  <h3>The password of your account <b style="color:red">{accountName}</b> has been reset</h3>
-</body>
-</html>
-
-`
-
-var accountResetPasswordKo = `
-<!DOCTYPE html>
-<html>
-<body style="background-color:white">
-  <div style="color:#404040;">
-   <div style="height:30px"></div>
-  <h3>Error reseting the password of your acount <b style="color:red">{accountName}</b>: {error}</h3>
-</body>
+    <body style="background-color:white">
+        <div style="color:#404040;">
+            <h3>If you requested a new password for your AMP account <b style="color:red">{accountName},</b> please clic below,</h3>
+            <div style="height:30px"></div>
+            <a
+                href="http://account.{ampAddress}:8085/v1/ampaccount/{accountName}/resetpassword/{token}"
+                style="font-family: arial;
+                    font-weight: bold;
+                    text-decoration: none;
+                    color: #FFFFFF;
+                    font-size: 17px;
+                    padding:10px 10px;
+                    -moz-border-radius: 20px;
+                    -webkit-border-radius: 20px;
+                    border-radius: 20px;
+                    background: #EE303C;"
+            >
+                &nbsp RESET PASSWORD &nbsp
+            </a>
+        </div>
+        <div style="height:20px"></div>
+        <div style="color:#404040;">
+            <h4>If you didn't make this request, you can safely ignore this email</h4>
+            <h4>This link is good for one hour only</h4>
+        </div>
+    </body>
 </html>
 
 `

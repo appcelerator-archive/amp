@@ -1,4 +1,4 @@
-package ampmail
+package mail
 
 import (
 	"fmt"
@@ -122,7 +122,7 @@ func UpdateAmpMailConfig(serverAddress string, port string, sender string, pwd s
 }
 
 func sendMailUsingSendGrid(to string, subject string, body string) error {
-	apiKey := config.SendGridKey
+	apiKey := config.EmailKey
 	from := mail.NewEmail("amp", config.EmailSender)
 	target := mail.NewEmail(strings.Split(to, "@")[0], to)
 	content := mail.NewContent("text/html", body)
