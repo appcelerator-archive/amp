@@ -368,7 +368,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 		Members: []*schema.OrganizationMember{
 			{
 				Name: requester.Name,
-				Role: schema.OrganizationRole_OWNER,
+				Role: schema.OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
 	}
@@ -554,11 +554,32 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	if err := s.accounts.DeleteOrganization(ctx, organization.Id); err != nil {
+	// Delete organization
+	if err := s.accounts.DeleteOrganization(ctx, organization.Name); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
 	// TODO: We probably need to send an email ...
 	log.Println("Successfully deleted organization", in.Name)
 
+	return &pb.Empty{}, nil
+}
+
+// CreateTeam implements account.CreateTeam
+func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Empty, error) {
+	return &pb.Empty{}, nil
+}
+
+// AddUserToTeam implements account.AddUserToTeam
+func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*pb.Empty, error) {
+	return &pb.Empty{}, nil
+}
+
+// RemoveUserFromTeam implements account.RemoveUserFromTeam
+func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest) (*pb.Empty, error) {
+	return &pb.Empty{}, nil
+}
+
+// DeleteTeam implements account.DeleteTeam
+func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }

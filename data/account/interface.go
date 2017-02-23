@@ -47,6 +47,24 @@ type Interface interface {
 	// DeleteOrganization deletes a organization by name
 	DeleteOrganization(ctx context.Context, name string) (err error)
 
+	// CreateTeam creates a new team
+	CreateTeam(ctx context.Context, organization *schema.Organization, team *schema.Team) (err error)
+
+	// GetTeam fetches a team by name
+	GetTeam(ctx context.Context, organization *schema.Organization, name string) (team *schema.Team)
+
+	// AddUserToTeam adds a user to the given team
+	AddUserToTeam(ctx context.Context, organization *schema.Organization, name string, user *schema.User) (err error)
+
+	// RemoveUserFromTeam removes a user from the given team
+	RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, name string, user *schema.User) (err error)
+
+	// ListTeams lists teams
+	ListTeams(ctx context.Context, organization *schema.Organization) (teams []*schema.Team, err error)
+
+	// DeleteTeam deletes a team by name
+	DeleteTeam(ctx context.Context, organization *schema.Organization, name string) (err error)
+
 	// Reset resets the user store
 	Reset(ctx context.Context)
 }

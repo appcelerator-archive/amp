@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"fmt"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
@@ -152,7 +153,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organization *schema.
 	// Add the user as a team member
 	organization.Members = append(organization.Members, &schema.OrganizationMember{
 		Name: user.Name,
-		Role: schema.OrganizationRole_MEMBER,
+		Role: schema.OrganizationRole_ORGANIZATION_MEMBER,
 	})
 	return s.updateOrganization(ctx, organization)
 }
@@ -206,6 +207,71 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	if err := s.Store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
 		return err
 	}
+	return nil
+}
+
+// CreateTeam creates a new team
+func (s *Store) CreateTeam(ctx context.Context, organization *schema.Organization, team *schema.Team) error {
+	if err := team.Validate(); err != nil {
+		return err
+	}
+	// Check if team already exists
+	for _, t := range organization.Teams {
+		if t.Name == team.Name {
+			return fmt.Errorf("team already exists")
+		}
+	}
+	// Add the team to the organization
+	organization.Teams = append(organization.Teams, team)
+	return s.updateOrganization(ctx, organization)
+}
+
+// GetTeam fetches a team by name
+func (s *Store) GetTeam(ctx context.Context, organization *schema.Organization, name string) *schema.Team {
+	// Check if team already exists
+	for _, t := range organization.Teams {
+		if t.Name == name {
+			return t
+		}
+	}
+	return nil
+}
+
+// AddUserToTeam adds a user to the given team
+func (s *Store) AddUserToTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
+	team := s.GetTeam(ctx, organization, teamName)
+	if team == nil {
+		return fmt.Errorf("team not found")
+	}
+
+	// Check if user is already a member
+	for _, member := range team.Members {
+		if member.Name == user.Name {
+			return nil // User is already a member of the team, return
+		}
+	}
+
+	// Add the user as a team member
+	team.Members = append(team.Members, &schema.TeamMember{
+		Name: user.Name,
+		Role: schema.TeamRole_TEAM_MEMBER,
+	})
+
+	return s.updateOrganization(ctx, organization)
+}
+
+// RemoveUserFromTeam removes a user from the given team
+func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
+	return nil
+}
+
+// ListTeams lists teams
+func (s *Store) ListTeams(ctx context.Context, organization *schema.Organization) ([]*schema.Team, error) {
+	return nil, nil
+}
+
+// DeleteTeam deletes a team by name
+func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organization, name string) error {
 	return nil
 }
 
