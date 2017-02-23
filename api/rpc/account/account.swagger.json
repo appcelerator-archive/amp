@@ -15,243 +15,6 @@
     "application/json"
   ],
   "paths": {
-    "/v1/users": {
-      "get": {
-        "operationId": "ListUsers",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/accountListUsersReply"
-            }
-          }
-        },
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/login": {
-      "post": {
-        "operationId": "Login",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountLogInRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/passwordChange": {
-      "post": {
-        "operationId": "PasswordChange",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordChangeRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/passwordSet": {
-      "post": {
-        "operationId": "PasswordSet",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordSetRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/signup": {
-      "post": {
-        "summary": "Users",
-        "operationId": "SignUp",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountSignUpRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/verify/{token}": {
-      "get": {
-        "operationId": "Verify",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/accountVerificationReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "token",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/{email}/forgotLogin": {
-      "post": {
-        "operationId": "ForgotLogin",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "email",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountForgotLoginRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/{name}": {
-      "get": {
-        "operationId": "GetUser",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/accountGetUserReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
-    "/v1/users/{name}/passwordReset": {
-      "post": {
-        "operationId": "PasswordReset",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string",
-            "format": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountPasswordResetRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
     "/v1/organization/create": {
       "post": {
         "summary": "Organizations",
@@ -376,6 +139,244 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/accountRemoveUserFromOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "operationId": "ListUsers",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountListUsersReply"
+            }
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/login": {
+      "post": {
+        "operationId": "Login",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountLogInRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/passwordChange": {
+      "post": {
+        "operationId": "PasswordChange",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordChangeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/passwordSet": {
+      "post": {
+        "operationId": "PasswordSet",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordSetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/signup": {
+      "post": {
+        "summary": "Users",
+        "operationId": "SignUp",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountSignUpRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/verify": {
+      "post": {
+        "operationId": "Verify",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountVerificationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/{email}/forgotLogin": {
+      "post": {
+        "operationId": "ForgotLogin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountForgotLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/{name}": {
+      "get": {
+        "operationId": "GetUser",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/accountGetUserReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/users/{name}/passwordReset": {
+      "post": {
+        "operationId": "PasswordReset",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountPasswordResetRequest"
             }
           }
         ],
@@ -538,8 +539,7 @@
           "type": "string",
           "format": "string"
         }
-      },
-      "title": "Users"
+      }
     },
     "accountUser": {
       "type": "object",
@@ -556,16 +556,8 @@
           "type": "string",
           "format": "int64"
         }
-      }
-    },
-    "accountVerificationReply": {
-      "type": "object",
-      "properties": {
-        "reply": {
-          "type": "string",
-          "format": "string"
-        }
-      }
+      },
+      "title": "Users"
     },
     "accountVerificationRequest": {
       "type": "object",

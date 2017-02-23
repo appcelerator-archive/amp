@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service Account {
+
   // Users
   rpc SignUp (SignUpRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
@@ -58,12 +59,6 @@ service Account {
       get: "/v1/users"
     };
   };
-}
-
-message User {
-  string name = 1;
-  string email = 2;
-  int64 create_dt = 3;
 
   // Organizations
   rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
@@ -92,6 +87,12 @@ message User {
 }
 
 // Users
+message User {
+  string name = 1;
+  string email = 2;
+  int64 create_dt = 3;
+}
+
 message SignUpRequest {
   string name = 1;
   string password = 2;
