@@ -3,10 +3,7 @@ timeout: 1m
 lookupdir: /lookup
 setupdir: /setup
 testdirs:
-<<<<<<< HEAD
   - /account
-=======
->>>>>>> e665a904daddf7ede359528cb4cd0e44acf32d68
   - /kv
   - /logs
   - /service
