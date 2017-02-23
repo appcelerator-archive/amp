@@ -15,7 +15,7 @@ enum OrganizationRole {
   MEMBER = 1;
 }
 
-message Member {
+message OrganizationMember {
   string name = 1;
   OrganizationRole role = 2;
 }
@@ -25,6 +25,5 @@ message Organization {
   string name = 2;
   string email = 3;
   int64 create_dt = 4;
-  repeated Member members = 5;
+  repeated OrganizationMember members = 5;
 }
-

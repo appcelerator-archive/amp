@@ -141,6 +141,41 @@ func (s *Store) GetOrganizationByEmail(ctx context.Context, email string) (*sche
 	return nil, nil
 }
 
+// AddUserToOrganization adds a user to the given organization
+func (s *Store) AddUserToOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error) {
+	// Check if user is already a member
+	for _, member := range organization.Members {
+		if member.Name == user.Name {
+			return nil // User is already a member of the organization, return
+		}
+	}
+	// Add the user as a team member
+	organization.Members = append(organization.Members, &schema.OrganizationMember{
+		Name: user.Name,
+		Role: schema.OrganizationRole_MEMBER,
+	})
+	return s.updateOrganization(ctx, organization)
+}
+
+// RemoveUserFromOrganization removes a user from the given organization
+func (s *Store) RemoveUserFromOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error) {
+	// Check if user is actually a member
+	memberIndex := -1
+	for i, member := range organization.Members {
+		if member.Name == user.Name {
+			memberIndex = i
+			break
+		}
+	}
+	if memberIndex == -1 {
+		return nil // User is not a member of the organization, return
+	}
+
+	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
+	return s.updateOrganization(ctx, organization)
+}
+
 // ListOrganizations lists organizations
 func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, error) {
 	protos := []proto.Message{}
@@ -154,8 +189,8 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, 
 	return organizations, nil
 }
 
-// UpdateOrganization updates a organization
-func (s *Store) UpdateOrganization(ctx context.Context, in *schema.Organization) error {
+// updateOrganization updates a organization
+func (s *Store) updateOrganization(ctx context.Context, in *schema.Organization) error {
 	if err := in.Validate(); err != nil {
 		return err
 	}

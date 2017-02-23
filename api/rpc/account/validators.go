@@ -119,6 +119,28 @@ func (r *CreateOrganizationRequest) Validate() (err error) {
 	return nil
 }
 
+// Validate validates AddOrganizationMemberRequest
+func (r *AddUserToOrganizationRequest) Validate() (err error) {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.UserName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates RemoveOrganizationMemberRequest
+func (r *RemoveUserFromOrganizationRequest) Validate() error {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.UserName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
 // Validate validates DeleteOrganizationRequest
 func (r *DeleteOrganizationRequest) Validate() error {
 	if err := schema.CheckName(r.Name); err != nil {

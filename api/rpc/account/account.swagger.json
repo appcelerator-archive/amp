@@ -303,9 +303,102 @@
           "Account"
         ]
       }
+    },
+    "/v1/organization/{organization_name}/add/{user_name}": {
+      "post": {
+        "operationId": "AddUserToOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "user_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountAddUserToOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/v1/organization/{organization_name}/remove/{user_name}": {
+      "post": {
+        "operationId": "RemoveUserFromOrganization",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "user_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountRemoveUserFromOrganizationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
     }
   },
   "definitions": {
+    "accountAddUserToOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
     "accountCreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -412,6 +505,19 @@
           "format": "string"
         },
         "password": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
           "type": "string",
           "format": "string"
         }

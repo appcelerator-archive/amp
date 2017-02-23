@@ -43,21 +43,28 @@ func CheckEmailAddress(email string) (string, error) {
 	return address.Address, nil
 }
 
-func checkMember(member *Member) error {
+func checkMember(member *OrganizationMember) error {
 	if isEmpty(member.Name) {
-		return fmt.Errorf("member name is mandatory")
+		return fmt.Errorf("organization member name is mandatory")
 	}
 	return nil
 }
 
-func checkMembers(members []*Member) error {
+func checkMembers(members []*OrganizationMember) error {
 	if len(members) == 0 {
-		return fmt.Errorf("members cannot be empty")
+		return fmt.Errorf("organization members cannot be empty")
 	}
+	haveAtLeastOneOwner := false
 	for _, member := range members {
 		if err := checkMember(member); err != nil {
 			return err
 		}
+		if member.Role == OrganizationRole_OWNER {
+			haveAtLeastOneOwner = true
+		}
+	}
+	if !haveAtLeastOneOwner {
+		return fmt.Errorf("organization must have at least one owner")
 	}
 	return nil
 }

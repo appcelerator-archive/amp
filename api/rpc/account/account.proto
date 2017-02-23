@@ -72,6 +72,18 @@ message User {
       body: "*"
     };
   };
+  rpc AddUserToOrganization (AddUserToOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/organization/{organization_name}/add/{user_name}",
+      body: "*"
+    };
+  };
+  rpc RemoveUserFromOrganization (RemoveUserFromOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/organization/{organization_name}/remove/{user_name}",
+      body: "*"
+    };
+  };
   rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/organization/{name}"
@@ -140,4 +152,14 @@ message CreateOrganizationRequest {
 
 message DeleteOrganizationRequest {
   string name = 1;
+}
+
+message AddUserToOrganizationRequest {
+  string organization_name = 1;
+  string user_name = 2;
+}
+
+message RemoveUserFromOrganizationRequest {
+  string organization_name = 1;
+  string user_name = 2;
 }

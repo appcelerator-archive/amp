@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/pkg/mail"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/hlandau/passlib"
+	"github.com/ory-am/ladon"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -335,16 +336,20 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 		return nil, err
 	}
 
-	// Get the user
-	user, err := s.accounts.GetUserFromContext(ctx)
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
 	}
 
 	// Check if organization already exists
@@ -360,9 +365,9 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 	organization := &schema.Organization{
 		Email: in.Email,
 		Name:  in.Name,
-		Members: []*schema.Member{
+		Members: []*schema.OrganizationMember{
 			{
-				Name: user.Name,
+				Name: requester.Name,
 				Role: schema.OrganizationRole_OWNER,
 			},
 		},
@@ -370,9 +375,139 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 	if err := s.accounts.CreateOrganization(ctx, organization); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
+	// TODO: We probably need to send an email ...
 	log.Println("Successfully created organization", in.Name)
 
+	return &pb.Empty{}, nil
+}
+
+// AddUserToOrganization implements account.AddOrganizationMember
+func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+	}
+
+	// Check if organization exists
+	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+
+	// Check authorization
+	if err := auth.Warden.IsAllowed(&ladon.Request{
+		Subject:  requester.Name,
+		Action:   auth.UpdateAction,
+		Resource: auth.OrganizationResource,
+		Context: ladon.Context{
+			"owners": organization.GetOwners(),
+		},
+	}); err != nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
+	// Check if the user exists
+	user, err := s.accounts.GetUser(ctx, in.UserName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	}
+
+	// Add the new member
+	if err := s.accounts.AddUserToOrganization(ctx, organization, user); err != nil {
+		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
+	}
 	// TODO: We probably need to send an email ...
+	log.Printf("Successfully added member %s to organization %s\n", in.UserName, organization.Name)
+
+	return &pb.Empty{}, nil
+}
+
+// RemoveUserFromOrganization implements account.RemoveOrganizationMember
+func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest) (*pb.Empty, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+	}
+
+	// Check if organization exists
+	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+
+	// Check authorization
+	if err := auth.Warden.IsAllowed(&ladon.Request{
+		Subject:  requester.Name,
+		Action:   auth.UpdateAction,
+		Resource: auth.OrganizationResource,
+		Context: ladon.Context{
+			"owners": organization.GetOwners(),
+		},
+	}); err != nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
+	// Check if the user exists
+	user, err := s.accounts.GetUser(ctx, in.UserName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	}
+
+	// Remove the existing member
+	if err := s.accounts.RemoveUserFromOrganization(ctx, organization, user); err != nil {
+		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
+	}
+	// TODO: We probably need to send an email ...
+	log.Printf("Successfully removed user %s from organization %s\n", in.UserName, organization.Name)
+
 	return &pb.Empty{}, nil
 }
 
@@ -382,16 +517,20 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		return nil, err
 	}
 
-	// Get the user
-	user, err := s.accounts.GetUserFromContext(ctx)
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
 	}
 
 	// Check if organization exists
@@ -403,13 +542,23 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		return nil, grpc.Errorf(codes.NotFound, "organization not found")
 	}
 
-	// TODO: check if user is authorized to delete this organization
+	// Check authorization
+	if err := auth.Warden.IsAllowed(&ladon.Request{
+		Subject:  requester.Name,
+		Action:   auth.DeleteAction,
+		Resource: auth.OrganizationResource,
+		Context: ladon.Context{
+			"owners": organization.GetOwners(),
+		},
+	}); err != nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
+	}
 
 	if err := s.accounts.DeleteOrganization(ctx, organization.Id); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
+	// TODO: We probably need to send an email ...
 	log.Println("Successfully deleted organization", in.Name)
 
-	// TODO: We probably need to send an email ...
 	return &pb.Empty{}, nil
 }

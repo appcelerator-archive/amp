@@ -35,11 +35,14 @@ type Interface interface {
 	// GetOrganizationByEmail fetches a organization by email
 	GetOrganizationByEmail(ctx context.Context, email string) (organization *schema.Organization, err error)
 
+	// AddUserToOrganization adds a user to the given organization
+	AddUserToOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error)
+
+	// RemoveUserFromOrganization removes a user from the given organization
+	RemoveUserFromOrganization(ctx context.Context, organization *schema.Organization, user *schema.User) (err error)
+
 	// ListOrganizations lists organizations
 	ListOrganizations(ctx context.Context) (organizations []*schema.Organization, err error)
-
-	// UpdateOrganization updates a organization
-	UpdateOrganization(ctx context.Context, update *schema.Organization) (err error)
 
 	// DeleteOrganization deletes a organization by name
 	DeleteOrganization(ctx context.Context, name string) (err error)
