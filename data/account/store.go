@@ -2,12 +2,9 @@ package account
 
 import (
 	"context"
-	"fmt"
-	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
-	"google.golang.org/grpc/metadata"
 	"path"
 	"strings"
 	"time"
@@ -68,20 +65,6 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User,
 	return nil, nil
 }
 
-// GetUserFromContext fetches a user from context metadata
-func (s *Store) GetUserFromContext(ctx context.Context) (*schema.User, error) {
-	md, ok := metadata.FromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("unable to get metadata from context")
-	}
-	users := md[auth.RequesterKey]
-	if len(users) == 0 {
-		return nil, fmt.Errorf("context metadata has no requester field")
-	}
-	user := users[0]
-	return s.GetUser(ctx, user)
-}
-
 // ListUsers lists users
 func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	protos := []proto.Message{}
@@ -116,12 +99,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 // Reset resets the account store
-func (s *Store) Reset(ctx context.Context) error {
-	if err := s.Store.Delete(ctx, usersRootKey, true, nil); err != nil {
-		return err
-	}
-	if err := s.Store.Delete(ctx, organizationsRootKey, true, nil); err != nil {
-		return err
-	}
-	return nil
+func (s *Store) Reset(ctx context.Context) {
+	s.Store.Delete(ctx, usersRootKey, true, nil)
+	s.Store.Delete(ctx, organizationsRootKey, true, nil)
 }

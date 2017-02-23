@@ -52,6 +52,8 @@ var (
 		"/account.Account/PasswordReset",
 		"/account.Account/PasswordSet",
 		"/account.Account/ForgotLogin",
+		"/account.Account/GetUser",
+		"/account.Account/ListUsers",
 
 		"/version.Version/List",
 	}
@@ -141,4 +143,18 @@ func ValidateUserToken(signedString string) (*UserClaims, error) {
 		return nil, fmt.Errorf("invalid claims")
 	}
 	return claims, nil
+}
+
+// GetRequester gets the requester from context metadata
+func GetRequesterName(ctx context.Context) (string, error) {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("unable to get metadata from context")
+	}
+	users := md[RequesterKey]
+	if len(users) == 0 {
+		return "", fmt.Errorf("context metadata has no requester field")
+	}
+	user := users[0]
+	return user, nil
 }

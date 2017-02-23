@@ -222,20 +222,24 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 		return nil, err
 	}
 
-	// Get the user
-	user, err := s.accounts.GetUserFromContext(ctx)
+	// Get the requester
+	requesterName, err := auth.GetRequesterName(ctx)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	requester, err := s.accounts.GetUser(ctx, requesterName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	if !requester.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
 	}
 
 	// Check the existing password password
-	_, err = passlib.Verify(in.ExistingPassword, user.PasswordHash)
+	_, err = passlib.Verify(in.ExistingPassword, requester.PasswordHash)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
@@ -245,11 +249,11 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	user.PasswordHash = newPasswordHash
-	if err := s.accounts.UpdateUser(ctx, user); err != nil {
+	requester.PasswordHash = newPasswordHash
+	if err := s.accounts.UpdateUser(ctx, requester); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
-	log.Println("Successfully updated the password for user", user.Name)
+	log.Println("Successfully updated the password for user", requester.Name)
 
 	return &pb.Empty{}, nil
 }
@@ -276,4 +280,43 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.E
 	log.Println("Successfully processed forgot login request for user", user.Name)
 
 	return &pb.Empty{}, nil
+}
+
+// GetUser implements account.GetUser
+func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the user
+	user, err := s.accounts.GetUser(ctx, in.Name)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	log.Println("Successfully retrieved user", user.Name)
+
+	return &GetUserReply{User: FromSchema(user)}, nil
+}
+
+// ListUsers implements account.ListUsers
+func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUsersReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// List users
+	users, err := s.accounts.ListUsers(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	reply := &ListUsersReply{}
+	for _, user := range users {
+		reply.Users = append(reply.Users, FromSchema(user))
+	}
+	log.Println("Successfully list users")
+
+	return reply, nil
 }

@@ -528,3 +528,54 @@ func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
 	_, forgotLoginErr := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{Email: "this is not a valid email"})
 	assert.Error(t, forgotLoginErr)
 }
+
+func TestUserGet(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
+	// Verify
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, verifyErr)
+
+	// Get
+	getReply, getErr := accountClient.GetUser(ctx, &account.GetUserRequest{Name: signUpRequest.Name})
+	assert.NoError(t, getErr)
+	assert.NotEmpty(t, getReply)
+	assert.Equal(t, getReply.User.Name, signUpRequest.Name)
+	assert.Equal(t, getReply.User.Email, signUpRequest.Email)
+	assert.NotEmpty(t, getReply.User.CreateDt)
+}
+
+func TestUserList(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
+	assert.NoError(t, signUpErr)
+
+	// Create a token
+	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
+	assert.NoError(t, createTokenErr)
+
+	// Verify
+	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, verifyErr)
+
+	// List
+	listReply, listErr := accountClient.ListUsers(ctx, &account.ListUsersRequest{})
+	assert.NoError(t, listErr)
+	assert.NotEmpty(t, listReply)
+	assert.Len(t, listReply.Users, 1)
+	assert.Equal(t, listReply.Users[0].Name, signUpRequest.Name)
+	assert.Equal(t, listReply.Users[0].Email, signUpRequest.Email)
+	assert.NotEmpty(t, listReply.Users[0].CreateDt)
+}

@@ -17,9 +17,6 @@ type Interface interface {
 	// GetUserByEmail fetches a user by email
 	GetUserByEmail(ctx context.Context, email string) (user *schema.User, err error)
 
-	// GetUserFromContext fetches a user from context metadata
-	GetUserFromContext(ctx context.Context) (user *schema.User, err error)
-
 	// ListUsers lists users
 	ListUsers(ctx context.Context) (users []*schema.User, err error)
 
@@ -29,6 +26,6 @@ type Interface interface {
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
 
-	// Reset resets the user store
-	Reset(ctx context.Context) (err error)
+	// Reset resets the account store
+	Reset(ctx context.Context)
 }
