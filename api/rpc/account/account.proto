@@ -8,46 +8,62 @@ import "google/protobuf/empty.proto";
 service Account {
   rpc SignUp (SignUpRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/signup",
+      post: "/v1/users/signup",
       body: "*"
     };
   };
   rpc Verify (VerificationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/verify",
+      post: "/v1/users/verify",
       body: "*"
     };
   };
   rpc Login (LogInRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/login",
+      post: "/v1/users/login",
       body: "*"
     };
   };
   rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{name}/passwordReset",
+      post: "/v1/users/{name}/passwordReset",
       body: "*"
     };
   };
   rpc PasswordSet (PasswordSetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/passwordSet",
+      post: "/v1/users/passwordSet",
       body: "*"
     };
   };
   rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/passwordChange",
+      post: "/v1/users/passwordChange",
       body: "*"
     };
   };
-  rpc ForgotLogin(ForgotLoginRequest) returns (google.protobuf.Empty) {
+  rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/account/{email}/forgotLogin",
+      post: "/v1/users/{email}/forgotLogin",
       body: "*"
     };
   };
+  rpc GetUser (GetUserRequest) returns (GetUserReply) {
+    option (google.api.http) = {
+      get: "/v1/users/{name}"
+    };
+  };
+  rpc ListUsers (ListUsersRequest) returns (ListUsersReply) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  };
+}
+
+message User {
+  string name = 1;
+  string email = 2;
+  int64 create_dt = 3;
 }
 
 message SignUpRequest {
@@ -81,4 +97,19 @@ message PasswordChangeRequest {
 
 message ForgotLoginRequest {
   string email = 1;
+}
+
+message GetUserRequest {
+  string name = 1;
+}
+
+message GetUserReply {
+  User user = 1;
+}
+
+message ListUsersRequest {
+}
+
+message ListUsersReply {
+  repeated User users = 1;
 }

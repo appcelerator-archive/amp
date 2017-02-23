@@ -29,6 +29,6 @@ type Interface interface {
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
 
-	// Reset resets the user store
-	Reset(ctx context.Context) (err error)
+	// Reset resets the account store
+	Reset(ctx context.Context)
 }
