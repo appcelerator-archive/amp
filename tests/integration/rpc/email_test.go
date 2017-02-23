@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/mail"
+	netmail "net/mail"
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp/pkg/ampmail"
+	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/mhale/smtpd"
 )
 
@@ -27,18 +27,18 @@ var accountName = "myAccount"
 var token = "1234567890"
 
 func TestAmpMail(t *testing.T) {
-	ampmail.UpdateAmpMailConfig("localhost", "2525", from, "")
+	mail.UpdateAmpMailConfig("localhost", "2525", from, "")
 	emailReceived = nil
-	ampmail.SendAccountVerificationEmail(to, accountName, token)
+	mail.SendAccountVerificationEmail(to, accountName, token)
 	waitTestForEmail(t, "AMP account activation", "AMP account activation")
 	emailReceived = nil
-	ampmail.SendAccountResetPasswordEmail(to, accountName, token)
+	mail.SendAccountResetPasswordEmail(to, accountName, token)
 	waitTestForEmail(t, "AccountResetPassword", "AMP account password reset")
 	emailReceived = nil
-	ampmail.SendAccountPasswordConfirmationEmail(to, accountName)
+	mail.SendAccountPasswordConfirmationEmail(to, accountName)
 	waitTestForEmail(t, "AccountPasswordConfirmation", "AMP account password confirmation")
 	emailReceived = nil
-	ampmail.SendAccountNameReminderEmail(to, accountName)
+	mail.SendAccountNameReminderEmail(to, accountName)
 	waitTestForEmail(t, "AccountNameReminder", "AMP account name reminder")
 }
 
@@ -50,7 +50,7 @@ func initMailServer() {
 }
 
 func mailHandler(origin net.Addr, from string, to []string, data []byte) {
-	msg, _ := mail.ReadMessage(bytes.NewReader(data))
+	msg, _ := netmail.ReadMessage(bytes.NewReader(data))
 	subject := msg.Header.Get("Subject")
 	emailReceived = &emailMessage{
 		from:    from,

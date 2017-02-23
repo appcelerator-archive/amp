@@ -27,21 +27,16 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config             *amp.Config
-	serverAddress      string
-	port               string
-	etcdEndpoints      string
-	elasticsearchURL   string
-	clientID           string
-	clientSecret       string
-	natsURL            string
-	influxURL          string
-	dockerURL          string
-	dockerVersion      string
-	webMailServerPort  string
-	emailServerAddress string
-	emailServerPort    string
-	emailSender        string
+	config           *amp.Config
+	serverAddress    string
+	port             string
+	etcdEndpoints    string
+	elasticsearchURL string
+	clientID         string
+	clientSecret     string
+	natsURL          string
+	influxURL        string
+	dockerURL        string
 )
 
 func parseFlags(config *amp.Config) {
@@ -57,10 +52,6 @@ func parseFlags(config *amp.Config) {
 	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
-	flag.StringVar(&webMailServerPort, "webmail-port", amp.DefaultWebMailServerPort, "Webamail port (default '"+amp.DefaultWebMailServerPort+"')")
-	flag.StringVar(&emailServerAddress, "email-server-address", amp.DefaultEmailServerAddress, "Email Server address (default '"+amp.DefaultEmailServerAddress+"')")
-	flag.StringVar(&emailServerPort, "email-server-port", amp.DefaultEmailServerPort, "Email Server port (default '"+amp.DefaultEmailServerPort+"')")
-	flag.StringVar(&emailSender, "email-sender", amp.DefaultEmailSender, "Email senser (default '"+amp.DefaultEmailSender+"')")
 	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
@@ -92,10 +83,6 @@ func parseFlags(config *amp.Config) {
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = amp.DockerDefaultVersion
-	config.WebMailServerPort = webMailServerPort
-	config.EmailServerAddress = emailServerAddress
-	config.EmailServerPort = emailServerPort
-	config.EmailSender = emailSender
 }
 
 func main() {

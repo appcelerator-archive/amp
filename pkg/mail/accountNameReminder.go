@@ -1,4 +1,4 @@
-package ampmail
+package mail
 
 var accountNameReminderBody = `
 <!DOCTYPE html>

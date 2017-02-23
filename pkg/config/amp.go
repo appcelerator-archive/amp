@@ -45,15 +45,6 @@ const (
 	// AmplifierDefaultAddress is the default amplifier endpoint
 	AmplifierDefaultAddress = "local.appcelerator.io"
 
-	//DefaultWebMailServerPort web address
-	DefaultWebMailServerPort = "8085" //temporary port to be removed
-
-	//DefaultEmailServerAddress email server address
-	DefaultEmailServerAddress = "" //we use sendgrid by default
-
-	//DefaultEmailServerPort email server port
-	DefaultEmailServerPort = "" //we use sendgrid by default
-
 	//DefaultEmailSender email sender
 	DefaultEmailSender = "amp.appcelerator@axway.com"
 )
