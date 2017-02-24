@@ -14,6 +14,9 @@ type Interface interface {
 	// CheckUserPassword checks the given user password
 	CheckUserPassword(ctx context.Context, password string, name string) (err error)
 
+	// SetUserPassword sets the given user password
+	SetUserPassword(ctx context.Context, password string, name string) (err error)
+
 	// GetUser fetches a user by name
 	GetUser(ctx context.Context, name string) (user *schema.User, err error)
 

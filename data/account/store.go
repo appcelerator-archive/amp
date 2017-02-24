@@ -46,7 +46,7 @@ func (s *Store) CreateUser(ctx context.Context, password string, in *schema.User
 	return nil
 }
 
-func (s *Store) getUser(ctx context.Context, name string) (*schema.User, error) {
+func (s *Store) getRawUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func secureUser(user *schema.User) *schema.User {
 
 // GetUser fetches a user by name
 func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
-	user, err := s.getUser(ctx, name)
+	user, err := s.getRawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -78,16 +78,36 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 
 // CheckUserPassword checks the given user password
 func (s *Store) CheckUserPassword(ctx context.Context, password string, name string) error {
-	user, err := s.getUser(ctx, name)
+	user, err := s.getRawUser(ctx, name)
 	if err != nil {
 		return err
 	}
 	if user == nil {
 		return fmt.Errorf("user not found")
 	}
+	// TODO: should we use the newHash ?
 	_, err = passlib.Verify(password, user.PasswordHash)
 	if err != nil {
-		return fmt.Errorf("Inavlid password")
+		return fmt.Errorf("invalid password")
+	}
+	return nil
+}
+
+// SetUserPassword sets the given user password
+func (s *Store) SetUserPassword(ctx context.Context, password string, name string) error {
+	user, err := s.getRawUser(ctx, name)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	user.PasswordHash, err = passlib.Hash(password)
+	if err != nil {
+		return err
+	}
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+		return err
 	}
 	return nil
 }
@@ -120,11 +140,16 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 }
 
 // UpdateUser updates a user
-func (s *Store) UpdateUser(ctx context.Context, in *schema.User) error {
-	if err := in.Validate(); err != nil {
+func (s *Store) UpdateUser(ctx context.Context, update *schema.User) error {
+	if err := update.Validate(); err != nil {
 		return err
 	}
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, in.Name), in, 0); err != nil {
+	current, err := s.getRawUser(ctx, update.Name)
+	if err != nil {
+		return err
+	}
+	update.PasswordHash = current.PasswordHash
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, update.Name), update, 0); err != nil {
 		return err
 	}
 	return nil
@@ -211,7 +236,7 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organization *sc
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
+	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex + 1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -319,7 +344,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Org
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
+	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex + 1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -343,7 +368,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organizatio
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex+1:]...)
+	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex + 1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 

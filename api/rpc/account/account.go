@@ -11,7 +11,6 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/mail"
 	pb "github.com/golang/protobuf/ptypes/empty"
-	"github.com/hlandau/passlib"
 	"github.com/ory-am/ladon"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -201,12 +200,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Sets the new password
-	passwordHash, err := passlib.Hash(in.Password)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	user.PasswordHash = passwordHash
-	if err := s.accounts.UpdateUser(ctx, user); err != nil {
+	if err := s.accounts.SetUserPassword(ctx, in.Password, user.Name); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully set new password for user", user.Name)
@@ -237,18 +231,12 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	}
 
 	// Check the existing password password
-	_, err = passlib.Verify(in.ExistingPassword, requester.PasswordHash)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
+	if err := s.accounts.CheckUserPassword(ctx, in.ExistingPassword, requester.Name); err != nil {
+		return nil, grpc.Errorf(codes.FailedPrecondition, err.Error())
 	}
 
 	// Sets the new password
-	newPasswordHash, err := passlib.Hash(in.NewPassword)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester.PasswordHash = newPasswordHash
-	if err := s.accounts.UpdateUser(ctx, requester); err != nil {
+	if err := s.accounts.SetUserPassword(ctx, in.NewPassword, requester.Name); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
 	log.Println("Successfully updated the password for user", requester.Name)

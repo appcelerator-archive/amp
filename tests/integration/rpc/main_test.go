@@ -10,7 +10,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	as "github.com/appcelerator/amp/data/account"
-	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -23,23 +22,16 @@ import (
 )
 
 var (
-	ctx                    context.Context
-	store                  storage.Interface
-	functionClient         function.FunctionClient
-	statsClient            stats.StatsClient
-	stackClient            stack.StackServiceClient
-	topicClient            topic.TopicClient
-	serviceClient          service.ServiceClient
-	logsClient             logs.LogsClient
-	accountClient          account.AccountClient
-	anonymousAccountClient account.AccountClient
-	accountStore           as.Interface
-	testUser               = schema.User{
-		Email:        "test@amp.io",
-		Name:         "testUser",
-		IsVerified:   true,
-		PasswordHash: "testHash",
-	}
+	ctx            context.Context
+	store          storage.Interface
+	functionClient function.FunctionClient
+	statsClient    stats.StatsClient
+	stackClient    stack.StackServiceClient
+	topicClient    topic.TopicClient
+	serviceClient  service.ServiceClient
+	logsClient     logs.LogsClient
+	accountClient  account.AccountClient
+	accountStore   as.Interface
 )
 
 func TestMain(m *testing.M) {
@@ -53,7 +45,7 @@ func TestMain(m *testing.M) {
 	accountStore = as.NewStore(store)
 
 	// Create a valid user token
-	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
+	token, _ := auth.CreateUserToken("default", time.Hour)
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
@@ -79,15 +71,16 @@ func TestMain(m *testing.M) {
 	// Init mail
 	initMailServer()
 
-	// Clients init
+	// Authenticated clients
 	functionClient = function.NewFunctionClient(authenticatedConn)
 	statsClient = stats.NewStatsClient(authenticatedConn)
 	stackClient = stack.NewStackServiceClient(authenticatedConn)
 	topicClient = topic.NewTopicClient(authenticatedConn)
 	serviceClient = service.NewServiceClient(authenticatedConn)
 	logsClient = logs.NewLogsClient(authenticatedConn)
-	accountClient = account.NewAccountClient(authenticatedConn)
-	anonymousAccountClient = account.NewAccountClient(anonymousConn)
+
+	// Anonymous clients
+	accountClient = account.NewAccountClient(anonymousConn)
 
 	// Start tests
 	os.Exit(m.Run())

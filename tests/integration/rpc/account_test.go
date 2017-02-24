@@ -13,22 +13,38 @@ import (
 // Users
 
 var (
-	signUpRequest = account.SignUpRequest{
+	testUser = account.SignUpRequest{
 		Name:     "user",
 		Password: "userPassword",
 		Email:    "user@amp.io",
 	}
 )
 
+func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
+	// SignUp
+	_, err := accountClient.SignUp(ctx, user)
+	assert.NoError(t, err)
+
+	// Create a token
+	token, err := auth.CreateUserToken(user.Name, time.Hour)
+	assert.NoError(t, err)
+
+	// Verify
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, err)
+
+	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+}
+
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	invalidSignUp := signUpRequest
+	invalidSignUp := testUser
 	invalidSignUp.Name = "UpperCaseIsNotAllowed"
-	_, signUpErr := accountClient.SignUp(ctx, &invalidSignUp)
-	assert.Error(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
@@ -36,10 +52,10 @@ func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	invalidSignUp := signUpRequest
+	invalidSignUp := testUser
 	invalidSignUp.Email = "this is not an email"
-	_, signUpErr := accountClient.SignUp(ctx, &invalidSignUp)
-	assert.Error(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
@@ -47,10 +63,10 @@ func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	invalidSignUp := signUpRequest
+	invalidSignUp := testUser
 	invalidSignUp.Password = ""
-	_, signUpErr := accountClient.SignUp(ctx, &invalidSignUp)
-	assert.Error(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	assert.Error(t, err)
 }
 
 func TestUserShouldSignUpAndVerify(t *testing.T) {
@@ -58,16 +74,16 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
+	token, err := auth.CreateUserToken(testUser.Name, time.Hour)
+	assert.NoError(t, err)
 
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, err)
 }
 
 func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
@@ -75,11 +91,11 @@ func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, err1 := accountClient.SignUp(ctx, &signUpRequest)
+	_, err1 := accountClient.SignUp(ctx, &testUser)
 	assert.NoError(t, err1)
 
 	// SignUp
-	_, err2 := accountClient.SignUp(ctx, &signUpRequest)
+	_, err2 := accountClient.SignUp(ctx, &testUser)
 	assert.Error(t, err2)
 }
 
@@ -88,12 +104,12 @@ func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: "this is not a token"})
-	assert.Error(t, verifyErr)
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: "this is not a token"})
+	assert.Error(t, err)
 }
 
 // TODO: Check token with invalid signature
@@ -104,24 +120,15 @@ func TestUserLogin(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
+	_, err := accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
+		Password: testUser.Password,
 	})
-	assert.NoError(t, loginErr)
+	assert.NoError(t, err)
 }
 
 func TestUserLoginNonExistingAccountShouldFail(t *testing.T) {
@@ -129,11 +136,11 @@ func TestUserLoginNonExistingAccountShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
+	_, err := accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
+		Password: testUser.Password,
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserLoginNonVerifiedAccountShouldFail(t *testing.T) {
@@ -141,333 +148,214 @@ func TestUserLoginNonVerifiedAccountShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
+		Password: testUser.Password,
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
+	_, err := accountClient.Login(ctx, &account.LogInRequest{
 		Name:     "not the right user name",
-		Password: signUpRequest.Password,
+		Password: testUser.Password,
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err := accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: "not the right password",
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserPasswordReset(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Password Reset
-	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
-	assert.NoError(t, passwordResetErr)
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	assert.NoError(t, err)
 }
 
 func TestUserPasswordResetNonExistingAccountShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Password Reset
-	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "This is not an existing user"})
-	assert.Error(t, passwordResetErr)
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "This is not an existing user"})
+	assert.Error(t, err)
 }
 
 func TestUserPasswordSet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// Password Reset
-	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
-	assert.NoError(t, passwordResetErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Password Set
-	_, passwordSetErr := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
+	_, err := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
 	})
-	assert.NoError(t, passwordSetErr)
+	assert.NoError(t, err)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: "newPassword",
 	})
-	assert.NoError(t, loginErr)
+	assert.NoError(t, err)
 }
 
 func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Password Reset
-	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
-	assert.NoError(t, passwordResetErr)
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	assert.NoError(t, err)
 
 	// Password Set
-	_, passwordSetErr := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    "this is an invalid token",
 		Password: "newPassword",
 	})
-	assert.Error(t, passwordSetErr)
+	assert.Error(t, err)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: "newPassword",
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Password Reset
-	_, passwordResetErr := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: signUpRequest.Name})
-	assert.NoError(t, passwordResetErr)
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	assert.NoError(t, err)
 
 	// Password Set
-	_, passwordSetErr := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
+	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "",
 	})
-	assert.Error(t, passwordSetErr)
+	assert.Error(t, err)
 
 	// Login
-	_, loginErr := accountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: "",
 	})
-	assert.Error(t, loginErr)
+	assert.Error(t, err)
 }
 
 func TestUserPasswordChange(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// Login
-	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
-	})
-	assert.NoError(t, loginErr)
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	ctx = metadata.NewContext(ctx, ownerRequester)
 	newPassword := "newPassword"
-	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		ExistingPassword: signUpRequest.Password,
+	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
-	assert.NoError(t, passwordChangeErr)
+	assert.NoError(t, err)
 
 	// Login
-	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: newPassword,
 	})
-	assert.NoError(t, newLoginErr)
+	assert.NoError(t, err)
 }
 
 func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// Login
-	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
-	})
-	assert.NoError(t, loginErr)
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := "newPassword"
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	ctx = metadata.NewContext(ctx, ownerRequester)
-	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
+	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
 		ExistingPassword: "this is not a valid password",
 		NewPassword:      newPassword,
 	})
-	assert.Error(t, passwordChangeErr)
+	assert.Error(t, err)
 
 	// Login
-	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: newPassword,
 	})
-	assert.Error(t, newLoginErr)
+	assert.Error(t, err)
 }
 
 func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// Login
-	_, loginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
-		Password: signUpRequest.Password,
-	})
-	assert.NoError(t, loginErr)
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := ""
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	ctx = metadata.NewContext(ctx, ownerRequester)
-	_, passwordChangeErr := anonymousAccountClient.PasswordChange(ctx, &account.PasswordChangeRequest{
-		ExistingPassword: signUpRequest.Password,
+	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
-	assert.Error(t, passwordChangeErr)
+	assert.Error(t, err)
 
 	// Login
-	_, newLoginErr := anonymousAccountClient.Login(ctx, &account.LogInRequest{
-		Name:     signUpRequest.Name,
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
 		Password: newPassword,
 	})
-	assert.Error(t, newLoginErr)
+	assert.Error(t, err)
 }
 
 func TestUserForgotLogin(t *testing.T) {
@@ -475,12 +363,14 @@ func TestUserForgotLogin(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, forgotLoginErr := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{Email: signUpRequest.Email})
-	assert.NoError(t, forgotLoginErr)
+	_, err = accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+		Email: testUser.Email,
+	})
+	assert.NoError(t, err)
 }
 
 func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
@@ -488,36 +378,31 @@ func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, forgotLoginErr := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{Email: "this is not a valid email"})
-	assert.Error(t, forgotLoginErr)
+	_, err = accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+		Email: "this is not a valid email",
+	})
+	assert.Error(t, err)
 }
 
 func TestUserGet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// Get
-	getReply, getErr := accountClient.GetUser(ctx, &account.GetUserRequest{Name: signUpRequest.Name})
-	assert.NoError(t, getErr)
+	getReply, err := accountClient.GetUser(ctx, &account.GetUserRequest{
+		Name: testUser.Name,
+	})
+	assert.NoError(t, err)
 	assert.NotEmpty(t, getReply)
-	assert.Equal(t, getReply.User.Name, signUpRequest.Name)
-	assert.Equal(t, getReply.User.Email, signUpRequest.Email)
+	assert.Equal(t, getReply.User.Name, testUser.Name)
+	assert.Equal(t, getReply.User.Email, testUser.Email)
 	assert.NotEmpty(t, getReply.User.CreateDt)
 }
 
@@ -525,62 +410,54 @@ func TestUserList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := accountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	createUser(t, &testUser)
 
 	// List
-	listReply, listErr := accountClient.ListUsers(ctx, &account.ListUsersRequest{})
-	assert.NoError(t, listErr)
+	listReply, err := accountClient.ListUsers(ctx, &account.ListUsersRequest{})
+	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
 	assert.Len(t, listReply.Users, 1)
-	assert.Equal(t, listReply.Users[0].Name, signUpRequest.Name)
-	assert.Equal(t, listReply.Users[0].Email, signUpRequest.Email)
+	assert.Equal(t, listReply.Users[0].Name, testUser.Name)
+	assert.Equal(t, listReply.Users[0].Email, testUser.Email)
 	assert.NotEmpty(t, listReply.Users[0].CreateDt)
 }
 
 // Organizations
 
 var (
-	createOrganizationRequest = account.CreateOrganizationRequest{
+	testOrg = account.CreateOrganizationRequest{
 		Name:  "organization",
 		Email: "organization@amp.io",
 	}
-	orgMemberSignUpRequest = account.SignUpRequest{
+	testMember = account.SignUpRequest{
 		Name:     "organization-member",
 		Password: "organizationMemberPassword",
 		Email:    "organization.member@amp.io",
 	}
 )
 
+func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
+	// Create a user
+	ownerCtx := createUser(t, owner)
+
+	// CreateOrganization
+	_, err := accountClient.CreateOrganization(ownerCtx, org)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
 func TestOrganizationCreate(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
 
 	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
+	assert.NoError(t, err)
 }
 
 func TestOrganizationCreateNotVerifiedUserShouldFail(t *testing.T) {
@@ -588,449 +465,259 @@ func TestOrganizationCreateNotVerifiedUserShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
 
 	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
+	token, err := auth.CreateUserToken(testUser.Name, time.Hour)
+	ownerCtx := metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+	assert.NoError(t, err)
 
 	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.Error(t, createOrganizationErr)
+	_, err = accountClient.CreateOrganization(ownerCtx, &testOrg)
+	assert.Error(t, err)
 }
 
 func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// CreateOrganization again
-	_, createOrganizationAgainErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.Error(t, createOrganizationAgainErr)
+	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
+	assert.Error(t, err)
 }
 
 func TestOrganizationAddUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 }
 
 func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	memberRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	memberCtx := createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, memberRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(memberCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationAddNonValidatedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	_, err := accountClient.SignUp(ctx, &testMember)
+	assert.NoError(t, err)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, addUserToOrganizationErr)
+	_, err = accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
+	// Create owner
+	ownerCtx := createUser(t, &testUser)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr = anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err = accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 }
 
 func TestOrganizationRemoveUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr := anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, ownerRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, removeUserFromOrganizationErr)
+	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 }
 
 func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	memberRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	memberCtx := createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr := anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, memberRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, removeUserFromOrganizationErr)
+	_, err = accountClient.RemoveUserFromOrganization(memberCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr := anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, ownerRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.Error(t, removeUserFromOrganizationErr)
+	_, err := accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr := anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, ownerRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, removeUserFromOrganizationErr)
+	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr = anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, ownerRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, removeUserFromOrganizationErr)
+	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 }
 
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// SignUp
-	_, signUpErr := anonymousAccountClient.SignUp(ctx, &signUpRequest)
-	assert.NoError(t, signUpErr)
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
-	// Create a token
-	token, createTokenErr := auth.CreateUserToken(signUpRequest.Name, time.Hour)
-	ownerRequester := metadata.Pairs(auth.TokenKey, token)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	_, verifyErr := anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// SignUp member
-	_, signUpErr = anonymousAccountClient.SignUp(ctx, &orgMemberSignUpRequest)
-	assert.NoError(t, signUpErr)
-
-	// Create a token
-	token, createTokenErr = auth.CreateUserToken(orgMemberSignUpRequest.Name, time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify member
-	_, verifyErr = anonymousAccountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, verifyErr)
-
-	// CreateOrganization
-	_, createOrganizationErr := anonymousAccountClient.CreateOrganization(metadata.NewContext(ctx, ownerRequester), &createOrganizationRequest)
-	assert.NoError(t, createOrganizationErr)
+	// Create member
+	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, addUserToOrganizationErr := anonymousAccountClient.AddUserToOrganization(metadata.NewContext(ctx, ownerRequester), &account.AddUserToOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: orgMemberSignUpRequest.Name})
-	assert.NoError(t, addUserToOrganizationErr)
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, removeUserFromOrganizationErr := anonymousAccountClient.RemoveUserFromOrganization(metadata.NewContext(ctx, ownerRequester), &account.RemoveUserFromOrganizationRequest{OrganizationName: createOrganizationRequest.Name, UserName: signUpRequest.Name})
-	assert.Error(t, removeUserFromOrganizationErr)
+	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testUser.Name,
+	})
+	assert.Error(t, err)
 }
