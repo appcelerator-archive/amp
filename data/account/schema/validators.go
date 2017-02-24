@@ -24,13 +24,6 @@ func CheckName(name string) error {
 	return nil
 }
 
-func checkPasswordHash(passwordHash string) error {
-	if isEmpty(passwordHash) {
-		return fmt.Errorf("password hash is mandatory")
-	}
-	return nil
-}
-
 // CheckEmailAddress checks email address
 func CheckEmailAddress(email string) (string, error) {
 	address, err := mail.ParseAddress(email)
@@ -113,9 +106,6 @@ func (u *User) Validate() (err error) {
 		return err
 	}
 	if u.Email, err = CheckEmailAddress(u.Email); err != nil {
-		return err
-	}
-	if err = checkPasswordHash(u.PasswordHash); err != nil {
 		return err
 	}
 	return nil

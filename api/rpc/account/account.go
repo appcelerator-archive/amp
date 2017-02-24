@@ -48,9 +48,8 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 
 	// Create the new user
 	user := &schema.User{
-		Email:      in.Email,
-		Name:       in.Name,
-		IsVerified: false,
+		Email: in.Email,
+		Name:  in.Name,
 	}
 	if err := s.accounts.CreateUser(ctx, in.Password, user); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
