@@ -78,7 +78,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 	// Validate the token
 	claims, err := auth.ValidateUserToken(in.Token)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "VadidateUsetToken: %v", err.Error())
+		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
 	// Get the user

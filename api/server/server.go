@@ -141,12 +141,11 @@ func initInfluxDB(config *amp.Config) error {
 }
 
 func initNats(config *amp.Config) error {
-	// NATS
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	if err := runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout); err != nil {
+	if err := runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, "amplifier-"+hostname, amp.DefaultTimeout); err != nil {
 		return err
 	}
 	return nil
@@ -154,7 +153,7 @@ func initNats(config *amp.Config) error {
 
 func initDocker(config *amp.Config) error {
 	log.Printf("Connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
-	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
+	defaultHeaders := map[string]string{"User-Agent": "amplifier"}
 	var err error
 	runtime.Docker, err = client.NewClient(config.DockerURL, config.DockerVersion, nil, defaultHeaders)
 	if err != nil {
