@@ -135,25 +135,24 @@
         ]
       }
     },
-    "/v1/users/verify": {
-      "post": {
+    "/v1/users/verify/{token}": {
+      "get": {
         "operationId": "Verify",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountVerificationReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "token",
+            "in": "path",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountVerificationRequest"
-            }
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -373,6 +372,15 @@
         "create_dt": {
           "type": "string",
           "format": "int64"
+        }
+      }
+    },
+    "accountVerificationReply": {
+      "type": "object",
+      "properties": {
+        "reply": {
+          "type": "string",
+          "format": "string"
         }
       }
     },
