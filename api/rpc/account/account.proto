@@ -4,6 +4,7 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "github.com/appcelerator/amp/data/account/schema/account.proto";
 
 service Account {
 
@@ -83,6 +84,16 @@ service Account {
       delete: "/v1/organizations/{name}"
     };
   };
+  rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{name}"
+    };
+  };
+  rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsReply) {
+    option (google.api.http) = {
+      get: "/v1/organizations"
+    };
+  };
 
   // Teams
   rpc CreateTeam (CreateTeamRequest) returns (google.protobuf.Empty) {
@@ -93,29 +104,33 @@ service Account {
   };
   rpc AddUserToTeam (AddUserToTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/v1/organization/{organization_name}/team/{team_name}/members",
+      post: "/v1/organizations/{organization_name}/teams/{team_name}/members",
       body: "*"
     };
   };
   rpc RemoveUserFromTeam (RemoveUserFromTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/organization/{organization_name}/team/{team_name}/members"
+      delete: "/v1/organizations/{organization_name}/teams/{team_name}/members"
     };
   };
   rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/organization/{organization_name}/team/{team_name}"
+      delete: "/v1/organizations/{organization_name}/teams/{team_name}"
+    };
+  };
+  rpc GetTeam (GetTeamRequest) returns (GetTeamReply) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{organization_name}/teams/{team_name}"
+    };
+  };
+  rpc ListTeams (ListTeamsRequest) returns (ListTeamsReply) {
+    option (google.api.http) = {
+      get: "/organizations/{organization_name}/teams"
     };
   };
 }
 
 // Users
-message User {
-  string name = 1;
-  string email = 2;
-  int64 create_dt = 3;
-}
-
 message SignUpRequest {
   string name = 1;
   string password = 2;
@@ -158,14 +173,14 @@ message GetUserRequest {
 }
 
 message GetUserReply {
-  User user = 1;
+  schema.User user = 1;
 }
 
 message ListUsersRequest {
 }
 
 message ListUsersReply {
-  repeated User users = 1;
+  repeated schema.User users = 1;
 }
 
 // Organizations
@@ -188,7 +203,27 @@ message RemoveUserFromOrganizationRequest {
   string user_name = 2;
 }
 
+message GetOrganizationRequest {
+  string name = 1;
+}
+
+message GetOrganizationReply {
+  schema.Organization organization = 1;
+}
+
+message ListOrganizationsRequest {
+}
+
+message ListOrganizationsReply {
+  repeated schema.Organization organizations = 1;
+}
+
 // Teams
+message Team {
+  string name = 1;
+  int64 create_dt = 2;
+}
+
 message CreateTeamRequest {
   string organization_name = 1;
   string team_name = 2;
@@ -209,4 +244,21 @@ message RemoveUserFromTeamRequest {
   string organization_name = 1;
   string team_name = 2;
   string user_name = 3;
+}
+
+message GetTeamRequest {
+  string organization_name = 1;
+  string team_name = 2;
+}
+
+message GetTeamReply {
+  schema.Team team = 1;
+}
+
+message ListTeamsRequest {
+  string organization_name = 1;
+}
+
+message ListTeamsReply {
+  repeated schema.Team teams = 1;
 }

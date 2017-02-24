@@ -6,6 +6,7 @@ import (
 	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
+	"github.com/hlandau/passlib"
 	"path"
 	"strings"
 	"time"
@@ -29,20 +30,23 @@ func NewStore(store storage.Interface) *Store {
 // Users
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(ctx context.Context, in *schema.User) error {
+func (s *Store) CreateUser(ctx context.Context, password string, in *schema.User) (err error) {
 	if err := in.Validate(); err != nil {
 		return err
 	}
 	in.IsVerified = false
 	in.CreateDt = time.Now().Unix()
+	in.PasswordHash, err = passlib.Hash(password)
+	if err != nil {
+		return err
+	}
 	if err := s.Store.Create(ctx, path.Join(usersRootKey, in.Name), in, nil, 0); err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetUser fetches a user by name
-func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
+func (s *Store) getUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
@@ -54,6 +58,40 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 	return user, nil
 }
 
+func secureUser(user *schema.User) *schema.User {
+	if user == nil {
+		return nil
+	}
+	// For security reasons, remove the password hash
+	user.PasswordHash = ""
+	return user
+}
+
+// GetUser fetches a user by name
+func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
+	user, err := s.getUser(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return secureUser(user), nil
+}
+
+// CheckUserPassword checks the given user password
+func (s *Store) CheckUserPassword(ctx context.Context, password string, name string) error {
+	user, err := s.getUser(ctx, name)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	_, err = passlib.Verify(password, user.PasswordHash)
+	if err != nil {
+		return fmt.Errorf("Inavlid password")
+	}
+	return nil
+}
+
 // GetUserByEmail fetches a user by email
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
 	users, err := s.ListUsers(ctx)
@@ -62,7 +100,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User,
 	}
 	for _, user := range users {
 		if strings.EqualFold(user.Email, email) {
-			return user, nil
+			return secureUser(user), nil
 		}
 	}
 	return nil, nil
@@ -76,7 +114,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	}
 	users := []*schema.User{}
 	for _, proto := range protos {
-		users = append(users, proto.(*schema.User))
+		users = append(users, secureUser(proto.(*schema.User)))
 	}
 	return users, nil
 }

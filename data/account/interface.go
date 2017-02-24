@@ -8,8 +8,11 @@ import (
 
 // Interface defines the user data access layer
 type Interface interface {
-	// CreateUser creates a new user
-	CreateUser(ctx context.Context, user *schema.User) (err error)
+	// CreateUser creates a new user with given password
+	CreateUser(ctx context.Context, password string, user *schema.User) (err error)
+
+	// CheckUserPassword checks the given user password
+	CheckUserPassword(ctx context.Context, password string, name string) (err error)
 
 	// GetUser fetches a user by name
 	GetUser(ctx context.Context, name string) (user *schema.User, err error)

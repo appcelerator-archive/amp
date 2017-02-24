@@ -46,20 +46,13 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 		return nil, grpc.Errorf(codes.AlreadyExists, "user already exists")
 	}
 
-	// Hash password
-	passwordHash, err := passlib.Hash(in.Password)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-
 	// Create the new user
 	user := &schema.User{
-		Email:        in.Email,
-		Name:         in.Name,
-		IsVerified:   false,
-		PasswordHash: passwordHash,
+		Email:      in.Email,
+		Name:       in.Name,
+		IsVerified: false,
 	}
-	if err := s.accounts.CreateUser(ctx, user); err != nil {
+	if err := s.accounts.CreateUser(ctx, in.Password, user); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
 
@@ -131,8 +124,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 	}
 
 	// Check password
-	_, err = passlib.Verify(in.Password, user.PasswordHash)
-	if err != nil {
+	if err := s.accounts.CheckUserPassword(ctx, in.Password, in.Name); err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, err.Error())
 	}
 
@@ -305,7 +297,7 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 	}
 	log.Println("Successfully retrieved user", user.Name)
 
-	return &GetUserReply{User: FromSchema(user)}, nil
+	return &GetUserReply{User: user}, nil
 }
 
 // ListUsers implements account.ListUsers
@@ -321,7 +313,7 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 	}
 	reply := &ListUsersReply{}
 	for _, user := range users {
-		reply.Users = append(reply.Users, FromSchema(user))
+		reply.Users = append(reply.Users, user)
 	}
 	log.Println("Successfully list users")
 
@@ -564,6 +556,18 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	return &pb.Empty{}, nil
 }
 
+// GetOrganization implements account.GetOrganization
+func (s *Server) GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationReply, error) {
+	return nil, nil
+}
+
+// ListOrganizations implements account.ListOrganizations
+func (s *Server) ListOrganizations(context.Context, *ListOrganizationsRequest) (*ListOrganizationsReply, error) {
+	return nil, nil
+}
+
+// Teams
+
 // CreateTeam implements account.CreateTeam
 func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
@@ -627,7 +631,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
 	// TODO: We probably need to send an email ...
-	log.Printf("Successfully created team %s in organization %s", in.TeamName, in.OrganizationName)
+	log.Printf("Successfully created team %s in organization %s\n", in.TeamName, in.OrganizationName)
 
 	return &pb.Empty{}, nil
 }
@@ -823,12 +827,22 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Emp
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	// Delete organization
+	// Delete team
 	if err := s.accounts.DeleteTeam(ctx, organization, team.Name); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "storage error")
 	}
 	// TODO: We probably need to send an email ...
-	log.Println("Successfully deleted team %s from organization %s", in.TeamName, in.OrganizationName)
+	log.Printf("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
 
 	return &pb.Empty{}, nil
+}
+
+// GetTeam implements account.GetTeam
+func (s *Server) GetTeam(context.Context, *GetTeamRequest) (*GetTeamReply, error) {
+	return nil, nil
+}
+
+// ListTeams implements account.ListTeams
+func (s *Server) ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsReply, error) {
+	return nil, nil
 }
