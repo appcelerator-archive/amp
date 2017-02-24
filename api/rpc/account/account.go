@@ -1,6 +1,10 @@
 package account
 
 import (
+	"fmt"
+	"log"
+	"time"
+
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/account/schema"
@@ -12,8 +16,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"log"
-	"time"
 )
 
 // Server is used to implement account.UserServer
@@ -74,7 +76,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 }
 
 // Verify implements account.Verify
-func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty, error) {
+func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*VerificationReply, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
@@ -82,7 +84,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	// Validate the token
 	claims, err := auth.ValidateUserToken(in.Token)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
+		return nil, grpc.Errorf(codes.Internal, "VadidateUsetToken: %v", err.Error())
 	}
 
 	// Get the user
@@ -97,12 +99,14 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*pb.Empty
 	// Activate the user
 	user.IsVerified = true
 	if err := s.accounts.UpdateUser(ctx, user); err != nil {
-		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
+		return &VerificationReply{}, grpc.Errorf(codes.Internal, err.Error())
 	}
 	// TODO: We probably need to send an email ...
 	log.Println("Successfully verified user", user.Name)
 
-	return &pb.Empty{}, nil
+	return &VerificationReply{
+		Reply: fmt.Sprintf("Account %s is ready", user.Name),
+	}, nil
 }
 
 // Login implements account.Login

@@ -12,10 +12,9 @@ service Account {
       body: "*"
     };
   };
-  rpc Verify (VerificationRequest) returns (google.protobuf.Empty) {
+  rpc Verify (VerificationRequest) returns (VerificationReply) {
     option (google.api.http) = {
-      post: "/v1/users/verify",
-      body: "*"
+      get: "/v1/users/verify/{token}"
     };
   };
   rpc Login (LogInRequest) returns (google.protobuf.Empty) {
@@ -74,6 +73,10 @@ message SignUpRequest {
 
 message VerificationRequest {
   string token = 1;
+}
+
+message VerificationReply {
+  string reply = 1;
 }
 
 message LogInRequest {
