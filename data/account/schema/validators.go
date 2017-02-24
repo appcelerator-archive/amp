@@ -80,17 +80,10 @@ func checkTeamMembers(members []*TeamMember) error {
 	if len(members) == 0 {
 		return fmt.Errorf("team members cannot be empty")
 	}
-	haveAtLeastOneOwner := false
 	for _, member := range members {
 		if err := checkTeamMember(member); err != nil {
 			return err
 		}
-		if member.Role == TeamRole_TEAM_OWNER {
-			haveAtLeastOneOwner = true
-		}
-	}
-	if !haveAtLeastOneOwner {
-		return fmt.Errorf("team must have at least one owner")
 	}
 	return nil
 }

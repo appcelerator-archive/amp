@@ -595,6 +595,18 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 		return nil, grpc.Errorf(codes.NotFound, "organization not found")
 	}
 
+	// Check authorization
+	if err := auth.Warden.IsAllowed(&ladon.Request{
+		Subject:  requester.Name,
+		Action:   auth.UpdateAction,
+		Resource: auth.OrganizationResource,
+		Context: ladon.Context{
+			"owners": organization.GetOwners(),
+		},
+	}); err != nil {
+		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
 	// Check if team already exists
 	teamAlreadyExists := s.accounts.GetTeam(ctx, organization, in.TeamName)
 	if teamAlreadyExists != nil {
