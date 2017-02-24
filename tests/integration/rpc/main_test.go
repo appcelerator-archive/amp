@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	accountStore = as.NewStore(store)
 
 	// Create a valid user token
-	token, _ := auth.CreateUserToken("default", time.Hour)
+	token, _ := auth.CreateToken("default", auth.TokenTypeLogin, time.Hour)
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")

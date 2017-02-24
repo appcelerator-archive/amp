@@ -11,9 +11,42 @@ import (
 	"time"
 )
 
+// Keys used in context metadata
+const (
+	TokenKey          = "amp.token"
+	RequesterKey      = "amp.requester"
+	TokenTypeVerify   = "verify"
+	TokenTypeLogin    = "login"
+	TokenTypePassword = "password"
+)
+
+var (
+	// TODO: this MUST NOT be public
+	// TODO: find a way to store this key secretly
+	secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
+
+	anonymousAllowed = []string{
+		"/account.Account/SignUp",
+		"/account.Account/Verify",
+		"/account.Account/Login",
+		"/account.Account/PasswordReset",
+		"/account.Account/PasswordSet",
+		"/account.Account/ForgotLogin",
+		"/account.Account/GetUser",
+		"/account.Account/ListUsers",
+		"/account.Account/GetOrganization",
+		"/account.Account/ListOrganizations",
+		"/account.Account/GetTeam",
+		"/account.Account/ListTeams",
+
+		"/version.Version/List",
+	}
+)
+
 // UserClaims represents user claims
-type UserClaims struct {
+type AccountClaims struct {
 	AccountName string `json:"AccountName"`
+	Type        string `json:"Type"`
 	jwt.StandardClaims
 }
 
@@ -34,31 +67,6 @@ func (c *LoginCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// Keys used in context metadata
-const (
-	TokenKey     = "amp.token"
-	RequesterKey = "amp.requester"
-)
-
-var (
-	// TODO: this MUST NOT be public
-	// TODO: find a way to store this key secretly
-	secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
-
-	anonymousAllowed = []string{
-		"/account.Account/SignUp",
-		"/account.Account/Verify",
-		"/account.Account/Login",
-		"/account.Account/PasswordReset",
-		"/account.Account/PasswordSet",
-		"/account.Account/ForgotLogin",
-		"/account.Account/GetUser",
-		"/account.Account/ListUsers",
-
-		"/version.Version/List",
-	}
-)
-
 func isAnonymous(elem string) bool {
 	for _, e := range anonymousAllowed {
 		if e == elem {
@@ -70,7 +78,7 @@ func isAnonymous(elem string) bool {
 
 // StreamInterceptor is an interceptor checking for authentication tokens
 func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+	if !isAnonymous(info.FullMethod) {
 		if _, err := authorize(stream.Context()); err != nil {
 			return err
 		}
@@ -80,7 +88,7 @@ func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 
 // Interceptor is an interceptor checking for authentication tokens
 func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (i interface{}, err error) {
-	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+	if !isAnonymous(info.FullMethod) {
 		if ctx, err = authorize(ctx); err != nil {
 			return nil, err
 		}
@@ -89,32 +97,33 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 }
 
 func authorize(ctx context.Context) (context.Context, error) {
-	if md, ok := metadata.FromContext(ctx); ok {
-		tokens := md[TokenKey]
-		if len(tokens) == 0 {
-			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
-		}
-		token := tokens[0]
-		if token == "" {
-			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
-		}
-		claims, err := ValidateUserToken(token)
-		if err != nil {
-			return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
-		}
-		// Enrich the context with the requester
-		md := metadata.Pairs(RequesterKey, claims.AccountName)
-		ctx = metadata.NewContext(ctx, md)
-		return ctx, nil
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 	}
-	return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	tokens := md[TokenKey]
+	if len(tokens) == 0 {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	}
+	token := tokens[0]
+	if token == "" {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	}
+	claims, err := ValidateToken(token, TokenTypeLogin)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
+	}
+	// Enrich the context with the requester
+	ctx = metadata.NewContext(ctx, metadata.Pairs(RequesterKey, claims.AccountName))
+	return ctx, nil
 }
 
-// CreateUserToken creates a token for a given user name
-func CreateUserToken(name string, validFor time.Duration) (string, error) {
+// CreateToken creates a token for a given user name
+func CreateToken(name string, tokenType string, validFor time.Duration) (string, error) {
 	// Forge the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
 		name, // The token contains the user name to verify
+		tokenType,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(validFor).Unix(),
 			Issuer:    os.Args[0],
@@ -122,14 +131,14 @@ func CreateUserToken(name string, validFor time.Duration) (string, error) {
 	})
 	ss, err := token.SignedString(secretKey)
 	if err != nil {
-		return "", fmt.Errorf("unable to issue verification token")
+		return "", fmt.Errorf("unable to issue token")
 	}
 	return ss, nil
 }
 
-// ValidateUserToken validates a user token and return its claims
-func ValidateUserToken(signedString string) (*UserClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &UserClaims{}, func(t *jwt.Token) (interface{}, error) {
+// ValidateToken validates a token and return its claims
+func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
+	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
@@ -138,9 +147,12 @@ func ValidateUserToken(signedString string) (*UserClaims, error) {
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
-	claims, ok := token.Claims.(*UserClaims)
+	claims, ok := token.Claims.(*AccountClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
+	}
+	if claims.Type != tokenType {
+		return nil, fmt.Errorf("invalid token type")
 	}
 	return claims, nil
 }

@@ -5,24 +5,9 @@ var accountResetPasswordEmailBody = `
 <html>
     <body style="background-color:white">
         <div style="color:#404040;">
-            <h3>If you requested a new password for your AMP account <b style="color:red">{accountName},</b> please clic below,</h3>
-            <div style="height:30px"></div>
-            <a
-                href="http://account.{ampAddress}:8085/v1/ampaccount/{accountName}/resetpassword/{token}"
-                style="font-family: arial;
-                    font-weight: bold;
-                    text-decoration: none;
-                    color: #FFFFFF;
-                    font-size: 17px;
-                    padding:10px 10px;
-                    -moz-border-radius: 20px;
-                    -webkit-border-radius: 20px;
-                    border-radius: 20px;
-                    background: #EE303C;"
-            >
-                &nbsp RESET PASSWORD &nbsp
-            </a>
-        </div>
+         	<h2>Hi <b style="color:red">{accountName}</b>!</h2>
+            <h3>If you requested a new password for your AMP account, please use the following command line:</h4>
+            <h4>amp account password --set {token}</h4>
         <div style="height:20px"></div>
         <div style="color:#404040;">
             <h4>If you didn't make this request, you can safely ignore this email</h4>

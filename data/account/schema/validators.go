@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"fmt"
+	"github.com/holys/safe"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -16,10 +16,10 @@ func isEmpty(s string) bool {
 // CheckName checks user name
 func CheckName(name string) error {
 	if isEmpty(name) {
-		return fmt.Errorf("name is mandatory")
+		return InvalidName
 	}
 	if !nameFormat.MatchString(name) {
-		return fmt.Errorf("name is invalid")
+		return InvalidName
 	}
 	return nil
 }
@@ -28,24 +28,36 @@ func CheckName(name string) error {
 func CheckEmailAddress(email string) (string, error) {
 	address, err := mail.ParseAddress(email)
 	if err != nil {
-		return "", err
+		return "", InvalidEmail
 	}
 	if isEmpty(address.Address) {
-		return "", fmt.Errorf("email is mandatory")
+		return "", InvalidEmail
 	}
 	return address.Address, nil
 }
 
+// CheckPassword checks password
+func CheckPassword(password string) error {
+	if isEmpty(password) {
+		return PasswordTooWeak
+	}
+	safety := safe.New(8, 0, 0, safe.Simple)
+	if passwordStrength := safety.Check(password); passwordStrength <= safe.Simple {
+		return PasswordTooWeak
+	}
+	return nil
+}
+
 func checkOrganizationMember(member *OrganizationMember) error {
 	if isEmpty(member.Name) {
-		return fmt.Errorf("organization member name is mandatory")
+		return InvalidName
 	}
 	return nil
 }
 
 func checkOrganizationMembers(members []*OrganizationMember) error {
 	if len(members) == 0 {
-		return fmt.Errorf("organization members cannot be empty")
+		return InvalidName
 	}
 	haveAtLeastOneOwner := false
 	for _, member := range members {
@@ -57,43 +69,21 @@ func checkOrganizationMembers(members []*OrganizationMember) error {
 		}
 	}
 	if !haveAtLeastOneOwner {
-		return fmt.Errorf("organization must have at least one owner")
+		return AtLeastOneOwner
 	}
 	return nil
 }
 
 func checkTeamMember(member *TeamMember) error {
 	if isEmpty(member.Name) {
-		return fmt.Errorf("team member name is mandatory")
+		return InvalidName
 	}
 	return nil
 }
 
 func checkTeamMembers(members []*TeamMember) error {
-	if len(members) == 0 {
-		return fmt.Errorf("team members cannot be empty")
-	}
 	for _, member := range members {
 		if err := checkTeamMember(member); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func checkTeam(team *Team) (err error) {
-	if err = CheckName(team.Name); err != nil {
-		return err
-	}
-	if err = checkTeamMembers(team.Members); err != nil {
-		return err
-	}
-	return nil
-}
-
-func checkTeams(teams []*Team) error {
-	for _, team := range teams {
-		if err := checkTeam(team); err != nil {
 			return err
 		}
 	}
@@ -122,13 +112,21 @@ func (o *Organization) Validate() (err error) {
 	if err = checkOrganizationMembers(o.Members); err != nil {
 		return err
 	}
-	if err = checkTeams(o.Teams); err != nil {
-		return err
+	for _, team := range o.Teams {
+		if err := team.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 // Validate validates Team
 func (t *Team) Validate() error {
-	return checkTeam(t)
+	if err := CheckName(t.Name); err != nil {
+		return err
+	}
+	if err := checkTeamMembers(t.Members); err != nil {
+		return err
+	}
+	return nil
 }
