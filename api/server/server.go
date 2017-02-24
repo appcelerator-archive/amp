@@ -40,8 +40,8 @@ func initDependencies(config *amp.Config) {
 	type initFunc func(*amp.Config) error
 
 	initFuncs := []initFunc{initEtcd, initElasticsearch, initNats, initInfluxDB, initDocker}
+	wg.Add(len(initFuncs))
 	for _, f := range initFuncs {
-		wg.Add(1)
 		go func(f initFunc) {
 			defer wg.Done()
 			if err := f(config); err != nil {
@@ -146,7 +146,7 @@ func initNats(config *amp.Config) error {
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	if runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+	if err := runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout); err != nil {
 		return err
 	}
 	return nil

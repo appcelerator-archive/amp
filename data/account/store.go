@@ -236,7 +236,7 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organization *sc
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex + 1:]...)
+	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -344,7 +344,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Org
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex + 1:]...)
+	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -368,7 +368,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organizatio
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex + 1:]...)
+	organization.Members = append(organization.Members[:teamIndex], organization.Members[teamIndex+1:]...)
 	return s.updateOrganization(ctx, organization)
 }
 
