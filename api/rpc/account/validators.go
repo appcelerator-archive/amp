@@ -149,6 +149,19 @@ func (r *DeleteOrganizationRequest) Validate() error {
 	return nil
 }
 
+// Validate validates GetOrganizationRequest
+func (r *GetOrganizationRequest) Validate() error {
+	if err := schema.CheckName(r.Name); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates ListOrganizationsRequest
+func (r *ListOrganizationsRequest) Validate() error {
+	return nil
+}
+
 // Validate validates CreateTeamRequest
 func (r *CreateTeamRequest) Validate() error {
 	if err := schema.CheckName(r.OrganizationName); err != nil {
@@ -196,5 +209,21 @@ func (r *DeleteTeamRequest) Validate() (err error) {
 	if err := schema.CheckName(r.TeamName); err != nil {
 		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	}
+	return nil
+}
+
+// Validate validates GetTeamRequest
+func (r *GetTeamRequest) Validate() error {
+	if err := schema.CheckName(r.OrganizationName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := schema.CheckName(r.TeamName); err != nil {
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return nil
+}
+
+// Validate validates ListTeamsRequest
+func (r *ListTeamsRequest) Validate() error {
 	return nil
 }

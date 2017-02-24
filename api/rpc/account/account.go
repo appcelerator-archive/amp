@@ -557,13 +557,42 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 }
 
 // GetOrganization implements account.GetOrganization
-func (s *Server) GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationReply, error) {
-	return nil, nil
+func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest) (*GetOrganizationReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the organization
+	organization, err := s.accounts.GetOrganization(ctx, in.Name)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+	log.Println("Successfully retrieved organization", organization.Name)
+
+	return &GetOrganizationReply{Organization: organization}, nil
 }
 
 // ListOrganizations implements account.ListOrganizations
-func (s *Server) ListOrganizations(context.Context, *ListOrganizationsRequest) (*ListOrganizationsReply, error) {
-	return nil, nil
+func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest) (*ListOrganizationsReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// List organizations
+	organizations, err := s.accounts.ListOrganizations(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	reply := &ListOrganizationsReply{}
+	for _, organization := range organizations {
+		reply.Organizations = append(reply.Organizations, organization)
+	}
+	log.Println("Successfully list organizations")
+
+	return reply, nil
 }
 
 // Teams
@@ -838,11 +867,51 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Emp
 }
 
 // GetTeam implements account.GetTeam
-func (s *Server) GetTeam(context.Context, *GetTeamRequest) (*GetTeamReply, error) {
-	return nil, nil
+func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the organization
+	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+
+	// Get the team
+	team := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	if team == nil {
+		return nil, grpc.Errorf(codes.NotFound, "team not found")
+	}
+	log.Println("Successfully retrieved team", team.Name)
+
+	return &GetTeamReply{Team: team}, nil
 }
 
 // ListTeams implements account.ListTeams
-func (s *Server) ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsReply, error) {
-	return nil, nil
+func (s *Server) ListTeams(ctx context.Context, in *ListTeamsRequest) (*ListTeamsReply, error) {
+	if err := in.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get the organization
+	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+
+	// List teams
+	reply := &ListTeamsReply{}
+	for _, team := range organization.Teams {
+		reply.Teams = append(reply.Teams, team)
+	}
+	log.Println("Successfully list teams")
+
+	return reply, nil
 }
