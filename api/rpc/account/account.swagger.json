@@ -485,7 +485,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountVerificationReply"
             }
           }
         },
@@ -737,6 +737,15 @@
         }
       },
       "title": "Users"
+    },
+    "accountVerificationReply": {
+      "type": "object",
+      "properties": {
+        "reply": {
+          "type": "string",
+          "format": "string"
+        }
+      }
     },
     "accountVerificationRequest": {
       "type": "object",
