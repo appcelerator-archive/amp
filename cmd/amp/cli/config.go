@@ -31,6 +31,9 @@ const (
 
 	//DefaultAdminServerPort adm-server address
 	DefaultAdminServerPort = "8081"
+
+	//DefaultCmdTheme terminal theme
+	//DefaultCmdTheme = "dark"
 )
 
 // InitConfig reads in a config file and ENV variables if set.
@@ -47,6 +50,9 @@ func InitConfig(configFile string, config *Configuration, verbose bool, ampAddr 
 	if config.AdminServerPort == "" {
 		config.AdminServerPort = DefaultAdminServerPort
 	}
+	// if config.CmdTheme == "" {
+	// 	config.CmdTheme = DefaultCmdTheme
+	// }
 	// Add matching environment variables - will take precedence over config files.
 	viper.AutomaticEnv()
 
