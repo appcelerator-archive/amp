@@ -57,7 +57,7 @@ func checkOrganizationMember(member *OrganizationMember) error {
 
 func checkOrganizationMembers(members []*OrganizationMember) error {
 	if len(members) == 0 {
-		return InvalidName
+		return AtLeastOneOwner
 	}
 	haveAtLeastOneOwner := false
 	for _, member := range members {

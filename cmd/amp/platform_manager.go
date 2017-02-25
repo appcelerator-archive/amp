@@ -79,14 +79,6 @@ type ampService struct {
 }
 
 var currentColorTheme = "default"
-var (
-	colRegular = 0
-	colInfo    = 1
-	colWarn    = 2
-	colError   = 3
-	colSuccess = 4
-	colUser    = 5
-)
 
 func (s *ampManager) init(firstMessage string) error {
 	s.ctx = context.Background()
@@ -664,7 +656,7 @@ func (s *ampManager) setColors() {
 	s.fcolWarn = s.printColor[colWarn].SprintFunc()
 	s.fcolError = s.printColor[colError].SprintFunc()
 	s.fcolSuccess = s.printColor[colSuccess].SprintFunc()
-	s.fcolUser = s.printColor[colUser].SprintFunc()
+	//s.fcolUser = s.printColor[colUser].SprintFunc()
 	//add theme as you want.
 }
 

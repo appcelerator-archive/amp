@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -25,7 +26,7 @@ func init() {
 	TopicCmd.AddCommand(createTopicCmd)
 }
 
-func createTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func createTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("must specify topic name")
 	}
@@ -39,9 +40,10 @@ func createTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	}}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, err := client.Create(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := client.Create(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 
 	fmt.Println(reply.Topic.Id)
