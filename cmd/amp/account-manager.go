@@ -61,8 +61,9 @@ var (
 		},
 	}
 
-	reset  bool
 	change bool
+	reset  bool
+	set    bool
 
 	//TODO: pass verbose as arg
 	manager = NewCmdManager("")
@@ -76,9 +77,9 @@ func init() {
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
 
-	pwdCmd.Flags().BoolVar(&reset, "reset", false, "Reset Password")
 	pwdCmd.Flags().BoolVar(&change, "change", false, "Change Password")
-
+	pwdCmd.Flags().BoolVar(&reset, "reset", false, "Reset Password")
+	pwdCmd.Flags().BoolVar(&set, "set", false, "Set Password")
 }
 
 // signUp validates the input command line arguments and creates a new account
@@ -172,6 +173,9 @@ func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if change {
 		return pwdChange(amp, cmd, args)
 	}
+	if set {
+		return pwdSet(amp, cmd, args)
+	}
 	manager.printf(2, "Choose a command for password operation.\nUse amp account password -h for help.\n")
 	return nil
 }
@@ -209,6 +213,28 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
+	if err != nil {
+		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		return
+	}
+	manager.printf(4, "Your password change has been successful.\n")
+	return nil
+}
+
+// pwdSet validates the input command line arguments and changes existing password of an account
+// by invoking the corresponding rpc/storage method
+func pwdSet(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+	// Get inputs
+	manager.printf(0, "This will allow you to set a new password.\n")
+	token := getToken()
+	fmt.Println("Enter new password.")
+	password := getPassword()
+	request := &account.PasswordSetRequest{
+		Token:    token,
+		Password: password,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	_, err = accClient.PasswordSet(context.Background(), request)
 	if err != nil {
 		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
 		return

@@ -11,33 +11,13 @@ import (
 	"time"
 )
 
-// UserClaims represents user claims
-type UserClaims struct {
-	AccountName string `json:"AccountName"`
-	jwt.StandardClaims
-}
-
-// LoginCredentials represents login credentials
-type LoginCredentials struct {
-	Token string
-}
-
-// GetRequestMetadata implements credentials.PerRPCCredentials
-func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		TokenKey: c.Token,
-	}, nil
-}
-
-// RequireTransportSecurity implements credentials.PerRPCCredentials
-func (c *LoginCredentials) RequireTransportSecurity() bool {
-	return false
-}
-
 // Keys used in context metadata
 const (
-	TokenKey     = "amp.token"
-	RequesterKey = "amp.requester"
+	TokenKey          = "amp.token"
+	RequesterKey      = "amp.requester"
+	TokenTypeVerify   = "verify"
+	TokenTypeLogin    = "login"
+	TokenTypePassword = "password"
 )
 
 var (
@@ -58,6 +38,30 @@ var (
 		"/version.Version/List",
 	}
 )
+
+// UserClaims represents user claims
+type AccountClaims struct {
+	AccountName string `json:"AccountName"`
+	Type        string `json:"Type"`
+	jwt.StandardClaims
+}
+
+// LoginCredentials represents login credentials
+type LoginCredentials struct {
+	Token string
+}
+
+// GetRequestMetadata implements credentials.PerRPCCredentials
+func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		TokenKey: c.Token,
+	}, nil
+}
+
+// RequireTransportSecurity implements credentials.PerRPCCredentials
+func (c *LoginCredentials) RequireTransportSecurity() bool {
+	return false
+}
 
 func isAnonymous(elem string) bool {
 	for _, e := range anonymousAllowed {
@@ -98,7 +102,7 @@ func authorize(ctx context.Context) (context.Context, error) {
 		if token == "" {
 			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 		}
-		claims, err := ValidateUserToken(token)
+		claims, err := ValidateUserToken(token, TokenTypeLogin)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
 		}
@@ -111,10 +115,11 @@ func authorize(ctx context.Context) (context.Context, error) {
 }
 
 // CreateUserToken creates a token for a given user name
-func CreateUserToken(name string, validFor time.Duration) (string, error) {
+func CreateUserToken(name string, tokenType string, validFor time.Duration) (string, error) {
 	// Forge the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
 		name, // The token contains the user name to verify
+		tokenType,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(validFor).Unix(),
 			Issuer:    os.Args[0],
@@ -128,8 +133,8 @@ func CreateUserToken(name string, validFor time.Duration) (string, error) {
 }
 
 // ValidateUserToken validates a user token and return its claims
-func ValidateUserToken(signedString string) (*UserClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &UserClaims{}, func(t *jwt.Token) (interface{}, error) {
+func ValidateUserToken(signedString string, tokenType string) (*AccountClaims, error) {
+	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
@@ -138,9 +143,12 @@ func ValidateUserToken(signedString string) (*UserClaims, error) {
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
-	claims, ok := token.Claims.(*UserClaims)
+	claims, ok := token.Claims.(*AccountClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
+	}
+	if claims.Type != tokenType {
+		return nil, fmt.Errorf("invalid token type")
 	}
 	return claims, nil
 }

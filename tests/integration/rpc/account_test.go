@@ -25,14 +25,16 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	_, err := accountClient.SignUp(ctx, user)
 	assert.NoError(t, err)
 
-	// Create a token
-	token, err := auth.CreateUserToken(user.Name, time.Hour)
+	// Create a verify token
+	token, err := auth.CreateUserToken(user.Name, auth.TokenTypeVerify, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
 	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
 	assert.NoError(t, err)
 
+	// Create a login token
+	token, err = auth.CreateUserToken(user.Name, auth.TokenTypeLogin, time.Hour)
 	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 }
 
@@ -78,7 +80,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a token
-	token, err := auth.CreateUserToken(testUser.Name, time.Hour)
+	token, err := auth.CreateUserToken(testUser.Name, auth.TokenTypeVerify, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -221,7 +223,7 @@ func TestUserPasswordSet(t *testing.T) {
 	createUser(t, &testUser)
 
 	// Password Set
-	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
+	token, _ := auth.CreateUserToken(testUser.Name, auth.TokenTypePassword, time.Hour)
 	_, err := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -274,7 +276,7 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := auth.CreateUserToken(testUser.Name, time.Hour)
+	token, _ := auth.CreateUserToken(testUser.Name, auth.TokenTypePassword, time.Hour)
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "",
@@ -469,7 +471,7 @@ func TestOrganizationCreateNotVerifiedUserShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a token
-	token, err := auth.CreateUserToken(testUser.Name, time.Hour)
+	token, err := auth.CreateUserToken(testUser.Name, auth.TokenTypeLogin, time.Hour)
 	ownerCtx := metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 	assert.NoError(t, err)
 
