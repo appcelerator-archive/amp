@@ -85,7 +85,7 @@ func init() {
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
 func signUp(amp *cli.AMP) (err error) {
-	manager.printf(0, "This will sign you up for a new personal AMP account.\n")
+	manager.printf(colRegular, "This will sign you up for a new personal AMP account.")
 	username := getUserName()
 	email := getEmailAddress()
 	password := getPassword()
@@ -97,17 +97,17 @@ func signUp(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.SignUp(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Hi %s! Please check your email to complete the signup process.\n", username)
+	manager.printf(colSuccess, "Hi %s! Please check your email to complete the signup process.", username)
 	return nil
 }
 
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
 func verify(amp *cli.AMP) (err error) {
-	manager.printf(0, "This will verify an existing AMP account.\n")
+	manager.printf(colRegular, "This will verify an existing AMP account.")
 	token := getToken()
 	request := &account.VerificationRequest{
 		Token: token,
@@ -115,17 +115,17 @@ func verify(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.Verify(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Your account has now been activated.\n")
+	manager.printf(colSuccess, "Your account has now been activated.")
 	return nil
 }
 
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
 func login(amp *cli.AMP) (err error) {
-	manager.printf(0, "This will login to an existing AMP account.\n")
+	manager.printf(colRegular, "This will login to an existing AMP account.")
 	username := getUserName()
 	password := getPassword()
 	request := &account.LogInRequest{
@@ -136,20 +136,20 @@ func login(amp *cli.AMP) (err error) {
 	header := metadata.MD{}
 	_, err = accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
 	if err := cli.SaveToken(header); err != nil {
 		return err
 	}
-	manager.printf(4, "Welcome back, %s!\n", username)
+	manager.printf(colSuccess, "Welcome back, %s!", username)
 	return nil
 }
 
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
 func forgotLogin(amp *cli.AMP) (err error) {
-	manager.printf(0, "This will send your username to your registered email address.\n")
+	manager.printf(colRegular, "This will send your username to your registered email address.")
 	email := getEmailAddress()
 	request := &account.ForgotLoginRequest{
 		Email: email,
@@ -157,10 +157,10 @@ func forgotLogin(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Your login name has been sent to the address: %s\n", email)
+	manager.printf(colSuccess, "Your login name has been sent to the address: %s", email)
 	return nil
 }
 
@@ -176,14 +176,14 @@ func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if set {
 		return pwdSet(amp, cmd, args)
 	}
-	manager.printf(2, "Choose a command for password operation.\nUse amp account password -h for help.\n")
+	manager.printf(colWarn, "Choose a command for password operation.\nUse amp account password -h for help.")
 	return nil
 }
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
 func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
-	manager.printf(0, "This will send a password reset email to your email address.\n")
+	manager.printf(colRegular, "This will send a password reset email to your email address.")
 	username := getUserName()
 	request := &account.PasswordResetRequest{
 		Name: username,
@@ -191,10 +191,10 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Hi %s! Please check your email to complete the password reset process.\n", username)
+	manager.printf(colSuccess, "Hi %s! Please check your email to complete the password reset process.", username)
 	return nil
 }
 
@@ -202,7 +202,7 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	// Get inputs
-	manager.printf(0, "This will allow you to update your existing password.\n")
+	manager.printf(colRegular, "This will allow you to update your existing password.")
 	fmt.Println("Enter your current password.")
 	existingPwd := getPassword()
 	fmt.Println("Enter new password.")
@@ -214,10 +214,10 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Your password change has been successful.\n")
+	manager.printf(colSuccess, "Your password change has been successful.")
 	return nil
 }
 
@@ -249,7 +249,7 @@ func getUserName() (username string) {
 	username = strings.TrimSpace(username)
 	err := schema.CheckName(username)
 	if err != nil {
-		manager.printf(2, "Username is invalid/incorrect. Try again!\n\n")
+		manager.printf(colWarn, err.Error())
 		return getUserName()
 	}
 	return
@@ -261,7 +261,7 @@ func getEmailAddress() (email string) {
 	email = strings.TrimSpace(email)
 	_, err := schema.CheckEmailAddress(email)
 	if err != nil {
-		manager.printf(2, "Email in incorrect format. Try again!\n\n")
+		manager.printf(colWarn, err.Error())
 		return getEmailAddress()
 	}
 	return
@@ -277,15 +277,15 @@ func getToken() (token string) {
 func getPassword() (password string) {
 	fmt.Print("password: ")
 	pw, err := gopass.GetPasswd()
-	if pw == nil || err != nil {
-		manager.printf(2, "Password is mandatory. Try again!\n\n")
+	if err != nil {
+		manager.fatalf(err.Error())
 		return getPassword()
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
 	err = schema.CheckPassword(password)
 	if err != nil {
-		manager.printf(2, "Password entered is too weak. Password must be at least 8 characters long. Try again!\n\n")
+		manager.printf(colWarn, grpc.ErrorDesc(err))
 		return getPassword()
 	}
 	return
