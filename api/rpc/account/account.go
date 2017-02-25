@@ -30,6 +30,40 @@ func NewServer(store storage.Interface) *Server {
 
 // Users
 
+func (s *Server) getRequester(ctx context.Context) (requester *schema.User, err error) {
+	requesterName, err := auth.GetRequesterName(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if requester, err = s.accounts.GetUser(ctx, requesterName); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if requester == nil {
+		return nil, grpc.Errorf(codes.NotFound, "requester not found")
+	}
+	return requester, nil
+}
+
+func (s *Server) getUser(ctx context.Context, name string) (user *schema.User, err error) {
+	if user, err = s.accounts.GetUser(ctx, name); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found")
+	}
+	return user, nil
+}
+
+func (s *Server) getVerifiedUser(ctx context.Context, name string) (user *schema.User, err error) {
+	if user, err = s.getUser(ctx, name); err != nil {
+		return nil, err
+	}
+	if !user.IsVerified {
+		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+	}
+	return user, nil
+}
+
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
@@ -78,21 +112,17 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 	// Validate the token
 	claims, err := auth.ValidateUserToken(in.Token, auth.TokenTypeVerify)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
+		return nil, grpc.Errorf(codes.FailedPrecondition, err.Error())
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, claims.AccountName)
+	user, err := s.getUser(ctx, claims.AccountName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+		return nil, err
 	}
 
 	// Activate the user
-	user.IsVerified = true
-	if err := s.accounts.UpdateUser(ctx, user); err != nil {
+	if err := s.accounts.ActivateUser(ctx, user.Name); err != nil {
 		return &VerificationReply{}, grpc.Errorf(codes.Internal, err.Error())
 	}
 	// TODO: We probably need to send an email ...
@@ -110,15 +140,9 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, in.Name)
+	user, err := s.getVerifiedUser(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
 	// Check password
@@ -149,12 +173,9 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, in.Name)
+	user, err := s.getUser(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+		return nil, err
 	}
 
 	// Create a password reset token valid for an hour
@@ -185,15 +206,9 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, claims.AccountName)
+	user, err := s.getUser(ctx, claims.AccountName)
 	if err != nil {
-		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
 	// Sets the new password
@@ -211,20 +226,10 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
 	// Check the existing password password
@@ -272,12 +277,9 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 	}
 
 	// Get the user
-	user, err := s.accounts.GetUser(ctx, in.Name)
+	user, err := s.getUser(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
+		return nil, err
 	}
 	log.Println("Successfully retrieved user", user.Name)
 
@@ -306,26 +308,26 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 
 // Organizations
 
+func (s *Server) getOrganization(ctx context.Context, name string) (organization *schema.Organization, err error) {
+	if organization, err = s.accounts.GetOrganization(ctx, name); err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+	if organization == nil {
+		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+	}
+	return organization, nil
+}
+
 // CreateOrganization implements account.CreateOrganization
 func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*pb.Empty, error) {
 	if err := in.Validate(); err != nil {
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
 	// Check if organization already exists
@@ -363,29 +365,16 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
 	// Check authorization
@@ -400,16 +389,10 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	// Check if the user exists
-	user, err := s.accounts.GetUser(ctx, in.UserName)
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, in.UserName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
 	// Add the new member
@@ -428,29 +411,16 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
 	// Check authorization
@@ -465,19 +435,13 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	// Check if the user exists
-	user, err := s.accounts.GetUser(ctx, in.UserName)
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, in.UserName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
-	// Remove the existing member
+	// Remove member
 	if err := s.accounts.RemoveUserFromOrganization(ctx, organization, user); err != nil {
 		return &pb.Empty{}, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -493,29 +457,16 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.Name)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
 	// Check authorization
@@ -546,13 +497,10 @@ func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest
 		return nil, err
 	}
 
-	// Get the organization
-	organization, err := s.accounts.GetOrganization(ctx, in.Name)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 	log.Println("Successfully retrieved organization", organization.Name)
 
@@ -587,29 +535,16 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
 	// Get organization
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
 	// Check authorization
@@ -625,7 +560,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 	}
 
 	// Check if team already exists
-	teamAlreadyExists := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	teamAlreadyExists := organization.GetTeam(in.TeamName)
 	if teamAlreadyExists != nil {
 		return nil, grpc.Errorf(codes.AlreadyExists, "team already exists")
 	}
@@ -655,33 +590,20 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
-	// Check if team exists
-	team := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	// Get team
+	team := organization.GetTeam(in.TeamName)
 	if team == nil {
 		return nil, grpc.Errorf(codes.NotFound, "team not found")
 	}
@@ -698,16 +620,10 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	// Check if the user exists
-	user, err := s.accounts.GetUser(ctx, in.UserName)
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, in.UserName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
 	// Add the new member
@@ -726,33 +642,20 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
-	// Check if team exists
-	team := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	// Get team
+	team := organization.GetTeam(in.TeamName)
 	if team == nil {
 		return nil, grpc.Errorf(codes.NotFound, "team not found")
 	}
@@ -769,16 +672,10 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		return nil, grpc.Errorf(codes.PermissionDenied, "permission denied")
 	}
 
-	// Check if the user exists
-	user, err := s.accounts.GetUser(ctx, in.UserName)
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, in.UserName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found")
-	}
-	if !user.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "user not verified")
+		return nil, err
 	}
 
 	// Remove the existing member
@@ -797,33 +694,20 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Emp
 		return nil, err
 	}
 
-	// Get the requester
-	requesterName, err := auth.GetRequesterName(ctx)
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	requester, err := s.accounts.GetUser(ctx, requesterName)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if requester == nil {
-		return nil, grpc.Errorf(codes.NotFound, "requester not found")
-	}
-	if !requester.IsVerified {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "requester not verified")
+		return nil, err
 	}
 
-	// Check if organization exists
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
-	// Check if team exists
-	team := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	// Get team
+	team := organization.GetTeam(in.TeamName)
 	if team == nil {
 		return nil, grpc.Errorf(codes.NotFound, "team not found")
 	}
@@ -856,17 +740,14 @@ func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply
 		return nil, err
 	}
 
-	// Get the organization
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
-	// Get the team
-	team := s.accounts.GetTeam(ctx, organization, in.TeamName)
+	// Get team
+	team := organization.GetTeam(in.TeamName)
 	if team == nil {
 		return nil, grpc.Errorf(codes.NotFound, "team not found")
 	}
@@ -881,13 +762,10 @@ func (s *Server) ListTeams(ctx context.Context, in *ListTeamsRequest) (*ListTeam
 		return nil, err
 	}
 
-	// Get the organization
-	organization, err := s.accounts.GetOrganization(ctx, in.OrganizationName)
+	// Get organization
+	organization, err := s.getOrganization(ctx, in.OrganizationName)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
-	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found")
+		return nil, err
 	}
 
 	// List teams

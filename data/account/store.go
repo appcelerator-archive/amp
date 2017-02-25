@@ -46,7 +46,7 @@ func (s *Store) CreateUser(ctx context.Context, password string, in *schema.User
 	return nil
 }
 
-func (s *Store) getRawUser(ctx context.Context, name string) (*schema.User, error) {
+func (s *Store) rawUser(ctx context.Context, name string) (*schema.User, error) {
 	user := &schema.User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func secureUser(user *schema.User) *schema.User {
 
 // GetUser fetches a user by name
 func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
-	user, err := s.getRawUser(ctx, name)
+	user, err := s.rawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 
 // CheckUserPassword checks the given user password
 func (s *Store) CheckUserPassword(ctx context.Context, password string, name string) error {
-	user, err := s.getRawUser(ctx, name)
+	user, err := s.rawUser(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (s *Store) CheckUserPassword(ctx context.Context, password string, name str
 
 // SetUserPassword sets the given user password
 func (s *Store) SetUserPassword(ctx context.Context, password string, name string) error {
-	user, err := s.getRawUser(ctx, name)
+	user, err := s.rawUser(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -139,17 +139,17 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	return users, nil
 }
 
-// UpdateUser updates a user
-func (s *Store) UpdateUser(ctx context.Context, update *schema.User) error {
-	if err := update.Validate(); err != nil {
-		return err
-	}
-	current, err := s.getRawUser(ctx, update.Name)
+// ActivateUser activates a user account
+func (s *Store) ActivateUser(ctx context.Context, name string) error {
+	user, err := s.rawUser(ctx, name)
 	if err != nil {
 		return err
 	}
-	update.PasswordHash = current.PasswordHash
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, update.Name), update, 0); err != nil {
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	user.IsVerified = true
+	if err := s.Store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return err
 	}
 	return nil
@@ -290,20 +290,9 @@ func (s *Store) CreateTeam(ctx context.Context, organization *schema.Organizatio
 	return s.updateOrganization(ctx, organization)
 }
 
-// GetTeam fetches a team by name
-func (s *Store) GetTeam(ctx context.Context, organization *schema.Organization, name string) *schema.Team {
-	// Check if team already exists
-	for _, t := range organization.Teams {
-		if t.Name == name {
-			return t
-		}
-	}
-	return nil
-}
-
 // AddUserToTeam adds a user to the given team
 func (s *Store) AddUserToTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
-	team := s.GetTeam(ctx, organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return fmt.Errorf("team not found")
 	}
@@ -326,7 +315,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organization *schema.Organiza
 
 // RemoveUserFromTeam removes a user from the given team
 func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Organization, teamName string, user *schema.User) error {
-	team := s.GetTeam(ctx, organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return fmt.Errorf("team not found")
 	}
@@ -350,7 +339,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organization *schema.Org
 
 // DeleteTeam deletes a team by name
 func (s *Store) DeleteTeam(ctx context.Context, organization *schema.Organization, teamName string) error {
-	team := s.GetTeam(ctx, organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return fmt.Errorf("team not found")
 	}

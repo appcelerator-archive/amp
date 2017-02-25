@@ -74,7 +74,7 @@ func isAnonymous(elem string) bool {
 
 // StreamInterceptor is an interceptor checking for authentication tokens
 func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+	if !isAnonymous(info.FullMethod) {
 		if _, err := authorize(stream.Context()); err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 
 // Interceptor is an interceptor checking for authentication tokens
 func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (i interface{}, err error) {
-	if anonymous := isAnonymous(info.FullMethod); !anonymous {
+	if !isAnonymous(info.FullMethod) {
 		if ctx, err = authorize(ctx); err != nil {
 			return nil, err
 		}
@@ -93,25 +93,25 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 }
 
 func authorize(ctx context.Context) (context.Context, error) {
-	if md, ok := metadata.FromContext(ctx); ok {
-		tokens := md[TokenKey]
-		if len(tokens) == 0 {
-			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
-		}
-		token := tokens[0]
-		if token == "" {
-			return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
-		}
-		claims, err := ValidateUserToken(token, TokenTypeLogin)
-		if err != nil {
-			return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
-		}
-		// Enrich the context with the requester
-		md := metadata.Pairs(RequesterKey, claims.AccountName)
-		ctx = metadata.NewContext(ctx, md)
-		return ctx, nil
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 	}
-	return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	tokens := md[TokenKey]
+	if len(tokens) == 0 {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	}
+	token := tokens[0]
+	if token == "" {
+		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+	}
+	claims, err := ValidateUserToken(token, TokenTypeLogin)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
+	}
+	// Enrich the context with the requester
+	ctx = metadata.NewContext(ctx, metadata.Pairs(RequesterKey, claims.AccountName))
+	return ctx, nil
 }
 
 // CreateUserToken creates a token for a given user name

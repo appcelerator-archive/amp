@@ -26,8 +26,8 @@ type Interface interface {
 	// ListUsers lists users
 	ListUsers(ctx context.Context) (users []*schema.User, err error)
 
-	// UpdateUser updates a user
-	UpdateUser(ctx context.Context, update *schema.User) (err error)
+	// ActivateUser activates a user account
+	ActivateUser(ctx context.Context, name string) (err error)
 
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
@@ -55,9 +55,6 @@ type Interface interface {
 
 	// CreateTeam creates a new team
 	CreateTeam(ctx context.Context, organization *schema.Organization, team *schema.Team) (err error)
-
-	// GetTeam fetches a team by name
-	GetTeam(ctx context.Context, organization *schema.Organization, name string) (team *schema.Team)
 
 	// AddUserToTeam adds a user to the given team
 	AddUserToTeam(ctx context.Context, organization *schema.Organization, name string, user *schema.User) (err error)

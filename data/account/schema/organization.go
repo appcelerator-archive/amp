@@ -9,3 +9,14 @@ func (o *Organization) GetOwners() (owners []*OrganizationMember) {
 	}
 	return
 }
+
+// GetTeam fetches a team by name
+func (o *Organization) GetTeam(name string) *Team {
+	// Check if team already exists
+	for _, t := range o.Teams {
+		if t.Name == name {
+			return t
+		}
+	}
+	return nil
+}

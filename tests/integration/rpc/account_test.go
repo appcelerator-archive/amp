@@ -114,8 +114,19 @@ func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TODO: Check token with invalid signature
-// TODO: Check token with non existing account id
+func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a verify token
+	token, err := auth.CreateUserToken("nonexistinguser", auth.TokenTypeVerify, time.Hour)
+	assert.NoError(t, err)
+
+	// Verify
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.Error(t, err)
+}
+
 // TODO: Check expired token
 
 func TestUserLogin(t *testing.T) {
@@ -133,7 +144,7 @@ func TestUserLogin(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUserLoginNonExistingAccountShouldFail(t *testing.T) {
+func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -145,7 +156,7 @@ func TestUserLoginNonExistingAccountShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserLoginNonVerifiedAccountShouldFail(t *testing.T) {
+func TestUserLoginNonVerifiedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -203,7 +214,7 @@ func TestUserPasswordReset(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUserPasswordResetNonExistingAccountShouldFail(t *testing.T) {
+func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -211,7 +222,19 @@ func TestUserPasswordResetNonExistingAccountShouldFail(t *testing.T) {
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "This is not an existing user"})
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "this is not a valid user name"})
+	assert.Error(t, err)
+}
+
+func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createUser(t, &testUser)
+
+	// Password Reset
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "nonexistinguser"})
 	assert.Error(t, err)
 }
 
@@ -252,6 +275,33 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	// Password Set
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    "this is an invalid token",
+		Password: "newPassword",
+	})
+	assert.Error(t, err)
+
+	// Login
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
+		Password: "newPassword",
+	})
+	assert.Error(t, err)
+}
+
+func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createUser(t, &testUser)
+
+	// Password Reset
+	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	assert.NoError(t, err)
+
+	// Password Set
+	token, _ := auth.CreateUserToken("nonexistinguser", auth.TokenTypePassword, time.Hour)
+	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+		Token:    token,
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
@@ -324,7 +374,30 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	// Password Change
 	newPassword := "newPassword"
 	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
-		ExistingPassword: "this is not a valid password",
+		ExistingPassword: "this is not the right password",
+		NewPassword:      newPassword,
+	})
+	assert.Error(t, err)
+
+	// Login
+	_, err = accountClient.Login(ctx, &account.LogInRequest{
+		Name:     testUser.Name,
+		Password: newPassword,
+	})
+	assert.Error(t, err)
+}
+
+func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// Password Change
+	newPassword := ""
+	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
@@ -345,7 +418,7 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
-	newPassword := ""
+	newPassword := "aze"
 	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
 		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
@@ -375,7 +448,7 @@ func TestUserForgotLogin(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
+func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -386,6 +459,17 @@ func TestUserForgotLoginInvalidEmailShouldFail(t *testing.T) {
 	// ForgotLogin
 	_, err = accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
 		Email: "this is not a valid email",
+	})
+	assert.Error(t, err)
+}
+
+func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// ForgotLogin
+	_, err := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+		Email: testUser.Email,
 	})
 	assert.Error(t, err)
 }
@@ -406,6 +490,28 @@ func TestUserGet(t *testing.T) {
 	assert.Equal(t, getReply.User.Name, testUser.Name)
 	assert.Equal(t, getReply.User.Email, testUser.Email)
 	assert.NotEmpty(t, getReply.User.CreateDt)
+}
+
+func TestUserGetMalformedUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Get
+	_, err := accountClient.GetUser(ctx, &account.GetUserRequest{
+		Name: "this user is malformed",
+	})
+	assert.Error(t, err)
+}
+
+func TestUserGetNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Get
+	_, err := accountClient.GetUser(ctx, &account.GetUserRequest{
+		Name: testUser.Name,
+	})
+	assert.Error(t, err)
 }
 
 func TestUserList(t *testing.T) {
@@ -460,24 +566,6 @@ func TestOrganizationCreate(t *testing.T) {
 	// CreateOrganization
 	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
 	assert.NoError(t, err)
-}
-
-func TestOrganizationCreateNotVerifiedUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
-	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
-	assert.NoError(t, err)
-
-	// Create a token
-	token, err := auth.CreateUserToken(testUser.Name, auth.TokenTypeLogin, time.Hour)
-	ownerCtx := metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
-	assert.NoError(t, err)
-
-	// CreateOrganization
-	_, err = accountClient.CreateOrganization(ownerCtx, &testOrg)
-	assert.Error(t, err)
 }
 
 func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
