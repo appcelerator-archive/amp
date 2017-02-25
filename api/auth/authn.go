@@ -105,7 +105,7 @@ func authorize(ctx context.Context) (context.Context, error) {
 	if token == "" {
 		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
 	}
-	claims, err := ValidateUserToken(token, TokenTypeLogin)
+	claims, err := ValidateToken(token, TokenTypeLogin)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
@@ -114,8 +114,8 @@ func authorize(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-// CreateUserToken creates a token for a given user name
-func CreateUserToken(name string, tokenType string, validFor time.Duration) (string, error) {
+// CreateToken creates a token for a given user name
+func CreateToken(name string, tokenType string, validFor time.Duration) (string, error) {
 	// Forge the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
 		name, // The token contains the user name to verify
@@ -127,13 +127,13 @@ func CreateUserToken(name string, tokenType string, validFor time.Duration) (str
 	})
 	ss, err := token.SignedString(secretKey)
 	if err != nil {
-		return "", fmt.Errorf("unable to issue verification token")
+		return "", fmt.Errorf("unable to issue token")
 	}
 	return ss, nil
 }
 
-// ValidateUserToken validates a user token and return its claims
-func ValidateUserToken(signedString string, tokenType string) (*AccountClaims, error) {
+// ValidateToken validates a token and return its claims
+func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
 	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})

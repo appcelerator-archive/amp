@@ -89,7 +89,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 	}
 
 	// Create a verification token valid for an hour
-	token, err := auth.CreateUserToken(user.Name, auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateToken(user.Name, auth.TokenTypeVerify, time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -110,7 +110,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 	}
 
 	// Validate the token
-	claims, err := auth.ValidateUserToken(in.Token, auth.TokenTypeVerify)
+	claims, err := auth.ValidateToken(in.Token, auth.TokenTypeVerify)
 	if err != nil {
 		return nil, grpc.Errorf(codes.FailedPrecondition, err.Error())
 	}
@@ -151,7 +151,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 	}
 
 	// Create an authentication token valid for a day
-	token, err := auth.CreateUserToken(user.Name, auth.TokenTypeLogin, 24*time.Hour)
+	token, err := auth.CreateToken(user.Name, auth.TokenTypeLogin, 24*time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -179,7 +179,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	}
 
 	// Create a password reset token valid for an hour
-	token, err := auth.CreateUserToken(user.Name, auth.TokenTypePassword, time.Hour)
+	token, err := auth.CreateToken(user.Name, auth.TokenTypePassword, time.Hour)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -200,7 +200,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 
 	// Validate the token
-	claims, err := auth.ValidateUserToken(in.Token, auth.TokenTypePassword)
+	claims, err := auth.ValidateToken(in.Token, auth.TokenTypePassword)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
