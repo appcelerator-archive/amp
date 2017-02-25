@@ -7,6 +7,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"os"
 	"strconv"
 	"strings"
@@ -62,7 +63,7 @@ func init() {
 	RootCmd.AddCommand(functionCmd)
 }
 
-func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify function name and docker image")
@@ -87,21 +88,23 @@ func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 		Name:  name,
 		Image: image,
 	}}
-	reply, err := function.NewFunctionClient(amp.Conn).Create(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := function.NewFunctionClient(amp.Conn).Create(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 
 	fmt.Println(reply.Function.Id)
 	return nil
 }
 
-func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	// List functions
 	request := &function.ListRequest{}
-	reply, err := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 
 	// --quiet only display IDs
@@ -125,7 +128,7 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("rm requires at least one argument")
 	}
@@ -137,9 +140,10 @@ func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 		}
 
 		request := &function.DeleteRequest{Id: arg}
-		_, err := client.Delete(context.Background(), request)
-		if err != nil {
-			fmt.Println(err)
+		_, er := client.Delete(context.Background(), request)
+		if er != nil {
+			manager.fatalf(grpc.ErrorDesc(er))
+			return
 		} else {
 			fmt.Println(arg)
 		}

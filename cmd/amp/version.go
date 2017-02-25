@@ -11,6 +11,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var versionTemplate = `AMP:
@@ -41,7 +42,7 @@ func init() {
 }
 
 // Lists version info of AMP and Amplifier
-func list(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func list(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)
@@ -64,9 +65,10 @@ func list(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request := &version.ListRequest{}
 	if err = AMP.Connect(); err == nil {
 		client := version.NewVersionClient(amp.Conn)
-		reply, err := client.List(context.Background(), request)
-		if err != nil {
-			return err
+		reply, er := client.List(context.Background(), request)
+		if er != nil {
+			manager.fatalf(grpc.ErrorDesc(er))
+			return
 		}
 		vd.Amplifier = &version.Details{
 			Version:   reply.Reply.Version,
