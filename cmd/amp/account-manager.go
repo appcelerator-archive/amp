@@ -271,11 +271,6 @@ func getToken() (token string) {
 	fmt.Print("token: ")
 	fmt.Scanln(&token)
 	token = strings.TrimSpace(token)
-	err := account.CheckVerificationCode(token)
-	if err != nil {
-		manager.printf(2, "Code is invalid. Try again!\n\n")
-		return getToken()
-	}
 	return
 }
 
@@ -288,7 +283,7 @@ func getPassword() (password string) {
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
-	err = account.CheckPassword(password)
+	err = schema.CheckPassword(password)
 	if err != nil {
 		manager.printf(2, "Password entered is too weak. Password must be at least 8 characters long. Try again!\n\n")
 		return getPassword()
