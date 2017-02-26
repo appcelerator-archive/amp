@@ -33,21 +33,21 @@ func convertError(err error) error {
 	case schema.InvalidEmail:
 	case schema.InvalidToken:
 	case schema.PasswordTooWeak:
-		grpc.Errorf(codes.InvalidArgument, err.Error())
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	case schema.WrongPassword:
 	case schema.UserNotVerified:
 	case schema.AtLeastOneOwner:
-		grpc.Errorf(codes.FailedPrecondition, err.Error())
+		return grpc.Errorf(codes.FailedPrecondition, err.Error())
 	case schema.UserAlreadyExists:
 	case schema.OrganizationAlreadyExists:
 	case schema.TeamAlreadyExists:
-		grpc.Errorf(codes.AlreadyExists, err.Error())
+		return grpc.Errorf(codes.AlreadyExists, err.Error())
 	case schema.UserNotFound:
 	case schema.OrganizationNotFound:
 	case schema.TeamNotFound:
-		grpc.Errorf(codes.NotFound, err.Error())
+		return grpc.Errorf(codes.NotFound, err.Error())
 	case schema.NotAuthorized:
-		grpc.Errorf(codes.PermissionDenied, err.Error())
+		return grpc.Errorf(codes.PermissionDenied, err.Error())
 	}
 	return grpc.Errorf(codes.Internal, err.Error())
 }

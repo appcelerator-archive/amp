@@ -38,6 +38,23 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 }
 
+func TestUserShouldSignUpAndVerify(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// SignUp
+	_, err := accountClient.SignUp(ctx, &testUser)
+	assert.NoError(t, err)
+
+	// Create a token
+	token, err := auth.CreateToken(testUser.Name, auth.TokenTypeVerify, time.Hour)
+	assert.NoError(t, err)
+
+	// Verify
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, err)
+}
+
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -71,7 +88,7 @@ func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserShouldSignUpAndVerify(t *testing.T) {
+func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -79,26 +96,9 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	_, err := accountClient.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
-	// Create a token
-	token, err := auth.CreateToken(testUser.Name, auth.TokenTypeVerify, time.Hour)
-	assert.NoError(t, err)
-
-	// Verify
-	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-	assert.NoError(t, err)
-}
-
-func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
 	// SignUp
-	_, err1 := accountClient.SignUp(ctx, &testUser)
-	assert.NoError(t, err1)
-
-	// SignUp
-	_, err2 := accountClient.SignUp(ctx, &testUser)
-	assert.Error(t, err2)
+	_, err = accountClient.SignUp(ctx, &testUser)
+	assert.Error(t, err)
 }
 
 func TestUserVerifyNotATokenShouldFail(t *testing.T) {
