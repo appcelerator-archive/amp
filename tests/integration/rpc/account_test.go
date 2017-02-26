@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
@@ -556,6 +557,19 @@ func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, ow
 	return ownerCtx
 }
 
+func addUserToOrganization(t *testing.T, org *account.CreateOrganizationRequest, ownerCtx context.Context, user *account.SignUpRequest) context.Context {
+	// Create a user
+	userCtx := createUser(t, user)
+
+	// AddUserToOrganization
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: org.Name,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+	return userCtx
+}
+
 func TestOrganizationCreate(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -940,6 +954,563 @@ func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testUser.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestOrganizationList(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createOrganization(t, &testOrg, &testUser)
+
+	// List
+	listReply, err := accountClient.ListOrganizations(ctx, &account.ListOrganizationsRequest{})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, listReply)
+	assert.Len(t, listReply.Organizations, 1)
+	assert.Equal(t, listReply.Organizations[0].Name, testOrg.Name)
+	assert.Equal(t, listReply.Organizations[0].Email, testOrg.Email)
+	assert.NotEmpty(t, listReply.Organizations[0].CreateDt)
+	assert.NotEmpty(t, listReply.Organizations[0].Members)
+	assert.Equal(t, listReply.Organizations[0].Members[0].Name, testUser.Name)
+	assert.Equal(t, listReply.Organizations[0].Members[0].Role, schema.OrganizationRole_ORGANIZATION_OWNER)
+}
+
+// Teams
+
+var (
+	testTeam = account.CreateTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         "team",
+	}
+)
+
+func createTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest, team *account.CreateTeamRequest) context.Context {
+	// Create a user
+	ownerCtx := createOrganization(t, org, owner)
+
+	// CreateTeam
+	_, err := accountClient.CreateTeam(ownerCtx, team)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+func TestTeamCreate(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// CreateTeam
+	_, err := accountClient.CreateTeam(ownerCtx, &testTeam)
+	assert.NoError(t, err)
+}
+
+func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// CreateTeam
+	invalidRequest := testTeam
+	invalidRequest.OrganizationName = "this is not a valid name"
+	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	assert.Error(t, err)
+}
+
+func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// CreateTeam
+	invalidRequest := testTeam
+	invalidRequest.TeamName = "this is not a valid name"
+	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	assert.Error(t, err)
+}
+
+func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// CreateTeam
+	invalidRequest := testTeam
+	invalidRequest.OrganizationName = "nonExistingOrg"
+	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	assert.Error(t, err)
+}
+
+func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create organization
+	createOrganization(t, &testOrg, &testUser)
+
+	// Create a user not part of the organization
+	notOrgOwnerCtx := createUser(t, &testMember)
+
+	// CreateTeam
+	_, err := accountClient.CreateTeam(notOrgOwnerCtx, &testTeam)
+	assert.Error(t, err)
+}
+
+func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// CreateTeam again
+	_, err := accountClient.CreateTeam(ownerCtx, &testTeam)
+	assert.Error(t, err)
+}
+
+func TestTeamAddUser(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+	addUserToOrganization(t, &testOrg, ownerCtx, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: "this is not a valid name",
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         "this is not a valid name",
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         "this is not a valid name",
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createUser(t, &testUser)
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	createTeam(t, &testOrg, &testUser, &testTeam)
+	memberCtx := createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(memberCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// SignUp member
+	_, err := accountClient.SignUp(ctx, &testMember)
+	assert.NoError(t, err)
+
+	// AddUserToTeam
+	_, err = accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// AddUserToTeam again
+	_, err = accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func TestTeamRemoveUser(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// RemoveUserFromTeam
+	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// RemoveUserFromTeam
+	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: "this is not a valid name",
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// RemoveUserFromTeam
+	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         "this is not a valid name",
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// RemoveUserFromTeam
+	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         "this is not a valid name",
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create user
+	ownerCtx := createUser(t, &testUser)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// RemoveUserFromTeam
+	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// RemoveUserFromTeam
+	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	/// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	memberCtx := createUser(t, &testMember)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+
+	// RemoveUserFromTeam
+	_, err = accountClient.RemoveUserFromTeam(memberCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// RemoveUserFromTeam
+	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	/// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create member
+	createUser(t, &testMember)
+
+	// RemoveUserFromTeam
+	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		UserName:         testMember.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func TestTeamList(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// List
+	listReply, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+		OrganizationName: testOrg.Name,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, listReply)
+	assert.Len(t, listReply.Teams, 1)
+	assert.Equal(t, listReply.Teams[0].Name, testTeam.TeamName)
+	assert.NotEmpty(t, listReply.Teams[0].CreateDt)
+	assert.NotEmpty(t, listReply.Teams[0].Members)
+	assert.Equal(t, listReply.Teams[0].Members[0].Name, testUser.Name)
+	assert.Equal(t, listReply.Teams[0].Members[0].Role, schema.TeamRole_TEAM_OWNER)
+}
+
+func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// List
+	_, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+		OrganizationName: "this is not a valid name",
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	createUser(t, &testUser)
+
+	// List
+	_, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+		OrganizationName: testTeam.OrganizationName,
 	})
 	assert.Error(t, err)
 }

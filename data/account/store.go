@@ -306,10 +306,8 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Check if user is already a member
-	for _, member := range organization.Members {
-		if member.Name == user.Name {
-			return nil // User is already a member of the organization, return
-		}
+	if organization.HasMember(user.Name) {
+		return nil // User is already a member of the organization, return
 	}
 
 	// Add the user as a team member
@@ -355,14 +353,8 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 		return err
 	}
 
-	// Check if user is actually a member
-	memberIndex := -1
-	for i, member := range organization.Members {
-		if member.Name == user.Name {
-			memberIndex = i
-			break
-		}
-	}
+	// Check if user is part of the organization
+	memberIndex := organization.GetMemberIndex(user.Name)
 	if memberIndex == -1 {
 		return nil // User is not a member of the organization, return
 	}
@@ -439,15 +431,6 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 
 // Teams
 
-func getTeam(o *schema.Organization, name string) *schema.Team {
-	for _, t := range o.Teams {
-		if t.Name == name {
-			return t
-		}
-	}
-	return nil
-}
-
 // CreateTeam creates a new team
 func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName string) error {
 	// Get requester
@@ -477,9 +460,8 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		return schema.NotAuthorized
 	}
 
-	// Check if organization already exists
-	alreadyExists := getTeam(organization, teamName)
-	if alreadyExists != nil {
+	// Check if team already exists
+	if organization.HasTeam(teamName) {
 		return schema.TeamAlreadyExists
 	}
 
@@ -518,7 +500,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Get team
-	team := getTeam(organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return schema.TeamNotFound
 	}
@@ -541,11 +523,15 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return err
 	}
 
-	// Check if user is already a member
-	for _, member := range team.Members {
-		if member.Name == user.Name {
-			return nil // User is already a member of the team, return
-		}
+	// TODO: check if this check is necessary
+	//// Check if user is part of the organization
+	//if !organization.HasMember(user.Name) {
+	//	return schema.NotAnOrganizationMember
+	//}
+
+	// Check if user is part of the team
+	if team.HasMember(user.Name) {
+		return nil // User is already a member of the team, return
 	}
 
 	// Add the user as a team member
@@ -574,7 +560,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Get team
-	team := getTeam(organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return schema.TeamNotFound
 	}
@@ -598,13 +584,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Check if user is actually a member
-	memberIndex := -1
-	for i, member := range team.Members {
-		if member.Name == user.Name {
-			memberIndex = i
-			break
-		}
-	}
+	memberIndex := team.GetMemberIndex(user.Name)
 	if memberIndex == -1 {
 		return nil // User is not a member of the team, return
 	}
@@ -629,11 +609,10 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 	if err := schema.CheckName(teamName); err != nil {
 		return nil, err
 	}
-	team := getTeam(organization, teamName)
+	team := organization.GetTeam(teamName)
 	if team == nil {
 		return nil, schema.TeamNotFound
 	}
-
 	return team, nil
 }
 
@@ -679,22 +658,10 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 		return schema.NotAuthorized
 	}
 
-	// Get team
-	team := getTeam(organization, teamName)
-	if team == nil {
-		return schema.TeamNotFound
-	}
-
 	// Check if the team is actually a team in the organization
-	teamIndex := -1
-	for i, team := range organization.Teams {
-		if team.Name == teamName {
-			teamIndex = i
-			break
-		}
-	}
+	teamIndex := organization.GetTeamIndex(teamName)
 	if teamIndex == -1 {
-		return nil // Team is not part of the organization team, return
+		return nil // Team is not part of the organization, return
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice

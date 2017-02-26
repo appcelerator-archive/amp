@@ -34,6 +34,10 @@ var (
 		"/account.Account/ForgotLogin",
 		"/account.Account/GetUser",
 		"/account.Account/ListUsers",
+		"/account.Account/GetOrganization",
+		"/account.Account/ListOrganizations",
+		"/account.Account/GetTeam",
+		"/account.Account/ListTeams",
 
 		"/version.Version/List",
 	}
