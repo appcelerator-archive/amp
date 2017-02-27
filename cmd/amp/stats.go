@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -65,10 +66,11 @@ func init() {
 }
 
 // Stats displays resource usage statistcs
-func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) (er error) {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
-		return err
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
 	}
 
 	var query = stats.StatsRequest{}
@@ -135,7 +137,8 @@ func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	if err = validateQuery(&query); err != nil {
-		return err
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
 	}
 
 	// Execute query regarding discriminator
@@ -143,7 +146,8 @@ func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 	if !query.StatsFollow {
 		_, err = executeStat(ctx, c, &query, true, 0)
-		return err
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
 	}
 	return startFollow(ctx, c, &query)
 }
@@ -441,6 +445,7 @@ func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 		ctime, err := executeStat(ctx, c, query, !isHisto, currentTime)
 		currentTime = ctime
 		if err != nil {
+
 			return err
 		}
 		time.Sleep(3 * time.Second)

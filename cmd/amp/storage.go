@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // StorageCmd is the main command for attaching storage subcommands.
@@ -73,7 +74,7 @@ func init() {
 
 // storagePut validates the input command line arguments and creates or updates storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify storage key and storage value")
@@ -89,10 +90,10 @@ func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	v := args[1]
 	request := &storage.PutStorage{Key: k, Val: v}
 	client := storage.NewStorageClient(amp.Conn)
-	reply, err := client.Put(context.Background(), request)
-	if err != nil {
-		fmt.Println("key not found: " + k)
-		return nil
+	reply, er := client.Put(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -100,7 +101,7 @@ func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 // storageGet validates the input command line arguments and retrieves storage key-value pair
 //by invoking the corresponding rpc/storage method
-func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -114,10 +115,10 @@ func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request := &storage.GetStorage{Key: k}
 
 	client := storage.NewStorageClient(amp.Conn)
-	reply, err := client.Get(context.Background(), request)
-	if err != nil {
-		fmt.Println("Key not found: " + k)
-		return nil
+	reply, er := client.Get(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -125,7 +126,7 @@ func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 // storageDelete validates the input command line arguments and deletes storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -139,10 +140,10 @@ func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request := &storage.DeleteStorage{Key: k}
 
 	client := storage.NewStorageClient(amp.Conn)
-	reply, err := client.Delete(context.Background(), request)
-	if err != nil {
-		fmt.Println("Key not found: " + k)
-		return nil
+	reply, er := client.Delete(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -150,15 +151,16 @@ func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 // storageList validates the input command line arguments and lists all the storage
 // key-value pairs by invoking the corresponding rpc/storage method
-func storageList(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func storageList(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) > 0 {
 		return errors.New("too many arguments - check again")
 	}
 	request := &storage.ListStorage{}
 	client := storage.NewStorageClient(amp.Conn)
-	reply, err := client.List(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := client.List(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	if reply == nil || len(reply.List) == 0 {
 		fmt.Println("No storage object is available")

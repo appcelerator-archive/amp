@@ -66,11 +66,11 @@ func (s *cmdManager) setColors() {
 	// 	s.printColor[3] = color.New(color.FgRed)
 	// 	s.printColor[4] = color.New(color.FgGreen)
 	// } else {
-		s.printColor[0] = color.New(color.FgMagenta)
-		s.printColor[1] = color.New(color.FgHiBlack)
-		s.printColor[2] = color.New(color.FgYellow)
-		s.printColor[3] = color.New(color.FgRed)
-		s.printColor[4] = color.New(color.FgGreen)
+	s.printColor[0] = color.New(color.FgMagenta)
+	s.printColor[1] = color.New(color.FgHiBlack)
+	s.printColor[2] = color.New(color.FgYellow)
+	s.printColor[3] = color.New(color.FgRed)
+	s.printColor[4] = color.New(color.FgGreen)
 	//} //add theme as you want.
 	s.fcolRegular = s.printColor[colRegular].SprintFunc()
 	s.fcolInfo = s.printColor[colInfo].SprintFunc()
