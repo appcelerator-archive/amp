@@ -1,17 +1,17 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strings"
 	"text/tabwriter"
 
-	"google.golang.org/grpc"
+	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/data/account/schema"
+	"google.golang.org/grpc"
 )
 
 // OrgCmd is the main command for attaching organization sub-commands.
@@ -45,7 +45,7 @@ var (
 
 	getOrgCmd = &cobra.Command{
 		Use:   "get",
-		Short: "Get organization",
+		Short: "Get organization info",
 		Long:  `The get command retrieves details of an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getOrg(AMP)
@@ -90,7 +90,6 @@ func init() {
 	//OrgCmd.AddCommand(transferOrgCmd)
 }
 
-
 // listOrg validates the input command line arguments and lists available organizations
 // by invoking the corresponding rpc/storage method
 func listOrg(amp *cli.AMP) (err error) {
@@ -119,7 +118,7 @@ func createOrg(amp *cli.AMP) (err error) {
 	orgName := getOrgName()
 	email := getEmailAddress()
 	request := &account.CreateOrganizationRequest{
-		Name: orgName,
+		Name:  orgName,
 		Email: email,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
@@ -188,7 +187,7 @@ func addMem(amp *cli.AMP) (err error) {
 	name := getUserName()
 	request := &account.AddUserToOrganizationRequest{
 		OrganizationName: orgName,
-		UserName: name,
+		UserName:         name,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.AddUserToOrganization(context.Background(), request)
@@ -208,7 +207,7 @@ func removeMem(amp *cli.AMP) (err error) {
 	name := getUserName()
 	request := &account.RemoveUserFromOrganizationRequest{
 		OrganizationName: orgName,
-		UserName: name,
+		UserName:         name,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.RemoveUserFromOrganization(context.Background(), request)
@@ -238,14 +237,14 @@ func removeMem(amp *cli.AMP) (err error) {
 //	return nil
 //}
 
-func getOrgName() (username string) {
+func getOrgName() (org string) {
 	fmt.Print("organization name: ")
-	fmt.Scanln(&username)
-	username = strings.TrimSpace(username)
-	err := schema.CheckName(username)
+	fmt.Scanln(&org)
+	org = strings.TrimSpace(org)
+	err := schema.CheckName(org)
 	if err != nil {
 		manager.printf(colWarn, err.Error())
-		return getUserName()
+		return getOrgName()
 	}
 	return
 }
