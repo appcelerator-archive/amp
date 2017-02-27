@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// OrgCmd is the main command for attaching organization sub-commands.
+// TeamCmd is the main command for attaching team sub-commands.
 var (
 	listTeamCmd = &cobra.Command{
 		Use:   "list",
@@ -91,7 +91,7 @@ func listTeam(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListTeams(context.Background(), request)
 	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
@@ -157,16 +157,20 @@ func getTeam(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.GetTeam(context.Background(), request)
 	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
-	manager.printf(colSuccess, "Organization Create Date = %s", reply.Team.CreateDt)
-	manager.printf(colSuccess, "Organization Name = %s", reply.Team.Name)
-	manager.printf(colSuccess, "MEMBER NAME\tROLE\t")
-	manager.printf(colSuccess, "-----------\t----\t")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "TEAM\tCREATE DATE")
+	fmt.Fprintln(w, "----\t-----------")
+	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, reply.Team.CreateDt)
+
+	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
+	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Team.Members {
-		manager.printf(colSuccess, "%s\t%s\t\n", mem.Name, mem.Role)
+		fmt.Fprintln(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
+	w.Flush()
 	return nil
 }
 

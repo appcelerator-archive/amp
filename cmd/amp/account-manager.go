@@ -236,7 +236,7 @@ func pwdSet(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordSet(context.Background(), request)
 	if err != nil {
-		manager.fatalf("server error: %v\n", grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
 	manager.printf(4, "Your password change has been successful.\n")

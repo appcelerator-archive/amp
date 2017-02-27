@@ -69,15 +69,6 @@ var (
 			return removeMem(AMP)
 		},
 	}
-
-	//transferOrgCmd = &cobra.Command{
-	//	Use:   "transfer",
-	//	Short: "Transfer organization",
-	//	Long:  `The transfer command transfers ownership from one organization to another.`,
-	//	RunE: func(cmd *cobra.Command, args []string) error {
-	//		return transferOrg(AMP, cmd, args)
-	//	},
-	//}
 )
 
 func init() {
@@ -87,7 +78,6 @@ func init() {
 	OrgCmd.AddCommand(getOrgCmd)
 	OrgCmd.AddCommand(addOrgCmd)
 	OrgCmd.AddCommand(removeOrgCmd)
-	//OrgCmd.AddCommand(transferOrgCmd)
 }
 
 // listOrg validates the input command line arguments and lists available organizations
@@ -98,7 +88,7 @@ func listOrg(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListOrganizations(context.Background(), request)
 	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
@@ -160,22 +150,25 @@ func getOrg(amp *cli.AMP) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.GetOrganization(context.Background(), request)
 	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
+		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
-	manager.printf(colSuccess, "Organization Create Date = %s", reply.Organization.CreateDt)
-	manager.printf(colSuccess, "Organization Name = %s", reply.Organization.Name)
-	manager.printf(colSuccess, "Organization Email = %s", reply.Organization.Email)
-	manager.printf(colSuccess, "MEMBER NAME\tROLE\t")
-	manager.printf(colSuccess, "-----------\t----\t")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATE DATE")
+	fmt.Fprintln(w, "------------\t-----\t-----------")
+	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, reply.Organization.CreateDt)
+
+	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
+	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Organization.Members {
-		manager.printf(colSuccess, "%s\t%s\t\n", mem.Name, mem.Role)
+		fmt.Fprintln(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
-	manager.printf(colSuccess, "TEAM NAME\tDATE CREATED\t")
-	manager.printf(colSuccess, "---------\t------------\t")
+	fmt.Fprintln(w, "TEAM NAME\tDATE CREATED\t")
+	fmt.Fprintln(w, "---------\t------------\t")
 	for _, team := range reply.Organization.Teams {
-		manager.printf(colSuccess, "%s\t%s\t\n", team.Name, team.CreateDt)
+		fmt.Fprintln(w, "%s\t%s\t\n", team.Name, team.CreateDt)
 	}
+	w.Flush()
 	return nil
 }
 
@@ -218,24 +211,6 @@ func removeMem(amp *cli.AMP) (err error) {
 	manager.printf(colSuccess, "Member(s) have been removed from organization successfully.")
 	return nil
 }
-
-// transferOrg validates the input command line arguments and transfers an organization
-// by invoking the corresponding rpc/storage method
-//func transferOrg(amp *cli.AMP) (err error) {
-//	manager.printf(colRegular, "This will transfer ownership of an organization to another.")
-//	orgName := getOrgName()
-//	request := &account.DeleteOrganizationRequest{
-//		Name: orgName,
-//	}
-//	accClient := account.NewAccountClient(amp.Conn)
-//	_, err = accClient.DeleteOrganization(context.Background(), request)
-//	if err != nil {
-//		manager.fatalf(grpc.ErrorDesc(err))
-//		return
-//	}
-//	manager.printf(colSuccess, "The organization has been deleted successfully.")
-//	return nil
-//}
 
 func getOrgName() (org string) {
 	fmt.Print("organization name: ")
