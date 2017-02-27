@@ -57,7 +57,7 @@ var (
 		Short: "Account password operations",
 		Long:  "The password command allows users allows users to reset or update password.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return pwd(AMP, cmd, args)
+			return pwd(AMP)
 		},
 	}
 
@@ -166,15 +166,15 @@ func forgotLogin(amp *cli.AMP) (err error) {
 
 // pwd validates the input command line arguments and performs password-related operations
 // by invoking the corresponding rpc/storage method
-func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwd(amp *cli.AMP) (err error) {
 	if reset {
-		return pwdReset(amp, cmd, args)
+		return pwdReset(amp)
 	}
 	if change {
-		return pwdChange(amp, cmd, args)
+		return pwdChange(amp)
 	}
 	if set {
-		return pwdSet(amp, cmd, args)
+		return pwdSet(amp)
 	}
 	manager.printf(colWarn, "Choose a command for password operation.\nUse amp account password -h for help.")
 	return nil
@@ -182,7 +182,7 @@ func pwd(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
-func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdReset(amp *cli.AMP) (err error) {
 	manager.printf(colRegular, "This will send a password reset email to your email address.")
 	username := getUserName()
 	request := &account.PasswordResetRequest{
@@ -200,7 +200,7 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
-func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdChange(amp *cli.AMP) (err error) {
 	// Get inputs
 	manager.printf(colRegular, "This will allow you to update your existing password.")
 	fmt.Println("Enter your current password.")
@@ -223,7 +223,7 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // pwdSet validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
-func pwdSet(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func pwdSet(amp *cli.AMP) (err error) {
 	// Get inputs
 	manager.printf(0, "This will allow you to set a new password.\n")
 	token := getToken()

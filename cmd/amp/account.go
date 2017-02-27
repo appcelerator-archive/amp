@@ -14,8 +14,18 @@ var (
 			return AMP.Connect()
 		},
 	}
+
+	OrgCmd = &cobra.Command{
+		Use:   "org",
+		Short: "Organization operations",
+		Long:  `The account command manages all account-related operations.`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
+	}
 )
 
 func init() {
 	RootCmd.AddCommand(AccountCmd)
+	RootCmd.AddCommand(OrgCmd)
 }
