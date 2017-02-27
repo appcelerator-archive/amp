@@ -1,6 +1,6 @@
 # Permission levels for an organization
 
-After you create an organization, you should give Owner permissions to a small group of people who will manage the organization account.
+After you create an organization, you should give **Owner** permissions to a small group of people who will manage the organization account.
 
 Organization members can have **owner**, or **member** roles:
 
