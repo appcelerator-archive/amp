@@ -375,6 +375,20 @@
           "Account"
         ]
       },
+      "delete": {
+        "operationId": "DeleteUser",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "tags": [
+          "Account"
+        ]
+      },
       "post": {
         "summary": "Users",
         "operationId": "SignUp",
@@ -675,6 +689,9 @@
           "format": "string"
         }
       }
+    },
+    "accountDeleteUserRequest": {
+      "type": "object"
     },
     "accountForgotLoginRequest": {
       "type": "object",

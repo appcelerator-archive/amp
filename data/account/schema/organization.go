@@ -10,6 +10,16 @@ func (o *Organization) GetOwners() (owners []*OrganizationMember) {
 	return
 }
 
+// GetOwners get organization owners
+func (o *Organization) IsOwner(name string) bool {
+	for _, member := range o.GetMembers() {
+		if member.GetName() == name {
+			return true
+		}
+	}
+	return false
+}
+
 func (o *Organization) GetMemberIndex(memberName string) int {
 	memberIndex := -1
 	for i, member := range o.Members {

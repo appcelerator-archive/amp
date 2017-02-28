@@ -60,6 +60,11 @@ service Account {
       get: "/v1/users"
     };
   };
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/users"
+    };
+  };
 
   // Organizations
   rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
@@ -79,11 +84,6 @@ service Account {
       delete: "/v1/organizations/{organization_name}/members/{user_name}"
     };
   };
-  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{name}"
-    };
-  };
   rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply) {
     option (google.api.http) = {
       get: "/v1/organizations/{name}"
@@ -92,6 +92,11 @@ service Account {
   rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsReply) {
     option (google.api.http) = {
       get: "/v1/organizations"
+    };
+  };
+  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/organizations/{name}"
     };
   };
 
@@ -113,11 +118,6 @@ service Account {
       delete: "/v1/organizations/{organization_name}/teams/{team_name}/members"
     };
   };
-  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}"
-    };
-  };
   rpc GetTeam (GetTeamRequest) returns (GetTeamReply) {
     option (google.api.http) = {
       get: "/v1/organizations/{organization_name}/teams/{team_name}"
@@ -126,6 +126,11 @@ service Account {
   rpc ListTeams (ListTeamsRequest) returns (ListTeamsReply) {
     option (google.api.http) = {
       get: "/organizations/{organization_name}/teams"
+    };
+  };
+  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/organizations/{organization_name}/teams/{team_name}"
     };
   };
 }
@@ -183,14 +188,13 @@ message ListUsersReply {
   repeated schema.User users = 1;
 }
 
+message DeleteUserRequest {
+}
+
 // Organizations
 message CreateOrganizationRequest {
   string name = 1;
   string email = 2;
-}
-
-message DeleteOrganizationRequest {
-  string name = 1;
 }
 
 message AddUserToOrganizationRequest {
@@ -218,6 +222,10 @@ message ListOrganizationsReply {
   repeated schema.Organization organizations = 1;
 }
 
+message DeleteOrganizationRequest {
+  string name = 1;
+}
+
 // Teams
 message Team {
   string name = 1;
@@ -225,11 +233,6 @@ message Team {
 }
 
 message CreateTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
-}
-
-message DeleteTeamRequest {
   string organization_name = 1;
   string team_name = 2;
 }
@@ -261,4 +264,9 @@ message ListTeamsRequest {
 
 message ListTeamsReply {
   repeated schema.Team teams = 1;
+}
+
+message DeleteTeamRequest {
+  string organization_name = 1;
+  string team_name = 2;
 }
