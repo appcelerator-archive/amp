@@ -23,9 +23,21 @@ type emailTemplate struct {
 func init() {
 	config = amp.GetConfig()
 	emailTemplateMap = make(map[string]*emailTemplate)
-	AddEmailTemplate("AccountVerification", "AMP account activation", true, accountVerificationBody)
-	AddEmailTemplate("AccountResetPassword", "AMP account password reset", true, accountResetPasswordEmailBody)
-	AddEmailTemplate("AccountPasswordConfirmation", "AMP account password confirmation", true, accountPasswordConfirmationEmailBody)
+	AddEmailTemplate("AccountVerification", "AMP Account verification", true, accountVerificationBody)
+	AddEmailTemplate("AccountCreated", "AMP account creation confirmation", true, accountCreationBody)
+
+	AddEmailTemplate("organizationCreated", "AMP organization creation confirmation", true, organizationCreationBody)
+	AddEmailTemplate("userAddedInOrganization", "AMP user added in organization confirmation", true, addUserToOrganizationBody)
+	AddEmailTemplate("userRemoveFromOrganization", "AMP user removed from organization confirmation", true, removeUserFromOrganizationBody)
+	AddEmailTemplate("organizationRemoved", "AMP organization removed confirmation", true, organizationRemoveBody)
+
+	AddEmailTemplate("teamCreated", "AMP team creation confirmation", true, teamCreationBody)
+	AddEmailTemplate("userAddedInTeam", "AMP user added in team confirmation", true, addUserToTeamBody)
+	AddEmailTemplate("userRemoveFromTeam", "AMP user removed from team confirmation", true, removeUserFromTeamBody)
+	AddEmailTemplate("teamRemoved", "AMP team removed confirmation", true, teamRemoveBody)
+
+	AddEmailTemplate("AccountResetPassword", "AMP reset password", true, accountResetPasswordEmailBody)
+	AddEmailTemplate("AccountPasswordConfirmation", "AMP reset password confirmation", true, accountPasswordConfirmationEmailBody)
 	AddEmailTemplate("AccountNameReminder", "AMP account name reminder", true, accountNameReminderBody)
 }
 
@@ -38,6 +50,110 @@ func SendAccountVerificationEmail(to string, accountName string, token string) e
 		"ampAddress":  config.ServerAddress,
 	}
 	if err := SendTemplateEmail(to, "AccountVerification", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendAccountVerificationEmail send a AccountVerification email template
+func SendAccountCreatedEmail(to string, accountName string) error {
+	//config := conf.GetRegularConfig(false)
+	variables := map[string]string{
+		"accountName": accountName,
+	}
+	if err := SendTemplateEmail(to, "AccountVerification", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendOrganizationCreatedEmail send mail
+func SendOrganizationCreatedEmail(to string, organization string) error {
+	variables := map[string]string{
+		"organization": organization,
+	}
+	if err := SendTemplateEmail(to, "organizationCreated", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendUserAddedInOrganizationEmail send mail
+func SendUserAddedInOrganizationEmail(to string, organization string, user string) error {
+	variables := map[string]string{
+		"organization": organization,
+		"user":         user,
+	}
+	if err := SendTemplateEmail(to, "userAddedInOrganization", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendUserRemovedFromOrganizationEmail send mail
+func SendUserRemovedFromOrganizationEmail(to string, organization string, user string) error {
+	variables := map[string]string{
+		"organization": organization,
+		"user":         user,
+	}
+	if err := SendTemplateEmail(to, "userRemoveFromOrganization", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendOrganizationRemovedEmail send mail
+func SendOrganizationRemovedEmail(to string, organization string) error {
+	variables := map[string]string{
+		"organization": organization,
+	}
+	if err := SendTemplateEmail(to, "organizationRemoveBody", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendTeamCreatedEmail send mail
+func SendTeamCreatedEmail(to string, team string) error {
+	variables := map[string]string{
+		"team": team,
+	}
+	if err := SendTemplateEmail(to, "teamCreated", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendUserAddedInTeamEmail send mail
+func SendUserAddedInTeamEmail(to string, team string, user string) error {
+	variables := map[string]string{
+		"team": team,
+		"user": user,
+	}
+	if err := SendTemplateEmail(to, "userAddedInTeam", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendUserRemovedFromTeamEmail send mail
+func SendUserRemovedFromTeamEmail(to string, team string, user string) error {
+	variables := map[string]string{
+		"team": team,
+		"user": user,
+	}
+	if err := SendTemplateEmail(to, "userRemoveFromTeam", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+//SendTeamRemovedEmail send mail
+func SendTeamRemovedEmail(to string, team string) error {
+	variables := map[string]string{
+		"team": team,
+	}
+	if err := SendTemplateEmail(to, "teamRemoveBody", variables); err != nil {
 		return err
 	}
 	return nil

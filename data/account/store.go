@@ -213,7 +213,24 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 
 // DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
-	// TODO: check if user is owner of an organization
+	// Get organizations owned by he user
+	ownedOrganizations, err := s.getOwnedOrganization(ctx, name)
+	if err != nil {
+		return err
+	}
+	// Check if user can be removed from all organizations
+	for _, o := range ownedOrganizations {
+		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
+			return err
+		}
+	}
+	// If yes, remove the user from all organizations
+	for _, o := range ownedOrganizations {
+		if err := s.RemoveUserFromOrganization(ctx, o.Name, name); err != nil {
+			return err
+		}
+	}
+	// Delete the user
 	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
 		return err
 	}
@@ -221,6 +238,20 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 // Organizations
+
+func (s *Store) getOwnedOrganization(ctx context.Context, name string) ([]*schema.Organization, error) {
+	organizations, err := s.ListOrganizations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ownedOrganizations := []*schema.Organization{}
+	for _, o := range organizations {
+		if o.IsOwner(name) {
+			ownedOrganizations = append(ownedOrganizations, o)
+		}
+	}
+	return ownedOrganizations, nil
+}
 
 func (s *Store) updateOrganization(ctx context.Context, in *schema.Organization) error {
 	if err := in.Validate(); err != nil {
@@ -318,21 +349,20 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	return s.updateOrganization(ctx, organization)
 }
 
-// RemoveUserFromOrganization removes a user from the given organization
-func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (err error) {
+func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*schema.Organization, error) {
 	// Get requester
 	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return nil, schema.OrganizationNotFound
 	}
 
 	// Check authorization
@@ -344,23 +374,38 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 			"owners": organization.GetOwners(),
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return nil, schema.NotAuthorized
 	}
 
 	// Get the user
 	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Check if user is part of the organization
 	memberIndex := organization.GetMemberIndex(user.Name)
 	if memberIndex == -1 {
-		return nil // User is not a member of the organization, return
+		return nil, nil // User is not a member of the organization, return
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
 	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
+	if err := organization.Validate(); err != nil {
+		return nil, err
+	}
+	return organization, nil
+}
+
+// RemoveUserFromOrganization removes a user from the given organization
+func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (err error) {
+	organization, err := s.canRemoveUserFromOrganization(ctx, organizationName, userName)
+	if err != nil {
+		return err
+	}
+	if organization == nil {
+		return nil
+	}
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -422,7 +467,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 		return schema.NotAuthorized
 	}
 
-	// TODO: check other conditions
+	// Delete organization
 	if err := s.Store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
 		return err
 	}
@@ -523,7 +568,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return err
 	}
 
-	// TODO: check if this check is necessary
+	// TODO: Does the user need to be part of the organization?
 	//// Check if user is part of the organization
 	//if !organization.HasMember(user.Name) {
 	//	return schema.NotAnOrganizationMember
