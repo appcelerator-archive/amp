@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
@@ -17,9 +19,10 @@ import (
 // OrgCmd is the main command for attaching organization sub-commands.
 var (
 	listOrgCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List organization",
-		Long:  `The list command lists all available organizations.`,
+		Use:     "list",
+		Short:   "List organization",
+		Long:    `The list command lists all available organizations.`,
+		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrg(AMP)
 		},
@@ -35,9 +38,10 @@ var (
 	}
 
 	deleteOrgCmd = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete organization",
-		Long:  `The delete command deletes an organization.`,
+		Use:     "delete",
+		Short:   "Delete organization",
+		Long:    `The delete command deletes an organization.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteOrg(AMP)
 		},
@@ -62,9 +66,10 @@ var (
 	}
 
 	removeOrgCmd = &cobra.Command{
-		Use:   "remove",
-		Short: "Remove members from organization",
-		Long:  `The remove command removes from an organization.`,
+		Use:     "remove",
+		Short:   "Remove members from organization",
+		Long:    `The remove command removes from an organization.`,
+		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeMem(AMP)
 		},
@@ -156,17 +161,27 @@ func getOrg(amp *cli.AMP) (err error) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATE DATE")
 	fmt.Fprintln(w, "------------\t-----\t-----------")
-	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, reply.Organization.CreateDt)
+	orgCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Organization.CreateDt, 10), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	orgCreateTime := time.Unix(orgCreate, 0)
+	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
 
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Organization.Members {
-		fmt.Fprintln(w, "%s\t%s\t\n", mem.Name, mem.Role)
+		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
 	fmt.Fprintln(w, "TEAM NAME\tDATE CREATED\t")
 	fmt.Fprintln(w, "---------\t------------\t")
 	for _, team := range reply.Organization.Teams {
-		fmt.Fprintln(w, "%s\t%s\t\n", team.Name, team.CreateDt)
+		teamCreate, err := strconv.ParseInt(strconv.FormatInt(team.CreateDt, 10), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		teamCreateTime := time.Unix(teamCreate, 0)
+		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, teamCreateTime)
 	}
 	w.Flush()
 	return nil

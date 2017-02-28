@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 var logsCmd = &cobra.Command{
@@ -39,10 +40,11 @@ func init() {
 }
 
 // Logs fetches the logs
-func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
-	ctx, err := amp.GetAuthorizedContext()
-	if err != nil {
-		return err
+func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+	ctx, er := amp.GetAuthorizedContext()
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	if amp.Verbose() {
 		fmt.Println("Log flags:")
@@ -81,9 +83,10 @@ func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 	// Get logs from amplifier
 	c := logs.NewLogsClient(amp.Conn)
-	r, err := c.Get(ctx, &request)
-	if err != nil {
-		return err
+	r, er := c.Get(ctx, &request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	for _, entry := range r.Entries {
 		displayLogEntry(entry, meta)
@@ -93,17 +96,19 @@ func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	// If follow is requested, get subsequent logs and stream it
-	stream, err := c.GetStream(ctx, &request)
-	if err != nil {
-		return err
+	stream, er := c.GetStream(ctx, &request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	for {
-		entry, err := stream.Recv()
-		if err == io.EOF {
+		entry, er := stream.Recv()
+		if er == io.EOF {
 			break
 		}
-		if err != nil {
-			return err
+		if er != nil {
+			manager.fatalf(grpc.ErrorDesc(er))
+			return
 		}
 		displayLogEntry(entry, meta)
 	}

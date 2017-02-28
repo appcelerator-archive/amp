@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -30,13 +31,14 @@ func init() {
 	TopicCmd.AddCommand(listTopicCmd)
 }
 
-func listTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func listTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	request := &topic.ListRequest{}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, err := client.List(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := client.List(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)

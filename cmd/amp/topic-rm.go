@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -25,7 +26,7 @@ func init() {
 	TopicCmd.AddCommand(removeTopicCmd)
 }
 
-func removeTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func removeTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("must specify topic id")
 	}
@@ -37,9 +38,10 @@ func removeTopic(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request := &topic.DeleteRequest{Id: id}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, err := client.Delete(context.Background(), request)
-	if err != nil {
-		return err
+	reply, er := client.Delete(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
 	}
 	fmt.Println(reply.Topic.Id)
 	return nil

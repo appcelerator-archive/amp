@@ -225,7 +225,7 @@ func pwdChange(amp *cli.AMP) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwdSet(amp *cli.AMP) (err error) {
 	// Get inputs
-	manager.printf(0, "This will allow you to set a new password.\n")
+	manager.printf(colRegular, "This will allow you to set a new password.")
 	token := getToken()
 	fmt.Println("Enter new password.")
 	password := getPassword()
@@ -239,7 +239,7 @@ func pwdSet(amp *cli.AMP) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(4, "Your password change has been successful.\n")
+	manager.printf(colSuccess, "Your set password has been successful.")
 	return nil
 }
 

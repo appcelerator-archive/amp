@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
@@ -17,9 +19,10 @@ import (
 // TeamCmd is the main command for attaching team sub-commands.
 var (
 	listTeamCmd = &cobra.Command{
-		Use:   "list",
-		Short: "List team",
-		Long:  `The list command lists all available teams in an organization.`,
+		Use:     "list",
+		Short:   "List team",
+		Long:    `The list command lists all available teams in an organization.`,
+		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeam(AMP)
 		},
@@ -35,9 +38,10 @@ var (
 	}
 
 	deleteTeamCmd = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete team",
-		Long:  `The delete command deletes a team in an organization.`,
+		Use:     "delete",
+		Short:   "Delete team",
+		Long:    `The delete command deletes a team in an organization.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteTeam(AMP)
 		},
@@ -62,9 +66,10 @@ var (
 	}
 
 	removeTeamCmd = &cobra.Command{
-		Use:   "remove",
-		Short: "Remove members from team",
-		Long:  `The remove command removes members from a team in an organization.`,
+		Use:     "remove",
+		Short:   "Remove members from team",
+		Long:    `The remove command removes members from a team in an organization.`,
+		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTeamMem(AMP)
 		},
@@ -163,12 +168,17 @@ func getTeam(amp *cli.AMP) (err error) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATE DATE")
 	fmt.Fprintln(w, "----\t-----------")
-	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, reply.Team.CreateDt)
+	teamCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Team.CreateDt, 10), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	teamCreateTime := time.Unix(teamCreate, 0)
+	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, teamCreateTime)
 
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Team.Members {
-		fmt.Fprintln(w, "%s\t%s\t\n", mem.Name, mem.Role)
+		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
 	w.Flush()
 	return nil
