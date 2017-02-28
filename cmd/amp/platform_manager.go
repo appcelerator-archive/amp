@@ -656,7 +656,7 @@ func (s *ampManager) setColors() {
 	s.fcolWarn = s.printColor[colWarn].SprintFunc()
 	s.fcolError = s.printColor[colError].SprintFunc()
 	s.fcolSuccess = s.printColor[colSuccess].SprintFunc()
-	//s.fcolUser = s.printColor[colUser].SprintFunc()
+	s.fcolUser = s.printColor[colUser].SprintFunc() //Before comment this line, remove all usage of s.fcolUser
 	//add theme as you want.
 }
 

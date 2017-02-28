@@ -532,6 +532,18 @@ func TestUserList(t *testing.T) {
 	assert.NotEmpty(t, listReply.Users[0].CreateDt)
 }
 
+func TestUserDelete(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{})
+	assert.NoError(t, err)
+}
+
 // Organizations
 
 var (
@@ -1047,7 +1059,7 @@ func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
 
 	// CreateTeam
 	invalidRequest := testTeam
-	invalidRequest.OrganizationName = "nonExistingOrg"
+	invalidRequest.OrganizationName = "non-existing-org"
 	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
