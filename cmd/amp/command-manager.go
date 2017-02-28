@@ -26,6 +26,7 @@ var (
 	colWarn    = 2
 	colError   = 3
 	colSuccess = 4
+	colUser    = 5 //before remove this variable, remove all usage of this variable
 )
 
 func NewCmdManager(verbose string) *cmdManager {
