@@ -30,13 +30,13 @@ func TestAmpMail(t *testing.T) {
 	mail.UpdateAmpMailConfig("localhost", "2525", from, "")
 	emailReceived = nil
 	mail.SendAccountVerificationEmail(to, accountName, token)
-	waitTestForEmail(t, "AMP account activation", "AMP account activation")
+	waitTestForEmail(t, "AccountVerification", "AMP Account verification")
 	emailReceived = nil
 	mail.SendAccountResetPasswordEmail(to, accountName, token)
-	waitTestForEmail(t, "AccountResetPassword", "AMP account password reset")
+	waitTestForEmail(t, "AccountResetPassword", "AMP reset password")
 	emailReceived = nil
 	mail.SendAccountPasswordConfirmationEmail(to, accountName)
-	waitTestForEmail(t, "AccountPasswordConfirmation", "AMP account password confirmation")
+	waitTestForEmail(t, "AccountPasswordConfirmation", "AMP reset password confirmation")
 	emailReceived = nil
 	mail.SendAccountNameReminderEmail(to, accountName)
 	waitTestForEmail(t, "AccountNameReminder", "AMP account name reminder")
