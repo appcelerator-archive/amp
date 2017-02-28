@@ -97,10 +97,15 @@ func listOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "ORGANIZATION")
-	fmt.Fprintln(w, "------------")
+	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
+	fmt.Fprintln(w, "------------\t-----\t-------\t")
 	for _, org := range reply.Organizations {
-		fmt.Fprintf(w, "%s\n", org)
+		orgCreate, err := strconv.ParseInt(strconv.FormatInt(org.CreateDt, 10), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		orgCreateTime := time.Unix(orgCreate, 0)
+		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, orgCreateTime)
 	}
 	w.Flush()
 	return nil
@@ -159,29 +164,29 @@ func getOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATE DATE")
-	fmt.Fprintln(w, "------------\t-----\t-----------")
+	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
+	fmt.Fprintln(w, "------------\t-----\t-------\t")
 	orgCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Organization.CreateDt, 10), 10, 64)
 	if err != nil {
 		panic(err)
 	}
 	orgCreateTime := time.Unix(orgCreate, 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
+	fmt.Fprintf(w, "%s\t%s\t%s\t", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
 
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
-	fmt.Fprintln(w, "TEAM NAME\tDATE CREATED\t")
-	fmt.Fprintln(w, "---------\t------------\t")
+	fmt.Fprintln(w, "TEAM NAME\tCREATED\t")
+	fmt.Fprintln(w, "---------\t-------\t")
 	for _, team := range reply.Organization.Teams {
 		teamCreate, err := strconv.ParseInt(strconv.FormatInt(team.CreateDt, 10), 10, 64)
 		if err != nil {
 			panic(err)
 		}
 		teamCreateTime := time.Unix(teamCreate, 0)
-		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, teamCreateTime)
+		fmt.Fprintf(w, "%s\t%s\t", team.Name, teamCreateTime)
 	}
 	w.Flush()
 	return nil
