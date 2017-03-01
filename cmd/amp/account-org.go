@@ -3,14 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"text/tabwriter"
-	"time"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -19,10 +15,9 @@ import (
 // OrgCmd is the main command for attaching organization sub-commands.
 var (
 	listOrgCmd = &cobra.Command{
-		Use:     "list",
-		Short:   "List organization",
-		Long:    `The list command lists all available organizations.`,
-		Aliases: []string{"ls"},
+		Use:   "ls",
+		Short: "List organization",
+		Long:  `The list command lists all available organizations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrg(AMP)
 		},
@@ -33,17 +28,17 @@ var (
 		Short: "Create organization",
 		Long:  `The create command creates an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createOrg(AMP)
+			return createOrg(AMP, cmd)
 		},
 	}
 
 	deleteOrgCmd = &cobra.Command{
-		Use:     "delete",
+		Use:     "del",
 		Short:   "Delete organization",
 		Long:    `The delete command deletes an organization.`,
-		Aliases: []string{"del"},
+		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return deleteOrg(AMP)
+			return deleteOrg(AMP, cmd)
 		},
 	}
 
@@ -52,28 +47,49 @@ var (
 		Short: "Get organization info",
 		Long:  `The get command retrieves details of an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getOrg(AMP)
+			return getOrg(AMP, cmd)
 		},
 	}
 
-	addOrgCmd = &cobra.Command{
+	memOrgCmd = &cobra.Command{
+		Use:   "member",
+		Short: "Member-related operations in an organization",
+		Long:  `The member command manages member-related operations for an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return memberOrg()
+		},
+	}
+
+	addOrgMemCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add members to organization",
 		Long:  `The add command adds members to an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addMem(AMP)
+			return addOrgMem(AMP, cmd)
 		},
 	}
 
-	removeOrgCmd = &cobra.Command{
-		Use:     "remove",
+	remOrgMemCmd = &cobra.Command{
+		Use:     "del",
 		Short:   "Remove members from organization",
 		Long:    `The remove command removes from an organization.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeMem(AMP)
+			return remOrgMem(AMP, cmd)
 		},
 	}
+
+	listOrgMemCmd = &cobra.Command{
+		Use:   "ls",
+		Short: "List members of organization",
+		Long:  `The remove command removes from an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listOrgMem(AMP, cmd)
+		},
+	}
+
+	organization string
+	member       string
 )
 
 func init() {
@@ -81,14 +97,30 @@ func init() {
 	OrgCmd.AddCommand(createOrgCmd)
 	OrgCmd.AddCommand(deleteOrgCmd)
 	OrgCmd.AddCommand(getOrgCmd)
-	OrgCmd.AddCommand(addOrgCmd)
-	OrgCmd.AddCommand(removeOrgCmd)
+	OrgCmd.AddCommand(memOrgCmd)
+	memOrgCmd.AddCommand(addOrgMemCmd)
+	memOrgCmd.AddCommand(remOrgMemCmd)
+	memOrgCmd.AddCommand(listOrgMemCmd)
+
+	createOrgCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	createOrgCmd.Flags().StringVar(&email, "email", email, "Email ID")
+
+	deleteOrgCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+
+	getOrgCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+
+	addOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	addOrgMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
+
+	remOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	remOrgMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
+
+	listOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 }
 
 // listOrg validates the input command line arguments and lists available organizations
 // by invoking the corresponding rpc/storage method
 func listOrg(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will list organizations.")
 	request := &account.ListOrganizationsRequest{}
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListOrganizations(context.Background(), request)
@@ -97,15 +129,10 @@ func listOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
-	fmt.Fprintln(w, "------------\t-----\t-------\t")
 	for _, org := range reply.Organizations {
-		orgCreate, err := strconv.ParseInt(strconv.FormatInt(org.CreateDt, 10), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		orgCreateTime := time.Unix(orgCreate, 0)
-		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, orgCreateTime)
+		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, ConvertTime(org.CreateDt))
 	}
 	w.Flush()
 	return nil
@@ -113,12 +140,21 @@ func listOrg(amp *cli.AMP) (err error) {
 
 // createOrg validates the input command line arguments and creates an organization
 // by invoking the corresponding rpc/storage method
-func createOrg(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will create an organization.")
-	orgName := getOrgName()
-	email := getEmailAddress()
+func createOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
+	}
+	if cmd.Flag("email").Changed {
+		email = cmd.Flag("email").Value.String()
+	} else {
+		email = GetEmailAddress()
+	}
+
 	request := &account.CreateOrganizationRequest{
-		Name:  orgName,
+		Name:  organization,
 		Email: email,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
@@ -127,17 +163,22 @@ func createOrg(amp *cli.AMP) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(colSuccess, "Hi %s! Please check your email to complete the signup process.", orgName)
+	manager.printf(colSuccess, "Hi %s! Please check your email to complete the signup process.", organization)
 	return nil
 }
 
 // deleteOrg validates the input command line arguments and deletes an organization
 // by invoking the corresponding rpc/storage method
-func deleteOrg(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will delete an organization.")
-	orgName := getOrgName()
+func deleteOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
+	}
+
 	request := &account.DeleteOrganizationRequest{
-		Name: orgName,
+		Name: organization,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.DeleteOrganization(context.Background(), request)
@@ -151,12 +192,17 @@ func deleteOrg(amp *cli.AMP) (err error) {
 
 // getOrg validates the input command line arguments and retrieves info of an organization
 // by invoking the corresponding rpc/storage method
-func getOrg(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will get details of an organization.")
-	orgName := getOrgName()
-	request := &account.GetOrganizationRequest{
-		Name: orgName,
+func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
 	}
+	request := &account.GetOrganizationRequest{
+		Name: organization,
+	}
+
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.GetOrganization(context.Background(), request)
 	if er != nil {
@@ -164,43 +210,49 @@ func getOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
-	fmt.Fprintln(w, "------------\t-----\t-------\t")
-	orgCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Organization.CreateDt, 10), 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	orgCreateTime := time.Unix(orgCreate, 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\t", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
-
+	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, ConvertTime(reply.Organization.CreateDt))
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
-	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM NAME\tCREATED\t")
-	fmt.Fprintln(w, "---------\t-------\t")
 	for _, team := range reply.Organization.Teams {
-		teamCreate, err := strconv.ParseInt(strconv.FormatInt(team.CreateDt, 10), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		teamCreateTime := time.Unix(teamCreate, 0)
-		fmt.Fprintf(w, "%s\t%s\t", team.Name, teamCreateTime)
+		fmt.Fprintf(w, "%s\t%s\n", team.Name, ConvertTime(team.CreateDt))
 	}
 	w.Flush()
 	return nil
 }
 
-// addMem validates the input command line arguments and adds members to an organization
+// memberOrg validates the input command line arguments and retrieves info about members of an organization
 // by invoking the corresponding rpc/storage method
-func addMem(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will add members to an organization.")
-	orgName := getOrgName()
-	name := getUserName()
+func memberOrg() (err error) {
+	manager.printf(colWarn, "Choose a command for member operations.\nUse amp org member -h for help.")
+	return nil
+}
+
+// addOrgMem validates the input command line arguments and adds members to an organization
+// by invoking the corresponding rpc/storage method
+func addOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
+	}
+	if cmd.Flag("member").Changed {
+		member = cmd.Flag("member").Value.String()
+	} else {
+		fmt.Print("member name: ")
+		member = GetName()
+	}
+
 	request := &account.AddUserToOrganizationRequest{
-		OrganizationName: orgName,
-		UserName:         name,
+		OrganizationName: organization,
+		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.AddUserToOrganization(context.Background(), request)
@@ -212,15 +264,25 @@ func addMem(amp *cli.AMP) (err error) {
 	return nil
 }
 
-// removeMem validates the input command line arguments and removes members from an organization
+// remOrgMem validates the input command line arguments and removes members from an organization
 // by invoking the corresponding rpc/storage method
-func removeMem(amp *cli.AMP) (err error) {
-	manager.printf(colRegular, "This will remove members from an organization.")
-	orgName := getOrgName()
-	name := getUserName()
+func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
+	}
+	if cmd.Flag("member").Changed {
+		member = cmd.Flag("member").Value.String()
+	} else {
+		fmt.Print("member name: ")
+		member = GetName()
+	}
+
 	request := &account.RemoveUserFromOrganizationRequest{
-		OrganizationName: orgName,
-		UserName:         name,
+		OrganizationName: organization,
+		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.RemoveUserFromOrganization(context.Background(), request)
@@ -232,14 +294,31 @@ func removeMem(amp *cli.AMP) (err error) {
 	return nil
 }
 
-func getOrgName() (org string) {
-	fmt.Print("organization name: ")
-	fmt.Scanln(&org)
-	org = strings.TrimSpace(org)
-	err := schema.CheckName(org)
-	if err != nil {
-		manager.printf(colWarn, err.Error())
-		return getOrgName()
+// listOrgMem validates the input command line arguments and removes members from an organization
+// by invoking the corresponding rpc/storage method
+func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
 	}
-	return
+
+	request := &account.GetOrganizationRequest{
+		Name: organization,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	reply, er := accClient.GetOrganization(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "USERNAME\tROLE\t")
+	for _, user := range reply.Organization.Members {
+		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
+	}
+	w.Flush()
+	return nil
 }

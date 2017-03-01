@@ -35,23 +35,9 @@ var (
 		},
 	}
 
-	// Team owners are able to administrate their own teams
-	teamOwner = &ladon.DefaultPolicy{
-		ID:          stringid.GenerateNonCryptoID(),
-		Subjects:    []string{"<.*>"}, // This will match any subject (user name), we should consider using []string{"<.+>"} to have at least one character
-		Description: "Team owners are able to administrate their own teams",
-		Resources:   []string{TeamResource},
-		Actions:     []string{"<" + AdminAction + ">"},
-		Effect:      ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"owners": &conditions.TeamOwnerCondition{},
-		},
-	}
-
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		organizationOwner,
-		teamOwner,
 	}
 
 	Warden = &ladon.Ladon{

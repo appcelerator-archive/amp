@@ -35,6 +35,7 @@ func convertError(err error) error {
 	case schema.PasswordTooWeak:
 		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	case schema.WrongPassword:
+		return grpc.Errorf(codes.Unauthenticated, err.Error())
 	case schema.UserNotVerified:
 	case schema.AtLeastOneOwner:
 		return grpc.Errorf(codes.FailedPrecondition, err.Error())
@@ -71,15 +72,18 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 	// Create user
 	user, err := s.accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
+		s.accounts.DeleteUserByName(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	// Create a verification token valid for an hour
 	token, err := auth.CreateToken(user.Name, auth.TokenTypeVerify, time.Hour)
 	if err != nil {
+		s.accounts.DeleteUserByName(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	// Send the verification email
 	if err := mail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
+		s.accounts.DeleteUserByName(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	log.Println("Successfully created user", user.Name)
