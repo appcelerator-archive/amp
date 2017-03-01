@@ -25,6 +25,7 @@ func init() {
 	emailTemplateMap = make(map[string]*emailTemplate)
 	AddEmailTemplate("AccountVerification", "AMP Account verification", true, accountVerificationBody)
 	AddEmailTemplate("AccountCreated", "AMP account creation confirmation", true, accountCreationBody)
+	AddEmailTemplate("AccountRemoved", "AMP account removed", true, accountRemovedBody)
 
 	AddEmailTemplate("organizationCreated", "AMP organization creation confirmation", true, organizationCreationBody)
 	AddEmailTemplate("userAddedInOrganization", "AMP user added in organization confirmation", true, addUserToOrganizationBody)
@@ -41,7 +42,7 @@ func init() {
 	AddEmailTemplate("AccountNameReminder", "AMP account name reminder", true, accountNameReminderBody)
 }
 
-// SendAccountVerificationEmail send a AccountVerification email template
+// SendAccountVerificationEmail send mail
 func SendAccountVerificationEmail(to string, accountName string, token string) error {
 	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
@@ -55,13 +56,25 @@ func SendAccountVerificationEmail(to string, accountName string, token string) e
 	return nil
 }
 
-// SendAccountVerificationEmail send a AccountVerification email template
+// SendAccountCreatedEmail send mail
 func SendAccountCreatedEmail(to string, accountName string) error {
 	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,
 	}
-	if err := SendTemplateEmail(to, "AccountVerification", variables); err != nil {
+	if err := SendTemplateEmail(to, "AccountCreated", variables); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendAccountRemovedEmail send mail
+func SendAccountRemovedEmail(to string, accountName string) error {
+	//config := conf.GetRegularConfig(false)
+	variables := map[string]string{
+		"accountName": accountName,
+	}
+	if err := SendTemplateEmail(to, "AccountRemoved", variables); err != nil {
 		return err
 	}
 	return nil

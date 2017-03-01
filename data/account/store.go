@@ -211,30 +211,36 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	return users, nil
 }
 
-// DeleteUser deletes a user by name
-func (s *Store) DeleteUser(ctx context.Context, name string) error {
-	// Get organizations owned by he user
-	ownedOrganizations, err := s.getOwnedOrganization(ctx, name)
+// DeleteUser deletes the requester's user account
+func (s *Store) DeleteUser(ctx context.Context) (*schema.User, error) {
+	// Get requester
+	requester, err := s.getRequester(ctx)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	// Get organizations owned by he user
+	ownedOrganizations, err := s.getOwnedOrganization(ctx, requester.Name)
+	if err != nil {
+		return nil, err
 	}
 	// Check if user can be removed from all organizations
 	for _, o := range ownedOrganizations {
-		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
-			return err
+		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, requester.Name); err != nil {
+			return nil, err
 		}
 	}
 	// If yes, remove the user from all organizations
 	for _, o := range ownedOrganizations {
-		if err := s.RemoveUserFromOrganization(ctx, o.Name, name); err != nil {
-			return err
+		if err := s.RemoveUserFromOrganization(ctx, o.Name, requester.Name); err != nil {
+			return nil, err
 		}
 	}
 	// Delete the user
-	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
-		return err
+	if err := s.Store.Delete(ctx, path.Join(usersRootKey, requester.Name), false, nil); err != nil {
+		return nil, err
 	}
-	return nil
+	return secureUser(requester), nil
 }
 
 // Organizations
