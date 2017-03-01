@@ -56,7 +56,16 @@ var (
 		},
 	}
 
-	addOrgCmd = &cobra.Command{
+	memOrgCmd = &cobra.Command{
+		Use:   "member",
+		Short: "Member-related operations in an organization",
+		Long:  `The member command manages member-related operations for an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return memberOrg()
+		},
+	}
+
+	addCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add members to organization",
 		Long:  `The add command adds members to an organization.`,
@@ -65,13 +74,22 @@ var (
 		},
 	}
 
-	removeOrgCmd = &cobra.Command{
+	removeCmd = &cobra.Command{
 		Use:     "remove",
 		Short:   "Remove members from organization",
 		Long:    `The remove command removes from an organization.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeMem(AMP)
+		},
+	}
+
+	listCmd = &cobra.Command{
+		Use:   "ls",
+		Short: "List members of organization",
+		Long:  `The remove command removes from an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listMem(AMP)
 		},
 	}
 )
@@ -81,8 +99,10 @@ func init() {
 	OrgCmd.AddCommand(createOrgCmd)
 	OrgCmd.AddCommand(deleteOrgCmd)
 	OrgCmd.AddCommand(getOrgCmd)
-	OrgCmd.AddCommand(addOrgCmd)
-	OrgCmd.AddCommand(removeOrgCmd)
+	OrgCmd.AddCommand(memOrgCmd)
+	memOrgCmd.AddCommand(addCmd)
+	memOrgCmd.AddCommand(removeCmd)
+	memOrgCmd.AddCommand(listCmd)
 }
 
 // listOrg validates the input command line arguments and lists available organizations
@@ -97,6 +117,7 @@ func listOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	fmt.Fprintln(w, "------------\t-----\t-------\t")
 	for _, org := range reply.Organizations {
@@ -164,6 +185,7 @@ func getOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	fmt.Fprintln(w, "------------\t-----\t-------\t")
 	orgCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Organization.CreateDt, 10), 10, 64)
@@ -171,13 +193,14 @@ func getOrg(amp *cli.AMP) (err error) {
 		panic(err)
 	}
 	orgCreateTime := time.Unix(orgCreate, 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\t", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
-
+	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, orgCreateTime)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
 	}
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM NAME\tCREATED\t")
 	fmt.Fprintln(w, "---------\t-------\t")
 	for _, team := range reply.Organization.Teams {
@@ -186,9 +209,16 @@ func getOrg(amp *cli.AMP) (err error) {
 			panic(err)
 		}
 		teamCreateTime := time.Unix(teamCreate, 0)
-		fmt.Fprintf(w, "%s\t%s\t", team.Name, teamCreateTime)
+		fmt.Fprintf(w, "%s\t%s\n", team.Name, teamCreateTime)
 	}
 	w.Flush()
+	return nil
+}
+
+// memberOrg validates the input command line arguments and retrieves info about members of an organization
+// by invoking the corresponding rpc/storage method
+func memberOrg() (err error) {
+	manager.printf(colWarn, "Choose a command for member operations.\nUse amp account org member -h for help.")
 	return nil
 }
 
@@ -229,6 +259,31 @@ func removeMem(amp *cli.AMP) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Member(s) have been removed from organization successfully.")
+	return nil
+}
+
+// listMem validates the input command line arguments and removes members from an organization
+// by invoking the corresponding rpc/storage method
+func listMem(amp *cli.AMP) (err error) {
+	manager.printf(colRegular, "This will list members of an organization.")
+	org := getOrgName()
+	request := &account.GetOrganizationRequest{
+		Name: org,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	reply, er := accClient.GetOrganization(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "USERNAME\tROLE\t")
+	fmt.Fprintln(w, "--------\t----\t")
+	for _, user := range reply.Organization.Members {
+		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
+	}
+	w.Flush()
 	return nil
 }
 

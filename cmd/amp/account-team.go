@@ -56,7 +56,16 @@ var (
 		},
 	}
 
-	addTeamCmd = &cobra.Command{
+	memTeamCmd = &cobra.Command{
+		Use:   "member",
+		Short: "Member-related operations in a team",
+		Long:  `The member command manages member-related operations of a team in an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return memberTeam()
+		},
+	}
+
+	addMemCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add members to team",
 		Long:  `The add command adds members to a team in an organization.`,
@@ -65,13 +74,22 @@ var (
 		},
 	}
 
-	removeTeamCmd = &cobra.Command{
+	removeMemCmd = &cobra.Command{
 		Use:     "remove",
 		Short:   "Remove members from team",
 		Long:    `The remove command removes members from a team in an organization.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTeamMem(AMP)
+		},
+	}
+
+	listMemCmd = &cobra.Command{
+		Use:   "ls",
+		Short: "List members of team",
+		Long:  `The list command lists members of a team in an organization.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listTeamMem(AMP)
 		},
 	}
 )
@@ -81,8 +99,10 @@ func init() {
 	TeamCmd.AddCommand(createTeamCmd)
 	TeamCmd.AddCommand(deleteTeamCmd)
 	TeamCmd.AddCommand(getTeamCmd)
-	TeamCmd.AddCommand(addTeamCmd)
-	TeamCmd.AddCommand(removeTeamCmd)
+	TeamCmd.AddCommand(memTeamCmd)
+	memTeamCmd.AddCommand(addMemCmd)
+	memTeamCmd.AddCommand(removeMemCmd)
+	memTeamCmd.AddCommand(listMemCmd)
 }
 
 // listTeam validates the input command line arguments and lists available teams
@@ -100,10 +120,15 @@ func listTeam(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "TEAM")
-	fmt.Fprintln(w, "----")
+	fmt.Fprintln(w, "TEAM\tCREATED\t")
+	fmt.Fprintln(w, "----\t-------\t")
 	for _, team := range reply.Teams {
-		fmt.Fprintf(w, "%s\n", team)
+		teamCreate, err := strconv.ParseInt(strconv.FormatInt(team.CreateDt, 10), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		teamCreateTime := time.Unix(teamCreate, 0)
+		fmt.Fprintf(w, "%s\t%s\n", team.Name, teamCreateTime)
 	}
 	w.Flush()
 	return nil
@@ -166,8 +191,8 @@ func getTeam(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "TEAM\tCREATE DATE")
-	fmt.Fprintln(w, "----\t-----------")
+	fmt.Fprintln(w, "TEAM\tCREATED\t")
+	fmt.Fprintln(w, "----\t-------\t")
 	teamCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Team.CreateDt, 10), 10, 64)
 	if err != nil {
 		panic(err)
@@ -178,9 +203,16 @@ func getTeam(amp *cli.AMP) (err error) {
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Team.Members {
-		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
+		fmt.Fprintf(w, "%s\t%s\n", mem.Name, mem.Role)
 	}
 	w.Flush()
+	return nil
+}
+
+// memberTeam validates the input command line arguments and retrieves info about members of a team in an organization
+// by invoking the corresponding rpc/storage method
+func memberTeam() (err error) {
+	manager.printf(colWarn, "Choose a command for member operations.\nUse amp account team member -h for help.")
 	return nil
 }
 
@@ -225,6 +257,32 @@ func removeTeamMem(amp *cli.AMP) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Member(s) have been removed from team %s successfully.", team)
+	return nil
+}
+
+// listMem validates the input command line arguments and lists members of a team
+// by invoking the corresponding rpc/storage method
+func listTeamMem(amp *cli.AMP) (err error) {
+	manager.printf(colRegular, "This will list members of a team in an organization.")
+	orgName := getOrgName()
+	team := getTeamName()
+	request := &account.GetTeamRequest{
+		OrganizationName: orgName,
+		TeamName:         team,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	reply, er := accClient.GetTeam(context.Background(), request)
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "USERNAME\tROLE\t")
+	fmt.Fprintln(w, "--------\t----\t")
+	for _, user := range reply.Team.Members {
+		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
+	}
+	w.Flush()
 	return nil
 }
 
