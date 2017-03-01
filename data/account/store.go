@@ -560,9 +560,9 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	if err := auth.Warden.IsAllowed(&ladon.Request{
 		Subject:  requester.Name,
 		Action:   auth.UpdateAction,
-		Resource: auth.TeamResource,
+		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": team.GetOwners(),
+			"owners": organization.GetOwners(),
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -620,9 +620,9 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	if err := auth.Warden.IsAllowed(&ladon.Request{
 		Subject:  requester.Name,
 		Action:   auth.UpdateAction,
-		Resource: auth.TeamResource,
+		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": team.GetOwners(),
+			"owners": organization.GetOwners(),
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -701,7 +701,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	if err := auth.Warden.IsAllowed(&ladon.Request{
 		Subject:  requester.Name,
 		Action:   auth.DeleteAction,
-		Resource: auth.TeamResource,
+		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
 			"owners": organization.GetOwners(),
 		},

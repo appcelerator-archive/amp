@@ -35,6 +35,7 @@ func convertError(err error) error {
 	case schema.PasswordTooWeak:
 		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	case schema.WrongPassword:
+		return grpc.Errorf(codes.Unauthenticated, err.Error())
 	case schema.UserNotVerified:
 	case schema.AtLeastOneOwner:
 		return grpc.Errorf(codes.FailedPrecondition, err.Error())
