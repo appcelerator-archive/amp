@@ -32,10 +32,20 @@ var (
 			return AMP.Connect()
 		},
 	}
+
+	UserCmd = &cobra.Command{
+		Use:   "user",
+		Short: "User operations",
+		Long:  `The user command manages all user-related operations.`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
+	}
 )
 
 func init() {
 	RootCmd.AddCommand(AccountCmd)
 	RootCmd.AddCommand(OrgCmd)
 	RootCmd.AddCommand(TeamCmd)
+	RootCmd.AddCommand(UserCmd)
 }

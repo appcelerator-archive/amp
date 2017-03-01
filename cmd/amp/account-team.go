@@ -120,6 +120,7 @@ func listTeam(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	fmt.Fprintln(w, "----\t-------\t")
 	for _, team := range reply.Teams {
@@ -191,6 +192,7 @@ func getTeam(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	fmt.Fprintln(w, "----\t-------\t")
 	teamCreate, err := strconv.ParseInt(strconv.FormatInt(reply.Team.CreateDt, 10), 10, 64)
@@ -199,7 +201,7 @@ func getTeam(amp *cli.AMP) (err error) {
 	}
 	teamCreateTime := time.Unix(teamCreate, 0)
 	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, teamCreateTime)
-
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
 	fmt.Fprintln(w, "-----------\t----\t")
 	for _, mem := range reply.Team.Members {
@@ -277,6 +279,7 @@ func listTeamMem(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	fmt.Fprintln(w, "--------\t----\t")
 	for _, user := range reply.Team.Members {
