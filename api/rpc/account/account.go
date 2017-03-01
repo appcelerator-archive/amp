@@ -52,6 +52,18 @@ func convertError(err error) error {
 	return grpc.Errorf(codes.Internal, err.Error())
 }
 
+func (s *Server) getUserEmail(ctx context.Context) string {
+	name, err := auth.GetRequesterName(ctx)
+	if err != nil {
+		return ""
+	}
+	user, errm := s.accounts.GetUser(ctx, name)
+	if errm != nil {
+		return ""
+	}
+	return user.Email
+}
+
 // Users
 
 // SignUp implements account.SignUp
@@ -206,6 +218,19 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 	return &ListUsersReply{Users: users}, nil
 }
 
+// DeleteUser implements account.DeleteUser
+func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*pb.Empty, error) {
+	user, err := s.accounts.DeleteUser(ctx)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	if err := mail.SendAccountRemovedEmail(user.Email, user.Name); err != nil {
+		return nil, convertError(err)
+	}
+	log.Println("Successfully deleted user", user.Name)
+	return &pb.Empty{}, nil
+}
+
 // Organizations
 
 // CreateOrganization implements account.CreateOrganization
@@ -253,21 +278,6 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 	return &pb.Empty{}, nil
 }
 
-// DeleteOrganization implements account.DeleteOrganization
-func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*pb.Empty, error) {
-	if err := s.accounts.DeleteOrganization(ctx, in.Name); err != nil {
-		return nil, convertError(err)
-	}
-	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
-		if err := mail.SendOrganizationRemovedEmail(email, in.Name); err != nil {
-			return nil, convertError(err)
-		}
-	}
-	log.Println("Successfully deleted organization", in.Name)
-	return &pb.Empty{}, nil
-}
-
 // GetOrganization implements account.GetOrganization
 func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest) (*GetOrganizationReply, error) {
 	organization, err := s.accounts.GetOrganization(ctx, in.Name)
@@ -289,6 +299,21 @@ func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsReq
 	}
 	log.Println("Successfully list organizations")
 	return &ListOrganizationsReply{Organizations: organizations}, nil
+}
+
+// DeleteOrganization implements account.DeleteOrganization
+func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*pb.Empty, error) {
+	if err := s.accounts.DeleteOrganization(ctx, in.Name); err != nil {
+		return nil, convertError(err)
+	}
+	// Send confirmation email
+	if email := s.getUserEmail(ctx); email != "" {
+		if err := mail.SendOrganizationRemovedEmail(email, in.Name); err != nil {
+			return nil, convertError(err)
+		}
+	}
+	log.Println("Successfully deleted organization", in.Name)
+	return &pb.Empty{}, nil
 }
 
 // Teams
@@ -338,21 +363,6 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 	return &pb.Empty{}, nil
 }
 
-// DeleteTeam implements account.DeleteTeam
-func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Empty, error) {
-	if err := s.accounts.DeleteTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
-		return nil, convertError(err)
-	}
-	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
-		if err := mail.SendTeamRemovedEmail(email, in.TeamName); err != nil {
-			return nil, convertError(err)
-		}
-	}
-	log.Printf("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
-	return &pb.Empty{}, nil
-}
-
 // GetTeam implements account.GetTeam
 func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply, error) {
 	team, err := s.accounts.GetTeam(ctx, in.OrganizationName, in.TeamName)
@@ -372,14 +382,17 @@ func (s *Server) ListTeams(ctx context.Context, in *ListTeamsRequest) (*ListTeam
 	return &ListTeamsReply{Teams: teams}, nil
 }
 
-func (s *Server) getUserEmail(ctx context.Context) string {
-	name, err := auth.GetRequesterName(ctx)
-	if err != nil {
-		return ""
+// DeleteTeam implements account.DeleteTeam
+func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Empty, error) {
+	if err := s.accounts.DeleteTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
+		return nil, convertError(err)
 	}
-	user, errm := s.accounts.GetUser(ctx, name)
-	if errm != nil {
-		return ""
+	// Send confirmation email
+	if email := s.getUserEmail(ctx); email != "" {
+		if err := mail.SendTeamRemovedEmail(email, in.TeamName); err != nil {
+			return nil, convertError(err)
+		}
 	}
-	return user.Email
+	log.Printf("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
+	return &pb.Empty{}, nil
 }

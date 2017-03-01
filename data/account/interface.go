@@ -29,8 +29,8 @@ type Interface interface {
 	// VerifyUser verifies a user account
 	VerifyUser(ctx context.Context, token string) (user *schema.User, err error)
 
-	// DeleteUser deletes a user by name
-	DeleteUser(ctx context.Context, name string) (err error)
+	// DeleteUser deletes the requester's user account
+	DeleteUser(ctx context.Context) (user *schema.User, err error)
 
 	// CreateOrganization creates a new organization
 	CreateOrganization(ctx context.Context, name string, email string) (err error)

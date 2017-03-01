@@ -12,6 +12,18 @@ var accountCreationBody = `
 
 `
 
+var accountRemovedBody = `
+<!DOCTYPE html>
+<html>
+<body style="background-color:white">
+  <div style="color:#404040;">
+    <div style="height:30px"></div>
+  <h3>Your acount <b style="color:red">{accountName}</b> has been removed</h3>
+</body>
+</html>
+
+`
+
 var organizationCreationBody = `
 <!DOCTYPE html>
 <html>
