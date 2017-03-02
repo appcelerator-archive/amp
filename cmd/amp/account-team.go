@@ -24,7 +24,7 @@ var (
 		Long:    `The list command lists all available teams in an organization.`,
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTeam(AMP)
+			return listTeam(AMP, cmd)
 		},
 	}
 
@@ -33,7 +33,7 @@ var (
 		Short: "Create team",
 		Long:  `The create command creates a team in an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createTeam(AMP)
+			return createTeam(AMP, cmd)
 		},
 	}
 
@@ -43,7 +43,7 @@ var (
 		Long:    `The delete command deletes a team in an organization.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return deleteTeam(AMP)
+			return deleteTeam(AMP, cmd)
 		},
 	}
 
@@ -52,7 +52,7 @@ var (
 		Short: "Get team info",
 		Long:  `The get command retrieves details of a team in an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getTeam(AMP)
+			return getTeam(AMP, cmd)
 		},
 	}
 
@@ -65,33 +65,35 @@ var (
 		},
 	}
 
-	addMemCmd = &cobra.Command{
+	addTeamMemCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add members to team",
 		Long:  `The add command adds members to a team in an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addTeamMem(AMP)
+			return addTeamMem(AMP, cmd)
 		},
 	}
 
-	removeMemCmd = &cobra.Command{
+	remTeamMemCmd = &cobra.Command{
 		Use:     "remove",
 		Short:   "Remove members from team",
 		Long:    `The remove command removes members from a team in an organization.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeTeamMem(AMP)
+			return removeTeamMem(AMP, cmd)
 		},
 	}
 
-	listMemCmd = &cobra.Command{
+	listTeamMemCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List members of team",
 		Long:  `The list command lists members of a team in an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTeamMem(AMP)
+			return listTeamMem(AMP, cmd)
 		},
 	}
+
+	team string
 )
 
 func init() {
@@ -100,18 +102,45 @@ func init() {
 	TeamCmd.AddCommand(deleteTeamCmd)
 	TeamCmd.AddCommand(getTeamCmd)
 	TeamCmd.AddCommand(memTeamCmd)
-	memTeamCmd.AddCommand(addMemCmd)
-	memTeamCmd.AddCommand(removeMemCmd)
-	memTeamCmd.AddCommand(listMemCmd)
+	memTeamCmd.AddCommand(addTeamMemCmd)
+	memTeamCmd.AddCommand(remTeamMemCmd)
+	memTeamCmd.AddCommand(listTeamMemCmd)
+
+	listTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+
+	createTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	createTeamCmd.Flags().StringVar(&team, "team", team, "Team Name")
+
+	deleteTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	deleteTeamCmd.Flags().StringVar(&team, "team", team, "Team Name")
+
+	getTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	getTeamCmd.Flags().StringVar(&team, "team", team, "Team Name")
+
+	addTeamMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	addTeamMemCmd.Flags().StringVar(&team, "team", team, "Team Name")
+	addTeamMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
+
+	remTeamMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	remTeamMemCmd.Flags().StringVar(&team, "team", team, "Team Name")
+	remTeamMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
+
+	listTeamMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	listTeamMemCmd.Flags().StringVar(&team, "team", team, "Team Name")
 }
 
 // listTeam validates the input command line arguments and lists available teams
 // by invoking the corresponding rpc/storage method
-func listTeam(amp *cli.AMP) (err error) {
+func listTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will list teams in an organization.")
-	orgName := getOrgName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+
 	request := &account.ListTeamsRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListTeams(context.Background(), request)
@@ -137,12 +166,21 @@ func listTeam(amp *cli.AMP) (err error) {
 
 // createTeam validates the input command line arguments and creates a team in an organization
 // by invoking the corresponding rpc/storage method
-func createTeam(amp *cli.AMP) (err error) {
+func createTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will create a team in an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+
 	request := &account.CreateTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
@@ -151,18 +189,27 @@ func createTeam(amp *cli.AMP) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(colSuccess, "Successfully created team %s in organization %s.", team, orgName)
+	manager.printf(colSuccess, "Successfully created team %s in organization %s.", team, organization)
 	return nil
 }
 
 // deleteTeam validates the input command line arguments and deletes a team in an organization
 // by invoking the corresponding rpc/storage method
-func deleteTeam(amp *cli.AMP) (err error) {
+func deleteTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will delete a team from an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+
 	request := &account.DeleteTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
@@ -171,18 +218,27 @@ func deleteTeam(amp *cli.AMP) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(colSuccess, "Successfully deleted team %s from organization %s.", team, orgName)
+	manager.printf(colSuccess, "Successfully deleted team %s from organization %s.", team, organization)
 	return nil
 }
 
 // getTeam validates the input command line arguments and retrieves info of a team in an organization
 // by invoking the corresponding rpc/storage method
-func getTeam(amp *cli.AMP) (err error) {
+func getTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will get details of a team in an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+
 	request := &account.GetTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
@@ -214,21 +270,34 @@ func getTeam(amp *cli.AMP) (err error) {
 // memberTeam validates the input command line arguments and retrieves info about members of a team in an organization
 // by invoking the corresponding rpc/storage method
 func memberTeam() (err error) {
-	manager.printf(colWarn, "Choose a command for member operations.\nUse amp account team member -h for help.")
+	manager.printf(colWarn, "Choose a command for member operations.\nUse amp team member -h for help.")
 	return nil
 }
 
 // addTeamMem validates the input command line arguments and adds members to a team
 // by invoking the corresponding rpc/storage method
-func addTeamMem(amp *cli.AMP) (err error) {
+func addTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will add members to a team in an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
-	name := getUserName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+	if cmd.Flags().Changed("member") {
+		member = cmd.Flag("member").Value.String()
+	} else {
+		member = getUserName()
+	}
+
 	request := &account.AddUserToTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
-		UserName:         name,
+		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.AddUserToTeam(context.Background(), request)
@@ -242,15 +311,28 @@ func addTeamMem(amp *cli.AMP) (err error) {
 
 // removeTeamMem validates the input command line arguments and removes members from a team
 // by invoking the corresponding rpc/storage method
-func removeTeamMem(amp *cli.AMP) (err error) {
+func removeTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will remove members from a team in an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
-	name := getUserName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+	if cmd.Flags().Changed("member") {
+		member = cmd.Flag("member").Value.String()
+	} else {
+		member = getUserName()
+	}
+
 	request := &account.RemoveUserFromTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
-		UserName:         name,
+		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.RemoveUserFromTeam(context.Background(), request)
@@ -264,12 +346,21 @@ func removeTeamMem(amp *cli.AMP) (err error) {
 
 // listMem validates the input command line arguments and lists members of a team
 // by invoking the corresponding rpc/storage method
-func listTeamMem(amp *cli.AMP) (err error) {
+func listTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will list members of a team in an organization.")
-	orgName := getOrgName()
-	team := getTeamName()
+	if cmd.Flags().Changed("org") {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		organization = getOrgName()
+	}
+	if cmd.Flags().Changed("team") {
+		team = cmd.Flag("team").Value.String()
+	} else {
+		team = getTeamName()
+	}
+
 	request := &account.GetTeamRequest{
-		OrganizationName: orgName,
+		OrganizationName: organization,
 		TeamName:         team,
 	}
 	accClient := account.NewAccountClient(amp.Conn)

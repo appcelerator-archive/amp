@@ -42,7 +42,7 @@ var (
 		Short: "Get user info",
 		Long:  `The get command retrieves details of a user.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getUser(AMP)
+			return getUser(AMP, cmd)
 		},
 	}
 )
@@ -51,6 +51,8 @@ func init() {
 	UserCmd.AddCommand(listUserCmd)
 	UserCmd.AddCommand(deleteUserCmd)
 	UserCmd.AddCommand(getUserCmd)
+
+	getUserCmd.Flags().StringVar(&name, "name", name, "Account Name")
 }
 
 // listUser validates the input command line arguments and lists all users
@@ -92,9 +94,14 @@ func deleteUser(amp *cli.AMP) (err error) {
 
 // getUser validates the input command line arguments and retrieves info of a user
 // by invoking the corresponding rpc/storage method
-func getUser(amp *cli.AMP) (err error) {
+func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	manager.printf(colRegular, "This will get details of a user.")
-	name := getUserName()
+	if cmd.Flag("name").Changed {
+		name = cmd.Flag("name").Value.String()
+	} else {
+		name = getUserName()
+	}
+
 	request := &account.GetUserRequest{
 		Name: name,
 	}
