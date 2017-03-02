@@ -21,7 +21,7 @@ var (
 		Short: "Signup for a new account",
 		Long:  `The signup command creates a new account and sends a verification link to the registered email address.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return signUp(AMP)
+			return signUp(AMP, cmd, args)
 		},
 	}
 
@@ -65,6 +65,9 @@ var (
 	reset  bool
 	set    bool
 
+	username string
+	email    string
+	password string
 	//TODO: pass verbose as arg
 	manager = NewCmdManager("")
 )
@@ -77,6 +80,10 @@ func init() {
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
 
+	signUpCmd.Flags().StringVar(&username, "name", username, "Account name")
+	signUpCmd.Flags().StringVar(&email, "email", email, "Email ID")
+	signUpCmd.Flags().StringVar(&password, "password", password, "Password")
+
 	pwdCmd.Flags().BoolVar(&change, "change", false, "Change Password")
 	pwdCmd.Flags().BoolVar(&reset, "reset", false, "Reset Password")
 	pwdCmd.Flags().BoolVar(&set, "set", false, "Set Password")
@@ -84,11 +91,29 @@ func init() {
 
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
-func signUp(amp *cli.AMP) (err error) {
+func signUp(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	manager.printf(colRegular, "This will sign you up for a new personal AMP account.")
-	username := getUserName()
-	email := getEmailAddress()
-	password := getPassword()
+	paramLength := cmd.Flags().NFlag()
+	switch paramLength {
+	case 0:
+		username = getUserName()
+		email = getEmailAddress()
+		password = getPassword()
+	case 1:
+		username = cmd.Flag("name").Value.String()
+		email = getEmailAddress()
+		password = getPassword()
+	case 2:
+		username = cmd.Flag("name").Value.String()
+		email = cmd.Flag("email").Value.String()
+		password = getPassword()
+	case 3:
+		username = cmd.Flag("name").Value.String()
+		email = cmd.Flag("email").Value.String()
+		password = cmd.Flag("password").Value.String()
+	default:
+		manager.fatalf("too many parameters")
+	}
 	request := &account.SignUpRequest{
 		Name:     username,
 		Email:    email,
