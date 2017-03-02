@@ -49,8 +49,8 @@ func CheckPassword(password string) error {
 }
 
 func checkOrganizationMember(member *OrganizationMember) error {
-	if isEmpty(member.Name) {
-		return InvalidName
+	if err := CheckName(member.Name); err != nil {
+		return err
 	}
 	return nil
 }
@@ -75,8 +75,8 @@ func checkOrganizationMembers(members []*OrganizationMember) error {
 }
 
 func checkTeamMember(member *TeamMember) error {
-	if isEmpty(member.Name) {
-		return InvalidName
+	if err := CheckName(member.Name); err != nil {
+		return err
 	}
 	return nil
 }
