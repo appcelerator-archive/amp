@@ -148,7 +148,7 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, team := range reply.Teams {
 			fmt.Println(team.Name)
@@ -366,7 +366,7 @@ func listTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, member := range reply.Team.Members {
 			fmt.Println(member.Name)

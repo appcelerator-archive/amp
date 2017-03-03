@@ -71,11 +71,11 @@ var (
 	reset  bool
 	set    bool
 
-	username    string
-	email       string
-	password    string
-	token       string
-	existingPwd string
+	username string
+	email    string
+	password string
+	token    string
+	newPwd   string
 
 	//TODO: pass verbose as arg
 	manager = NewCmdManager("")
@@ -106,8 +106,8 @@ func init() {
 	pwdCmd.Flags().BoolVar(&set, "set", false, "Set Password")
 	pwdCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	pwdCmd.Flags().StringVar(&token, "token", token, "Verification Token")
-	pwdCmd.Flags().StringVar(&password, "password", password, "Password")
-	pwdCmd.Flags().StringVar(&existingPwd, "current", existingPwd, "Current Password")
+	pwdCmd.Flags().StringVar(&password, "password", password, "Current Password")
+	pwdCmd.Flags().StringVar(&newPwd, "new-password", newPwd, "New Password")
 
 	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
 }
@@ -292,21 +292,21 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	fmt.Println("Enter your current password.")
-	if cmd.Flag("current").Changed {
-		existingPwd = cmd.Flag("current").Value.String()
-	} else {
-		existingPwd = GetPassword()
-	}
-	fmt.Println("Enter new password.")
-	if cmd.Flag("current").Changed {
-		password = cmd.Flag("current").Value.String()
+	if cmd.Flag("password").Changed {
+		password = cmd.Flag("password").Value.String()
 	} else {
 		password = GetPassword()
 	}
+	fmt.Println("Enter new password.")
+	if cmd.Flag("new-password").Changed {
+		newPwd = cmd.Flag("new-password").Value.String()
+	} else {
+		newPwd = GetPassword()
+	}
 
 	request := &account.PasswordChangeRequest{
-		ExistingPassword: existingPwd,
-		NewPassword:      password,
+		ExistingPassword: password,
+		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
