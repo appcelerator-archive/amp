@@ -3,13 +3,6 @@ package cli
 import (
 	"fmt"
 	"github.com/ThomasRooney/gexpect"
-	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"regexp"
 	"testing"
 	"time"
@@ -63,38 +56,7 @@ var (
 
 // TestCli is the primary test func, tests all cli commands.
 func TestCli(t *testing.T) {
-	ctx := context.Background()
-
-	// Connect to amplifier
-	conn, err := grpc.Dial("local.appcelerator.io:8080",
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-	)
-	assert.NoError(t, err)
-
-	accountClient := account.NewAccountClient(conn)
-
-	signUpRequest := account.SignUpRequest{
-		Name:     "cli",
-		Password: "cliPassword",
-		Email:    "cli@amp.io",
-	}
-
-	// SignUp
-	accountClient.SignUp(ctx, &signUpRequest)
-
-	// Create a token
-	token, createTokenErr := auth.CreateLoginToken(signUpRequest.Name, "", time.Hour)
-	assert.NoError(t, createTokenErr)
-
-	// Verify
-	accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
-
-	// Login, somehow
-	md := metadata.Pairs(auth.TokenKey, token)
-	cli.SaveToken(md)
-
+	var err error
 	// Parse all suites specified in the array of suite directories.
 	suites, err = createSuite(suiteDir)
 	if err != nil {

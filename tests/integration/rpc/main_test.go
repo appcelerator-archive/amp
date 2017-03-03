@@ -83,5 +83,10 @@ func TestMain(m *testing.M) {
 	accountClient = account.NewAccountClient(anonymousConn)
 
 	// Start tests
-	os.Exit(m.Run())
+	code := m.Run()
+
+	// Tear down
+	accountStore.Reset(ctx)
+
+	os.Exit(code)
 }
