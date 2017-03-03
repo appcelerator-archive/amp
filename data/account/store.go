@@ -69,28 +69,26 @@ func (s *Store) getVerifiedUser(ctx context.Context, name string) (user *schema.
 	return user, nil
 }
 
-func (s *Store) getRequester(ctx context.Context) (requester *schema.User, err error) {
-	requesterName, err := auth.GetRequesterName(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if requester, err = s.getUser(ctx, requesterName); err != nil {
-		return nil, err
-	}
-	return requester, nil
-}
-
 // Users
 
 // CreateUser creates a new user
 func (s *Store) CreateUser(ctx context.Context, name string, email string, password string) (user *schema.User, err error) {
 	// Check if user already exists
-	alreadyExists, err := s.rawUser(ctx, name)
+	userAlreadyExists, err := s.rawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	if alreadyExists != nil {
+	if userAlreadyExists != nil {
 		return nil, schema.UserAlreadyExists
+	}
+
+	// Check if organization already exists
+	orgAlreadyExists, err := s.GetOrganization(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if orgAlreadyExists != nil {
+		return nil, schema.OrganizationAlreadyExists
 	}
 
 	// Create the new user
@@ -118,7 +116,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 // VerifyUser verifies a user account
 func (s *Store) VerifyUser(ctx context.Context, token string) (*schema.User, error) {
 	// Validate the token
-	claims, err := auth.ValidateToken(token, auth.TokenTypeVerify)
+	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, schema.InvalidToken
 	}
@@ -211,7 +209,17 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	return users, nil
 }
 
-func (s *Store) deleteUser(ctx context.Context, name string) error {
+// DeleteUser deletes a user by name
+func (s *Store) DeleteUser(ctx context.Context, name string) error {
+	// Get requester
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+	if requester != name {
+		return schema.NotAuthorized
+	}
+
 	// Get organizations owned by he user
 	ownedOrganizations, err := s.getOwnedOrganization(ctx, name)
 	if err != nil {
@@ -229,29 +237,12 @@ func (s *Store) deleteUser(ctx context.Context, name string) error {
 			return err
 		}
 	}
+
 	// Delete the user
 	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
-}
-
-// DeleteUser deletes the requester's user account
-func (s *Store) DeleteUser(ctx context.Context) (*schema.User, error) {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.deleteUser(ctx, requester.Name); err != nil {
-		return nil, err
-	}
-	return secureUser(requester), nil
-}
-
-// DeleteUserByName deletes a user by name
-func (s *Store) DeleteUserByName(ctx context.Context, name string) error {
-	return s.deleteUser(ctx, name)
 }
 
 // Organizations
@@ -282,29 +273,37 @@ func (s *Store) updateOrganization(ctx context.Context, in *schema.Organization)
 
 // CreateOrganization creates a new organization
 func (s *Store) CreateOrganization(ctx context.Context, name string, email string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
+
+	// Check if user already exists
+	userAlreadyExists, err := s.rawUser(ctx, name)
 	if err != nil {
 		return err
+	}
+	if userAlreadyExists != nil {
+		return schema.UserAlreadyExists
 	}
 
 	// Check if organization already exists
-	alreadyExists, err := s.GetOrganization(ctx, name)
+	orgAlreadyExists, err := s.GetOrganization(ctx, name)
 	if err != nil {
 		return err
 	}
-	if alreadyExists != nil {
+	if orgAlreadyExists != nil {
 		return schema.OrganizationAlreadyExists
 	}
 
 	// Create the new organization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return err
+	}
 	organization := &schema.Organization{
 		Email:    email,
 		Name:     name,
 		CreateDt: time.Now().Unix(),
 		Members: []*schema.OrganizationMember{
 			{
-				Name: requester.Name,
+				Name: requester,
 				Role: schema.OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
@@ -320,12 +319,6 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 
 // AddUserToOrganization adds a user to the given organization
 func (s *Store) AddUserToOrganization(ctx context.Context, organizationName string, userName string) (err error) {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -336,8 +329,12 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -367,12 +364,6 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 }
 
 func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*schema.Organization, error) {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -383,8 +374,12 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return nil, schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -457,12 +452,6 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, 
 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, name)
 	if err != nil {
@@ -473,8 +462,12 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.DeleteAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -495,12 +488,6 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 
 // CreateTeam creates a new team
 func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -511,8 +498,12 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	}
 
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -533,7 +524,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		CreateDt: time.Now().Unix(),
 		Members: []*schema.TeamMember{
 			{
-				Name: requester.Name,
+				Name: requester,
 				Role: schema.TeamRole_TEAM_OWNER,
 			},
 		},
@@ -546,12 +537,6 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 
 // AddUserToTeam adds a user to the given team
 func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -561,15 +546,13 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return schema.OrganizationNotFound
 	}
 
-	// Get team
-	team := organization.GetTeam(teamName)
-	if team == nil {
-		return schema.TeamNotFound
-	}
-
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -577,6 +560,12 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		},
 	}); err != nil {
 		return schema.NotAuthorized
+	}
+
+	// Get team
+	team := organization.GetTeam(teamName)
+	if team == nil {
+		return schema.TeamNotFound
 	}
 
 	// Get the user
@@ -606,12 +595,6 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 
 // RemoveUserFromTeam removes a user from the given team
 func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -621,15 +604,13 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		return schema.OrganizationNotFound
 	}
 
-	// Get team
-	team := organization.GetTeam(teamName)
-	if team == nil {
-		return schema.TeamNotFound
-	}
-
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
@@ -637,6 +618,12 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
+	}
+
+	// Get team
+	team := organization.GetTeam(teamName)
+	if team == nil {
+		return schema.TeamNotFound
 	}
 
 	// Get the user
@@ -672,9 +659,6 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 		return nil, err
 	}
 	team := organization.GetTeam(teamName)
-	if team == nil {
-		return nil, schema.TeamNotFound
-	}
 	return team, nil
 }
 
@@ -693,12 +677,6 @@ func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*sche
 
 // DeleteTeam deletes a team by name
 func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamName string) error {
-	// Get requester
-	requester, err := s.getRequester(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -709,8 +687,12 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	}
 
 	// Check authorization
+	requester, err := auth.GetUser(ctx)
+	if err != nil {
+		return schema.NotAuthorized
+	}
 	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  requester.Name,
+		Subject:  requester,
 		Action:   auth.DeleteAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{

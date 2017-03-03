@@ -27,7 +27,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a verify token
-	token, err := auth.CreateToken(user.Name, auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -35,7 +35,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a login token
-	token, err = auth.CreateToken(user.Name, auth.TokenTypeLogin, time.Hour)
+	token, err = auth.CreateLoginToken(user.Name, "", time.Hour)
 	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 }
 
@@ -48,7 +48,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a token
-	token, err := auth.CreateToken(testUser.Name, auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateVerificationToken(testUser.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -120,7 +120,7 @@ func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// Create a verify token
-	token, err := auth.CreateToken("nonexistinguser", auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateVerificationToken("nonexistinguser", time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -247,7 +247,7 @@ func TestUserPasswordSet(t *testing.T) {
 	createUser(t, &testUser)
 
 	// Password Set
-	token, _ := auth.CreateToken(testUser.Name, auth.TokenTypePassword, time.Hour)
+	token, _ := auth.CreatePasswordToken(testUser.Name, time.Hour)
 	_, err := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -300,7 +300,7 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := auth.CreateToken("nonexistinguser", auth.TokenTypePassword, time.Hour)
+	token, _ := auth.CreatePasswordToken("nonexistinguser", time.Hour)
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -327,7 +327,7 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := auth.CreateToken(testUser.Name, auth.TokenTypePassword, time.Hour)
+	token, _ := auth.CreatePasswordToken(testUser.Name, time.Hour)
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "",
@@ -540,8 +540,23 @@ func TestUserDelete(t *testing.T) {
 	ownerCtx := createUser(t, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{})
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testUser.Name})
 	assert.NoError(t, err)
+}
+
+func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// Create another  user
+	createUser(t, &testMember)
+
+	// Delete
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testMember.Name})
+	assert.Error(t, err)
 }
 
 // Organizations

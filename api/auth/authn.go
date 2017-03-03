@@ -2,22 +2,17 @@ package auth
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"os"
-	"time"
 )
 
 // Keys used in context metadata
 const (
-	TokenKey          = "amp.token"
-	RequesterKey      = "amp.requester"
-	TokenTypeVerify   = "verify"
-	TokenTypeLogin    = "login"
-	TokenTypePassword = "password"
+	TokenKey              = "amp.token"
+	UserKey               = "amp.user"
+	ActiveOrganizationKey = "amp.activeOrganization"
 )
 
 var (
@@ -42,13 +37,6 @@ var (
 		"/version.Version/List",
 	}
 )
-
-// UserClaims represents user claims
-type AccountClaims struct {
-	AccountName string `json:"AccountName"`
-	Type        string `json:"Type"`
-	jwt.StandardClaims
-}
 
 // LoginCredentials represents login credentials
 type LoginCredentials struct {
@@ -113,60 +101,55 @@ func authorize(ctx context.Context) (context.Context, error) {
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
-	// Enrich the context with the requester
-	ctx = metadata.NewContext(ctx, metadata.Pairs(RequesterKey, claims.AccountName))
+	// Enrich the context
+	ctx = metadata.NewContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))
 	return ctx, nil
 }
 
-// CreateToken creates a token for a given user name
-func CreateToken(name string, tokenType string, validFor time.Duration) (string, error) {
-	// Forge the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
-		name, // The token contains the user name to verify
-		tokenType,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(validFor).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
-	ss, err := token.SignedString(secretKey)
+// GetRequester gets the requester, i.e. the user or organization performing the request
+func GetRequester(ctx context.Context) (string, error) {
+	user, err := GetUser(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to issue token")
+		return "", err
 	}
-	return ss, nil
+	activeOrganization, err := GetActiveOrganization(ctx)
+	if err != nil {
+		return "", err
+	}
+	if activeOrganization != "" {
+		return activeOrganization, nil
+	}
+	return user, nil
 }
 
-// ValidateToken validates a token and return its claims
-func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
-	}
-	claims, ok := token.Claims.(*AccountClaims)
-	if !ok {
-		return nil, fmt.Errorf("invalid claims")
-	}
-	if claims.Type != tokenType {
-		return nil, fmt.Errorf("invalid token type")
-	}
-	return claims, nil
-}
-
-// GetRequester gets the requester from context metadata
-func GetRequesterName(ctx context.Context) (string, error) {
+// GetUser gets the user from context metadata
+func GetUser(ctx context.Context) (string, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("unable to get metadata from context")
 	}
-	users := md[RequesterKey]
+
+	users := md[UserKey]
 	if len(users) == 0 {
-		return "", fmt.Errorf("context metadata has no requester field")
+		return "", fmt.Errorf("context metadata has no user field")
 	}
+
 	user := users[0]
 	return user, nil
+}
+
+// GetActiveOrganization gets the active organization from context metadata
+func GetActiveOrganization(ctx context.Context) (string, error) {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("unable to get metadata from context")
+	}
+
+	activeOrganizations := md[ActiveOrganizationKey]
+	if len(activeOrganizations) == 0 {
+		return "", nil
+	}
+
+	activeOrganization := activeOrganizations[0]
+	return activeOrganization, nil
 }

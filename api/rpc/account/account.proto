@@ -65,6 +65,12 @@ service Account {
       delete: "/v1/users"
     };
   };
+  rpc Switch (SwitchRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/switch",
+      body: "*"
+    };
+  };
 
   // Organizations
   rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
@@ -155,6 +161,10 @@ message LogInRequest {
   string password = 2;
 }
 
+message SwitchRequest {
+  string account = 1;
+}
+
 message PasswordResetRequest {
   string name = 1;
 }
@@ -189,6 +199,7 @@ message ListUsersReply {
 }
 
 message DeleteUserRequest {
+  string name = 1;
 }
 
 // Organizations

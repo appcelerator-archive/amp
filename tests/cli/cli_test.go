@@ -85,7 +85,7 @@ func TestCli(t *testing.T) {
 	accountClient.SignUp(ctx, &signUpRequest)
 
 	// Create a token
-	token, createTokenErr := auth.CreateToken(signUpRequest.Name, auth.TokenTypeLogin, time.Hour)
+	token, createTokenErr := auth.CreateLoginToken(signUpRequest.Name, "", time.Hour)
 	assert.NoError(t, createTokenErr)
 
 	// Verify

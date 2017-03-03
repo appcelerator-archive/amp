@@ -25,7 +25,7 @@ var (
 	verifyCmd = &cobra.Command{
 		Use:   "verify",
 		Short: "Verify account",
-		Long:  `The verify command verifies an account by sending a verification code to their registered email address.`,
+		Long:  `The verify command verifies an account by checking the given verification code.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP, cmd)
 		},
@@ -52,9 +52,18 @@ var (
 	pwdCmd = &cobra.Command{
 		Use:   "password",
 		Short: "Account password operations",
-		Long:  "The password command allows users allows users to reset or update password.",
+		Long:  "The password command allows users to reset or update password.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwd(AMP, cmd)
+		},
+	}
+
+	switchCmd = &cobra.Command{
+		Use:   "switch",
+		Short: "Switch account",
+		Long:  "The switch command allows users to switch between their personal and organization accounts.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return switchAccount(AMP, cmd)
 		},
 	}
 
@@ -79,6 +88,7 @@ func init() {
 	AccountCmd.AddCommand(loginCmd)
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
+	AccountCmd.AddCommand(switchCmd)
 
 	signUpCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	signUpCmd.Flags().StringVar(&email, "email", email, "Email ID")
@@ -98,6 +108,8 @@ func init() {
 	pwdCmd.Flags().StringVar(&token, "token", token, "Verification Token")
 	pwdCmd.Flags().StringVar(&password, "password", password, "Password")
 	pwdCmd.Flags().StringVar(&existingPwd, "current", existingPwd, "Current Password")
+
+	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
 }
 
 // signUp validates the input command line arguments and creates a new account
@@ -209,6 +221,31 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Your login name has been sent to the address: %s", email)
+	return nil
+}
+
+func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("name").Changed {
+		username = cmd.Flag("name").Value.String()
+	} else {
+		fmt.Print("account: ")
+		username = GetName()
+	}
+
+	request := &account.SwitchRequest{
+		Account: username,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	header := metadata.MD{}
+	_, err = accClient.Switch(context.Background(), request, grpc.Header(&header))
+	if err != nil {
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
+	}
+	if err := cli.SaveToken(header); err != nil {
+		return err
+	}
+	manager.printf(colSuccess, "Your are now logged in as: %s", username)
 	return nil
 }
 

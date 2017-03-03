@@ -53,13 +53,31 @@ func convertError(err error) error {
 	return grpc.Errorf(codes.Internal, err.Error())
 }
 
-func (s *Server) getUserEmail(ctx context.Context) string {
-	name, err := auth.GetRequesterName(ctx)
+func (s *Server) getRequesterEmail(ctx context.Context) string {
+	activeOrganization, err := auth.GetActiveOrganization(ctx)
 	if err != nil {
 		return ""
 	}
-	user, errm := s.accounts.GetUser(ctx, name)
-	if errm != nil {
+	if activeOrganization != "" {
+		organization, err := s.accounts.GetOrganization(ctx, activeOrganization)
+		if err != nil {
+			return ""
+		}
+		if organization == nil {
+			return ""
+		}
+		return organization.Email
+	}
+
+	userName, err := auth.GetUser(ctx)
+	if err != nil {
+		return ""
+	}
+	user, err := s.accounts.GetUser(ctx, userName)
+	if err != nil {
+		return ""
+	}
+	if user == nil {
 		return ""
 	}
 	return user.Email
@@ -72,18 +90,18 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 	// Create user
 	user, err := s.accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
-		s.accounts.DeleteUserByName(ctx, in.Name)
+		s.accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	// Create a verification token valid for an hour
-	token, err := auth.CreateToken(user.Name, auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
 	if err != nil {
-		s.accounts.DeleteUserByName(ctx, in.Name)
+		s.accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	// Send the verification email
 	if err := mail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
-		s.accounts.DeleteUserByName(ctx, in.Name)
+		s.accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
 	log.Println("Successfully created user", user.Name)
@@ -110,7 +128,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 		return nil, convertError(err)
 	}
 	// Create an authentication token valid for a day
-	token, err := auth.CreateToken(in.Name, auth.TokenTypeLogin, 24*time.Hour)
+	token, err := auth.CreateLoginToken(in.Name, "", 24*time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -134,7 +152,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
-	token, err := auth.CreateToken(user.Name, auth.TokenTypePassword, time.Hour)
+	token, err := auth.CreatePasswordToken(user.Name, time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -163,8 +181,8 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 
 // PasswordChange implements account.PasswordChange
 func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (*pb.Empty, error) {
-	// Get requester
-	requester, err := auth.GetRequesterName(ctx)
+	// Get requesting user
+	requester, err := auth.GetUser(ctx)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -224,14 +242,59 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 
 // DeleteUser implements account.DeleteUser
 func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*pb.Empty, error) {
-	user, err := s.accounts.DeleteUser(ctx)
+	// Get requesting user
+	user, err := s.accounts.GetUser(ctx, in.Name)
 	if err != nil {
+		return nil, convertError(err)
+	}
+	if user == nil {
+		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
+	}
+
+	if err := s.accounts.DeleteUser(ctx, in.Name); err != nil {
 		return nil, convertError(err)
 	}
 	if err := mail.SendAccountRemovedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully deleted user", user.Name)
+	log.Println("Successfully deleted user", in.Name)
+	return &pb.Empty{}, nil
+}
+
+// Switch implements account.Switch
+func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*pb.Empty, error) {
+	// Get user name
+	userName, err := auth.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	activeOrganization := ""
+	// If the account name is not his own account, it has to be an organization
+	if userName != in.Account {
+		organization, err := s.accounts.GetOrganization(ctx, in.Account)
+		if err != nil {
+			return nil, convertError(err)
+		}
+		if organization == nil {
+			return nil, grpc.Errorf(codes.NotFound, "organization not found: %s", in.Account)
+		}
+		if !organization.HasMember(userName) {
+			return nil, grpc.Errorf(codes.FailedPrecondition, "user %s is not a member of organization  %s", userName, in.Account)
+		}
+		activeOrganization = organization.Name
+	}
+
+	// Create an authentication token valid for a day
+	token, err := auth.CreateLoginToken(userName, activeOrganization, 24*time.Hour)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	// Send the authN token to the client
+	md := metadata.Pairs(auth.TokenKey, token)
+	if err := grpc.SendHeader(ctx, md); err != nil {
+		return nil, convertError(err)
+	}
 	return &pb.Empty{}, nil
 }
 
@@ -243,7 +306,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 		return nil, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendOrganizationCreatedEmail(email, in.Name); err != nil {
 			return nil, convertError(err)
 		}
@@ -258,7 +321,7 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 		return &pb.Empty{}, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendUserAddedInOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
@@ -273,7 +336,7 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 		return &pb.Empty{}, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendUserRemovedFromOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
@@ -311,7 +374,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		return nil, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendOrganizationRemovedEmail(email, in.Name); err != nil {
 			return nil, convertError(err)
 		}
@@ -328,7 +391,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 		return nil, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendTeamCreatedEmail(email, in.TeamName); err != nil {
 			return nil, convertError(err)
 		}
@@ -343,7 +406,7 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 		return &pb.Empty{}, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendUserAddedInTeamEmail(email, in.TeamName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
@@ -358,7 +421,7 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		return &pb.Empty{}, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendUserRemovedFromTeamEmail(email, in.TeamName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
@@ -372,6 +435,9 @@ func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply
 	team, err := s.accounts.GetTeam(ctx, in.OrganizationName, in.TeamName)
 	if err != nil {
 		return nil, convertError(err)
+	}
+	if team == nil {
+		return nil, grpc.Errorf(codes.NotFound, "team not found: %s", in.TeamName)
 	}
 	log.Println("Successfully retrieved team", team.Name)
 	return &GetTeamReply{Team: team}, nil
@@ -392,7 +458,7 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Emp
 		return nil, convertError(err)
 	}
 	// Send confirmation email
-	if email := s.getUserEmail(ctx); email != "" {
+	if email := s.getRequesterEmail(ctx); email != "" {
 		if err := mail.SendTeamRemovedEmail(email, in.TeamName); err != nil {
 			return nil, convertError(err)
 		}
