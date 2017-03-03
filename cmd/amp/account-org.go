@@ -163,7 +163,7 @@ func createOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(colSuccess, "Hi %s! Please check your email to complete the signup process.", organization)
+	manager.printf(colSuccess, "The organization %s has been successfully created.", organization)
 	return nil
 }
 
