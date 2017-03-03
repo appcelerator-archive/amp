@@ -2,22 +2,16 @@ package auth
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"os"
-	"time"
 )
 
 // Keys used in context metadata
 const (
-	TokenKey          = "amp.token"
-	RequesterKey      = "amp.requester"
-	TokenTypeVerify   = "verify"
-	TokenTypeLogin    = "login"
-	TokenTypePassword = "password"
+	TokenKey     = "amp.token"
+	RequesterKey = "amp.requester"
 )
 
 var (
@@ -42,13 +36,6 @@ var (
 		"/version.Version/List",
 	}
 )
-
-// UserClaims represents user claims
-type AccountClaims struct {
-	AccountName string `json:"AccountName"`
-	Type        string `json:"Type"`
-	jwt.StandardClaims
-}
 
 // LoginCredentials represents login credentials
 type LoginCredentials struct {
@@ -116,45 +103,6 @@ func authorize(ctx context.Context) (context.Context, error) {
 	// Enrich the context with the requester
 	ctx = metadata.NewContext(ctx, metadata.Pairs(RequesterKey, claims.AccountName))
 	return ctx, nil
-}
-
-// CreateToken creates a token for a given user name
-func CreateToken(name string, tokenType string, validFor time.Duration) (string, error) {
-	// Forge the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
-		name, // The token contains the user name to verify
-		tokenType,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(validFor).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
-	ss, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", fmt.Errorf("unable to issue token")
-	}
-	return ss, nil
-}
-
-// ValidateToken validates a token and return its claims
-func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
-	}
-	claims, ok := token.Claims.(*AccountClaims)
-	if !ok {
-		return nil, fmt.Errorf("invalid claims")
-	}
-	if claims.Type != tokenType {
-		return nil, fmt.Errorf("invalid token type")
-	}
-	return claims, nil
 }
 
 // GetRequester gets the requester from context metadata

@@ -493,6 +493,32 @@
         ]
       }
     },
+    "/v1/users/switch": {
+      "post": {
+        "operationId": "Switch",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountSwitchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/users/{email}/forgotLogin": {
       "post": {
         "operationId": "ForgotLogin",
@@ -900,6 +926,15 @@
         }
       },
       "title": "Users"
+    },
+    "accountSwitchRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string",
+          "format": "string"
+        }
+      }
     },
     "accountVerificationReply": {
       "type": "object",

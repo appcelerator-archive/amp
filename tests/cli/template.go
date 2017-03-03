@@ -48,7 +48,7 @@ func templating(input string, cache map[string]string) (output string, err error
 
 	// Custom function to generate token for account verify command.
 	verify := func(in string) (string, error) {
-		token, err := auth.CreateToken(in, auth.TokenTypeVerify, time.Hour)
+		token, err := auth.CreateVerificationToken(in, time.Hour)
 		if err != nil {
 			return "", err
 		}

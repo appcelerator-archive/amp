@@ -76,7 +76,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 		return nil, convertError(err)
 	}
 	// Create a verification token valid for an hour
-	token, err := auth.CreateToken(user.Name, auth.TokenTypeVerify, time.Hour)
+	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
 	if err != nil {
 		s.accounts.DeleteUserByName(ctx, in.Name)
 		return nil, convertError(err)
@@ -110,7 +110,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 		return nil, convertError(err)
 	}
 	// Create an authentication token valid for a day
-	token, err := auth.CreateToken(in.Name, auth.TokenTypeLogin, 24*time.Hour)
+	token, err := auth.CreateLoginToken(in.Name, "", 24*time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -134,7 +134,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
-	token, err := auth.CreateToken(user.Name, auth.TokenTypePassword, time.Hour)
+	token, err := auth.CreatePasswordToken(user.Name, time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -232,6 +232,43 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*pb.Emp
 		return nil, convertError(err)
 	}
 	log.Println("Successfully deleted user", user.Name)
+	return &pb.Empty{}, nil
+}
+
+// Switch implements account.Switch
+func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*pb.Empty, error) {
+	// Get requester name
+	requesterName, err := auth.GetRequesterName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	activeOrganization := ""
+	// If the account name is not his own account, it has to be an organization
+	if requesterName != in.Account {
+		organization, err := s.accounts.GetOrganization(ctx, in.Account)
+		if err != nil {
+			return nil, convertError(err)
+		}
+		if organization == nil {
+			return nil, grpc.Errorf(codes.NotFound, "organization not found: %s", in.Account)
+		}
+		if !organization.HasMember(requesterName) {
+			return nil, grpc.Errorf(codes.FailedPrecondition, "user %s is not a member of organization  %s", requesterName, in.Account)
+		}
+		activeOrganization = organization.Name
+	}
+
+	// Create an authentication token valid for a day
+	token, err := auth.CreateLoginToken(requesterName, activeOrganization, 24*time.Hour)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	// Send the authN token to the client
+	md := metadata.Pairs(auth.TokenKey, token)
+	if err := grpc.SendHeader(ctx, md); err != nil {
+		return nil, convertError(err)
+	}
 	return &pb.Empty{}, nil
 }
 
@@ -372,6 +409,9 @@ func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply
 	team, err := s.accounts.GetTeam(ctx, in.OrganizationName, in.TeamName)
 	if err != nil {
 		return nil, convertError(err)
+	}
+	if team == nil {
+		return nil, grpc.Errorf(codes.NotFound, "team not found: %s", in.TeamName)
 	}
 	log.Println("Successfully retrieved team", team.Name)
 	return &GetTeamReply{Team: team}, nil

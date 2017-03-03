@@ -85,12 +85,21 @@ func (s *Store) getRequester(ctx context.Context) (requester *schema.User, err e
 // CreateUser creates a new user
 func (s *Store) CreateUser(ctx context.Context, name string, email string, password string) (user *schema.User, err error) {
 	// Check if user already exists
-	alreadyExists, err := s.rawUser(ctx, name)
+	userAlreadyExists, err := s.rawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	if alreadyExists != nil {
+	if userAlreadyExists != nil {
 		return nil, schema.UserAlreadyExists
+	}
+
+	// Check if organization already exists
+	orgAlreadyExists, err := s.GetOrganization(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if orgAlreadyExists != nil {
+		return nil, schema.OrganizationAlreadyExists
 	}
 
 	// Create the new user
@@ -118,7 +127,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 // VerifyUser verifies a user account
 func (s *Store) VerifyUser(ctx context.Context, token string) (*schema.User, error) {
 	// Validate the token
-	claims, err := auth.ValidateToken(token, auth.TokenTypeVerify)
+	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, schema.InvalidToken
 	}
@@ -288,12 +297,21 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		return err
 	}
 
-	// Check if organization already exists
-	alreadyExists, err := s.GetOrganization(ctx, name)
+	// Check if user already exists
+	userAlreadyExists, err := s.rawUser(ctx, name)
 	if err != nil {
 		return err
 	}
-	if alreadyExists != nil {
+	if userAlreadyExists != nil {
+		return schema.UserAlreadyExists
+	}
+
+	// Check if organization already exists
+	orgAlreadyExists, err := s.GetOrganization(ctx, name)
+	if err != nil {
+		return err
+	}
+	if orgAlreadyExists != nil {
 		return schema.OrganizationAlreadyExists
 	}
 
@@ -672,9 +690,6 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 		return nil, err
 	}
 	team := organization.GetTeam(teamName)
-	if team == nil {
-		return nil, schema.TeamNotFound
-	}
 	return team, nil
 }
 
