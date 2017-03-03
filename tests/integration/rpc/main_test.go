@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	as "github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -53,7 +54,7 @@ func TestMain(m *testing.M) {
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
-		grpc.WithPerRPCCredentials(&auth.LoginCredentials{Token: token}),
+		grpc.WithPerRPCCredentials(&cli.LoginCredentials{Token: token}),
 	)
 	if err != nil {
 		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)

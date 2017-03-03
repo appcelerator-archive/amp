@@ -6,7 +6,6 @@ import (
 	"github.com/appcelerator/amp/pkg/config"
 	"net/http"
 	"net/url"
-	"os"
 )
 
 //SendSms send a sms

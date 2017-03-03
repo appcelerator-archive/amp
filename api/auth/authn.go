@@ -12,7 +12,7 @@ import (
 const (
 	TokenKey              = "amp.token"
 	UserKey               = "amp.user"
-	ActiveOrganizationKey = "amp.activeOrganization"
+	ActiveOrganizationKey = "amp.organization"
 )
 
 var (
@@ -37,23 +37,6 @@ var (
 		"/version.Version/List",
 	}
 )
-
-// LoginCredentials represents login credentials
-type LoginCredentials struct {
-	Token string
-}
-
-// GetRequestMetadata implements credentials.PerRPCCredentials
-func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		TokenKey: c.Token,
-	}, nil
-}
-
-// RequireTransportSecurity implements credentials.PerRPCCredentials
-func (c *LoginCredentials) RequireTransportSecurity() bool {
-	return false
-}
 
 func isAnonymous(elem string) bool {
 	for _, e := range anonymousAllowed {

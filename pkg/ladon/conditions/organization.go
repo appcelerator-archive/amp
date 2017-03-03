@@ -1,21 +1,25 @@
 package conditions
 
 import (
-	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/ory-am/ladon"
 )
 
-// OwnerCondition is a condition which is fulfilled if the request's subject is an owner of the given resource
-type OrganizationOwnerCondition struct{}
+type Resource interface {
+	// GetOwners gets the resource owners
+	GetOwners() (owners []string)
+}
+
+// ResourceOwnerCondition is a condition which is fulfilled if the request's subject is an owner of the given resource
+type ResourceOwnerCondition struct{}
 
 // Fulfills returns true if the request's subject is equal to the given value string
-func (c *OrganizationOwnerCondition) Fulfills(value interface{}, r *ladon.Request) bool {
-	members, ok := value.([]*schema.OrganizationMember)
+func (c *ResourceOwnerCondition) Fulfills(value interface{}, r *ladon.Request) bool {
+	resource, ok := value.(Resource)
 	if !ok {
 		return false
 	}
-	for _, member := range members {
-		if member.Name == r.Subject {
+	for _, owner := range resource.GetOwners() {
+		if owner == r.Subject {
 			return true
 		}
 	}
@@ -23,6 +27,6 @@ func (c *OrganizationOwnerCondition) Fulfills(value interface{}, r *ladon.Reques
 }
 
 // GetName returns the condition's name.
-func (c *OrganizationOwnerCondition) GetName() string {
-	return "OrganizationOwnerCondition"
+func (c *ResourceOwnerCondition) GetName() string {
+	return "ResourceOwnerCondition"
 }

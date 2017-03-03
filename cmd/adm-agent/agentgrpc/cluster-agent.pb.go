@@ -18,14 +18,14 @@ It has these top-level messages:
 */
 package agentgrpc
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import "github.com/golang/protobuf/proto"
+import "fmt"
+import "math"
 import _ "github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api"
 
 import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

@@ -338,7 +338,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -383,7 +383,7 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return nil, schema.NotAuthorized
@@ -471,7 +471,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 		Action:   auth.DeleteAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -507,7 +507,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -556,7 +556,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -614,7 +614,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
@@ -696,7 +696,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 		Action:   auth.DeleteAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"owners": organization.GetOwners(),
+			"resource": organization,
 		},
 	}); err != nil {
 		return schema.NotAuthorized
