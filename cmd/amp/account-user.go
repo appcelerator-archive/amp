@@ -30,7 +30,7 @@ var (
 		Long:    `The delete command deletes a user.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return deleteUser(AMP)
+			return deleteUser(AMP, cmd)
 		},
 	}
 
@@ -50,6 +50,7 @@ func init() {
 	UserCmd.AddCommand(getUserCmd)
 
 	getUserCmd.Flags().StringVar(&name, "name", name, "Account Name")
+	deleteUserCmd.Flags().StringVar(&name, "name", name, "Account Name")
 }
 
 // listUser validates the input command line arguments and lists all users
@@ -74,8 +75,17 @@ func listUser(amp *cli.AMP) (err error) {
 
 // deleteUser validates the input command line arguments and deletes a user
 // by invoking the corresponding rpc/storage method
-func deleteUser(amp *cli.AMP) (err error) {
-	request := &account.DeleteUserRequest{}
+func deleteUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("name").Changed {
+		name = cmd.Flag("name").Value.String()
+	} else {
+		fmt.Print("username: ")
+		name = GetName()
+	}
+
+	request := &account.DeleteUserRequest{
+		Name: name,
+	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.DeleteUser(context.Background(), request)
 	if err != nil {
@@ -100,9 +110,9 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Name: name,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, er := accClient.GetUser(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
+	reply, err := accClient.GetUser(context.Background(), request)
+	if err != nil {
+		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
