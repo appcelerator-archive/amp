@@ -5,13 +5,10 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/appcelerator/amp/data/account/schema"
-	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"strings"
 )
 
 // Cobra definitions for account management related commands
@@ -106,21 +103,21 @@ func init() {
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
 func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	manager.printf(colRegular, "This will sign you up for a new personal AMP account.")
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
-		username = getUserName()
+		fmt.Print("username: ")
+		username = GetName()
 	}
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = getEmailAddress()
+		email = GetEmailAddress()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = getPassword()
+		password = GetPassword()
 	}
 
 	request := &account.SignUpRequest{
@@ -141,11 +138,10 @@ func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
 func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	manager.printf(colRegular, "This will verify an existing AMP account.")
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = getToken()
+		token = GetToken()
 	}
 
 	request := &account.VerificationRequest{
@@ -164,16 +160,16 @@ func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
 func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	manager.printf(colRegular, "This will login to an existing AMP account.")
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
-		username = getUserName()
+		fmt.Print("username: ")
+		username = GetName()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = getPassword()
+		password = GetPassword()
 	}
 
 	request := &account.LogInRequest{
@@ -197,11 +193,10 @@ func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
 func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	manager.printf(colRegular, "This will send your username to your registered email address.")
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = getEmailAddress()
+		email = GetEmailAddress()
 	}
 
 	request := &account.ForgotLoginRequest{
@@ -236,11 +231,11 @@ func pwd(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
 func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	manager.printf(colRegular, "This will send a password reset email to your email address.")
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
-		username = getUserName()
+		fmt.Print("username: ")
+		username = GetName()
 	}
 
 	request := &account.PasswordResetRequest{
@@ -259,19 +254,17 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	// Get inputs
-	manager.printf(colRegular, "This will allow you to update your existing password.")
 	fmt.Println("Enter your current password.")
 	if cmd.Flag("current").Changed {
 		existingPwd = cmd.Flag("current").Value.String()
 	} else {
-		existingPwd = getPassword()
+		existingPwd = GetPassword()
 	}
 	fmt.Println("Enter new password.")
 	if cmd.Flag("current").Changed {
 		password = cmd.Flag("current").Value.String()
 	} else {
-		password = getPassword()
+		password = GetPassword()
 	}
 
 	request := &account.PasswordChangeRequest{
@@ -291,18 +284,16 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // pwdSet validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
 func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	// Get inputs
-	manager.printf(colRegular, "This will allow you to set a new password.")
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = getToken()
+		token = GetToken()
 	}
 	fmt.Println("Enter new password.")
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = getPassword()
+		password = GetPassword()
 	}
 
 	request := &account.PasswordSetRequest{
@@ -315,54 +306,6 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		manager.fatalf(grpc.ErrorDesc(err))
 		return
 	}
-	manager.printf(colSuccess, "Your set password has been successful.")
+	manager.printf(colSuccess, "Your password set has been successful.")
 	return nil
-}
-
-func getUserName() (username string) {
-	fmt.Print("username: ")
-	fmt.Scanln(&username)
-	username = strings.TrimSpace(username)
-	err := schema.CheckName(username)
-	if err != nil {
-		manager.printf(colWarn, err.Error())
-		return getUserName()
-	}
-	return
-}
-
-func getEmailAddress() (email string) {
-	fmt.Print("email: ")
-	fmt.Scanln(&email)
-	email = strings.TrimSpace(email)
-	_, err := schema.CheckEmailAddress(email)
-	if err != nil {
-		manager.printf(colWarn, err.Error())
-		return getEmailAddress()
-	}
-	return
-}
-
-func getToken() (token string) {
-	fmt.Print("token: ")
-	fmt.Scanln(&token)
-	token = strings.TrimSpace(token)
-	return
-}
-
-func getPassword() (password string) {
-	fmt.Print("password: ")
-	pw, err := gopass.GetPasswd()
-	if err != nil {
-		manager.fatalf(err.Error())
-		return getPassword()
-	}
-	password = string(pw)
-	password = strings.TrimSpace(password)
-	err = schema.CheckPassword(password)
-	if err != nil {
-		manager.printf(colWarn, grpc.ErrorDesc(err))
-		return getPassword()
-	}
-	return
 }
