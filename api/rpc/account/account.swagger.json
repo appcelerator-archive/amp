@@ -717,7 +717,13 @@
       }
     },
     "accountDeleteUserRequest": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        }
+      }
     },
     "accountForgotLoginRequest": {
       "type": "object",

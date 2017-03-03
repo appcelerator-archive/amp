@@ -27,6 +27,7 @@ message FunctionEntry {
   string id = 1;
   string name = 2;
   string image = 3;
+  string owner = 4;
 }
 
 message FunctionCall {

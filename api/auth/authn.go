@@ -10,8 +10,9 @@ import (
 
 // Keys used in context metadata
 const (
-	TokenKey     = "amp.token"
-	RequesterKey = "amp.requester"
+	TokenKey              = "amp.token"
+	UserKey               = "amp.user"
+	ActiveOrganizationKey = "amp.activeOrganization"
 )
 
 var (
@@ -100,21 +101,55 @@ func authorize(ctx context.Context) (context.Context, error) {
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
 	}
-	// Enrich the context with the requester
-	ctx = metadata.NewContext(ctx, metadata.Pairs(RequesterKey, claims.AccountName))
+	// Enrich the context
+	ctx = metadata.NewContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))
 	return ctx, nil
 }
 
-// GetRequester gets the requester from context metadata
-func GetRequesterName(ctx context.Context) (string, error) {
+// GetRequester gets the requester, i.e. the user or organization performing the request
+func GetRequester(ctx context.Context) (string, error) {
+	user, err := GetUser(ctx)
+	if err != nil {
+		return "", err
+	}
+	activeOrganization, err := GetActiveOrganization(ctx)
+	if err != nil {
+		return "", err
+	}
+	if activeOrganization != "" {
+		return activeOrganization, nil
+	}
+	return user, nil
+}
+
+// GetUser gets the user from context metadata
+func GetUser(ctx context.Context) (string, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("unable to get metadata from context")
 	}
-	users := md[RequesterKey]
+
+	users := md[UserKey]
 	if len(users) == 0 {
-		return "", fmt.Errorf("context metadata has no requester field")
+		return "", fmt.Errorf("context metadata has no user field")
 	}
+
 	user := users[0]
 	return user, nil
+}
+
+// GetActiveOrganization gets the active organization from context metadata
+func GetActiveOrganization(ctx context.Context) (string, error) {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("unable to get metadata from context")
+	}
+
+	activeOrganizations := md[ActiveOrganizationKey]
+	if len(activeOrganizations) == 0 {
+		return "", nil
+	}
+
+	activeOrganization := activeOrganizations[0]
+	return activeOrganization, nil
 }

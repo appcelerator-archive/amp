@@ -119,9 +119,9 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 	// Table view
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\tImage")
+	fmt.Fprintln(w, "ID\tName\tImage\tOwner")
 	for _, fn := range reply.Functions {
-		fmt.Fprintf(w, "%s\t%s\t%s\t\n", fn.Id, fn.Name, fn.Image)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", fn.Id, fn.Name, fn.Image, fn.Owner)
 	}
 	w.Flush()
 

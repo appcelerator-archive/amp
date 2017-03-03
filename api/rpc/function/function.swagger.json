@@ -124,6 +124,10 @@
         "image": {
           "type": "string",
           "format": "string"
+        },
+        "owner": {
+          "type": "string",
+          "format": "string"
         }
       }
     },

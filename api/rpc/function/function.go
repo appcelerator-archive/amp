@@ -1,6 +1,7 @@
 package function
 
 import (
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -23,6 +24,13 @@ type Server struct {
 // Create implements function.Server
 func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 	log.Println("rpc-function: Create", in.String())
+
+	// Get requester
+	requester, err := auth.GetRequester(ctx)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, err.Error())
+	}
+
 	// Validate the function
 	fn := in.Function
 	fn.Name = strings.TrimSpace(fn.Name)
@@ -47,6 +55,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 
 	// Store the function
 	fn.Id = stringid.GenerateNonCryptoID()
+	fn.Owner = requester
 	if err := s.Store.Create(ctx, path.Join(amp.EtcdFunctionRootKey, fn.Id), fn, nil, 0); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "error creating function: %v", err)
 	}

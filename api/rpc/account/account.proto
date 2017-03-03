@@ -199,6 +199,7 @@ message ListUsersReply {
 }
 
 message DeleteUserRequest {
+  string name = 1;
 }
 
 // Organizations

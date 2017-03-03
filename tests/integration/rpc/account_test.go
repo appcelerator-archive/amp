@@ -540,8 +540,23 @@ func TestUserDelete(t *testing.T) {
 	ownerCtx := createUser(t, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{})
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testUser.Name})
 	assert.NoError(t, err)
+}
+
+func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// Create another  user
+	createUser(t, &testMember)
+
+	// Delete
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testMember.Name})
+	assert.Error(t, err)
 }
 
 // Organizations
