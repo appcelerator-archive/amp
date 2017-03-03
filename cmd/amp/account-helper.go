@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/howeyc/gopass"
 	"google.golang.org/grpc"
 	"strconv"
@@ -10,54 +10,54 @@ import (
 	"time"
 )
 
-func GetName() (in string) {
+func getName() (in string) {
 	fmt.Scanln(&in)
 	username = strings.TrimSpace(in)
-	err := schema.CheckName(in)
+	err := accounts.CheckName(in)
 	if err != nil {
 		manager.printf(colWarn, err.Error())
-		return GetName()
+		return getName()
 	}
 	return
 }
 
-func GetEmailAddress() (email string) {
+func getEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
 	email = strings.TrimSpace(email)
-	_, err := schema.CheckEmailAddress(email)
+	_, err := accounts.CheckEmailAddress(email)
 	if err != nil {
 		manager.printf(colWarn, err.Error())
-		return GetEmailAddress()
+		return getEmailAddress()
 	}
 	return
 }
 
-func GetToken() (token string) {
+func getToken() (token string) {
 	fmt.Print("token: ")
 	fmt.Scanln(&token)
 	token = strings.TrimSpace(token)
 	return
 }
 
-func GetPassword() (password string) {
+func getPassword() (password string) {
 	fmt.Print("password: ")
 	pw, err := gopass.GetPasswd()
 	if err != nil {
 		manager.fatalf(err.Error())
-		return GetPassword()
+		return getPassword()
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
-	err = schema.CheckPassword(password)
+	err = accounts.CheckPassword(password)
 	if err != nil {
 		manager.printf(colWarn, grpc.ErrorDesc(err))
-		return GetPassword()
+		return getPassword()
 	}
 	return
 }
 
-func ConvertTime(in int64) time.Time {
+func convertTime(in int64) time.Time {
 	intVal, err := strconv.ParseInt(strconv.FormatInt(in, 10), 10, 64)
 	if err != nil {
 		manager.printf(colWarn, err.Error())

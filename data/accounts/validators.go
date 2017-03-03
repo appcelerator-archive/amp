@@ -1,4 +1,4 @@
-package schema
+package accounts
 
 import (
 	"github.com/holys/safe"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,32}$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,128}$`)
 
 func isEmpty(s string) bool {
 	return s == "" || strings.TrimSpace(s) == ""
