@@ -129,7 +129,6 @@ func listOrg(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	for _, org := range reply.Organizations {
 		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, ConvertTime(org.CreateDt))
@@ -210,19 +209,8 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, ConvertTime(reply.Organization.CreateDt))
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
-	for _, mem := range reply.Organization.Members {
-		fmt.Fprintf(w, "%s\t%s\t\n", mem.Name, mem.Role)
-	}
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "TEAM NAME\tCREATED\t")
-	for _, team := range reply.Organization.Teams {
-		fmt.Fprintf(w, "%s\t%s\n", team.Name, ConvertTime(team.CreateDt))
-	}
 	w.Flush()
 	return nil
 }
@@ -314,7 +302,6 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	for _, user := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)

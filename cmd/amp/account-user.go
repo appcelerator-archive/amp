@@ -64,7 +64,6 @@ func listUser(amp *cli.AMP) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "USERNAME\tEMAIL\t")
 	for _, user := range reply.Users {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Email)
@@ -116,7 +115,6 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "USERNAME\tEMAIL\tVERIFIED\tCREATED\t")
 	fmt.Fprintf(w, "%s\t%s\t%t\t%s\n", reply.User.Name, reply.User.Email, reply.User.IsVerified, ConvertTime(reply.User.CreateDt))
 	w.Flush()
