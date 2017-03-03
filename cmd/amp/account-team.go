@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -102,6 +103,7 @@ func init() {
 	memTeamCmd.AddCommand(listTeamMemCmd)
 
 	listTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	listTeamCmd.Flags().BoolP("quiet", "q", false, "Only display Team Name")
 
 	createTeamCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 	createTeamCmd.Flags().StringVar(&team, "team", team, "Team Name")
@@ -122,6 +124,7 @@ func init() {
 
 	listTeamMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 	listTeamMemCmd.Flags().StringVar(&team, "team", team, "Team Name")
+	listTeamMemCmd.Flags().BoolP("quiet", "q", false, "Only display Team Name")
 }
 
 // listTeam validates the input command line arguments and lists available teams
@@ -143,8 +146,16 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
+
+	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
+		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+	} else if quiet {
+		for _, team := range reply.Teams {
+			fmt.Println(team.Name)
+		}
+		return nil
+	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	for _, team := range reply.Teams {
 		fmt.Fprintf(w, "%s\t%s\n", team.Name, ConvertTime(team.CreateDt))
@@ -240,14 +251,8 @@ func getTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, ConvertTime(reply.Team.CreateDt))
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "MEMBER NAME\tROLE\t")
-	for _, mem := range reply.Team.Members {
-		fmt.Fprintf(w, "%s\t%s\n", mem.Name, mem.Role)
-	}
 	w.Flush()
 	return nil
 }
@@ -359,8 +364,16 @@ func listTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
+
+	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
+		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+	} else if quiet {
+		for _, member := range reply.Team.Members {
+			fmt.Println(member.Name)
+		}
+		return nil
+	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
-	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	for _, user := range reply.Team.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
