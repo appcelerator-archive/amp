@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -19,7 +20,7 @@ var (
 		Short: "List organization",
 		Long:  `The list command lists all available organizations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listOrg(AMP)
+			return listOrg(AMP, cmd)
 		},
 	}
 
@@ -102,6 +103,8 @@ func init() {
 	memOrgCmd.AddCommand(remOrgMemCmd)
 	memOrgCmd.AddCommand(listOrgMemCmd)
 
+	listOrgCmd.Flags().BoolP("quiet", "q", false, "Only display Organization Name")
+
 	createOrgCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 	createOrgCmd.Flags().StringVar(&email, "email", email, "Email ID")
 
@@ -116,11 +119,12 @@ func init() {
 	remOrgMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
 
 	listOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	listOrgMemCmd.Flags().BoolP("quiet", "q", false, "Only display Member Name")
 }
 
 // listOrg validates the input command line arguments and lists available organizations
 // by invoking the corresponding rpc/storage method
-func listOrg(amp *cli.AMP) (err error) {
+func listOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	request := &account.ListOrganizationsRequest{}
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListOrganizations(context.Background(), request)
@@ -128,6 +132,16 @@ func listOrg(amp *cli.AMP) (err error) {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
+
+	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
+		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+	} else if quiet {
+		for _, org := range reply.Organizations {
+			fmt.Println(org.Name)
+		}
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	for _, org := range reply.Organizations {
@@ -282,7 +296,7 @@ func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	return nil
 }
 
-// listOrgMem validates the input command line arguments and removes members from an organization
+// listOrgMem validates the input command line arguments and lists all members of an organization
 // by invoking the corresponding rpc/storage method
 func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("org").Changed {
@@ -301,6 +315,16 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
+
+	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
+		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+	} else if quiet {
+		for _, member := range reply.Organization.Members {
+			fmt.Println(member.Name)
+		}
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	for _, user := range reply.Organization.Members {

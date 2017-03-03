@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"text/tabwriter"
 
 	"golang.org/x/net/context"
@@ -20,7 +21,7 @@ var (
 		Short: "List user",
 		Long:  `The list command lists all available users.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listUser(AMP)
+			return listUser(AMP, cmd)
 		},
 	}
 
@@ -49,19 +50,30 @@ func init() {
 	UserCmd.AddCommand(deleteUserCmd)
 	UserCmd.AddCommand(getUserCmd)
 
+	listUserCmd.Flags().BoolP("quiet", "q", false, "Only display User Name")
+
 	getUserCmd.Flags().StringVar(&name, "name", name, "Account Name")
+
 	deleteUserCmd.Flags().StringVar(&name, "name", name, "Account Name")
 }
 
 // listUser validates the input command line arguments and lists all users
 // by invoking the corresponding rpc/storage method
-func listUser(amp *cli.AMP) (err error) {
+func listUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	request := &account.ListUsersRequest{}
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, er := accClient.ListUsers(context.Background(), request)
 	if er != nil {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
+	}
+	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
+		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
+	} else if quiet {
+		for _, user := range reply.Users {
+			fmt.Println(user.Name)
+		}
+		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tEMAIL\t")
