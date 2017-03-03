@@ -134,7 +134,7 @@ func listOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, org := range reply.Organizations {
 			fmt.Println(org.Name)
@@ -317,7 +317,7 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err)
+		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, member := range reply.Organization.Members {
 			fmt.Println(member.Name)
