@@ -211,6 +211,31 @@ func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
 	return users, nil
 }
 
+func (s *Store) deleteUser(ctx context.Context, name string) error {
+	// Get organizations owned by he user
+	ownedOrganizations, err := s.getOwnedOrganization(ctx, name)
+	if err != nil {
+		return err
+	}
+	// Check if user can be removed from all organizations
+	for _, o := range ownedOrganizations {
+		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
+			return err
+		}
+	}
+	// If yes, remove the user from all organizations
+	for _, o := range ownedOrganizations {
+		if err := s.RemoveUserFromOrganization(ctx, o.Name, name); err != nil {
+			return err
+		}
+	}
+	// Delete the user
+	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 // DeleteUser deletes the requester's user account
 func (s *Store) DeleteUser(ctx context.Context) (*schema.User, error) {
 	// Get requester
@@ -218,29 +243,15 @@ func (s *Store) DeleteUser(ctx context.Context) (*schema.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Get organizations owned by he user
-	ownedOrganizations, err := s.getOwnedOrganization(ctx, requester.Name)
-	if err != nil {
-		return nil, err
-	}
-	// Check if user can be removed from all organizations
-	for _, o := range ownedOrganizations {
-		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, requester.Name); err != nil {
-			return nil, err
-		}
-	}
-	// If yes, remove the user from all organizations
-	for _, o := range ownedOrganizations {
-		if err := s.RemoveUserFromOrganization(ctx, o.Name, requester.Name); err != nil {
-			return nil, err
-		}
-	}
-	// Delete the user
-	if err := s.Store.Delete(ctx, path.Join(usersRootKey, requester.Name), false, nil); err != nil {
+	if err := s.deleteUser(ctx, requester.Name); err != nil {
 		return nil, err
 	}
 	return secureUser(requester), nil
+}
+
+// DeleteUserByName deletes a user by name
+func (s *Store) DeleteUserByName(ctx context.Context, name string) error {
+	return s.deleteUser(ctx, name)
 }
 
 // Organizations
