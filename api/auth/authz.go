@@ -11,7 +11,7 @@ const (
 	// Resources
 	AmpResource          = "amprn"
 	OrganizationResource = AmpResource + ":organization"
-	TeamResource         = AmpResource + ":team"
+	FunctionResource     = AmpResource + ":function"
 
 	// Actions
 	CreateAction = "create"
@@ -23,21 +23,35 @@ const (
 
 var (
 	// Organization owners are able to administrate their own organizations
-	organizationOwner = &ladon.DefaultPolicy{
+	organizationOwners = &ladon.DefaultPolicy{
 		ID:          stringid.GenerateNonCryptoID(),
-		Subjects:    []string{"<.*>"}, // This will match any subject (user name), we should consider using []string{"<.+>"} to have at least one character
+		Subjects:    []string{"<.*>"},
 		Description: "Organization owners are able to administrate their own organizations",
 		Resources:   []string{OrganizationResource},
 		Actions:     []string{"<" + AdminAction + ">"},
 		Effect:      ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"owners": &conditions.OrganizationOwnerCondition{},
+			"resource": &conditions.ResourceOwnerCondition{},
+		},
+	}
+
+	// Functions owners are able to administrate their own functions
+	functionOwners = &ladon.DefaultPolicy{
+		ID:          stringid.GenerateNonCryptoID(),
+		Subjects:    []string{"<.*>"},
+		Description: "Functions owners are able to administrate their own functions",
+		Resources:   []string{FunctionResource},
+		Actions:     []string{"<" + AdminAction + ">"},
+		Effect:      ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"resource": &conditions.ResourceOwnerCondition{},
 		},
 	}
 
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
-		organizationOwner,
+		organizationOwners,
+		functionOwners,
 	}
 
 	Warden = &ladon.Ladon{

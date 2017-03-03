@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"github.com/appcelerator/amp/api/auth"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 	"os"
@@ -53,11 +54,28 @@ func ReadToken() (string, error) {
 	return string(data), nil
 }
 
+// LoginCredentials represents login credentials
+type LoginCredentials struct {
+	Token string
+}
+
+// GetRequestMetadata implements credentials.PerRPCCredentials
+func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		auth.TokenKey: c.Token,
+	}, nil
+}
+
+// RequireTransportSecurity implements credentials.PerRPCCredentials
+func (c *LoginCredentials) RequireTransportSecurity() bool {
+	return false
+}
+
 // GetLoginCredentials returns the login credentials
-func GetLoginCredentials() *auth.LoginCredentials {
+func GetLoginCredentials() *LoginCredentials {
 	token, err := ReadToken()
 	if err != nil {
-		return &auth.LoginCredentials{Token: ""}
+		return &LoginCredentials{Token: ""}
 	}
-	return &auth.LoginCredentials{Token: token}
+	return &LoginCredentials{Token: token}
 }
