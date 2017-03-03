@@ -7,7 +7,8 @@ import (
 	"github.com/fatih/color"
 )
 
-type cmdManager struct {
+// CmdManager manages command output
+type CmdManager struct {
 	verbose     bool
 	quiet       bool
 	printColor  [5]*color.Color
@@ -29,8 +30,8 @@ var (
 	colUser    = 5 //before remove this variable, remove all usage of this variable
 )
 
-func NewCmdManager(verbose string) *cmdManager {
-	s := &cmdManager{}
+func newCmdManager(verbose string) *CmdManager {
+	s := &CmdManager{}
 	s.setColors()
 	if verbose == "true" {
 		s.verbose = true
@@ -38,7 +39,7 @@ func NewCmdManager(verbose string) *cmdManager {
 	return s
 }
 
-func (s *cmdManager) printf(col int, format string, args ...interface{}) {
+func (s *CmdManager) printf(col int, format string, args ...interface{}) {
 	if s.quiet {
 		return
 	}
@@ -53,12 +54,12 @@ func (s *cmdManager) printf(col int, format string, args ...interface{}) {
 	fmt.Println("")
 }
 
-func (s *cmdManager) fatalf(format string, args ...interface{}) {
+func (s *CmdManager) fatalf(format string, args ...interface{}) {
 	s.printf(colError, format, args...)
 	os.Exit(1)
 }
 
-func (s *cmdManager) setColors() {
+func (s *CmdManager) setColors() {
 	// theme := AMP.Configuration.CmdTheme
 	// if theme == "dark" {
 	// 	s.printColor[0] = color.New(color.FgHiWhite)

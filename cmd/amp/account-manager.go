@@ -25,7 +25,7 @@ var (
 	verifyCmd = &cobra.Command{
 		Use:   "verify",
 		Short: "Verify account",
-		Long:  `The verify command verifies an account by sending a verification code to their registered email address.`,
+		Long:  `The verify command verifies an account by checking the given verification code.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP, cmd)
 		},
@@ -52,9 +52,18 @@ var (
 	pwdCmd = &cobra.Command{
 		Use:   "password",
 		Short: "Account password operations",
-		Long:  "The password command allows users allows users to reset or update password.",
+		Long:  "The password command allows users to reset or update password.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwd(AMP, cmd)
+		},
+	}
+
+	switchCmd = &cobra.Command{
+		Use:   "switch",
+		Short: "Switch account",
+		Long:  "The switch command allows users to switch between their personal and organization accounts.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return switchAccount(AMP, cmd)
 		},
 	}
 
@@ -62,14 +71,14 @@ var (
 	reset  bool
 	set    bool
 
-	username    string
-	email       string
-	password    string
-	token       string
-	existingPwd string
+	username string
+	email    string
+	password string
+	token    string
+	newPwd   string
 
 	//TODO: pass verbose as arg
-	manager = NewCmdManager("")
+	manager = newCmdManager("")
 )
 
 //Adding account management commands to the account command
@@ -79,6 +88,7 @@ func init() {
 	AccountCmd.AddCommand(loginCmd)
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
+	AccountCmd.AddCommand(switchCmd)
 
 	signUpCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	signUpCmd.Flags().StringVar(&email, "email", email, "Email ID")
@@ -96,8 +106,11 @@ func init() {
 	pwdCmd.Flags().BoolVar(&set, "set", false, "Set Password")
 	pwdCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	pwdCmd.Flags().StringVar(&token, "token", token, "Verification Token")
-	pwdCmd.Flags().StringVar(&password, "password", password, "Password")
-	pwdCmd.Flags().StringVar(&existingPwd, "current", existingPwd, "Current Password")
+	pwdCmd.Flags().StringVar(&password, "password", password, "Current Password")
+	pwdCmd.Flags().StringVar(&newPwd, "new-password", newPwd, "New Password")
+
+	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
+
 }
 
 // signUp validates the input command line arguments and creates a new account
@@ -107,17 +120,17 @@ func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = GetEmailAddress()
+		email = getEmailAddress()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.SignUpRequest{
@@ -141,7 +154,7 @@ func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = GetToken()
+		token = getToken()
 	}
 
 	request := &account.VerificationRequest{
@@ -164,12 +177,12 @@ func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.LogInRequest{
@@ -196,7 +209,7 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = GetEmailAddress()
+		email = getEmailAddress()
 	}
 
 	request := &account.ForgotLoginRequest{
@@ -209,6 +222,33 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Your login name has been sent to the address: %s", email)
+	return nil
+}
+
+// switchAccount validates the input command line arguments and switches from personal account to an organization account
+// by invoking the corresponding rpc/storage method
+func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("name").Changed {
+		username = cmd.Flag("name").Value.String()
+	} else {
+		fmt.Print("account: ")
+		username = getName()
+	}
+
+	request := &account.SwitchRequest{
+		Account: username,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	header := metadata.MD{}
+	_, err = accClient.Switch(context.Background(), request, grpc.Header(&header))
+	if err != nil {
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
+	}
+	if err := cli.SaveToken(header); err != nil {
+		return err
+	}
+	manager.printf(colSuccess, "Your are now logged in as: %s", username)
 	return nil
 }
 
@@ -235,7 +275,7 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 
 	request := &account.PasswordResetRequest{
@@ -255,21 +295,21 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // by invoking the corresponding rpc/storage method
 func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	fmt.Println("Enter your current password.")
-	if cmd.Flag("current").Changed {
-		existingPwd = cmd.Flag("current").Value.String()
+	if cmd.Flag("password").Changed {
+		password = cmd.Flag("password").Value.String()
 	} else {
-		existingPwd = GetPassword()
+		password = getPassword()
 	}
 	fmt.Println("Enter new password.")
-	if cmd.Flag("current").Changed {
-		password = cmd.Flag("current").Value.String()
+	if cmd.Flag("new-password").Changed {
+		newPwd = cmd.Flag("new-password").Value.String()
 	} else {
-		password = GetPassword()
+		newPwd = getPassword()
 	}
 
 	request := &account.PasswordChangeRequest{
-		ExistingPassword: existingPwd,
-		NewPassword:      password,
+		ExistingPassword: password,
+		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err = accClient.PasswordChange(context.Background(), request)
@@ -287,13 +327,13 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = GetToken()
+		token = getToken()
 	}
 	fmt.Println("Enter new password.")
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.PasswordSetRequest{

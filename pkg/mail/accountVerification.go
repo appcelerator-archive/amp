@@ -26,7 +26,7 @@ var accountVerificationBody = `
             </a>
             <div style="height:20px"></div>
             <h4>You can also validate your AMP account using the following command line:</h4>
-            <h4>amp account verify {token}</h4>
+            <h4>amp account verify --token {token}</h4>
         </div>
     </body>
 </html>
