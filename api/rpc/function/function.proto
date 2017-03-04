@@ -3,6 +3,8 @@ syntax = "proto3";
 package function;
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "github.com/appcelerator/amp/data/functions/functions.proto";
 
 service Function {
   rpc Create (CreateRequest) returns (CreateReply) {
@@ -16,50 +18,29 @@ service Function {
       get: "/v1/function"
     };
   };
-  rpc Delete (DeleteRequest) returns (DeleteReply) {
+  rpc Delete (DeleteRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/function/{id}"
     };
   };
 }
 
-message FunctionEntry {
-  string id = 1;
-  string name = 2;
-  string image = 3;
-  string owner = 4;
-}
-
-message FunctionCall {
-  string callID = 1;
-  bytes input = 2;
-  FunctionEntry function = 3;
-  string returnTo = 4;
-}
-
-message FunctionReturn {
-  string callID = 1;
-  bytes output = 2;
-}
-
 message CreateRequest {
-  FunctionEntry function = 1;
+  string name = 1;
+  string image = 2;
 }
 
 message CreateReply {
-  FunctionEntry function = 1;
+  functions.Function function = 1;
 }
 
 message ListRequest {
 }
 
 message ListReply {
-  repeated FunctionEntry functions = 1;
+  repeated functions.Function functions = 1;
 }
 
 message DeleteRequest {
   string id = 1;
-}
-
-message DeleteReply {
 }

@@ -1,7 +1,6 @@
-package auth
+package authn
 
 import (
-	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -89,50 +88,30 @@ func authorize(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-// GetRequester gets the requester, i.e. the user or organization performing the request
-func GetRequester(ctx context.Context) (string, error) {
-	user, err := GetUser(ctx)
-	if err != nil {
-		return "", err
-	}
-	activeOrganization, err := GetActiveOrganization(ctx)
-	if err != nil {
-		return "", err
-	}
-	if activeOrganization != "" {
-		return activeOrganization, nil
-	}
-	return user, nil
-}
-
 // GetUser gets the user from context metadata
-func GetUser(ctx context.Context) (string, error) {
+func GetUser(ctx context.Context) string {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("unable to get metadata from context")
+		return ""
 	}
-
 	users := md[UserKey]
 	if len(users) == 0 {
-		return "", fmt.Errorf("context metadata has no user field")
+		return ""
 	}
-
 	user := users[0]
-	return user, nil
+	return user
 }
 
 // GetActiveOrganization gets the active organization from context metadata
-func GetActiveOrganization(ctx context.Context) (string, error) {
+func GetActiveOrganization(ctx context.Context) string {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("unable to get metadata from context")
+		return ""
 	}
-
 	activeOrganizations := md[ActiveOrganizationKey]
 	if len(activeOrganizations) == 0 {
-		return "", nil
+		return ""
 	}
-
 	activeOrganization := activeOrganizations[0]
-	return activeOrganization, nil
+	return activeOrganization
 }

@@ -36,9 +36,6 @@ const (
 	// NatsLogsTopic is the topic used for log events
 	NatsLogsTopic = "amp-logs"
 
-	// EtcdFunctionRootKey is the root key used for functions in the storage
-	EtcdFunctionRootKey = "functions"
-
 	// InfrastructureRole is the label used for infrastructure services
 	InfrastructureRole = "infrastructure"
 

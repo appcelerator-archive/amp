@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package schema;
+package accounts;
 
 message User {
   string name = 1; // This is the primary key
@@ -11,8 +11,8 @@ message User {
 }
 
 enum TeamRole {
-  TEAM_OWNER = 0;
-  TEAM_MEMBER = 1;
+  TEAM_MEMBER = 0;
+  TEAM_OWNER = 1;
 }
 
 message TeamMember {
@@ -27,8 +27,8 @@ message Team {
 }
 
 enum OrganizationRole {
-  ORGANIZATION_OWNER = 0;
-  ORGANIZATION_MEMBER = 1;
+  ORGANIZATION_MEMBER = 0;
+  ORGANIZATION_OWNER = 1;
 }
 
 message OrganizationMember {
@@ -42,4 +42,14 @@ message Organization {
   int64 create_dt = 3;
   repeated OrganizationMember members = 4;
   repeated Team teams = 5;
+}
+
+enum AccountType {
+  USER = 0;
+  ORGANIZATION = 1;
+}
+
+message Account {
+  AccountType type = 1;
+  string name = 2;
 }

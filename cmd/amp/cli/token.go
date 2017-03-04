@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/authn"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
@@ -19,7 +19,7 @@ var (
 // SaveToken saves the authentication token to file
 func SaveToken(metadata metadata.MD) error {
 	// Extract token from header
-	tokens := metadata[auth.TokenKey]
+	tokens := metadata[authn.TokenKey]
 	if len(tokens) == 0 {
 		return fmt.Errorf("invalid token")
 	}
@@ -62,7 +62,7 @@ type LoginCredentials struct {
 // GetRequestMetadata implements credentials.PerRPCCredentials
 func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
-		auth.TokenKey: c.Token,
+		authn.TokenKey: c.Token,
 	}, nil
 }
 

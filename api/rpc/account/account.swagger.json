@@ -192,6 +192,44 @@
         "tags": [
           "Account"
         ]
+      },
+      "put": {
+        "operationId": "ChangeOrganizationMemberRole",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "user_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountChangeOrganizationMemberRoleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/v1/organizations/{organization_name}/teams": {
@@ -667,6 +705,22 @@
         }
       }
     },
+    "accountChangeOrganizationMemberRoleRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/accountsOrganizationRole"
+        }
+      }
+    },
     "accountCreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -692,7 +746,8 @@
           "type": "string",
           "format": "string"
         }
-      }
+      },
+      "title": "Teams"
     },
     "accountDeleteOrganizationRequest": {
       "type": "object",
@@ -738,7 +793,7 @@
       "type": "object",
       "properties": {
         "organization": {
-          "$ref": "#/definitions/schemaOrganization"
+          "$ref": "#/definitions/accountsOrganization"
         }
       }
     },
@@ -755,7 +810,7 @@
       "type": "object",
       "properties": {
         "team": {
-          "$ref": "#/definitions/schemaTeam"
+          "$ref": "#/definitions/accountsTeam"
         }
       }
     },
@@ -776,7 +831,7 @@
       "type": "object",
       "properties": {
         "user": {
-          "$ref": "#/definitions/schemaUser"
+          "$ref": "#/definitions/accountsUser"
         }
       }
     },
@@ -795,7 +850,7 @@
         "organizations": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaOrganization"
+            "$ref": "#/definitions/accountsOrganization"
           }
         }
       }
@@ -809,7 +864,7 @@
         "teams": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaTeam"
+            "$ref": "#/definitions/accountsTeam"
           }
         }
       }
@@ -829,7 +884,7 @@
         "users": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaUser"
+            "$ref": "#/definitions/accountsUser"
           }
         }
       }
@@ -960,12 +1015,7 @@
         }
       }
     },
-    "protobufEmpty": {
-      "type": "object",
-      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
-      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
-    },
-    "schemaOrganization": {
+    "accountsOrganization": {
       "type": "object",
       "properties": {
         "name": {
@@ -983,18 +1033,18 @@
         "members": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaOrganizationMember"
+            "$ref": "#/definitions/accountsOrganizationMember"
           }
         },
         "teams": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaTeam"
+            "$ref": "#/definitions/accountsTeam"
           }
         }
       }
     },
-    "schemaOrganizationMember": {
+    "accountsOrganizationMember": {
       "type": "object",
       "properties": {
         "name": {
@@ -1002,19 +1052,19 @@
           "format": "string"
         },
         "role": {
-          "$ref": "#/definitions/schemaOrganizationRole"
+          "$ref": "#/definitions/accountsOrganizationRole"
         }
       }
     },
-    "schemaOrganizationRole": {
+    "accountsOrganizationRole": {
       "type": "string",
       "enum": [
-        "ORGANIZATION_OWNER",
-        "ORGANIZATION_MEMBER"
+        "ORGANIZATION_MEMBER",
+        "ORGANIZATION_OWNER"
       ],
-      "default": "ORGANIZATION_OWNER"
+      "default": "ORGANIZATION_MEMBER"
     },
-    "schemaTeam": {
+    "accountsTeam": {
       "type": "object",
       "properties": {
         "name": {
@@ -1028,12 +1078,12 @@
         "members": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemaTeamMember"
+            "$ref": "#/definitions/accountsTeamMember"
           }
         }
       }
     },
-    "schemaTeamMember": {
+    "accountsTeamMember": {
       "type": "object",
       "properties": {
         "name": {
@@ -1041,19 +1091,19 @@
           "format": "string"
         },
         "role": {
-          "$ref": "#/definitions/schemaTeamRole"
+          "$ref": "#/definitions/accountsTeamRole"
         }
       }
     },
-    "schemaTeamRole": {
+    "accountsTeamRole": {
       "type": "string",
       "enum": [
-        "TEAM_OWNER",
-        "TEAM_MEMBER"
+        "TEAM_MEMBER",
+        "TEAM_OWNER"
       ],
-      "default": "TEAM_OWNER"
+      "default": "TEAM_MEMBER"
     },
-    "schemaUser": {
+    "accountsUser": {
       "type": "object",
       "properties": {
         "name": {
@@ -1077,6 +1127,11 @@
           "format": "int64"
         }
       }
+    },
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
     }
   }
 }

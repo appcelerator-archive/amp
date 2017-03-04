@@ -91,7 +91,7 @@ func deleteUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		name = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		name = GetName()
+		name = getName()
 	}
 
 	request := &account.DeleteUserRequest{
@@ -114,7 +114,7 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		name = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		name = GetName()
+		name = getName()
 	}
 
 	request := &account.GetUserRequest{
@@ -128,7 +128,7 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tEMAIL\tVERIFIED\tCREATED\t")
-	fmt.Fprintf(w, "%s\t%s\t%t\t%s\n", reply.User.Name, reply.User.Email, reply.User.IsVerified, ConvertTime(reply.User.CreateDt))
+	fmt.Fprintf(w, "%s\t%s\t%t\t%s\n", reply.User.Name, reply.User.Email, reply.User.IsVerified, convertTime(reply.User.CreateDt))
 	w.Flush()
 	return nil
 }

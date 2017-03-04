@@ -4,7 +4,7 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "github.com/appcelerator/amp/data/account/schema/account.proto";
+import "github.com/appcelerator/amp/data/accounts/accounts.proto";
 
 service Account {
 
@@ -88,6 +88,12 @@ service Account {
   rpc RemoveUserFromOrganization (RemoveUserFromOrganizationRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/organizations/{organization_name}/members/{user_name}"
+    };
+  };
+  rpc ChangeOrganizationMemberRole (ChangeOrganizationMemberRoleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/organizations/{organization_name}/members/{user_name}",
+      body: "*"
     };
   };
   rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply) {
@@ -188,14 +194,14 @@ message GetUserRequest {
 }
 
 message GetUserReply {
-  schema.User user = 1;
+  accounts.User user = 1;
 }
 
 message ListUsersRequest {
 }
 
 message ListUsersReply {
-  repeated schema.User users = 1;
+  repeated accounts.User users = 1;
 }
 
 message DeleteUserRequest {
@@ -218,19 +224,25 @@ message RemoveUserFromOrganizationRequest {
   string user_name = 2;
 }
 
+message ChangeOrganizationMemberRoleRequest {
+  string organization_name = 1;
+  string user_name = 2;
+  accounts.OrganizationRole role = 3;
+}
+
 message GetOrganizationRequest {
   string name = 1;
 }
 
 message GetOrganizationReply {
-  schema.Organization organization = 1;
+  accounts.Organization organization = 1;
 }
 
 message ListOrganizationsRequest {
 }
 
 message ListOrganizationsReply {
-  repeated schema.Organization organizations = 1;
+  repeated accounts.Organization organizations = 1;
 }
 
 message DeleteOrganizationRequest {
@@ -238,11 +250,6 @@ message DeleteOrganizationRequest {
 }
 
 // Teams
-message Team {
-  string name = 1;
-  int64 create_dt = 2;
-}
-
 message CreateTeamRequest {
   string organization_name = 1;
   string team_name = 2;
@@ -266,7 +273,7 @@ message GetTeamRequest {
 }
 
 message GetTeamReply {
-  schema.Team team = 1;
+  accounts.Team team = 1;
 }
 
 message ListTeamsRequest {
@@ -274,7 +281,7 @@ message ListTeamsRequest {
 }
 
 message ListTeamsReply {
-  repeated schema.Team teams = 1;
+  repeated accounts.Team teams = 1;
 }
 
 message DeleteTeamRequest {

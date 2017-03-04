@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"github.com/appcelerator/amp/api/rpc/function"
+	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -96,7 +96,7 @@ func messageHandler(msg *stan.Msg) {
 
 func processMessage(msg *stan.Msg) {
 	// Parse function call message
-	functionCall := function.FunctionCall{}
+	functionCall := functions.FunctionCall{}
 	err := proto.Unmarshal(msg.Data, &functionCall)
 	if err != nil {
 		log.Println("Error unmarshalling function call:", err)
@@ -148,7 +148,7 @@ func processMessage(msg *stan.Msg) {
 	log.Println("Function call executed")
 
 	// Post response to NATS
-	functionReturn := function.FunctionReturn{
+	functionReturn := functions.FunctionReturn{
 		CallID: functionCall.CallID,
 		Output: stdOutBuffer.Bytes(),
 	}
