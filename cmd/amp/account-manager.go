@@ -110,6 +110,7 @@ func init() {
 	pwdCmd.Flags().StringVar(&newPwd, "new-password", newPwd, "New Password")
 
 	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
+
 }
 
 // signUp validates the input command line arguments and creates a new account
@@ -224,6 +225,8 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	return nil
 }
 
+// switchAccount validates the input command line arguments and switches from personal account to an organization account
+// by invoking the corresponding rpc/storage method
 func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
