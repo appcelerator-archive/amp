@@ -1,9 +1,8 @@
-package account
+package accounts
 
 import (
 	"context"
 	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
@@ -28,8 +27,8 @@ func NewStore(store storage.Interface) *Store {
 	}
 }
 
-func (s *Store) rawUser(ctx context.Context, name string) (*schema.User, error) {
-	user := &schema.User{}
+func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
+	user := &User{}
 	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func (s *Store) rawUser(ctx context.Context, name string) (*schema.User, error) 
 	return user, nil
 }
 
-func secureUser(user *schema.User) *schema.User {
+func secureUser(user *User) *User {
 	if user == nil {
 		return nil
 	}
@@ -49,22 +48,22 @@ func secureUser(user *schema.User) *schema.User {
 	return user
 }
 
-func (s *Store) getUser(ctx context.Context, name string) (user *schema.User, err error) {
+func (s *Store) getUser(ctx context.Context, name string) (user *User, err error) {
 	if user, err = s.rawUser(ctx, name); err != nil {
 		return nil, err
 	}
 	if user == nil {
-		return nil, schema.UserNotFound
+		return nil, UserNotFound
 	}
 	return user, nil
 }
 
-func (s *Store) getVerifiedUser(ctx context.Context, name string) (user *schema.User, err error) {
+func (s *Store) getVerifiedUser(ctx context.Context, name string) (user *User, err error) {
 	if user, err = s.getUser(ctx, name); err != nil {
 		return nil, err
 	}
 	if !user.IsVerified {
-		return nil, schema.UserNotVerified
+		return nil, UserNotVerified
 	}
 	return user, nil
 }
@@ -72,14 +71,14 @@ func (s *Store) getVerifiedUser(ctx context.Context, name string) (user *schema.
 // Users
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(ctx context.Context, name string, email string, password string) (user *schema.User, err error) {
+func (s *Store) CreateUser(ctx context.Context, name string, email string, password string) (user *User, err error) {
 	// Check if user already exists
 	userAlreadyExists, err := s.rawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	if userAlreadyExists != nil {
-		return nil, schema.UserAlreadyExists
+		return nil, UserAlreadyExists
 	}
 
 	// Check if organization with the same name already exists
@@ -88,17 +87,17 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		return nil, err
 	}
 	if orgAlreadyExists != nil {
-		return nil, schema.OrganizationAlreadyExists
+		return nil, OrganizationAlreadyExists
 	}
 
 	// Create the new user
-	user = &schema.User{
+	user = &User{
 		Email:      email,
 		Name:       name,
 		IsVerified: false,
 		CreateDt:   time.Now().Unix(),
 	}
-	if err = schema.CheckPassword(password); err != nil {
+	if err = CheckPassword(password); err != nil {
 		return nil, err
 	}
 	if user.PasswordHash, err = passlib.Hash(password); err != nil {
@@ -114,11 +113,11 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 }
 
 // VerifyUser verifies a user account
-func (s *Store) VerifyUser(ctx context.Context, token string) (*schema.User, error) {
+func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	// Validate the token
 	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
 	if err != nil {
-		return nil, schema.InvalidToken
+		return nil, InvalidToken
 	}
 	user, err := s.getUser(ctx, claims.AccountName)
 	if err != nil {
@@ -140,7 +139,7 @@ func (s *Store) CheckUserPassword(ctx context.Context, name string, password str
 	// TODO: should we use the newHash ?
 	_, err = passlib.Verify(password, user.PasswordHash)
 	if err != nil {
-		return schema.WrongPassword
+		return WrongPassword
 	}
 	return nil
 }
@@ -153,7 +152,7 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 	}
 
 	// Password
-	if err = schema.CheckPassword(password); err != nil {
+	if err = CheckPassword(password); err != nil {
 		return err
 	}
 	if user.PasswordHash, err = passlib.Hash(password); err != nil {
@@ -168,8 +167,8 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 }
 
 // GetUser fetches a user by name
-func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) {
-	if err := schema.CheckName(name); err != nil {
+func (s *Store) GetUser(ctx context.Context, name string) (*User, error) {
+	if err := CheckName(name); err != nil {
 		return nil, err
 	}
 	user, err := s.rawUser(ctx, name)
@@ -180,8 +179,8 @@ func (s *Store) GetUser(ctx context.Context, name string) (*schema.User, error) 
 }
 
 // GetUserByEmail fetches a user by email
-func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
-	if _, err := schema.CheckEmailAddress(email); err != nil {
+func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	if _, err := CheckEmailAddress(email); err != nil {
 		return nil, err
 	}
 	users, err := s.ListUsers(ctx)
@@ -197,14 +196,14 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*schema.User,
 }
 
 // ListUsers lists users
-func (s *Store) ListUsers(ctx context.Context) ([]*schema.User, error) {
+func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	protos := []proto.Message{}
-	if err := s.Store.List(ctx, usersRootKey, storage.Everything, &schema.User{}, &protos); err != nil {
+	if err := s.Store.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
 		return nil, err
 	}
-	users := []*schema.User{}
+	users := []*User{}
 	for _, proto := range protos {
-		users = append(users, secureUser(proto.(*schema.User)))
+		users = append(users, secureUser(proto.(*User)))
 	}
 	return users, nil
 }
@@ -214,7 +213,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// Get requester
 	requester := auth.GetUser(ctx)
 	if requester != name {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Get organizations owned by he user
@@ -244,12 +243,12 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 
 // Organizations
 
-func (s *Store) getOwnedOrganization(ctx context.Context, name string) ([]*schema.Organization, error) {
+func (s *Store) getOwnedOrganization(ctx context.Context, name string) ([]*Organization, error) {
 	organizations, err := s.ListOrganizations(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ownedOrganizations := []*schema.Organization{}
+	ownedOrganizations := []*Organization{}
 	for _, o := range organizations {
 		if o.IsOwner(name) {
 			ownedOrganizations = append(ownedOrganizations, o)
@@ -258,7 +257,7 @@ func (s *Store) getOwnedOrganization(ctx context.Context, name string) ([]*schem
 	return ownedOrganizations, nil
 }
 
-func (s *Store) updateOrganization(ctx context.Context, in *schema.Organization) error {
+func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {
 	if err := in.Validate(); err != nil {
 		return err
 	}
@@ -276,7 +275,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		return err
 	}
 	if userAlreadyExists != nil {
-		return schema.UserAlreadyExists
+		return UserAlreadyExists
 	}
 
 	// Check if organization already exists
@@ -285,18 +284,18 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		return err
 	}
 	if orgAlreadyExists != nil {
-		return schema.OrganizationAlreadyExists
+		return OrganizationAlreadyExists
 	}
 
 	// Create the new organization
-	organization := &schema.Organization{
+	organization := &Organization{
 		Email:    email,
 		Name:     name,
 		CreateDt: time.Now().Unix(),
-		Members: []*schema.OrganizationMember{
+		Members: []*OrganizationMember{
 			{
 				Name: auth.GetUser(ctx),
-				Role: schema.OrganizationRole_ORGANIZATION_OWNER,
+				Role: OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
 	}
@@ -317,7 +316,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -329,7 +328,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Get the user
@@ -344,21 +343,21 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Add the user as a team member
-	organization.Members = append(organization.Members, &schema.OrganizationMember{
+	organization.Members = append(organization.Members, &OrganizationMember{
 		Name: user.Name,
-		Role: schema.OrganizationRole_ORGANIZATION_MEMBER,
+		Role: OrganizationRole_ORGANIZATION_MEMBER,
 	})
 	return s.updateOrganization(ctx, organization)
 }
 
-func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*schema.Organization, error) {
+func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
-		return nil, schema.OrganizationNotFound
+		return nil, OrganizationNotFound
 	}
 
 	// Check authorization
@@ -367,10 +366,10 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"resource": organization,
+			"roles.organization": organization,
 		},
 	}); err != nil {
-		return nil, schema.NotAuthorized
+		return nil, NotAuthorized
 	}
 
 	// Get the user
@@ -406,14 +405,14 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 }
 
 // ChangeOrganizationMemberRole changes the role of given user in the given organization
-func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role schema.OrganizationRole) (err error) {
+func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role OrganizationRole) (err error) {
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -422,10 +421,10 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 		Action:   auth.UpdateAction,
 		Resource: auth.OrganizationResource,
 		Context: ladon.Context{
-			"resource": organization,
+			"roles.organization": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Get the user
@@ -437,7 +436,7 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 	// Check if user is already a member
 	member := organization.GetMember(user.Name)
 	if member == nil {
-		return schema.UserNotFound
+		return UserNotFound
 	}
 
 	// Change the role of the user
@@ -446,11 +445,11 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 }
 
 // GetOrganization fetches a organization by name
-func (s *Store) GetOrganization(ctx context.Context, name string) (*schema.Organization, error) {
-	if err := schema.CheckName(name); err != nil {
+func (s *Store) GetOrganization(ctx context.Context, name string) (*Organization, error) {
+	if err := CheckName(name); err != nil {
 		return nil, err
 	}
-	organization := &schema.Organization{}
+	organization := &Organization{}
 	if err := s.Store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
 		return nil, err
 	}
@@ -462,14 +461,14 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (*schema.Organ
 }
 
 // ListOrganizations lists organizations
-func (s *Store) ListOrganizations(ctx context.Context) ([]*schema.Organization, error) {
+func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) {
 	protos := []proto.Message{}
-	if err := s.Store.List(ctx, organizationsRootKey, storage.Everything, &schema.Organization{}, &protos); err != nil {
+	if err := s.Store.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {
 		return nil, err
 	}
-	organizations := []*schema.Organization{}
+	organizations := []*Organization{}
 	for _, proto := range protos {
-		organizations = append(organizations, proto.(*schema.Organization))
+		organizations = append(organizations, proto.(*Organization))
 	}
 	return organizations, nil
 }
@@ -482,7 +481,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -494,7 +493,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Delete organization
@@ -514,7 +513,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -527,22 +526,22 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Check if team already exists
 	if organization.HasTeam(teamName) {
-		return schema.TeamAlreadyExists
+		return TeamAlreadyExists
 	}
 
 	// Create the new team
-	team := &schema.Team{
+	team := &Team{
 		Name:     teamName,
 		CreateDt: time.Now().Unix(),
-		Members: []*schema.TeamMember{
+		Members: []*TeamMember{
 			{
 				Name: requester,
-				Role: schema.TeamRole_TEAM_OWNER,
+				Role: TeamRole_TEAM_OWNER,
 			},
 		},
 	}
@@ -560,7 +559,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -572,13 +571,13 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Get team
 	team := organization.GetTeam(teamName)
 	if team == nil {
-		return schema.TeamNotFound
+		return TeamNotFound
 	}
 
 	// Get the user
@@ -590,7 +589,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	// TODO: Does the user need to be part of the organization?
 	//// Check if user is part of the organization
 	//if !organization.HasMember(user.Name) {
-	//	return schema.NotAnOrganizationMember
+	//	return NotAnOrganizationMember
 	//}
 
 	// Check if user is part of the team
@@ -599,9 +598,9 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Add the user as a team member
-	team.Members = append(team.Members, &schema.TeamMember{
+	team.Members = append(team.Members, &TeamMember{
 		Name: user.Name,
-		Role: schema.TeamRole_TEAM_MEMBER,
+		Role: TeamRole_TEAM_MEMBER,
 	})
 	return s.updateOrganization(ctx, organization)
 }
@@ -614,7 +613,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -626,13 +625,13 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Get team
 	team := organization.GetTeam(teamName)
 	if team == nil {
-		return schema.TeamNotFound
+		return TeamNotFound
 	}
 
 	// Get the user
@@ -653,18 +652,18 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 }
 
 // GetTeam fetches a team by name
-func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*schema.Team, error) {
+func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*Team, error) {
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
-		return nil, schema.OrganizationNotFound
+		return nil, OrganizationNotFound
 	}
 
 	// Get team
-	if err := schema.CheckName(teamName); err != nil {
+	if err := CheckName(teamName); err != nil {
 		return nil, err
 	}
 	team := organization.GetTeam(teamName)
@@ -672,14 +671,14 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 }
 
 // ListTeams lists teams
-func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*schema.Team, error) {
+func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*Team, error) {
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
 	}
 	if organization == nil {
-		return nil, schema.OrganizationNotFound
+		return nil, OrganizationNotFound
 	}
 	return organization.Teams, nil
 }
@@ -692,7 +691,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 		return err
 	}
 	if organization == nil {
-		return schema.OrganizationNotFound
+		return OrganizationNotFound
 	}
 
 	// Check authorization
@@ -704,7 +703,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 			"resource": organization,
 		},
 	}); err != nil {
-		return schema.NotAuthorized
+		return NotAuthorized
 	}
 
 	// Check if the team is actually a team in the organization

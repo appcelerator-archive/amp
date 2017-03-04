@@ -1,4 +1,4 @@
-package schema
+package accounts
 
 // GetOwners get teams owners
 func (t *Team) GetOwners() (owners []*TeamMember) {

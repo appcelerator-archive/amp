@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc"
 	"os"
 	"strconv"
-	"strings"
 	"text/tabwriter"
 )
 
@@ -69,25 +68,16 @@ func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error)
 		return errors.New("must specify function name and docker image")
 	case 1:
 		return errors.New("must specify docker image")
-	case 2:
-	// OK
+	case 2: // OK
 	default:
 		return errors.New("too many arguments")
 	}
 
-	name, image := strings.TrimSpace(args[0]), strings.TrimSpace(args[1])
-	if name == "" {
-		return errors.New("function name cannot be empty")
-	}
-	if image == "" {
-		return errors.New("docker image cannot be empty")
-	}
-
 	// Create function
-	request := &function.CreateRequest{Function: &function.FunctionEntry{
+	request := &function.CreateRequest{
 		Name:  name,
 		Image: image,
-	}}
+	}
 	reply, er := function.NewFunctionClient(amp.Conn).Create(context.Background(), request)
 	if er != nil {
 		manager.fatalf(grpc.ErrorDesc(er))
@@ -121,7 +111,7 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "ID\tName\tImage\tOwner")
 	for _, fn := range reply.Functions {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", fn.Id, fn.Name, fn.Image, fn.Owner)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", fn.Id, fn.Name, fn.Image, fn.Owner.Name)
 	}
 	w.Flush()
 

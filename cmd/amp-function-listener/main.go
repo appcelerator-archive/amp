@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
+	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -106,22 +107,22 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	ctx, cancel := context.WithTimeout(context.Background(), amp.DefaultTimeout)
 	defer cancel()
 	key := path.Join(amp.EtcdFunctionRootKey, idOrName)
-	fe := &function.FunctionEntry{}
+	fe := &functions.Function{}
 	if err := store.Get(ctx, key, fe, false); err != nil {
 		// We didn't find the function by id, try by name (by listing them all)
-		functions := []proto.Message{}
+		protos := []proto.Message{}
 		ctx, cancel := context.WithTimeout(context.Background(), amp.DefaultTimeout)
 		defer cancel()
-		if err := store.List(ctx, amp.EtcdFunctionRootKey, storage.Everything, fe, &functions); err != nil {
+		if err := store.List(ctx, amp.EtcdFunctionRootKey, storage.Everything, fe, &protos); err != nil {
 			httpError(w, http.StatusInternalServerError, fmt.Sprintf("error listing functions: %v", err))
 			return
 		}
 
 		// Look for function by name
 		found := false
-		for _, f := range functions {
+		for _, f := range protos {
 			ok := false
-			fe, ok = f.(*function.FunctionEntry)
+			fe, ok = f.(*functions.Function)
 			if !ok {
 				httpError(w, http.StatusInternalServerError, fmt.Sprintf("error casting function, expected: %T, got: %T", fe, f))
 				return

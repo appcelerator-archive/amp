@@ -1,15 +1,32 @@
-package account
+package accounts
 
 import (
 	"context"
-
-	"github.com/appcelerator/amp/data/account/schema"
 )
+
+type Error string
+
+func (e Error) Error() string { return string(e) }
+
+const InvalidName = Error("username is invalid")
+const InvalidEmail = Error("email is invalid")
+const PasswordTooWeak = Error("password is too weak")
+const WrongPassword = Error("password is wrong")
+const InvalidToken = Error("token is invalid")
+const UserAlreadyExists = Error("user already exists")
+const UserNotFound = Error("user not found")
+const UserNotVerified = Error("user not verified")
+const OrganizationAlreadyExists = Error("organization already exists")
+const OrganizationNotFound = Error("organization not found")
+const TeamAlreadyExists = Error("team already exists")
+const TeamNotFound = Error("team not found")
+const AtLeastOneOwner = Error("organization must have at least one owner")
+const NotAuthorized = Error("user not authorized")
 
 // Interface defines the user data access layer
 type Interface interface {
 	// CreateUser creates a new user with given password
-	CreateUser(ctx context.Context, name string, email string, password string) (user *schema.User, err error)
+	CreateUser(ctx context.Context, name string, email string, password string) (user *User, err error)
 
 	// CheckUserPassword checks the given user password
 	CheckUserPassword(ctx context.Context, name string, password string) (err error)
@@ -18,16 +35,16 @@ type Interface interface {
 	SetUserPassword(ctx context.Context, name string, password string) (err error)
 
 	// GetUser fetches a user by name
-	GetUser(ctx context.Context, name string) (user *schema.User, err error)
+	GetUser(ctx context.Context, name string) (user *User, err error)
 
 	// GetUserByEmail fetches a user by email
-	GetUserByEmail(ctx context.Context, email string) (user *schema.User, err error)
+	GetUserByEmail(ctx context.Context, email string) (user *User, err error)
 
 	// ListUsers lists users
-	ListUsers(ctx context.Context) (users []*schema.User, err error)
+	ListUsers(ctx context.Context) (users []*User, err error)
 
 	// VerifyUser verifies a user account
-	VerifyUser(ctx context.Context, token string) (user *schema.User, err error)
+	VerifyUser(ctx context.Context, token string) (user *User, err error)
 
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
@@ -36,7 +53,7 @@ type Interface interface {
 	CreateOrganization(ctx context.Context, name string, email string) (err error)
 
 	// GetOrganization fetches a organization by name
-	GetOrganization(ctx context.Context, name string) (organization *schema.Organization, err error)
+	GetOrganization(ctx context.Context, name string) (organization *Organization, err error)
 
 	// AddUserToOrganization adds a user to the given organization
 	AddUserToOrganization(ctx context.Context, organizationName string, userName string) (err error)
@@ -45,10 +62,10 @@ type Interface interface {
 	RemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (err error)
 
 	// ChangeOrganizationMemberRole changes the role of given user in the given organization
-	ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role schema.OrganizationRole) (err error)
+	ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role OrganizationRole) (err error)
 
 	// ListOrganizations lists organizations
-	ListOrganizations(ctx context.Context) (organizations []*schema.Organization, err error)
+	ListOrganizations(ctx context.Context) (organizations []*Organization, err error)
 
 	// DeleteOrganization deletes a organization by name
 	DeleteOrganization(ctx context.Context, name string) (err error)
@@ -57,10 +74,10 @@ type Interface interface {
 	CreateTeam(ctx context.Context, organizationName string, teamName string) (err error)
 
 	// GetTeam fetches a team by name
-	GetTeam(ctx context.Context, organizationName string, teamName string) (team *schema.Team, err error)
+	GetTeam(ctx context.Context, organizationName string, teamName string) (team *Team, err error)
 
 	// ListTeams lists teams
-	ListTeams(ctx context.Context, organizationName string) (teams []*schema.Team, err error)
+	ListTeams(ctx context.Context, organizationName string) (teams []*Team, err error)
 
 	// AddUserToTeam adds a user to the given team
 	AddUserToTeam(ctx context.Context, organizationName string, teamName string, userName string) (err error)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -332,12 +332,12 @@ func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		fmt.Scanln(&role)
 	}
 
-	orgRole := schema.OrganizationRole_ORGANIZATION_MEMBER
+	orgRole := accounts.OrganizationRole_ORGANIZATION_MEMBER
 	switch role {
 	case "owner":
-		orgRole = schema.OrganizationRole_ORGANIZATION_OWNER
+		orgRole = accounts.OrganizationRole_ORGANIZATION_OWNER
 	case "member":
-		orgRole = schema.OrganizationRole_ORGANIZATION_MEMBER
+		orgRole = accounts.OrganizationRole_ORGANIZATION_MEMBER
 	default:
 		manager.fatalf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", role)
 	}

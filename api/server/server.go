@@ -19,7 +19,8 @@ import (
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
-	accounts "github.com/appcelerator/amp/data/account"
+	accounts "github.com/appcelerator/amp/data/accounts"
+	functions "github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -87,7 +88,7 @@ func Start(config *amp.Config) {
 		NatsStreaming: runtime.NatsStreaming,
 	})
 	function.RegisterFunctionServer(s, &function.Server{
-		Store:         runtime.Store,
+		Functions:     functions.NewStore(runtime.Store),
 		NatsStreaming: runtime.NatsStreaming,
 	})
 	//register storage service
@@ -102,7 +103,7 @@ func Start(config *amp.Config) {
 		Arch:      runInfo.GOARCH,
 	})
 	account.RegisterAccountServer(s, &account.Server{
-		Accounts: runtime.Accounts,
+		Accounts: accounts.NewStore(runtime.Store),
 	})
 
 	// start listening
@@ -121,9 +122,6 @@ func initEtcd(config *amp.Config) error {
 		return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
 	}
 	log.Println("Connected to etcd at", strings.Join(runtime.Store.Endpoints(), ","))
-
-	// Create associated stores
-	runtime.Accounts = accounts.NewStore(runtime.Store)
 	return nil
 }
 

@@ -10,7 +10,8 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/cmd/amp/cli"
-	as "github.com/appcelerator/amp/data/account"
+	"github.com/appcelerator/amp/data/accounts"
+	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -34,7 +35,8 @@ var (
 	serviceClient  service.ServiceClient
 	logsClient     logs.LogsClient
 	accountClient  account.AccountClient
-	accountStore   as.Interface
+	accountStore   accounts.Interface
+	functionStore  functions.Interface
 )
 
 func TestMain(m *testing.M) {
@@ -45,7 +47,8 @@ func TestMain(m *testing.M) {
 	if err := store.Connect(5 * time.Second); err != nil {
 		log.Panicf("Unable to connect to etcd on: %s\n%v", amp.EtcdDefaultEndpoint, err)
 	}
-	accountStore = as.NewStore(store)
+	accountStore = accounts.NewStore(store)
+	functionStore = functions.NewStore(store)
 
 	// Create a valid user token
 	token, _ := auth.CreateLoginToken("default", "", time.Hour)

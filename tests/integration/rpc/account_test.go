@@ -3,7 +3,7 @@ package tests
 import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -958,7 +958,7 @@ func TestOrganizationList(t *testing.T) {
 	assert.NotEmpty(t, listReply.Organizations[0].CreateDt)
 	assert.NotEmpty(t, listReply.Organizations[0].Members)
 	assert.Equal(t, listReply.Organizations[0].Members[0].Name, testUser.Name)
-	assert.Equal(t, listReply.Organizations[0].Members[0].Role, schema.OrganizationRole_ORGANIZATION_OWNER)
+	assert.Equal(t, listReply.Organizations[0].Members[0].Role, accounts.OrganizationRole_ORGANIZATION_OWNER)
 }
 
 // Teams
@@ -1456,7 +1456,7 @@ func TestTeamList(t *testing.T) {
 	assert.NotEmpty(t, listReply.Teams[0].CreateDt)
 	assert.NotEmpty(t, listReply.Teams[0].Members)
 	assert.Equal(t, listReply.Teams[0].Members[0].Name, testUser.Name)
-	assert.Equal(t, listReply.Teams[0].Members[0].Role, schema.TeamRole_TEAM_OWNER)
+	assert.Equal(t, listReply.Teams[0].Members[0].Role, accounts.TeamRole_TEAM_OWNER)
 }
 
 func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {

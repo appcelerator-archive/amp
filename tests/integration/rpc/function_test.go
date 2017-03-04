@@ -14,15 +14,14 @@ import (
 func TestFunctionShouldCreateAndDeleteAFunction(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
+	functionStore.Reset(context.Background())
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	created, err := functionClient.Create(ownerCtx, &CreateRequest{
-		Function: &FunctionEntry{
-			Name:  "test-function",
-			Image: "test-image",
-		},
+		Name:  "test-function",
+		Image: "test-image",
 	})
 	assert.NoError(t, err)
 
@@ -35,44 +34,37 @@ func TestFunctionShouldCreateAndDeleteAFunction(t *testing.T) {
 func TestFunctionShouldFailWhenCreatingAnAlreadyExistingFunction(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
+	functionStore.Reset(context.Background())
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
-	created, err := functionClient.Create(ownerCtx, &CreateRequest{
-		Function: &FunctionEntry{
-			Name:  "test-function",
-			Image: "test-image",
-		},
+	_, err := functionClient.Create(ownerCtx, &CreateRequest{
+		Name:  "test-function",
+		Image: "test-image",
 	})
 	assert.NoError(t, err)
 
 	_, err = functionClient.Create(ownerCtx, &CreateRequest{
-		Function: &FunctionEntry{
-			Name:  "test-function",
-			Image: "test-image",
-		},
+		Name:  "test-function",
+		Image: "test-image",
 	})
 	assert.Error(t, err)
-
-	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{
-		Id: created.Function.Id,
-	})
-	assert.NoError(t, err)
 }
 
 func TestFunctionShouldListCreatedFunctions(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
+	functionStore.Reset(context.Background())
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
-	r1, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-1", Image: "test-image-1"}})
+	r1, err := functionClient.Create(ownerCtx, &CreateRequest{Name: "test-function-1", Image: "test-image-1"})
 	assert.NoError(t, err)
-	r2, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-2", Image: "test-image-2"}})
+	r2, err := functionClient.Create(ownerCtx, &CreateRequest{Name: "test-function-2", Image: "test-image-2"})
 	assert.NoError(t, err)
-	r3, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-3", Image: "test-image-3"}})
+	r3, err := functionClient.Create(ownerCtx, &CreateRequest{Name: "test-function-3", Image: "test-image-3"})
 	assert.NoError(t, err)
 
 	reply, err := functionClient.List(ownerCtx, &ListRequest{})
@@ -98,15 +90,14 @@ func TestFunctionShouldListCreatedFunctions(t *testing.T) {
 func TestFunctionShouldCreateInvokeAndDeleteAFunction(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
+	functionStore.Reset(context.Background())
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	created, err := functionClient.Create(ownerCtx, &CreateRequest{
-		Function: &FunctionEntry{
-			Name:  "test-" + stringid.GenerateNonCryptoID(),
-			Image: "appcelerator/amp-demo-function",
-		},
+		Name:  "test-" + stringid.GenerateNonCryptoID(),
+		Image: "appcelerator/amp-demo-function",
 	})
 	assert.NoError(t, err)
 

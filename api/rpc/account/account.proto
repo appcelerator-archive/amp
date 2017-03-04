@@ -4,7 +4,7 @@ package account;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "github.com/appcelerator/amp/data/account/schema/account.proto";
+import "github.com/appcelerator/amp/data/accounts/accounts.proto";
 
 service Account {
 
@@ -194,14 +194,14 @@ message GetUserRequest {
 }
 
 message GetUserReply {
-  schema.User user = 1;
+  accounts.User user = 1;
 }
 
 message ListUsersRequest {
 }
 
 message ListUsersReply {
-  repeated schema.User users = 1;
+  repeated accounts.User users = 1;
 }
 
 message DeleteUserRequest {
@@ -227,7 +227,7 @@ message RemoveUserFromOrganizationRequest {
 message ChangeOrganizationMemberRoleRequest {
   string organization_name = 1;
   string user_name = 2;
-  schema.OrganizationRole role = 3;
+  accounts.OrganizationRole role = 3;
 }
 
 message GetOrganizationRequest {
@@ -235,14 +235,14 @@ message GetOrganizationRequest {
 }
 
 message GetOrganizationReply {
-  schema.Organization organization = 1;
+  accounts.Organization organization = 1;
 }
 
 message ListOrganizationsRequest {
 }
 
 message ListOrganizationsReply {
-  repeated schema.Organization organizations = 1;
+  repeated accounts.Organization organizations = 1;
 }
 
 message DeleteOrganizationRequest {
@@ -250,11 +250,6 @@ message DeleteOrganizationRequest {
 }
 
 // Teams
-message Team {
-  string name = 1;
-  int64 create_dt = 2;
-}
-
 message CreateTeamRequest {
   string organization_name = 1;
   string team_name = 2;
@@ -278,7 +273,7 @@ message GetTeamRequest {
 }
 
 message GetTeamReply {
-  schema.Team team = 1;
+  accounts.Team team = 1;
 }
 
 message ListTeamsRequest {
@@ -286,7 +281,7 @@ message ListTeamsRequest {
 }
 
 message ListTeamsReply {
-  repeated schema.Team teams = 1;
+  repeated accounts.Team teams = 1;
 }
 
 message DeleteTeamRequest {

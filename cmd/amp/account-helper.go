@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/howeyc/gopass"
 	"google.golang.org/grpc"
 	"strconv"
@@ -13,7 +13,7 @@ import (
 func GetName() (in string) {
 	fmt.Scanln(&in)
 	username = strings.TrimSpace(in)
-	err := schema.CheckName(in)
+	err := accounts.CheckName(in)
 	if err != nil {
 		manager.printf(colWarn, err.Error())
 		return GetName()
@@ -25,7 +25,7 @@ func GetEmailAddress() (email string) {
 	fmt.Print("email: ")
 	fmt.Scanln(&email)
 	email = strings.TrimSpace(email)
-	_, err := schema.CheckEmailAddress(email)
+	_, err := accounts.CheckEmailAddress(email)
 	if err != nil {
 		manager.printf(colWarn, err.Error())
 		return GetEmailAddress()
@@ -49,7 +49,7 @@ func GetPassword() (password string) {
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
-	err = schema.CheckPassword(password)
+	err = accounts.CheckPassword(password)
 	if err != nil {
 		manager.printf(colWarn, grpc.ErrorDesc(err))
 		return GetPassword()

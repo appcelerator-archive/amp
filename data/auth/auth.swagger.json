@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "github.com/appcelerator/amp/data/account/schema/account.proto",
+    "title": "github.com/appcelerator/amp/data/auth/auth.proto",
     "version": "version not set"
   },
   "schemes": [

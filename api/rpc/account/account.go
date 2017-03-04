@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/data/account"
-	"github.com/appcelerator/amp/data/account/schema"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/mail"
-	pb "github.com/golang/protobuf/ptypes/empty"
+	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -18,30 +17,30 @@ import (
 
 // Server is used to implement account.UserServer
 type Server struct {
-	Accounts account.Interface
+	Accounts accounts.Interface
 }
 
 func convertError(err error) error {
 	switch err {
-	case schema.InvalidName:
-	case schema.InvalidEmail:
-	case schema.InvalidToken:
-	case schema.PasswordTooWeak:
+	case accounts.InvalidName:
+	case accounts.InvalidEmail:
+	case accounts.InvalidToken:
+	case accounts.PasswordTooWeak:
 		return grpc.Errorf(codes.InvalidArgument, err.Error())
-	case schema.WrongPassword:
+	case accounts.WrongPassword:
 		return grpc.Errorf(codes.Unauthenticated, err.Error())
-	case schema.UserNotVerified:
-	case schema.AtLeastOneOwner:
+	case accounts.UserNotVerified:
+	case accounts.AtLeastOneOwner:
 		return grpc.Errorf(codes.FailedPrecondition, err.Error())
-	case schema.UserAlreadyExists:
-	case schema.OrganizationAlreadyExists:
-	case schema.TeamAlreadyExists:
+	case accounts.UserAlreadyExists:
+	case accounts.OrganizationAlreadyExists:
+	case accounts.TeamAlreadyExists:
 		return grpc.Errorf(codes.AlreadyExists, err.Error())
-	case schema.UserNotFound:
-	case schema.OrganizationNotFound:
-	case schema.TeamNotFound:
+	case accounts.UserNotFound:
+	case accounts.OrganizationNotFound:
+	case accounts.TeamNotFound:
 		return grpc.Errorf(codes.NotFound, err.Error())
-	case schema.NotAuthorized:
+	case accounts.NotAuthorized:
 		return grpc.Errorf(codes.PermissionDenied, err.Error())
 	}
 	return grpc.Errorf(codes.Internal, err.Error())
@@ -73,7 +72,7 @@ func (s *Server) getRequesterEmail(ctx context.Context) string {
 // Users
 
 // SignUp implements account.SignUp
-func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, error) {
+func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, error) {
 	// Create user
 	user, err := s.Accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
@@ -92,7 +91,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*pb.Empty, erro
 		return nil, convertError(err)
 	}
 	log.Println("Successfully created user", user.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // Verify implements account.Verify
@@ -109,7 +108,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 }
 
 // Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error) {
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, error) {
 	// Check password
 	if err := s.Accounts.CheckUserPassword(ctx, in.Name, in.Password); err != nil {
 		return nil, convertError(err)
@@ -125,11 +124,11 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*pb.Empty, error)
 		return nil, convertError(err)
 	}
 	log.Println("Successfully logged user in", in.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // PasswordReset implements account.PasswordReset
-func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*pb.Empty, error) {
+func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*empty.Empty, error) {
 	// Get the user
 	user, err := s.Accounts.GetUser(ctx, in.Name)
 	if err != nil {
@@ -148,11 +147,11 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, convertError(err)
 	}
 	log.Println("Successfully reset password for user", user.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // PasswordSet implements account.PasswordSet
-func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.Empty, error) {
+func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empty.Empty, error) {
 	// Validate token
 	claims, err := auth.ValidateToken(in.Token, auth.TokenTypePassword)
 	if err != nil {
@@ -160,14 +159,14 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*pb.E
 	}
 	// Sets the new password
 	if err := s.Accounts.SetUserPassword(ctx, claims.AccountName, in.Password); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	log.Println("Successfully set new password for user", claims.AccountName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // PasswordChange implements account.PasswordChange
-func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (*pb.Empty, error) {
+func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (*empty.Empty, error) {
 	// Get requesting user
 	requester := auth.GetUser(ctx)
 
@@ -177,14 +176,14 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	}
 	// Sets the new password
 	if err := s.Accounts.SetUserPassword(ctx, requester, in.NewPassword); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	log.Println("Successfully updated the password for user", requester)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // ForgotLogin implements account.PasswordChange
-func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.Empty, error) {
+func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empty.Empty, error) {
 	// Get the user
 	user, err := s.Accounts.GetUserByEmail(ctx, in.Email)
 	if err != nil {
@@ -198,7 +197,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*pb.E
 		return nil, convertError(err)
 	}
 	log.Println("Successfully processed forgot login request for user", user.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // GetUser implements account.GetUser
@@ -226,7 +225,7 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 }
 
 // DeleteUser implements account.DeleteUser
-func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*pb.Empty, error) {
+func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.Empty, error) {
 	// Get requesting user
 	user, err := s.Accounts.GetUser(ctx, in.Name)
 	if err != nil {
@@ -243,11 +242,11 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*pb.Emp
 		return nil, convertError(err)
 	}
 	log.Println("Successfully deleted user", in.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // Switch implements account.Switch
-func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*pb.Empty, error) {
+func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, error) {
 	// Get user name
 	userName := auth.GetUser(ctx)
 
@@ -277,13 +276,13 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*pb.Empty, erro
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
 	}
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // Organizations
 
 // CreateOrganization implements account.CreateOrganization
-func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*pb.Empty, error) {
+func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.CreateOrganization(ctx, in.Name, in.Email); err != nil {
 		return nil, convertError(err)
 	}
@@ -294,13 +293,13 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 		}
 	}
 	log.Println("Successfully created organization", in.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // AddUserToOrganization implements account.AddOrganizationMember
-func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest) (*pb.Empty, error) {
+func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.AddUserToOrganization(ctx, in.OrganizationName, in.UserName); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
@@ -309,13 +308,13 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 		}
 	}
 	log.Printf("Successfully added member %s to organization %s\n", in.UserName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // RemoveUserFromOrganization implements account.RemoveOrganizationMember
-func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest) (*pb.Empty, error) {
+func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.RemoveUserFromOrganization(ctx, in.OrganizationName, in.UserName); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
@@ -324,16 +323,16 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 		}
 	}
 	log.Printf("Successfully removed user %s from organization %s\n", in.UserName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // ChangeOrganizationMemberRole implements account.ChangeOrganizationMemberRole
-func (s *Server) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrganizationMemberRoleRequest) (*pb.Empty, error) {
+func (s *Server) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrganizationMemberRoleRequest) (*empty.Empty, error) {
 	if err := s.Accounts.ChangeOrganizationMemberRole(ctx, in.OrganizationName, in.UserName, in.Role); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	log.Printf("Successfully changed role of user %s from organization %s to %v\n", in.UserName, in.OrganizationName, in.Role)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // GetOrganization implements account.GetOrganization
@@ -360,7 +359,7 @@ func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsReq
 }
 
 // DeleteOrganization implements account.DeleteOrganization
-func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*pb.Empty, error) {
+func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.DeleteOrganization(ctx, in.Name); err != nil {
 		return nil, convertError(err)
 	}
@@ -371,13 +370,13 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 		}
 	}
 	log.Println("Successfully deleted organization", in.Name)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // Teams
 
 // CreateTeam implements account.CreateTeam
-func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Empty, error) {
+func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.CreateTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
 		return nil, convertError(err)
 	}
@@ -388,13 +387,13 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*pb.Emp
 		}
 	}
 	log.Printf("Successfully created team %s in organization %s\n", in.TeamName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // AddUserToTeam implements account.AddUserToTeam
-func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*pb.Empty, error) {
+func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.AddUserToTeam(ctx, in.OrganizationName, in.TeamName, in.UserName); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
@@ -403,13 +402,13 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 		}
 	}
 	log.Printf("Successfully added member %s to team %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // RemoveUserFromTeam implements account.RemoveUserFromTeam
-func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest) (*pb.Empty, error) {
+func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.RemoveUserFromTeam(ctx, in.OrganizationName, in.TeamName, in.UserName); err != nil {
-		return &pb.Empty{}, convertError(err)
+		return &empty.Empty{}, convertError(err)
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
@@ -418,7 +417,7 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		}
 	}
 	log.Printf("Successfully removed user %s from teams %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }
 
 // GetTeam implements account.GetTeam
@@ -444,7 +443,7 @@ func (s *Server) ListTeams(ctx context.Context, in *ListTeamsRequest) (*ListTeam
 }
 
 // DeleteTeam implements account.DeleteTeam
-func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Empty, error) {
+func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.DeleteTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
 		return nil, convertError(err)
 	}
@@ -455,5 +454,5 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*pb.Emp
 		}
 	}
 	log.Printf("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
-	return &pb.Empty{}, nil
+	return &empty.Empty{}, nil
 }

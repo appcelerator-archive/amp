@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package functions;
+
+import "github.com/appcelerator/amp/data/auth/auth.proto";
+
+message Function {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  auth.Account owner = 4;
+  int64 create_dt = 5;
+}

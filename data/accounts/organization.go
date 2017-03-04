@@ -1,4 +1,4 @@
-package schema
+package accounts
 
 // GetOwners get organization owners
 func (o *Organization) GetOwners() (owners []string) {

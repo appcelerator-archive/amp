@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/appcelerator/amp/data/auth"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -89,12 +90,18 @@ func authorize(ctx context.Context) (context.Context, error) {
 }
 
 // GetRequester gets the requester, i.e. the user or organization performing the request
-func GetRequester(ctx context.Context) string {
+func GetRequester(ctx context.Context) *auth.Account {
 	activeOrganization := GetActiveOrganization(ctx)
 	if activeOrganization != "" {
-		return activeOrganization
+		return &auth.Account{
+			Type: auth.AccountType_ORGANIZATION,
+			Name: activeOrganization,
+		}
 	}
-	return GetUser(ctx)
+	return &auth.Account{
+		Type: auth.AccountType_USER,
+		Name: GetUser(ctx),
+	}
 }
 
 // GetUser gets the user from context metadata
