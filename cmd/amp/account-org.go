@@ -8,6 +8,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/appcelerator/amp/data/account/schema"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -70,10 +71,19 @@ var (
 		},
 	}
 
+	changeOrgMemRoleCmd = &cobra.Command{
+		Use:   "role owner|member",
+		Short: "Change role of organization member",
+		Long:  `The role command changes the role of an organization member.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return changeOrgMem(AMP, cmd)
+		},
+	}
+
 	remOrgMemCmd = &cobra.Command{
 		Use:     "del",
 		Short:   "Remove members from organization",
-		Long:    `The remove command removes from an organization.`,
+		Long:    `The remove command removes member from an organization.`,
 		Aliases: []string{"rm"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remOrgMem(AMP, cmd)
@@ -83,7 +93,7 @@ var (
 	listOrgMemCmd = &cobra.Command{
 		Use:   "ls",
 		Short: "List members of organization",
-		Long:  `The remove command removes from an organization.`,
+		Long:  `The list command lists members of an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrgMem(AMP, cmd)
 		},
@@ -91,6 +101,7 @@ var (
 
 	organization string
 	member       string
+	role         string
 )
 
 func init() {
@@ -102,6 +113,7 @@ func init() {
 	memOrgCmd.AddCommand(addOrgMemCmd)
 	memOrgCmd.AddCommand(remOrgMemCmd)
 	memOrgCmd.AddCommand(listOrgMemCmd)
+	memOrgCmd.AddCommand(changeOrgMemRoleCmd)
 
 	listOrgCmd.Flags().BoolP("quiet", "q", false, "Only display Organization Name")
 
@@ -114,6 +126,10 @@ func init() {
 
 	addOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 	addOrgMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
+
+	changeOrgMemRoleCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
+	changeOrgMemRoleCmd.Flags().StringVar(&member, "member", member, "Member Name")
+	changeOrgMemRoleCmd.Flags().StringVar(&role, "role", role, "Role Name")
 
 	remOrgMemCmd.Flags().StringVar(&organization, "org", organization, "Organization Name")
 	remOrgMemCmd.Flags().StringVar(&member, "member", member, "Member Name")
@@ -293,6 +309,51 @@ func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Member(s) have been removed from organization successfully.")
+	return nil
+}
+
+func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+	if cmd.Flag("org").Changed {
+		organization = cmd.Flag("org").Value.String()
+	} else {
+		fmt.Print("organization: ")
+		organization = GetName()
+	}
+	if cmd.Flag("member").Changed {
+		member = cmd.Flag("member").Value.String()
+	} else {
+		fmt.Print("member name: ")
+		member = GetName()
+	}
+	if cmd.Flag("role").Changed {
+		role = cmd.Flag("role").Value.String()
+	} else {
+		fmt.Print("organization role: ")
+		fmt.Scanln(&role)
+	}
+
+	orgRole := schema.OrganizationRole_ORGANIZATION_MEMBER
+	switch role {
+	case "owner":
+		orgRole = schema.OrganizationRole_ORGANIZATION_OWNER
+	case "member":
+		orgRole = schema.OrganizationRole_ORGANIZATION_MEMBER
+	default:
+		manager.fatalf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", role)
+	}
+
+	request := &account.ChangeOrganizationMemberRoleRequest{
+		OrganizationName: organization,
+		UserName:         member,
+		Role:             orgRole,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	_, err = accClient.ChangeOrganizationMemberRole(context.Background(), request)
+	if err != nil {
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
+	}
+	manager.printf(colSuccess, "Role has been changed successfully.")
 	return nil
 }
 

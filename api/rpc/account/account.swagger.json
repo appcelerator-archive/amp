@@ -192,6 +192,44 @@
         "tags": [
           "Account"
         ]
+      },
+      "put": {
+        "operationId": "ChangeOrganizationMemberRole",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "user_name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountChangeOrganizationMemberRoleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/v1/organizations/{organization_name}/teams": {
@@ -664,6 +702,22 @@
         "user_name": {
           "type": "string",
           "format": "string"
+        }
+      }
+    },
+    "accountChangeOrganizationMemberRoleRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "user_name": {
+          "type": "string",
+          "format": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/schemaOrganizationRole"
         }
       }
     },

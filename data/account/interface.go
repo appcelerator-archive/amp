@@ -44,6 +44,9 @@ type Interface interface {
 	// RemoveUserFromOrganization removes a user from the given organization
 	RemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (err error)
 
+	// ChangeOrganizationMemberRole changes the role of given user in the given organization
+	ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role schema.OrganizationRole) (err error)
+
 	// ListOrganizations lists organizations
 	ListOrganizations(ctx context.Context) (organizations []*schema.Organization, err error)
 

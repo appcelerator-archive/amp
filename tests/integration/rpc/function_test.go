@@ -4,6 +4,7 @@ import (
 	. "github.com/appcelerator/amp/api/rpc/function"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -11,7 +12,13 @@ import (
 )
 
 func TestFunctionShouldCreateAndDeleteAFunction(t *testing.T) {
-	created, err := functionClient.Create(ctx, &CreateRequest{
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	created, err := functionClient.Create(ownerCtx, &CreateRequest{
 		Function: &FunctionEntry{
 			Name:  "test-function",
 			Image: "test-image",
@@ -19,14 +26,20 @@ func TestFunctionShouldCreateAndDeleteAFunction(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	_, err = functionClient.Delete(ctx, &DeleteRequest{
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{
 		Id: created.Function.Id,
 	})
 	assert.NoError(t, err)
 }
 
 func TestFunctionShouldFailWhenCreatingAnAlreadyExistingFunction(t *testing.T) {
-	created, err := functionClient.Create(ctx, &CreateRequest{
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	created, err := functionClient.Create(ownerCtx, &CreateRequest{
 		Function: &FunctionEntry{
 			Name:  "test-function",
 			Image: "test-image",
@@ -34,7 +47,7 @@ func TestFunctionShouldFailWhenCreatingAnAlreadyExistingFunction(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	_, err = functionClient.Create(ctx, &CreateRequest{
+	_, err = functionClient.Create(ownerCtx, &CreateRequest{
 		Function: &FunctionEntry{
 			Name:  "test-function",
 			Image: "test-image",
@@ -42,34 +55,40 @@ func TestFunctionShouldFailWhenCreatingAnAlreadyExistingFunction(t *testing.T) {
 	})
 	assert.Error(t, err)
 
-	_, err = functionClient.Delete(ctx, &DeleteRequest{
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{
 		Id: created.Function.Id,
 	})
 	assert.NoError(t, err)
 }
 
 func TestFunctionShouldListCreatedFunctions(t *testing.T) {
-	r1, err := functionClient.Create(ctx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-1", Image: "test-image-1"}})
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	r1, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-1", Image: "test-image-1"}})
 	assert.NoError(t, err)
-	r2, err := functionClient.Create(ctx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-2", Image: "test-image-2"}})
+	r2, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-2", Image: "test-image-2"}})
 	assert.NoError(t, err)
-	r3, err := functionClient.Create(ctx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-3", Image: "test-image-3"}})
+	r3, err := functionClient.Create(ownerCtx, &CreateRequest{Function: &FunctionEntry{Name: "test-function-3", Image: "test-image-3"}})
 	assert.NoError(t, err)
 
-	reply, err := functionClient.List(ctx, &ListRequest{})
+	reply, err := functionClient.List(ownerCtx, &ListRequest{})
 	assert.NoError(t, err)
 	assert.Contains(t, reply.Functions, r1.Function)
 	assert.Contains(t, reply.Functions, r2.Function)
 	assert.Contains(t, reply.Functions, r3.Function)
 
-	_, err = functionClient.Delete(ctx, &DeleteRequest{Id: r1.Function.Id})
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{Id: r1.Function.Id})
 	assert.NoError(t, err)
-	_, err = functionClient.Delete(ctx, &DeleteRequest{Id: r2.Function.Id})
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{Id: r2.Function.Id})
 	assert.NoError(t, err)
-	_, err = functionClient.Delete(ctx, &DeleteRequest{Id: r3.Function.Id})
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{Id: r3.Function.Id})
 	assert.NoError(t, err)
 
-	reply, err = functionClient.List(ctx, &ListRequest{})
+	reply, err = functionClient.List(ownerCtx, &ListRequest{})
 	assert.NoError(t, err)
 	assert.NotContains(t, reply.Functions, r1.Function)
 	assert.NotContains(t, reply.Functions, r2.Function)
@@ -77,7 +96,13 @@ func TestFunctionShouldListCreatedFunctions(t *testing.T) {
 }
 
 func TestFunctionShouldCreateInvokeAndDeleteAFunction(t *testing.T) {
-	created, err := functionClient.Create(ctx, &CreateRequest{
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	created, err := functionClient.Create(ownerCtx, &CreateRequest{
 		Function: &FunctionEntry{
 			Name:  "test-" + stringid.GenerateNonCryptoID(),
 			Image: "appcelerator/amp-demo-function",
@@ -93,7 +118,7 @@ func TestFunctionShouldCreateInvokeAndDeleteAFunction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, strings.Title(testInput), string(output))
 
-	_, err = functionClient.Delete(ctx, &DeleteRequest{
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{
 		Id: created.Function.Id,
 	})
 	assert.NoError(t, err)

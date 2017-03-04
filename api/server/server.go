@@ -19,6 +19,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
+	accounts "github.com/appcelerator/amp/data/account"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -100,7 +101,9 @@ func Start(config *amp.Config) {
 		Os:        runInfo.GOOS,
 		Arch:      runInfo.GOARCH,
 	})
-	account.RegisterAccountServer(s, account.NewServer(runtime.Store))
+	account.RegisterAccountServer(s, &account.Server{
+		Accounts: runtime.Accounts,
+	})
 
 	// start listening
 	lis, err := net.Listen("tcp", config.Port)
@@ -118,6 +121,9 @@ func initEtcd(config *amp.Config) error {
 		return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
 	}
 	log.Println("Connected to etcd at", strings.Join(runtime.Store.Endpoints(), ","))
+
+	// Create associated stores
+	runtime.Accounts = accounts.NewStore(runtime.Store)
 	return nil
 }
 

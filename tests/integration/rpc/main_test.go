@@ -14,8 +14,10 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"log"
 	"os"
 	"testing"
@@ -73,7 +75,6 @@ func TestMain(m *testing.M) {
 	initMailServer()
 
 	// Authenticated clients
-	functionClient = function.NewFunctionClient(authenticatedConn)
 	statsClient = stats.NewStatsClient(authenticatedConn)
 	stackClient = stack.NewStackServiceClient(authenticatedConn)
 	topicClient = topic.NewTopicClient(authenticatedConn)
@@ -82,6 +83,7 @@ func TestMain(m *testing.M) {
 
 	// Anonymous clients
 	accountClient = account.NewAccountClient(anonymousConn)
+	functionClient = function.NewFunctionClient(anonymousConn)
 
 	// Start tests
 	code := m.Run()
@@ -90,4 +92,57 @@ func TestMain(m *testing.M) {
 	accountStore.Reset(ctx)
 
 	os.Exit(code)
+}
+
+func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
+	// SignUp
+	_, err := accountClient.SignUp(ctx, user)
+	assert.NoError(t, err)
+
+	// Create a verify token
+	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
+	assert.NoError(t, err)
+
+	// Verify
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	assert.NoError(t, err)
+
+	// Create a login token
+	token, err = auth.CreateLoginToken(user.Name, "", time.Hour)
+	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+}
+
+func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
+	// Create a user
+	ownerCtx := createUser(t, owner)
+
+	// CreateOrganization
+	_, err := accountClient.CreateOrganization(ownerCtx, org)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+func addUserToOrganization(t *testing.T, org *account.CreateOrganizationRequest, ownerCtx context.Context, user *account.SignUpRequest) context.Context {
+	// Create a user
+	userCtx := createUser(t, user)
+
+	// AddUserToOrganization
+	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: org.Name,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+	return userCtx
+}
+
+func createTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest, team *account.CreateTeamRequest) context.Context {
+	// Create a user
+	ownerCtx := createOrganization(t, org, owner)
+
+	// CreateTeam
+	_, err := accountClient.CreateTeam(ownerCtx, team)
+	assert.NoError(t, err)
+
+	return ownerCtx
 }

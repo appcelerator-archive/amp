@@ -2,6 +2,7 @@ package function
 
 import (
 	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -22,20 +23,29 @@ type Server struct {
 	NatsStreaming ns.NatsStreaming
 }
 
-// GetOwners get organization owners
+// GetOwners get function owner
 func (f *FunctionEntry) GetOwners() []string {
-	return []string{f.Owner}
+	user, err := runtime.Accounts.GetUser(context.Background(), f.Owner)
+	if err != nil {
+		return []string{}
+	}
+	if user != nil {
+		return []string{user.Name}
+	}
+
+	org, err := runtime.Accounts.GetOrganization(context.Background(), f.Owner)
+	if err != nil {
+		return []string{}
+	}
+	if org != nil {
+		return org.GetOwners()
+	}
+	return []string{}
 }
 
 // Create implements function.Server
 func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 	log.Println("rpc-function: Create", in.String())
-
-	// Get requester
-	requester, err := auth.GetRequester(ctx)
-	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, err.Error())
-	}
 
 	// Validate the function
 	fn := in.Function
@@ -61,7 +71,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 
 	// Store the function
 	fn.Id = stringid.GenerateNonCryptoID()
-	fn.Owner = requester
+	fn.Owner = auth.GetRequester(ctx)
 	if err := s.Store.Create(ctx, path.Join(amp.EtcdFunctionRootKey, fn.Id), fn, nil, 0); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "error creating function: %v", err)
 	}
@@ -98,10 +108,7 @@ func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*DeleteReply, e
 	}
 
 	// Check authorization
-	requester, err := auth.GetRequester(ctx)
-	if err != nil {
-		return nil, grpc.Errorf(codes.PermissionDenied, "user %s is not authorized to perform this action", requester)
-	}
+	requester := auth.GetRequester(ctx)
 	if err := auth.Warden.IsAllowed(&ladon.Request{
 		Subject:  requester,
 		Action:   auth.DeleteAction,

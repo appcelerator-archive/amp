@@ -31,6 +31,15 @@ func (o *Organization) GetMemberIndex(memberName string) int {
 	return memberIndex
 }
 
+func (o *Organization) GetMember(memberName string) *OrganizationMember {
+	for _, member := range o.Members {
+		if member.Name == memberName {
+			return member
+		}
+	}
+	return nil
+}
+
 func (o *Organization) HasMember(memberName string) bool {
 	return o.GetMemberIndex(memberName) != -1
 }
