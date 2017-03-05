@@ -8,6 +8,6 @@ message Function {
   string id = 1;
   string name = 2;
   string image = 3;
-  accounts.Owner owner = 4;
+  accounts.Account owner = 4;
   int64 create_dt = 5;
 }

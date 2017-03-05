@@ -44,7 +44,7 @@ func (s *Store) CreateFunction(ctx context.Context, name string, image string) (
 		Id:       stringid.GenerateNonCryptoID(),
 		Name:     name,
 		Image:    image,
-		Owner:    accounts.GetRequester(ctx),
+		Owner:    accounts.GetRequesterAccount(ctx),
 		CreateDt: time.Now().Unix(),
 	}
 	if err := function.Validate(); err != nil {

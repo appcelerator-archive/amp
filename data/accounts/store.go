@@ -25,6 +25,55 @@ func NewStore(store storage.Interface) *Store {
 	return &Store{store: store}
 }
 
+// GetRequesterAccount gets the requester account from the given context, i.e. the user or organization performing the request
+func GetRequesterAccount(ctx context.Context) *Account {
+	activeOrganization := authn.GetActiveOrganization(ctx)
+	if activeOrganization != "" {
+		return &Account{
+			Type: AccountType_ORGANIZATION,
+			Name: activeOrganization,
+		}
+	}
+	return &Account{
+		Type: AccountType_USER,
+		Name: authn.GetUser(ctx),
+	}
+}
+
+func (s *Store) IsAuthorized(ctx context.Context, owner Account, action string, resource string) bool {
+	subject := authn.GetUser(ctx)
+	switch owner.Type {
+	case AccountType_ORGANIZATION:
+		organization, err := s.GetOrganization(ctx, owner.Name)
+		if err != nil {
+			return false
+		}
+		if organization == nil {
+			return false
+		}
+		err = warden.IsAllowed(&ladon.Request{
+			Subject:  subject,
+			Action:   action,
+			Resource: resource,
+			Context: ladon.Context{
+				"organization": organization,
+			},
+		})
+		return err == nil
+	case AccountType_USER:
+		err := warden.IsAllowed(&ladon.Request{
+			Subject:  subject,
+			Action:   action,
+			Resource: resource,
+			Context: ladon.Context{
+				"user": owner.Name,
+			},
+		})
+		return err == nil
+	}
+	return false
+}
+
 func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	user := &User{}
 	if err := s.store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
@@ -308,6 +357,11 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 
 // AddUserToOrganization adds a user to the given organization
 func (s *Store) AddUserToOrganization(ctx context.Context, organizationName string, userName string) (err error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -315,18 +369,6 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Get the user
@@ -349,6 +391,11 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 }
 
 func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+		return nil, NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -356,18 +403,6 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 	if organization == nil {
 		return nil, OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"roles.organization": organization,
-		},
-	}); err != nil {
-		return nil, NotAuthorized
 	}
 
 	// Get the user
@@ -404,6 +439,11 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 
 // ChangeOrganizationMemberRole changes the role of given user in the given organization
 func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role OrganizationRole) (err error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -411,18 +451,6 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"roles.organization": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Get the user
@@ -473,6 +501,11 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) 
 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, name}, DeleteAction, OrganizationResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, name)
 	if err != nil {
@@ -480,18 +513,6 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   DeleteAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Delete organization
@@ -505,6 +526,11 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 
 // CreateTeam creates a new team
 func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, CreateAction, TeamResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -512,19 +538,6 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	requester := authn.GetUser(ctx)
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  requester,
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Check if team already exists
@@ -538,7 +551,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		CreateDt: time.Now().Unix(),
 		Members: []*TeamMember{
 			{
-				Name: requester,
+				Name: authn.GetUser(ctx),
 				Role: TeamRole_TEAM_OWNER,
 			},
 		},
@@ -551,6 +564,11 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 
 // AddUserToTeam adds a user to the given team
 func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -558,18 +576,6 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Get team
@@ -605,6 +611,11 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 
 // RemoveUserFromTeam removes a user from the given team
 func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -612,18 +623,6 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   UpdateAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Get team
@@ -683,6 +682,11 @@ func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*Team
 
 // DeleteTeam deletes a team by name
 func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamName string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, Account{AccountType_ORGANIZATION, organizationName}, DeleteAction, TeamResource) {
+		return NotAuthorized
+	}
+
 	// Get organization
 	organization, err := s.GetOrganization(ctx, organizationName)
 	if err != nil {
@@ -690,18 +694,6 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	}
 	if organization == nil {
 		return OrganizationNotFound
-	}
-
-	// Check authorization
-	if err := Warden.IsAllowed(&ladon.Request{
-		Subject:  authn.GetUser(ctx),
-		Action:   DeleteAction,
-		Resource: OrganizationResource,
-		Context: ladon.Context{
-			"resource": organization,
-		},
-	}); err != nil {
-		return NotAuthorized
 	}
 
 	// Check if the team is actually a team in the organization

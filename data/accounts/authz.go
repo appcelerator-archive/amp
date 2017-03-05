@@ -1,11 +1,8 @@
 package accounts
 
 import (
-	"github.com/appcelerator/amp/api/authn"
-	"github.com/appcelerator/amp/pkg/ladon/conditions"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/ory-am/ladon"
-	"golang.org/x/net/context"
 	"log"
 )
 
@@ -13,6 +10,7 @@ const (
 	// Resources
 	AmpResource          = "amprn"
 	OrganizationResource = AmpResource + ":organization"
+	TeamResource         = AmpResource + ":team"
 	FunctionResource     = AmpResource + ":function"
 
 	// Actions
@@ -24,64 +22,108 @@ const (
 )
 
 var (
-	// Organization owners are able to administrate their own organizations
-	organizationOwners = &ladon.DefaultPolicy{
-		ID:          stringid.GenerateNonCryptoID(),
-		Subjects:    []string{"<.*>"},
-		Description: "Organization owners are able to administrate their own organizations",
-		Resources:   []string{OrganizationResource},
-		Actions:     []string{"<" + AdminAction + ">"},
-		Effect:      ladon.AllowAccess,
+	organizationsAdminByOrgOwners = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{OrganizationResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"resource": &conditions.ResourceOwnerCondition{},
+			"organization": &OrganizationRoleCondition{[]OrganizationRole{
+				OrganizationRole_ORGANIZATION_OWNER,
+			}},
 		},
 	}
 
-	// Functions owners are able to administrate their own functions
-	functionOwners = &ladon.DefaultPolicy{
-		ID:          stringid.GenerateNonCryptoID(),
-		Subjects:    []string{"<.*>"},
-		Description: "Functions owners are able to administrate their own functions",
-		Resources:   []string{FunctionResource},
-		Actions:     []string{"<" + AdminAction + ">"},
-		Effect:      ladon.AllowAccess,
+	teamsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{TeamResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"resource": &conditions.ResourceOwnerCondition{},
+			"organization": &OrganizationRoleCondition{[]OrganizationRole{
+				OrganizationRole_ORGANIZATION_MEMBER,
+				OrganizationRole_ORGANIZATION_OWNER,
+			}},
+		},
+	}
+
+	functionsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{FunctionResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"organization": &OrganizationRoleCondition{[]OrganizationRole{
+				OrganizationRole_ORGANIZATION_MEMBER,
+				OrganizationRole_ORGANIZATION_OWNER,
+			}},
+		},
+	}
+
+	functionsAdminByUserOwner = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{FunctionResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
 		},
 	}
 
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
-		organizationOwners,
-		functionOwners,
+		organizationsAdminByOrgOwners,
+		teamsAdminByOrgOwnersAndMembers,
+		functionsAdminByOrgOwnersAndMembers,
+		functionsAdminByUserOwner,
 	}
 
-	Warden = &ladon.Ladon{
+	warden = &ladon.Ladon{
 		Manager: ladon.NewMemoryManager(),
 	}
 )
-
-// GetRequester gets the requester, i.e. the user or organization performing the request
-func GetRequester(ctx context.Context) *Owner {
-	activeOrganization := authn.GetActiveOrganization(ctx)
-	if activeOrganization != "" {
-		return &Owner{
-			Type: OwnerType_ORGANIZATION,
-			Name: activeOrganization,
-		}
-	}
-	return &Owner{
-		Type: OwnerType_USER,
-		Name: authn.GetUser(ctx),
-	}
-}
 
 // TODO: Create a real policy manager?
 func init() {
 	// Register all policies
 	for _, policy := range policies {
-		if err := Warden.Manager.Create(policy); err != nil {
+		if err := warden.Manager.Create(policy); err != nil {
 			log.Fatal("Unable to create policy:", err)
 		}
 	}
+}
+
+// OrganizationRoleCondition is a condition which is fulfilled if the request's subject has the expected role in the organization
+type OrganizationRoleCondition struct {
+	ExpectedRoles []OrganizationRole
+}
+
+// Fulfills returns true if the request's subject is equal to the given value string
+func (c *OrganizationRoleCondition) Fulfills(value interface{}, r *ladon.Request) bool {
+	organization, ok := value.(*Organization)
+	if !ok {
+		return false
+	}
+	if organization == nil {
+		return false
+	}
+	member := organization.GetMember(r.Subject)
+	if member == nil {
+		return false
+	}
+	for _, role := range c.ExpectedRoles {
+		if role == member.GetRole() {
+			return true
+		}
+	}
+	return false
+}
+
+// GetName returns the condition's name.
+func (c *OrganizationRoleCondition) GetName() string {
+	return "OrganizationRoleCondition"
 }
