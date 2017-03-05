@@ -1059,10 +1059,10 @@
     "accountsOrganizationRole": {
       "type": "string",
       "enum": [
-        "ORGANIZATION_OWNER",
-        "ORGANIZATION_MEMBER"
+        "ORGANIZATION_MEMBER",
+        "ORGANIZATION_OWNER"
       ],
-      "default": "ORGANIZATION_OWNER"
+      "default": "ORGANIZATION_MEMBER"
     },
     "accountsTeam": {
       "type": "object",
@@ -1098,10 +1098,10 @@
     "accountsTeamRole": {
       "type": "string",
       "enum": [
-        "TEAM_OWNER",
-        "TEAM_MEMBER"
+        "TEAM_MEMBER",
+        "TEAM_OWNER"
       ],
-      "default": "TEAM_OWNER"
+      "default": "TEAM_MEMBER"
     },
     "accountsUser": {
       "type": "object",

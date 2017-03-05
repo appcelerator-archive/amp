@@ -2,12 +2,3 @@ syntax = "proto3";
 
 package auth;
 
-enum AccountType {
-  USER = 0;
-  ORGANIZATION = 1;
-}
-
-message Account {
-  AccountType type = 1;
-  string name = 2;
-}

@@ -2,7 +2,7 @@ package functions
 
 import (
 	"context"
-	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
@@ -42,7 +42,7 @@ func (s *Store) CreateFunction(ctx context.Context, name string, image string) (
 		Id:       stringid.GenerateNonCryptoID(),
 		Name:     name,
 		Image:    image,
-		Owner:    auth.GetRequester(ctx),
+		Owner:    accounts.GetRequester(ctx),
 		CreateDt: time.Now().Unix(),
 	}
 	if err := function.Validate(); err != nil {

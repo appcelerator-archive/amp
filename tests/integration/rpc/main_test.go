@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 	functionStore = functions.NewStore(store)
 
 	// Create a valid user token
-	token, _ := auth.CreateLoginToken("default", "", time.Hour)
+	token, _ := authn.CreateLoginToken("default", "", time.Hour)
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
@@ -103,7 +103,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a verify token
-	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
+	token, err := authn.CreateVerificationToken(user.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -111,8 +111,8 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a login token
-	token, err = auth.CreateLoginToken(user.Name, "", time.Hour)
-	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+	token, err = authn.CreateLoginToken(user.Name, "", time.Hour)
+	return metadata.NewContext(ctx, metadata.Pairs(authn.TokenKey, token))
 }
 
 func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {

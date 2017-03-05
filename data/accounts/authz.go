@@ -1,9 +1,11 @@
-package auth
+package accounts
 
 import (
+	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/pkg/ladon/conditions"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/ory-am/ladon"
+	"golang.org/x/net/context"
 	"log"
 )
 
@@ -58,6 +60,21 @@ var (
 		Manager: ladon.NewMemoryManager(),
 	}
 )
+
+// GetRequester gets the requester, i.e. the user or organization performing the request
+func GetRequester(ctx context.Context) *Owner {
+	activeOrganization := authn.GetActiveOrganization(ctx)
+	if activeOrganization != "" {
+		return &Owner{
+			Type: OwnerType_ORGANIZATION,
+			Name: activeOrganization,
+		}
+	}
+	return &Owner{
+		Type: OwnerType_USER,
+		Name: authn.GetUser(ctx),
+	}
+}
 
 // TODO: Create a real policy manager?
 func init() {

@@ -429,7 +429,7 @@ func (m *ChangeOrganizationMemberRoleRequest) GetRole() accounts.OrganizationRol
 	if m != nil {
 		return m.Role
 	}
-	return accounts.OrganizationRole_ORGANIZATION_OWNER
+	return accounts.OrganizationRole_ORGANIZATION_MEMBER
 }
 
 type GetOrganizationRequest struct {

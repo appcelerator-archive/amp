@@ -82,11 +82,11 @@
     }
   },
   "definitions": {
-    "authAccount": {
+    "accountsOwner": {
       "type": "object",
       "properties": {
         "type": {
-          "$ref": "#/definitions/authAccountType"
+          "$ref": "#/definitions/accountsOwnerType"
         },
         "name": {
           "type": "string",
@@ -94,7 +94,7 @@
         }
       }
     },
-    "authAccountType": {
+    "accountsOwnerType": {
       "type": "string",
       "enum": [
         "USER",
@@ -162,7 +162,7 @@
           "format": "string"
         },
         "owner": {
-          "$ref": "#/definitions/authAccount"
+          "$ref": "#/definitions/accountsOwner"
         },
         "create_dt": {
           "type": "string",

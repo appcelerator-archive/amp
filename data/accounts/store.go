@@ -2,7 +2,7 @@ package accounts
 
 import (
 	"context"
-	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
@@ -115,7 +115,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 // VerifyUser verifies a user account
 func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	// Validate the token
-	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
+	claims, err := authn.ValidateToken(token, authn.TokenTypeVerification)
 	if err != nil {
 		return nil, InvalidToken
 	}
@@ -211,7 +211,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 // DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// Get requester
-	requester := auth.GetUser(ctx)
+	requester := authn.GetUser(ctx)
 	if requester != name {
 		return NotAuthorized
 	}
@@ -294,7 +294,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		CreateDt: time.Now().Unix(),
 		Members: []*OrganizationMember{
 			{
-				Name: auth.GetUser(ctx),
+				Name: authn.GetUser(ctx),
 				Role: OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
@@ -320,10 +320,10 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
@@ -361,10 +361,10 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"roles.organization": organization,
 		},
@@ -416,10 +416,10 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"roles.organization": organization,
 		},
@@ -485,10 +485,10 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.DeleteAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   DeleteAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
@@ -517,11 +517,11 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	}
 
 	// Check authorization
-	requester := auth.GetUser(ctx)
-	if err := auth.Warden.IsAllowed(&ladon.Request{
+	requester := authn.GetUser(ctx)
+	if err := Warden.IsAllowed(&ladon.Request{
 		Subject:  requester,
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
@@ -563,10 +563,10 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
@@ -617,10 +617,10 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.UpdateAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   UpdateAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
@@ -695,10 +695,10 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	}
 
 	// Check authorization
-	if err := auth.Warden.IsAllowed(&ladon.Request{
-		Subject:  auth.GetUser(ctx),
-		Action:   auth.DeleteAction,
-		Resource: auth.OrganizationResource,
+	if err := Warden.IsAllowed(&ladon.Request{
+		Subject:  authn.GetUser(ctx),
+		Action:   DeleteAction,
+		Resource: OrganizationResource,
 		Context: ladon.Context{
 			"resource": organization,
 		},
