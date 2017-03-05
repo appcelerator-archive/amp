@@ -14,13 +14,15 @@ const functionsRootKey = "functions"
 
 // Store implements function data.Interface
 type Store struct {
-	Store storage.Interface
+	store    storage.Interface
+	accounts accounts.Interface
 }
 
 // NewStore returns an etcd implementation of function.Interface
 func NewStore(store storage.Interface) *Store {
 	return &Store{
-		Store: store,
+		store:    store,
+		accounts: accounts.NewStore(store),
 	}
 }
 
@@ -48,7 +50,7 @@ func (s *Store) CreateFunction(ctx context.Context, name string, image string) (
 	if err := function.Validate(); err != nil {
 		return nil, err
 	}
-	if err := s.Store.Create(ctx, path.Join(functionsRootKey, function.Id), function, nil, 0); err != nil {
+	if err := s.store.Create(ctx, path.Join(functionsRootKey, function.Id), function, nil, 0); err != nil {
 		return nil, err
 	}
 	return function, nil
@@ -57,7 +59,7 @@ func (s *Store) CreateFunction(ctx context.Context, name string, image string) (
 // GetFunction fetches a function by id
 func (s *Store) GetFunction(ctx context.Context, id string) (*Function, error) {
 	function := &Function{}
-	if err := s.Store.Get(ctx, path.Join(functionsRootKey, id), function, true); err != nil {
+	if err := s.store.Get(ctx, path.Join(functionsRootKey, id), function, true); err != nil {
 		return nil, err
 	}
 	// If there's no "id" in the answer, it means the function has not been found, so return nil
@@ -87,7 +89,7 @@ func (s *Store) GetFunctionByName(ctx context.Context, name string) (*Function, 
 // ListFunctions lists functions
 func (s *Store) ListFunctions(ctx context.Context) ([]*Function, error) {
 	protos := []proto.Message{}
-	if err := s.Store.List(ctx, functionsRootKey, storage.Everything, &Function{}, &protos); err != nil {
+	if err := s.store.List(ctx, functionsRootKey, storage.Everything, &Function{}, &protos); err != nil {
 		return nil, err
 	}
 	functions := []*Function{}
@@ -100,7 +102,7 @@ func (s *Store) ListFunctions(ctx context.Context) ([]*Function, error) {
 // DeleteFunction deletes a function by id
 func (s *Store) DeleteFunction(ctx context.Context, id string) error {
 	// Delete the function
-	if err := s.Store.Delete(ctx, path.Join(functionsRootKey, id), false, nil); err != nil {
+	if err := s.store.Delete(ctx, path.Join(functionsRootKey, id), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -108,5 +110,5 @@ func (s *Store) DeleteFunction(ctx context.Context, id string) error {
 
 // Reset resets the account store
 func (s *Store) Reset(ctx context.Context) {
-	s.Store.Delete(ctx, functionsRootKey, true, nil)
+	s.store.Delete(ctx, functionsRootKey, true, nil)
 }

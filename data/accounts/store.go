@@ -17,19 +17,17 @@ const organizationsRootKey = "organizations"
 
 // Store implements user data.Interface
 type Store struct {
-	Store storage.Interface
+	store storage.Interface
 }
 
 // NewStore returns an etcd implementation of user.Interface
 func NewStore(store storage.Interface) *Store {
-	return &Store{
-		Store: store,
-	}
+	return &Store{store: store}
 }
 
 func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	user := &User{}
-	if err := s.Store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
+	if err := s.store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
 	}
 	// If there's no "name" in the answer, it means the user has not been found, so return nil
@@ -106,7 +104,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
-	if err := s.Store.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
+	if err := s.store.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
 		return nil, err
 	}
 	return secureUser(user), nil
@@ -124,7 +122,7 @@ func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 		return nil, err
 	}
 	user.IsVerified = true
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+	if err := s.store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return nil, err
 	}
 	return secureUser(user), nil
@@ -160,7 +158,7 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 	}
 
 	// Update user
-	if err := s.Store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+	if err := s.store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return err
 	}
 	return nil
@@ -198,7 +196,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error)
 // ListUsers lists users
 func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	protos := []proto.Message{}
-	if err := s.Store.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
+	if err := s.store.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
 		return nil, err
 	}
 	users := []*User{}
@@ -235,7 +233,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	}
 
 	// Delete the user
-	if err := s.Store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
+	if err := s.store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -261,7 +259,7 @@ func (s *Store) updateOrganization(ctx context.Context, in *Organization) error 
 	if err := in.Validate(); err != nil {
 		return err
 	}
-	if err := s.Store.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
+	if err := s.store.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
 		return err
 	}
 	return nil
@@ -302,7 +300,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 	if err := organization.Validate(); err != nil {
 		return err
 	}
-	if err := s.Store.Create(ctx, path.Join(organizationsRootKey, organization.Name), organization, nil, 0); err != nil {
+	if err := s.store.Create(ctx, path.Join(organizationsRootKey, organization.Name), organization, nil, 0); err != nil {
 		return err
 	}
 	return nil
@@ -450,7 +448,7 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (*Organization
 		return nil, err
 	}
 	organization := &Organization{}
-	if err := s.Store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
+	if err := s.store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
 		return nil, err
 	}
 	// If there's no "name" in the answer, it means the organization has not been found, so return nil
@@ -463,7 +461,7 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (*Organization
 // ListOrganizations lists organizations
 func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) {
 	protos := []proto.Message{}
-	if err := s.Store.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {
+	if err := s.store.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {
 		return nil, err
 	}
 	organizations := []*Organization{}
@@ -497,7 +495,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 
 	// Delete organization
-	if err := s.Store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
+	if err := s.store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -719,6 +717,6 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 
 // Reset resets the account store
 func (s *Store) Reset(ctx context.Context) {
-	s.Store.Delete(ctx, usersRootKey, true, nil)
-	s.Store.Delete(ctx, organizationsRootKey, true, nil)
+	s.store.Delete(ctx, usersRootKey, true, nil)
+	s.store.Delete(ctx, organizationsRootKey, true, nil)
 }
