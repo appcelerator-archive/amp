@@ -1,8 +1,6 @@
 package accounts
 
-import (
-	"context"
-)
+import "golang.org/x/net/context"
 
 type Error string
 
@@ -87,6 +85,9 @@ type Interface interface {
 
 	// DeleteTeam deletes a team by name
 	DeleteTeam(ctx context.Context, organizationName string, teamName string) (err error)
+
+	// IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
+	IsAuthorized(ctx context.Context, owner *Account, action string, resource string) bool
 
 	// Reset resets the user store
 	Reset(ctx context.Context)

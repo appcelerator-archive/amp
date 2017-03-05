@@ -1,11 +1,11 @@
 package functions
 
 import (
-	"context"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/net/context"
 	"path"
 	"time"
 )
@@ -101,6 +101,19 @@ func (s *Store) ListFunctions(ctx context.Context) ([]*Function, error) {
 
 // DeleteFunction deletes a function by id
 func (s *Store) DeleteFunction(ctx context.Context, id string) error {
+	f, err := s.GetFunction(ctx, id)
+	if err != nil {
+		return err
+	}
+	if f == nil {
+		return FunctionNotFound
+	}
+
+	// Check authorization
+	if !s.accounts.IsAuthorized(ctx, f.Owner, accounts.DeleteAction, accounts.FunctionResource) {
+		return accounts.NotAuthorized
+	}
+
 	// Delete the function
 	if err := s.store.Delete(ctx, path.Join(functionsRootKey, id), false, nil); err != nil {
 		return err

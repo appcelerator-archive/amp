@@ -1,8 +1,10 @@
 package accounts
 
 import (
+	"github.com/appcelerator/amp/api/authn"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/ory-am/ladon"
+	"golang.org/x/net/context"
 	"log"
 )
 
@@ -95,6 +97,61 @@ func init() {
 			log.Fatal("Unable to create policy:", err)
 		}
 	}
+}
+
+// Authorization
+
+// GetRequesterAccount gets the requester account from the given context, i.e. the user or organization performing the request
+func GetRequesterAccount(ctx context.Context) *Account {
+	activeOrganization := authn.GetActiveOrganization(ctx)
+	if activeOrganization != "" {
+		return &Account{
+			Type: AccountType_ORGANIZATION,
+			Name: activeOrganization,
+		}
+	}
+	return &Account{
+		Type: AccountType_USER,
+		Name: authn.GetUser(ctx),
+	}
+}
+
+// IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
+func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string, resource string) bool {
+	if owner == nil {
+		return false
+	}
+	subject := authn.GetUser(ctx)
+	switch owner.Type {
+	case AccountType_ORGANIZATION:
+		organization, err := s.GetOrganization(ctx, owner.Name)
+		if err != nil {
+			return false
+		}
+		if organization == nil {
+			return false
+		}
+		err = warden.IsAllowed(&ladon.Request{
+			Subject:  subject,
+			Action:   action,
+			Resource: resource,
+			Context: ladon.Context{
+				"organization": organization,
+			},
+		})
+		return err == nil
+	case AccountType_USER:
+		err := warden.IsAllowed(&ladon.Request{
+			Subject:  subject,
+			Action:   action,
+			Resource: resource,
+			Context: ladon.Context{
+				"user": owner.Name,
+			},
+		})
+		return err == nil
+	}
+	return false
 }
 
 // OrganizationRoleCondition is a condition which is fulfilled if the request's subject has the expected role in the organization

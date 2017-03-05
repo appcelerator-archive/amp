@@ -1,8 +1,6 @@
 package functions
 
-import (
-	"context"
-)
+import "golang.org/x/net/context"
 
 type Error string
 
@@ -11,6 +9,7 @@ func (e Error) Error() string { return string(e) }
 const InvalidName = Error("name is invalid")
 const InvalidImage = Error("image is invalid")
 const FunctionAlreadyExists = Error("function already exists")
+const FunctionNotFound = Error("function not found")
 
 // Interface defines the function data access layer
 type Interface interface {
