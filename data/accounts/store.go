@@ -31,8 +31,7 @@ func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	if err := s.store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
 	}
-	// If there's no "name" in the answer, it means the user has not been found, so return nil
-	if user.GetName() == "" {
+	if user.GetName() == "" { // If there's no "name" in the answer, it means the user has not been found, so return nil
 		return nil, nil
 	}
 	return user, nil
@@ -42,8 +41,7 @@ func secureUser(user *User) *User {
 	if user == nil {
 		return nil
 	}
-	// For security reasons, remove the password hash
-	user.PasswordHash = ""
+	user.PasswordHash = "" // For security reasons, remove the password hash
 	return user
 }
 
@@ -133,9 +131,7 @@ func (s *Store) CheckUserPassword(ctx context.Context, name string, password str
 	if err != nil {
 		return err
 	}
-	// TODO: should we use the newHash ?
-	_, err = passlib.Verify(password, user.PasswordHash)
-	if err != nil {
+	if _, err = passlib.Verify(password, user.PasswordHash); err != nil {
 		return WrongPassword
 	}
 	return nil
@@ -213,19 +209,19 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 		return NotAuthorized
 	}
 
-	// Get organizations owned by he user
-	ownedOrganizations, err := s.getOwnedOrganization(ctx, name)
+	// Get organizations in which the user is a member
+	organizations, err := s.getUserOrganizations(ctx, name)
 	if err != nil {
 		return err
 	}
 	// Check if user can be removed from all organizations
-	for _, o := range ownedOrganizations {
+	for _, o := range organizations {
 		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
 			return err
 		}
 	}
 	// If yes, remove the user from all organizations
-	for _, o := range ownedOrganizations {
+	for _, o := range organizations {
 		if err := s.RemoveUserFromOrganization(ctx, o.Name, name); err != nil {
 			return err
 		}
@@ -240,18 +236,18 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 
 // Organizations
 
-func (s *Store) getOwnedOrganization(ctx context.Context, name string) ([]*Organization, error) {
+func (s *Store) getUserOrganizations(ctx context.Context, name string) ([]*Organization, error) {
 	organizations, err := s.ListOrganizations(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ownedOrganizations := []*Organization{}
+	userOrganizations := []*Organization{}
 	for _, o := range organizations {
-		if o.IsOwner(name) {
-			ownedOrganizations = append(ownedOrganizations, o)
+		if o.HasMember(name) {
+			userOrganizations = append(userOrganizations, o)
 		}
 	}
-	return ownedOrganizations, nil
+	return userOrganizations, nil
 }
 
 func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {
