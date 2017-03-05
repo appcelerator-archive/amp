@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -71,6 +72,14 @@ func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error)
 	case 2: // OK
 	default:
 		return errors.New("too many arguments")
+	}
+
+	name, image := strings.TrimSpace(args[0]), strings.TrimSpace(args[1])
+	if name == "" {
+		return errors.New("function name cannot be empty")
+	}
+	if image == "" {
+		return errors.New("docker image cannot be empty")
 	}
 
 	// Create function
