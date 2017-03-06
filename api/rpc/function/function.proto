@@ -25,18 +25,6 @@ service Function {
   };
 }
 
-message FunctionCall {
-  string callID = 1;
-  bytes input = 2;
-  functions.Function function = 3;
-  string returnTo = 4;
-}
-
-message FunctionReturn {
-  string callID = 1;
-  bytes output = 2;
-}
-
 message CreateRequest {
   string name = 1;
   string image = 2;

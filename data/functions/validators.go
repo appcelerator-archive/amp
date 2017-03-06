@@ -22,7 +22,7 @@ func CheckName(name string) error {
 	return nil
 }
 
-// CheckName checks user name
+// CheckImage checks image name
 func CheckImage(name string) error {
 	if isEmpty(name) {
 		return InvalidImage

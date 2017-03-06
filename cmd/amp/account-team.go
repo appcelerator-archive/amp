@@ -134,7 +134,7 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 
 	request := &account.ListTeamsRequest{
@@ -158,7 +158,7 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	for _, team := range reply.Teams {
-		fmt.Fprintf(w, "%s\t%s\n", team.Name, ConvertTime(team.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\n", team.Name, convertTime(team.CreateDt))
 	}
 	w.Flush()
 	return nil
@@ -171,13 +171,13 @@ func createTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 
 	request := &account.CreateTeamRequest{
@@ -201,13 +201,13 @@ func deleteTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 
 	request := &account.DeleteTeamRequest{
@@ -231,13 +231,13 @@ func getTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 
 	request := &account.GetTeamRequest{
@@ -252,7 +252,7 @@ func getTeam(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
-	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, ConvertTime(reply.Team.CreateDt))
+	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, convertTime(reply.Team.CreateDt))
 	w.Flush()
 	return nil
 }
@@ -271,19 +271,19 @@ func addTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 	if cmd.Flags().Changed("member") {
 		member = cmd.Flag("member").Value.String()
 	} else {
 		fmt.Print("member name: ")
-		member = GetName()
+		member = getName()
 	}
 
 	request := &account.AddUserToTeamRequest{
@@ -308,19 +308,19 @@ func removeTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 	if cmd.Flags().Changed("member") {
 		member = cmd.Flag("member").Value.String()
 	} else {
 		fmt.Print("member name: ")
-		member = GetName()
+		member = getName()
 	}
 
 	request := &account.RemoveUserFromTeamRequest{
@@ -345,13 +345,13 @@ func listTeamMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flags().Changed("team") {
 		team = cmd.Flag("team").Value.String()
 	} else {
 		fmt.Print("team: ")
-		team = GetName()
+		team = getName()
 	}
 
 	request := &account.GetTeamRequest{

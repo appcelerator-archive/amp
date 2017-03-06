@@ -2,14 +2,18 @@ package functions
 
 import "golang.org/x/net/context"
 
+// Error type
 type Error string
 
 func (e Error) Error() string { return string(e) }
 
-const InvalidName = Error("name is invalid")
-const InvalidImage = Error("image is invalid")
-const FunctionAlreadyExists = Error("function already exists")
-const FunctionNotFound = Error("function not found")
+// Errors
+const (
+	InvalidName           = Error("name is invalid")
+	InvalidImage          = Error("image is invalid")
+	FunctionAlreadyExists = Error("function already exists")
+	FunctionNotFound      = Error("function not found")
+)
 
 // Interface defines the function data access layer
 type Interface interface {

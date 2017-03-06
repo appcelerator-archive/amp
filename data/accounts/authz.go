@@ -8,14 +8,13 @@ import (
 	"log"
 )
 
+// Resources and actions
 const (
-	// Resources
 	AmpResource          = "amprn"
 	OrganizationResource = AmpResource + ":organization"
 	TeamResource         = AmpResource + ":team"
 	FunctionResource     = AmpResource + ":function"
 
-	// Actions
 	CreateAction = "create"
 	ReadAction   = "read"
 	UpdateAction = "update"
@@ -168,7 +167,7 @@ func (c *OrganizationRoleCondition) Fulfills(value interface{}, r *ladon.Request
 	if organization == nil {
 		return false
 	}
-	member := organization.GetMember(r.Subject)
+	member := organization.getMember(r.Subject)
 	if member == nil {
 		return false
 	}

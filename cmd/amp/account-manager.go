@@ -78,7 +78,7 @@ var (
 	newPwd   string
 
 	//TODO: pass verbose as arg
-	manager = NewCmdManager("")
+	manager = newCmdManager("")
 )
 
 //Adding account management commands to the account command
@@ -120,17 +120,17 @@ func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = GetEmailAddress()
+		email = getEmailAddress()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.SignUpRequest{
@@ -154,7 +154,7 @@ func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = GetToken()
+		token = getToken()
 	}
 
 	request := &account.VerificationRequest{
@@ -177,12 +177,12 @@ func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.LogInRequest{
@@ -209,7 +209,7 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = GetEmailAddress()
+		email = getEmailAddress()
 	}
 
 	request := &account.ForgotLoginRequest{
@@ -232,7 +232,7 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("account: ")
-		username = GetName()
+		username = getName()
 	}
 
 	request := &account.SwitchRequest{
@@ -275,7 +275,7 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		username = cmd.Flag("name").Value.String()
 	} else {
 		fmt.Print("username: ")
-		username = GetName()
+		username = getName()
 	}
 
 	request := &account.PasswordResetRequest{
@@ -298,13 +298,13 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 	fmt.Println("Enter new password.")
 	if cmd.Flag("new-password").Changed {
 		newPwd = cmd.Flag("new-password").Value.String()
 	} else {
-		newPwd = GetPassword()
+		newPwd = getPassword()
 	}
 
 	request := &account.PasswordChangeRequest{
@@ -327,13 +327,13 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
-		token = GetToken()
+		token = getToken()
 	}
 	fmt.Println("Enter new password.")
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
 	} else {
-		password = GetPassword()
+		password = getPassword()
 	}
 
 	request := &account.PasswordSetRequest{

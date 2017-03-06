@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -17,7 +16,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 	"time"
 )
@@ -49,11 +47,14 @@ var (
 	// store is the interface used to access the key/value storage backend
 	store storage.Interface
 
+	// functions is the interface used to access the function storage
+	fStore functions.Interface
+
 	// returnToTopic is the topic used to listen to function return
 	returnToTopic string
 
 	// locks is used for function return (indexed by call id)
-	locks = make(map[string](chan *function.FunctionReturn))
+	locks = make(map[string](chan *functions.FunctionReturn))
 )
 
 const (
@@ -70,6 +71,8 @@ func main() {
 		log.Fatalln("Unable to connect to etcd:", err)
 	}
 	log.Println("Connected to etcd at", strings.Join(store.Endpoints(), ","))
+
+	fStore = functions.NewStore(store)
 
 	// NATS Connect
 	hostname, err := os.Hostname()
@@ -106,40 +109,23 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Try to get the function by id first
 	ctx, cancel := context.WithTimeout(context.Background(), amp.DefaultTimeout)
 	defer cancel()
-	key := path.Join(amp.EtcdFunctionRootKey, idOrName)
-	fe := &functions.Function{}
-	if err := store.Get(ctx, key, fe, false); err != nil {
-		// We didn't find the function by id, try by name (by listing them all)
-		protos := []proto.Message{}
-		ctx, cancel := context.WithTimeout(context.Background(), amp.DefaultTimeout)
-		defer cancel()
-		if err := store.List(ctx, amp.EtcdFunctionRootKey, storage.Everything, fe, &protos); err != nil {
-			httpError(w, http.StatusInternalServerError, fmt.Sprintf("error listing functions: %v", err))
+	function, err := fStore.GetFunction(ctx, idOrName)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, fmt.Sprintf("error fetching function: %s", err.Error()))
+		return
+	}
+	if function == nil { // We didn't find the function by id, try by name (by listing them all)
+		function, err = fStore.GetFunctionByName(ctx, idOrName)
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, fmt.Sprintf("error fetching function: %s", err.Error()))
 			return
 		}
-
-		// Look for function by name
-		found := false
-		for _, f := range protos {
-			ok := false
-			fe, ok = f.(*functions.Function)
-			if !ok {
-				httpError(w, http.StatusInternalServerError, fmt.Sprintf("error casting function, expected: %T, got: %T", fe, f))
-				return
-			}
-			if fe.Name == idOrName {
-				found = true
-				break
-			}
-		}
-
-		// If not found, just exit
-		if !found {
+		if function == nil {
 			httpError(w, http.StatusNotFound, fmt.Sprintf("function not found: %s", idOrName))
 			return
 		}
 	}
-	log.Println("Function found", fe)
+	log.Println("Function found", function)
 
 	// Read the body parameter if any
 	body, err := ioutil.ReadAll(r.Body)
@@ -150,10 +136,10 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 	// Invoke the function by posting a function call to NATS
 	callID := stringid.GenerateNonCryptoID()
-	functionCall := function.FunctionCall{
+	functionCall := functions.FunctionCall{
 		CallID:   callID,
 		Input:    body,
-		Function: fe,
+		Function: function,
 		ReturnTo: returnToTopic,
 	}
 
@@ -173,7 +159,7 @@ func Index(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	log.Println("Function call successfuly submitted, call id:", functionCall.CallID)
 
 	// Wait for a NATS response
-	locks[callID] = make(chan *function.FunctionReturn, 1) // Create the channel
+	locks[callID] = make(chan *functions.FunctionReturn, 1) // Create the channel
 	select {
 	case functionReturn := <-locks[callID]: // Wait for the functionReturn on the channel
 		if _, err := fmt.Fprint(w, string(functionReturn.Output)); err != nil {
@@ -194,7 +180,7 @@ func httpError(w http.ResponseWriter, statusCode int, message string) {
 
 func messageHandler(msg *stan.Msg) {
 	// Parse function return message
-	functionReturn := &function.FunctionReturn{}
+	functionReturn := &functions.FunctionReturn{}
 	err := proto.Unmarshal(msg.Data, functionReturn)
 	if err != nil {
 		log.Println("Error unmarshalling function return:", err)

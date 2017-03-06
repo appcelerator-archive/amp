@@ -358,7 +358,7 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 
 	// Check if user is part of the organization
-	memberIndex := organization.GetMemberIndex(user.Name)
+	memberIndex := organization.getMemberIndex(user.Name)
 	if memberIndex == -1 {
 		return nil, nil // User is not a member of the organization, return
 	}
@@ -406,7 +406,7 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 	}
 
 	// Check if user is already a member
-	member := organization.GetMember(user.Name)
+	member := organization.getMember(user.Name)
 	if member == nil {
 		return UserNotFound
 	}
@@ -487,7 +487,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	}
 
 	// Check if team already exists
-	if organization.HasTeam(teamName) {
+	if organization.hasTeam(teamName) {
 		return TeamAlreadyExists
 	}
 
@@ -525,7 +525,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Get team
-	team := organization.GetTeam(teamName)
+	team := organization.getTeam(teamName)
 	if team == nil {
 		return TeamNotFound
 	}
@@ -543,7 +543,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	//}
 
 	// Check if user is part of the team
-	if team.HasMember(user.Name) {
+	if team.hasMember(user.Name) {
 		return nil // User is already a member of the team, return
 	}
 
@@ -572,7 +572,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Get team
-	team := organization.GetTeam(teamName)
+	team := organization.getTeam(teamName)
 	if team == nil {
 		return TeamNotFound
 	}
@@ -584,7 +584,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Check if user is actually a member
-	memberIndex := team.GetMemberIndex(user.Name)
+	memberIndex := team.getMemberIndex(user.Name)
 	if memberIndex == -1 {
 		return nil // User is not a member of the team, return
 	}
@@ -609,7 +609,7 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 	if err := CheckName(teamName); err != nil {
 		return nil, err
 	}
-	team := organization.GetTeam(teamName)
+	team := organization.getTeam(teamName)
 	return team, nil
 }
 
@@ -643,7 +643,7 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	}
 
 	// Check if the team is actually a team in the organization
-	teamIndex := organization.GetTeamIndex(teamName)
+	teamIndex := organization.getTeamIndex(teamName)
 	if teamIndex == -1 {
 		return nil // Team is not part of the organization, return
 	}

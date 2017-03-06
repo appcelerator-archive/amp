@@ -1,7 +1,6 @@
 package accounts
 
-// GetOwners get teams owners
-func (t *Team) GetOwners() (owners []*TeamMember) {
+func (t *Team) getOwners() (owners []*TeamMember) {
 	for _, member := range t.Members {
 		if member.Role == TeamRole_TEAM_OWNER {
 			owners = append(owners, member)
@@ -10,7 +9,7 @@ func (t *Team) GetOwners() (owners []*TeamMember) {
 	return
 }
 
-func (t *Team) GetMemberIndex(memberName string) int {
+func (t *Team) getMemberIndex(memberName string) int {
 	memberIndex := -1
 	for i, member := range t.Members {
 		if member.Name == memberName {
@@ -21,6 +20,6 @@ func (t *Team) GetMemberIndex(memberName string) int {
 	return memberIndex
 }
 
-func (o *Team) HasMember(memberName string) bool {
-	return o.GetMemberIndex(memberName) != -1
+func (t *Team) hasMember(memberName string) bool {
+	return t.getMemberIndex(memberName) != -1
 }

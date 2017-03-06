@@ -11,3 +11,15 @@ message Function {
   accounts.Account owner = 4;
   int64 create_dt = 5;
 }
+
+message FunctionCall {
+  string callID = 1;
+  bytes input = 2;
+  functions.Function function = 3;
+  string returnTo = 4;
+}
+
+message FunctionReturn {
+  string callID = 1;
+  bytes output = 2;
+}

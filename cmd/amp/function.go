@@ -142,7 +142,6 @@ func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error)
 		_, er := client.Delete(context.Background(), request)
 		if er != nil {
 			manager.fatalf(grpc.ErrorDesc(er))
-			return
 		} else {
 			fmt.Println(arg)
 		}

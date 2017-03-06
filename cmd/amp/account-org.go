@@ -161,7 +161,7 @@ func listOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	for _, org := range reply.Organizations {
-		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, ConvertTime(org.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, convertTime(org.CreateDt))
 	}
 	w.Flush()
 	return nil
@@ -174,12 +174,12 @@ func createOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
-		email = GetEmailAddress()
+		email = getEmailAddress()
 	}
 
 	request := &account.CreateOrganizationRequest{
@@ -203,7 +203,7 @@ func deleteOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 
 	request := &account.DeleteOrganizationRequest{
@@ -226,7 +226,7 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	request := &account.GetOrganizationRequest{
 		Name: organization,
@@ -240,7 +240,7 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
-	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, ConvertTime(reply.Organization.CreateDt))
+	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, convertTime(reply.Organization.CreateDt))
 	w.Flush()
 	return nil
 }
@@ -259,13 +259,13 @@ func addOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flag("member").Changed {
 		member = cmd.Flag("member").Value.String()
 	} else {
 		fmt.Print("member name: ")
-		member = GetName()
+		member = getName()
 	}
 
 	request := &account.AddUserToOrganizationRequest{
@@ -289,13 +289,13 @@ func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flag("member").Changed {
 		member = cmd.Flag("member").Value.String()
 	} else {
 		fmt.Print("member name: ")
-		member = GetName()
+		member = getName()
 	}
 
 	request := &account.RemoveUserFromOrganizationRequest{
@@ -317,13 +317,13 @@ func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 	if cmd.Flag("member").Changed {
 		member = cmd.Flag("member").Value.String()
 	} else {
 		fmt.Print("member name: ")
-		member = GetName()
+		member = getName()
 	}
 	if cmd.Flag("role").Changed {
 		role = cmd.Flag("role").Value.String()
@@ -364,7 +364,7 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		organization = cmd.Flag("org").Value.String()
 	} else {
 		fmt.Print("organization: ")
-		organization = GetName()
+		organization = getName()
 	}
 
 	request := &account.GetOrganizationRequest{
