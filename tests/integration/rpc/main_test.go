@@ -103,15 +103,24 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a verify token
-	token, err := authn.CreateVerificationToken(user.Name, time.Hour)
+	verificationToken, err := authn.CreateVerificationToken(user.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: verificationToken})
 	assert.NoError(t, err)
 
-	// Create a login token
-	token, err = authn.CreateLoginToken(user.Name, "", time.Hour)
+	// Login
+	header := metadata.MD{}
+	_, err = accountClient.Login(ctx, &account.LogInRequest{Name: user.Name, Password: user.Password}, grpc.Header(&header))
+	assert.NoError(t, err)
+
+	// Extract token from header
+	tokens := header[authn.TokenKey]
+	assert.NotEmpty(t, tokens)
+	token := tokens[0]
+	assert.NotEmpty(t, token)
+
 	return metadata.NewContext(ctx, metadata.Pairs(authn.TokenKey, token))
 }
 
@@ -126,7 +135,7 @@ func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, ow
 	return ownerCtx
 }
 
-func addUserToOrganization(t *testing.T, org *account.CreateOrganizationRequest, ownerCtx context.Context, user *account.SignUpRequest) context.Context {
+func createAndAddUserToOrganization(ownerCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest) context.Context {
 	// Create a user
 	userCtx := createUser(t, user)
 
@@ -148,4 +157,23 @@ func createTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *acc
 	assert.NoError(t, err)
 
 	return ownerCtx
+}
+
+func switchAccount(userCtx context.Context, t *testing.T, accountName string) context.Context {
+	header := metadata.MD{}
+	_, err := accountClient.Switch(userCtx, &account.SwitchRequest{Account: accountName}, grpc.Header(&header))
+	assert.NoError(t, err)
+
+	// Extract token from header
+	tokens := header[authn.TokenKey]
+	assert.NotEmpty(t, tokens)
+	token := tokens[0]
+	assert.NotEmpty(t, token)
+
+	return metadata.NewContext(ctx, metadata.Pairs(authn.TokenKey, token))
+}
+
+func changeOrganizationMemberRole(userCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest, role accounts.OrganizationRole) {
+	_, err := accountClient.ChangeOrganizationMemberRole(userCtx, &account.ChangeOrganizationMemberRoleRequest{OrganizationName: org.Name, UserName: user.Name, Role: role})
+	assert.NoError(t, err)
 }

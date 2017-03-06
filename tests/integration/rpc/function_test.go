@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"github.com/appcelerator/amp/api/rpc/account"
 	. "github.com/appcelerator/amp/api/rpc/function"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
@@ -112,5 +114,47 @@ func TestFunctionShouldCreateInvokeAndDeleteAFunction(t *testing.T) {
 	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{
 		Id: created.Function.Id,
 	})
+	assert.NoError(t, err)
+}
+
+func TestFunctionPermissions(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+	functionStore.Reset(context.Background())
+
+	// Create an organization and its owner
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create and add a member to the organization, then promote to org owner
+	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	changeOrganizationMemberRole(ownerCtx, t, &testOrg, &testMember, accounts.OrganizationRole_ORGANIZATION_OWNER)
+
+	// Create a user function
+	userFunction, err := functionClient.Create(ownerCtx, &CreateRequest{Name: "user-function", Image: "hello-world"})
+	assert.NoError(t, err)
+
+	// Create an org function
+	orgContext := switchAccount(ownerCtx, t, testOrg.Name)
+	orgFunction, err := functionClient.Create(orgContext, &CreateRequest{Name: "org-function", Image: "hello-world"})
+	assert.NoError(t, err)
+
+	// Remove user from organization
+	_, err = accountClient.RemoveUserFromOrganization(memberCtx, &account.RemoveUserFromOrganizationRequest{OrganizationName: testOrg.Name, UserName: testUser.Name})
+	assert.NoError(t, err)
+
+	// Member cannot delete user function
+	_, err = functionClient.Delete(memberCtx, &DeleteRequest{Id: userFunction.Function.Id})
+	assert.Error(t, err)
+
+	// User cannot delete org function
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{Id: orgFunction.Function.Id})
+	assert.Error(t, err)
+
+	// Member can delete his own function
+	_, err = functionClient.Delete(memberCtx, &DeleteRequest{Id: orgFunction.Function.Id})
+	assert.NoError(t, err)
+
+	// User can delete his own function
+	_, err = functionClient.Delete(ownerCtx, &DeleteRequest{Id: userFunction.Function.Id})
 	assert.NoError(t, err)
 }

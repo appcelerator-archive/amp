@@ -18,6 +18,19 @@ var (
 		Password: "userPassword",
 		Email:    "user@amp.io",
 	}
+	testOrg = account.CreateOrganizationRequest{
+		Name:  "organization",
+		Email: "organization@amp.io",
+	}
+	testMember = account.SignUpRequest{
+		Name:     "organization-member",
+		Password: "organizationMemberPassword",
+		Email:    "organization.member@amp.io",
+	}
+	testTeam = account.CreateTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         "team",
+	}
 )
 
 func TestUserShouldSignUpAndVerify(t *testing.T) {
@@ -541,17 +554,6 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 }
 
 // Organizations
-var (
-	testOrg = account.CreateOrganizationRequest{
-		Name:  "organization",
-		Email: "organization@amp.io",
-	}
-	testMember = account.SignUpRequest{
-		Name:     "organization-member",
-		Password: "organizationMemberPassword",
-		Email:    "organization.member@amp.io",
-	}
-)
 
 func TestOrganizationCreate(t *testing.T) {
 	// Reset the storage
@@ -963,13 +965,6 @@ func TestOrganizationList(t *testing.T) {
 
 // Teams
 
-var (
-	testTeam = account.CreateTeamRequest{
-		OrganizationName: testOrg.Name,
-		TeamName:         "team",
-	}
-)
-
 func TestTeamCreate(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1057,7 +1052,7 @@ func TestTeamAddUser(t *testing.T) {
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
-	addUserToOrganization(t, &testOrg, ownerCtx, &testMember)
+	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
 	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
