@@ -96,6 +96,20 @@ func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create an organization
+	createOrganization(t, &testOrg, &testUser)
+
+	// SignUp user with organization name
+	conflictSignUp := testUser
+	conflictSignUp.Name = testOrg.Name
+	_, err := accountClient.SignUp(ctx, &conflictSignUp)
+	assert.Error(t, err)
+}
+
 func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -553,6 +567,33 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUserDeleteUserOnlyOwnerOfOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create an organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testUser.Name})
+	assert.Error(t, err)
+}
+
+func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create an organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create a member
+	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+
+	// Delete
+	_, err := accountClient.DeleteUser(memberCtx, &account.DeleteUserRequest{Name: testMember.Name})
+	assert.NoError(t, err)
+}
+
 // Organizations
 
 func TestOrganizationCreate(t *testing.T) {
@@ -604,6 +645,20 @@ func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
 
 	// CreateOrganization again
 	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
+	assert.Error(t, err)
+}
+
+func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create user
+	ownerCtx := createUser(t, &testUser)
+
+	// CreateOrganization
+	invalidRequest := testOrg
+	invalidRequest.Name = testUser.Name
+	_, err := accountClient.CreateOrganization(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
@@ -866,7 +921,7 @@ func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 	// RemoveUserFromOrganization
 	_, err = accountClient.RemoveUserFromOrganization(memberCtx, &account.RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
+		UserName:         testUser.Name,
 	})
 	assert.Error(t, err)
 }
@@ -943,6 +998,60 @@ func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestOrganizationChangeUserRole(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create a member
+	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+
+	_, err := accountClient.ChangeOrganizationMemberRole(ownerCtx, &account.ChangeOrganizationMemberRoleRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+	})
+	assert.NoError(t, err)
+}
+
+func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create a member
+	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+
+	_, err := accountClient.ChangeOrganizationMemberRole(memberCtx, &account.ChangeOrganizationMemberRoleRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+	})
+	assert.Error(t, err)
+}
+
+func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create organization
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create user
+	createUser(t, &testMember)
+
+	_, err := accountClient.ChangeOrganizationMemberRole(ownerCtx, &account.ChangeOrganizationMemberRoleRequest{
+		OrganizationName: testOrg.Name,
+		UserName:         testMember.Name,
+		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+	})
+	assert.Error(t, err)
+}
+
 func TestOrganizationList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -961,6 +1070,51 @@ func TestOrganizationList(t *testing.T) {
 	assert.NotEmpty(t, listReply.Organizations[0].Members)
 	assert.Equal(t, listReply.Organizations[0].Members[0].Name, testUser.Name)
 	assert.Equal(t, listReply.Organizations[0].Members[0].Role, accounts.OrganizationRole_ORGANIZATION_OWNER)
+}
+
+func TestOrganizationDelete(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{
+		Name: testOrg.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Create a member
+	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+
+	// Delete
+	_, err := accountClient.DeleteOrganization(memberCtx, &account.DeleteOrganizationRequest{
+		Name: testOrg.Name,
+	})
+	assert.Error(t, err)
+}
+
+func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a user
+	ownerCtx := createUser(t, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{
+		Name: testOrg.Name,
+	})
+	assert.Error(t, err)
 }
 
 // Teams

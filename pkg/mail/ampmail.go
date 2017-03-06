@@ -120,7 +120,7 @@ func SendOrganizationRemovedEmail(to string, organization string) error {
 	variables := map[string]string{
 		"organization": organization,
 	}
-	if err := SendTemplateEmail(to, "organizationRemoveBody", variables); err != nil {
+	if err := SendTemplateEmail(to, "organizationRemoved", variables); err != nil {
 		return err
 	}
 	return nil
@@ -166,7 +166,7 @@ func SendTeamRemovedEmail(to string, team string) error {
 	variables := map[string]string{
 		"team": team,
 	}
-	if err := SendTemplateEmail(to, "teamRemoveBody", variables); err != nil {
+	if err := SendTemplateEmail(to, "teamRemoved", variables); err != nil {
 		return err
 	}
 	return nil

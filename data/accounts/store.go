@@ -338,7 +338,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 
 func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+	if authn.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
 		return nil, NotAuthorized
 	}
 
