@@ -14,9 +14,10 @@ import (
 var (
 	// TODO: add support for 'remove' alias
 	serviceRmCmd = &cobra.Command{
-		Use:   "rm SERVICE-NAME... or SERVICE-ID...",
-		Short: "Remove one or more services",
-		Long:  `The remove command removes one or more services based on specified service name(s) or id(s).`,
+		Use:     "rm SERVICE-NAME... or SERVICE-ID...",
+		Short:   "Remove one or more services (alias: del)",
+		Long:    `The remove command deletes one or more services based on specified service name(s) or id(s).`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return serviceRm(AMP, cmd, args)
 		},

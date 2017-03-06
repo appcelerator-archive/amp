@@ -62,9 +62,10 @@ var (
 		},
 	}
 	stackRmCmd = &cobra.Command{
-		Use:   "rm STACK-NAME or STACK-ID",
-		Short: "Remove a stack",
-		Long:  `The remove command removes the specified stack name or id completely, including ETCD data.`,
+		Use:     "rm STACK-NAME or STACK-ID",
+		Short:   "Remove a stack (alias: del)",
+		Long:    `The remove command deletes the specified stack name or id completely, including ETCD data.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackRm(AMP, cmd, args)
 		},
