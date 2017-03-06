@@ -45,9 +45,10 @@ If successful, a function id is returned.`,
 	}
 
 	removeFunctionCmd = &cobra.Command{
-		Use:   "rm FUNC-ID",
-		Short: "Remove a function",
-		Long:  `The remove command unregisters the specified function.`,
+		Use:     "rm FUNC-ID",
+		Short:   "Remove a function (alias: del)",
+		Long:    `The remove command unregisters the specified function.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeFunction(AMP, cmd, args)
 		},

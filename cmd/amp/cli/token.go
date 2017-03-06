@@ -54,6 +54,19 @@ func ReadToken() (string, error) {
 	return string(data), nil
 }
 
+// RemoveToken deletes the authentication token file
+func RemoveToken() error {
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("cannot get current user")
+	}
+	err = os.Remove(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile))
+	if err != nil {
+		return fmt.Errorf("cannot remove token")
+	}
+	return nil
+}
+
 // LoginCredentials represents login credentials
 type LoginCredentials struct {
 	Token string

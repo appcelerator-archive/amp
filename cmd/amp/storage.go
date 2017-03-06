@@ -45,10 +45,10 @@ Else, it updates the existing key with the new input value.`,
 	}
 	// storageDeleteCmd represents the deletion of storage value based on key
 	storageDeleteCmd = &cobra.Command{
-		Use:     "del KEY or rm KEY",
-		Short:   "Delete a storage object (alias: rm)",
-		Long:    `The delete command deletes the key-value pair in storage based on the specified input key.`,
-		Aliases: []string{"rm"},
+		Use:     "rm KEY or del KEY",
+		Short:   "Remove a storage object (alias: del)",
+		Long:    `The remove command deletes the key-value pair in storage based on the specified input key.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageDelete(AMP, cmd, args)
 		},

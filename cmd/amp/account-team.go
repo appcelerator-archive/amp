@@ -34,10 +34,10 @@ var (
 	}
 
 	deleteTeamCmd = &cobra.Command{
-		Use:     "del",
-		Short:   "Delete team",
-		Long:    `The delete command deletes a team in an organization.`,
-		Aliases: []string{"rm"},
+		Use:     "rm",
+		Short:   "Remove team (alias: del)",
+		Long:    `The remove command deletes a team in an organization.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteTeam(AMP, cmd)
 		},
@@ -71,10 +71,10 @@ var (
 	}
 
 	remTeamMemCmd = &cobra.Command{
-		Use:     "del",
-		Short:   "Remove members from team",
-		Long:    `The remove command removes members from a team in an organization.`,
-		Aliases: []string{"rm"},
+		Use:     "rm",
+		Short:   "Remove members from team (alias: del)",
+		Long:    `The remove command deletes members from a team in an organization.`,
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTeamMem(AMP, cmd)
 		},
