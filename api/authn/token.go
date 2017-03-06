@@ -49,7 +49,7 @@ func createToken(account string, activeOrganization string, tokenType string, va
 			Issuer:    os.Args[0],
 		},
 	})
-	ss, err := token.SignedString(secretKey)
+	ss, err := token.SignedString(SecretKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to issue token")
 	}
@@ -59,7 +59,7 @@ func createToken(account string, activeOrganization string, tokenType string, va
 // ValidateToken validates a token and return its claims
 func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
 	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return SecretKey, nil
 	})
 	if err != nil {
 		return nil, err

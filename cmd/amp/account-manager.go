@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -67,6 +69,15 @@ var (
 		},
 	}
 
+	whoamiCmd = &cobra.Command{
+		Use:   "whoami",
+		Short: "Display currently logged-in user",
+		Long:  "The whoami command displays the user who is currently logged in.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return whoAccount()
+		},
+	}
+
 	change bool
 	reset  bool
 	set    bool
@@ -89,6 +100,7 @@ func init() {
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
 	AccountCmd.AddCommand(switchCmd)
+	AccountCmd.AddCommand(whoamiCmd)
 
 	signUpCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	signUpCmd.Flags().StringVar(&email, "email", email, "Email ID")
@@ -347,5 +359,30 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		return
 	}
 	manager.printf(colSuccess, "Your password set has been successful.")
+	return nil
+}
+
+// whoAccount validates the input command line arguments and displays the current account
+// by invoking the corresponding rpc/storage method
+func whoAccount() (err error) {
+	token, er := cli.ReadToken()
+	if er != nil {
+		manager.fatalf(grpc.ErrorDesc(er))
+		return
+	}
+	pToken, e := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return authn.SecretKey, nil
+	})
+	if e != nil {
+		manager.fatalf(grpc.ErrorDesc(e))
+		return
+	}
+	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok && pToken.Valid {
+		if claims.ActiveOrganization != "" {
+			manager.printf(colSuccess, claims.ActiveOrganization)
+		} else {
+			manager.printf(colSuccess, claims.AccountName)
+		}
+	}
 	return nil
 }
