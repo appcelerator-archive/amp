@@ -78,6 +78,15 @@ var (
 		},
 	}
 
+	logoutCmd = &cobra.Command{
+		Use:   "logout",
+		Short: "Logout current user",
+		Long:  "The logout command logs out the user who is currently logged in.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return logout()
+		},
+	}
+
 	change bool
 	reset  bool
 	set    bool
@@ -101,6 +110,7 @@ func init() {
 	AccountCmd.AddCommand(pwdCmd)
 	AccountCmd.AddCommand(switchCmd)
 	AccountCmd.AddCommand(whoamiCmd)
+	AccountCmd.AddCommand(logoutCmd)
 
 	signUpCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	signUpCmd.Flags().StringVar(&email, "email", email, "Email ID")
@@ -384,5 +394,17 @@ func whoAccount() (err error) {
 			manager.printf(colSuccess, claims.AccountName)
 		}
 	}
+	return nil
+}
+
+// logout validates the input command line arguments and logs out of the current account
+// by invoking the corresponding rpc/storage method
+func logout() (err error) {
+	err = cli.RemoveToken()
+	if err != nil {
+		manager.fatalf(grpc.ErrorDesc(err))
+		return
+	}
+	manager.printf(colSuccess, "You have been successfully logged out!")
 	return nil
 }
