@@ -1,23 +1,5 @@
 package accounts
 
-func (o *Organization) getOwners() (owners []string) {
-	for _, member := range o.Members {
-		if member.Role == OrganizationRole_ORGANIZATION_OWNER {
-			owners = append(owners, member.Name)
-		}
-	}
-	return
-}
-
-func (o *Organization) isOwner(name string) bool {
-	for _, member := range o.GetMembers() {
-		if member.GetName() == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (o *Organization) getMemberIndex(memberName string) int {
 	memberIndex := -1
 	for i, member := range o.Members {
