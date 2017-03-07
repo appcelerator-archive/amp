@@ -17,7 +17,7 @@ const (
 var (
 	// TODO: this MUST NOT be public
 	// TODO: find a way to store this key secretly
-	SecretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
+	secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
 
 	anonymousAllowed = []string{
 		"/account.Account/SignUp",
