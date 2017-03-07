@@ -159,6 +159,20 @@ func createTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *acc
 	return ownerCtx
 }
 
+func createAndAddUserToTeam(ownerCtx context.Context, t *testing.T, team *account.CreateTeamRequest, user *account.SignUpRequest) context.Context {
+	// Create a user
+	userCtx := createUser(t, user)
+
+	// AddUserToTeam
+	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: team.OrganizationName,
+		TeamName:         team.TeamName,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+	return userCtx
+}
+
 func switchAccount(userCtx context.Context, t *testing.T, accountName string) context.Context {
 	header := metadata.MD{}
 	_, err := accountClient.Switch(userCtx, &account.SwitchRequest{Account: accountName}, grpc.Header(&header))

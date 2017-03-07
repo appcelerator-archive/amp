@@ -14,7 +14,7 @@ import (
 var (
 	removeTopicCmd = &cobra.Command{
 		Use:     "rm TOPIC-ID",
-		Short:   "Remove topic (alias: del)",
+		Short:   "Remove topic",
 		Long:    `The remove command deletes the specified topic id.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {

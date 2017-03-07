@@ -7,7 +7,7 @@ import (
 // PlatformCmd is the main command for attaching topic subcommands.
 var PlatformCmd = &cobra.Command{
 	Use:     "platform",
-	Short:   "Platform operations (alias: pf)",
+	Short:   "Platform operations",
 	Long:    `Platform command manages all platform-related operations.`,
 	Aliases: []string{"pf"},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

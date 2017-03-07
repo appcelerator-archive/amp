@@ -27,7 +27,7 @@ var (
 
 	deleteUserCmd = &cobra.Command{
 		Use:     "rm",
-		Short:   "Remove user (alias: del)",
+		Short:   "Remove user",
 		Long:    `The remove command deletes a user.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
