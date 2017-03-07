@@ -69,12 +69,12 @@ var (
 		},
 	}
 
-	whoamiCmd = &cobra.Command{
+	whoAmICmd = &cobra.Command{
 		Use:   "whoami",
 		Short: "Display currently logged-in user",
 		Long:  "The whoami command displays the user who is currently logged in.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return whoAccount()
+			return whoAmI()
 		},
 	}
 
@@ -109,7 +109,7 @@ func init() {
 	AccountCmd.AddCommand(forgotLoginCmd)
 	AccountCmd.AddCommand(pwdCmd)
 	AccountCmd.AddCommand(switchCmd)
-	AccountCmd.AddCommand(whoamiCmd)
+	AccountCmd.AddCommand(whoAmICmd)
 	AccountCmd.AddCommand(logoutCmd)
 
 	signUpCmd.Flags().StringVar(&username, "name", username, "Account Name")
@@ -372,22 +372,18 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	return nil
 }
 
-// whoAccount validates the input command line arguments and displays the current account
+// whoAmI validates the input command line arguments and displays the current account
 // by invoking the corresponding rpc/storage method
-func whoAccount() (err error) {
+func whoAmI() (err error) {
 	token, er := cli.ReadToken()
 	if er != nil {
 		manager.fatalf(grpc.ErrorDesc(er))
 		return
 	}
-	pToken, e := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return authn.SecretKey, nil
+	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte{}, nil
 	})
-	if e != nil {
-		manager.fatalf(grpc.ErrorDesc(e))
-		return
-	}
-	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok && pToken.Valid {
+	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok {
 		if claims.ActiveOrganization != "" {
 			manager.printf(colSuccess, claims.ActiveOrganization)
 		} else {
