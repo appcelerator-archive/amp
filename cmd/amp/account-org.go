@@ -36,7 +36,7 @@ var (
 
 	deleteOrgCmd = &cobra.Command{
 		Use:     "rm",
-		Short:   "Remove organization (alias: del)",
+		Short:   "Remove organization",
 		Long:    `The remove command deletes an organization.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -82,7 +82,7 @@ var (
 
 	remOrgMemCmd = &cobra.Command{
 		Use:     "rm",
-		Short:   "Remove members from organization (alias: del)",
+		Short:   "Remove members from organization",
 		Long:    `The remove command deletes member from an organization.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
