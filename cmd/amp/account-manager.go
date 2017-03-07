@@ -375,9 +375,9 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // whoAmI validates the input command line arguments and displays the current account
 // by invoking the corresponding rpc/storage method
 func whoAmI() (err error) {
-	token, er := cli.ReadToken()
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
+	token, err := cli.ReadToken()
+	if err != nil {
+		manager.fatalf("You are not logged in.")
 		return
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
@@ -385,9 +385,9 @@ func whoAmI() (err error) {
 	})
 	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok {
 		if claims.ActiveOrganization != "" {
-			manager.printf(colSuccess, claims.ActiveOrganization)
+			manager.printf(colSuccess, "Logged in as organization %s (on behalf of user %s).", claims.ActiveOrganization, claims.AccountName)
 		} else {
-			manager.printf(colSuccess, claims.AccountName)
+			manager.printf(colSuccess, "Logged in as user %s.", claims.AccountName)
 		}
 	}
 	return nil

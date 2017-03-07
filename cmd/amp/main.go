@@ -109,11 +109,11 @@ func main() {
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
 
-	RootCmd.Flags().StringVar(&configFile, "use-config", "", "Specify config file (overrides default at $HOME/.config/amp/amp.yaml)")
-	RootCmd.Flags().BoolVar(&displayConfigFilePath, "config-used", false, "Display config file used (if any)")
+	RootCmd.PersistentFlags().StringVar(&configFile, "use-config", "", "Specify config file (overrides default at $HOME/.config/amp/amp.yaml)")
+	RootCmd.PersistentFlags().BoolVar(&displayConfigFilePath, "config-used", false, "Display config file used (if any)")
 	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	RootCmd.PersistentFlags().StringVar(&serverAddr, "server", "", "Server address")
-	RootCmd.Flags().BoolVarP(&listVersion, "version", "V", false, "Version number")
+	RootCmd.PersistentFlags().BoolVarP(&listVersion, "version", "V", false, "Version number")
 	RootCmd.PersistentFlags().BoolP("help", "h", false, "Display help")
 
 	cmd, _, err := RootCmd.Find(os.Args[1:])
