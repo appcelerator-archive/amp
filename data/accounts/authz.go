@@ -123,11 +123,8 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 	subject := authn.GetUser(ctx)
 	switch owner.Type {
 	case AccountType_ORGANIZATION:
-		organization, err := s.GetOrganization(ctx, owner.Name)
+		organization, err := s.getOrganization(ctx, owner.Name)
 		if err != nil {
-			return false
-		}
-		if organization == nil {
 			return false
 		}
 		err = warden.IsAllowed(&ladon.Request{

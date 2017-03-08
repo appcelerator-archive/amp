@@ -1052,6 +1052,35 @@ func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestOrganizationGet(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create a organization
+	createOrganization(t, &testOrg, &testUser)
+
+	// Get
+	getReply, err := accountClient.GetOrganization(ctx, &account.GetOrganizationRequest{
+		Name: testOrg.Name,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, getReply)
+	assert.Equal(t, getReply.Organization.Name, testOrg.Name)
+	assert.Equal(t, getReply.Organization.Email, testOrg.Email)
+	assert.NotEmpty(t, getReply.Organization.CreateDt)
+}
+
+func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Get
+	_, err := accountClient.GetOrganization(ctx, &account.GetOrganizationRequest{
+		Name: "this organization is malformed",
+	})
+	assert.Error(t, err)
+}
+
 func TestOrganizationList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1587,11 +1616,93 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestTeamGet(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Get
+	getReply, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, getReply)
+	assert.NotEmpty(t, getReply.Team)
+	assert.Equal(t, getReply.Team.Name, testTeam.TeamName)
+	assert.NotEmpty(t, getReply.Team.CreateDt)
+	assert.NotEmpty(t, getReply.Team.Members)
+	assert.Equal(t, getReply.Team.Members[0].Name, testUser.Name)
+	assert.Equal(t, getReply.Team.Members[0].Role, accounts.TeamRole_TEAM_OWNER)
+}
+
+func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create user
+	ownerCtx := createUser(t, &testUser)
+
+	// Get
+	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create org
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Get
+	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Get
+	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+		OrganizationName: "this is not a valid team name",
+		TeamName:         testTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Get
+	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+		OrganizationName: testOrg.Name,
+		TeamName:         "this is not a valid team name",
+	})
+	assert.Error(t, err)
+}
+
 func TestTeamList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Create a user
+	// Create a team
 	createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
@@ -1612,7 +1723,7 @@ func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Create a user
+	// Create team
 	createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
@@ -1626,7 +1737,7 @@ func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
-	// Create a user
+	// Create user
 	createUser(t, &testUser)
 
 	// List
@@ -1634,4 +1745,67 @@ func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 		OrganizationName: testTeam.OrganizationName,
 	})
 	assert.Error(t, err)
+}
+
+func TestTeamDelete(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Delete
+	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.NoError(t, err)
+}
+
+func TestTeamDeleteNotOwnerShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create a member
+	memberCtx := createAndAddUserToTeam(ownerCtx, t, &testTeam, &testMember)
+
+	// Delete
+	_, err := accountClient.DeleteTeam(memberCtx, &account.DeleteTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create org
+	ownerCtx := createUser(t, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
+func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
+	// Reset the storage
+	accountStore.Reset(context.Background())
+
+	// Create org
+	ownerCtx := createOrganization(t, &testOrg, &testUser)
+
+	// Delete
+	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+	})
+	assert.NoError(t, err)
 }
