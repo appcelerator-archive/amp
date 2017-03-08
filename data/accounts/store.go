@@ -236,6 +236,16 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 
 // Organizations
 
+func (s *Store) getOrganization(ctx context.Context, name string) (organization *Organization, err error) {
+	if organization, err = s.GetOrganization(ctx, name); err != nil {
+		return nil, err
+	}
+	if organization == nil {
+		return nil, OrganizationNotFound
+	}
+	return organization, nil
+}
+
 func (s *Store) getUserOrganizations(ctx context.Context, name string) ([]*Organization, error) {
 	organizations, err := s.ListOrganizations(ctx)
 	if err != nil {
@@ -309,12 +319,9 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Get the user
@@ -343,12 +350,9 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
-	}
-	if organization == nil {
-		return nil, OrganizationNotFound
 	}
 
 	// Get the user
@@ -391,12 +395,9 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Get the user
@@ -453,12 +454,9 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, name)
+	_, err := s.getOrganization(ctx, name)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Delete organization
@@ -478,12 +476,9 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Check if team already exists
@@ -516,12 +511,9 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Get team
@@ -563,12 +555,9 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Get team
@@ -597,12 +586,9 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 // GetTeam fetches a team by name
 func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*Team, error) {
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
-	}
-	if organization == nil {
-		return nil, OrganizationNotFound
 	}
 
 	// Get team
@@ -616,12 +602,9 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 // ListTeams lists teams
 func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*Team, error) {
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return nil, err
-	}
-	if organization == nil {
-		return nil, OrganizationNotFound
 	}
 	return organization.Teams, nil
 }
@@ -634,12 +617,9 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	}
 
 	// Get organization
-	organization, err := s.GetOrganization(ctx, organizationName)
+	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
 		return err
-	}
-	if organization == nil {
-		return OrganizationNotFound
 	}
 
 	// Check if the team is actually a team in the organization
