@@ -16,11 +16,11 @@ import (
 
 var (
 	serviceCreateCmd = &cobra.Command{
-		Use:   "create IMAGE [OPTION...]",
-		Short: "Create a new service",
-		Long:  `The create command creates a new service with a specified image and/or additional options.`,
+		Use:     "create",
+		Short:   "Create a new service",
+		Example: "amp service create sample-image/test-service --name=foo-service",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return serviceCreate(AMP, cmd, args)
+			return serviceCreate(AMP, args)
 		},
 	}
 
@@ -70,7 +70,7 @@ func init() {
 	ServiceCmd.AddCommand(serviceCreateCmd)
 }
 
-func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func serviceCreate(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service create\" requires at least 1 argument(s)")

@@ -16,12 +16,9 @@ import (
 func init() {
 	// configCmd represents the Config command
 	configCmd := &cobra.Command{
-		Use:   "config [KEY] [VALUE]",
-		Short: "Display or update the current configuration",
-		Long: `The config command displays/updates the current configuration.
-No arguments: display the current configuration.
-One argument: display the configuration key value.
-Two arguments: set the key to the value.`,
+		Use:     "config",
+		Short:   "Display or update the current configuration",
+		Example: "amp config \namp config AmpAddress",
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:

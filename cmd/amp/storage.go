@@ -17,7 +17,6 @@ import (
 var StorageCmd = &cobra.Command{
 	Use:   "kv",
 	Short: "Storage operations",
-	Long:  `KV command manages all key-value based storage operations in the ETCD.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},
@@ -26,40 +25,39 @@ var StorageCmd = &cobra.Command{
 var (
 	// storagePutCmd represents the creation of storage key-value pair
 	storagePutCmd = &cobra.Command{
-		Use:   "put KEY VALUE",
-		Short: "Assign specified value with specified key",
-		Long: `The put command creates a storage object with the key-value input if the key does not already exist.
-Else, it updates the existing key with the new input value.`,
+		Use:     "put",
+		Short:   "Assign specified value with specified key",
+		Example: "amp kv put foo bar",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return storagePut(AMP, cmd, args)
+			return storagePut(AMP, args)
 		},
 	}
 	// storageGetCmd represents the retrieval of storage value based on key
 	storageGetCmd = &cobra.Command{
-		Use:   "get KEY",
-		Short: "Retrieve a storage object",
-		Long:  `The get command retrieves a key-value pair based on the specified input key.`,
+		Use:     "get",
+		Short:   "Retrieve a storage object",
+		Example: "amp kv get foo",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return storageGet(AMP, cmd, args)
+			return storageGet(AMP, args)
 		},
 	}
 	// storageDeleteCmd represents the deletion of storage value based on key
 	storageDeleteCmd = &cobra.Command{
-		Use:     "rm KEY or del KEY",
+		Use:     "rm",
 		Short:   "Remove a storage object",
-		Long:    `The remove command deletes the key-value pair in storage based on the specified input key.`,
+		Example: "amp kv rm foo \namp kv del foo",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return storageDelete(AMP, cmd, args)
+			return storageDelete(AMP, args)
 		},
 	}
 	// storageListCmd represents the list of storage key-value pair
 	storageListCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List all storage objects",
-		Long:  `The list command returns a list of all the key-value pair in storage.`,
+		Use:     "ls",
+		Short:   "List all storage objects",
+		Example: "amp kv ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return storageList(AMP, cmd, args)
+			return storageList(AMP, args)
 		},
 	}
 )
@@ -74,7 +72,7 @@ func init() {
 
 // storagePut validates the input command line arguments and creates or updates storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func storagePut(amp *cli.AMP, args []string) (err error) {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify storage key and storage value")
@@ -101,7 +99,7 @@ func storagePut(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // storageGet validates the input command line arguments and retrieves storage key-value pair
 //by invoking the corresponding rpc/storage method
-func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func storageGet(amp *cli.AMP, args []string) (err error) {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -126,7 +124,7 @@ func storageGet(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 
 // storageDelete validates the input command line arguments and deletes storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func storageDelete(amp *cli.AMP, args []string) (err error) {
 	if len(args) > 1 {
 		return errors.New("too many arguments - check again")
 	} else if len(args) == 0 {
@@ -151,7 +149,7 @@ func storageDelete(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) 
 
 // storageList validates the input command line arguments and lists all the storage
 // key-value pairs by invoking the corresponding rpc/storage method
-func storageList(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func storageList(amp *cli.AMP, args []string) (err error) {
 	if len(args) > 0 {
 		return errors.New("too many arguments - check again")
 	}

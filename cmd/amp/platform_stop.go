@@ -8,12 +8,11 @@ import (
 
 // PlatformStop is the main command for attaching platform subcommands.
 var PlatformStop = &cobra.Command{
-	Use:   "stop [OPTION...]",
-	Short: "Stop platform",
-	Long: `The stop command stops all the running services on AMP platform.
-If the AMP platform is already stopped, it returns an appropriate message.`,
+	Use:     "stop",
+	Short:   "Stop platform",
+	Example: "amp platform stop -l \namp pf stop --quiet",
 	Run: func(cmd *cobra.Command, args []string) {
-		stopAMP(cmd, args)
+		stopAMP(cmd)
 	},
 }
 
@@ -23,7 +22,7 @@ func init() {
 	PlatformCmd.AddCommand(PlatformStop)
 }
 
-func stopAMP(cmd *cobra.Command, args []string) error {
+func stopAMP(cmd *cobra.Command) error {
 	manager := &ampManager{}
 	if cmd.Flag("quiet").Value.String() == "true" {
 		manager.silence = true
