@@ -12,6 +12,7 @@ var PlatformStop = &cobra.Command{
 	Short: "Stop platform",
 	Long: `The stop command stops all the running services on AMP platform.
 If the AMP platform is already stopped, it returns an appropriate message.`,
+	Example: "amp platform stop -l \namp pf stop --quiet",
 	Run: func(cmd *cobra.Command, args []string) {
 		stopAMP(cmd)
 	},

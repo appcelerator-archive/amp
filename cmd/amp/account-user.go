@@ -17,9 +17,10 @@ import (
 // UserCmd is the main command for attaching user sub-commands.
 var (
 	listUserCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List user",
-		Long:  `The list command lists all available users.`,
+		Use:     "ls",
+		Short:   "List user",
+		Long:    `The list command lists all available users.`,
+		Example: "amp user ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listUser(AMP, cmd)
 		},
@@ -29,6 +30,7 @@ var (
 		Use:     "rm",
 		Short:   "Remove user",
 		Long:    `The remove command deletes a user.`,
+		Example: "amp user rm --name=hpotter \namp user del --name=hpotter",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteUser(AMP, cmd)
@@ -36,9 +38,10 @@ var (
 	}
 
 	getUserCmd = &cobra.Command{
-		Use:   "get",
-		Short: "Get user info",
-		Long:  `The get command retrieves details of a user.`,
+		Use:     "get",
+		Short:   "Get user info",
+		Long:    `The get command retrieves details of a user.`,
+		Example: "amp user get --name=rweasley",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getUser(AMP, cmd)
 		},

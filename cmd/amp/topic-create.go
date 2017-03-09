@@ -13,9 +13,10 @@ import (
 
 var (
 	createTopicCmd = &cobra.Command{
-		Use:   "create TOPIC-NAME",
-		Short: "Create a topic",
-		Long:  `The create command creates a topic with specified name.`,
+		Use:     "create TOPIC-NAME",
+		Short:   "Create a topic",
+		Long:    `The create command creates a topic with specified name.`,
+		Example: "amp topic create dockerize",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTopic(AMP, args)
 		},

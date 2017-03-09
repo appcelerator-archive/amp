@@ -38,6 +38,7 @@ var (
 		Short: "Appcelerator Microservice Platform.",
 		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform for managing and
 monitoring containerized applications and microservices as part of a unified serverless computing environment.`,
+		Example: "amp org \namp kv get foo",
 		Run: func(cmd *cobra.Command, args []string) {
 			if displayConfigFilePath {
 				configFilePath := viper.ConfigFileUsed()

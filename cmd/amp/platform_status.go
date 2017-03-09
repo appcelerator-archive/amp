@@ -12,6 +12,7 @@ var PlatformStatus = &cobra.Command{
 	Short: "Get AMP platform status",
 	Long: `The status command retrieves current status of AMP platform (stopped, partially running, running).
 The command returns 1 if status is not running.`,
+	Example: "amp platform status --local \namp pf status -q",
 	Run: func(cmd *cobra.Command, args []string) {
 		getAMPStatus(cmd)
 	},

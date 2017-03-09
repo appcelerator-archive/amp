@@ -16,36 +16,40 @@ import (
 // Cobra definitions for account management related commands
 var (
 	signUpCmd = &cobra.Command{
-		Use:   "signup",
-		Short: "Signup for a new account",
-		Long:  `The signup command creates a new account and sends a verification link to the registered email address.`,
+		Use:     "signup",
+		Short:   "Signup for a new account",
+		Long:    `The signup command creates a new account and sends a verification link to the registered email address.`,
+		Example: "amp account signup --name=jdoe --email=jdoe@fakemail.me --password=p@s5wrd",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return signUp(AMP, cmd)
 		},
 	}
 
 	verifyCmd = &cobra.Command{
-		Use:   "verify",
-		Short: "Verify account",
-		Long:  `The verify command verifies an account by checking the given verification code.`,
+		Use:     "verify",
+		Short:   "Verify account",
+		Long:    `The verify command verifies an account by checking the given verification code.`,
+		Example: "amp account verify --token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBY2NvdW50TmFtZSI6ImNsaXVzZXJuYW1lIiwiQWN0aXZlT3JnYW5pemF0aW9uIjoiIiwiVHlwZSI6ImxvZ2luIiwiZXhwIjoxNDg4Njc4NDY5LCJpc3MiOiJhbXBsaWZpZXIifQ.NdRiGWKXJlTgu_5OB3NFlf5dzpVqqcVNMird-GOyLGI",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP, cmd)
 		},
 	}
 
 	loginCmd = &cobra.Command{
-		Use:   "login",
-		Short: "Login to account",
-		Long:  `The login command logs the user into their existing account.`,
+		Use:     "login",
+		Short:   "Login to account",
+		Long:    `The login command logs the user into their existing account.`,
+		Example: "amp account login --name=jdoe --password=p@s5wrd",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return login(AMP, cmd)
 		},
 	}
 
 	forgotLoginCmd = &cobra.Command{
-		Use:   "forgot-login",
-		Short: "Retrieve account name",
-		Long:  `The forgot login command retrieves the account name, in case the user has forgotten it.`,
+		Use:     "forgot-login",
+		Short:   "Retrieve account name",
+		Long:    `The forgot login command retrieves the account name, in case the user has forgotten it.`,
+		Example: "amp account forgot-login --email=jdoe@fakemail.me",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return forgotLogin(AMP, cmd)
 		},
@@ -61,51 +65,56 @@ var (
 	}
 
 	pwdChangeCmd = &cobra.Command{
-		Use:   "change",
-		Short: "Change account password",
-		Long:  "The change command allows users to update their existing password.",
+		Use:     "change",
+		Short:   "Change account password",
+		Long:    "The change command allows users to update their existing password.",
+		Example: "amp account password change --name=jdoe --password=p@s5wrd --new-password=v@larm0rghuli$",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdChange(AMP, cmd)
 		},
 	}
 
 	pwdResetCmd = &cobra.Command{
-		Use:   "reset",
-		Short: "Reset account password",
-		Long:  "The reset command allows users to reset their password.",
+		Use:     "reset",
+		Short:   "Reset account password",
+		Long:    "The reset command allows users to reset their password.",
+		Example: "amp account password reset --name=jdoe",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdReset(AMP, cmd)
 		},
 	}
 
 	switchCmd = &cobra.Command{
-		Use:   "switch",
-		Short: "Switch account",
-		Long:  "The switch command allows users to switch between their personal and organization accounts.",
+		Use:     "switch",
+		Short:   "Switch account",
+		Long:    "The switch command allows users to switch between their personal and organization accounts.",
+		Example: "amp account switch --name=swag",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return switchAccount(AMP, cmd)
 		},
 	}
 
 	whoAmICmd = &cobra.Command{
-		Use:   "whoami",
-		Short: "Display currently logged-in user",
-		Long:  "The whoami command displays the user who is currently logged in.",
+		Use:     "whoami",
+		Short:   "Display currently logged-in user",
+		Long:    "The whoami command displays the user who is currently logged in.",
+		Example: "amp account whoami",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return whoAmI()
 		},
 	}
 
 	logoutCmd = &cobra.Command{
-		Use:   "logout",
-		Short: "Logout current user",
-		Long:  "The logout command logs out the user who is currently logged in.",
+		Use:     "logout",
+		Short:   "Logout current user",
+		Long:    "The logout command logs out the user who is currently logged in.",
+		Example: "amp account logout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return logout()
 		},
 	}
 
-	set    bool
+	set bool
 
 	username string
 	email    string

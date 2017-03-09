@@ -7,9 +7,10 @@ import (
 
 // PlatformMonitor is the main command for attaching platform subcommands.
 var PlatformMonitor = &cobra.Command{
-	Use:   "monitor",
-	Short: "Display AMP platform services",
-	Long:  `The monitor command displays information about AMP platform services and states.`,
+	Use:     "monitor",
+	Short:   "Display AMP platform services",
+	Long:    `The monitor command displays information about AMP platform services and states.`,
+	Example: "amp platform monitor \namp pf monitor",
 	Run: func(cmd *cobra.Command, args []string) {
 		displayAMPServiceStatus(cmd)
 	},

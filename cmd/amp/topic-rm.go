@@ -16,6 +16,7 @@ var (
 		Use:     "rm TOPIC-ID",
 		Short:   "Remove topic",
 		Long:    `The remove command deletes the specified topic id.`,
+		Example: "amp topic rm 7gstrgfgv \namp topic del 7gstrgfgv",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTopic(AMP, args)
