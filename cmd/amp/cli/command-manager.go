@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"os"
@@ -27,13 +27,12 @@ var (
 	colWarn    = 2
 	colError   = 3
 	colSuccess = 4
-	colUser    = 5 //before remove this variable, remove all usage of this variable
 )
 
-func newCmdManager(verbose string) *CmdManager {
+func NewCmdManager(verbose bool) *CmdManager {
 	s := &CmdManager{}
 	s.setColors()
-	if verbose == "true" {
+	if verbose {
 		s.verbose = true
 	}
 	return s
@@ -54,26 +53,21 @@ func (s *CmdManager) printf(col int, format string, args ...interface{}) {
 	fmt.Println("")
 }
 
-func (s *CmdManager) fatalf(format string, args ...interface{}) {
-	s.printf(colError, format, args...)
-	os.Exit(1)
-}
-
 func (s *CmdManager) setColors() {
-	// theme := AMP.Configuration.CmdTheme
-	// if theme == "dark" {
-	// 	s.printColor[0] = color.New(color.FgHiWhite)
-	// 	s.printColor[1] = color.New(color.FgHiBlack)
-	// 	s.printColor[2] = color.New(color.FgYellow)
-	// 	s.printColor[3] = color.New(color.FgRed)
-	// 	s.printColor[4] = color.New(color.FgGreen)
-	// } else {
-	s.printColor[0] = color.New(color.FgMagenta)
-	s.printColor[1] = color.New(color.FgHiBlack)
-	s.printColor[2] = color.New(color.FgYellow)
-	s.printColor[3] = color.New(color.FgRed)
-	s.printColor[4] = color.New(color.FgGreen)
-	//} //add theme as you want.
+	theme := Configuration{}.CmdTheme
+	if theme == "dark" {
+		s.printColor[0] = color.New(color.FgHiWhite)
+		s.printColor[1] = color.New(color.FgHiBlack)
+		s.printColor[2] = color.New(color.FgYellow)
+		s.printColor[3] = color.New(color.FgRed)
+		s.printColor[4] = color.New(color.FgGreen)
+	} else {
+		s.printColor[0] = color.New(color.FgBlue)
+		s.printColor[1] = color.New(color.FgHiBlack)
+		s.printColor[2] = color.New(color.FgYellow)
+		s.printColor[3] = color.New(color.FgRed)
+		s.printColor[4] = color.New(color.FgGreen)
+	} //add theme as you want.
 	s.fcolRegular = s.printColor[colRegular].SprintFunc()
 	s.fcolInfo = s.printColor[colInfo].SprintFunc()
 	s.fcolWarn = s.printColor[colWarn].SprintFunc()
@@ -81,4 +75,25 @@ func (s *CmdManager) setColors() {
 	s.fcolSuccess = s.printColor[colSuccess].SprintFunc()
 	s.fcolTitle = s.printColor[colRegular].SprintFunc()
 	s.fcolLines = s.printColor[colSuccess].SprintFunc()
+}
+
+func (s *CmdManager) Regular(format string, args ...interface{}) {
+	s.printf(colRegular, format, args...)
+}
+
+func (s *CmdManager) Info(format string, args ...interface{}) {
+	s.printf(colInfo, format, args...)
+}
+
+func (s *CmdManager) Warn(format string, args ...interface{}) {
+	s.printf(colWarn, format, args...)
+}
+
+func (s *CmdManager) Fatal(format string, args ...interface{}) {
+	s.printf(colError, format, args...)
+	os.Exit(1)
+}
+
+func (s *CmdManager) Success(format string, args ...interface{}) {
+	s.printf(colSuccess, format, args...)
 }

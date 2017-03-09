@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	distreference "github.com/docker/distribution/reference"
@@ -12,16 +11,16 @@ import (
 	docker "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 )
 
-// RegCmd is the main command for attaching registry subcommands.
+// RegCmd is the main command for attaching registry sub-commands.
 var RegCmd = &cobra.Command{
 	Use:   "registry",
 	Short: "Registry operations",
-	Long:  `Registry command manages all registry-related operations.`,
 }
 
 var (
@@ -29,19 +28,19 @@ var (
 	domain   string
 	insecure bool
 	pushCmd  = &cobra.Command{
-		Use:   "push IMAGE [OPTION...]",
-		Short: "Push an image to the AMP registry",
-		Long:  `The push command pushes an image to the AMP registry.`,
+		Use:     "push",
+		Short:   "Push an image to the AMP registry",
+		Example: "sample/test-registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryPush(AMP, cmd, args)
+			return RegistryPush(AMP, args)
 		},
 	}
 	reglsCmd = &cobra.Command{
-		Use:   "ls [OPTION...]",
-		Short: "List the AMP registry images",
-		Long:  `The list command lists all the available images in the AMP registry.`,
+		Use:     "ls",
+		Short:   "List the AMP registry images",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryLs(AMP, cmd, args)
+			return RegistryLs(AMP)
 		},
 	}
 )
@@ -53,6 +52,8 @@ func init() {
 	RegCmd.PersistentFlags().StringVarP(&endpoint, "endpoint", "e", "", "The amp registry endpoint (hostname or IP), overrides the domain option")
 	RegCmd.AddCommand(pushCmd)
 	RegCmd.AddCommand(reglsCmd)
+
+	reglsCmd.Flags().BoolP("quiet", "q", false, "Only display IDs")
 }
 
 // registryEndpoint returns the registry endpoint
@@ -66,22 +67,22 @@ func registryEndpoint() (ep string) {
 }
 
 // RegistryPush displays resource usage statistics
-func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryPush(amp *cli.AMP, args []string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amp-cli"}
 	dclient, err := docker.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	ctx := context.Background()
 	_, err = amp.GetAuthorizedContext()
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	// @todo: read the .dockercfg file for authentication, or use credentials from amp.yaml
 	ac := types.AuthConfig{Username: "none"}
 	jsonString, err := json.Marshal(ac)
 	if err != nil {
-		return errors.New("failed to marshal authconfig")
+		mgr.Fatal("failed to marshal authconfig")
 	}
 	dst := make([]byte, base64.URLEncoding.EncodedLen(len(jsonString)))
 	base64.URLEncoding.Encode(dst, jsonString)
@@ -91,48 +92,48 @@ func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	image := args[0]
 	distributionRef, err := distreference.ParseNamed(image)
 	if err != nil {
-		return fmt.Errorf("error parsing reference: %q is not a valid repository/tag", image)
+		mgr.Fatal("error parsing reference: %q is not a valid repository/tag", image)
 	}
 	if _, isCanonical := distributionRef.(distreference.Canonical); isCanonical {
-		return errors.New("refusing to create a tag with a digest reference")
+		mgr.Fatal("refusing to create a tag with a digest reference")
 	}
 	tag := reference.GetTagFromNamedRef(distributionRef)
 	hostname, name := distreference.SplitHostname(distributionRef)
 
 	if amp.Verbose() {
-		fmt.Printf("Registry push request with:\n  image: %s\n", image)
+		mgr.Info("Registry push request with:\n  image: %s\n", image)
 	}
 
 	taggedImage := image
 	if hostname != registryEndpoint() {
 		taggedImage = registryEndpoint() + "/" + name + ":" + tag
-		fmt.Printf("Tag image from %s to %s\n", image, taggedImage)
+		mgr.Regular("Tag image from %s to %s\n", image, taggedImage)
 		if err := dclient.ImageTag(ctx, image, taggedImage); err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 	}
 	fmt.Printf("Push image %s\n", taggedImage)
 	resp, err := dclient.ImagePush(ctx, taggedImage, imagePushOptions)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	body, err := ioutil.ReadAll(resp)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	re := regexp.MustCompile(`: digest: sha256:`)
 	if !re.Match(body) {
 		fmt.Print(string(body))
-		return errors.New("push failed")
+		mgr.Fatal("push failed")
 	}
 	return nil
 }
 
 // RegistryLs lists images
-func RegistryLs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryLs(amp *cli.AMP) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	var protocol string
 	if insecure {
@@ -142,7 +143,7 @@ func RegistryLs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	}
 	resp, err := http.Get(protocol + "://" + registryEndpoint() + "/v2/_catalog")
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

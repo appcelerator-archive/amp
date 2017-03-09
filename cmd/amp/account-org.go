@@ -17,18 +17,18 @@ import (
 // OrgCmd is the main command for attaching organization sub-commands.
 var (
 	listOrgCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List organization",
-		Long:  `The list command lists all available organizations.`,
+		Use:     "ls",
+		Short:   "List organization",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrg(AMP, cmd)
 		},
 	}
 
 	createOrgCmd = &cobra.Command{
-		Use:   "create",
-		Short: "Create organization",
-		Long:  `The create command creates an organization.`,
+		Use:     "create",
+		Short:   "Create organization",
+		Example: "--org=dummyorg --email=admin@dummyorg.io",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createOrg(AMP, cmd)
 		},
@@ -37,7 +37,7 @@ var (
 	deleteOrgCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove organization",
-		Long:    `The remove command deletes an organization.`,
+		Example: "--org=fakeorg",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteOrg(AMP, cmd)
@@ -45,9 +45,9 @@ var (
 	}
 
 	getOrgCmd = &cobra.Command{
-		Use:   "get",
-		Short: "Get organization info",
-		Long:  `The get command retrieves details of an organization.`,
+		Use:     "get",
+		Short:   "Get organization info",
+		Example: "--org=randomorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getOrg(AMP, cmd)
 		},
@@ -56,25 +56,24 @@ var (
 	memOrgCmd = &cobra.Command{
 		Use:   "member",
 		Short: "Member-related operations in an organization",
-		Long:  `The member command manages member-related operations for an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return memberOrg()
 		},
 	}
 
 	addOrgMemCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add members to organization",
-		Long:  `The add command adds members to an organization.`,
+		Use:     "add",
+		Short:   "Add members to organization",
+		Example: "--org=fakeorg --member=arya",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addOrgMem(AMP, cmd)
 		},
 	}
 
 	changeOrgMemRoleCmd = &cobra.Command{
-		Use:   "role owner|member",
-		Short: "Change role of organization member",
-		Long:  `The role command changes the role of an organization member.`,
+		Use:     "change owner|member",
+		Short:   "Change role of organization member",
+		Example: "--org=fakeorg --member=jsnow --role=owner",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return changeOrgMem(AMP, cmd)
 		},
@@ -83,7 +82,7 @@ var (
 	remOrgMemCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove members from organization",
-		Long:    `The remove command deletes member from an organization.`,
+		Example: "--org=randomorg --member=sansa",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remOrgMem(AMP, cmd)
@@ -91,9 +90,9 @@ var (
 	}
 
 	listOrgMemCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List members of organization",
-		Long:  `The list command lists members of an organization.`,
+		Use:     "ls",
+		Short:   "List members of organization",
+		Example: "--org=dummyorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrgMem(AMP, cmd)
 		},
@@ -140,17 +139,16 @@ func init() {
 
 // listOrg validates the input command line arguments and lists available organizations
 // by invoking the corresponding rpc/storage method
-func listOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func listOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	request := &account.ListOrganizationsRequest{}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, er := accClient.ListOrganizations(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := accClient.ListOrganizations(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
+		mgr.Fatal("unable to convert quiet parameter : %v", grpc.ErrorDesc(err))
 	} else if quiet {
 		for _, org := range reply.Organizations {
 			fmt.Println(org.Name)
@@ -169,7 +167,7 @@ func listOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 
 // createOrg validates the input command line arguments and creates an organization
 // by invoking the corresponding rpc/storage method
-func createOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func createOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -187,18 +185,17 @@ func createOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Email: email,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.CreateOrganization(context.Background(), request)
+	_, err := accClient.CreateOrganization(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "The organization %s has been successfully created.", organization)
+	mgr.Success("The organization %s has been successfully created.", organization)
 	return nil
 }
 
 // deleteOrg validates the input command line arguments and deletes an organization
 // by invoking the corresponding rpc/storage method
-func deleteOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func deleteOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -210,18 +207,17 @@ func deleteOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Name: organization,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.DeleteOrganization(context.Background(), request)
+	_, err := accClient.DeleteOrganization(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "The organization has been deleted successfully.")
+	mgr.Success("The organization has been deleted successfully.")
 	return nil
 }
 
 // getOrg validates the input command line arguments and retrieves info of an organization
 // by invoking the corresponding rpc/storage method
-func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func getOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -233,10 +229,9 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, er := accClient.GetOrganization(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := accClient.GetOrganization(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
@@ -248,13 +243,13 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) (err error) {
 // memberOrg validates the input command line arguments and retrieves info about members of an organization
 // by invoking the corresponding rpc/storage method
 func memberOrg() (err error) {
-	manager.printf(colWarn, "Choose a command for member operations.\nUse amp org member -h for help.")
+	mgr.Warn("Choose a command for member operations.\nUse amp org member -h for help.")
 	return nil
 }
 
 // addOrgMem validates the input command line arguments and adds members to an organization
 // by invoking the corresponding rpc/storage method
-func addOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func addOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -273,18 +268,17 @@ func addOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.AddUserToOrganization(context.Background(), request)
+	_, err := accClient.AddUserToOrganization(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Member(s) have been added to organization successfully.")
+	mgr.Success("Member(s) have been added to organization successfully.")
 	return nil
 }
 
 // remOrgMem validates the input command line arguments and removes members from an organization
 // by invoking the corresponding rpc/storage method
-func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func remOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -303,16 +297,15 @@ func remOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		UserName:         member,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.RemoveUserFromOrganization(context.Background(), request)
+	_, err := accClient.RemoveUserFromOrganization(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Member(s) have been removed from organization successfully.")
+	mgr.Success("Member(s) have been removed from organization successfully.")
 	return nil
 }
 
-func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -339,7 +332,7 @@ func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	case "member":
 		orgRole = accounts.OrganizationRole_ORGANIZATION_MEMBER
 	default:
-		manager.fatalf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", role)
+		mgr.Warn("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", role)
 	}
 
 	request := &account.ChangeOrganizationMemberRoleRequest{
@@ -348,18 +341,17 @@ func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Role:             orgRole,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.ChangeOrganizationMemberRole(context.Background(), request)
+	_, err := accClient.ChangeOrganizationMemberRole(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Role has been changed successfully.")
+	mgr.Success("Role has been changed successfully.")
 	return nil
 }
 
 // listOrgMem validates the input command line arguments and lists all members of an organization
 // by invoking the corresponding rpc/storage method
-func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func listOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("org").Changed {
 		organization = cmd.Flag("org").Value.String()
 	} else {
@@ -371,14 +363,13 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Name: organization,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, er := accClient.GetOrganization(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := accClient.GetOrganization(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
+		mgr.Fatal("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, member := range reply.Organization.Members {
 			fmt.Println(member.Name)

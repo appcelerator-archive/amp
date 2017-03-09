@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -12,15 +11,16 @@ import (
 	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
 	serviceCreateCmd = &cobra.Command{
-		Use:   "create IMAGE [OPTION...]",
-		Short: "Create a new service",
-		Long:  `The create command creates a new service with a specified image and/or additional options.`,
+		Use:     "create",
+		Short:   "Create a new service",
+		Example: "sample-image/test-service --name=foo-service",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return serviceCreate(AMP, cmd, args)
+			return serviceCreate(AMP, args)
 		},
 	}
 
@@ -70,22 +70,22 @@ func init() {
 	ServiceCmd.AddCommand(serviceCreateCmd)
 }
 
-func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func serviceCreate(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		log.Fatal("\"amp service create\" requires at least 1 argument(s)")
+		mgr.Fatal("\"amp service create\" requires at least 1 argument(s)")
 	}
 
 	image = args[0]
 
 	parsedSpecs, err := parsePublishSpecs(publishSpecs)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	parsedNetworks, err := parseNetworks(networks)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	// add service mode to spec
@@ -102,13 +102,13 @@ func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	case "global":
 		if replicas != 0 {
 			// global mode can't specify replicas (only allowed 1 per node)
-			log.Fatal("Replicas can only be used with replicated mode")
+			mgr.Fatal("replicas can only be used with replicated mode")
 		}
 		swarmMode = &service.ServiceSpec_Global{
 			Global: &service.GlobalService{},
 		}
 	default:
-		log.Fatalf("Invalid option for mode: %s", mode)
+		mgr.Fatal("invalid option for mode: %s", mode)
 	}
 
 	spec := &service.ServiceSpec{
@@ -134,12 +134,12 @@ func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 		opts := cliflags.NewClientOptions()
 		err := dockerCli.Initialize(opts)
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		// Retrieve encoded auth token from the image reference
 		encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, image)
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		spec.RegistryAuth = encodedAuth
 	}
@@ -147,7 +147,7 @@ func serviceCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	client := service.NewServiceClient(amp.Conn)
 	reply, err := client.Create(ctx, request)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Id)
