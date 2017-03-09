@@ -18,11 +18,11 @@ const (
 
 var (
 	listTopicCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List topics",
-		Long:  `The list command returns all available topics.`,
+		Use:     "ls",
+		Short:   "List topics",
+		Example: "amp topic ls \namp topic ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTopic(AMP, cmd, args)
+			return listTopic(AMP)
 		},
 	}
 )
@@ -31,7 +31,7 @@ func init() {
 	TopicCmd.AddCommand(listTopicCmd)
 }
 
-func listTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func listTopic(amp *cli.AMP) (err error) {
 	request := &topic.ListRequest{}
 
 	client := topic.NewTopicClient(amp.Conn)

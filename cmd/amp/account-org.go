@@ -17,18 +17,18 @@ import (
 // OrgCmd is the main command for attaching organization sub-commands.
 var (
 	listOrgCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List organization",
-		Long:  `The list command lists all available organizations.`,
+		Use:     "ls",
+		Short:   "List organization",
+		Example: "amp org ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrg(AMP, cmd)
 		},
 	}
 
 	createOrgCmd = &cobra.Command{
-		Use:   "create",
-		Short: "Create organization",
-		Long:  `The create command creates an organization.`,
+		Use:     "create",
+		Short:   "Create organization",
+		Example: "amp org create --org=dummyorg --email=admin@dummyorg.io",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createOrg(AMP, cmd)
 		},
@@ -37,7 +37,7 @@ var (
 	deleteOrgCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove organization",
-		Long:    `The remove command deletes an organization.`,
+		Example: "amp org rm --org=fakeorg \namp org del --org=fakeorg",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteOrg(AMP, cmd)
@@ -45,9 +45,9 @@ var (
 	}
 
 	getOrgCmd = &cobra.Command{
-		Use:   "get",
-		Short: "Get organization info",
-		Long:  `The get command retrieves details of an organization.`,
+		Use:     "get",
+		Short:   "Get organization info",
+		Example: "amp org get --org=randomorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getOrg(AMP, cmd)
 		},
@@ -56,25 +56,24 @@ var (
 	memOrgCmd = &cobra.Command{
 		Use:   "member",
 		Short: "Member-related operations in an organization",
-		Long:  `The member command manages member-related operations for an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return memberOrg()
 		},
 	}
 
 	addOrgMemCmd = &cobra.Command{
-		Use:   "add",
-		Short: "Add members to organization",
-		Long:  `The add command adds members to an organization.`,
+		Use:     "add",
+		Short:   "Add members to organization",
+		Example: "amp org member add --org=fakeorg --member=arya",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addOrgMem(AMP, cmd)
 		},
 	}
 
 	changeOrgMemRoleCmd = &cobra.Command{
-		Use:   "role owner|member",
-		Short: "Change role of organization member",
-		Long:  `The role command changes the role of an organization member.`,
+		Use:     "change owner|member",
+		Short:   "Change role of organization member",
+		Example: "amp org member change --org=fakeorg --member=jsnow --role=owner",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return changeOrgMem(AMP, cmd)
 		},
@@ -83,7 +82,7 @@ var (
 	remOrgMemCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove members from organization",
-		Long:    `The remove command deletes member from an organization.`,
+		Example: "amp org member rm --org=randomorg --member=sansa \namp org member del --org=randomorg --member=sansa",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remOrgMem(AMP, cmd)
@@ -91,9 +90,9 @@ var (
 	}
 
 	listOrgMemCmd = &cobra.Command{
-		Use:   "ls",
-		Short: "List members of organization",
-		Long:  `The list command lists members of an organization.`,
+		Use:     "ls",
+		Short:   "List members of organization",
+		Example: "amp org member ls --org=dummyorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listOrgMem(AMP, cmd)
 		},

@@ -21,7 +21,6 @@ import (
 var RegCmd = &cobra.Command{
 	Use:   "registry",
 	Short: "Registry operations",
-	Long:  `Registry command manages all registry-related operations.`,
 }
 
 var (
@@ -29,19 +28,19 @@ var (
 	domain   string
 	insecure bool
 	pushCmd  = &cobra.Command{
-		Use:   "push IMAGE [OPTION...]",
-		Short: "Push an image to the AMP registry",
-		Long:  `The push command pushes an image to the AMP registry.`,
+		Use:     "push",
+		Short:   "Push an image to the AMP registry",
+		Example: "amp registry push sample/test-registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryPush(AMP, cmd, args)
+			return RegistryPush(AMP, args)
 		},
 	}
 	reglsCmd = &cobra.Command{
-		Use:   "ls [OPTION...]",
-		Short: "List the AMP registry images",
-		Long:  `The list command lists all the available images in the AMP registry.`,
+		Use:     "ls",
+		Short:   "List the AMP registry images",
+		Example: "amp registry ls \namp registry ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryLs(AMP, cmd, args)
+			return RegistryLs(AMP)
 		},
 	}
 )
@@ -53,6 +52,8 @@ func init() {
 	RegCmd.PersistentFlags().StringVarP(&endpoint, "endpoint", "e", "", "The amp registry endpoint (hostname or IP), overrides the domain option")
 	RegCmd.AddCommand(pushCmd)
 	RegCmd.AddCommand(reglsCmd)
+
+	reglsCmd.Flags().BoolP("quiet", "q", false, "Only display IDs")
 }
 
 // registryEndpoint returns the registry endpoint
@@ -66,7 +67,7 @@ func registryEndpoint() (ep string) {
 }
 
 // RegistryPush displays resource usage statistics
-func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryPush(amp *cli.AMP, args []string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amp-cli"}
 	dclient, err := docker.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
@@ -129,7 +130,7 @@ func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 }
 
 // RegistryLs lists images
-func RegistryLs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryLs(amp *cli.AMP) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

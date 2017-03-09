@@ -14,12 +14,12 @@ import (
 var (
 	// TODO: add support for 'remove' alias
 	serviceRmCmd = &cobra.Command{
-		Use:     "rm SERVICE-NAME... or SERVICE-ID...",
+		Use:     "rm",
 		Short:   "Remove one or more services",
-		Long:    `The remove command deletes one or more services based on specified service name(s) or id(s).`,
+		Example: "amp service rm sample-service \namp service del sample-service",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return serviceRm(AMP, cmd, args)
+			return serviceRm(AMP, args)
 		},
 	}
 
@@ -31,7 +31,7 @@ func init() {
 	ServiceCmd.AddCommand(serviceRmCmd)
 }
 
-func serviceRm(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func serviceRm(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
