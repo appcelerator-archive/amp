@@ -22,7 +22,7 @@ var (
 		Short: "List topics",
 		Long:  `The list command returns all available topics.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTopic(AMP, cmd, args)
+			return listTopic(AMP)
 		},
 	}
 )
@@ -31,7 +31,7 @@ func init() {
 	TopicCmd.AddCommand(listTopicCmd)
 }
 
-func listTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func listTopic(amp *cli.AMP) (err error) {
 	request := &topic.ListRequest{}
 
 	client := topic.NewTopicClient(amp.Conn)

@@ -33,7 +33,7 @@ var (
 		Short: "Push an image to the AMP registry",
 		Long:  `The push command pushes an image to the AMP registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryPush(AMP, cmd, args)
+			return RegistryPush(AMP, args)
 		},
 	}
 	reglsCmd = &cobra.Command{
@@ -41,7 +41,7 @@ var (
 		Short: "List the AMP registry images",
 		Long:  `The list command lists all the available images in the AMP registry.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RegistryLs(AMP, cmd, args)
+			return RegistryLs(AMP)
 		},
 	}
 )
@@ -66,7 +66,7 @@ func registryEndpoint() (ep string) {
 }
 
 // RegistryPush displays resource usage statistics
-func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryPush(amp *cli.AMP, args []string) error {
 	defaultHeaders := map[string]string{"User-Agent": "amp-cli"}
 	dclient, err := docker.NewClient(DockerURL, DockerVersion, nil, defaultHeaders)
 	if err != nil {
@@ -129,7 +129,7 @@ func RegistryPush(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 }
 
 // RegistryLs lists images
-func RegistryLs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+func RegistryLs(amp *cli.AMP) error {
 	_, err := amp.GetAuthorizedContext()
 	if err != nil {
 		return err

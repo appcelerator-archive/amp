@@ -13,7 +13,7 @@ var PlatformStatus = &cobra.Command{
 	Long: `The status command retrieves current status of AMP platform (stopped, partially running, running).
 The command returns 1 if status is not running.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		getAMPStatus(cmd, args)
+		getAMPStatus(cmd)
 	},
 }
 
@@ -23,7 +23,7 @@ func init() {
 	PlatformCmd.AddCommand(PlatformStatus)
 }
 
-func getAMPStatus(cmd *cobra.Command, args []string) error {
+func getAMPStatus(cmd *cobra.Command) error {
 	manager := &ampManager{}
 	if cmd.Flag("quiet").Value.String() == "true" {
 		manager.silence = true

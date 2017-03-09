@@ -17,7 +17,7 @@ var (
 		Short: "Create a topic",
 		Long:  `The create command creates a topic with specified name.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createTopic(AMP, cmd, args)
+			return createTopic(AMP, args)
 		},
 	}
 )
@@ -26,7 +26,7 @@ func init() {
 	TopicCmd.AddCommand(createTopicCmd)
 }
 
-func createTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func createTopic(amp *cli.AMP, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("must specify topic name")
 	}

@@ -33,7 +33,7 @@ var VersionCmd = &cobra.Command{
 	Short: "Display the version info for AMP and Amplifier",
 	Long:  `The version command displays the version info for AMP and Amplifier, including the current version and build.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return list(AMP, cmd, args)
+		return list(AMP)
 	},
 }
 
@@ -42,7 +42,7 @@ func init() {
 }
 
 // Lists version info of AMP and Amplifier
-func list(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func list(amp *cli.AMP) (err error) {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)

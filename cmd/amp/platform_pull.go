@@ -12,7 +12,7 @@ var PlatformPull = &cobra.Command{
 	Short: "Pull platform images",
 	Long:  `The pull command pulls all the images available from AMP Infrastructure stack.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		pullAMPImages(cmd, args)
+		pullAMPImages(cmd)
 	},
 }
 
@@ -22,7 +22,7 @@ func init() {
 	PlatformCmd.AddCommand(PlatformPull)
 }
 
-func pullAMPImages(cmd *cobra.Command, args []string) error {
+func pullAMPImages(cmd *cobra.Command) error {
 	manager := &ampManager{}
 	if cmd.Flag("quiet").Value.String() == "true" {
 		manager.silence = true

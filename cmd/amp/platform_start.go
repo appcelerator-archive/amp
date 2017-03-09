@@ -13,7 +13,7 @@ var PlatformStart = &cobra.Command{
 	Long: `The start command starts all AMP platform services available in the AMP Infrastructure stack.
 If the AMP platform is already running, it returns an appropriate message along with an option to force a re-start.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		startAMP(cmd, args)
+		startAMP(cmd)
 	},
 }
 
@@ -24,7 +24,7 @@ func init() {
 	PlatformCmd.AddCommand(PlatformStart)
 }
 
-func startAMP(cmd *cobra.Command, args []string) error {
+func startAMP(cmd *cobra.Command) error {
 	manager := &ampManager{}
 	if cmd.Flag("quiet").Value.String() == "true" {
 		manager.silence = true

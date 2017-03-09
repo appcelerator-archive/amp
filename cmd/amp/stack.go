@@ -50,7 +50,7 @@ var (
 		Short: "Start a stopped stack",
 		Long:  `The start command starts a stopped stack according to the specified stack name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackStart(AMP, cmd, args)
+			return stackStart(AMP, args)
 		},
 	}
 	stackStopCmd = &cobra.Command{
@@ -58,7 +58,7 @@ var (
 		Short: "Stop a stack",
 		Long:  `The stop command stops all services of the specified stack name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackStop(AMP, cmd, args)
+			return stackStop(AMP, args)
 		},
 	}
 	stackRmCmd = &cobra.Command{
@@ -75,7 +75,7 @@ var (
 		Short: "List available stacks",
 		Long:  `The list command lists all available stacks, which are running.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackList(AMP, cmd, args)
+			return stackList(AMP)
 		},
 	}
 	stackTasksCmd = &cobra.Command{
@@ -83,7 +83,7 @@ var (
 		Short: "List the tasks of a stack",
 		Long:  `The ps command lists the tasks of a stack based on specified name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackTasks(AMP, cmd, args)
+			return stackTasks(AMP, args)
 		},
 	}
 	stackUrlsCmd = &cobra.Command{
@@ -91,7 +91,7 @@ var (
 		Short: "List the urls for a stack",
 		Long:  `The urls command lists the urls for a stack based on specified name or id.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stackUrls(AMP, cmd, args)
+			return stackUrls(AMP, args)
 		},
 	}
 	listQuiet  *bool
@@ -259,7 +259,7 @@ func stackUp(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackStart(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackStart(amp *cli.AMP, args []string) (err error) {
 
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
@@ -282,7 +282,7 @@ func stackStart(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackStop(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackStop(amp *cli.AMP, args []string) (err error) {
 
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
@@ -337,7 +337,7 @@ func stackRm(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackList(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackList(amp *cli.AMP) (err error) {
 	var limit = *listLast
 	if *listLatest {
 		limit = 1
@@ -373,7 +373,7 @@ func stackList(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackTasks(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackTasks(amp *cli.AMP, args []string) (err error) {
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
 	}
@@ -397,7 +397,7 @@ func stackTasks(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackUrls(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackUrls(amp *cli.AMP, args []string) (err error) {
 	if len(args) == 0 {
 		log.Fatal("Must specify stack name or id")
 	}

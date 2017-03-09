@@ -31,7 +31,7 @@ var (
 		Long: `The create command registers a function with the specified name and image.
 If successful, a function id is returned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createFunction(AMP, cmd, args)
+			return createFunction(AMP, args)
 		},
 	}
 
@@ -40,7 +40,7 @@ If successful, a function id is returned.`,
 		Short: "List functions",
 		Long:  `The list command displays all registered functions.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listFunction(AMP, cmd, args)
+			return listFunction(AMP, cmd)
 		},
 	}
 
@@ -50,7 +50,7 @@ If successful, a function id is returned.`,
 		Long:    `The remove command unregisters the specified function.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeFunction(AMP, cmd, args)
+			return removeFunction(AMP, args)
 		},
 	}
 )
@@ -64,7 +64,7 @@ func init() {
 	RootCmd.AddCommand(functionCmd)
 }
 
-func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func createFunction(amp *cli.AMP, args []string) (err error) {
 	switch len(args) {
 	case 0:
 		return errors.New("must specify function name and docker image")
@@ -98,7 +98,7 @@ func createFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error)
 	return nil
 }
 
-func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func listFunction(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	// List functions
 	request := &function.ListRequest{}
 	reply, er := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
@@ -128,7 +128,7 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func removeFunction(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func removeFunction(amp *cli.AMP, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("rm requires at least one argument")
 	}

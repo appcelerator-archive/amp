@@ -18,7 +18,7 @@ var (
 		Long:    `The remove command deletes the specified topic id.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeTopic(AMP, cmd, args)
+			return removeTopic(AMP, args)
 		},
 	}
 )
@@ -27,7 +27,7 @@ func init() {
 	TopicCmd.AddCommand(removeTopicCmd)
 }
 
-func removeTopic(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func removeTopic(amp *cli.AMP, args []string) (err error) {
 	if len(args) == 0 {
 		return errors.New("must specify topic id")
 	}
