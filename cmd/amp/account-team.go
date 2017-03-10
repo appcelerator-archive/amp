@@ -36,7 +36,6 @@ var (
 	deleteTeamCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove team",
-		Long:    `The remove command deletes a team in an organization.`,
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteTeam(AMP, cmd)

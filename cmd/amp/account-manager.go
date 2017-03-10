@@ -55,7 +55,7 @@ var (
 		Use:   "password",
 		Short: "Account password operations",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return pwd(AMP, cmd)
+			return pwd()
 		},
 	}
 
@@ -71,10 +71,18 @@ var (
 	pwdResetCmd = &cobra.Command{
 		Use:     "reset",
 		Short:   "Reset account password",
-		Long:    "The reset command allows users to reset their password.",
 		Example: "amp account password reset --name=jdoe",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdReset(AMP, cmd)
+		},
+	}
+
+	pwdSetCmd = &cobra.Command{
+		Use:     "set",
+		Short:   "Set account password",
+		Example: "amp account password set --token=this-is-a-token-sample --password=v@lard0haeri$",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pwdSet(AMP, cmd)
 		},
 	}
 
@@ -105,8 +113,6 @@ var (
 		},
 	}
 
-	set bool
-
 	username string
 	email    string
 	password string
@@ -126,6 +132,7 @@ func init() {
 	AccountCmd.AddCommand(pwdCmd)
 	pwdCmd.AddCommand(pwdChangeCmd)
 	pwdCmd.AddCommand(pwdResetCmd)
+	pwdCmd.AddCommand(pwdSetCmd)
 	AccountCmd.AddCommand(switchCmd)
 	AccountCmd.AddCommand(whoAmICmd)
 	AccountCmd.AddCommand(logoutCmd)
@@ -141,8 +148,8 @@ func init() {
 
 	forgotLoginCmd.Flags().StringVar(&email, "email", email, "Email ID")
 
-	pwdCmd.Flags().BoolVar(&set, "set", false, "Set Password")
-	pwdCmd.Flags().StringVar(&token, "token", token, "Verification Token")
+	pwdSetCmd.Flags().StringVar(&token, "token", token, "Verification Token")
+	pwdSetCmd.Flags().StringVar(&password, "password", password, "Password")
 
 	pwdChangeCmd.Flags().StringVar(&username, "name", username, "Account Name")
 	pwdChangeCmd.Flags().StringVar(&password, "password", password, "Current Password")
@@ -295,16 +302,7 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
 
 // pwd validates the input command line arguments and performs password-related operations
 // by invoking the corresponding rpc/storage method
-func pwd(amp *cli.AMP, cmd *cobra.Command) (err error) {
-	//if reset {
-	//	return pwdReset(amp, cmd)
-	//}
-	//if change {
-	//	return pwdChange(amp, cmd)
-	//}
-	if set {
-		return pwdSet(amp, cmd)
-	}
+func pwd() (err error) {
 	manager.printf(colWarn, "Choose a command for password operation.\nUse amp account password -h for help.")
 	return nil
 }
@@ -362,7 +360,7 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	return nil
 }
 
-// pwdSet validates the input command line arguments and changes existing password of an account
+// pwdSet validates the input command line arguments and sets password of an account
 // by invoking the corresponding rpc/storage method
 func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	if cmd.Flag("token").Changed {
