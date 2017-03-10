@@ -6,14 +6,6 @@ import (
 
 // AccountCmd is the main command for attaching account sub-commands.
 var (
-	AccountCmd = &cobra.Command{
-		Use:   "account",
-		Short: "Account operations",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return AMP.Connect()
-		},
-	}
-
 	OrgCmd = &cobra.Command{
 		Use:   "org",
 		Short: "Organization operations",
@@ -40,7 +32,6 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(AccountCmd)
 	RootCmd.AddCommand(OrgCmd)
 	RootCmd.AddCommand(TeamCmd)
 	RootCmd.AddCommand(UserCmd)
