@@ -17,7 +17,6 @@ import (
 var StorageCmd = &cobra.Command{
 	Use:   "kv",
 	Short: "Storage operations",
-	Long:  `KV command manages all key-value based storage operations in the ETCD.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},
@@ -26,10 +25,8 @@ var StorageCmd = &cobra.Command{
 var (
 	// storagePutCmd represents the creation of storage key-value pair
 	storagePutCmd = &cobra.Command{
-		Use:   "put KEY VALUE",
-		Short: "Assign specified value with specified key",
-		Long: `The put command creates a storage object with the key-value input if the key does not already exist.
-Else, it updates the existing key with the new input value.`,
+		Use:     "put",
+		Short:   "Assign specified value with specified key",
 		Example: "amp kv put foo bar",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storagePut(AMP, args)
@@ -37,9 +34,8 @@ Else, it updates the existing key with the new input value.`,
 	}
 	// storageGetCmd represents the retrieval of storage value based on key
 	storageGetCmd = &cobra.Command{
-		Use:     "get KEY",
+		Use:     "get",
 		Short:   "Retrieve a storage object",
-		Long:    `The get command retrieves a key-value pair based on the specified input key.`,
 		Example: "amp kv get foo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageGet(AMP, args)
@@ -47,9 +43,8 @@ Else, it updates the existing key with the new input value.`,
 	}
 	// storageDeleteCmd represents the deletion of storage value based on key
 	storageDeleteCmd = &cobra.Command{
-		Use:     "rm KEY or del KEY",
+		Use:     "rm",
 		Short:   "Remove a storage object",
-		Long:    `The remove command deletes the key-value pair in storage based on the specified input key.`,
 		Example: "amp kv rm foo \namp kv del foo",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,7 +55,6 @@ Else, it updates the existing key with the new input value.`,
 	storageListCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List all storage objects",
-		Long:    `The list command returns a list of all the key-value pair in storage.`,
 		Example: "amp kv ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageList(AMP, args)

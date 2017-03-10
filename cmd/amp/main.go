@@ -34,10 +34,8 @@ var (
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
-		Use:   `amp [OPTION...] COMMAND [ARG...]`,
-		Short: "Appcelerator Microservice Platform.",
-		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform for managing and
-monitoring containerized applications and microservices as part of a unified serverless computing environment.`,
+		Use:     "amp",
+		Short:   "Appcelerator Microservice Platform",
 		Example: "amp org \namp kv get foo",
 		Run: func(cmd *cobra.Command, args []string) {
 			if displayConfigFilePath {
@@ -81,7 +79,6 @@ func main() {
 	infoCmd := &cobra.Command{
 		Use:   "info",
 		Short: "Display AMP version",
-		Long:  `Display the current amp version and server information.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 			fmt.Printf("Server: %s\n", Config.AmpAddress)
@@ -91,9 +88,8 @@ func main() {
 
 	// helpCmd displays help about amp Commands
 	var helpCmd = &cobra.Command{
-		Use:   "help [command]",
+		Use:   "help",
 		Short: "Help about the command",
-		Long:  `Display the help and usage information about AMP commands.`,
 		RunE: func(c *cobra.Command, args []string) error {
 			cmd, args, e := RootCmd.Find(os.Args[2:])
 			if cmd == nil || e != nil || len(args) > 0 {
@@ -131,9 +127,7 @@ func main() {
 
 var usageTemplate = `Usage:	{{if not .HasSubCommands}}{{.UseLine}}{{end}}{{if .HasSubCommands}}{{ .CommandPath}} COMMAND{{end}}
 
-{{ .Short | trim }}
-
-{{ .Long | trim }}{{if gt .Aliases 0}}
+{{ .Short | trim }}{{if gt .Aliases 0}}
 
 Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}

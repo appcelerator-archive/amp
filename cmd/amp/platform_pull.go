@@ -8,9 +8,8 @@ import (
 
 // PlatformPull is the main command for attaching platform subcommands.
 var PlatformPull = &cobra.Command{
-	Use:     "pull [OPTION...]",
+	Use:     "pull",
 	Short:   "Pull platform images",
-	Long:    `The pull command pulls all the images available from AMP Infrastructure stack.`,
 	Example: "amp platform pull --local \namp pf start -q",
 	Run: func(cmd *cobra.Command, args []string) {
 		pullAMPImages(cmd)

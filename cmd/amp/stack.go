@@ -20,7 +20,6 @@ import (
 var StackCmd = &cobra.Command{
 	Use:   "stack",
 	Short: "Stack operations",
-	Long:  `Stack command manages all stack-related operations.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return AMP.Connect()
 	},
@@ -28,18 +27,16 @@ var StackCmd = &cobra.Command{
 
 var (
 	stackCreateCmd = &cobra.Command{
-		Use:     "create -f FILE-PATH STACK-NAME [OPTION...]",
+		Use:     "create",
 		Short:   "Create a stack",
-		Long:    `The create command creates a stack according to the specified file path and name.`,
 		Example: "amp stack create -f examples/stacks/micro/stack.yml micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackCreate(AMP, cmd, args)
 		},
 	}
 	stackUpCmd = &cobra.Command{
-		Use:     "up -f FILE-PATH STACK-NAME [OPTION...]",
+		Use:     "up",
 		Short:   "Create and deploy a stack",
-		Long:    `The up command creates and deploys a stack according to the specified file path and name.`,
 		Example: "amp stack up -f examples/stacks/micro/stack.yml micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUp(AMP, cmd, args)
@@ -48,27 +45,24 @@ var (
 	// stack configuration file
 	stackfile     string
 	stackStartCmd = &cobra.Command{
-		Use:     "start STACK-NAME or STACK-ID [OPTION...]",
+		Use:     "start",
 		Short:   "Start a stopped stack",
-		Long:    `The start command starts a stopped stack according to the specified stack name or id.`,
 		Example: "amp stack start micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStart(AMP, args)
 		},
 	}
 	stackStopCmd = &cobra.Command{
-		Use:     "stop STACK-NAME or STACK-ID [OPTION...]",
+		Use:     "stop",
 		Short:   "Stop a stack",
-		Long:    `The stop command stops all services of the specified stack name or id.`,
 		Example: "amp stack stop micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStop(AMP, args)
 		},
 	}
 	stackRmCmd = &cobra.Command{
-		Use:     "rm STACK-NAME or STACK-ID",
+		Use:     "rm",
 		Short:   "Remove a stack",
-		Long:    `The remove command deletes the specified stack name or id completely, including ETCD data.`,
 		Example: "amp stack rm micro-stack \namp stack del micro-stack",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -76,27 +70,24 @@ var (
 		},
 	}
 	stackListCmd = &cobra.Command{
-		Use:     "ls [OPTION...]",
+		Use:     "ls",
 		Short:   "List available stacks",
-		Long:    `The list command lists all available stacks, which are running.`,
 		Example: "amp stack ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackList(AMP)
 		},
 	}
 	stackTasksCmd = &cobra.Command{
-		Use:     "ps [STACK-NAME or STACK-ID] [OPTION...]",
+		Use:     "ps",
 		Short:   "List the tasks of a stack",
-		Long:    `The ps command lists the tasks of a stack based on specified name or id.`,
 		Example: "amp stack ps micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackTasks(AMP, args)
 		},
 	}
 	stackUrlsCmd = &cobra.Command{
-		Use:     "urls [STACK-NAME... or STACK-ID...] [OPTION...]",
+		Use:     "urls",
 		Short:   "List the urls for a stack",
-		Long:    `The urls command lists the urls for a stack based on specified name or id.`,
 		Example: "amp stack urls pinger",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUrls(AMP, args)

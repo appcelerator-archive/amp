@@ -18,7 +18,6 @@ var (
 	functionCmd = &cobra.Command{
 		Use:     "function",
 		Short:   "Function operations",
-		Long:    `Function command manages all function-related operations.`,
 		Aliases: []string{"fn"},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
@@ -26,29 +25,28 @@ var (
 	}
 
 	createFunctionCmd = &cobra.Command{
-		Use:   "create FUNC-NAME IMAGE",
-		Short: "Create a function",
-		Long: `The create command registers a function with the specified name and image.
-If successful, a function id is returned.`,
+		Use:     "create",
+		Short:   "Create a function",
+		Example: "amp function create sample-func samples/function-test \namp fn create sample-func samples/function-test",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createFunction(AMP, args)
 		},
 	}
 
 	listFunctionCmd = &cobra.Command{
-		Use:   "ls [OPTION]",
-		Short: "List functions",
-		Long:  `The list command displays all registered functions.`,
+		Use:     "ls",
+		Short:   "List functions",
+		Example: "amp function ls \namp fn ls -q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listFunction(AMP, cmd)
 		},
 	}
 
 	removeFunctionCmd = &cobra.Command{
-		Use:     "rm FUNC-ID",
+		Use:     "rm",
 		Short:   "Remove a function",
-		Long:    `The remove command unregisters the specified function.`,
 		Aliases: []string{"del"},
+		Example: "amp function rm ujyhjdb656 \namp fn del ujyhjdb656",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeFunction(AMP, args)
 		},

@@ -9,7 +9,6 @@ var (
 	AccountCmd = &cobra.Command{
 		Use:   "account",
 		Short: "Account operations",
-		Long:  `The account command manages all account-related operations.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -18,7 +17,6 @@ var (
 	OrgCmd = &cobra.Command{
 		Use:   "org",
 		Short: "Organization operations",
-		Long:  `The organization command manages all organization-related operations.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -27,7 +25,6 @@ var (
 	TeamCmd = &cobra.Command{
 		Use:   "team",
 		Short: "Team operations",
-		Long:  `The team command manages all team-related operations.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -36,7 +33,6 @@ var (
 	UserCmd = &cobra.Command{
 		Use:   "user",
 		Short: "User operations",
-		Long:  `The user command manages all user-related operations.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},

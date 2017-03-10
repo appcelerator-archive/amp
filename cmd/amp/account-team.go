@@ -18,7 +18,6 @@ var (
 	listTeamCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List team",
-		Long:    `The list command lists all available teams in an organization.`,
 		Example: "amp team ls --org=dummyorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeam(AMP, cmd)
@@ -28,7 +27,6 @@ var (
 	createTeamCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create team",
-		Long:    `The create command creates a team in an organization.`,
 		Example: "amp team create --org=randomorg --team=coolteam ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTeam(AMP, cmd)
@@ -39,7 +37,6 @@ var (
 		Use:     "rm",
 		Short:   "Remove team",
 		Long:    `The remove command deletes a team in an organization.`,
-		Example: "amp team rm --org=fakeorg --team=funteam \namp team del --org=fakeorg --team=funteam",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteTeam(AMP, cmd)
@@ -49,7 +46,6 @@ var (
 	getTeamCmd = &cobra.Command{
 		Use:     "get",
 		Short:   "Get team info",
-		Long:    `The get command retrieves details of a team in an organization.`,
 		Example: "amp team get --org=fakeorg --team=funteam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getTeam(AMP, cmd)
@@ -59,7 +55,6 @@ var (
 	memTeamCmd = &cobra.Command{
 		Use:   "member",
 		Short: "Member-related operations in a team",
-		Long:  `The member command manages member-related operations of a team in an organization.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return memberTeam(AMP, cmd)
 		},
@@ -68,7 +63,6 @@ var (
 	addTeamMemCmd = &cobra.Command{
 		Use:     "add",
 		Short:   "Add members to team",
-		Long:    `The add command adds members to a team in an organization.`,
 		Example: "amp team member add --org=fakeorg --team=funteam --member=rachel",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addTeamMem(AMP, cmd)
@@ -78,7 +72,6 @@ var (
 	remTeamMemCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove members from team",
-		Long:    `The remove command deletes members from a team in an organization.`,
 		Example: "amp team member rm --org=randomorg --team=coolteam --member=joey \namp team member del --org=randomorg --team=coolteam --member=joey",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -89,7 +82,6 @@ var (
 	listTeamMemCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List members of team",
-		Long:    `The list command lists members of a team in an organization.`,
 		Example: "amp team member ls --org=dummyorg --team=geekteam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeamMem(AMP, cmd)
