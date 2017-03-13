@@ -3,7 +3,7 @@ test-timeout: 1m
 cmd-timeout: 30s
 commands:
   - account-forgot-login:
-    cmd: amp account forgot-login
+    cmd: amp user forgot-login
     args:
     options:
     input:
@@ -11,7 +11,7 @@ commands:
     expectation: account-forgot-login
 
   - account-pwd-Reset:
-    cmd: amp account password
+    cmd: amp user password
     args:
     options:
       - --reset
@@ -20,7 +20,7 @@ commands:
     expectation: account-pwd-reset
 
   - acccount-pwd-Change:
-    cmd: amp account password
+    cmd: amp user password
     args:
     options:
       - --change
