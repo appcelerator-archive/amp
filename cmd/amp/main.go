@@ -89,6 +89,9 @@ var (
 		Use:     "login",
 		Short:   "Login to account",
 		Example: "amp account login --name=jdoe --password=p@s5wrd",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return login(AMP, cmd)
 		},
@@ -98,6 +101,9 @@ var (
 		Use:     "switch",
 		Short:   "Switch account",
 		Example: "amp account switch --name=swag",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return switchAccount(AMP, cmd)
 		},
@@ -147,8 +153,8 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&listVersion, "version", "V", false, "Version number")
 	RootCmd.PersistentFlags().BoolP("help", "h", false, "Display help")
 
-	loginCmd.Flags().StringVar(&username, "name", username, "Account Name")
-	loginCmd.Flags().StringVar(&password, "password", password, "Password")
+	loginCmd.Flags().StringVar(&username, "name", "", "Account Name")
+	loginCmd.Flags().StringVar(&password, "password", "", "Password")
 
 	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
 }

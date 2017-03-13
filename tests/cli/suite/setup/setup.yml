@@ -3,7 +3,7 @@ test-timeout: 1m
 cmd-timeout: 30s
 commands:
   - account-signup:
-    cmd: amp account signup
+    cmd: amp user signup
     args:
     options:
     input:
@@ -13,7 +13,7 @@ commands:
     expectation: account-signup
 
   - account-verify:
-    cmd: amp account verify
+    cmd: amp user verify
     args:
     options:
     input:
@@ -21,7 +21,7 @@ commands:
     expectation: account-verify
 
   - account-login:
-    cmd: amp account login
+    cmd: amp login
     args:
     options:
     input:
