@@ -10,7 +10,7 @@ import (
 var PlatformStatus = &cobra.Command{
 	Use:     "status",
 	Short:   "Get AMP platform status",
-	Example: "amp platform status --local \namp pf status -q",
+	Example: "-q",
 	Run: func(cmd *cobra.Command, args []string) {
 		getAMPStatus(cmd)
 	},

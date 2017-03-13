@@ -10,7 +10,7 @@ import (
 var PlatformStart = &cobra.Command{
 	Use:     "start",
 	Short:   "Start platform",
-	Example: "amp platform start \namp pf start -f -l",
+	Example: "-f -l",
 	Run: func(cmd *cobra.Command, args []string) {
 		startAMP(cmd)
 	},

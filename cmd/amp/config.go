@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -18,7 +17,7 @@ func init() {
 	configCmd := &cobra.Command{
 		Use:     "config",
 		Short:   "Display or update the current configuration",
-		Example: "amp config \namp config AmpAddress",
+		Example: "AmpAddress",
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:
@@ -36,7 +35,7 @@ func init() {
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
-					log.Fatalf("Field %s not found", strings.Title(args[0]))
+					mgr.Fatal("field %s not found", strings.Title(args[0]))
 				}
 				fmt.Println(f.Value())
 			case 2:
@@ -44,27 +43,27 @@ func init() {
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
-					log.Fatalf("Field %s not found", strings.Title(args[0]))
+					mgr.Fatal("field %s not found", strings.Title(args[0]))
 				}
 				switch f.Kind().String() {
 				case "bool":
 					b, err := strconv.ParseBool(args[1])
 					if err != nil {
-						log.Fatalf("Could not parse %s as bool", args[1])
+						mgr.Fatal("could not parse %s as bool", args[1])
 					}
 					f.Set(b)
 				case "string":
 					f.Set(args[1])
 				default:
-					log.Fatal("Unsupported field type")
+					mgr.Fatal("unsupported field type")
 				}
 				err := cli.SaveConfiguration(Config)
 				if err != nil {
-					log.Fatal("Failed to save config")
+					mgr.Fatal("failed to save config")
 				}
 				fmt.Println(f.Value())
 			default:
-				log.Fatal("Too many arguments")
+				mgr.Fatal("too many arguments")
 			}
 		},
 	}

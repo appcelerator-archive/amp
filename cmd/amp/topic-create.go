@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/topic"
@@ -15,7 +14,7 @@ var (
 	createTopicCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create a topic",
-		Example: "amp topic create dockerize",
+		Example: "dockerize",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTopic(AMP, args)
 		},
@@ -26,13 +25,13 @@ func init() {
 	TopicCmd.AddCommand(createTopicCmd)
 }
 
-func createTopic(amp *cli.AMP, args []string) (err error) {
+func createTopic(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		return errors.New("must specify topic name")
+		mgr.Fatal("must specify topic name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("must specify topic name")
+		mgr.Fatal("must specify topic name")
 	}
 
 	request := &topic.CreateRequest{Topic: &topic.TopicEntry{
@@ -40,10 +39,9 @@ func createTopic(amp *cli.AMP, args []string) (err error) {
 	}}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, er := client.Create(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Create(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Topic.Id)

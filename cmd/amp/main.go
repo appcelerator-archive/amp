@@ -30,6 +30,8 @@ var (
 	// AMP manages the connection and state for the client
 	AMP *cli.AMP
 
+	mgr *cli.CmdManager
+
 	// Config is used by command implementations to access the computed client configuration.
 	Config                = &cli.Configuration{}
 	configFile            string
@@ -62,8 +64,9 @@ var (
 	}
 
 	helpCmd = &cobra.Command{
-		Use:   "help",
-		Short: "Help about the command",
+		Use:     "help",
+		Short:   "Help about the command",
+		Example: " ",
 		RunE: func(c *cobra.Command, args []string) error {
 			cmd, args, e := RootCmd.Find(os.Args[2:])
 			if cmd == nil || e != nil || len(args) > 0 {
@@ -77,8 +80,9 @@ var (
 	}
 
 	infoCmd = &cobra.Command{
-		Use:   "info",
-		Short: "Display AMP version",
+		Use:     "info",
+		Short:   "Display AMP version",
+		Example: " ",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 			fmt.Printf("Server: %s\n", Config.AmpAddress)
@@ -88,7 +92,7 @@ var (
 	loginCmd = &cobra.Command{
 		Use:     "login",
 		Short:   "Login to account",
-		Example: "amp account login --name=jdoe --password=p@s5wrd",
+		Example: "--name=jdoe --password=p@s5wrd",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -100,7 +104,7 @@ var (
 	switchCmd = &cobra.Command{
 		Use:     "switch",
 		Short:   "Switch account",
-		Example: "amp account switch --name=swag",
+		Example: "--name=swatkats",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -112,7 +116,7 @@ var (
 	whoAmICmd = &cobra.Command{
 		Use:     "whoami",
 		Short:   "Display currently logged-in user",
-		Example: "amp account whoami",
+		Example: " ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return whoAmI()
 		},
@@ -121,7 +125,7 @@ var (
 	logoutCmd = &cobra.Command{
 		Use:     "logout",
 		Short:   "Logout current user",
-		Example: "amp account logout",
+		Example: " ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return logout()
 		},
@@ -129,9 +133,6 @@ var (
 
 	username string
 	password string
-
-	//TODO: pass verbose as arg
-	manager = newCmdManager("")
 )
 
 func init() {
@@ -171,6 +172,10 @@ func main() {
 			RootCmd.SilenceErrors = true
 			RootCmd.SilenceUsage = true
 		}
+
+		//initialize command manager
+		mgr = cli.NewCmdManager(false)
+
 		cli.AtExit(func() {
 			if AMP != nil {
 				AMP.Disconnect()
@@ -180,19 +185,17 @@ func main() {
 
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
-		fmt.Println(err)
-		cli.Exit(1)
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		cli.Exit(1)
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	cli.Exit(0)
 }
 
 // login validates the input command line arguments and allows login to an existing account
 // by invoking the corresponding rpc/storage method
-func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func login(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
@@ -211,21 +214,20 @@ func login(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	header := metadata.MD{}
-	_, err = accClient.Login(context.Background(), request, grpc.Header(&header))
+	_, err := accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Welcome back, %s!", username)
+	mgr.Success("Welcome back, %s!", username)
 	return nil
 }
 
 // switchAccount validates the input command line arguments and switches from personal account to an organization account
 // by invoking the corresponding rpc/storage method
-func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func switchAccount(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
@@ -238,34 +240,32 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	}
 	accClient := account.NewAccountClient(amp.Conn)
 	header := metadata.MD{}
-	_, err = accClient.Switch(context.Background(), request, grpc.Header(&header))
+	_, err := accClient.Switch(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Your are now logged in as: %s", username)
+	mgr.Success("Your are now logged in as: %s", username)
 	return nil
 }
 
 // whoAmI validates the input command line arguments and displays the current account
 // by invoking the corresponding rpc/storage method
-func whoAmI() (err error) {
+func whoAmI() error {
 	token, err := cli.ReadToken()
 	if err != nil {
-		manager.fatalf("You are not logged in.")
-		return
+		mgr.Fatal("you are not logged in")
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
 	})
 	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok {
 		if claims.ActiveOrganization != "" {
-			manager.printf(colSuccess, "Logged in as organization %s (on behalf of user %s).", claims.ActiveOrganization, claims.AccountName)
+			mgr.Success("Logged in as organization %s (on behalf of user %s).", claims.ActiveOrganization, claims.AccountName)
 		} else {
-			manager.printf(colSuccess, "Logged in as user %s.", claims.AccountName)
+			mgr.Success("Logged in as user %s.", claims.AccountName)
 		}
 	}
 	return nil
@@ -273,13 +273,12 @@ func whoAmI() (err error) {
 
 // logout validates the input command line arguments and logs out of the current account
 // by invoking the corresponding rpc/storage method
-func logout() (err error) {
-	err = cli.RemoveToken()
+func logout() error {
+	err := cli.RemoveToken()
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "You have been successfully logged out!")
+	mgr.Success("You have been successfully logged out!")
 	return nil
 }
 
@@ -291,7 +290,7 @@ Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
 Examples:
-{{ .Example }}{{end}}{{if .HasFlags}}
+{{if not .HasSubCommands}}{{.UseLine}}{{end}} {{ .Example }}{{end}}{{if .HasFlags}}
 
 Options:
 {{.Flags.FlagUsages | trimRightSpace}}{{end}}{{ if .HasAvailableSubCommands}}

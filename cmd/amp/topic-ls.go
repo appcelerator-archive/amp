@@ -20,7 +20,7 @@ var (
 	listTopicCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List topics",
-		Example: "amp topic ls \namp topic ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTopic(AMP)
 		},
@@ -31,19 +31,17 @@ func init() {
 	TopicCmd.AddCommand(listTopicCmd)
 }
 
-func listTopic(amp *cli.AMP) (err error) {
+func listTopic(amp *cli.AMP) error {
 	request := &topic.ListRequest{}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, er := client.List(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.List(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ID\tNAME\t")
-	fmt.Fprintln(w, "--\t----\t")
 	for _, topic := range reply.Topics {
 		fmt.Fprintf(w, "%s\t%s\t\n", topic.Id, topic.Name)
 	}
