@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -15,7 +14,7 @@ import (
 var logsCmd = &cobra.Command{
 	Use:     "logs",
 	Short:   "Fetch log entries matching provided criteria",
-	Example: "amp logs -n 150 \namp logs -m",
+	Example: "-n 150",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {
@@ -40,11 +39,10 @@ func init() {
 }
 
 // Logs fetches the logs
-func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
-	ctx, er := amp.GetAuthorizedContext()
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+	ctx, err := amp.GetAuthorizedContext()
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if amp.Verbose() {
 		fmt.Println("Log flags:")
@@ -67,26 +65,25 @@ func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	request.Message = cmd.Flag("message").Value.String()
 	request.Stack = cmd.Flag("stack").Value.String()
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
-		log.Fatalf("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
+		mgr.Fatal("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 	meta := false
 	if meta, err = strconv.ParseBool(cmd.Flag("meta").Value.String()); err != nil {
-		log.Fatalf("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
+		mgr.Fatal("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 	}
 	follow := false
 	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
-		log.Fatalf("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
+		mgr.Fatal("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 	if request.Infra, err = strconv.ParseBool(cmd.Flag("infra").Value.String()); err != nil {
-		log.Fatalf("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
+		mgr.Fatal("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 
 	// Get logs from amplifier
 	c := logs.NewLogsClient(amp.Conn)
-	r, er := c.Get(ctx, &request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	r, err := c.Get(ctx, &request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
 		displayLogEntry(entry, meta)
@@ -96,19 +93,17 @@ func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	}
 
 	// If follow is requested, get subsequent logs and stream it
-	stream, er := c.GetStream(ctx, &request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	stream, err := c.GetStream(ctx, &request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	for {
-		entry, er := stream.Recv()
-		if er == io.EOF {
+		entry, err := stream.Recv()
+		if err == io.EOF {
 			break
 		}
-		if er != nil {
-			manager.fatalf(grpc.ErrorDesc(er))
-			return
+		if err != nil {
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		displayLogEntry(entry, meta)
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -27,7 +26,7 @@ var (
 	storagePutCmd = &cobra.Command{
 		Use:     "put",
 		Short:   "Assign specified value with specified key",
-		Example: "amp kv put foo bar",
+		Example: "foo bar",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storagePut(AMP, args)
 		},
@@ -36,7 +35,7 @@ var (
 	storageGetCmd = &cobra.Command{
 		Use:     "get",
 		Short:   "Retrieve a storage object",
-		Example: "amp kv get foo",
+		Example: "foo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageGet(AMP, args)
 		},
@@ -45,7 +44,7 @@ var (
 	storageDeleteCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove a storage object",
-		Example: "amp kv rm foo \namp kv del foo",
+		Example: "foo",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageDelete(AMP, args)
@@ -55,7 +54,7 @@ var (
 	storageListCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List all storage objects",
-		Example: "amp kv ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageList(AMP, args)
 		},
@@ -72,26 +71,25 @@ func init() {
 
 // storagePut validates the input command line arguments and creates or updates storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storagePut(amp *cli.AMP, args []string) (err error) {
+func storagePut(amp *cli.AMP, args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.New("must specify storage key and storage value")
+		mgr.Fatal("must specify storage key and storage value")
 	case 1:
-		return errors.New("must specify storage value")
+		mgr.Fatal("must specify storage value")
 	case 2:
 		// OK
 	default:
-		return errors.New("too many arguments")
+		mgr.Fatal("too many arguments")
 	}
 
 	k := args[0]
 	v := args[1]
 	request := &storage.PutStorage{Key: k, Val: v}
 	client := storage.NewStorageClient(amp.Conn)
-	reply, er := client.Put(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Put(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -99,24 +97,23 @@ func storagePut(amp *cli.AMP, args []string) (err error) {
 
 // storageGet validates the input command line arguments and retrieves storage key-value pair
 //by invoking the corresponding rpc/storage method
-func storageGet(amp *cli.AMP, args []string) (err error) {
+func storageGet(amp *cli.AMP, args []string) error {
 	if len(args) > 1 {
-		return errors.New("too many arguments - check again")
+		mgr.Fatal("too many arguments")
 	} else if len(args) == 0 {
-		return errors.New("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 	k := args[0]
 	if k == "" {
-		return errors.New("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 
 	request := &storage.GetStorage{Key: k}
 
 	client := storage.NewStorageClient(amp.Conn)
-	reply, er := client.Get(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Get(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -124,24 +121,23 @@ func storageGet(amp *cli.AMP, args []string) (err error) {
 
 // storageDelete validates the input command line arguments and deletes storage key-value pair
 // by invoking the corresponding rpc/storage method
-func storageDelete(amp *cli.AMP, args []string) (err error) {
+func storageDelete(amp *cli.AMP, args []string) error {
 	if len(args) > 1 {
-		return errors.New("too many arguments - check again")
+		mgr.Fatal("too many arguments")
 	} else if len(args) == 0 {
-		return errors.New("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 	k := args[0]
 	if k == "" {
-		return errors.New("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 
 	request := &storage.DeleteStorage{Key: k}
 
 	client := storage.NewStorageClient(amp.Conn)
-	reply, er := client.Delete(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Delete(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -149,25 +145,22 @@ func storageDelete(amp *cli.AMP, args []string) (err error) {
 
 // storageList validates the input command line arguments and lists all the storage
 // key-value pairs by invoking the corresponding rpc/storage method
-func storageList(amp *cli.AMP, args []string) (err error) {
+func storageList(amp *cli.AMP, args []string) error {
 	if len(args) > 0 {
-		return errors.New("too many arguments - check again")
+		mgr.Fatal("too many arguments")
 	}
 	request := &storage.ListStorage{}
 	client := storage.NewStorageClient(amp.Conn)
-	reply, er := client.List(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.List(context.Background(), request)
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if reply == nil || len(reply.List) == 0 {
-		fmt.Println("No storage object is available")
-		return nil
+		mgr.Warn("no storage object is available")
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "KEY\tVALUE\t")
-	fmt.Fprintln(w, "---\t-----\t")
 	for _, info := range reply.List {
 		fmt.Fprintf(w, "%s\t%s\t\n", info.Key, info.Val)
 	}

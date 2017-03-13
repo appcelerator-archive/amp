@@ -15,7 +15,7 @@ func getName() (in string) {
 	username = strings.TrimSpace(in)
 	err := accounts.CheckName(in)
 	if err != nil {
-		manager.printf(colWarn, err.Error())
+		mgr.Warn(err.Error())
 		return getName()
 	}
 	return
@@ -27,7 +27,7 @@ func getEmailAddress() (email string) {
 	email = strings.TrimSpace(email)
 	_, err := accounts.CheckEmailAddress(email)
 	if err != nil {
-		manager.printf(colWarn, err.Error())
+		mgr.Warn(err.Error())
 		return getEmailAddress()
 	}
 	return
@@ -44,14 +44,14 @@ func getPassword() (password string) {
 	fmt.Print("password: ")
 	pw, err := gopass.GetPasswd()
 	if err != nil {
-		manager.fatalf(err.Error())
+		mgr.Warn(err.Error())
 		return getPassword()
 	}
 	password = string(pw)
 	password = strings.TrimSpace(password)
 	err = accounts.CheckPassword(password)
 	if err != nil {
-		manager.printf(colWarn, grpc.ErrorDesc(err))
+		mgr.Warn(grpc.ErrorDesc(err))
 		return getPassword()
 	}
 	return
@@ -60,7 +60,7 @@ func getPassword() (password string) {
 func convertTime(in int64) time.Time {
 	intVal, err := strconv.ParseInt(strconv.FormatInt(in, 10), 10, 64)
 	if err != nil {
-		manager.printf(colWarn, err.Error())
+		mgr.Warn(err.Error())
 	}
 	out := time.Unix(intVal, 0)
 	return out

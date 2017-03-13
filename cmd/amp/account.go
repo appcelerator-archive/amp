@@ -29,10 +29,19 @@ var (
 			return AMP.Connect()
 		},
 	}
+
+	PwdCmd = &cobra.Command{
+		Use:   "password",
+		Short: "Password operations",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
+	}
 )
 
 func init() {
 	RootCmd.AddCommand(OrgCmd)
 	RootCmd.AddCommand(TeamCmd)
 	RootCmd.AddCommand(UserCmd)
+	RootCmd.AddCommand(PwdCmd)
 }

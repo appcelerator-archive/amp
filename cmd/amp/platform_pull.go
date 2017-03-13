@@ -10,7 +10,7 @@ import (
 var PlatformPull = &cobra.Command{
 	Use:     "pull",
 	Short:   "Pull platform images",
-	Example: "amp platform pull --local \namp pf start -q",
+	Example: "--local",
 	Run: func(cmd *cobra.Command, args []string) {
 		pullAMPImages(cmd)
 	},
