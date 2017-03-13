@@ -60,7 +60,11 @@ func RemoveToken() error {
 	if err != nil {
 		return fmt.Errorf("cannot get current user")
 	}
-	err = os.Remove(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile))
+	filePath := filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil
+	}
+	err = os.Remove(filePath)
 	if err != nil {
 		return fmt.Errorf("cannot remove token")
 	}
