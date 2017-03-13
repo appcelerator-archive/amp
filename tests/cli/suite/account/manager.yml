@@ -11,19 +11,17 @@ commands:
     expectation: account-forgot-login
 
   - account-pwd-Reset:
-    cmd: amp user password
+    cmd: amp user password reset
     args:
     options:
-      - --reset
     input:
       - cliusername
     expectation: account-pwd-reset
 
   - acccount-pwd-Change:
-    cmd: amp user password
+    cmd: amp user password change
     args:
     options:
-      - --change
     input:
       - cliPassword
       - cliDrowssap
