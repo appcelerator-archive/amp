@@ -42,7 +42,7 @@ func createTopic(amp *cli.AMP, args []string) error {
 	client := topic.NewTopicClient(amp.Conn)
 	reply, err := client.Create(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Topic.Id)

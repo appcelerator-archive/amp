@@ -73,7 +73,7 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Hi %s! Please check your email to complete the password reset process.", username)
 	return nil
@@ -102,7 +102,7 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your password change has been successful.")
 	return nil
@@ -130,7 +130,7 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.PasswordSet(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your password set has been successful.")
 	return nil

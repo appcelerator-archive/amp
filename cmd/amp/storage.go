@@ -74,13 +74,13 @@ func init() {
 func storagePut(amp *cli.AMP, args []string) error {
 	switch len(args) {
 	case 0:
-		mgr.Error("must specify storage key and storage value")
+		mgr.Fatal("must specify storage key and storage value")
 	case 1:
-		mgr.Error("must specify storage value")
+		mgr.Fatal("must specify storage value")
 	case 2:
 		// OK
 	default:
-		mgr.Error("too many arguments")
+		mgr.Fatal("too many arguments")
 	}
 
 	k := args[0]
@@ -89,7 +89,7 @@ func storagePut(amp *cli.AMP, args []string) error {
 	client := storage.NewStorageClient(amp.Conn)
 	reply, err := client.Put(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -99,13 +99,13 @@ func storagePut(amp *cli.AMP, args []string) error {
 //by invoking the corresponding rpc/storage method
 func storageGet(amp *cli.AMP, args []string) error {
 	if len(args) > 1 {
-		mgr.Error("too many arguments")
+		mgr.Fatal("too many arguments")
 	} else if len(args) == 0 {
-		mgr.Error("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 	k := args[0]
 	if k == "" {
-		mgr.Error("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 
 	request := &storage.GetStorage{Key: k}
@@ -113,7 +113,7 @@ func storageGet(amp *cli.AMP, args []string) error {
 	client := storage.NewStorageClient(amp.Conn)
 	reply, err := client.Get(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -123,13 +123,13 @@ func storageGet(amp *cli.AMP, args []string) error {
 // by invoking the corresponding rpc/storage method
 func storageDelete(amp *cli.AMP, args []string) error {
 	if len(args) > 1 {
-		mgr.Error("too many arguments")
+		mgr.Fatal("too many arguments")
 	} else if len(args) == 0 {
-		mgr.Error("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 	k := args[0]
 	if k == "" {
-		mgr.Error("must specify storage key")
+		mgr.Fatal("must specify storage key")
 	}
 
 	request := &storage.DeleteStorage{Key: k}
@@ -137,7 +137,7 @@ func storageDelete(amp *cli.AMP, args []string) error {
 	client := storage.NewStorageClient(amp.Conn)
 	reply, err := client.Delete(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Val)
 	return nil
@@ -147,13 +147,13 @@ func storageDelete(amp *cli.AMP, args []string) error {
 // key-value pairs by invoking the corresponding rpc/storage method
 func storageList(amp *cli.AMP, args []string) error {
 	if len(args) > 0 {
-		mgr.Error("too many arguments")
+		mgr.Fatal("too many arguments")
 	}
 	request := &storage.ListStorage{}
 	client := storage.NewStorageClient(amp.Conn)
 	reply, err := client.List(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if reply == nil || len(reply.List) == 0 {
 		mgr.Warn("no storage object is available")

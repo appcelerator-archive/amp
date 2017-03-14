@@ -144,11 +144,11 @@ func listOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.ListOrganizations(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		mgr.Error("unable to convert quiet parameter : %v", grpc.ErrorDesc(err))
+		mgr.Fatal("unable to convert quiet parameter : %v", grpc.ErrorDesc(err))
 	} else if quiet {
 		for _, org := range reply.Organizations {
 			fmt.Println(org.Name)
@@ -187,7 +187,7 @@ func createOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.CreateOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("The organization %s has been successfully created.", organization)
 	return nil
@@ -209,7 +209,7 @@ func deleteOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.DeleteOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("The organization has been deleted successfully.")
 	return nil
@@ -231,7 +231,7 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
@@ -270,7 +270,7 @@ func addOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.AddUserToOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Member(s) have been added to organization successfully.")
 	return nil
@@ -299,7 +299,7 @@ func remOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.RemoveUserFromOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Member(s) have been removed from organization successfully.")
 	return nil
@@ -343,7 +343,7 @@ func changeOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.ChangeOrganizationMemberRole(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Role has been changed successfully.")
 	return nil
@@ -365,11 +365,11 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetOrganization(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		mgr.Error("unable to convert quiet parameter : %v", err.Error())
+		mgr.Fatal("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, member := range reply.Organization.Members {
 			fmt.Println(member.Name)

@@ -126,7 +126,7 @@ func signUp(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.SignUp(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Hi %s! Please check your email to complete the signup process.", username)
 	return nil
@@ -147,7 +147,7 @@ func verify(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.Verify(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your account has now been activated.")
 	return nil
@@ -168,7 +168,7 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your login name has been sent to the address: %s", email)
 	return nil
@@ -181,10 +181,10 @@ func listUser(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.ListUsers(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		mgr.Error("unable to convert quiet parameter : %v", err.Error())
+		mgr.Fatal("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, user := range reply.Users {
 			fmt.Println(user.Name)
@@ -216,7 +216,7 @@ func deleteUser(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.DeleteUser(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Successfully deleted user.")
 	return nil
@@ -238,7 +238,7 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetUser(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tEMAIL\tVERIFIED\tCREATED\t")

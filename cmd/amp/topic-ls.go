@@ -37,7 +37,7 @@ func listTopic(amp *cli.AMP) error {
 	client := topic.NewTopicClient(amp.Conn)
 	reply, err := client.List(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)

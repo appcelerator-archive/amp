@@ -142,7 +142,7 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.ListTeams(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
@@ -185,7 +185,7 @@ func createTeam(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.CreateTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Successfully created team %s in organization %s.", team, organization)
 	return nil
@@ -214,7 +214,7 @@ func deleteTeam(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.DeleteTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Successfully deleted team %s from organization %s.", team, organization)
 	return nil
@@ -243,7 +243,7 @@ func getTeam(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
@@ -289,7 +289,7 @@ func addTeamMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.AddUserToTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Member(s) have been added to team %s successfully.", team)
 	return nil
@@ -325,7 +325,7 @@ func removeTeamMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	_, err := accClient.RemoveUserFromTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Member(s) have been removed from team %s successfully.", team)
 	return nil
@@ -354,11 +354,11 @@ func listTeamMem(amp *cli.AMP, cmd *cobra.Command) error {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetTeam(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		mgr.Error("unable to convert quiet parameter : %v", err.Error())
+		mgr.Fatal("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, member := range reply.Team.Members {
 			fmt.Println(member.Name)

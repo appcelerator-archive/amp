@@ -35,7 +35,7 @@ func serviceRm(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
 		//log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
-		mgr.Error("\"amp service rm\" requires at least 1 argument(s)")
+		mgr.Fatal("\"amp service rm\" requires at least 1 argument(s)")
 	}
 
 	client := service.NewServiceClient(amp.Conn)
@@ -53,10 +53,10 @@ func serviceRm(amp *cli.AMP, args []string) error {
 			if index > -1 {
 				//errmsg := fmt.Sprintf("Error: %s", errstr[index+len(pattern):])
 				//fmt.Println(errmsg)
-				mgr.Error("error : %s", errstr[index+len(pattern):])
+				mgr.Fatal("error : %s", errstr[index+len(pattern):])
 			} else {
 				//fmt.Printf("Error: %s\n", err)
-				mgr.Error("error : %s", grpc.ErrorDesc(err))
+				mgr.Fatal("error : %s", grpc.ErrorDesc(err))
 			}
 		} else {
 			fmt.Println(resp.Ident)

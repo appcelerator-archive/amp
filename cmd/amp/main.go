@@ -191,7 +191,7 @@ func main() {
 	if err := cmd.Execute(); err != nil {
 		//fmt.Println(err)
 		//cli.Exit(1)
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	cli.Exit(0)
 }
@@ -219,10 +219,10 @@ func login(amp *cli.AMP, cmd *cobra.Command) error {
 	header := metadata.MD{}
 	_, err := accClient.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Welcome back, %s!", username)
 	return nil
@@ -247,11 +247,11 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) error {
 	if err != nil {
 		//manager.fatalf(grpc.ErrorDesc(err))
 		//return
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
 		//return err
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your are now logged in as: %s", username)
 	return nil
@@ -264,7 +264,7 @@ func whoAmI() error {
 	if err != nil {
 		//manager.fatalf("You are not logged in.")
 		//return
-		mgr.Error("you are not logged in")
+		mgr.Fatal("you are not logged in")
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
@@ -284,7 +284,7 @@ func whoAmI() error {
 func logout() error {
 	err := cli.RemoveToken()
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("You have been successfully logged out!")
 	return nil

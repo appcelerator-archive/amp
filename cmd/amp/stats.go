@@ -68,7 +68,7 @@ func init() {
 func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	var query = stats.StatsRequest{}
@@ -135,7 +135,7 @@ func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	if err = validateQuery(&query); err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	// Execute query regarding discriminator
@@ -143,7 +143,7 @@ func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 	if !query.StatsFollow {
 		_, err = executeStat(ctx, c, &query, true, 0)
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	return startFollow(ctx, c, &query)
 }
@@ -155,7 +155,7 @@ func backQuoteDash(val string) string {
 func validateQuery(query *stats.StatsRequest) error {
 	if query.Period != "" && (query.Since != "" || query.Until != "") {
 		//log.Fatal("--period can't be used with --since or --until")
-		mgr.Error("--period can't be used with --since or --until")
+		mgr.Fatal("--period can't be used with --since or --until")
 	}
 	return nil
 }
@@ -424,7 +424,7 @@ func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 		ctime, err := executeStat(ctx, c, query, true, 0)
 		currentTime = ctime
 		if err != nil {
-			mgr.Error(grpc.ErrorDesc(err))
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		query.Since = ""
 		query.Until = ""
@@ -442,7 +442,7 @@ func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 		ctime, err := executeStat(ctx, c, query, !isHisto, currentTime)
 		currentTime = ctime
 		if err != nil {
-			mgr.Error(grpc.ErrorDesc(err))
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		time.Sleep(3 * time.Second)
 	}

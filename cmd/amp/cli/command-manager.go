@@ -90,7 +90,7 @@ func (s *CmdManager) Warn(format string, args ...interface{}) {
 	s.printf(colWarn, format, args...)
 }
 
-func (s *CmdManager) Error(format string, args ...interface{}) {
+func (s *CmdManager) Fatal(format string, args ...interface{}) {
 	s.printf(colError, format, args...)
 	os.Exit(1)
 }

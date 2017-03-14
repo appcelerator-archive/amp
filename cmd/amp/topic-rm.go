@@ -28,11 +28,11 @@ func init() {
 
 func removeTopic(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		mgr.Error("must specify topic id")
+		mgr.Fatal("must specify topic id")
 	}
 	id := args[0]
 	if id == "" {
-		mgr.Error("must specify topic id")
+		mgr.Fatal("must specify topic id")
 	}
 
 	request := &topic.DeleteRequest{Id: id}
@@ -40,7 +40,7 @@ func removeTopic(amp *cli.AMP, args []string) error {
 	client := topic.NewTopicClient(amp.Conn)
 	reply, err := client.Delete(context.Background(), request)
 	if err != nil {
-		mgr.Error(grpc.ErrorDesc(err))
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Topic.Id)
 	return nil
