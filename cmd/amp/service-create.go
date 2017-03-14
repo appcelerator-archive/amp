@@ -73,7 +73,6 @@ func init() {
 func serviceCreate(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		//log.Fatal("\"amp service create\" requires at least 1 argument(s)")
 		mgr.Fatal("\"amp service create\" requires at least 1 argument(s)")
 	}
 
@@ -103,15 +102,13 @@ func serviceCreate(amp *cli.AMP, args []string) error {
 	case "global":
 		if replicas != 0 {
 			// global mode can't specify replicas (only allowed 1 per node)
-			//log.Fatal("Replicas can only be used with replicated mode")
-			mgr.Fatal("Replicas can only be used with replicated mode")
+			mgr.Fatal("replicas can only be used with replicated mode")
 		}
 		swarmMode = &service.ServiceSpec_Global{
 			Global: &service.GlobalService{},
 		}
 	default:
-		//log.Fatalf("Invalid option for mode: %s", mode)
-		mgr.Fatal("Invalid option for mode: %s", mode)
+		mgr.Fatal("invalid option for mode: %s", mode)
 	}
 
 	spec := &service.ServiceSpec{

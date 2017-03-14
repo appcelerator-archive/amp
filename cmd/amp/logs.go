@@ -65,21 +65,17 @@ func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	request.Message = cmd.Flag("message").Value.String()
 	request.Stack = cmd.Flag("stack").Value.String()
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
-		//log.Fatalf("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
 		mgr.Fatal("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 	meta := false
 	if meta, err = strconv.ParseBool(cmd.Flag("meta").Value.String()); err != nil {
-		//log.Fatalf("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 		mgr.Fatal("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 	}
 	follow := false
 	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
-		//log.Fatalf("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
 		mgr.Fatal("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 	if request.Infra, err = strconv.ParseBool(cmd.Flag("infra").Value.String()); err != nil {
-		//log.Fatalf("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
 		mgr.Fatal("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 

@@ -174,7 +174,7 @@ func main() {
 		}
 
 		//initialize command manager
-		mgr = cli.NewCmdManager("")
+		mgr = cli.NewCmdManager(false)
 
 		cli.AtExit(func() {
 			if AMP != nil {
@@ -185,12 +185,9 @@ func main() {
 
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
-		fmt.Println(err)
-		cli.Exit(1)
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cmd.Execute(); err != nil {
-		//fmt.Println(err)
-		//cli.Exit(1)
 		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	cli.Exit(0)
@@ -245,12 +242,9 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) error {
 	header := metadata.MD{}
 	_, err := accClient.Switch(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		//manager.fatalf(grpc.ErrorDesc(err))
-		//return
 		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
-		//return err
 		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	mgr.Success("Your are now logged in as: %s", username)
@@ -262,8 +256,6 @@ func switchAccount(amp *cli.AMP, cmd *cobra.Command) error {
 func whoAmI() error {
 	token, err := cli.ReadToken()
 	if err != nil {
-		//manager.fatalf("You are not logged in.")
-		//return
 		mgr.Fatal("you are not logged in")
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {

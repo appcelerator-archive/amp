@@ -356,16 +356,13 @@ func stackList(amp *cli.AMP) error {
 
 func stackTasks(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		//log.Fatal("Must specify stack name or id")
 		mgr.Fatal("must specify stack name or id")
 	}
 	if len(args) > 1 {
-		//log.Fatal("Must specify single stack name or id")
 		mgr.Fatal("must specify only one stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		//log.Fatal("Must specify stack name or id")
 		mgr.Fatal("must specify stack name or id")
 	}
 	request := &stack.TasksRequest{
@@ -382,12 +379,10 @@ func stackTasks(amp *cli.AMP, args []string) error {
 
 func stackUrls(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		//log.Fatal("Must specify stack name or id")
 		mgr.Fatal("must specify stack name or id")
 	}
 	for _, ident := range args {
 		if ident == "" {
-			//log.Fatal("Must specify stack name or id")
 			mgr.Fatal("must specify stack name or id")
 		}
 		request := &stack.StackRequest{

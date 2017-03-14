@@ -22,9 +22,6 @@ var (
 			return serviceRm(AMP, args)
 		},
 	}
-
-	// services to remove
-	//services []string
 )
 
 func init() {
@@ -33,8 +30,6 @@ func init() {
 
 func serviceRm(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
-		// TODO use standard errors and print usage
-		//log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
 		mgr.Fatal("\"amp service rm\" requires at least 1 argument(s)")
 	}
 
@@ -51,11 +46,8 @@ func serviceRm(amp *cli.AMP, args []string) error {
 			errstr := fmt.Sprintf("%s", err)
 			index := strings.LastIndex(errstr, pattern)
 			if index > -1 {
-				//errmsg := fmt.Sprintf("Error: %s", errstr[index+len(pattern):])
-				//fmt.Println(errmsg)
 				mgr.Fatal("error : %s", errstr[index+len(pattern):])
 			} else {
-				//fmt.Printf("Error: %s\n", err)
 				mgr.Fatal("error : %s", grpc.ErrorDesc(err))
 			}
 		} else {

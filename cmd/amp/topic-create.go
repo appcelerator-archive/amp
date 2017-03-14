@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/topic"
@@ -28,11 +27,11 @@ func init() {
 
 func createTopic(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		return errors.New("must specify topic name")
+		mgr.Fatal("must specify topic name")
 	}
 	name := args[0]
 	if name == "" {
-		return errors.New("must specify topic name")
+		mgr.Fatal("must specify topic name")
 	}
 
 	request := &topic.CreateRequest{Topic: &topic.TopicEntry{

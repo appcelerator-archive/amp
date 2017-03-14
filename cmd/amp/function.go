@@ -64,24 +64,19 @@ func init() {
 func createFunction(amp *cli.AMP, args []string) error {
 	switch len(args) {
 	case 0:
-		//return errors.New("must specify function name and docker image")
 		mgr.Fatal("must specify function name and docker image")
 	case 1:
-		//return errors.New("must specify docker image")
 		mgr.Fatal("must specify docker image")
 	case 2: // OK
 	default:
-		//return errors.New("too many arguments")
 		mgr.Fatal("too many arguments")
 	}
 
 	name, image := strings.TrimSpace(args[0]), strings.TrimSpace(args[1])
 	if name == "" {
-		//return errors.New("function name cannot be empty")
 		mgr.Fatal("function name cannot be empty")
 	}
 	if image == "" {
-		//return errors.New("docker image cannot be empty")
 		mgr.Fatal("docker image cannot be empty")
 	}
 

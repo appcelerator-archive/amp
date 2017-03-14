@@ -154,7 +154,6 @@ func backQuoteDash(val string) string {
 
 func validateQuery(query *stats.StatsRequest) error {
 	if query.Period != "" && (query.Since != "" || query.Until != "") {
-		//log.Fatal("--period can't be used with --since or --until")
 		mgr.Fatal("--period can't be used with --since or --until")
 	}
 	return nil

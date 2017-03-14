@@ -124,7 +124,6 @@ func RegistryPush(amp *cli.AMP, args []string) error {
 	re := regexp.MustCompile(`: digest: sha256:`)
 	if !re.Match(body) {
 		fmt.Print(string(body))
-		//return errors.New("push failed")
 		mgr.Fatal("push failed")
 	}
 	return nil
