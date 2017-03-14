@@ -97,7 +97,7 @@ start_node() {
     --label="node.role=swarm" \
     ${opts} \
     subfuzion/dind --registry-mirror=http://${REGISTRY}:5000
-  # a bit of extra time seems to be needed before trying to initalize the node as a swarm manager
+  # tiny delay to ensure stability
   sleep 5
 }
 
@@ -115,6 +115,8 @@ create_managers() {
     "${SWARMOPTS}"
   SWARMIP=$(docker inspect "${name}" --format '{{ .NetworkSettings.Networks.'${HOSTNET}'.IPAddress }}')
   echo "swarm manager ip (m1): ${SWARMIP}"
+  # a bit of extra time seems to be needed before trying to initialize the node as a swarm manager
+  sleep 5
   (docker --host="${name}" swarm init --advertise-addr="${SWARMIP}:2377") &> /dev/null
   MTOKEN=$(docker --host="${name}" swarm join-token -q manager)
   WTOKEN=$(docker --host="${name}" swarm join-token -q worker)
