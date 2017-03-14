@@ -16,7 +16,7 @@ var (
 	serviceRmCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove one or more services",
-		Example: "amp service rm sample-service \namp service del sample-service",
+		Example: "sample-service",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return serviceRm(AMP, args)

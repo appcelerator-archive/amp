@@ -20,7 +20,7 @@ var (
 	listTopicCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List topics",
-		Example: "amp topic ls \namp topic ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTopic(AMP)
 		},

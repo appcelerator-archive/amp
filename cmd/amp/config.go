@@ -17,7 +17,7 @@ func init() {
 	configCmd := &cobra.Command{
 		Use:     "config",
 		Short:   "Display or update the current configuration",
-		Example: "amp config \namp config AmpAddress",
+		Example: "AmpAddress",
 		Run: func(cmd *cobra.Command, args []string) {
 			switch len(args) {
 			case 0:

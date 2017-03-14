@@ -16,7 +16,7 @@ var (
 	pwdChangeCmd = &cobra.Command{
 		Use:     "change",
 		Short:   "Change password",
-		Example: "amp password change --name=jdoe --password=p@s5wrd --new-password=v@larm0rghuli$",
+		Example: "--name=jdoe --password=p@s5wrd --new-password=v@larm0rghuli$",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdChange(AMP, cmd)
 		},
@@ -25,7 +25,7 @@ var (
 	pwdResetCmd = &cobra.Command{
 		Use:     "reset",
 		Short:   "Reset password",
-		Example: "amp password reset --name=jdoe",
+		Example: "--name=jdoe",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdReset(AMP, cmd)
 		},
@@ -34,7 +34,7 @@ var (
 	pwdSetCmd = &cobra.Command{
 		Use:     "set",
 		Short:   "Set password",
-		Example: "amp password set --token=this-is-a-token-sample --password=v@lard0haeri$",
+		Example: "--token=this-is-a-token-sample --password=v@lard0haeri$",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return pwdSet(AMP, cmd)
 		},

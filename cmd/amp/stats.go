@@ -22,7 +22,7 @@ const (
 var statsCmd = &cobra.Command{
 	Use:     "stats",
 	Short:   "Display resource usage statistics",
-	Example: "amp stats container \n amp stats mem io",
+	Example: "mem io",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {

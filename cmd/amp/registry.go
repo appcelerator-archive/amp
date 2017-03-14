@@ -30,7 +30,7 @@ var (
 	pushCmd  = &cobra.Command{
 		Use:     "push",
 		Short:   "Push an image to the AMP registry",
-		Example: "amp registry push sample/test-registry",
+		Example: "sample/test-registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryPush(AMP, args)
 		},
@@ -38,7 +38,7 @@ var (
 	reglsCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List the AMP registry images",
-		Example: "amp registry ls \namp registry ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RegistryLs(AMP)
 		},

@@ -28,7 +28,7 @@ var (
 	stackCreateCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create a stack",
-		Example: "amp stack create -f examples/stacks/micro/stack.yml micro-stack",
+		Example: "-f examples/stacks/micro/stack.yml micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackCreate(AMP, cmd, args)
 		},
@@ -36,7 +36,7 @@ var (
 	stackUpCmd = &cobra.Command{
 		Use:     "up",
 		Short:   "Create and deploy a stack",
-		Example: "amp stack up -f examples/stacks/micro/stack.yml micro-stack",
+		Example: "-f examples/stacks/micro/stack.yml micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUp(AMP, cmd, args)
 		},
@@ -46,7 +46,7 @@ var (
 	stackStartCmd = &cobra.Command{
 		Use:     "start",
 		Short:   "Start a stopped stack",
-		Example: "amp stack start micro-stack",
+		Example: "micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStart(AMP, args)
 		},
@@ -54,7 +54,7 @@ var (
 	stackStopCmd = &cobra.Command{
 		Use:     "stop",
 		Short:   "Stop a stack",
-		Example: "amp stack stop micro-stack",
+		Example: "micro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackStop(AMP, args)
 		},
@@ -62,7 +62,7 @@ var (
 	stackRmCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove a stack",
-		Example: "amp stack rm micro-stack \namp stack del micro-stack",
+		Example: "micro-stack",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackRm(AMP, cmd, args)
@@ -71,7 +71,7 @@ var (
 	stackListCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List available stacks",
-		Example: "amp stack ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackList(AMP)
 		},
@@ -79,7 +79,7 @@ var (
 	stackTasksCmd = &cobra.Command{
 		Use:     "ps",
 		Short:   "List the tasks of a stack",
-		Example: "amp stack ps micro-stack",
+		Example: "macro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackTasks(AMP, args)
 		},
@@ -87,7 +87,7 @@ var (
 	stackUrlsCmd = &cobra.Command{
 		Use:     "urls",
 		Short:   "List the urls for a stack",
-		Example: "amp stack urls pinger",
+		Example: "macro-stack",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return stackUrls(AMP, args)
 		},

@@ -66,7 +66,7 @@ var (
 	helpCmd = &cobra.Command{
 		Use:     "help",
 		Short:   "Help about the command",
-		Example: "amp help",
+		Example: " ",
 		RunE: func(c *cobra.Command, args []string) error {
 			cmd, args, e := RootCmd.Find(os.Args[2:])
 			if cmd == nil || e != nil || len(args) > 0 {
@@ -82,7 +82,7 @@ var (
 	infoCmd = &cobra.Command{
 		Use:     "info",
 		Short:   "Display AMP version",
-		Example: "amp info",
+		Example: " ",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
 			fmt.Printf("Server: %s\n", Config.AmpAddress)
@@ -92,7 +92,7 @@ var (
 	loginCmd = &cobra.Command{
 		Use:     "login",
 		Short:   "Login to account",
-		Example: "amp login --name=jdoe --password=p@s5wrd",
+		Example: "--name=jdoe --password=p@s5wrd",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -104,7 +104,7 @@ var (
 	switchCmd = &cobra.Command{
 		Use:     "switch",
 		Short:   "Switch account",
-		Example: "amp switch --name=swatkats",
+		Example: "--name=swatkats",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return AMP.Connect()
 		},
@@ -116,7 +116,7 @@ var (
 	whoAmICmd = &cobra.Command{
 		Use:     "whoami",
 		Short:   "Display currently logged-in user",
-		Example: "amp whoami",
+		Example: " ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return whoAmI()
 		},
@@ -125,7 +125,7 @@ var (
 	logoutCmd = &cobra.Command{
 		Use:     "logout",
 		Short:   "Logout current user",
-		Example: "amp logout",
+		Example: " ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return logout()
 		},
@@ -298,7 +298,7 @@ Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
 Examples:
-{{ .Example }}{{end}}{{if .HasFlags}}
+{{if not .HasSubCommands}}{{.UseLine}}{{end}} {{ .Example }}{{end}}{{if .HasFlags}}
 
 Options:
 {{.Flags.FlagUsages | trimRightSpace}}{{end}}{{ if .HasAvailableSubCommands}}

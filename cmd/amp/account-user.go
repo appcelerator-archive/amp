@@ -19,7 +19,7 @@ var (
 	signUpCmd = &cobra.Command{
 		Use:     "signup",
 		Short:   "Signup for a new account",
-		Example: "amp user signup --name=jdoe --email=jdoe@fakemail.me --password=p@s5wrd",
+		Example: "--name=jdoe --email=jdoe@fakemail.me --password=p@s5wrd",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return signUp(AMP, cmd)
 		},
@@ -28,7 +28,7 @@ var (
 	verifyCmd = &cobra.Command{
 		Use:     "verify",
 		Short:   "Verify account",
-		Example: "amp user verify --token=this-is-a-very-very-very-long-token-code",
+		Example: "--token=this-is-a-very-very-very-long-token-code",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(AMP, cmd)
 		},
@@ -37,7 +37,7 @@ var (
 	forgotLoginCmd = &cobra.Command{
 		Use:     "forgot-login",
 		Short:   "Retrieve account name",
-		Example: "amp user forgot-login --email=jdoe@fakemail.me",
+		Example: "--email=jdoe@fakemail.me",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return forgotLogin(AMP, cmd)
 		},
@@ -46,7 +46,7 @@ var (
 	listUserCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List user",
-		Example: "amp user ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listUser(AMP, cmd)
 		},
@@ -55,7 +55,7 @@ var (
 	deleteUserCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove user",
-		Example: "amp user rm --name=hpotter \namp user del --name=hpotter",
+		Example: "--name=hpotter",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteUser(AMP, cmd)
@@ -65,7 +65,7 @@ var (
 	getUserCmd = &cobra.Command{
 		Use:     "get",
 		Short:   "Get user info",
-		Example: "amp user get --name=rweasley",
+		Example: "--name=rweasley",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getUser(AMP, cmd)
 		},

@@ -10,7 +10,7 @@ import (
 var PlatformStop = &cobra.Command{
 	Use:     "stop",
 	Short:   "Stop platform",
-	Example: "amp platform stop -l \namp pf stop --quiet",
+	Example: "--quiet",
 	Run: func(cmd *cobra.Command, args []string) {
 		stopAMP(cmd)
 	},

@@ -18,7 +18,7 @@ var (
 	listTeamCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List team",
-		Example: "amp team ls --org=dummyorg",
+		Example: "--org=dummyorg",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeam(AMP, cmd)
 		},
@@ -27,7 +27,7 @@ var (
 	createTeamCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create team",
-		Example: "amp team create --org=randomorg --team=coolteam ",
+		Example: "--org=randomorg --team=coolteam ",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTeam(AMP, cmd)
 		},
@@ -36,6 +36,7 @@ var (
 	deleteTeamCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove team",
+		Example: "--org=dummyorg --team=boreteam ",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteTeam(AMP, cmd)
@@ -45,7 +46,7 @@ var (
 	getTeamCmd = &cobra.Command{
 		Use:     "get",
 		Short:   "Get team info",
-		Example: "amp team get --org=fakeorg --team=funteam",
+		Example: "--org=fakeorg --team=funteam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getTeam(AMP, cmd)
 		},
@@ -62,7 +63,7 @@ var (
 	addTeamMemCmd = &cobra.Command{
 		Use:     "add",
 		Short:   "Add members to team",
-		Example: "amp team member add --org=fakeorg --team=funteam --member=rachel",
+		Example: "--org=fakeorg --team=funteam --member=rachel",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addTeamMem(AMP, cmd)
 		},
@@ -71,7 +72,7 @@ var (
 	remTeamMemCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove members from team",
-		Example: "amp team member rm --org=randomorg --team=coolteam --member=joey \namp team member del --org=randomorg --team=coolteam --member=joey",
+		Example: "--org=randomorg --team=coolteam --member=joey",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTeamMem(AMP, cmd)
@@ -81,7 +82,7 @@ var (
 	listTeamMemCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List members of team",
-		Example: "amp team member ls --org=dummyorg --team=geekteam",
+		Example: "--org=dummyorg --team=geekteam",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeamMem(AMP, cmd)
 		},

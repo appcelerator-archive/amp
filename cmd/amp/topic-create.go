@@ -15,7 +15,7 @@ var (
 	createTopicCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create a topic",
-		Example: "amp topic create dockerize",
+		Example: "dockerize",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createTopic(AMP, args)
 		},

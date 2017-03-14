@@ -26,7 +26,7 @@ var (
 	createFunctionCmd = &cobra.Command{
 		Use:     "create",
 		Short:   "Create a function",
-		Example: "amp function create sample-func samples/function-test \namp fn create sample-func samples/function-test",
+		Example: "sample-func samples/function-test",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return createFunction(AMP, args)
 		},
@@ -35,7 +35,7 @@ var (
 	listFunctionCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List functions",
-		Example: "amp function ls \namp fn ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listFunction(AMP, cmd)
 		},
@@ -45,7 +45,7 @@ var (
 		Use:     "rm",
 		Short:   "Remove a function",
 		Aliases: []string{"del"},
-		Example: "amp function rm ujyhjdb656 \namp fn del ujyhjdb656",
+		Example: "ujyhjdb656",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeFunction(AMP, args)
 		},

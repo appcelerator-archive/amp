@@ -14,7 +14,7 @@ var (
 	removeTopicCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove topic",
-		Example: "amp topic rm 7gstrgfgv \namp topic del 7gstrgfgv",
+		Example: "7gstrgfgv",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return removeTopic(AMP, args)

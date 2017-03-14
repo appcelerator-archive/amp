@@ -14,7 +14,7 @@ import (
 var logsCmd = &cobra.Command{
 	Use:     "logs",
 	Short:   "Fetch log entries matching provided criteria",
-	Example: "amp logs -n 150 \namp logs -m",
+	Example: "-n 150",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {

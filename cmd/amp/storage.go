@@ -26,7 +26,7 @@ var (
 	storagePutCmd = &cobra.Command{
 		Use:     "put",
 		Short:   "Assign specified value with specified key",
-		Example: "amp kv put foo bar",
+		Example: "foo bar",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storagePut(AMP, args)
 		},
@@ -35,7 +35,7 @@ var (
 	storageGetCmd = &cobra.Command{
 		Use:     "get",
 		Short:   "Retrieve a storage object",
-		Example: "amp kv get foo",
+		Example: "foo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageGet(AMP, args)
 		},
@@ -44,7 +44,7 @@ var (
 	storageDeleteCmd = &cobra.Command{
 		Use:     "rm",
 		Short:   "Remove a storage object",
-		Example: "amp kv rm foo \namp kv del foo",
+		Example: "foo",
 		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageDelete(AMP, args)
@@ -54,7 +54,7 @@ var (
 	storageListCmd = &cobra.Command{
 		Use:     "ls",
 		Short:   "List all storage objects",
-		Example: "amp kv ls -q",
+		Example: "-q",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return storageList(AMP, args)
 		},
