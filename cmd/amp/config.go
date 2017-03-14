@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -36,7 +35,8 @@ func init() {
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
-					log.Fatalf("Field %s not found", strings.Title(args[0]))
+					//log.Fatalf("Field %s not found", strings.Title(args[0]))
+					mgr.Error("field %s not found", strings.Title(args[0]))
 				}
 				fmt.Println(f.Value())
 			case 2:
@@ -44,27 +44,32 @@ func init() {
 				s := structs.New(Config)
 				f, ok := s.FieldOk(strings.Title(args[0]))
 				if !ok {
-					log.Fatalf("Field %s not found", strings.Title(args[0]))
+					//log.Fatalf("Field %s not found", strings.Title(args[0]))
+					mgr.Error("field %s not found", strings.Title(args[0]))
 				}
 				switch f.Kind().String() {
 				case "bool":
 					b, err := strconv.ParseBool(args[1])
 					if err != nil {
-						log.Fatalf("Could not parse %s as bool", args[1])
+						//log.Fatalf("Could not parse %s as bool", args[1])
+						mgr.Error("could not parse %s as bool", args[1])
 					}
 					f.Set(b)
 				case "string":
 					f.Set(args[1])
 				default:
-					log.Fatal("Unsupported field type")
+					//log.Fatal("Unsupported field type")
+					mgr.Error("unsupported field type")
 				}
 				err := cli.SaveConfiguration(Config)
 				if err != nil {
-					log.Fatal("Failed to save config")
+					//log.Fatal("Failed to save config")
+					mgr.Error("failed to save config")
 				}
 				fmt.Println(f.Value())
 			default:
-				log.Fatal("Too many arguments")
+				//log.Fatal("Too many arguments")
+				mgr.Error("too many arguments")
 			}
 		},
 	}

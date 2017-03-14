@@ -26,7 +26,7 @@ func init() {
 	TopicCmd.AddCommand(createTopicCmd)
 }
 
-func createTopic(amp *cli.AMP, args []string) (err error) {
+func createTopic(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
 		return errors.New("must specify topic name")
 	}
@@ -40,10 +40,9 @@ func createTopic(amp *cli.AMP, args []string) (err error) {
 	}}
 
 	client := topic.NewTopicClient(amp.Conn)
-	reply, er := client.Create(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Create(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Topic.Id)

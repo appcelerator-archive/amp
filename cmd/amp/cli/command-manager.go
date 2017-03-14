@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"os"
@@ -30,7 +30,7 @@ var (
 	colUser    = 5 //before remove this variable, remove all usage of this variable
 )
 
-func newCmdManager(verbose string) *CmdManager {
+func NewCmdManager(verbose string) *CmdManager {
 	s := &CmdManager{}
 	s.setColors()
 	if verbose == "true" {
@@ -52,11 +52,6 @@ func (s *CmdManager) printf(col int, format string, args ...interface{}) {
 	}
 	colorp.Printf(format, args...)
 	fmt.Println("")
-}
-
-func (s *CmdManager) fatalf(format string, args ...interface{}) {
-	s.printf(colError, format, args...)
-	os.Exit(1)
 }
 
 func (s *CmdManager) setColors() {
@@ -81,4 +76,25 @@ func (s *CmdManager) setColors() {
 	s.fcolSuccess = s.printColor[colSuccess].SprintFunc()
 	s.fcolTitle = s.printColor[colRegular].SprintFunc()
 	s.fcolLines = s.printColor[colSuccess].SprintFunc()
+}
+
+func (s *CmdManager) Regular(format string, args ...interface{}) {
+	s.printf(colRegular, format, args...)
+}
+
+func (s *CmdManager) Info(format string, args ...interface{}) {
+	s.printf(colInfo, format, args...)
+}
+
+func (s *CmdManager) Warn(format string, args ...interface{}) {
+	s.printf(colWarn, format, args...)
+}
+
+func (s *CmdManager) Error(format string, args ...interface{}) {
+	s.printf(colError, format, args...)
+	os.Exit(1)
+}
+
+func (s *CmdManager) Success(format string, args ...interface{}) {
+	s.printf(colSuccess, format, args...)
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/cmd/amp/cli"
@@ -62,23 +61,28 @@ func init() {
 	RootCmd.AddCommand(functionCmd)
 }
 
-func createFunction(amp *cli.AMP, args []string) (err error) {
+func createFunction(amp *cli.AMP, args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.New("must specify function name and docker image")
+		//return errors.New("must specify function name and docker image")
+		mgr.Error("must specify function name and docker image")
 	case 1:
-		return errors.New("must specify docker image")
+		//return errors.New("must specify docker image")
+		mgr.Error("must specify docker image")
 	case 2: // OK
 	default:
-		return errors.New("too many arguments")
+		//return errors.New("too many arguments")
+		mgr.Error("too many arguments")
 	}
 
 	name, image := strings.TrimSpace(args[0]), strings.TrimSpace(args[1])
 	if name == "" {
-		return errors.New("function name cannot be empty")
+		//return errors.New("function name cannot be empty")
+		mgr.Error("function name cannot be empty")
 	}
 	if image == "" {
-		return errors.New("docker image cannot be empty")
+		//return errors.New("docker image cannot be empty")
+		mgr.Error("docker image cannot be empty")
 	}
 
 	// Create function
@@ -86,28 +90,26 @@ func createFunction(amp *cli.AMP, args []string) (err error) {
 		Name:  name,
 		Image: image,
 	}
-	reply, er := function.NewFunctionClient(amp.Conn).Create(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := function.NewFunctionClient(amp.Conn).Create(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Function.Id)
 	return nil
 }
 
-func listFunction(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func listFunction(amp *cli.AMP, cmd *cobra.Command) error {
 	// List functions
 	request := &function.ListRequest{}
-	reply, er := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := function.NewFunctionClient(amp.Conn).List(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	// --quiet only display IDs
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("Unable to convert quiet parameter: %v", cmd.Flag("f").Value.String())
+		mgr.Error("Unable to convert quiet parameter: %v", cmd.Flag("f").Value.String())
 	} else if quiet {
 		for _, fn := range reply.Functions {
 			fmt.Println(fn.Id)
@@ -117,7 +119,7 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command) (err error) {
 
 	// Table view
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\tImage\tOwner")
+	fmt.Fprintln(w, "ID\tNAME\tIMAGE\tOWNER")
 	for _, fn := range reply.Functions {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", fn.Id, fn.Name, fn.Image, fn.Owner.Name)
 	}
@@ -126,9 +128,9 @@ func listFunction(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	return nil
 }
 
-func removeFunction(amp *cli.AMP, args []string) (err error) {
+func removeFunction(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		return errors.New("rm requires at least one argument")
+		mgr.Error("rm requires at least one argument")
 	}
 
 	client := function.NewFunctionClient(amp.Conn)
@@ -138,9 +140,9 @@ func removeFunction(amp *cli.AMP, args []string) (err error) {
 		}
 
 		request := &function.DeleteRequest{Id: arg}
-		_, er := client.Delete(context.Background(), request)
-		if er != nil {
-			manager.fatalf(grpc.ErrorDesc(er))
+		_, err := client.Delete(context.Background(), request)
+		if err != nil {
+			mgr.Error(grpc.ErrorDesc(err))
 		} else {
 			fmt.Println(arg)
 		}

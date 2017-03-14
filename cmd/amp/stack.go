@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -120,39 +119,36 @@ func init() {
 	StackCmd.AddCommand(stackUrlsCmd)
 }
 
-func stackCreate(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackCreate(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	stackfile, err := cmd.Flags().GetString("file")
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
 	if stackfile == "" {
-		log.Fatal("Specify the stackfile with the --flag option")
+		mgr.Error("specify the stackfile with the --flag option")
 	}
 
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name")
+		mgr.Error("must specify stack name")
 	}
 	name := args[0]
 	if name == "" {
-		log.Fatal("Must specify stack name")
+		mgr.Error("must specify stack name")
 	}
 
-	b, er := ioutil.ReadFile(stackfile)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	b, err := ioutil.ReadFile(stackfile)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	contents := string(b)
 	ctx := context.Background()
 
-	s, er := stack.ParseStackfile(ctx, contents)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	s, err := stack.ParseStackfile(ctx, contents)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	s.Name = name
 
@@ -164,64 +160,58 @@ func stackCreate(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 		opts := cliflags.NewClientOptions()
 		err = dockerCli.Initialize(opts)
 		if err != nil {
-			manager.fatalf(grpc.ErrorDesc(err))
-			return
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		for _, service := range s.Services {
 			// Retrieve encoded auth token from the image reference
-			encodedAuth, er := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
-			if er != nil {
-				manager.fatalf(grpc.ErrorDesc(er))
-				return
+			encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
+			if err != nil {
+				mgr.Error(grpc.ErrorDesc(err))
 			}
 			service.RegistryAuth = encodedAuth
 		}
 	}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.Create(ctx, request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Create(ctx, request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.StackId)
 	return nil
 }
 
-func stackUp(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
-	stackfile, er := cmd.Flags().GetString("file")
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+func stackUp(amp *cli.AMP, cmd *cobra.Command, args []string) error {
+	stackfile, err := cmd.Flags().GetString("file")
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	// TODO: note: currently --file is *not* an optional flag event though it's intended to be
 	if stackfile == "" {
-		log.Fatal("Specify the stackfile with the --flag option")
+		mgr.Error("specify the stackfile with the --flag option")
 	}
 
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name")
+		mgr.Error("must specify stack name")
 	}
 	name := args[0]
 	if name == "" {
-		log.Fatal("Must specify stack name")
+		mgr.Error("must specify stack name")
 	}
 
-	b, er := ioutil.ReadFile(stackfile)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	b, err := ioutil.ReadFile(stackfile)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	contents := string(b)
 	ctx := context.Background()
 
-	s, er := stack.ParseStackfile(ctx, contents)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	s, err := stack.ParseStackfile(ctx, contents)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	s.Name = name
 
@@ -231,87 +221,82 @@ func stackUp(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	if registryAuth {
 		dockerCli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr)
 		opts := cliflags.NewClientOptions()
-		err = dockerCli.Initialize(opts)
+		err := dockerCli.Initialize(opts)
 		if err != nil {
-			manager.fatalf(grpc.ErrorDesc(err))
-			return
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		for _, service := range s.Services {
 			// Retrieve encoded auth token from the image reference
-			encodedAuth, er := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
-			if er != nil {
-				manager.fatalf(grpc.ErrorDesc(er))
-				return
+			encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, service.Image)
+			if err != nil {
+				mgr.Error(grpc.ErrorDesc(err))
 			}
 			service.RegistryAuth = encodedAuth
 		}
 	}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.Up(ctx, request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Up(ctx, request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.StackId)
 	return nil
 }
 
-func stackStart(amp *cli.AMP, args []string) (err error) {
+func stackStart(amp *cli.AMP, args []string) error {
 
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.Start(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Start(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply)
 	return nil
 }
 
-func stackStop(amp *cli.AMP, args []string) (err error) {
+func stackStop(amp *cli.AMP, args []string) error {
 
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 
 	request := &stack.StackRequest{StackIdent: ident}
 
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.Stop(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Stop(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.StackId)
 	return nil
 }
 
-func stackRm(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
+func stackRm(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 
 	force := false
@@ -325,10 +310,9 @@ func stackRm(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 		}
 
 		client := stack.NewStackServiceClient(amp.Conn)
-		reply, er := client.Remove(context.Background(), request)
-		if er != nil {
-			manager.fatalf(grpc.ErrorDesc(er))
-			return
+		reply, err := client.Remove(context.Background(), request)
+		if err != nil {
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 
 		fmt.Println(reply.StackId)
@@ -336,7 +320,7 @@ func stackRm(amp *cli.AMP, cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func stackList(amp *cli.AMP) (err error) {
+func stackList(amp *cli.AMP) error {
 	var limit = *listLast
 	if *listLatest {
 		limit = 1
@@ -346,10 +330,9 @@ func stackList(amp *cli.AMP) (err error) {
 		Limit: limit,
 	}
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.List(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.List(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	//Manage -q
 	if *listQuiet {
@@ -359,8 +342,7 @@ func stackList(amp *cli.AMP) (err error) {
 		return nil
 	}
 	if reply == nil || len(reply.List) == 0 {
-		fmt.Println("No stack is available")
-		return nil
+		mgr.Warn("no stack available")
 	}
 	//Format output
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -372,46 +354,49 @@ func stackList(amp *cli.AMP) (err error) {
 	return nil
 }
 
-func stackTasks(amp *cli.AMP, args []string) (err error) {
+func stackTasks(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name or id")
+		//log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	if len(args) > 1 {
-		log.Fatal("Must specify single stack name or id")
+		//log.Fatal("Must specify single stack name or id")
+		mgr.Error("must specify only one stack name or id")
 	}
 	ident := args[0]
 	if ident == "" {
-		log.Fatal("Must specify stack name or id")
+		//log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	request := &stack.TasksRequest{
 		StackIdent: ident,
 	}
 	client := stack.NewStackServiceClient(amp.Conn)
-	reply, er := client.Tasks(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := client.Tasks(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	fmt.Print(reply.Message)
 	return nil
 }
 
-func stackUrls(amp *cli.AMP, args []string) (err error) {
+func stackUrls(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		log.Fatal("Must specify stack name or id")
+		//log.Fatal("Must specify stack name or id")
+		mgr.Error("must specify stack name or id")
 	}
 	for _, ident := range args {
 		if ident == "" {
-			log.Fatal("Must specify stack name or id")
+			//log.Fatal("Must specify stack name or id")
+			mgr.Error("must specify stack name or id")
 		}
 		request := &stack.StackRequest{
 			StackIdent: ident,
 		}
 		client := stack.NewStackServiceClient(amp.Conn)
-		reply, er := client.Get(context.Background(), request)
-		if er != nil {
-			manager.fatalf(grpc.ErrorDesc(er))
-			return
+		reply, err := client.Get(context.Background(), request)
+		if err != nil {
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		for _, service := range reply.Stack.Services {
 			for _, spec := range service.PublishSpecs {

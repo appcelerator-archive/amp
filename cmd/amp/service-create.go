@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	cliflags "github.com/docker/docker/cli/flags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -73,19 +73,20 @@ func init() {
 func serviceCreate(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		log.Fatal("\"amp service create\" requires at least 1 argument(s)")
+		//log.Fatal("\"amp service create\" requires at least 1 argument(s)")
+		mgr.Error("\"amp service create\" requires at least 1 argument(s)")
 	}
 
 	image = args[0]
 
 	parsedSpecs, err := parsePublishSpecs(publishSpecs)
 	if err != nil {
-		return err
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	parsedNetworks, err := parseNetworks(networks)
 	if err != nil {
-		return err
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	// add service mode to spec
@@ -102,13 +103,15 @@ func serviceCreate(amp *cli.AMP, args []string) error {
 	case "global":
 		if replicas != 0 {
 			// global mode can't specify replicas (only allowed 1 per node)
-			log.Fatal("Replicas can only be used with replicated mode")
+			//log.Fatal("Replicas can only be used with replicated mode")
+			mgr.Error("Replicas can only be used with replicated mode")
 		}
 		swarmMode = &service.ServiceSpec_Global{
 			Global: &service.GlobalService{},
 		}
 	default:
-		log.Fatalf("Invalid option for mode: %s", mode)
+		//log.Fatalf("Invalid option for mode: %s", mode)
+		mgr.Error("Invalid option for mode: %s", mode)
 	}
 
 	spec := &service.ServiceSpec{
@@ -134,12 +137,12 @@ func serviceCreate(amp *cli.AMP, args []string) error {
 		opts := cliflags.NewClientOptions()
 		err := dockerCli.Initialize(opts)
 		if err != nil {
-			return err
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		// Retrieve encoded auth token from the image reference
 		encodedAuth, err := command.RetrieveAuthTokenFromImage(ctx, dockerCli, image)
 		if err != nil {
-			return err
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		spec.RegistryAuth = encodedAuth
 	}
@@ -147,7 +150,7 @@ func serviceCreate(amp *cli.AMP, args []string) error {
 	client := service.NewServiceClient(amp.Conn)
 	reply, err := client.Create(ctx, request)
 	if err != nil {
-		return err
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 
 	fmt.Println(reply.Id)

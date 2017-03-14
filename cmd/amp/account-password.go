@@ -59,7 +59,7 @@ func init() {
 
 // pwdReset validates the input command line arguments and resets password of an account
 // by invoking the corresponding rpc/storage method
-func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func pwdReset(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
@@ -71,18 +71,17 @@ func pwdReset(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Name: username,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.PasswordReset(context.Background(), request)
+	_, err := accClient.PasswordReset(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Hi %s! Please check your email to complete the password reset process.", username)
+	mgr.Success("Hi %s! Please check your email to complete the password reset process.", username)
 	return nil
 }
 
 // pwdChange validates the input command line arguments and changes existing password of an account
 // by invoking the corresponding rpc/storage method
-func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func pwdChange(amp *cli.AMP, cmd *cobra.Command) error {
 	fmt.Println("Enter your current password.")
 	if cmd.Flag("password").Changed {
 		password = cmd.Flag("password").Value.String()
@@ -101,18 +100,17 @@ func pwdChange(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		NewPassword:      newPwd,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.PasswordChange(context.Background(), request)
+	_, err := accClient.PasswordChange(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Your password change has been successful.")
+	mgr.Success("Your password change has been successful.")
 	return nil
 }
 
 // pwdSet validates the input command line arguments and sets password of an account
 // by invoking the corresponding rpc/storage method
-func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func pwdSet(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
@@ -130,11 +128,10 @@ func pwdSet(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.PasswordSet(context.Background(), request)
+	_, err := accClient.PasswordSet(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Your password set has been successful.")
+	mgr.Success("Your password set has been successful.")
 	return nil
 }

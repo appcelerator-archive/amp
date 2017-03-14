@@ -100,7 +100,7 @@ func init() {
 
 // signUp validates the input command line arguments and creates a new account
 // by invoking the corresponding rpc/storage method
-func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func signUp(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		username = cmd.Flag("name").Value.String()
 	} else {
@@ -124,18 +124,17 @@ func signUp(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Password: password,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.SignUp(context.Background(), request)
+	_, err := accClient.SignUp(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Hi %s! Please check your email to complete the signup process.", username)
+	mgr.Success("Hi %s! Please check your email to complete the signup process.", username)
 	return nil
 }
 
 // verify validates the input command line arguments and verifies an account
 // by invoking the corresponding rpc/storage method
-func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func verify(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("token").Changed {
 		token = cmd.Flag("token").Value.String()
 	} else {
@@ -146,18 +145,17 @@ func verify(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Token: token,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.Verify(context.Background(), request)
+	_, err := accClient.Verify(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Your account has now been activated.")
+	mgr.Success("Your account has now been activated.")
 	return nil
 }
 
 // forgotLogin validates the input command line arguments and retrieves account name
 // by invoking the corresponding rpc/storage method
-func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func forgotLogin(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("email").Changed {
 		email = cmd.Flag("email").Value.String()
 	} else {
@@ -168,27 +166,25 @@ func forgotLogin(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Email: email,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.ForgotLogin(context.Background(), request)
+	_, err := accClient.ForgotLogin(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Your login name has been sent to the address: %s", email)
+	mgr.Success("Your login name has been sent to the address: %s", email)
 	return nil
 }
 
 // listUser validates the input command line arguments and lists all users
 // by invoking the corresponding rpc/storage method
-func listUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func listUser(amp *cli.AMP, cmd *cobra.Command) error {
 	request := &account.ListUsersRequest{}
 	accClient := account.NewAccountClient(amp.Conn)
-	reply, er := accClient.ListUsers(context.Background(), request)
-	if er != nil {
-		manager.fatalf(grpc.ErrorDesc(er))
-		return
+	reply, err := accClient.ListUsers(context.Background(), request)
+	if err != nil {
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		return fmt.Errorf("unable to convert quiet parameter : %v", err.Error())
+		mgr.Error("unable to convert quiet parameter : %v", err.Error())
 	} else if quiet {
 		for _, user := range reply.Users {
 			fmt.Println(user.Name)
@@ -206,7 +202,7 @@ func listUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 
 // deleteUser validates the input command line arguments and deletes a user
 // by invoking the corresponding rpc/storage method
-func deleteUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func deleteUser(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		name = cmd.Flag("name").Value.String()
 	} else {
@@ -218,18 +214,17 @@ func deleteUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 		Name: name,
 	}
 	accClient := account.NewAccountClient(amp.Conn)
-	_, err = accClient.DeleteUser(context.Background(), request)
+	_, err := accClient.DeleteUser(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
-	manager.printf(colSuccess, "Successfully deleted user.")
+	mgr.Success("Successfully deleted user.")
 	return nil
 }
 
 // getUser validates the input command line arguments and retrieves info of a user
 // by invoking the corresponding rpc/storage method
-func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
+func getUser(amp *cli.AMP, cmd *cobra.Command) error {
 	if cmd.Flag("name").Changed {
 		name = cmd.Flag("name").Value.String()
 	} else {
@@ -243,8 +238,7 @@ func getUser(amp *cli.AMP, cmd *cobra.Command) (err error) {
 	accClient := account.NewAccountClient(amp.Conn)
 	reply, err := accClient.GetUser(context.Background(), request)
 	if err != nil {
-		manager.fatalf(grpc.ErrorDesc(err))
-		return
+		mgr.Error(grpc.ErrorDesc(err))
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tEMAIL\tVERIFIED\tCREATED\t")

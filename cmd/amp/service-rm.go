@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 	}
 
 	// services to remove
-	services []string
+	//services []string
 )
 
 func init() {
@@ -34,7 +34,8 @@ func init() {
 func serviceRm(amp *cli.AMP, args []string) error {
 	if len(args) < 1 {
 		// TODO use standard errors and print usage
-		log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
+		//log.Fatal("\"amp service rm\" requires at least 1 argument(s)")
+		mgr.Error("\"amp service rm\" requires at least 1 argument(s)")
 	}
 
 	client := service.NewServiceClient(amp.Conn)
@@ -50,10 +51,12 @@ func serviceRm(amp *cli.AMP, args []string) error {
 			errstr := fmt.Sprintf("%s", err)
 			index := strings.LastIndex(errstr, pattern)
 			if index > -1 {
-				errmsg := fmt.Sprintf("Error: %s", errstr[index+len(pattern):])
-				fmt.Println(errmsg)
+				//errmsg := fmt.Sprintf("Error: %s", errstr[index+len(pattern):])
+				//fmt.Println(errmsg)
+				mgr.Error("error : %s", errstr[index+len(pattern):])
 			} else {
-				fmt.Printf("Error: %s\n", err)
+				//fmt.Printf("Error: %s\n", err)
+				mgr.Error("error : %s", grpc.ErrorDesc(err))
 			}
 		} else {
 			fmt.Println(resp.Ident)

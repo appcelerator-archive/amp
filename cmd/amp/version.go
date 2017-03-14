@@ -42,12 +42,12 @@ func init() {
 }
 
 // Lists version info of AMP and Amplifier
-func list(amp *cli.AMP) (err error) {
+func list(amp *cli.AMP) error {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)
 	if err != nil {
-		return fmt.Errorf("template parsing error: %v", err)
+		mgr.Error("template parsing error: %v", err)
 	}
 	var doc bytes.Buffer
 
@@ -65,10 +65,9 @@ func list(amp *cli.AMP) (err error) {
 	request := &version.ListRequest{}
 	if err = AMP.Connect(); err == nil {
 		client := version.NewVersionClient(amp.Conn)
-		reply, er := client.List(context.Background(), request)
-		if er != nil {
-			manager.fatalf(grpc.ErrorDesc(er))
-			return
+		reply, err := client.List(context.Background(), request)
+		if err != nil {
+			mgr.Error(grpc.ErrorDesc(err))
 		}
 		vd.Amplifier = &version.Details{
 			Version:   reply.Reply.Version,
@@ -80,7 +79,7 @@ func list(amp *cli.AMP) (err error) {
 	}
 
 	if err := tmpl.Execute(&doc, vd); err != nil {
-		return fmt.Errorf("executing templating error: %v", err)
+		mgr.Error("executing templating error: %v", err)
 	}
 
 	fmt.Println(doc.String())
