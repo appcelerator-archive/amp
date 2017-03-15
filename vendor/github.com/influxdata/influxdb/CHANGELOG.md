@@ -1,11 +1,26 @@
-## v1.2.1 [unreleased]
+## v1.2.2 [2017-03-14]
+
+### Release Notes
+
+### Configuration Changes
+
+#### `[http]` Section
+
+* `max-row-limit` now defaults to `0`.  The previous default was `10000`, but due to a bug, the value in use since `1.0` was `0`.
+
+### Bugfixes
+
+- [#8050](https://github.com/influxdata/influxdb/issues/8050): influxdb & grafana, absence of data on the graphs
+
+## v1.2.1 [2017-03-08]
+
+### Release Notes
 
 ### Bugfixes
 
 - [#7877](https://github.com/influxdata/influxdb/issues/7877): Fix mapping of types when the measurement uses a regex
 - [#7888](https://github.com/influxdata/influxdb/pull/7888): Expand query dimensions from the subquery.
 - [#7910](https://github.com/influxdata/influxdb/issues/7910): Fix EvalType when a parenthesis expression is used.
-- [#7929](https://github.com/influxdata/influxdb/issues/7929): Fix series tag iteration segfault. (#7922)
 - [#7906](https://github.com/influxdata/influxdb/issues/7906): Anchors not working as expected with case-insensitive regex
 - [#7895](https://github.com/influxdata/influxdb/issues/7895): Fix incorrect math when aggregates that emit different times are used.
 - [#7946](https://github.com/influxdata/influxdb/issues/7946): Fix authentication when subqueries are present.
@@ -13,6 +28,17 @@
 - [#7905](https://github.com/influxdata/influxdb/issues/7905): Fix ORDER BY time DESC with ordering series keys.
 - [#7966](https://github.com/influxdata/influxdb/pull/7966): Prevent a panic when aggregates are used in an inner query with a raw query.
 - [#8001](https://github.com/influxdata/influxdb/issues/8001): Map types correctly when using a regex and one of the measurements is empty.
+- [#8040](https://github.com/influxdata/influxdb/issues/8040): Reduce the expression in a subquery to avoid a panic.
+- [#7968](https://github.com/influxdata/influxdb/issues/7968): Properly select a tag within a subquery.
+- [#8028](https://github.com/influxdata/influxdb/issues/8028): Fix panic in collectd when configured to read types DB from directory.
+- [#7880](https://github.com/influxdata/influxdb/issues/7880): Dividing aggregate functions with different outputs doesn't panic.
+- [#8044](https://github.com/influxdata/influxdb/issues/8044): Treat non-reserved measurement names with underscores as normal measurements.
+- [#8078](https://github.com/influxdata/influxdb/issues/8078): Map types correctly when selecting a field with multiple measurements where one of the measurements is empty.
+- [#8080](https://github.com/influxdata/influxdb/issues/8080): Point.UnmarshalBinary() bounds check
+- [#8084](https://github.com/influxdata/influxdb/issues/8084): Points missing after compaction
+- [#8085](https://github.com/influxdata/influxdb/issues/8085): panic: interface conversion: tsm1.Value is tsm1.IntegerValue, not tsm1.FloatValue.
+- [#8095](https://github.com/influxdata/influxdb/pull/8095): Fix race in WALEntry.Encode and Values.Deduplicate
+- [#8100](https://github.com/influxdata/influxdb/issues/8100): Include IsRawQuery in the rewritten statement for meta queries.
 
 ## v1.2.0 [2017-01-24]
 
@@ -43,7 +69,6 @@ The stress tool `influx_stress` will be removed in a subsequent release. We reco
 
 ### Bugfixes
 
-- [#7832](https://github.com/influxdata/influxdb/pull/7832): Fix memory leak when writing new series over HTTP
 - [#7786](https://github.com/influxdata/influxdb/pull/7786): Fix potential race condition in correctness of tsm1_cache memBytes statistic.
 - [#7784](https://github.com/influxdata/influxdb/pull/7784): Fix broken error return on meta client's UpdateUser and DropContinuousQuery methods.
 - [#7741](https://github.com/influxdata/influxdb/pull/7741): Fix string quoting and significantly improve performance of `influx_inspect export`.
@@ -65,6 +90,26 @@ The stress tool `influx_stress` will be removed in a subsequent release. We reco
 - [#7838](https://github.com/influxdata/influxdb/issues/7838): Ensure Subscriber service can be disabled.
 - [#7845](https://github.com/influxdata/influxdb/issues/7845): Fix race in storage engine.
 - [#7814](https://github.com/influxdata/influxdb/issues/7814): InfluxDB should do a partial write on mismatched type errors.
+
+## v1.1.4 [2017-02-27]
+
+### Bugfixes
+
+- [#8063](https://github.com/influxdata/influxdb/pull/8063): Backport #7631 to reduce GC allocations.
+
+## v1.1.3 [2017-02-17]
+
+### Bugfixes
+
+- [#8027](https://github.com/influxdata/influxdb/pull/8027): Remove Tags.shouldCopy, replace with forceCopy on series creation.
+
+## v1.1.2 [2017-02-16]
+
+### Bugfixes
+
+- [#7832](https://github.com/influxdata/influxdb/pull/7832): Fix memory leak when writing new series over HTTP
+- [#7929](https://github.com/influxdata/influxdb/issues/7929): Fix series tag iteration segfault. (#7922)
+- [#8011](https://github.com/influxdata/influxdb/issues/8011): Fix tag dereferencing panic.
 
 ## v1.1.1 [2016-12-06]
 
