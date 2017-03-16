@@ -27,7 +27,7 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config           server.Config
+	config           *amp.Config
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
@@ -37,6 +37,8 @@ var (
 	influxURL        string
 	dockerURL        string
 	dockerVersion    string
+	emailSender      string
+	smsSender        string
 )
 
 func parseFlags() {
@@ -51,6 +53,8 @@ func parseFlags() {
 	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
+	flag.StringVar(&emailSender, "email-sender", amp.DefaultEmailSender, "Email senser (default '"+amp.DefaultEmailSender+"')")
+	flag.StringVar(&smsSender, "sms-sender", amp.DefaultSmsSender, "Email senser (default '"+amp.DefaultSmsSender+"')")
 	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
@@ -81,10 +85,17 @@ func parseFlags() {
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = amp.DockerDefaultVersion
+	config.EmailSender = emailSender
+	config.SmsSender = smsSender
 }
 
 func main() {
 	fmt.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
+	parseFlags()
+	server.Start(config)
+
+	config = amp.GetConfig()
+	amp.InitConfig(config)
 	parseFlags()
 	server.Start(config)
 }
