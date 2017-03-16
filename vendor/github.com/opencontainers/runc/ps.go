@@ -20,7 +20,7 @@ var psCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "format, f",
-			Value: "table",
+			Value: "",
 			Usage: `select one of: ` + formatOptions,
 		},
 	},
@@ -38,12 +38,8 @@ var psCommand = cli.Command{
 			return err
 		}
 
-		switch context.String("format") {
-		case "table":
-		case "json":
+		if context.String("format") == "json" {
 			return json.NewEncoder(os.Stdout).Encode(pids)
-		default:
-			return fmt.Errorf("invalid format option")
 		}
 
 		// [1:] is to remove command name, ex:

@@ -17,7 +17,6 @@
             "id": "https://opencontainers.org/schema/runtime/state/status",
             "type": "string",
             "enum": [
-                "creating",
                 "created",
                 "running",
                 "stopped"
@@ -28,8 +27,8 @@
             "type": "integer",
             "minimum": 0
         },
-        "bundle": {
-            "id": "https://opencontainers.org/schema/runtime/state/bundle",
+        "bundlePath": {
+            "id": "https://opencontainers.org/schema/runtime/state/bundlePath",
             "type": "string"
         },
         "annotations": {
@@ -41,6 +40,6 @@
         "id",
         "status",
         "pid",
-        "bundle"
+        "bundlePath"
     ]
 }

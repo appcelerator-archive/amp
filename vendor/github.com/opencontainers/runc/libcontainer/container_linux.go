@@ -191,29 +191,17 @@ func (c *linuxContainer) Start(process *Process) error {
 	if err != nil {
 		return err
 	}
-	if status == Stopped {
-		if err := c.createExecFifo(); err != nil {
-			return err
-		}
-	}
-	if err := c.start(process, status == Stopped); err != nil {
-		if status == Stopped {
-			c.deleteExecFifo()
-		}
-		return err
-	}
-	return nil
+	return c.start(process, status == Stopped)
 }
 
 func (c *linuxContainer) Run(process *Process) error {
 	c.m.Lock()
+	defer c.m.Unlock()
 	status, err := c.currentStatus()
 	if err != nil {
-		c.m.Unlock()
 		return err
 	}
-	c.m.Unlock()
-	if err := c.Start(process); err != nil {
+	if err := c.start(process, status == Stopped); err != nil {
 		return err
 	}
 	if status == Stopped {
@@ -301,37 +289,6 @@ func (c *linuxContainer) Signal(s os.Signal, all bool) error {
 		return newSystemErrorWithCause(err, "signaling init process")
 	}
 	return nil
-}
-
-func (c *linuxContainer) createExecFifo() error {
-	rootuid, err := c.Config().HostUID()
-	if err != nil {
-		return err
-	}
-	rootgid, err := c.Config().HostGID()
-	if err != nil {
-		return err
-	}
-
-	fifoName := filepath.Join(c.root, execFifoFilename)
-	if _, err := os.Stat(fifoName); err == nil {
-		return fmt.Errorf("exec fifo %s already exists", fifoName)
-	}
-	oldMask := syscall.Umask(0000)
-	if err := syscall.Mkfifo(fifoName, 0622); err != nil {
-		syscall.Umask(oldMask)
-		return err
-	}
-	syscall.Umask(oldMask)
-	if err := os.Chown(fifoName, rootuid, rootgid); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *linuxContainer) deleteExecFifo() {
-	fifoName := filepath.Join(c.root, execFifoFilename)
-	os.Remove(fifoName)
 }
 
 func (c *linuxContainer) newParentProcess(p *Process, doInit bool) (parentProcess, error) {
@@ -450,6 +407,7 @@ func (c *linuxContainer) newInitConfig(process *Process) *initConfig {
 		AppArmorProfile:  c.config.AppArmorProfile,
 		ProcessLabel:     c.config.ProcessLabel,
 		Rlimits:          c.config.Rlimits,
+		ExecFifoPath:     filepath.Join(c.root, execFifoFilename),
 	}
 	if process.NoNewPrivileges != nil {
 		cfg.NoNewPrivileges = *process.NoNewPrivileges
@@ -694,12 +652,6 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		}
 	}
 
-	//pre-dump may need parentImage param to complete iterative migration
-	if criuOpts.ParentImage != "" {
-		rpcOpts.ParentImg = proto.String(criuOpts.ParentImage)
-		rpcOpts.TrackMem = proto.Bool(true)
-	}
-
 	// append optional manage cgroups mode
 	if criuOpts.ManageCgroupsMode != 0 {
 		if err := c.checkCriuVersion("1.7"); err != nil {
@@ -709,55 +661,48 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		rpcOpts.ManageCgroupsMode = &mode
 	}
 
-	var t criurpc.CriuReqType
-	if criuOpts.PreDump {
-		t = criurpc.CriuReqType_PRE_DUMP
-	} else {
-		t = criurpc.CriuReqType_DUMP
-	}
+	t := criurpc.CriuReqType_DUMP
 	req := &criurpc.CriuReq{
 		Type: &t,
 		Opts: &rpcOpts,
 	}
 
-	//no need to dump these information in pre-dump
-	if !criuOpts.PreDump {
-		for _, m := range c.config.Mounts {
-			switch m.Device {
-			case "bind":
-				c.addCriuDumpMount(req, m)
-				break
-			case "cgroup":
-				binds, err := getCgroupMounts(m)
-				if err != nil {
-					return err
-				}
-				for _, b := range binds {
-					c.addCriuDumpMount(req, b)
-				}
-				break
-			}
-		}
-
-		if err := c.addMaskPaths(req); err != nil {
-			return err
-		}
-
-		for _, node := range c.config.Devices {
-			m := &configs.Mount{Destination: node.Path, Source: node.Path}
+	for _, m := range c.config.Mounts {
+		switch m.Device {
+		case "bind":
 			c.addCriuDumpMount(req, m)
+			break
+		case "cgroup":
+			binds, err := getCgroupMounts(m)
+			if err != nil {
+				return err
+			}
+			for _, b := range binds {
+				c.addCriuDumpMount(req, b)
+			}
+			break
 		}
+	}
 
-		// Write the FD info to a file in the image directory
-		fdsJSON, err := json.Marshal(c.initProcess.externalDescriptors())
-		if err != nil {
-			return err
-		}
+	if err := c.addMaskPaths(req); err != nil {
+		return err
+	}
 
-		err = ioutil.WriteFile(filepath.Join(criuOpts.ImagesDirectory, descriptorsFilename), fdsJSON, 0655)
-		if err != nil {
-			return err
-		}
+	for _, node := range c.config.Devices {
+		m := &configs.Mount{Destination: node.Path, Source: node.Path}
+		c.addCriuDumpMount(req, m)
+	}
+
+	// Write the FD info to a file in the image directory
+
+	fdsJSON, err := json.Marshal(c.initProcess.externalDescriptors())
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(criuOpts.ImagesDirectory, descriptorsFilename), fdsJSON, 0655)
+	if err != nil {
+		return err
 	}
 
 	err = c.criuSwrk(nil, req, criuOpts, false)
@@ -1070,23 +1015,6 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 		case t == criurpc.CriuReqType_RESTORE:
 		case t == criurpc.CriuReqType_DUMP:
 			break
-		case t == criurpc.CriuReqType_PRE_DUMP:
-			// In pre-dump mode CRIU is in a loop and waits for
-			// the final DUMP command.
-			// The current runc pre-dump approach, however, is
-			// start criu in PRE_DUMP once for a single pre-dump
-			// and not the whole series of pre-dump, pre-dump, ...m, dump
-			// If we got the message CriuReqType_PRE_DUMP it means
-			// CRIU was successful and we need to forcefully stop CRIU
-			logrus.Debugf("PRE_DUMP finished. Send close signal to CRIU service")
-			criuClient.Close()
-			// Process status won't be success, because one end of sockets is closed
-			_, err := cmd.Process.Wait()
-			if err != nil {
-				logrus.Debugf("After PRE_DUMP CRIU exiting failed")
-				return err
-			}
-			return nil
 		default:
 			return fmt.Errorf("unable to parse the response %s", resp.String())
 		}
@@ -1288,9 +1216,14 @@ func (c *linuxContainer) runType() (Status, error) {
 	if !exist || err != nil {
 		return Stopped, err
 	}
-	// We'll create exec fifo and blocking on it after container is created,
-	// and delete it after start container.
-	if _, err := os.Stat(filepath.Join(c.root, execFifoFilename)); err == nil {
+	// check if the process that is running is the init process or the user's process.
+	// this is the difference between the container Running and Created.
+	environ, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/environ", pid))
+	if err != nil {
+		return Stopped, newSystemErrorWithCausef(err, "reading /proc/%d/environ", pid)
+	}
+	check := []byte("_LIBCONTAINER")
+	if bytes.Contains(environ, check) {
 		return Created, nil
 	}
 	return Running, nil

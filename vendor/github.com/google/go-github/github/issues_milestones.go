@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Milestone represents a GitHub repository milestone.
+// Milestone represents a Github repository milestone.
 type Milestone struct {
 	URL          *string    `json:"url,omitempty"`
 	HTMLURL      *string    `json:"html_url,omitempty"`

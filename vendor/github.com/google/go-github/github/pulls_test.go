@@ -251,6 +251,12 @@ func TestPullRequestsService_Edit(t *testing.T) {
 			want:         &PullRequest{Number: Int(1)},
 		},
 		{
+			// nil request
+			sendResponse: `{}`,
+			wantUpdate:   `{}`,
+			want:         &PullRequest{},
+		},
+		{
 			// base update
 			input:        &PullRequest{Base: &PullRequestBranch{Ref: String("master")}},
 			sendResponse: `{"number":1,"base":{"ref":"master"}}`,
@@ -287,7 +293,7 @@ func TestPullRequestsService_Edit(t *testing.T) {
 }
 
 func TestPullRequestsService_Edit_invalidOwner(t *testing.T) {
-	_, _, err := client.PullRequests.Edit(context.Background(), "%", "r", 1, &PullRequest{})
+	_, _, err := client.PullRequests.Edit(context.Background(), "%", "r", 1, nil)
 	testURLParseError(t, err)
 }
 

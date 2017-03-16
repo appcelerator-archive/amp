@@ -64,7 +64,6 @@ func main() {
 		{"users/willnorris/keys", &[]github.Key{}},
 		{"orgs/google-test", &github.Organization{}},
 		{"repos/google/go-github", &github.Repository{}},
-		{"repos/google/go-github/issues/1", &github.Issue{}},
 		{"/gists/9257657", &github.Gist{}},
 	} {
 		err := testType(tt.url, tt.typ)

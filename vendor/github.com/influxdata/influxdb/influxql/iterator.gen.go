@@ -1263,34 +1263,28 @@ func (itr *floatExprIterator) Next() (*FloatPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p FloatPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -1631,34 +1625,28 @@ func (itr *floatIntegerExprIterator) Next() (*IntegerPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p FloatPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -2003,34 +1991,28 @@ func (itr *floatStringExprIterator) Next() (*StringPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p FloatPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -2375,34 +2357,28 @@ func (itr *floatBooleanExprIterator) Next() (*BooleanPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p FloatPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -3915,34 +3891,28 @@ func (itr *integerFloatExprIterator) Next() (*FloatPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p IntegerPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -4287,34 +4257,28 @@ func (itr *integerExprIterator) Next() (*IntegerPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p IntegerPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -4655,34 +4619,28 @@ func (itr *integerStringExprIterator) Next() (*StringPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p IntegerPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -5027,34 +4985,28 @@ func (itr *integerBooleanExprIterator) Next() (*BooleanPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p IntegerPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = 0
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = 0
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -6552,34 +6504,28 @@ func (itr *stringFloatExprIterator) Next() (*FloatPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p StringPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = ""
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = ""
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -6924,34 +6870,28 @@ func (itr *stringIntegerExprIterator) Next() (*IntegerPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p StringPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = ""
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = ""
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -7296,34 +7236,28 @@ func (itr *stringExprIterator) Next() (*StringPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p StringPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = ""
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = ""
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -7664,34 +7598,28 @@ func (itr *stringBooleanExprIterator) Next() (*BooleanPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p StringPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = ""
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = ""
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -9189,34 +9117,28 @@ func (itr *booleanFloatExprIterator) Next() (*FloatPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p BooleanPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = false
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = false
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -9561,34 +9483,28 @@ func (itr *booleanIntegerExprIterator) Next() (*IntegerPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p BooleanPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = false
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = false
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -9933,34 +9849,28 @@ func (itr *booleanStringExprIterator) Next() (*StringPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p BooleanPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = false
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = false
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {
@@ -10305,34 +10215,28 @@ func (itr *booleanExprIterator) Next() (*BooleanPoint, error) {
 			return nil, err
 		}
 
-		// If any of these are nil and we are using fill(none), skip these points.
-		if (a == nil || a.Nil || b == nil || b.Nil) && itr.points == nil {
-			continue
-		}
+		if a == nil || a.Nil {
+			if itr.points == nil {
+				continue
+			}
 
-		// If one of the two points is nil, we need to fill it with a fake nil
-		// point that has the same name, tags, and time as the other point.
-		// There should never be a time when both of these are nil.
-		if a == nil {
-			p := *b
+			var p BooleanPoint
+			if b != nil {
+				p = *b
+			} else {
+				p = *a
+			}
+			p.Value = itr.points[0].Value
+			p.Nil = itr.points[0].Nil
 			a = &p
-			a.Value = false
-			a.Nil = true
-		} else if b == nil {
+		} else if b == nil || b.Nil {
+			if itr.points == nil {
+				continue
+			}
 			p := *a
+			p.Value = itr.points[1].Value
+			p.Nil = itr.points[1].Nil
 			b = &p
-			b.Value = false
-			b.Nil = true
-		}
-
-		// If a value is nil, use the fill values if the fill value is non-nil.
-		if a.Nil && !itr.points[0].Nil {
-			a.Value = itr.points[0].Value
-			a.Nil = false
-		}
-		if b.Nil && !itr.points[1].Nil {
-			b.Value = itr.points[1].Value
-			b.Nil = false
 		}
 
 		if itr.storePrev {

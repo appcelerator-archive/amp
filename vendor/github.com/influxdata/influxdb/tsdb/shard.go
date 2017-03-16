@@ -18,7 +18,7 @@ import (
 	"github.com/influxdata/influxdb/influxql"
 	"github.com/influxdata/influxdb/models"
 	internal "github.com/influxdata/influxdb/tsdb/internal"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
 // monitorStatInterval is the interval at which the shard is inspected
@@ -484,6 +484,9 @@ func (s *Shard) createFieldsAndMeasurements(fieldsToCreate []*FieldCreate) error
 
 		// Add the field to the in memory index
 		if err := m.CreateFieldIfNotExists(f.Field.Name, f.Field.Type, false); err != nil {
+			if err == ErrFieldTypeConflict {
+				return nil
+			}
 			return err
 		}
 
@@ -582,7 +585,7 @@ func (s *Shard) validateSeriesAndFields(points []models.Point) ([]models.Point, 
 				continue
 			}
 
-			ss = s.index.CreateSeriesIndexIfNotExists(p.Name(), NewSeries(string(p.Key()), tags), true)
+			ss = s.index.CreateSeriesIndexIfNotExists(p.Name(), NewSeries(string(p.Key()), tags))
 			atomic.AddInt64(&s.stats.SeriesCreated, 1)
 		}
 
@@ -608,23 +611,9 @@ func (s *Shard) validateSeriesAndFields(points []models.Point) ([]models.Point, 
 				default:
 					continue
 				}
-
-				if f := mf.FieldBytes(iter.FieldKey()); f != nil {
-					// Field present in shard metadata, make sure there is no type conflict.
-					if f.Type != createType {
-						atomic.AddInt64(&s.stats.WritePointsDropped, 1)
-						dropped++
-						reason = fmt.Sprintf("%s: input field \"%s\" on measurement \"%s\" is type %s, already exists as type %s", ErrFieldTypeConflict, iter.FieldKey(), p.Name(), createType, f.Type)
-						skip = true
-					} else {
-						continue // Field is present, and it's of the same type. Nothing more to do.
-					}
-				}
-
-				if !skip {
-					fieldsToCreate = append(fieldsToCreate, &FieldCreate{p.Name(), &Field{Name: string(iter.FieldKey()), Type: createType}})
-				}
+				fieldsToCreate = append(fieldsToCreate, &FieldCreate{p.Name(), &Field{Name: string(iter.FieldKey()), Type: createType}})
 			}
+			continue // skip validation since all fields are new
 		}
 
 		iter.Reset()
@@ -700,28 +689,23 @@ func (s *Shard) CreateIterator(measurement string, opt influxql.IteratorOptions)
 	}
 
 	if strings.HasPrefix(measurement, "_") {
-		if itr, ok, err := s.createSystemIterator(measurement, opt); ok {
-			return itr, err
-		}
-		// Unknown system source so pass this to the engine.
+		return s.createSystemIterator(measurement, opt)
 	}
 	return s.engine.CreateIterator(measurement, opt)
 }
 
 // createSystemIterator returns an iterator for a system source.
-func (s *Shard) createSystemIterator(measurement string, opt influxql.IteratorOptions) (influxql.Iterator, bool, error) {
+func (s *Shard) createSystemIterator(measurement string, opt influxql.IteratorOptions) (influxql.Iterator, error) {
 	switch measurement {
 	case "_fieldKeys":
-		itr, err := NewFieldKeysIterator(s, opt)
-		return itr, true, err
+		return NewFieldKeysIterator(s, opt)
 	case "_series":
-		itr, err := NewSeriesIterator(s, opt)
-		return itr, true, err
+		return NewSeriesIterator(s, opt)
 	case "_tagKeys":
-		itr, err := NewTagKeysIterator(s, opt)
-		return itr, true, err
+		return NewTagKeysIterator(s, opt)
+	default:
+		return nil, fmt.Errorf("unknown system source: %s", measurement)
 	}
-	return nil, false, nil
 }
 
 // FieldDimensions returns unique sets of fields and dimensions across a list of sources.
@@ -746,15 +730,12 @@ func (s *Shard) FieldDimensions(measurements []string) (fields map[string]influx
 				keys = []string{"tagKey"}
 			}
 
-			if len(keys) > 0 {
-				for _, k := range keys {
-					if _, ok := fields[k]; !ok || influxql.String < fields[k] {
-						fields[k] = influxql.String
-					}
+			for _, k := range keys {
+				if _, ok := fields[k]; !ok || influxql.String < fields[k] {
+					fields[k] = influxql.String
 				}
-				continue
 			}
-			// Unknown system source so default to looking for a measurement.
+			continue
 		}
 
 		// Retrieve measurement.
@@ -798,19 +779,16 @@ func (s *Shard) MapType(measurement, field string) influxql.DataType {
 			if field == "fieldKey" || field == "fieldType" {
 				return influxql.String
 			}
-			return influxql.Unknown
 		case "_series":
 			if field == "key" {
 				return influxql.String
 			}
-			return influxql.Unknown
 		case "_tagKeys":
 			if field == "tagKey" {
 				return influxql.String
 			}
-			return influxql.Unknown
 		}
-		// Unknown system source so default to looking for a measurement.
+		return influxql.Unknown
 	}
 
 	mm := s.index.Measurement(measurement)
@@ -1145,12 +1123,7 @@ func (m *MeasurementFields) CreateFieldIfNotExists(name string, typ influxql.Dat
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	// Re-check field and type under write lock.
 	if f := m.fields[name]; f != nil {
-		if f.Type != typ {
-			return ErrFieldTypeConflict
-		}
 		return nil
 	}
 
@@ -1508,7 +1481,7 @@ func (itr *tagValuesIterator) Next() (*influxql.FloatPoint, error) {
 		}
 
 		key := itr.buf.keys[0]
-		value := itr.buf.s.GetTagString(key)
+		value := itr.buf.s.Tags.GetString(key)
 		if value == "" {
 			itr.buf.keys = itr.buf.keys[1:]
 			continue

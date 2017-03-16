@@ -165,14 +165,7 @@ func restoreContainer(context *cli.Context, spec *specs.Spec, config *configs.Co
 	if err != nil {
 		return -1, err
 	}
-
-	notifySocket := newNotifySocket(context, os.Getenv("NOTIFY_SOCKET"), id)
-	if notifySocket != nil {
-		notifySocket.setupSpec(context, spec)
-		notifySocket.setupSocket()
-	}
-
-	handler := newSignalHandler(!context.Bool("no-subreaper"), notifySocket)
+	handler := newSignalHandler(!context.Bool("no-subreaper"))
 	if err := container.Restore(process, options); err != nil {
 		return -1, err
 	}
@@ -188,7 +181,10 @@ func restoreContainer(context *cli.Context, spec *specs.Spec, config *configs.Co
 			return -1, err
 		}
 	}
-	return handler.forward(process, tty, detach)
+	if detach {
+		return 0, nil
+	}
+	return handler.forward(process, tty)
 }
 
 func criuOptions(context *cli.Context) *libcontainer.CriuOpts {
@@ -199,12 +195,10 @@ func criuOptions(context *cli.Context) *libcontainer.CriuOpts {
 	return &libcontainer.CriuOpts{
 		ImagesDirectory:         imagePath,
 		WorkDirectory:           context.String("work-path"),
-		ParentImage:             context.String("parent-path"),
 		LeaveRunning:            context.Bool("leave-running"),
 		TcpEstablished:          context.Bool("tcp-established"),
 		ExternalUnixConnections: context.Bool("ext-unix-sk"),
 		ShellJob:                context.Bool("shell-job"),
 		FileLocks:               context.Bool("file-locks"),
-		PreDump:                 context.Bool("pre-dump"),
 	}
 }

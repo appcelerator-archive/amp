@@ -46,6 +46,56 @@
             "minimum": 0,
             "maximum": 100
         },
+        "intPointer": {
+            "oneOf": [
+                {
+                    "type": "integer"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "uint16Pointer": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/uint16"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "uint64Pointer": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/uint64"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "percentPointer": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/percent"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "stringPointer": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
         "mapStringString": {
             "type": "object",
             "patternProperties": {
@@ -91,12 +141,9 @@
                     "$ref": "#/definitions/Env"
                 },
                 "timeout": {
-                    "type": "integer"
+                    "$ref": "#/definitions/intPointer"
                 }
-            },
-            "required": [
-                "path"
-            ]
+            }
         },
         "ArrayOfHooks": {
             "type": "array",
@@ -116,12 +163,7 @@
                 "size": {
                     "$ref": "#/definitions/uint32"
                 }
-            },
-            "required": [
-                "hostID",
-                "containerID",
-                "size"
-            ]
+            }
         },
         "Mount": {
             "type": "object",
@@ -140,7 +182,9 @@
                 }
             },
             "required": [
-                "destination"
+                "destination",
+                "source",
+                "type"
             ]
         },
         "ociVersion": {
@@ -148,7 +192,14 @@
             "type": "string"
         },
         "annotations": {
-            "$ref": "#/definitions/mapStringString"
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/mapStringString"
+                },
+                {
+                    "type": "null"
+                }
+            ]
         }
     }
 }

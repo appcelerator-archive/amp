@@ -59,6 +59,7 @@ type initConfig struct {
 	PassedFilesCount int              `json:"passed_files_count"`
 	ContainerId      string           `json:"containerid"`
 	Rlimits          []configs.Rlimit `json:"rlimits"`
+	ExecFifoPath     string           `json:"start_pipe_path"`
 	CreateConsole    bool             `json:"create_console"`
 }
 

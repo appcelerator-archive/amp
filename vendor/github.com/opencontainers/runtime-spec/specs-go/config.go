@@ -17,7 +17,7 @@ type Spec struct {
 	// Mounts configures additional mounts (on top of Root).
 	Mounts []Mount `json:"mounts,omitempty"`
 	// Hooks configures callbacks for container lifecycle events.
-	Hooks *Hooks `json:"hooks,omitempty"`
+	Hooks Hooks `json:"hooks"`
 	// Annotations contains arbitrary metadata for the container.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
@@ -44,8 +44,8 @@ type Process struct {
 	// Cwd is the current working directory for the process and must be
 	// relative to the container's root.
 	Cwd string `json:"cwd"`
-	// Capabilities are Linux capabilities that are kept for the process.
-	Capabilities *LinuxCapabilities `json:"capabilities,omitempty" platform:"linux"`
+	// Capabilities are Linux capabilities that are kept for the container.
+	Capabilities []string `json:"capabilities,omitempty" platform:"linux"`
 	// Rlimits specifies rlimit options to apply to the process.
 	Rlimits []LinuxRlimit `json:"rlimits,omitempty" platform:"linux"`
 	// NoNewPrivileges controls whether additional privileges could be gained by processes in the container.
@@ -54,21 +54,6 @@ type Process struct {
 	ApparmorProfile string `json:"apparmorProfile,omitempty" platform:"linux"`
 	// SelinuxLabel specifies the selinux context that the container process is run as.
 	SelinuxLabel string `json:"selinuxLabel,omitempty" platform:"linux"`
-}
-
-// LinuxCapabilities specifies the whitelist of capabilities that are kept for a process.
-// http://man7.org/linux/man-pages/man7/capabilities.7.html
-type LinuxCapabilities struct {
-	// Bounding is the set of capabilities checked by the kernel.
-	Bounding []string `json:"bounding,omitempty" platform:"linux"`
-	// Effective is the set of capabilities checked by the kernel.
-	Effective []string `json:"effective,omitempty" platform:"linux"`
-	// Inheritable is the capabilities preserved across execve.
-	Inheritable []string `json:"inheritable,omitempty" platform:"linux"`
-	// Permitted is the limiting superset for effective capabilities.
-	Permitted []string `json:"permitted,omitempty" platform:"linux"`
-	// Ambient is the ambient set of capabilities that are kept.
-	Ambient []string `json:"ambient,omitempty" platform:"linux"`
 }
 
 // Box specifies dimensions of a rectangle. Used for specifying the size of a console.
@@ -113,10 +98,10 @@ type Mount struct {
 	// Destination is the path where the mount will be placed relative to the container's root.  The path and child directories MUST exist, a runtime MUST NOT create directories automatically to a mount point.
 	Destination string `json:"destination"`
 	// Type specifies the mount kind.
-	Type string `json:"type,omitempty"`
+	Type string `json:"type"`
 	// Source specifies the source path of the mount.  In the case of bind mounts on
 	// Linux based systems this would be the file on the host.
-	Source string `json:"source,omitempty"`
+	Source string `json:"source"`
 	// Options are fstab style mount options.
 	Options []string `json:"options,omitempty"`
 }
@@ -154,7 +139,7 @@ type Linux struct {
 	// CgroupsPath specifies the path to cgroups that are created and/or joined by the container.
 	// The path is expected to be relative to the cgroups mountpoint.
 	// If resources are specified, the cgroups at CgroupsPath will be updated based on resources.
-	CgroupsPath string `json:"cgroupsPath,omitempty"`
+	CgroupsPath *string `json:"cgroupsPath,omitempty"`
 	// Namespaces contains the namespaces that are created and/or joined by the container
 	Namespaces []LinuxNamespace `json:"namespaces,omitempty"`
 	// Devices are a list of device nodes that are created for the container
@@ -169,9 +154,6 @@ type Linux struct {
 	ReadonlyPaths []string `json:"readonlyPaths,omitempty"`
 	// MountLabel specifies the selinux context for the mounts in the container.
 	MountLabel string `json:"mountLabel,omitempty"`
-	// IntelRdt contains Intel Resource Director Technology (RDT) information
-	// for handling resource constraints (e.g., L3 cache) for the container
-	IntelRdt *LinuxIntelRdt `json:"intelRdt,omitempty"`
 }
 
 // LinuxNamespace is the configuration for a Linux namespace
@@ -302,17 +284,17 @@ type LinuxCPU struct {
 	// CPU shares (relative weight (ratio) vs. other cgroups with cpu shares).
 	Shares *uint64 `json:"shares,omitempty"`
 	// CPU hardcap limit (in usecs). Allowed cpu time in a given period.
-	Quota *int64 `json:"quota,omitempty"`
+	Quota *uint64 `json:"quota,omitempty"`
 	// CPU period to be used for hardcapping (in usecs).
 	Period *uint64 `json:"period,omitempty"`
 	// How much time realtime scheduling may use (in usecs).
-	RealtimeRuntime *int64 `json:"realtimeRuntime,omitempty"`
+	RealtimeRuntime *uint64 `json:"realtimeRuntime,omitempty"`
 	// CPU period to be used for realtime scheduling (in usecs).
 	RealtimePeriod *uint64 `json:"realtimePeriod,omitempty"`
 	// CPUs to use within the cpuset. Default is to use any CPU available.
-	Cpus string `json:"cpus,omitempty"`
+	Cpus *string `json:"cpus,omitempty"`
 	// List of memory nodes in the cpuset. Default is to use any available memory node.
-	Mems string `json:"mems,omitempty"`
+	Mems *string `json:"mems,omitempty"`
 }
 
 // LinuxPids for Linux cgroup 'pids' resource management (Linux 4.3)
@@ -374,13 +356,20 @@ type LinuxDeviceCgroup struct {
 	// Allow or deny
 	Allow bool `json:"allow"`
 	// Device type, block, char, etc.
-	Type string `json:"type,omitempty"`
+	Type *string `json:"type,omitempty"`
 	// Major is the device's major number.
 	Major *int64 `json:"major,omitempty"`
 	// Minor is the device's minor number.
 	Minor *int64 `json:"minor,omitempty"`
 	// Cgroup access permissions format, rwm.
-	Access string `json:"access,omitempty"`
+	Access *string `json:"access,omitempty"`
+}
+
+// LinuxSeccomp represents syscall restrictions
+type LinuxSeccomp struct {
+	DefaultAction LinuxSeccompAction `json:"defaultAction"`
+	Architectures []Arch             `json:"architectures"`
+	Syscalls      []LinuxSyscall     `json:"syscalls,omitempty"`
 }
 
 // Solaris contains platform specific configuration for Solaris application containers.
@@ -480,13 +469,6 @@ type WindowsNetworkResources struct {
 	EgressBandwidth *uint64 `json:"egressBandwidth,omitempty"`
 }
 
-// LinuxSeccomp represents syscall restrictions
-type LinuxSeccomp struct {
-	DefaultAction LinuxSeccompAction `json:"defaultAction"`
-	Architectures []Arch             `json:"architectures,omitempty"`
-	Syscalls      []LinuxSyscall     `json:"syscalls"`
-}
-
 // Arch used for additional architectures
 type Arch string
 
@@ -509,8 +491,6 @@ const (
 	ArchPPC64LE     Arch = "SCMP_ARCH_PPC64LE"
 	ArchS390        Arch = "SCMP_ARCH_S390"
 	ArchS390X       Arch = "SCMP_ARCH_S390X"
-	ArchPARISC      Arch = "SCMP_ARCH_PARISC"
-	ArchPARISC64    Arch = "SCMP_ARCH_PARISC64"
 )
 
 // LinuxSeccompAction taken upon Seccomp rule match
@@ -549,15 +529,7 @@ type LinuxSeccompArg struct {
 
 // LinuxSyscall is used to match a syscall in Seccomp
 type LinuxSyscall struct {
-	Names  []string           `json:"names"`
+	Name   string             `json:"name"`
 	Action LinuxSeccompAction `json:"action"`
-	Args   []LinuxSeccompArg  `json:"args"`
-}
-
-// LinuxIntelRdt has container runtime resource constraints
-// for Intel RDT/CAT which introduced in Linux 4.10 kernel
-type LinuxIntelRdt struct {
-	// The schema for L3 cache id and capacity bitmask (CBM)
-	// Format: "L3:<cache_id0>=<cbm0>;<cache_id1>=<cbm1>;..."
-	L3CacheSchema string `json:"l3CacheSchema,omitempty"`
+	Args   []LinuxSeccompArg  `json:"args,omitempty"`
 }

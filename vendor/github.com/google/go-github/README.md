@@ -22,7 +22,7 @@ access different parts of the GitHub API. For example:
 client := github.NewClient(nil)
 
 // list all organizations for user "willnorris"
-orgs, _, err := client.Organizations.List(ctx, "willnorris", nil)
+orgs, _, err := client.Organizations.List("willnorris", nil)
 ```
 
 Some API methods have optional parameters that can be passed. For example:
@@ -32,7 +32,7 @@ client := github.NewClient(nil)
 
 // list public repositories for org "github"
 opt := &github.RepositoryListByOrgOptions{Type: "public"}
-repos, _, err := client.Repositories.ListByOrg(ctx, "github", opt)
+repos, _, err := client.Repositories.ListByOrg("github", opt)
 ```
 
 The services of a client divide the API into logical chunks and correspond to
@@ -52,16 +52,15 @@ API token][]), you can use it with the oauth2 library using:
 import "golang.org/x/oauth2"
 
 func main() {
-  ctx := context.Background()
   ts := oauth2.StaticTokenSource(
     &oauth2.Token{AccessToken: "... your access token ..."},
   )
-  tc := oauth2.NewClient(ctx, ts)
+  tc := oauth2.NewClient(oauth2.NoContext, ts)
 
   client := github.NewClient(tc)
 
   // list all repositories for the authenticated user
-  repos, _, err := client.Repositories.List(ctx, "", nil)
+  repos, _, err := client.Repositories.List("", nil)
 }
 ```
 
@@ -91,7 +90,7 @@ up-to-date rate limit data for the client.
 To detect an API rate limit error, you can check if its type is `*github.RateLimitError`:
 
 ```go
-repos, _, err := client.Repositories.List(ctx, "", nil)
+repos, _, err := client.Repositories.List("", nil)
 if _, ok := err.(*github.RateLimitError); ok {
 	log.Println("hit rate limit")
 }
@@ -111,7 +110,7 @@ To detect this condition of error, you can check if its type is
 `*github.AcceptedError`:
 
 ```go
-stats, _, err := client.Repositories.ListContributorsStats(ctx, org, repo)
+stats, _, err := client.Repositories.ListContributorsStats(org, repo)
 if _, ok := err.(*github.AcceptedError); ok {
 	log.Println("scheduled on GitHub side")
 }
@@ -141,7 +140,7 @@ repo := &github.Repository{
 	Name:    github.String("foo"),
 	Private: github.Bool(true),
 }
-client.Repositories.Create(ctx, "", repo)
+client.Repositories.Create("", repo)
 ```
 
 Users who have worked with protocol buffers should find this pattern familiar.
@@ -164,7 +163,7 @@ opt := &github.RepositoryListByOrgOptions{
 // get all pages of results
 var allRepos []*github.Repository
 for {
-	repos, resp, err := client.Repositories.ListByOrg(ctx, "github", opt)
+	repos, resp, err := client.Repositories.ListByOrg("github", opt)
 	if err != nil {
 		return err
 	}
@@ -200,17 +199,6 @@ straightforward.
 [roadmap]: https://docs.google.com/spreadsheet/ccc?key=0ApoVX4GOiXr-dGNKN1pObFh6ek1DR2FKUjBNZ1FmaEE&usp=sharing
 [contributing]: CONTRIBUTING.md
 
-
-## Google App Engine ##
-
-Go on App Engine Classic (which as of this writing uses Go 1.6) can not use
-the `"context"` import and still relies on `"golang.org/x/net/context"`.
-As a result, if you wish to continue to use `go-github` on App Engine Classic,
-you will need to rewrite all the `"context"` imports using the following command:
-
-    `gofmt -w -r '"context" -> "golang.org/x/net/context"' *.go`
-
-See `with_appengine.go` for more details.
 
 ## License ##
 

@@ -33,18 +33,14 @@ func (s *MemoryGroup) Apply(d *cgroupData) (err error) {
 	path, err := d.path("memory")
 	if err != nil && !cgroups.IsNotFound(err) {
 		return err
-	} else if path == "" {
-		return nil
 	}
 	if memoryAssigned(d.config) {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		if path != "" {
 			if err := os.MkdirAll(path, 0755); err != nil {
 				return err
 			}
-			// Only enable kernel memory accouting when this cgroup
-			// is created by libcontainer, otherwise we might get
-			// error when people use `cgroupsPath` to join an existed
-			// cgroup whose kernel memory is not initialized.
+		}
+		if d.config.KernelMemory != 0 {
 			if err := EnableKernelMemoryAccounting(path); err != nil {
 				return err
 			}
