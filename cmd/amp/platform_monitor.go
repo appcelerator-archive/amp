@@ -7,11 +7,11 @@ import (
 
 // PlatformMonitor is the main command for attaching platform subcommands.
 var PlatformMonitor = &cobra.Command{
-	Use:   "monitor",
-	Short: "Display AMP platform services",
-	Long:  `The monitor command displays information about AMP platform services and states.`,
+	Use:     "monitor",
+	Short:   "Display AMP platform services",
+	Example: "monitor",
 	Run: func(cmd *cobra.Command, args []string) {
-		displayAMPServiceStatus(cmd, args)
+		displayAMPServiceStatus(cmd)
 	},
 }
 
@@ -19,7 +19,7 @@ func init() {
 	PlatformCmd.AddCommand(PlatformMonitor)
 }
 
-func displayAMPServiceStatus(cmd *cobra.Command, args []string) error {
+func displayAMPServiceStatus(cmd *cobra.Command) error {
 	manager := &ampManager{}
 	if cmd.Flag("verbose").Value.String() == "true" {
 		manager.verbose = true

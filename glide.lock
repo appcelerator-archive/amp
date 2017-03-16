@@ -1,5 +1,5 @@
-hash: c8487343575f0de08248a21ffe97fe5f8d69c08373b241c923032e3e1b95c498
-updated: 2017-03-16T06:43:28.513664006Z
+hash: 37cdfec0cf579e6a345df35871a9a749c375ceedd676c43dc1b48a6b76d17c3a
+updated: 2017-03-16T10:44:39.076910718-07:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -11,6 +11,8 @@ imports:
   - quantile
 - name: github.com/blang/semver
   version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
+- name: github.com/cenkalti/backoff
+  version: 3db60c813733fce657c114634171689bbf1f8dee
 - name: github.com/coreos/etcd
   version: 21fdcc6443f3267111051240f0eca839acc96a39
   subpackages:
@@ -21,7 +23,7 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
   - spew
 - name: github.com/dgrijalva/jwt-go
@@ -129,6 +131,8 @@ imports:
   version: 7d7316ed6e1ed2de075aab8dfc76de5d158d66e1
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- name: github.com/go-errors/errors
+  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/gogo/protobuf
   version: a9cd0c35b97daf74d0ebf3514c5254814b2703b4
   subpackages:
@@ -141,6 +145,7 @@ imports:
   - jsonpb
   - proto
   - protoc-gen-go/descriptor
+  - ptypes/empty
 - name: github.com/google/go-github
   version: 839082db564f53df5b8b386f217c7c217b5a624f
   subpackages:
@@ -162,6 +167,8 @@ imports:
   - runtime/internal
   - third_party/googleapis/google/api
   - utilities
+- name: github.com/hailocab/go-hostpool
+  version: e80d13ce29ede4452c43dea11e79b9bc8a15b478
 - name: github.com/hashicorp/hcl
   version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
   subpackages:
@@ -187,6 +194,10 @@ imports:
   - client/v2
   - models
   - pkg/escape
+- name: github.com/jmoiron/sqlx
+  version: 8ed836a8adb659e8492bcaa49e0880bb84075fe2
+  subpackages:
+  - reflectx
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/kballard/go-shellquote
@@ -226,8 +237,10 @@ imports:
   - util
 - name: github.com/nats-io/nuid
   version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
+- name: github.com/oleiade/reflections
+  version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/runc
-  version: 31980a53ae7887b2c8f8715d13c3eb486c27b6cf
+  version: 697cb97cb78e4d9ab5cefa6f53e2923dae8f02cf
   subpackages:
   - libcontainer/configs
   - libcontainer/devices
@@ -237,12 +250,23 @@ imports:
   version: 4badf7fae7549a987581072b29d5e7b73a7bdaf5
   subpackages:
   - specs-go
+- name: github.com/ory-am/common
+  version: eaf2f2a2e18295ffc4e89d07a9556903d22b4e79
+  subpackages:
+  - compiler
+  - pkg
+- name: github.com/ory-am/ladon
+  version: 511d561a9a22e6f1c9eda4859673721c56375a23
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
   version: fee7787d3f811af92276f5ff10107092e95b7a1d
 - name: github.com/pkg/errors
-  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/prometheus/client_golang
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
@@ -261,6 +285,10 @@ imports:
   version: a1dba9ce8baed984a2495b658c82687f8157b98f
   subpackages:
   - xfs
+- name: github.com/rubenv/sql-migrate
+  version: a3e2963537993d229b6e257d10bd8bc640b06ce3
+  subpackages:
+  - sqlparse
 - name: github.com/sendgrid/rest
   version: 3ec51b4f1754e13e92409355851a0a82e9a06461
 - name: github.com/sendgrid/sendgrid-go
@@ -268,7 +296,7 @@ imports:
   subpackages:
   - helpers/mail
 - name: github.com/Sirupsen/logrus
-  version: 547e984ad93a90192134fc0fdb57a468edb514fe
+  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -283,7 +311,12 @@ imports:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
-- name: github.com/Thomasrooney/gexpect
+- name: github.com/stretchr/testify
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
+  subpackages:
+  - assert
+  - require
+- name: github.com/ThomasRooney/gexpect
   version: 5482f03509440585d13d8f648989e05903001842
 - name: github.com/vbatts/tar-split
   version: b9127a139315e57ebc26030e7decf72d0a20acb4
@@ -303,6 +336,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
   - ssh/terminal
 - name: golang.org/x/net
   version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
@@ -357,22 +392,48 @@ imports:
   - stats
   - tap
   - transport
+- name: gopkg.in/dancannon/gorethink.v2
+  version: 610fcc04c971a9fa42f1b6625c7c52b5bb472c51
+- name: gopkg.in/fatih/pool.v2
+  version: 6e328e67893eb46323ad06f0e92cb9536babbabc
+- name: gopkg.in/gorethink/gorethink.v3
+  version: 610fcc04c971a9fa42f1b6625c7c52b5bb472c51
+  subpackages:
+  - encoding
+  - ql2
+  - types
+- name: gopkg.in/gorp.v1
+  version: c87af80f3cc5036b55b83d77171e156791085e2e
+- name: gopkg.in/hlandau/easymetric.v1
+  version: 1c173222e345c2ba115e0f483821c6da2d3b0fa9
+  subpackages:
+  - cexp
+- name: gopkg.in/hlandau/measurable.v1
+  version: d96a009bd9bda94dd1294105e67e8c1794e533d3
+- name: gopkg.in/hlandau/passlib.v1
+  version: 933f1c3f63ffb0d17de04c3174f875ae683a33cd
+  subpackages:
+  - abstract
+  - hash/bcrypt
+  - hash/bcryptsha256
+  - hash/scrypt
+  - hash/scrypt/raw
+  - hash/sha2crypt
+  - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
-  version: 3901ec7ce170cd5b0ccb2720893c399d24d295c6
+  version: 8c148e9a5e627a3c155c6980fb965fe7813d78b8
 - name: gopkg.in/olivere/elastic.v5
-  version: 3901ec7ce170cd5b0ccb2720893c399d24d295c6
+  version: 8c148e9a5e627a3c155c6980fb965fe7813d78b8
   subpackages:
   - uritemplates
+- name: gopkg.in/redis.v5
+  version: 8fcba2ea878201b70c5a63dd416141d4ddbc601a
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
-testImports:
-- name: github.com/mhale/smtpd
-  version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
-- name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
-  subpackages:
-  - difflib
-- name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
-  subpackages:
-  - assert
+  version: bef53efd0c76e49e6de55ead051f886bea7e9420
+testImports: []
