@@ -65,15 +65,26 @@ func main() {
 	//fmt.Printf("%s %s\n", cmd, strings.Join(args, " "))
 
 	proc := exec.Command(cmd, args...)
-	out, err := proc.StdoutPipe()
+
+	stdout, err := proc.StdoutPipe()
 	if err != nil {
 		panic(err)
 	}
-
-	scanner := bufio.NewScanner(out)
+	outscanner := bufio.NewScanner(stdout)
 	go func() {
-		for scanner.Scan() {
-			fmt.Printf("%s\n", scanner.Text())
+		for outscanner.Scan() {
+			fmt.Printf("%s\n", outscanner.Text())
+		}
+	}()
+
+	stderr, err := proc.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+	errscanner := bufio.NewScanner(stderr)
+	go func() {
+		for errscanner.Scan() {
+			fmt.Fprintf(os.Stderr, "%s\n", errscanner.Text())
 		}
 	}()
 
