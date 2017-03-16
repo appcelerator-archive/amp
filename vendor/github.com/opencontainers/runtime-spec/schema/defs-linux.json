@@ -18,7 +18,9 @@
                 "SCMP_ARCH_PPC64",
                 "SCMP_ARCH_PPC64LE",
                 "SCMP_ARCH_S390",
-                "SCMP_ARCH_S390X"
+                "SCMP_ARCH_S390X",
+                "SCMP_ARCH_PARISC",
+                "SCMP_ARCH_PARISC64"
             ]
         },
         "SeccompAction": {
@@ -63,8 +65,11 @@
         "Syscall": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
+                "names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "action": {
                     "$ref": "#/definitions/SeccompAction"
@@ -78,7 +83,7 @@
             }
         },
         "Capability": {
-            "description": "Linux process permissions",
+            "description": "Linux process capabilities",
             "type": "string",
             "pattern": "^CAP_([A-Z]|_)+$"
         },
@@ -96,9 +101,6 @@
             "minimum": 0,
             "maximum": 512
         },
-        "FilePermissions": {
-            "type": "string"
-        },
         "FileType": {
             "description": "Type of a block or special character device",
             "type": "string",
@@ -106,12 +108,13 @@
         },
         "Device": {
             "type": "object",
+            "required": [
+                "type",
+                "path"
+            ],
             "properties": {
                 "type": {
                     "$ref": "#/definitions/FileType"
-                },
-                "permissions": {
-                    "$ref": "#/definitions/FilePermissions"
                 },
                 "path": {
                     "$ref": "defs.json#/definitions/FilePath"
@@ -138,16 +141,6 @@
             "minimum": 10,
             "maximum": 1000
         },
-        "blkioWeightPointer": {
-            "oneOf": [
-                {
-                    "$ref": "#/definitions/blkioWeight"
-                },
-                {
-                    "type": "null"
-                }
-            ]
-        },
         "blockIODevice": {
             "type": "object",
             "properties": {
@@ -173,22 +166,12 @@
                     "type": "object",
                     "properties": {
                         "weight": {
-                            "$ref": "#/definitions/blkioWeightPointer"
+                            "$ref": "#/definitions/blkioWeight"
                         },
                         "leafWeight": {
-                            "$ref": "#/definitions/blkioWeightPointer"
+                            "$ref": "#/definitions/blkioWeight"
                         }
                     }
-                }
-            ]
-        },
-        "blockIODeviceWeightPointer": {
-            "oneOf": [
-                {
-                    "$ref": "#/definitions/blockIODeviceWeight"
-                },
-                {
-                    "type": "null"
                 }
             ]
         },
@@ -201,19 +184,9 @@
                     "type": "object",
                     "properties": {
                         "rate": {
-                            "$ref": "defs.json#/definitions/uint64Pointer"
+                            "$ref": "defs.json#/definitions/uint64"
                         }
                     }
-                }
-            ]
-        },
-        "blockIODeviceThrottlePointer": {
-            "oneOf": [
-                {
-                    "$ref": "#/definitions/blockIODeviceThrottle"
-                },
-                {
-                    "type": "null"
                 }
             ]
         },
@@ -224,32 +197,21 @@
                     "type": "boolean"
                 },
                 "type": {
-                    "$ref": "defs.json#/definitions/stringPointer"
+                    "type": "string"
                 },
                 "major": {
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/Major"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ]
+                    "$ref": "#/definitions/Major"
                 },
                 "minor": {
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/Minor"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ]
+                    "$ref": "#/definitions/Minor"
                 },
                 "access": {
-                    "$ref": "defs.json#/definitions/stringPointer"
+                    "type": "string"
                 }
-            }
+            },
+            "required": [
+                "allow"
+            ]
         },
         "NetworkInterfacePriority": {
             "type": "object",
@@ -260,7 +222,11 @@
                 "priority": {
                     "$ref": "defs.json#/definitions/uint32"
                 }
-            }
+            },
+            "required": [
+                "name",
+                "priority"
+            ]
         },
         "NamespaceType": {
             "type": "string",
@@ -283,7 +249,10 @@
                 "path": {
                     "$ref": "defs.json#/definitions/FilePath"
                 }
-            }
+            },
+            "required": [
+                "type"
+            ]
         }
     }
 }

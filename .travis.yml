@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-  - 1.7.4
+  - 1.7.x
 
 install:
   - sudo sysctl -w vm.max_map_count=262144
@@ -14,21 +14,17 @@ install:
   - sudo apt-get update
   - sudo apt-get install docker-engine
   - docker swarm init --advertise-addr 127.0.0.1
+  - docker network create -d overlay --attachable swarmnet
+  - make fmt check
   - hack/amptools make -f Makefile.refactor.make cleanall
   - mkdir -p $HOME/.config/amp
   - echo SendGridKey:$SENDGRIDKEY >$HOME/.config/amp/amplifier.yaml
   - hack/amptools make -f Makefile.refactor.make build
-  - make fmt check install
-  - make TAG=local build-image
-  - amp platform pull --local
-  - amp platform start --local
 
 script:
-  - make test
+  - tests/refactored-tests.sh
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" &&
-      docker tag appcelerator/amp:local appcelerator/amp:latest &&
-      timeout 30 docker push appcelerator/amp:latest;
+      echo "Docker image publication has been disabled for now";
     fi

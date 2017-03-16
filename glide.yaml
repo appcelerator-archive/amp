@@ -95,6 +95,11 @@ import:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/kballard/go-shellquote
 - package: github.com/kr/pty
+- package: github.com/hlandau/passlib
+  version: ^1.0.9
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/holys/safe
 - package: github.com/ory-am/ladon
   version: ^0.4.2
 testImport:

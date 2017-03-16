@@ -20,7 +20,7 @@ import (
 	"github.com/influxdata/influxdb/influxql"
 	"github.com/influxdata/influxdb/models"
 	"github.com/influxdata/influxdb/tsdb"
-	"go.uber.org/zap"
+	"github.com/uber-go/zap"
 )
 
 //go:generate tmpl -data=@iterator.gen.go.tmpldata iterator.gen.go.tmpl
@@ -652,7 +652,7 @@ func (e *Engine) addToIndexFromKey(shardID uint64, key []byte, fieldType influxq
 	_, tags, _ := models.ParseKey(seriesKey)
 
 	s := tsdb.NewSeries(string(seriesKey), tags)
-	index.CreateSeriesIndexIfNotExists(measurement, s)
+	index.CreateSeriesIndexIfNotExists(measurement, s, false)
 	s.AssignShard(shardID)
 
 	return nil
@@ -816,11 +816,24 @@ func (e *Engine) DeleteSeriesRange(seriesKeys []string, min, max int64) error {
 
 // DeleteMeasurement deletes a measurement and all related series.
 func (e *Engine) DeleteMeasurement(name string, seriesKeys []string) error {
-	e.fieldsMu.Lock()
-	delete(e.measurementFields, name)
-	e.fieldsMu.Unlock()
+	// Delete the bulk of data outside of the fields lock
+	if err := e.DeleteSeries(seriesKeys); err != nil {
+		return err
+	}
 
-	return e.DeleteSeries(seriesKeys)
+	e.fieldsMu.Lock()
+	defer e.fieldsMu.Unlock()
+
+	// Delete any data that may have been written while we were deleting outside
+	// of the lock
+	if err := e.DeleteSeries(seriesKeys); err != nil {
+		return err
+	}
+
+	// Remove the field type mapping
+	delete(e.measurementFields, name)
+
+	return nil
 }
 
 // SeriesCount returns the number of series buckets on the shard.

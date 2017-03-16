@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"sort"
 	"strconv"
@@ -1323,11 +1324,6 @@ func (p *point) Tags() Tags {
 		return p.cachedTags
 	}
 	p.cachedTags = parseTags(p.key)
-
-	for i := range p.cachedTags {
-		p.cachedTags[i].shouldCopy = true
-	}
-
 	return p.cachedTags
 }
 
@@ -1497,21 +1493,36 @@ func (p *point) MarshalBinary() ([]byte, error) {
 
 // UnmarshalBinary decodes a binary representation of the point into a point struct.
 func (p *point) UnmarshalBinary(b []byte) error {
-	var i int
-	keyLen := int(binary.BigEndian.Uint32(b[:4]))
-	i += int(4)
+	var n int
 
-	p.key = b[i : i+keyLen]
-	i += keyLen
+	// Read key length.
+	if len(b) < 4 {
+		return io.ErrShortBuffer
+	}
+	n, b = int(binary.BigEndian.Uint32(b[:4])), b[4:]
 
-	fieldLen := int(binary.BigEndian.Uint32(b[i : i+4]))
-	i += int(4)
+	// Read key.
+	if len(b) < n {
+		return io.ErrShortBuffer
+	}
+	p.key, b = b[:n], b[n:]
 
-	p.fields = b[i : i+fieldLen]
-	i += fieldLen
+	// Read fields length.
+	if len(b) < 4 {
+		return io.ErrShortBuffer
+	}
+	n, b = int(binary.BigEndian.Uint32(b[:4])), b[4:]
 
-	p.time = time.Now()
-	p.time.UnmarshalBinary(b[i:])
+	// Read fields.
+	if len(b) < n {
+		return io.ErrShortBuffer
+	}
+	p.fields, b = b[:n], b[n:]
+
+	// Read timestamp.
+	if err := p.time.UnmarshalBinary(b); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1626,9 +1637,6 @@ func (p *point) Split(size int) []Point {
 type Tag struct {
 	Key   []byte
 	Value []byte
-
-	// shouldCopy returns whether or not a tag should be copied when Clone-ing
-	shouldCopy bool
 }
 
 // Clone returns a shallow copy of Tag.
@@ -1636,10 +1644,6 @@ type Tag struct {
 // Tags associated with a Point created by ParsePointsWithPrecision will hold references to the byte slice that was parsed.
 // Use Clone to create a Tag with new byte slices that do not refer to the argument to ParsePointsWithPrecision.
 func (t Tag) Clone() Tag {
-	if !t.shouldCopy {
-		return t
-	}
-
 	other := Tag{
 		Key:   make([]byte, len(t.Key)),
 		Value: make([]byte, len(t.Value)),
@@ -1674,15 +1678,6 @@ func NewTags(m map[string]string) Tags {
 func (a Tags) Clone() Tags {
 	if len(a) == 0 {
 		return nil
-	}
-
-	needsClone := false
-	for i := 0; i < len(a) && !needsClone; i++ {
-		needsClone = a[i].shouldCopy
-	}
-
-	if !needsClone {
-		return a
 	}
 
 	others := make(Tags, len(a))

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package oauth;
+
+service Github {
+  rpc Create (AuthRequest) returns (AuthReply) {}
+}
+
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+  string otp = 3;
+}
+
+message AuthReply {
+  string sessionKey = 1;
+  string name = 2;
+}
+
+message Token {
+  int32 id = 1;
+  string token = 2;
+  string tokenLastEight = 3;
+}

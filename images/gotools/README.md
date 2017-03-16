@@ -9,6 +9,6 @@ These tools are used by the amp toolchain.
 
 Currently includes
 
-* [Go 1.7](https://hub.docker.com/_/golang/)
+* [Go 1.8](https://hub.docker.com/_/golang/)
 * [Glide](https://glide.sh/) v0.12.3
 * [Golint](https://github.com/golang/lint)
