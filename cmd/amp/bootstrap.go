@@ -9,7 +9,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// StartCmd is the main command for attaching local swarm commands.
+var (
+	startArgs = [...]string{"-p", "docker"}
+	stopArgs  = [...]string{"-c"}
+)
+
+// StartCmd will bootstrap a new cluster
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a local amp cluster",
@@ -19,19 +24,33 @@ var startCmd = &cobra.Command{
 	},
 }
 
+// StopCmd will stop and cleanup a managed cluster
+var stopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Stop a local amp cluster",
+	Long:  `The stop command stops and cleans up a local amp cluster.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return stop(AMP, cmd, args)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(startCmd)
+	RootCmd.AddCommand(stopCmd)
 }
 
 func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
-	return startCluster()
+	return updateCluster(append(startArgs[:], args[:]...))
+}
+func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
+	return updateCluster(append(stopArgs[:], args[:]...))
 }
 
-// TODO: replace the stacks/local-bootstrap script with go code
-func startCluster() error {
+// TODO: replace the bootstrap script with go code
+func updateCluster(args []string) error {
 	// TODO: use AMPHOME environment variable for path
-	cmd := "local-bootstrap"
-	proc := exec.Command(cmd)
+	cmd := "bootstrap"
+	proc := exec.Command(cmd, args...)
 	stdout, err := proc.StdoutPipe()
 	if err != nil {
 		return err
