@@ -260,7 +260,7 @@ type shardRouting struct {
 	RelocatingNode string          `json:"relocating_node"`
 	Shard          int             `json:"shard"`
 	Index          string          `json:"index"`
-	Version        int64           `json:"version"`
+	Version        int64           `json:"state"`
 	RestoreSource  *RestoreSource  `json:"restore_source"`
 	AllocationId   *allocationId   `json:"allocation_id"`
 	UnassignedInfo *unassignedInfo `json:"unassigned_info"`

@@ -75,8 +75,7 @@ func getDevices(path string) ([]*configs.Device, error) {
 		switch {
 		case f.IsDir():
 			switch f.Name() {
-			// ".lxc" & ".lxd-mounts" added to address https://github.com/lxc/lxd/issues/2825
-			case "pts", "shm", "fd", "mqueue", ".lxc", ".lxd-mounts":
+			case "pts", "shm", "fd", "mqueue":
 				continue
 			default:
 				sub, err := getDevices(filepath.Join(path, f.Name()))

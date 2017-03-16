@@ -1,5 +1,4 @@
-// +build !windows
-// +build !appengine
+// +build !windows appengine
 
 package isatty
 

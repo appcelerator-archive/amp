@@ -39,9 +39,3 @@ Then use it like:
 ```bash
 ./validate config-schema.json <yourpath>/config.json
 ```
-
-Or like:
-
-```bash
-./validate https://raw.githubusercontent.com/opencontainers/runtime-spec/v1.0.0-rc1/schema/schema.json <yourpath>/config.json
-```

@@ -276,7 +276,7 @@ func TestActivityService_ListUserEventsForOrganization(t *testing.T) {
 	}
 }
 
-func TestActivityService_EventParsePayload_typed(t *testing.T) {
+func TestActivityService_EventPayload_typed(t *testing.T) {
 	raw := []byte(`{"type": "PushEvent","payload":{"push_id": 1}}`)
 	var event *Event
 	if err := json.Unmarshal(raw, &event); err != nil {
@@ -284,19 +284,15 @@ func TestActivityService_EventParsePayload_typed(t *testing.T) {
 	}
 
 	want := &PushEvent{PushID: Int(1)}
-	got, err := event.ParsePayload()
-	if err != nil {
-		t.Fatalf("ParsePayload returned unexpected error: %v", err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.ParsePayload returned %+v, want %+v", got, want)
+	if !reflect.DeepEqual(event.Payload(), want) {
+		t.Errorf("Event Payload returned %+v, want %+v", event.Payload(), want)
 	}
 }
 
 // TestEvent_Payload_untyped checks that unrecognized events are parsed to an
 // interface{} value (instead of being discarded or throwing an error), for
 // forward compatibility with new event types.
-func TestActivityService_EventParsePayload_untyped(t *testing.T) {
+func TestActivityService_EventPayload_untyped(t *testing.T) {
 	raw := []byte(`{"type": "UnrecognizedEvent","payload":{"field": "val"}}`)
 	var event *Event
 	if err := json.Unmarshal(raw, &event); err != nil {
@@ -304,16 +300,12 @@ func TestActivityService_EventParsePayload_untyped(t *testing.T) {
 	}
 
 	want := map[string]interface{}{"field": "val"}
-	got, err := event.ParsePayload()
-	if err != nil {
-		t.Fatalf("ParsePayload returned unexpected error: %v", err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.ParsePayload returned %+v, want %+v", got, want)
+	if !reflect.DeepEqual(event.Payload(), want) {
+		t.Errorf("Event Payload returned %+v, want %+v", event.Payload(), want)
 	}
 }
 
-func TestActivityService_EventParsePayload_installation(t *testing.T) {
+func TestActivityService_EventPayload_installation(t *testing.T) {
 	raw := []byte(`{"type": "PullRequestEvent","payload":{"installation":{"id":1}}}`)
 	var event *Event
 	if err := json.Unmarshal(raw, &event); err != nil {
@@ -321,11 +313,7 @@ func TestActivityService_EventParsePayload_installation(t *testing.T) {
 	}
 
 	want := &PullRequestEvent{Installation: &Installation{ID: Int(1)}}
-	got, err := event.ParsePayload()
-	if err != nil {
-		t.Fatalf("ParsePayload returned unexpected error: %v", err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.ParsePayload returned %+v, want %+v", got, want)
+	if !reflect.DeepEqual(event.Payload(), want) {
+		t.Errorf("Event Payload returned %+v, want %+v", event.Payload(), want)
 	}
 }

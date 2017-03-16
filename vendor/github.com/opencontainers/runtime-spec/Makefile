@@ -74,7 +74,7 @@ endif
 # When this is running in travis, it will only check the travis commit range
 .gitvalidation:
 	@which git-validation > /dev/null 2>/dev/null || (echo "ERROR: git-validation not found. Consider 'make install.tools' target" && false)
-ifdef TRAVIS_COMMIT_RANGE
+ifeq ($(TRAVIS),true)
 	git-validation -q -run DCO,short-subject,dangling-whitespace
 else
 	git-validation -v -run DCO,short-subject,dangling-whitespace -range $(EPOCH_TEST_COMMIT)..HEAD

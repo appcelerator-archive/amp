@@ -59,7 +59,7 @@ type GistCommit struct {
 	Version      *string      `json:"version,omitempty"`
 	User         *User        `json:"user,omitempty"`
 	ChangeStatus *CommitStats `json:"change_status,omitempty"`
-	CommittedAt  *Timestamp   `json:"committed_at,omitempty"`
+	CommitedAt   *Timestamp   `json:"commited_at,omitempty"`
 }
 
 func (gc GistCommit) String() string {
@@ -240,7 +240,7 @@ func (s *GistsService) Edit(ctx context.Context, id string, gist *Gist) (*Gist, 
 
 // ListCommits lists commits of a gist.
 //
-// GitHub API docs: https://developer.github.com/v3/gists/#list-gist-commits
+// Github API docs: https://developer.github.com/v3/gists/#list-gist-commits
 func (s *GistsService) ListCommits(ctx context.Context, id string) ([]*GistCommit, *Response, error) {
 	u := fmt.Sprintf("gists/%v/commits", id)
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -283,7 +283,7 @@ func (s *GistsService) Star(ctx context.Context, id string) (*Response, error) {
 
 // Unstar a gist on a behalf of authenticated user.
 //
-// GitHub API docs: https://developer.github.com/v3/gists/#unstar-a-gist
+// Github API docs: https://developer.github.com/v3/gists/#unstar-a-gist
 func (s *GistsService) Unstar(ctx context.Context, id string) (*Response, error) {
 	u := fmt.Sprintf("gists/%v/star", id)
 	req, err := s.client.NewRequest("DELETE", u, nil)
@@ -328,7 +328,7 @@ func (s *GistsService) Fork(ctx context.Context, id string) (*Gist, *Response, e
 
 // ListForks lists forks of a gist.
 //
-// GitHub API docs: https://developer.github.com/v3/gists/#list-gist-forks
+// Github API docs: https://developer.github.com/v3/gists/#list-gist-forks
 func (s *GistsService) ListForks(ctx context.Context, id string) ([]*GistFork, *Response, error) {
 	u := fmt.Sprintf("gists/%v/forks", id)
 	req, err := s.client.NewRequest("GET", u, nil)

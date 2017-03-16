@@ -117,101 +117,43 @@ type Option func(*Options) error
 
 // Options can be used to create a customized connection.
 type Options struct {
-
-	// Url represents a single NATS server url to which the client
-	// will be connecting. If Servers is also set, it then becomes
-	// the first server in the array.
-	Url string
-
-	// Servers is the configured set of servers which are
-	// available when attempting to connect.
-	Servers []string
-
-	// NoRandomize configures whether we will be randomizing
-	// the server pool of servers.
-	NoRandomize bool
-
-	// Name is the optional name label which will be sent to the server
-	// on CONNECT to identify the client.
-	Name string
-
-	// Verbose enables the server whether it should reply back
-	// OK on commands successfully being processed.
-	Verbose bool
-
-	// Pedantic sets pedantic flag option sent on connect to signal server
-	// whether it should be doing further validation of subjects.
-	Pedantic bool
-
-	// Secure enable TLS secure connections that skip server
-	// verification by default.
-	Secure bool
-
-	// TLSConfig is the custom TLS configuration to use for
-	// the secure transport.
-	TLSConfig *tls.Config
-
-	// AllowReconnect enables reconnection logic for when server we were
-	// connected to fails.
+	Url            string
+	Servers        []string
+	NoRandomize    bool
+	Name           string
+	Verbose        bool
+	Pedantic       bool
+	Secure         bool
+	TLSConfig      *tls.Config
 	AllowReconnect bool
-
-	// MaxReconnect sets the number of connect attempts that will be
-	// tried before giving up connecting further to a server in the pool.
-	// If negative, then it will never give up trying to connect.
-	MaxReconnect int
-
-	// ReconnectWait sets the time to backoff after attempting to reconnect
-	// to a server that we were already connected to previously.
-	ReconnectWait time.Duration
-
-	// Timeout sets the timeout for Dial on a connection.
-	Timeout time.Duration
+	MaxReconnect   int
+	ReconnectWait  time.Duration
+	Timeout        time.Duration
 
 	// FlusherTimeout is the maximum time to wait for the flusher loop
 	// to be able to finish writing to the underlying socket.
 	FlusherTimeout time.Duration
 
-	// PingInterval is the period at which the server will be sending ping
-	// commands to the server, disabled if 0 or negative.
-	PingInterval time.Duration
-
-	// MaxPingsOut is the maximum number of pending ping commands waiting
-	// for a response back before raising a ErrStaleConnection error.
-	MaxPingsOut int
-
-	// ClosedCB sets the closed handler called when client will
-	// no longer be connected.
-	ClosedCB ConnHandler
-
-	// DisconnectedCB sets the disconnected handler called whenever we
-	// are disconnected.
+	PingInterval   time.Duration // disabled if 0 or negative
+	MaxPingsOut    int
+	ClosedCB       ConnHandler
 	DisconnectedCB ConnHandler
+	ReconnectedCB  ConnHandler
+	AsyncErrorCB   ErrHandler
 
-	// ReconnectedCB sets the reconnected handler called whenever
-	// successfully reconnected.
-	ReconnectedCB ConnHandler
-
-	// AsyncErrorCB sets the async error handler (e.g. slow consumer errors)
-	AsyncErrorCB ErrHandler
-
-	// ReconnectBufSize of the backing bufio buffer during reconnect. Once this
+	// Size of the backing bufio buffer during reconnect. Once this
 	// has been exhausted publish operations will error.
 	ReconnectBufSize int
 
-	// SubChanLen is the size of the buffered channel used between the socket
+	// The size of the buffered channel used between the socket
 	// Go routine and the message delivery for SyncSubscriptions.
 	// NOTE: This does not affect AsyncSubscriptions which are
 	// dictated by PendingLimits()
 	SubChanLen int
 
-	// User sets the user to be used when connecting to the server.
-	User string
-
-	// Password sets the password to be used when connecting to a server.
+	User     string
 	Password string
-
-	// Token sets the token to be used when connecting to a server.
-	Token string
+	Token    string
 
 	// Dialer allows users setting a custom Dialer
 	Dialer *net.Dialer
@@ -246,7 +188,7 @@ type Conn struct {
 	Statistics
 	mu      sync.Mutex
 	Opts    Options
-	wg      *sync.WaitGroup
+	wg      sync.WaitGroup
 	url     *url.URL
 	conn    net.Conn
 	srvPool []*srv
@@ -872,7 +814,7 @@ func (nc *Conn) makeTLSConn() {
 
 // waitForExits will wait for all socket watcher Go routines to
 // be shutdown before proceeding.
-func (nc *Conn) waitForExits(wg *sync.WaitGroup) {
+func (nc *Conn) waitForExits() {
 	// Kick old flusher forcefully.
 	select {
 	case nc.fch <- true:
@@ -880,9 +822,7 @@ func (nc *Conn) waitForExits(wg *sync.WaitGroup) {
 	}
 
 	// Wait for any previous go routines.
-	if wg != nil {
-		wg.Wait()
-	}
+	nc.wg.Wait()
 }
 
 // spinUpGoRoutines will launch the Go routines responsible for
@@ -892,16 +832,14 @@ func (nc *Conn) waitForExits(wg *sync.WaitGroup) {
 // reconnect when the previous ones have exited.
 func (nc *Conn) spinUpGoRoutines() {
 	// Make sure everything has exited.
-	nc.waitForExits(nc.wg)
+	nc.waitForExits()
 
-	// Create a new waitGroup instance for this run.
-	nc.wg = &sync.WaitGroup{}
 	// We will wait on both.
 	nc.wg.Add(2)
 
 	// Spin up the readLoop and the socket flusher.
-	go nc.readLoop(nc.wg)
-	go nc.flusher(nc.wg)
+	go nc.readLoop()
+	go nc.flusher()
 
 	nc.mu.Lock()
 	if nc.Opts.PingInterval > 0 {
@@ -1236,10 +1174,7 @@ func (nc *Conn) flushReconnectPendingItems() {
 func (nc *Conn) doReconnect() {
 	// We want to make sure we have the other watchers shutdown properly
 	// here before we proceed past this point.
-	nc.mu.Lock()
-	wg := nc.wg
-	nc.mu.Unlock()
-	nc.waitForExits(wg)
+	nc.waitForExits()
 
 	// FIXME(dlc) - We have an issue here if we have
 	// outstanding flush points (pongs) and they were not
@@ -1430,9 +1365,9 @@ func (nc *Conn) asyncDispatch() {
 // readLoop() will sit on the socket reading and processing the
 // protocol from the server. It will dispatch appropriately based
 // on the op type.
-func (nc *Conn) readLoop(wg *sync.WaitGroup) {
+func (nc *Conn) readLoop() {
 	// Release the wait group on exit
-	defer wg.Done()
+	defer nc.wg.Done()
 
 	// Create a parseState if needed.
 	nc.mu.Lock()
@@ -1636,9 +1571,9 @@ func (nc *Conn) processPermissionsViolation(err string) {
 
 // flusher is a separate Go routine that will process flush requests for the write
 // bufio. This allows coalescing of writes to the underlying socket.
-func (nc *Conn) flusher(wg *sync.WaitGroup) {
+func (nc *Conn) flusher() {
 	// Release the wait group
-	defer wg.Done()
+	defer nc.wg.Done()
 
 	// snapshot the bw and conn since they can change from underneath of us.
 	nc.mu.Lock()
@@ -1833,7 +1768,8 @@ func (nc *Conn) publish(subj, reply string, data []byte) error {
 	nc.mu.Lock()
 
 	// Proactively reject payloads over the threshold set by server.
-	msgSize := int64(len(data))
+	var msgSize int64
+	msgSize = int64(len(data))
 	if msgSize > nc.info.MaxPayload {
 		nc.mu.Unlock()
 		return ErrMaxPayload

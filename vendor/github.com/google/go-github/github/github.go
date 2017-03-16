@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:generate go run gen-accessors.go
-
 package github
 
 import (
@@ -27,7 +25,7 @@ import (
 )
 
 const (
-	libraryVersion = "4"
+	libraryVersion = "3"
 	defaultBaseURL = "https://api.github.com/"
 	uploadBaseURL  = "https://uploads.github.com/"
 	userAgent      = "go-github/" + libraryVersion
@@ -390,7 +388,7 @@ func parseRate(r *http.Response) Rate {
 // The provided ctx must be non-nil. If it is canceled or times out,
 // ctx.Err() will be returned.
 func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
-	ctx, req = withContext(ctx, req)
+	req = req.WithContext(ctx)
 
 	rateLimitCategory := category(req.URL.Path)
 

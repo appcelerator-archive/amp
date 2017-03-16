@@ -17,9 +17,6 @@ package etcdmain
 import (
 	"fmt"
 	"os"
-
-	"github.com/coreos/go-systemd/daemon"
-	systemdutil "github.com/coreos/go-systemd/util"
 )
 
 func Main() {
@@ -37,17 +34,4 @@ func Main() {
 	}
 
 	startEtcdOrProxyV2()
-}
-
-func notifySystemd() {
-	if !systemdutil.IsRunningSystemd() {
-		return
-	}
-	sent, err := daemon.SdNotify(false, "READY=1")
-	if err != nil {
-		plog.Errorf("failed to notify systemd for readiness: %v", err)
-	}
-	if !sent {
-		plog.Errorf("forgot to set Type=notify in systemd service file?")
-	}
 }
