@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/oauth"
@@ -20,6 +21,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
@@ -49,7 +51,7 @@ var clientInitializers = []clientInitializer{
 // Service initializers register the services with the grpc server
 var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
-	//registerStorageServer,
+	registerStorageServer,
 	//registerLogsServer,
 	//registerStatsServer,
 	//registerServiceServer,
@@ -57,6 +59,7 @@ var serviceInitializers = []serviceInitializer{
 	//registerTopicServer,
 	//registerFunctionServer,
 	//registerGithubServer,
+	registerAccountServer,
 }
 
 // Start starts the amplifier server
@@ -82,8 +85,8 @@ func initClients(config *amp.Config) {
 	// attempting to continue in a degraded state if there are problems at start up
 
 	var wg sync.WaitGroup
+	wg.Add(len(clientInitializers))
 	for _, f := range clientInitializers {
-		wg.Add(1)
 		go func(f clientInitializer) {
 			defer wg.Done()
 			if err := f(config); err != nil {
@@ -225,5 +228,11 @@ func registerGithubServer(c *amp.Config, s *grpc.Server) {
 		Store:        runtime.Store,
 		ClientID:     c.ClientID,
 		ClientSecret: c.ClientSecret,
+	})
+}
+
+func registerAccountServer(c *amp.Config, s *grpc.Server) {
+	account.RegisterAccountServer(s, &account.Server{
+		Accounts: accounts.NewStore(runtime.Store),
 	})
 }
