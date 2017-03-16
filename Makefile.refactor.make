@@ -101,21 +101,28 @@ AMP := amp
 AMPBINARY=$(AMP).alpine
 AMPTAG := local
 AMPIMG := appcelerator/$(AMP):$(AMPTAG)
+AMPBOOTDIR := bootstrap
+AMPBOOTEXE := bootstrap
+AMPBOOTIMG := appcelerator/$(AMP)-bootstrap:$(AMPTAG)
 AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
 AMPDIRS := $(CMDDIR)/$(AMP) tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 
-$(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) $(CMDDIR)/$(AMP)/local-bootstrap
+$(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) $(AMPBOOTDIR)/$(AMPBOOTEXE)
 	@go build -ldflags $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
 
-build-cli: $(AMPTARGET)
-	@$(DOCKER_CMD) build -t $(AMPIMG) $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
+build-bootstrap: $(AMPBOOTDIR)/Dockerfile $(AMPBOOTDIR)/$(AMPBOOTEXE)
+	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+
+build-cli: $(AMPTARGET) build-bootstrap
+	@$(DOCKER_CMD) build -t $(AMPIMG)  $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
 
 rebuild-cli: clean-cli build-cli
 
 .PHONY: clean-cli
 clean-cli:
 	@rm -f $(AMPTARGET)
+	@$(DOCKER_CMD) image rm $(AMPIMG) $(AMPBOOTIMG) || true
 
 xbuild-cli:
 	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
