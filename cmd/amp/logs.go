@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 var logsCmd = &cobra.Command{
-	Use:   "logs [OPTION...] [SERVICE-NAME or SERVICE-ID]",
-	Short: "Fetch log entries matching provided criteria",
-	Long:  `The log command fetches log entries matching provided criteria. If provided, SERVICE can be a partial or full service id or service name.`,
+	Use:     "logs",
+	Short:   "Fetch log entries matching provided criteria",
+	Example: "-n 150",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {
@@ -39,10 +39,10 @@ func init() {
 }
 
 // Logs fetches the logs
-func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func Logs(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if amp.Verbose() {
 		fmt.Println("Log flags:")
@@ -65,25 +65,25 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	request.Message = cmd.Flag("message").Value.String()
 	request.Stack = cmd.Flag("stack").Value.String()
 	if request.Size, err = strconv.ParseInt(cmd.Flag("number").Value.String(), 10, 64); err != nil {
-		log.Fatalf("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
+		mgr.Fatal("Unable to convert number parameter: %v\n", cmd.Flag("n").Value.String())
 	}
 	meta := false
 	if meta, err = strconv.ParseBool(cmd.Flag("meta").Value.String()); err != nil {
-		log.Fatalf("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
+		mgr.Fatal("Unable to convert meta parameter: %v\n", cmd.Flag("meta").Value.String())
 	}
 	follow := false
 	if follow, err = strconv.ParseBool(cmd.Flag("follow").Value.String()); err != nil {
-		log.Fatalf("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
+		mgr.Fatal("Unable to convert follow parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 	if request.Infra, err = strconv.ParseBool(cmd.Flag("infra").Value.String()); err != nil {
-		log.Fatalf("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
+		mgr.Fatal("Unable to convert infra parameter: %v\n", cmd.Flag("f").Value.String())
 	}
 
 	// Get logs from amplifier
 	c := logs.NewLogsClient(amp.Conn)
 	r, err := c.Get(ctx, &request)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
 		displayLogEntry(entry, meta)
@@ -95,7 +95,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	// If follow is requested, get subsequent logs and stream it
 	stream, err := c.GetStream(ctx, &request)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	for {
 		entry, err := stream.Recv()
@@ -103,7 +103,7 @@ func Logs(amp *client.AMP, cmd *cobra.Command, args []string) error {
 			break
 		}
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		displayLogEntry(entry, meta)
 	}

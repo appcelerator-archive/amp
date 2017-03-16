@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/appcelerator/amp/api/client"
+	// TODO: client should *not* have been removed
+	//"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +25,7 @@ func init() {
 	RootCmd.AddCommand(startCmd)
 }
 
-func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func start(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	return startCluster()
 }
 

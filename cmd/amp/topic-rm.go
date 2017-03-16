@@ -1,22 +1,23 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/topic"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var (
 	removeTopicCmd = &cobra.Command{
-		Use:   "rm TOPIC-ID",
-		Short: "Remove topic",
-		Long:  `The remove command removes the specified topic id.`,
+		Use:     "rm",
+		Short:   "Remove topic",
+		Example: "7gstrgfgv",
+		Aliases: []string{"del"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeTopic(AMP, cmd, args)
+			return removeTopic(AMP, args)
 		},
 	}
 )
@@ -25,13 +26,13 @@ func init() {
 	TopicCmd.AddCommand(removeTopicCmd)
 }
 
-func removeTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func removeTopic(amp *cli.AMP, args []string) error {
 	if len(args) == 0 {
-		return errors.New("must specify topic id")
+		mgr.Fatal("must specify topic id")
 	}
 	id := args[0]
 	if id == "" {
-		return errors.New("must specify topic id")
+		mgr.Fatal("must specify topic id")
 	}
 
 	request := &topic.DeleteRequest{Id: id}
@@ -39,7 +40,7 @@ func removeTopic(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	client := topic.NewTopicClient(amp.Conn)
 	reply, err := client.Delete(context.Background(), request)
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	fmt.Println(reply.Topic.Id)
 	return nil

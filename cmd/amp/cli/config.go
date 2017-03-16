@@ -6,18 +6,53 @@ import (
 	"os"
 	"path"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
+// Configuration is for all configurable client settings
+type Configuration struct {
+	Verbose         bool
+	GitHub          string
+	Target          string
+	AmpAddress      string
+	ServerPort      string
+	AdminServerPort string
+	CmdTheme        string
+}
+
+const (
+	//DefaultAmpAddress amplifier address
+	DefaultAmpAddress = "local.appcelerator.io"
+
+	//DefaultServerPort amplifier address
+	DefaultServerPort = "8080"
+
+	//DefaultAdminServerPort adm-server address
+	DefaultAdminServerPort = "8081"
+
+	//DefaultCmdTheme terminal theme
+	//DefaultCmdTheme = "dark"
+)
+
 // InitConfig reads in a config file and ENV variables if set.
 // Configuration variable lookup occurs in a specific order.
-func InitConfig(configFile string, config *client.Configuration, verbose bool, serverAddr string) {
+func InitConfig(configFile string, config *Configuration, verbose bool, ampAddr string) {
 	config.Verbose = verbose
-	config.ServerAddress = serverAddr
-
+	config.AmpAddress = ampAddr
+	if config.AmpAddress == "" {
+		config.AmpAddress = DefaultAmpAddress
+	}
+	if config.ServerPort == "" {
+		config.ServerPort = DefaultServerPort
+	}
+	if config.AdminServerPort == "" {
+		config.AdminServerPort = DefaultAdminServerPort
+	}
+	// if config.CmdTheme == "" {
+	// 	config.CmdTheme = DefaultCmdTheme
+	// }
 	// Add matching environment variables - will take precedence over config files.
 	viper.AutomaticEnv()
 

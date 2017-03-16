@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -20,9 +20,9 @@ const (
 )
 
 var statsCmd = &cobra.Command{
-	Use:   "stats [OPTION...] [SERVICE-NAME... or SERVICE-ID...]",
-	Short: "Display resource usage statistics",
-	Long:  `Stats command manages all statistics-related operations on containers, services, nodes about cpu, memory, io, net.`,
+	Use:     "stats",
+	Short:   "Display resource usage statistics",
+	Example: "mem io",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := AMP.Connect()
 		if err != nil {
@@ -65,10 +65,10 @@ func init() {
 }
 
 // Stats displays resource usage statistcs
-func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func Stats(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	ctx, err := amp.GetAuthorizedContext()
 	if err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	var query = stats.StatsRequest{}
@@ -135,7 +135,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	if err = validateQuery(&query); err != nil {
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 
 	// Execute query regarding discriminator
@@ -143,7 +143,7 @@ func Stats(amp *client.AMP, cmd *cobra.Command, args []string) error {
 
 	if !query.StatsFollow {
 		_, err = executeStat(ctx, c, &query, true, 0)
-		return err
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	return startFollow(ctx, c, &query)
 }
@@ -154,7 +154,7 @@ func backQuoteDash(val string) string {
 
 func validateQuery(query *stats.StatsRequest) error {
 	if query.Period != "" && (query.Since != "" || query.Until != "") {
-		log.Fatal("--period can't be used with --since or --until")
+		mgr.Fatal("--period can't be used with --since or --until")
 	}
 	return nil
 }
@@ -423,7 +423,7 @@ func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 		ctime, err := executeStat(ctx, c, query, true, 0)
 		currentTime = ctime
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		query.Since = ""
 		query.Until = ""
@@ -441,7 +441,7 @@ func startFollow(ctx context.Context, c stats.StatsClient, query *stats.StatsReq
 		ctime, err := executeStat(ctx, c, query, !isHisto, currentTime)
 		currentTime = ctime
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		time.Sleep(3 * time.Second)
 	}

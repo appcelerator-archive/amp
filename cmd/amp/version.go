@@ -7,10 +7,11 @@ import (
 
 	"github.com/docker/docker/utils/templates"
 
-	"github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/api/rpc/version"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 var versionTemplate = `AMP:
@@ -28,11 +29,11 @@ Amplifier:
 
 // VersionCmd represents the amp version
 var VersionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Display the version info for AMP and Amplifier",
-	Long:  `The version command displays the version info for AMP and Amplifier, including the current version and build.`,
+	Use:     "version",
+	Short:   "Display the version info for AMP and Amplifier",
+	Example: " ",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return list(AMP, cmd, args)
+		return list(AMP)
 	},
 }
 
@@ -41,12 +42,12 @@ func init() {
 }
 
 // Lists version info of AMP and Amplifier
-func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func list(amp *cli.AMP) error {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)
 	if err != nil {
-		return fmt.Errorf("template parsing error: %v", err)
+		mgr.Fatal("template parsing error: %v", err)
 	}
 	var doc bytes.Buffer
 
@@ -54,7 +55,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		AMP: &version.Details{
 			Version:    Version,
 			Build:      Build,
-			ConfigAddr: amp.Configuration.ServerAddress,
+			ConfigAddr: amp.Configuration.AmpAddress,
 			GoVersion:  runtime.Version(),
 			Os:         runtime.GOOS,
 			Arch:       runtime.GOARCH,
@@ -66,7 +67,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 		client := version.NewVersionClient(amp.Conn)
 		reply, err := client.List(context.Background(), request)
 		if err != nil {
-			return err
+			mgr.Fatal(grpc.ErrorDesc(err))
 		}
 		vd.Amplifier = &version.Details{
 			Version:   reply.Reply.Version,
@@ -78,7 +79,7 @@ func list(amp *client.AMP, cmd *cobra.Command, args []string) error {
 	}
 
 	if err := tmpl.Execute(&doc, vd); err != nil {
-		return fmt.Errorf("executing templating error: %v", err)
+		mgr.Fatal("executing templating error: %v", err)
 	}
 
 	fmt.Println(doc.String())
