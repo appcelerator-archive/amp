@@ -36,7 +36,6 @@ func init() {
 		"-u", ug, //fmt.Sprintf("%s:%s", strconv.Itoa(os.Getuid()), strconv.Itoa(os.Getgid())),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-v", fmt.Sprintf("%s/.ssh:/root/.ssh:ro", homedir),
-		"-v", fmt.Sprintf("%s/.config:/root/.config:ro", homedir),
 		"-v", fmt.Sprintf("%s:/go/src/%s", wd, repo),
 		"-w", fmt.Sprintf("/go/src/%s", repo),
 		"-e", fmt.Sprintf("VERSION=%s", version),

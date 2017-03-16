@@ -47,7 +47,6 @@ docker run -it --rm --name amptools \
     -u "$UG" \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     -v "$HOME/.ssh:/root/.ssh:ro" \
-    -v "$HOME/.config:/root/.config:ro" \
     -v "$PWD:/go/src/$REPO" \
     -w "/go/src/$REPO" \
     -e "VERSION=$VERSION" \
@@ -63,3 +62,4 @@ cleanup() {
 }
 
 trap cleanup EXIT
+

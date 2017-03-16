@@ -41,10 +41,4 @@ const (
 
 	// InfrastructureRole is the label used for infrastructure services
 	InfrastructureRole = "infrastructure"
-
-	//DefaultEmailSender email sender
-	DefaultEmailSender = "amp.appcelerator@axway.com"
-
-	//DefaultSmsSender sms sender
-	DefaultSmsSender = ""
 )
