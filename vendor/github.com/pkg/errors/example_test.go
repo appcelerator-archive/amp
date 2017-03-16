@@ -35,59 +35,6 @@ func ExampleNew_printf() {
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
 }
 
-func ExampleWithMessage() {
-	cause := errors.New("whoops")
-	err := errors.WithMessage(cause, "oh noes")
-	fmt.Println(err)
-
-	// Output: oh noes: whoops
-}
-
-func ExampleWithStack() {
-	cause := errors.New("whoops")
-	err := errors.WithStack(cause)
-	fmt.Println(err)
-
-	// Output: whoops
-}
-
-func ExampleWithStack_printf() {
-	cause := errors.New("whoops")
-	err := errors.WithStack(cause)
-	fmt.Printf("%+v", err)
-
-	// Example Output:
-	// whoops
-	// github.com/pkg/errors_test.ExampleWithStack_printf
-	//         /home/fabstu/go/src/github.com/pkg/errors/example_test.go:55
-	// testing.runExample
-	//         /usr/lib/go/src/testing/example.go:114
-	// testing.RunExamples
-	//         /usr/lib/go/src/testing/example.go:38
-	// testing.(*M).Run
-	//         /usr/lib/go/src/testing/testing.go:744
-	// main.main
-	//         github.com/pkg/errors/_test/_testmain.go:106
-	// runtime.main
-	//         /usr/lib/go/src/runtime/proc.go:183
-	// runtime.goexit
-	//         /usr/lib/go/src/runtime/asm_amd64.s:2086
-	// github.com/pkg/errors_test.ExampleWithStack_printf
-	//         /home/fabstu/go/src/github.com/pkg/errors/example_test.go:56
-	// testing.runExample
-	//         /usr/lib/go/src/testing/example.go:114
-	// testing.RunExamples
-	//         /usr/lib/go/src/testing/example.go:38
-	// testing.(*M).Run
-	//         /usr/lib/go/src/testing/testing.go:744
-	// main.main
-	//         github.com/pkg/errors/_test/_testmain.go:106
-	// runtime.main
-	//         /usr/lib/go/src/runtime/proc.go:183
-	// runtime.goexit
-	//         /usr/lib/go/src/runtime/asm_amd64.s:2086
-}
-
 func ExampleWrap() {
 	cause := errors.New("whoops")
 	err := errors.Wrap(cause, "oh noes")
@@ -172,14 +119,14 @@ func ExampleErrorf_extended() {
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
 }
 
-func Example_stackTrace() {
-	type stackTracer interface {
+func Example_stacktrace() {
+	type StackTrace interface {
 		StackTrace() errors.StackTrace
 	}
 
-	err, ok := errors.Cause(fn()).(stackTracer)
+	err, ok := errors.Cause(fn()).(StackTrace)
 	if !ok {
-		panic("oops, err does not implement stackTracer")
+		panic("oops, err does not implement StackTrace")
 	}
 
 	st := err.StackTrace()
@@ -188,7 +135,7 @@ func Example_stackTrace() {
 	// Example output:
 	// github.com/pkg/errors_test.fn
 	//	/home/dfc/src/github.com/pkg/errors/example_test.go:47
-	// github.com/pkg/errors_test.Example_stackTrace
+	// github.com/pkg/errors_test.Example_stacktrace
 	//	/home/dfc/src/github.com/pkg/errors/example_test.go:127
 }
 

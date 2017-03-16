@@ -115,6 +115,7 @@ ctx := context.Background()
 client, err := elastic.NewClient()
 if err != nil {
     // Handle error
+    panic(err)
 }
 
 // Create an index
@@ -131,7 +132,7 @@ _, err = client.Index().
     Type("tweet").
     Id("1").
     BodyJson(tweet).
-    Refresh(true).
+    Refresh("true").
     Do(ctx)
 if err != nil {
     // Handle error
