@@ -1,38 +1,38 @@
 #!/bin/bash
 
-NETWORK=swarmnet
+NETWORK=hostnet # This is not configurable yet
 TAG=local
 SERVER_PORT=50101
 
-echo "Starting the amplifier service... "
-docker service create --name amplifier --network $NETWORK appcelerator/amplifier:$TAG
+echo "Starting the swarm ... "
+docker network create $NETWORK 2>/dev/null || true
+amp start
+
+echo "Building and publishing amplifier image..."
+docker push localhost:5000/appcelerator/amplifier:local
+
+echo "Starting the amplifier stack..."
+docker run -it --rm --network=$NETWORK -v $PWD/stacks:/stacks docker --host=m1 stack deploy -c /stacks/amplifier.stack.yml amplifier
 if [ $? -ne 0 ]; then
-  echo "Failed to start amplifier service"
+  echo "Failed to start amplifier stack"
   exit 1
 fi
-echo "Waiting for the amplifier service to be up... "
-maxretries=10
-retries=0
-while [ $retries -le $maxretries ]; do
-  docker service ps  amplifier | awk '{print $6}' | grep -qw Running && break
-  echo -n "."
-  sleep 1
-  ((retries+1))
-done
-if [ $retries -eq $maxretries ]; then
-  echo "amplifier failed to start in a sensible time"
-  docker service rm amplifier
-  exit 1
-fi
-echo
-echo "Connecting to amplifier with the CLI... "
-# test the CLI and the connection to the server
-# if connection fails, the container will return a non zero code
-docker run --rm --name cli --network $NETWORK appcelerator/amp:$TAG --server amplifier:$SERVER_PORT version
-if [ $? -ne 0 ]; then
-  echo "Failed to connect"
-  docker service rm amplifier
-  exit 1
-fi
-docker service rm amplifier
+
+#echo "Waiting for amplifier to be reachable ..."
+#maxretries=30
+#retries=0
+#while [ $retries -le $maxretries ]; do
+#  docker run --rm --name cli --network $NETWORK appcelerator/amp:$TAG --server m1:50101 version &> /dev/null && break
+#  echo -n "."
+#  sleep 1
+#  ((retries++))
+#done
+#echo
+#
+#if [ $retries -gt $maxretries ]; then
+#  echo " amplifier failed to start in a sensible time"
+#  docker run -it --rm --network=hostnet docker --host=m1 service ls
+#  exit 1
+#fi
+
 echo "Passed"

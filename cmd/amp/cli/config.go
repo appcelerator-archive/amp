@@ -42,11 +42,11 @@ func InitConfig(configFile string, config *Configuration, verbose bool, ampAddr 
 	config.Verbose = verbose
 	config.AmpAddress = ampAddr
 	if config.AmpAddress == "" {
-		config.AmpAddress = DefaultAmpAddress
+		config.AmpAddress = DefaultAmpAddress + ":" + DefaultServerPort
 	}
-	if config.ServerPort == "" {
-		config.ServerPort = DefaultServerPort
-	}
+	//if config.ServerPort == "" {
+	//	config.ServerPort = DefaultServerPort
+	//}
 	if config.AdminServerPort == "" {
 		config.AdminServerPort = DefaultAdminServerPort
 	}
