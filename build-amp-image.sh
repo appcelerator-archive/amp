@@ -78,6 +78,11 @@ if [ $? -ne 0 ]; then
   echo "failed"
   exit 1
 fi
+if [ -f ~/.config/amp/amplifier.yaml ]; then
+  cp ~/.config/amp/amplifier.yaml .
+else 
+  touch ./amplifier.yaml
+fi
 echo "OK"
 
 echo "building shrunk image... "
@@ -93,6 +98,7 @@ echo "OK"
 mv .dockerignore.bak .dockerignore
 
 echo -n "cleanup... "
+rm -f ./amplifier.yaml
 rm -f amp amplifier amp-agent amp-log-worker amplifier-gateway adm-server adm-agent amp-function-listener amp-function-worker
 $DOCKER kill amp-builder >/dev/null 2>&1
 $DOCKER rm amp-builder >/dev/null 2>&1

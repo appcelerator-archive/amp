@@ -27,7 +27,8 @@ var (
 
 // config vars - used for generating a config from command line flags
 var (
-	config           server.Config
+	config           *amp.Config
+	serverAddress    string
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
@@ -36,13 +37,13 @@ var (
 	natsURL          string
 	influxURL        string
 	dockerURL        string
-	dockerVersion    string
 )
 
-func parseFlags() {
+func parseFlags(config *amp.Config) {
 	var displayVersion bool
 
 	// set up flags
+	flag.StringVarP(&serverAddress, "server-address", "a", amp.AmplifierDefaultAddress, "Amplifier server address")
 	flag.StringVarP(&port, "port", "p", defaultPort, "Server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "Etcd comma-separated endpoints")
 	flag.StringVarP(&elasticsearchURL, "elasticsearch-url", "s", amp.ElasticsearchDefaultURL, "Elasticsearch URL (default '"+amp.ElasticsearchDefaultURL+"')")
@@ -70,6 +71,7 @@ func parseFlags() {
 
 	// update config
 	config.Version = Version
+	config.ServerAddress = serverAddress
 	config.Port = port
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret
@@ -85,6 +87,8 @@ func parseFlags() {
 
 func main() {
 	fmt.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
-	parseFlags()
+	config = amp.GetConfig()
+	amp.InitConfig(config)
+	parseFlags(config)
 	server.Start(config)
 }

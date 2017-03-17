@@ -5,10 +5,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -23,10 +28,12 @@ var (
 	Build string
 
 	// AMP manages the connection and state for the client
-	AMP *client.AMP
+	AMP *cli.AMP
+
+	mgr *cli.CmdManager
 
 	// Config is used by command implementations to access the computed client configuration.
-	Config                = &client.Configuration{}
+	Config                = &cli.Configuration{}
 	configFile            string
 	verbose               bool
 	serverAddr            string
@@ -35,10 +42,9 @@ var (
 
 	// RootCmd is the base command for the CLI.
 	RootCmd = &cobra.Command{
-		Use:   `amp [OPTION...] COMMAND [ARG...]`,
-		Short: "Appcelerator Microservice Platform.",
-		Long: `Appcelerator Microservice Platform(AMP) is an open-source Container-as-a-Service (CaaS) platform for managing and
-monitoring containerized applications and microservices as part of a unified serverless computing environment.`,
+		Use:     "amp",
+		Short:   "Appcelerator Microservice Platform",
+		Example: "amp org \namp kv get foo",
 		Run: func(cmd *cobra.Command, args []string) {
 			if displayConfigFilePath {
 				configFilePath := viper.ConfigFileUsed()
@@ -56,50 +62,11 @@ monitoring containerized applications and microservices as part of a unified ser
 			fmt.Println(cmd.UsageString())
 		},
 	}
-)
 
-// All main does is process commands and flags and invoke the app
-func main() {
-	cobra.OnInitialize(func() {
-		cli.InitConfig(configFile, Config, verbose, serverAddr)
-		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
-			Config.ServerAddress = addr
-		}
-		if Config.ServerAddress == "" {
-			Config.ServerAddress = client.DefaultServerAddress
-		}
-		if Config.AdminServerAddress == "" {
-			Config.AdminServerAddress = client.DefaultAdminServerAddress
-		}
-		AMP = client.NewAMP(Config, cli.NewLogger(Config.Verbose))
-		if !Config.Verbose {
-			RootCmd.SilenceErrors = true
-			RootCmd.SilenceUsage = true
-		}
-		cli.AtExit(func() {
-			if AMP != nil {
-				AMP.Disconnect()
-			}
-		})
-	})
-
-	// infoCmd represents the amp information
-	infoCmd := &cobra.Command{
-		Use:   "info",
-		Short: "Display AMP version",
-		Long:  `Display the current amp version and server information.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
-			fmt.Printf("Server: %s\n", Config.ServerAddress)
-		},
-	}
-	RootCmd.AddCommand(infoCmd)
-
-	// helpCmd displays help about amp Commands
-	var helpCmd = &cobra.Command{
-		Use:   "help [command]",
-		Short: "Help about the command",
-		Long:  `Display the help and usage information about AMP commands.`,
+	helpCmd = &cobra.Command{
+		Use:     "help",
+		Short:   "Help about the command",
+		Example: " ",
 		RunE: func(c *cobra.Command, args []string) error {
 			cmd, args, e := RootCmd.Find(os.Args[2:])
 			if cmd == nil || e != nil || len(args) > 0 {
@@ -111,7 +78,71 @@ func main() {
 			return nil
 		},
 	}
+
+	infoCmd = &cobra.Command{
+		Use:     "info",
+		Short:   "Display AMP version",
+		Example: " ",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("amp (cli version: %s, build: %s)\n", Version, Build)
+			fmt.Printf("Server: %s\n", Config.AmpAddress)
+		},
+	}
+
+	loginCmd = &cobra.Command{
+		Use:     "login",
+		Short:   "Login to account",
+		Example: "--name=jdoe --password=p@s5wrd",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return login(AMP, cmd)
+		},
+	}
+
+	switchCmd = &cobra.Command{
+		Use:     "switch",
+		Short:   "Switch account",
+		Example: "--name=swatkats",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return AMP.Connect()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return switchAccount(AMP, cmd)
+		},
+	}
+
+	whoAmICmd = &cobra.Command{
+		Use:     "whoami",
+		Short:   "Display currently logged-in user",
+		Example: " ",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return whoAmI()
+		},
+	}
+
+	logoutCmd = &cobra.Command{
+		Use:     "logout",
+		Short:   "Logout current user",
+		Example: " ",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return logout()
+		},
+	}
+
+	username string
+	password string
+)
+
+func init() {
+	RootCmd.AddCommand(infoCmd)
+
 	RootCmd.AddCommand(helpCmd)
+	RootCmd.AddCommand(loginCmd)
+	RootCmd.AddCommand(switchCmd)
+	RootCmd.AddCommand(whoAmICmd)
+	RootCmd.AddCommand(logoutCmd)
 
 	RootCmd.SetUsageTemplate(usageTemplate)
 	RootCmd.SetHelpTemplate(helpTemplate)
@@ -123,29 +154,143 @@ func main() {
 	RootCmd.PersistentFlags().BoolVarP(&listVersion, "version", "V", false, "Version number")
 	RootCmd.PersistentFlags().BoolP("help", "h", false, "Display help")
 
+	loginCmd.Flags().StringVar(&username, "name", "", "Account Name")
+	loginCmd.Flags().StringVar(&password, "password", "", "Password")
+
+	switchCmd.Flags().StringVar(&username, "name", username, "Account Name")
+}
+
+// All main does is process commands and flags and invoke the app
+func main() {
+	cobra.OnInitialize(func() {
+		cli.InitConfig(configFile, Config, verbose, serverAddr)
+		if addr := RootCmd.Flag("server").Value.String(); addr != "" {
+			Config.AmpAddress = addr
+		}
+		AMP = cli.NewAMP(Config, cli.NewLogger(Config.Verbose))
+		if !Config.Verbose {
+			RootCmd.SilenceErrors = true
+			RootCmd.SilenceUsage = true
+		}
+
+		//initialize command manager
+		mgr = cli.NewCmdManager(false)
+
+		cli.AtExit(func() {
+			if AMP != nil {
+				AMP.Disconnect()
+			}
+		})
+	})
+
 	cmd, _, err := RootCmd.Find(os.Args[1:])
 	if err != nil {
-		fmt.Println(err)
-		cli.Exit(1)
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		cli.Exit(1)
+		mgr.Fatal(grpc.ErrorDesc(err))
 	}
 	cli.Exit(0)
 }
 
-var usageTemplate = `Usage:	{{if not .HasSubCommands}}{{.UseLine}}{{end}}{{if .HasSubCommands}}{{ .CommandPath}} COMMAND{{end}}
+// login validates the input command line arguments and allows login to an existing account
+// by invoking the corresponding rpc/storage method
+func login(amp *cli.AMP, cmd *cobra.Command) error {
+	if cmd.Flag("name").Changed {
+		username = cmd.Flag("name").Value.String()
+	} else {
+		fmt.Print("username: ")
+		username = getName()
+	}
+	if cmd.Flag("password").Changed {
+		password = cmd.Flag("password").Value.String()
+	} else {
+		password = getPassword()
+	}
 
-{{ .Short | trim }}
+	request := &account.LogInRequest{
+		Name:     username,
+		Password: password,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	header := metadata.MD{}
+	_, err := accClient.Login(context.Background(), request, grpc.Header(&header))
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveToken(header); err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
+	}
+	mgr.Success("Welcome back, %s!", username)
+	return nil
+}
 
-{{ .Long | trim }}{{if gt .Aliases 0}}
+// switchAccount validates the input command line arguments and switches from personal account to an organization account
+// by invoking the corresponding rpc/storage method
+func switchAccount(amp *cli.AMP, cmd *cobra.Command) error {
+	if cmd.Flag("name").Changed {
+		username = cmd.Flag("name").Value.String()
+	} else {
+		fmt.Print("account: ")
+		username = getName()
+	}
+
+	request := &account.SwitchRequest{
+		Account: username,
+	}
+	accClient := account.NewAccountClient(amp.Conn)
+	header := metadata.MD{}
+	_, err := accClient.Switch(context.Background(), request, grpc.Header(&header))
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveToken(header); err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
+	}
+	mgr.Success("Your are now logged in as: %s", username)
+	return nil
+}
+
+// whoAmI validates the input command line arguments and displays the current account
+// by invoking the corresponding rpc/storage method
+func whoAmI() error {
+	token, err := cli.ReadToken()
+	if err != nil {
+		mgr.Fatal("you are not logged in")
+	}
+	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte{}, nil
+	})
+	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok {
+		if claims.ActiveOrganization != "" {
+			mgr.Success("Logged in as organization %s (on behalf of user %s).", claims.ActiveOrganization, claims.AccountName)
+		} else {
+			mgr.Success("Logged in as user %s.", claims.AccountName)
+		}
+	}
+	return nil
+}
+
+// logout validates the input command line arguments and logs out of the current account
+// by invoking the corresponding rpc/storage method
+func logout() error {
+	err := cli.RemoveToken()
+	if err != nil {
+		mgr.Fatal(grpc.ErrorDesc(err))
+	}
+	mgr.Success("You have been successfully logged out!")
+	return nil
+}
+
+var usageTemplate = `Usage: {{if not .HasSubCommands}}{{.UseLine}}{{end}}{{if .HasSubCommands}}{{ .CommandPath}} COMMAND{{end}}
+
+{{ .Short | trim }}{{if gt .Aliases 0}}
 
 Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
 Examples:
-{{ .Example }}{{end}}{{if .HasFlags}}
+{{if not .HasSubCommands}}{{.UseLine}}{{end}} {{ .Example }}{{end}}{{if .HasFlags}}
 
 Options:
 {{.Flags.FlagUsages | trimRightSpace}}{{end}}{{ if .HasAvailableSubCommands}}

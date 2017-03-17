@@ -1,0 +1,31 @@
+account-forgot-login: "Your login name has been sent to the address: cli@amp.io"
+account-login: "Welcome back, cliusername"
+account-pwd-change: "Your password change has been successful."
+account-pwd-reset: "Hi cliusername! Please check your email to complete the password reset process."
+account-signup: "Hi cliusername! Please check your email to complete the signup process."
+account-verify: "Your account has now been activated."
+logs-all: ([a-zA-Z0-9\.\-:\"\s\_\t\n$&?/\[\]%><,;()+='*{}\\]*)
+logs-metadata: (timestamp:"[A-Z0-9\.\-:\"]+\s+time_id:"[A-Z0-9\.\-:\"]+\s+service_id:"[a-zA-Z0-9$\"]+\s+service_name:"[a-zA-Z0-9\-$\"]+\s+message:"[a-z0-9\./\-:\s\_\"=\t\n\$\\&%?\[\]\%\>\<\,\;\+$\"]+\s+container_id:"[a-z0-9$\"]+\s+node_id:"[a-z0-9$\"]+\s+task_id:"[a-z0-9$\"]+\s+task_name:"[a-zA-Z0-9\.\-$\"]+)
+logs-numbered: ([a-zA-Z0-9\.\-:\"\s\_\t\n\$&%?/\[\]\%\>\<\,\;]*){10}
+docker-service-list-valid-service:   .*({{call .uniq `pinger`}}).*
+docker-service-list-invalid-service: .*[^{{call .uniq `pinger`}}].*
+platform-status-running: "status: running"
+service-id: ([a-z0-9]){25}
+service-curl: .*(pong).*
+service-remove: "{{call .uniq `pinger`}}"
+stack-list-running: NAME\s+ID\s+STATE\s*([a-z0-9A-Z\s]*){1,}({{call .uniq `stack`}})([a-z0-9A-Z\s]*){1,}
+stack-list-unavailable: no stack available
+stack-id: ([a-z0-9]){64}
+stats-container: Service name\s+Container name\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*-+\s*([a-zA-Z0-9\-\.%\s/]*){1,}
+stats-cpu: Service name\s+CPU %%\s*-+\s*([a-z\-0-9\.%\s]*){1,}
+stats-io: Service name\s+Disk IO\s+read/write\s*-+\s*([a-z0-9A-Z\-\./\s]*){1,}
+stats-net: Service name\s+Net Rx/Tx\s*-+\s*([a-z0-9\-\.A-Z\s/]*){1,}
+stats-node: Node id\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO read/write\s+Net Rx/Tx\s*-+\s*([0-9a-zA-Z\.\s/%]*){1,}
+stats-service: Service name\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*-+\s*([a-zA-Z0-9\.\s/%]*){1,}
+stats-task: Service name\s+Task name\s+Node id\s+CPU %%\s+Mem usage\s+Mem %%\s+Disk IO\s+read/write\s+Net Rx/Tx\s*-+\s*([a-zA-Z0-9\-\.\s%]*){1,}
+kv-unavailable: no storage object is available
+kv-put: ([a-zA-Z0-9]){1,}
+kv-get: ([a-zA-Z0-9]){1,}
+kv-ls: KEY\s+VALUE\s*([a-zA-Z0-9\s]*){1,}
+kv-del: ([a-zA-Z0-9]){1,}
+kv-rm: ([a-zA-Z0-9]){1,}

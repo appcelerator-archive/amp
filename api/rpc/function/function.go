@@ -1,80 +1,69 @@
 package function
 
 import (
-	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
-	"github.com/docker/docker/pkg/stringid"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"log"
-	"path"
-	"strings"
 )
 
 // Server is used to implement function.FunctionServer
 type Server struct {
-	Store         storage.Interface
+	Functions     functions.Interface
 	NatsStreaming ns.NatsStreaming
+}
+
+func convertError(err error) error {
+	switch err {
+	case functions.InvalidName:
+	case functions.InvalidImage:
+		return grpc.Errorf(codes.InvalidArgument, err.Error())
+	case functions.FunctionAlreadyExists:
+		return grpc.Errorf(codes.AlreadyExists, err.Error())
+	}
+	return grpc.Errorf(codes.Internal, err.Error())
 }
 
 // Create implements function.Server
 func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 	log.Println("rpc-function: Create", in.String())
-	// Validate the function
-	fn := in.Function
-	fn.Name = strings.TrimSpace(fn.Name)
-	fn.Image = strings.TrimSpace(fn.Image)
-	if fn.Name == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "function name is mandatory")
-	}
-	if fn.Image == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "docker image is mandatory")
-	}
-
-	// Check if the function already exists
-	reply, err := s.List(ctx, &ListRequest{})
+	function, err := s.Functions.CreateFunction(ctx, in.Name, in.Image)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "error listing functions: %v, err")
+		return nil, convertError(err)
 	}
-	for _, fn := range reply.Functions {
-		if strings.EqualFold(fn.Name, in.Function.Name) {
-			return nil, grpc.Errorf(codes.AlreadyExists, "function already exists: %s", in.Function.Name)
-		}
-	}
-
-	// Store the function
-	fn.Id = stringid.GenerateNonCryptoID()
-	if err := s.Store.Create(ctx, path.Join(amp.EtcdFunctionRootKey, fn.Id), fn, nil, 0); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "error creating function: %v", err)
-	}
-	log.Println("Created function:", fn.String())
-	return &CreateReply{Function: fn}, nil
+	log.Println("Successfully created function", function.String())
+	return &CreateReply{Function: function}, nil
 }
 
 // List implements function.Server
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
-	log.Println("rpc-function: List", in.String())
-	var functions []proto.Message
-	if err := s.Store.List(ctx, amp.EtcdFunctionRootKey, storage.Everything, &FunctionEntry{}, &functions); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "error listing functions: %v", err)
+	functions, err := s.Functions.ListFunctions(ctx)
+	if err != nil {
+		return nil, convertError(err)
 	}
-	reply := &ListReply{}
-	for _, function := range functions {
-		reply.Functions = append(reply.Functions, function.(*FunctionEntry))
-	}
-	log.Println("Listed functions")
-	return reply, nil
+	log.Println("Successfully list functions")
+	return &ListReply{Functions: functions}, nil
 }
 
 // Delete implements function.Server
-func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*DeleteReply, error) {
+func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*empty.Empty, error) {
 	log.Println("rpc-function: Delete", in.String())
-	if err := s.Store.Delete(ctx, path.Join(amp.EtcdFunctionRootKey, in.Id), false, nil); err != nil {
+
+	// Check if function exists
+	function, err := s.Functions.GetFunction(ctx, in.Id)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	if function == nil {
 		return nil, grpc.Errorf(codes.NotFound, "function not found: %s", in.Id)
 	}
-	log.Println("Deleted function id: ", in.Id)
-	return &DeleteReply{}, nil
+
+	if err := s.Functions.DeleteFunction(ctx, in.Id); err != nil {
+		return nil, convertError(err)
+	}
+	log.Println("Successfully deleted function", in.Id)
+	return &empty.Empty{}, nil
 }
