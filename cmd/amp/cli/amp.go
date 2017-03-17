@@ -35,15 +35,14 @@ type AMP struct {
 
 // Connect to amplifier
 func (a *AMP) Connect() error {
-	ampAddr := fmt.Sprintf("%s:%s", a.Configuration.AmpAddress, a.Configuration.ServerPort)
-	conn, err := grpc.Dial(ampAddr,
+	conn, err := grpc.Dial(a.Configuration.AmpAddress,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second),
 		grpc.WithPerRPCCredentials(GetLoginCredentials()),
 	)
 	if err != nil {
-		return fmt.Errorf("Error connecting to amplifier @ %s: %v", ampAddr, err)
+		return fmt.Errorf("Error connecting to amplifier @ %s: %v", a.Configuration.AmpAddress, err)
 	}
 	a.Conn = conn
 	return nil

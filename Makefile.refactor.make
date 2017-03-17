@@ -148,7 +148,9 @@ $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 	@go build -ldflags $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
 
 build-server: $(AMPLTARGET)
+	@cp -f /root/.config/amp/amplifier.yaml cmd/amplifier &> /dev/null || touch cmd/amplifier/amplifier.yaml
 	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
+	@rm -f cmd/amplifier/amplifier.yaml
 
 rebuild-server: clean-server build-server
 
