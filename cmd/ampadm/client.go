@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	ampClient "github.com/appcelerator/amp/api/client"
 	"github.com/appcelerator/amp/cmd/adm-server/servergrpc"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ type clusterClient struct {
 	debug         bool
 	nodeName      string
 	nodeHost      string
-	configuration *ampClient.Configuration
+	configuration *cli.Configuration
 	clusterLoader *ClusterLoader
 	recvChan      chan *servergrpc.ClientMes
 	printColor    [7]*color.Color
@@ -76,8 +76,8 @@ func (g *clusterClient) init() error {
 }
 
 func (g *clusterClient) initConfiguration(configFile string, serverAddr string) {
-	g.configuration = &ampClient.Configuration{}
-	InitConfig(g, configFile, g.configuration, g.debug, serverAddr)
+	g.configuration = &cli.Configuration{}
+	cli.InitConfig(configFile, g.configuration, g.debug, serverAddr)
 	g.setColors()
 }
 
@@ -102,7 +102,7 @@ func (g *clusterClient) initConnection() error {
 }
 
 func (g *clusterClient) connectServer() error {
-	conn, err := grpc.Dial(g.configuration.AdminServerAddress,
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", g.configuration.AmpAddress, g.configuration.AdminServerPort),
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second*20))
@@ -181,7 +181,7 @@ func (g *clusterClient) startServerReader() error {
 }
 
 func (g *clusterClient) isLocalhostServer() bool {
-	if strings.HasPrefix(g.configuration.AdminServerAddress, "127.0.0.1") || strings.HasPrefix(g.configuration.AdminServerAddress, "localhost") {
+	if strings.HasPrefix(g.configuration.AmpAddress, "127.0.0.1") || strings.HasPrefix(g.configuration.AmpAddress, "localhost") {
 		return true
 	}
 	return false

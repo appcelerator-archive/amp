@@ -17,6 +17,8 @@ install:
   - docker network create -d overlay --attachable swarmnet
   - make fmt check
   - hack/amptools make -f Makefile.refactor.make cleanall
+  - mkdir -p $HOME/.config/amp
+  - echo SendGridKey:$SENDGRIDKEY >$HOME/.config/amp/amplifier.yaml
   - hack/amptools make -f Makefile.refactor.make build
 
 script:

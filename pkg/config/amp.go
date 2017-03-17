@@ -36,9 +36,12 @@ const (
 	// NatsLogsTopic is the topic used for log events
 	NatsLogsTopic = "amp-logs"
 
-	// EtcdFunctionRootKey is the root key used for functions in the storage
-	EtcdFunctionRootKey = "functions"
-
 	// InfrastructureRole is the label used for infrastructure services
 	InfrastructureRole = "infrastructure"
+
+	// AmplifierDefaultAddress is the default amplifier endpoint
+	AmplifierDefaultAddress = "local.appcelerator.io"
+
+	//DefaultEmailSender email sender
+	DefaultEmailSender = "amp.appcelerator@axway.com"
 )

@@ -62,7 +62,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/functionDeleteReply"
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },
@@ -81,43 +81,48 @@
     }
   },
   "definitions": {
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/accountsAccountType"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountsAccountType": {
+      "type": "string",
+      "enum": [
+        "USER",
+        "ORGANIZATION"
+      ],
+      "default": "USER"
+    },
     "functionCreateReply": {
       "type": "object",
       "properties": {
         "function": {
-          "$ref": "#/definitions/functionFunctionEntry"
+          "$ref": "#/definitions/functionsFunction"
         }
       }
     },
     "functionCreateRequest": {
       "type": "object",
       "properties": {
-        "function": {
-          "$ref": "#/definitions/functionFunctionEntry"
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
         }
       }
-    },
-    "functionDeleteReply": {
-      "type": "object"
     },
     "functionDeleteRequest": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
-        }
-      }
-    },
-    "functionFunctionEntry": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "image": {
           "type": "string"
         }
       }
@@ -128,13 +133,39 @@
         "functions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/functionFunctionEntry"
+            "$ref": "#/definitions/functionsFunction"
           }
         }
       }
     },
     "functionListRequest": {
       "type": "object"
+    },
+    "functionsFunction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
     }
   }
 }

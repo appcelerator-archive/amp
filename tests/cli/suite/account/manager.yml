@@ -1,0 +1,28 @@
+name: manager
+test-timeout: 1m
+cmd-timeout: 30s
+commands:
+  - account-forgot-login:
+    cmd: amp user forgot-login
+    args:
+    options:
+    input:
+      - cli@amp.io
+    expectation: account-forgot-login
+
+  - account-pwd-Reset:
+    cmd: amp password reset
+    args:
+    options:
+    input:
+      - cliusername
+    expectation: account-pwd-reset
+
+  - acccount-pwd-Change:
+    cmd: amp password change
+    args:
+    options:
+    input:
+      - cliPassword
+      - cliDrowssap
+    expectation: account-pwd-change
