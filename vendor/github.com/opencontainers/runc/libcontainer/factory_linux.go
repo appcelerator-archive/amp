@@ -169,16 +169,6 @@ func (l *LinuxFactory) Create(id string, config *configs.Config) (Container, err
 	if err := os.Chown(containerRoot, uid, gid); err != nil {
 		return nil, newGenericError(err, SystemError)
 	}
-	fifoName := filepath.Join(containerRoot, execFifoFilename)
-	oldMask := syscall.Umask(0000)
-	if err := syscall.Mkfifo(fifoName, 0622); err != nil {
-		syscall.Umask(oldMask)
-		return nil, newGenericError(err, SystemError)
-	}
-	syscall.Umask(oldMask)
-	if err := os.Chown(fifoName, uid, gid); err != nil {
-		return nil, newGenericError(err, SystemError)
-	}
 	c := &linuxContainer{
 		id:            id,
 		root:          containerRoot,
@@ -232,8 +222,10 @@ func (l *LinuxFactory) Type() string {
 func (l *LinuxFactory) StartInitialization() (err error) {
 	var (
 		pipefd, rootfd int
+		consoleSocket  *os.File
 		envInitPipe    = os.Getenv("_LIBCONTAINER_INITPIPE")
 		envStateDir    = os.Getenv("_LIBCONTAINER_STATEDIR")
+		envConsole     = os.Getenv("_LIBCONTAINER_CONSOLE")
 	)
 
 	// Get the INITPIPE.
@@ -251,10 +243,18 @@ func (l *LinuxFactory) StartInitialization() (err error) {
 	// Only init processes have STATEDIR.
 	rootfd = -1
 	if it == initStandard {
-		rootfd, err = strconv.Atoi(envStateDir)
-		if err != nil {
+		if rootfd, err = strconv.Atoi(envStateDir); err != nil {
 			return fmt.Errorf("unable to convert _LIBCONTAINER_STATEDIR=%s to int: %s", envStateDir, err)
 		}
+	}
+
+	if envConsole != "" {
+		console, err := strconv.Atoi(envConsole)
+		if err != nil {
+			return fmt.Errorf("unable to convert _LIBCONTAINER_CONSOLE=%s to int: %s", envConsole, err)
+		}
+		consoleSocket = os.NewFile(uintptr(console), "console-socket")
+		defer consoleSocket.Close()
 	}
 
 	// clear the current process's environment to clean any libcontainer
@@ -279,7 +279,7 @@ func (l *LinuxFactory) StartInitialization() (err error) {
 		}
 	}()
 
-	i, err := newContainerInit(it, pipe, rootfd)
+	i, err := newContainerInit(it, pipe, consoleSocket, rootfd)
 	if err != nil {
 		return err
 	}

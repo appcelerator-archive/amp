@@ -84,7 +84,7 @@ import:
   - pkg/stdcopy
   - pkg/stringid
   - utils/templates
-- package: github.com/Thomasrooney/gexpect
+- package: github.com/ThomasRooney/gexpect
 - package: github.com/kballard/go-shellquote
 - package: github.com/kr/pty
 - package: github.com/hlandau/passlib
