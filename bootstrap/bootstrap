@@ -71,7 +71,7 @@ _get_infrakit_image() {
       echo "_get_infrakit_image() expects an argument" >&2
       exit 1
     fi
-  echo "$NON_CONTAINERIZED_PLUGINS" | grep -qw "$_package"
+  echo "$MANAGED_PLUGINS" | grep -qw "$_package"
   if [ $? -ne 0 ]; then
     echo "$INFRAKIT_INFRAKIT_IMAGE"
     return
@@ -84,7 +84,7 @@ FROM $INFRAKIT_INFRAKIT_IMAGE
 RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
     echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
     echo "@community http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-apk add --update ${_package}@community && rm -rf /var/cache/apk/*
+RUN apk add --update ${_package}@community && rm -rf /var/cache/apk/*
 EOF
   docker build -f $_dockerfile -t $_dockerimage $_d >/dev/null
   if [ $? -eq 0 ]; then
@@ -256,7 +256,7 @@ _run_ikt_container() {
   else
     echo "group" > $LOCAL_CONFIG/leader
   fi
-  
+
   # remove old customized configuration just in case
   if $(_am_i_in_a_container); then
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "sed -i.bak 's/^{{ global \"\/script\/baseurl\"/#{{ global \"\/script\/baseurl\"/' $LOCAL_CONFIG/env.ikt" || exit 1
@@ -283,7 +283,7 @@ _run_ikt_container() {
          -v $CERT_DIR:/etc/docker \
          $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS $_infrakit_image \
          infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log 5 \
-         manager group-stateless flavor-swarm flavor-vanilla flavor-combo
+         manager group-stateless flavor-swarm flavor-vanilla flavor-combo instance-terraform
     _should_wait_for_plugins=1
   else
     echo "infraKit container is already started"
@@ -298,7 +298,11 @@ _run_ikt_plugin_container() {
   local _plugin
   local _image
   for _plugin in $@; do
-    echo $NON_CONTAINERIZED_PLUGINS | grep -qw $_plugin
+    echo $MANAGED_PLUGINS | grep -qw $_plugin
+    if [ $? -eq 0 ]; then
+      continue
+    fi
+    echo "$NON_CONTAINERIZED_PLUGINS" | grep -qw $_plugin
     if [ $? -ne 0 ]; then
       docker container ls --format '{{.Names}}' | grep -qw instance-plugin-$_plugin
       if [ $? -ne 0 ]; then
@@ -412,7 +416,7 @@ _run_registry() {
 
 VALID_PROVIDERS="aws docker terraform"
 # we can't run InfraKit in a container for these plugins
-NON_CONTAINERIZED_PLUGINS="terraform"
+NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
 MANAGED_PLUGINS="terraform"
 provider=docker
