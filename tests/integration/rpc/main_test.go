@@ -1,6 +1,11 @@
 package tests
 
 import (
+	"log"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
@@ -19,10 +24,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"log"
-	"os"
-	"testing"
-	"time"
 )
 
 var (

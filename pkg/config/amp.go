@@ -44,4 +44,7 @@ const (
 
 	//DefaultEmailSender email sender
 	DefaultEmailSender = "amp.appcelerator@axway.com"
+
+	//DefaultSmsSender sms sender
+	DefaultSmsSender = ""
 )
