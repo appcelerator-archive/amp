@@ -28,7 +28,6 @@ var (
 // config vars - used for generating a config from command line flags
 var (
 	config           *amp.Config
-	serverAddress    string
 	port             string
 	etcdEndpoints    string
 	elasticsearchURL string
@@ -37,13 +36,15 @@ var (
 	natsURL          string
 	influxURL        string
 	dockerURL        string
+	dockerVersion    string
+	emailSender      string
+	smsSender        string
 )
 
-func parseFlags(config *amp.Config) {
+func parseFlags() {
 	var displayVersion bool
 
 	// set up flags
-	flag.StringVarP(&serverAddress, "server-address", "a", amp.AmplifierDefaultAddress, "Amplifier server address")
 	flag.StringVarP(&port, "port", "p", defaultPort, "Server port (default '"+defaultPort+"')")
 	flag.StringVarP(&etcdEndpoints, "endpoints", "e", amp.EtcdDefaultEndpoint, "Etcd comma-separated endpoints")
 	flag.StringVarP(&elasticsearchURL, "elasticsearch-url", "s", amp.ElasticsearchDefaultURL, "Elasticsearch URL (default '"+amp.ElasticsearchDefaultURL+"')")
@@ -52,6 +53,8 @@ func parseFlags(config *amp.Config) {
 	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
 	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
+	flag.StringVar(&emailSender, "email-sender", amp.DefaultEmailSender, "Email senser (default '"+amp.DefaultEmailSender+"')")
+	flag.StringVar(&smsSender, "sms-sender", amp.DefaultSmsSender, "Email senser (default '"+amp.DefaultSmsSender+"')")
 	flag.BoolVarP(&displayVersion, "version", "v", false, "Print version information and quit")
 
 	// parse command line flags
@@ -71,7 +74,6 @@ func parseFlags(config *amp.Config) {
 
 	// update config
 	config.Version = Version
-	config.ServerAddress = serverAddress
 	config.Port = port
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret
@@ -83,12 +85,14 @@ func parseFlags(config *amp.Config) {
 	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = amp.DockerDefaultVersion
+	config.EmailSender = emailSender
+	config.SmsSender = smsSender
 }
 
 func main() {
 	fmt.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
 	config = amp.GetConfig()
 	amp.InitConfig(config)
-	parseFlags(config)
+	parseFlags()
 	server.Start(config)
 }

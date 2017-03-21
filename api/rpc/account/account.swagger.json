@@ -31,8 +31,7 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -97,8 +96,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -120,8 +118,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -145,8 +142,7 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -178,15 +174,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "user_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -208,15 +202,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "user_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -249,8 +241,7 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -282,15 +273,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "team_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -312,15 +301,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "team_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -344,15 +331,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "team_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -374,15 +359,13 @@
             "name": "organization_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "team_name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -573,8 +556,7 @@
             "name": "email",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -606,8 +588,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -631,8 +612,7 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           },
           {
             "name": "body",
@@ -664,8 +644,7 @@
             "name": "token",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -679,12 +658,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "user_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -692,16 +669,13 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "team_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "user_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -709,12 +683,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "user_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/accountsOrganizationRole"
@@ -725,12 +697,10 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Organizations"
@@ -739,12 +709,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "team_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Teams"
@@ -753,8 +721,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -762,12 +729,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "team_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -775,8 +740,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -784,8 +748,7 @@
       "type": "object",
       "properties": {
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -801,8 +764,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -818,12 +780,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "team_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -839,8 +799,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -873,8 +832,7 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -896,12 +854,10 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -909,12 +865,10 @@
       "type": "object",
       "properties": {
         "existingPassword": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "newPassword": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -922,8 +876,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -931,12 +884,10 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -944,12 +895,10 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "user_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -957,16 +906,13 @@
       "type": "object",
       "properties": {
         "organization_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "team_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "user_name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -974,16 +920,13 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Users"
@@ -992,8 +935,7 @@
       "type": "object",
       "properties": {
         "account": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -1001,8 +943,7 @@
       "type": "object",
       "properties": {
         "reply": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -1010,8 +951,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -1019,12 +959,10 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "create_dt": {
           "type": "string",
@@ -1048,8 +986,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/accountsOrganizationRole"
@@ -1068,8 +1005,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "create_dt": {
           "type": "string",
@@ -1087,8 +1023,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "role": {
           "$ref": "#/definitions/accountsTeamRole"
@@ -1107,16 +1042,13 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "password_hash": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "is_verified": {
           "type": "boolean",

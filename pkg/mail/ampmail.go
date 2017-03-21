@@ -2,8 +2,6 @@ package mail
 
 import (
 	"fmt"
-	"log"
-	"net/smtp"
 	"strings"
 
 	"github.com/appcelerator/amp/pkg/config"
@@ -223,38 +221,15 @@ func SendTemplateEmail(to string, templateEmailName string, variableMap map[stri
 
 // SendMail send an eamail to "to" with subject and body, use configuration
 func SendMail(to string, subject string, isHTML bool, body string) error {
-	if config.EmailServerAddress == "" {
-		return sendMailUsingSendGrid(to, subject, body)
-	}
-	from := config.EmailSender
-	servername := config.EmailServerAddress
-	serverport := config.EmailServerPort
-	pass := config.EmailPwd
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n", from, to, subject, body)
-	if isHTML {
-		msg = fmt.Sprintf("From: %s\r\nTo: %s\r\nMIME-Version: 1.0\r\nContent-type: text/html\r\nSubject: %s\r\n\r\n%s\r\n", from, to, subject, body)
-	}
-	auth := smtp.PlainAuth("", from, pass, servername)
-	if err := smtp.SendMail(fmt.Sprintf("%s:%s", servername, serverport), auth, from, []string{to}, []byte(msg)); err != nil {
-		return err
-	}
-	log.Printf("email subject=%s has been sent to: %s\n", subject, to)
-	return nil
-}
-
-//UpdateAmpMailConfig update email config
-func UpdateAmpMailConfig(serverAddress string, port string, sender string, pwd string) {
-	config.EmailServerAddress = serverAddress
-	config.EmailServerPort = port
-	config.EmailSender = sender
-	config.EmailPwd = pwd
-}
-
-func sendMailUsingSendGrid(to string, subject string, body string) error {
 	apiKey := config.EmailKey
+	fmt.Printf("SendMail conf: %+v\n", config)
 	from := mail.NewEmail("amp", config.EmailSender)
 	target := mail.NewEmail(strings.Split(to, "@")[0], to)
-	content := mail.NewContent("text/html", body)
+	cType := "text/plain"
+	if isHTML {
+		cType = "text/html"
+	}
+	content := mail.NewContent(cType, body)
 	m := mail.NewV3MailInit(from, subject, target, content)
 
 	request := sendgrid.GetRequest(apiKey, "/v3/mail/send", "https://api.sendgrid.com")
@@ -263,6 +238,7 @@ func sendMailUsingSendGrid(to string, subject string, body string) error {
 	if _, err := sendgrid.API(request); err != nil {
 		return err
 	}
+	fmt.Printf("ok\n")
 	return nil
 }
 

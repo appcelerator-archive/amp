@@ -26,28 +26,22 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "role": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "availability": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "hostname": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "host_architecture": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "host_os": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "cpu": {
           "type": "string",
@@ -58,16 +52,13 @@
           "format": "int64"
         },
         "docker_version": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "status": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "address": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "nb_containers": {
           "type": "string",
@@ -95,8 +86,7 @@
       "type": "object",
       "properties": {
         "image": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     },
@@ -121,8 +111,7 @@
       "type": "object",
       "properties": {
         "node": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "container": {
           "type": "boolean",
