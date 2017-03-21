@@ -86,6 +86,63 @@
           "Properties": {
             "Config": {
               "Image": "docker:dind"{{ if ref "/docker/registry/host" }},
+              "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }}
+            },
+            "HostConfig": {
+              "Privileged": true
+            },
+            "NetworkAttachments": [
+              {
+                "Name": "hostnet"
+              }
+            ],
+            "Tags": {
+              "Name": "worker",
+              "Deployment": "Infrakit",
+              "Role" : "worker"
+            }
+          }
+        },
+        "Flavor": {
+          "Plugin": "flavor-combo",
+          "Properties": {
+            "Flavors": [
+              {
+                "Plugin": "flavor-swarm/worker",
+                "Properties": {
+                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
+                  "SwarmJoinIP": "m1",
+                  "Docker" : {
+                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/tlsport" }}",
+                    "TLS" : {
+                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "InsecureSkipVerify": false
+                    }
+                    {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "Plugin": "group",
+    "Properties": {
+      "ID": "amp-proxy",
+      "Properties": {
+        "Allocation": {
+          "LogicalIds": [ "amp-proxy" ]
+        },
+        "Instance": {
+          "Plugin": "instance-docker",
+          "Properties": {
+            "Config": {
+              "Image": "docker:dind"{{ if ref "/docker/registry/host" }},
               "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }} {{ if ref "/docker/ports/exposed" }},
               "ExposedPorts": {{ ref "/docker/ports/exposed" | to_json }} {{ end }}
             },
