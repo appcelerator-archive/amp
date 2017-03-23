@@ -105,7 +105,7 @@ AMPBOOTDIR := bootstrap
 AMPBOOTEXE := bootstrap
 AMPBOOTIMG := appcelerator/$(AMP)-bootstrap:$(AMPTAG)
 AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
-AMPDIRS := $(CMDDIR)/$(AMP) tests
+AMPDIRS := api/client $(CMDDIR)/$(AMP) tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 
 $(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) $(AMPBOOTDIR)/$(AMPBOOTEXE)
