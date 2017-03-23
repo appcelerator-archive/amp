@@ -3,9 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
-	"io"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 
 func init() {
 	dockerArgs = []string{
-		"run", "-it", "--rm", "--name", "ampcli",
+		"run", "-i", "--rm", "--name", "ampcli",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
@@ -45,7 +45,7 @@ func main() {
 		defer stdin.Close()
 		input := bufio.NewScanner(os.Stdin)
 		for input.Scan() {
-			io.WriteString(stdin, input.Text())
+			io.WriteString(stdin, input.Text()+"\n")
 		}
 	}()
 
