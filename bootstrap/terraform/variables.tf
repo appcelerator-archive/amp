@@ -1,12 +1,23 @@
-# Variables
+# Default variables used by the *.tf files
+# This file shouldn't be modified, override the variables in a terraform.tfvars file instead
+
+variable "aws_region" {
+  description = "AWS region to launch servers"
+  default     = "us-west-2"
+}
+
+variable "aws_profile" {
+  description = "AWS credentials profile"
+  default     = "default"
+}
 
 variable "aws_amis" {
   default = {
-    eu-central-1 = "ami-2830f947"
-    eu-west-1 = "ami-98ecb7fe"
-    us-east-1 = "ami-f0768de6"
-    us-west-1 = "ami-79df8219"
-    us-west-2 = "ami-d206bdb2"
+    eu-central-1 = "ami-a85480c7"
+    eu-west-1 = "ami-971238f1"
+    us-east-1 = "ami-2757f631"
+    us-west-1 = "ami-44613824"
+    us-west-2 = "ami-7ac6491a"
   }
 }
 
@@ -17,13 +28,8 @@ variable "vpc_cidrs" {
   }
 }
 
-variable "aws_region" {
-  description = "AWS region to launch servers."
-  default     = "us-west-2"
-}
-
 variable "aws_name" {
-  default = "jgj-ikt"
+  default = "ikt"
 }
 
 variable "bootstrap_instance_type" {
@@ -35,7 +41,7 @@ variable "bootstrap_instance_type" {
 variable "bootstrap_key_name" {
   type = "string"
   description = "Name of an existing EC2 KeyPair to enable SSH access to the instances"
-  default = "jgj-us-west-2"
+  default = "default-us-west-2"
 }
 
 variable "infrakit_config_base_url" {
