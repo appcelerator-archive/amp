@@ -24,10 +24,10 @@ type Configuration struct {
 
 const (
 	//DefaultAmpAddress amplifier address
-	DefaultAmpAddress = "local.appcelerator.io"
+	DefaultAmpAddress = "amp-proxy"
 
 	//DefaultServerPort amplifier address
-	DefaultServerPort = "8080"
+	DefaultServerPort = "50101"
 
 	//DefaultAdminServerPort adm-server address
 	DefaultAdminServerPort = "8081"

@@ -25,7 +25,9 @@ go get github.com/rubenv/sql-migrate/...
 ```
 
 ## Usage
+
 ### As a standalone tool
+
 ```
 $ sql-migrate --help
 usage: sql-migrate [--version] [--help] <command> [<args>]
@@ -91,7 +93,22 @@ $ sql-migrate status
 +---------------+-----------------------------------------+
 ```
 
+### MySQL Caveat
+
+If you are using MySQL, you must append `?parseTime=true` to the `datasource` configuration. For example:
+
+```yml
+production:
+    dialect: mysql
+    datasource: root@/dbname?parseTime=true
+    dir: migrations/mysql
+    table: migrations
+```
+
+See [here](https://github.com/go-sql-driver/mysql#parsetime) for more information.
+
 ### As a library
+
 Import sql-migrate into your application:
 
 ```go
@@ -200,6 +217,7 @@ DROP INDEX people_unique_id_idx;
 ```
 
 ## Embedding migrations with [bindata](https://github.com/jteeuwen/go-bindata)
+
 If you like your Go applications self-contained (that is: a single binary): use [bindata](https://github.com/jteeuwen/go-bindata) to embed the migration files.
 
 Just write your migration files as usual, as a set of SQL files in a folder.
@@ -227,6 +245,7 @@ Both `Asset` and `AssetDir` are functions provided by bindata.
 Then proceed as usual.
 
 ## Extending
+
 Adding a new migration source means implementing `MigrationSource`.
 
 ```go
@@ -237,26 +256,6 @@ type MigrationSource interface {
 
 The resulting slice of migrations will be executed in the given order, so it should usually be sorted by the `Id` field.
 
-## License 
+## License
 
-    (The MIT License)
-
-    Copyright (C) 2014-2017 by Ruben Vermeersch <ruben@rocketeer.be>
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+This library is distributed under the [MIT](LICENSE) license.
