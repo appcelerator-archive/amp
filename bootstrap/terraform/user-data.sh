@@ -7,22 +7,10 @@ packages:
   - git
   - curl
   - unzip
-  - make
 write_files:
   - path: /root/.config/infrakit/infrakit/env.ikt
     content: |
-      {{/* Global variables */}}
-      {{ global "/terraform/region" "${region}" }}
-      {{ global "/terraform/stackname" "${name}" }}
-      {{ global "/terraform/vpcid" "${vpc_id}" }}
-      {{ global "/terraform/subnetid" "${subnet_id}" }}
-      {{ global "/terraform/securitygroupid" "${security_group_id}" }}
-      {{ global "/terraform/amiid" "${ami}" }}
-      {{ global "/terraform/instancetype" "${instance_type}" }}
-      {{ global "/terraform/instanceprofile" "${cluster_instance_profile}" }}
-      {{ global "/terraform/keyname" "${key_name}" }}
       {{ global "/script/baseurl" "${infrakit_config_base_url}" }}
-      {{ global "/docker/aufs/size" "${aufs_volume_size}" }}
 runcmd:
   - wget -qO- https://get.docker.com/ | sh
   - usermod -G docker ubuntu

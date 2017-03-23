@@ -500,7 +500,7 @@ if [ $started -gt 0 ]; then
   loop=1
   looplimit=10
   while [ $rc -ne 0 ]; do
-    docker exec infrakit infrakit manager inspect 2>&1 | grep -q 'Found manager group is leader =  true'
+    docker exec infrakit infrakit manager inspect 2>&1 | egrep -qe 'leader.*=.*true'
     rc=$?
     docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
     rc=$((rc+$?))
