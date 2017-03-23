@@ -6,20 +6,20 @@ services:
 language: go
 
 go:
-  - 1.8.x
+  - 1.7.x
 
 install:
   - sudo sysctl -w vm.max_map_count=262144
   - go get -u github.com/golang/lint/golint
-  - sudo apt update
-  - sudo apt install docker-engine
+  - sudo apt-get update
+  - sudo apt-get install docker-engine
+  - docker swarm init --advertise-addr 127.0.0.1
+  - docker network create -d overlay --attachable swarmnet
   - make fmt check
-  - mkdir -p $HOME/.config/amp && echo SendGridKey:$SENDGRIDKEY >$HOME/.config/amp/amplifier.yaml
-  - hack/amptools make -f Makefile.refactor.make cleanall build build-cli-wrapper
-  - export PATH=$PWD/bin/linux/amd64:$PATH
+  - hack/amptools make -f Makefile.refactor.make cleanall
+  - hack/amptools make -f Makefile.refactor.make build
 
 script:
-  - docker tag appcelerator/amplifier:local localhost:5000/appcelerator/amplifier:local
   - tests/refactored-tests.sh
 
 after_success:

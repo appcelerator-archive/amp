@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/appcelerator/amp/api/client"
+	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -39,10 +39,10 @@ func init() {
 	RootCmd.AddCommand(stopCmd)
 }
 
-func start(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func start(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	return updateCluster(append(startArgs[:], args[:]...))
 }
-func stop(amp *client.AMP, cmd *cobra.Command, args []string) error {
+func stop(amp *cli.AMP, cmd *cobra.Command, args []string) error {
 	return updateCluster(append(stopArgs[:], args[:]...))
 }
 

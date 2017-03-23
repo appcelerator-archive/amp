@@ -66,8 +66,6 @@ import:
 - package: github.com/xeipuuv/gojsonschema
 - package: github.com/xeipuuv/gojsonreference
 - package: github.com/xeipuuv/gojsonpointer
-- package: github.com/gorilla/mux
-- package: github.com/mhale/smtpd
 - package: github.com/docker/docker
   version: ^1.13.0
   subpackages:
@@ -94,10 +92,14 @@ import:
 - package: github.com/dgrijalva/jwt-go
   version: ^3.0.0
 - package: github.com/holys/safe
+- package: github.com/ory-am/ladon
+  version: ^0.4.3
 - package: github.com/sendgrid/sendgrid-go
-  version: ^v3.3.1
+  version: ^3.3.1
+  subpackages:
+  - helpers/mail
 testImport:
 - package: github.com/stretchr/testify
-  version: ^1.1.4
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert

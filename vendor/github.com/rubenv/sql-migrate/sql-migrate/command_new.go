@@ -45,7 +45,7 @@ func (c *NewCommand) Synopsis() string {
 }
 
 func (c *NewCommand) Run(args []string) int {
-	cmdFlags := flag.NewFlagSet("redo", flag.ContinueOnError)
+	cmdFlags := flag.NewFlagSet("new", flag.ContinueOnError)
 	cmdFlags.Usage = func() { ui.Output(c.Help()) }
 	ConfigFlags(cmdFlags)
 
@@ -59,7 +59,7 @@ func (c *NewCommand) Run(args []string) int {
 		return 1
 	}
 
-	if err := CreateMigration(args[0]); err != nil {
+	if err := CreateMigration(cmdFlags.Arg(0)); err != nil {
 		ui.Error(err.Error())
 		return 1
 	}
@@ -76,7 +76,7 @@ func CreateMigration(name string) error {
 		return err
 	}
 
-	fileName := fmt.Sprintf("%s-%s.sql", time.Now().Format("20060201150405"), strings.TrimSpace(name))
+	fileName := fmt.Sprintf("%s-%s.sql", time.Now().Format("20060102150405"), strings.TrimSpace(name))
 	f, err := os.Create(path.Join(env.Dir, fileName))
 
 	if err != nil {
