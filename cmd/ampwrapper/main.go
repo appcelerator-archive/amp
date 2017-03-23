@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"io"
 )
 
 var (
@@ -14,7 +15,7 @@ var (
 
 func init() {
 	dockerArgs = []string{
-		"run", "-t", "--rm", "--name", "ampcli",
+		"run", "-it", "--rm", "--name", "ampcli",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
@@ -35,6 +36,20 @@ func main() {
 
 	proc := exec.Command(cmd, args...)
 
+	// wire up stdin to the command's stdin
+	stdin, err := proc.StdinPipe()
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		defer stdin.Close()
+		input := bufio.NewScanner(os.Stdin)
+		for input.Scan() {
+			io.WriteString(stdin, input.Text())
+		}
+	}()
+
+	// display command's stdout
 	stdout, err := proc.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -46,6 +61,7 @@ func main() {
 		}
 	}()
 
+	// display command's stderr
 	stderr, err := proc.StderrPipe()
 	if err != nil {
 		panic(err)
