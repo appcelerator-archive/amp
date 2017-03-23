@@ -1,6 +1,6 @@
 {{ source "default.ikt" }}
 {{ source "file:///infrakit/env.ikt" }}
-{ $workerSize := ref "/swarm/size/worker" }}
+{{ $workerSize := ref "/swarm/size/worker" }}
 [
   {
     "Plugin": "group",
@@ -8,25 +8,26 @@
       "ID": "amp-manager-{{ ref "/terraform/vpcid" }}",
       "Properties": {
         "Allocation": {
-          Size: 2
+          "Size": 3
         },
         "Instance": {
-          "Plugin": "terraform",
+          "Plugin": "instance-terraform",
           "Properties": {
-            "RunInstancesInput": {
-              "ImageId": "{{ ref "/terraform/amiid" }}",
-              "InstanceType": "{{ ref "/terraform/instancetype" }}",
-              "KeyName": "{{ ref "/terraform/keyname" }}",
-              "SubnetId": "{{ ref "/terraform/subnetid" }}",
-              {{ if ref "/terraform/instanceprofile" }}"IamInstanceProfile": {
-                "Name": "{{ ref "/terraform/instanceprofile" }}"
-              },{{ end }}
-              "SecurityGroupIds": [ "{{ ref "/terraform/securitygroupid" }}" ]
-            },
-            "Tags": {
-              "Name": "{{ ref "/terraform/stackname" }}-manager",
-              "Deployment": "Infrakit",
-              "Role" : "manager"
+            "type": "aws_instance",
+            "value": {
+              "ami": "${lookup(var.aws_amis, var.aws_region)}",
+              "instance_type": "${var.bootstrap_instance_type}",
+              "key_name": "${var.bootstrap_key_name}",
+              "subnet_id": "${aws_subnet.default.id}",
+              "iam_instance_profile": {
+                "Name": "${aws_iam_instance_profile.provisioner_instance_profile.id}"
+              },
+              "vpc_security_group_ids": [ "${aws_security_group.default.id}" ],
+              "tags": {
+                "Name": "${var.aws_name}-manager",
+                "Deployment": "Infrakit",
+                "Role" : "manager"
+              }
             }
           }
         },
@@ -63,11 +64,10 @@
                 "Plugin": "flavor-vanilla",
                 "Properties": {
                   "Init": [
-                    "set -o errexit",
+                    "# create an overlay network",
                     "docker network inspect {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
                     "  docker network create -d overlay --attachable {{ ref "/amp/network" }}",
-                    "docker service ls {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "docker service create --name amplifier --network {{ ref "/amp/network" }} {{ ref "/amp/amplifier/image" }}:{{ ref "/amp/amplifier/version" }} || true"
+                    "exit 0"
                   ]
                 }
               }
@@ -88,20 +88,21 @@
         "Instance": {
           "Plugin": "instance-terraform",
           "Properties": {
-            "RunInstancesInput": {
-              "ImageId": "{{ ref "/terraform/amiid" }}",
-              "InstanceType": "{{ ref "/terraform/instancetype" }}",
-              "KeyName": "{{ ref "/terraform/keyname" }}",
-              "SubnetId": "{{ ref "/terraform/subnetid" }}",
-              {{ if ref "/terraform/instanceprofile" }}"IamInstanceProfile": {
-                "Name": "{{ ref "/terraform/instanceprofile" }}"
-              },{{ end }}
-              "SecurityGroupIds": [ "{{ ref "/terraform/securitygroupid" }}" ]
-            },
-            "Tags": {
-              "Name": "{{ ref "/terraform/stackname" }}-worker",
-              "Deployment": "Infrakit",
-              "Role" : "worker"
+            "type": "aws_instance",
+            "value": {
+              "ami": "${lookup(var.aws_amis, var.aws_region)}",
+              "instance_type": "${var.bootstrap_instance_type}",
+              "key_name": "${var.bootstrap_key_name}",
+              "subnet_id": "${aws_subnet.default.id}",
+              "iam_instance_profile": {
+                "Name": "${aws_iam_instance_profile.provisioner_instance_profile.id}"
+              },
+              "vpc_security_group_ids": [ "${aws_security_group.default.id}" ],
+              "tags": {
+                "Name": "{var.aws_name}-worker",
+                "Deployment": "Infrakit",
+                "Role" : "worker"
+              }
             }
           }
         },
