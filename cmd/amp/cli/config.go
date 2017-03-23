@@ -24,7 +24,7 @@ type Configuration struct {
 
 const (
 	//DefaultAmpAddress amplifier address
-	DefaultAmpAddress = "amp-proxy"
+	DefaultAmpAddress = "m1"
 
 	//DefaultServerPort amplifier address
 	DefaultServerPort = "50101"
