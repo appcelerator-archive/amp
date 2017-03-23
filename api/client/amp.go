@@ -12,7 +12,7 @@ import (
 
 const (
 	//DefaultServerAddress amplifier address + port default
-	DefaultServerAddress = "127.0.0.1:8080"
+	DefaultServerAddress = "m1:50101"
 	//DefaultAdminServerAddress adm-server address + port default
 	DefaultAdminServerAddress = "127.0.0.1:31315"
 )
