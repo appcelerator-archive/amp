@@ -106,17 +106,7 @@ data "template_file" "user_data" {
   template = "${file("user-data.sh")}"
 
   vars {
-    region = "${var.aws_region}"
-    name = "${var.aws_name}"
-    vpc_id = "${aws_vpc.default.id}"
-    subnet_id = "${aws_subnet.default.id}"
-    security_group_id = "${aws_security_group.default.id}"
-    ami = "${lookup(var.aws_amis, var.aws_region)}"
-    instance_type = "${var.bootstrap_instance_type}"
-    cluster_instance_profile = "${aws_iam_instance_profile.cluster_instance_profile.id}"
-    key_name = "${var.bootstrap_key_name}"
     infrakit_config_base_url = "${var.infrakit_config_base_url}"
-    aufs_volume_size = "${var.aufs_volume_size}"
   }
 }
 

@@ -5,7 +5,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-manager-{{ ref "/terraform/vpcid" }}",
+      "ID": "amp-manager-${aws_vpc.default.id}",
       "Properties": {
         "Allocation": {
           "Size": 3
@@ -19,9 +19,7 @@
               "instance_type": "${var.bootstrap_instance_type}",
               "key_name": "${var.bootstrap_key_name}",
               "subnet_id": "${aws_subnet.default.id}",
-              "iam_instance_profile": {
-                "Name": "${aws_iam_instance_profile.provisioner_instance_profile.id}"
-              },
+              "iam_instance_profile": "${aws_iam_instance_profile.provisioner_instance_profile.id}",
               "vpc_security_group_ids": [ "${aws_security_group.default.id}" ],
               "tags": {
                 "Name": "${var.aws_name}-manager",
@@ -80,7 +78,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-{{ ref "/terraform/vpcid" }}",
+      "ID": "amp-worker-${aws_vpc.default.id}",
       "Properties": {
         "Allocation": {
           "Size": {{ $workerSize }}
@@ -94,9 +92,7 @@
               "instance_type": "${var.bootstrap_instance_type}",
               "key_name": "${var.bootstrap_key_name}",
               "subnet_id": "${aws_subnet.default.id}",
-              "iam_instance_profile": {
-                "Name": "${aws_iam_instance_profile.provisioner_instance_profile.id}"
-              },
+              "iam_instance_profile": "${aws_iam_instance_profile.provisioner_instance_profile.id}",
               "vpc_security_group_ids": [ "${aws_security_group.default.id}" ],
               "tags": {
                 "Name": "{var.aws_name}-worker",

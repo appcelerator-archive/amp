@@ -41,7 +41,7 @@ variable "bootstrap_instance_type" {
 variable "bootstrap_key_name" {
   type = "string"
   description = "Name of an existing EC2 KeyPair to enable SSH access to the instances"
-  default = "default-us-west-2"
+  default = ""
 }
 
 variable "infrakit_config_base_url" {
