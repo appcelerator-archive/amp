@@ -31,7 +31,6 @@
 
 syntax = "proto2";
 
-import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -96,7 +95,6 @@ message MsgWithOneof {
     string title = 1;
     int64 salary = 2;
     string Country = 3;
-    string home_address = 4;
   }
 }
 
@@ -118,7 +116,6 @@ message Complex {
 }
 
 message KnownTypes {
-  optional google.protobuf.Any an = 14;
   optional google.protobuf.Duration dur = 1;
   optional google.protobuf.Struct st = 12;
   optional google.protobuf.Timestamp ts = 2;
