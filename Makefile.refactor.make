@@ -57,18 +57,10 @@ cleanall-glide: clean-glide
 # =============================================================================
 PROTODIRS := api cmd data tests
 PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
-PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
-# Generate swagger.json files for protobuf types even if only exposed over gRPC, not REST API
-PROTOTARGETS := $(PROTOFILES:.proto=.pb.go) $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOFILES:.proto=.swagger.json)
+PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
+PROTOOPTS := -I/go/src/ --go_out=plugins=grpc:/go/src/
 
-PROTOOPTS := \
-	-I/go/src/ \
-	-I/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	--go_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:/go/src/ \
-	--grpc-gateway_out=logtostderr=true:/go/src \
-	--swagger_out=logtostderr=true:/go/src/
-
-%.pb.go %.pb.gw.go %.swagger.json: %.proto
+%.pb.go: %.proto
 	@echo $<
 	@protoc $(PROTOOPTS) /go/src/$(REPO)/$<
 
@@ -76,7 +68,7 @@ protoc: $(PROTOTARGETS)
 
 .PHONY: clean-protoc
 clean-protoc:
-	@find $(PROTODIRS) \( -name "*.pb.go" -o -name "*.pb.gw.go" -o -name "*.swagger.json" \) -type f -delete
+	@find $(PROTODIRS) \( -name "*.pb.go" \) -type f -delete
 
 # =============================================================================
 # CLEAN

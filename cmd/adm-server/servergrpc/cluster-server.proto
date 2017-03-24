@@ -2,19 +2,17 @@ syntax = "proto3";
 
 package servergrpc;
 
-import "google/api/annotations.proto";
-
 service ClusterServerService {
-        rpc GetClientStream (stream ClientMes) returns (stream ClientMes) {}
-        rpc RegisterAgent (RegisterRequest) returns (ServerRet) {}
-        rpc AgentHealth (AgentHealthRequest) returns (ServerRet) {}
-        rpc GetNodesInfo (GetNodesInfoRequest) returns (NodesInfo) {}
-        rpc PurgeNodes (PurgeNodesRequest) returns (PurgeNodesAnswers) {}
-        rpc AmpMonitor (AmpRequest) returns (AmpMonitorAnswers) {}
-        rpc AmpPull (AmpRequest) returns (AmpRet) {}
-        rpc GetAmpStatus (AmpRequest) returns (AmpStatusAnswer) {}
-        rpc AmpStart (AmpRequest) returns (AmpRet) {}
-        rpc AmpStop (AmpRequest) returns (AmpRet) {}
+        rpc GetClientStream (stream ClientMes) returns (stream ClientMes);
+        rpc RegisterAgent (RegisterRequest) returns (ServerRet);
+        rpc AgentHealth (AgentHealthRequest) returns (ServerRet);
+        rpc GetNodesInfo (GetNodesInfoRequest) returns (NodesInfo);
+        rpc PurgeNodes (PurgeNodesRequest) returns (PurgeNodesAnswers);
+        rpc AmpMonitor (AmpRequest) returns (AmpMonitorAnswers);
+        rpc AmpPull (AmpRequest) returns (AmpRet);
+        rpc GetAmpStatus (AmpRequest) returns (AmpStatusAnswer);
+        rpc AmpStart (AmpRequest) returns (AmpRet);
+        rpc AmpStop (AmpRequest) returns (AmpRet);
 }
 
 message ClientMes {
@@ -36,7 +34,7 @@ message AgentHealthRequest{
 
 message ServerRet{
         string agent_id = 1;
-        string error = 2; 
+        string error = 2;
 }
 
 message ServerRets{
@@ -50,7 +48,7 @@ message GetNodesInfoRequest{
 }
 
 message NodesInfo{
-        repeated NodeInfo nodes = 1;        
+        repeated NodeInfo nodes = 1;
 }
 
 message NodeInfo{
@@ -110,7 +108,7 @@ message AmpRequest{
 }
 
 message AmpRet{
-    
+
 }
 
 message TypedOutput{

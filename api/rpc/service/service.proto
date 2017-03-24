@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package service;
 
-import "google/api/annotations.proto";
-
 message ServiceSpec {
   string image = 1;
   string name = 2;
@@ -23,7 +21,7 @@ message ServiceSpec {
 
 message NetworkAttachment {
   string target = 1;
-  repeated string aliases = 2;  
+  repeated string aliases = 2;
 }
 
 message PublishSpec {
@@ -57,15 +55,6 @@ message RemoveResponse {
 }
 
 service Service {
-  rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse) {
-    option (google.api.http) = {
-      post: "/v1/service",
-      body: "*"
-    };
-  }
-  rpc Remove (RemoveRequest) returns (RemoveResponse) {
-    option (google.api.http) = {
-      delete: "/v1/service/{ident}"
-    };
-  }
+  rpc Create (ServiceCreateRequest) returns (ServiceCreateResponse);
+  rpc Remove (RemoveRequest) returns (RemoveResponse);
 }

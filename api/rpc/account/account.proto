@@ -2,149 +2,40 @@ syntax = "proto3";
 
 package account;
 
-import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "github.com/appcelerator/amp/data/accounts/accounts.proto";
 
 service Account {
 
   // Users
-  rpc SignUp (SignUpRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users",
-      body: "*"
-    };
-  };
-  rpc Verify (VerificationRequest) returns (VerificationReply) {
-    option (google.api.http) = {
-      get: "/v1/users/{token}"
-    };
-  };
-  rpc Login (LogInRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/login",
-      body: "*"
-    };
-  };
-  rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/{name}/passwordReset",
-      body: "*"
-    };
-  };
-  rpc PasswordSet (PasswordSetRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/passwordSet",
-      body: "*"
-    };
-  };
-  rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/passwordChange",
-      body: "*"
-    };
-  };
-  rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/{email}/forgotLogin",
-      body: "*"
-    };
-  };
-  rpc GetUser (GetUserRequest) returns (GetUserReply) {
-    option (google.api.http) = {
-      get: "/v1/users/{name}"
-    };
-  };
-  rpc ListUsers (ListUsersRequest) returns (ListUsersReply) {
-    option (google.api.http) = {
-      get: "/v1/users"
-    };
-  };
-  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/users"
-    };
-  };
-  rpc Switch (SwitchRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/users/switch",
-      body: "*"
-    };
-  };
+  rpc SignUp (SignUpRequest) returns (google.protobuf.Empty);
+  rpc Verify (VerificationRequest) returns (VerificationReply);
+  rpc Login (LogInRequest) returns (google.protobuf.Empty);
+  rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty);
+  rpc PasswordSet (PasswordSetRequest) returns (google.protobuf.Empty);
+  rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty);
+  rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty);
+  rpc GetUser (GetUserRequest) returns (GetUserReply);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc Switch (SwitchRequest) returns (google.protobuf.Empty);
 
   // Organizations
-  rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations",
-      body: "*"
-    };
-  };
-  rpc AddUserToOrganization (AddUserToOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/members",
-      body: "*"
-    };
-  };
-  rpc RemoveUserFromOrganization (RemoveUserFromOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/members/{user_name}"
-    };
-  };
-  rpc ChangeOrganizationMemberRole (ChangeOrganizationMemberRoleRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/organizations/{organization_name}/members/{user_name}",
-      body: "*"
-    };
-  };
-  rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations/{name}"
-    };
-  };
-  rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations"
-    };
-  };
-  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{name}"
-    };
-  };
+  rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty);
+  rpc AddUserToOrganization (AddUserToOrganizationRequest) returns (google.protobuf.Empty);
+  rpc RemoveUserFromOrganization (RemoveUserFromOrganizationRequest) returns (google.protobuf.Empty);
+  rpc ChangeOrganizationMemberRole (ChangeOrganizationMemberRoleRequest) returns (google.protobuf.Empty);
+  rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply);
+  rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsReply);
+  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty);
 
   // Teams
-  rpc CreateTeam (CreateTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/teams",
-      body: "*"
-    };
-  };
-  rpc AddUserToTeam (AddUserToTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/teams/{team_name}/members",
-      body: "*"
-    };
-  };
-  rpc RemoveUserFromTeam (RemoveUserFromTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}/members"
-    };
-  };
-  rpc GetTeam (GetTeamRequest) returns (GetTeamReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations/{organization_name}/teams/{team_name}"
-    };
-  };
-  rpc ListTeams (ListTeamsRequest) returns (ListTeamsReply) {
-    option (google.api.http) = {
-      get: "/organizations/{organization_name}/teams"
-    };
-  };
-  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}"
-    };
-  };
+  rpc CreateTeam (CreateTeamRequest) returns (google.protobuf.Empty);
+  rpc AddUserToTeam (AddUserToTeamRequest) returns (google.protobuf.Empty);
+  rpc RemoveUserFromTeam (RemoveUserFromTeamRequest) returns (google.protobuf.Empty);
+  rpc GetTeam (GetTeamRequest) returns (GetTeamReply);
+  rpc ListTeams (ListTeamsRequest) returns (ListTeamsReply);
+  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty);
 }
 
 // Users

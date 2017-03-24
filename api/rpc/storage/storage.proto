@@ -2,30 +2,11 @@ syntax = "proto3";
 
 package storage;
 
-import "google/api/annotations.proto";
-
 service Storage {
-  rpc Put (PutStorage) returns (StorageResponse) {
-    option (google.api.http) = {
-      put: "/v1/storage/{key}",
-      body: "*"
-    };
-  };
-  rpc Get (GetStorage) returns (StorageResponse) {
-    option (google.api.http) = {
-      get: "/v1/storage/{key}"
-    };
-  };
-  rpc Delete (DeleteStorage) returns (StorageResponse) {
-    option (google.api.http) = {
-      delete: "/v1/storage/{key}"
-    };
-  };
-  rpc List (ListStorage) returns (ListResponse) {
-    option (google.api.http) = {
-      get: "/v1/storage"
-    };
-  };
+  rpc Put (PutStorage) returns (StorageResponse);
+  rpc Get (GetStorage) returns (StorageResponse);
+  rpc Delete (DeleteStorage) returns (StorageResponse);
+  rpc List (ListStorage) returns (ListResponse);
 }
 
 // struct for get storage request function

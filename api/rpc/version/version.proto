@@ -2,14 +2,8 @@ syntax = "proto3";
 
 package version;
 
-import "google/api/annotations.proto";
-
 service Version {
-  rpc List (ListRequest) returns (ListReply) {
-    option (google.api.http) = {
-      get: "/v1/version",
-    };
-  };
+  rpc List (ListRequest) returns (ListReply);
 }
 
 message VersionInfo {
