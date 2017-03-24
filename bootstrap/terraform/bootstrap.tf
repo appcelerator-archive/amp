@@ -256,6 +256,7 @@ resource "aws_iam_instance_profile" "cluster_instance_profile" {
 resource "random_id" "group_suffix" {
   byte_length = 8
 }
+
 resource "aws_instance" "m1" {
   depends_on = [ "aws_subnet.default" ]
   vpc_security_group_ids = [ "${aws_security_group.default.id}" ]
@@ -271,4 +272,10 @@ resource "aws_instance" "m1" {
     infrakit.role = "manager"
   }
   user_data = "${data.template_file.user_data.rendered}"
+}
+
+# Outputs
+
+output "public-ip" {
+  value = "${aws_instance.m1.public_ip}"
 }
