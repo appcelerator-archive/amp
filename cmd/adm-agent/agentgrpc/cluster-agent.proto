@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package agentgrpc;
 
-import "google/api/annotations.proto";
-
 service ClusterAgentService {
-        rpc GetNodeInfo (GetNodeInfoRequest) returns (NodeInfo) {}
-        rpc PurgeNode (PurgeNodeRequest) returns (PurgeNodeAnswer) {}
-        rpc PullImage (PullImageRequest) returns (AgentRet) {}
+        rpc GetNodeInfo (GetNodeInfoRequest) returns (NodeInfo);
+        rpc PurgeNode (PurgeNodeRequest) returns (PurgeNodeAnswer);
+        rpc PullImage (PullImageRequest) returns (AgentRet);
 }
 
 message AgentRet{
@@ -34,7 +32,7 @@ message NodeInfo{
         int64 nb_containers_running = 13;
         int64 nb_containers_paused = 14;
         int64 nb_containers_stopped = 15;
-        int64 images = 16;      
+        int64 images = 16;
 }
 
 message PurgeNodeRequest{
