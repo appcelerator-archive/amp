@@ -14,9 +14,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/api/rpc/topic"
 )
 
 var (
@@ -61,15 +59,7 @@ func run() (err error) {
 	if err != nil {
 		return
 	}
-	err = stack.RegisterStackServiceHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
-	if err != nil {
-		return
-	}
 	err = stats.RegisterStatsHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
-	if err != nil {
-		return
-	}
-	err = topic.RegisterTopicHandlerFromEndpoint(ctx, mux, *amplifierEndpoint, opts)
 	if err != nil {
 		return
 	}

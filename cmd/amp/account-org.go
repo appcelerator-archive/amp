@@ -156,7 +156,7 @@ func listOrg(amp *cli.AMP, cmd *cobra.Command) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	for _, org := range reply.Organizations {
 		fmt.Fprintf(w, "%s\t%s\t%s\t\n", org.Name, org.Email, convertTime(org.CreateDt))
@@ -233,7 +233,7 @@ func getOrg(amp *cli.AMP, cmd *cobra.Command) error {
 	if err != nil {
 		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	fmt.Fprintf(w, "%s\t%s\t%s\n", reply.Organization.Name, reply.Organization.Email, convertTime(reply.Organization.CreateDt))
 	w.Flush()
@@ -377,7 +377,7 @@ func listOrgMem(amp *cli.AMP, cmd *cobra.Command) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	for _, user := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
