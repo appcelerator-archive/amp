@@ -42,12 +42,13 @@ update-deps:
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
 
-.PHONY: clean-glide
-clean-glide:
+.PHONY: clean-deps
+clean-deps:
 	@rm -rf vendor
 
-.PHONY: cleanall-glide
-cleanall-glide: clean-glide
+.PHONY: cleanall-deps
+# cleanall-deps will effectively causes `install-deps` to behave like `update-deps`
+cleanall-deps: clean-deps
 	@rm -rf .glide glide.lock
 
 # =============================================================================
@@ -74,8 +75,10 @@ clean-protoc:
 # CLEAN
 # =============================================================================
 .PHONY: clean cleanall
-clean: clean-glide clean-protoc clean-cli clean-server
-cleanall: clean cleanall-glide
+# clean doesn't remove the vendor directory since installing is time-intensive;
+# you can do this explicitly: `ampmake clean-deps clean`
+clean: clean-protoc clean-cli clean-server
+cleanall: clean cleanall-deps
 
 # =============================================================================
 # BUILD
