@@ -127,7 +127,7 @@ clean-cli:
 xbuild-cli:
 	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
 
-build-cli-wrapper: build-cli
+build-cli-wrapper:
 #	@hack/build4alpine $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
 	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/ampwrapper
 

@@ -54,10 +54,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	outscanner := bufio.NewScanner(stdout)
 	go func() {
-		for outscanner.Scan() {
-			fmt.Printf("%s\n", outscanner.Text())
+		output := make([]byte, 1)
+		for {
+			n, err := stdout.Read(output)
+			if n == 0 || err == io.EOF {
+				break
+			}
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("%s", string(output[0]))
 		}
 	}()
 
@@ -66,8 +73,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	errscanner := bufio.NewScanner(stderr)
 	go func() {
+		errscanner := bufio.NewScanner(stderr)
 		for errscanner.Scan() {
 			fmt.Fprintf(os.Stderr, "%s\n", errscanner.Text())
 		}
