@@ -7,6 +7,7 @@ INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
 INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
 INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
 INFRAKIT_DOCKER_IMAGE=appcelerator/infrakit-docker:1.0.0
+TERRAFORM_FILES=(bootstrap.tf variables.tf terraform.tfvars user-data.sh)
 SSL_KEY_LENGTH=2048
 CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
 CERT_DIR=~/.config/infrakit/certs
@@ -104,6 +105,7 @@ EOF
 # TODO: add a force option to remove the volume if it already exists, and add a hint when the volume exists and the option is not used
 _prepare_configuration_volume() {
       local _d=$1
+      local _infrakitconfigbaseurl=$2
       local _dockerfile
       local _dockerimage
       _dockerfile=$(mktemp $_d/ikt.vol.XXXXXX)
@@ -121,6 +123,11 @@ EOF
 COPY $(basename $_envfile) $INFRAKIT_HOME/env.ikt
 EOF
       fi
+      for i in "${TERRAFORM_FILES[@]}"
+      do
+        echo "curl $_infrakitconfigbaseurl/terraform/$i -o $INFRAKIT_HOME/terraform/$i"
+        curl $_infrakitconfigbaseurl/terraform/$i -o $INFRAKIT_HOME/terraform/$i
+      done
       cat >> $_dockerfile << EOF
 RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
@@ -151,7 +158,7 @@ _set_source() {
     # a new random temporary directory used as the source
     _d=$(mktemp -d)
     if [ "x$provider" = "xterraform" ]; then
-      curl $InfraKitConfigurationBaseURL/terraform 
+      curl $InfraKitConfigurationBaseURL/terraform
     fi
   else
     CONTAINER_CONFIG_TPL=file://$INFRAKIT_HOME/config.${provider}-${target}.tpl
@@ -166,7 +173,7 @@ _set_source() {
       _d=$(dirname $_d)
     fi
   fi
-  _prepare_configuration_volume $_d
+  _prepare_configuration_volume $_d $InfraKitConfigurationBaseURL
 }
 
 # sets the number of managers and workers
@@ -297,7 +304,7 @@ _run_ikt_container() {
     fi
 
     _infrakit_image=$(_get_infrakit_image $provider) || exit 1
-    
+
     echo "starting up InfraKit (image $_infrakit_image)"
     docker run -d --restart always --name infrakit \
          -v $CERT_DIR:/etc/docker \
