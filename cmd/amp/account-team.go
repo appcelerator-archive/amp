@@ -153,7 +153,7 @@ func listTeam(amp *cli.AMP, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	for _, team := range reply.Teams {
 		fmt.Fprintf(w, "%s\t%s\n", team.Name, convertTime(team.CreateDt))
@@ -245,7 +245,7 @@ func getTeam(amp *cli.AMP, cmd *cobra.Command) error {
 	if err != nil {
 		mgr.Fatal(grpc.ErrorDesc(err))
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	fmt.Fprintf(w, "%s\t%s\n", reply.Team.Name, convertTime(reply.Team.CreateDt))
 	w.Flush()
@@ -365,7 +365,7 @@ func listTeamMem(amp *cli.AMP, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "USERNAME\tROLE\t")
 	for _, user := range reply.Team.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)

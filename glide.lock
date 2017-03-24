@@ -1,5 +1,5 @@
 hash: 326cc54bfcef7435b6b7143fcb4426ea19a97d465be83c8bfa71d85bdc97ae86
-updated: 2017-03-23T21:53:12.905620593Z
+updated: 2017-03-24T17:56:10.895117661Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -144,7 +144,6 @@ imports:
   subpackages:
   - jsonpb
   - proto
-  - protoc-gen-go/descriptor
   - ptypes/empty
 - name: github.com/google/go-github
   version: d683a1c6198d75c6be7a7ab5e2f9834cb6408834
@@ -325,7 +324,7 @@ imports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: ff0417f4272e480246b4507459b3f6ae721a87ac
+  version: 702b404897d4364af44dc8dcabc9815947942325
 - name: golang.org/x/crypto
   version: c10c31b5e94b6f7a0283272dc2bb27163dcea24b
   subpackages:

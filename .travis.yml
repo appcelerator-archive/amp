@@ -20,7 +20,6 @@ install:
   - hack/amptools make -f Makefile.refactor.make build
 
 script:
-  - tests/refactored-tests.sh
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then

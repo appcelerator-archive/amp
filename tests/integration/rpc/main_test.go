@@ -11,9 +11,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
@@ -31,8 +29,6 @@ var (
 	store          storage.Interface
 	functionClient function.FunctionClient
 	statsClient    stats.StatsClient
-	stackClient    stack.StackServiceClient
-	topicClient    topic.TopicClient
 	serviceClient  service.ServiceClient
 	logsClient     logs.LogsClient
 	accountClient  account.AccountClient
@@ -80,8 +76,6 @@ func TestMain(m *testing.M) {
 
 	// Authenticated clients
 	statsClient = stats.NewStatsClient(authenticatedConn)
-	stackClient = stack.NewStackServiceClient(authenticatedConn)
-	topicClient = topic.NewTopicClient(authenticatedConn)
 	serviceClient = service.NewServiceClient(authenticatedConn)
 	logsClient = logs.NewLogsClient(authenticatedConn)
 

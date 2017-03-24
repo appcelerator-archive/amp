@@ -15,10 +15,8 @@ import (
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/service"
-	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/storage"
-	"github.com/appcelerator/amp/api/rpc/topic"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/accounts"
@@ -202,20 +200,6 @@ func registerStatsServer(c *amp.Config, s *grpc.Server) {
 func registerServiceServer(c *amp.Config, s *grpc.Server) {
 	service.RegisterServiceServer(s, &service.Service{
 		Docker: runtime.Docker,
-	})
-}
-
-func registerStackServiceServer(c *amp.Config, s *grpc.Server) {
-	stack.RegisterStackServiceServer(s, stack.NewServer(
-		runtime.Store,
-		runtime.Docker,
-	))
-}
-
-func registerTopicServer(c *amp.Config, s *grpc.Server) {
-	topic.RegisterTopicServer(s, &topic.Server{
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
 	})
 }
 

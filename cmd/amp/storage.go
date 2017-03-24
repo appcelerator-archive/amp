@@ -159,7 +159,7 @@ func storageList(amp *cli.AMP, args []string) error {
 		mgr.Warn("no storage object is available")
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, tablePadding, ' ', 0)
 	fmt.Fprintln(w, "KEY\tVALUE\t")
 	for _, info := range reply.List {
 		fmt.Fprintf(w, "%s\t%s\t\n", info.Key, info.Val)
