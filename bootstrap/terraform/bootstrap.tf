@@ -106,7 +106,8 @@ data "template_file" "user_data" {
   template = "${file("user-data.sh")}"
 
   vars {
-    infrakit_config_base_url = "${var.infrakit_config_base_url}"
+    infrakit_config_base_url = "${var.infrakit_config_base_url}",
+    instance_infrakit_group_suffix = "${random_id.group_suffix.hex}",
   }
 }
 
@@ -252,6 +253,9 @@ resource "aws_iam_instance_profile" "cluster_instance_profile" {
   roles = [ "${aws_iam_role.cluster_role.id}" ]
 }
 
+resource "random_id" "group_suffix" {
+  byte_length = 8
+}
 resource "aws_instance" "m1" {
   depends_on = [ "aws_subnet.default" ]
   vpc_security_group_ids = [ "${aws_security_group.default.id}" ]
@@ -261,11 +265,10 @@ resource "aws_instance" "m1" {
   ami = "${lookup(var.aws_amis, var.aws_region)}"
   key_name = "${var.bootstrap_key_name}"
   instance_type = "${var.bootstrap_instance_type}"
-  private_ip = "192.168.2.254"
   tags {
     Name = "${var.aws_name}-manager-1"
-    infrakit.group = "swarm-managers"
-    infrakit.role = "managers"
+    infrakit.group = "amp-manager-${random_id.group_suffix.hex}"
+    infrakit.role = "manager"
   }
   user_data = "${data.template_file.user_data.rendered}"
 }
