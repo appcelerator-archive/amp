@@ -2,6 +2,7 @@
 
 NETWORK=swarmnet
 TAG=local
+SERVER_HOST=m1
 SERVER_PORT=50101
 
 echo "Starting the amplifier service... "
@@ -28,7 +29,7 @@ echo
 echo "Connecting to amplifier with the CLI... "
 # test the CLI and the connection to the server
 # if connection fails, the container will return a non zero code
-docker run --rm --name cli --network $NETWORK appcelerator/amp:$TAG --server amplifier:$SERVER_PORT version
+docker run --rm --name cli --network $NETWORK appcelerator/amp:$TAG --server $SERVER_HOST:$SERVER_PORT version
 if [ $? -ne 0 ]; then
   echo "Failed to connect"
   docker service rm amplifier
