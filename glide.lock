@@ -1,5 +1,5 @@
-hash: 326cc54bfcef7435b6b7143fcb4426ea19a97d465be83c8bfa71d85bdc97ae86
-updated: 2017-03-24T17:56:10.895117661Z
+hash: c9fab1db53e40608d1f5b60e60e0f4f7bc54bcabe7551aa64b0a0e7cea823251
+updated: 2017-03-24T23:59:20.461918823Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -9,8 +9,6 @@ imports:
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
-- name: github.com/blang/semver
-  version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
 - name: github.com/cenkalti/backoff
   version: 3db60c813733fce657c114634171689bbf1f8dee
 - name: github.com/coreos/etcd
@@ -63,7 +61,6 @@ imports:
   - api/types/versions
   - api/types/volume
   - cli/command
-  - cli/command/idresolver
   - cli/flags
   - cliconfig
   - cliconfig/configfile
@@ -120,7 +117,7 @@ imports:
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
 - name: github.com/fatih/color
@@ -140,15 +137,11 @@ imports:
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  version: 8d92cf5fc15a4382f8964b08e1f42a75c0591aa3
   subpackages:
   - jsonpb
   - proto
   - ptypes/empty
-- name: github.com/google/go-github
-  version: d683a1c6198d75c6be7a7ab5e2f9834cb6408834
-  subpackages:
-  - github
 - name: github.com/gorilla/context
   version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
 - name: github.com/gorilla/mux
@@ -156,11 +149,10 @@ imports:
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
-  version: a8f25bd1ab549f8b87afd48aa9181221e9d439bb
+  version: 84398b94e188ee336f307779b57b3aa91af7063c
   subpackages:
   - runtime
   - runtime/internal
-  - third_party/googleapis/google/api
   - utilities
 - name: github.com/hailocab/go-hostpool
   version: e80d13ce29ede4452c43dea11e79b9bc8a15b478
@@ -195,10 +187,6 @@ imports:
   - reflectx
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
-- name: github.com/kballard/go-shellquote
-  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
-- name: github.com/kr/pty
-  version: f7ee69f31298ecbe5d2b349c711e2547a617d398
 - name: github.com/magiconair/properties
   version: 51463bfca2576e06c62a8504b5c0f06d61312647
 - name: github.com/mattn/go-colorable
@@ -299,32 +287,24 @@ imports:
 - name: github.com/spf13/cast
   version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
-  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
+  version: 7be4beda01ec05d0b93d80b3facd2b6f44080d94
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
-  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+  version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/spf13/viper
-  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+  version: 84f94806c67f59dd7ae87bc5351f7a9c94a4558d
 - name: github.com/stretchr/testify
   version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert
   - require
-- name: github.com/ThomasRooney/gexpect
-  version: 5482f03509440585d13d8f648989e05903001842
 - name: github.com/vbatts/tar-split
   version: b9127a139315e57ebc26030e7decf72d0a20acb4
   subpackages:
   - archive/tar
   - tar/asm
   - tar/storage
-- name: github.com/xeipuuv/gojsonpointer
-  version: 6fe8760cad3569743d51ddbb243b26f8456742dc
-- name: github.com/xeipuuv/gojsonreference
-  version: e02fc20de94c78484cd5ffb007f8af96be030a45
-- name: github.com/xeipuuv/gojsonschema
-  version: 702b404897d4364af44dc8dcabc9815947942325
 - name: golang.org/x/crypto
   version: c10c31b5e94b6f7a0283272dc2bb27163dcea24b
   subpackages:
@@ -335,20 +315,17 @@ imports:
   - scrypt
   - ssh/terminal
 - name: golang.org/x/net
-  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
+  version: 4876518f9e71663000c348837735820161a42df7
   subpackages:
   - context
   - context/ctxhttp
   - http2
   - http2/hpack
-  - idna
   - internal/timeseries
   - lex/httplex
   - proxy
   - trace
   - websocket
-- name: golang.org/x/oauth2
-  version: 7fdf09982454086d5570c7db3e11f360194830ca
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   repo: https://go.googlesource.com/sys
@@ -419,5 +396,11 @@ imports:
 - name: gopkg.in/yaml.v2
   version: bef53efd0c76e49e6de55ead051f886bea7e9420
 testImports:
+- name: github.com/kballard/go-shellquote
+  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
+- name: github.com/kr/pty
+  version: f7ee69f31298ecbe5d2b349c711e2547a617d398
 - name: github.com/mhale/smtpd
   version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
+- name: github.com/ThomasRooney/gexpect
+  version: 5482f03509440585d13d8f648989e05903001842
