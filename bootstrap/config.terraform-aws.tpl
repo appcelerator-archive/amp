@@ -5,7 +5,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-manager-${aws_vpc.default.id}",
+      "ID": "amp-manager-{{ ref "/aws/stackname" }}",
       "Properties": {
         "Allocation": {
           "Size": 3
@@ -45,16 +45,16 @@
                 "Plugin": "flavor-swarm/manager",
                 "Properties": {
                   "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/manager-init.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "SwarmJoinIP": "${aws_instance.m1.private_ip}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://${aws_instance.m1.private_ip}:{{ ref "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
                       "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
                       "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
                       "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://${aws_instance.m1.private_ip}:{{ ref "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }
@@ -78,7 +78,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-${aws_vpc.default.id}",
+      "ID": "amp-worker-{{ ref "/aws/stackname" }}",
       "Properties": {
         "Allocation": {
           "Size": {{ $workerSize }}
@@ -118,16 +118,16 @@
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
                   "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "SwarmJoinIP": "${aws_instance.m1.private_ip}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://${aws_instance.m1.private_ip}:{{ ref "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
                       "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
                       "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
                       "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://${aws_instance.m1.private_ip}:{{ ref "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }
