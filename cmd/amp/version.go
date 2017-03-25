@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/docker/docker/utils/templates"
-
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/docker/docker/pkg/templates"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

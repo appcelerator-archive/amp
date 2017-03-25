@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/pkg/integration/checker"
+	"github.com/docker/docker/integration-cli/checker"
+	"github.com/docker/docker/integration-cli/daemon"
 	"github.com/go-check/check"
 )
 
@@ -26,18 +27,22 @@ func init() {
 
 type DockerAuthzV2Suite struct {
 	ds *DockerSuite
-	d  *Daemon
+	d  *daemon.Daemon
 }
 
 func (s *DockerAuthzV2Suite) SetUpTest(c *check.C) {
 	testRequires(c, DaemonIsLinux, Network)
-	s.d = NewDaemon(c)
-	c.Assert(s.d.Start(), check.IsNil)
+	s.d = daemon.New(c, dockerBinary, dockerdBinary, daemon.Config{
+		Experimental: testEnv.ExperimentalDaemon(),
+	})
+	s.d.Start(c)
 }
 
 func (s *DockerAuthzV2Suite) TearDownTest(c *check.C) {
-	s.d.Stop()
-	s.ds.TearDownTest(c)
+	if s.d != nil {
+		s.d.Stop(c)
+		s.ds.TearDownTest(c)
+	}
 }
 
 func (s *DockerAuthzV2Suite) TestAuthZPluginAllowNonVolumeRequest(c *check.C) {
@@ -47,12 +52,12 @@ func (s *DockerAuthzV2Suite) TestAuthZPluginAllowNonVolumeRequest(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	// start the daemon with the plugin and load busybox, --net=none build fails otherwise
 	// because it needs to pull busybox
-	c.Assert(s.d.Restart("--authorization-plugin="+authzPluginNameWithTag), check.IsNil)
+	s.d.Restart(c, "--authorization-plugin="+authzPluginNameWithTag)
 	c.Assert(s.d.LoadBusybox(), check.IsNil)
 
 	// defer disabling the plugin
 	defer func() {
-		c.Assert(s.d.Restart(), check.IsNil)
+		s.d.Restart(c)
 		_, err = s.d.Cmd("plugin", "disable", authzPluginNameWithTag)
 		c.Assert(err, checker.IsNil)
 		_, err = s.d.Cmd("plugin", "rm", authzPluginNameWithTag)
@@ -77,11 +82,11 @@ func (s *DockerAuthzV2Suite) TestAuthZPluginRejectVolumeRequests(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// restart the daemon with the plugin
-	c.Assert(s.d.Restart("--authorization-plugin="+authzPluginNameWithTag), check.IsNil)
+	s.d.Restart(c, "--authorization-plugin="+authzPluginNameWithTag)
 
 	// defer disabling the plugin
 	defer func() {
-		c.Assert(s.d.Restart(), check.IsNil)
+		s.d.Restart(c)
 		_, err = s.d.Cmd("plugin", "disable", authzPluginNameWithTag)
 		c.Assert(err, checker.IsNil)
 		_, err = s.d.Cmd("plugin", "rm", authzPluginNameWithTag)
@@ -117,17 +122,17 @@ func (s *DockerAuthzV2Suite) TestAuthZPluginBadManifestFailsDaemonStart(c *check
 	c.Assert(err, checker.IsNil)
 
 	// start the daemon with the plugin, it will error
-	c.Assert(s.d.Restart("--authorization-plugin="+authzPluginBadManifestName), check.NotNil)
+	c.Assert(s.d.RestartWithError("--authorization-plugin="+authzPluginBadManifestName), check.NotNil)
 
 	// restarting the daemon without requiring the plugin will succeed
-	c.Assert(s.d.Restart(), check.IsNil)
+	s.d.Restart(c)
 }
 
 func (s *DockerAuthzV2Suite) TestNonexistentAuthZPluginFailsDaemonStart(c *check.C) {
 	testRequires(c, DaemonIsLinux, Network)
 	// start the daemon with a non-existent authz plugin, it will error
-	c.Assert(s.d.Restart("--authorization-plugin="+nonexistentAuthzPluginName), check.NotNil)
+	c.Assert(s.d.RestartWithError("--authorization-plugin="+nonexistentAuthzPluginName), check.NotNil)
 
 	// restarting the daemon without requiring the plugin will succeed
-	c.Assert(s.d.Restart(), check.IsNil)
+	s.d.Start(c)
 }

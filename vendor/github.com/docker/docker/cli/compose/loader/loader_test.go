@@ -394,7 +394,7 @@ services:
 `)
 	assert.NoError(t, err)
 
-	expected := map[string]string{
+	expected := types.MappingWithEquals{
 		"FOO":  "1",
 		"BAR":  "2",
 		"BAZ":  "2.5",
@@ -456,7 +456,7 @@ volumes:
 
 	home := os.Getenv("HOME")
 
-	expectedLabels := map[string]string{
+	expectedLabels := types.MappingWithEquals{
 		"home1":       home,
 		"home2":       home,
 		"nonexistent": "",
@@ -541,6 +541,50 @@ services:
 	assert.Contains(t, forbidden, "extends")
 }
 
+func TestInvalidExternalAndDriverCombination(t *testing.T) {
+	_, err := loadYAML(`
+version: "3"
+volumes:
+  external_volume:
+    external: true
+    driver: foobar
+`)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicting parameters \"external\" and \"driver\" specified for volume")
+	assert.Contains(t, err.Error(), "external_volume")
+}
+
+func TestInvalidExternalAndDirverOptsCombination(t *testing.T) {
+	_, err := loadYAML(`
+version: "3"
+volumes:
+  external_volume:
+    external: true
+    driver_opts:
+      beep: boop
+`)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicting parameters \"external\" and \"driver_opts\" specified for volume")
+	assert.Contains(t, err.Error(), "external_volume")
+}
+
+func TestInvalidExternalAndLabelsCombination(t *testing.T) {
+	_, err := loadYAML(`
+version: "3"
+volumes:
+  external_volume:
+    external: true
+    labels:
+      - beep=boop
+`)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicting parameters \"external\" and \"labels\" specified for volume")
+	assert.Contains(t, err.Error(), "external_volume")
+}
+
 func durationPtr(value time.Duration) *time.Duration {
 	return &value
 }
@@ -621,6 +665,10 @@ func TestFullExample(t *testing.T) {
 			"BAR":            "2",
 			"BAZ":            "3",
 		},
+		EnvFile: []string{
+			"./example1.env",
+			"./example2.env",
+		},
 		Expose: []string{"3000", "8000"},
 		ExternalLinks: []string{
 			"redis_1",
@@ -632,10 +680,7 @@ func TestFullExample(t *testing.T) {
 			"somehost":  "162.242.195.82",
 		},
 		HealthCheck: &types.HealthCheckConfig{
-			Test: []string{
-				"CMD-SHELL",
-				"echo \"hello world\"",
-			},
+			Test:     types.HealthCheckTest([]string{"CMD-SHELL", "echo \"hello world\""}),
 			Interval: "10s",
 			Timeout:  "1s",
 			Retries:  uint64Ptr(5),
@@ -674,14 +719,145 @@ func TestFullExample(t *testing.T) {
 			"other-other-network": nil,
 		},
 		Pid: "host",
-		Ports: []string{
-			"3000",
-			"3000-3005",
-			"8000:8000",
-			"9090-9091:8080-8081",
-			"49100:22",
-			"127.0.0.1:8001:8001",
-			"127.0.0.1:5000-5010:5000-5010",
+		Ports: []types.ServicePortConfig{
+			//"3000",
+			{
+				Mode:     "ingress",
+				Target:   3000,
+				Protocol: "tcp",
+			},
+			//"3000-3005",
+			{
+				Mode:     "ingress",
+				Target:   3000,
+				Protocol: "tcp",
+			},
+			{
+				Mode:     "ingress",
+				Target:   3001,
+				Protocol: "tcp",
+			},
+			{
+				Mode:     "ingress",
+				Target:   3002,
+				Protocol: "tcp",
+			},
+			{
+				Mode:     "ingress",
+				Target:   3003,
+				Protocol: "tcp",
+			},
+			{
+				Mode:     "ingress",
+				Target:   3004,
+				Protocol: "tcp",
+			},
+			{
+				Mode:     "ingress",
+				Target:   3005,
+				Protocol: "tcp",
+			},
+			//"8000:8000",
+			{
+				Mode:      "ingress",
+				Target:    8000,
+				Published: 8000,
+				Protocol:  "tcp",
+			},
+			//"9090-9091:8080-8081",
+			{
+				Mode:      "ingress",
+				Target:    8080,
+				Published: 9090,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    8081,
+				Published: 9091,
+				Protocol:  "tcp",
+			},
+			//"49100:22",
+			{
+				Mode:      "ingress",
+				Target:    22,
+				Published: 49100,
+				Protocol:  "tcp",
+			},
+			//"127.0.0.1:8001:8001",
+			{
+				Mode:      "ingress",
+				Target:    8001,
+				Published: 8001,
+				Protocol:  "tcp",
+			},
+			//"127.0.0.1:5000-5010:5000-5010",
+			{
+				Mode:      "ingress",
+				Target:    5000,
+				Published: 5000,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5001,
+				Published: 5001,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5002,
+				Published: 5002,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5003,
+				Published: 5003,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5004,
+				Published: 5004,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5005,
+				Published: 5005,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5006,
+				Published: 5006,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5007,
+				Published: 5007,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5008,
+				Published: 5008,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5009,
+				Published: 5009,
+				Protocol:  "tcp",
+			},
+			{
+				Mode:      "ingress",
+				Target:    5010,
+				Published: 5010,
+				Protocol:  "tcp",
+			},
 		},
 		Privileged: true,
 		ReadOnly:   true,
@@ -705,13 +881,13 @@ func TestFullExample(t *testing.T) {
 			},
 		},
 		User: "someone",
-		Volumes: []string{
-			"/var/lib/mysql",
-			"/opt/data:/var/lib/mysql",
-			fmt.Sprintf("%s:/code", workingDir),
-			fmt.Sprintf("%s/static:/var/www/html", workingDir),
-			fmt.Sprintf("%s/configs:/etc/configs/:ro", homeDir),
-			"datavolume:/var/lib/mysql",
+		Volumes: []types.ServiceVolumeConfig{
+			{Target: "/var/lib/mysql", Type: "volume"},
+			{Source: "/opt/data", Target: "/var/lib/mysql", Type: "bind"},
+			{Source: workingDir, Target: "/code", Type: "bind"},
+			{Source: workingDir + "/static", Target: "/var/www/html", Type: "bind"},
+			{Source: homeDir + "/configs", Target: "/etc/configs/", Type: "bind", ReadOnly: true},
+			{Source: "datavolume", Target: "/var/lib/mysql", Type: "volume"},
 		},
 		WorkingDir: "/code",
 	}
@@ -798,3 +974,148 @@ type servicesByName []types.ServiceConfig
 func (sbn servicesByName) Len() int           { return len(sbn) }
 func (sbn servicesByName) Swap(i, j int)      { sbn[i], sbn[j] = sbn[j], sbn[i] }
 func (sbn servicesByName) Less(i, j int) bool { return sbn[i].Name < sbn[j].Name }
+
+func TestLoadAttachableNetwork(t *testing.T) {
+	config, err := loadYAML(`
+version: "3.2"
+networks:
+  mynet1:
+    driver: overlay
+    attachable: true
+  mynet2:
+    driver: bridge
+`)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	expected := map[string]types.NetworkConfig{
+		"mynet1": {
+			Driver:     "overlay",
+			Attachable: true,
+		},
+		"mynet2": {
+			Driver:     "bridge",
+			Attachable: false,
+		},
+	}
+
+	assert.Equal(t, expected, config.Networks)
+}
+
+func TestLoadExpandedPortFormat(t *testing.T) {
+	config, err := loadYAML(`
+version: "3.2"
+services:
+  web:
+    image: busybox
+    ports:
+      - "80-82:8080-8082"
+      - "90-92:8090-8092/udp"
+      - "85:8500"
+      - 8600
+      - protocol: udp
+        target: 53
+        published: 10053
+      - mode: host
+        target: 22
+        published: 10022
+`)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	expected := []types.ServicePortConfig{
+		{
+			Mode:      "ingress",
+			Target:    8080,
+			Published: 80,
+			Protocol:  "tcp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8081,
+			Published: 81,
+			Protocol:  "tcp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8082,
+			Published: 82,
+			Protocol:  "tcp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8090,
+			Published: 90,
+			Protocol:  "udp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8091,
+			Published: 91,
+			Protocol:  "udp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8092,
+			Published: 92,
+			Protocol:  "udp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8500,
+			Published: 85,
+			Protocol:  "tcp",
+		},
+		{
+			Mode:      "ingress",
+			Target:    8600,
+			Published: 0,
+			Protocol:  "tcp",
+		},
+		{
+			Target:    53,
+			Published: 10053,
+			Protocol:  "udp",
+		},
+		{
+			Mode:      "host",
+			Target:    22,
+			Published: 10022,
+		},
+	}
+
+	assert.Equal(t, 1, len(config.Services))
+	assert.Equal(t, expected, config.Services[0].Ports)
+}
+
+func TestLoadExpandedMountFormat(t *testing.T) {
+	config, err := loadYAML(`
+version: "3.2"
+services:
+  web:
+    image: busybox
+    volumes:
+      - type: volume
+        source: foo
+        target: /target
+        read_only: true
+volumes:
+  foo: {}
+`)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	expected := types.ServiceVolumeConfig{
+		Type:     "volume",
+		Source:   "foo",
+		Target:   "/target",
+		ReadOnly: true,
+	}
+
+	assert.Equal(t, 1, len(config.Services))
+	assert.Equal(t, 1, len(config.Services[0].Volumes))
+	assert.Equal(t, expected, config.Services[0].Volumes[0])
+}

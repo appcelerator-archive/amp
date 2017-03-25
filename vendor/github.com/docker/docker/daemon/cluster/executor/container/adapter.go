@@ -3,6 +3,7 @@ package container
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,19 +12,19 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/distribution/digest"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/backend"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/daemon/cluster/convert"
 	executorpkg "github.com/docker/docker/daemon/cluster/executor"
-	"github.com/docker/docker/reference"
 	"github.com/docker/libnetwork"
 	"github.com/docker/swarmkit/agent/exec"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/log"
-	"github.com/docker/swarmkit/protobuf/ptypes"
+	gogotypes "github.com/gogo/protobuf/types"
+	"github.com/opencontainers/go-digest"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
 )
@@ -54,13 +55,13 @@ func (c *containerAdapter) pullImage(ctx context.Context) error {
 	spec := c.container.spec()
 
 	// Skip pulling if the image is referenced by image ID.
-	if _, err := digest.ParseDigest(spec.Image); err == nil {
+	if _, err := digest.Parse(spec.Image); err == nil {
 		return nil
 	}
 
 	// Skip pulling if the image is referenced by digest and already
 	// exists locally.
-	named, err := reference.ParseNamed(spec.Image)
+	named, err := reference.ParseNormalizedNamed(spec.Image)
 	if err == nil {
 		if _, ok := named.(reference.Canonical); ok {
 			_, err := c.backend.LookupImage(spec.Image)
@@ -239,7 +240,7 @@ func (c *containerAdapter) create(ctx context.Context) error {
 
 	container := c.container.task.Spec.GetContainer()
 	if container == nil {
-		return fmt.Errorf("unable to get container from task spec")
+		return errors.New("unable to get container from task spec")
 	}
 
 	// configure secrets
@@ -396,6 +397,12 @@ func (c *containerAdapter) deactivateServiceBinding() error {
 }
 
 func (c *containerAdapter) logs(ctx context.Context, options api.LogSubscriptionOptions) (io.ReadCloser, error) {
+	// we can't handle the peculiarities of a TTY-attached container yet
+	conf := c.container.config()
+	if conf != nil && conf.Tty {
+		return nil, errors.New("logs not supported on containers with a TTY attached")
+	}
+
 	reader, writer := io.Pipe()
 
 	apiOptions := &backend.ContainerLogsConfig{
@@ -412,18 +419,21 @@ func (c *containerAdapter) logs(ctx context.Context, options api.LogSubscription
 	}
 
 	if options.Since != nil {
-		since, err := ptypes.Timestamp(options.Since)
+		since, err := gogotypes.TimestampFromProto(options.Since)
 		if err != nil {
 			return nil, err
 		}
-		apiOptions.Since = since.Format(time.RFC3339Nano)
+		// print since as this formatted string because the docker container
+		// logs interface expects it like this.
+		// see github.com/docker/docker/api/types/time.ParseTimestamps
+		apiOptions.Since = fmt.Sprintf("%d.%09d", since.Unix(), int64(since.Nanosecond()))
 	}
 
 	if options.Tail < 0 {
 		// See protobuf documentation for details of how this works.
 		apiOptions.Tail = fmt.Sprint(-options.Tail - 1)
 	} else if options.Tail > 0 {
-		return nil, fmt.Errorf("tail relative to start of logs not supported via docker API")
+		return nil, errors.New("tail relative to start of logs not supported via docker API")
 	}
 
 	if len(options.Streams) == 0 {

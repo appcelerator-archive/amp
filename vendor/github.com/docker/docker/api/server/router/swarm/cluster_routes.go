@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/backend"
 	"github.com/docker/docker/api/types/filters"
 	types "github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/pkg/stdcopy"
 	"golang.org/x/net/context"
 )
 
@@ -65,7 +66,8 @@ func (sr *swarmRouter) updateCluster(ctx context.Context, w http.ResponseWriter,
 	rawVersion := r.URL.Query().Get("version")
 	version, err := strconv.ParseUint(rawVersion, 10, 64)
 	if err != nil {
-		return fmt.Errorf("Invalid swarm version '%s': %s", rawVersion, err.Error())
+		err := fmt.Errorf("invalid swarm version '%s': %v", rawVersion, err)
+		return errors.NewBadRequestError(err)
 	}
 
 	var flags types.UpdateFlags
@@ -73,7 +75,8 @@ func (sr *swarmRouter) updateCluster(ctx context.Context, w http.ResponseWriter,
 	if value := r.URL.Query().Get("rotateWorkerToken"); value != "" {
 		rot, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("invalid value for rotateWorkerToken: %s", value)
+			err := fmt.Errorf("invalid value for rotateWorkerToken: %s", value)
+			return errors.NewBadRequestError(err)
 		}
 
 		flags.RotateWorkerToken = rot
@@ -82,7 +85,8 @@ func (sr *swarmRouter) updateCluster(ctx context.Context, w http.ResponseWriter,
 	if value := r.URL.Query().Get("rotateManagerToken"); value != "" {
 		rot, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("invalid value for rotateManagerToken: %s", value)
+			err := fmt.Errorf("invalid value for rotateManagerToken: %s", value)
+			return errors.NewBadRequestError(err)
 		}
 
 		flags.RotateManagerToken = rot
@@ -91,7 +95,7 @@ func (sr *swarmRouter) updateCluster(ctx context.Context, w http.ResponseWriter,
 	if value := r.URL.Query().Get("rotateManagerUnlockKey"); value != "" {
 		rot, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("invalid value for rotateManagerUnlockKey: %s", value)
+			return errors.NewBadRequestError(fmt.Errorf("invalid value for rotateManagerUnlockKey: %s", value))
 		}
 
 		flags.RotateManagerUnlockKey = rot
@@ -184,15 +188,18 @@ func (sr *swarmRouter) updateService(ctx context.Context, w http.ResponseWriter,
 	rawVersion := r.URL.Query().Get("version")
 	version, err := strconv.ParseUint(rawVersion, 10, 64)
 	if err != nil {
-		return fmt.Errorf("Invalid service version '%s': %s", rawVersion, err.Error())
+		err := fmt.Errorf("invalid service version '%s': %v", rawVersion, err)
+		return errors.NewBadRequestError(err)
 	}
 
+	var flags basictypes.ServiceUpdateOptions
+
 	// Get returns "" if the header does not exist
-	encodedAuth := r.Header.Get("X-Registry-Auth")
+	flags.EncodedRegistryAuth = r.Header.Get("X-Registry-Auth")
+	flags.RegistryAuthFrom = r.URL.Query().Get("registryAuthFrom")
+	flags.Rollback = r.URL.Query().Get("rollback")
 
-	registryAuthFrom := r.URL.Query().Get("registryAuthFrom")
-
-	resp, err := sr.backend.UpdateService(vars["id"], version, service, encodedAuth, registryAuthFrom)
+	resp, err := sr.backend.UpdateService(vars["id"], version, service, flags)
 	if err != nil {
 		logrus.Errorf("Error updating service %s: %v", vars["id"], err)
 		return err
@@ -248,7 +255,8 @@ func (sr *swarmRouter) getServiceLogs(ctx context.Context, w http.ResponseWriter
 			// The client may be expecting all of the data we're sending to
 			// be multiplexed, so send it through OutStream, which will
 			// have been set up to handle that if needed.
-			fmt.Fprintf(logsConfig.OutStream, "Error grabbing service logs: %v\n", err)
+			stdwriter := stdcopy.NewStdWriter(w, stdcopy.Systemerr)
+			fmt.Fprintf(stdwriter, "Error grabbing service logs: %v\n", err)
 		default:
 			return err
 		}
@@ -294,7 +302,8 @@ func (sr *swarmRouter) updateNode(ctx context.Context, w http.ResponseWriter, r 
 	rawVersion := r.URL.Query().Get("version")
 	version, err := strconv.ParseUint(rawVersion, 10, 64)
 	if err != nil {
-		return fmt.Errorf("Invalid node version '%s': %s", rawVersion, err.Error())
+		err := fmt.Errorf("invalid node version '%s': %v", rawVersion, err)
+		return errors.NewBadRequestError(err)
 	}
 
 	if err := sr.backend.UpdateNode(vars["id"], version, node); err != nil {

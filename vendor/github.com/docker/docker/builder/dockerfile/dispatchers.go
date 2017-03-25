@@ -8,6 +8,7 @@ package dockerfile
 // package.
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"runtime"
@@ -23,7 +24,6 @@ import (
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/pkg/signal"
-	runconfigopts "github.com/docker/docker/runconfig/opts"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -203,25 +203,23 @@ func from(b *Builder, args []string, attributes map[string]bool, original string
 
 	name := args[0]
 
-	var (
-		image builder.Image
-		err   error
-	)
+	var image builder.Image
 
 	// Windows cannot support a container with no base image.
 	if name == api.NoBaseImageSpecifier {
 		if runtime.GOOS == "windows" {
-			return fmt.Errorf("Windows does not support FROM scratch")
+			return errors.New("Windows does not support FROM scratch")
 		}
 		b.image = ""
 		b.noBaseImage = true
 	} else {
 		// TODO: don't use `name`, instead resolve it to a digest
 		if !b.options.PullParent {
-			image, err = b.docker.GetImageOnBuild(name)
+			image, _ = b.docker.GetImageOnBuild(name)
 			// TODO: shouldn't we error out if error is different from "not found" ?
 		}
 		if image == nil {
+			var err error
 			image, err = b.docker.PullOnBuild(b.clientCtx, name, b.options.AuthConfigs, b.Output)
 			if err != nil {
 				return err
@@ -254,7 +252,7 @@ func onbuild(b *Builder, args []string, attributes map[string]bool, original str
 	triggerInstruction := strings.ToUpper(strings.TrimSpace(args[0]))
 	switch triggerInstruction {
 	case "ONBUILD":
-		return fmt.Errorf("Chaining ONBUILD via `ONBUILD ONBUILD` isn't allowed")
+		return errors.New("Chaining ONBUILD via `ONBUILD ONBUILD` isn't allowed")
 	case "MAINTAINER", "FROM":
 		return fmt.Errorf("%s isn't allowed as an ONBUILD trigger", triggerInstruction)
 	}
@@ -309,7 +307,11 @@ func workdir(b *Builder, args []string, attributes map[string]bool, original str
 		return nil
 	}
 
-	container, err := b.docker.ContainerCreate(types.ContainerCreateConfig{Config: b.runConfig})
+	container, err := b.docker.ContainerCreate(types.ContainerCreateConfig{
+		Config: b.runConfig,
+		// Set a log config to override any default value set on the daemon
+		HostConfig: &container.HostConfig{LogConfig: defaultLogConfig},
+	})
 	if err != nil {
 		return err
 	}
@@ -333,7 +335,7 @@ func workdir(b *Builder, args []string, attributes map[string]bool, original str
 //
 func run(b *Builder, args []string, attributes map[string]bool, original string) error {
 	if b.image == "" && !b.noBaseImage {
-		return fmt.Errorf("Please provide a source image with `from` prior to run")
+		return errors.New("Please provide a source image with `from` prior to run")
 	}
 
 	if err := b.flags.Parse(); err != nil {
@@ -362,34 +364,7 @@ func run(b *Builder, args []string, attributes map[string]bool, original string)
 	defer func(cmd strslice.StrSlice) { b.runConfig.Cmd = cmd }(cmd)
 	defer func(env []string) { b.runConfig.Env = env }(env)
 
-	// derive the net build-time environment for this run. We let config
-	// environment override the build time environment.
-	// This means that we take the b.buildArgs list of env vars and remove
-	// any of those variables that are defined as part of the container. In other
-	// words, anything in b.Config.Env. What's left is the list of build-time env
-	// vars that we need to add to each RUN command - note the list could be empty.
-	//
-	// We don't persist the build time environment with container's config
-	// environment, but just sort and prepend it to the command string at time
-	// of commit.
-	// This helps with tracing back the image's actual environment at the time
-	// of RUN, without leaking it to the final image. It also aids cache
-	// lookup for same image built with same build time environment.
-	cmdBuildEnv := []string{}
-	configEnv := runconfigopts.ConvertKVStringsToMap(b.runConfig.Env)
-	for key, val := range b.options.BuildArgs {
-		if !b.isBuildArgAllowed(key) {
-			// skip build-args that are not in allowed list, meaning they have
-			// not been defined by an "ARG" Dockerfile command yet.
-			// This is an error condition but only if there is no "ARG" in the entire
-			// Dockerfile, so we'll generate any necessary errors after we parsed
-			// the entire file (see 'leftoverArgs' processing in evaluator.go )
-			continue
-		}
-		if _, ok := configEnv[key]; !ok && val != nil {
-			cmdBuildEnv = append(cmdBuildEnv, fmt.Sprintf("%s=%s", key, *val))
-		}
-	}
+	cmdBuildEnv := b.buildArgsWithoutConfigEnv()
 
 	// derive the command to use for probeCache() and to commit in this container.
 	// Note that we only do this if there are any build-time env vars.  Also, we
@@ -472,7 +447,7 @@ func cmd(b *Builder, args []string, attributes map[string]bool, original string)
 }
 
 // parseOptInterval(flag) is the duration of flag.Value, or 0 if
-// empty. An error is reported if the value is given and is not positive.
+// empty. An error is reported if the value is given and less than 1 second.
 func parseOptInterval(f *Flag) (time.Duration, error) {
 	s := f.Value
 	if s == "" {
@@ -482,8 +457,8 @@ func parseOptInterval(f *Flag) (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
-	if d <= 0 {
-		return 0, fmt.Errorf("Interval %#v must be positive", f.name)
+	if d < time.Duration(time.Second) {
+		return 0, fmt.Errorf("Interval %#v cannot be less than 1 second", f.name)
 	}
 	return d, nil
 }
@@ -501,7 +476,7 @@ func healthcheck(b *Builder, args []string, attributes map[string]bool, original
 	args = args[1:]
 	if typ == "NONE" {
 		if len(args) != 0 {
-			return fmt.Errorf("HEALTHCHECK NONE takes no arguments")
+			return errors.New("HEALTHCHECK NONE takes no arguments")
 		}
 		test := strslice.StrSlice{typ}
 		b.runConfig.Healthcheck = &container.HealthConfig{
@@ -529,7 +504,7 @@ func healthcheck(b *Builder, args []string, attributes map[string]bool, original
 		case "CMD":
 			cmdSlice := handleJSONArgs(args, attributes)
 			if len(cmdSlice) == 0 {
-				return fmt.Errorf("Missing command after HEALTHCHECK CMD")
+				return errors.New("Missing command after HEALTHCHECK CMD")
 			}
 
 			if !attributes["json"] {
@@ -690,7 +665,7 @@ func volume(b *Builder, args []string, attributes map[string]bool, original stri
 	for _, v := range args {
 		v = strings.TrimSpace(v)
 		if v == "" {
-			return fmt.Errorf("VOLUME specified can not be an empty string")
+			return errors.New("VOLUME specified can not be an empty string")
 		}
 		b.runConfig.Volumes[v] = struct{}{}
 	}
@@ -721,7 +696,7 @@ func stopSignal(b *Builder, args []string, attributes map[string]bool, original 
 // ARG name[=value]
 //
 // Adds the variable foo to the trusted list of variables that can be passed
-// to builder using the --build-arg flag for expansion/subsitution or passing to 'run'.
+// to builder using the --build-arg flag for expansion/substitution or passing to 'run'.
 // Dockerfile author may optionally set a default value of this variable.
 func arg(b *Builder, args []string, attributes map[string]bool, original string) error {
 	if len(args) != 1 {

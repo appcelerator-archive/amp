@@ -23,15 +23,13 @@ import:
   - api/types/container
   - api/types/events
   - api/types/filters
-  - api/types/mount
   - api/types/network
   - api/types/reference
   - api/types/swarm
-  - cli/command
-  - cli/flags
   - client
   - pkg/stdcopy
   - pkg/stringid
+  - pkg/templates
 - package: github.com/coreos/etcd
   version: ^3.1.4
   subpackages:

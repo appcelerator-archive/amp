@@ -21,6 +21,7 @@ dockerd - Enable daemon mode
 [**--default-gateway**[=*DEFAULT-GATEWAY*]]
 [**--default-gateway-v6**[=*DEFAULT-GATEWAY-V6*]]
 [**--default-runtime**[=*runc*]]
+[**--default-shm-size**[=*64MiB*]]
 [**--default-ulimit**[=*[]*]]
 [**--disable-legacy-registry**]
 [**--dns**[=*[]*]]
@@ -163,6 +164,9 @@ $ sudo dockerd --add-runtime runc=runc --add-runtime custom=/usr/local/bin/my-ru
 
 **--default-runtime**="runc"
   Set default runtime if there're more than one specified by `--add-runtime`.
+
+**--default-shm-size**=*64MiB*
+  Set the daemon-wide default shm size for containers. Default is `64MiB`.
 
 **--default-ulimit**=[]
   Default ulimits for containers.
@@ -649,7 +653,7 @@ Example use: `dockerd -s zfs --storage-opt zfs.fsname=zroot/docker`
 
 #### btrfs.min_space
 
-Specifies the mininum size to use when creating the subvolume which is used for
+Specifies the minimum size to use when creating the subvolume which is used for
 containers. If user uses disk quota for btrfs when creating or running a
 container with **--storage-opt size** option, docker should ensure the **size**
 cannot be smaller than **btrfs.min_space**.
@@ -704,6 +708,24 @@ For information about how to create an authorization plugin, see [authorization
 plugin](https://docs.docker.com/engine/extend/authorization/) section in the
 Docker extend section of this documentation.
 
+# RUNTIME EXECUTION OPTIONS
+
+You can configure the runtime using options specified with the `--exec-opt` flag.
+All the flag's options have the `native` prefix. A single `native.cgroupdriver`
+option is available.
+
+The `native.cgroupdriver` option specifies the management of the container's
+cgroups. You can only specify `cgroupfs` or `systemd`. If you specify
+`systemd` and it is not available, the system errors out. If you omit the
+`native.cgroupdriver` option,` cgroupfs` is used.
+
+This example sets the `cgroupdriver` to `systemd`:
+
+```bash
+$ sudo dockerd --exec-opt native.cgroupdriver=systemd
+```
+
+Setting this option applies to all containers the daemon launches.
 
 # HISTORY
 Sept 2015, Originally compiled by Shishir Mahajan <shishir.mahajan@redhat.com>
