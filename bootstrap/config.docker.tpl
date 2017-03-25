@@ -18,8 +18,8 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "docker:dind"{{ if ref "/docker/registry/host" }},
-              "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }}
+              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
+              "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "Privileged": true
@@ -85,8 +85,8 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "docker:dind"{{ if ref "/docker/registry/host" }},
-              "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }}
+              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
+              "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "Privileged": true
@@ -142,7 +142,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "docker:dind"{{ if ref "/docker/registry/host" }},
+              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
               "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }} {{ if ref "/docker/ports/exposed" }},
               "ExposedPorts": {{ ref "/docker/ports/exposed" | to_json }} {{ end }}
             },
