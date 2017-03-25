@@ -1,17 +1,21 @@
 package: github.com/appcelerator/amp
 import:
+- package: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+- package: github.com/spf13/cobra
+  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
+- package: github.com/spf13/viper
+  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - package: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
   - ptypes/empty
-- package: github.com/coreos/etcd
-  version: ^3.1.4
+- package: google.golang.org/grpc
+  version: ^1.2.0
   subpackages:
-  - clientv3
-  - mvcc/mvccpb
-- package: github.com/dgrijalva/jwt-go
-  version: ^3.0.0
+  - codes
+  - metadata
 - package: github.com/docker/distribution
   version: ^2.6.0
   subpackages:
@@ -33,6 +37,13 @@ import:
   - pkg/stdcopy
   - pkg/stringid
   - utils/templates
+- package: github.com/coreos/etcd
+  version: ^3.1.4
+  subpackages:
+  - clientv3
+  - mvcc/mvccpb
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
 - package: github.com/fatih/color
   version: ^1.4.1
 - package: github.com/fatih/structs
@@ -58,19 +69,11 @@ import:
   version: ^3.3.1
   subpackages:
   - helpers/mail
-- package: github.com/spf13/cobra
-- package: github.com/spf13/pflag
-- package: github.com/spf13/viper
 - package: golang.org/x/net
   subpackages:
   - context
   - websocket
   - lex/httplex
-- package: google.golang.org/grpc
-  version: ^1.2.0
-  subpackages:
-  - codes
-  - metadata
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.30
 - package: gopkg.in/yaml.v2

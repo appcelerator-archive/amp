@@ -57,9 +57,6 @@ type Command struct {
 	Deprecated string
 	// Is this command hidden and should NOT show up in the list of available commands?
 	Hidden bool
-	// Annotations are key/value pairs that can be used by applications to identify or
-	// group commands
-	Annotations map[string]string
 	// Full set of flags
 	flags *flag.FlagSet
 	// Set of flags childrens of this command will inherit
@@ -155,12 +152,12 @@ func (c *Command) SetUsageTemplate(s string) {
 }
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
-// fails.
+// fails
 func (c *Command) SetFlagErrorFunc(f func(*Command, error) error) {
 	c.flagErrorFunc = f
 }
 
-// SetHelpFunc sets help function. Can be defined by Application.
+// SetHelpFunc sets help function. Can be defined by Application
 func (c *Command) SetHelpFunc(f func(*Command, []string)) {
 	c.helpFunc = f
 }
@@ -187,7 +184,7 @@ func (c *Command) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string
 	}
 }
 
-// OutOrStdout returns output to stdout.
+// OutOrStdout returns output to stdout
 func (c *Command) OutOrStdout() io.Writer {
 	return c.getOut(os.Stdout)
 }
@@ -345,19 +342,19 @@ Aliases:
 {{end}}{{if .HasExample}}
 
 Examples:
-{{ .Example }}{{end}}{{if .HasAvailableSubCommands}}
+{{ .Example }}{{end}}{{ if .HasAvailableSubCommands}}
 
-Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+Available Commands:{{range .Commands}}{{if .IsAvailableCommand}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{ if .HasAvailableLocalFlags}}
 
 Flags:
-{{.LocalFlags.FlagUsages | trimRightSpace}}{{end}}{{if .HasAvailableInheritedFlags}}
+{{.LocalFlags.FlagUsages | trimRightSpace}}{{end}}{{ if .HasAvailableInheritedFlags}}
 
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimRightSpace}}{{end}}{{if .HasHelpSubCommands}}
 
-Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+Additional help topics:{{range .Commands}}{{if .IsHelpCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{ if .HasAvailableSubCommands }}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
@@ -384,18 +381,20 @@ func (c *Command) resetChildrensParents() {
 	}
 }
 
-func hasNoOptDefVal(name string, f *flag.FlagSet) bool {
+// Test if the named flag is a boolean flag.
+func isBooleanFlag(name string, f *flag.FlagSet) bool {
 	flag := f.Lookup(name)
 	if flag == nil {
 		return false
 	}
-	return len(flag.NoOptDefVal) > 0
+	return flag.Value.Type() == "bool"
 }
 
-func shortHasNoOptDefVal(name string, fs *flag.FlagSet) bool {
+// Test if the named flag is a boolean flag.
+func isBooleanShortFlag(name string, f *flag.FlagSet) bool {
 	result := false
-	fs.VisitAll(func(flag *flag.Flag) {
-		if flag.Shorthand == name && len(flag.NoOptDefVal) > 0 {
+	f.VisitAll(func(f *flag.Flag) {
+		if f.Shorthand == name && f.Value.Type() == "bool" {
 			result = true
 		}
 	})
@@ -421,8 +420,8 @@ func stripFlags(args []string, c *Command) []string {
 				inQuote = true
 			case strings.HasPrefix(y, "--") && !strings.Contains(y, "="):
 				// TODO: this isn't quite right, we should really check ahead for 'true' or 'false'
-				inFlag = !hasNoOptDefVal(y[2:], c.Flags())
-			case strings.HasPrefix(y, "-") && !strings.Contains(y, "=") && len(y) == 2 && !shortHasNoOptDefVal(y[1:], c.Flags()):
+				inFlag = !isBooleanFlag(y[2:], c.Flags())
+			case strings.HasPrefix(y, "-") && !strings.Contains(y, "=") && len(y) == 2 && !isBooleanShortFlag(y[1:], c.Flags()):
 				inFlag = true
 			case inFlag:
 				inFlag = false
@@ -456,7 +455,7 @@ func argsMinusFirstX(args []string, x string) []string {
 	return args
 }
 
-// Find the target command given the args and command tree
+// Find finds the target command given the args and command tree
 // Meant to be run on the highest node. Only searches down.
 func (c *Command) Find(args []string) (*Command, []string, error) {
 	if c == nil {
@@ -696,6 +695,7 @@ func (c *Command) Execute() error {
 
 // ExecuteC executes the command.
 func (c *Command) ExecuteC() (cmd *Command, err error) {
+
 	// Regardless of what command execute is called on, run on Root only
 	if c.HasParent() {
 		return c.Root().ExecuteC()
@@ -780,7 +780,7 @@ func (c *Command) initHelpCmd() {
 			Run: func(c *Command, args []string) {
 				cmd, _, e := c.Root().Find(args)
 				if cmd == nil || e != nil {
-					c.Printf("Unknown help topic %#q\n", args)
+					c.Printf("Unknown help topic %#q.", args)
 					c.Root().Usage()
 				} else {
 					cmd.Help()
@@ -788,7 +788,6 @@ func (c *Command) initHelpCmd() {
 			},
 		}
 	}
-	c.RemoveCommand(c.helpCommand)
 	c.AddCommand(c.helpCommand)
 }
 
@@ -970,8 +969,7 @@ func (c *Command) Name() string {
 	if i >= 0 {
 		name = name[:i]
 	}
-	c.name = name
-	return c.name
+	return name
 }
 
 // HasAlias determines if a given string is an alias of the command.
@@ -1022,12 +1020,11 @@ func (c *Command) IsAvailableCommand() bool {
 	return false
 }
 
-// IsAdditionalHelpTopicCommand determines if a command is an additional
-// help topic command; additional help topic command is determined by the
-// fact that it is NOT runnable/hidden/deprecated, and has no sub commands that
-// are runnable/hidden/deprecated.
-// Concrete example: https://github.com/spf13/cobra/issues/393#issuecomment-282741924.
-func (c *Command) IsAdditionalHelpTopicCommand() bool {
+// IsHelpCommand determines if a command is a 'help' command; a help command is
+// determined by the fact that it is NOT runnable/hidden/deprecated, and has no
+// sub commands that are runnable/hidden/deprecated.
+func (c *Command) IsHelpCommand() bool {
+
 	// if a command is runnable, deprecated, or hidden it is not a 'help' command
 	if c.Runnable() || len(c.Deprecated) != 0 || c.Hidden {
 		return false
@@ -1035,7 +1032,7 @@ func (c *Command) IsAdditionalHelpTopicCommand() bool {
 
 	// if any non-help sub commands are found, the command is not a 'help' command
 	for _, sub := range c.commands {
-		if !sub.IsAdditionalHelpTopicCommand() {
+		if !sub.IsHelpCommand() {
 			return false
 		}
 	}
@@ -1048,9 +1045,10 @@ func (c *Command) IsAdditionalHelpTopicCommand() bool {
 // that need to be shown in the usage/help default template under 'additional help
 // topics'.
 func (c *Command) HasHelpSubCommands() bool {
+
 	// return true on the first found available 'help' sub command
 	for _, sub := range c.commands {
-		if sub.IsAdditionalHelpTopicCommand() {
+		if sub.IsHelpCommand() {
 			return true
 		}
 	}
@@ -1062,6 +1060,7 @@ func (c *Command) HasHelpSubCommands() bool {
 // HasAvailableSubCommands determines if a command has available sub commands that
 // need to be shown in the usage/help default template under 'available commands'.
 func (c *Command) HasAvailableSubCommands() bool {
+
 	// return true on the first found available (non deprecated/help/hidden)
 	// sub command
 	for _, sub := range c.commands {
