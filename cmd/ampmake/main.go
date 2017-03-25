@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/mitchellh/go-homedir"
 )
@@ -52,13 +51,11 @@ func init() {
 func main() {
 	args := []string{
 		"make",
-		"-f",
-		"Makefile.refactor.make",
 	}
 
 	if len(os.Args) > 1 {
 		args = append(args, os.Args[1:]...)
-		fmt.Println(strings.Join(args, " "))
+		//fmt.Println(strings.Join(args, " "))
 	}
 
 	cmd := "docker"
