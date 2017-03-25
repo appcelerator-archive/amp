@@ -14,7 +14,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/version"
@@ -194,12 +193,6 @@ func registerStorageServer(c *amp.Config, s *grpc.Server) {
 func registerStatsServer(c *amp.Config, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Influx: runtime.Influx,
-	})
-}
-
-func registerServiceServer(c *amp.Config, s *grpc.Server) {
-	service.RegisterServiceServer(s, &service.Service{
-		Docker: runtime.Docker,
 	})
 }
 
