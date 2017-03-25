@@ -3,21 +3,11 @@ sudo: required
 services:
   - docker
 
-language: go
-
-go:
-  - 1.7.x
-
 install:
   - sudo sysctl -w vm.max_map_count=262144
-  - go get -u github.com/golang/lint/golint
   - sudo apt-get update
   - sudo apt-get install docker-engine
-  - docker swarm init --advertise-addr 127.0.0.1
-  - docker network create -d overlay --attachable swarmnet
-  - make fmt check
-  - hack/amptools make -f Makefile.refactor.make cleanall
-  - hack/amptools make -f Makefile.refactor.make build
+  - bin/linux/amd64/ampmake cleanall build
 
 script:
 
@@ -25,3 +15,4 @@ after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
       echo "Docker image publication has been disabled for now";
     fi
+
