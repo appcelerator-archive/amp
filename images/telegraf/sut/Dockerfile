@@ -1,4 +1,4 @@
-From appcelerator/alpine:3.5.1
+From appcelerator/alpine:3.5.2
 RUN apk --update add docker bind-tools@edge
 RUN apk upgrade && \
     apk --update add go git musl musl-dev && \
