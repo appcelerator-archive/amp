@@ -12,10 +12,10 @@ import (
 	"github.com/docker/docker/api"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/versions"
+	cliconfig "github.com/docker/docker/cli/config"
+	"github.com/docker/docker/cli/config/configfile"
+	"github.com/docker/docker/cli/config/credentials"
 	cliflags "github.com/docker/docker/cli/flags"
-	"github.com/docker/docker/cliconfig"
-	"github.com/docker/docker/cliconfig/configfile"
-	"github.com/docker/docker/cliconfig/credentials"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/dockerversion"
 	dopts "github.com/docker/docker/opts"
@@ -32,7 +32,16 @@ type Streams interface {
 	Err() io.Writer
 }
 
-// DockerCli represents the docker command line client.
+// Cli represents the docker command line client.
+type Cli interface {
+	Client() client.APIClient
+	Out() *OutStream
+	Err() io.Writer
+	In() *InStream
+	ConfigFile() *configfile.ConfigFile
+}
+
+// DockerCli is an instance the docker command line client.
 // Instances of the client can be returned from NewDockerCli.
 type DockerCli struct {
 	configFile      *configfile.ConfigFile
@@ -42,12 +51,18 @@ type DockerCli struct {
 	keyFile         string
 	client          client.APIClient
 	hasExperimental bool
+	osType          string
 	defaultVersion  string
 }
 
 // HasExperimental returns true if experimental features are accessible.
 func (cli *DockerCli) HasExperimental() bool {
 	return cli.hasExperimental
+}
+
+// OSType returns the operating system the daemon is running on.
+func (cli *DockerCli) OSType() string {
+	return cli.osType
 }
 
 // DefaultVersion returns api.defaultVersion of DOCKER_API_VERSION if specified.
@@ -150,13 +165,14 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	cli.defaultVersion = cli.client.ClientVersion()
 
 	if opts.Common.TrustKey == "" {
-		cli.keyFile = filepath.Join(cliconfig.ConfigDir(), cliflags.DefaultTrustKeyFile)
+		cli.keyFile = filepath.Join(cliconfig.Dir(), cliflags.DefaultTrustKeyFile)
 	} else {
 		cli.keyFile = opts.Common.TrustKey
 	}
 
 	if ping, err := cli.client.Ping(context.Background()); err == nil {
 		cli.hasExperimental = ping.Experimental
+		cli.osType = ping.OSType
 
 		// since the new header was added in 1.25, assume server is 1.24 if header is not present.
 		if ping.APIVersion == "" {
@@ -179,7 +195,7 @@ func NewDockerCli(in io.ReadCloser, out, err io.Writer) *DockerCli {
 // LoadDefaultConfigFile attempts to load the default config file and returns
 // an initialized ConfigFile struct if none is found.
 func LoadDefaultConfigFile(err io.Writer) *configfile.ConfigFile {
-	configFile, e := cliconfig.Load(cliconfig.ConfigDir())
+	configFile, e := cliconfig.Load(cliconfig.Dir())
 	if e != nil {
 		fmt.Fprintf(err, "WARNING: Error loading config file:%v\n", e)
 	}

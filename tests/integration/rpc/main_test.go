@@ -10,7 +10,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/appcelerator/amp/data/accounts"
@@ -29,7 +28,6 @@ var (
 	store          storage.Interface
 	functionClient function.FunctionClient
 	statsClient    stats.StatsClient
-	serviceClient  service.ServiceClient
 	logsClient     logs.LogsClient
 	accountClient  account.AccountClient
 	accountStore   accounts.Interface
@@ -76,7 +74,6 @@ func TestMain(m *testing.M) {
 
 	// Authenticated clients
 	statsClient = stats.NewStatsClient(authenticatedConn)
-	serviceClient = service.NewServiceClient(authenticatedConn)
 	logsClient = logs.NewLogsClient(authenticatedConn)
 
 	// Anonymous clients

@@ -8,11 +8,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/distribution/digest"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
@@ -20,8 +21,8 @@ import (
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/docker/docker/plugin/v2"
-	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
 
@@ -314,11 +315,36 @@ func attachToLog(id string) func(libcontainerd.IOPipe) error {
 }
 
 func validatePrivileges(requiredPrivileges, privileges types.PluginPrivileges) error {
-	// todo: make a better function that doesn't check order
-	if !reflect.DeepEqual(privileges, requiredPrivileges) {
+	if !isEqual(requiredPrivileges, privileges, isEqualPrivilege) {
 		return errors.New("incorrect privileges")
 	}
+
 	return nil
+}
+
+func isEqual(arrOne, arrOther types.PluginPrivileges, compare func(x, y types.PluginPrivilege) bool) bool {
+	if len(arrOne) != len(arrOther) {
+		return false
+	}
+
+	sort.Sort(arrOne)
+	sort.Sort(arrOther)
+
+	for i := 1; i < arrOne.Len(); i++ {
+		if !compare(arrOne[i], arrOther[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isEqualPrivilege(a, b types.PluginPrivilege) bool {
+	if a.Name != b.Name {
+		return false
+	}
+
+	return reflect.DeepEqual(a.Value, b.Value)
 }
 
 func configToRootFS(c []byte) (*image.RootFS, error) {

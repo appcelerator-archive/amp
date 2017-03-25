@@ -1,10 +1,6 @@
-hash: 944c149eeb533ed7025bd9ef859437cff04687f85094055f0e804989614c4a66
-updated: 2017-03-25T01:25:01.522641595Z
+hash: 3f8347cdf96f0ca66ab1dc0e7bc6f79eb5697b9d35fc15abb83fdd4b8553efc5
+updated: 2017-03-25T05:47:21.362225691Z
 imports:
-- name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
-  subpackages:
-  - winterm
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
@@ -27,30 +23,22 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/docker/distribution
-  version: 0d39820aa79e678113b010bae558345fda98db53
+  version: 0700fa570d7bcc1b3e46ee127c4489fd25f4daa3
   subpackages:
   - context
-  - digest
+  - digestset
   - reference
-  - registry/api/errcode
-  - registry/api/v2
-  - registry/client
-  - registry/client/auth
-  - registry/client/auth/challenge
-  - registry/client/transport
-  - registry/storage/cache
-  - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
+  version: d2532c636f03ea12744c4aec62562d78e5cde8ae
   subpackages:
   - api
-  - api/server/httputils
   - api/types
   - api/types/blkiodev
   - api/types/container
   - api/types/events
   - api/types/filters
+  - api/types/image
   - api/types/mount
   - api/types/network
   - api/types/reference
@@ -60,56 +48,16 @@ imports:
   - api/types/time
   - api/types/versions
   - api/types/volume
-  - cli/command
-  - cli/flags
-  - cliconfig
-  - cliconfig/configfile
-  - cliconfig/credentials
   - client
-  - daemon/graphdriver
-  - dockerversion
-  - image
-  - image/v1
-  - layer
-  - oci
-  - opts
-  - pkg/archive
-  - pkg/chrootarchive
-  - pkg/fileutils
-  - pkg/homedir
-  - pkg/httputils
-  - pkg/idtools
   - pkg/ioutils
-  - pkg/jsonlog
-  - pkg/jsonmessage
   - pkg/longpath
-  - pkg/mount
-  - pkg/parsers/kernel
-  - pkg/plugingetter
-  - pkg/plugins
-  - pkg/plugins/transport
-  - pkg/pools
-  - pkg/promise
   - pkg/random
-  - pkg/reexec
   - pkg/stdcopy
   - pkg/stringid
   - pkg/system
-  - pkg/tarsum
-  - pkg/term
-  - pkg/term/windows
+  - pkg/templates
   - pkg/testutil/assert
   - pkg/tlsconfig
-  - pkg/useragent
-  - plugin/v2
-  - reference
-  - registry
-  - utils/templates
-- name: github.com/docker/docker-credential-helpers
-  version: 71779cf7f595bf47f5a56d0629ce044e59b1cffa
-  subpackages:
-  - client
-  - credentials
 - name: github.com/docker/go-connections
   version: a2afab9802043837035592f1c24827fb70766de9
   subpackages:
@@ -119,7 +67,7 @@ imports:
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
-  version: fa567046d9b14f6aa788882a950d69651d230b21
+  version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/fatih/structs
@@ -142,10 +90,6 @@ imports:
   - jsonpb
   - proto
   - ptypes/empty
-- name: github.com/gorilla/context
-  version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
-- name: github.com/gorilla/mux
-  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -195,8 +139,6 @@ imports:
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
-- name: github.com/mattn/go-shellwords
-  version: 005a0944d84452842197c2108bd9168ced206f78
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
@@ -206,7 +148,7 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
-  version: 482a9fd5fa83e8c4e7817413b80f3eb8feec03ef
+  version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/nats-io/go-nats
   version: 61923ed1eaf8398000991fbbee2ef11ab5a5be0d
 - name: github.com/nats-io/go-nats-streaming
@@ -222,17 +164,8 @@ imports:
   version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
 - name: github.com/oleiade/reflections
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
-- name: github.com/opencontainers/runc
-  version: ef9a4b315558d31eae520725ff67383c2f79c3cb
-  subpackages:
-  - libcontainer/configs
-  - libcontainer/devices
-  - libcontainer/system
-  - libcontainer/user
-- name: github.com/opencontainers/runtime-spec
-  version: e659613ba5a720bcc11afa54461970a6eec163a7
-  subpackages:
-  - specs-go
+- name: github.com/opencontainers/go-digest
+  version: aa2ec055abd10d26d539eb630a92241b781ce4bc
 - name: github.com/ory-am/common
   version: eaf2f2a2e18295ffc4e89d07a9556903d22b4e79
   subpackages:
@@ -279,7 +212,7 @@ imports:
   subpackages:
   - helpers/mail
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -299,18 +232,11 @@ imports:
   subpackages:
   - assert
   - require
-- name: github.com/vbatts/tar-split
-  version: b9127a139315e57ebc26030e7decf72d0a20acb4
-  subpackages:
-  - archive/tar
-  - tar/asm
-  - tar/storage
 - name: golang.org/x/crypto
-  version: c10c31b5e94b6f7a0283272dc2bb27163dcea24b
+  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
   subpackages:
   - bcrypt
   - blowfish
-  - ocsp
   - pbkdf2
   - scrypt
   - ssh/terminal
@@ -329,7 +255,6 @@ imports:
   - websocket
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
-  repo: https://go.googlesource.com/sys
   subpackages:
   - unix
   - windows
@@ -395,8 +320,12 @@ imports:
   - internal/pool
   - internal/proto
 - name: gopkg.in/yaml.v2
-  version: bef53efd0c76e49e6de55ead051f886bea7e9420
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 testImports:
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
 - name: github.com/kballard/go-shellquote
   version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
 - name: github.com/kr/pty

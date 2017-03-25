@@ -13,6 +13,27 @@ keywords: "API, Docker, rcli, REST, documentation"
      will be rejected.
 -->
 
+## v1.28 API changes
+
+[Docker Engine API v1.28](https://docs.docker.com/engine/api/v1.28/) documentation
+
+
+* `GET /containers/create` now takes a `DeviceCgroupRules` field in `HostConfig` allowing to set custom device cgroup rules for the created container.
+* Optional query parameter `verbose` for `GET /networks/(id or name)` will now list all services with all the tasks, including the non-local tasks on the given network.
+* `GET /containers/(id or name)/attach/ws` now returns WebSocket in binary frame format for API version >= v1.28, and returns WebSocket in text frame format for API version< v1.28, for the purpose of backward-compatibility.
+* `GET /networks` is optimised only to return list of all networks and network specific information. List of all containers attached to a specific network is removed from this API and is only available using the network specific `GET /networks/{network-id}.
+* `GET /containers/json` now supports `publish` and `expose` filters to filter containers that expose or publish certain ports.
+* `POST /services/create` and `POST /services/(id or name)/update` now accept the `ReadOnly` parameter, which mounts the container's root filesystem as read only.
+* `POST /build` now accepts `extrahosts` parameter to specify a host to ip mapping to use during the build.
+* `POST /services/create` and `POST /services/(id or name)/update` now accept a `rollback` value for `FailureAction`.
+* `POST /services/create` and `POST /services/(id or name)/update` now accept an optional `RollbackConfig` object which specifies rollback options.
+
+## v1.27 API changes
+
+[Docker Engine API v1.27](https://docs.docker.com/engine/api/v1.27/) documentation
+
+* `GET /containers/(id or name)/stats` now includes an `online_cpus` field in both `precpu_stats` and `cpu_stats`. If this field is `nil` then for compatibility with older daemons the length of the corresponding `cpu_usage.percpu_usage` array should be used.
+
 ## v1.26 API changes
 
 [Docker Engine API v1.26](https://docs.docker.com/engine/api/v1.26/) documentation
@@ -83,6 +104,9 @@ keywords: "API, Docker, rcli, REST, documentation"
 * `DELETE /secrets/{id}` removes the secret `id`.
 * `GET /secrets/{id}` returns information on the secret `id`.
 * `POST /secrets/{id}/update` updates the secret `id`.
+* `POST /services/(id or name)/update` now accepts service name or prefix of service id as a parameter.
+* `POST /containers/create` added 2 built-in log-opts that work on all logging drivers,
+`mode` (`blocking`|`non-blocking`), and `max-buffer-size` (e.g. `2m`) which enables a non-blocking log buffer.
 
 ## v1.24 API changes
 

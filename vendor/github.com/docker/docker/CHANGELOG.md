@@ -5,6 +5,117 @@ information on the list of deprecated flags and APIs please have a look at
 https://docs.docker.com/engine/deprecated/ where target removal dates can also
 be found.
 
+## 17.04.0-ce (2017-04-05)
+
+### Client
++ Sort `docker stack ls` by name [#31085](https://github.com/docker/docker/pull/31085)
++ Flags for specifying bind mount consistency [#31047](https://github.com/docker/docker/pull/31047)
+* Suppressing image digest in docker ps [#30848](https://github.com/docker/docker/pull/30848)
+* Hide command options that are related to Windows [#30788](https://github.com/docker/docker/pull/30788)
+* Fix `docker plugin install` prompt to accept "enter" for the "N" default [#30769](https://github.com/docker/docker/pull/30769)
++ Add `truncate` function for Go templates [#30484](https://github.com/docker/docker/pull/30484)
+* Support expanded syntax of ports in `stack deploy` [#30476](https://github.com/docker/docker/pull/30476)
+* Support expanded syntax of mounts in `stack deploy` [#30597](https://github.com/docker/docker/pull/30597) [#31795](https://github.com/docker/docker/pull/31795)
++ Add `--add-host` for docker build [#30383](https://github.com/docker/docker/pull/30383)
++ Add `.CreatedAt` placeholder for `docker network ls --format` [#29900](https://github.com/docker/docker/pull/29900)
+* Update order of `--secret-rm` and `--secret-add` [#29802](https://github.com/docker/docker/pull/29802)
+* Fix use of `**/` in `.dockerignore` [#29043](https://github.com/docker/docker/pull/29043)
++ Add `--filter enabled=true` for `docker plugin ls` [#28627](https://github.com/docker/docker/pull/28627)
++ Add `--format` to `docker service ls` [#28199](https://github.com/docker/docker/pull/28199)
++ Add `publish` and `expose` filter for `docker ps --filter` [#27557](https://github.com/docker/docker/pull/27557)
+* Support multiple service IDs on `docker service ps` [#25234](https://github.com/docker/docker/pull/25234)
++ Allow swarm join with `--availability=drain` [#24993](https://github.com/docker/docker/pull/24993)
+* Removal of the email from `docker login` [#26868](https://github.com/docker/docker/pull/26868)
+
+### Networking
+* Check parameter `--ip`, `--ip6` and `--link-local-ip` in `docker network connect` [#30807](https://github.com/docker/docker/pull/30807)
++ Added support for `dns-search` [#30117](https://github.com/docker/docker/pull/30117)
++ Added --verbose option for docker network inspect to show task details from all swarm nodes [#31710](https://github.com/docker/docker/pull/31710)
+* Clear stale datapath encryption states when joining the cluster [docker/libnetwork#1354](https://github.com/docker/libnetwork/pull/1354)
++ Ensure iptables initialization only happens once [docker/libnetwork#1676](https://github.com/docker/libnetwork/pull/1676)
+* Fix bad order of iptables filter rules [docker/libnetwork#961](https://github.com/docker/libnetwork/pull/961)
++ Add anonymous container alias to service record on attachable network [docker/libnetwork#1651](https://github.com/docker/libnetwork/pull/1651)
++ Support for `com.docker.network.container_interface_prefix` driver label [docker/libnetwork#1667](https://github.com/docker/libnetwork/pull/1667)
+
+### Runtime
+* Handle paused container when restoring without live-restore set [#31704](https://github.com/docker/docker/pull/31704)
+- Do not allow sub second in healthcheck options in Dockerfile [#31177](https://github.com/docker/docker/pull/31177)
+* Support name and id prefix in  `secret update` [#30856](https://github.com/docker/docker/pull/30856)
+* Use binary frame for websocket attach endpoint [#30460](https://github.com/docker/docker/pull/30460)
+* Fix linux mount calls not applying propagation type changes [#30416](https://github.com/docker/docker/pull/30416)
+* Fix ExecIds leak on failed `exec -i` [#30340](https://github.com/docker/docker/pull/30340)
+* Prune named but untagged images if `danglingOnly=true` [#30330](https://github.com/docker/docker/pull/30330)
++ Add daemon flag to set `no_new_priv` as default for unprivileged containers [#29984](https://github.com/docker/docker/pull/29984)
++ Add daemon option `--default-shm-size` [#29692](https://github.com/docker/docker/pull/29692)
++ Support registry mirror config reload [#29650](https://github.com/docker/docker/pull/29650)
+- Ignore the daemon log config when building images [#29552](https://github.com/docker/docker/pull/29552)
+* Move secret name or ID prefix resolving from client to daemon [#29218](https://github.com/docker/docker/pull/29218)
++ Implement optional ring buffer for container logs [#28762](https://github.com/docker/docker/pull/28762)
++ Allow adding rules to `cgroup devices.allow` on container create/run [#22563](https://github.com/docker/docker/pull/22563)
+
+### Swarm Mode
++ Topology-aware scheduling [#30725](https://github.com/docker/docker/pull/30725)
++ Automatic service rollback on failure [#31108](https://github.com/docker/docker/pull/31108)
++ Worker and manager on the same node are now connected through a UNIX socket [docker/swarmkit#1828](https://github.com/docker/swarmkit/pull/1828), [docker/swarmkit#1850](https://github.com/docker/swarmkit/pull/1850), [docker/swarmkit#1851](https://github.com/docker/swarmkit/pull/1851)
+* Improve raft transport package [docker/swarmkit#1748](https://github.com/docker/swarmkit/pull/1748)
+* No automatic manager shutdown on demotion/removal [docker/swarmkit#1829](https://github.com/docker/swarmkit/pull/1829)
+* Use TransferLeadership to make leader demotion safer [docker/swarmkit#1939](https://github.com/docker/swarmkit/pull/1939)
+* Decrease default monitoring period [docker/swarmkit#1967](https://github.com/docker/swarmkit/pull/1967)
++ Add Service logs formatting [#31672](https://github.com/docker/docker/pull/31672)
+* Fix service logs API to be able to specify stream [#31313](https://github.com/docker/docker/pull/31313)
++ Add `--stop-signal` for `service create` and `service update` [#30754](https://github.com/docker/docker/pull/30754)
++ Add `--read-only` for `service create` and `service update` [#30162](https://github.com/docker/docker/pull/30162)
++ Renew the context after communicating with the registry [#31586](https://github.com/docker/docker/pull/31586)
+
+### Windows
+* Wait for OOBE to prevent crashing during host update [#31054](https://github.com/docker/docker/pull/31054)
+* Block pulling Windows images on non-Windows daemons [#29001](https://github.com/docker/docker/pull/29001)
+
+## 17.03.0-ce (2017-03-01)
+
+**IMPORTANT**: Starting with this release, Docker is on a monthly release cycle and uses a
+new YY.MM versioning scheme to reflect this. Two channels are available: monthly and quarterly.
+Any given monthly release will only receive security and bugfixes until the next monthly
+release is available. Quarterly releases receive security and bugfixes for 4 months after
+initial release. This release includes bugfixes for 1.13.1 but
+there are no major feature additions and the API version stays the same.
+Upgrading from Docker 1.13.1 to 17.03.0 is expected to be simple and low-risk.
+
+### Client
+
+* Fix panic in `docker stats --format` [#30776](https://github.com/docker/docker/pull/30776)
+
+### Contrib
+
+* Update various `bash` and `zsh` completion scripts [#30823](https://github.com/docker/docker/pull/30823), [#30945](https://github.com/docker/docker/pull/30945) and more...
+* Block obsolete socket families in default seccomp profile - mitigates unpatched kernels' CVE-2017-6074 [#29076](https://github.com/docker/docker/pull/29076)
+
+### Networking
+
+* Fix bug on overlay encryption keys rotation in cross-datacenter swarm [#30727](https://github.com/docker/docker/pull/30727)
+* Fix side effect panic in overlay encryption and network control plane communication failure ("No installed keys could decrypt the message") on frequent swarm leader re-election [#25608](https://github.com/docker/docker/pull/25608)
+* Several fixes around system responsiveness and datapath programming when using overlay network with external kv-store [docker/libnetwork#1639](https://github.com/docker/libnetwork/pull/1639), [docker/libnetwork#1632](https://github.com/docker/libnetwork/pull/1632) and more...
+* Discard incoming plain vxlan packets for encrypted overlay network [#31170](https://github.com/docker/docker/pull/31170)
+* Release the network attachment on allocation failure [#31073](https://github.com/docker/docker/pull/31073)
+* Fix port allocation when multiple published ports map to the same target port [docker/swarmkit#1835](https://github.com/docker/swarmkit/pull/1835)
+
+### Runtime
+
+* Fix a deadlock in docker logs [#30223](https://github.com/docker/docker/pull/30223)
+* Fix cpu spin waiting for log write events [#31070](https://github.com/docker/docker/pull/31070)
+* Fix a possible crash when using journald [#31231](https://github.com/docker/docker/pull/31231) [#31263](https://github.com/docker/docker/pull/31263)
+* Fix a panic on close of nil channel [#31274](https://github.com/docker/docker/pull/31274)
+* Fix duplicate mount point for `--volumes-from` in `docker run` [#29563](https://github.com/docker/docker/pull/29563)
+* Fix `--cache-from` does not cache last step [#31189](https://github.com/docker/docker/pull/31189)
+
+### Swarm Mode
+
+* Shutdown leaks an error when the container was never started [#31279](https://github.com/docker/docker/pull/31279)
+* Fix possibility of tasks getting stuck in the "NEW" state during a leader failover [docker/swarmkit#1938](https://github.com/docker/swarmkit/pull/1938)
+* Fix extraneous task creations for global services that led to confusing replica counts in `docker service ls` [docker/swarmkit#1957](https://github.com/docker/swarmkit/pull/1957)
+* Fix problem that made rolling updates slow when `task-history-limit` was set to 1 [docker/swarmkit#1948](https://github.com/docker/swarmkit/pull/1948)
+* Restart tasks elsewhere, if appropriate, when they are shut down as a result of nodes no longer satisfying constraints [docker/swarmkit#1958](https://github.com/docker/swarmkit/pull/1958)
+
 ## 1.13.1 (2017-02-08)
 
 **IMPORTANT**: On Linux distributions where `devicemapper` was the default storage driver,
@@ -1434,7 +1545,7 @@ that allows to add build-time environment variables (#15182)
 
 - devicemapper: Implement deferred deletion capability (#16381)
 
-## Networking
+### Networking
 
 + `docker network` exits experimental and is part of standard release (#16645)
 + New network top-level concept, with associated subcommands and API (#16645)

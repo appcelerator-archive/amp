@@ -143,7 +143,7 @@ func (daemon *Daemon) create(params types.ContainerCreateConfig, managed bool) (
 	}
 	// Make sure NetworkMode has an acceptable value. We do this to ensure
 	// backwards API compatibility.
-	container.HostConfig = runconfig.SetDefaultNetModeIfBlank(container.HostConfig)
+	runconfig.SetDefaultNetModeIfBlank(container.HostConfig)
 
 	daemon.updateContainerNetworkSettings(container, endpointsConfigs)
 
@@ -151,9 +151,7 @@ func (daemon *Daemon) create(params types.ContainerCreateConfig, managed bool) (
 		logrus.Errorf("Error saving new container to disk: %v", err)
 		return nil, err
 	}
-	if err := daemon.Register(container); err != nil {
-		return nil, err
-	}
+	daemon.Register(container)
 	daemon.LogContainerEvent(container, "create")
 	return container, nil
 }
@@ -210,8 +208,13 @@ func (daemon *Daemon) setRWLayer(container *container.Container) error {
 		layerID = img.RootFS.ChainID()
 	}
 
-	rwLayer, err := daemon.layerStore.CreateRWLayer(container.ID, layerID, container.MountLabel, daemon.getLayerInit(), container.HostConfig.StorageOpt)
+	rwLayerOpts := &layer.CreateRWLayerOpts{
+		MountLabel: container.MountLabel,
+		InitFunc:   daemon.getLayerInit(),
+		StorageOpt: container.HostConfig.StorageOpt,
+	}
 
+	rwLayer, err := daemon.layerStore.CreateRWLayer(container.ID, layerID, rwLayerOpts)
 	if err != nil {
 		return err
 	}

@@ -66,7 +66,7 @@ func (s *Server) UpdateSecret(ctx context.Context, request *api.UpdateSecretRequ
 	err := s.store.Update(func(tx store.Tx) error {
 		secret = store.GetSecret(tx, request.SecretID)
 		if secret == nil {
-			return nil
+			return grpc.Errorf(codes.NotFound, "secret %s not found", request.SecretID)
 		}
 
 		// Check if the Name is different than the current name, or the secret is non-nil and different
@@ -84,9 +84,6 @@ func (s *Server) UpdateSecret(ctx context.Context, request *api.UpdateSecretRequ
 	})
 	if err != nil {
 		return nil, err
-	}
-	if secret == nil {
-		return nil, grpc.Errorf(codes.NotFound, "secret %s not found", request.SecretID)
 	}
 
 	log.G(ctx).WithFields(logrus.Fields{
@@ -159,7 +156,7 @@ func (s *Server) ListSecrets(ctx context.Context, request *api.ListSecretsReques
 	return &api.ListSecretsResponse{Secrets: respSecrets}, nil
 }
 
-// CreateSecret creates and return a `CreateSecretResponse` with a `Secret` based
+// CreateSecret creates and returns a `CreateSecretResponse` with a `Secret` based
 // on the provided `CreateSecretRequest.SecretSpec`.
 // - Returns `InvalidArgument` if the `CreateSecretRequest.SecretSpec` is malformed,
 //   or if the secret data is too long or contains invalid characters.
