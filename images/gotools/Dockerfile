@@ -28,6 +28,8 @@ VOLUME /tmp/glide
 # Custom settings for interactive shell
 ADD etc/profile.d /etc/profile.d
 
+RUN gometalinter --install
+
 # TODO: might want to use /go as the work directory...
 WORKDIR /go/src
 CMD [ "echo", "[gotools] specify the command to run" ]

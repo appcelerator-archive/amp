@@ -155,7 +155,18 @@ rebuild-server: clean-server build-server
 clean-server:
 	@rm -f $(AMPLTARGET)
 
+# =============================================================================
+# Quality checks
+# =============================================================================
+GOSRCS := $(AMPSRC) $(AMPLSRC)
 
-dump:
-	@echo $(DOCKER_CMD)
+# format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
+.PHONY: fmt
+fmt:
+	@gofmt -s -l -w $(GOSRCS)
+
+.PHONY: lint
+lint:
+#	@gometalinter --deadline=30s --disable-all --enable=golint --enable=vet --enable=ineffassign --enable=goconst --enable=goimports --vendor --exclude=vendor ./...
+	@gometalinter --deadline=3m --vendor --exclude=vendor ./...
 
