@@ -1,5 +1,5 @@
-hash: bf9e60e14674d20063cecbf63088d8e4d1cafd23d49de687dd1c9e5514cf6570
-updated: 2017-03-25T00:33:46.593142267Z
+hash: 944c149eeb533ed7025bd9ef859437cff04687f85094055f0e804989614c4a66
+updated: 2017-03-25T01:25:01.522641595Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -315,12 +315,13 @@ imports:
   - scrypt
   - ssh/terminal
 - name: golang.org/x/net
-  version: 4876518f9e71663000c348837735820161a42df7
+  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
   subpackages:
   - context
   - context/ctxhttp
   - http2
   - http2/hpack
+  - idna
   - internal/timeseries
   - lex/httplex
   - proxy
