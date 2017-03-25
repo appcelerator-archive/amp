@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+TAGS=( 1.3 1.3.0 )
+OWNER=appcelerator
+IMAGE=amptools
+
+docker build -t ${OWNER}/${IMAGE} .
+
+for tag in "${TAGS[@]}"
+do
+  docker tag ${OWNER}/${IMAGE} ${OWNER}/${IMAGE}:${tag}
+  docker push ${OWNER}/${IMAGE}:${tag}
+done
+

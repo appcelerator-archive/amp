@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+TAGS=( 1.6 1.6.0 )
+OWNER=appcelerator
+IMAGE=gotools
+
+docker build -t ${OWNER}/${IMAGE} .
+
+for tag in "${TAGS[@]}"
+do
+  docker tag ${OWNER}/${IMAGE} ${OWNER}/${IMAGE}:${tag}
+  docker push ${OWNER}/${IMAGE}:${tag}
+done
+
