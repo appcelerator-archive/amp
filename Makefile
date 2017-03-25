@@ -46,12 +46,8 @@ CLI := amp
 SERVER := amplifier
 AGENT := amp-agent
 LOGWORKER := amp-log-worker
-GATEWAY := amplifier-gateway
 FUNCTION_LISTENER := amp-function-listener
 FUNCTION_WORKER := amp-function-worker
-CLUSTERSERVER := adm-server
-CLUSTERAGENT := adm-agent
-AMPADM := ampadm
 
 TAG ?= latest
 IMAGE := $(OWNER)/amp:$(TAG)
@@ -105,11 +101,8 @@ install-host: proto-host
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(SERVER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_LISTENER)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_WORKER)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
 
 proto: $(PROTOALLTARGETS)
 
@@ -126,16 +119,13 @@ bin-clean:
 	@rm -f coverage.out coverage-all.out
 	@rm -f $$(which $(AGENT)) ./$(AGENT)
 	@rm -f $$(which $(LOGWORKER)) ./$(LOGWORKER)
-	@rm -f $$(which $(GATEWAY)) ./$(GATEWAY)
 	@rm -f $$(which $(FUNCTION_LISTENER)) ./$(FUNCTION_LISTENER)
 	@rm -f $$(which $(FUNCTION_WORKER)) ./$(FUNCTION_WORKER)
-	@rm -f $$(which $(CLUSTERSERVER)) ./$(CLUSTERSERVER)
-	@rm -f $$(which $(CLUSTERAGENT)) ./$(CLUSTERAGENT)
 	@rm -f *.exe
 
 clean: proto-clean bin-clean
 
-install: install-cli install-server install-agent install-log-worker install-gateway install-fn-listener install-fn-worker install-adm-server install-adm-agent install-ampadm
+install: install-cli install-server install-agent install-log-worker install-fn-listener install-fn-worker
 
 DATASRC := $(shell find ./data -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 APISRC := $(shell find ./api -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
@@ -145,7 +135,6 @@ CLISRC := $(shell find ./cmd/amp -type f -name '*.go' -not -name '*.pb.go' -not 
 SERVERSRC := $(shell find ./cmd/amplifier -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 AGENTSRC := $(shell find ./cmd/amp-agent -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 LOGWORKERSRC := $(shell find ./cmd/amp-log-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
-GATEWAYSRC := $(shell find ./cmd/amplifier-gateway -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 FUNCTIONLISTENERSRC := $(shell find ./cmd/amp-function-listener -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 FUNCTIONWORKERSRC := $(shell find ./cmd/amp-function-worker -type f -name '*.go' -not -name '*.pb.go' -not -name '*.pb.gw.go')
 install-cli: $(CLISRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
@@ -156,20 +145,12 @@ install-agent: $(AGENTSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AGENT)
 install-log-worker: $(LOGWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(LOGWORKER)
-install-gateway: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(GATEWAY)
 install-fn-listener: $(FUNCTIONLISTENERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_LISTENER)
 install-fn-worker: $(FUNCTIONWORKERSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
 	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(FUNCTION_WORKER)
-install-adm-server: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERSERVER)
-install-adm-agent: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(CLUSTERAGENT)
-install-ampadm: $(GATEWAYSRC) $(DATASRC) $(APISRC) $(VENDORSRC) $(PROTOALLTARGETS)
-	@go install $(LDFLAGS) $(REPO)/$(CMDDIR)/$(AMPADM)
 
-build: build-cli build-server build-agent build-log-worker build-gateway build-fn-listener build-fn-worker build-adm-server build-adm-agent build-ampadm
+build: build-cli build-server build-agent build-log-worker build-fn-listener build-fn-worker build-adm-server build-adm-agent build-ampadm
 
 build-cli: proto $(CLISRC) $(APISRC) $(VENDORSRC) Makefile
 	@hack/build $(CLI)
@@ -179,14 +160,6 @@ build-agent: proto
 	@hack/build $(AGENT)
 build-log-worker: proto
 	@hack/build $(LOGWORKER)
-build-gateway: proto
-	@hack/build $(GATEWAY)
-build-adm-server: proto
-	@hack/build $(CLUSTERSERVER)
-build-adm-agent: proto
-	@hack/build $(CLUSTERAGENT)
-build-ampadm: proto
-	@hack/build $(AMPADM)
 build-fn-listener: proto
 	@hack/build $(FUNCTION_LISTENER)
 build-fn-worker: proto
@@ -218,18 +191,6 @@ build-server-darwin:
 build-server-windows:
 	@rm -f $(SERVER).exe
 	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(SERVER)
-
-build-ampadm-linux:
-	@rm -f $(AMPADM)
-	@env GOOS=linux GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
-
-build-ampadm-darwin:
-	@rm -f $(AMPADM)
-	@env GOOS=darwin GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
-
-build-ampadm-windows:
-	@rm -f $(AMPADM).exe
-	@env GOOS=windows GOARCH=amd64 VERSION=$(VERSION) BUILD=$(BUILD) hack/build $(AMPADM)
 
 dist-linux: build-cli-linux build-server-linux build-ampadm-linux
 	@rm -f dist/Linux/x86_64/amp-$(VERSION).tgz
@@ -307,4 +268,3 @@ cover:
 
 rules:
 	@hack/print-make-rules
-
