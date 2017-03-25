@@ -45,7 +45,7 @@ func init() {
 		"-e", fmt.Sprintf("REPO=%s", repo),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
-		"appcelerator/amptools:1.1.0",
+		"appcelerator/amptools:1.3",
 	}
 }
 
