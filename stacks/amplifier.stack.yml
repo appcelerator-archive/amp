@@ -52,7 +52,7 @@ services:
         constraints: [node.role == manager]
 
   etcd:
-    image: appcelerator/etcd:3.1.0
+    image: appcelerator/etcd:3.1.4
     command:
       - "--listen-client-urls"
       - "http://0.0.0.0:2379"

@@ -1,11 +1,23 @@
-FROM appcelerator/alpine:3.5.1
-MAINTAINER Nicolas Degory <ndegory@axway.com>
+FROM appcelerator/alpine:3.5.2
 
-ENV TELEGRAF_VERSION 1.1.2
+ENV TELEGRAF_VERSION 1.2.1
+
+ENV GOLANG_VERSION 1.8
+ENV GOLANG_SRC_URL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz
+ENV GOLANG_SRC_SHA256 406865f587b44be7092f206d73fc1de252600b79b3cacc587b74b5ef5c623596
 
 RUN apk update && apk upgrade && \
-    apk --virtual build-deps add go git gcc musl-dev make binutils patch go && \
+    apk --virtual build-deps add go git openssl gcc musl-dev make binutils patch && \
+    export GOROOT_BOOTSTRAP="$(go env GOROOT)" && \
+    wget -q "$GOLANG_SRC_URL" -O golang.tar.gz && \
+    echo "$GOLANG_SRC_SHA256  golang.tar.gz" | sha256sum -c - && \
+    tar -C /usr/local -xzf golang.tar.gz && \
+    rm golang.tar.gz && \
+    cd /usr/local/go/src && \
+    ./make.bash && \
     export GOPATH=/go && \
+    export PATH=/usr/local/go/bin:$PATH && \
+    go version && \
     go get -v github.com/influxdata/telegraf && \
     cd $GOPATH/src/github.com/influxdata/telegraf && \
     if [ $TELEGRAF_VERSION != "master" ]; then git checkout -q --detach "${TELEGRAF_VERSION}" ; fi && \
@@ -13,7 +25,7 @@ RUN apk update && apk upgrade && \
     chmod +x $GOPATH/bin/* && \
     mv $GOPATH/bin/* /bin/ && \
     apk del build-deps && \
-    cd / && rm -rf /var/cache/apk/* $GOPATH && \
+    cd / && rm -rf /var/cache/apk/* $GOPATH /usr/local/go && \
     mkdir -p /etc/telegraf
 
 EXPOSE 8094
