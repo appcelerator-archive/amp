@@ -7,7 +7,7 @@ install:
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
   - sudo apt-get install docker-engine
-  - bin/linux/amd64/ampmake cleanall build
+  - bin/linux/amd64/ampmake clean build
 
 script:
 
