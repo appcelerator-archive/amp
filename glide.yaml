@@ -32,7 +32,6 @@ import:
   - client
   - pkg/stdcopy
   - pkg/stringid
-  - utils/templates
 - package: github.com/coreos/etcd
   version: ^3.1.4
   subpackages:
