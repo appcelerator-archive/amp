@@ -1,5 +1,5 @@
-hash: c9fab1db53e40608d1f5b60e60e0f4f7bc54bcabe7551aa64b0a0e7cea823251
-updated: 2017-03-24T23:59:20.461918823Z
+hash: 509418d43074b35f5154376818a3d8b3066d34bdb620c027af5761c0fcf03f53
+updated: 2017-03-25T00:24:13.823301219Z
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -137,7 +137,7 @@ imports:
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 8d92cf5fc15a4382f8964b08e1f42a75c0591aa3
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - jsonpb
   - proto

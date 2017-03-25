@@ -1,5 +1,10 @@
 package: github.com/appcelerator/amp
 import:
+- package: github.com/golang/protobuf
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  subpackages:
+  - proto
+  - ptypes/empty
 - package: github.com/coreos/etcd
   version: ^3.1.4
   subpackages:
@@ -32,10 +37,6 @@ import:
   version: ^1.4.1
 - package: github.com/fatih/structs
   version: ^1.0.0
-- package: github.com/golang/protobuf
-  subpackages:
-  - proto
-  - ptypes/empty
 - package: github.com/hlandau/passlib
   version: ^1.0.9
 - package: github.com/holys/safe
