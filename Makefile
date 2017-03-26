@@ -158,18 +158,49 @@ clean-server:
 # =============================================================================
 # Quality checks
 # =============================================================================
-GOSRCS := $(AMPSRC) $(AMPLSRC)
+CHECKDIRS := cmd/amp cmd/amplifier api data tests
+CHECKSRCS := $(shell find $(CHECKDIRS) -type f -name '*.go')
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 .PHONY: fmt
 fmt:
-	@gofmt -s -l -w $(GOSRCS)
+	@goimports -l $(CHECKDIRS) && goimports -w $(CHECKDIRS)
+	@gofmt -s -l -w $(CHECKSRCS)
 
 .PHONY: lint
 lint:
-#	@gometalinter --deadline=30s --disable-all --enable=golint --enable=vet --enable=ineffassign --enable=goconst --enable=goimports --vendor --exclude=vendor ./...
-	@gometalinter --deadline=5m --vendor --exclude=vendor ./...
+	@gometalinter --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
+		--sort=path --aggregate \
+		--disable-all \
+		--enable=deadcode \
+		--enable=dupl \
+		--enable=errcheck \
+		--enable=gas \
+		--enable=goconst \
+		--enable=gocyclo \
+		--enable=gofmt \
+		--enable=goimports \
+		--enable=golint \
+		--enable=gosimple \
+		--enable=ineffassign \
+		--enable=interfacer \
+		--enable=staticcheck \
+		--enable=structcheck \
+		--enable=test \
+		--enable=unconvert \
+		--enable=unparam \
+		--enable=unused \
+		--enable=varcheck \
+		--enable=vet \
+		--enable=vetshadow \
+		$(CHECKDIRS)
 
+
+# =============================================================================
+# Misc
+# =============================================================================
+
+# Display all the Makefile rules
 .PHONY: rules
 rules:
 	@hack/print-make-rules
