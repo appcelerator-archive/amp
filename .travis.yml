@@ -9,9 +9,10 @@ install:
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
   - sudo apt-get install docker-engine
-  - bin/linux/amd64/ampmake clean build
 
 script:
+  - bin/linux/amd64/ampmake clean build
+  - ampmake lint
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
