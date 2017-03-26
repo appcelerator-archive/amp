@@ -2,10 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"github.com/ThomasRooney/gexpect"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/ThomasRooney/gexpect"
 )
 
 // SuiteSpec defines the suite fields and the suite data structures.

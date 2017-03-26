@@ -1,14 +1,15 @@
 package accounts
 
 import (
+	"path"
+	"strings"
+	"time"
+
 	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
 	"golang.org/x/net/context"
-	"path"
-	"strings"
-	"time"
 )
 
 const usersRootKey = "users"

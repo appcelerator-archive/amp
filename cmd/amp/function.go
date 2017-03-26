@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"os"
-	"strconv"
-	"strings"
-	"text/tabwriter"
 )
 
 var (

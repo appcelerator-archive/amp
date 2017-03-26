@@ -2,9 +2,12 @@ package logs
 
 import (
 	"encoding/json"
+	"strings"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"strings"
+
+	"log"
 
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
@@ -14,7 +17,6 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v3"
-	"log"
 )
 
 const (

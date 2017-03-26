@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"strings"
+
 	"github.com/appcelerator/amp/api/state"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -16,7 +18,6 @@ import (
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	"strings"
 )
 
 const (
