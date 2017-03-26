@@ -1,11 +1,12 @@
 package influx
 
 import (
-	. "github.com/appcelerator/amp/data/influx"
-	"github.com/appcelerator/amp/pkg/config"
 	"os"
 	"testing"
 	"time"
+
+	. "github.com/appcelerator/amp/data/influx"
+	"github.com/appcelerator/amp/pkg/config"
 )
 
 var (

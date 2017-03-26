@@ -1,11 +1,12 @@
 package accounts
 
 import (
+	"log"
+
 	"github.com/appcelerator/amp/api/authn"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/ory-am/ladon"
 	"golang.org/x/net/context"
-	"log"
 )
 
 // Resources and actions

@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/data/accounts"
-	"github.com/howeyc/gopass"
-	"google.golang.org/grpc"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/appcelerator/amp/data/accounts"
+	"github.com/howeyc/gopass"
+	"google.golang.org/grpc"
 )
 
 func getName() (in string) {

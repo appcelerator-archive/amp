@@ -1,13 +1,14 @@
 package tests
 
 import (
+	"testing"
+	"time"
+
 	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 // Users

@@ -1,16 +1,17 @@
 package tests
 
 import (
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	. "github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"testing"
 )
 
 func TestFunctionShouldCreateAndDeleteAFunction(t *testing.T) {

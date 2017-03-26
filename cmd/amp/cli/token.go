@@ -2,13 +2,14 @@ package cli
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/api/authn"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/appcelerator/amp/api/authn"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/metadata"
 )
 
 var (

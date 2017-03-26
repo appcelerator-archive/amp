@@ -2,8 +2,9 @@ package elasticsearch
 
 import (
 	"context"
-	"gopkg.in/olivere/elastic.v3"
 	"time"
+
+	"gopkg.in/olivere/elastic.v3"
 )
 
 // Elasticsearch wrapper

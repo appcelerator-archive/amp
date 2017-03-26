@@ -1,13 +1,14 @@
 package functions
 
 import (
+	"path"
+	"time"
+
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	"path"
-	"time"
 )
 
 const functionsRootKey = "functions"

@@ -2,6 +2,8 @@ package tests
 
 import (
 	"log"
+	"math/rand"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -13,8 +15,6 @@ import (
 	"github.com/nats-io/go-nats"
 	"github.com/nats-io/go-nats-streaming"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"strconv"
 )
 
 const (

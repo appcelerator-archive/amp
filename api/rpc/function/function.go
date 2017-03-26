@@ -1,13 +1,14 @@
 package function
 
 import (
+	"log"
+
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"log"
 )
 
 // Server is used to implement function.FunctionServer

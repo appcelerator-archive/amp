@@ -1,15 +1,16 @@
 package etcd
 
 import (
+	"log"
+	"strings"
+	"sync"
+
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"log"
-	"strings"
-	"sync"
 )
 
 const (

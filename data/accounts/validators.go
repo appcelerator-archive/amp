@@ -1,10 +1,11 @@
 package accounts
 
 import (
-	"github.com/holys/safe"
 	"net/mail"
 	"regexp"
 	"strings"
+
+	"github.com/holys/safe"
 )
 
 var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,128}$`)

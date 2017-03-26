@@ -2,9 +2,10 @@ package authn
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"os"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // Token types
