@@ -10,8 +10,11 @@ install:
   - sudo apt-get update
   - sudo apt-get install docker-engine
 
+before_script:
+  - export PATH=bin/linux/amd64:$PATH
+
 script:
-  - bin/linux/amd64/ampmake clean build
+  - ampmake clean build
   - ampmake lint
 
 after_success:
