@@ -102,10 +102,12 @@ AMPBOOTIMG := appcelerator/$(AMP)-bootstrap:$(AMPTAG)
 AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
 # TODO: add api/client back to project
 #AMPDIRS := api/client $(CMDDIR)/$(AMP) tests
-AMPDIRS := $(CMDDIR)/$(AMP) tests
+AMPDIRS := $(CMDDIR)/$(AMP) cli tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 
 $(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) $(AMPBOOTDIR)/$(AMPBOOTEXE)
+	@echo "Compiling $(AMP) source(s):"
+	@echo $?
 	@go build -ldflags $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
 
 build-bootstrap: $(AMPBOOTDIR)/Dockerfile $(AMPBOOTDIR)/$(AMPBOOTEXE)
@@ -142,6 +144,8 @@ AMPLDIRS := cmd/$(AMPL) api data tests
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 
 $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
+	@echo "Compiling $(AMPL) source(s):"
+	@echo $?
 	@go build -ldflags $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
 
 build-server: $(AMPLTARGET)

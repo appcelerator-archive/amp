@@ -1,0 +1,158 @@
+#!/bin/sh
+# This script is intended to be run from an alpine container, which uses a
+# mostly bash-compatible shell (ash) implemented by BusyBox (both ash and
+# sh are symlinked to /bin/busybox).
+#
+# This script starts containers that will run a registry
+# and a number of Docker engines to participate as swarm nodes.
+#
+# Usage: MANAGERS=3 WORKERS=2 local-bootstrap -p=8000:8000
+#
+# Using Docker, this looks like:
+# docker run -it --rm \
+#   -v /var/run/docker.sock:/var/run/docker.sock \
+#   -v $PWD:/usr/local/sbin \
+#   --network=hostnet \
+#   -e MANAGERS=3 \
+#   -e WORKERS=2 \
+# docker local-bootstrap -p=8000:8000
+#
+# Note: the port publishing option (-p=8000:8000) is passed to the local-bootstrap command.
+# Any options will be supplied as `docker run` options for the container that gets
+# created to be the swarm manager node. In this case, a service in the swarm listening
+# on port 8000 will also be available from the host (at 127.0.0.1:8000).
+
+set -e
+trap 'onexit $LINENO' EXIT
+
+# Supplied by environment
+MANAGERS=${MANAGERS:-3}
+WORKERS=${WORKERS:-2}
+
+# Command args will be passed on as `docker run` options when creating the swarm manager
+# (mainly for exposing extra ports)
+# Use normal `docker run [OPTIONS]` syntax. Ex: `local-bootstrap -p=3000:3000 -p=8000:8000`
+SWARMOPTS="$@"
+
+MANAGERS=${MANAGERS:-3}
+WORKERS=${WORKERS:-2}
+
+REGISTRY=registry
+HOSTNET=hostnet
+SWARMIP=""
+MTOKEN=""
+WTOKEN=""
+SWARMNET=ampnet
+
+main() {
+  create_host_bridge_network
+  start_registry
+  create_swarm
+}
+
+create_host_bridge_network() {
+  (docker network ls | grep ${HOSTNET} &> /dev/null) || ( \
+    echo "Create host bridge network: ${HOSTNET}" && \
+    docker network create ${HOSTNET} )
+}
+
+start_registry() {
+  (docker ps --format '{{ .Names }}' | grep "^${REGISTRY}$" &> /dev/null ) || ( \
+    echo start registry service: ${REGISTRY} && \
+    docker run \
+      --name=${REGISTRY} \
+      --detach \
+      --network=${HOSTNET} \
+      -p=5000:5000 \
+      --restart=unless-stopped \
+      --volume=registry:/var/lib/registry \
+      --label="host.role=cluster" \
+      registry:2
+    sleep 5 )
+    echo "Registry is running on port 5000"
+}
+
+create_swarm() {
+  create_managers
+  create_workers
+}
+
+node_exists() {
+  name=$1
+  docker ps -aq --filter="name=${name}" | grep "${name}"
+}
+
+remove_node() {
+  name=$1
+  (docker rm -f $(docker ps -aq --filter=name="${name}")) &> /dev/null || true
+}
+
+start_node() {
+  node=$1
+  opts="${@:2}"
+  remove_node "${node}"
+  docker run --privileged --detach --name="${node}" --hostname="${node}" \
+    --network="${HOSTNET}" \
+    --label="host.role=cluster" \
+    --label="node.role=swarm" \
+    ${opts} \
+    subfuzion/dind --registry-mirror=http://${REGISTRY}:5000
+  # tiny delay to ensure stability
+  sleep 5
+}
+
+create_managers() {
+  name=m1
+  echo starting manager: ${name}
+  # publish common default ports plus whatever is passed to this script as extra options
+  start_node "${name}" \
+    "-p=3000:3000" \
+    "-p=80:80" \
+    "-p=8000:8000" \
+    "-p=8080:8080" \
+    "-p=9000:9000" \
+    "-p=50101:50101" \
+    "${SWARMOPTS}"
+  SWARMIP=$(docker inspect "${name}" --format '{{ .NetworkSettings.Networks.'${HOSTNET}'.IPAddress }}')
+  echo "swarm manager ip (m1): ${SWARMIP}"
+  # a bit of extra time seems to be needed before trying to initialize the node as a swarm manager
+  sleep 5
+  (docker --host="${name}" swarm init --advertise-addr="${SWARMIP}:2377") &> /dev/null
+  MTOKEN=$(docker --host="${name}" swarm join-token -q manager)
+  WTOKEN=$(docker --host="${name}" swarm join-token -q worker)
+  docker --host="${name}" network create -d overlay --attachable "${SWARMNET}"
+
+  count=$((MANAGERS-1))
+  for m in $(seq ${count}); do
+    i=$((m+1))
+    name="m$i"
+    echo "Starting manager $i: ${name}"
+    start_node "${name}"
+    echo "Joining manager ${name} to swarm at: m1:2377"
+    docker --host="${name}" swarm join --token "${MTOKEN}" m1:2377
+  done
+}
+
+create_workers() {
+  for w in $(seq "${WORKERS}"); do
+    name="w$w"
+    echo "Starting worker $w: ${name}"
+    start_node "${name}"
+    echo "Joining worker ${name} to swarm at: m1:2377"
+    docker --host="${name}" swarm join --token "${WTOKEN}" m1:2377
+  done
+}
+
+onexit() {
+  if [[ "$?" -eq 0 ]]; then
+    echo "---------------------------------------------------------------------------"
+    echo "Swarm running at m1:2377"
+    echo "---------------------------------------------------------------------------"
+    docker --host=m1 node ls
+  else
+    echo "Bootstrap failed, line: $1"
+  fi
+}
+
+main
+

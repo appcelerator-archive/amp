@@ -5,6 +5,8 @@ NAME=$2
 PKG=$3
 LDFLAGS=$4
 
+# target => $GOOS $GOARCH
+# see: https://golang.org/doc/install/source#environment
 TARGETS=(
     darwin amd64
     linux amd64
