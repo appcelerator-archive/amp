@@ -1,14 +1,4 @@
-# Provider
-
-
-provider "aws" {
-  region = "${var.aws_region}"
-  profile = "${var.aws_profile}"
-}
-
-
 # Data
-
 
 data "aws_iam_policy_document" "provisioner_role_doc" {
   # version = "2012-10-17"
@@ -102,12 +92,26 @@ data "aws_iam_policy_document" "cluster_role_policy_doc" {
   }
 }
 
-data "template_file" "user_data" {
-  template = "${file("user-data.sh")}"
+data "template_file" "user_data_leader" {
+  template = "${file("user-data-leader")}"
 
   vars {
-    infrakit_config_base_url = "${var.infrakit_config_base_url}",
-    instance_infrakit_group_suffix = "${random_id.group_suffix.hex}",
+    tpl_config_base_url = "${var.infrakit_config_base_url}",
+    tpl_infrakit_group_suffix = "${random_id.group_suffix.hex}",
+    tpl_aws_name = "${var.aws_name}",
+    tpl_instance_type = "${var.bootstrap_instance_type}",
+    tpl_key_name = "${var.bootstrap_key_name}",
+    tpl_subnet_id = "${aws_subnet.default.id}",
+    tpl_iam_instance_profile = "${aws_iam_instance_profile.cluster_instance_profile.id}",
+    tpl_security_group_id = "${aws_security_group.default.id}",
+  }
+}
+
+data "template_file" "user_data_manager" {
+  template = "${file("user-data")}"
+  vars {
+    tpl_config_base_url = "${var.infrakit_config_base_url}",
+    tpl_manager_ip = "${aws_instance.m1.private_ip}",
   }
 }
 
@@ -267,11 +271,43 @@ resource "aws_instance" "m1" {
   key_name = "${var.bootstrap_key_name}"
   instance_type = "${var.bootstrap_instance_type}"
   tags {
-    Name = "${var.aws_name}-manager-1"
-    infrakit.group = "amp-manager-${random_id.group_suffix.hex}"
-    infrakit.role = "manager"
+    Name = "${var.aws_name}-manager1"
+    SwarmRole = "manager"
+    Project = "${var.aws_name}"
   }
-  user_data = "${data.template_file.user_data.rendered}"
+  user_data = "${data.template_file.user_data_leader.rendered}"
+}
+resource "aws_instance" "m2" {
+  depends_on = [ "aws_subnet.default" ]
+  vpc_security_group_ids = [ "${aws_security_group.default.id}" ]
+  subnet_id = "${aws_subnet.default.id}"
+  availability_zone = "${aws_subnet.default.availability_zone}"
+  iam_instance_profile = "${aws_iam_instance_profile.provisioner_instance_profile.id}"
+  ami = "${lookup(var.aws_amis, var.aws_region)}"
+  key_name = "${var.bootstrap_key_name}"
+  instance_type = "${var.bootstrap_instance_type}"
+  tags {
+    Name = "${var.aws_name}-manager2"
+    SwarmRole = "manager"
+    Project = "${var.aws_name}"
+  }
+  user_data = "${data.template_file.user_data_manager.rendered}"
+}
+resource "aws_instance" "m3" {
+  depends_on = [ "aws_subnet.default" ]
+  vpc_security_group_ids = [ "${aws_security_group.default.id}" ]
+  subnet_id = "${aws_subnet.default.id}"
+  availability_zone = "${aws_subnet.default.availability_zone}"
+  iam_instance_profile = "${aws_iam_instance_profile.provisioner_instance_profile.id}"
+  ami = "${lookup(var.aws_amis, var.aws_region)}"
+  key_name = "${var.bootstrap_key_name}"
+  instance_type = "${var.bootstrap_instance_type}"
+  tags {
+    Name = "${var.aws_name}-manager3"
+    SwarmRole = "manager"
+    Project = "${var.aws_name}"
+  }
+  user_data = "${data.template_file.user_data_manager.rendered}"
 }
 
 # Outputs

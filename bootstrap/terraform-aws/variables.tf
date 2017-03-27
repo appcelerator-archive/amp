@@ -44,10 +44,40 @@ variable "bootstrap_key_name" {
   default = ""
 }
 
+variable "cluster_instance_type" {
+  type = "string"
+  description = "EC2 HVM instance type (t2.micro, m3.medium, etc)"
+  default = "t2.micro"
+}
+
+variable "cluster_key_name" {
+  type = "string"
+  description = "Name of an existing EC2 KeyPair to enable SSH access to the instances"
+  default = ""
+}
+
+variable "cluster_subnet_id" {
+  type = "string"
+  description = "Subnet ID for the cluster instances"
+  default = ""
+}
+
+variable "cluster_iam_instance_profile" {
+  type = "string"
+  description = "IAM instance profile ID for the cluster instances"
+  default = ""
+}
+
+variable "cluster_security_group_id" {
+  type = "string"
+  description = "Security group ID for the cluster instances"
+  default = ""
+}
+
 variable "infrakit_config_base_url" {
   type = "string"
   description = "Base URL for InfraKit configuration. there should be a bootstrap.sh, a variables.ikt and a config.tpl file"
-  default = "https://raw.githubusercontent.com/appcelerator/amp/ikt-terraform-aws/bootstrap"
+  default = "https://raw.githubusercontent.com/appcelerator/amp/master/bootstrap"
 }
 
 variable "aufs_volume_size" {
