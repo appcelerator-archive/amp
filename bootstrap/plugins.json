@@ -30,7 +30,7 @@
         "Plugin" : "instance-terraform",
         "Launch" : {
             "os" : {
-                "Cmd" : "infrakit-instance-terraform --dir={{env "INFRAKIT_HOME"}}/terraform --log 5 > {{env "INFRAKIT_HOME"}}/logs/instance-terraform.log 2>&1"
+                "Cmd" : "infrakit-instance-terraform --dir={{env "PLUGIN_DIR"}} --log 5 > {{env "INFRAKIT_HOME"}}/logs/instance-terraform.log 2>&1"
             }
         }
     }

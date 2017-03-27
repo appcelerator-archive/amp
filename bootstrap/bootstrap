@@ -4,10 +4,11 @@
 
 INFRAKIT_HOME=/infrakit
 INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
-INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
+#INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:latest
 INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
 INFRAKIT_DOCKER_IMAGE=appcelerator/infrakit-docker:1.0.0
-TERRAFORM_FILES=(bootstrap.tf variables.tf terraform.tfvars user-data.sh)
+TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
 SSL_KEY_LENGTH=2048
 CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
 CERT_DIR=~/.config/infrakit/certs
@@ -62,6 +63,67 @@ _get_dirname() {
     echo "$_d"
 }
 
+# expose the Docker remote api
+_expose_remote_api() {
+  mkdir -p /etc/systemd/system/docker.service.d
+  cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
+EOF
+  # Restart Docker to let port listening take effect.
+  systemctl daemon-reload
+  systemctl restart docker.service
+}
+
+# init a Swarm cluster
+# to be used when bootstrapping a full cluster with InfraKit, Infrakit running on the Swarm manager
+# if an argument is provided, it's the ip of an existing manager that should be joined
+_init_swarm() {
+  local _token
+  local _manager
+  local _loop=0
+  local _maxloop=120
+  echo "initializing Docker"
+  wget -qO- https://get.docker.com/ | sh && \
+  usermod -G docker ubuntu && \
+  systemctl enable docker.service && \
+  systemctl start docker.service && \
+  if [ -n "$1" ]; then
+    _manager=$1
+    echo "joining a Docker Swarm..."
+    while [ $((++_loop)) -lt $_maxloop ]; do
+      _token=$(docker -H $_manager:2375 swarm join-token -q manager 2>/dev/null)
+      if [ $? -eq 0 ] && [ -n "$_token" ]; then
+        break
+      fi
+      sleep 1
+    done
+    if [ $_loop -lt $_maxloop ]; then
+      _loop=0
+      _maxloop=10
+      while [ $((++_loop)) -lt $_maxloop ]; do
+        sleep 1
+        docker swarm join --token $_token $_manager:2377
+        if [ $? -eq 0 ]; then
+          break
+        fi
+      done
+      if [ $_loop -ge $_maxloop ]; then
+        echo "failed to join" >&2
+        return 1
+      fi
+    else
+      echo "failed to get the join token" >&2
+      return 1
+    fi
+  else
+    echo "initializing Docker Swarm"
+    _expose_remote_api
+    docker swarm init
+  fi
+}
+
 # build a new image based on the official one if needed
 # TODO: remove the image when it's not needed anymore
 _get_infrakit_image() {
@@ -105,11 +167,17 @@ EOF
 # TODO: add a force option to remove the volume if it already exists, and add a hint when the volume exists and the option is not used
 _prepare_configuration_volume() {
       local _d=$1
-      local _infrakitconfigbaseurl=$2
       local _dockerfile
       local _dockerimage
       _dockerfile=$(mktemp $_d/ikt.vol.XXXXXX)
       _dockerimage=$(basename $_dockerfile | tr '[:upper:]' '[:lower:]')
+
+      # in case a configuration file has been provided for the instance plugin
+      if [ -n "$providerfile" ]; then
+        mkdir -p "$_d/$provider"
+        cp "$providerfile" "$_d/$provider/"
+      fi
+
       echo "preparing a Docker image with the configuration data"
       cat >> $_dockerfile << EOF
 FROM alpine:3.5
@@ -123,11 +191,6 @@ EOF
 COPY $(basename $_envfile) $INFRAKIT_HOME/env.ikt
 EOF
       fi
-      for i in "${TERRAFORM_FILES[@]}"
-      do
-        echo "curl $_infrakitconfigbaseurl/terraform/$i -o $INFRAKIT_HOME/terraform/$i"
-        curl $_infrakitconfigbaseurl/terraform/$i -o $INFRAKIT_HOME/terraform/$i
-      done
       cat >> $_dockerfile << EOF
 RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
@@ -158,7 +221,12 @@ _set_source() {
     # a new random temporary directory used as the source
     _d=$(mktemp -d)
     if [ "x$provider" = "xterraform" ]; then
-      curl $InfraKitConfigurationBaseURL/terraform
+      echo "trying to fetch remote files for $provider ($target)..."
+      mkdir -p "$_d/$provider"
+      for i in "${TERRAFORM_FILES[@]}"; do
+        curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i"
+      done
+      echo "fetch done"
     fi
   else
     CONTAINER_CONFIG_TPL=file://$INFRAKIT_HOME/config.${provider}-${target}.tpl
@@ -173,7 +241,7 @@ _set_source() {
       _d=$(dirname $_d)
     fi
   fi
-  _prepare_configuration_volume $_d $InfraKitConfigurationBaseURL
+  _prepare_configuration_volume $_d
 }
 
 # sets the number of managers and workers
@@ -308,7 +376,7 @@ _run_ikt_container() {
     echo "starting up InfraKit (image $_infrakit_image)"
     docker run -d --restart always --name infrakit \
          -v $CERT_DIR:/etc/docker \
-         $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS $_infrakit_image \
+         $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS -e PLUGIN_DIR=$INFRAKIT_HOME/${provider} $_infrakit_image \
          infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log 5 \
          manager group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins
     _should_wait_for_plugins=1
@@ -444,11 +512,21 @@ MANAGED_PLUGINS="terraform"
 target=local
 provider=docker
 envfile=""
+providerfile=""
 should_pull=1
 clustersize=5
 clean=0
-while getopts ":t:p:e:n:hfc" opt; do
+init_swarm=0
+swarm_join_ip=""
+
+while getopts ":ij:t:p:e:n:hfc" opt; do
   case $opt in
+  i)
+      init_swarm=1
+      ;;
+  j)
+      swarm_join_ip=$OPTARG
+      ;;
   n)
       clustersize=$OPTARG
       ;;
@@ -460,7 +538,17 @@ while getopts ":t:p:e:n:hfc" opt; do
       fi
       ;;
   p)
-      echo "$VALID_PROVIDERS" | grep -wq "$OPTARG" && provider=$OPTARG
+      # provider[:envfilepath]]
+      f1=$(echo "$OPTARG" | cut -f1 -d:)
+      f2=$(echo "$OPTARG" | cut -f2 -d:)
+      if [ -n "$f2" ] && [ "x$f1" != "x$f2" ]; then
+        providerfile="$f2"
+        if [ ! -f "$providerfile" ]; then
+          echo "Configuration file for $f1 was not found ($providerfile)" >&2
+          exit 1
+        fi
+      fi
+      echo "$VALID_PROVIDERS" | grep -wq "$f1" && provider=$f1
       if [ -z "$provider" ]; then
           echo "valid providers are $VALID_PROVIDERS"
           exit 1
@@ -507,6 +595,13 @@ if [ $clean -eq 1 ]; then
   _kill_ikt
   _clean_config
   exit
+fi
+if [ $init_swarm -eq 1 ]; then
+  _init_swarm || exit 1
+fi
+if [ -n "$swarm_join_ip" ]; then
+  _init_swarm $swarm_join_ip || exit 1
+  exit 0
 fi
 _set_source $1
 _set_size $clustersize
