@@ -109,10 +109,10 @@ $(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPS
 	@go build -ldflags $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
 
 build-bootstrap: $(AMPBOOTDIR)/Dockerfile $(AMPBOOTDIR)/$(AMPBOOTEXE)
-	@$(DOCKER_CMD) build --no-cache -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
 
 build-cli: $(AMPTARGET) build-bootstrap
-	@$(DOCKER_CMD) build --no-cache -t $(AMPIMG)  $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
+	@$(DOCKER_CMD) build -t $(AMPIMG)  $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
 
 rebuild-cli: clean-cli build-cli
 
@@ -146,7 +146,7 @@ $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 
 build-server: $(AMPLTARGET)
 	@cp -f /root/.config/amp/amplifier.yaml cmd/amplifier &> /dev/null || touch cmd/amplifier/amplifier.yaml
-	@$(DOCKER_CMD) build --no-cache -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
+	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
 	@rm -f cmd/amplifier/amplifier.yaml
 
 rebuild-server: clean-server build-server
