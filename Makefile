@@ -173,7 +173,6 @@ lint:
 		--sort=path --aggregate \
 		--disable-all \
 		--enable=deadcode \
-		--enable=dupl \
 		--enable=errcheck \
 		--enable=gas \
 		--enable=goconst \
