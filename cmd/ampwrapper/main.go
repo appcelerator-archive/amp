@@ -24,7 +24,7 @@ func init() {
 	dockerArgs = []string{
 		"run", "-i", "--rm", "--name", "ampcli",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp:rw", homedir),
+		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp", homedir),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
 		"--network", "hostnet",
