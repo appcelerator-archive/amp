@@ -7,8 +7,8 @@ import (
 	"github.com/appcelerator/amp/api/authn"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/accounts"
-	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // Users
@@ -34,6 +34,7 @@ var (
 	}
 )
 
+// nolint : dupl
 func TestUserShouldSignUpAndVerify(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -51,6 +52,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -62,6 +64,7 @@ func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -73,6 +76,7 @@ func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -84,6 +88,7 @@ func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -97,6 +102,7 @@ func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -111,6 +117,7 @@ func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -124,6 +131,7 @@ func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -139,6 +147,7 @@ func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 
 // TODO: Check expired token
 
+// nolint : dupl
 func TestUserLogin(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -154,6 +163,7 @@ func TestUserLogin(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -166,6 +176,7 @@ func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserLoginNonVerifiedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -182,6 +193,7 @@ func TestUserLoginNonVerifiedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -197,6 +209,7 @@ func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -212,6 +225,7 @@ func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordReset(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -224,6 +238,7 @@ func TestUserPasswordReset(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -236,6 +251,7 @@ func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -248,6 +264,7 @@ func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordSet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -271,6 +288,7 @@ func TestUserPasswordSet(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -297,6 +315,7 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -324,6 +343,7 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -351,6 +371,7 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordChange(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -374,6 +395,7 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -397,6 +419,7 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -420,6 +443,7 @@ func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -443,6 +467,7 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserForgotLogin(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -458,6 +483,7 @@ func TestUserForgotLogin(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -473,6 +499,7 @@ func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -484,6 +511,7 @@ func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserGet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -502,6 +530,7 @@ func TestUserGet(t *testing.T) {
 	assert.NotEmpty(t, getReply.User.CreateDt)
 }
 
+// nolint : dupl
 func TestUserGetMalformedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -513,6 +542,7 @@ func TestUserGetMalformedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserGetNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -524,6 +554,7 @@ func TestUserGetNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -541,6 +572,7 @@ func TestUserList(t *testing.T) {
 	assert.NotEmpty(t, listReply.Users[0].CreateDt)
 }
 
+// nolint : dupl
 func TestUserDelete(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -553,6 +585,7 @@ func TestUserDelete(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -568,6 +601,7 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserDeleteUserOnlyOwnerOfOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -580,6 +614,7 @@ func TestUserDeleteUserOnlyOwnerOfOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -597,6 +632,7 @@ func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
 
 // Organizations
 
+// nolint : dupl
 func TestOrganizationCreate(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -609,6 +645,7 @@ func TestOrganizationCreate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -623,6 +660,7 @@ func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -637,6 +675,7 @@ func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -649,6 +688,7 @@ func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -663,6 +703,7 @@ func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -681,6 +722,7 @@ func TestOrganizationAddUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -699,6 +741,7 @@ func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -717,6 +760,7 @@ func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -732,6 +776,7 @@ func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -750,6 +795,7 @@ func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -765,6 +811,7 @@ func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddNonValidatedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -784,6 +831,7 @@ func TestOrganizationAddNonValidatedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -809,6 +857,7 @@ func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -834,6 +883,7 @@ func TestOrganizationRemoveUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -859,6 +909,7 @@ func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -884,6 +935,7 @@ func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -902,6 +954,7 @@ func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -927,6 +980,7 @@ func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -942,6 +996,7 @@ func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -974,6 +1029,7 @@ func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -999,6 +1055,7 @@ func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationChangeUserRole(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1017,6 +1074,7 @@ func TestOrganizationChangeUserRole(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1035,6 +1093,7 @@ func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1053,6 +1112,7 @@ func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationGet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1071,6 +1131,7 @@ func TestOrganizationGet(t *testing.T) {
 	assert.NotEmpty(t, getReply.Organization.CreateDt)
 }
 
+// nolint : dupl
 func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1082,6 +1143,7 @@ func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1102,6 +1164,7 @@ func TestOrganizationList(t *testing.T) {
 	assert.Equal(t, listReply.Organizations[0].Members[0].Role, accounts.OrganizationRole_ORGANIZATION_OWNER)
 }
 
+// nolint : dupl
 func TestOrganizationDelete(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1116,6 +1179,7 @@ func TestOrganizationDelete(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1133,6 +1197,7 @@ func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1149,6 +1214,7 @@ func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 
 // Teams
 
+// nolint : dupl
 func TestTeamCreate(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1161,6 +1227,7 @@ func TestTeamCreate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1175,6 +1242,7 @@ func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1189,6 +1257,7 @@ func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1203,6 +1272,7 @@ func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1218,6 +1288,7 @@ func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1230,6 +1301,7 @@ func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1247,6 +1319,7 @@ func TestTeamAddUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1263,6 +1336,7 @@ func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1279,6 +1353,7 @@ func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1295,6 +1370,7 @@ func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1312,6 +1388,7 @@ func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1329,6 +1406,7 @@ func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1345,6 +1423,7 @@ func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1362,6 +1441,7 @@ func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1382,6 +1462,7 @@ func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1409,6 +1490,7 @@ func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUser(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1436,6 +1518,7 @@ func TestTeamRemoveUser(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1463,6 +1546,7 @@ func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1490,6 +1574,7 @@ func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1517,6 +1602,7 @@ func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1536,6 +1622,7 @@ func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1555,6 +1642,7 @@ func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1582,6 +1670,7 @@ func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1598,6 +1687,7 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1617,6 +1707,7 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamGet(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1639,6 +1730,7 @@ func TestTeamGet(t *testing.T) {
 	assert.Equal(t, getReply.Team.Members[0].Role, accounts.TeamRole_TEAM_OWNER)
 }
 
+// nolint : dupl
 func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1654,6 +1746,7 @@ func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1669,6 +1762,7 @@ func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1684,6 +1778,7 @@ func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1699,6 +1794,7 @@ func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamList(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1720,6 +1816,7 @@ func TestTeamList(t *testing.T) {
 	assert.Equal(t, listReply.Teams[0].Members[0].Role, accounts.TeamRole_TEAM_OWNER)
 }
 
+// nolint : dupl
 func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1734,6 +1831,7 @@ func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1748,6 +1846,7 @@ func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamDelete(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1763,6 +1862,7 @@ func TestTeamDelete(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// nolint : dupl
 func TestTeamDeleteNotOwnerShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1781,6 +1881,7 @@ func TestTeamDeleteNotOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
@@ -1796,6 +1897,7 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// nolint : dupl
 func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
