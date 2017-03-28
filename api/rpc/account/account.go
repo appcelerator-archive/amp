@@ -201,6 +201,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empt
 }
 
 // GetUser implements account.GetUser
+// nolint : dupl
 func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply, error) {
 	// Get the user
 	user, err := s.Accounts.GetUser(ctx, in.Name)
@@ -215,6 +216,7 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 }
 
 // ListUsers implements account.ListUsers
+// nolint : dupl
 func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUsersReply, error) {
 	users, err := s.Accounts.ListUsers(ctx)
 	if err != nil {
@@ -297,6 +299,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 }
 
 // AddUserToOrganization implements account.AddOrganizationMember
+// nolint : dupl
 func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.AddUserToOrganization(ctx, in.OrganizationName, in.UserName); err != nil {
 		return &empty.Empty{}, convertError(err)
@@ -312,6 +315,7 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 }
 
 // RemoveUserFromOrganization implements account.RemoveOrganizationMember
+// nolint : dupl
 func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.RemoveUserFromOrganization(ctx, in.OrganizationName, in.UserName); err != nil {
 		return &empty.Empty{}, convertError(err)
@@ -336,6 +340,7 @@ func (s *Server) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrg
 }
 
 // GetOrganization implements account.GetOrganization
+// nolint : dupl
 func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest) (*GetOrganizationReply, error) {
 	organization, err := s.Accounts.GetOrganization(ctx, in.Name)
 	if err != nil {
@@ -349,6 +354,7 @@ func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest
 }
 
 // ListOrganizations implements account.ListOrganizations
+// nolint : dupl
 func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest) (*ListOrganizationsReply, error) {
 	organizations, err := s.Accounts.ListOrganizations(ctx)
 	if err != nil {
@@ -359,6 +365,7 @@ func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsReq
 }
 
 // DeleteOrganization implements account.DeleteOrganization
+// nolint : dupl
 func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*empty.Empty, error) {
 	if err := s.Accounts.DeleteOrganization(ctx, in.Name); err != nil {
 		return nil, convertError(err)
@@ -376,6 +383,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 // Teams
 
 // CreateTeam implements account.CreateTeam
+// nolint : dupl
 func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.CreateTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
 		return nil, convertError(err)
@@ -391,6 +399,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*empty.
 }
 
 // AddUserToTeam implements account.AddUserToTeam
+// nolint : dupl
 func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.AddUserToTeam(ctx, in.OrganizationName, in.TeamName, in.UserName); err != nil {
 		return &empty.Empty{}, convertError(err)
@@ -406,6 +415,7 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 }
 
 // RemoveUserFromTeam implements account.RemoveUserFromTeam
+// nolint : dupl
 func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.RemoveUserFromTeam(ctx, in.OrganizationName, in.TeamName, in.UserName); err != nil {
 		return &empty.Empty{}, convertError(err)
@@ -443,6 +453,7 @@ func (s *Server) ListTeams(ctx context.Context, in *ListTeamsRequest) (*ListTeam
 }
 
 // DeleteTeam implements account.DeleteTeam
+// nolint : dupl
 func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.DeleteTeam(ctx, in.OrganizationName, in.TeamName); err != nil {
 		return nil, convertError(err)

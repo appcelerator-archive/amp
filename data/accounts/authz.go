@@ -37,6 +37,7 @@ var (
 		},
 	}
 
+	// nolint : dupl
 	teamsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
@@ -51,6 +52,7 @@ var (
 		},
 	}
 
+	// nolint : dupl
 	functionsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},

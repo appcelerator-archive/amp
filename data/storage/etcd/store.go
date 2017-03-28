@@ -254,12 +254,14 @@ func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Messa
 }
 
 // Watch implements storage.Interface.Watch.
+// nolint : dupl
 func (s *etcd) Watch(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
 	key = s.prefix(key)
 	return s.watch(ctx, key, resourceVersion, filter, false)
 }
 
 // WatchList implements storage.Interface.WatchList.
+// nolint : dupl
 func (s *etcd) WatchList(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
 	key = s.prefix(key)
 	return s.watch(ctx, key, resourceVersion, filter, true)

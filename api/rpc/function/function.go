@@ -40,6 +40,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 }
 
 // List implements function.Server
+// nolint : dupl
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	functions, err := s.Functions.ListFunctions(ctx)
 	if err != nil {
