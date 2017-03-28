@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+
+	"github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -14,9 +16,15 @@ var (
 )
 
 func init() {
+	homedir, err := homedir.Dir()
+	if err != nil {
+		panic(err)
+	}
+
 	dockerArgs = []string{
 		"run", "-i", "--rm", "--name", "ampcli",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
+		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp:rw", homedir),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
 		"--network", "hostnet",
