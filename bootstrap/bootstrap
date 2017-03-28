@@ -474,20 +474,24 @@ started=$((started + $?))
 if [ $started -gt 0 ]; then
   echo -n "waiting for plugins to be available..."
   rc=1
-  loop=0
+  loop=1
+  looplimit=10
   while [ $rc -ne 0 ]; do
-    docker exec infrakit infrakit instance --name=instance-$provider describe ls >/dev/null 2>&1
+    docker exec infrakit infrakit manager inspect 2>&1 | grep -q 'Found manager group is leader =  true'
     rc=$?
-    if [ $((++loop)) -gt 8 ]; then
-      echo " timeout reached, abort"
-      docker inspect infrakit
+    docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
+    rc=$((rc+$?))
+    docker exec infrakit infrakit instance --name=instance-$provider describe >/dev/null 2>&1
+    rc=$((rc+$?))
+    if [ $((++loop)) -gt $looplimit ]; then
+      echo " aborting after $looplimit attempts" >&2
+      docker inspect infrakit >&2
       exit 1
     fi
     sleep 1
     echo -n "."
   done
   echo
-  sleep 3
 fi
 _prepare_config_container
 _deploy_config_container
