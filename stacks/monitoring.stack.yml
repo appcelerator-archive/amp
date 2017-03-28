@@ -1,0 +1,117 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+  infrastructure:
+
+volumes:
+  amp-etcd:
+
+services:
+
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:5.2.2
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+
+  nats:
+    image: appcelerator/amp-nats-streaming:v0.3.8
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+        io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+
+  influxdb:
+    image: appcelerator/influxdb-amp:1.2.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+
+  telegraf-agent:
+    image: appcelerator/telegraf:telegraf-1.2.1
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    environment: [
+      "OUTPUT_INFLUXDB_ENABLED=true",
+      "INFLUXDB_URL=http://influxdb:8086",
+      "TAG_datacenter=dc1",
+      "TAG_type=core",
+      "INPUT_DOCKER_ENABLED=true",
+      "INPUT_CPU_ENABLED=true",
+      "INPUT_DISK_ENABLED=true",
+      "INPUT_DISKIO_ENABLED=true",
+      "INPUT_KERNEL_ENABLED=true",
+      "INPUT_MEM_ENABLED=true",
+      "INPUT_PROCESS_ENABLED=true",
+      "INPUT_SWAP_ENABLED=true",
+      "INPUT_SYSTEM_ENABLED=true",
+      "INPUT_NET_ENABLED=true",
+      "INPUT_HAPROXY_ENABLED=false",
+      "INFLUXDB_TIMEOUT=20",
+    ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default
+      - infrastructure
+    depends_on:
+      - influxdb
+
+  grafana:
+    image: appcelerator/grafana-amp:1.2.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.mapping: "grafana:3000"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+    depends_on:
+      - influxdb
+
+  kapacitor:
+    image: appcelerator/kapacitor-amp:1.2.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+    depends_on:
+      - influxdb

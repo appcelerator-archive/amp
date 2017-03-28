@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/appcelerator/amp/data/influx"
+	"github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,7 +17,10 @@ import (
 
 // Stats structure to implement StatsServer interface
 type Stats struct {
-	Influx influx.Influx
+	InfluxURL       string
+	InfluxConnected bool
+	Influx          influx.Influx
+	Docker          *dockerClient.Client
 }
 
 const (
@@ -28,8 +34,45 @@ const (
 	metricsIO              = "io"
 )
 
+func (s *Stats) isInfluxDB(ctx context.Context) bool {
+	if !s.doesInfluxDBServiceExist(ctx) {
+		s.InfluxConnected = false
+		return false
+	}
+	if !s.InfluxConnected {
+		fmt.Println("Connecting to InfluxDB at", s.InfluxURL)
+		s.Influx = influx.New(s.InfluxURL, "telegraf", "", "")
+		if err := s.Influx.Connect(5 * time.Second); err != nil {
+			fmt.Printf("unable to connect to influxDB at %s: %v", s.InfluxURL, err)
+			return false
+		}
+		s.InfluxConnected = true
+		fmt.Println("Connected to influxDB at", s.InfluxURL)
+		return true
+	}
+	return true
+}
+
+func (s *Stats) doesInfluxDBServiceExist(ctx context.Context) bool {
+	list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
+	//Filter: filter,
+	})
+	if err != nil || len(list) == 0 {
+		return false
+	}
+	for _, serv := range list {
+		if serv.Spec.Annotations.Name == "monitoring_influxdb" {
+			return true
+		}
+	}
+	return false
+}
+
 // StatsQuery extracts stat information according to StatsRequest
 func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	if !s.isInfluxDB(ctx) {
+		return nil, fmt.Errorf("the monitoring_influxdb service is not running, please start the stack 'monitoring'")
+	}
 	var metricList [4]*StatsReply
 	if req.StatsCpu {
 		ret, err := s.statQueryMetric(req, metricsCPU)
