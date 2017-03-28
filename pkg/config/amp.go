@@ -18,9 +18,6 @@ const (
 	// NatsClusterID is the id of the infrastructure nats cluster
 	NatsClusterID = "test-cluster"
 
-	// InfluxDefaultURL is the default influxdb endpoint
-	InfluxDefaultURL = "http://influxdb:8086"
-
 	// DockerDefaultURL is the default docker endpoint
 	DockerDefaultURL = "unix:///var/run/docker.sock"
 
