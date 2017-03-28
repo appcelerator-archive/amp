@@ -42,6 +42,8 @@ services:
       - infrastructure
     ports:
       - "50101:50101"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"  
     deploy:
       replicas: 3
       labels:
@@ -69,4 +71,3 @@ services:
         io.amp.role: "amp.infrastructure"
       placement:
         constraints: [node.role == manager]
-
