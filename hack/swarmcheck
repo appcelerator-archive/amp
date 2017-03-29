@@ -1,0 +1,20 @@
+#!/bin/bash
+
+usage() {
+    echo "usage: swarmcheck docker node ls [MANGAGER/WORKER] [FILTER]"
+    echo "example: swarmcheck docker node ls worker"
+    exit 1
+}
+
+[[ $# -eq 0 ]] && usage
+
+# max script timeout, default = 3000 seconds (5m)
+TIMEOUT="${3:-3000}"
+
+SECONDS=0
+while true; do
+	status=$(docker exec m1 docker node inspect --format "{{.Status.State}}" self)
+	echo $status
+	[[ $status -eq "ready" ]] && exit 0
+	[[ $SECONDS -gt $TIMEOUT ]] && exit 1
+done

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+usage() {
+    echo "usage: ctrcheck CMD [FILTER] [TIMEOUT]"
+    echo "example: ctrcheck docker ps --filter "name=jdoe" 60"
+    exit 1
+}
+
+[[ $# -eq 0 ]] && usage
+
+# max script timeout, default = 3000 seconds (5m)
+TIMEOUT="${3:-3000}"
+
+SECONDS=0
+while true; do
+	status=$(docker ps --filter "name=m1" --filter "status=running")
+	echo $status
+	[[ $status ]] && exit 0
+	[[ $SECONDS -gt $TIMEOUT ]] && exit 1
+done

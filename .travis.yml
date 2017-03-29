@@ -12,13 +12,20 @@ install:
 
 before_script:
   - export PATH=bin/linux/amd64:$PATH
+  - docker network create hostnet
 
 script:
   - ampmake clean build
   - ampmake lint
+  - amp start
+  - docker tag appcelerator/amplifier:local localhost:5000/appcelerator/amplifier:local
+  - hack/curlcheck localhost:5000/v2/ 200 3000
+  - docker push localhost:5000/appcelerator/amplifier:local
+  - hack/ctrcheck docker ps --filter name=m1 --filter status=running 3000
+  - hack/swarmcheck docker exec m1 docker node inspect --format "{{.Status.State}}" self 3000
+  - docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1 stack deploy -c /stacks/amplifier.stack.yml amplifier
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
       echo "Docker image publication has been disabled for now";
     fi
-
