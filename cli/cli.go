@@ -9,11 +9,15 @@ import (
 
 // Interface for the CLI's functionality.
 type Interface interface {
+	Version() string
+	Build() string
+
+	Console() *Console
 	In() *InStream
 	Out() *OutStream
 	Err() io.Writer
-	Console() *Console
 
+	Address() string
 	ClientConn() *grpc.ClientConn
 
 	OnInitialize(initializers ...func())
@@ -21,22 +25,42 @@ type Interface interface {
 
 // c implements cli.Interface
 type cli struct {
+	Configuration
+	version    string
+	build      string
+	console    *Console
 	in         *InStream
 	out        *OutStream
 	err        io.Writer
-	console    *Console
+	address    string
 	clientConn *grpc.ClientConn
 }
 
 // NewCLI returns a new CLI instance.
-func NewCLI(in io.ReadCloser, out, err io.Writer, verbose bool) Interface {
+func NewCLI(in io.ReadCloser, out, err io.Writer, config *Configuration) Interface {
 	c := &cli{
+		Configuration: *config,
 		in:  NewInStream(in),
 		out: NewOutStream(out),
 		err: err,
 	}
-	c.console = NewConsole(c.Out(), verbose)
+	c.console = NewConsole(c.Out(), config.Verbose)
 	return c
+}
+
+// Version returns the version of the CLI process that supplied this value at initialization.
+func (c cli) Version() string {
+	return c.Configuration.Version
+}
+
+// Build returns the build of the CLI process that supplied this value at initialization.
+func (c cli) Build() string {
+	return c.Configuration.Build
+}
+
+// Address returns the address of the grpc api (host:port) used for the client connection.
+func (c cli) Address () string {
+	return c.Configuration.Address
 }
 
 // In returns the reader used for stdin.
