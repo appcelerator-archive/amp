@@ -169,7 +169,7 @@ fmt:
 
 .PHONY: lint
 lint:
-	@gometalinter --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
+	@gometalinter --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go --exclude=cmd/amp \
 		--sort=path --aggregate \
 		--disable-all \
 		--enable=deadcode \
