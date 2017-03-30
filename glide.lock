@@ -1,14 +1,14 @@
-hash: 3f8347cdf96f0ca66ab1dc0e7bc6f79eb5697b9d35fc15abb83fdd4b8553efc5
-updated: 2017-03-25T05:47:21.362225691Z
+hash: 7728fb16b386136b2656922c1ea19bfbed44bc16fdb60ff5db394067df86a6b6
+updated: 2017-03-30T16:41:57.094551794Z
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
 - name: github.com/cenkalti/backoff
-  version: 3db60c813733fce657c114634171689bbf1f8dee
+  version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
 - name: github.com/coreos/etcd
-  version: 41e52ebc22add2f9b91a59f90db8e31f7e5c0538
+  version: 20490caaf0dcd96bb4a95e40625559def8ef5b04
   subpackages:
   - auth/authpb
   - clientv3
@@ -68,12 +68,14 @@ imports:
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
   version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
+- name: github.com/elastic/beats
+  version: cfd95705b31e98a7e8fea22805fb6d20ec5c396b
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/fsnotify/fsnotify
-  version: ff7bc41d4007f67e5456703c34342df4e0113f64
+  version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-errors/errors
@@ -176,7 +178,7 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: f6e7596e8daafd44dc9e5c208dc73035020c8481
+  version: e32a2e04744250647a72bf17da1b09befc03b6b1
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
@@ -202,7 +204,7 @@ imports:
   subpackages:
   - xfs
 - name: github.com/rubenv/sql-migrate
-  version: a3e2963537993d229b6e257d10bd8bc640b06ce3
+  version: 38004e7a77f2b350ea8467038dca66073d907725
   subpackages:
   - sqlparse
 - name: github.com/sendgrid/rest
@@ -259,7 +261,7 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: fc7fa097411d30e6708badff276c4c164425590c
+  version: 3aa6d803466d99ea1bdf4af99e6db53299c02bd7
   subpackages:
   - transform
   - unicode/norm
@@ -306,9 +308,9 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v3
-  version: 8c148e9a5e627a3c155c6980fb965fe7813d78b8
+  version: cf4e58efdcee2e8e7c18dad44d51ed166fb256c2
 - name: gopkg.in/olivere/elastic.v5
-  version: 8c148e9a5e627a3c155c6980fb965fe7813d78b8
+  version: cf4e58efdcee2e8e7c18dad44d51ed166fb256c2
   subpackages:
   - uritemplates
 - name: gopkg.in/redis.v5

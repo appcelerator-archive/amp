@@ -23,7 +23,7 @@ import (
 
 const (
 	// Version is the current version of Elastic.
-	Version = "5.0.30"
+	Version = "5.0.31"
 
 	// DefaultURL is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -1205,6 +1205,10 @@ func (c *Client) PerformRequest(ctx context.Context, method, path string, params
 
 		// Get response
 		res, err := ctxhttp.Do(ctx, c.c, (*http.Request)(req))
+		if err == context.Canceled || err == context.DeadlineExceeded {
+			// Proceed, but don't mark the node as dead
+			return nil, err
+		}
 		if err != nil {
 			n++
 			wait, ok, rerr := c.retrier.Retry(ctx, n, (*http.Request)(req), res, err)
@@ -1533,6 +1537,11 @@ func (c *Client) GetMapping() *IndicesGetMappingService {
 // PutMapping registers a mapping.
 func (c *Client) PutMapping() *IndicesPutMappingService {
 	return NewIndicesPutMappingService(c)
+}
+
+// GetFieldMapping gets mapping for fields.
+func (c *Client) GetFieldMapping() *IndicesGetFieldMappingService {
+	return NewIndicesGetFieldMappingService(c)
 }
 
 // -- cat APIs --
