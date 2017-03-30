@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -48,7 +48,7 @@ func templating(input string, cache map[string]string) (output string, err error
 
 	// Custom function to generate token for account verify command.
 	verify := func(in string) (string, error) {
-		token, err := authn.CreateVerificationToken(in, time.Hour)
+		token, err := auth.CreateVerificationToken(in, time.Hour)
 		if err != nil {
 			return "", err
 		}

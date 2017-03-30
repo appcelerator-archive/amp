@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/docker/distribution/context"
@@ -43,7 +43,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a token
-	token, err := authn.CreateVerificationToken(testUser.Name, time.Hour)
+	token, err := auth.CreateVerificationToken(testUser.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -129,7 +129,7 @@ func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 	accountStore.Reset(context.Background())
 
 	// Create a verify token
-	token, err := authn.CreateVerificationToken("nonexistinguser", time.Hour)
+	token, err := auth.CreateVerificationToken("nonexistinguser", time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -256,7 +256,7 @@ func TestUserPasswordSet(t *testing.T) {
 	createUser(t, &testUser)
 
 	// Password Set
-	token, _ := authn.CreatePasswordToken(testUser.Name, time.Hour)
+	token, _ := auth.CreatePasswordToken(testUser.Name, time.Hour)
 	_, err := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -309,7 +309,7 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := authn.CreatePasswordToken("nonexistinguser", time.Hour)
+	token, _ := auth.CreatePasswordToken("nonexistinguser", time.Hour)
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -336,7 +336,7 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := authn.CreatePasswordToken(testUser.Name, time.Hour)
+	token, _ := auth.CreatePasswordToken(testUser.Name, time.Hour)
 	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
 		Token:    token,
 		Password: "",

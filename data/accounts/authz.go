@@ -3,7 +3,7 @@ package accounts
 import (
 	"log"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/ory-am/ladon"
 	"golang.org/x/net/context"
@@ -103,7 +103,7 @@ func init() {
 
 // GetRequesterAccount gets the requester account from the given context, i.e. the user or organization performing the request
 func GetRequesterAccount(ctx context.Context) *Account {
-	activeOrganization := authn.GetActiveOrganization(ctx)
+	activeOrganization := auth.GetActiveOrganization(ctx)
 	if activeOrganization != "" {
 		return &Account{
 			Type: AccountType_ORGANIZATION,
@@ -112,7 +112,7 @@ func GetRequesterAccount(ctx context.Context) *Account {
 	}
 	return &Account{
 		Type: AccountType_USER,
-		Name: authn.GetUser(ctx),
+		Name: auth.GetUser(ctx),
 	}
 }
 
@@ -121,7 +121,7 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 	if owner == nil {
 		return false
 	}
-	subject := authn.GetUser(ctx)
+	subject := auth.GetUser(ctx)
 	switch owner.Type {
 	case AccountType_ORGANIZATION:
 		organization, err := s.getOrganization(ctx, owner.Name)
