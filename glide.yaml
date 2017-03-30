@@ -71,10 +71,13 @@ import:
 - package: gopkg.in/olivere/elastic.v3
   version: ^5.0.30
 - package: gopkg.in/yaml.v2
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+- package: github.com/elastic/beats
+  version: ^5.3.0
+- package: github.com/pkg/errors
+  version: ^0.8.0
 testImport:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/mhale/smtpd
-- package: github.com/stretchr/testify
-  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
-  subpackages:
-  - assert
