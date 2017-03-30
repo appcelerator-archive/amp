@@ -77,7 +77,7 @@ clean-protoc:
 .PHONY: clean cleanall
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
-clean: clean-protoc clean-cli clean-server
+clean: clean-protoc clean-cli clean-server clean-beat
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -86,7 +86,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli
+build: install-deps protoc build-server build-cli build-beat
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -155,9 +155,34 @@ build-server: $(AMPLTARGET)
 
 rebuild-server: clean-server build-server
 
-.PHONY: clean-cli
+.PHONY: clean-server
 clean-server:
 	@rm -f $(AMPLTARGET)
+
+# =============================================================================
+# BUILD BEAT (`ampbeat`)
+# Saves binary to `cmd/ampbeat/ampbeat.alpine`,
+# then builds `appcelerator/ampbeat` image
+# =============================================================================
+BEAT := ampbeat
+BEATBINARY=$(BEAT).alpine
+BEATTAG := local
+BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
+BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
+BEATDIRS := cmd/$(BEAT) api data tests
+BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
+
+$(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC)
+	@go build -ldflags $(LDFLAGS) -o $(BEATTARGET) $(REPO)/$(CMDDIR)/$(BEAT)
+
+build-beat: $(BEATTARGET)
+	@$(DOCKER_CMD) build -t $(BEATIMG) $(CMDDIR)/$(BEAT) || (rm -f $(BEATTARGET); exit 1)
+
+rebuild-beat: clean-beat build-beat
+
+.PHONY: clean-beat
+clean-beat:
+	@rm -f $(BEATTARGET)
 
 # =============================================================================
 # Quality checks
