@@ -43,7 +43,7 @@ var clientInitializers = []clientInitializer{
 	//initElasticsearch,
 	//initNats,
 	//initInfluxDB,
-	//initDocker,
+	initDocker,
 }
 
 // Service initializers register the services with the grpc server
@@ -51,7 +51,7 @@ var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
 	registerStorageServer,
 	//registerLogsServer,
-	//registerStatsServer,
+	registerStatsServer,
 	//registerServiceServer,
 	//registerStackServiceServer,
 	//registerTopicServer,
@@ -178,9 +178,10 @@ func registerVersionServer(c *amp.Config, s *grpc.Server) {
 
 func registerLogsServer(c *amp.Config, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
-		Es:            &runtime.Elasticsearch,
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Docker:           runtime.Docker,
+		ElasticsearchURL: c.ElasticsearchURL,
+		Store:            runtime.Store,
+		NatsStreaming:    runtime.NatsStreaming,
 	})
 }
 
@@ -192,7 +193,9 @@ func registerStorageServer(c *amp.Config, s *grpc.Server) {
 
 func registerStatsServer(c *amp.Config, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
-		Influx: runtime.Influx,
+		Docker:    runtime.Docker,
+		InfluxURL: c.InfluxURL,
+		Influx:    runtime.Influx,
 	})
 }
 
