@@ -1,20 +1,20 @@
 #!/bin/bash
 
 usage() {
-    echo "usage: swarmcheck docker node ls [MANGAGER/WORKER] [FILTER]"
-    echo "example: swarmcheck docker node ls worker"
+    echo "usage: swarmcheck [TIMEOUT]"
+    echo "example: swarmcheck 120"
     exit 1
 }
 
 [[ $# -eq 0 ]] && usage
 
-# max script timeout, default = 3000 seconds (5m)
-TIMEOUT="${3:-3000}"
+# max script timeout, default = 300 seconds (5m)
+TIMEOUT="${1:-300}"
 
 SECONDS=0
 while true; do
-	status=$(docker exec m1 docker node inspect --format "{{.Status.State}}" self)
-	echo $status
-	[[ $status -eq "ready" ]] && exit 0
-	[[ $SECONDS -gt $TIMEOUT ]] && exit 1
+    nc=$(docker node ls | awk '{ print $1 }' | wc -w)
+    accepted=$(docker node ls --filter membership=accepted | awk '{ print $1 }' | wc -w)
+    [[ $nc -eq $accepted ]] && exit 0
+    [[ $SECONDS -gt $TIMEOUT ]] && exit 1
 done

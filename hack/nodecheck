@@ -1,0 +1,21 @@
+#!/bin/bash
+
+usage() {
+    echo "usage: nodecheck COUNT [TIMEOUT]"
+    echo "example: nodecheck 5 120"
+    exit 1
+}
+
+[[ $# -eq 0 ]] && usage
+
+COUNT="$1"
+
+# max script timeout, default = 300 seconds (5m)
+TIMEOUT="${2:-300}"
+
+SECONDS=0
+while true; do
+    nc=$(docker ps --format '{{ .Names }}' | wc -w)
+    [[ $nc -eq COUNT ]] && exit 0
+    [[ $SECONDS -gt $TIMEOUT ]] && exit 1
+done
