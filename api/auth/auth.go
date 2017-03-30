@@ -1,4 +1,4 @@
-package authn
+package auth
 
 import (
 	"golang.org/x/net/context"

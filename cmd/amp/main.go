@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cmd/amp/cli"
 	"github.com/dgrijalva/jwt-go"
@@ -258,10 +258,10 @@ func whoAmI() error {
 	if err != nil {
 		mgr.Fatal("you are not logged in")
 	}
-	pToken, _ := jwt.ParseWithClaims(token, &authn.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+	pToken, _ := jwt.ParseWithClaims(token, &auth.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
 	})
-	if claims, ok := pToken.Claims.(*authn.AccountClaims); ok {
+	if claims, ok := pToken.Claims.(*auth.AccountClaims); ok {
 		if claims.ActiveOrganization != "" {
 			mgr.Success("Logged in as organization %s (on behalf of user %s).", claims.ActiveOrganization, claims.AccountName)
 		} else {

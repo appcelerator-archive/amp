@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -64,8 +64,8 @@ func Start(c *amp.Config) {
 
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(authn.StreamInterceptor),
-		grpc.UnaryInterceptor(authn.Interceptor),
+		grpc.StreamInterceptor(auth.StreamInterceptor),
+		grpc.UnaryInterceptor(auth.Interceptor),
 	)
 	registerServices(c, s)
 

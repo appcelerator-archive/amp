@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
@@ -111,7 +111,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 // VerifyUser verifies a user account
 func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	// Validate the token
-	claims, err := authn.ValidateToken(token, authn.TokenTypeVerification)
+	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, InvalidToken
 	}
@@ -205,7 +205,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 // DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	// Get requester
-	requester := authn.GetUser(ctx)
+	requester := auth.GetUser(ctx)
 	if requester != name {
 		return NotAuthorized
 	}
@@ -298,7 +298,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		CreateDt: time.Now().Unix(),
 		Members: []*OrganizationMember{
 			{
-				Name: authn.GetUser(ctx),
+				Name: auth.GetUser(ctx),
 				Role: OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
@@ -346,7 +346,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 
 func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
 	// Check authorization
-	if authn.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+	if auth.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
 		return nil, NotAuthorized
 	}
 
@@ -493,7 +493,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		CreateDt: time.Now().Unix(),
 		Members: []*TeamMember{
 			{
-				Name: authn.GetUser(ctx),
+				Name: auth.GetUser(ctx),
 				Role: TeamRole_TEAM_OWNER,
 			},
 		},

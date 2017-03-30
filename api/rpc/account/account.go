@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -47,7 +47,7 @@ func convertError(err error) error {
 }
 
 func (s *Server) getRequesterEmail(ctx context.Context) string {
-	activeOrganization := authn.GetActiveOrganization(ctx)
+	activeOrganization := auth.GetActiveOrganization(ctx)
 	if activeOrganization != "" {
 		organization, err := s.Accounts.GetOrganization(ctx, activeOrganization)
 		if err != nil {
@@ -59,7 +59,7 @@ func (s *Server) getRequesterEmail(ctx context.Context) string {
 		return organization.Email
 	}
 
-	user, err := s.Accounts.GetUser(ctx, authn.GetUser(ctx))
+	user, err := s.Accounts.GetUser(ctx, auth.GetUser(ctx))
 	if err != nil {
 		return ""
 	}
@@ -80,7 +80,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	// Create a verification token valid for an hour
-	token, err := authn.CreateVerificationToken(user.Name, time.Hour)
+	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
 	if err != nil {
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
@@ -114,12 +114,12 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, err
 		return nil, convertError(err)
 	}
 	// Create an authentication token valid for a day
-	token, err := authn.CreateLoginToken(in.Name, "", 24*time.Hour)
+	token, err := auth.CreateLoginToken(in.Name, "", 24*time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
 	// Send the authN token to the client
-	md := metadata.Pairs(authn.TokenKey, token)
+	md := metadata.Pairs(auth.TokenKey, token)
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
 	}
@@ -138,7 +138,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
-	token, err := authn.CreatePasswordToken(user.Name, time.Hour)
+	token, err := auth.CreatePasswordToken(user.Name, time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -153,7 +153,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 // PasswordSet implements account.PasswordSet
 func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empty.Empty, error) {
 	// Validate token
-	claims, err := authn.ValidateToken(in.Token, authn.TokenTypePassword)
+	claims, err := auth.ValidateToken(in.Token, auth.TokenTypePassword)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -168,7 +168,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empt
 // PasswordChange implements account.PasswordChange
 func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) (*empty.Empty, error) {
 	// Get requesting user
-	requester := authn.GetUser(ctx)
+	requester := auth.GetUser(ctx)
 
 	// Check the existing password password
 	if err := s.Accounts.CheckUserPassword(ctx, requester, in.ExistingPassword); err != nil {
@@ -248,7 +248,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 // Switch implements account.Switch
 func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, error) {
 	// Get user name
-	userName := authn.GetUser(ctx)
+	userName := auth.GetUser(ctx)
 
 	activeOrganization := ""
 	// If the account name is not his own account, it has to be an organization
@@ -267,12 +267,12 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 	}
 
 	// Create an authentication token valid for a day
-	token, err := authn.CreateLoginToken(userName, activeOrganization, 24*time.Hour)
+	token, err := auth.CreateLoginToken(userName, activeOrganization, 24*time.Hour)
 	if err != nil {
 		return nil, convertError(err)
 	}
 	// Send the authN token to the client
-	md := metadata.Pairs(authn.TokenKey, token)
+	md := metadata.Pairs(auth.TokenKey, token)
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
 	}

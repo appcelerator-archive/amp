@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appcelerator/amp/api/authn"
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	functionStore = functions.NewStore(store)
 
 	// Create a valid user token
-	token, _ := authn.CreateLoginToken("default", "", time.Hour)
+	token, _ := auth.CreateLoginToken("default", "", time.Hour)
 
 	// Connect to amplifier
 	log.Println("Connecting to amplifier")
@@ -95,7 +95,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a verify token
-	verificationToken, err := authn.CreateVerificationToken(user.Name, time.Hour)
+	verificationToken, err := auth.CreateVerificationToken(user.Name, time.Hour)
 	assert.NoError(t, err)
 
 	// Verify
@@ -108,12 +108,12 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[authn.TokenKey]
+	tokens := header[auth.TokenKey]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(authn.TokenKey, token))
+	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 }
 
 func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
@@ -171,12 +171,12 @@ func switchAccount(userCtx context.Context, t *testing.T, accountName string) co
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[authn.TokenKey]
+	tokens := header[auth.TokenKey]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(authn.TokenKey, token))
+	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
 }
 
 func changeOrganizationMemberRole(userCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest, role accounts.OrganizationRole) {
