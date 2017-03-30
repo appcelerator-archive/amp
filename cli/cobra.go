@@ -104,7 +104,7 @@ func managementSubCommands(cmd *cobra.Command) []*cobra.Command {
 var usageTemplate = `Usage:
 
 {{- if not .HasSubCommands}}	{{.UseLine}}{{end}}
-{{- if .HasSubCommands}}	{{ .CommandPath}} COMMAND{{end}}
+{{- if .HasSubCommands}}	{{ .CommandPath}} [OPTIONS] COMMAND [ARGS...]{{end}}
 
 {{ .Short | trim }}
 

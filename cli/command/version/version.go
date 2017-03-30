@@ -45,8 +45,7 @@ amplifier:      {{if .IsConnected}}
 func NewVersionCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "version",
-		Short:   "Display the version info for AMP and Amplifier",
-		Example: " ",
+		Short:   "Show amp version information",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return list(c)
 		},

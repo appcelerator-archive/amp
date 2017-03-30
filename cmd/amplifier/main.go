@@ -35,7 +35,6 @@ var (
 	clientSecret     string
 	natsURL          string
 	dockerURL        string
-	dockerVersion    string
 	emailSender      string
 	smsSender        string
 )
@@ -75,9 +74,7 @@ func parseFlags() {
 	config.Port = port
 	config.ClientID = clientID
 	config.ClientSecret = clientSecret
-	for _, s := range strings.Split(etcdEndpoints, ",") {
-		config.EtcdEndpoints = append(config.EtcdEndpoints, s)
-	}
+	config.EtcdEndpoints = append(config.EtcdEndpoints, strings.Split(etcdEndpoints, ",")...)
 	config.ElasticsearchURL = elasticsearchURL
 	config.NatsURL = natsURL
 	config.DockerURL = dockerURL

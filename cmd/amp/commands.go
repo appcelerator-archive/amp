@@ -9,14 +9,14 @@ import (
 // newRootCommand returns a new instance of the amp cli root command.
 func newRootCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "amp [OPTIONS] COMMAND [ARG...]",
-		Short:        "Appcelerator Microservice Platform",
-		SilenceUsage: true,
-		SilenceErrors: true,
+		Use:               "amp [OPTIONS] COMMAND [ARG...]",
+		Short:             "Appcelerator Microservice Platform",
+		SilenceUsage:      true,
+		//SilenceErrors:     true,
 		Example:           "amp version",
 		PersistentPreRunE: cli.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			//c.Console().Println(cmd.UsageString())
+			c.Console().Println(cmd.UsageString())
 		},
 	}
 
