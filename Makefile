@@ -77,7 +77,8 @@ clean-protoc:
 .PHONY: clean cleanall
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
-clean: clean-protoc clean-cli clean-server clean-beat
+
+clean: clean-protoc clean-cli clean-server clean-beat clean-agent
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -86,7 +87,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat
+build: install-deps protoc build-server build-cli build-beat build-agent
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -159,6 +160,7 @@ rebuild-server: clean-server build-server
 clean-server:
 	@rm -f $(AMPLTARGET)
 
+
 # =============================================================================
 # BUILD BEAT (`ampbeat`)
 # Saves binary to `cmd/ampbeat/ampbeat.alpine`,
@@ -183,6 +185,31 @@ rebuild-beat: clean-beat build-beat
 .PHONY: clean-beat
 clean-beat:
 	@rm -f $(BEATTARGET)
+
+# =============================================================================
+# BUILD AGENT (`amp-agent`)
+# Saves binary to `cmd/amp-agent/amp-agent.alpine`,
+# then builds `appcelerator/amp-agent` image
+# =============================================================================
+AGENT := amp-agent
+AGENTBINARY=$(AGENT).alpine
+AGENTTAG := local
+AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
+AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
+AGENTDIRS := cmd/$(AGENT) api data tests
+AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
+
+$(AGENTTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AGENTSRC)
+	@go build -ldflags $(LDFLAGS) -o $(AGENTTARGET) $(REPO)/$(CMDDIR)/$(AGENT)
+
+build-agent: $(AGENTTARGET)
+	@$(DOCKER_CMD) build -t $(AGENTIMG) $(CMDDIR)/$(AGENT) || (rm -f $(AGENTTARGET); exit 1)
+
+rebuild-agent: clean-agent build-agent
+
+.PHONY: clean-agent
+clean-agent:
+	@rm -f $(AGENTTARGET)
 
 # =============================================================================
 # Quality checks
@@ -232,4 +259,3 @@ lint:
 .PHONY: rules
 rules:
 	@hack/print-make-rules
-
