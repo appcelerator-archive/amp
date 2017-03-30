@@ -14,8 +14,8 @@ URL="$1"
 # expected HTTP status code
 CODE="${2:-200}"
 
-# max script timeout, default = 3000 seconds (5m)
-TIMEOUT="${3:-3000}"
+# max script timeout, default = 300 seconds (5m)
+TIMEOUT="${3:-300}"
 
 # poll sleep interval, default = 1 second
 INTERVAL="${4:-1}"
