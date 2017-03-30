@@ -10,22 +10,17 @@ import (
 func newRootCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "amp [OPTIONS] COMMAND [ARG...]",
-		Short:             "Appcelerator Microservice Platform",
+		Short:             "Deploy, manage, and monitor container stacks and functions.",
 		SilenceUsage:      true,
-		//SilenceErrors:     true,
+		SilenceErrors:     true,
 		Example:           "amp version",
-		PersistentPreRunE: cli.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			c.Console().Println(cmd.UsageString())
 		},
 	}
-
 	cli.SetupRootCommand(cmd)
-
 	cmd.SetOutput(c.Out())
-
 	addCommands(cmd, c)
-
 	return cmd
 }
 

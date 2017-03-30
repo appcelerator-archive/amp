@@ -9,7 +9,7 @@ func NoArgs(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return nil
 	}
-	return fmt.Errorf("%s' is not valid (this command does not accept arguments).\nSee 'amp --help'", args[0])
+	return fmt.Errorf("unexpected argument: %s\nSee '%s --help'", args[0], cmd.CommandPath())
 }
 
 //func NoArgs() func(*cobra.Command, []string) error {

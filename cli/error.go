@@ -6,7 +6,6 @@
 package cli
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -34,7 +33,9 @@ type StatusError struct {
 }
 
 func (e StatusError) Error() string {
-	return fmt.Sprintf("Status: %s, Code: %d", e.Status, e.StatusCode)
+	// TODO revisit the idea of command status codes, not useful right now
+	// return fmt.Sprintf("Status: %s, Code: %d", e.Status, e.StatusCode)
+	return e.Status
 }
 
 
