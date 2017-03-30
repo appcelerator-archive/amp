@@ -46,14 +46,15 @@ func NewVersionCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "version",
 		Short:   "Show amp version information",
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return list(c)
+			return showVersion(c)
 		},
 	}
 }
 
-// Lists version info of AMP and Amplifier
-func list(c cli.Interface) error {
+// Print version info of client and server (if connected).
+func showVersion(c cli.Interface) error {
 
 	templateFormat := versionTemplate
 	tmpl, err := templates.Parse(templateFormat)
