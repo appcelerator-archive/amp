@@ -23,7 +23,7 @@ type Interface interface {
 	OnInitialize(initializers ...func())
 }
 
-// c implements cli.Interface
+// cli implements cli.Interface
 type cli struct {
 	Configuration
 	version    string

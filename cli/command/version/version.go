@@ -42,6 +42,7 @@ amplifier:      {{if .IsConnected}}
  Go version:    {{.Server.GoVersion}}
  OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected{{end}}`
 
+// NewVersionCommand returns a new instance of the version command.
 func NewVersionCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "version",
