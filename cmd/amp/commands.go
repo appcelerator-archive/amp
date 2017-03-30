@@ -6,13 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Opts struct {
+type opts struct {
 	version bool
 }
 
 // newRootCommand returns a new instance of the amp cli root command.
 func newRootCommand(c cli.Interface) *cobra.Command {
-	opts := &Opts{}
+	opts := &opts{}
 
 	cmd := &cobra.Command{
 		Use:           "amp [OPTIONS] COMMAND [ARG...]",
