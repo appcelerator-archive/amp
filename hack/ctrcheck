@@ -1,20 +1,25 @@
 #!/bin/bash
 
 usage() {
-    echo "usage: ctrcheck CMD [FILTER] [TIMEOUT]"
-    echo "example: ctrcheck docker ps --filter "name=jdoe" 60"
+    echo "usage: ctrcheck NAME [FILTER] [TIMEOUT]"
+    echo "example: ctrcheck foo running 60"
     exit 1
 }
 
 [[ $# -eq 0 ]] && usage
 
-# max script timeout, default = 3000 seconds (5m)
-TIMEOUT="${3:-3000}"
+NAME="$1"
+
+STATUS="${2:-running}"
+
+# max script timeout, default = 300 seconds (5m)
+TIMEOUT="${3:-300}"
 
 SECONDS=0
 while true; do
-	status=$(docker ps --filter "name=m1" --filter "status=running")
-	echo $status
-	[[ $status ]] && exit 0
-	[[ $SECONDS -gt $TIMEOUT ]] && exit 1
+     name=$(docker ps --filter name="$NAME" --filter status="$STATUS" --format '{{ .Name }}' | wc -w)
+     # if command fails, it's probably because the node is not up yet
+     [[ $? -ne 0 ]] && [[ $SECONDS -lt $TIMEOUT ]] && continue
+     [[ $name -eq $NAME ]] && exit 0
+	 [[ $SECONDS -gt $TIMEOUT ]] && exit 1
 done

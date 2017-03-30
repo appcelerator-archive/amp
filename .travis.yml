@@ -19,10 +19,11 @@ script:
   - ampmake lint
   - amp start
   - docker tag appcelerator/amplifier:local localhost:5000/appcelerator/amplifier:local
-  - hack/curlcheck localhost:5000/v2/ 200 3000
+  - hack/curlcheck localhost:5000/v2/ 200 300
   - docker push localhost:5000/appcelerator/amplifier:local
-  - hack/ctrcheck docker ps --filter name=m1 --filter status=running 3000
-  - hack/swarmcheck docker exec m1 docker node inspect --format "{{.Status.State}}" self 3000
+  - hack/ctrcheck m1 running 300
+  - hack/nodecheck 7 300
+  - hack/swarmcheck 300
   - docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1 stack deploy -c /stacks/amplifier.stack.yml amplifier
 
 after_success:
