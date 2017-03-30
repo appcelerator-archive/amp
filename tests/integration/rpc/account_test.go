@@ -7,8 +7,8 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/accounts"
-	"github.com/docker/distribution/context"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // Users
