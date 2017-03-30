@@ -34,7 +34,6 @@ var (
 	clientID         string
 	clientSecret     string
 	natsURL          string
-	influxURL        string
 	dockerURL        string
 	dockerVersion    string
 	emailSender      string
@@ -51,7 +50,6 @@ func parseFlags() {
 	flag.StringVarP(&clientID, "clientid", "i", defaultClientID, "GitHub app clientid (default '"+defaultClientID+"')")
 	flag.StringVarP(&clientSecret, "clientsecret", "c", defaultClientSecret, "GitHub app clientsecret (default '"+defaultClientSecret+"')")
 	flag.StringVarP(&natsURL, "nats-url", "", amp.NatsDefaultURL, "Nats URL (default '"+amp.NatsDefaultURL+"')")
-	flag.StringVarP(&influxURL, "influx-url", "", amp.InfluxDefaultURL, "InfluxDB URL (default '"+amp.InfluxDefaultURL+"')")
 	flag.StringVar(&dockerURL, "docker-url", amp.DockerDefaultURL, "Docker URL (default '"+amp.DockerDefaultURL+"')")
 	flag.StringVar(&emailSender, "email-sender", amp.DefaultEmailSender, "Email senser (default '"+amp.DefaultEmailSender+"')")
 	flag.StringVar(&smsSender, "sms-sender", amp.DefaultSmsSender, "Email senser (default '"+amp.DefaultSmsSender+"')")
@@ -82,7 +80,6 @@ func parseFlags() {
 	}
 	config.ElasticsearchURL = elasticsearchURL
 	config.NatsURL = natsURL
-	config.InfluxURL = influxURL
 	config.DockerURL = dockerURL
 	config.DockerVersion = amp.DockerDefaultVersion
 	config.EmailSender = emailSender

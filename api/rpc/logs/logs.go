@@ -2,20 +2,21 @@ package logs
 
 import (
 	"encoding/json"
-	"strings"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"gopkg.in/olivere/elastic.v3"
 )
 
@@ -70,9 +71,48 @@ const (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Es            *elasticsearch.Elasticsearch
-	Store         storage.Interface
-	NatsStreaming ns.NatsStreaming
+	ElasticsearchURL string
+	EsConnected      bool
+	Es               *elasticsearch.Elasticsearch
+	Store            storage.Interface
+	NatsStreaming    ns.NatsStreaming
+	Docker           *dockerClient.Client
+}
+
+func (s *Server) isElasticsearch(ctx context.Context) *elastic.Client {
+	if !s.doesElasticsearchServiceExist(ctx) {
+		s.EsConnected = false
+		return nil
+	}
+	if !s.EsConnected {
+		log.Println("Connecting to elasticsearch at", s.ElasticsearchURL)
+		if err := s.Es.Connect(s.ElasticsearchURL, amp.DefaultTimeout); err != nil {
+			log.Printf("unable to connect to elasticsearch at %s: %v", s.ElasticsearchURL, err)
+			return nil
+		}
+		s.EsConnected = true
+		log.Println("Connected to elasticsearch at", s.ElasticsearchURL)
+	}
+	client := s.Es.GetClient()
+	if client.IsRunning() {
+		return client
+	}
+	return nil
+}
+
+func (s *Server) doesElasticsearchServiceExist(ctx context.Context) bool {
+	list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
+	//Filter: filter,
+	})
+	if err != nil || len(list) == 0 {
+		return false
+	}
+	for _, serv := range list {
+		if serv.Spec.Annotations.Name == "monitoring_elasticsearch" {
+			return true
+		}
+	}
+	return false
 }
 
 // Get implements log.LogServer
@@ -82,11 +122,14 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
-
+	client := s.isElasticsearch(ctx)
+	if client == nil {
+		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
+	}
 	log.Println("rpc-logs: Get", in.String())
 
 	// Prepare request to elasticsearch
-	request := s.Es.GetClient().Search().Index(EsIndex)
+	request := client.Search().Index(EsIndex)
 	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))

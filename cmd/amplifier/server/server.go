@@ -20,7 +20,6 @@ import (
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
-	"github.com/appcelerator/amp/data/influx"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/client"
@@ -42,8 +41,7 @@ var clientInitializers = []clientInitializer{
 	initEtcd,
 	//initElasticsearch,
 	//initNats,
-	//initInfluxDB,
-	//initDocker,
+	initDocker,
 }
 
 // Service initializers register the services with the grpc server
@@ -51,7 +49,7 @@ var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
 	registerStorageServer,
 	//registerLogsServer,
-	//registerStatsServer,
+	registerStatsServer,
 	//registerServiceServer,
 	//registerStackServiceServer,
 	//registerTopicServer,
@@ -118,16 +116,6 @@ func initElasticsearch(config *amp.Config) error {
 	return nil
 }
 
-func initInfluxDB(config *amp.Config) error {
-	log.Println("Connecting to InfluxDB at", config.InfluxURL)
-	runtime.Influx = influx.New(config.InfluxURL, "telegraf", "", "")
-	if err := runtime.Influx.Connect(defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to influxDB at %s: %v", config.InfluxURL, err)
-	}
-	log.Println("Connected to influxDB at", config.InfluxURL)
-	return nil
-}
-
 func initNats(config *amp.Config) error {
 	// NATS
 	hostname, err := os.Hostname()
@@ -178,9 +166,10 @@ func registerVersionServer(c *amp.Config, s *grpc.Server) {
 
 func registerLogsServer(c *amp.Config, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
-		Es:            &runtime.Elasticsearch,
-		Store:         runtime.Store,
-		NatsStreaming: runtime.NatsStreaming,
+		Docker:           runtime.Docker,
+		ElasticsearchURL: c.ElasticsearchURL,
+		Store:            runtime.Store,
+		NatsStreaming:    runtime.NatsStreaming,
 	})
 }
 
@@ -192,7 +181,10 @@ func registerStorageServer(c *amp.Config, s *grpc.Server) {
 
 func registerStatsServer(c *amp.Config, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
-		Influx: runtime.Influx,
+		Docker:           runtime.Docker,
+		ElasticsearchURL: c.ElasticsearchURL,
+		Store:            runtime.Store,
+		NatsStreaming:    runtime.NatsStreaming,
 	})
 }
 
