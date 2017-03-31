@@ -16,11 +16,11 @@ func NewStartCommand(c cli.Interface) *cobra.Command {
 		Short: "Start a local amp cluster",
 		Long:  `The start command initializes a local amp cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return start(args)
+			return start(c, args)
 		},
 	}
 }
 
-func start(args []string) error {
-	return updateCluster(append(startArgs[:], args[:]...))
+func start(c cli.Interface, args []string) error {
+	return updateCluster(c, append(startArgs[:], args[:]...))
 }

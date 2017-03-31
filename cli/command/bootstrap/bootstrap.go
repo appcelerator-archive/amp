@@ -2,12 +2,13 @@ package bootstrap
 
 import (
 	"bufio"
-	"fmt"
 	"os/exec"
+
+	"github.com/appcelerator/amp/cli"
 )
 
 // TODO: replace the bootstrap script with go code
-func updateCluster(args []string) error {
+func updateCluster(c cli.Interface, args []string) error {
 	// TODO: use AMPHOME environment variable for path
 	cmd := "bootstrap"
 	proc := exec.Command(cmd, args...)
@@ -23,13 +24,13 @@ func updateCluster(args []string) error {
 	outscanner := bufio.NewScanner(stdout)
 	go func() {
 		for outscanner.Scan() {
-			fmt.Printf("%s\n", outscanner.Text())
+			c.Console().Printf("%s\n", outscanner.Text())
 		}
 	}()
 	errscanner := bufio.NewScanner(stderr)
 	go func() {
 		for errscanner.Scan() {
-			fmt.Printf("%s\n", errscanner.Text())
+			c.Console().Printf("%s\n", errscanner.Text())
 		}
 	}()
 
