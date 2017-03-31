@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/cli/command/bootstrap"
+	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/spf13/cobra"
 )
@@ -44,8 +44,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 func addCommands(cmd *cobra.Command, c cli.Interface) {
 	cmd.AddCommand(
 		// bootstrap
-		bootstrap.NewStartCommand(c),
-		bootstrap.NewStopCommand(c),
+		cluster.NewClusterCommand(c),
 
 		// version
 		version.NewVersionCommand(c),

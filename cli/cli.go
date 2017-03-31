@@ -16,6 +16,7 @@ type Interface interface {
 	In() *InStream
 	Out() *OutStream
 	Err() io.Writer
+	ShowHelp(cmd *cobra.Command, args []string) error
 
 	Address() string
 	ClientConn() *grpc.ClientConn
@@ -91,4 +92,10 @@ func (c cli) OnInitialize(initializers ...func()) {
 // ClientConn returns the grpc connection to the API.
 func (c cli) ClientConn() *grpc.ClientConn {
 	return c.clientConn
+}
+
+func (c cli) ShowHelp(cmd *cobra.Command, args []string) error {
+	cmd.SetOutput(c.Err())
+	cmd.HelpFunc()(cmd, args)
+	return nil
 }
