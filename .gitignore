@@ -1,5 +1,10 @@
 .glide/
 /dist
 *.alpine
+/*.exe
+instance*.tf.json
+*.tfstate
+*.tfstate.backup
+*.tfvars
 coverage.out
 coverage-all.out
