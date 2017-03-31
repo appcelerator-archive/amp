@@ -7,9 +7,17 @@ import (
 	"github.com/elastic/beats/libbeat/beat"
 )
 
+// build vars
+var (
+	// Version is set with a linker flag (see Makefile)
+	Version string
+
+	// Build is set with a linker flag (see Makefile)
+	Build string
+)
+
 func main() {
-	err := beat.Run("ampbeat", "", beater.New)
-	if err != nil {
+	if beat.Run("ampbeat", Version, beater.New) != nil {
 		os.Exit(1)
 	}
 }
