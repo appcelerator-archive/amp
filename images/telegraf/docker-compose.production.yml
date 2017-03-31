@@ -1,7 +1,0 @@
-version: '2'
-services:
-  telegraf:
-    extends:
-      file: docker-compose.yml
-      service: telegraf
-    command: "-c"
