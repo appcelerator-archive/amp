@@ -246,19 +246,17 @@ _set_source() {
 
 # sets the number of managers and workers
 _set_size() {
-  local _size=$1
-  local _manager_size
-  local _worker_size
   local _vars
-  if [ $_size -gt 3 ]; then
-    _manager_size=3
-  else
-    _manager_size=1
+  if [ "x$provider" = "xdocker" ]; then
+    # we're adding a container to proxy the ports, so let's remove it from the overall count
+    ((--worker_count))
   fi
-  _worker_size=$((_size - _manager_size))
-  echo "the $_size nodes will be distributed as $_manager_size managers and $_worker_size workers"
-  _vars="{{ global \"/swarm/size/manager\" \"$_manager_size\" }}
-{{ global \"/swarm/size/worker\" \"$_worker_size\" }}"
+  if [ $worker_count -le 0 ] || [ $manager_count -le 0 ]; then
+    echo "asking for $manager_count manager(s) and $worker_count worker(s), abort"
+    exit 1
+  fi
+  _vars="{{ global \"/swarm/size/manager\" \"$manager_count\" }}
+{{ global \"/swarm/size/worker\" \"$worker_count\" }}"
   docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" || exit 1
   echo "cluster size added to $INFRAKIT_HOME/env.ikt"
 }
@@ -523,13 +521,14 @@ provider=docker
 envfile=""
 providerfile=""
 should_pull=1
-clustersize=5
+manager_count=1
+worker_count=2
 clean=0
 init_swarm=0
 swarm_join_ip=""
 label=""
 
-while getopts ":ij:t:p:e:n:l:hfc" opt; do
+while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
   case $opt in
   i)
       init_swarm=1
@@ -537,8 +536,11 @@ while getopts ":ij:t:p:e:n:l:hfc" opt; do
   j)
       swarm_join_ip=$OPTARG
       ;;
-  n)
-      clustersize=$OPTARG
+  w)
+      worker_count=$OPTARG
+      ;;
+  m)
+      manager_count=$OPTARG
       ;;
   l)
       label=$OPTARG
@@ -617,7 +619,7 @@ if [ -n "$swarm_join_ip" ]; then
   exit 0
 fi
 _set_source $1
-_set_size $clustersize
+_set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 if [ "$provider" = "docker" ]; then _run_registry; fi
 if [ $should_pull -eq 1 ]; then _pull_images $provider; fi
