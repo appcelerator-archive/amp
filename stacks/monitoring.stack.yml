@@ -12,7 +12,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.2.2
+    image: appcelerator/elasticsearch-amp:5.3.0
     deploy:
       mode: replicated
       replicas: 1
@@ -71,7 +71,7 @@ services:
       - elasticsearch
 
   kibana:
-    image: blacktop/kibana:5.2
+    image: appcelerator/kibana:5.3.0
     deploy:
       mode: replicated
       replicas: 1
