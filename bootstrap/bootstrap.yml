@@ -342,7 +342,7 @@ Resources:
                 - curl
                 - unzip
               write_files:
-                - path: /root/.config/infrakit/infrakit/env.ikt
+                - path: /tmp/env.ikt
                   content: |
                     {{/* Global variables */}}
                     {{ global "/aws/region" "${region}" }}
@@ -361,8 +361,8 @@ Resources:
                 - usermod -G docker ubuntu
                 - systemctl enable docker.service
                 - systemctl start docker.service
-                - curl ${InfraKitConfigurationBaseURL}/bootstrap.sh -o /usr/local/bin/bootstrap.sh
-                - bash /usr/local/bin/bootstrap.sh -p aws ${InfraKitConfigurationBaseURL}
+                - curl ${InfraKitConfigurationBaseURL}/bootstrap -o /usr/local/bin/bootstrap.sh
+                - bash /usr/local/bin/bootstrap.sh -p aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
 
 Metadata:
