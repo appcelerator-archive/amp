@@ -196,7 +196,7 @@ RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
 EOF
       docker build -t $_dockerimage -f $_dockerfile $_d >/dev/null|| exit 1
-      rm "$_envfile"
+      if [ -n "$envfile" ]; then rm "$_envfile"; fi
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
       if [ $? -eq 0 ]; then
         echo "The Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
@@ -348,15 +348,24 @@ _run_ikt_container() {
     # cleanup
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "rm -f $INFRAKIT_HOME/plugins/flavor-* $INFRAKIT_HOME/plugins/group* $INFRAKIT_HOME/plugins/instance-*" || exit 1
     # set a stackname if it's not already set. Useful when deploying on AWS
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ]; then
-      local _stackname
-      _stackname=$(uuidgen | tr '[:upper:]' '[:lower:]')
-      if [ $? -ne 0 ]; then
-        # fall back to the hostname if uuidgen is not available
+    local _stackname
+    if [ -n "$label" ]; then
+      _stackname=$label
+     else
+       _stackname=$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]')
+      if [ ${PIPESTATUS[0]} -ne 0 ] || [ -z "$_stackname" ]; then
+        # fall back to the hostname if uuidgen is not available, probably the case in a container
         _stackname=$(hostname)
       fi
+    fi
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
+    if [ $? -ne 0 ]; then
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/aws/stackname\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
+    fi
+    # set a docker engine label if it's not already set. Useful when deploying locally
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/project $INFRAKIT_HOME/env.ikt"
+    if [ $? -ne 0 ]; then
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/docker/label/project\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
     fi
     # set the provisioner IP if not already set. Useful when bootstraping with the first manager
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"
@@ -518,8 +527,9 @@ clustersize=5
 clean=0
 init_swarm=0
 swarm_join_ip=""
+label=""
 
-while getopts ":ij:t:p:e:n:hfc" opt; do
+while getopts ":ij:t:p:e:n:l:hfc" opt; do
   case $opt in
   i)
       init_swarm=1
@@ -529,6 +539,9 @@ while getopts ":ij:t:p:e:n:hfc" opt; do
       ;;
   n)
       clustersize=$OPTARG
+      ;;
+  l)
+      label=$OPTARG
       ;;
   t)
       echo "$VALID_TARGETS" | grep -wq "$OPTARG" && target=$OPTARG
