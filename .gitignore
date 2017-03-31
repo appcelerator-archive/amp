@@ -2,9 +2,12 @@
 /dist
 *.alpine
 /*.exe
+coverage.out
+coverage-all.out
+
+# terraform
 instance*.tf.json
 *.tfstate
 *.tfstate.backup
 *.tfvars
-coverage.out
-coverage-all.out
+*.lock.info
