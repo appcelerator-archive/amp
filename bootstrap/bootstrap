@@ -199,9 +199,18 @@ EOF
       if [ -n "$envfile" ]; then rm "$_envfile"; fi
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
       if [ $? -eq 0 ]; then
-        echo "The Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
-        rm $_dockerfile
-        exit 1
+        if [ $force_start -eq 1 ]; then
+          echo "warning: force start, removing Docker volume $BOOTSTRAP_VOLUME" >&2
+          docker volume rm $BOOTSTRAP_VOLUME
+          if [ $? -ne 0 ]; then
+            echo "force start failed, unable to remove the Docker volume $BOOTSTRAP_VOLUME, it's probably still used by an infrakit container" >&2
+            exit 1
+          fi
+        else
+          echo "the Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
+          rm -f $_dockerfile
+          exit 1
+        fi
       fi
       echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data"
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true
@@ -520,14 +529,13 @@ target=local
 provider=docker
 envfile=""
 providerfile=""
-should_pull=1
 manager_count=1
 worker_count=2
 clean=0
 init_swarm=0
 swarm_join_ip=""
 label=""
-
+force_start=0
 while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
   case $opt in
   i)
@@ -574,8 +582,8 @@ while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
       exit 0
       ;;
   f)
-      # don't pull images
-      should_pull=0
+      # force start
+      force_start=1
       ;;
   c)
       clean=1
@@ -622,7 +630,7 @@ _set_source $1
 _set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 if [ "$provider" = "docker" ]; then _run_registry; fi
-if [ $should_pull -eq 1 ]; then _pull_images $provider; fi
+_pull_images $provider
 _run_ikt_container $provider
 started=$?
 _run_ikt_plugin_container $provider
