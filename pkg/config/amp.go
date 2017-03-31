@@ -33,6 +33,9 @@ const (
 	// NatsLogsTopic is the topic used for log events
 	NatsLogsTopic = "amp-logs"
 
+	// NatsMetricsTopic is the topic used for metrics events
+	NatsMetricsTopic = "amp-metrics"
+
 	// InfrastructureRole is the label used for infrastructure services
 	InfrastructureRole = "infrastructure"
 

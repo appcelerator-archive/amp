@@ -2,38 +2,37 @@ package core
 
 import (
 	"fmt"
-	"github.com/appcelerator/amp/pkg/config"
 	"os"
 	"strconv"
+
+	"github.com/appcelerator/amp/pkg/config"
 )
 
 //AgentConfig configuration parameters
 type AgentConfig struct {
-	dockerEngine     string
-	elasticsearchURL string
-	apiPort          string
-	period           int
-	natsURL          string
-	clientID         string
-	clusterID        string
+	dockerEngine string
+	apiPort      string
+	period       int
+	natsURL      string
+	clientID     string
+	clusterID    string
 }
 
 var conf AgentConfig
 
 //update conf instance with default value and environment variables
-func (cfg *AgentConfig) init(version string, build string) {
+func (cfg *AgentConfig) init(version string) {
 	cfg.setDefault()
 	cfg.loadConfigUsingEnvVariable()
-	cfg.displayConfig(version, build)
+	cfg.displayConfig(version)
 }
 
 //Set default value of configuration
 func (cfg *AgentConfig) setDefault() {
 	cfg.dockerEngine = amp.DockerDefaultURL
 	cfg.natsURL = amp.NatsDefaultURL
-	cfg.elasticsearchURL = amp.ElasticsearchDefaultURL
 	cfg.apiPort = "3000"
-	cfg.period = 1
+	cfg.period = 3
 	cfg.clientID = "amp-agent-" + os.Getenv("HOSTNAME")
 	cfg.clusterID = amp.NatsClusterID
 }
@@ -43,15 +42,14 @@ func (cfg *AgentConfig) loadConfigUsingEnvVariable() {
 	cfg.dockerEngine = getStringParameter("DOCKER", cfg.dockerEngine)
 	cfg.natsURL = getStringParameter("NATS_URL", cfg.natsURL)
 	cfg.apiPort = getStringParameter("API_PORT", cfg.apiPort)
-	cfg.elasticsearchURL = getStringParameter("ELASTICSEARCH", cfg.elasticsearchURL)
 	cfg.period = getIntParameter("PERIOD", cfg.period)
 	cfg.clientID = getStringParameter("CLIENTID", cfg.clientID)
 	cfg.clusterID = getStringParameter("CLIENTID", cfg.clusterID)
 }
 
 //display amp-pilot configuration
-func (cfg *AgentConfig) displayConfig(version string, build string) {
-	fmt.Printf("amp-agent version: %v build: %s\n", version, build)
+func (cfg *AgentConfig) displayConfig(version string) {
+	fmt.Printf("amp-agent version: %v", version)
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Println("Configuration:")
 	fmt.Printf("Docker-engine: %s\n", conf.dockerEngine)
