@@ -1,0 +1,25 @@
+#cloud-config
+repo_update: true
+repo_upgrade: security
+packages:
+  - ca-certificates
+  - jq
+  - git
+  - curl
+  - unzip
+write_files:
+  - path: /tmp/env.ikt
+    content: |
+      {{ global "/aws/stackname" "${tpl_infrakit_group_suffix}" }}
+      {{ global "/script/baseurl" "${tpl_config_base_url}" }}
+  - path: /tmp/terraform.tfvars
+    content: |
+      aws_name = "${tpl_aws_name}"
+      cluster_instance_type = "${tpl_instance_type}"
+      cluster_key_name = "${tpl_key_name}"
+      cluster_subnet_id = "${tpl_subnet_id}"
+      cluster_iam_instance_profile = "${tpl_iam_instance_profile}"
+      cluster_security_group_id = "${tpl_security_group_id}"
+runcmd:
+  - curl ${tpl_config_base_url}/bootstrap -o /usr/local/bin/bootstrap.sh
+  - bash /usr/local/bin/bootstrap.sh -i -p terraform:/tmp/terraform.tfvars -t aws -e /tmp/env.ikt ${tpl_config_base_url}

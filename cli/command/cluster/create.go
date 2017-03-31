@@ -7,12 +7,12 @@ import (
 
 type createOpts struct {
 	managers int
-	workers int
+	workers  int
 }
 
 var (
-	createArgs = []string{"-p", "docker"}
-	opts = &createOpts{}
+	createArgs = []string{}
+	opts       = &createOpts{}
 )
 
 // NewCreateCommand returns a new instance of the create command for bootstrapping a local development cluster.

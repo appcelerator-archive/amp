@@ -1,8 +1,8 @@
 #!/bin/bash
 
 usage() {
-    echo "usage: nodecheck COUNT [TIMEOUT]"
-    echo "example: nodecheck 5 120"
+    echo "usage: nodecheck COUNT [TIMEOUT] [LABEL[=value]]"
+    echo "example: nodecheck 5 120 Project=dev"
     exit 1
 }
 
@@ -13,9 +13,16 @@ COUNT="$1"
 # max script timeout, default = 300 seconds (5m)
 TIMEOUT="${2:-300}"
 
+# filters on a label
+LABEL_OPT=""
+[[ $# -ge 3 ]] && LABEL_OPT=-f\ "label=$3"
+
 SECONDS=0
 while true; do
-    nc=$(docker ps --format '{{ .Names }}' | wc -w)
+    nc=$(docker ps --format '{{ .Names }}' $LABEL_OPT | wc -w)
     [[ $nc -eq COUNT ]] && exit 0
-    [[ $SECONDS -gt $TIMEOUT ]] && exit 1
+    if [[ $SECONDS -gt $TIMEOUT ]]; then
+        echo "found $nc container(s), expected $COUNT"
+        exit 1
+    fi
 done

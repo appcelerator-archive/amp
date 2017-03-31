@@ -32,6 +32,7 @@
             "Tags": {
               "Name": "manager",
               "Deployment": "Infrakit",
+              "Project": "{{ ref "/docker/label/project" }}",
               "Role" : "manager"
             }
           }
@@ -99,6 +100,7 @@
             "Tags": {
               "Name": "worker",
               "Deployment": "Infrakit",
+              "Project": "{{ ref "/docker/label/project" }}",
               "Role" : "worker"
             }
           }
@@ -157,6 +159,7 @@
             ],
             "Tags": {
               "Name": "worker",
+              "Project": "{{ ref "/docker/label/project" }}",
               "Deployment": "Infrakit",
               "Role" : "worker"
             }
