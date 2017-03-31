@@ -8,6 +8,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type clusterOpts struct {
+	managers int
+	workers int
+	driver string
+	name string
+}
+
+var (
+	opts = &clusterOpts{}
+	flagMap map[string]string
+)
+
 // NewClusterCommand returns a new instance of the cluster command.
 func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
@@ -18,6 +30,7 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	}
 	cmd.AddCommand(NewCreateCommand(c))
 	cmd.AddCommand(NewDestroyCommand(c))
+	cmd.AddCommand(NewUpdateCommand(c))
 	return cmd
 }
 
