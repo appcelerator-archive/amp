@@ -16,11 +16,11 @@ func NewStopCommand(c cli.Interface) *cobra.Command {
 		Short: "Stop a local amp cluster",
 		Long:  `The stop command stops and cleans up a local amp cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return stop(args)
+			return stop(c, args)
 		},
 	}
 }
 
-func stop(args []string) error {
+func stop(c cli.Interface, args []string) error {
 	return updateCluster(append(stopArgs[:], args[:]...))
 }
