@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cli/command/bootstrap"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,10 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 // addCommands adds the cli commands to the root command that we want to make available for a release.
 func addCommands(cmd *cobra.Command, c cli.Interface) {
 	cmd.AddCommand(
+		// bootstrap
+		bootstrap.NewStartCommand(c),
+		bootstrap.NewStopCommand(c),
+
 		// version
 		version.NewVersionCommand(c),
 	)
