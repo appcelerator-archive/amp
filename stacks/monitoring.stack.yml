@@ -36,6 +36,8 @@ services:
     networks:
       - default
       - infrastructure
+    ports:
+      - "4222:4222"
 
   agent:
     image: appcelerator/amp-agent:local
