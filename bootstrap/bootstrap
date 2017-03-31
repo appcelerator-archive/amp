@@ -370,9 +370,9 @@ _run_ikt_container() {
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/aws/stackname\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
     fi
     # set a docker engine label if it's not already set. Useful when deploying locally
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/project $INFRAKIT_HOME/env.ikt"
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/cluster $INFRAKIT_HOME/env.ikt"
     if [ $? -ne 0 ]; then
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/docker/label/project\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/docker/label/cluster\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
     fi
     # set the provisioner IP if not already set. Useful when bootstraping with the first manager
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"

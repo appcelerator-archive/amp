@@ -32,7 +32,7 @@
             "Tags": {
               "Name": "manager",
               "Deployment": "Infrakit",
-              "Project": "{{ ref "/docker/label/project" }}",
+              "Cluster": "{{ ref "/docker/label/cluster" }}",
               "Role" : "manager"
             }
           }
@@ -100,7 +100,7 @@
             "Tags": {
               "Name": "worker",
               "Deployment": "Infrakit",
-              "Project": "{{ ref "/docker/label/project" }}",
+              "Cluster": "{{ ref "/docker/label/cluster" }}",
               "Role" : "worker"
             }
           }
@@ -159,7 +159,7 @@
             ],
             "Tags": {
               "Name": "worker",
-              "Project": "{{ ref "/docker/label/project" }}",
+              "Cluster": "{{ ref "/docker/label/cluster" }}",
               "Deployment": "Infrakit",
               "Role" : "worker"
             }
