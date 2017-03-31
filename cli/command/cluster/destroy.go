@@ -14,7 +14,6 @@ func NewDestroyCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:   "destroy",
 		Short: "Destroy a local amp cluster",
-		Long:  `The destroy command stops and removes the amp cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return destroy(c, args)
 		},
