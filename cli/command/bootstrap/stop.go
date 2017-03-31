@@ -22,5 +22,5 @@ func NewStopCommand(c cli.Interface) *cobra.Command {
 }
 
 func stop(c cli.Interface, args []string) error {
-	return updateCluster(append(stopArgs[:], args[:]...))
+	return updateCluster(c, append(stopArgs[:], args[:]...))
 }
