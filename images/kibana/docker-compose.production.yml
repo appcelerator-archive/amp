@@ -1,0 +1,6 @@
+version: "2"
+services:
+  kibana:
+    image: appcelerator/kibana
+    build: .
+    command: "/bin/true"
