@@ -55,8 +55,17 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
+        "failcnt": {
+          "type": "long"
+        },
         "fields": {
           "properties": {}
+        },
+        "limit": {
+          "type": "long"
+        },
+        "maxUsage": {
+          "type": "long"
         },
         "message": {
           "norms": false,
@@ -98,9 +107,24 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
+        "read": {
+          "type": "long"
+        },
         "role": {
           "ignore_above": 1024,
           "type": "keyword"
+        },
+        "rxBytes": {
+          "type": "long"
+        },
+        "rxDropped": {
+          "type": "long"
+        },
+        "rxErrors": {
+          "type": "long"
+        },
+        "rxPackets": {
+          "type": "long"
         },
         "service_id": {
           "ignore_above": 1024,
@@ -121,6 +145,42 @@
         "task_id": {
           "ignore_above": 1024,
           "type": "keyword"
+        },
+        "total": {
+          "type": "long"
+        },
+        "totalBytes": {
+          "type": "long"
+        },
+        "totalUsage": {
+          "type": "double"
+        },
+        "txBytes": {
+          "type": "long"
+        },
+        "txDropped": {
+          "type": "long"
+        },
+        "txErrors": {
+          "type": "long"
+        },
+        "txPackets": {
+          "type": "long"
+        },
+        "usage": {
+          "type": "long"
+        },
+        "usageInKernelmode": {
+          "type": "double"
+        },
+        "usageInUsermode": {
+          "type": "double"
+        },
+        "usage_p": {
+          "type": "double"
+        },
+        "write": {
+          "type": "long"
         }
       }
     }

@@ -1,12 +1,12 @@
-- key: logs
-  title: logs
+- key: common
+  title: common
   description: >
-    Docker containers logs.
+    AMP events metadata
   fields:
     - name: "container_id"
       type: keyword
       description: >
-        The container id.
+        The container id
     - name: "container_name"
       type: keyword
       description: >
@@ -42,8 +42,119 @@
     - name: "role"
       type: keyword
       description: >
-        The amp role
+        The AMP role
+
+- key: logs
+  title: logs
+  description: >
+    Docker container logs
+  fields:
     - name: "message"
       type: text
       description: >
         The log message
+
+- key: cpu
+  title: cpu metrics
+  description: >
+    Gather cpu consumption of the current container.
+  fields:
+    - name: "totalUsage"
+      type: double
+      description: >
+        Total cpu consumption in percent.
+        This value can be greater than 100%, depending on the number of available CPUs.
+    - name: "usageInKernelmode"
+      type: double
+      description: >
+        Same as *totalUsage*, but only the Kernel mode consumptions.
+    - name: "usageInUsermode"
+      type: double
+      description: >
+        Same as *totalUsage*, but only the User mode consumptions.
+
+- key: io
+  title: io metrics
+  description: >
+    Gather disk usage of the current container.
+  fields:
+    - name: "read"
+      type: long
+      description: >
+        It represents amount of bytes read by the container on disk(s) during the period.
+    - name: "write"
+      type: long
+      description: >
+        It represents amount of bytes written by the container on disk(s) during the period.
+    - name: "total"
+      type: long
+      description: >
+        It represents amount of bytes read and written by the container on disk(s) during the period.
+
+- key: mem
+  title: memory metrics
+  description: >
+    Docker mem metrics
+  fields:
+    - name: "failcnt"
+      type: long
+      description: >
+        TODO
+    - name: "limit"
+      type: long
+      description: >
+        Limit of memory (max memory available) in KBytes.
+    - name: "maxUsage"
+      type: long
+      description: >
+        Maximum memory used by the container in KBytes.
+    - name: "usage"
+      type: long
+      description: >
+        Current memory consumption in KBytes.
+    - name: "usage_p"
+      type: double
+      description: >
+        Amount of memory used by the container in percents between 0.0 and 1.0.
+
+- key: net
+  title: network metrics
+  description: >
+    Gather container metrics about network (rx/tx)
+  fields:
+    - name: "totalBytes"
+      type: long
+      description: >
+        Total number of bytes received and transmitted since the last event.
+    - name: "rxBytes"
+      type: long
+      description: >
+        Number number of bytes received since the last event.
+    - name: "rxDropped"
+      type: long
+      description: >
+        Number received dropped packets since the last event.
+    - name: "rxErrors"
+      type: long
+      description: >
+        Number number of errors received since the last event.
+    - name: "rxPackets"
+      type: long
+      description: >
+        Number number of packets received since the last event.
+    - name: "txBytes"
+      type: long
+      description: >
+        Number number of bytes transmitted since the last event.
+    - name: "txDropped"
+      type: long
+      description: >
+        Number transmitted dropped packets since the last event.
+    - name: "txErrors"
+      type: long
+      description: >
+        Number number of errors transmitted since the last event.
+    - name: "txPackets"
+      type: long
+      description: >
+        Number of packets transmitted since the last event.
