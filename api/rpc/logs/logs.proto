@@ -9,17 +9,17 @@ service Logs {
 
 message LogEntry {
   string timestamp = 1;
-  string time_id = 2;
-  string service_id = 3;
-  string service_name = 4;
-  string message = 5;
-  string container_id = 6;
-  string node_id = 7;
+  string container_id = 2;
+  string container_name = 3;
+  string container_short_name = 4;
+  string container_state = 5;
+  string service_name = 6;
+  string service_id = 7;
   string task_id = 8;
-  string task_name = 9;
-  string stack_id = 10;
-  string stack_name = 11;
-  string role = 12;
+  string stack_name = 9;
+  string node_id = 10;
+  string role = 11;
+  string message = 12;
 }
 
 message GetRequest {

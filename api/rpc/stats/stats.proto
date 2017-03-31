@@ -6,57 +6,81 @@ service Stats {
   rpc StatsQuery (StatsRequest) returns (StatsReply);
 }
 
-message StatsRequest {
-  bool stats_cpu=1;
-  bool stats_mem=2;
-  bool stats_io=3;
-  bool stats_net=4;
-  bool stats_follow=5;
-  string discriminator=6;
-  string filter_datacenter=7;
-  string filter_host=8;
-  string filter_container_id=9;
-  string filter_container_name=10;
-  string filter_container_image=11;
-  string filter_service_id=12;
-  string filter_service_name=13;
-  string filter_task_id=14;
-  string filter_task_name=15;
-  string filter_node_id=16;
-  string filter_service_ident=17;
-  string since=18;
-  string until=19;
-  string period=20;
-  string time_group=21;
+message MetricsEntry {
+  int64 time = 1;
+  string timestamp = 2;
+  string container_id = 3;
+  string container_name = 4;
+  string container_short_name = 5;
+  string container_state = 6;
+  string service_name = 7;
+  string service_id = 8;
+  string task_id = 9;
+  string stack_name = 10;
+  string node_id = 11;
+  string role = 12;
+  MetricsCPUEntry cpu = 13;
+  MetricsIOEntry io = 14;
+  MetricsMemEntry mem = 15;
+  MetricsNetEntry net = 16;
 }
 
-message StatsEntry {
-  //Common data
-  int64 time=1;
-  string datacenter=2;
-  string host=3;
-  string container_id=4;
-  string container_name=5;
-  string container_image=6;
-  string service_id=7;
-  string service_name=8;
-  string task_id=9;
-  string task_name=10;
-  string node_id=11;
-  string type=12;
-  string sort_type=13;
-  //CPU Metrics fields
-  double number=14;
-  double cpu=15;
-  double mem=16;
-  double mem_usage=17;
-  double mem_limit=18;
-  double io_read=19;
-  double io_write=20;
-  double net_tx_bytes=21;
-  double net_rx_bytes=22;
+message MetricsCPUEntry {
+  double total_usage = 1;
+  double usage_in_kernel_mode = 2;
+  double usage_in_user_mode = 3;
+}
+
+message MetricsIOEntry {
+  int64 read = 1;
+  int64 write = 2;
+  int64 total = 3;
+}
+
+message MetricsMemEntry {
+  int64 failcnt = 1;
+  int64 limit = 2;
+  int64 maxusage = 3;
+  int64 usage = 4;
+  double usage_p = 5;
+}
+
+message MetricsNetEntry {
+  int64 total_bytes = 1;
+  int64 rx_bytes = 2;
+  int64 rx_dropped = 3;
+  int64 rx_errors = 4;
+  int64 rx_packets = 5;
+  int64 tx_bytes = 6;
+  int64 tx_dropped = 7;
+  int64 tx_errors = 8;
+  int64 tx_packets = 9;
+}
+
+message StatsRequest {
+  bool stats_cpu = 1;
+  bool stats_mem = 2;
+  bool stats_io = 3;
+  bool stats_net = 4;
+  bool stats_follow = 5;
+  string discriminator = 6;
+  string filter_datacenter = 7;
+  string filter_host = 8;
+  string filter_container_id = 9;
+  string filter_container_name = 10;
+  string filter_container_image = 11;
+  string filter_service_id = 12;
+  string filter_service_name = 13;
+  string filter_task_id = 14;
+  string filter_task_name = 15;
+  string filter_node_id = 16;
+  string filter_service_ident = 17;
+  string since = 18;
+  string until = 19;
+  string period = 20;
+  string time_group = 21;
 }
 
 message StatsReply {
-  repeated StatsEntry entries = 1;
+  repeated MetricsEntry entries = 1;
 }

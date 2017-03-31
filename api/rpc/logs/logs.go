@@ -247,9 +247,8 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = strings.HasPrefix(serviceID, strings.ToLower(in.Service)) || strings.HasPrefix(serviceName, strings.ToLower(in.Service))
 	}
 	if in.Stack != "" {
-		stackID := strings.ToLower(entry.StackId)
 		stackName := strings.ToLower(entry.StackName)
-		match = strings.HasPrefix(stackID, strings.ToLower(in.Stack)) || strings.HasPrefix(stackName, strings.ToLower(in.Stack))
+		match = strings.HasPrefix(stackName, strings.ToLower(in.Stack))
 	}
 	if !in.Infra {
 		match = entry.Role != amp.InfrastructureRole
