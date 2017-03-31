@@ -54,8 +54,13 @@ func openLogsStream(ID string, lastTimeID string) (io.ReadCloser, error) {
 
 // Use elasticsearch REST API directly
 func getLastTimeID(ID string) string {
+	var err error
 	request := strings.Replace(elasticSearchTimeIDQuery, "[container_id]", ID, 1)
 	req, err := http.NewRequest("POST", conf.elasticsearchURL+"/amp-logs/_search", bytes.NewBuffer([]byte(request)))
+	if err != nil {
+		fmt.Println("elasticsearch connection error: ", err)
+		return ""
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -95,10 +100,8 @@ func startReadingLogs(ID string, data *ContainerData) {
 	stream := data.logsStream
 	serviceName := data.labels["com.docker.swarm.service.name"]
 	serviceID := data.labels["com.docker.swarm.service.id"]
-	taskName := data.labels["com.docker.swarm.task.name"]
 	taskID := data.labels["com.docker.swarm.task.id"]
 	nodeID := data.labels["com.docker.swarm.node.id"]
-	stackID := data.labels["io.amp.stack.id"]
 	stackName := data.labels["io.amp.stack.name"]
 	role := data.labels["io.amp.role"]
 	reader := bufio.NewReader(stream)
@@ -127,26 +130,23 @@ func startReadingLogs(ID string, data *ContainerData) {
 		logEntry := logs.LogEntry{
 			ServiceName: serviceName,
 			ServiceId:   serviceID,
-			TaskName:    taskName,
 			TaskId:      taskID,
-			StackId:     stackID,
 			StackName:   stackName,
 			NodeId:      nodeID,
 			ContainerId: ID,
 			Message:     slog,
 			Timestamp:   timestamp.Format(time.RFC3339Nano),
-			TimeId:      timestamp.UTC().Format(time.RFC3339Nano),
 			Role:        role,
 		}
 
 		encoded, err := proto.Marshal(&logEntry)
 		if err != nil {
-			fmt.Println("error marshalling log entry: %v", err)
+			fmt.Printf("error marshalling log entry: %v", err)
 		}
 
 		_, err = agent.natsStreaming.GetClient().PublishAsync(amp.NatsLogsTopic, encoded, nil)
 		if err != nil {
-			fmt.Println("error sending log entry: %v", err)
+			fmt.Printf("error sending log entry: %v", err)
 		}
 	}
 }
