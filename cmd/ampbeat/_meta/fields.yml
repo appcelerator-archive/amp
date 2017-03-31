@@ -1,9 +1,49 @@
-- key: ampbeat
-  title: ampbeat
-  description:
+- key: logs
+  title: logs
+  description: >
+    Docker containers logs.
   fields:
-    - name: counter
-      type: long
-      required: true
+    - name: "container_id"
+      type: keyword
       description: >
-        PLEASE UPDATE DOCUMENTATION
+        The container id.
+    - name: "container_name"
+      type: keyword
+      description: >
+        The container name
+    - name: "container_short_name"
+      type: keyword
+      description: >
+        The container short name
+    - name: "container_state"
+      type: keyword
+      description: >
+        The container state
+    - name: "service_name"
+      type: keyword
+      description: >
+        The service name
+    - name: "service_id"
+      type: keyword
+      description: >
+        The service id
+    - name: "task_id"
+      type: keyword
+      description: >
+        The task id
+    - name: "stack_name"
+      type: keyword
+      description: >
+        The stack name
+    - name: "node_id"
+      type: keyword
+      description: >
+        The node id
+    - name: "role"
+      type: keyword
+      description: >
+        The amp role
+    - name: "message"
+      type: text
+      description: >
+        The log message
