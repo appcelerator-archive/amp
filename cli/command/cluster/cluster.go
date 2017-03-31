@@ -1,11 +1,25 @@
-package bootstrap
+package cluster
 
 import (
 	"bufio"
 	"os/exec"
 
 	"github.com/appcelerator/amp/cli"
+	"github.com/spf13/cobra"
 )
+
+// NewClusterCommand returns a new instance of the cluster command.
+func NewClusterCommand(c cli.Interface) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster",
+		Short:   "Cluster management operations",
+		PreRunE: cli.NoArgs,
+		RunE:    c.ShowHelp,
+	}
+	cmd.AddCommand(NewCreateCommand(c))
+	cmd.AddCommand(NewDestroyCommand(c))
+	return cmd
+}
 
 // TODO: replace the bootstrap script with go code
 func updateCluster(c cli.Interface, args []string) error {
