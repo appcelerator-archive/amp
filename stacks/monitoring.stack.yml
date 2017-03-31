@@ -7,7 +7,7 @@ networks:
   infrastructure:
 
 volumes:
-  amp-beat:
+  ampagent:
 
 services:
 
@@ -36,6 +36,39 @@ services:
     networks:
       - default
       - infrastructure
+
+  agent:
+    image: appcelerator/amp-agent:local
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    volumes:
+      - ampagent:/containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default
+      - infrastructure
+    depends_on:
+      - nats
+
+  ampbeat:
+    image: appcelerator/ampbeat:local
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+      - infrastructure
+    depends_on:
+      - nats
+      - elasticsearch
 
   kibana:
     image: blacktop/kibana:5.2
