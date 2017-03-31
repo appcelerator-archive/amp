@@ -23,7 +23,6 @@ INTERVAL="${4:-1}"
 SECONDS=0
 while true; do
 	status=$(curl -L -s -o /dev/null -w '%{http_code}\n' "$URL")
-	echo $status
 	[[ $status -eq $CODE ]] && exit 0
 	[[ $SECONDS -gt $TIMEOUT ]] && exit 1
 	sleep $INTERVAL 
