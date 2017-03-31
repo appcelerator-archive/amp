@@ -43,7 +43,7 @@ services:
     ports:
       - "50101:50101"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"  
+      - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
       replicas: 3
       labels:
@@ -54,7 +54,7 @@ services:
         constraints: [node.role == manager]
 
   etcd:
-    image: appcelerator/etcd:3.1.0
+    image: appcelerator/etcd:3.1.5
     command:
       - "--listen-client-urls"
       - "http://0.0.0.0:2379"
