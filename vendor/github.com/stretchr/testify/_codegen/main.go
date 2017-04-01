@@ -10,7 +10,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/doc"
-	"go/format"
 	"go/importer"
 	"go/parser"
 	"go/token"
@@ -78,18 +77,13 @@ func generateCode(importer imports.Importer, funcs []testFunc) error {
 		}
 	}
 
-	code, err := format.Source(buff.Bytes())
-	if err != nil {
-		return err
-	}
-
 	// Write file
 	output, err := outputFile()
 	if err != nil {
 		return err
 	}
 	defer output.Close()
-	_, err = io.Copy(output, bytes.NewReader(code))
+	_, err = io.Copy(output, buff)
 	return err
 }
 

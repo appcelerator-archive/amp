@@ -1,6 +1,10 @@
-hash: 7728fb16b386136b2656922c1ea19bfbed44bc16fdb60ff5db394067df86a6b6
-updated: 2017-03-30T16:41:57.094551794Z
+hash: e3fd7d0727f653712ae47f3c4458fb327b7bb45df7a79cb81180134c96873fdb
+updated: 2017-04-01T19:46:28.874293931Z
 imports:
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
@@ -17,7 +21,7 @@ imports:
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/dgrijalva/jwt-go
@@ -25,12 +29,10 @@ imports:
 - name: github.com/docker/distribution
   version: 0700fa570d7bcc1b3e46ee127c4489fd25f4daa3
   subpackages:
-  - context
   - digestset
   - reference
-  - uuid
 - name: github.com/docker/docker
-  version: d2532c636f03ea12744c4aec62562d78e5cde8ae
+  version: 2f35d73b7dc7a9e234ea06f6145a26c37472c775
   subpackages:
   - api
   - api/types
@@ -56,10 +58,12 @@ imports:
   - pkg/stringid
   - pkg/system
   - pkg/templates
+  - pkg/term
+  - pkg/term/windows
   - pkg/testutil/assert
   - pkg/tlsconfig
 - name: github.com/docker/go-connections
-  version: a2afab9802043837035592f1c24827fb70766de9
+  version: e15c02316c12de00874640cd76311849de2aeed5
   subpackages:
   - nat
   - sockets
@@ -68,20 +72,89 @@ imports:
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
   version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
+- name: github.com/eapache/queue
+  version: ded5959c0d4e360646dc9e9908cff48666781367
 - name: github.com/elastic/beats
   version: cfd95705b31e98a7e8fea22805fb6d20ec5c396b
+  subpackages:
+  - libbeat/beat
+  - libbeat/cfgfile
+  - libbeat/common
+  - libbeat/common/dtfmt
+  - libbeat/common/file
+  - libbeat/common/fmtstr
+  - libbeat/common/jsontransform
+  - libbeat/common/match
+  - libbeat/common/op
+  - libbeat/common/streambuf
+  - libbeat/dashboards/dashboards
+  - libbeat/logp
+  - libbeat/monitoring
+  - libbeat/monitoring/adapter
+  - libbeat/outputs
+  - libbeat/outputs/codecs/format
+  - libbeat/outputs/codecs/json
+  - libbeat/outputs/console
+  - libbeat/outputs/elasticsearch
+  - libbeat/outputs/fileout
+  - libbeat/outputs/kafka
+  - libbeat/outputs/logstash
+  - libbeat/outputs/mode
+  - libbeat/outputs/mode/lb
+  - libbeat/outputs/mode/modeutil
+  - libbeat/outputs/mode/single
+  - libbeat/outputs/outil
+  - libbeat/outputs/redis
+  - libbeat/outputs/transport
+  - libbeat/paths
+  - libbeat/plugin
+  - libbeat/processors
+  - libbeat/processors/actions
+  - libbeat/processors/add_cloud_metadata
+  - libbeat/publisher
+  - libbeat/service
+  - metricbeat/schema
+  - metricbeat/schema/mapstriface
+- name: github.com/elastic/go-lumber
+  version: 616041e345fc33c97bc0eb0fa6b388aa07bca3e1
+  subpackages:
+  - client/v2
+  - lj
+  - log
+  - protocol/v2
+  - server/internal
+  - server/v2
+- name: github.com/elastic/go-ucfg
+  version: ec8488a52542c0c51e42e8ea204dcaff400bc644
+  subpackages:
+  - cfgutil
+  - flag
+  - internal/parse
+  - json
+  - yaml
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
+- name: github.com/garyburd/redigo
+  version: 8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13
+  subpackages:
+  - internal
+  - redis
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-errors/errors
   version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/gogo/protobuf
-  version: a9cd0c35b97daf74d0ebf3514c5254814b2703b4
+  version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
   - gogoproto
   - proto
@@ -92,6 +165,8 @@ imports:
   - jsonpb
   - proto
   - ptypes/empty
+- name: github.com/golang/snappy
+  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -121,18 +196,23 @@ imports:
   version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-- name: github.com/influxdata/influxdb
-  version: 1bcf3ae74c6b9c4897dab68d513d056277eb24f7
-  subpackages:
-  - client/v2
-  - models
-  - pkg/escape
 - name: github.com/jmoiron/sqlx
   version: 8ed836a8adb659e8492bcaa49e0880bb84075fe2
   subpackages:
   - reflectx
+- name: github.com/joeshaw/multierror
+  version: 69b34d4ec901851247ae7e77d33909caf9df99ed
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/klauspost/compress
+  version: 006acde2c5d283d2f8b8aa03d8f0cd2891c680cf
+  subpackages:
+  - flate
+  - zlib
+- name: github.com/klauspost/cpuid
+  version: 09cded8978dc9e80714c4d85b0322337b0a1e5e0
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/magiconair/properties
   version: 51463bfca2576e06c62a8504b5c0f06d61312647
 - name: github.com/mattn/go-colorable
@@ -149,6 +229,8 @@ imports:
   version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
+- name: github.com/mitchellh/hashstructure
+  version: b098c52ef6beab8cd82bc4a32422cf54b890e8fa
 - name: github.com/mitchellh/mapstructure
   version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/nats-io/go-nats
@@ -164,6 +246,8 @@ imports:
   - util
 - name: github.com/nats-io/nuid
   version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
+- name: github.com/nranchev/go-libGeoIP
+  version: c78e8bd2dd3599feb21fd30886043979e82fe948
 - name: github.com/oleiade/reflections
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/go-digest
@@ -179,10 +263,16 @@ imports:
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
   version: e32a2e04744250647a72bf17da1b09befc03b6b1
+- name: github.com/pierrec/lz4
+  version: 5c9560bfa9ace2bf86080bf40d46b34ae44604df
+- name: github.com/pierrec/xxHash
+  version: 5a004441f897722c627870a981d02b29924215fa
+  subpackages:
+  - xxHash32
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
@@ -203,16 +293,25 @@ imports:
   version: a1dba9ce8baed984a2495b658c82687f8157b98f
   subpackages:
   - xfs
+- name: github.com/rcrowley/go-metrics
+  version: ab2277b1c5d15c3cba104e9cbddbdfc622df5ad8
+  subpackages:
+  - exp
 - name: github.com/rubenv/sql-migrate
   version: 38004e7a77f2b350ea8467038dca66073d907725
   subpackages:
   - sqlparse
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/sendgrid/rest
   version: 3ec51b4f1754e13e92409355851a0a82e9a06461
 - name: github.com/sendgrid/sendgrid-go
   version: aae62ebbdabd46754b041a12b9f74d2ffdfc49d7
   subpackages:
   - helpers/mail
+- name: github.com/Shopify/sarama
+  version: f0996189c86dc27338468f2a9b10077c6d572b34
+  repo: https://github.com/urso/sarama
 - name: github.com/Sirupsen/logrus
   version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
 - name: github.com/spf13/afero
@@ -230,18 +329,17 @@ imports:
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - name: github.com/stretchr/testify
-  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
   subpackages:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
+  version: 1351f936d976c60a0a48d728281922cf63eafb8d
   subpackages:
   - bcrypt
   - blowfish
   - pbkdf2
   - scrypt
-  - ssh/terminal
 - name: golang.org/x/net
   version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
   subpackages:
@@ -260,9 +358,12 @@ imports:
   subpackages:
   - unix
   - windows
+  - windows/svc
+  - windows/svc/debug
 - name: golang.org/x/text
-  version: 3aa6d803466d99ea1bdf4af99e6db53299c02bd7
+  version: d69c40b4be55797923cec7457fac7a244d91a9b6
   subpackages:
+  - encoding
   - transform
   - unicode/norm
 - name: google.golang.org/grpc
@@ -322,12 +423,8 @@ imports:
   - internal/pool
   - internal/proto
 - name: gopkg.in/yaml.v2
-  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
 testImports:
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
-- name: github.com/gorilla/mux
-  version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
 - name: github.com/kballard/go-shellquote
   version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
 - name: github.com/kr/pty

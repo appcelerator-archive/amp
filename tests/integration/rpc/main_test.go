@@ -11,7 +11,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/cmd/amp/cli"
+	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
