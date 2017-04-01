@@ -199,9 +199,18 @@ EOF
       if [ -n "$envfile" ]; then rm "$_envfile"; fi
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
       if [ $? -eq 0 ]; then
-        echo "The Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
-        rm $_dockerfile
-        exit 1
+        if [ $force_start -eq 1 ]; then
+          echo "warning: force start, removing Docker volume $BOOTSTRAP_VOLUME" >&2
+          docker volume rm $BOOTSTRAP_VOLUME
+          if [ $? -ne 0 ]; then
+            echo "force start failed, unable to remove the Docker volume $BOOTSTRAP_VOLUME, it's probably still used by an infrakit container" >&2
+            exit 1
+          fi
+        else
+          echo "the Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
+          rm -f $_dockerfile
+          exit 1
+        fi
       fi
       echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data"
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true
@@ -246,19 +255,17 @@ _set_source() {
 
 # sets the number of managers and workers
 _set_size() {
-  local _size=$1
-  local _manager_size
-  local _worker_size
   local _vars
-  if [ $_size -gt 3 ]; then
-    _manager_size=3
-  else
-    _manager_size=1
+  if [ "x$provider" = "xdocker" ]; then
+    # we're adding a container to proxy the ports, so let's remove it from the overall count
+    ((--worker_count))
   fi
-  _worker_size=$((_size - _manager_size))
-  echo "the $_size nodes will be distributed as $_manager_size managers and $_worker_size workers"
-  _vars="{{ global \"/swarm/size/manager\" \"$_manager_size\" }}
-{{ global \"/swarm/size/worker\" \"$_worker_size\" }}"
+  if [ $worker_count -le 0 ] || [ $manager_count -le 0 ]; then
+    echo "asking for $manager_count manager(s) and $worker_count worker(s), abort"
+    exit 1
+  fi
+  _vars="{{ global \"/swarm/size/manager\" \"$manager_count\" }}
+{{ global \"/swarm/size/worker\" \"$worker_count\" }}"
   docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" || exit 1
   echo "cluster size added to $INFRAKIT_HOME/env.ikt"
 }
@@ -363,9 +370,9 @@ _run_ikt_container() {
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/aws/stackname\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
     fi
     # set a docker engine label if it's not already set. Useful when deploying locally
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/project $INFRAKIT_HOME/env.ikt"
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/cluster $INFRAKIT_HOME/env.ikt"
     if [ $? -ne 0 ]; then
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/docker/label/project\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/docker/label/cluster\" \"$_stackname\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
     fi
     # set the provisioner IP if not already set. Useful when bootstraping with the first manager
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"
@@ -519,17 +526,19 @@ NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
 MANAGED_PLUGINS="terraform"
 target=local
+default_target=1
 provider=docker
+default_provider=1
 envfile=""
 providerfile=""
-should_pull=1
-clustersize=5
+manager_count=1
+worker_count=2
 clean=0
 init_swarm=0
 swarm_join_ip=""
 label=""
-
-while getopts ":ij:t:p:e:n:l:hfc" opt; do
+force_start=0
+while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
   case $opt in
   i)
       init_swarm=1
@@ -537,8 +546,11 @@ while getopts ":ij:t:p:e:n:l:hfc" opt; do
   j)
       swarm_join_ip=$OPTARG
       ;;
-  n)
-      clustersize=$OPTARG
+  w)
+      worker_count=$OPTARG
+      ;;
+  m)
+      manager_count=$OPTARG
       ;;
   l)
       label=$OPTARG
@@ -549,6 +561,7 @@ while getopts ":ij:t:p:e:n:l:hfc" opt; do
           echo "valid targets are $VALID_TARGETS"
           exit 1
       fi
+      default_target=0
       ;;
   p)
       # provider[:envfilepath]]
@@ -566,14 +579,15 @@ while getopts ":ij:t:p:e:n:l:hfc" opt; do
           echo "valid providers are $VALID_PROVIDERS"
           exit 1
       fi
+      default_provider=0
       ;;
   h)
-      echo "usage: $(basename $0) [-t target] [-p provider] [-n cluster size] [-f] [-h]"
+      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-f] [-h]"
       exit 0
       ;;
   f)
-      # don't pull images
-      should_pull=0
+      # force start
+      force_start=1
       ;;
   c)
       clean=1
@@ -597,9 +611,9 @@ while getopts ":ij:t:p:e:n:l:hfc" opt; do
 done
 shift "$((OPTIND-1))"
 
-# in case only the provider has been set, and it's not docker, use the target name as provider
-if [ "x$target" = "xlocal" ] && [ "x$provider" != "xdocker" ]; then
-    target=$provider
+# in case only the target has been set, and it's not local, use terraform as default provider
+if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
+    provider=terraform
 fi
 
 if [ $clean -eq 1 ]; then
@@ -617,10 +631,10 @@ if [ -n "$swarm_join_ip" ]; then
   exit 0
 fi
 _set_source $1
-_set_size $clustersize
+_set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 if [ "$provider" = "docker" ]; then _run_registry; fi
-if [ $should_pull -eq 1 ]; then _pull_images $provider; fi
+_pull_images $provider
 _run_ikt_container $provider
 started=$?
 _run_ikt_plugin_container $provider
