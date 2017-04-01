@@ -18,7 +18,7 @@ script:
   - set -e
   - ampmake clean build
   - ampmake lint
-  - amp cluster create -m 3 -w 2
+  - amp cluster create -w 2
   - docker tag appcelerator/amplifier:local localhost:5000/appcelerator/amplifier:local
   - hack/curlcheck localhost:5000/v2/ 200 300
   - docker push localhost:5000/appcelerator/amplifier:local
