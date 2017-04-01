@@ -526,7 +526,9 @@ NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
 MANAGED_PLUGINS="terraform"
 target=local
+default_target=1
 provider=docker
+default_provider=1
 envfile=""
 providerfile=""
 manager_count=1
@@ -559,6 +561,7 @@ while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
           echo "valid targets are $VALID_TARGETS"
           exit 1
       fi
+      default_target=0
       ;;
   p)
       # provider[:envfilepath]]
@@ -576,9 +579,10 @@ while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
           echo "valid providers are $VALID_PROVIDERS"
           exit 1
       fi
+      default_provider=0
       ;;
   h)
-      echo "usage: $(basename $0) [-t target] [-p provider] [-n cluster size] [-f] [-h]"
+      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-f] [-h]"
       exit 0
       ;;
   f)
@@ -607,9 +611,9 @@ while getopts ":ij:t:p:e:m:w:l:hfc" opt; do
 done
 shift "$((OPTIND-1))"
 
-# in case only the provider has been set, and it's not docker, use the target name as provider
-if [ "x$target" = "xlocal" ] && [ "x$provider" != "xdocker" ]; then
-    target=$provider
+# in case only the target has been set, and it's not local, use terraform as default provider
+if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
+    provider=terraform
 fi
 
 if [ $clean -eq 1 ]; then
