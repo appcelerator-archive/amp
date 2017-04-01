@@ -1,22 +1,20 @@
 package cluster
 
 import (
-	"bufio"
-	"os/exec"
-
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cli/exec"
 	"github.com/spf13/cobra"
 )
 
 type clusterOpts struct {
 	managers int
-	workers int
+	workers  int
 	provider string
-	name string
+	name     string
 }
 
 var (
-	opts = &clusterOpts{3,2,"local", ""}
+	opts    = &clusterOpts{3, 2, "local", ""}
 	flagMap map[string]string
 )
 
@@ -35,45 +33,18 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-// TODO: replace the bootstrap script with go code
 func updateCluster(c cli.Interface, args []string) error {
-	// TODO: use AMPHOME environment variable for path
-	cmd := "bootstrap"
-	proc := exec.Command(cmd, args...)
-	stdout, err := proc.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	stderr, err := proc.StderrPipe()
-	if err != nil {
-		return err
-	}
+	return exec.Run(c, "bootstrap", args)
+}
 
-	outscanner := bufio.NewScanner(stdout)
-	go func() {
-		for outscanner.Scan() {
-			c.Console().Printf("%s\n", outscanner.Text())
+// Map cli cluster flags to target bootstrap cluster command flags,
+// append to and return args array
+func reflag(cmd *cobra.Command, flags map[string]string, args []string) []string {
+	// transform src flags to target flags and add flag and value to cargs
+	for s, t := range flags {
+		if cmd.Flag(s).Changed {
+			args = append(args, t, cmd.Flag(s).Value.String())
 		}
-	}()
-	errscanner := bufio.NewScanner(stderr)
-	go func() {
-		for errscanner.Scan() {
-			c.Console().Printf("%s\n", errscanner.Text())
-		}
-	}()
-
-	err = proc.Start()
-	if err != nil {
-		panic(err)
 	}
-
-	err = proc.Wait()
-	if err != nil {
-		// Just pass along the information that the process exited with a failure;
-		// whatever error information it displayed is what the user will see.
-		return err
-
-	}
-
-	return nil
+	return args
 }
