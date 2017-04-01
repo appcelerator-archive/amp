@@ -70,7 +70,7 @@ func (a *Agent) newCPUDiff(cpu *CPUStats) *CPUStatsDiff {
 		ret := common.MapStr{}
 		if cap(cpu.PerCPUUsage) == cap(cpu.PrePerCPUUsage) {
 			for index := range cpu.PerCPUUsage {
-				name := fmt.Sprintf("cpu%d", index)
+				name := log.Sprintf("cpu%d", index)
 				ret[name] = a.calculateLoad(cpu.PerCPUUsage[index], cpu.PrePerCPUUsage[index], diff.Duration)
 			}
 		}

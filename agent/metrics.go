@@ -3,8 +3,8 @@ package core
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -19,9 +19,9 @@ func (a *Agent) updateMetricsStreams() {
 		if data.metricsStream == nil || data.metricsReadError {
 			streamb, err := a.dockerClient.ContainerStats(context.Background(), ID, true)
 			if err != nil {
-				fmt.Printf("Error opening metrics stream on container: %s\n", data.name)
+				log.Printf("Error opening metrics stream on container: %s\n", data.name)
 			} else {
-				fmt.Printf("open metrics stream on container: %s\n", data.name)
+				log.Printf("open metrics stream on container: %s\n", data.name)
 				data.metricsStream = streamb.Body
 				go a.startReadingMetrics(ID, data)
 			}
@@ -32,14 +32,14 @@ func (a *Agent) updateMetricsStreams() {
 // open a metrics container stream
 func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 	stream := data.metricsStream
-	fmt.Printf("start reading metrics on container: %s\n", data.name)
+	log.Printf("start reading metrics on container: %s\n", data.name)
 	decoder := json.NewDecoder(stream)
 	statsData := new(types.StatsJSON)
 	for err := decoder.Decode(statsData); err != io.EOF; err = decoder.Decode(statsData) {
 		if err != nil {
-			fmt.Printf("close metrics stream on container %s (%v)\n", data.name, err)
+			log.Printf("close metrics stream on container %s (%v)\n", data.name, err)
 			data.metricsReadError = true
-			stream.Close()
+			_ = stream.Close()
 			a.removeContainer(ID)
 			return
 		}
@@ -63,11 +63,11 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 		a.setCPUMetrics(statsData, metricsEntry)
 		encoded, err := proto.Marshal(metricsEntry)
 		if err != nil {
-			fmt.Printf("error marshalling metrics entry: %v", err)
+			log.Printf("error marshalling metrics entry: %v\n", err)
 		}
 		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsMetricsTopic, encoded, nil)
 		if err != nil {
-			fmt.Printf("error sending log entry: %v", err)
+			log.Printf("error sending log entry: %v\n", err)
 			return
 		}
 		a.nbMetrics++
@@ -78,7 +78,10 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 func (a *Agent) closeMetricsStreams() {
 	for _, data := range a.containers {
 		if data.metricsStream != nil {
-			data.metricsStream.Close()
+			err := data.metricsStream.Close()
+			if err != nil {
+				log.Println("Error closing a metrics stream: ", err)
+			}
 		}
 	}
 }

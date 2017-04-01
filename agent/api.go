@@ -1,27 +1,30 @@
 package core
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
 const baseURL = "/api/v1"
 
-//Start API server
+// Start API server
 func (a *Agent) initAPI() {
-	fmt.Println("Start API server on port " + conf.apiPort)
+	log.Println("Start API server on port " + conf.apiPort)
 	go func() {
 		http.HandleFunc(baseURL+"/health", a.agentHealth)
-		http.ListenAndServe(":"+conf.apiPort, nil)
+		err := http.ListenAndServe(":"+conf.apiPort, nil)
+		if err != nil {
+			log.Fatalln("Unable to start server: ", err)
+		}
 	}()
 }
 
-//for HEALTHCHECK Dockerfile instruction
+// or HEALTHCHECK Dockerfile instruction
 func (a *Agent) agentHealth(resp http.ResponseWriter, req *http.Request) {
 	if a.eventStreamReading {
 		resp.WriteHeader(200)
 	} else {
-		fmt.Println("execute /health: return not healthy")
+		log.Println("Error: health check failed")
 		resp.WriteHeader(400)
 	}
 }

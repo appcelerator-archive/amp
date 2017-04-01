@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/appcelerator/amp/cmd/amp-agent/core"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/appcelerator/amp/agent"
 )
 
 // build vars
