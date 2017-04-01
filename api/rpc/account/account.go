@@ -118,7 +118,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, err
 	if err != nil {
 		return nil, convertError(err)
 	}
-	// Send the authN token to the client
+	// Send the auth token to the client
 	md := metadata.Pairs(auth.TokenKey, token)
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
@@ -271,7 +271,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 	if err != nil {
 		return nil, convertError(err)
 	}
-	// Send the authN token to the client
+	// Send the auth token to the client
 	md := metadata.Pairs(auth.TokenKey, token)
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
