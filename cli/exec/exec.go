@@ -7,8 +7,8 @@ import (
 	"github.com/appcelerator/amp/cli"
 )
 
-// Command is a helper to exec an os command using the streams configured for the cli.
-func Command(c cli.Interface, name string, args []string) error {
+// Run is a helper to exec an os command using the streams configured for the cli.
+func Run(c cli.Interface, name string, args []string) error {
 	proc := exec.Command(name, args...)
 	stdout, err := proc.StdoutPipe()
 	if err != nil {
