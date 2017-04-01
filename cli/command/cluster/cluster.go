@@ -11,12 +11,12 @@ import (
 type clusterOpts struct {
 	managers int
 	workers int
-	driver string
+	provider string
 	name string
 }
 
 var (
-	opts = &clusterOpts{}
+	opts = &clusterOpts{3,2,"local", ""}
 	flagMap map[string]string
 )
 
@@ -31,6 +31,7 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewCreateCommand(c))
 	cmd.AddCommand(NewDestroyCommand(c))
 	cmd.AddCommand(NewUpdateCommand(c))
+	cmd.AddCommand(NewStatusCommand(c))
 	return cmd
 }
 

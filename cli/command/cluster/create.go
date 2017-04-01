@@ -18,7 +18,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.IntVarP(&opts.workers, "workers", "w", 2, "Initial number of worker nodes")
 	flags.IntVarP(&opts.managers, "managers", "m", 3, "Intial number of manager nodes")
-	flags.StringVarP(&opts.driver, "driver", "d", "local", "Cluster deployment target")
+	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
 	return cmd
 }
@@ -31,8 +31,8 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 	if cmd.Flag("managers").Changed {
 		flagMap["-m"] = cmd.Flag("managers").Value.String()
 	}
-	if cmd.Flag("driver").Changed {
-		flagMap["-t"] = cmd.Flag("driver").Value.String()
+	if cmd.Flag("provider").Changed {
+		flagMap["-t"] = cmd.Flag("provider").Value.String()
 	}
 	if cmd.Flag("name").Changed {
 		flagMap["-l"] = cmd.Flag("name").Value.String()
