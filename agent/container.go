@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-//ContainerData data
+// ContainerData data
 type ContainerData struct {
 	name             string
 	ID               string
@@ -37,10 +38,10 @@ type ContainerData struct {
 	lastDateSaveTime time.Time
 }
 
-//Verify if the event stream is working, if not start it
+// Verify if the event stream is working, if not start it
 func (a *Agent) updateEventsStream() {
 	if !a.eventStreamReading {
-		fmt.Println("Opening docker events stream...")
+		log.Println("Opening docker events stream...")
 		args := filters.NewArgs()
 		args.Add("type", "container")
 		args.Add("event", "die")
@@ -58,25 +59,25 @@ func (a *Agent) updateEventsStream() {
 // Start and read the docker event stream and update container list accordingly
 func (a *Agent) startEventStream(stream <-chan events.Message, errs <-chan error) {
 	a.eventStreamReading = true
-	fmt.Println("start events stream reader")
+	log.Println("start events stream reader")
 	go func() {
 		for {
 			select {
 			case err := <-errs:
 				if err != nil {
-					fmt.Printf("Error reading event: %v\n", err)
+					log.Printf("Error reading event: %v\n", err)
 					a.eventStreamReading = false
 					return
 				}
 			case event := <-stream:
-				fmt.Printf("Docker event: action=%s containerId=%s\n", event.Action, event.Actor.ID)
+				log.Printf("Docker event: action=%s containerId=%s\n", event.Action, event.Actor.ID)
 				a.updateContainerMap(event.Action, event.Actor.ID)
 			}
 		}
 	}()
 }
 
-//Update containers list concidering event action and event containerId
+// Update containers list considering event action and event container id
 func (a *Agent) updateContainerMap(action string, containerID string) {
 	if action == "start" {
 		a.addContainer(containerID)
@@ -88,7 +89,7 @@ func (a *Agent) updateContainerMap(action string, containerID string) {
 	}
 }
 
-//add a container to the main container map and retrieve some container information
+// Add a container to the main container map and retrieve some container information
 func (a *Agent) addContainer(ID string) {
 	_, ok := a.containers[ID]
 	if !ok {
@@ -104,7 +105,7 @@ func (a *Agent) addContainer(ID string) {
 				logsReadError: false,
 			}
 			labels := inspect.Config.Labels
-			//data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
+			// data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
 			data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
 			if data.serviceName == "" {
 				data.serviceName = "noService"
@@ -122,49 +123,53 @@ func (a *Agent) addContainer(ID string) {
 				data.health = inspect.State.Health.Status
 			}
 			if data.role == "infrastructure" {
-				fmt.Printf("add infrastructure container  %s\n", data.name)
+				log.Printf("add infrastructure container  %s\n", data.name)
 			} else {
-				fmt.Printf("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
+				log.Printf("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
 			}
 			a.containers[ID] = &data
 		} else {
-			fmt.Printf("Container inspect error: %v\n", err)
+			log.Printf("Container inspect error: %v\n", err)
 		}
 	}
 }
 
-//Suppress a container from the main container map
+// Remove a container from the main container map
 func (a *Agent) removeContainer(ID string) {
 	data, ok := a.containers[ID]
 	if ok {
-		fmt.Println("remove container", data.name)
+		log.Println("remove container", data.name)
 		delete(a.containers, ID)
 	}
-	os.Remove(path.Join(containersDateDir, ID))
+	err := os.Remove(path.Join(containersDataDir, ID))
+	if err != nil {
+		log.Println("Error removing container data directory: ", err)
+	}
 }
 
-//Update container status and health
-func (a *Agent) updateContainer(ID string) {
-	data, ok := a.containers[ID]
+// Update container status and health
+// TODO
+// nolint: unused
+func (a *Agent) updateContainer(id string) {
+	data, ok := a.containers[id]
 	if ok {
-		inspect, err := a.dockerClient.ContainerInspect(context.Background(), ID)
+		inspect, err := a.dockerClient.ContainerInspect(context.Background(), id)
 		if err == nil {
-			//labels = inspect.Config.Labels
+			// labels = inspect.Config.Labels
 			data.state = inspect.State.Status
 			data.health = ""
 			if inspect.State.Health != nil {
 				data.health = inspect.State.Health.Status
 			}
-			fmt.Println("update container", data.name)
+			log.Println("update container", data.name)
 		} else {
-			fmt.Printf("Container %s inspect error: %v\n", data.name, err)
+			log.Printf("Container %s inspect error: %v\n", data.name, err)
 		}
 	}
 }
 
 func (a *Agent) getMapValue(labelMap map[string]string, name string) string {
 	if val, exist := labelMap[name]; exist {
-		//todo
 		return val
 	}
 	return ""

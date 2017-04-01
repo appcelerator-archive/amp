@@ -187,11 +187,11 @@ clean-beat:
 	@rm -f $(BEATTARGET)
 
 # =============================================================================
-# BUILD AGENT (`amp-agent`)
-# Saves binary to `cmd/amp-agent/amp-agent.alpine`,
-# then builds `appcelerator/amp-agent` image
+# BUILD AGENT (`agent`)
+# Saves binary to `cmd/agent/agent.alpine`,
+# then builds `appcelerator/agent` image
 # =============================================================================
-AGENT := amp-agent
+AGENT := agent
 AGENTBINARY=$(AGENT).alpine
 AGENTTAG := local
 AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
@@ -214,7 +214,7 @@ clean-agent:
 # =============================================================================
 # Quality checks
 # =============================================================================
-CHECKDIRS := api cmd data tests
+CHECKDIRS := agent api cmd data tests
 CHECKSRCS := $(shell find $(CHECKDIRS) -type f -name '*.go')
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)

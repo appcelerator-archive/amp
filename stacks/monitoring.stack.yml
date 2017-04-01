@@ -40,7 +40,7 @@ services:
       - "4222:4222"
 
   agent:
-    image: appcelerator/amp-agent:local
+    image: appcelerator/agent:local
     deploy:
       mode: global
       labels:

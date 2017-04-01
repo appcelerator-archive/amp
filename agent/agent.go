@@ -1,13 +1,11 @@
 package core
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"log"
 
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -17,76 +15,76 @@ import (
 )
 
 const (
-	defaultTimeOut    = 30 * time.Second
-	natsClientID      = "amp-agent"
-	containersDateDir = "/containers"
+	containersDataDir = "/containers"
 )
 
-//Agent data
+// Agent data
 type Agent struct {
-	dockerClient       *client.Client
-	containers         map[string]*ContainerData
-	eventStreamReading bool
-	//lastUpdate           time.Time
+	dockerClient        *client.Client
+	containers          map[string]*ContainerData
+	eventStreamReading  bool
 	logsSavedDatePeriod int
 	natsStreaming       ns.NatsStreaming
 	nbLogs              int
 	nbMetrics           int
 }
 
-//AgentInit Connect to docker engine, get initial containers list and start the agent
-func AgentInit(version string, build string) error {
+// AgentInit Connect to docker engine, get initial containers list and start the agent
+func AgentInit(version, build string) error {
 	agent := Agent{}
 	agent.trapSignal()
-	conf.init(version)
+	conf.init(version, build)
 
-	//containers dir creqtion
-	os.MkdirAll(containersDateDir, 0666)
+	// containers dir creation
+	err := os.MkdirAll(containersDataDir, 0666)
+	if err != nil {
+		log.Fatalln("Unable to create container data directory: ", err)
+	}
 
 	// NATS Connect
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Fatalln("Unable to get hostname:", err)
+		log.Fatalln("Unable to get hostname: ", err)
 	}
 	if agent.natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
 		return err
 	}
 
 	// Connection to Docker
-	defaultHeaders := map[string]string{"User-Agent": "amp-agent"}
+	defaultHeaders := map[string]string{"User-Agent": "agent"}
 	cli, err := client.NewClient(conf.dockerEngine, amp.DockerDefaultVersion, nil, defaultHeaders)
 	if err != nil {
-		agent.natsStreaming.Close()
+		_ = agent.natsStreaming.Close()
 		return err
 	}
 	agent.dockerClient = cli
-	fmt.Println("Connected to Docker-engine")
+	log.Println("Connected to Docker-engine")
 
-	fmt.Println("Extracting containers list...")
+	log.Println("Extracting containers list...")
 	agent.containers = make(map[string]*ContainerData)
 	ContainerListOptions := types.ContainerListOptions{All: true}
 	containers, err := agent.dockerClient.ContainerList(context.Background(), ContainerListOptions)
 	if err != nil {
-		agent.natsStreaming.Close()
+		_ = agent.natsStreaming.Close()
 		return err
 	}
 	for _, cont := range containers {
 		agent.addContainer(cont.ID)
 	}
-	fmt.Println("done")
+	log.Println("done")
 	agent.start()
 	return nil
 }
 
-//Main agent loop, verify if events and logs stream are started if not start them
+// Main agent loop, verify if events and logs stream are started if not start them
 func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
 	for {
-		a.uddateStreams()
+		a.updateStreams()
 		nb++
 		if nb == 10 {
-			fmt.Printf("Sent %d logs and %d metrics on the last %d seconds\n", a.nbLogs, a.nbMetrics, nb*conf.period)
+			log.Printf("Sent %d logs and %d metrics on the last %d seconds\n", a.nbLogs, a.nbMetrics, nb*conf.period)
 			nb = 0
 			a.nbLogs = 0
 			a.nbMetrics = 0
@@ -95,19 +93,25 @@ func (a *Agent) start() {
 	}
 }
 
-//starts logs and metrics stream of eech new started container
-func (a *Agent) uddateStreams() {
+// Starts logs and metrics stream of eech new started container
+func (a *Agent) updateStreams() {
 	a.updateLogsStream()
 	a.updateMetricsStreams()
 	a.updateEventsStream()
 }
 
-// Close AgentInit ressources
+// Close AgentInit resources
 func (a *Agent) stop() {
 	a.closeLogsStreams()
 	a.closeMetricsStreams()
-	a.dockerClient.Close()
-	a.natsStreaming.Close()
+	err := a.dockerClient.Close()
+	if err != nil {
+		log.Println("error closing connection to docker client: ", err)
+	}
+	err = a.natsStreaming.Close()
+	if err != nil {
+		log.Println("error closing connection to NATS: ", err)
+	}
 }
 
 // Launch a routine to catch SIGTERM Signal
@@ -117,7 +121,7 @@ func (a *Agent) trapSignal() {
 	signal.Notify(ch, syscall.SIGTERM)
 	go func() {
 		<-ch
-		fmt.Println("\namp-agent received SIGTERM signal")
+		log.Println("\nagent received SIGTERM signal")
 		a.stop()
 		os.Exit(1)
 	}()
