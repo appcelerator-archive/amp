@@ -8,10 +8,11 @@ import (
 // NewUpdateCommand returns a new instance of the update command for updating local development cluster.
 func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update a local amp cluster",
+		Use:     "update",
+		Short:   "Update a local amp cluster",
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return update(c, cmd, args)
+			return update(c, cmd)
 		},
 	}
 
@@ -21,16 +22,13 @@ func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-func update(c cli.Interface, cmd *cobra.Command, args []string) error {
-	flagMap = make(map[string]string)
-	if cmd.Flag("workers").Changed {
-		flagMap["-w"] = cmd.Flag("workers").Value.String()
+func update(c cli.Interface, cmd *cobra.Command) error {
+	// This is a map from cli cluster flag name to bootstrap script flag name
+	m := map[string]string{
+		"workers":  "-w",
+		"managers": "-m",
 	}
-	if cmd.Flag("managers").Changed {
-		flagMap["-m"] = cmd.Flag("managers").Value.String()
-	}
-	for k, v := range flagMap {
-		args = append(args, k, v)
-	}
-	return updateCluster(c, args)
+
+	args := []string{}
+	return updateCluster(c, reflag(cmd, m, args))
 }

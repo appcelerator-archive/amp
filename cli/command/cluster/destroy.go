@@ -14,12 +14,13 @@ func NewDestroyCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:   "destroy",
 		Short: "Destroy a local amp cluster",
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return destroy(c, args)
+			return destroy(c)
 		},
 	}
 }
 
-func destroy(c cli.Interface, args []string) error {
-	return updateCluster(c, append(destroyArgs[:], args[:]...))
+func destroy(c cli.Interface) error {
+	return updateCluster(c, destroyArgs)
 }

@@ -10,8 +10,9 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a local amp cluster",
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return create(c, cmd, args)
+			return create(c, cmd)
 		},
 	}
 
@@ -23,22 +24,17 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-func create(c cli.Interface, cmd *cobra.Command, args []string) error {
-	flagMap = make(map[string]string)
-	if cmd.Flag("workers").Changed {
-		flagMap["-w"] = cmd.Flag("workers").Value.String()
+// Map cli cluster flags to target bootstrap cluster command flags and update the cluster
+func create(c cli.Interface, cmd *cobra.Command) error {
+	// This is a map from cli cluster flag name to bootstrap script flag name
+	m := map[string]string{
+		"workers":  "-w",
+		"managers": "-m",
+		"provider": "-t",
+		"name":     "-l",
 	}
-	if cmd.Flag("managers").Changed {
-		flagMap["-m"] = cmd.Flag("managers").Value.String()
-	}
-	if cmd.Flag("provider").Changed {
-		flagMap["-t"] = cmd.Flag("provider").Value.String()
-	}
-	if cmd.Flag("name").Changed {
-		flagMap["-l"] = cmd.Flag("name").Value.String()
-	}
-	for k, v := range flagMap {
-		args = append(args, k, v)
-	}
-	return updateCluster(c, args)
+
+	args := []string{}
+	return updateCluster(c, reflag(cmd, m, args))
 }
+
