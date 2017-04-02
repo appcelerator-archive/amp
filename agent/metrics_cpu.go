@@ -66,16 +66,6 @@ func (a *Agent) newCPUDiff(cpu *CPUStats) *CPUStatsDiff {
 	if diff.Duration <= 0 {
 		return nil
 	}
-	/*
-		ret := common.MapStr{}
-		if cap(cpu.PerCPUUsage) == cap(cpu.PrePerCPUUsage) {
-			for index := range cpu.PerCPUUsage {
-				name := log.Sprintf("cpu%d", index)
-				ret[name] = a.calculateLoad(cpu.PerCPUUsage[index], cpu.PrePerCPUUsage[index], diff.Duration)
-			}
-		}
-		diff.PerCPUUsage = ret
-	*/
 	diff.TotalUsage = a.calculateLoad(cpu.TotalUsage, cpu.PreTotalUsage, diff.Duration)
 	diff.UsageInKernelmode = a.calculateLoad(cpu.UsageInKernelmode, cpu.UsageInKernelmode, diff.Duration)
 	diff.UsageInUsermode = a.calculateLoad(cpu.UsageInUsermode, cpu.UsageInUsermode, diff.Duration)
@@ -88,5 +78,5 @@ func (a *Agent) calculateLoad(oldValue uint64, newValue uint64, duration uint64)
 	if value < 0 || duration == 0 {
 		return float64(0)
 	}
-	return float64(value) / (float64(duration) * float64(1000000000))
+	return float64(value) / (float64(duration) * float64(10000000))
 }
