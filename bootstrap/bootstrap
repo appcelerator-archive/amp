@@ -5,9 +5,8 @@
 INFRAKIT_HOME=/infrakit
 INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
 #INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:latest
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.1.0
 INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_DOCKER_IMAGE=appcelerator/infrakit-docker:1.0.0
 TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
 SSL_KEY_LENGTH=2048
 CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
@@ -501,7 +500,7 @@ _clean_config() {
 _prepare_config_container() {
   echo "prepare the InfraKit configuration file..." >&2
   local _config=$(mktemp)
-  docker exec infrakit infrakit template --log 5 --url $CONTAINER_CONFIG_TPL > $_config
+  docker exec infrakit infrakit template --log 5 $CONTAINER_CONFIG_TPL > $_config
   docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
   if [ $? -ne 0 ]; then
     echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
@@ -604,7 +603,7 @@ VALID_PROVIDERS="aws docker terraform"
 # we can't run InfraKit in a container for these plugins
 NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
-MANAGED_PLUGINS="terraform"
+MANAGED_PLUGINS="docker terraform"
 target=local
 default_target=1
 provider=docker

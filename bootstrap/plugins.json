@@ -18,6 +18,15 @@
     }
     ,
     {
+        "Plugin" : "instance-docker",
+        "Launch" : {
+            "os" : {
+                "Cmd" : "infrakit-instance-docker --log 5 > {{env "INFRAKIT_HOME"}}/logs/instance-docker.log 2>&1"
+            }
+        }
+    }
+    ,
+    {
         "Plugin" : "instance-vagrant",
         "Launch" : {
             "os" : {
