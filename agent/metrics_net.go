@@ -80,13 +80,13 @@ func (a *Agent) newNetDiff(newNet *NetStats, previousNet *NetStats) *NetStatsDif
 	if diff.Duration <= 0 {
 		return nil
 	}
-	diff.RxBytes = int64(newNet.RxBytes - previousNet.RxBytes)
-	diff.RxDropped = int64(newNet.RxDropped - previousNet.RxDropped)
-	diff.RxErrors = int64(newNet.RxErrors - previousNet.RxErrors)
-	diff.RxPackets = int64(newNet.RxPackets - previousNet.RxPackets)
-	diff.TxBytes = int64(newNet.TxBytes - previousNet.TxBytes)
-	diff.TxDropped = int64(newNet.TxDropped - previousNet.TxDropped)
-	diff.TxErrors = int64(newNet.TxErrors - previousNet.TxErrors)
-	diff.TxPackets = int64(newNet.TxPackets - previousNet.TxPackets)
+	diff.RxBytes = int64(newNet.RxBytes-previousNet.RxBytes) / diff.Duration
+	diff.RxDropped = int64(newNet.RxDropped-previousNet.RxDropped) / diff.Duration
+	diff.RxErrors = int64(newNet.RxErrors-previousNet.RxErrors) / diff.Duration
+	diff.RxPackets = int64(newNet.RxPackets-previousNet.RxPackets) / diff.Duration
+	diff.TxBytes = int64(newNet.TxBytes-previousNet.TxBytes) / diff.Duration
+	diff.TxDropped = int64(newNet.TxDropped-previousNet.TxDropped) / diff.Duration
+	diff.TxErrors = int64(newNet.TxErrors-previousNet.TxErrors) / diff.Duration
+	diff.TxPackets = int64(newNet.TxPackets-previousNet.TxPackets) / diff.Duration
 	return diff
 }

@@ -63,8 +63,8 @@ func (a *Agent) newIODiff(newIO *IOStats, previousIO *IOStats) *IOStatsDiff {
 	if diff.Duration <= 0 {
 		return nil
 	}
-	diff.Reads = int64(newIO.Reads - previousIO.Reads)
-	diff.Writes = int64(newIO.Writes - previousIO.Writes)
-	diff.Totals = int64(newIO.Totals - previousIO.Totals)
+	diff.Reads = int64(newIO.Reads-previousIO.Reads) / diff.Duration
+	diff.Writes = int64(newIO.Writes-previousIO.Writes) / diff.Duration
+	diff.Totals = int64(newIO.Totals-previousIO.Totals) / diff.Duration
 	return diff
 }
