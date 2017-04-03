@@ -15,6 +15,19 @@ else
     fi
 fi
 
+rm -f "$ES_ALIVE"
+# Start pre-configuration in case ES is already available
+# In background because it will need a connection from Kibana to ES
+/preconfiguration.sh &
+
+# wait a bit for elasticsearch
+for w in $(seq 16); do
+  if [[ -f "$ES_ALIVE" ]]; then
+    break
+  fi
+  sleep 1
+done
+
 # Start kibana
 CMD="kibana"
 CMDARGS="$@"
