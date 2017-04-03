@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-
 	"log"
 
 	"github.com/spf13/viper"

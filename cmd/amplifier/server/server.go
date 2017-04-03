@@ -150,11 +150,13 @@ func registerServices(c *Configuration, s *grpc.Server) {
 
 func registerVersionServer(c *Configuration, s *grpc.Server) {
 	version.RegisterVersionServer(s, &version.Server{
-		Version:   c.Version,
-		Port:      c.Port,
-		GoVersion: rt.Version(),
-		Os:        rt.GOOS,
-		Arch:      rt.GOARCH,
+		Info: &version.Info{
+			Version:   c.Version,
+			Build:     c.Build,
+			GoVersion: rt.Version(),
+			Os:        rt.GOOS,
+			Arch:      rt.GOARCH,
+		},
 	})
 }
 
