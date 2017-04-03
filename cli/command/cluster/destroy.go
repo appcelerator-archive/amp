@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	destroyArgs = []string{"-c"}
+	destroyArgs = []string{"-d"}
 )
 
 // NewDestroyCommand returns a new instance of the destroy command for destroying and deleting a local development cluster.
 func NewDestroyCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:   "destroy",
-		Short: "Destroy a local amp cluster",
+		Use:     "destroy",
+		Short:   "Destroy a local amp cluster",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return destroy(c)
