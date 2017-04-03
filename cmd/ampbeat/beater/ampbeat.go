@@ -101,7 +101,7 @@ func logMessageHandler(msg *stan.Msg) {
 		"stack_name":           e.StackName,
 		"node_id":              e.NodeId,
 		"role":                 e.Role,
-		"message":              e.Message,
+		"msg":                  e.Message,
 	}
 	bt.client.PublishEvent(event)
 }
@@ -133,9 +133,9 @@ func metricsMessageHandler(msg *stan.Msg) {
 	}
 	if e.Cpu != nil {
 		event["cpu"] = common.MapStr{
-			"totalUsage":        e.Cpu.TotalUsage,
-			"usageInKernelmode": e.Cpu.UsageInKernelMode,
-			"usageInUsermode":   e.Cpu.UsageInUserMode,
+			"total_usage":          e.Cpu.TotalUsage,
+			"usage_in_kernel_mode": e.Cpu.UsageInKernelMode,
+			"usage_in_user_mode":   e.Cpu.UsageInUserMode,
 		}
 	}
 	if e.Io != nil {
@@ -147,24 +147,24 @@ func metricsMessageHandler(msg *stan.Msg) {
 	}
 	if e.Mem != nil {
 		event["mem"] = common.MapStr{
-			"failcnt":  e.Mem.Failcnt,
-			"limit":    e.Mem.Limit,
-			"maxUsage": e.Mem.Maxusage,
-			"usage":    e.Mem.Usage,
-			"usage_p":  e.Mem.UsageP,
+			"fail_count": e.Mem.Failcnt,
+			"limit":      e.Mem.Limit,
+			"max_usage":  e.Mem.Maxusage,
+			"usage":      e.Mem.Usage,
+			"usage_pct":  e.Mem.UsageP,
 		}
 	}
 	if e.Net != nil {
 		event["net"] = common.MapStr{
-			"totalBytes": e.Net.TotalBytes,
-			"rxBytes":    e.Net.RxBytes,
-			"rxDropped":  e.Net.RxDropped,
-			"rxErrors":   e.Net.RxErrors,
-			"rxPackets":  e.Net.RxPackets,
-			"txBytes":    e.Net.TxBytes,
-			"txDropped":  e.Net.TxDropped,
-			"txErrors":   e.Net.TxErrors,
-			"txPackets":  e.Net.TxPackets,
+			"total_bytes": e.Net.TotalBytes,
+			"rx_bytes":    e.Net.RxBytes,
+			"rx_dropped":  e.Net.RxDropped,
+			"rx_errors":   e.Net.RxErrors,
+			"rx_packets":  e.Net.RxPackets,
+			"tx_bytes":    e.Net.TxBytes,
+			"tx_dropped":  e.Net.TxDropped,
+			"tx_errors":   e.Net.TxErrors,
+			"tx_packets":  e.Net.TxPackets,
 		}
 	}
 	bt.client.PublishEvent(event)

@@ -65,7 +65,7 @@
           "index": "not_analyzed",
           "type": "string"
         },
-        "failcnt": {
+        "fail_count": {
           "type": "long"
         },
         "fields": {
@@ -74,15 +74,8 @@
         "limit": {
           "type": "long"
         },
-        "maxUsage": {
+        "max_usage": {
           "type": "long"
-        },
-        "message": {
-          "index": "analyzed",
-          "norms": {
-            "enabled": false
-          },
-          "type": "string"
         },
         "meta": {
           "properties": {
@@ -122,6 +115,13 @@
             }
           }
         },
+        "msg": {
+          "index": "analyzed",
+          "norms": {
+            "enabled": false
+          },
+          "type": "string"
+        },
         "node_id": {
           "ignore_above": 1024,
           "index": "not_analyzed",
@@ -135,16 +135,16 @@
           "index": "not_analyzed",
           "type": "string"
         },
-        "rxBytes": {
+        "rx_bytes": {
           "type": "long"
         },
-        "rxDropped": {
+        "rx_dropped": {
           "type": "long"
         },
-        "rxErrors": {
+        "rx_errors": {
           "type": "long"
         },
-        "rxPackets": {
+        "rx_packets": {
           "type": "long"
         },
         "service_id": {
@@ -175,34 +175,34 @@
         "total": {
           "type": "long"
         },
-        "totalBytes": {
+        "total_bytes": {
           "type": "long"
         },
-        "totalUsage": {
+        "total_usage": {
           "type": "double"
         },
-        "txBytes": {
+        "tx_bytes": {
           "type": "long"
         },
-        "txDropped": {
+        "tx_dropped": {
           "type": "long"
         },
-        "txErrors": {
+        "tx_errors": {
           "type": "long"
         },
-        "txPackets": {
+        "tx_packets": {
           "type": "long"
         },
         "usage": {
           "type": "long"
         },
-        "usageInKernelmode": {
+        "usage_in_kernel_mode": {
           "type": "double"
         },
-        "usageInUsermode": {
+        "usage_in_user_mode": {
           "type": "double"
         },
-        "usage_p": {
+        "usage_pct": {
           "type": "double"
         },
         "write": {
