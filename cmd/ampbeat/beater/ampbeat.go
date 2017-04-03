@@ -54,13 +54,13 @@ func (bt *Ampbeat) Run(b *beat.Beat) error {
 	bt.client = b.Publisher.Connect()
 
 	// logs subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, logMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsLogsSubject, logMessageHandler, stan.DeliverAllAvailable()); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
 	logp.Info("Succesfully subscribed to logs subject")
 
 	// metrics subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsMetricsTopic, metricsMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsMetricsSubject, metricsMessageHandler, stan.DeliverAllAvailable()); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
 	logp.Info("Succesfully subscribed to metrics subject")
@@ -102,7 +102,7 @@ func logMessageHandler(msg *stan.Msg) {
 		"stack_name":           e.StackName,
 		"node_id":              e.NodeId,
 		"role":                 e.Role,
-		"msg":                  e.Message,
+		"msg":                  e.Msg,
 	}
 	bt.client.PublishEvent(event)
 }

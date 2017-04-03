@@ -16,11 +16,11 @@ const (
 	DockerDefaultURL     = "unix:///var/run/docker.sock"
 	DockerDefaultVersion = "1.24"
 
-	NatsDefaultURL    = "nats://nats:4222"
-	NatsClusterID     = "test-cluster"
-	NatsFunctionTopic = "amp-function-calls"
-	NatsLogsTopic     = "amp-logs"
-	NatsMetricsTopic  = "amp-metrics"
+	NatsDefaultURL     = "nats://nats:4222"
+	NatsClusterID      = "test-cluster"
+	NatsFunctionTopic  = "amp-function-calls"
+	NatsLogsSubject    = "amp-logs"
+	NatsMetricsSubject = "amp-metrics"
 
 	DefaultTimeout     = time.Minute
 	InfrastructureRole = "infrastructure"

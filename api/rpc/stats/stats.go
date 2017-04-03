@@ -6,7 +6,7 @@ import (
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"golang.org/x/net/context"
-	"gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 // Stats structure to implement StatsServer interface

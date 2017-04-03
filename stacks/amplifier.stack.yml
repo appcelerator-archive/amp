@@ -44,10 +44,12 @@ services:
       - "50101:50101"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       replicas: 3
       labels:
-        io.amp.role: "amp.infrastructure"
+        io.amp.role: "infrastructure"
       restart_policy:
         condition: on-failure
       placement:
@@ -66,8 +68,10 @@ services:
           - "etcd"
     volumes:
       - amp-etcd:/data
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       labels:
-        io.amp.role: "amp.infrastructure"
+        io.amp.role: "infrastructure"
       placement:
         constraints: [node.role == manager]
