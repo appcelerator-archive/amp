@@ -5,7 +5,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-manager",
+      "ID": "amp-manager-{{ ref "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
           "LogicalIds": [
@@ -31,9 +31,8 @@
             ],
             "Tags": {
               "Name": "manager",
-              "Deployment": "Infrakit",
-              "Cluster": "{{ ref "/docker/label/cluster" }}",
-              "Role" : "manager"
+              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "SwarmRole" : "manager"
             }
           }
         },
@@ -77,7 +76,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker",
+      "ID": "amp-worker-{{ ref "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
           "Size": {{ $workerSize }}
@@ -100,8 +99,8 @@
             "Tags": {
               "Name": "worker",
               "Deployment": "Infrakit",
-              "Cluster": "{{ ref "/docker/label/cluster" }}",
-              "Role" : "worker"
+              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "SwarmRole" : "worker"
             }
           }
         },
@@ -135,7 +134,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-proxy",
+      "ID": "amp-proxy-{{ ref "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
           "LogicalIds": [ "amp-proxy" ]
@@ -159,9 +158,8 @@
             ],
             "Tags": {
               "Name": "worker",
-              "Cluster": "{{ ref "/docker/label/cluster" }}",
-              "Deployment": "Infrakit",
-              "Role" : "worker"
+              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "SwarmRole" : "worker"
             }
           }
         },

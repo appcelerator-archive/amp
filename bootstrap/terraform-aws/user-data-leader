@@ -22,4 +22,4 @@ write_files:
       cluster_security_group_id = "${tpl_security_group_id}"
 runcmd:
   - curl ${tpl_config_base_url}/bootstrap -o /usr/local/bin/bootstrap.sh
-  - bash /usr/local/bin/bootstrap.sh -i -p terraform:/tmp/terraform.tfvars -t aws -e /tmp/env.ikt ${tpl_config_base_url}
+  - bash /usr/local/bin/bootstrap.sh -1 -p terraform:/tmp/terraform.tfvars -t aws -e /tmp/env.ikt ${tpl_config_base_url}
