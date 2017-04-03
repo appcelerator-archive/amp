@@ -1,0 +1,72 @@
+#!/bin/bash
+
+CMD=$(basename $0)
+CID=
+TIMEOUT=180
+INTERVAL=1
+
+usage() {
+cat << EOF
+Usage: $CMD [-t TIMEOUT] [-i INTERVAL] CID
+
+$CMD waits until the local development cluster nodes are all running.
+
+Options:
+  -t    Timeout in seconds for command to keep trying until failing with
+        exit status code 1; to make only one attempt, set timeout = 0
+        (default 300)
+  -i    Interval in seconds between attempts to check the cluster (default 1)
+  -h    Display this help
+
+Example: $CMD 300 1
+
+EOF
+    exit 1
+}
+
+error() {
+  printf "Error: %s\n\n" "$1" >&2
+  usage
+}
+
+ok() {
+  echo "OK"
+  exit 0
+}
+
+timeout() {
+  echo "Error: timed out waiting for cluster."
+  exit 1
+}
+
+while getopts ':hc:t:i:' opt; do
+  case $opt in
+    h) usage ;;
+    t) TIMEOUT=$OPTARG ;;
+    i) INTERVAL=$OPTARG ;;
+    :) error "missing argument for option: -$OPTARG" ;;
+    ?) error "invalid option: -$OPTARG" ;;
+  esac
+done
+
+# OPTIND points to argument after processing valid option arguments (which must
+# come first). Since the index is 1-based starting from the first argument, its
+# value should be equal to the number of arguments. If it's less, than that means
+# there are too many non-flag arguments.
+# HOWEVER, if you want to accept more than one non-flag argument (called operands
+# in posix), then adjust the logic here accordingly.
+[[ $OPTIND -lt $# ]] && error "only one non-flag arg allowed (and it must be last)"
+
+# get command argument (non-flag arg)
+args=("$@")
+CID="${args[((OPTIND-1))]}"
+[[ -z "${CID// }" ]] && error "missing cluster id"
+
+SECONDS=0
+while true; do
+  ./bootstrap/bootstrap -s $CID &> /dev/null
+  [[ $? -eq 0 ]] && exit 0
+  [[ $TIMEOUT -eq 0 || $SECONDS -gt $TIMEOUT ]] && timeout
+  sleep $INTERVAL
+done
+
