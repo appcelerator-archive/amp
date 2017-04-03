@@ -39,7 +39,7 @@ var clientInitializers = []clientInitializer{
 	initElasticsearch,
 	initEtcd,
 	initMailer,
-	//initNats,
+	initNats,
 }
 
 // Service initializers register the services with the grpc server
@@ -48,9 +48,6 @@ var serviceInitializers = []serviceInitializer{
 	registerStorageServer,
 	registerLogsServer,
 	registerStatsServer,
-	//registerServiceServer,
-	//registerStackServiceServer,
-	//registerTopicServer,
 	//registerFunctionServer,
 	registerAccountServer,
 }

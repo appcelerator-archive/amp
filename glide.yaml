@@ -64,7 +64,7 @@ import:
   - context
   - websocket
   - lex/httplex
-- package: gopkg.in/olivere/elastic.v3
+- package: gopkg.in/olivere/elastic.v5
   version: ^5.0.30
 - package: gopkg.in/yaml.v2
 - package: github.com/stretchr/testify

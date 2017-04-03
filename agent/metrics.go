@@ -65,7 +65,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 		if err != nil {
 			log.Printf("error marshalling metrics entry: %v\n", err)
 		}
-		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsMetricsTopic, encoded, nil)
+		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsMetricsSubject, encoded, nil)
 		if err != nil {
 			log.Printf("error sending log entry: %v\n", err)
 			return

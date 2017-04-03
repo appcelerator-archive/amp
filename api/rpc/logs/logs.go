@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/docker"
@@ -15,56 +16,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"gopkg.in/olivere/elastic.v3"
-)
-
-const (
-	// EsIndex is the name of the Elasticsearch index
-	EsIndex = "amp-logs"
-
-	// EsType is the name of the Elasticsearch type
-	EsType = "amp-log-entry"
-
-	// EsMapping is the name of the Elasticsearch type mapping
-	EsMapping = `{
-	 "amp-log-entry": {
-		"properties": {
-		  "timestamp": {
-			"type": "date"
-		  },
-		  "time_id": {
-			"type": "keyword",
-		  },
-		  "container_id": {
-			"type": "keyword",
-		  },
-		  "node_id": {
-			"type": "keyword",
-		  },
-		  "service_id": {
-			"type": "keyword",
-		  },
-		  "service_name": {
-			"type": "keyword",
-		  },
-		  "task_id": {
-			"type": "keyword",
-		  },
-		  "task_name": {
-			"type": "keyword",
-		  },
-		  "stack_id": {
-			"type": "keyword",
-		  },
-		  "stack_name": {
-			"type": "keyword",
-		  },
-		  "role": {
-			"type": "keyword",
-		  }
-		}
-	  }
-	}`
+	"gopkg.in/olivere/elastic.v5"
 )
 
 // Server is used to implement log.LogServer
@@ -84,9 +36,18 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 	log.Println("rpc-logs: Get", in.String())
 
+	// Prepares indices
+	indices := []string{}
+	date := time.Now().UTC()
+	for i := 0; i < 2; i++ {
+		indices = append(indices, "ampbeat-"+date.Format("2006.01.02"))
+		date = date.AddDate(0, 0, -1)
+	}
+
 	// Prepare request to elasticsearch
-	request := s.Es.GetClient().Search().Index(EsIndex)
-	request.Sort("time_id", false)
+	request := s.Es.GetClient().Search().Index(indices...).IgnoreUnavailable(true)
+	request.Type("logs")
+	request.Sort("@timestamp", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
 	} else {
@@ -95,15 +56,11 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 	masterQuery := elastic.NewBoolQuery()
 	if in.Container != "" {
-		masterQuery.Filter(elastic.NewPrefixQuery("container_id", in.Container))
-	}
-	if in.Message != "" {
-		queryString := elastic.NewSimpleQueryStringQuery(in.Message)
-		queryString.Field("message")
-		masterQuery.Filter(queryString)
-	}
-	if in.Node != "" {
-		masterQuery.Filter(elastic.NewPrefixQuery("node_id", in.Node))
+		boolQuery := elastic.NewBoolQuery()
+		masterQuery.Filter(
+			boolQuery.Should(elastic.NewPrefixQuery("container_id", in.Service)),
+			boolQuery.Should(elastic.NewPrefixQuery("container_name", in.Service)),
+		)
 	}
 	if in.Service != "" {
 		boolQuery := elastic.NewBoolQuery()
@@ -113,16 +70,19 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		)
 	}
 	if in.Stack != "" {
-		boolQuery := elastic.NewBoolQuery()
-		masterQuery.Filter(
-			boolQuery.Should(elastic.NewPrefixQuery("stack_id", in.Stack)),
-			boolQuery.Should(elastic.NewPrefixQuery("stack_name", in.Stack)),
-		)
+		masterQuery.Filter(elastic.NewPrefixQuery("stack_name", in.Stack))
+	}
+	if in.Node != "" {
+		masterQuery.Filter(elastic.NewPrefixQuery("node_id", in.Node))
+	}
+	if in.Message != "" {
+		queryString := elastic.NewSimpleQueryStringQuery(in.Message)
+		queryString.Field("msg")
+		masterQuery.Filter(queryString)
 	}
 	if !in.Infra {
 		masterQuery.MustNot(elastic.NewTermQuery("role", amp.InfrastructureRole))
 	}
-	// TODO timestamp queries
 
 	// Perform request
 	searchResult, err := request.Query(masterQuery).Do(ctx)
@@ -134,11 +94,11 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	reply := GetReply{}
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
-		entry, err := parseJSONLogEntry(*hit.Source)
-		if err != nil {
+		entry := &LogEntry{}
+		if err := json.Unmarshal(*hit.Source, &entry); err != nil {
 			return nil, grpc.Errorf(codes.Internal, "%v", err)
 		}
-		reply.Entries[i] = &entry
+		reply.Entries[i] = entry
 	}
 
 	// Reverse entries
@@ -159,20 +119,19 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	}
 	log.Println("rpc-logs: GetStream", in.String())
 
-	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, func(msg *stan.Msg) {
-		entry, err := parseProtoLogEntry(msg.Data)
-		if err != nil {
+	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsSubject, func(msg *stan.Msg) {
+		entry := &LogEntry{}
+		if err := proto.Unmarshal(msg.Data, entry); err != nil {
 			return
 		}
-		if filter(&entry, in) {
-			stream.Send(&entry)
+		if filter(entry, in) {
+			stream.Send(entry)
 		}
 	})
 	if err != nil {
 		sub.Unsubscribe()
 		return grpc.Errorf(codes.Internal, "%v", err)
 	}
-
 	for {
 		select {
 		case <-stream.Context().Done():
@@ -182,26 +141,12 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	}
 }
 
-func parseJSONLogEntry(data []byte) (logEntry LogEntry, err error) {
-	err = json.Unmarshal(data, &logEntry)
-	return
-}
-
-func parseProtoLogEntry(data []byte) (logEntry LogEntry, err error) {
-	err = proto.Unmarshal(data, &logEntry)
-	return
-}
-
 func filter(entry *LogEntry, in *GetRequest) bool {
 	match := true
 	if in.Container != "" {
-		match = strings.HasPrefix(strings.ToLower(entry.ContainerId), strings.ToLower(in.Container))
-	}
-	if in.Message != "" {
-		match = strings.Contains(strings.ToLower(entry.Message), strings.ToLower(in.Message))
-	}
-	if in.Node != "" {
-		match = strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
+		containerID := strings.ToLower(entry.ContainerId)
+		containerName := strings.ToLower(entry.ContainerName)
+		match = strings.HasPrefix(containerID, strings.ToLower(in.Container)) || strings.HasPrefix(containerName, strings.ToLower(in.Container))
 	}
 	if in.Service != "" {
 		serviceID := strings.ToLower(entry.ServiceId)
@@ -209,8 +154,13 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = strings.HasPrefix(serviceID, strings.ToLower(in.Service)) || strings.HasPrefix(serviceName, strings.ToLower(in.Service))
 	}
 	if in.Stack != "" {
-		stackName := strings.ToLower(entry.StackName)
-		match = strings.HasPrefix(stackName, strings.ToLower(in.Stack))
+		match = strings.HasPrefix(strings.ToLower(entry.StackName), strings.ToLower(in.Stack))
+	}
+	if in.Node != "" {
+		match = strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
+	}
+	if in.Message != "" {
+		match = strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
 	if !in.Infra {
 		match = entry.Role != amp.InfrastructureRole

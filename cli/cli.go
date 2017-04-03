@@ -41,9 +41,9 @@ type cli struct {
 func NewCLI(in io.ReadCloser, out, err io.Writer, config *Configuration) Interface {
 	c := &cli{
 		Configuration: *config,
-		in:  NewInStream(in),
-		out: NewOutStream(out),
-		err: err,
+		in:            NewInStream(in),
+		out:           NewOutStream(out),
+		err:           err,
 	}
 	c.console = NewConsole(c.Out(), config.Verbose)
 	return c
@@ -60,7 +60,7 @@ func (c cli) Build() string {
 }
 
 // Address returns the address of the grpc api (host:port) used for the client connection.
-func (c cli) Address () string {
+func (c cli) Address() string {
 	return c.Configuration.Address
 }
 

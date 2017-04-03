@@ -98,13 +98,13 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
 			Role:               data.role,
-			Message:            slog,
+			Msg:                slog,
 		}
 		encoded, err := proto.Marshal(&logEntry)
 		if err != nil {
 			log.Printf("error marshalling log entry: %v\n", err)
 		}
-		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsLogsTopic, encoded, nil)
+		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsLogsSubject, encoded, nil)
 		if err != nil {
 			log.Printf("error sending log entry: %v\n", err)
 			return

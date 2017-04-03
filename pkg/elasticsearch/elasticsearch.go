@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 // Elasticsearch wrapper

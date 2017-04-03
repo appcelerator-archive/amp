@@ -19,7 +19,7 @@ message LogEntry {
   string stack_name = 9;
   string node_id = 10;
   string role = 11;
-  string message = 12;
+  string msg = 12;
 }
 
 message GetRequest {
