@@ -22,6 +22,7 @@ import (
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/docker/docker/client"
 	"google.golang.org/grpc"
 )
@@ -31,17 +32,18 @@ const (
 )
 
 type (
-	clientInitializer  func(*amp.Config) error
-	serviceInitializer func(*amp.Config, *grpc.Server)
+	clientInitializer  func(*Configuration) error
+	serviceInitializer func(*Configuration, *grpc.Server)
 )
 
 // Client initializers open connections to required backend services
 // Clients are stored as members of runtime
 var clientInitializers = []clientInitializer{
-	initEtcd,
-	//initElasticsearch,
-	//initNats,
 	initDocker,
+	//initElasticsearch,
+	initEtcd,
+	initMailer,
+	//initNats,
 }
 
 // Service initializers register the services with the grpc server
@@ -58,7 +60,7 @@ var serviceInitializers = []serviceInitializer{
 }
 
 // Start starts the amplifier server
-func Start(c *amp.Config) {
+func Start(c *Configuration) {
 	// initialize clients
 	initClients(c)
 
@@ -78,13 +80,13 @@ func Start(c *amp.Config) {
 	log.Fatalln(s.Serve(lis))
 }
 
-func initClients(config *amp.Config) {
+func initClients(config *Configuration) {
 	// ensure all initialization code fails fast on errors; there is no point in
 	// attempting to continue in a degraded state if there are problems at start up
 
 	var wg sync.WaitGroup
+	wg.Add(len(clientInitializers))
 	for _, f := range clientInitializers {
-		wg.Add(1)
 		go func(f clientInitializer) {
 			defer wg.Done()
 			if err := f(config); err != nil {
@@ -97,7 +99,7 @@ func initClients(config *amp.Config) {
 	wg.Wait()
 }
 
-func initEtcd(config *amp.Config) error {
+func initEtcd(config *Configuration) error {
 	log.Println("Connecting to etcd at", strings.Join(config.EtcdEndpoints, ","))
 	runtime.Store = etcd.New(config.EtcdEndpoints, "amp")
 	if err := runtime.Store.Connect(defaultTimeOut); err != nil {
@@ -107,7 +109,7 @@ func initEtcd(config *amp.Config) error {
 	return nil
 }
 
-func initElasticsearch(config *amp.Config) error {
+func initElasticsearch(config *Configuration) error {
 	log.Println("Connecting to elasticsearch at", config.ElasticsearchURL)
 	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
 		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", config.ElasticsearchURL, err)
@@ -116,7 +118,7 @@ func initElasticsearch(config *amp.Config) error {
 	return nil
 }
 
-func initNats(config *amp.Config) error {
+func initNats(config *Configuration) error {
 	// NATS
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -128,7 +130,7 @@ func initNats(config *amp.Config) error {
 	return nil
 }
 
-func initDocker(config *amp.Config) error {
+func initDocker(config *Configuration) error {
 	log.Printf("Connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
 	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
 	var err error
@@ -140,10 +142,15 @@ func initDocker(config *amp.Config) error {
 	return nil
 }
 
-func registerServices(c *amp.Config, s *grpc.Server) {
+func initMailer(config *Configuration) error {
+	runtime.Mailer = mail.NewMailer(config.EmailKey, config.EmailSender, config.PublicAddress)
+	return nil
+}
+
+func registerServices(c *Configuration, s *grpc.Server) {
 	var wg sync.WaitGroup
+	wg.Add(len(serviceInitializers))
 	for _, f := range serviceInitializers {
-		wg.Add(1)
 		go func(f serviceInitializer) {
 			defer wg.Done()
 			f(c, s)
@@ -154,7 +161,7 @@ func registerServices(c *amp.Config, s *grpc.Server) {
 	wg.Wait()
 }
 
-func registerVersionServer(c *amp.Config, s *grpc.Server) {
+func registerVersionServer(c *Configuration, s *grpc.Server) {
 	version.RegisterVersionServer(s, &version.Server{
 		Version:   c.Version,
 		Port:      c.Port,
@@ -164,7 +171,7 @@ func registerVersionServer(c *amp.Config, s *grpc.Server) {
 	})
 }
 
-func registerLogsServer(c *amp.Config, s *grpc.Server) {
+func registerLogsServer(c *Configuration, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
 		Docker:           runtime.Docker,
 		ElasticsearchURL: c.ElasticsearchURL,
@@ -173,13 +180,13 @@ func registerLogsServer(c *amp.Config, s *grpc.Server) {
 	})
 }
 
-func registerStorageServer(c *amp.Config, s *grpc.Server) {
+func registerStorageServer(c *Configuration, s *grpc.Server) {
 	storage.RegisterStorageServer(s, &storage.Server{
 		Store: runtime.Store,
 	})
 }
 
-func registerStatsServer(c *amp.Config, s *grpc.Server) {
+func registerStatsServer(c *Configuration, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Docker:           runtime.Docker,
 		ElasticsearchURL: c.ElasticsearchURL,
@@ -188,15 +195,16 @@ func registerStatsServer(c *amp.Config, s *grpc.Server) {
 	})
 }
 
-func registerFunctionServer(c *amp.Config, s *grpc.Server) {
+func registerFunctionServer(c *Configuration, s *grpc.Server) {
 	function.RegisterFunctionServer(s, &function.Server{
 		Functions:     functions.NewStore(runtime.Store),
 		NatsStreaming: runtime.NatsStreaming,
 	})
 }
 
-func registerAccountServer(c *amp.Config, s *grpc.Server) {
+func registerAccountServer(c *Configuration, s *grpc.Server) {
 	account.RegisterAccountServer(s, &account.Server{
 		Accounts: accounts.NewStore(runtime.Store),
+		Mailer:   runtime.Mailer,
 	})
 }
