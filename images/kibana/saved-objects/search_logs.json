@@ -1,0 +1,17 @@
+{
+  "title": "logs",
+  "description": "",
+  "hits": 0,
+  "columns": [
+    "service_name",
+    "message"
+  ],
+  "sort": [
+    "@timestamp",
+    "desc"
+  ],
+  "version": 1,
+  "kibanaSavedObjectMeta": {
+    "searchSourceJSON": "{\"index\":\"ampbeat-*\",\"highlightAll\":true,\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"ampbeat-*\",\"key\":\"type\",\"negate\":false,\"value\":\"logs\"},\"query\":{\"match\":{\"type\":{\"query\":\"logs\",\"type\":\"phrase\"}}}}]}"
+  }
+}

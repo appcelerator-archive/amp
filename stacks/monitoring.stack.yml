@@ -73,7 +73,7 @@ services:
       - elasticsearch
 
   kibana:
-    image: appcelerator/kibana:5.3.0
+    image: appcelerator/kibana:5.3.0-1
     deploy:
       mode: replicated
       replicas: 1

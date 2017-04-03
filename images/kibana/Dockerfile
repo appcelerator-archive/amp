@@ -21,7 +21,9 @@ ENV ELASTICSEARCH_URL http://elasticsearch:9200
 COPY kibana.yml.tpl /opt/kibana/config/kibana.yml.tpl
 RUN rm -v /opt/kibana/config/kibana.yml
 
-#COPY preconfiguration.sh /
+COPY preconfiguration.sh /
+COPY saved-objects /var/lib/kibana/saved-objects
+COPY index-patterns /var/lib/kibana/index-patterns
 COPY run.sh /
 
 EXPOSE 5601
