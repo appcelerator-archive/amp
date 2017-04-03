@@ -22,3 +22,4 @@
 {{ global "/docker/registry/host" "registry" }}
 {{ global "/docker/registry/port" "5000" }}
 {{ global "/aws/stackname" "unset" }}
+{{ global "/docker/label/cluster/key" "atomiq.clusterid" }}
