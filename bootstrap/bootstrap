@@ -165,7 +165,6 @@ EOF
 # works even when the Docker host is not local (running from inside a container on the host)
 # args:
 #   - path of the directory containing the configuration
-# TODO: add a force option to remove the volume if it already exists, and add a hint when the volume exists and the option is not used
 _prepare_configuration_volume() {
       local _d=$1
       local _dockerfile
@@ -208,7 +207,7 @@ EOF
             exit 1
           fi
         else
-          echo "the Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort" >&2
+          echo "the Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort. You may want to use the -f option to force start." >&2
           rm -f $_dockerfile
           exit 1
         fi
@@ -614,7 +613,7 @@ label=""
 force_start=0
 status_request=""
 list_request=""
-while getopts ":1j:t:p:e:m:w:i:l:s:hfc" opt; do
+while getopts ":1j:t:p:e:m:w:i:l:s:hfd" opt; do
   case $opt in
   1)
       init_swarm=1
@@ -672,7 +671,7 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfc" opt; do
       # force start
       force_start=1
       ;;
-  c)
+  d)
       clean=1
       ;;
   e)
