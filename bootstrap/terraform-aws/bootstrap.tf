@@ -172,6 +172,13 @@ resource "aws_security_group" "default" {
   }
 
   ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["${lookup(var.vpc_cidrs, "vpc")}"]
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
