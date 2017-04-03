@@ -191,7 +191,6 @@ func registerStatsServer(c *Configuration, s *grpc.Server) {
 		Docker:           runtime.Docker,
 		ElasticsearchURL: c.ElasticsearchURL,
 		Store:            runtime.Store,
-		NatsStreaming:    runtime.NatsStreaming,
 	})
 }
 
