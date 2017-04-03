@@ -3,6 +3,7 @@ package runtime
 import (
 	"github.com/appcelerator/amp/data/elasticsearch"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/client"
 )
@@ -20,4 +21,7 @@ var (
 
 	// NatsStreaming is the nats streaming client
 	NatsStreaming ns.NatsStreaming
+
+	// Mailer
+	Mailer *mail.Mailer
 )

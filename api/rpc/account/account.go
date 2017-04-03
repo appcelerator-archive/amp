@@ -18,6 +18,7 @@ import (
 // Server is used to implement account.UserServer
 type Server struct {
 	Accounts accounts.Interface
+	Mailer   *mail.Mailer
 }
 
 func convertError(err error) error {
@@ -86,7 +87,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	// Send the verification email
-	if err := mail.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
@@ -100,7 +101,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 	if err != nil {
 		return nil, convertError(err)
 	}
-	if err := mail.SendAccountCreatedEmail(user.Email, user.Name); err != nil {
+	if err := s.Mailer.SendAccountCreatedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully verified user", user.Name)
@@ -143,7 +144,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, convertError(err)
 	}
 	// Send the password reset email
-	if err := mail.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully reset password for user", user.Name)
@@ -193,7 +194,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empt
 		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Email)
 	}
 	// Send the account name reminder email
-	if err := mail.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
+	if err := s.Mailer.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully processed forgot login request for user", user.Name)
@@ -238,7 +239,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 	if err := s.Accounts.DeleteUser(ctx, in.Name); err != nil {
 		return nil, convertError(err)
 	}
-	if err := mail.SendAccountRemovedEmail(user.Email, user.Name); err != nil {
+	if err := s.Mailer.SendAccountRemovedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully deleted user", in.Name)
@@ -288,7 +289,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendOrganizationCreatedEmail(email, in.Name); err != nil {
+		if err := s.Mailer.SendOrganizationCreatedEmail(email, in.Name); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -303,7 +304,7 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendUserAddedInOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
+		if err := s.Mailer.SendUserAddedInOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -318,7 +319,7 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendUserRemovedFromOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
+		if err := s.Mailer.SendUserRemovedFromOrganizationEmail(email, in.OrganizationName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -365,7 +366,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendOrganizationRemovedEmail(email, in.Name); err != nil {
+		if err := s.Mailer.SendOrganizationRemovedEmail(email, in.Name); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -382,7 +383,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*empty.
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendTeamCreatedEmail(email, in.TeamName); err != nil {
+		if err := s.Mailer.SendTeamCreatedEmail(email, in.TeamName); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -397,7 +398,7 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendUserAddedInTeamEmail(email, in.TeamName, in.UserName); err != nil {
+		if err := s.Mailer.SendUserAddedInTeamEmail(email, in.TeamName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -412,7 +413,7 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendUserRemovedFromTeamEmail(email, in.TeamName, in.UserName); err != nil {
+		if err := s.Mailer.SendUserRemovedFromTeamEmail(email, in.TeamName, in.UserName); err != nil {
 			return nil, convertError(err)
 		}
 	}
@@ -449,7 +450,7 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*empty.
 	}
 	// Send confirmation email
 	if email := s.getRequesterEmail(ctx); email != "" {
-		if err := mail.SendTeamRemovedEmail(email, in.TeamName); err != nil {
+		if err := s.Mailer.SendTeamRemovedEmail(email, in.TeamName); err != nil {
 			return nil, convertError(err)
 		}
 	}

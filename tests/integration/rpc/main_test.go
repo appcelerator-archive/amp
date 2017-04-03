@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
@@ -38,7 +39,7 @@ func TestMain(m *testing.M) {
 	ctx = context.Background()
 
 	// Stores
-	store = etcd.New([]string{amp.EtcdDefaultEndpoint}, "amp")
+	store = etcd.New([]string{server.EtcdDefaultEndpoint}, "amp")
 	if err := store.Connect(5 * time.Second); err != nil {
 		log.Panicf("Unable to connect to etcd on: %s\n%v", amp.EtcdDefaultEndpoint, err)
 	}
@@ -49,23 +50,24 @@ func TestMain(m *testing.M) {
 	token, _ := auth.CreateLoginToken("default", "", time.Hour)
 
 	// Connect to amplifier
+	amplifierEndpoint := "amplifier" + server.DefaultPort
 	log.Println("Connecting to amplifier")
-	authenticatedConn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+	authenticatedConn, err := grpc.Dial(amplifierEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
 		grpc.WithPerRPCCredentials(&cli.LoginCredentials{Token: token}),
 	)
 	if err != nil {
-		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)
+		log.Panicf("Unable to connect to amplifier on: %s\n%v", amplifierEndpoint, err)
 	}
-	anonymousConn, err := grpc.Dial(amp.AmplifierDefaultEndpoint,
+	anonymousConn, err := grpc.Dial(amplifierEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
 	)
 	if err != nil {
-		log.Panicf("Unable to connect to amplifier on: %s\n%v", amp.AmplifierDefaultEndpoint, err)
+		log.Panicf("Unable to connect to amplifier on: %s\n%v", amplifierEndpoint, err)
 	}
 	log.Println("Connected to amplifier")
 
