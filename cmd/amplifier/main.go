@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/pkg/config"
 	"github.com/prometheus/common/log"

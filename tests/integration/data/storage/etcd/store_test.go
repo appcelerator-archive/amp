@@ -15,7 +15,6 @@ import (
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/config"
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"

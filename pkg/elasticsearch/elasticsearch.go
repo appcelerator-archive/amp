@@ -9,25 +9,41 @@ import (
 
 // Elasticsearch wrapper
 type Elasticsearch struct {
-	// elasticsearch client
-	client *elastic.Client
+	client    *elastic.Client
+	url       string
+	timeout   time.Duration
+	connected bool
 }
 
-// Connect to the elastic search server
-func (es *Elasticsearch) Connect(url string, timeout time.Duration) error {
-	// Create ES client
-	var err error
+// NewClient instantiates an Elasticsearch wrapper
+func NewClient(url string, timeout time.Duration) *Elasticsearch {
+	return &Elasticsearch{
+		url:     url,
+		timeout: timeout,
+	}
+}
+
+// Connect connects to Elasticsearch
+func (es *Elasticsearch) Connect() (err error) {
+	if es.connected {
+		return nil
+	}
 	es.client, err = elastic.NewClient(
-		elastic.SetURL(url),
+		elastic.SetURL(es.url),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(true),
-		elastic.SetHealthcheckTimeoutStartup(timeout),
+		elastic.SetHealthcheckTimeoutStartup(es.timeout),
 		elastic.SetMaxRetries(10),
 		//elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		//elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)),
 		//elastic.SetTraceLog(log.New(os.Stdout, "", log.LstdFlags)),
 	)
-	return err
+	if err != nil {
+		es.connected = false
+		return err
+	}
+	es.connected = true
+	return nil
 }
 
 // GetClient returns the native elastic search client

@@ -24,7 +24,7 @@ type Agent struct {
 	containers          map[string]*ContainerData
 	eventStreamReading  bool
 	logsSavedDatePeriod int
-	natsStreaming       ns.NatsStreaming
+	natsStreaming       *ns.NatsStreaming
 	nbLogs              int
 	nbMetrics           int
 }
@@ -46,7 +46,8 @@ func AgentInit(version, build string) error {
 	if err != nil {
 		log.Fatalln("Unable to get hostname: ", err)
 	}
-	if agent.natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
+	agent.natsStreaming = ns.NewClient(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout)
+	if err := agent.natsStreaming.Connect(); err != nil {
 		return err
 	}
 

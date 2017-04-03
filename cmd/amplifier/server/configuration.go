@@ -3,8 +3,9 @@ package server
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
 	"log"
+
+	"github.com/spf13/viper"
 )
 
 // Config is used for amplifier configuration settings

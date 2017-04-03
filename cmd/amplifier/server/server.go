@@ -8,9 +8,7 @@ import (
 	rt "runtime"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -22,13 +20,11 @@ import (
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
-	"github.com/docker/docker/client"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"google.golang.org/grpc"
-)
-
-const (
-	defaultTimeOut = 30 * time.Second
 )
 
 type (
@@ -40,7 +36,7 @@ type (
 // Clients are stored as members of runtime
 var clientInitializers = []clientInitializer{
 	initDocker,
-	//initElasticsearch,
+	initElasticsearch,
 	initEtcd,
 	initMailer,
 	//initNats,
@@ -50,7 +46,7 @@ var clientInitializers = []clientInitializer{
 var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
 	registerStorageServer,
-	//registerLogsServer,
+	registerLogsServer,
 	registerStatsServer,
 	//registerServiceServer,
 	//registerStackServiceServer,
@@ -66,8 +62,8 @@ func Start(c *Configuration) {
 
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(auth.StreamInterceptor),
-		grpc.UnaryInterceptor(auth.Interceptor),
+	//grpc.StreamInterceptor(auth.StreamInterceptor),
+	//grpc.UnaryInterceptor(auth.Interceptor),
 	)
 	registerServices(c, s)
 
@@ -102,7 +98,7 @@ func initClients(config *Configuration) {
 func initEtcd(config *Configuration) error {
 	log.Println("Connecting to etcd at", strings.Join(config.EtcdEndpoints, ","))
 	runtime.Store = etcd.New(config.EtcdEndpoints, "amp")
-	if err := runtime.Store.Connect(defaultTimeOut); err != nil {
+	if err := runtime.Store.Connect(amp.DefaultTimeout); err != nil {
 		return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
 	}
 	log.Println("Connected to etcd at", strings.Join(runtime.Store.Endpoints(), ","))
@@ -110,33 +106,24 @@ func initEtcd(config *Configuration) error {
 }
 
 func initElasticsearch(config *Configuration) error {
-	log.Println("Connecting to elasticsearch at", config.ElasticsearchURL)
-	if err := runtime.Elasticsearch.Connect(config.ElasticsearchURL, defaultTimeOut); err != nil {
-		return fmt.Errorf("unable to connect to elasticsearch at %s: %v", config.ElasticsearchURL, err)
-	}
-	log.Println("Connected to elasticsearch at", config.ElasticsearchURL)
+	runtime.Elasticsearch = elasticsearch.NewClient(config.ElasticsearchURL, amp.DefaultTimeout)
 	return nil
 }
 
 func initNats(config *Configuration) error {
-	// NATS
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	if runtime.NatsStreaming.Connect(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout) != nil {
-		return err
-	}
+	runtime.NatsStreaming = ns.NewClient(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout)
 	return nil
 }
 
 func initDocker(config *Configuration) error {
+	runtime.Docker = docker.NewClient(config.DockerURL, config.DockerVersion)
 	log.Printf("Connecting to Docker API at %s version API: %s\n", config.DockerURL, config.DockerVersion)
-	defaultHeaders := map[string]string{"User-Agent": "amplifier-1.0"}
-	var err error
-	runtime.Docker, err = client.NewClient(config.DockerURL, config.DockerVersion, nil, defaultHeaders)
-	if err != nil {
-		return fmt.Errorf("unable to connect to Docker at %s: %v", config.DockerURL, err)
+	if err := runtime.Docker.Connect(); err != nil {
+		return err
 	}
 	log.Println("Connected to Docker API at", config.DockerURL)
 	return nil
@@ -173,10 +160,9 @@ func registerVersionServer(c *Configuration, s *grpc.Server) {
 
 func registerLogsServer(c *Configuration, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
-		Docker:           runtime.Docker,
-		ElasticsearchURL: c.ElasticsearchURL,
-		Store:            runtime.Store,
-		NatsStreaming:    runtime.NatsStreaming,
+		Docker:        runtime.Docker,
+		Es:            runtime.Elasticsearch,
+		NatsStreaming: runtime.NatsStreaming,
 	})
 }
 
@@ -188,9 +174,8 @@ func registerStorageServer(c *Configuration, s *grpc.Server) {
 
 func registerStatsServer(c *Configuration, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
-		Docker:           runtime.Docker,
-		ElasticsearchURL: c.ElasticsearchURL,
-		Store:            runtime.Store,
+		Docker: runtime.Docker,
+		Es:     runtime.Elasticsearch,
 	})
 }
 
