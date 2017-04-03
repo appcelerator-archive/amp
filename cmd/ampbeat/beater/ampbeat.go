@@ -22,7 +22,7 @@ type Ampbeat struct {
 	done          chan struct{}
 	config        config.Config
 	client        publisher.Client
-	natsStreaming ns.NatsStreaming
+	natsStreaming *ns.NatsStreaming
 }
 
 var bt = &Ampbeat{
@@ -41,7 +41,8 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get hostname: %v", err)
 	}
-	if err = bt.natsStreaming.Connect(amp.NatsDefaultURL, amp.NatsClusterID, b.Name+"-"+hostname, amp.DefaultTimeout); err != nil {
+	bt.natsStreaming = ns.NewClient(amp.NatsDefaultURL, amp.NatsClusterID, b.Name+"-"+hostname, amp.DefaultTimeout)
+	if err = bt.natsStreaming.Connect(); err != nil {
 		return nil, fmt.Errorf("Unable to connect to NATS: %v", err)
 	}
 

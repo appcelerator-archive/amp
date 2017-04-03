@@ -6,12 +6,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/appcelerator/amp/data/elasticsearch"
-	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
-	"github.com/docker/docker/api/types"
-	dockerClient "github.com/docker/docker/client"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
@@ -71,65 +69,23 @@ const (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	ElasticsearchURL string
-	EsConnected      bool
-	Es               *elasticsearch.Elasticsearch
-	Store            storage.Interface
-	NatsStreaming    ns.NatsStreaming
-	Docker           *dockerClient.Client
+	Docker        *docker.Docker
+	Es            *elasticsearch.Elasticsearch
+	NatsStreaming *ns.NatsStreaming
 }
 
-func (s *Server) isElasticsearch(ctx context.Context) *elastic.Client {
-	if !s.doesElasticsearchServiceExist(ctx) {
-		s.EsConnected = false
-		return nil
-	}
-	if !s.EsConnected {
-		log.Println("Connecting to elasticsearch at", s.ElasticsearchURL)
-		if err := s.Es.Connect(s.ElasticsearchURL, amp.DefaultTimeout); err != nil {
-			log.Printf("unable to connect to elasticsearch at %s: %v", s.ElasticsearchURL, err)
-			return nil
-		}
-		s.EsConnected = true
-		log.Println("Connected to elasticsearch at", s.ElasticsearchURL)
-	}
-	client := s.Es.GetClient()
-	if client.IsRunning() {
-		return client
-	}
-	return nil
-}
-
-func (s *Server) doesElasticsearchServiceExist(ctx context.Context) bool {
-	list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
-	//Filter: filter,
-	})
-	if err != nil || len(list) == 0 {
-		return false
-	}
-	for _, serv := range list {
-		if serv.Spec.Annotations.Name == "monitoring_elasticsearch" {
-			return true
-		}
-	}
-	return false
-}
-
-// Get implements log.LogServer
+// Get implements logs.LogsServer
 func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
-	// TODO: Authentication is disabled in order to allow tests. Re-enable this as soon as we have a way to auth in tests.
-	//_, err := oauth.CheckAuthorization(ctx, logs.Store)
-	//if err != nil {
-	//	return nil, err
-	//}
-	client := s.isElasticsearch(ctx)
-	if client == nil {
+	if !s.Docker.DoesServiceExist(ctx, "monitoring_elasticsearch") {
 		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
+	}
+	if err := s.Es.Connect(); err != nil {
+		return nil, err
 	}
 	log.Println("rpc-logs: Get", in.String())
 
 	// Prepare request to elasticsearch
-	request := client.Search().Index(EsIndex)
+	request := s.Es.GetClient().Search().Index(EsIndex)
 	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
@@ -195,6 +151,12 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 // GetStream implements log.LogServer
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
+	if !s.Docker.DoesServiceExist(stream.Context(), "monitoring_nats") {
+		return fmt.Errorf("the monitoring_nats service is not running, please start stack 'monitoring'")
+	}
+	if err := s.NatsStreaming.Connect(); err != nil {
+		return err
+	}
 	log.Println("rpc-logs: GetStream", in.String())
 
 	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsTopic, func(msg *stan.Msg) {

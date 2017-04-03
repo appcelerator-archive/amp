@@ -2,26 +2,17 @@ package stats
 
 import (
 	"fmt"
-	"log"
 
-	elastic "gopkg.in/olivere/elastic.v3"
-
-	"github.com/appcelerator/amp/data/elasticsearch"
-	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/pkg/config"
-	"github.com/docker/docker/api/types"
-	dockerClient "github.com/docker/docker/client"
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"golang.org/x/net/context"
+	"gopkg.in/olivere/elastic.v3"
 )
 
 // Stats structure to implement StatsServer interface
 type Stats struct {
-	ElasticsearchURL string
-	EsConnected      bool
-	Es               *elasticsearch.Elasticsearch
-	Store            storage.Interface
-	Docker           *dockerClient.Client
-	Client           *elastic.Client
+	Docker *docker.Docker
+	Es     *elasticsearch.Elasticsearch
 }
 
 const (
@@ -37,47 +28,13 @@ const (
 	metricsIO              = "io"
 )
 
-func (s *Stats) isElasticsearch(ctx context.Context) bool {
-	if !s.doesElasticsearchServiceExist(ctx) {
-		s.EsConnected = false
-		return false
-	}
-	if !s.EsConnected {
-		log.Println("Connecting to elasticsearch at", s.ElasticsearchURL)
-		if err := s.Es.Connect(s.ElasticsearchURL, amp.DefaultTimeout); err != nil {
-			log.Printf("unable to connect to elasticsearch at %s: %v", s.ElasticsearchURL, err)
-			return false
-		}
-		s.EsConnected = true
-		log.Println("Connected to elasticsearch at", s.ElasticsearchURL)
-	}
-	client := s.Es.GetClient()
-	if client.IsRunning() {
-		s.Client = client
-		return true
-	}
-	return false
-}
-
-func (s *Stats) doesElasticsearchServiceExist(ctx context.Context) bool {
-	list, err := s.Docker.ServiceList(ctx, types.ServiceListOptions{
-	//Filter: filter,
-	})
-	if err != nil || len(list) == 0 {
-		return false
-	}
-	for _, serv := range list {
-		if serv.Spec.Annotations.Name == "monitoring_elasticsearch" {
-			return true
-		}
-	}
-	return false
-}
-
 // StatsQuery extracts stat information according to StatsRequest
 func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
-	if !s.isElasticsearch(ctx) {
+	if !s.Docker.DoesServiceExist(ctx, "monitoring_elasticsearch") {
 		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
+	}
+	if err := s.Es.Connect(); err != nil {
+		return nil, err
 	}
 	if req.TimeGroup == "" && req.Period == "" && req.Since == "" && req.Until == "" {
 		return s.statsCurrentQuery(ctx, req)
@@ -176,7 +133,7 @@ func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*Stat
 	boolQuery := s.createBoolQuery(req, "now-10s")
 	agg := s.createTermAggreggation(req)
 
-	result, err := s.Client.Search().
+	result, err := s.Es.GetClient().Search().
 		Index(esIndex).
 		Query(boolQuery).
 		Aggregation("group", agg).
@@ -294,7 +251,7 @@ func (s *Stats) statsHistoricQuery(ctx context.Context, req *StatsRequest) (*Sta
 	histoAgg := elastic.NewDateHistogramAggregation().Field("@timestamp").Interval("30s")
 	agg = agg.SubAggregation("histo", histoAgg)
 
-	result, err := s.Client.Search().
+	result, err := s.Es.GetClient().Search().
 		Index(esIndex).
 		Query(boolQuery).
 		Aggregation("group", agg).

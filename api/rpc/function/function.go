@@ -14,7 +14,7 @@ import (
 // Server is used to implement function.FunctionServer
 type Server struct {
 	Functions     functions.Interface
-	NatsStreaming ns.NatsStreaming
+	NatsStreaming *ns.NatsStreaming
 }
 
 func convertError(err error) error {
