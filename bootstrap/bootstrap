@@ -201,7 +201,7 @@ EOF
       if [ $? -eq 0 ]; then
         if [ $force_start -eq 1 ]; then
           echo "warning: force start, removing Docker volume $BOOTSTRAP_VOLUME" >&2
-          docker volume rm $BOOTSTRAP_VOLUME
+          docker volume rm $BOOTSTRAP_VOLUME >&2
           if [ $? -ne 0 ]; then
             echo "force start failed, unable to remove the Docker volume $BOOTSTRAP_VOLUME, it's probably still used by an infrakit container" >&2
             exit 1
@@ -534,12 +534,19 @@ _status(){
   local _esize
   local _csize
   local _rc=0
+  local _c
   _groups=$(docker exec infrakit infrakit group ls -q | grep $_clusterid)
   if [ $? -ne 0 ]; then
     echo "no InfraKit group definition found for this cluster" >&2
     return 1
   fi
   for _group in $_groups; do
+    # first look for convergence in the group metadata, that will make sure the expected size is defined
+    _c=$(docker exec infrakit infrakit metadata cat group-stateless/groups/$_group/Converged)
+    if [ "x$_c" != "xtrue" ]; then
+      echo "group specifications are not ready yet" >&2
+      return 1
+    fi
     # expected size
     _esize=$(docker exec infrakit infrakit metadata cat group-stateless/specs/$_group/Properties/Allocation/Size)
     if [ $? -ne 0 ]; then
@@ -613,7 +620,8 @@ label=""
 force_start=0
 status_request=""
 list_request=""
-while getopts ":1j:t:p:e:m:w:i:l:s:hfd" opt; do
+block=0
+while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
   case $opt in
   1)
       init_swarm=1
@@ -663,8 +671,11 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfd" opt; do
   s)
       status_request=$OPTARG
       ;;
+  b)
+      block=$OPTARG
+      ;;
   h)
-      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-i CLUSTERID] [-l CLUSTERID] [-s CLUSTERID] [--init-swarm] [--join-swarm] [-f] [-h]"
+      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-i CLUSTERID] [-b TIMEOUT] [-l CLUSTERID] [-s CLUSTERID] [--init-swarm] [--join-swarm] [-f] [-h]"
       exit 0
       ;;
   f)
@@ -755,4 +766,17 @@ if [ $started -gt 0 ]; then
 fi
 _prepare_config_container
 _deploy_config_container
+if [ $block -gt 0 ]; then
+  rc=1
+  SECONDS=0
+  echo "waiting for cluster to be ready..." >&2
+  while [ $rc -ne 0 ]; do
+    _status $clusterid 2>/dev/null
+    rc=$?
+    if [ $SECONDS -gt $block ]; then
+      echo "cluster is still not ready after $block sec" >&2
+      exit 1
+    fi
+  done
+fi
 echo done >&2
