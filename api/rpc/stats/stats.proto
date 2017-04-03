@@ -19,10 +19,11 @@ message MetricsEntry {
   string stack_name = 10;
   string node_id = 11;
   string role = 12;
-  MetricsCPUEntry cpu = 13;
-  MetricsIOEntry io = 14;
-  MetricsMemEntry mem = 15;
-  MetricsNetEntry net = 16;
+  string group = 13;
+  MetricsCPUEntry cpu = 14;
+  MetricsIOEntry io = 15;
+  MetricsMemEntry mem = 16;
+  MetricsNetEntry net = 17;
 }
 
 message MetricsCPUEntry {
@@ -62,23 +63,20 @@ message StatsRequest {
   bool stats_mem = 2;
   bool stats_io = 3;
   bool stats_net = 4;
-  bool stats_follow = 5;
-  string discriminator = 6;
-  string filter_datacenter = 7;
-  string filter_host = 8;
-  string filter_container_id = 9;
-  string filter_container_name = 10;
-  string filter_container_image = 11;
-  string filter_service_id = 12;
-  string filter_service_name = 13;
-  string filter_task_id = 14;
-  string filter_task_name = 15;
-  string filter_node_id = 16;
-  string filter_service_ident = 17;
-  string since = 18;
-  string until = 19;
-  string period = 20;
-  string time_group = 21;
+  string group = 5;
+  string filter_container_id = 6;
+  string filter_container_name = 7;
+  string filter_container_short_name = 8;
+  string filter_container_state = 9;
+  string filter_service_name = 10;
+  string filter_service_id = 11;
+  string filter_task_id = 12;
+  string filter_stack_name = 13;
+  string filter_node_id = 14;
+  string since = 15;
+  string until = 16;
+  string period = 17;
+  string time_group = 18;
 }
 
 message StatsReply {
