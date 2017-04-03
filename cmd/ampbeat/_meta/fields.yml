@@ -49,7 +49,7 @@
   description: >
     Docker container logs
   fields:
-    - name: "message"
+    - name: "msg"
       type: text
       description: >
         The log message
@@ -59,16 +59,16 @@
   description: >
     Gather cpu consumption of the current container.
   fields:
-    - name: "totalUsage"
+    - name: "total_usage"
       type: double
       description: >
         Total cpu consumption in percent.
         This value can be greater than 100%, depending on the number of available CPUs.
-    - name: "usageInKernelmode"
+    - name: "usage_in_kernel_mode"
       type: double
       description: >
         Same as *totalUsage*, but only the Kernel mode consumptions.
-    - name: "usageInUsermode"
+    - name: "usage_in_user_mode"
       type: double
       description: >
         Same as *totalUsage*, but only the User mode consumptions.
@@ -96,7 +96,7 @@
   description: >
     Docker mem metrics
   fields:
-    - name: "failcnt"
+    - name: "fail_count"
       type: long
       description: >
         TODO
@@ -104,7 +104,7 @@
       type: long
       description: >
         Limit of memory (max memory available) in KBytes.
-    - name: "maxUsage"
+    - name: "max_usage"
       type: long
       description: >
         Maximum memory used by the container in KBytes.
@@ -112,7 +112,7 @@
       type: long
       description: >
         Current memory consumption in KBytes.
-    - name: "usage_p"
+    - name: "usage_pct"
       type: double
       description: >
         Amount of memory used by the container in percents between 0.0 and 1.0.
@@ -122,39 +122,39 @@
   description: >
     Gather container metrics about network (rx/tx)
   fields:
-    - name: "totalBytes"
+    - name: "total_bytes"
       type: long
       description: >
         Total number of bytes received and transmitted since the last event.
-    - name: "rxBytes"
+    - name: "rx_bytes"
       type: long
       description: >
         Number number of bytes received since the last event.
-    - name: "rxDropped"
+    - name: "rx_dropped"
       type: long
       description: >
         Number received dropped packets since the last event.
-    - name: "rxErrors"
+    - name: "rx_errors"
       type: long
       description: >
         Number number of errors received since the last event.
-    - name: "rxPackets"
+    - name: "rx_packets"
       type: long
       description: >
         Number number of packets received since the last event.
-    - name: "txBytes"
+    - name: "tx_bytes"
       type: long
       description: >
         Number number of bytes transmitted since the last event.
-    - name: "txDropped"
+    - name: "tx_dropped"
       type: long
       description: >
         Number transmitted dropped packets since the last event.
-    - name: "txErrors"
+    - name: "tx_errors"
       type: long
       description: >
         Number number of errors transmitted since the last event.
-    - name: "txPackets"
+    - name: "tx_packets"
       type: long
       description: >
         Number of packets transmitted since the last event.
