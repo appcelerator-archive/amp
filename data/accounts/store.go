@@ -18,13 +18,13 @@ const organizationsRootKey = "organizations"
 
 // Store implements user data.Interface
 type Store struct {
-	cfg     *configuration.Configuration
-	storage storage.Interface
+	registration string
+	storage      storage.Interface
 }
 
 // NewStore returns an etcd implementation of user.Interface
-func NewStore(storage storage.Interface, cfg *configuration.Configuration) *Store {
-	return &Store{storage: storage, cfg: cfg}
+func NewStore(storage storage.Interface, registration string) *Store {
+	return &Store{storage: storage, registration: registration}
 }
 
 // Users
@@ -104,7 +104,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		IsVerified: false,
 		CreateDt:   time.Now().Unix(),
 	}
-	if s.cfg.Registration == configuration.RegistrationNone {
+	if s.registration == configuration.RegistrationNone {
 		user.IsVerified = true
 	}
 	if password, err = CheckPassword(password); err != nil {

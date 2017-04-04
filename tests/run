@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
+
+checkexit() {
+  [[ $1 -ne 0 ]] && printf "${@:2} (exit $1)\n" && exit $1
+}
+
+ok() {
+  echo ok $1
+}
+
+pushimage() {
+  echo "push image: $1/$2"
+  docker tag $2 $1/$2
+  checkexit $? "error tagging image"
+  docker push $1/$2
+  checkexit $? "error pushing image"
+  ok
+}
+
+# helper for any subsequent docker commands
+amps="docker run --rm --network=hostnet docker --host=m1"
+
+# Removing any previous instance
+$amps rm -f integration-tests > /dev/null 2>&1 || true
+$amps rmi -f appcelerator/amp-integration:test > /dev/null 2>&1 || true
+
+# Build integration test image
+docker build -t appcelerator/amp-integration:test -f $(dirname $SP)/tests/Dockerfile $(dirname $SP)
+
+# Push image to the swarm registry
+pushimage localhost:5000 appcelerator/amp-integration:test
+
+# Run integration tests
+$amps run --rm --network ampnet --name integration-tests appcelerator/amp-integration:test \
+  go test -v github.com/appcelerator/amp/tests/integration/...

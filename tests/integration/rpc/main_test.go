@@ -8,10 +8,7 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/cmd/amplifier/server"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -24,8 +21,6 @@ import (
 var (
 	ctx           context.Context
 	store         storage.Interface
-	statsClient   stats.StatsClient
-	logsClient    logs.LogsClient
 	accountClient account.AccountClient
 	accountStore  accounts.Interface
 )
@@ -38,23 +33,11 @@ func TestMain(m *testing.M) {
 	if err := store.Connect(); err != nil {
 		log.Panicf("Unable to connect to etcd on: %s\n%v", etcd.DefaultEndpoint, err)
 	}
-	accountStore = accounts.NewStore(store)
-
-	// Create a valid user token
-	token, _ := auth.CreateLoginToken("default", "")
+	accountStore = accounts.NewStore(store, configuration.RegistrationNone)
 
 	// Connect to amplifier
-	amplifierEndpoint := "amplifier" + server.DefaultPort
+	amplifierEndpoint := "amplifier" + configuration.DefaultPort
 	log.Println("Connecting to amplifier")
-	authenticatedConn, err := grpc.Dial(amplifierEndpoint,
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second),
-		grpc.WithPerRPCCredentials(&cli.LoginCredentials{Token: token}),
-	)
-	if err != nil {
-		log.Panicf("Unable to connect to amplifier on: %s\n%v", amplifierEndpoint, err)
-	}
 	anonymousConn, err := grpc.Dial(amplifierEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
@@ -64,13 +47,6 @@ func TestMain(m *testing.M) {
 		log.Panicf("Unable to connect to amplifier on: %s\n%v", amplifierEndpoint, err)
 	}
 	log.Println("Connected to amplifier")
-
-	// Init mail
-	initMailServer()
-
-	// Authenticated clients
-	statsClient = stats.NewStatsClient(authenticatedConn)
-	logsClient = logs.NewLogsClient(authenticatedConn)
 
 	// Anonymous clients
 	accountClient = account.NewAccountClient(anonymousConn)
@@ -144,20 +120,6 @@ func createTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *acc
 	assert.NoError(t, err)
 
 	return ownerCtx
-}
-
-func createAndAddUserToTeam(ownerCtx context.Context, t *testing.T, team *account.CreateTeamRequest, user *account.SignUpRequest) context.Context {
-	// Create a user
-	userCtx := createUser(t, user)
-
-	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
-		OrganizationName: team.OrganizationName,
-		TeamName:         team.TeamName,
-		UserName:         user.Name,
-	})
-	assert.NoError(t, err)
-	return userCtx
 }
 
 func switchAccount(userCtx context.Context, t *testing.T, accountName string) context.Context {
