@@ -93,7 +93,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		IsVerified: false,
 		CreateDt:   time.Now().Unix(),
 	}
-	if err = CheckPassword(password); err != nil {
+	if password, err = CheckPassword(password); err != nil {
 		return nil, err
 	}
 	if user.PasswordHash, err = passlib.Hash(password); err != nil {
@@ -146,7 +146,7 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 	}
 
 	// Password
-	if err = CheckPassword(password); err != nil {
+	if password, err = CheckPassword(password); err != nil {
 		return err
 	}
 	if user.PasswordHash, err = passlib.Hash(password); err != nil {
@@ -161,11 +161,11 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 }
 
 // GetUser fetches a user by name
-func (s *Store) GetUser(ctx context.Context, name string) (*User, error) {
-	if err := CheckName(name); err != nil {
+func (s *Store) GetUser(ctx context.Context, name string) (user *User, err error) {
+	if name, err = CheckName(name); err != nil {
 		return nil, err
 	}
-	user, err := s.rawUser(ctx, name)
+	user, err = s.rawUser(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -419,11 +419,11 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 }
 
 // GetOrganization fetches a organization by name
-func (s *Store) GetOrganization(ctx context.Context, name string) (*Organization, error) {
-	if err := CheckName(name); err != nil {
+func (s *Store) GetOrganization(ctx context.Context, name string) (organization *Organization, err error) {
+	if name, err = CheckName(name); err != nil {
 		return nil, err
 	}
-	organization := &Organization{}
+	organization = &Organization{}
 	if err := s.store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
 		return nil, err
 	}
@@ -593,7 +593,7 @@ func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName s
 	}
 
 	// Get team
-	if err := CheckName(teamName); err != nil {
+	if teamName, err = CheckName(teamName); err != nil {
 		return nil, err
 	}
 	team := organization.getTeam(teamName)

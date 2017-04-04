@@ -10,47 +10,45 @@ import (
 
 var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,128}$`)
 
-func isEmpty(s string) bool {
-	return s == "" || strings.TrimSpace(s) == ""
-}
-
 // CheckName checks user name
-func CheckName(name string) error {
-	if isEmpty(name) {
-		return InvalidName
+func CheckName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", InvalidName
 	}
 	if !nameFormat.MatchString(name) {
-		return InvalidName
+		return "", InvalidName
 	}
-	return nil
+	return name, nil
 }
 
 // CheckEmailAddress checks email address
 func CheckEmailAddress(email string) (string, error) {
-	address, err := mail.ParseAddress(email)
+	address, err := mail.ParseAddress(strings.TrimSpace(email))
 	if err != nil {
 		return "", InvalidEmail
 	}
-	if isEmpty(address.Address) {
+	if address.Address == "" {
 		return "", InvalidEmail
 	}
 	return address.Address, nil
 }
 
 // CheckPassword checks password
-func CheckPassword(password string) error {
-	if isEmpty(password) {
-		return PasswordTooWeak
+func CheckPassword(password string) (string, error) {
+	password = strings.TrimSpace(password)
+	if password == "" {
+		return "", PasswordTooWeak
 	}
 	safety := safe.New(8, 0, 0, safe.Simple)
 	if passwordStrength := safety.Check(password); passwordStrength <= safe.Simple {
-		return PasswordTooWeak
+		return "", PasswordTooWeak
 	}
-	return nil
+	return password, nil
 }
 
-func checkOrganizationMember(member *OrganizationMember) error {
-	if err := CheckName(member.Name); err != nil {
+func checkOrganizationMember(member *OrganizationMember) (err error) {
+	if member.Name, err = CheckName(member.Name); err != nil {
 		return err
 	}
 	return nil
@@ -75,8 +73,8 @@ func checkOrganizationMembers(members []*OrganizationMember) error {
 	return nil
 }
 
-func checkTeamMember(member *TeamMember) error {
-	if err := CheckName(member.Name); err != nil {
+func checkTeamMember(member *TeamMember) (err error) {
+	if member.Name, err = CheckName(member.Name); err != nil {
 		return err
 	}
 	return nil
@@ -93,7 +91,7 @@ func checkTeamMembers(members []*TeamMember) error {
 
 // Validate validates User
 func (u *User) Validate() (err error) {
-	if err = CheckName(u.Name); err != nil {
+	if u.Name, err = CheckName(u.Name); err != nil {
 		return err
 	}
 	if u.Email, err = CheckEmailAddress(u.Email); err != nil {
@@ -104,7 +102,7 @@ func (u *User) Validate() (err error) {
 
 // Validate validates Organization
 func (o *Organization) Validate() (err error) {
-	if err = CheckName(o.Name); err != nil {
+	if o.Name, err = CheckName(o.Name); err != nil {
 		return err
 	}
 	if o.Email, err = CheckEmailAddress(o.Email); err != nil {
@@ -122,8 +120,8 @@ func (o *Organization) Validate() (err error) {
 }
 
 // Validate validates Team
-func (t *Team) Validate() error {
-	if err := CheckName(t.Name); err != nil {
+func (t *Team) Validate() (err error) {
+	if t.Name, err = CheckName(t.Name); err != nil {
 		return err
 	}
 	if err := checkTeamMembers(t.Members); err != nil {

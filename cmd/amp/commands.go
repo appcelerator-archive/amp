@@ -4,6 +4,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/logs"
+	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/spf13/cobra"
 )
@@ -49,6 +50,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// logs
 		logs.NewLogsCommand(c),
+
+		// user
+		user.NewUserCommand(c),
 
 		// version
 		version.NewVersionCommand(c),
