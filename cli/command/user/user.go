@@ -14,5 +14,6 @@ func NewUserCommand(c cli.Interface) *cobra.Command {
 		RunE:    c.ShowHelp,
 	}
 	cmd.AddCommand(NewSignUpCommand(c))
+	cmd.AddCommand(NewVerifyCommand(c))
 	return cmd
 }

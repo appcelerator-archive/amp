@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"io"
-	"log"
 )
 
 type logsOpts struct {
@@ -66,7 +65,6 @@ func getLogs(c cli.Interface, args []string) error {
 	lc := logs.NewLogsClient(conn)
 	r, err := lc.Get(ctx, &request)
 	if err != nil {
-		log.Fatalln(grpc.ErrorDesc(err))
 		c.Console().Fatalln(grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
@@ -79,7 +77,6 @@ func getLogs(c cli.Interface, args []string) error {
 	// If follow is requested, get subsequent logs and stream it
 	stream, err := lc.GetStream(ctx, &request)
 	if err != nil {
-		log.Fatalln(grpc.ErrorDesc(err))
 		c.Console().Fatalln(grpc.ErrorDesc(err))
 	}
 	for {
@@ -88,7 +85,6 @@ func getLogs(c cli.Interface, args []string) error {
 			break
 		}
 		if err != nil {
-			log.Fatalln(grpc.ErrorDesc(err))
 			c.Console().Fatalln(grpc.ErrorDesc(err))
 		}
 		displayLogEntry(c, entry, opts.meta)
