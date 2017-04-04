@@ -24,6 +24,7 @@ script:
   - ls -la bin/linux/amd64
   - amp --server=localhost cluster create --tag=local --registration=none --notifications=false
   - TESTINCLUDE=platform/testing testrunner platform/tests
+  - tests/run
   - amp --server localhost cluster rm
   - ampmake lint
 

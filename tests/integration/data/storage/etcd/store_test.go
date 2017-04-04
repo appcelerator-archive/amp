@@ -6,12 +6,10 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"strings"
-
-	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/state"
@@ -37,10 +35,10 @@ func TestMain(m *testing.M) {
 	log.SetFlags(log.Lshortfile)
 	log.SetPrefix("test: ")
 
-	etcdEndpoints := []string{server.EtcdDefaultEndpoint}
+	etcdEndpoints := []string{etcd.DefaultEndpoint}
 	log.Printf("connecting to etcd at %s", strings.Join(etcdEndpoints, ","))
-	store = etcd.New(etcdEndpoints, "amp")
-	if err := store.Connect(defTimeout); err != nil {
+	store = etcd.New(etcdEndpoints, "amp", defTimeout)
+	if err := store.Connect(); err != nil {
 		log.Panicf("Unable to connect to etcd on: %s\n%v", etcdEndpoints, err)
 	}
 	log.Printf("connected to etcd at %v", strings.Join(store.Endpoints(), ","))

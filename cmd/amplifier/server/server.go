@@ -66,7 +66,7 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		ns:       ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
 		docker:   docker.NewClient(config.DockerURL, config.DockerVersion),
 		mailer:   mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
-		accounts: accounts.NewStore(etcd, config),
+		accounts: accounts.NewStore(etcd, config.Registration),
 	}
 	return amp, nil
 }
