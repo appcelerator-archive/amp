@@ -1,2 +1,90 @@
 #!/bin/bash
 
+SUCCESS=0
+
+CID=$1
+
+# This script uses other scripts expected to be in the same directory
+# This gets absolute path to script (resolving symlinks)
+readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
+
+# commands
+readonly bootstrap="$SP/../bootstrap/bootstrap"
+readonly clustercheck="$SP/clustercheck"
+readonly curlcheck="$SP/curlcheck"
+readonly swarmcheck="$SP/swarmcheck"
+
+checkexit() {
+  [[ $1 -ne 0 ]] && printf "${@:2} (exit $1)\n" && exit $1
+}
+
+cleanup() {
+  [[ SUCCESS -ne 1 && ! -z $CID ]] && echo "clean up" && $bootstrap -d $CID
+}
+trap cleanup EXIT
+
+ok() {
+  echo ok
+}
+
+pushimage() {
+  echo "push image: $1/$2"
+  docker tag $2 $1/$2
+  checkexit $? "error tagging image"
+  docker push $1/$2
+  checkexit $? "error pushing image"
+  ok
+}
+
+deploystack() {
+  echo "deploy $1 => $2"
+  docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1 stack deploy -c /stacks/$1 $2
+  checkexit $? "error deploying stack"
+  ok
+}
+
+if [ -z $CID ]; then
+  echo "bootstrapping cluster"
+  CID=$($bootstrap -f)
+  checkexit $? "bootstrap failed"
+  echo $CID
+else
+  $bootstrap -s $CID
+  if [ $? -ne 0 ]; then
+    echo "bootstrapping cluster: $CID"
+    $bootstrap -fi $CID
+    checkexit $? "bootstrap failed"
+    echo $CID
+  fi
+fi
+
+echo "wait for cluster"
+$clustercheck $CID
+checkexit $? "cluster timed out"
+ok
+
+echo "wait for swarm mode"
+$swarmcheck 300
+checkexit $? "swarm mode timed out"
+ok
+
+echo "wait for registry"
+$curlcheck localhost:5000/v2/ 200 10
+checkexit $? "registry timed out"
+ok
+
+echo "push images to cluster"
+pushimage localhost:5000 appcelerator/amplifier:local
+pushimage localhost:5000 appcelerator/ampbeat:local
+pushimage localhost:5000 appcelerator/agent:local
+
+echo "deploy stacks to cluster"
+deploystack amplifier.stack.yml amplifier
+deploystack monitoring.stack.yml monitoring
+
+SUCCESS=1
+echo set the following alias for docker to run cluster swarm commands on your system:
+echo "export AMPHOME=$(dirname $SP)"
+echo "alias amps=\"docker run -it --rm --network=hostnet -v \$AMPHOME/stacks:/stacks docker --host=m1\""
+echo "amps service ls"
+
