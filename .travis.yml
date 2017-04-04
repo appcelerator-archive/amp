@@ -18,15 +18,7 @@ script:
   - set -e
   - ampmake clean build
   - ampmake lint
-  - amp cluster create -w 2
-  - docker tag appcelerator/amplifier:local localhost:5000/appcelerator/amplifier:local
-  - hack/curlcheck localhost:5000/v2/ 200 300
-  - docker push localhost:5000/appcelerator/amplifier:local
-  - hack/ctrcheck m1 running 300
-  - hack/nodecheck 8 300
-  - hack/swarmcheck 300
-  - docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1 stack deploy -c /stacks/amplifier.stack.yml amplifier
-  - amp cluster destroy
+  - hack/deploy && amp cluster destroy
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
