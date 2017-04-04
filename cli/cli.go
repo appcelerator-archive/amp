@@ -93,7 +93,7 @@ func (c cli) OnInitialize(initializers ...func()) {
 func (c cli) ClientConn() (*grpc.ClientConn, error) {
 	if c.clientConn == nil {
 		var err error
-		c.clientConn, err = NewClientConn(c.Address(), "")
+		c.clientConn, err = NewClientConn(c.Address(), GetToken())
 		if err != nil {
 			return nil, err
 		}

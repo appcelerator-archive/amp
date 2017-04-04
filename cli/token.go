@@ -88,11 +88,11 @@ func (c *LoginCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// GetLoginCredentials returns the login credentials
-func GetLoginCredentials() *LoginCredentials {
+// GetToken returns the stored token
+func GetToken() string {
 	token, err := ReadToken()
 	if err != nil {
-		return &LoginCredentials{Token: ""}
+		return ""
 	}
-	return &LoginCredentials{Token: token}
+	return token
 }
