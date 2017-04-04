@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"fmt"
+	"github.com/howeyc/gopass"
 )
 
 // Theme is struct for terminal color functions
@@ -178,4 +180,21 @@ func (c Console) warn() {
 // prints error prefix
 func (c Console) error() {
 	c.theme.Error.Fprint(c.OutStream(), errorPrefix)
+}
+
+func (c Console) GetInput(prompt string) (in string) {
+	c.Printf("%s: ", prompt)
+	fmt.Scanln(&in)
+	in = strings.TrimSpace(in)
+	return in
+}
+
+func (c Console) GetSilentInput(prompt string) (in string) {
+	c.Printf("%s: ", prompt)
+	bytes, err := gopass.GetPasswd()
+	if err != nil {
+		c.Fatalln(err.Error())
+	}
+	in = strings.TrimSpace(string(bytes))
+	return in
 }
