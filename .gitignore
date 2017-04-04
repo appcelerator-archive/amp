@@ -11,3 +11,4 @@ instance*.tf.json
 *.tfstate.backup
 *.tfvars
 *.lock.info
+ikt.vol.*
