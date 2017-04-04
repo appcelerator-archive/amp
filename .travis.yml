@@ -18,7 +18,9 @@ before_script:
 script:
   - set -e
   - ampmake clean build
-  - hack/deploy && amp cluster destroy
+  - hack/deploy
+  - hack/versioncheck 30
+  - amp cluster destroy
   - ampmake lint
 
 after_success:

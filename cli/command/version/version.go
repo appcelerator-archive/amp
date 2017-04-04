@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"runtime"
 
+	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
 	"github.com/docker/docker/pkg/templates"
 	"github.com/spf13/cobra"
-	"github.com/appcelerator/amp/api/rpc/version"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
