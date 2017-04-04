@@ -33,7 +33,7 @@ var (
 		"/account.Account/GetTeam",
 		"/account.Account/ListTeams",
 
-		"/version.Version/List",
+		"/version.Version/Get",
 	}
 )
 

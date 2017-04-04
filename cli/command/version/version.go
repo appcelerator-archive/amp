@@ -7,11 +7,14 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/docker/docker/pkg/templates"
 	"github.com/spf13/cobra"
+	"github.com/appcelerator/amp/api/rpc/version"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 type Version struct {
 	Client *ClientVersionInfo
-	Server interface{} // should be:  *ServerVersionInfo from rpc/version/version.proto ...
+	Server *version.Info
 }
 
 // AmplifierOK Checks if AMP is connected to Amplifier
@@ -38,7 +41,6 @@ var versionTemplate = `amp:
 amplifier:      {{if .IsConnected}}
  Version:       {{.Server.Version}}
  Build:         {{.Server.Build}}
- Address:       {{.Server.Address}}
  Go version:    {{.Server.GoVersion}}
  OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected{{end}}`
 
@@ -56,9 +58,7 @@ func NewVersionCommand(c cli.Interface) *cobra.Command {
 
 // Print version info of client and server (if connected).
 func showVersion(c cli.Interface) error {
-
-	templateFormat := versionTemplate
-	tmpl, err := templates.Parse(templateFormat)
+	tmpl, err := templates.Parse(versionTemplate)
 	if err != nil {
 		c.Console().Fatalf("template parsing error: %v\n", err)
 	}
@@ -75,24 +75,21 @@ func showVersion(c cli.Interface) error {
 		},
 	}
 
-	// TODO: rpc service needs to be refactored ... it should return a ServerVersionInfo as protobuf-generated struct
-	// the service shouldn't know anything about the client
-
-	//request := &version.ListRequest{}
-	//if err = AMP.Connect(); err == nil {
-	//	client := version.NewVersionClient(c.ClientConn())
-	//	reply, err := client.List(context.Background(), request)
-	//	if err != nil {
-	//		mgr.Fatal(grpc.ErrorDesc(err))
-	//	}
-	//	vd.Amplifier = &version.Details{
-	//		Version:   reply.Reply.Version,
-	//		Port:      reply.Reply.Port,
-	//		GoVersion: reply.Reply.Goversion,
-	//		Os:        reply.Reply.Os,
-	//		Arch:      reply.Reply.Arch,
-	//	}
-	//}
+	conn, err := c.ClientConn()
+	if err == nil {
+		client := version.NewVersionClient(conn)
+		reply, err := client.Get(context.Background(), &version.GetRequest{})
+		if err != nil {
+			c.Console().Fatalf(grpc.ErrorDesc(err))
+		}
+		v.Server = &version.Info{
+			Version:   reply.Info.Version,
+			Build:     reply.Info.Build,
+			GoVersion: reply.Info.GoVersion,
+			Os:        reply.Info.Os,
+			Arch:      reply.Info.Arch,
+		}
+	}
 
 	if err := tmpl.Execute(&doc, v); err != nil {
 		c.Console().Fatalf("executing templating error: %v\n", err)

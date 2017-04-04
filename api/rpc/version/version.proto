@@ -3,20 +3,20 @@ syntax = "proto3";
 package version;
 
 service Version {
-  rpc List (ListRequest) returns (ListReply);
+  rpc Get (GetRequest) returns (GetReply);
 }
 
-message VersionInfo {
+message Info {
   string version = 1;
-  string port = 2;
-  string goversion = 3;
+  string build = 2;
+  string go_version = 3;
   string os = 4;
   string arch = 5;
 }
 
-message ListRequest {
+message GetRequest {
 }
 
-message ListReply {
-  VersionInfo reply = 1;
+message GetReply {
+  Info info = 1;
 }
