@@ -58,6 +58,7 @@ func (s *Store) CreateFunction(ctx context.Context, name string, image string) (
 }
 
 // GetFunction fetches a function by id
+// nolint : dupl
 func (s *Store) GetFunction(ctx context.Context, id string) (*Function, error) {
 	function := &Function{}
 	if err := s.store.Get(ctx, path.Join(functionsRootKey, id), function, true); err != nil {
@@ -88,6 +89,7 @@ func (s *Store) GetFunctionByName(ctx context.Context, name string) (*Function, 
 }
 
 // ListFunctions lists functions
+// nolint : dupl
 func (s *Store) ListFunctions(ctx context.Context) ([]*Function, error) {
 	protos := []proto.Message{}
 	if err := s.store.List(ctx, functionsRootKey, storage.Everything, &Function{}, &protos); err != nil {

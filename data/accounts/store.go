@@ -26,7 +26,7 @@ func NewStore(store storage.Interface) *Store {
 }
 
 // Users
-
+// nolint : dupl
 func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	user := &User{}
 	if err := s.store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
@@ -46,6 +46,7 @@ func secureUser(user *User) *User {
 	return user
 }
 
+// nolint : dupl
 func (s *Store) getUser(ctx context.Context, name string) (user *User, err error) {
 	if user, err = s.rawUser(ctx, name); err != nil {
 		return nil, err
@@ -236,7 +237,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 }
 
 // Organizations
-
+// nolint : dupl
 func (s *Store) getOrganization(ctx context.Context, name string) (organization *Organization, err error) {
 	if organization, err = s.GetOrganization(ctx, name); err != nil {
 		return nil, err
@@ -435,6 +436,7 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (*Organization
 }
 
 // ListOrganizations lists organizations
+// nolint : dupl
 func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) {
 	protos := []proto.Message{}
 	if err := s.store.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {

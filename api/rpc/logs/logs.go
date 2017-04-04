@@ -192,6 +192,7 @@ func parseProtoLogEntry(data []byte) (logEntry LogEntry, err error) {
 	return
 }
 
+// nolint : dupl
 func filter(entry *LogEntry, in *GetRequest) bool {
 	match := true
 	if in.Container != "" {
