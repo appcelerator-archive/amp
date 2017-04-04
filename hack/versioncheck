@@ -1,0 +1,22 @@
+#!/bin/bash
+
+usage() {
+    echo "usage: versioncheck [TIMEOUT]"
+    echo "example: versioncheck 120"
+    exit 1
+}
+
+[[ $# -eq 0 ]] && usage
+
+# max script timeout, default = 300 seconds (5m)
+TIMEOUT="${1:-300}"
+
+SECONDS=0
+while true; do
+    amp version
+    docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1 service ls
+    echo "-------------------------------"
+    v=$(amp version | grep 'not connected' | wc -l)
+    [[ $v -eq 0 ]] && [[ $SECONDS -lt $TIMEOUT ]] && amp version && break
+    [[ $SECONDS -gt $TIMEOUT ]] && echo "version check timed out" && exit 1
+done
