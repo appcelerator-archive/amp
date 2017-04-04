@@ -12,6 +12,6 @@ func NewClientConn(addr string, token string) (*grpc.ClientConn, error) {
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second),
-		//grpc.WithPerRPCCredentials(token),
+		grpc.WithPerRPCCredentials(&LoginCredentials{Token:token}),
 	)
 }
