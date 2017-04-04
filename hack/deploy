@@ -83,8 +83,4 @@ deploystack amplifier.stack.yml amplifier
 deploystack monitoring.stack.yml monitoring
 
 SUCCESS=1
-echo set the following alias for docker to run cluster swarm commands on your system:
-echo "export AMPHOME=$(dirname $SP)"
-echo "alias amps=\"docker run -it --rm --network=hostnet -v \$AMPHOME/stacks:/stacks docker --host=m1\""
-echo "amps service ls"
 

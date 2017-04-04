@@ -1,0 +1,25 @@
+#!/bin/bash
+
+readonly CID="f573e897-7aa0-4516-a195-42ee91039e97"
+readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
+readonly deploy="$SP/deploy"
+
+$deploy $CID
+status=$?
+[[ $status -ne 0 ]] && exit $status
+
+docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1 service ls
+
+cat <<EOF
+
+Run the following command to update your environment to use docker swarm commands for the local amp swarm:
+  $ source "\$($SP/ampenv)"
+
+To see your updated environment
+  $ env | grep AMP
+
+Example of using the amp swarm alias:
+  $ amps node ls
+  $ amps service ls
+
+EOF
