@@ -9,9 +9,7 @@
       "Properties": {
         "Allocation": {
           "LogicalIds": [
-            "m1",
-            "m2",
-            "m3"
+            "m1"
           ]
         },
         "Instance": {

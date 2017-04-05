@@ -109,7 +109,7 @@ checkexit $? "monitoring-agent service replica checks timed out"
 ok
 
 # final sanity check
-$servicescheck 0
+$servicescheck 1
 checkexit $? "global service replica checks timed out"
 ok
 docker run -it --rm --network=hostnet docker --host=m1 service ls
