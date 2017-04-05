@@ -13,6 +13,7 @@ readonly bootstrap="$SP/../bootstrap/bootstrap"
 readonly clustercheck="$SP/clustercheck"
 readonly curlcheck="$SP/curlcheck"
 readonly swarmcheck="$SP/swarmcheck"
+readonly servicescheck="$SP/servicescheck"
 
 checkexit() {
   [[ $1 -ne 0 ]] && printf "${@:2} (exit $1)\n" && exit $1
@@ -81,6 +82,11 @@ pushimage localhost:5000 appcelerator/agent:local
 echo "deploy stacks to cluster"
 deploystack amplifier.stack.yml amplifier
 deploystack monitoring.stack.yml monitoring
+
+echo "wait for all services replicas to be running"
+$servicescheck 300
+checkexit $? "service replica checks timed out"
+ok
 
 SUCCESS=1
 

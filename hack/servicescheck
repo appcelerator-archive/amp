@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+TIMEOUT="${1:-300}"
+INTERVAL="${2:-2}"
+
+amps="docker run -it --rm --network=hostnet docker --host=m1"
+
+check() {
+  list=$($amps service ls)
+  result=$(echo "$list" | awk '{ print $4 }' | tail -n +2)
+
+  read -ra replicas <<< $result
+
+  for r in "${replicas[@]}"; do
+    # split "1/1" into [actual, desired] replica arrays
+    IFS="/" read -ra e <<< "$r"
+    # if actual != desired then service is not healthy
+    [[ "${e[0]}" -ne "${e[1]}" ]] && return 1
+  done
+}
+
+SECONDS=0
+while true; do
+  check
+  [[ $? -eq 0 ]] && exit 0
+  [[ "${TIMEOUT}" -eq 0 || "${SECONDS}" -gt "${TIMEOUT}" ]] && $amps service ls && exit 1
+  sleep "${INTERVAL}"
+done
+
