@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	rt "runtime"
-	"strings"
 	"sync"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -93,12 +92,7 @@ func initClients(config *Configuration) {
 }
 
 func initEtcd(config *Configuration) error {
-	log.Println("Connecting to etcd at", strings.Join(config.EtcdEndpoints, ","))
-	runtime.Store = etcd.New(config.EtcdEndpoints, "amp")
-	if err := runtime.Store.Connect(amp.DefaultTimeout); err != nil {
-		return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
-	}
-	log.Println("Connected to etcd at", strings.Join(runtime.Store.Endpoints(), ","))
+	runtime.Store = etcd.New(config.EtcdEndpoints, "amp", amp.DefaultTimeout)
 	return nil
 }
 
