@@ -5,6 +5,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logs"
+	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/spf13/cobra"
@@ -54,6 +55,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// logs
 		logs.NewLogsCommand(c),
+
+		//password
+		password.NewPasswordCommand(c),
 
 		// user
 		user.NewUserCommand(c),
