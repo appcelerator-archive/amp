@@ -28,7 +28,7 @@ main() {
 }
 
 # set options to default values
-TIMEOUT=180
+TIMEOUT=360
 INTERVAL=2
 
 while getopts 't:i:' opt; do
