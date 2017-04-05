@@ -1,0 +1,34 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:5.3.0
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+
+  nats:
+    image: appcelerator/amp-nats-streaming:v0.3.8
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+    ports:
+      - "4222:4222"

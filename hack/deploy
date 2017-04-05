@@ -20,8 +20,7 @@ checkexit() {
 }
 
 cleanup() {
-#  [[ SUCCESS -ne 1 && ! -z $CID ]] && echo "clean up" && $bootstrap -d $CID
-exit 0
+  [[ SUCCESS -ne 1 && ! -z $CID ]] && echo "clean up" && $bootstrap -d $CID
 }
 trap cleanup EXIT
 
@@ -82,19 +81,38 @@ pushimage localhost:5000 appcelerator/agent:local
 
 echo "deploy amplifier stack to cluster"
 deploystack amplifier.stack.yml amplifier
-
 echo "wait for all amplifier stack service replicas to be running"
 $servicescheck 600
-checkexit $? "service replica checks timed out"
+checkexit $? "amplifier service replica checks timed out"
 ok
 
-echo "deploy monitoring stack to cluster"
-deploystack monitoring.stack.yml monitoring
-
-echo "wait for all monitoring stack service replicas to be running"
-$servicescheck 600
-checkexit $? "service replica checks timed out"
+echo "deploy monitoring-core stack to cluster"
+deploystack monitoring-core.stack.yml monitoring-core
+maxwait=580
+echo "wait for all monitoring-core service replicas to be running ($maxwait sec)"
+$servicescheck $maxwait
+checkexit $? "monitoring-core service replica checks timed out"
 ok
+
+echo "deploy monitoring-aux stack to cluster"
+deploystack monitoring-aux.stack.yml monitoring-aux
+echo "wait for all monitoring-aux service replicas to be running ($maxwait sec)"
+$servicescheck $maxwait
+checkexit $? "monitoring-aux service replica checks timed out"
+ok
+
+echo "deploy monitoring-agent stack to cluster"
+deploystack monitoring-agent.stack.yml monitoring-agent
+echo "wait for all monitoring-agent service replicas to be running ($maxwait sec)"
+$servicescheck $maxwait
+checkexit $? "monitoring-agent service replica checks timed out"
+ok
+
+# final sanity check
+$servicescheck 0
+checkexit $? "global service replica checks timed out"
+ok
+docker run -it --rm --network=hostnet docker --host=m1 service ls
 
 SUCCESS=1
 
