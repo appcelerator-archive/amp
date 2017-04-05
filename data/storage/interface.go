@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"time"
-
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -13,7 +11,7 @@ type Interface interface {
 	Endpoints() []string
 
 	// Connect to etcd using client v3 api
-	Connect(timeout time.Duration) error
+	Connect() error
 
 	// Close connection to etcd
 	Close() error

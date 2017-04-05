@@ -17,6 +17,7 @@ package etcd
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"strings"
 	"time"
@@ -32,11 +33,18 @@ type etcd struct {
 	client     *clientv3.Client
 	endpoints  []string
 	pathPrefix string
+	timeout    time.Duration
+	connected  bool
+
+	//if err := runtime.Store.Connect(amp.DefaultTimeout); err != nil {
+	//return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
+	//}
+	//
 }
 
 // New returns an etcd implementation of storage.Interface
-func New(endpoints []string, prefix string) storage.Interface {
-	return &etcd{endpoints: endpoints, pathPrefix: prefix}
+func New(endpoints []string, prefix string, timeout time.Duration) storage.Interface {
+	return &etcd{endpoints: endpoints, pathPrefix: prefix, timeout: timeout}
 }
 
 // Endpoints gets the endpoints etcd
@@ -45,12 +53,15 @@ func (s *etcd) Endpoints() []string {
 }
 
 // Connect to etcd using client v3 api
-func (s *etcd) Connect(timeout time.Duration) error {
+func (s *etcd) Connect() error {
+	log.Println("Connecting to etcd at", strings.Join(s.endpoints, ","))
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   s.endpoints,
-		DialTimeout: timeout,
+		DialTimeout: s.timeout,
 	})
 	s.client = cli
+	s.connected = true
+	log.Println("Connected to etcd at", strings.Join(s.endpoints, ","))
 	return err
 }
 
@@ -60,11 +71,17 @@ func (s *etcd) Close() error {
 		return err
 	}
 	s.client = nil
+	s.connected = false
 	return nil
 }
 
 // Create implements storage.Interface.Create
 func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out proto.Message, ttl int64) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	opts, err := s.options(ctx, int64(ttl))
@@ -100,6 +117,11 @@ func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out pr
 
 // Get implements storage.Interface.Get.
 func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNotFound bool) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	getResp, err := s.client.KV.Get(ctx, key)
@@ -124,6 +146,11 @@ func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNot
 
 // Update implements storage.Interface.Update
 func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl int64) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	// must exist
@@ -160,6 +187,11 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 
 // Delete implements storage.Interface.Delete
 func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.Message) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	opts := []clientv3.OpOption{clientv3.WithPrefix()}
@@ -189,6 +221,11 @@ func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.M
 
 // List implements storage.Interface.List.
 func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj proto.Message, out *[]proto.Message) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = slash(s.prefix(key))
 
 	getResp, err := s.client.KV.Get(ctx, key, clientv3.WithPrefix())
@@ -216,6 +253,11 @@ func (s *etcd) List(ctx context.Context, key string, filter storage.Filter, obj 
 
 //Put implements storage.Interface.Put
 func (s *etcd) Put(ctx context.Context, key string, val proto.Message, ttl int64) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	data, _ := proto.Marshal(val)
@@ -235,6 +277,11 @@ func (s *etcd) Put(ctx context.Context, key string, val proto.Message, ttl int64
 
 //CompareAndSet implements storage.Interface.CompareAndSet
 func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return err
+		}
+	}
 	key = s.prefix(key)
 
 	expected, _ := proto.Marshal(expect)
@@ -255,12 +302,22 @@ func (s *etcd) CompareAndSet(ctx context.Context, key string, expect proto.Messa
 
 // Watch implements storage.Interface.Watch.
 func (s *etcd) Watch(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return nil, err
+		}
+	}
 	key = s.prefix(key)
 	return s.watch(ctx, key, resourceVersion, filter, false)
 }
 
 // WatchList implements storage.Interface.WatchList.
 func (s *etcd) WatchList(ctx context.Context, key string, resourceVersion int64, filter storage.Filter) (storage.WatchInterface, error) {
+	if !s.connected {
+		if err := s.Connect(); err != nil {
+			return nil, err
+		}
+	}
 	key = s.prefix(key)
 	return s.watch(ctx, key, resourceVersion, filter, true)
 }
