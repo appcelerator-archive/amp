@@ -22,6 +22,7 @@
               "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
+              "AutoRemove": true,
               "Privileged": true
             },
             "NetworkAttachments": [
@@ -63,6 +64,8 @@
                     "# create an overlay network",
                     "docker network inspect {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
                     "  docker network create -d overlay --attachable {{ ref "/amp/network" }}",
+                    "docker run --rm --network {{ ref "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
+                    "if [ $? -ne 0 ]; then echo 'Docker Swarm DNS check failed'; exit 1; fi",
                     "exit 0"
                   ]
                 }
@@ -89,6 +92,7 @@
               "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
+              "AutoRemove": true,
               "Privileged": true
             },
             "NetworkAttachments": [
@@ -124,6 +128,15 @@
                     {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
                   }
                 }
+              }, {
+                "Plugin": "flavor-vanilla",
+                "Properties": {
+                  "Init": [
+                    "docker run --rm  --network {{ ref "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
+                    "if [ $? -ne 0 ]; then echo 'Docker Swarm DNS check failed'; exit 1; fi",
+                    "exit 0"
+                  ]
+                }
               }
             ]
           }
@@ -148,6 +161,7 @@
               "ExposedPorts": {{ ref "/docker/ports/exposed" | to_json }} {{ end }}
             },
             "HostConfig": {
+              "AutoRemove": true,
               "Privileged": true{{ if ref "/docker/ports/bindings" }},
               "PortBindings": {{ ref "/docker/ports/bindings" | to_json }} {{ end }}
             },
@@ -182,6 +196,15 @@
                     }
                     {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
                   }
+                }
+              }, {
+                "Plugin": "flavor-vanilla",
+                "Properties": {
+                  "Init": [
+                    "docker run --rm  --network {{ ref "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
+                    "if [ $? -ne 0 ]; then echo 'Docker Swarm DNS check failed'; exit 1; fi",
+                    "exit 0"
+                  ]
                 }
               }
             ]
