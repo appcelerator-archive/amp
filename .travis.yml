@@ -17,8 +17,8 @@ before_script:
 script:
   - set -e
   - ampmake clean build
-  - ampmake lint
   - hack/deploy && amp cluster destroy
+  - ampmake lint
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then

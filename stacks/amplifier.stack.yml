@@ -11,30 +11,6 @@ volumes:
 
 services:
 
-  visualizer:
-    image: manomarks/visualizer
-    networks:
-      - default
-    ports:
-      - "8080:8080/tcp"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    deploy:
-      placement:
-        constraints: [node.role == manager]
-
-  portainer:
-    image: portainer/portainer
-    networks:
-      - default
-    ports:
-      - "9000:9000"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    deploy:
-      placement:
-        constraints: [node.role == manager]
-
   amplifier:
     image: appcelerator/amplifier:local
     networks:
@@ -47,7 +23,7 @@ services:
     labels:
       io.amp.role: "infrastructure"
     deploy:
-      replicas: 3
+      replicas: 1
       labels:
         io.amp.role: "infrastructure"
       restart_policy:
