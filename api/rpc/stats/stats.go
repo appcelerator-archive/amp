@@ -75,10 +75,7 @@ func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*Stat
 // execute a historic stats request
 func (s *Stats) statsHistoricQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
 	if req.Period == "" {
-		req.Period = "now-10m"
-	}
-	if req.TimeGroup == "" {
-		req.Period = "1m"
+		return nil, fmt.Errorf("Historical statistics (using --time-group option) should set --period option explicitelly")
 	}
 	boolQuery := s.createBoolQuery(req, req.Period)
 	agg := s.createHistoAggreggation(req)
@@ -347,8 +344,12 @@ func (s *Stats) validateTimeGroup(rg string) error {
 		return fmt.Errorf("time-group last digit should be in [y,M,w,d,h,m,s]")
 	}
 	mid := rg[0 : len(rg)-1]
-	if _, err := strconv.Atoi(mid); err != nil {
+	num, err := strconv.Atoi(mid)
+	if err != nil {
 		return fmt.Errorf("the time-group doesn't start by a number")
+	}
+	if last == "s" && num < 3 {
+		return fmt.Errorf("to short time-group, it should be upper than 2s")
 	}
 	return nil
 }
