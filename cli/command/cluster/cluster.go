@@ -15,7 +15,6 @@ type clusterOpts struct {
 
 var (
 	opts    = &clusterOpts{3, 2, "local", ""}
-	flagMap map[string]string
 )
 
 // NewClusterCommand returns a new instance of the cluster command.
