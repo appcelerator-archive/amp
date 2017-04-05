@@ -1,0 +1,38 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  ampbeat:
+    image: appcelerator/ampbeat:local
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+    networks:
+      - default
+
+  kibana:
+    image: appcelerator/kibana:5.3.0-1
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.mapping: "kibana:5601"
+    labels:
+      io.amp.role: "infrastructure"
+    environment: [
+      "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    ]
+    ports:
+      - "5601:5601"
+    networks:
+      - default

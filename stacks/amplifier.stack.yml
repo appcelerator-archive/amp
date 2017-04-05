@@ -23,7 +23,7 @@ services:
     labels:
       io.amp.role: "infrastructure"
     deploy:
-      replicas: 1
+      mode: global
       labels:
         io.amp.role: "infrastructure"
       restart_policy:

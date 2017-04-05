@@ -21,6 +21,7 @@ check() {
 }
 
 dumplogs() {
+  uptime
   $amps service ls
 
   list=$($amps service ls)
