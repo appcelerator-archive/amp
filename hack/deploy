@@ -25,7 +25,7 @@ cleanup() {
 trap cleanup EXIT
 
 ok() {
-  echo ok
+  echo ok $1
 }
 
 pushimage() {
@@ -42,6 +42,18 @@ deploystack() {
   docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1 stack deploy -c /stacks/$1 $2
   checkexit $? "error deploying stack"
   ok
+}
+
+# can only use this once the swarm is ready
+lookup() {
+  [[ -z $amps ]] && echo "error to use lookup before swarm is created" && return 1
+  $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 nslookup $1
+}
+
+# can only use this once the swarm is ready
+kurl() {
+  [[ -z $amps ]] && echo "error to use kurl before swarm is created" && return 1
+  $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
 }
 
 if [ -z $CID ]; then
@@ -69,6 +81,9 @@ $swarmcheck 300
 checkexit $? "swarm mode timed out"
 ok
 
+# helper for any subsequent docker commands
+amps="docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1"
+
 echo "wait for registry"
 $curlcheck localhost:5000/v2/ 200 10
 checkexit $? "registry timed out"
@@ -94,10 +109,6 @@ $servicescheck $maxwait
 checkexit $? "monitoring-core service replica checks timed out"
 ok
 
-# sanity checks after starting stack
-$curlcheck elasticsearch:9200 30
-$curlcheck nats:8222 30
-
 echo "deploy monitoring-aux stack to cluster"
 deploystack monitoring-aux.stack.yml monitoring-aux
 echo "wait for all monitoring-aux service replicas to be running ($maxwait sec)"
@@ -112,11 +123,33 @@ $servicescheck $maxwait
 checkexit $? "monitoring-agent service replica checks timed out"
 ok
 
-# final sanity check
-$servicescheck 1
-checkexit $? "global service replica checks timed out"
+# final sanity checks
+# ===================
+
+$servicescheck 0
+checkexit $? "final service replica smoke check failed"
 ok
-docker run -it --rm --network=hostnet docker --host=m1 service ls
+
+echo
+$amps service ls
+echo
+
+# sanity service lookup and ping checks after starting monitoring stack
+echo "test nats availability"
+lookup nats
+checkexit $? "service lookup check failed: nats"
+ok "service lookup check succeeded: nats"
+kurl nats:8222
+checkexit $? "service ping check failed: nats"
+ok "service ping check succeeded: nats"
+
+echo "test elasticsearch availability"
+lookup elasticsearch
+checkexit $? "service lookup check failed: elasticsearch"
+ok "service lookup check succeeded: elasticsearch"
+kurl elasticsearch:9200
+checkexit $? "service ping check failed: elasticsearch"
+ok "service ping check succeeded: elasticsearch"
 
 SUCCESS=1
 
