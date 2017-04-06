@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -17,6 +16,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"gopkg.in/olivere/elastic.v5"
+)
+
+const (
+	InfrastructureRole = "infrastructure"
 )
 
 // Server is used to implement log.LogServer
@@ -81,7 +84,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		masterQuery.Filter(queryString)
 	}
 	if !in.Infra {
-		masterQuery.MustNot(elastic.NewTermQuery("role", amp.InfrastructureRole))
+		masterQuery.MustNot(elastic.NewTermQuery("role", InfrastructureRole))
 	}
 
 	// Perform request
@@ -119,7 +122,7 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	}
 	log.Println("rpc-logs: GetStream", in.String())
 
-	sub, err := s.NatsStreaming.GetClient().Subscribe(amp.NatsLogsSubject, func(msg *stan.Msg) {
+	sub, err := s.NatsStreaming.GetClient().Subscribe(ns.LogsSubject, func(msg *stan.Msg) {
 		entry := &LogEntry{}
 		if err := proto.Unmarshal(msg.Data, entry); err != nil {
 			return
@@ -163,7 +166,7 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
 	if !in.Infra {
-		match = entry.Role != amp.InfrastructureRole
+		match = entry.Role != InfrastructureRole
 	}
 	return match
 }

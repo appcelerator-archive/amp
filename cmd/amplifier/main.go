@@ -2,10 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/appcelerator/amp/cmd/amplifier/server"
-	"github.com/appcelerator/amp/pkg/config"
-	"github.com/prometheus/common/log"
+	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/elasticsearch"
+	"github.com/appcelerator/amp/pkg/mail"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/sms"
 )
 
 // build vars
@@ -27,15 +32,15 @@ func main() {
 	config = &server.Configuration{
 		Version:          Version,
 		Build:            Build,
-		Port:             amp.AmplifierDefaultPort,
-		PublicAddress:    amp.AmplifierDefaultPublicAddress,
-		EmailSender:      amp.EmailDefaultSender,
-		SmsSender:        amp.SmsDefaultSender,
-		EtcdEndpoints:    []string{amp.EtcdDefaultEndpoint},
-		ElasticsearchURL: amp.ElasticsearchDefaultURL,
-		NatsURL:          amp.NatsDefaultURL,
-		DockerURL:        amp.DockerDefaultURL,
-		DockerVersion:    amp.DockerDefaultVersion,
+		Port:             server.DefaultPort,
+		PublicAddress:    server.DefaultPublicAddress,
+		EmailSender:      mail.DefaultSender,
+		SmsSender:        sms.DefaultSender,
+		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
+		ElasticsearchURL: elasticsearch.DefaultURL,
+		NatsURL:          ns.DefaultURL,
+		DockerURL:        docker.DefaultURL,
+		DockerVersion:    docker.DefaultVersion,
 	}
 
 	// Override with configuration file

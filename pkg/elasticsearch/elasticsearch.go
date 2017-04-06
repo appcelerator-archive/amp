@@ -7,6 +7,9 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+const(
+	DefaultURL = "http://elasticsearch:9200"
+)
 // Elasticsearch wrapper
 type Elasticsearch struct {
 	client    *elastic.Client

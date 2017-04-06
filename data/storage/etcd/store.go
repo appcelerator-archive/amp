@@ -28,6 +28,10 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	DefaultEndpoint = "http://etcd:2379"
+)
+
 // etcd is used to connect to and query etcd
 type etcd struct {
 	client     *clientv3.Client

@@ -17,7 +17,6 @@ import (
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

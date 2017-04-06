@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -46,14 +46,14 @@ func AgentInit(version, build string) error {
 	if err != nil {
 		log.Fatalln("Unable to get hostname: ", err)
 	}
-	agent.natsStreaming = ns.NewClient(amp.NatsDefaultURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout)
+	agent.natsStreaming = ns.NewClient(ns.DefaultURL, ns.ClusterID, os.Args[0]+"-"+hostname, time.Minute)
 	if err := agent.natsStreaming.Connect(); err != nil {
 		return err
 	}
 
 	// Connection to Docker
 	defaultHeaders := map[string]string{"User-Agent": "agent"}
-	cli, err := client.NewClient(conf.dockerEngine, amp.DockerDefaultVersion, nil, defaultHeaders)
+	cli, err := client.NewClient(conf.dockerEngine, docker.DefaultVersion, nil, defaultHeaders)
 	if err != nil {
 		_ = agent.natsStreaming.Close()
 		return err

@@ -19,7 +19,6 @@ import (
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/config"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
@@ -93,12 +92,12 @@ func initClients(config *Configuration) {
 }
 
 func initEtcd(config *Configuration) error {
-	runtime.Store = etcd.New(config.EtcdEndpoints, "amp", amp.DefaultTimeout)
+	runtime.Store = etcd.New(config.EtcdEndpoints, "amp", DefaultTimeout)
 	return nil
 }
 
 func initElasticsearch(config *Configuration) error {
-	runtime.Elasticsearch = elasticsearch.NewClient(config.ElasticsearchURL, amp.DefaultTimeout)
+	runtime.Elasticsearch = elasticsearch.NewClient(config.ElasticsearchURL, DefaultTimeout)
 	return nil
 }
 
@@ -107,7 +106,7 @@ func initNats(config *Configuration) error {
 	if err != nil {
 		return fmt.Errorf("unable to get hostname: %v", err)
 	}
-	runtime.NatsStreaming = ns.NewClient(config.NatsURL, amp.NatsClusterID, os.Args[0]+"-"+hostname, amp.DefaultTimeout)
+	runtime.NatsStreaming = ns.NewClient(config.NatsURL, ns.ClusterID, os.Args[0]+"-"+hostname, DefaultTimeout)
 	return nil
 }
 

@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+const (
+	DefaultURL     = "nats://nats:4222"
+	ClusterID      = "test-cluster"
+	FunctionTopic  = "amp-function-calls"
+	LogsSubject    = "amp-logs"
+	MetricsSubject = "amp-metrics"
+)
+
 // NatsStreaming NATS-Streaming wrapper
 type NatsStreaming struct {
 	client    stan.Conn
