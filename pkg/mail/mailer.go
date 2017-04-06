@@ -8,6 +8,10 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+const (
+	DefaultSender            = "amp@atomiq.io"
+)
+
 type emailTemplate struct {
 	isHTML  bool
 	subject string

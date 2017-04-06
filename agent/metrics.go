@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/stats"
-	amp "github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
 	"github.com/gogo/protobuf/proto"
 )
@@ -65,7 +65,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 		if err != nil {
 			log.Printf("error marshalling metrics entry: %v\n", err)
 		}
-		_, err = a.natsStreaming.GetClient().PublishAsync(amp.NatsMetricsSubject, encoded, nil)
+		_, err = a.natsStreaming.GetClient().PublishAsync(ns.MetricsSubject, encoded, nil)
 		if err != nil {
 			log.Printf("error sending log entry: %v\n", err)
 			return

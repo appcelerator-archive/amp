@@ -3,18 +3,34 @@ package sms
 import (
 	"bytes"
 	"fmt"
-	"github.com/appcelerator/amp/pkg/config"
 	"net/http"
 	"net/url"
 )
 
+const (
+	DefaultSender              = "amp"
+)
+
+type Sms struct {
+	accountID           string
+	sender      string
+	apiKey    string
+}
+
+func NewSms(accountID string, apiKey string, sender string) *Sms {
+	return &Sms{
+		accountID: accountID,
+		apiKey:           apiKey,
+		sender:      sender,
+	}
+}
+
 //SendSms send a sms
-func SendSms(to string, message string) error {
-	config := amp.GetConfig()
-	url := fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", config.SmsAccountID)
-	body := encodeBody(config.SmsSender, to, message)
+func (s *Sms) SendSms(to string, message string) error {
+	url := fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", s.accountID)
+	body := encodeBody(s.sender, to, message)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(body)))
-	req.SetBasicAuth(config.SmsAccountID, config.SmsKey)
+	req.SetBasicAuth(s.accountID, s.apiKey)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}

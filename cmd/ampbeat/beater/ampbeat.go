@@ -8,8 +8,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cmd/ampbeat/config"
-	"github.com/appcelerator/amp/pkg/config"
-	ns "github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
@@ -41,7 +40,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get hostname: %v", err)
 	}
-	bt.natsStreaming = ns.NewClient(amp.NatsDefaultURL, amp.NatsClusterID, b.Name+"-"+hostname, amp.DefaultTimeout)
+	bt.natsStreaming = ns.NewClient(ns.DefaultURL, ns.ClusterID, b.Name+"-"+hostname, time.Minute)
 	if err = bt.natsStreaming.Connect(); err != nil {
 		return nil, fmt.Errorf("Unable to connect to NATS: %v", err)
 	}
@@ -54,13 +53,13 @@ func (bt *Ampbeat) Run(b *beat.Beat) error {
 	bt.client = b.Publisher.Connect()
 
 	// logs subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsLogsSubject, logMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().Subscribe(ns.LogsSubject, logMessageHandler, stan.DeliverAllAvailable()); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
 	logp.Info("Succesfully subscribed to logs subject")
 
 	// metrics subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(amp.NatsMetricsSubject, metricsMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().Subscribe(ns.MetricsSubject, metricsMessageHandler, stan.DeliverAllAvailable()); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
 	logp.Info("Succesfully subscribed to metrics subject")

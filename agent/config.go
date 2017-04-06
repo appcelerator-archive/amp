@@ -5,7 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/appcelerator/amp/pkg/config"
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 )
 
 // AgentConfig configuration parameters
@@ -29,12 +30,12 @@ func (cfg *AgentConfig) init(version, build string) {
 
 // Set default value of configuration
 func (cfg *AgentConfig) setDefault() {
-	cfg.dockerEngine = amp.DockerDefaultURL
-	cfg.natsURL = amp.NatsDefaultURL
+	cfg.dockerEngine = docker.DefaultURL
+	cfg.natsURL = ns.DefaultURL
 	cfg.apiPort = "3000"
 	cfg.period = 3
 	cfg.clientID = "agent-" + os.Getenv("HOSTNAME")
-	cfg.clusterID = amp.NatsClusterID
+	cfg.clusterID = ns.ClusterID
 }
 
 // Update config with env variables

@@ -4,7 +4,15 @@ import (
 	"fmt"
 	"log"
 
+	"time"
+
 	"github.com/spf13/viper"
+)
+
+const (
+	DefaultPort          = ":50101"
+	DefaultPublicAddress = "local.appcelerator.io"
+	DefaultTimeout       = time.Minute
 )
 
 // Config is used for amplifier configuration settings
