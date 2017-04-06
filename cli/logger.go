@@ -77,4 +77,3 @@ func (l Logger) Println(args ...interface{}) {
 		fmt.Fprintln(l.out, args)
 	}
 }
-

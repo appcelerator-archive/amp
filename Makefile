@@ -214,7 +214,7 @@ clean-agent:
 # =============================================================================
 # Quality checks
 # =============================================================================
-CHECKDIRS := agent api cmd data tests
+CHECKDIRS := agent api cli cmd data pkg tests
 CHECKSRCS := $(shell find $(CHECKDIRS) -type f -name '*.go')
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)

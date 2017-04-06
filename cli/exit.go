@@ -21,4 +21,3 @@ func Exit(code int) {
 	}
 	os.Exit(code)
 }
-
