@@ -3,8 +3,9 @@ package cli
 import (
 	"strings"
 
-	"github.com/fatih/color"
 	"fmt"
+
+	"github.com/fatih/color"
 	"github.com/howeyc/gopass"
 )
 

@@ -2,10 +2,11 @@ package ns
 
 import (
 	"fmt"
-	"github.com/nats-io/go-nats"
-	"github.com/nats-io/go-nats-streaming"
 	"log"
 	"time"
+
+	"github.com/nats-io/go-nats"
+	"github.com/nats-io/go-nats-streaming"
 )
 
 const (

@@ -8,8 +8,8 @@ import (
 // NewCreateCommand returns a new instance of the create command for bootstrapping a local development cluster.
 func NewCreateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a local amp cluster",
+		Use:     "create",
+		Short:   "Create a local amp cluster",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return create(c, cmd)
@@ -37,4 +37,3 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	args := []string{}
 	return updateCluster(c, reflag(cmd, m, args))
 }
-
