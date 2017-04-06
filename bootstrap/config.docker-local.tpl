@@ -21,14 +21,7 @@
             },
             "HostConfig": {
               "AutoRemove": true,
-              "Privileged": true,
-              "Mounts": [
-                {
-                  "Type": "bind",
-                  "Source": "/lib/modules",
-                  "Target": "/lib/modules"
-                }
-              ]
+              "Privileged": true
             },
             "NetworkAttachments": [
               {
@@ -96,14 +89,7 @@
             },
             "HostConfig": {
               "AutoRemove": true,
-              "Privileged": true,
-              "Mounts": [
-                {
-                  "Type": "bind",
-                  "Source": "/lib/modules",
-                  "Target": "/lib/modules"
-                }
-              ]
+              "Privileged": true
             },
             "NetworkAttachments": [
               {
@@ -172,14 +158,7 @@
             },
             "HostConfig": {
               "AutoRemove": true,
-              "Privileged": true,
-              "Mounts": [
-                {
-                  "Type": "bind",
-                  "Source": "/lib/modules",
-                  "Target": "/lib/modules"
-                }
-              ]{{ if ref "/docker/ports/bindings" }},
+              "Privileged": true{{ if ref "/docker/ports/bindings" }},
               "PortBindings": {{ ref "/docker/ports/bindings" | to_json }} {{ end }}
             },
             "NetworkAttachments": [
