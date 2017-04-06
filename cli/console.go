@@ -1,9 +1,9 @@
 package cli
 
 import (
-	"strings"
-
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/howeyc/gopass"
@@ -40,6 +40,7 @@ var (
 	successPrefix = "Succes: "
 	warningPrefix = "Warning: "
 	errorPrefix   = "Error: "
+	fatalPrefix   = "Fatal: "
 )
 
 // Console augments basic logging functions with a theme that can be applied
@@ -168,6 +169,27 @@ func (c Console) Successln(args ...interface{}) {
 	c.theme.Success.Fprintln(c.OutStream(), args...)
 }
 
+// Fatal prints args Theme.Error() and exits with code 1.
+func (c Console) Fatal(args ...interface{}) {
+	c.fatal()
+	c.theme.Error.Fprint(c.OutStream(), args...)
+	os.Exit(1)
+}
+
+// Fatalf prints a formatted string using Theme.Error() and exits with code 1
+func (c Console) Fatalf(format string, args ...interface{}) {
+	c.fatal()
+	c.theme.Error.Fprintf(c.OutStream(), format, args...)
+	os.Exit(1)
+}
+
+// Fatalln prints args using Theme.Error(),appends a newline and exits with code 1
+func (c Console) Fatalln(args ...interface{}) {
+	c.fatal()
+	c.theme.Error.Fprintln(c.OutStream(), args...)
+	os.Exit(1)
+}
+
 // prints success prefix
 func (c Console) success() {
 	c.theme.Success.Fprint(c.OutStream(), successPrefix)
@@ -181,6 +203,11 @@ func (c Console) warn() {
 // prints error prefix
 func (c Console) error() {
 	c.theme.Error.Fprint(c.OutStream(), errorPrefix)
+}
+
+// prints fatal prefix
+func (c Console) fatal() {
+	c.theme.Error.Fprint(c.OutStream(), fatalPrefix)
 }
 
 func (c Console) GetInput(prompt string) (in string) {
