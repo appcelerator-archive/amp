@@ -30,5 +30,3 @@ services:
         io.amp.role: "infrastructure"
     labels:
       io.amp.role: "infrastructure"
-    ports:
-      - "4222:4222"

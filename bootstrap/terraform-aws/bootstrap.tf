@@ -172,10 +172,16 @@ resource "aws_security_group" "default" {
   }
 
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["${lookup(var.vpc_cidrs, "vpc")}"]
+    from_port   = 50101
+    to_port     = 50199
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 50101
+    to_port     = 50199
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
