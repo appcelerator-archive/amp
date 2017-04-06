@@ -94,6 +94,10 @@ $servicescheck $maxwait
 checkexit $? "monitoring-core service replica checks timed out"
 ok
 
+# sanity checks after starting stack
+$curlcheck elasticsearch:9200 30
+$curlcheck nats:8222 30
+
 echo "deploy monitoring-aux stack to cluster"
 deploystack monitoring-aux.stack.yml monitoring-aux
 echo "wait for all monitoring-aux service replicas to be running ($maxwait sec)"
