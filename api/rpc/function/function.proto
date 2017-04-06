@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package function;
 
-import "google/protobuf/empty.proto";
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 import "github.com/appcelerator/amp/data/functions/functions.proto";
 
 service Function {
