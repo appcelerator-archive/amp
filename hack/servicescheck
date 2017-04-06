@@ -40,11 +40,16 @@ dumplogs() {
 }
 
 SECONDS=0
+trace=0
 while true; do
   check
   [[ $? -eq 0 ]] && exit 0
-  [[ $(($SECONDS % 30)) -eq 0 ]] && $amps service ls
   [[ "${TIMEOUT}" -eq 0 || "${SECONDS}" -gt "${TIMEOUT}" ]] && dumplogs && exit 1
   sleep "${INTERVAL}"
+  # heartbeat trace so CI builds don't time out
+  if [ $(($SECONDS - $trace)) -gt 10 ]; then
+    trace=$SECONDS
+    $amps service ls
+  fi
 done
 
