@@ -12,6 +12,8 @@ services:
 
   agent:
     image: appcelerator/agent:local
+    networks:
+      - default
     deploy:
       mode: global
       labels:
@@ -21,5 +23,3 @@ services:
     volumes:
       - ampagent:/containers
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - default
