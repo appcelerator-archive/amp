@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/appcelerator/amp/pkg/config"
 )
 
 const (
