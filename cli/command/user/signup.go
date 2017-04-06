@@ -47,7 +47,7 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		c.Console().Fatalln(grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.SignUpRequest{
@@ -57,7 +57,7 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 	}
 	_, err = client.SignUp(context.Background(), request)
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		c.Console().Fatalln(grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Hi %s! Please check your email to complete the signup process.\n", opts.username)
 	return nil
