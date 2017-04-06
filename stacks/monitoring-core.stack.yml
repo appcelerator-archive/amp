@@ -9,6 +9,8 @@ services:
 
   elasticsearch:
     image: appcelerator/elasticsearch-amp:5.3.0
+    networks:
+      - default
     deploy:
       mode: replicated
       replicas: 1
@@ -16,11 +18,11 @@ services:
         io.amp.role: "infrastructure"
     labels:
       io.amp.role: "infrastructure"
-    networks:
-      - default
 
   nats:
     image: appcelerator/amp-nats-streaming:v0.3.8
+    networks:
+      - default
     deploy:
       mode: replicated
       replicas: 1
@@ -28,7 +30,5 @@ services:
         io.amp.role: "infrastructure"
     labels:
       io.amp.role: "infrastructure"
-    networks:
-      - default
     ports:
       - "4222:4222"
