@@ -13,7 +13,7 @@ services:
     networks:
       - default
     ports:
-      - "8080:8080/tcp"
+      - "50180:8080/tcp"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     deploy:
@@ -25,7 +25,7 @@ services:
     networks:
       - default
     ports:
-      - "9000:9000"
+      - "50190:9000"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
