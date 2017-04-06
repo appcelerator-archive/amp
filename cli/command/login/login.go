@@ -24,6 +24,7 @@ func NewLoginCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Login to account",
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return login(c, cmd)
 		},
