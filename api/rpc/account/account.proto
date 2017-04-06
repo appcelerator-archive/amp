@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package account;
 
-import "google/protobuf/empty.proto";
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 import "github.com/appcelerator/amp/data/accounts/accounts.proto";
 
 service Account {
