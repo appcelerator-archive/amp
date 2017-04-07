@@ -57,3 +57,7 @@ amp org rm
 
 amp org ls
 [no longer find the removed org]
+
+### Retrieve account name 
+amp user forgot-login
+[an email containing the username will be sent to the registered email address]
