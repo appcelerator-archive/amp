@@ -85,7 +85,7 @@ ok
 amps="docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1"
 
 echo "wait for registry"
-$curlcheck localhost:5000/v2/ 200 10
+$curlcheck localhost:5000/v2/ 200 180amp
 checkexit $? "registry timed out"
 ok
 

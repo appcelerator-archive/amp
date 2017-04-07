@@ -1,8 +1,8 @@
 package team
 
 import (
-	"github.com/appcelerator/amp/cli/command/team/member"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cli/command/team/member"
 	"github.com/spf13/cobra"
 )
 

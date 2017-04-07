@@ -1,8 +1,8 @@
 package org
 
 import (
-	"github.com/appcelerator/amp/cli/command/org/member"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cli/command/org/member"
 	"github.com/spf13/cobra"
 )
 

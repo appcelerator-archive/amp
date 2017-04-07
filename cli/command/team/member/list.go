@@ -2,14 +2,15 @@ package member
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"text/tabwriter"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"os"
-	"strconv"
-	"text/tabwriter"
 )
 
 type listTeamMemOpts struct {

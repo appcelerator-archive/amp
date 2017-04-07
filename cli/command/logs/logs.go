@@ -2,11 +2,12 @@ package logs
 
 import (
 	"context"
+	"io"
+
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"io"
 )
 
 type logsOpts struct {

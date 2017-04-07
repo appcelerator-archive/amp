@@ -13,7 +13,9 @@ services:
   amplifier:
     image: appcelerator/amplifier:local
     networks:
-      - default
+      default:
+        aliases:
+          - amplifier
     ports:
       - "50101:50101"
     volumes:
@@ -32,7 +34,9 @@ services:
   agent:
     image: appcelerator/agent:local
     networks:
-      - default
+      default:
+        aliases:
+          - agent
     deploy:
       mode: global
       labels:

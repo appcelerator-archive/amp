@@ -12,6 +12,7 @@ const (
 	DefaultURL     = "unix:///var/run/docker.sock"
 	DefaultVersion = "1.24"
 )
+
 // Docker wrapper
 type Docker struct {
 	url     string

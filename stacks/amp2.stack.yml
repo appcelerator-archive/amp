@@ -10,7 +10,9 @@ services:
   ampbeat:
     image: appcelerator/ampbeat:local
     networks:
-      - default
+      default:
+        aliases:
+          - ampbeat
     deploy:
       mode: replicated
       replicas: 1
@@ -24,7 +26,9 @@ services:
   kibana:
     image: appcelerator/kibana:5.3.0-1
     networks:
-      - default
+      default:
+        aliases:
+          - kibana
     deploy:
       mode: replicated
       replicas: 1

@@ -21,8 +21,8 @@ var (
 // NewSignUpCommand returns a new instance of the signup command.
 func NewSignUpCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "signup",
-		Short: "Signup for a new account",
+		Use:     "signup",
+		Short:   "Signup for a new account",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return signUp(c, cmd)

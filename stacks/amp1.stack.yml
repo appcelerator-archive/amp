@@ -27,7 +27,9 @@ services:
   nats:
     image: appcelerator/amp-nats-streaming:v0.3.8
     networks:
-      - default
+      default:
+        aliases:
+          - nats
     labels:
       io.amp.role: "infrastructure"
     deploy:
@@ -41,7 +43,9 @@ services:
   etcd:
     image: appcelerator/etcd:3.1.5-1
     networks:
-      - default
+      default:
+        aliases:
+          - etcd
     command:
       - "--listen-client-urls"
       - "http://0.0.0.0:2379"
@@ -56,3 +60,4 @@ services:
         io.amp.role: "infrastructure"
       placement:
         constraints: [node.role == worker]
+

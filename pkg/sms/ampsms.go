@@ -8,20 +8,20 @@ import (
 )
 
 const (
-	DefaultSender              = "amp"
+	DefaultSender = "amp"
 )
 
 type Sms struct {
-	accountID           string
-	sender      string
+	accountID string
+	sender    string
 	apiKey    string
 }
 
 func NewSms(accountID string, apiKey string, sender string) *Sms {
 	return &Sms{
 		accountID: accountID,
-		apiKey:           apiKey,
-		sender:      sender,
+		apiKey:    apiKey,
+		sender:    sender,
 	}
 }
 
