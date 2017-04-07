@@ -1,15 +1,22 @@
 ### Create a main user
+
     amp user signup
     [you should receive an email with the token]
+
     amp user verify
+
     amp login
 
 ### Create a second user (different name, same email)
+
     amp user signup
+
     amp user verify
 
 ### Organization management
+
     amp org create
+
     amp org ls
     [the newly created org will show up]
 
@@ -28,6 +35,7 @@
     [no longer find the removed user]
 
 ### Team management
+
     amp team create
 
     amp team ls
@@ -58,6 +66,28 @@
     amp org ls
     [no longer find the removed org]
 
-### Retrieve account name 
+### Retrieve account name
+
     amp user forgot-login
     [an email containing the username will be sent to the registered email address]
+
+### Switch between accounts
+
+    amp login
+    [login as a user]
+
+    amp switch <org name>
+    [switch account to specified organization]
+
+### Who's logged in?
+
+    amp login
+    [login as a user or organization]
+
+    amp whoami
+    [see currently logged in account name - user or organization]
+
+### Logout of account
+
+    amp logout
+    [no longer signed in to AMP]

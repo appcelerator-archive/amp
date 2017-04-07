@@ -346,7 +346,7 @@ func continueHistoricExecution(ctx context.Context, c cli.Interface, client stat
 }
 
 func getHistoricSleepDuration(timeGroup string) (time.Duration, error) {
-	last := timeGroup[len(timeGroup)-1 : len(timeGroup)]
+	last := timeGroup[len(timeGroup)-1:]
 	num, err := strconv.Atoi(timeGroup[0 : len(timeGroup)-1])
 	if err != nil {
 		return 0, err

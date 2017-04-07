@@ -1,6 +1,8 @@
 package logout
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -21,7 +23,7 @@ func NewLogoutCommand(c cli.Interface) *cobra.Command {
 func logout(c cli.Interface) error {
 	err := cli.RemoveToken()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("You have been logged out!")
 	return nil

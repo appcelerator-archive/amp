@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/org"
 	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/stats"
+	"github.com/appcelerator/amp/cli/command/switch"
 	"github.com/appcelerator/amp/cli/command/team"
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
@@ -69,6 +70,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		//password
 		password.NewPasswordCommand(c),
+
+		//switch
+		switch_.NewSwitchCommand(c),
 
 		//team
 		team.NewTeamCommand(c),
