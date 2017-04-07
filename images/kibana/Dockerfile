@@ -30,4 +30,4 @@ EXPOSE 5601
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/run.sh"]
 
-HEALTHCHECK --interval=5s --retries=24 --timeout=1s CMD curl -s "127.0.0.1:5601/api/status" | jq -r '.status.overall.state' | grep -q green
+#HEALTHCHECK --interval=5s --retries=24 --timeout=1s CMD curl -s "127.0.0.1:5601/api/status" | jq -r '.status.overall.state' | grep -q green

@@ -7,6 +7,7 @@ packages:
   - git
   - curl
   - unzip
+  - awscli
 runcmd:
   - curl ${tpl_config_base_url}/bootstrap -o /usr/local/bin/bootstrap.sh
   - bash /usr/local/bin/bootstrap.sh -p terraform -t aws -j ${tpl_manager_ip} ${tpl_config_base_url}

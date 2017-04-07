@@ -19,6 +19,8 @@ if [[ $try -ge $maxretries ]]; then
     echo
     echo "failed"
     curl "$KIBANA_URL/api/status"
+    echo "ssl endpoint connection test:"
+    curl -k https://kibana
     exit 1
 fi
 echo " ($status) [OK]"

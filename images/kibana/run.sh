@@ -2,6 +2,17 @@
 
 ES_ALIVE=/tmp/elastic_search_is_alive
 
+# check if a certificate is present
+if [[ -n "$SERVER_SSL_CERTIFICATE" && -n "$SERVER_SSL_KEY" && -f "$SERVER_SSL_CERTIFICATE" && -f "$SERVER_SSL_KEY" ]]; then
+  echo "found $SERVER_SSL_CERTIFICATE and $SERVER_SSL_KEY"
+  echo "enabling SSL"
+  SERVER_SSL_ENABLED=true
+else
+  echo "disabling SSL"
+  SERVER_SSL_ENABLED=false
+fi
+export SERVER_SSL_ENABLED
+
 # Configuration file for kibana.yml
 if [[ -f "/opt/kibana/config/kibana.yml.tpl" ]]; then
     echo "Kibana configuration file will be generated."

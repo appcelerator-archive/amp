@@ -12,10 +12,12 @@ SSL_KEY_LENGTH=2048
 CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
 CERT_DIR=~/.config/infrakit/certs
 BOOTSTRAP_VOLUME=amp-bootstrap
-INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME"
+ROLE_LABEL=tools
+INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
 BRIDGE_NETWORK=hostnet
 CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-atomiq.clusterid}
+INFRAKIT_LOG_LEVEL=4
 
 # check if the bootstrap script is executed inside a container
 _am_i_in_a_container() {
@@ -65,11 +67,18 @@ _get_dirname() {
 
 # expose the Docker remote api
 _expose_remote_api() {
+  local _registry_opt
   mkdir -p /etc/systemd/system/docker.service.d
+  if [ $# -gt 0 ]; then
+    _registry_opt="--registry-mirror=http://$1:5000"
+    if [ "$1" != "127.0.0.1" ]; then
+      _registry_opt="$_registry_opt --insecure-registry=http://$1:5000"
+    fi
+  fi
   cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock --experimental $_registry_opt
 EOF
   # Restart Docker to let port listening take effect.
   systemctl daemon-reload
@@ -91,6 +100,7 @@ _init_swarm() {
   systemctl start docker.service && \
   if [ -n "$1" ]; then
     _manager=$1
+    _expose_remote_api $_manager
     echo "joining a Docker Swarm..." >&2
     while [ $((++_loop)) -lt $_maxloop ]; do
       _token=$(docker -H $_manager:2375 swarm join-token -q manager 2>/dev/null)
@@ -119,7 +129,7 @@ _init_swarm() {
     fi
   else
     echo "initializing Docker Swarm" >&2
-    _expose_remote_api
+    _expose_remote_api 127.0.0.1
     docker swarm init
   fi
 }
@@ -215,6 +225,20 @@ EOF
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true >&2
       rm -f $_dockerfile
       docker image rm $_dockerimage >/dev/null
+}
+
+_system_check() {
+  docker info | grep -q "Swarm: active" && return 0
+  if [ $? -ne 0 ] && [ $(uname) = "Darwin" ]; then
+    echo "Warning: Swarm mode is not enabled on your Mac, the DinD cluster will probably not work correctly"
+    return 1
+  fi
+  lsmod | grep -q ip_vs
+  if [ $? -ne 0 ]; then
+    echo "Warning: the IPVS module is not loaded, consider modprobing ip_vs or alternatively initializing your host Docker Swarm"
+    return 1
+  fi
+  return 0
 }
 
 # define and prepare the source directory
@@ -381,10 +405,11 @@ _run_ikt_container() {
     fi
     # set the provisioner IP if not already set. Useful when bootstraping with the first manager
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] && [ ! $(_am_i_in_a_container) ]; then
       local _ip
       _ip=$(_get_ip)
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/bootstrap/ip\" \"$_ip\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
+      echo "bootstrap ip ($_ip) added in env.ikt" >&2 
     fi
     if [ "x$provider" = "xdocker" ]; then
         echo "making sure the network $BRIDGE_NETWORK is created" >&2
@@ -398,7 +423,7 @@ _run_ikt_container() {
     docker run -d --restart always --name infrakit \
          -v $CERT_DIR:/etc/docker \
          $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS -e PLUGIN_DIR=$INFRAKIT_HOME/${provider} $_infrakit_image \
-         infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log 5 \
+         infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log $INFRAKIT_LOG_LEVEL \
          manager group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >&2
     _should_wait_for_plugins=1
   else
@@ -437,7 +462,7 @@ _run_ikt_plugin_container() {
         echo "starting up InfraKit $_plugin plugin (image $_image)..." >&2
         docker run -d --restart always --name instance-plugin-$_plugin \
              $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS $_image \
-             infrakit-instance-$_plugin --log 5 >&2
+             infrakit-instance-$_plugin --log $INFRAKIT_LOG_LEVEL >&2
         if [ $? -ne 0 ]; then
             echo "unable to start the $_plugin plugin" >&2
             exit 1
@@ -500,7 +525,7 @@ _clean_config() {
 _prepare_config_container() {
   echo "prepare the InfraKit configuration file..." >&2
   local _config=$(mktemp)
-  docker exec infrakit infrakit template --log 5 $CONTAINER_CONFIG_TPL > $_config
+  docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
   docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
   if [ $? -ne 0 ]; then
     echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
@@ -518,11 +543,13 @@ _deploy_config_container() {
 
 # run a registry service for Docker image availability in the cluster
 _run_registry() {
+  local _nwopt
+  docker network inspect $BRIDGE_NETWORK >/dev/null 2>&1 && _nwopt="--network=$BRIDGE_NETWORK"
   docker ps | grep -qw registry || \
-  docker run --name=registry --detach --network=$BRIDGE_NETWORK \
+  docker run --name=registry --detach $_nwopt \
              -p=5000:5000 --restart=unless-stopped \
              --volume=registry:/var/lib/registry \
-             --label="$CLUSTER_LABEL_NAME=$clusterid" --label="host.role=cluster" \
+             --label="$CLUSTER_LABEL_NAME=$clusterid" --label="io.amp.role=$ROLE_LABEL" \
              registry:2 >&2
 }
 
@@ -735,7 +762,7 @@ _set_source $1
 _set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 clusterid=$(_set_clusterid)
-if [ "$provider" = "docker" ]; then _run_registry; fi
+if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null; _run_registry; fi
 _pull_images $provider
 _run_ikt_container $provider
 started=$?
