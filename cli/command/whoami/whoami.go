@@ -1,6 +1,8 @@
 package whoami
 
 import (
+	"errors"
+
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cli"
 	"github.com/dgrijalva/jwt-go"
@@ -22,16 +24,16 @@ func NewWhoAmICommand(c cli.Interface) *cobra.Command {
 func whoami(c cli.Interface) error {
 	token, err := cli.ReadToken()
 	if err != nil {
-		c.Console().Fatalln("you are not logged in")
+		return errors.New("you are not logged in")
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &auth.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
 	})
 	if claims, ok := pToken.Claims.(*auth.AccountClaims); ok {
 		if claims.ActiveOrganization != "" {
-			c.Console().Printf("Logged in as organization: %s (on behalf of user %s).\n", claims.ActiveOrganization, claims.AccountName)
+			c.Console().Printf("Logged in as organization: %s (on behalf of user %s)\n", claims.ActiveOrganization, claims.AccountName)
 		} else {
-			c.Console().Printf("Logged in as user: %s.\n", claims.AccountName)
+			c.Console().Printf("Logged in as user: %s\n", claims.AccountName)
 		}
 	}
 	return nil
