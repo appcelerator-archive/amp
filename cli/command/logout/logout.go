@@ -8,7 +8,7 @@ import (
 
 // NewLogoutCommand returns a new instance of the logout command.
 func NewLogoutCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:     "logout",
 		Short:   "Logout of account",
 		PreRunE: cli.NoArgs,
@@ -16,7 +16,6 @@ func NewLogoutCommand(c cli.Interface) *cobra.Command {
 			return logout(c)
 		},
 	}
-	return cmd
 }
 
 func logout(c cli.Interface) error {
