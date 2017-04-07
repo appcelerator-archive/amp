@@ -2,7 +2,6 @@ package team
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -61,8 +60,8 @@ func listTeam(c cli.Interface, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
-	fmt.Fprintln(w, "TEAM\tCREATED\t")
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
+	fmt.Fprintln(w, "TEAM\tCREATED ON")
 	for _, team := range reply.Teams {
 		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, time.ConvertTime(team.CreateDt))
 	}

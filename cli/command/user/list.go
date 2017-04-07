@@ -2,7 +2,6 @@ package user
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -51,8 +50,8 @@ func listUser(c cli.Interface, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
-	fmt.Fprintln(w, "USERNAME\tEMAIL\t")
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
+	fmt.Fprintln(w, "USERNAME\tEMAIL")
 	for _, user := range reply.Users {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Email)
 	}

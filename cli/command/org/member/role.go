@@ -24,7 +24,7 @@ var (
 // NewOrgChangeMemRoleCommand returns a new instance of the organization member role change command.
 func NewOrgChangeMemRoleCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "change",
+		Use:     "role",
 		Short:   "Change member role",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

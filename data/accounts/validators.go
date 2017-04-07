@@ -36,10 +36,6 @@ func CheckEmailAddress(email string) (string, error) {
 
 // CheckPassword checks password
 func CheckPassword(password string) (string, error) {
-	password = strings.TrimSpace(password)
-	if password == "" {
-		return "", PasswordTooWeak
-	}
 	safety := safe.New(8, 0, 0, safe.Simple)
 	if passwordStrength := safety.Check(password); passwordStrength <= safe.Simple {
 		return "", PasswordTooWeak

@@ -2,7 +2,6 @@ package member
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -59,8 +58,8 @@ func listOrgMem(c cli.Interface, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
-	fmt.Fprintln(w, "USERNAME\tROLE\t")
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
+	fmt.Fprintln(w, "USERNAME\tROLE")
 	for _, user := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
 	}

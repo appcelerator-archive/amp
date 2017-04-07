@@ -18,6 +18,11 @@ type Theme struct {
 	Success *color.Color
 }
 
+const (
+	// Padding for tabwriter
+	Padding = 3
+)
+
 var (
 	// DarkTheme defines colors appropriate for a dark terminal
 	DarkTheme = &Theme{
@@ -227,6 +232,6 @@ func (c *Console) GetSilentInput(prompt string) (in string) {
 	if err != nil {
 		c.Fatalln(err.Error())
 	}
-	in = strings.TrimSpace(string(bytes))
+	in = string(bytes)
 	return in
 }
