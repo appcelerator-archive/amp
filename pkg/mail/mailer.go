@@ -224,6 +224,9 @@ func (m *Mailer) SendTemplateEmail(to string, templateEmailName string, variable
 
 // SendMail send an email to "to" with subject and body, use configuration
 func (m *Mailer) SendMail(to string, subject string, isHTML bool, body string) error {
+	if m.apiKey == "" {
+		return fmt.Errorf("SendGrid API key is empty")
+	}
 	from := mail.NewEmail("amp", m.emailSender)
 	target := mail.NewEmail(strings.Split(to, "@")[0], to)
 	cType := "text/plain"
