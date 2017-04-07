@@ -23,7 +23,6 @@ cleanup() {
   [[ SUCCESS -ne 1 && ! -z $CID ]] && echo "clean up" && $bootstrap -d $CID
 }
 trap cleanup EXIT
-trap 'rm -f bootstrap/ikt.vol.*' EXIT
 
 ok() {
   echo ok $1
@@ -153,3 +152,4 @@ checkexit $? "service ping check failed: elasticsearch"
 ok "service ping check succeeded: elasticsearch"
 
 SUCCESS=1
+
