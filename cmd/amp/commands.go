@@ -4,6 +4,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/login"
+	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
 	"github.com/appcelerator/amp/cli/command/org"
 	"github.com/appcelerator/amp/cli/command/password"
@@ -58,6 +59,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// logs
 		logs.NewLogsCommand(c),
+
+		//logout
+		logout.NewLogoutCommand(c),
 
 		// org
 		org.NewOrgCommand(c),
