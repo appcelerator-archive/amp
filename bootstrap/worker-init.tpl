@@ -14,6 +14,13 @@ set -o xtrace
 if [ "x$provider" != "xdocker" ]; then
   _install_docker
   systemctl stop docker.service
+  mkdir -p /etc/systemd/system/docker.service.d
+  cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ if ref "/certificate/ca/service" }}{{ ref "/docker/remoteapi/tlsport" }} --tlsverify --tlscacert={{ ref "/docker/remoteapi/cafile" }} --tlscert={{ ref "/docker/remoteapi/srvcertfile" }} --tlskey={{ ref "/docker/remoteapi/srvkeyfile" }}{{else }}{{ ref "/docker/remoteapi/port" }}{{ end }} -H unix:///var/run/docker.sock{{ if ref "/bootstrap/ip" }} --registry-mirror=http://{{ ref "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ ref "/bootstrap/ip" }}:5000{{ end }}
+EOF
+  systemctl daemon-reload
 fi
 # Use an EBS volume for the devicemapper
 if [ "x$provider" = "xaws" ]; then

@@ -99,7 +99,7 @@ data "template_file" "user_data_leader" {
     tpl_config_base_url = "${var.infrakit_config_base_url}",
     tpl_infrakit_group_suffix = "${random_id.group_suffix.hex}",
     tpl_aws_name = "${var.aws_name}",
-    tpl_instance_type = "${var.bootstrap_instance_type}",
+    tpl_instance_type = "${var.cluster_instance_type}",
     tpl_key_name = "${var.bootstrap_key_name}",
     tpl_subnet_id = "${aws_subnet.default.id}",
     tpl_iam_instance_profile = "${aws_iam_instance_profile.cluster_instance_profile.id}",
@@ -182,6 +182,19 @@ resource "aws_security_group" "default" {
     to_port     = 50199
     protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 2375
+    to_port     = 2375
+    protocol    = "tcp"
+    cidr_blocks = ["${var.cidr_remote_api}"]
+  }
+  ingress {
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["${var.cidr_remote_api}"]
   }
 
   ingress {
@@ -325,6 +338,12 @@ resource "aws_instance" "m3" {
 
 # Outputs
 
-output "public-ip" {
+output "leader_ip" {
   value = "${aws_instance.m1.public_ip}"
+}
+output "manager_ips" {
+  value = ["${aws_instance.m1.public_ip}","${aws_instance.m2.public_ip}","${aws_instance.m3.public_ip}"]
+}
+output "cluster_id" {
+    value = "${random_id.group_suffix.hex}"
 }

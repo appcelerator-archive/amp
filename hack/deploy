@@ -14,13 +14,88 @@ readonly clustercheck="$SP/clustercheck"
 readonly curlcheck="$SP/curlcheck"
 readonly swarmcheck="$SP/swarmcheck"
 readonly servicescheck="$SP/servicescheck"
+readonly terraformdir="$SP/../bootstrap/terraform-aws"
+
+# IP range that should have access to the docker remote API
+rapi_cidr="$(curl -sf ifconfig.co)/32"
+
+deployment_target() {
+  local _target
+  _target=$(echo $(basename $0) | cut -d- -f2) 
+  if [ $? -ne 0 ] || [ "$_target" = "$(basename $0)" ]; then
+    _target="local"
+  fi
+  echo $_target
+}
+
+# create the cluster and echo the cluster id
+cluster_create() {
+  case $(deployment_target) in
+  local)
+    # async
+    if [ $# -eq 0 ]; then
+      $bootstrap -f
+    else
+      $bootstrap -fi $1
+    fi ;;
+  aws)
+    # sync (modulo user data execution)
+    if [ $# -ne 0 ]; then
+      echo "cluster creation with id set is not available for this deployment target" >&2
+      return 1
+    fi
+    terraform apply --var "cidr_remote_api=$rapi_cidr" $terraformdir >/dev/null 2>&1
+    terraform output -state=$terraformdir/terraform.tfstate cluster_id
+    ;;
+  esac
+}
+
+# destroy the cluster
+cluster_destroy() {
+  case $(deployment_target) in
+  local)
+    $bootstrap -d ;;
+  aws)
+    terraform destroy $terraformdir;;
+  esac
+}
+
+# status of cluster, expects the cluster id as argument
+# 0 means healthy
+cluster_status() {
+  case $(deployment_target) in
+  local)
+    $bootstrap -s $1 >/dev/null 2>&1 ;;
+  aws)
+    terraform output -state=$terraformdir/terraform.tfstate $cluster_id >/dev/null ;;
+  esac
+}
+
+# sets hosts for Docker remote API and for the Docker registry
+set_hosts(){
+  case $(deployment_target) in
+  local)
+    dockerhost=m1
+    registryhost=localhost
+    ;;
+  aws)
+    dockerhost=$(terraform output -state=$terraformdir/terraform.tfstate leader_ip)
+    registryhost=$dockerhost
+    # variable used in sub scripts
+    DOCKERHOST=$dockerhost
+    export DOCKERHOST
+    ;;
+  esac
+  echo "Docker host = $dockerhost"
+  echo "Docker registry = $registryhost"
+}
 
 checkexit() {
   [[ $1 -ne 0 ]] && printf "${@:2} (exit $1)\n" && exit $1
 }
 
 cleanup() {
-  [[ SUCCESS -ne 1 && ! -z $CID ]] && echo "clean up" && $bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
 }
 trap cleanup EXIT
 
@@ -37,9 +112,31 @@ pushimage() {
   ok
 }
 
+
+echo "$(deployment_target) deployment"
+if [ -z $CID ]; then
+  echo "bootstrapping cluster"
+  CID=$(cluster_create)
+  checkexit $? "bootstrap failed"
+  echo $CID
+else
+  cluster_status $CID
+  checkexit $? "cluster is not healthy"
+fi
+
+set_hosts
+# helper for any subsequent docker commands
+if [ $(deployment_target) = "local" ]; then
+  amps="docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
+  stacks_path=/stacks
+else
+  amps="docker -H $dockerhost"
+  stacks_path=stacks
+fi
+
 deploystack() {
   echo "deploy $1 => $2"
-  docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1 stack deploy -c /stacks/$1 $2
+  $amps stack deploy -c $stacks_path/$1 $2
   checkexit $? "error deploying stack"
   ok
 }
@@ -56,54 +153,47 @@ kurl() {
   $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
 }
 
-if [ -z $CID ]; then
-  echo "bootstrapping cluster"
-  CID=$($bootstrap -f)
-  checkexit $? "bootstrap failed"
-  echo $CID
-else
-  $bootstrap -s $CID
-  if [ $? -ne 0 ]; then
-    echo "bootstrapping cluster: $CID"
-    $bootstrap -fi $CID
-    checkexit $? "bootstrap failed"
-    echo $CID
-  fi
-fi
-
 echo "wait for cluster"
-$clustercheck $CID
+if [ $(deployment_target) = "local" ]; then
+  $clustercheck $CID
+else
+  clustersize=5
+  SECONDS=0
+  while [ $($amps node ls -q | wc -l) -lt $clustersize ]; do
+    sleep 5
+    [ $SECONDS -gt 300 ] && break
+  done
+  [ $SECONDS -le 300 ]
+fi
 checkexit $? "cluster timed out"
 ok
 
 echo "wait for swarm mode"
+# todo: fix swarmcheck, it now checks the local swarm, not the one from the cluster
 $swarmcheck 300
 checkexit $? "swarm mode timed out"
 ok
 
-# helper for any subsequent docker commands
-amps="docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1"
-
 echo "wait for registry"
-$curlcheck localhost:5000/v2/ 200 10
+$curlcheck $registryhost:5000/v2/ 200 10
 checkexit $? "registry timed out"
 ok
 
 echo "push images to cluster"
-pushimage localhost:5000 appcelerator/amplifier:local
-pushimage localhost:5000 appcelerator/ampbeat:local
-pushimage localhost:5000 appcelerator/agent:local
+pushimage $registryhost:5000 appcelerator/amplifier:local
+pushimage $registryhost:5000 appcelerator/ampbeat:local
+pushimage $registryhost:5000 appcelerator/agent:local
 
+maxwait=580
 echo "deploy amp1 stack to cluster"
 deploystack amp1.stack.yml amp1
-echo "wait for all amp1 stack service replicas to be running"
-$servicescheck 600
+echo "wait for all amp1 stack service replicas to be running ($maxwait sec)"
+$servicescheck $maxwait
 checkexit $? "amp1 service replica checks timed out"
 ok
 
 echo "deploy amp2 stack to cluster"
 deploystack amp2.stack.yml amp2
-maxwait=580
 echo "wait for all amp2 service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
 checkexit $? "amp2 service replica checks timed out"
@@ -129,7 +219,7 @@ echo
 
 # sanity service lookup and ping checks after starting monitoring stack
 echo "test nats availability"
-lookup nats
+lookup nats >/dev/null
 checkexit $? "service lookup check failed: nats"
 ok "service lookup check succeeded: nats"
 kurl nats:8222
@@ -137,7 +227,7 @@ checkexit $? "service ping check failed: nats"
 ok "service ping check succeeded: nats"
 
 echo "test elasticsearch availability"
-lookup elasticsearch
+lookup elasticsearch >/dev/null
 checkexit $? "service lookup check failed: elasticsearch"
 ok "service lookup check succeeded: elasticsearch"
 kurl elasticsearch:9200

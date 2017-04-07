@@ -47,7 +47,7 @@ variable "bootstrap_key_name" {
 variable "cluster_instance_type" {
   type = "string"
   description = "EC2 HVM instance type (t2.micro, m3.medium, etc)"
-  default = "t2.micro"
+  default = "t2.small"
 }
 
 variable "cluster_key_name" {
@@ -83,4 +83,9 @@ variable "infrakit_config_base_url" {
 variable "aufs_volume_size" {
   description = "Size in GB of the EBS volume for the Docker AUFS storage on each node"
   default = 26
+}
+
+variable "cidr_remote_api" {
+  description = "CIDR to open for Docker remote API access (port 2375)"
+  default = "0.0.0.0/0"
 }

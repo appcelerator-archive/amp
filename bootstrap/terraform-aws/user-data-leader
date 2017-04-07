@@ -24,4 +24,4 @@ write_files:
 runcmd:
   - curl ${tpl_config_base_url}/bootstrap -o /usr/local/bin/bootstrap.sh
   - bash /usr/local/bin/bootstrap.sh -1 -p terraform:/tmp/terraform.tfvars -t aws -e /tmp/env.ikt ${tpl_config_base_url}
-  - docker create network -d overlay --attachable ampnet
+  - docker network create -d overlay --attachable ampnet

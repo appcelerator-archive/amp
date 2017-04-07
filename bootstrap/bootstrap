@@ -65,11 +65,18 @@ _get_dirname() {
 
 # expose the Docker remote api
 _expose_remote_api() {
+  local _registry_opt
   mkdir -p /etc/systemd/system/docker.service.d
+  if [ $# -gt 0 ]; then
+    _registry_opt="--registry-mirror=http://$1:5000"
+    if [ "$1" != "127.0.0.1" ]; then
+      _registry_opt="$_registry_opt --insecure-registry=http://$1:5000"
+    fi
+  fi
   cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock --experimental $_registry_opt
 EOF
   # Restart Docker to let port listening take effect.
   systemctl daemon-reload
@@ -91,6 +98,7 @@ _init_swarm() {
   systemctl start docker.service && \
   if [ -n "$1" ]; then
     _manager=$1
+    _expose_remote_api $_manager
     echo "joining a Docker Swarm..." >&2
     while [ $((++_loop)) -lt $_maxloop ]; do
       _token=$(docker -H $_manager:2375 swarm join-token -q manager 2>/dev/null)
@@ -119,7 +127,7 @@ _init_swarm() {
     fi
   else
     echo "initializing Docker Swarm" >&2
-    _expose_remote_api
+    _expose_remote_api 127.0.0.1
     docker swarm init
   fi
 }
@@ -381,10 +389,11 @@ _run_ikt_container() {
     fi
     # set the provisioner IP if not already set. Useful when bootstraping with the first manager
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] && [ ! $(_am_i_in_a_container) ]; then
       local _ip
       _ip=$(_get_ip)
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ global \"/bootstrap/ip\" \"$_ip\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
+      echo "bootstrap ip ($_ip) added in env.ikt" >&2 
     fi
     if [ "x$provider" = "xdocker" ]; then
         echo "making sure the network $BRIDGE_NETWORK is created" >&2
@@ -518,8 +527,10 @@ _deploy_config_container() {
 
 # run a registry service for Docker image availability in the cluster
 _run_registry() {
+  local _nwopt
+  docker network inspect $BRIDGE_NETWORK >/dev/null 2>&1 && _nwopt="--network=$BRIDGE_NETWORK"
   docker ps | grep -qw registry || \
-  docker run --name=registry --detach --network=$BRIDGE_NETWORK \
+  docker run --name=registry --detach $_nwopt \
              -p=5000:5000 --restart=unless-stopped \
              --volume=registry:/var/lib/registry \
              --label="$CLUSTER_LABEL_NAME=$clusterid" --label="host.role=cluster" \
@@ -735,7 +746,7 @@ _set_source $1
 _set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 clusterid=$(_set_clusterid)
-if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then _run_registry; fi
+if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null; _run_registry; fi
 _pull_images $provider
 _run_ikt_container $provider
 started=$?

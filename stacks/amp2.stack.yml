@@ -22,7 +22,7 @@ services:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:5.3.0-1
+    image: appcelerator/kibana:5.3.0-2
     networks:
       - default
     deploy:
@@ -35,8 +35,12 @@ services:
         constraints: [node.role == worker]
     labels:
       io.amp.role: "infrastructure"
+    volumes:
+      - /etc/ssl:/etc/ssl:ro
     environment: [
-      "ELASTICSEARCH_URL=http://elasticsearch:9200"
+      "ELASTICSEARCH_URL=http://elasticsearch:9200",
+      "SERVER_SSL_CERTIFICATE=/etc/ssl/server.crt",
+      "SERVER_SSL_KEY=/etc/ssl/server.key"
     ]
     ports:
       - "50106:5601"
