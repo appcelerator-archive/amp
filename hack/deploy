@@ -94,33 +94,26 @@ pushimage localhost:5000 appcelerator/amplifier:local
 pushimage localhost:5000 appcelerator/ampbeat:local
 pushimage localhost:5000 appcelerator/agent:local
 
-echo "deploy amplifier stack to cluster"
-deploystack amplifier.stack.yml amplifier
-echo "wait for all amplifier stack service replicas to be running"
+echo "deploy amp1 stack to cluster"
+deploystack amp1.stack.yml amp1
+echo "wait for all amp1 stack service replicas to be running"
 $servicescheck 600
-checkexit $? "amplifier service replica checks timed out"
+checkexit $? "amp1 service replica checks timed out"
 ok
 
-echo "deploy monitoring-core stack to cluster"
-deploystack monitoring-core.stack.yml monitoring-core
+echo "deploy amp2 stack to cluster"
+deploystack amp2.stack.yml amp2
 maxwait=580
-echo "wait for all monitoring-core service replicas to be running ($maxwait sec)"
+echo "wait for all amp2 service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
-checkexit $? "monitoring-core service replica checks timed out"
+checkexit $? "amp2 service replica checks timed out"
 ok
 
-echo "deploy monitoring-aux stack to cluster"
-deploystack monitoring-aux.stack.yml monitoring-aux
-echo "wait for all monitoring-aux service replicas to be running ($maxwait sec)"
+echo "deploy amp3 stack to cluster"
+deploystack amp3.stack.yml amp3
+echo "wait for all amp3 service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
-checkexit $? "monitoring-aux service replica checks timed out"
-ok
-
-echo "deploy monitoring-agent stack to cluster"
-deploystack monitoring-agent.stack.yml monitoring-agent
-echo "wait for all monitoring-agent service replicas to be running ($maxwait sec)"
-$servicescheck $maxwait
-checkexit $? "monitoring-agent service replica checks timed out"
+checkexit $? "amp3 service replica checks timed out"
 ok
 
 # final sanity checks
