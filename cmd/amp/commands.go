@@ -19,6 +19,7 @@ import (
 
 type opts struct {
 	version bool
+	addr    string
 }
 
 // newRootCommand returns a new instance of the amp cli root command.
@@ -31,19 +32,26 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example:       "amp version",
-		Run: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if opts.addr != "" {
+				c.SetAddress(opts.addr)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.version {
 				showVersion()
-				return
+				return nil
 			}
 			cmd.SetOutput(c.Err())
 			cmd.HelpFunc()(cmd, args)
+			return nil
 		},
 	}
 	cli.SetupRootCommand(cmd)
 
-	flags := cmd.Flags()
-	flags.BoolVarP(&opts.version, "version", "v", false, "Print version information and quit")
+	cmd.Flags().BoolVarP(&opts.version, "version", "v", false, "Print version information and quit")
+	cmd.PersistentFlags().StringVarP(&opts.addr, "server", "s", "", "Specify server (host:port)")
 
 	cmd.SetOutput(c.Out())
 	addCommands(cmd, c)
