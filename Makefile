@@ -150,9 +150,9 @@ $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 	@go build -ldflags $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
 
 build-server: $(AMPLTARGET)
-	@cp -f /root/.config/amp/amplifier.yaml cmd/amplifier &> /dev/null || touch cmd/amplifier/amplifier.yaml
+	@cp -f /root/.config/amp/amplifier.y*ml cmd/amplifier &> /dev/null || (echo "!! Warning !! You have no configuration file for amplifier, emails will not work" && touch cmd/amplifier/amplifier.yml)
 	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
-	@rm -f cmd/amplifier/amplifier.yaml
+	@rm -f cmd/amplifier/amplifier.yml
 
 rebuild-server: clean-server build-server
 
