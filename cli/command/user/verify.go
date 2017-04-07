@@ -19,8 +19,8 @@ var (
 // NewVerifyCommand returns a new instance of the verify command.
 func NewVerifyCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "verify",
-		Short: "Verify account",
+		Use:     "verify",
+		Short:   "Verify account",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return verify(c, cmd)

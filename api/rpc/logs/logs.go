@@ -2,7 +2,7 @@ package logs
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log"
 	"strings"
 	"time"
@@ -31,11 +31,8 @@ type Server struct {
 
 // Get implements logs.LogsServer
 func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
-	if !s.Docker.DoesServiceExist(ctx, "monitoring_elasticsearch") {
-		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
-	}
 	if err := s.Es.Connect(); err != nil {
-		return nil, err
+		return nil, errors.New("unable to connect to elasticsearch service")
 	}
 	log.Println("rpc-logs: Get", in.String())
 
@@ -114,11 +111,8 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 // GetStream implements log.LogServer
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	if !s.Docker.DoesServiceExist(stream.Context(), "monitoring_nats") {
-		return fmt.Errorf("the monitoring_nats service is not running, please start stack 'monitoring'")
-	}
 	if err := s.NatsStreaming.Connect(); err != nil {
-		return err
+		return errors.New("unable to connect to nats service")
 	}
 	log.Println("rpc-logs: GetStream", in.String())
 

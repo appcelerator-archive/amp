@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -30,11 +31,8 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 	if err := s.validateTimeGroup(req.TimeGroup); err != nil {
 		return nil, err
 	}
-	if !s.Docker.DoesServiceExist(ctx, "monitoring_elasticsearch") {
-		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
-	}
 	if err := s.Es.Connect(); err != nil {
-		return nil, err
+		return nil, errors.New("unable to connect to elasticsearch service")
 	}
 	if req.TimeGroup == "" {
 		return s.statsCurrentQuery(ctx, req)
@@ -61,7 +59,7 @@ func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*Stat
 	}
 	ranges, ok := result.Aggregations.Terms("group")
 	if !ok {
-		return nil, fmt.Errorf("Request error 'group' not found")
+		return nil, errors.New("Request error 'group' not found")
 	}
 	ret := &StatsReply{}
 	for _, bucket := range ranges.Buckets {
@@ -99,7 +97,7 @@ func (s *Stats) statsHistoricQuery(ctx context.Context, req *StatsRequest) (*Sta
 	}
 	ranges, ok := result.Aggregations.Terms("histo")
 	if !ok {
-		return nil, fmt.Errorf("Request error 'histo' not found")
+		return nil, errors.New("Request error 'histo' not found")
 	}
 	ret := &StatsReply{}
 	for _, bucket := range ranges.Buckets {
@@ -327,15 +325,15 @@ func (s *Stats) validatePeriod(rg string) error {
 		return nil
 	}
 	if !strings.HasPrefix(rg, "now-") {
-		return fmt.Errorf("period should start y 'now-'")
+		return fmt.Errorf("period should start y 'now-': %s", rg)
 	}
-	last := rg[len(rg)-1 : len(rg)]
+	last := rg[len(rg)-1:]
 	if last != "y" && last != "M" && last != "w" && last != "d" && last != "h" && last != "m" && last != "s" {
-		return fmt.Errorf("time-group last digit should be in [y,M,w,d,h,m,s]")
+		return fmt.Errorf("time-group last digit should be in [y,M,w,d,h,m,s]: %s", rg)
 	}
 	mid := rg[4 : len(rg)-1]
 	if _, err := strconv.Atoi(mid); err != nil {
-		return fmt.Errorf("period digits between 'now-' and last digit are not numeric")
+		return fmt.Errorf("period digits between 'now-' and last digit are not numeric: %s", rg)
 	}
 	return nil
 }
@@ -344,7 +342,7 @@ func (s *Stats) validateTimeGroup(rg string) error {
 	if rg == "" {
 		return nil
 	}
-	last := rg[len(rg)-1 : len(rg)]
+	last := rg[len(rg)-1:]
 	if last != "y" && last != "M" && last != "w" && last != "d" && last != "h" && last != "m" && last != "s" {
 		return fmt.Errorf("time-group last digit should be in [y,M,w,d,h,m,s]")
 	}

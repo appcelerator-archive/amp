@@ -1,8 +1,8 @@
 package team
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strconv"
 	"text/tabwriter"
 
