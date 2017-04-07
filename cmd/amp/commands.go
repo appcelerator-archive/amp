@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/team"
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
+	"github.com/appcelerator/amp/cli/command/whoami"
 	"github.com/spf13/cobra"
 )
 
@@ -80,5 +81,8 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// version
 		version.NewVersionCommand(c),
+
+		//whoami
+		whoami.NewWhoAmICommand(c),
 	)
 }
