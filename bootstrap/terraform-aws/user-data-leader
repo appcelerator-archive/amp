@@ -7,6 +7,7 @@ packages:
   - git
   - curl
   - unzip
+  - awscli
 write_files:
   - path: /tmp/env.ikt
     content: |
@@ -15,6 +16,7 @@ write_files:
   - path: /tmp/terraform.tfvars
     content: |
       aws_name = "${tpl_aws_name}"
+      aws_region = "${tpl_aws_region}"
       cluster_instance_type = "${tpl_instance_type}"
       cluster_key_name = "${tpl_key_name}"
       cluster_subnet_id = "${tpl_subnet_id}"
@@ -23,3 +25,4 @@ write_files:
 runcmd:
   - curl ${tpl_config_base_url}/bootstrap -o /usr/local/bin/bootstrap.sh
   - bash /usr/local/bin/bootstrap.sh -1 -p terraform:/tmp/terraform.tfvars -t aws -e /tmp/env.ikt ${tpl_config_base_url}
+  - docker network create -d overlay --attachable ampnet

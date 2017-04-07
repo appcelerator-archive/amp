@@ -99,7 +99,8 @@ data "template_file" "user_data_leader" {
     tpl_config_base_url = "${var.infrakit_config_base_url}",
     tpl_infrakit_group_suffix = "${random_id.group_suffix.hex}",
     tpl_aws_name = "${var.aws_name}",
-    tpl_instance_type = "${var.bootstrap_instance_type}",
+    tpl_aws_region = "${var.aws_region}",
+    tpl_instance_type = "${var.cluster_instance_type}",
     tpl_key_name = "${var.bootstrap_key_name}",
     tpl_subnet_id = "${aws_subnet.default.id}",
     tpl_iam_instance_profile = "${aws_iam_instance_profile.cluster_instance_profile.id}",
@@ -185,6 +186,19 @@ resource "aws_security_group" "default" {
   }
 
   ingress {
+    from_port   = 2375
+    to_port     = 2375
+    protocol    = "tcp"
+    cidr_blocks = ["${var.cidr_remote_api}"]
+  }
+  ingress {
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["${var.cidr_remote_api}"]
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -225,13 +239,13 @@ resource "aws_security_group" "default" {
 }
 
 resource "aws_iam_role" "provisioner_role" {
-  name = "${var.aws_name}-provisioner-role"
+  name = "${var.aws_name}-${var.aws_region}-provisioner-role"
   path = "/"
   assume_role_policy = "${data.aws_iam_policy_document.provisioner_role_doc.json}"
 }
 
 resource "aws_iam_policy" "provisioner_policy" {
-  name = "${var.aws_name}-provisioner-policy"
+  name = "${var.aws_name}-${var.aws_region}-provisioner-policy"
   path = "/"
   policy = "${data.aws_iam_policy_document.provisioner_role_policy_doc.json}"
 }
@@ -242,19 +256,19 @@ resource "aws_iam_role_policy_attachment" "provisioner_attachment" {
 }
 
 resource "aws_iam_instance_profile" "provisioner_instance_profile" {
-  name = "${var.aws_name}-provisioner-instance-profile"
+  name = "${var.aws_name}-${var.aws_region}-provisioner-instance-profile"
   path = "/"
   roles = [ "${aws_iam_role.provisioner_role.id}" ]
 }
 
 resource "aws_iam_role" "cluster_role" {
-  name = "${var.aws_name}-cluster_role"
+  name = "${var.aws_name}-${var.aws_region}-cluster_role"
   path = "/"
   assume_role_policy = "${data.aws_iam_policy_document.cluster_role_doc.json}"
 }
 
 resource "aws_iam_policy" "cluster_policy" {
-  name = "${var.aws_name}-cluster-policy"
+  name = "${var.aws_name}-${var.aws_region}-cluster-policy"
   path = "/"
   policy = "${data.aws_iam_policy_document.cluster_role_policy_doc.json}"
 }
@@ -265,7 +279,7 @@ resource "aws_iam_role_policy_attachment" "cluster_attachment" {
 }
 
 resource "aws_iam_instance_profile" "cluster_instance_profile" {
-  name = "${var.aws_name}-cluster-instance-profile"
+  name = "${var.aws_name}-${var.aws_region}-cluster-instance-profile"
   path = "/"
   roles = [ "${aws_iam_role.cluster_role.id}" ]
 }
@@ -325,6 +339,12 @@ resource "aws_instance" "m3" {
 
 # Outputs
 
-output "public-ip" {
+output "leader_ip" {
   value = "${aws_instance.m1.public_ip}"
+}
+output "manager_ips" {
+  value = ["${aws_instance.m1.public_ip}","${aws_instance.m2.public_ip}","${aws_instance.m3.public_ip}"]
+}
+output "cluster_id" {
+    value = "${random_id.group_suffix.hex}"
 }

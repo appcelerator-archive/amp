@@ -14,12 +14,18 @@ Most basic form:
 ```
 docker run -t -p 5601:5601 -e "ELASTICSEARCH_URL=http://myElasticSearchHost:9200" appcelerator/kibana
 ```
+With SSL:
+```
+docker run -t -p 443:443 -v /etc/kibana/ssl:/etc/kibana/ssl -e SERVER_SSL_CERTIFICATE=/etc/kibana/ssl/kibana.crt -e SERVER_SSL_KEY=/etc/kibana/ssl/kibana.key -e "ELASTICSEARCH_URL=http://myElasticSearchHost:9200" appcelerator/kibana
+```
 
 # Configuration (ENV, -e)
 
 - `ELASTICSEARCH_URL`: URL of ElasticSearch. Default value: `http://elasticsearch:9200`
 - `KIBANA_BASE_PATH`: Value of 'server.basePath' inside kibana.yml. Default value: *Empty*
+- `SERVER_SSL_CERTIFICATE`: full container path for a TLS certificate
+- `SERVER_SSL_KEY`: full container path for a ssl key
 
 ## Tags
 
-- 5.3.0-1, 5.3, latest
+- 5.3.0-2, 5.3, latest

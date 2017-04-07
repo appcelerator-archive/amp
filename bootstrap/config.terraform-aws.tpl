@@ -37,7 +37,8 @@
                 "Properties": {
                   "Init": [
                     "#!/bin/bash",
-                    "apt-get install -y awscli jq"
+                    "apt-get install -y awscli jq",
+                    "sysctl -w vm.max_map_count=262144"
                   ]
                 }
               }, {

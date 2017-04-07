@@ -1,5 +1,8 @@
 #!/bin/bash
 
+[ -z "$DOCKERHOST" ] && DOCKERHOST=m1
+[ "$DOCKERHOST" = "m1" ] && amps="docker run -it --rm --network=hostnet docker --host=m1" || amps="docker run -it --rm docker --host=$DOCKERHOST"
+
 usage() {
     echo "usage: swarmcheck [TIMEOUT]"
     echo "example: swarmcheck 120"
@@ -12,9 +15,20 @@ usage() {
 TIMEOUT="${1:-300}"
 
 SECONDS=0
+typeset -i nc
+typeset -i ready
 while true; do
-    nc=$(docker node ls | awk '{ print $1 }' | wc -w)
-    accepted=$(docker node ls --filter membership=accepted | awk '{ print $1 }' | wc -w)
-    [[ $nc -eq $accepted ]] && exit 0
+    # number of nodes + 1 (header)
+    nc=$($amps node ls | wc -l)
+    if [[ $? -ne 0 ]]; then nc=0; fi
+    # number of nodes ready and active
+    ready=$($amps node ls | grep "Ready *Active" | wc -l)
+    # bug in the filter: the list is not complete
+    #accepted=$(docker node ls --filter membership=accepted | awk '{ print $1 }' | wc -w)
+    if [[ $nc -gt 1 && $nc -eq $((ready+1)) ]]; then
+      echo "the swarm has $ready active and ready nodes" >&2
+      exit 0
+    fi
     [[ $SECONDS -gt $TIMEOUT ]] && exit 1
+    sleep 1
 done
