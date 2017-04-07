@@ -3,6 +3,7 @@ package logs
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -31,6 +32,9 @@ type Server struct {
 
 // Get implements logs.LogsServer
 func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+	if !s.Docker.DoesServiceExist(ctx, "elasticsearch") {
+		return nil, fmt.Errorf("the monitoring_elasticsearch service is not running, please start stack 'monitoring'")
+	}
 	if err := s.Es.Connect(); err != nil {
 		return nil, errors.New("unable to connect to elasticsearch service")
 	}

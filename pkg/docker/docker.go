@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -47,9 +48,14 @@ func (d *Docker) DoesServiceExist(ctx context.Context, name string) bool {
 	if err != nil || len(list) == 0 {
 		return false
 	}
+	suffix := fmt.Sprintf("_%s", name)
 	for _, service := range list {
-		if service.Spec.Annotations.Name == name {
-			return true
+		if strings.HasSuffix(service.Spec.Annotations.Name, suffix) {
+			for _, name := range service.Spec.Labels {
+				if name == "infrastructure" {
+					return true
+				}
+			}
 		}
 	}
 	return false
