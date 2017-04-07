@@ -1,5 +1,9 @@
 # Kibana is served by a back end server. This setting specifies the port to use.
-#server.port: 5601
+{{ if .SERVER_SSL_ENABLED -}}
+server.port: 443 
+{{ else }}
+server.port: 5601
+{{ end }}
 
 # Specifies the address to which the Kibana server will bind. IP addresses and host names are both valid values.
 # The default is 'localhost', which usually means remote machines will not be able to connect.
@@ -44,9 +48,11 @@ elasticsearch.url: "{{ .ELASTICSEARCH_URL }}"
 
 # Enables SSL and paths to the PEM-format SSL certificate and SSL key files, respectively.
 # These settings enable SSL for outgoing requests from the Kibana server to the browser.
-#server.ssl.enabled: false
-#server.ssl.certificate: /path/to/your/server.crt
-#server.ssl.key: /path/to/your/server.key
+{{ if .SERVER_SSL_ENABLED -}}
+server.ssl.enabled: true
+server.ssl.certificate: {{ .SERVER_SSL_CERTIFICATE }}
+server.ssl.key: {{ .SERVER_SSL_KEY }}
+{{ end }}
 
 # Optional settings that provide the paths to the PEM-format SSL certificate and key files.
 # These files validate that your Elasticsearch backend uses the same key files.
