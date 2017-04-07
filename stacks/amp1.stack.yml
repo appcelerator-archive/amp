@@ -1,0 +1,58 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  amp-etcd:
+
+services:
+
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:5.3.0
+    networks:
+      - default
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == worker]
+
+  nats:
+    image: appcelerator/amp-nats-streaming:v0.3.8
+    networks:
+      - default
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == worker]
+
+  etcd:
+    image: appcelerator/etcd:3.1.5-1
+    networks:
+      - default
+    command:
+      - "--listen-client-urls"
+      - "http://0.0.0.0:2379"
+      - "--advertise-client-urls"
+      - "http://etcd:2379"
+    volumes:
+      - amp-etcd:/data
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == worker]
