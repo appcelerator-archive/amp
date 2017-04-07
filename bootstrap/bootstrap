@@ -735,7 +735,7 @@ _set_source $1
 _set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 clusterid=$(_set_clusterid)
-if [ "$provider" = "docker" ]; then _run_registry; fi
+if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then _run_registry; fi
 _pull_images $provider
 _run_ikt_container $provider
 started=$?
