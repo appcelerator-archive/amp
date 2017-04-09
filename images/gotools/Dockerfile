@@ -1,4 +1,4 @@
-FROM golang:1.8-alpine
+FROM golang:1.8
 # This builds a convenience "all-in-one" image for go development.
 # It intentionally does not remove any build prerequisites like most of our other
 # images since this image is meant strictly for building things.
@@ -6,7 +6,8 @@ FROM golang:1.8-alpine
 # The alpine-sdk adds a bunch of essential tools, such as
 # ca-certificates, musl, musl-dev, openssl, curl, make, gcc, g++, libstdc++, libc-dev, tar, bzip2, git
 # The rest are for building grpc or for any other convenience.
-RUN apk --no-cache add alpine-sdk bash vim autoconf automake libtool bind-tools drill
+#RUN apk --no-cache add alpine-sdk bash vim autoconf automake libtool bind-tools drill
+RUN apt-get update -y && apt-get install -y apt-utils autoconf automake bash ca-certificates dnsutils git jq libtool vim sudo tar zip
 
 # Helper commands, like go-getter and install-protoc
 ADD bin /usr/local/bin/

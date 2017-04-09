@@ -1,15 +1,9 @@
 #!/usr/bin/env bash
 # Build an alpine image
-# usage: build4alpine REPO BINARY-NAME PKG-TO-BUILD [LDFLAGS]
+# usage: build4alpine REPO/FILENAME PKG-TO-BUILD [LDFLAGS]
 
 DEST=$GOPATH/src/$1
-NAME=$2
-PKG=$3
-LDFLAGS="${4:-$LDFLAGS}"
+PKG=$2
+LDFLAGS="${3:-$LDFLAGS}"
 
-GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build \
-  -a \
-  -installsuffix alpine \
-  -ldflags "$LDFLAGS" \
-  -o $DEST/alpine/$GOARCH/$NAME $PKG
-
+GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -ldflags "$LDFLAGS" -o $DEST $PKG

@@ -9,3 +9,4 @@ make install
 make clean
 cd ..
 rm -r protobuf
+ldconfig

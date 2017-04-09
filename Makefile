@@ -15,6 +15,9 @@ export LDFLAGS := "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 export OWNER := appcelerator
 export REPO := github.com/$(OWNER)/amp
 
+export GOOS := $(shell go env | grep GOOS | sed 's/"//g' | cut -c6-)
+export GOARCH := $(shell go env | grep GOARCH | sed 's/"//g' | cut -c8-)
+
 # COMMON DIRECTORIES
 # =============================================================================
 CMDDIR := cmd
@@ -78,7 +81,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc clean-cli clean-server clean-beat clean-agent
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -87,49 +90,47 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat build-agent
+build: install-deps protoc build-cli build-server build-beat build-agent
+buildall: install-deps protoc buildall-cli build-server build-beat build-agent
 
 # =============================================================================
 # BUILD CLI (`amp`)
 # Saves binary to `cmd/amp/amp.alpine`, then builds `appcelerator/amp` image
 # =============================================================================
 AMP := amp
-AMPBINARY=$(AMP).alpine
-AMPTAG := local
-AMPIMG := appcelerator/$(AMP):$(AMPTAG)
-AMPBOOTDIR := bootstrap
-AMPBOOTEXE := bootstrap
-AMPBOOTIMG := appcelerator/$(AMP)-bootstrap:$(AMPTAG)
-AMPTARGET := $(CMDDIR)/$(AMP)/$(AMPBINARY)
-# TODO: add api/client back to project
-#AMPDIRS := api/client $(CMDDIR)/$(AMP) tests
+AMPTARGET := bin/$(GOOS)/$(GOARCH)/$(AMP)
 AMPDIRS := $(CMDDIR)/$(AMP) cli tests
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
+AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
-$(AMPTARGET): $(CMDDIR)/$(AMP)/Dockerfile $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) $(AMPBOOTDIR)/$(AMPBOOTEXE)
-	@echo "Compiling $(AMP) source(s):"
+$(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC)
+	@echo "Compiling $(AMP) source(s) ($(GOOS)/$(GOARCH))"
 	@echo $?
-	@go build -ldflags $(LDFLAGS) -o $(AMPTARGET) $(REPO)/$(CMDDIR)/$(AMP)
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) hack/lbuild $(REPO)/bin $(AMP) $(AMPPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(AMP)"
 
-build-bootstrap: $(AMPBOOTDIR)/Dockerfile $(AMPBOOTDIR)/$(AMPBOOTEXE)
-	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+build-cli: $(AMPTARGET)
 
-build-cli: $(AMPTARGET) build-bootstrap
-	@$(DOCKER_CMD) build -t $(AMPIMG)  $(CMDDIR)/$(AMP) || (rm -f $(AMPTARGET); exit 1)
-
+.PHONY: rebuild-cli
 rebuild-cli: clean-cli build-cli
+
+.PHONY: rebuildall-cli
+rebuildall-cli: cleanall-cli buildall-cli
 
 .PHONY: clean-cli
 clean-cli:
 	@rm -f $(AMPTARGET)
-	@$(DOCKER_CMD) image rm $(AMPIMG) $(AMPBOOTIMG) || true
 
-xbuild-cli:
+.PHONY: cleanall-cli
+cleanall-cli:
+# following fails in gogland shell
+#	@(shopt -s extglob; rm -f bin/*(darwin|linux|alpine)/amd64/amp)
+	@rm -f bin/darwin/amd64/amp bin/linux/amd64/amp bin/alpine/amd64/amp
+
+# Build cross-compiled versions of the cli
+buildall-cli: $(AMPTARGET)
+	@echo "cross-compiling $(AMP) cli for supported targets"
 	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
-
-build-cli-wrapper:
-#	@hack/build4alpine $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
-	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/ampwrapper
 
 # =============================================================================
 # BUILD SERVER (`amplifier`)
@@ -143,14 +144,17 @@ AMPLIMG := appcelerator/$(AMPL):$(AMPLTAG)
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
 AMPLDIRS := cmd/$(AMPL) api data tests
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
+AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
 $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 	@echo "Compiling $(AMPL) source(s):"
 	@echo $?
-	@go build -ldflags $(LDFLAGS) -o $(AMPLTARGET) $(REPO)/$(CMDDIR)/$(AMPL)
+	@hack/build4alpine $(REPO)/$(AMPLTARGET) $(AMPLPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(AMPL)"
 
 build-server: $(AMPLTARGET)
-	@cp -f /root/.config/amp/amplifier.y*ml cmd/amplifier &> /dev/null || (echo "!! Warning !! You have no configuration file for amplifier, emails will not work" && touch cmd/amplifier/amplifier.yml)
+	@echo "build $(AMPLIMG)"
+	@cp -f ~/.config/amp/amplifier.y*ml cmd/amplifier &> /dev/null || (echo "Warning: ~/.config/amp/amplifier.yml not found (sendgrid key needed to send email)" && touch cmd/amplifier/amplifier.yml)
 	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
 	@rm -f cmd/amplifier/amplifier.yml
 
@@ -173,11 +177,16 @@ BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
 BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
 BEATDIRS := cmd/$(BEAT) api data tests
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
+BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
 $(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC)
-	@go build -ldflags $(LDFLAGS) -o $(BEATTARGET) $(REPO)/$(CMDDIR)/$(BEAT)
+	@echo "Compiling $(BEAT) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(BEATTARGET) $(BEATPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(BEAT)"
 
 build-beat: $(BEATTARGET)
+	@echo "build $(BEATIMG)"
 	@$(DOCKER_CMD) build -t $(BEATIMG) $(CMDDIR)/$(BEAT) || (rm -f $(BEATTARGET); exit 1)
 
 rebuild-beat: clean-beat build-beat
@@ -198,11 +207,16 @@ AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
 AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
 AGENTDIRS := cmd/$(AGENT) api data tests
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
+AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
 $(AGENTTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AGENTSRC)
-	@go build -ldflags $(LDFLAGS) -o $(AGENTTARGET) $(REPO)/$(CMDDIR)/$(AGENT)
+	@echo "Compiling $(AGENT) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(AGENTTARGET) $(AGENTPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(AGENT)"
 
 build-agent: $(AGENTTARGET)
+	@echo "build $(AGENTIMG)"
 	@$(DOCKER_CMD) build -t $(AGENTIMG) $(CMDDIR)/$(AGENT) || (rm -f $(AGENTTARGET); exit 1)
 
 rebuild-agent: clean-agent build-agent
@@ -226,6 +240,7 @@ fmt:
 # TODO: Remove the cli folder exclusion when we're done
 .PHONY: lint
 lint:
+	@echo "running lint checks - this will take a while..."
 	@gometalinter --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
 	    --exclude=cli \
 		--sort=path --aggregate \
@@ -252,6 +267,11 @@ lint:
 		--enable=vetshadow \
 		$(CHECKDIRS)
 
+.PHONY: lint-fast
+lint-fast:
+	@echo "running subset of lint checks in fast mode"
+	@gometalinter --fast --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
+		$(CHECKDIRS)
 
 # =============================================================================
 # Misc
@@ -261,6 +281,12 @@ lint:
 rules:
 	@hack/print-make-rules
 
+# Display pertinent environment variables
+.PHONY: env
+env:
+	@echo "GOOS=$(GOOS)"
+	@echo "GOARCH=$(GOARCH)"
+
 # =============================================================================
 # Local deployment for development
 # =============================================================================
@@ -269,3 +295,10 @@ CID := f573e897-7aa0-4516-a195-42ee91039e97
 
 deploy: build
 	@hack/deploy $(CID)
+
+# =============================================================================
+# Run check before submitting a pull request!
+# =============================================================================
+
+check: fmt buildall lint-fast
+

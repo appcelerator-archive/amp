@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Like 'go get' but with pinned package versions. https://github.com/joewalnes/go-getter
 set -e
 : ${GOPATH?"GOPATH not set"}
