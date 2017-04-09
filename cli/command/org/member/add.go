@@ -1,6 +1,8 @@
 package member
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -42,7 +44,7 @@ func addOrgMem(c cli.Interface, cmd *cobra.Command) error {
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.AddUserToOrganizationRequest{
@@ -50,7 +52,7 @@ func addOrgMem(c cli.Interface, cmd *cobra.Command) error {
 		UserName:         addMemOrgOptions.member,
 	}
 	if _, err = client.AddUserToOrganization(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Member has been added to organization.")
 	return nil

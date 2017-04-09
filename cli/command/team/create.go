@@ -1,6 +1,8 @@
 package team
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -43,7 +45,7 @@ func createTeam(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.CreateTeamRequest{
@@ -51,7 +53,7 @@ func createTeam(c cli.Interface, cmd *cobra.Command) error {
 		TeamName:         createTeamOptions.team,
 	}
 	if _, err = client.CreateTeam(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Team has been created in the organization.")
 	return nil

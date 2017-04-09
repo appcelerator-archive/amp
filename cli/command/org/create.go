@@ -1,6 +1,8 @@
 package org
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -42,7 +44,7 @@ func createOrg(c cli.Interface, cmd *cobra.Command) error {
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.CreateOrganizationRequest{
@@ -50,7 +52,7 @@ func createOrg(c cli.Interface, cmd *cobra.Command) error {
 		Email: createOrgOptions.email,
 	}
 	if _, err = client.CreateOrganization(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Organization has been created.")
 	return nil

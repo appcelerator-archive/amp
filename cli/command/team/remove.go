@@ -1,6 +1,8 @@
 package team
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -44,7 +46,7 @@ func removeTeam(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteTeamRequest{
@@ -52,7 +54,7 @@ func removeTeam(c cli.Interface, cmd *cobra.Command) error {
 		TeamName:         removeTeamOptions.team,
 	}
 	if _, err = client.DeleteTeam(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Team has been removed from the organization.")
 	return nil

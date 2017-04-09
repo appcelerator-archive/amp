@@ -1,6 +1,8 @@
 package password
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -44,7 +46,7 @@ func change(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordChangeRequest{
@@ -52,7 +54,7 @@ func change(c cli.Interface, cmd *cobra.Command) error {
 		NewPassword:      changeOptions.new_password,
 	}
 	if _, err = client.PasswordChange(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Your password change has been successful.")
 	return nil

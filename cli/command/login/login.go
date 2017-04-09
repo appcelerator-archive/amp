@@ -1,6 +1,8 @@
 package login
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -44,7 +46,7 @@ func login(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.LogInRequest{
@@ -54,10 +56,10 @@ func login(c cli.Interface, cmd *cobra.Command) error {
 	header := metadata.MD{}
 	_, err = client.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
-		c.Console().Fatal(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	if err := cli.SaveToken(header); err != nil {
-		c.Console().Fatal(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Welcome back %s!\n", loginOptions.username)
 	return nil

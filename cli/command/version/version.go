@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"runtime"
 
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
 	"github.com/docker/docker/pkg/templates"
@@ -60,9 +62,8 @@ func NewVersionCommand(c cli.Interface) *cobra.Command {
 func showVersion(c cli.Interface) error {
 	tmpl, err := templates.Parse(versionTemplate)
 	if err != nil {
-		c.Console().Fatalf("template parsing error: %v\n", err)
+		return fmt.Errorf("template parsing error: %v\n", err)
 	}
-	var doc bytes.Buffer
 
 	v := Version{
 		Client: &ClientVersionInfo{
@@ -80,7 +81,7 @@ func showVersion(c cli.Interface) error {
 		client := version.NewVersionClient(conn)
 		reply, err := client.Get(context.Background(), &version.GetRequest{})
 		if err != nil {
-			c.Console().Fatalf(grpc.ErrorDesc(err))
+			return fmt.Errorf("%s", grpc.ErrorDesc(err))
 		}
 		v.Server = &version.Info{
 			Version:   reply.Info.Version,
@@ -91,10 +92,10 @@ func showVersion(c cli.Interface) error {
 		}
 	}
 
+	var doc bytes.Buffer
 	if err := tmpl.Execute(&doc, v); err != nil {
-		c.Console().Fatalf("executing templating error: %v\n", err)
+		return fmt.Errorf("executing templating error: %v\n", err)
 	}
-
 	c.Console().Println(doc.String())
 	return err
 }

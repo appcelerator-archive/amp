@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -38,14 +40,14 @@ func forgotLogin(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.ForgotLoginRequest{
 		Email: forgotLoginOptions.email,
 	}
 	if _, err = client.ForgotLogin(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Your login name has been sent to the address: %s", forgotLoginOptions.email)
 	return nil
