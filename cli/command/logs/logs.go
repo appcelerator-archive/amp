@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -61,12 +63,12 @@ func getLogs(c cli.Interface, args []string) error {
 	ctx := context.Background()
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalln(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	lc := logs.NewLogsClient(conn)
 	r, err := lc.Get(ctx, &request)
 	if err != nil {
-		c.Console().Fatalln(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
 		displayLogEntry(c, entry, opts.meta)
@@ -78,7 +80,7 @@ func getLogs(c cli.Interface, args []string) error {
 	// If follow is requested, get subsequent logs and stream it
 	stream, err := lc.GetStream(ctx, &request)
 	if err != nil {
-		c.Console().Fatalln(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	for {
 		entry, err := stream.Recv()
@@ -86,7 +88,7 @@ func getLogs(c cli.Interface, args []string) error {
 			break
 		}
 		if err != nil {
-			c.Console().Fatalln(grpc.ErrorDesc(err))
+			return fmt.Errorf("%s", grpc.ErrorDesc(err))
 		}
 		displayLogEntry(c, entry, opts.meta)
 	}

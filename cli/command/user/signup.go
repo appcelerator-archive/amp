@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -47,7 +49,7 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalln(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.SignUpRequest{
@@ -57,7 +59,7 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 	}
 	_, err = client.SignUp(context.Background(), request)
 	if err != nil {
-		c.Console().Fatalln(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Hi %s! Please check your email to complete the signup process.\n", opts.username)
 	return nil

@@ -1,6 +1,8 @@
 package member
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/data/accounts"
@@ -53,11 +55,11 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command) error {
 	case "member":
 		orgRole = accounts.OrganizationRole_ORGANIZATION_MEMBER
 	default:
-		c.Console().Fatalf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", changeMemOrgOptions.role)
+		return fmt.Errorf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", changeMemOrgOptions.role)
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.ChangeOrganizationMemberRoleRequest{
@@ -66,7 +68,7 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command) error {
 		Role:             orgRole,
 	}
 	if _, err = client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Member role has been changed.")
 	return nil

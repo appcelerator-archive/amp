@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -36,7 +38,7 @@ func verify(c cli.Interface, cmd *cobra.Command) error {
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.VerificationRequest{
@@ -44,7 +46,7 @@ func verify(c cli.Interface, cmd *cobra.Command) error {
 	}
 	_, err = client.Verify(context.Background(), request)
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Your account has now been activated.")
 	return nil

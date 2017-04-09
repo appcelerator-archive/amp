@@ -3,7 +3,6 @@ package member
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -14,7 +13,8 @@ import (
 )
 
 type listMemOrgOpts struct {
-	name string
+	name  string
+	quiet bool
 }
 
 var (
@@ -33,7 +33,7 @@ func NewOrgListMemCommand(c cli.Interface) *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.StringVar(&listMemOrgOptions.name, "org", "", "Organization name")
-	flags.BoolP("quiet", "q", false, "Only display member names")
+	flags.BoolVarP(&listMemOrgOptions.quiet, "quiet", "q", false, "Only display member names")
 	return cmd
 }
 
@@ -43,7 +43,7 @@ func listOrgMem(c cli.Interface, cmd *cobra.Command) error {
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.GetOrganizationRequest{
@@ -51,11 +51,9 @@ func listOrgMem(c cli.Interface, cmd *cobra.Command) error {
 	}
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		c.Console().Fatalf("unable to convert quiet parameter : %v", grpc.ErrorDesc(err))
-	} else if quiet {
+	if listMemOrgOptions.quiet {
 		for _, member := range reply.Organization.Members {
 			c.Console().Println(member.Name)
 		}

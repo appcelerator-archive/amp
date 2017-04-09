@@ -3,7 +3,6 @@ package member
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -14,8 +13,9 @@ import (
 )
 
 type listTeamMemOpts struct {
-	org  string
-	team string
+	org   string
+	team  string
+	quiet bool
 }
 
 var (
@@ -35,7 +35,7 @@ func NewListTeamMemCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&listTeamMemOptions.org, "org", "", "Organization name")
 	flags.StringVar(&listTeamMemOptions.team, "team", "", "Team name")
-	flags.BoolP("quiet", "q", false, "Only display team member names")
+	flags.BoolVarP(&listTeamMemOptions.quiet, "quiet", "q", false, "Only display team member names")
 	return cmd
 }
 
@@ -49,7 +49,7 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
 
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
@@ -58,11 +58,9 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if quiet, err := strconv.ParseBool(cmd.Flag("quiet").Value.String()); err != nil {
-		c.Console().Fatalf("unable to convert quiet parameter : %v", err.Error())
-	} else if quiet {
+	if listTeamMemOptions.quiet {
 		for _, member := range reply.Team.Members {
 			c.Console().Println(member.Name)
 		}

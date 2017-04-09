@@ -1,6 +1,8 @@
 package org
 
 import (
+	"fmt"
+
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -37,14 +39,14 @@ func removeOrg(c cli.Interface, cmd *cobra.Command) error {
 	}
 	conn, err := c.ClientConn()
 	if err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteOrganizationRequest{
 		Name: removeOrgOptions.name,
 	}
 	if _, err = client.DeleteOrganization(context.Background(), request); err != nil {
-		c.Console().Fatalf(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Organization has been removed.")
 	return nil
