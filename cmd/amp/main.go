@@ -24,7 +24,7 @@ func main() {
 	config = &cli.Configuration{
 		Version: Version,
 		Build:   Build,
-		Address: "m1:50101",
+		Address: "localhost:50101",
 	}
 
 	// Set terminal emulation based on platform as required.

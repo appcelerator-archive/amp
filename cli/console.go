@@ -52,8 +52,9 @@ type Console struct {
 
 // NewConsole creates a CLI Console instance that writes to the provided stream.
 func NewConsole(out *OutStream, verbose bool) *Console {
-	// TODO: disabled pending investigation why cursor color isn't restored after printing colorized output
-	color.NoColor = true
+	// TODO: investigate why cursor color isn't restored after printing colorized output
+	// Uncomment the following if necessary to disable color output
+	// color.NoColor = true
 
 	return &Console{
 		Logger: *NewLogger(out, verbose),

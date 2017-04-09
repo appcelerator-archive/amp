@@ -19,7 +19,7 @@ for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
   echo $DEST/$GOOS/$GOARCH/$NAME
   if [[ $GOOS = "alpine" ]]; then
     # build alpine as a special case
-    GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -installsuffix alpine -ldflags "$LDFLAGS" \
+    GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -ldflags "$LDFLAGS" \
       -o $DEST/alpine/$GOARCH/$NAME $PKG
   else
     GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o $DEST/$GOOS/$GOARCH/$NAME $PKG

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+DEST=$GOPATH/src/$1
+NAME=$2
+PKG=$3
+LDFLAGS=$4
+
+GOOS=${GOOS:-$(uname | tr [:upper:] [:lower:])}
+GOARCH=${GOARCH:-amd64}
+
+echo $GOOS/$GOARCH
+GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o $DEST/$GOOS/$GOARCH/$NAME $PKG
+
