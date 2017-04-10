@@ -22,7 +22,7 @@ var (
 // NewOrgCreateCommand returns a new instance of the create organization command.
 func NewOrgCreateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create",
+		Use:     "create [OPTIONS]",
 		Short:   "Create organization",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

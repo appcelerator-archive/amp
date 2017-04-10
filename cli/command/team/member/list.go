@@ -24,7 +24,7 @@ var (
 // NewListTeamMemCommand returns a new instance of the list team member command.
 func NewListTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS]",
 		Short:   "List members",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

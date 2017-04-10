@@ -1,4 +1,4 @@
-### User Management Commands
+### User Management
 
 The `amp user` command manages all user related operations for AMP.
 
@@ -25,41 +25,41 @@ The `amp user` command manages all user related operations for AMP.
 
 ### Examples
 
-* To create a user -
+* To create a user:
 ```
     $ amp user signup
 ```
-    [_an email with a verification token will be sent to the given email address_]
+    [An email with a verification token will be sent to the given email address.]
 
-* To verify newly created account -
+* To verify newly created account:
 ```
     $ amp user verify
 ```
 
-* To retrieve account name -
+* To retrieve account name:
 ```
     $ amp user forgot-login
 ```
-    [_an email with the username will be sent to the registered email address_]
+    [An email with the username will be sent to the registered email address.]
 
-* To retrieve a list of users -
+* To retrieve a list of users:
 ```
     $ amp user ls
 ```
 
-* To retrieve details of a specific user -
+* To retrieve details of a specific user:
 ```
     $ amp user get
 ```
 
-* To remove of a user -
+* To remove of a user:
 ```
     $ amp user rm
     [or]
     $ amp user del
 ```
 
-* To login to AMP -
+* To login to AMP:
 ```
     $ amp login
 ```

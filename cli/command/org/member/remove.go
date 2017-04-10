@@ -22,7 +22,7 @@ var (
 // NewOrgRemoveMemCommand returns a new instance of the remove organization member command.
 func NewOrgRemoveMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "rm",
+		Use:     "rm [OPTIONS]",
 		Short:   "Remove member from organization",
 		Aliases: []string{"del"},
 		PreRunE: cli.NoArgs,

@@ -30,7 +30,7 @@ var (
 // NewLogsCommand returns a new instance of the logs command.
 func NewLogsCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "logs SERVICE",
+		Use:   "logs [OPTIONS] SERVICE",
 		Short: "Fetch log entries matching provided criteria",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getLogs(c, args)

@@ -22,18 +22,18 @@ var (
 // NewListUserCommand returns a new instance of the list user command.
 func NewListUserCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS]",
 		Short:   "List users",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listUser(c, cmd)
+			return listUser(c)
 		},
 	}
 	cmd.Flags().BoolVarP(&listUserOptions.quiet, "quiet", "q", false, "Only display user names")
 	return cmd
 }
 
-func listUser(c cli.Interface, cmd *cobra.Command) error {
+func listUser(c cli.Interface) error {
 	request := &account.ListUsersRequest{}
 	conn, err := c.ClientConn()
 	if err != nil {

@@ -22,7 +22,7 @@ var (
 // NewOrgAddMemCommand returns a new instance of the add organization member command.
 func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add",
+		Use:     "add [OPTIONS]",
 		Short:   "Add member to organization",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

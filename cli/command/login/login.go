@@ -24,7 +24,7 @@ var (
 // NewLoginCommand returns a new instance of the login command.
 func NewLoginCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "login",
+		Use:     "login [OPTIONS]",
 		Short:   "Login to account",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

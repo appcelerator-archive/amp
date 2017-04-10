@@ -23,7 +23,7 @@ var (
 // NewAddTeamMemCommand returns a new instance of the add team member command.
 func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "add",
+		Use:     "add [OPTIONS]",
 		Short:   "Add member to team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

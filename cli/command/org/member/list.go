@@ -1,6 +1,7 @@
 package member
 
 import (
+	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -23,30 +24,29 @@ var (
 // NewOrgListMemCommand returns a new instance of the list organization member command.
 func NewOrgListMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS] ORGANIZATION",
 		Short:   "List members",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listOrgMem(c, cmd)
+			if args[0] == "" {
+				return errors.New("organization name cannot be empty")
+			}
+			listMemOrgOptions.name = args[0]
+			return listOrgMem(c, listMemOrgOptions)
 		},
 	}
-	flags := cmd.Flags()
-	flags.StringVar(&listMemOrgOptions.name, "org", "", "Organization name")
-	flags.BoolVarP(&listMemOrgOptions.quiet, "quiet", "q", false, "Only display member names")
+	cmd.Flags().BoolVarP(&listMemOrgOptions.quiet, "quiet", "q", false, "Only display member names")
 	return cmd
 }
 
-func listOrgMem(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("org").Changed {
-		listMemOrgOptions.name = c.Console().GetInput("organization name")
-	}
+func listOrgMem(c cli.Interface, opt *listMemOrgOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.GetOrganizationRequest{
-		Name: listMemOrgOptions.name,
+		Name: opt.name,
 	}
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {

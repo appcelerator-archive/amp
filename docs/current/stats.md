@@ -66,7 +66,7 @@ The `amp stats` command is used to query or stream statistics. It provides group
          Historic statistics add new lines depending of the time group.            
 
 
-A few useful examples:
+### Examples
 
 * To compute and follow stats by services:
 ```
@@ -78,27 +78,27 @@ A few useful examples:
   $ amp stats -f etcd
 ```
 
-* To compute only cpu and mem statistics for all stakcs
+* To compute only cpu and mem statistics for all stacks:
 ```
   $ amp stats --stack --cpu --mem
 ```
 
-* To compute stats by node
+* To compute stats by node:
 ```
   $ amp stats --node
 ```
 
-* To compute stats for a stack on a specific node
+* To compute stats for a stack on a specific node:
 ```
   $ amp stats --stack-name monitoring --node-id aNodeId
 ```
 
-* To compute historic stats for a service
+* To compute historic stats for a service:
 ```
   $ amp stats --period now-1m --time-group=10s elasticsearch
 ```
 
-* To compute historic stats for a stack and follow to see a new line every 3 seconds
+* To compute historic stats for a stack and follow to see a new line every 3 seconds:
 ```
   $ amp stats --stack-name monitoring --period now-30s --time-group=3s -f
 ```

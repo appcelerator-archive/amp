@@ -1,4 +1,4 @@
-### Password management
+### Password Management
 
 The `amp password` command manages password-related operations for any AMP account.
 
@@ -22,18 +22,19 @@ The `amp password` command manages password-related operations for any AMP accou
 
 ### Examples
 
-* To update current password -
+* To update current password:
 ```
     $ amp password change
 ```
 
-* To reset password -
+* To reset password:
 ```
     $ amp password reset
-    [an email with instructions to reset password will be sent]
 ```
+    [An email with instructions to reset password will be sent to the registered email address.]
 
-* To set a new password -
+
+* To set a new password:
 ```
     $ amp password set
 ```

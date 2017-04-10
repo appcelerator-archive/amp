@@ -1,6 +1,7 @@
 package team
 
 import (
+	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -13,7 +14,7 @@ import (
 )
 
 type listTeamOpts struct {
-	org   string
+	name  string
 	quiet bool
 }
 
@@ -24,31 +25,29 @@ var (
 // NewTeamListCommand returns a new instance of the team list command.
 func NewTeamListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS] ORGANIZATION",
 		Short:   "List team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTeam(c, cmd)
+			if args[0] == "" {
+				return errors.New("organization name cannot be empty")
+			}
+			listTeamOptions.name = args[0]
+			return listTeam(c, listTeamOptions)
 		},
 	}
-	flags := cmd.Flags()
-	flags.StringVar(&listTeamOptions.org, "org", "", "Organization name")
-	flags.BoolVarP(&listTeamOptions.quiet, "quiet", "q", false, "Only display team names")
+	cmd.Flags().BoolVarP(&listTeamOptions.quiet, "quiet", "q", false, "Only display team names")
 	return cmd
 }
 
-func listTeam(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("org").Changed {
-		listTeamOptions.org = c.Console().GetInput("organization name")
-	}
-
+func listTeam(c cli.Interface, opt *listTeamOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.ListTeamsRequest{
-		OrganizationName: listTeamOptions.org,
+		OrganizationName: opt.name,
 	}
 	reply, err := client.ListTeams(context.Background(), request)
 	if err != nil {

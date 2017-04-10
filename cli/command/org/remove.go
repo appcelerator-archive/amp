@@ -1,6 +1,7 @@
 package org
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -20,30 +21,29 @@ var (
 
 // NewOrgRemoveCommand returns a new instance of the remove organization command.
 func NewOrgRemoveCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "rm",
+	return &cobra.Command{
+		Use:     "rm ORGANIZATION",
 		Short:   "Remove organization",
 		Aliases: []string{"del"},
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeOrg(c, cmd)
+			if args[0] == "" {
+				return errors.New("organization name cannot be empty")
+			}
+			removeOrgOptions.name = args[0]
+			return removeOrg(c, removeOrgOptions)
 		},
 	}
-	cmd.Flags().StringVar(&removeOrgOptions.name, "org", "", "Organization name")
-	return cmd
 }
 
-func removeOrg(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("org").Changed {
-		removeOrgOptions.name = c.Console().GetInput("organization name")
-	}
+func removeOrg(c cli.Interface, opt *removeOrgOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteOrganizationRequest{
-		Name: removeOrgOptions.name,
+		Name: opt.name,
 	}
 	if _, err = client.DeleteOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

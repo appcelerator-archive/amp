@@ -1,4 +1,4 @@
-### Organization Management Commands
+### Organization Management
 
 The `amp org` command manages all organization related operations for AMP.
 
@@ -70,6 +70,8 @@ To be able to perform any organization related operations, you must be logged in
 
     Run 'amp org member COMMAND --help' for more information on a command.
 ```
+
+#### Examples
 
 * To add a member to an organization:
 ```

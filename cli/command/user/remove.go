@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -15,36 +16,34 @@ type removeUserOpts struct {
 }
 
 var (
-	removeUserOptions = &removeUserOpts{}
+	rmOptions = &removeUserOpts{}
 )
 
 // NewRemoveUserCommand returns a new instance of the remove user command.
 func NewRemoveUserCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "rm",
+	return &cobra.Command{
+		Use:     "rm USERNAME",
 		Short:   "Remove user",
 		Aliases: []string{"del"},
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeUser(c, cmd)
+			if args[0] == "" {
+				return errors.New("username cannot be empty")
+			}
+			rmOptions.username = args[0]
+			return removeUser(c, rmOptions)
 		},
 	}
-	cmd.Flags().StringVar(&removeUserOptions.username, "name", "", "User name")
-	return cmd
 }
 
-func removeUser(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("name").Changed {
-		removeUserOptions.username = c.Console().GetInput("username")
-	}
-
+func removeUser(c cli.Interface, opt *removeUserOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteUserRequest{
-		Name: removeUserOptions.username,
+		Name: opt.username,
 	}
 	if _, err := client.DeleteUser(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
