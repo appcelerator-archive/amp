@@ -584,6 +584,42 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	return s.updateOrganization(ctx, organization)
 }
 
+// ChangeTeamMemberRole changes the role of given user in the given team
+func (s *Store) ChangeTeamMemberRole(ctx context.Context, organizationName string, teamName string, userName string, role TeamRole) (err error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
+		return NotAuthorized
+	}
+
+	// Get organization
+	organization, err := s.getOrganization(ctx, organizationName)
+	if err != nil {
+		return err
+	}
+
+	// Get team
+	team := organization.getTeam(teamName)
+	if team == nil {
+		return TeamNotFound
+	}
+
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, userName)
+	if err != nil {
+		return err
+	}
+
+	// Check if user is already a member
+	member := team.getMember(user.Name)
+	if member == nil {
+		return UserNotFound
+	}
+
+	// Change the role of the user
+	member.Role = role
+	return s.updateOrganization(ctx, organization)
+}
+
 // GetTeam fetches a team by name
 func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*Team, error) {
 	// Get organization
