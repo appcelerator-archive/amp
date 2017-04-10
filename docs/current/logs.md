@@ -21,7 +21,7 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
           --stack string       Filter by the given stack
 
 
-A few useful examples:
+### Examples
 
 * To fetch and follow all the logs:
 ```

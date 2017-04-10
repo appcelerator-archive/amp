@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -10,45 +11,42 @@ import (
 	"google.golang.org/grpc"
 )
 
-type forgotLoginOpts struct {
+type forgotOpts struct {
 	email string
 }
 
 var (
-	forgotLoginOptions = &forgotLoginOpts{}
+	forgotOptions = &forgotOpts{}
 )
 
 // NewForgotLoginCommand returns a new instance of the forgot-login command.
 func NewForgotLoginCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "forgot-login",
+	return &cobra.Command{
+		Use:     "forgot-login EMAIL",
 		Short:   "Retrieve account name",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return forgotLogin(c, cmd)
+			if args[0] == "" {
+				return errors.New("email cannot be empty")
+			}
+			forgotOptions.email = args[0]
+			return forgotLogin(c, forgotOptions)
 		},
 	}
-
-	cmd.Flags().StringVar(&forgotLoginOptions.email, "email", "", "User email")
-	return cmd
 }
 
-func forgotLogin(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("email").Changed {
-		forgotLoginOptions.email = c.Console().GetInput("email")
-	}
-
+func forgotLogin(c cli.Interface, opt *forgotOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.ForgotLoginRequest{
-		Email: forgotLoginOptions.email,
+		Email: opt.email,
 	}
 	if _, err = client.ForgotLogin(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	c.Console().Printf("Your login name has been sent to the address: %s", forgotLoginOptions.email)
+	c.Console().Printf("Your login name has been sent to the address: %s", opt.email)
 	return nil
 }

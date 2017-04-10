@@ -23,7 +23,7 @@ var (
 // NewTeamGetCommand returns a new instance of the get team command.
 func NewTeamGetCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "get",
+		Use:     "get [OPTIONS]",
 		Short:   "Get team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

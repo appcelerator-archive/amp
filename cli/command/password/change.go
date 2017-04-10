@@ -22,7 +22,7 @@ var (
 // NewChangeCommand returns a new instance of the change command.
 func NewChangeCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "change",
+		Use:     "change [OPTIONS]",
 		Short:   "Change password",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

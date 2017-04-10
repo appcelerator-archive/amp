@@ -22,7 +22,7 @@ var (
 // NewSetCommand returns a new instance of the set command.
 func NewSetCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "set",
+		Use:     "set [OPTIONS]",
 		Short:   "Set password",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -25,7 +25,7 @@ var (
 // NewTeamChangeMemRoleCommand returns a new instance of the team member role change command.
 func NewTeamChangeMemRoleCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "role",
+		Use:     "role [OPTIONS]",
 		Short:   "Change member role",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

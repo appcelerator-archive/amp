@@ -1,6 +1,7 @@
 package password
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -20,36 +21,32 @@ var (
 
 // NewResetCommand returns a new instance of the reset command.
 func NewResetCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "reset",
+	return &cobra.Command{
+		Use:     "reset USERNAME",
 		Short:   "Reset password",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return reset(c, cmd)
+			if args[0] == "" {
+				return errors.New("username cannot be empty")
+			}
+			resetOptions.username = args[0]
+			return reset(c, resetOptions)
 		},
 	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&resetOptions.username, "name", "", "User name")
-	return cmd
 }
 
-func reset(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("name").Changed {
-		resetOptions.username = c.Console().GetInput("username")
-	}
-
+func reset(c cli.Interface, opt *resetOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordResetRequest{
-		Name: resetOptions.username,
+		Name: opt.username,
 	}
 	if _, err = client.PasswordReset(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	c.Console().Printf("Hi %s! Please check your email to complete the password reset process.\n", resetOptions.username)
+	c.Console().Printf("Hi %s! Please check your email to complete the password reset process.\n", opt.username)
 	return nil
 }

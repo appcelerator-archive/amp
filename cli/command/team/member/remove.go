@@ -23,7 +23,7 @@ var (
 // NewRemoveTeamMemCommand returns a new instance of the remove team member command.
 func NewRemoveTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "rm",
+		Use:     "rm [OPTIONS]",
 		Short:   "Remove member from team",
 		Aliases: []string{"del"},
 		PreRunE: cli.NoArgs,

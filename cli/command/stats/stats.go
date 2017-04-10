@@ -49,7 +49,7 @@ var displayGroupMap = map[string]string{
 // NewStatsCommand returns a new instance of the stats command.
 func NewStatsCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "stats SERVICE",
+		Use:   "stats [OPTIONS] SERVICE",
 		Short: "Display amp statistics",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getStats(c, args)
@@ -82,7 +82,7 @@ func NewStatsCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-// Stats displays resource usage statistcs
+// Stats displays resource usage statistics
 func getStats(c cli.Interface, args []string) error {
 	var query = &stats.StatsRequest{}
 

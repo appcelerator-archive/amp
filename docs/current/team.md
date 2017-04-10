@@ -1,4 +1,4 @@
-### Team Management Commands
+### Team Management
 
 The `amp team` command manages all team related operations for AMP.
 
@@ -70,6 +70,8 @@ To be able to perform any team related operations, you must be logged in to AMP 
     Run 'amp team member COMMAND --help' for more information on a command.
 ```
 
+#### Examples
+
 * To add a member to a team:
 ```
     $ amp team member add
@@ -78,6 +80,11 @@ To be able to perform any team related operations, you must be logged in to AMP 
 * To list members in a team:
 ```
     $ amp team member ls
+```
+
+* To change role of a member in a team:
+```
+    $ amp team member role
 ```
 
 * To remove a member from a team:

@@ -22,7 +22,7 @@ var (
 // NewTeamCreateCommand returns a new instance of the team create command.
 func NewTeamCreateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "create",
+		Use:     "create [OPTIONS]",
 		Short:   "Create team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

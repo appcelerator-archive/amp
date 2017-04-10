@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -16,35 +17,33 @@ type getUserOpts struct {
 }
 
 var (
-	getUserOptions = &getUserOpts{}
+	getOptions = &getUserOpts{}
 )
 
 // NewGetUserCommand returns a new instance of the get user command.
 func NewGetUserCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "get",
+	return &cobra.Command{
+		Use:     "get USERNAME",
 		Short:   "Get user",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getUser(c, cmd)
+			if args[0] == "" {
+				return errors.New("username cannot be empty")
+			}
+			getOptions.username = args[0]
+			return getUser(c, getOptions)
 		},
 	}
-	cmd.Flags().StringVar(&getUserOptions.username, "name", "", "User name")
-	return cmd
 }
 
-func getUser(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("name").Changed {
-		getUserOptions.username = c.Console().GetInput("username")
-	}
-
+func getUser(c cli.Interface, opt *getUserOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.GetUserRequest{
-		Name: getUserOptions.username,
+		Name: opt.username,
 	}
 	reply, err := client.GetUser(context.Background(), request)
 	if err != nil {

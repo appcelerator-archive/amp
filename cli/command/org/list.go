@@ -23,18 +23,18 @@ var (
 // NewOrgListCommand returns a new instance of the list organization command.
 func NewOrgListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS]",
 		Short:   "List organization",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listOrg(c, cmd)
+			return listOrg(c)
 		},
 	}
 	cmd.Flags().BoolVarP(&listOrgOptions.quiet, "quiet", "q", false, "Only display organization name")
 	return cmd
 }
 
-func listOrg(c cli.Interface, cmd *cobra.Command) error {
+func listOrg(c cli.Interface) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

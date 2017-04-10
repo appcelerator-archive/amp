@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -20,29 +21,28 @@ var (
 
 // NewVerifyCommand returns a new instance of the verify command.
 func NewVerifyCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "verify",
+	return &cobra.Command{
+		Use:     "verify TOKEN",
 		Short:   "Verify account",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return verify(c, cmd)
+			if args[0] == "" {
+				return errors.New("token cannot be empty")
+			}
+			verifyOptions.token = args[0]
+			return verify(c, verifyOptions)
 		},
 	}
-	cmd.Flags().StringVar(&verifyOptions.token, "token", "", "Verification token")
-	return cmd
 }
 
-func verify(c cli.Interface, cmd *cobra.Command) error {
-	if !cmd.Flag("token").Changed {
-		verifyOptions.token = c.Console().GetInput("token")
-	}
+func verify(c cli.Interface, opt *verifyOpts) error {
 	conn, err := c.ClientConn()
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := account.NewAccountClient(conn)
 	request := &account.VerificationRequest{
-		Token: verifyOptions.token,
+		Token: opt.token,
 	}
 	_, err = client.Verify(context.Background(), request)
 	if err != nil {
