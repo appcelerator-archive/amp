@@ -421,6 +421,15 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 	return &empty.Empty{}, nil
 }
 
+// ChangeTeamMemberRole implements account.ChangeTeamMemberRole
+func (s *Server) ChangeTeamMemberRole(ctx context.Context, in *ChangeTeamMemberRoleRequest) (*empty.Empty, error) {
+	if err := s.Accounts.ChangeTeamMemberRole(ctx, in.OrganizationName, in.TeamName, in.UserName, in.Role); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully changed role of user %s from team %s to %v\n", in.UserName, in.TeamName, in.Role)
+	return &empty.Empty{}, nil
+}
+
 // GetTeam implements account.GetTeam
 func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply, error) {
 	team, err := s.Accounts.GetTeam(ctx, in.OrganizationName, in.TeamName)
