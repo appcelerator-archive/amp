@@ -97,7 +97,7 @@ func (a *Agent) addContainer(ID string) {
 		if err == nil {
 			data := ContainerData{
 				ID:            ID,
-				name:          inspect.Name,
+				name:          a.cleanName(inspect.Name),
 				state:         inspect.State.Status,
 				pid:           inspect.State.Pid,
 				health:        "",
@@ -110,7 +110,7 @@ func (a *Agent) addContainer(ID string) {
 			if data.serviceName == "" {
 				data.serviceName = "noService"
 			}
-			data.shortName = fmt.Sprintf("%s_%d", data.serviceName, data.pid)
+			data.shortName = fmt.Sprintf("%s_%s", data.serviceName, ID[0:6])
 			data.serviceID = a.getMapValue(labels, "com.docker.swarm.service.id")
 			data.taskID = a.getMapValue(labels, "com.docker.swarm.task.id")
 			data.nodeID = a.getMapValue(labels, "com.docker.swarm.node.id")
@@ -132,6 +132,14 @@ func (a *Agent) addContainer(ID string) {
 			log.Printf("Container inspect error: %v\n", err)
 		}
 	}
+}
+
+//Remove the charactere '/' form the beginning of container name if exist
+func (a *Agent) cleanName(name string) string {
+	if len(name) > 1 && name[0] == '/' {
+		return name[1:]
+	}
+	return name
 }
 
 // Remove a container from the main container map
