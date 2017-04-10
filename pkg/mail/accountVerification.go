@@ -7,25 +7,7 @@ var accountVerificationBody = `
         <div style="color:#404040;">
             <h2>Hi <b style="color:red">{accountName}</b>, thanks for joining AMP!</h2>
             <h3>You have successfully created an AMP account.</h3>
-            <h3>Please click on the link below to verify your email address and complete your registration.</h3>
-            <div style="height:30px"></div>
-            <a
-                href="http://amplifier-api.{ampAddress}/v1/users/{token}"
-                style="font-family: arial;
-                    font-weight: bold;
-                    text-decoration: none;
-                    color: #FFFFFF;
-                    font-size: 17px;
-                    padding:10px 10px;
-                    -moz-border-radius: 20px;
-                    -webkit-border-radius: 20px;
-                    border-radius: 20px;
-                    background: #EE303C;"
-            >
-                &nbsp CONFIRM EMAIL ADDRESS &nbsp
-            </a>
-            <div style="height:20px"></div>
-            <h4>You can also validate your AMP account using the following command line:</h4>
+            <h3>Please validate your AMP account using the following command line:</h4>
             <h4>amp user verify --token {token}</h4>
         </div>
     </body>
