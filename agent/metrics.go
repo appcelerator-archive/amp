@@ -44,7 +44,6 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 			return
 		}
 		metricsEntry := &stats.MetricsEntry{
-			Time:               statsData.Read.UnixNano(),
 			Timestamp:          statsData.Read.Format(time.RFC3339Nano),
 			ContainerId:        ID,
 			ContainerName:      data.name,
@@ -55,7 +54,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
-			Role:               data.role,
+			Labels:             data.labels,
 		}
 		a.setMemMetrics(statsData, metricsEntry)
 		a.setIOMetrics(data, statsData, metricsEntry)

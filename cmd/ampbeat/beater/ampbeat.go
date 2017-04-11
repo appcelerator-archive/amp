@@ -3,6 +3,7 @@ package beater
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -17,6 +18,7 @@ import (
 	"github.com/nats-io/go-nats-streaming"
 )
 
+// Ampbeat amp libbeat type
 type Ampbeat struct {
 	done          chan struct{}
 	config        config.Config
@@ -28,7 +30,7 @@ var bt = &Ampbeat{
 	done: make(chan struct{}),
 }
 
-// Creates beater
+// New Creates beater
 func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	bt.config = config.DefaultConfig
 	if err := cfg.Unpack(&bt.config); err != nil {
@@ -48,6 +50,7 @@ func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
 	return bt, nil
 }
 
+//Run run the beat
 func (bt *Ampbeat) Run(b *beat.Beat) error {
 	logp.Info("ampbeat is running! Hit CTRL-C to stop it.")
 	bt.client = b.Publisher.Connect()
@@ -68,9 +71,9 @@ func (bt *Ampbeat) Run(b *beat.Beat) error {
 	case <-bt.done:
 		return nil
 	}
-	return nil
 }
 
+//Stop stop the beat
 func (bt *Ampbeat) Stop() {
 	bt.natsStreaming.Close()
 	bt.client.Close()
@@ -100,8 +103,10 @@ func logMessageHandler(msg *stan.Msg) {
 		"task_id":              e.TaskId,
 		"stack_name":           e.StackName,
 		"node_id":              e.NodeId,
-		"role":                 e.Role,
 		"msg":                  e.Msg,
+	}
+	if len(e.Labels) > 0 {
+		event["labels"] = getLabels(e.Labels)
 	}
 	bt.client.PublishEvent(event)
 }
@@ -129,7 +134,9 @@ func metricsMessageHandler(msg *stan.Msg) {
 		"task_id":              e.TaskId,
 		"stack_name":           e.StackName,
 		"node_id":              e.NodeId,
-		"role":                 e.Role,
+	}
+	if len(e.Labels) > 0 {
+		event["labels"] = getLabels(e.Labels)
 	}
 	if e.Cpu != nil {
 		event["cpu"] = common.MapStr{
@@ -168,4 +175,15 @@ func metricsMessageHandler(msg *stan.Msg) {
 		}
 	}
 	bt.client.PublishEvent(event)
+}
+
+func getLabels(labels map[string]string) common.MapStr {
+	labmap := common.MapStr{}
+	for name, value := range labels {
+		if !strings.HasPrefix(name, "com.docker.") {
+			name = strings.Replace(name, ".", "-", -1)
+			labmap[name] = value
+		}
+	}
+	return labmap
 }

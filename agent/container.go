@@ -36,6 +36,7 @@ type ContainerData struct {
 	previousIOStats  *IOStats
 	previousNetStats *NetStats
 	lastDateSaveTime time.Time
+	labels           map[string]string
 }
 
 // Verify if the event stream is working, if not start it
@@ -111,6 +112,7 @@ func (a *Agent) addContainer(ID string) {
 				data.serviceName = "noService"
 			}
 			data.shortName = fmt.Sprintf("%s_%s", data.serviceName, ID[0:6])
+			data.labels = labels
 			data.serviceID = a.getMapValue(labels, "com.docker.swarm.service.id")
 			data.taskID = a.getMapValue(labels, "com.docker.swarm.task.id")
 			data.nodeID = a.getMapValue(labels, "com.docker.swarm.node.id")
@@ -127,6 +129,7 @@ func (a *Agent) addContainer(ID string) {
 			} else {
 				log.Printf("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
 			}
+			data.labels = labels
 			a.containers[ID] = &data
 		} else {
 			log.Printf("Container inspect error: %v\n", err)

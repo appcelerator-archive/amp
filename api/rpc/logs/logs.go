@@ -9,6 +9,7 @@ import (
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
+	"github.com/appcelerator/amp/pkg/labels"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
@@ -16,14 +17,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"gopkg.in/olivere/elastic.v5"
-)
-
-const (
-	// InfrastructureRole amp role InfrastructureRole
-	InfrastructureRole = "infrastructure"
-
-	// ToolsRole amp role tools
-	ToolsRole = "tools"
 )
 
 // Server is used to implement log.LogServer
@@ -85,10 +78,10 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		masterQuery.Filter(queryString)
 	}
 	if !in.Infra {
-		masterQuery.MustNot(elastic.NewTermQuery("role", InfrastructureRole))
-		//For now ToolsRole is manage as InfrastructureRole
+		masterQuery.MustNot(elastic.NewTermQuery(convertLabelNameToESName(labels.LabelsNameRole), labels.LabelsValuesRoleInfrastructure))
+		//For now Tools role is manage as Infrastructure role
 		//Later: ToolsRole should be manage with a user premission (admin)
-		masterQuery.MustNot(elastic.NewTermQuery("role", ToolsRole))
+		masterQuery.MustNot(elastic.NewTermQuery(convertLabelNameToESName(labels.LabelsNameRole), labels.LabelsValuesRoleTools))
 	}
 
 	// Perform request
@@ -167,7 +160,12 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
 	if !in.Infra {
-		match = entry.Role != InfrastructureRole && entry.Role != ToolsRole
+		role := entry.Labels[labels.LabelsNameRole]
+		match = role != labels.LabelsValuesRoleInfrastructure && role != labels.LabelsValuesRoleTools
 	}
 	return match
+}
+
+func convertLabelNameToESName(name string) string {
+	return "labels." + strings.Replace(name, ".", "-", -1)
 }

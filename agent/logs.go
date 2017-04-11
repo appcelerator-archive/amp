@@ -97,7 +97,7 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
-			Role:               data.role,
+			Labels:             data.labels,
 			Msg:                slog,
 		}
 		encoded, err := proto.Marshal(&logEntry)
