@@ -21,7 +21,7 @@ ADD Gofile /go
 RUN go-getter /go/Gofile
 
 # Install glide for vendoring support
-RUN curl https://glide.sh/get | sh
+RUN curl -s https://glide.sh/get | sh
 # Use /tmp/glide for the glide cache
 RUN mkdir -p /tmp/glide && chmod 777 /tmp/glide
 VOLUME /tmp/glide
@@ -29,6 +29,8 @@ VOLUME /tmp/glide
 # Custom settings for interactive shell
 ADD etc/profile.d /etc/profile.d
 
+# don't put in Gofile for now
+RUN go get -u github.com/alecthomas/gometalinter
 RUN gometalinter --install
 
 # TODO: might want to use /go as the work directory...
