@@ -90,8 +90,8 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-cli build-server build-beat build-agent
-buildall: install-deps protoc buildall-cli build-server build-beat build-agent
+build: install-deps protoc build-server build-cli build-beat build-agent
+buildall: install-deps protoc build-server buildall-cli build-beat build-agent
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -229,7 +229,7 @@ clean-agent:
 # Quality checks
 # =============================================================================
 CHECKDIRS := agent api cli cmd data pkg tests
-CHECKSRCS := $(shell find $(CHECKDIRS) -type f -name '*.go')
+CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' \))
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 .PHONY: fmt
@@ -270,7 +270,10 @@ lint:
 .PHONY: lint-fast
 lint-fast:
 	@echo "running subset of lint checks in fast mode"
-	@gometalinter --fast --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
+	@gometalinter \
+		--vendored-linters \
+		--fast --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
+		--disable=gotype \
 		$(CHECKDIRS)
 
 # =============================================================================
