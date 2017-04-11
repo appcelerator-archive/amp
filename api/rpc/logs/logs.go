@@ -19,7 +19,11 @@ import (
 )
 
 const (
+	// InfrastructureRole amp role InfrastructureRole
 	InfrastructureRole = "infrastructure"
+
+	// ToolsRole amp role tools
+	ToolsRole = "tools"
 )
 
 // Server is used to implement log.LogServer
@@ -82,6 +86,9 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 	if !in.Infra {
 		masterQuery.MustNot(elastic.NewTermQuery("role", InfrastructureRole))
+		//For now ToolsRole is manage as InfrastructureRole
+		//Later: ToolsRole should be manage with a user premission (admin)
+		masterQuery.MustNot(elastic.NewTermQuery("role", ToolsRole))
 	}
 
 	// Perform request
@@ -160,7 +167,7 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 		match = strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
 	if !in.Infra {
-		match = entry.Role != InfrastructureRole
+		match = entry.Role != InfrastructureRole && entry.Role != ToolsRole
 	}
 	return match
 }
