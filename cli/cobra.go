@@ -28,7 +28,7 @@ func SetupRootCommand(rootCmd *cobra.Command) {
 	rootCmd.SetHelpCommand(helpCommand)
 
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Print usage")
-	rootCmd.PersistentFlags().MarkShorthandDeprecated("help", "please use --help") // nolint
+	_ = rootCmd.PersistentFlags().MarkShorthandDeprecated("help", "please use --help")
 }
 
 // FlagErrorFunc prints an error message which matches the format of the

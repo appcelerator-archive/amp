@@ -27,6 +27,8 @@ type Interface interface {
 // cli implements cli.Interface
 type cli struct {
 	Configuration
+	version    string // nolint: structcheck, unused
+	build      string // nolint: structcheck, unused
 	console    *Console
 	in         *InStream
 	out        *OutStream
