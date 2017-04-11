@@ -5,6 +5,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -58,6 +59,6 @@ func getTeam(c cli.Interface, cmd *cobra.Command) error {
 	}
 	c.Console().Printf("Team: %s\n", reply.Team.Name)
 	c.Console().Printf("Organization: %s\n", getTeamOptions.org)
-	c.Console().Printf("Created On: %s\n", cli.ConvertTime(c, reply.Team.CreateDt))
+	c.Console().Printf("Created On: %s\n", time.ConvertTime(reply.Team.CreateDt))
 	return nil
 }

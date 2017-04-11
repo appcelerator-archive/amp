@@ -237,12 +237,10 @@ fmt:
 	@goimports -l $(CHECKDIRS) && goimports -w $(CHECKDIRS)
 	@gofmt -s -l -w $(CHECKSRCS)
 
-# TODO: Remove the cli folder exclusion when we're done
 .PHONY: lint
 lint:
 	@echo "running lint checks - this will take a while..."
 	@gometalinter --deadline=10m --concurrency=1 --enable-gc --vendor --exclude=vendor --exclude=\.pb\.go \
-	    --exclude=cli \
 		--sort=path --aggregate \
 		--disable-all \
 		--enable=deadcode \

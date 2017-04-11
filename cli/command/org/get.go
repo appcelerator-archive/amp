@@ -5,6 +5,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -50,6 +51,6 @@ func getOrg(c cli.Interface, cmd *cobra.Command) error {
 	}
 	c.Console().Printf("Organization: %s\n", reply.Organization.Name)
 	c.Console().Printf("Email: %s\n", reply.Organization.Email)
-	c.Console().Printf("Created: %s\n", cli.ConvertTime(c, reply.Organization.CreateDt))
+	c.Console().Printf("Created: %s\n", time.ConvertTime(reply.Organization.CreateDt))
 	return nil
 }

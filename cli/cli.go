@@ -27,13 +27,12 @@ type Interface interface {
 // cli implements cli.Interface
 type cli struct {
 	Configuration
-	version    string
-	build      string
+	version    string // nolint: structcheck, unused
+	build      string // nolint: structcheck, unused
 	console    *Console
 	in         *InStream
 	out        *OutStream
 	err        io.Writer
-	address    string
 	clientConn *grpc.ClientConn
 }
 

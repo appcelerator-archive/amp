@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -63,7 +64,7 @@ func listTeam(c cli.Interface, cmd *cobra.Command) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED\t")
 	for _, team := range reply.Teams {
-		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, cli.ConvertTime(c, team.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, time.ConvertTime(team.CreateDt))
 	}
 	w.Flush()
 	return nil

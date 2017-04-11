@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -54,7 +55,7 @@ func listOrg(c cli.Interface, cmd *cobra.Command) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
 	for _, org := range reply.Organizations {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", org.Name, org.Email, cli.ConvertTime(c, org.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\t%s\n", org.Name, org.Email, time.ConvertTime(org.CreateDt))
 	}
 	w.Flush()
 	return nil
