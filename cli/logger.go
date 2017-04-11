@@ -22,7 +22,7 @@ func init() {
 	// WARNING: the grpc logger can only be set during init()
 	// https://godoc.org/google.golang.org/grpc/grpclog#SetLogger
 	// TODO: set verbose to false after testing
-	grpclog.SetLogger(&Logger{out: NewOutStream(os.Stdout), verbose: true})
+	grpclog.SetLogger(Logger{out: NewOutStream(os.Stdout), verbose: true})
 }
 
 // NewLogger creates a CLI Logger instance that writes to the provided stream.
@@ -31,50 +31,50 @@ func NewLogger(out *OutStream, verbose bool) *Logger {
 }
 
 // Verbose returns whether the logger is verbose
-func (l *Logger) Verbose() bool {
+func (l Logger) Verbose() bool {
 	return l.verbose
 }
 
-// OutStream return the logger underlying output stream
-func (l *Logger) OutStream() *OutStream {
+// OutStream return the underlying output stream
+func (l Logger) OutStream() *OutStream {
 	return l.out
 }
 
 // Fatal is equivalent to fmt.Print() followed by a call to os.Exit(1).
-func (l *Logger) Fatal(args ...interface{}) {
+func (l Logger) Fatal(args ...interface{}) {
 	l.Print(args)
 	os.Exit(1)
 }
 
 // Fatalf is equivalent to fmt.Printf() followed by a call to os.Exit(1).
-func (l *Logger) Fatalf(format string, args ...interface{}) {
+func (l Logger) Fatalf(format string, args ...interface{}) {
 	l.Printf(format, args)
 	os.Exit(1)
 }
 
 // Fatalln is equivalent to fmt.Println() followed by a call to os.Exit(1).
-func (l *Logger) Fatalln(args ...interface{}) {
+func (l Logger) Fatalln(args ...interface{}) {
 	l.Println(args)
 	os.Exit(1)
 }
 
 // Print is equivalent to fmt.Print() if verbose mode.
 // Arguments are handled in the manner of fmt.Printf.
-func (l *Logger) Print(args ...interface{}) {
+func (l Logger) Print(args ...interface{}) {
 	if l.verbose {
 		fmt.Fprint(l.out, args)
 	}
 }
 
 // Printf is equivalent to fmt.Printf() if verbose mode.
-func (l *Logger) Printf(format string, args ...interface{}) {
+func (l Logger) Printf(format string, args ...interface{}) {
 	if l.verbose {
 		fmt.Fprintf(l.out, format, args)
 	}
 }
 
 // Println is equivalent to fmt.Println() if verbose mode.
-func (l *Logger) Println(args ...interface{}) {
+func (l Logger) Println(args ...interface{}) {
 	if l.verbose {
 		fmt.Fprintln(l.out, args)
 	}

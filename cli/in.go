@@ -53,7 +53,7 @@ func (i *InStream) SetRawTerminal() (err error) {
 // RestoreTerminal restores normal mode to the terminal
 func (i *InStream) RestoreTerminal() {
 	if i.state != nil {
-		term.RestoreTerminal(i.fd, i.state) // nolint
+		_ = term.RestoreTerminal(i.fd, i.state) // nolint:
 	}
 }
 
