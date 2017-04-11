@@ -18,7 +18,7 @@ message LogEntry {
   string task_id = 8;
   string stack_name = 9;
   string node_id = 10;
-  string role = 11;
+  map<string, string> labels = 11;
   string msg = 12;
 }
 

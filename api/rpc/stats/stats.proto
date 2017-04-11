@@ -7,23 +7,22 @@ service Stats {
 }
 
 message MetricsEntry {
-  int64 time = 1;
-  string timestamp = 2;
-  string container_id = 3;
-  string container_name = 4;
-  string container_short_name = 5;
-  string container_state = 6;
-  string service_name = 7;
-  string service_id = 8;
-  string task_id = 9;
-  string stack_name = 10;
-  string node_id = 11;
-  string role = 12;
-  string group = 13;
-  MetricsCPUEntry cpu = 14;
-  MetricsIOEntry io = 15;
-  MetricsMemEntry mem = 16;
-  MetricsNetEntry net = 17;
+  string timestamp = 1;
+  string container_id = 2;
+  string container_name = 3;
+  string container_short_name = 4;
+  string container_state = 5;
+  string service_name = 6;
+  string service_id = 7;
+  string task_id = 8;
+  string stack_name = 9;
+  string node_id = 10;
+  map<string, string> labels = 11;
+  string group = 12;
+  MetricsCPUEntry cpu = 13;
+  MetricsIOEntry io = 14;
+  MetricsMemEntry mem = 15;
+  MetricsNetEntry net = 16;
 }
 
 message MetricsCPUEntry {
