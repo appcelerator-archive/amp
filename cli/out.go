@@ -48,7 +48,7 @@ func (o *OutStream) SetRawTerminal() (err error) {
 // RestoreTerminal restores normal mode to the terminal
 func (o *OutStream) RestoreTerminal() {
 	if o.state != nil {
-		term.RestoreTerminal(o.fd, o.state)
+		term.RestoreTerminal(o.fd, o.state) // nolint
 	}
 }
 

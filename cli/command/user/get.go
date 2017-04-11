@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -50,6 +51,6 @@ func getUser(c cli.Interface, cmd *cobra.Command) error {
 	c.Console().Printf("Username: %s\n", reply.User.Name)
 	c.Console().Printf("Email: %s\n", reply.User.Email)
 	c.Console().Printf("Verified?: %t\n", reply.User.IsVerified)
-	c.Console().Printf("Create Date: %s\n", cli.ConvertTime(c, reply.User.CreateDt))
+	c.Console().Printf("Create Date: %s\n", time.ConvertTime(reply.User.CreateDt))
 	return nil
 }

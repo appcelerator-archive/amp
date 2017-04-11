@@ -30,10 +30,12 @@ func NewLogger(out *OutStream, verbose bool) *Logger {
 	return &Logger{out: out, verbose: verbose}
 }
 
+// Verbose returns whether the logger is verbose
 func (l Logger) Verbose() bool {
 	return l.verbose
 }
 
+// OutStream return the underlying output stream
 func (l Logger) OutStream() *OutStream {
 	return l.out
 }
