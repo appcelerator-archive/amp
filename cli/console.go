@@ -26,7 +26,7 @@ const (
 var (
 	// DarkTheme defines colors appropriate for a dark terminal
 	DarkTheme = &Theme{
-		Normal:  color.New(color.FgWhite),
+		Normal:  color.New(),
 		Info:    color.New(color.FgHiBlack),
 		Warn:    color.New(color.FgYellow),
 		Error:   color.New(color.FgRed),
@@ -35,7 +35,7 @@ var (
 
 	// LightTheme defines colors appropriate for a light terminal
 	LightTheme = &Theme{
-		Normal:  color.New(color.FgBlue),
+		Normal:  color.New(),
 		Info:    color.New(color.FgBlack),
 		Warn:    color.New(color.FgYellow),
 		Error:   color.New(color.FgRed),

@@ -2,9 +2,8 @@ package version
 
 import (
 	"bytes"
-	"runtime"
-
 	"fmt"
+	"runtime"
 
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
@@ -33,14 +32,14 @@ type ClientVersionInfo struct {
 	Arch      string
 }
 
-var versionTemplate = `amp:
+var template = `Client:
  Version:       {{.Client.Version}}
  Build:         {{.Client.Build}}
  Address:       {{.Client.Address}}
  Go version:    {{.Client.GoVersion}}
  OS/Arch:       {{.Client.Os}}/{{.Client.Arch}}
 
-amplifier:      {{if .IsConnected}}
+Server:      {{if .IsConnected}}
  Version:       {{.Server.Version}}
  Build:         {{.Server.Build}}
  Go version:    {{.Server.GoVersion}}
@@ -60,7 +59,7 @@ func NewVersionCommand(c cli.Interface) *cobra.Command {
 
 // Print version info of client and server (if connected).
 func showVersion(c cli.Interface) error {
-	tmpl, err := templates.Parse(versionTemplate)
+	tmpl, err := templates.Parse(template)
 	if err != nil {
 		return fmt.Errorf("template parsing error: %v\n", err)
 	}
