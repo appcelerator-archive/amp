@@ -134,7 +134,7 @@ func (a *Agent) addContainer(ID string) {
 	}
 }
 
-//Remove the charactere '/' form the beginning of container name if exist
+// Strips '/' from beginning of container name, if present
 func (a *Agent) cleanName(name string) string {
 	if len(name) > 1 && name[0] == '/' {
 		return name[1:]
