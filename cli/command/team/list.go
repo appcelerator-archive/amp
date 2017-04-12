@@ -27,7 +27,7 @@ func NewTeamListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS] ORGANIZATION",
 		Short:   "List team",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {
 				return errors.New("organization name cannot be empty")

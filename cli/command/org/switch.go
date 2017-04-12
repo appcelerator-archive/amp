@@ -1,4 +1,4 @@
-package switch_
+package org
 
 import (
 	"errors"
@@ -25,7 +25,7 @@ func NewSwitchCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "switch ACCOUNT",
 		Short:   "Switch account",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {
 				return errors.New("account name cannot be empty")
