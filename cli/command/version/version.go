@@ -26,20 +26,20 @@ func (v Version) IsConnected() bool {
 type ClientVersionInfo struct {
 	Version   string
 	Build     string
-	Address   string
+	Server    string
 	GoVersion string
-	Os        string
+	OS        string
 	Arch      string
 }
 
 var template = `Client:
  Version:       {{.Client.Version}}
  Build:         {{.Client.Build}}
- Address:       {{.Client.Address}}
+ Server:        {{.Client.Server}}
  Go version:    {{.Client.GoVersion}}
- OS/Arch:       {{.Client.Os}}/{{.Client.Arch}}
+ OS/Arch:       {{.Client.OS}}/{{.Client.Arch}}
 
-Server:      {{if .IsConnected}}
+Server:         {{if .IsConnected}}
  Version:       {{.Server.Version}}
  Build:         {{.Server.Build}}
  Go version:    {{.Server.GoVersion}}
@@ -68,9 +68,9 @@ func showVersion(c cli.Interface) error {
 		Client: &ClientVersionInfo{
 			Version:   c.Version(),
 			Build:     c.Build(),
-			Address:   c.Address(),
+			Server:    c.Server(),
 			GoVersion: runtime.Version(),
-			Os:        runtime.GOOS,
+			OS:        runtime.GOOS,
 			Arch:      runtime.GOARCH,
 		},
 	}
