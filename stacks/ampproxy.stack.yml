@@ -1,0 +1,38 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+secrets:
+  certificate_atomiq:
+    external: true
+
+services:
+
+  proxy:
+    image: dockercloud/haproxy
+    networks:
+      - default
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == manager]
+    environment:
+      CERT_FOLDER: "/run/secrets"
+      EXTRA_FRONTEND_SETTINGS_80: redirect scheme https code 301 if !{ ssl_fc }
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      io.amp.role: "infrastructure"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1936:1936"
+    secrets:
+      - source: certificate_atomiq
+        target: cert0.pem
+        mode: 0400

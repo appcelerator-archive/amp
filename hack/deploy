@@ -14,11 +14,14 @@ readonly clustercheck="$SP/clustercheck"
 readonly curlcheck="$SP/curlcheck"
 readonly swarmcheck="$SP/swarmcheck"
 readonly servicescheck="$SP/servicescheck"
+readonly mkcert="$SP/mkcert"
 readonly terraformdir="$SP/../bootstrap/terraform-aws"
-readonly terraform="docker run -v $HOME/.aws:/root/.aws:ro -v $terraformdir:/data --workdir=/data hashicorp/terraform"
+readonly terraform="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $terraformdir:/data --workdir=/data hashicorp/terraform"
 
 # IP range that should have access to the docker remote API
 readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
+readonly localdomainname="local.atomiq.io"
+readonly clouddomainname="cloud.atomiq.io"
 
 # returns the target of the deployment: local or a cloud provider
 deployment_target() {
@@ -80,8 +83,9 @@ set_deployment_variables(){
   local)
     dockerhost=m1
     registryhost=localhost
-    amps="docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
+    amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
+    domainname=$localdomainname
     ;;
   aws)
     # todo: use a secured remote API
@@ -89,6 +93,7 @@ set_deployment_variables(){
     registryhost=$dockerhost
     amps="docker -H $dockerhost"
     stacks_path=stacks
+    domainname=$clouddomainname
     # variable used in sub scripts
     export DOCKERHOST=$dockerhost
     ;;
@@ -135,6 +140,30 @@ lookup() {
 kurl() {
   [[ -z $amps ]] && echo "error to use kurl before swarm is created" && return 1
   $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
+}
+
+# pushes certificates in a Docker secret, ready to use by services in stack files
+# for local bootstrap, a self signed certificate is created
+# for cloud bootstrap, a valid certificate should be provided
+# it has to be in the stacks folder, to allow access to the Docker client
+prepare_certificates() {
+  if [[ $# -ne 1 ]]; then
+    return 1
+  fi
+  local name=$1
+  local certfile="$SP/../stacks/$name.pem"
+  if [[ $(deployment_target) = "local" ]]; then
+    mv $($mkcert) $certfile
+  fi
+  if [[ ! -f "$certfile" ]]; then
+    # TODO use certbot
+    echo "can't find certificate $certfile" >&2
+    return 1
+  fi
+  echo "checking if the certificate secret is already defined"
+  $amps secret ls | grep -q "certificate_atomiq" && return 0 
+  echo "creating the certificate secret"
+  $amps secret create "certificate_atomiq" /stacks/$name.pem
 }
 
 trap cleanup EXIT
@@ -210,6 +239,18 @@ echo "wait for all amp service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
 checkexit $? "amp service replica checks timed out"
 ok
+
+prepare_certificates $domainname
+if [[ $? -eq 0 ]]; then
+  echo "deploy amp proxy stack to cluster"
+  deploystack ampproxy.stack.yml amp
+  echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
+  $servicescheck $maxwait
+  checkexit $? "amp proxy service replica checks timed out"
+  ok
+else
+  echo "won't deploy the proxy stack, there's no certificate"
+fi
 
 # final sanity checks
 # ===================

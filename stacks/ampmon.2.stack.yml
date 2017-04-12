@@ -39,13 +39,10 @@ services:
         constraints: [node.role == worker]
     labels:
       io.amp.role: "infrastructure"
-    volumes:
-      - /etc/ssl:/etc/ssl:ro
     environment: [
       "ELASTICSEARCH_URL=http://elasticsearch:9200",
-      "SERVER_SSL_CERTIFICATE=/etc/ssl/server.crt",
-      "SERVER_SSL_KEY=/etc/ssl/server.key"
+      "SERVICE_PORTS=5601",
+      "VIRTUAL_HOST=https://dashboard.*"
     ]
     ports:
       - "50106:5601"
-      - "443:443"

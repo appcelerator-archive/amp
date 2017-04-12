@@ -13,3 +13,6 @@ instance*.tf.json
 *.tfvars
 *.lock.info
 ikt.vol.*
+
+# certificates
+*.pem

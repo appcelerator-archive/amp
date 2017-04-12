@@ -19,7 +19,7 @@ typeset -i nc
 typeset -i ready
 while true; do
     # number of nodes + 1 (header)
-    nc=$($amps node ls | wc -l)
+    nc=$($amps node ls | grep -v Down | wc -l)
     if [[ $? -ne 0 ]]; then nc=0; fi
     # number of nodes ready and active
     ready=$($amps node ls | grep "Ready *Active" | wc -l)
