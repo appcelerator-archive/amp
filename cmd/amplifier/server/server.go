@@ -50,7 +50,7 @@ var serviceInitializers = []serviceInitializer{
 	registerLogsServer,
 	registerStackServer,
 	registerStatsServer,
-	//registerFunctionServer,
+	registerFunctionServer,
 	registerAccountServer,
 }
 

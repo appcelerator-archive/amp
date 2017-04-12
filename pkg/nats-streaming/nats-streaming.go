@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	DefaultURL     = "nats://nats:4222"
-	ClusterID      = "test-cluster"
-	FunctionTopic  = "amp-function-calls"
-	LogsSubject    = "amp-logs"
-	MetricsSubject = "amp-metrics"
+	DefaultURL      = "nats://nats:4222"
+	ClusterID       = "test-cluster"
+	FunctionSubject = "amp-function-calls"
+	LogsSubject     = "amp-logs"
+	MetricsSubject  = "amp-metrics"
 )
 
 // NatsStreaming NATS-Streaming wrapper

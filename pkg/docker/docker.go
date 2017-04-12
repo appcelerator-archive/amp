@@ -3,8 +3,14 @@ package docker
 import (
 	"fmt"
 
+	"os"
+
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"golang.org/x/net/context"
 )
 
@@ -53,4 +59,77 @@ func (d *Docker) DoesServiceExist(ctx context.Context, name string) bool {
 		}
 	}
 	return false
+}
+
+// ContainerCreate creates a container and pulls the image if needed
+func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, name string) (*container.ContainerCreateCreatedBody, error) {
+	var (
+		namedRef reference.Named
+	)
+
+	ref, err := reference.ParseAnyReference(config.Image)
+	if err != nil {
+		return nil, err
+	}
+	if named, ok := ref.(reference.Named); ok {
+		namedRef = reference.TagNameOnly(named)
+	}
+
+	response, err := d.client.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
+	if err == nil {
+		return &response, nil
+	}
+
+	// if image not found try to pull it
+	if client.IsErrImageNotFound(err) && namedRef != nil {
+		fmt.Fprintf(os.Stderr, "Unable to find image '%s' locally\n", reference.FamiliarString(namedRef))
+		if err = d.PullImage(ctx, config.Image); err != nil {
+			return nil, err
+		}
+
+		// Retry
+		response, err := d.client.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
+		if err != nil {
+			return nil, err
+		}
+		return &response, nil
+	}
+	return nil, err
+}
+
+// PullImage pulls a docker image
+func (d *Docker) PullImage(ctx context.Context, image string) error {
+	//ref, err := reference.ParseNormalizedNamed(image)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//// Resolve the Repository name from fqn to RepositoryInfo
+	//repoInfo, err := registry.ParseRepositoryInfo(ref)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//authConfig := command.ResolveAuthConfig(ctx, dockerCli, repoInfo.Index)
+	//encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//options := types.ImageCreateOptions{
+	//	RegistryAuth: encodedAuth,
+	//}
+
+	responseBody, err := d.client.ImageCreate(ctx, image, types.ImageCreateOptions{})
+	if err != nil {
+		return err
+	}
+	defer responseBody.Close()
+
+	return jsonmessage.DisplayJSONMessagesStream(
+		responseBody,
+		os.Stdout,
+		os.Stdout.Fd(),
+		false,
+		nil)
 }

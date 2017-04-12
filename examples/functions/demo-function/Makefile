@@ -6,4 +6,3 @@ install:
 
 image:
 	@docker build -t appcelerator/amp-demo-function .
-

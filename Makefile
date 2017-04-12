@@ -81,7 +81,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-funcexec clean-funchttp
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -90,8 +90,8 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat build-agent
-buildall: install-deps protoc build-server buildall-cli build-beat build-agent
+build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp
+buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -224,6 +224,66 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
+	
+# =============================================================================
+# BUILD FUNCHTTP (`funchttp`)
+# Saves binary to `cmd/funchttp/funchttp.alpine`,
+# then builds `appcelerator/funchttp` image
+# =============================================================================
+FUNCHTTP := funchttp
+FUNCHTTPBINARY=$(FUNCHTTP).alpine
+FUNCHTTPTAG := local
+FUNCHTTPIMG := appcelerator/$(FUNCHTTP):$(FUNCHTTPTAG)
+FUNCHTTPTARGET := $(CMDDIR)/$(FUNCHTTP)/$(FUNCHTTPBINARY)
+FUNCHTTPDIRS := cmd/$(FUNCHTTP) api data tests
+FUNCHTTPSRC := $(shell find $(FUNCHTTPDIRS) -type f -name '*.go')
+FUNCHTTPPKG := $(REPO)/$(CMDDIR)/$(FUNCHTTP)
+
+$(FUNCHTTPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(FUNCHTTPSRC)
+	@echo "Compiling $(FUNCHTTP) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(FUNCHTTPTARGET) $(FUNCHTTPPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(FUNCHTTP)"
+
+build-funchttp: $(FUNCHTTPTARGET)
+	@echo "build $(FUNCHTTPIMG)"
+	@$(DOCKER_CMD) build -t $(FUNCHTTPIMG) $(CMDDIR)/$(FUNCHTTP) || (rm -f $(FUNCHTTPTARGET); exit 1)
+
+rebuild-funchttp: clean-funchttp build-funchttp
+
+.PHONY: clean-funchttp
+clean-funchttp:
+	@rm -f $(FUNCHTTPTARGET)
+
+# =============================================================================
+# BUILD FUNCEXEC (`funcexec`)
+# Saves binary to `cmd/funcexec/funcexec.alpine`,
+# then builds `appcelerator/funcexec` image
+# =============================================================================
+FUNCEXEC := funcexec
+FUNCEXECBINARY=$(FUNCEXEC).alpine
+FUNCEXECTAG := local
+FUNCEXECIMG := appcelerator/$(FUNCEXEC):$(FUNCEXECTAG)
+FUNCEXECTARGET := $(CMDDIR)/$(FUNCEXEC)/$(FUNCEXECBINARY)
+FUNCEXECDIRS := cmd/$(FUNCEXEC) api data tests
+FUNCEXECSRC := $(shell find $(FUNCEXECDIRS) -type f -name '*.go')
+FUNCEXECPKG := $(REPO)/$(CMDDIR)/$(FUNCEXEC)
+
+$(FUNCEXECTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(FUNCEXECSRC)
+	@echo "Compiling $(FUNCEXEC) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(FUNCEXECTARGET) $(FUNCEXECPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(FUNCEXEC)"
+
+build-funcexec: $(FUNCEXECTARGET)
+	@echo "build $(FUNCEXECIMG)"
+	@$(DOCKER_CMD) build -t $(FUNCEXECIMG) $(CMDDIR)/$(FUNCEXEC) || (rm -f $(FUNCEXECTARGET); exit 1)
+
+rebuild-funcexec: clean-funcexec build-funcexec
+
+.PHONY: clean-funcexec
+clean-funcexec:
+	@rm -f $(FUNCEXECTARGET)
 
 # =============================================================================
 # Quality checks
