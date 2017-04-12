@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+which openssl >/dev/null
+
+CAKEY=$(mktemp).pem
+CACERT=$(mktemp).pem
+KEY=$(mktemp).pem
+CSR=$(mktemp).csr
+CERT=$(mktemp).pem
+PEM=$(mktemp).pem
+KEYLEN=2048
+EXPIRE=30
+CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=ca-$(hostname)"
+SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=dashboard.local.atomiq.io"
+
+openssl genrsa -out $CAKEY $KEYLEN
+openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT"
+openssl genrsa -out $KEY $KEYLEN
+openssl req -subj "$SUBJECT" -sha256 -new -key $KEY -out $CSR
+openssl x509 -req -days $EXPIRE -sha256 -in $CSR -CA $CACERT -CAkey $CAKEY -CAcreateserial -out $CERT
+
+cat $KEY $CERT > $PEM
+echo $PEM
+rm $CAKEY $CACERT $KEY $CSR $CERT
