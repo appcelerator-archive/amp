@@ -47,7 +47,7 @@ func AgentInit(version, build string) error {
 		log.Fatalln("Unable to get hostname: ", err)
 	}
 	agent.natsStreaming = ns.NewClient(ns.DefaultURL, ns.ClusterID, os.Args[0]+"-"+hostname, time.Minute)
-	if err := agent.natsStreaming.Connect(); err != nil {
+	if err = agent.natsStreaming.Connect(); err != nil {
 		return err
 	}
 
