@@ -19,5 +19,6 @@ func NewOrgCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewOrgRemoveCommand(c))
 	cmd.AddCommand(NewOrgGetCommand(c))
 	cmd.AddCommand(member.NewOrgMemCommand(c))
+	cmd.AddCommand(NewSwitchCommand(c))
 	return cmd
 }
