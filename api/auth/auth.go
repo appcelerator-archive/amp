@@ -12,6 +12,7 @@ const (
 	TokenKey              = "amp.token"
 	UserKey               = "amp.user"
 	ActiveOrganizationKey = "amp.organization"
+	CredentialsRequired   = "credentials required"
 )
 
 var (
@@ -69,19 +70,19 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 func authorize(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	tokens := md[TokenKey]
 	if len(tokens) == 0 {
-		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	token := tokens[0]
 	if token == "" {
-		return nil, grpc.Errorf(codes.Unauthenticated, "credentials required")
+		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	claims, err := ValidateToken(token, TokenTypeLogin)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials")
+		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}
 	// Enrich the context
 	ctx = metadata.NewContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))

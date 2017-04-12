@@ -24,7 +24,7 @@ func NewWhoAmICommand(c cli.Interface) *cobra.Command {
 func whoami(c cli.Interface) error {
 	token, err := cli.ReadToken()
 	if err != nil {
-		return errors.New("you are not logged in")
+		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
 	}
 	pToken, _ := jwt.ParseWithClaims(token, &auth.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
