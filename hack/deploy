@@ -161,7 +161,7 @@ prepare_certificates() {
     return 1
   fi
   echo "checking if the certificate secret is already defined"
-  $amps secret ls | grep -q "certificate_atomiq" && return 0 
+  $amps secret ls | grep -q "certificate_atomiq" && return 0
   echo "creating the certificate secret"
   $amps secret create "certificate_atomiq" /stacks/$name.pem
 }
@@ -214,7 +214,7 @@ checkexit $? "registry timed out"
 ok
 
 echo "push images to cluster"
-for image in amplifier ampbeat agent; do
+for image in amplifier ampbeat agent funcexec funchttp; do
   pushimage ${registryhost}:5000 appcelerator/${image}:local
 done
 
@@ -238,6 +238,13 @@ deploystack amp.stack.yml amp
 echo "wait for all amp service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
 checkexit $? "amp service replica checks timed out"
+ok
+
+echo "deploy function stack to cluster"
+deploystack function.stack.yml amp
+echo "wait for all function service replicas to be running ($maxwait sec)"
+$servicescheck $maxwait
+checkexit $? "amp function service replica checks timed out"
 ok
 
 prepare_certificates $domainname
