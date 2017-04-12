@@ -2,9 +2,8 @@ package logs
 
 import (
 	"context"
-	"io"
-
 	"fmt"
+	"io"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cli"

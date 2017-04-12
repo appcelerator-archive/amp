@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 type statsOpts struct {
@@ -137,12 +139,12 @@ func getStats(c cli.Interface, args []string) error {
 	ctx := context.Background()
 	conn, err := c.ClientConn()
 	if err != nil {
-		return err
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	client := stats.NewStatsClient(conn)
 	r, err := client.StatsQuery(ctx, query)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	if r.Entries == nil {
 		fmt.Println("No result found")
@@ -236,7 +238,7 @@ func getStatTitle(query *stats.StatsRequest) string {
 func getDisplayedGroup(group string) string {
 	val, ok := displayGroupMap[group]
 	if !ok {
-		return "unknow"
+		return "unknown"
 	}
 	return val
 }
@@ -320,15 +322,12 @@ func continueCurrentExecution(ctx context.Context, c cli.Interface, client stats
 func continueHistoricExecution(ctx context.Context, c cli.Interface, client stats.StatsClient, query *stats.StatsRequest, result *stats.StatsReply) error {
 	sleepTime, err := getHistoricSleepDuration(query.TimeGroup)
 	if err != nil {
-		return fmt.Errorf("Internal error: following is broken")
-	}
-	if sleepTime < 0 {
-		c.Console().Println("Too long time-groupd to way for the next line: following aborted")
+		return err
 	}
 	lastDate := result.Entries[len(result.Entries)-1].Group
 	currentDate, err := time.Parse("2006-01-02T15:04:05", lastDate)
 	if err != nil {
-		return fmt.Errorf("Get a bad date format: %v", err)
+		return fmt.Errorf("invalid date format: %s", err)
 	}
 	for {
 		time.Sleep(sleepTime)
@@ -352,7 +351,7 @@ func getHistoricSleepDuration(timeGroup string) (time.Duration, error) {
 		return 0, err
 	}
 	if last == "y" || last == "M" || last == "w" || last == "d" {
-		return -1, nil
+		return 0, errors.New("cannot follow output when period is greater than a day")
 	}
 	if last == "h" {
 		return time.Hour * time.Duration(num), nil
