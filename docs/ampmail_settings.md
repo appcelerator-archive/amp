@@ -10,7 +10,7 @@ amp uses the services of the email delivery site SendGrid: https://sendgrid.com/
 
 amp needs an SendGrid api key to be able to use it.
 
-To set the SendGrid apikey, create or update the file: `~/.config/amp/amplifier.yaml` and add this line inside:
+To set the SendGrid apikey, create or update the file: `~/.config/amp/amplifier.yml` and add this line inside:
 
 EmailKey: xxxxx
 

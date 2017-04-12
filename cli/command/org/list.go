@@ -2,7 +2,6 @@ package org
 
 import (
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -52,8 +51,8 @@ func listOrg(c cli.Interface, cmd *cobra.Command) error {
 		}
 		return nil
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', 0)
-	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED\t")
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
+	fmt.Fprintln(w, "ORGANIZATION\tEMAIL\tCREATED ON")
 	for _, org := range reply.Organizations {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", org.Name, org.Email, time.ConvertTime(org.CreateDt))
 	}
