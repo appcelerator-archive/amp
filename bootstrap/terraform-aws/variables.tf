@@ -13,11 +13,11 @@ variable "aws_profile" {
 
 variable "aws_amis" {
   default = {
-    eu-central-1 = "ami-a85480c7"
-    eu-west-1 = "ami-971238f1"
-    us-east-1 = "ami-2757f631"
-    us-west-1 = "ami-44613824"
-    us-west-2 = "ami-7ac6491a"
+    eu-central-1 = "ami-1b4d9e74"
+    eu-west-1 = "ami-b5a893d3"
+    us-east-1 = "ami-e4139df2"
+    us-west-1 = "ami-30476250"
+    us-west-2 = "ami-17ba2a77"
   }
 }
 
