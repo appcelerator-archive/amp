@@ -34,7 +34,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 		Example:       "amp version",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if opts.addr != "" {
-				c.SetAddress(opts.addr)
+				c.SetServer(opts.addr)
 			}
 			return nil
 		},

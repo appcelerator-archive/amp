@@ -4,7 +4,7 @@ package cli
 type Configuration struct {
 	Version string
 	Build   string
-	Address string
+	Server  string
 	Verbose bool
 	Theme   string
 }

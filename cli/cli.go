@@ -18,8 +18,8 @@ type Interface interface {
 	Err() io.Writer
 	ShowHelp(cmd *cobra.Command, args []string) error
 
-	Address() string
-	SetAddress(addr string)
+	Server() string
+	SetServer(server string)
 	ClientConn() (*grpc.ClientConn, error)
 
 	OnInitialize(initializers ...func())
@@ -59,14 +59,14 @@ func (c *cli) Build() string {
 	return c.Configuration.Build
 }
 
-// Address returns the address of the grpc api (host:port) used for the client connection.
-func (c *cli) Address() string {
-	return c.Configuration.Address
+// Server returns the address of the grpc api (host:port) used for the client connection.
+func (c *cli) Server() string {
+	return c.Configuration.Server
 }
 
-// SetAddress sets the address of the grpc api (host:port) used for the client connection.
-func (c *cli) SetAddress(addr string) {
-	c.Configuration.Address = addr
+// SetServer sets the address of the grpc api (host:port) used for the client connection.
+func (c *cli) SetServer(server string) {
+	c.Configuration.Server = server
 	c.clientConn = nil
 }
 
@@ -99,7 +99,7 @@ func (c *cli) OnInitialize(initializers ...func()) {
 func (c *cli) ClientConn() (*grpc.ClientConn, error) {
 	if c.clientConn == nil {
 		var err error
-		c.clientConn, err = NewClientConn(c.Address(), GetToken())
+		c.clientConn, err = NewClientConn(c.Server(), GetToken())
 		if err != nil {
 			return nil, err
 		}
