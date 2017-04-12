@@ -24,7 +24,7 @@ func NewVerifyCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "verify TOKEN",
 		Short:   "Verify account",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {
 				return errors.New("token cannot be empty")
