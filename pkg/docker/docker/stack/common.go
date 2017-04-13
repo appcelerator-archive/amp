@@ -3,10 +3,10 @@ package stack
 import (
 	"golang.org/x/net/context"
 
-	"github.com/appcelerator/amp/pkg/docker/docker/compose/convert"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/cli/compose/convert"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/opts"
 )
@@ -47,4 +47,14 @@ func getStackNetworks(
 	return apiclient.NetworkList(
 		ctx,
 		types.NetworkListOptions{Filters: getStackFilter(namespace)})
+}
+
+func getStackSecrets(
+	ctx context.Context,
+	apiclient client.APIClient,
+	namespace string,
+) ([]swarm.Secret, error) {
+	return apiclient.SecretList(
+		ctx,
+		types.SecretListOptions{Filters: getStackFilter(namespace)})
 }

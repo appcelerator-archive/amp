@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/appcelerator/amp/pkg/docker/docker/compose/convert" //{AMP} make it local
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/cli/compose/convert" //{AMP} make it local
 	//"github.com/docker/docker/cli" {AMP}: remove it
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/client"
