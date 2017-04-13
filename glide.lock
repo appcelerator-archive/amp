@@ -1,6 +1,10 @@
-hash: 94b4941c63ea2c7c99f31e4ed0b543b8f909ffc83129322dd7ff6307753921e4
-updated: 2017-04-05T13:40:27.411542688Z
+hash: a719108081fd8109fe82514f91cc66151a7ddc391eb5405773977538222cf874
+updated: 2017-04-13T17:58:34.564256502Z
 imports:
+- name: github.com/agl/ed25519
+  version: 5312a61534124124185d41f09206b9fef1d88403
+  subpackages:
+  - edwards25519
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
@@ -20,6 +24,7 @@ imports:
   - etcdserver/etcdserverpb
   - mvcc/mvccpb
   - pkg/tlsutil
+  - raft/raftpb
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -29,10 +34,20 @@ imports:
 - name: github.com/docker/distribution
   version: 0700fa570d7bcc1b3e46ee127c4489fd25f4daa3
   subpackages:
+  - context
   - digestset
   - reference
+  - registry/api/errcode
+  - registry/api/v2
+  - registry/client
+  - registry/client/auth
+  - registry/client/auth/challenge
+  - registry/client/transport
+  - registry/storage/cache
+  - registry/storage/cache/memory
+  - uuid
 - name: github.com/docker/docker
-  version: 2f35d73b7dc7a9e234ea06f6145a26c37472c775
+  version: 2878a859b5ea11d4d380a9e65c3db51eead84816
   subpackages:
   - api
   - api/types
@@ -50,28 +65,96 @@ imports:
   - api/types/time
   - api/types/versions
   - api/types/volume
+  - cli
+  - cli/command
+  - cli/command/formatter
+  - cli/command/idresolver
+  - cli/command/inspect
+  - cli/command/node
+  - cli/command/service
+  - cli/command/service/progress
+  - cli/command/task
+  - cli/config
+  - cli/config/configfile
+  - cli/config/credentials
+  - cli/flags
+  - cli/trust
   - client
+  - dockerversion
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/homedir
+  - pkg/httputils
+  - pkg/idtools
   - pkg/ioutils
+  - pkg/jsonlog
+  - pkg/jsonmessage
   - pkg/longpath
+  - pkg/parsers/kernel
+  - pkg/pools
+  - pkg/progress
+  - pkg/promise
   - pkg/random
   - pkg/stdcopy
+  - pkg/streamformatter
   - pkg/stringid
+  - pkg/stringutils
   - pkg/system
+  - pkg/tarsum
   - pkg/templates
   - pkg/term
   - pkg/term/windows
   - pkg/testutil/assert
   - pkg/tlsconfig
+  - pkg/useragent
+  - registry
+  - runconfig/opts
+- name: github.com/docker/docker-credential-helpers
+  version: 71779cf7f595bf47f5a56d0629ce044e59b1cffa
+  subpackages:
+  - client
+  - credentials
+- name: github.com/docker/go
+  version: d30aec9fd63c35133f8f79c3412ad91a3b08be06
+  subpackages:
+  - canonical/json
 - name: github.com/docker/go-connections
   version: e15c02316c12de00874640cd76311849de2aeed5
   subpackages:
   - nat
   - sockets
   - tlsconfig
+- name: github.com/docker/go-events
+  version: aa2e3b613fbbfdddbe055a7b9e3ce271cfd83eca
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
   version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
+- name: github.com/docker/notary
+  version: 86e2ee95b8674efa2d4d30eb2c91ee88ce8d99ac
+  subpackages:
+  - client
+  - client/changelist
+  - cryptoservice
+  - passphrase
+  - storage
+  - trustmanager
+  - trustmanager/yubikey
+  - trustpinning
+  - tuf
+  - tuf/data
+  - tuf/signed
+  - tuf/utils
+  - tuf/validation
+- name: github.com/docker/swarmkit
+  version: be68371f3dd628105efa790fa4620c4c8dafcca5
+  subpackages:
+  - api
+  - api/deepcopy
+  - api/defaults
+  - manager/raftselector
+  - protobuf/plugin
 - name: github.com/eapache/go-resiliency
   version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
   subpackages:
@@ -81,7 +164,7 @@ imports:
 - name: github.com/eapache/queue
   version: ded5959c0d4e360646dc9e9908cff48666781367
 - name: github.com/elastic/beats
-  version: cfd95705b31e98a7e8fea22805fb6d20ec5c396b
+  version: ce0ba232f2ab1b133e7e70cf2287a314ba604055
   subpackages:
   - libbeat/beat
   - libbeat/cfgfile
@@ -142,6 +225,8 @@ imports:
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/fatih/structs
   version: a720dfa8df582c51dee1b36feabb906bde1588bd
+- name: github.com/flynn-archive/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/garyburd/redigo
@@ -154,11 +239,13 @@ imports:
 - name: github.com/go-errors/errors
   version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/gogo/protobuf
-  version: 909568be09de550ed094403c2bf8a261b5bb730a
+  version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
   - gogoproto
   - proto
   - protoc-gen-gogo/descriptor
+  - sortkeys
+  - types
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
@@ -167,6 +254,10 @@ imports:
   - ptypes/empty
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -221,12 +312,16 @@ imports:
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
+- name: github.com/mattn/go-shellwords
+  version: 02e3cf038dcea8290e44424da473dd12be796a8a
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
 - name: github.com/Microsoft/go-winio
   version: fff283ad5116362ca252298cfc9b95828956d85d
+- name: github.com/miekg/pkcs11
+  version: 7283ca79f35edb89bc1b4ecae7f86a3680ce737f
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/hashstructure
@@ -248,10 +343,17 @@ imports:
   version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
 - name: github.com/nranchev/go-libGeoIP
   version: c78e8bd2dd3599feb21fd30886043979e82fe948
+- name: github.com/Nvveen/Gotty
+  version: cd527374f1e5bff4938207604a14f2e38a9cf512
 - name: github.com/oleiade/reflections
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/go-digest
   version: aa2ec055abd10d26d539eb630a92241b781ce4bc
+- name: github.com/opencontainers/runc
+  version: f8ce01dbdc7d16f74423c0bd23d8dc8565f24e9e
+  subpackages:
+  - libcontainer/system
+  - libcontainer/user
 - name: github.com/ory-am/common
   version: eaf2f2a2e18295ffc4e89d07a9556903d22b4e79
   subpackages:
@@ -288,7 +390,6 @@ imports:
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
-  - log
   - model
 - name: github.com/prometheus/procfs
   version: a1dba9ce8baed984a2495b658c82687f8157b98f
@@ -334,6 +435,12 @@ imports:
   subpackages:
   - assert
   - require
+- name: github.com/xeipuuv/gojsonpointer
+  version: 6fe8760cad3569743d51ddbb243b26f8456742dc
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 702b404897d4364af44dc8dcabc9815947942325
 - name: golang.org/x/crypto
   version: 1351f936d976c60a0a48d728281922cf63eafb8d
   subpackages:
@@ -360,18 +467,20 @@ imports:
   subpackages:
   - unix
   - windows
-  - windows/registry
   - windows/svc
   - windows/svc/debug
-  - windows/svc/eventlog
 - name: golang.org/x/text
   version: d69c40b4be55797923cec7457fac7a244d91a9b6
   subpackages:
   - encoding
   - transform
   - unicode/norm
+- name: golang.org/x/time
+  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
+  subpackages:
+  - rate
 - name: google.golang.org/grpc
-  version: cdee119ee21e61eef7093a41ba148fa83585e143
+  version: 8050b9cbc271307e5a716a9d782803d09b0d6f2d
   subpackages:
   - codes
   - credentials
@@ -413,7 +522,7 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v5
-  version: cf4e58efdcee2e8e7c18dad44d51ed166fb256c2
+  version: f698dfea7c6cb058bee5de042f1ad3387f678ab1
   subpackages:
   - uritemplates
 - name: gopkg.in/redis.v5

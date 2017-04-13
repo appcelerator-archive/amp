@@ -1,4 +1,4 @@
-version: "3"
+version: "3.2"
 
 services:
   foo:
@@ -45,6 +45,7 @@ services:
         window: 120s
       placement:
         constraints: [node=foo]
+      endpoint_mode: dnsrr
 
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
@@ -219,6 +220,10 @@ services:
       - ~/configs:/etc/configs/:ro
       # Named volume
       - datavolume:/var/lib/mysql
+      - type: bind
+        source: ./opt
+        target: /opt
+        consistency: cached
 
     working_dir: /code
 

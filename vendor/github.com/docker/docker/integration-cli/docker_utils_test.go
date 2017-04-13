@@ -21,6 +21,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/integration-cli/checker"
+	"github.com/docker/docker/integration-cli/cli"
+	"github.com/docker/docker/integration-cli/cli/build"
 	"github.com/docker/docker/integration-cli/daemon"
 	"github.com/docker/docker/integration-cli/registry"
 	"github.com/docker/docker/integration-cli/request"
@@ -77,77 +79,24 @@ func deleteImages(images ...string) error {
 	return icmd.RunCmd(icmd.Cmd{Command: append(args, images...)}).Error
 }
 
+// Deprecated: use cli.Docker or cli.DockerCmd
 func dockerCmdWithError(args ...string) (string, int, error) {
-	if err := validateArgs(args...); err != nil {
-		return "", 0, err
-	}
-	result := icmd.RunCommand(dockerBinary, args...)
+	result := cli.Docker(cli.Args(args...))
 	if result.Error != nil {
 		return result.Combined(), result.ExitCode, result.Compare(icmd.Success)
 	}
 	return result.Combined(), result.ExitCode, result.Error
 }
 
-func dockerCmdWithStdoutStderr(c *check.C, args ...string) (string, string, int) {
-	if err := validateArgs(args...); err != nil {
-		c.Fatalf(err.Error())
-	}
-
-	result := icmd.RunCommand(dockerBinary, args...)
-	c.Assert(result, icmd.Matches, icmd.Success)
-	return result.Stdout(), result.Stderr(), result.ExitCode
-}
-
+// Deprecated: use cli.Docker or cli.DockerCmd
 func dockerCmd(c *check.C, args ...string) (string, int) {
-	if err := validateArgs(args...); err != nil {
-		c.Fatalf(err.Error())
-	}
-	result := icmd.RunCommand(dockerBinary, args...)
-	c.Assert(result, icmd.Matches, icmd.Success)
+	result := cli.DockerCmd(c, args...)
 	return result.Combined(), result.ExitCode
 }
 
+// Deprecated: use cli.Docker or cli.DockerCmd
 func dockerCmdWithResult(args ...string) *icmd.Result {
-	return icmd.RunCommand(dockerBinary, args...)
-}
-
-func binaryWithArgs(args ...string) []string {
-	return append([]string{dockerBinary}, args...)
-}
-
-// execute a docker command with a timeout
-func dockerCmdWithTimeout(timeout time.Duration, args ...string) *icmd.Result {
-	if err := validateArgs(args...); err != nil {
-		return &icmd.Result{Error: err}
-	}
-	return icmd.RunCmd(icmd.Cmd{Command: binaryWithArgs(args...), Timeout: timeout})
-}
-
-// execute a docker command in a directory
-func dockerCmdInDir(c *check.C, path string, args ...string) (string, int, error) {
-	if err := validateArgs(args...); err != nil {
-		c.Fatalf(err.Error())
-	}
-	result := icmd.RunCmd(icmd.Cmd{Command: binaryWithArgs(args...), Dir: path})
-	return result.Combined(), result.ExitCode, result.Error
-}
-
-// validateArgs is a checker to ensure tests are not running commands which are
-// not supported on platforms. Specifically on Windows this is 'busybox top'.
-func validateArgs(args ...string) error {
-	if testEnv.DaemonPlatform() != "windows" {
-		return nil
-	}
-	foundBusybox := -1
-	for key, value := range args {
-		if strings.ToLower(value) == "busybox" {
-			foundBusybox = key
-		}
-		if (foundBusybox != -1) && (key == foundBusybox+1) && (strings.ToLower(value) == "top") {
-			return errors.New("cannot use 'busybox top' in tests on Windows. Use runSleepingContainer()")
-		}
-	}
-	return nil
+	return cli.Docker(cli.Args(args...))
 }
 
 func findContainerIP(c *check.C, id string, network string) string {
@@ -351,7 +300,7 @@ func newRemoteFileServer(c *check.C, ctx *FakeContext) *remoteFileServer {
 	// Build the image
 	fakeContextAddDockerfile(c, ctx, `FROM httpserver
 COPY . /static`)
-	buildImageSuccessfully(c, image, withoutCache, withExternalBuildContext(ctx))
+	buildImageSuccessfully(c, image, build.WithoutCache, withExternalBuildContext(ctx))
 
 	// Start the container
 	dockerCmd(c, "run", "-d", "-P", "--name", container, image)
@@ -389,6 +338,7 @@ func inspectFieldAndUnmarshall(c *check.C, name, field string, output interface{
 	}
 }
 
+// Deprecated: use cli.Inspect
 func inspectFilter(name, filter string) (string, error) {
 	format := fmt.Sprintf("{{%s}}", filter)
 	result := icmd.RunCommand(dockerBinary, "inspect", "-f", format, name)
@@ -398,10 +348,12 @@ func inspectFilter(name, filter string) (string, error) {
 	return strings.TrimSpace(result.Combined()), nil
 }
 
+// Deprecated: use cli.Inspect
 func inspectFieldWithError(name, field string) (string, error) {
 	return inspectFilter(name, fmt.Sprintf(".%s", field))
 }
 
+// Deprecated: use cli.Inspect
 func inspectField(c *check.C, name, field string) string {
 	out, err := inspectFilter(name, fmt.Sprintf(".%s", field))
 	if c != nil {
@@ -410,6 +362,7 @@ func inspectField(c *check.C, name, field string) string {
 	return out
 }
 
+// Deprecated: use cli.Inspect
 func inspectFieldJSON(c *check.C, name, field string) string {
 	out, err := inspectFilter(name, fmt.Sprintf("json .%s", field))
 	if c != nil {
@@ -418,6 +371,7 @@ func inspectFieldJSON(c *check.C, name, field string) string {
 	return out
 }
 
+// Deprecated: use cli.Inspect
 func inspectFieldMap(c *check.C, name, path, field string) string {
 	out, err := inspectFilter(name, fmt.Sprintf("index .%s %q", path, field))
 	if c != nil {
@@ -426,6 +380,7 @@ func inspectFieldMap(c *check.C, name, path, field string) string {
 	return out
 }
 
+// Deprecated: use cli.Inspect
 func inspectMountSourceField(name, destination string) (string, error) {
 	m, err := inspectMountPoint(name, destination)
 	if err != nil {
@@ -434,6 +389,7 @@ func inspectMountSourceField(name, destination string) (string, error) {
 	return m.Source, nil
 }
 
+// Deprecated: use cli.Inspect
 func inspectMountPoint(name, destination string) (types.MountPoint, error) {
 	out, err := inspectFilter(name, "json .Mounts")
 	if err != nil {
@@ -445,6 +401,7 @@ func inspectMountPoint(name, destination string) (types.MountPoint, error) {
 
 var errMountNotFound = errors.New("mount point not found")
 
+// Deprecated: use cli.Inspect
 func inspectMountPointJSON(j, destination string) (types.MountPoint, error) {
 	var mp []types.MountPoint
 	if err := json.Unmarshal([]byte(j), &mp); err != nil {
@@ -466,6 +423,7 @@ func inspectMountPointJSON(j, destination string) (types.MountPoint, error) {
 	return *m, nil
 }
 
+// Deprecated: use cli.Inspect
 func inspectImage(c *check.C, name, filter string) string {
 	args := []string{"inspect", "--type", "image"}
 	if filter != "" {
@@ -484,26 +442,14 @@ func getIDByName(c *check.C, name string) string {
 	return id
 }
 
-func buildImageSuccessfully(c *check.C, name string, cmdOperators ...func(*icmd.Cmd) func()) {
+// Deprecated: use cli.Build
+func buildImageSuccessfully(c *check.C, name string, cmdOperators ...cli.CmdOperator) {
 	buildImage(name, cmdOperators...).Assert(c, icmd.Success)
 }
 
-func buildImage(name string, cmdOperators ...func(*icmd.Cmd) func()) *icmd.Result {
-	cmd := icmd.Command(dockerBinary, "build", "-t", name)
-	for _, op := range cmdOperators {
-		deferFn := op(&cmd)
-		if deferFn != nil {
-			defer deferFn()
-		}
-	}
-	return icmd.RunCmd(cmd)
-}
-
-func withBuildContextPath(path string) func(*icmd.Cmd) func() {
-	return func(cmd *icmd.Cmd) func() {
-		cmd.Command = append(cmd.Command, path)
-		return nil
-	}
+// Deprecated: use cli.Build
+func buildImage(name string, cmdOperators ...cli.CmdOperator) *icmd.Result {
+	return cli.Docker(cli.Build(name), cmdOperators...)
 }
 
 func withExternalBuildContext(ctx *FakeContext) func(*icmd.Cmd) func() {
@@ -528,18 +474,6 @@ func withBuildContext(c *check.C, contextOperators ...func(*FakeContext) error) 
 	}
 }
 
-func withBuildFlags(flags ...string) func(*icmd.Cmd) func() {
-	return func(cmd *icmd.Cmd) func() {
-		cmd.Command = append(cmd.Command, flags...)
-		return nil
-	}
-}
-
-func withoutCache(cmd *icmd.Cmd) func() {
-	cmd.Command = append(cmd.Command, "--no-cache")
-	return nil
-}
-
 func withFile(name, content string) func(*FakeContext) error {
 	return func(ctx *FakeContext) error {
 		return ctx.Add(name, content)
@@ -554,24 +488,9 @@ func closeBuildContext(c *check.C, ctx *FakeContext) func() {
 	}
 }
 
-func withDockerfile(dockerfile string) func(*icmd.Cmd) func() {
-	return func(cmd *icmd.Cmd) func() {
-		cmd.Command = append(cmd.Command, "-")
-		cmd.Stdin = strings.NewReader(dockerfile)
-		return nil
-	}
-}
-
 func trustedBuild(cmd *icmd.Cmd) func() {
 	trustedCmd(cmd)
 	return nil
-}
-
-func withEnvironmentVariales(envs ...string) func(cmd *icmd.Cmd) func() {
-	return func(cmd *icmd.Cmd) func() {
-		cmd.Env = envs
-		return nil
-	}
 }
 
 type gitServer interface {

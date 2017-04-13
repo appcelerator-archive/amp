@@ -28,6 +28,7 @@
 		people = [
 			"aaronlehmann",
 			"akihirosuda",
+			"albers",
 			"aluzzardi",
 			"anusha",
 			"coolljt0725",
@@ -35,9 +36,11 @@
 			"crosbymichael",
 			"dnephin",
 			"duglin",
+			"ehazlett",
 			"estesp",
 			"icecrime",
 			"jhowardmsft",
+			"johnstep",
 			"justincormack",
 			"lk4d4",
 			"mavenugo",
@@ -227,6 +230,11 @@
 	Email = "al@docker.com"
 	GitHub = "aluzzardi"
 
+	[people.albers]
+	Name = "Harald Albers"
+	Email = "github@albersweb.de"
+	GitHub = "albers"
+
 	[people.andrewhsu]
 	Name = "Andrew Hsu"
 	Email = "andrewhsu@docker.com"
@@ -321,6 +329,11 @@
 	Name = "Jessie Frazelle"
 	Email = "jess@linux.com"
 	GitHub = "jessfraz"
+
+	[people.johnstep]
+	Name = "John Stephens"
+	Email = "johnstep@docker.com"
+	GitHub = "johnstep"
 
 	[people.justincormack]
 	Name = "Justin Cormack"

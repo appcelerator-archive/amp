@@ -370,6 +370,9 @@ func (d *Driver) Get(id, mountLabel string) (string, error) {
 	mountPath, err := hcsshim.GetLayerMountPath(d.info, rID)
 	if err != nil {
 		d.ctr.Decrement(rID)
+		if err := hcsshim.UnprepareLayer(d.info, rID); err != nil {
+			logrus.Warnf("Failed to Unprepare %s: %s", id, err)
+		}
 		if err2 := hcsshim.DeactivateLayer(d.info, rID); err2 != nil {
 			logrus.Warnf("Failed to Deactivate %s: %s", id, err)
 		}
@@ -402,8 +405,14 @@ func (d *Driver) Put(id string) error {
 		return nil
 	}
 	d.cacheMu.Lock()
+	_, exists := d.cache[rID]
 	delete(d.cache, rID)
 	d.cacheMu.Unlock()
+
+	// If the cache was not populated, then the layer was left unprepared and deactivated
+	if !exists {
+		return nil
+	}
 
 	if err := hcsshim.UnprepareLayer(d.info, rID); err != nil {
 		return err
@@ -412,7 +421,29 @@ func (d *Driver) Put(id string) error {
 }
 
 // Cleanup ensures the information the driver stores is properly removed.
+// We use this opportunity to cleanup any -removing folders which may be
+// still left if the daemon was killed while it was removing a layer.
 func (d *Driver) Cleanup() error {
+
+	items, err := ioutil.ReadDir(d.info.HomeDir)
+	if err != nil {
+		return err
+	}
+
+	// Note we don't return an error below - it's possible the files
+	// are locked. However, next time around after the daemon exits,
+	// we likely will be able to to cleanup successfully. Instead we log
+	// warnings if there are errors.
+	for _, item := range items {
+		if item.IsDir() && strings.HasSuffix(item.Name(), "-removing") {
+			if err := hcsshim.DestroyLayer(d.info, item.Name()); err != nil {
+				logrus.Warnf("Failed to cleanup %s: %s", item.Name(), err)
+			} else {
+				logrus.Infof("Cleaned up %s", item.Name())
+			}
+		}
+	}
+
 	return nil
 }
 

@@ -20,6 +20,17 @@ The following list of features are deprecated in Engine.
 To learn more about Docker Engine's deprecation policy,
 see [Feature Deprecation Policy](https://docs.docker.com/engine/#feature-deprecation-policy).
 
+### `-g` and `--graph` flags on `dockerd`
+
+**Deprecated In Release: v17.05.0**
+
+The `-g` or `--graph` flag for the `dockerd` or `docker daemon` command was
+used to indicate the directory in which to store persistent data and resource
+configuration and has been replaced with the more descriptive `--data-root`
+flag.
+
+These flags were added before Docker 1.0, so will not be _removed_, only
+_hidden_, to discourage their use.
 
 ### Top-level network properties in NetworkSettings
 
@@ -40,7 +51,7 @@ docker 1.9, but kept around for backward compatibility.
 Refer to [#17538](https://github.com/docker/docker/pull/17538) for further
 information.
 
-## `filter` param for `/images/json` endpoint
+### `filter` param for `/images/json` endpoint
 **Deprecated In Release: [v1.13.0](https://github.com/docker/docker/releases/tag/v1.13.0)**
 
 **Target For Removal In Release: v17.12**
@@ -288,3 +299,12 @@ Since 1.9, Docker Content Trust Offline key has been renamed to Root key and the
 
 - DOCKER_CONTENT_TRUST_OFFLINE_PASSPHRASE is now named DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE
 - DOCKER_CONTENT_TRUST_TAGGING_PASSPHRASE is now named DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE
+
+### `--api-enable-cors` flag on dockerd
+
+**Deprecated In Release: [v1.6.0](https://github.com/docker/docker/releases/tag/v1.6.0)**
+
+**Target For Removal In Release: v17.09**
+
+The flag `--api-enable-cors` is deprecated since v1.6.0. Use the flag
+`--api-cors-header` instead.

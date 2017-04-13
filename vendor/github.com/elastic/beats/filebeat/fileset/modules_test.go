@@ -29,6 +29,7 @@ func TestNewModuleRegistry(t *testing.T) {
 		{Module: "nginx"},
 		{Module: "mysql"},
 		{Module: "system"},
+		{Module: "auditd"},
 	}
 
 	reg, err := newModuleRegistry(modulesPath, configs, nil, "5.2.0")
@@ -36,9 +37,10 @@ func TestNewModuleRegistry(t *testing.T) {
 	assert.NotNil(t, reg)
 
 	expectedModules := map[string][]string{
+		"auditd": {"log"},
 		"nginx":  {"access", "error"},
 		"mysql":  {"slowlog", "error"},
-		"system": {"syslog"},
+		"system": {"syslog", "auth"},
 	}
 
 	assert.Equal(t, len(expectedModules), len(reg.registry))
@@ -98,7 +100,7 @@ func TestNewModuleRegistryConfig(t *testing.T) {
 	assert.NotContains(t, reg.registry["nginx"], "error")
 }
 
-func TestAppplyOverrides(t *testing.T) {
+func TestApplyOverrides(t *testing.T) {
 
 	falseVar := false
 	trueVar := true

@@ -59,6 +59,8 @@ Config provides the base accessible fields for working with V0 plugin format
 
         - **docker.authz/1.0**
 
+        - **docker.logdriver/1.0**
+
     - **`socket`** *string*
 
       socket is the name of the socket the engine should use to communicate with the plugins.
@@ -114,6 +116,11 @@ Config provides the base accessible fields for working with V0 plugin format
     - **`options`** *string array*
 
 	  options of the mount.
+
+- **`ipchost`** *boolean*
+   Access to host ipc namespace.
+- **`pidhost`** *boolean*
+   Access to host pid namespace.
 
 - **`propagatedMount`** *string*
 

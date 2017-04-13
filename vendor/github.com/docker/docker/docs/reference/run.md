@@ -458,10 +458,6 @@ If a container is connected to the default bridge network and `linked`
 with other containers, then the container's `/etc/hosts` file is updated
 with the linked container's name.
 
-If the container is connected to user-defined network, the container's
-`/etc/hosts` file is updated with names of all other containers in that
-user-defined network.
-
 > **Note** Since Docker may live update the container’s `/etc/hosts` file, there
 may be situations when processes inside the container can end up reading an
 empty or incomplete `/etc/hosts` file. In most cases, retrying the read again
@@ -1466,6 +1462,7 @@ Similarly the operator can set the **HOSTNAME** (Linux) or **COMPUTERNAME** (Win
   --health-interval       Time between running the check
   --health-retries        Consecutive failures needed to report unhealthy
   --health-timeout        Maximum time to allow one check to run
+  --health-start-period   Start period for the container to initialize before starting health-retries countdown
   --no-healthcheck        Disable any container-specified HEALTHCHECK
 ```
 

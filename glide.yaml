@@ -11,13 +11,15 @@ import:
   subpackages:
   - proto
   - ptypes/empty
+- package: github.com/gogo/protobuf
+  version: v0.4
 - package: google.golang.org/grpc
   version: ^1.2.0
   subpackages:
   - codes
   - metadata
 - package: github.com/docker/docker
-  version: ^v17.04.0-ce-rc1
+  version: ^v17.04.0-ce
   subpackages:
   - api/types
   - api/types/container
@@ -74,6 +76,9 @@ import:
   version: ^5.3.0
 - package: github.com/pkg/errors
   version: ^0.8.0
+- package: github.com/mattn/go-shellwords
+  version: ^v1.0.3
+- package: github.com/xeipuuv/gojsonschema
 testImport:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/mhale/smtpd

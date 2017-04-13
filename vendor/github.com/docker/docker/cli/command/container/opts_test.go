@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/docker/docker/runconfig"
 	"github.com/docker/go-connections/nat"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -51,7 +52,12 @@ func parseRun(args []string) (*container.Config, *container.HostConfig, *network
 	if err := flags.Parse(args); err != nil {
 		return nil, nil, nil, err
 	}
-	return parse(flags, copts)
+	// TODO: fix tests to accept ContainerConfig
+	containerConfig, err := parse(flags, copts)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return containerConfig.Config, containerConfig.HostConfig, containerConfig.NetworkingConfig, err
 }
 
 func parsetest(t *testing.T, args string) (*container.Config, *container.HostConfig, error) {
@@ -219,7 +225,7 @@ func compareRandomizedStrings(a, b, c, d string) error {
 	if a == d && b == c {
 		return nil
 	}
-	return fmt.Errorf("strings don't match")
+	return errors.Errorf("strings don't match")
 }
 
 // Simple parse with MacAddress validation
@@ -495,8 +501,8 @@ func TestParseHealth(t *testing.T) {
 	checkError("--no-healthcheck conflicts with --health-* options",
 		"--no-healthcheck", "--health-cmd=/check.sh -q", "img", "cmd")
 
-	health = checkOk("--health-timeout=2s", "--health-retries=3", "--health-interval=4.5s", "img", "cmd")
-	if health.Timeout != 2*time.Second || health.Retries != 3 || health.Interval != 4500*time.Millisecond {
+	health = checkOk("--health-timeout=2s", "--health-retries=3", "--health-interval=4.5s", "--health-start-period=5s", "img", "cmd")
+	if health.Timeout != 2*time.Second || health.Retries != 3 || health.Interval != 4500*time.Millisecond || health.StartPeriod != 5*time.Second {
 		t.Fatalf("--health-*: got %#v", health)
 	}
 }
@@ -746,14 +752,14 @@ func callDecodeContainerConfig(volumes []string, binds []string) (*container.Con
 		w.Config.Volumes[v] = struct{}{}
 	}
 	if b, err = json.Marshal(w); err != nil {
-		return nil, nil, fmt.Errorf("Error on marshal %s", err.Error())
+		return nil, nil, errors.Errorf("Error on marshal %s", err.Error())
 	}
 	c, h, _, err = runconfig.DecodeContainerConfig(bytes.NewReader(b))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Error parsing %s: %v", string(b), err)
+		return nil, nil, errors.Errorf("Error parsing %s: %v", string(b), err)
 	}
 	if c == nil || h == nil {
-		return nil, nil, fmt.Errorf("Empty config or hostconfig")
+		return nil, nil, errors.Errorf("Empty config or hostconfig")
 	}
 
 	return c, h, err

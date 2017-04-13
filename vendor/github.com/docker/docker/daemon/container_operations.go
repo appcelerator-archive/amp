@@ -546,6 +546,28 @@ func (daemon *Daemon) allocateNetwork(container *container.Container) error {
 		}
 	}
 
+	// If the container is not to be connected to any network,
+	// create its network sandbox now if not present
+	if len(networks) == 0 {
+		if nil == daemon.getNetworkSandbox(container) {
+			options, err := daemon.buildSandboxOptions(container)
+			if err != nil {
+				return err
+			}
+			sb, err := daemon.netController.NewSandbox(container.ID, options...)
+			if err != nil {
+				return err
+			}
+			container.UpdateSandboxNetworkSettings(sb)
+			defer func() {
+				if err != nil {
+					sb.Delete()
+				}
+			}()
+		}
+
+	}
+
 	if err := container.WriteHostConfig(); err != nil {
 		return err
 	}
@@ -916,7 +938,7 @@ func (daemon *Daemon) releaseNetwork(container *container.Container) {
 	settings := container.NetworkSettings.Networks
 	container.NetworkSettings.Ports = nil
 
-	if sid == "" || len(settings) == 0 {
+	if sid == "" {
 		return
 	}
 
@@ -1050,7 +1072,9 @@ func (daemon *Daemon) DeactivateContainerServiceBinding(containerName string) er
 	}
 	sb := daemon.getNetworkSandbox(container)
 	if sb == nil {
-		return fmt.Errorf("network sandbox does not exist for container %s", containerName)
+		// If the network sandbox is not found, then there is nothing to deactivate
+		logrus.Debugf("Could not find network sandbox for container %s on service binding deactivation request", containerName)
+		return nil
 	}
 	return sb.DisableService()
 }
