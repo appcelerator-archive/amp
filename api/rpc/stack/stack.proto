@@ -16,7 +16,8 @@ message DeployRequest {
 }
 
 message DeployReply {
-  string answer =1;
+  string full_name = 1;
+  string answer =2;
 }
 
 message ListRequest {}

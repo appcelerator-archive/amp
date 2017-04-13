@@ -33,7 +33,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if err := dockerCli.Initialize(opts); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
 	}
-	fileName := fmt.Sprintf("/tmp/%d-%s.yml", time.Now().UnixNano(), in.Name)
+	fileName := fmt.Sprintf("/tmp/%d-%s.yml", time.Now().UnixNano(), in.Name[0:16])
 	if err := ioutil.WriteFile(fileName, []byte(in.Compose), 0666); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
@@ -41,7 +41,8 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
-	deployOpt := stack.NewDeployOptions(fmt.Sprintf("%s_%s", stackInst.Name, stackInst.Id), fileName, true)
+	fullName := fmt.Sprintf("%s_%s", stackInst.Name, stackInst.Id)
+	deployOpt := stack.NewDeployOptions(fullName, fileName, true)
 	if err := stack.RunDeploy(dockerCli, deployOpt); err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -49,7 +50,8 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	out, _ := ioutil.ReadAll(r)
 	outs := strings.Replace(string(out), "docker", "amp", -1)
 	ans := &DeployReply{
-		Answer: string(outs),
+		FullName: fullName,
+		Answer:   string(outs),
 	}
 	return ans, nil
 }
