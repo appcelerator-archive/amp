@@ -41,10 +41,6 @@ metricbeat.modules:
   timeout: {{ m.timeout }}
   {% endif -%}
 
-  {% if m.namespace -%}
-  namespace: {{ m.namespace }}
-  {% endif -%}
-
   {% if m.processes -%}
   processes: {{ m.processes }}
   {% endif -%}
@@ -81,9 +77,6 @@ metricbeat.modules:
   {% for k, v in m.extras.items() -%}
   {{ k }}: {{ v }}
   {% endfor %}
-  {% endif -%}
-  {% if m.additional_content -%}
-  {{ m.additional_content }}
   {% endif -%}
 {%- endfor %}
 

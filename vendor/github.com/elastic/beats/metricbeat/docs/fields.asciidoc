@@ -20,7 +20,6 @@ grouped in the following categories:
 * <<exported-fields-couchbase>>
 * <<exported-fields-docker>>
 * <<exported-fields-haproxy>>
-* <<exported-fields-jolokia>>
 * <<exported-fields-kafka>>
 * <<exported-fields-mongodb>>
 * <<exported-fields-mysql>>
@@ -2803,20 +2802,6 @@ Configured queue limit (maxqueue) for the server, or nothing if the value of max
 type: integer
 
 The average queue time in ms over the last 1024 requests.
-
-
-[[exported-fields-jolokia]]
-== Jolokia Fields
-
-[]beta
-Jolokia Module
-
-
-
-[float]
-== jolokia Fields
-
-jolokia contains metrics exposed via jolokia agent
 
 
 [[exported-fields-kafka]]

@@ -10,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 // verify all containers to open metrics stream if not already done

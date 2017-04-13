@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"text/template"
 
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
-	"github.com/docker/docker/pkg/templates"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -32,7 +32,7 @@ type ClientVersionInfo struct {
 	Arch      string
 }
 
-var template = `Client:
+var t = `Client:
  Version:       {{.Client.Version}}
  Build:         {{.Client.Build}}
  Server:        {{.Client.Server}}
@@ -59,7 +59,7 @@ func NewVersionCommand(c cli.Interface) *cobra.Command {
 
 // Print version info of client and server (if connected).
 func showVersion(c cli.Interface) error {
-	tmpl, err := templates.Parse(template)
+	tmpl, err := template.New("tmpl").Parse(t)
 	if err != nil {
 		return fmt.Errorf("template parsing error: %v\n", err)
 	}

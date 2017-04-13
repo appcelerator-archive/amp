@@ -17,8 +17,7 @@ type PromEvent struct {
 // NewPromEvent creates a prometheus event based on the given string
 func NewPromEvent(line string) PromEvent {
 	// Separate key and value
-	splitPos := strings.LastIndex(line, " ")
-	split := []string{line[:splitPos], line[splitPos+1:]}
+	split := strings.Split(line, " ")
 
 	promEvent := PromEvent{
 		key:       split[0],
@@ -55,11 +54,11 @@ func extractLabels(labelsString string) common.MapStr {
 	keyValuePairs := common.MapStr{}
 
 	// Extract labels
-	labels := strings.Split(labelsString, "\",")
+	labels := strings.Split(labelsString, ",")
 	for _, label := range labels {
 		keyValue := strings.Split(label, "=")
 		// Remove " from value
-		keyValue[1] = strings.Trim(keyValue[1], "\"")
+		keyValue[1] = keyValue[1][1 : len(keyValue[1])-1]
 
 		// Converts value to int or float if needed
 		keyValuePairs[keyValue[0]] = convertValue(keyValue[1])
