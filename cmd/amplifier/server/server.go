@@ -12,6 +12,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/version"
@@ -46,6 +47,7 @@ var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
 	registerStorageServer,
 	registerLogsServer,
+	registerStackServer,
 	registerStatsServer,
 	//registerFunctionServer,
 	registerAccountServer,
@@ -184,4 +186,8 @@ func registerAccountServer(c *Configuration, s *grpc.Server) {
 		Accounts: accounts.NewStore(runtime.Store),
 		Mailer:   runtime.Mailer,
 	})
+}
+
+func registerStackServer(c *Configuration, s *grpc.Server) {
+	stack.RegisterStackServer(s, &stack.Server{})
 }
