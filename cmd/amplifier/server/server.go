@@ -19,6 +19,7 @@ import (
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
+	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
@@ -189,5 +190,7 @@ func registerAccountServer(c *Configuration, s *grpc.Server) {
 }
 
 func registerStackServer(c *Configuration, s *grpc.Server) {
-	stack.RegisterStackServer(s, &stack.Server{})
+	stack.RegisterStackServer(s, &stack.Server{
+		Stacks: stacks.NewStore(runtime.Store),
+	})
 }

@@ -15,6 +15,7 @@ const (
 	OrganizationResource = AmpResource + ":organization"
 	TeamResource         = AmpResource + ":team"
 	FunctionResource     = AmpResource + ":function"
+	StackResource        = AmpResource + ":stack"
 
 	CreateAction = "create"
 	ReadAction   = "read"
@@ -76,12 +77,39 @@ var (
 		},
 	}
 
+	stacksAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{StackResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"organization": &OrganizationRoleCondition{[]OrganizationRole{
+				OrganizationRole_ORGANIZATION_MEMBER,
+				OrganizationRole_ORGANIZATION_OWNER,
+			}},
+		},
+	}
+
+	stacksAdminByUserOwner = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{StackResource},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
+		},
+	}
+
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		organizationsAdminByOrgOwners,
 		teamsAdminByOrgOwnersAndMembers,
 		functionsAdminByOrgOwnersAndMembers,
 		functionsAdminByUserOwner,
+		stacksAdminByOrgOwnersAndMembers,
+		stacksAdminByUserOwner,
 	}
 
 	warden = &ladon.Ladon{
