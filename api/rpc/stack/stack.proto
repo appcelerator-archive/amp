@@ -15,11 +15,15 @@ message DeployRequest {
   bytes compose = 2;
 }
 
-message DeployReply {}
+message DeployReply {
+  string answer =1;
+}
 
 message ListRequest {}
 
-message ListReply {}
+message ListReply {
+ string answer =1;
+}
 
 message RemoveRequest {
   string id = 1;
