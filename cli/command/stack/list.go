@@ -16,6 +16,7 @@ import (
 func NewListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
+		Aliases: []string{"ls"},
 		Short:   "List deployed stacks",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
