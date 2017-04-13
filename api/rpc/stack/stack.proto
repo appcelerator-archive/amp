@@ -7,7 +7,7 @@ import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 service Stack {
   rpc Deploy (DeployRequest) returns (DeployReply);
   rpc List (ListRequest) returns (ListReply);
-  rpc Remove (RemoveRequest) returns (google.protobuf.Empty);
+  rpc Remove (RemoveRequest) returns (RemoveReply);
 }
 
 message DeployRequest {
@@ -27,4 +27,8 @@ message ListReply {
 
 message RemoveRequest {
   string id = 1;
+}
+
+message RemoveReply {
+ string answer =1;
 }

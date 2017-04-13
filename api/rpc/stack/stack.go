@@ -14,7 +14,6 @@ import (
 	"github.com/appcelerator/amp/pkg/docker/docker/stack"
 	"github.com/docker/docker/cli/command"
 	cliflags "github.com/docker/docker/cli/flags"
-	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 )
 
@@ -73,10 +72,10 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 }
 
 // Remove implements stack.Server
-func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*empty.Empty, error) {
+func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	log.Println("[stack] Remove", in.String())
 
-	_, w, _ := os.Pipe()
+	r, w, _ := os.Pipe()
 	dockerCli := command.NewDockerCli(os.Stdin, w, w)
 	opts := cliflags.NewClientOptions()
 	if err := dockerCli.Initialize(opts); err != nil {
@@ -87,13 +86,11 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*empty.Empty, e
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	w.Close()
-	//out, _ := ioutil.ReadAll(r)
-	//outs := strings.Replace(string(out), "docker", "amp", -1)
-	/*
-		ans := &StackReply{
-			Answer: string(outs),
-		}
-	*/
+	out, _ := ioutil.ReadAll(r)
+	outs := strings.Replace(string(out), "docker", "amp", -1)
+	ans := &RemoveReply{
+		Answer: string(outs),
+	}
 	log.Println("[stack] Success: removed", in.Id)
-	return &empty.Empty{}, nil
+	return ans, nil
 }

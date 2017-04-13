@@ -20,7 +20,7 @@ var (
 	opts = &deployOpts{}
 )
 
-// NewStackCommand returns a new instance of the stack command.
+// NewDeployCommand returns a new instance of the stack command.
 func NewDeployCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deploy",
@@ -58,4 +58,3 @@ func deploy(c cli.Interface) error {
 
 	return nil
 }
-
