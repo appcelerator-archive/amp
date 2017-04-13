@@ -30,7 +30,7 @@ func NewStore(store storage.Interface) *Store {
 // Stacks
 
 // CreateStack creates a new stack
-func (s *Store) CreateStack(ctx context.Context, name string, image string) (stack *Stack, err error) {
+func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err error) {
 	// Check if stack already exists
 	stackAlreadyExists, err := s.GetStackByName(ctx, name)
 	if err != nil {
