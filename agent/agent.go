@@ -7,10 +7,11 @@ import (
 	"syscall"
 	"time"
 
+	"fmt"
+
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
 
@@ -20,7 +21,7 @@ const (
 
 // Agent data
 type Agent struct {
-	dockerClient        *client.Client
+	dock                *docker.Docker
 	containers          map[string]*ContainerData
 	eventStreamReading  bool
 	logsSavedDatePeriod int
@@ -36,15 +37,14 @@ func AgentInit(version, build string) error {
 	conf.init(version, build)
 
 	// containers dir creation
-	err := os.MkdirAll(containersDataDir, 0666)
-	if err != nil {
-		log.Fatalln("Unable to create container data directory: ", err)
+	if err := os.MkdirAll(containersDataDir, 0666); err != nil {
+		return fmt.Errorf("Unable to create container data directory: %s", err)
 	}
 
 	// NATS Connect
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Fatalln("Unable to get hostname: ", err)
+		return fmt.Errorf("Unable to get hostname: %s", err)
 	}
 	agent.natsStreaming = ns.NewClient(ns.DefaultURL, ns.ClusterID, os.Args[0]+"-"+hostname, time.Minute)
 	if err = agent.natsStreaming.Connect(); err != nil {
@@ -52,19 +52,17 @@ func AgentInit(version, build string) error {
 	}
 
 	// Connection to Docker
-	defaultHeaders := map[string]string{"User-Agent": "agent"}
-	cli, err := client.NewClient(conf.dockerEngine, docker.DefaultVersion, nil, defaultHeaders)
-	if err != nil {
+	agent.dock = docker.NewClient(conf.dockerEngine, docker.DefaultVersion)
+	if err = agent.dock.Connect(); err != nil {
 		_ = agent.natsStreaming.Close()
 		return err
 	}
-	agent.dockerClient = cli
 	log.Println("Connected to Docker-engine")
 
 	log.Println("Extracting containers list...")
 	agent.containers = make(map[string]*ContainerData)
 	ContainerListOptions := types.ContainerListOptions{All: true}
-	containers, err := agent.dockerClient.ContainerList(context.Background(), ContainerListOptions)
+	containers, err := agent.dock.GetClient().ContainerList(context.Background(), ContainerListOptions)
 	if err != nil {
 		_ = agent.natsStreaming.Close()
 		return err
@@ -105,7 +103,7 @@ func (a *Agent) updateStreams() {
 func (a *Agent) stop() {
 	a.closeLogsStreams()
 	a.closeMetricsStreams()
-	err := a.dockerClient.Close()
+	err := a.dock.GetClient().Close()
 	if err != nil {
 		log.Println("error closing connection to docker client: ", err)
 	}

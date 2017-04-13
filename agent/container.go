@@ -52,7 +52,7 @@ func (a *Agent) updateEventsStream() {
 		args.Add("event", "create")
 		args.Add("event", "start")
 		eventsOptions := types.EventsOptions{Filters: args}
-		stream, err := a.dockerClient.Events(context.Background(), eventsOptions)
+		stream, err := a.dock.GetClient().Events(context.Background(), eventsOptions)
 		a.startEventStream(stream, err)
 	}
 }
@@ -94,7 +94,7 @@ func (a *Agent) updateContainerMap(action string, containerID string) {
 func (a *Agent) addContainer(ID string) {
 	_, ok := a.containers[ID]
 	if !ok {
-		inspect, err := a.dockerClient.ContainerInspect(context.Background(), ID)
+		inspect, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
 		if err == nil {
 			data := ContainerData{
 				ID:            ID,
@@ -164,7 +164,7 @@ func (a *Agent) removeContainer(ID string) {
 func (a *Agent) updateContainer(id string) {
 	data, ok := a.containers[id]
 	if ok {
-		inspect, err := a.dockerClient.ContainerInspect(context.Background(), id)
+		inspect, err := a.dock.GetClient().ContainerInspect(context.Background(), id)
 		if err == nil {
 			// labels = inspect.Config.Labels
 			data.state = inspect.State.Status

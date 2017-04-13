@@ -17,7 +17,7 @@ import (
 func (a *Agent) updateMetricsStreams() {
 	for ID, data := range a.containers {
 		if data.metricsStream == nil || data.metricsReadError {
-			streamb, err := a.dockerClient.ContainerStats(context.Background(), ID, true)
+			streamb, err := a.dock.GetClient().ContainerStats(context.Background(), ID, true)
 			if err != nil {
 				log.Printf("Error opening metrics stream on container: %s\n", data.name)
 			} else {

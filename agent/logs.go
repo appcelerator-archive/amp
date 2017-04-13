@@ -48,7 +48,7 @@ func (a *Agent) openLogsStream(ID string, lastTimeID string) (io.ReadCloser, err
 	if lastTimeID != "" {
 		containerLogsOptions.Since = lastTimeID
 	}
-	return a.dockerClient.ContainerLogs(context.Background(), ID, containerLogsOptions)
+	return a.dock.GetClient().ContainerLogs(context.Background(), ID, containerLogsOptions)
 }
 
 // get last timestamp if exist

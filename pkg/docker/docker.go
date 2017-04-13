@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultURL     = "unix:///var/run/docker.sock"
-	DefaultVersion = "1.24"
+	DefaultVersion = "1.27"
 )
 
 // Docker wrapper
