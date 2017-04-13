@@ -3,23 +3,25 @@
 
 The `amp logs` command is used to query or stream logs. It provides useful filtering options to manage what is presented.
 
+```
     $ amp logs --help
 
-    Usage:	amp logs SERVICE
+    Usage:	amp logs [OPTIONS] SERVICE
 
     Fetch log entries matching provided criteria
 
     Options:
           --container string   Filter by the given container
       -f, --follow             Follow log output
-          --help               Print usage
+      -h, --help               Print usage
       -i, --infra              Include infrastructure logs
       -m, --meta               Display entry metadata
           --msg string         Filter the message content by the given pattern
           --node string        Filter by the given node
       -n, --number int         Number of results (default 1000)
+      -s, --server string      Specify server (host:port)
           --stack string       Filter by the given stack
-
+```
 
 ### Examples
 

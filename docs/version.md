@@ -7,16 +7,16 @@ The `amp version` command displays the current version of AMP.
 ```
     $ amp version
 
-    amp:
+    Client:
      Version:       v0.6.0-dev
-     Build:         16cb488f
-     Address:       172.17.0.1:50101
+     Build:         6f590348
+     Server:        cloud.atomiq.io:50101
      Go version:    go1.8
-     OS/Arch:       linux/amd64
+     OS/Arch:       darwin/amd64
 
-    amplifier:
+    Server:
      Version:       v0.6.0-dev
-     Build:         f11025f6
-     Go version:    go1.8
+     Build:         04daab98
+     Go version:    go1.8.1
      OS/Arch:       linux/amd64
 ```
