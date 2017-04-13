@@ -17,7 +17,7 @@ const (
 // Interface defines the stack data access layer
 type Interface interface {
 	// CreateStack creates a new stack
-	CreateStack(ctx context.Context, name string, image string) (stack *Stack, err error)
+	CreateStack(ctx context.Context, name string) (stack *Stack, err error)
 
 	// GetStack fetches a stack by id
 	GetStack(ctx context.Context, id string) (stack *Stack, err error)
