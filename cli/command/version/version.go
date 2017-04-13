@@ -75,24 +75,30 @@ func showVersion(c cli.Interface) error {
 		},
 	}
 
-	conn := c.ClientConn()
-	client := version.NewVersionClient(conn)
-	reply, err := client.Get(context.Background(), &version.GetRequest{})
+	conn, err := c.Connect()
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
-	v.Server = &version.Info{
-		Version:   reply.Info.Version,
-		Build:     reply.Info.Build,
-		GoVersion: reply.Info.GoVersion,
-		Os:        reply.Info.Os,
-		Arch:      reply.Info.Arch,
+		// print an extra line since grpc debug logging doesn't
+		c.Console().Println()
+	} else {
+		client := version.NewVersionClient(conn)
+		reply, err := client.Get(context.Background(), &version.GetRequest{})
+		if err != nil {
+			return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		}
+		v.Server = &version.Info{
+			Version:   reply.Info.Version,
+			Build:     reply.Info.Build,
+			GoVersion: reply.Info.GoVersion,
+			Os:        reply.Info.Os,
+			Arch:      reply.Info.Arch,
+		}
 	}
 
 	var doc bytes.Buffer
 	if err := tmpl.Execute(&doc, v); err != nil {
 		return fmt.Errorf("executing templating error: %v\n", err)
 	}
+
 	c.Console().Println(doc.String())
-	return err
+	return nil
 }

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -20,6 +21,7 @@ type Interface interface {
 
 	Server() string
 	SetServer(server string)
+	Connect() (*grpc.ClientConn, error)
 	ClientConn() *grpc.ClientConn
 
 	OnInitialize(initializers ...func())
@@ -95,15 +97,28 @@ func (c *cli) OnInitialize(initializers ...func()) {
 	cobra.OnInitialize(initializers...)
 }
 
-// ClientConn returns the grpc connection to the API.
-func (c *cli) ClientConn() *grpc.ClientConn {
+// Connect opens a connection to the grpc API server (if not already connected).
+func (c *cli) Connect() (*grpc.ClientConn, error) {
 	if c.clientConn == nil {
 		var err error
 		c.clientConn, err = NewClientConn(c.Server(), GetToken())
 		if err != nil {
-			c.Console().Fatalln("unable to establish grpc connection: %s", err.Error())
+			// extra newline helpful for grpc errors
+			return nil, fmt.Errorf("\nunable to establish grpc connection: %s", err)
 		}
 	}
+	return c.clientConn, nil
+}
+
+// ClientConn opens a connection if necessary, then returns the grpc connection to the API.
+// If there is an error, this will exit the application with a fatal error.
+func (c *cli) ClientConn() *grpc.ClientConn {
+	conn, err := c.Connect()
+	if err != nil {
+		c.Console().Fatalln(err)
+	}
+
+	c.clientConn = conn
 	return c.clientConn
 }
 
