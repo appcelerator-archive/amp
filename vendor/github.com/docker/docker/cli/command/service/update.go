@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -18,7 +17,8 @@ import (
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
 	"github.com/docker/go-connections/nat"
-	shlex "github.com/flynn-archive/go-shlex"
+	"github.com/docker/swarmkit/api/defaults"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/net/context"
@@ -32,18 +32,18 @@ func newUpdateCommand(dockerCli *command.DockerCli) *cobra.Command {
 		Short: "Update a service",
 		Args:  cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUpdate(dockerCli, cmd.Flags(), args[0])
+			return runUpdate(dockerCli, cmd.Flags(), serviceOpts, args[0])
 		},
 	}
 
 	flags := cmd.Flags()
 	flags.String("image", "", "Service image tag")
-	flags.String("args", "", "Service command args")
+	flags.Var(&ShlexOpt{}, "args", "Service command args")
 	flags.Bool("rollback", false, "Rollback to previous specification")
 	flags.SetAnnotation("rollback", "version", []string{"1.25"})
 	flags.Bool("force", false, "Force update even if no changes require it")
 	flags.SetAnnotation("force", "version", []string{"1.25"})
-	addServiceFlags(cmd, serviceOpts)
+	addServiceFlags(flags, serviceOpts, nil)
 
 	flags.Var(newListOptsVar(), flagEnvRemove, "Remove an environment variable")
 	flags.Var(newListOptsVar(), flagGroupRemove, "Remove a previously added supplementary user group from the container")
@@ -75,6 +75,10 @@ func newUpdateCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.SetAnnotation(flagPlacementPrefAdd, "version", []string{"1.28"})
 	flags.Var(&placementPrefOpts{}, flagPlacementPrefRemove, "Remove a placement preference")
 	flags.SetAnnotation(flagPlacementPrefRemove, "version", []string{"1.28"})
+	flags.Var(&serviceOpts.networks, flagNetworkAdd, "Add a network")
+	flags.SetAnnotation(flagNetworkAdd, "version", []string{"1.29"})
+	flags.Var(newListOptsVar(), flagNetworkRemove, "Remove a network")
+	flags.SetAnnotation(flagNetworkRemove, "version", []string{"1.29"})
 	flags.Var(&serviceOpts.endpoint.publishPorts, flagPublishAdd, "Add or update a published port")
 	flags.Var(&serviceOpts.groups, flagGroupAdd, "Add an additional supplementary user group to the container")
 	flags.SetAnnotation(flagGroupAdd, "version", []string{"1.25"})
@@ -94,11 +98,11 @@ func newListOptsVar() *opts.ListOpts {
 	return opts.NewListOptsRef(&[]string{}, nil)
 }
 
-func runUpdate(dockerCli *command.DockerCli, flags *pflag.FlagSet, serviceID string) error {
+func runUpdate(dockerCli *command.DockerCli, flags *pflag.FlagSet, opts *serviceOptions, serviceID string) error {
 	apiClient := dockerCli.Client()
 	ctx := context.Background()
 
-	service, _, err := apiClient.ServiceInspectWithRaw(ctx, serviceID)
+	service, _, err := apiClient.ServiceInspectWithRaw(ctx, serviceID, types.ServiceInspectOptions{})
 	if err != nil {
 		return err
 	}
@@ -136,7 +140,7 @@ func runUpdate(dockerCli *command.DockerCli, flags *pflag.FlagSet, serviceID str
 			clientSideRollback = true
 			spec = service.PreviousSpec
 			if spec == nil {
-				return fmt.Errorf("service does not have a previous specification to roll back to")
+				return errors.Errorf("service does not have a previous specification to roll back to")
 			}
 		} else {
 			serverSideRollback = true
@@ -148,7 +152,7 @@ func runUpdate(dockerCli *command.DockerCli, flags *pflag.FlagSet, serviceID str
 		updateOpts.Rollback = "previous"
 	}
 
-	err = updateService(flags, spec)
+	err = updateService(ctx, apiClient, flags, spec)
 	if err != nil {
 		return err
 	}
@@ -196,10 +200,19 @@ func runUpdate(dockerCli *command.DockerCli, flags *pflag.FlagSet, serviceID str
 	}
 
 	fmt.Fprintf(dockerCli.Out(), "%s\n", serviceID)
-	return nil
+
+	if opts.detach {
+		if !flags.Changed("detach") {
+			fmt.Fprintln(dockerCli.Err(), "Since --detach=false was not specified, tasks will be updated in the background.\n"+
+				"In a future release, --detach=false will become the default.")
+		}
+		return nil
+	}
+
+	return waitOnService(ctx, dockerCli, serviceID, opts)
 }
 
-func updateService(flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
+func updateService(ctx context.Context, apiClient client.APIClient, flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
 	updateString := func(flag string, field *string) {
 		if flags.Changed(flag) {
 			*field, _ = flags.GetString(flag)
@@ -258,6 +271,7 @@ func updateService(flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
 	updateContainerLabels(flags, &cspec.Labels)
 	updateString("image", &cspec.Image)
 	updateStringToSlice(flags, "args", &cspec.Args)
+	updateStringToSlice(flags, flagEntrypoint, &cspec.Command)
 	updateEnvironment(flags, &cspec.Env)
 	updateString(flagWorkdir, &cspec.Dir)
 	updateString(flagUser, &cspec.User)
@@ -281,9 +295,8 @@ func updateService(flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
 
 	if anyChanged(flags, flagRestartCondition, flagRestartDelay, flagRestartMaxAttempts, flagRestartWindow) {
 		if task.RestartPolicy == nil {
-			task.RestartPolicy = &swarm.RestartPolicy{}
+			task.RestartPolicy = defaultRestartPolicy()
 		}
-
 		if flags.Changed(flagRestartCondition) {
 			value, _ := flags.GetString(flagRestartCondition)
 			task.RestartPolicy.Condition = swarm.RestartPolicyCondition(value)
@@ -307,30 +320,38 @@ func updateService(flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
 		updatePlacementPreferences(flags, task.Placement)
 	}
 
+	if anyChanged(flags, flagNetworkAdd, flagNetworkRemove) {
+		if err := updateNetworks(ctx, apiClient, flags, spec); err != nil {
+			return err
+		}
+	}
+
 	if err := updateReplicas(flags, &spec.Mode); err != nil {
 		return err
 	}
 
-	if anyChanged(flags, flagUpdateParallelism, flagUpdateDelay, flagUpdateMonitor, flagUpdateFailureAction, flagUpdateMaxFailureRatio) {
+	if anyChanged(flags, flagUpdateParallelism, flagUpdateDelay, flagUpdateMonitor, flagUpdateFailureAction, flagUpdateMaxFailureRatio, flagUpdateOrder) {
 		if spec.UpdateConfig == nil {
-			spec.UpdateConfig = &swarm.UpdateConfig{}
+			spec.UpdateConfig = updateConfigFromDefaults(defaults.Service.Update)
 		}
 		updateUint64(flagUpdateParallelism, &spec.UpdateConfig.Parallelism)
 		updateDuration(flagUpdateDelay, &spec.UpdateConfig.Delay)
 		updateDuration(flagUpdateMonitor, &spec.UpdateConfig.Monitor)
 		updateString(flagUpdateFailureAction, &spec.UpdateConfig.FailureAction)
 		updateFloatValue(flagUpdateMaxFailureRatio, &spec.UpdateConfig.MaxFailureRatio)
+		updateString(flagUpdateOrder, &spec.UpdateConfig.Order)
 	}
 
-	if anyChanged(flags, flagRollbackParallelism, flagRollbackDelay, flagRollbackMonitor, flagRollbackFailureAction, flagRollbackMaxFailureRatio) {
+	if anyChanged(flags, flagRollbackParallelism, flagRollbackDelay, flagRollbackMonitor, flagRollbackFailureAction, flagRollbackMaxFailureRatio, flagRollbackOrder) {
 		if spec.RollbackConfig == nil {
-			spec.RollbackConfig = &swarm.UpdateConfig{}
+			spec.RollbackConfig = updateConfigFromDefaults(defaults.Service.Rollback)
 		}
 		updateUint64(flagRollbackParallelism, &spec.RollbackConfig.Parallelism)
 		updateDuration(flagRollbackDelay, &spec.RollbackConfig.Delay)
 		updateDuration(flagRollbackMonitor, &spec.RollbackConfig.Monitor)
 		updateString(flagRollbackFailureAction, &spec.RollbackConfig.FailureAction)
 		updateFloatValue(flagRollbackMaxFailureRatio, &spec.RollbackConfig.MaxFailureRatio)
+		updateString(flagRollbackOrder, &spec.RollbackConfig.Order)
 	}
 
 	if flags.Changed(flagEndpointMode) {
@@ -409,15 +430,12 @@ func updateService(flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
 	return nil
 }
 
-func updateStringToSlice(flags *pflag.FlagSet, flag string, field *[]string) error {
+func updateStringToSlice(flags *pflag.FlagSet, flag string, field *[]string) {
 	if !flags.Changed(flag) {
-		return nil
+		return
 	}
 
-	value, _ := flags.GetString(flag)
-	valueSlice, err := shlex.Split(value)
-	*field = valueSlice
-	return err
+	*field = flags.Lookup(flag).Value.(*ShlexOpt).Value()
 }
 
 func anyChanged(flags *pflag.FlagSet, fields ...string) bool {
@@ -518,20 +536,21 @@ func updateLabels(flags *pflag.FlagSet, field *map[string]string) {
 }
 
 func updateEnvironment(flags *pflag.FlagSet, field *[]string) {
-	envSet := map[string]string{}
-	for _, v := range *field {
-		envSet[envKey(v)] = v
-	}
 	if flags.Changed(flagEnvAdd) {
+		envSet := map[string]string{}
+		for _, v := range *field {
+			envSet[envKey(v)] = v
+		}
+
 		value := flags.Lookup(flagEnvAdd).Value.(*opts.ListOpts)
 		for _, v := range value.GetAll() {
 			envSet[envKey(v)] = v
 		}
-	}
 
-	*field = []string{}
-	for _, v := range envSet {
-		*field = append(*field, v)
+		*field = []string{}
+		for _, v := range envSet {
+			*field = append(*field, v)
+		}
 	}
 
 	toRemove := buildToRemoveSet(flags, flagEnvRemove)
@@ -614,14 +633,13 @@ func (m byMountSource) Less(i, j int) bool {
 }
 
 func updateMounts(flags *pflag.FlagSet, mounts *[]mounttypes.Mount) error {
-
 	mountsByTarget := map[string]mounttypes.Mount{}
 
 	if flags.Changed(flagMountAdd) {
 		values := flags.Lookup(flagMountAdd).Value.(*opts.MountOpt).Value()
 		for _, mount := range values {
 			if _, ok := mountsByTarget[mount.Target]; ok {
-				return fmt.Errorf("duplicate mount target")
+				return errors.Errorf("duplicate mount target")
 			}
 			mountsByTarget[mount.Target] = mount
 		}
@@ -819,7 +837,7 @@ func updateReplicas(flags *pflag.FlagSet, serviceMode *swarm.ServiceMode) error 
 	}
 
 	if serviceMode == nil || serviceMode.Replicated == nil {
-		return fmt.Errorf("replicas can only be used with replicated mode")
+		return errors.Errorf("replicas can only be used with replicated mode")
 	}
 	serviceMode.Replicated.Replicas = flags.Lookup(flagReplicas).Value.(*Uint64Opt).Value()
 	return nil
@@ -891,7 +909,7 @@ func updateLogDriver(flags *pflag.FlagSet, taskTemplate *swarm.TaskSpec) error {
 }
 
 func updateHealthcheck(flags *pflag.FlagSet, containerSpec *swarm.ContainerSpec) error {
-	if !anyChanged(flags, flagNoHealthcheck, flagHealthCmd, flagHealthInterval, flagHealthRetries, flagHealthTimeout) {
+	if !anyChanged(flags, flagNoHealthcheck, flagHealthCmd, flagHealthInterval, flagHealthRetries, flagHealthTimeout, flagHealthStartPeriod) {
 		return nil
 	}
 	if containerSpec.Healthcheck == nil {
@@ -902,13 +920,13 @@ func updateHealthcheck(flags *pflag.FlagSet, containerSpec *swarm.ContainerSpec)
 		return err
 	}
 	if noHealthcheck {
-		if !anyChanged(flags, flagHealthCmd, flagHealthInterval, flagHealthRetries, flagHealthTimeout) {
+		if !anyChanged(flags, flagHealthCmd, flagHealthInterval, flagHealthRetries, flagHealthTimeout, flagHealthStartPeriod) {
 			containerSpec.Healthcheck = &container.HealthConfig{
 				Test: []string{"NONE"},
 			}
 			return nil
 		}
-		return fmt.Errorf("--%s conflicts with --health-* options", flagNoHealthcheck)
+		return errors.Errorf("--%s conflicts with --health-* options", flagNoHealthcheck)
 	}
 	if len(containerSpec.Healthcheck.Test) > 0 && containerSpec.Healthcheck.Test[0] == "NONE" {
 		containerSpec.Healthcheck.Test = nil
@@ -921,6 +939,10 @@ func updateHealthcheck(flags *pflag.FlagSet, containerSpec *swarm.ContainerSpec)
 		val := *flags.Lookup(flagHealthTimeout).Value.(*PositiveDurationOpt).Value()
 		containerSpec.Healthcheck.Timeout = val
 	}
+	if flags.Changed(flagHealthStartPeriod) {
+		val := *flags.Lookup(flagHealthStartPeriod).Value.(*PositiveDurationOpt).Value()
+		containerSpec.Healthcheck.StartPeriod = val
+	}
 	if flags.Changed(flagHealthRetries) {
 		containerSpec.Healthcheck.Retries, _ = flags.GetInt(flagHealthRetries)
 	}
@@ -932,5 +954,65 @@ func updateHealthcheck(flags *pflag.FlagSet, containerSpec *swarm.ContainerSpec)
 			containerSpec.Healthcheck.Test = nil
 		}
 	}
+	return nil
+}
+
+type byNetworkTarget []swarm.NetworkAttachmentConfig
+
+func (m byNetworkTarget) Len() int      { return len(m) }
+func (m byNetworkTarget) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
+func (m byNetworkTarget) Less(i, j int) bool {
+	return m[i].Target < m[j].Target
+}
+
+func updateNetworks(ctx context.Context, apiClient client.NetworkAPIClient, flags *pflag.FlagSet, spec *swarm.ServiceSpec) error {
+	// spec.TaskTemplate.Networks takes precedence over the deprecated
+	// spec.Networks field. If spec.Network is in use, we'll migrate those
+	// values to spec.TaskTemplate.Networks.
+	specNetworks := spec.TaskTemplate.Networks
+	if len(specNetworks) == 0 {
+		specNetworks = spec.Networks
+	}
+	spec.Networks = nil
+
+	toRemove := buildToRemoveSet(flags, flagNetworkRemove)
+	idsToRemove := make(map[string]struct{})
+	for networkIDOrName := range toRemove {
+		network, err := apiClient.NetworkInspect(ctx, networkIDOrName, false)
+		if err != nil {
+			return err
+		}
+		idsToRemove[network.ID] = struct{}{}
+	}
+
+	existingNetworks := make(map[string]struct{})
+	var newNetworks []swarm.NetworkAttachmentConfig
+	for _, network := range specNetworks {
+		if _, exists := idsToRemove[network.Target]; exists {
+			continue
+		}
+
+		newNetworks = append(newNetworks, network)
+		existingNetworks[network.Target] = struct{}{}
+	}
+
+	if flags.Changed(flagNetworkAdd) {
+		values := flags.Lookup(flagNetworkAdd).Value.(*opts.ListOpts).GetAll()
+		networks, err := convertNetworks(ctx, apiClient, values)
+		if err != nil {
+			return err
+		}
+		for _, network := range networks {
+			if _, exists := existingNetworks[network.Target]; exists {
+				return errors.Errorf("service is already attached to network %s", network.Target)
+			}
+			newNetworks = append(newNetworks, network)
+			existingNetworks[network.Target] = struct{}{}
+		}
+	}
+
+	sort.Sort(byNetworkTarget(newNetworks))
+
+	spec.TaskTemplate.Networks = newNetworks
 	return nil
 }

@@ -31,7 +31,7 @@ Options:
 ## Description
 
 It can be useful to commit a container's file changes or settings into a new
-image. This allows you debug a container by running an interactive shell, or to
+image. This allows you to debug a container by running an interactive shell, or to
 export a working dataset to another server. Generally, it is better to use
 Dockerfiles to manage your images in a documented and maintainable way.
 [Read more about valid image names and tags](tag.md).
@@ -74,7 +74,7 @@ svendowideit/testimage            version3            f5283438590d        16 sec
 ```bash
 $ docker ps
 
-ICONTAINER ID       IMAGE               COMMAND             CREATED             STATUS              PORTS              NAMES
+CONTAINER ID       IMAGE               COMMAND             CREATED             STATUS              PORTS              NAMES
 c3f279d17e0a        ubuntu:12.04        /bin/bash           7 days ago          Up 25 hours                            desperate_dubinsky
 197387f1b436        ubuntu:12.04        /bin/bash           7 days ago          Up 25 hours                            focused_hamilton
 

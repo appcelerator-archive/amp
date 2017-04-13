@@ -154,8 +154,10 @@ RUN git clone https://github.com/golang/lint.git /go/src/github.com/golang/lint 
 	&& go install -v github.com/golang/lint/golint
 
 # Install CRIU for checkpoint/restore support
-ENV CRIU_VERSION 2.9
-RUN mkdir -p /usr/src/criu \
+ENV CRIU_VERSION 2.12.1
+# Install dependancy packages specific to criu
+RUN apt-get install libnet-dev -y && \
+	mkdir -p /usr/src/criu \
 	&& curl -sSL https://github.com/xemul/criu/archive/v${CRIU_VERSION}.tar.gz | tar -v -C /usr/src/criu/ -xz --strip-components=1 \
 	&& cd /usr/src/criu \
 	&& make \
@@ -192,13 +194,13 @@ RUN set -x \
 
 # Get the "docker-py" source so we can run their integration tests
 ENV DOCKER_PY_COMMIT 4a08d04aef0595322e1b5ac7c52f28a931da85a5
+# To run integration tests docker-pycreds is required.
+# Before running the integration tests conftest.py is
+# loaded which results in loads auth.py that
+# imports the docker-pycreds module.
 RUN git clone https://github.com/docker/docker-py.git /docker-py \
 	&& cd /docker-py \
 	&& git checkout -q $DOCKER_PY_COMMIT \
-	# To run integration tests docker-pycreds is required.
-	# Before running the integration tests conftest.py is
-	# loaded which results in loads auth.py that
-	# imports the docker-pycreds module.
 	&& pip install docker-pycreds==0.2.1 \
 	&& pip install -r test-requirements.txt
 

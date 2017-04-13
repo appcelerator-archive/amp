@@ -129,47 +129,18 @@ func (b *Builder) dispatch(stepN int, stepTotal int, ast *parser.Node) error {
 
 	}
 
-	// count the number of nodes that we are going to traverse first
-	// so we can pre-create the argument and message array. This speeds up the
-	// allocation of those list a lot when they have a lot of arguments
-	cursor := ast
-	var n int
-	for cursor.Next != nil {
-		cursor = cursor.Next
-		n++
-	}
-	msgList := make([]string, n)
-
-	var i int
+	msgList := initMsgList(ast)
 	// Append build args to runConfig environment variables
 	envs := append(b.runConfig.Env, b.buildArgsWithoutConfigEnv()...)
 
-	for ast.Next != nil {
+	for i := 0; ast.Next != nil; i++ {
 		ast = ast.Next
-		var str string
-		str = ast.Value
-		if replaceEnvAllowed[cmd] {
-			var err error
-			var words []string
-
-			if allowWordExpansion[cmd] {
-				words, err = ProcessWords(str, envs, b.directive.EscapeToken)
-				if err != nil {
-					return err
-				}
-				strList = append(strList, words...)
-			} else {
-				str, err = ProcessWord(str, envs, b.directive.EscapeToken)
-				if err != nil {
-					return err
-				}
-				strList = append(strList, str)
-			}
-		} else {
-			strList = append(strList, str)
+		words, err := b.evaluateEnv(cmd, ast.Value, envs)
+		if err != nil {
+			return err
 		}
+		strList = append(strList, words...)
 		msgList[i] = ast.Value
-		i++
 	}
 
 	msg += " " + strings.Join(msgList, " ")
@@ -186,23 +157,41 @@ func (b *Builder) dispatch(stepN int, stepTotal int, ast *parser.Node) error {
 	return fmt.Errorf("Unknown instruction: %s", upperCasedCmd)
 }
 
+// count the number of nodes that we are going to traverse first
+// allocation of those list a lot when they have a lot of arguments
+func initMsgList(cursor *parser.Node) []string {
+	var n int
+	for ; cursor.Next != nil; n++ {
+		cursor = cursor.Next
+	}
+	return make([]string, n)
+}
+
+func (b *Builder) evaluateEnv(cmd string, str string, envs []string) ([]string, error) {
+	if !replaceEnvAllowed[cmd] {
+		return []string{str}, nil
+	}
+	var processFunc func(string, []string, rune) ([]string, error)
+	if allowWordExpansion[cmd] {
+		processFunc = ProcessWords
+	} else {
+		processFunc = func(word string, envs []string, escape rune) ([]string, error) {
+			word, err := ProcessWord(word, envs, escape)
+			return []string{word}, err
+		}
+	}
+	return processFunc(str, envs, b.directive.EscapeToken)
+}
+
 // buildArgsWithoutConfigEnv returns a list of key=value pairs for all the build
 // args that are not overriden by runConfig environment variables.
 func (b *Builder) buildArgsWithoutConfigEnv() []string {
 	envs := []string{}
 	configEnv := runconfigopts.ConvertKVStringsToMap(b.runConfig.Env)
 
-	for key, val := range b.options.BuildArgs {
-		if !b.isBuildArgAllowed(key) {
-			// skip build-args that are not in allowed list, meaning they have
-			// not been defined by an "ARG" Dockerfile command yet.
-			// This is an error condition but only if there is no "ARG" in the entire
-			// Dockerfile, so we'll generate any necessary errors after we parsed
-			// the entire file (see 'leftoverArgs' processing in evaluator.go )
-			continue
-		}
-		if _, ok := configEnv[key]; !ok && val != nil {
-			envs = append(envs, fmt.Sprintf("%s=%s", key, *val))
+	for key, val := range b.buildArgs.GetAllAllowed() {
+		if _, ok := configEnv[key]; !ok {
+			envs = append(envs, fmt.Sprintf("%s=%s", key, val))
 		}
 	}
 	return envs

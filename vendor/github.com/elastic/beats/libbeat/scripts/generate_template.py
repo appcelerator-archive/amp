@@ -67,17 +67,17 @@ def fields_to_es_template(args, input, output, index, version):
             }
         }
     else:
-        # For ES 5.x, increase the limit on the max number of fields.
+        # For ES >= 5.x, increase the limit on the max number of fields.
         # In a typical scenario, most fields are not used, so increasing the
         # limit shouldn't be that bad.
         template["settings"]["index.mapping.total_fields.limit"] = 10000
 
-        # should be done only for es5x. For es6x, any "_all" setting results
-        # in an error.
-        # TODO: https://github.com/elastic/beats/issues/3368
-        template["mappings"]["_default_"]["_all"] = {
-            "norms": False
-        }
+        if not args.es6x:
+            # should be done only for es5x. For es6x, any "_all" setting results
+            # in an error.
+            template["mappings"]["_default_"]["_all"] = {
+                "norms": False
+            }
 
     properties = {}
     dynamic_templates = []
@@ -135,6 +135,10 @@ def dedot(group):
     fields = []
     dedotted = {}
 
+    if not group["fields"]:
+        return
+
+
     for field in group["fields"]:
         if "." in field["name"]:
             # dedot
@@ -169,8 +173,10 @@ def fill_section_properties(args, section, defaults, path):
     properties = {}
     dynamic_templates = []
 
-    if "fields" in section:
+    if "fields" in section and section["fields"]:
         for field in section["fields"]:
+            if not field:
+                continue
             prop, dynamic = fill_field_properties(args, field, defaults, path)
             properties.update(prop)
             dynamic_templates.extend(dynamic)
@@ -185,6 +191,9 @@ def fill_field_properties(args, field, defaults, path):
     """
     properties = {}
     dynamic_templates = []
+
+    if not field:
+        return
 
     for key in defaults.keys():
         if key not in field:
@@ -344,6 +353,8 @@ if __name__ == "__main__":
         description="Generates the templates for a Beat.")
     parser.add_argument("--es2x", action="store_true",
                         help="Generate template for Elasticsearch 2.x.")
+    parser.add_argument("--es6x", action="store_true",
+                        help="Generate template for Elasticsearch 6.x.")
     parser.add_argument("path", help="Path to the beat folder")
     parser.add_argument("beatname", help="The beat fname")
     parser.add_argument("es_beats", help="The path to the general beats folder")
@@ -353,6 +364,8 @@ if __name__ == "__main__":
     target = args.path + "/" + args.beatname + ".template"
     if args.es2x:
         target += "-es2x"
+    elif args.es6x:
+        target += "-es6x"
     target += ".json"
 
     fields_yml = args.path + "/_meta/fields.generated.yml"

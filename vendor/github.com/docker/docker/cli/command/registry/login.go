@@ -7,6 +7,8 @@ import (
 
 	"github.com/docker/docker/cli"
 	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/registry"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -54,7 +56,7 @@ func runLogin(dockerCli *command.DockerCli, opts loginOptions) error {
 		serverAddress string
 		authServer    = command.ElectAuthServer(ctx, dockerCli)
 	)
-	if opts.serverAddress != "" {
+	if opts.serverAddress != "" && opts.serverAddress != registry.DefaultNamespace {
 		serverAddress = opts.serverAddress
 	} else {
 		serverAddress = authServer
@@ -75,7 +77,7 @@ func runLogin(dockerCli *command.DockerCli, opts loginOptions) error {
 		authConfig.IdentityToken = response.IdentityToken
 	}
 	if err := dockerCli.CredentialsStore(serverAddress).Store(authConfig); err != nil {
-		return fmt.Errorf("Error saving credentials: %v", err)
+		return errors.Errorf("Error saving credentials: %v", err)
 	}
 
 	if response.Status != "" {

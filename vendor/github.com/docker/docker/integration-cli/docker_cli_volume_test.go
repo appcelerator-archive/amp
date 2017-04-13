@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/integration-cli/checker"
+	"github.com/docker/docker/integration-cli/cli/build"
 	"github.com/docker/docker/integration-cli/request"
 	icmd "github.com/docker/docker/pkg/testutil/cmd"
 	"github.com/go-check/check"
@@ -497,7 +498,7 @@ func (s *DockerSuite) TestDuplicateMountpointsForVolumesFrom(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	image := "vimage"
-	buildImageSuccessfully(c, image, withDockerfile(`
+	buildImageSuccessfully(c, image, build.WithDockerfile(`
 		FROM busybox
 		VOLUME ["/tmp/data"]`))
 
@@ -539,7 +540,7 @@ func (s *DockerSuite) TestDuplicateMountpointsForVolumesFromAndBind(c *check.C) 
 	testRequires(c, DaemonIsLinux)
 
 	image := "vimage"
-	buildImageSuccessfully(c, image, withDockerfile(`
+	buildImageSuccessfully(c, image, build.WithDockerfile(`
                 FROM busybox
                 VOLUME ["/tmp/data"]`))
 
@@ -559,6 +560,7 @@ func (s *DockerSuite) TestDuplicateMountpointsForVolumesFromAndBind(c *check.C) 
 	c.Assert(strings.TrimSpace(out), checker.Contains, data1)
 	c.Assert(strings.TrimSpace(out), checker.Contains, data2)
 
+	// /tmp/data is automatically created, because we are not using the modern mount API here
 	out, _, err := dockerCmdWithError("run", "--name=app", "--volumes-from=data1", "--volumes-from=data2", "-v", "/tmp/data:/tmp/data", "-d", "busybox", "top")
 	c.Assert(err, checker.IsNil, check.Commentf("Out: %s", out))
 
@@ -579,10 +581,10 @@ func (s *DockerSuite) TestDuplicateMountpointsForVolumesFromAndBind(c *check.C) 
 
 // Test case (3) for 21845: duplicate targets for --volumes-from and `Mounts` (API only)
 func (s *DockerSuite) TestDuplicateMountpointsForVolumesFromAndMounts(c *check.C) {
-	testRequires(c, DaemonIsLinux)
+	testRequires(c, SameHostDaemon, DaemonIsLinux)
 
 	image := "vimage"
-	buildImageSuccessfully(c, image, withDockerfile(`
+	buildImageSuccessfully(c, image, build.WithDockerfile(`
                 FROM busybox
                 VOLUME ["/tmp/data"]`))
 
@@ -602,6 +604,8 @@ func (s *DockerSuite) TestDuplicateMountpointsForVolumesFromAndMounts(c *check.C
 	c.Assert(strings.TrimSpace(out), checker.Contains, data1)
 	c.Assert(strings.TrimSpace(out), checker.Contains, data2)
 
+	err := os.MkdirAll("/tmp/data", 0755)
+	c.Assert(err, checker.IsNil)
 	// Mounts is available in API
 	status, body, err := request.SockRequest("POST", "/containers/create?name=app", map[string]interface{}{
 		"Image": "busybox",

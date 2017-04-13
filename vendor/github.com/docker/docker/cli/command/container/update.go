@@ -1,7 +1,6 @@
 package container
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/opts"
 	runconfigopts "github.com/docker/docker/runconfig/opts"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -28,6 +28,7 @@ type updateOptions struct {
 	memorySwap         opts.MemSwapBytes
 	kernelMemory       opts.MemBytes
 	restartPolicy      string
+	cpus               opts.NanoCPUs
 
 	nFlag int
 
@@ -66,6 +67,9 @@ func NewUpdateCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.Var(&opts.kernelMemory, "kernel-memory", "Kernel memory limit")
 	flags.StringVar(&opts.restartPolicy, "restart", "", "Restart policy to apply when a container exits")
 
+	flags.Var(&opts.cpus, "cpus", "Number of CPUs")
+	flags.SetAnnotation("cpus", "version", []string{"1.29"})
+
 	return cmd
 }
 
@@ -97,6 +101,7 @@ func runUpdate(dockerCli *command.DockerCli, opts *updateOptions) error {
 		CPUQuota:           opts.cpuQuota,
 		CPURealtimePeriod:  opts.cpuRealtimePeriod,
 		CPURealtimeRuntime: opts.cpuRealtimeRuntime,
+		NanoCPUs:           opts.cpus.Value(),
 	}
 
 	updateConfig := containertypes.UpdateConfig{

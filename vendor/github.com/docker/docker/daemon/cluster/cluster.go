@@ -39,7 +39,6 @@ package cluster
 //
 
 import (
-	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -127,6 +126,7 @@ type Cluster struct {
 type attacher struct {
 	taskID           string
 	config           *network.NetworkingConfig
+	inProgress       bool
 	attachWaitCh     chan *network.NetworkingConfig
 	attachCompleteCh chan struct{}
 	detachWaitCh     chan struct{}
@@ -171,13 +171,8 @@ func New(config Config) (*Cluster, error) {
 		logrus.Error("swarm component could not be started before timeout was reached")
 	case err := <-nr.Ready():
 		if err != nil {
-			if errors.Cause(err) == errSwarmLocked {
-				return c, nil
-			}
-			if err, ok := errors.Cause(c.nr.err).(x509.CertificateInvalidError); ok && err.Reason == x509.Expired {
-				return c, nil
-			}
-			return nil, errors.Wrap(err, "swarm component could not be started")
+			logrus.WithError(err).Error("swarm component could not be started")
+			return c, nil
 		}
 	}
 	return c, nil

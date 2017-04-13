@@ -246,8 +246,9 @@ update: python-env collect
 	. ${PYTHON_ENV}/bin/activate && python ${ES_BEATS}/libbeat/scripts/generate_fields_docs.py $(PWD) ${BEAT_NAME} ${ES_BEATS}
 
 	# Generate index templates
-	. ${PYTHON_ENV}/bin/activate && python ${ES_BEATS}/libbeat/scripts/generate_template.py $(PWD) ${BEAT_NAME} ${ES_BEATS}
 	. ${PYTHON_ENV}/bin/activate && python ${ES_BEATS}/libbeat/scripts/generate_template.py --es2x $(PWD) ${BEAT_NAME} ${ES_BEATS}
+	. ${PYTHON_ENV}/bin/activate && python ${ES_BEATS}/libbeat/scripts/generate_template.py --es6x $(PWD) ${BEAT_NAME} ${ES_BEATS}
+	. ${PYTHON_ENV}/bin/activate && python ${ES_BEATS}/libbeat/scripts/generate_template.py $(PWD) ${BEAT_NAME} ${ES_BEATS}
 
 	# Generate index-pattern
 	echo "Generate index pattern"
@@ -327,7 +328,7 @@ install-home:
 	if [ -d _meta/module.generated ]; then \
 		install -d -m 755 ${HOME_PREFIX}/module; \
 		rsync -av _meta/module.generated/ ${HOME_PREFIX}/module/; \
-		chmod -R go-w _meta/module.generated; \
+		chmod -R go-w ${HOME_PREFIX}/module/; \
 	fi
 
 # Prepares for packaging. Builds binaries and creates homedir data
