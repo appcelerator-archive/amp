@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package stack;
+
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
+
+service Stack {
+  rpc Deploy (DeployRequest) returns (DeployReply);
+  rpc List (ListRequest) returns (ListReply);
+  rpc Remove (RemoveRequest) returns (google.protobuf.Empty);
+}
+
+message DeployRequest {
+  string name = 1;
+  bytes compose = 2;
+}
+
+message DeployReply {}
+
+message ListRequest {}
+
+message ListReply {}
+
+message RemoveRequest {
+  string id = 1;
+}
