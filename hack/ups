@@ -1,4 +1,4 @@
-amps='docker run -it --rm --network=hostnet -v /Users/tony/go/src/github.com/appcelerator/amp/stacks:/stacks docker --host=m1'
+amps='docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1'
 svc="amp_amplifier"
 name="amp"
 stack="stacks/amp.stack.yml"
