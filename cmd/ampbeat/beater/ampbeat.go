@@ -177,6 +177,7 @@ func metricsMessageHandler(msg *stan.Msg) {
 	bt.client.PublishEvent(event)
 }
 
+// Need to replace '.'' by '-'', becuse '.' is used by ES for object operator it can't be part of a field name.
 func getLabels(labels map[string]string) common.MapStr {
 	labmap := common.MapStr{}
 	for name, value := range labels {
