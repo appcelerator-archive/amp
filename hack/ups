@@ -1,0 +1,15 @@
+amps='docker run -it --rm --network=hostnet -v /Users/tony/go/src/github.com/appcelerator/amp/stacks:/stacks docker --host=m1'
+svc="amp_amplifier"
+name="amp"
+stack="stacks/amp.stack.yml"
+image="appcelerator/amplifier:local"
+rule="build-server"
+
+ampmake $rule
+docker tag $image localhost:5000/$image
+docker push localhost:5000/$image
+$amps service rm $svc
+$amps stack deploy -c $stack $name
+$amps service ls
+$amps service logs $svc
+
