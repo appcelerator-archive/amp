@@ -5,12 +5,13 @@ The `amp org` command manages all organization related operations for AMP.
 ```
     $ amp org
 
-    Usage:	amp org [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp org COMMAND
 
     Organization management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Management Commands:
       member      Manage organization members
@@ -20,6 +21,7 @@ The `amp org` command manages all organization related operations for AMP.
       get         Get organization
       ls          List organization
       rm          Remove organization
+      switch      Switch account
 
     Run 'amp org COMMAND --help' for more information on a command.
 ```
@@ -43,6 +45,11 @@ To be able to perform any organization related operations, you must be logged in
     $ amp org get
 ```
 
+* To switch between accounts (user or org):
+```
+    $ amp org switch
+```
+
 * To remove an organization:
 ```
     $ amp org rm
@@ -55,12 +62,13 @@ To be able to perform any organization related operations, you must be logged in
 ```
     $ amp org member
 
-    Usage:	amp org member [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp org member COMMAND
 
     Manage organization members
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Commands:
       add         Add member to organization

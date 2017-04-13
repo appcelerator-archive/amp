@@ -5,12 +5,13 @@ The `amp team` command manages all team related operations for AMP.
 ```
     $ amp team
 
-    Usage:	amp team [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp team COMMAND
 
     Team management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Management Commands:
       member      Team member management operations
@@ -55,17 +56,19 @@ To be able to perform any team related operations, you must be logged in to AMP 
 ```
     $ amp team member
 
-    Usage:	amp team member [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp team member COMMAND
 
     Team member management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Commands:
       add         Add member to team
       ls          List members
       rm          Remove member from team
+      role        Change member role
 
     Run 'amp team member COMMAND --help' for more information on a command.
 ```

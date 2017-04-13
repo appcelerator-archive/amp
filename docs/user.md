@@ -5,12 +5,13 @@ The `amp user` command manages all user related operations for AMP.
 ```
     $ amp user
 
-    Usage:	amp user [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp user COMMAND
 
     User management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Commands:
       forgot-login Retrieve account name
@@ -62,11 +63,6 @@ The `amp user` command manages all user related operations for AMP.
 * To login to AMP:
 ```
     $ amp login
-```
-
-* To switch between accounts (user or org):
-```
-    $ amp switch
 ```
 
 * To see who's currently logged in (user or org):

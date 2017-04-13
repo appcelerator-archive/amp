@@ -5,12 +5,13 @@ The `amp cluster` command manages all cluster-related operations for AMP.
 ```
     $ amp cluster
 
-    Usage:	amp cluster [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp cluster COMMAND
 
     Cluster management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Commands:
       create      Create a local amp cluster

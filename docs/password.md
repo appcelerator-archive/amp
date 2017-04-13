@@ -5,12 +5,13 @@ The `amp password` command manages password-related operations for any AMP accou
 ```
     $ amp password
 
-    Usage:	amp password [OPTIONS] COMMAND [ARGS...]
+    Usage:	amp password COMMAND
 
     Password management operations
 
     Options:
-          --help   Print usage
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
     Commands:
       change      Change password
