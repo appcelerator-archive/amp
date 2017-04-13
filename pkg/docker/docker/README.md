@@ -1,6 +1,6 @@
 # Docker forked sources
 
-Because Docker 1.13 does not provide a remote stack api, we need to embed some of the
+Because Docker 17-04.0 does not provide a remote stack api, we need to embed some of the
 Docker sources to provide this facility.
 
 All updates are prefixed by {AMP} in code and consist of the following:
@@ -16,4 +16,3 @@ under the [Apache 2.0 license](https://github.com/docker/docker/blob/master/LICE
 and can be found here:
 
 https://github.com/docker/docker/
-
