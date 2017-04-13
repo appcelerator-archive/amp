@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
+	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker/docker/stack"
 	"github.com/docker/docker/cli/command"
 	cliflags "github.com/docker/docker/cli/flags"
@@ -19,6 +20,7 @@ import (
 
 // Server is used to implement stack.StackServer
 type Server struct {
+	Stacks stacks.Interface
 }
 
 // Deploy implements stack.Server

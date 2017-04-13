@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package stacks;
+
+import "github.com/appcelerator/amp/data/accounts/accounts.proto";
+
+message Stack {
+  string id = 1;
+  string name = 2;
+  accounts.Account owner = 3;
+  int64 create_dt = 4;
+}
