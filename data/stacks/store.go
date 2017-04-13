@@ -42,7 +42,7 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 
 	// Create the new stack
 	stack = &Stack{
-		Id:       stringid.GenerateNonCryptoID(),
+		Id:       stringid.GenerateNonCryptoID()[0:16],
 		Name:     name,
 		Owner:    accounts.GetRequesterAccount(ctx),
 		CreateDt: time.Now().Unix(),
