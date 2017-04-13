@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// NewStackCommand returns a new instance of the stack command.
+// NewListCommand returns a new instance of the stack command.
 func NewListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
