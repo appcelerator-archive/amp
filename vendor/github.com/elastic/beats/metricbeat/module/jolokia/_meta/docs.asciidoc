@@ -1,6 +1,0 @@
-== Jolokia Module
-
-beta[]
-
-This is the Jolokia Module.
-

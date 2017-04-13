@@ -54,7 +54,7 @@ func TestTransportReconnectsOnConnect(t *testing.T) {
 	timeout := 2 * time.Second
 	GenCertsForIPIfMIssing(t, net.IP{127, 0, 0, 1}, certName)
 
-	testServer(t, &config, func(t *testing.T, makeServer MockServerFactory, proxy *transport.ProxyConfig) {
+	run := func(makeServer MockServerFactory, proxy *transport.ProxyConfig) {
 		server := makeServer(t, timeout, certName, proxy)
 		defer server.Close()
 
@@ -81,7 +81,12 @@ func TestTransportReconnectsOnConnect(t *testing.T) {
 		}
 
 		transp.Close()
-	})
+	}
+
+	run(NewMockServerTCP, nil)
+	run(NewMockServerTLS, nil)
+	run(NewMockServerTCP, &config)
+	run(NewMockServerTLS, &config)
 }
 
 func TestTransportFailConnectUnknownAddress(t *testing.T) {
@@ -93,28 +98,21 @@ func TestTransportFailConnectUnknownAddress(t *testing.T) {
 
 	invalidAddr := "invalid.dns.fqdn-unknown.invalid:100"
 
-	run := func(makeTransp TransportFactory, proxy *transport.ProxyConfig) func(*testing.T) {
-		return func(t *testing.T) {
-			transp, err := makeTransp(invalidAddr, proxy)
-			if err != nil {
-				t.Fatalf("failed to generate transport client: %v", err)
-			}
-
-			err = transp.Connect()
-			assert.NotNil(t, err)
+	run := func(makeTransp TransportFactory, proxy *transport.ProxyConfig) {
+		transp, err := makeTransp(invalidAddr, proxy)
+		if err != nil {
+			t.Fatalf("failed to generate transport client: %v", err)
 		}
-	}
 
-	factoryTests := func(f TransportFactory) func(*testing.T) {
-		return func(t *testing.T) {
-			t.Run("connect", run(f, nil))
-			t.Run("socks5", run(f, &config))
-		}
+		err = transp.Connect()
+		assert.NotNil(t, err)
 	}
 
 	timeout := 100 * time.Millisecond
-	t.Run("tcp", factoryTests(connectTCP(timeout)))
-	t.Run("tls", factoryTests(connectTLS(timeout, certName)))
+	run(connectTCP(timeout), nil)
+	run(connectTLS(timeout, certName), nil)
+	run(connectTCP(timeout), &config)
+	run(connectTLS(timeout, certName), &config)
 }
 
 func TestTransportClosedOnWriteReadError(t *testing.T) {
@@ -125,7 +123,7 @@ func TestTransportClosedOnWriteReadError(t *testing.T) {
 	timeout := 2 * time.Second
 	GenCertsForIPIfMIssing(t, net.IP{127, 0, 0, 1}, certName)
 
-	testServer(t, &config, func(t *testing.T, makeServer MockServerFactory, proxy *transport.ProxyConfig) {
+	run := func(makeServer MockServerFactory, proxy *transport.ProxyConfig) {
 		server := makeServer(t, timeout, certName, proxy)
 		defer server.Close()
 
@@ -139,24 +137,10 @@ func TestTransportClosedOnWriteReadError(t *testing.T) {
 		transp.Write([]byte("test3"))
 		_, err = transp.Read(buf[:])
 		assert.NotNil(t, err)
-	})
-}
-
-func testServer(t *testing.T, config *transport.ProxyConfig, run func(*testing.T, MockServerFactory, *transport.ProxyConfig)) {
-
-	runner := func(f MockServerFactory, c *transport.ProxyConfig) func(t *testing.T) {
-		return func(t *testing.T) {
-			run(t, f, config)
-		}
 	}
 
-	factoryTests := func(f MockServerFactory) func(t *testing.T) {
-		return func(t *testing.T) {
-			t.Run("connect", runner(f, nil))
-			t.Run("socks5", runner(f, config))
-		}
-	}
-
-	t.Run("tcp", factoryTests(NewMockServerTCP))
-	t.Run("tls", factoryTests(NewMockServerTLS))
+	run(NewMockServerTCP, nil)
+	run(NewMockServerTLS, nil)
+	run(NewMockServerTCP, &config)
+	run(NewMockServerTLS, &config)
 }

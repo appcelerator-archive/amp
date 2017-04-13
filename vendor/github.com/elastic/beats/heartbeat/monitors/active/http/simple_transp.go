@@ -14,13 +14,6 @@ import (
 	"github.com/elastic/beats/libbeat/outputs/transport"
 )
 
-const (
-	gzipEncoding   = "gzip"
-	urlSchemaHTTP  = "http"
-	urlSchemaHTTPS = "https"
-)
-
-// SimpleTransport contains the dialer and read/write callbacks
 type SimpleTransport struct {
 	Dialer             transport.Dialer
 	DisableCompression bool
@@ -39,7 +32,7 @@ func (t *SimpleTransport) checkRequest(req *http.Request) error {
 	}
 
 	scheme := req.URL.Scheme
-	isHTTP := scheme == urlSchemaHTTP || scheme == urlSchemaHTTPS
+	isHTTP := scheme == "http" || scheme == "https"
 	if !isHTTP {
 		return fmt.Errorf("http: unsupported scheme %v", scheme)
 	}
@@ -50,7 +43,6 @@ func (t *SimpleTransport) checkRequest(req *http.Request) error {
 	return nil
 }
 
-// RoundTrip sets up goroutines to write the request and read the responses
 func (t *SimpleTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	type readReturn struct {
 		resp *http.Response
@@ -76,7 +68,7 @@ func (t *SimpleTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		req.Method != "HEAD" {
 
 		requestedGzip = true
-		req.Header.Add("Accept-Encoding", gzipEncoding)
+		req.Header.Add("Accept-Encoding", "gzip")
 		defer req.Header.Del("Accept-Encoding")
 	}
 
@@ -140,7 +132,7 @@ func (t *SimpleTransport) readResponse(
 	}
 	t.sigStartRead()
 
-	if requestedGzip && resp.Header.Get("Content-Encoding") == gzipEncoding {
+	if requestedGzip && resp.Header.Get("Content-Encoding") == "gzip" {
 		resp.Header.Del("Content-Encoding")
 		resp.Header.Del("Content-Length")
 		resp.ContentLength = -1

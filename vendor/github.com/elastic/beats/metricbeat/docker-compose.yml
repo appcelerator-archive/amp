@@ -18,7 +18,6 @@ services:
       - ceph
       - couchbase
       - haproxy
-      - jolokia
       - kafka
       - mongodb
       - mysql
@@ -35,7 +34,6 @@ services:
       - ${PWD}/module/couchbase/_meta/env
       - ${PWD}/module/haproxy/_meta/env
       - ${PWD}/module/kafka/_meta/env
-      - ${PWD}/module/jolokia/_meta/env
       - ${PWD}/module/mongodb/_meta/env
       - ${PWD}/module/mysql/_meta/env
       - ${PWD}/module/nginx/_meta/env
@@ -57,9 +55,6 @@ services:
 
   haproxy:
     build: ${PWD}/module/haproxy/_meta
-
-  jolokia:
-    build: ${PWD}/module/jolokia/_meta
 
   kafka:
     build: ${PWD}/module/kafka/_meta

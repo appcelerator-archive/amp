@@ -24,10 +24,10 @@ https://github.com/elastic/beats/compare/v5.3.0...master[Check the HEAD diff]
 
 *Winlogbeat*
 
+
 ==== Bugfixes
 
 *Affecting all Beats*
-
 
 *Filebeat*
 
@@ -38,29 +38,20 @@ https://github.com/elastic/beats/compare/v5.3.0...master[Check the HEAD diff]
 *Metricbeat*
 
 - Avoid errors when some Apache status fields are missing. {issue}3074[3074]
-- Linux cgroup metrics are now enabled by default for the system process
-  metricset. The configuration option for the feature was renamed from
-  `cgroups` to `process.cgroups.enabled`. {pull}3519[3519]
-- Change fieldnames couchbase.node.couch.*.actual_disk_size.* to couchbase.node.couch.*.disk_size.* {pull}3545[3545]
 
 *Packetbeat*
 
 *Winlogbeat*
 
-
 ==== Added
 
 *Affecting all Beats*
-
-- Update index mappings to support future Elasticsearch 6.X. {pull}3778[3778]
-- Fix potential elasticsearch output URL parsing error if protocol scheme is missing. {pull}3671[3671]
 
 *Filebeat*
 
 *Heartbeat*
 
 *Metricbeat*
-- Add beta Jolokia module. {pull}3844[3844]
 
 *Packetbeat*
 
@@ -94,6 +85,7 @@ https://github.com/elastic/beats/compare/v5.3.0...master[Check the HEAD diff]
 
 *Winlogbeat*
 
+
 ////////////////////////////////////////////////////////////
 
 [[release-notes-5.3.0]]
@@ -121,34 +113,25 @@ https://github.com/elastic/beats/compare/v5.2.2...v5.3.0[View commits]
 *Affecting all Beats*
 
 - Add `_id`, `_type`, `_index` and `_score` fields in the generated index pattern. {pull}3282[3282]
-- Fix potential elasticsearch output URL parsing error if protocol scheme is missing. {pull}3671[3671]
-- Improve error message when downloading the dashboards fails. {pull}3805[3805]
-- Downgrade Elasticsearch per batch item failure log to debug level. {issue}3953[3953]
+- Fix panic when testing regex-AST to match against date patterns. {issue}3889[3889]
 
 *Filebeat*
-
+- Always use absolute path for event and registry. {pull}3328[3328]
+- Raise an exception in case there is a syntax error in one of the configuration files available under
+  filebeat.config_dir. {pull}3573[3573]
 - Fix empty registry file on machine crash. {issue}3537[3537]
 - Allow `-` in Apache access log byte count. {pull}3863[3863]
-- Downgrade Elasticsearch per batch item failure log to debug level. {issue}3953[3953]
-- Allow log lines without a program name in the Syslog fileset. {pull}3944[3944]
 
-*Heartbeat*
-
-- Add default ports in HTTP monitor. {pull}3924[3924]
+- Fix empty registry file on machine crash. {issue}3537[3537]
 
 *Metricbeat*
 
 - Add error handling to system process metricset for when Linux cgroups are missing from the kernel. {pull}3692[3692]
 - Add labels to the Docker healthcheck metricset output. {pull}3707[3707]
-- Make system process metricset honor the cpu_ticks config option. {issue}3590[3590]
-- Support common.Time in mapstriface.toTime() {pull}3812[3812]
-- Fixing panic on prometheus collector when label has , {pull}3947[3947]
-*Packetbeat*
 
 *Winlogbeat*
 
 - Fix handling of empty strings in event_data. {pull}3705[3705]
-- Fix null terminators include in raw XML string when include_xml is enabled. {pull}3943[3943]
 
 ==== Added
 
@@ -170,7 +153,6 @@ https://github.com/elastic/beats/compare/v5.2.2...v5.3.0[View commits]
 - The `symlinks` and `harverster_limit` settings are now GA, instead of experimental. {pull}3525[3525]
 - close_timeout is also applied when the output is blocking. {pull}3511[3511]
 - Improve handling of different path variants on Windows. {pull}3781[3781]
-- Add auditd module for reading audit logs on Linux. {pull}3750[3750] {pull}3941[3941]
 
 
 *Metricbeat*
@@ -186,29 +168,6 @@ https://github.com/elastic/beats/compare/v5.2.2...v5.3.0[View commits]
 - The Docker, Kafka, and Prometheus modules are now Beta, instead of experimental. {pull}3525[3525]
 - The HAProxy module is now GA, instead of experimental. {pull}3525[3525]
 - Add the ability to collect the environment variables from system processes. {pull}3337[3337]
-- Add experimental metricset `perfmon` to Windows module. {pull}3758[3758]
-- Add memcached module with stats metricset. {pull}3693[3693]
-- Adding support for custom http headers and TLS for metricbeat modules {pull}3945[3945]
-- Add experimental metricset `perfmon` to Windows module. {pull}3758[3758]
-- Add memcached module with stats metricset. {pull}3693[3693]
-- Add the `process.cmdline.cache.enabled` config option to the System Process Metricset. {pull}3891[3891]
-- Adding support for custom http headers and TLS for metricbeat modules {pull}3945[3945]
-- Add new MetricSet interfaces for developers (`Closer`, `ReportingFetcher`, and `PushMetricSet`). {pull}3908[3908]
-
-*Packetbeat*
-- Add `fields` and `fields_under_root` to packetbeat protocols configurations. {pull}3518[3518]
-- Add list style packetbeat protocols configurations. This change supports specifying multiple configurations of the same protocol analyzer. {pull}3518[3518]
-- Add DNS dashboard for an overview the DNS traffic. {pull}3883[3883]
-- Add DNS Tunneling dashboard to highlight domains with large numbers of subdomains or high data volume. {pull}3884[3884]
-
-*Winlogbeat*
-
-*Packetbeat*
-- Add DNS Tunneling dashboard to highlight domains with large numbers of subdomains or high data volume. {pull}3884[3884]
-
-*Packetbeat*
-- Add DNS dashboard for an overview the DNS traffic. {pull}3883[3883]
-- Add DNS Tunneling dashboard to highlight domains with large numbers of subdomains or high data volume. {pull}3884[3884]
 
 ==== Deprecated
 
