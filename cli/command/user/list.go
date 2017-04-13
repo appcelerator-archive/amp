@@ -35,10 +35,7 @@ func NewListUserCommand(c cli.Interface) *cobra.Command {
 
 func listUser(c cli.Interface) error {
 	request := &account.ListUsersRequest{}
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	reply, err := client.ListUsers(context.Background(), request)
 	if err != nil {

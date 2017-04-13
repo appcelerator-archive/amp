@@ -43,16 +43,13 @@ func createTeam(c cli.Interface, cmd *cobra.Command) error {
 		createTeamOptions.team = c.Console().GetInput("team name")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.CreateTeamRequest{
 		OrganizationName: createTeamOptions.org,
 		TeamName:         createTeamOptions.team,
 	}
-	if _, err = client.CreateTeam(context.Background(), request); err != nil {
+	if _, err := client.CreateTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Team has been created in the organization.")

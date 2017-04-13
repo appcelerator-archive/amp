@@ -44,16 +44,13 @@ func removeTeam(c cli.Interface, cmd *cobra.Command) error {
 		removeTeamOptions.team = c.Console().GetInput("team name")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteTeamRequest{
 		OrganizationName: removeTeamOptions.org,
 		TeamName:         removeTeamOptions.team,
 	}
-	if _, err = client.DeleteTeam(context.Background(), request); err != nil {
+	if _, err := client.DeleteTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Team has been removed from the organization.")

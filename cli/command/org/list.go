@@ -35,10 +35,7 @@ func NewOrgListCommand(c cli.Interface) *cobra.Command {
 }
 
 func listOrg(c cli.Interface) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ListOrganizationsRequest{}
 	reply, err := client.ListOrganizations(context.Background(), request)

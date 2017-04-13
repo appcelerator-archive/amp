@@ -44,10 +44,7 @@ func getTeam(c cli.Interface, cmd *cobra.Command) error {
 		getTeamOptions.org = c.Console().GetInput("team name")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
 		OrganizationName: getTeamOptions.org,

@@ -37,16 +37,13 @@ func NewSwitchCommand(c cli.Interface) *cobra.Command {
 }
 
 func switch_(c cli.Interface, opt *switchOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.SwitchRequest{
 		Account: opt.account,
 	}
 	header := metadata.MD{}
-	_, err = client.Switch(context.Background(), request, grpc.Header(&header))
+	_, err := client.Switch(context.Background(), request, grpc.Header(&header))
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}

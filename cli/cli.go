@@ -20,7 +20,7 @@ type Interface interface {
 
 	Server() string
 	SetServer(server string)
-	ClientConn() (*grpc.ClientConn, error)
+	ClientConn() *grpc.ClientConn
 
 	OnInitialize(initializers ...func())
 }
@@ -96,15 +96,15 @@ func (c *cli) OnInitialize(initializers ...func()) {
 }
 
 // ClientConn returns the grpc connection to the API.
-func (c *cli) ClientConn() (*grpc.ClientConn, error) {
+func (c *cli) ClientConn() *grpc.ClientConn {
 	if c.clientConn == nil {
 		var err error
 		c.clientConn, err = NewClientConn(c.Server(), GetToken())
 		if err != nil {
-			return nil, err
+			c.Console().Fatalln("unable to establish grpc connection: %s", err.Error())
 		}
 	}
-	return c.clientConn, nil
+	return c.clientConn
 }
 
 func (c *cli) ShowHelp(cmd *cobra.Command, args []string) error {

@@ -47,17 +47,14 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 		opts.password = c.Console().GetSilentInput("password")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.SignUpRequest{
 		Name:     opts.username,
 		Email:    opts.email,
 		Password: opts.password,
 	}
-	_, err = client.SignUp(context.Background(), request)
+	_, err := client.SignUp(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}

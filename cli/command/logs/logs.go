@@ -60,10 +60,7 @@ func getLogs(c cli.Interface, args []string) error {
 
 	// Get logs from amplifier
 	ctx := context.Background()
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	lc := logs.NewLogsClient(conn)
 	r, err := lc.Get(ctx, &request)
 	if err != nil {

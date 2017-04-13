@@ -44,16 +44,13 @@ func change(c cli.Interface, cmd *cobra.Command) error {
 		changeOptions.new_password = c.Console().GetSilentInput("new password")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordChangeRequest{
 		ExistingPassword: changeOptions.current_password,
 		NewPassword:      changeOptions.new_password,
 	}
-	if _, err = client.PasswordChange(context.Background(), request); err != nil {
+	if _, err := client.PasswordChange(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Your password change has been successful.")

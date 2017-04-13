@@ -37,15 +37,12 @@ func NewOrgRemoveCommand(c cli.Interface) *cobra.Command {
 }
 
 func removeOrg(c cli.Interface, opt *removeOrgOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteOrganizationRequest{
 		Name: opt.name,
 	}
-	if _, err = client.DeleteOrganization(context.Background(), request); err != nil {
+	if _, err := client.DeleteOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Organization has been removed.")

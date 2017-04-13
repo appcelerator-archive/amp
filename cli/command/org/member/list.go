@@ -40,10 +40,7 @@ func NewOrgListMemCommand(c cli.Interface) *cobra.Command {
 }
 
 func listOrgMem(c cli.Interface, opt *listMemOrgOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetOrganizationRequest{
 		Name: opt.name,

@@ -137,10 +137,7 @@ func getStats(c cli.Interface, args []string) error {
 
 	// Execute query regarding discriminator
 	ctx := context.Background()
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := stats.NewStatsClient(conn)
 	r, err := client.StatsQuery(ctx, query)
 	if err != nil {
