@@ -37,7 +37,11 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if err := ioutil.WriteFile(fileName, []byte(in.Compose), 0666); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
-	deployOpt := stack.NewDeployOptions(in.Name, fileName, true)
+	stackInst, err := s.Stacks.CreateStack(ctx, in.Name)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	deployOpt := stack.NewDeployOptions(fmt.Sprintf("%s_%s", stackInst.Name, stackInst.Id), fileName, true)
 	if err := stack.RunDeploy(dockerCli, deployOpt); err != nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}

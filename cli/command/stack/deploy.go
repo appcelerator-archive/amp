@@ -36,7 +36,7 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 }
 
 func deploy(c cli.Interface) error {
-	c.Console().Println(opts.name, opts.file)
+	c.Console().Printf("Deploying stack %s using %s\n", opts.name, opts.file)
 
 	contents, err := ioutil.ReadFile(opts.file)
 	if err != nil {
@@ -53,8 +53,6 @@ func deploy(c cli.Interface) error {
 	if err != nil {
 		return errors.New(grpc.ErrorDesc(err))
 	}
-
-	c.Console().Println(reply)
-
+	c.Console().Println(reply.Answer)
 	return nil
 }
