@@ -32,8 +32,6 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 }
 
 func remove(c cli.Interface) error {
-	c.Console().Printf("Remove stack: %s", opts.name)
-
 	req := &stack.RemoveRequest{
 		Id: ropts.name,
 	}
@@ -43,6 +41,6 @@ func remove(c cli.Interface) error {
 	if err != nil {
 		return errors.New(grpc.ErrorDesc(err))
 	}
-	c.Console().Println(reply)
+	c.Console().Println(reply.Answer)
 	return nil
 }
