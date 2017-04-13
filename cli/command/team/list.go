@@ -41,10 +41,7 @@ func NewTeamListCommand(c cli.Interface) *cobra.Command {
 }
 
 func listTeam(c cli.Interface, opt *listTeamOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ListTeamsRequest{
 		OrganizationName: opt.name,

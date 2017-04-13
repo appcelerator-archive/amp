@@ -37,10 +37,7 @@ func NewGetUserCommand(c cli.Interface) *cobra.Command {
 }
 
 func getUser(c cli.Interface, opt *getUserOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetUserRequest{
 		Name: opt.username,

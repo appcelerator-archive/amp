@@ -57,17 +57,14 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command) error {
 	default:
 		return fmt.Errorf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", changeMemOrgOptions.role)
 	}
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ChangeOrganizationMemberRoleRequest{
 		OrganizationName: changeMemOrgOptions.name,
 		UserName:         changeMemOrgOptions.member,
 		Role:             orgRole,
 	}
-	if _, err = client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {
+	if _, err := client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Member role has been changed.")

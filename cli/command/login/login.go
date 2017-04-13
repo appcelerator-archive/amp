@@ -44,17 +44,14 @@ func login(c cli.Interface, cmd *cobra.Command) error {
 		loginOptions.password = c.Console().GetSilentInput("password")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.LogInRequest{
 		Name:     loginOptions.username,
 		Password: loginOptions.password,
 	}
 	header := metadata.MD{}
-	_, err = client.Login(context.Background(), request, grpc.Header(&header))
+	_, err := client.Login(context.Background(), request, grpc.Header(&header))
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}

@@ -37,10 +37,7 @@ func NewRemoveUserCommand(c cli.Interface) *cobra.Command {
 }
 
 func removeUser(c cli.Interface, opt *removeUserOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.DeleteUserRequest{
 		Name: opt.username,

@@ -46,10 +46,7 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
 		listTeamMemOptions.team = c.Console().GetInput("team name")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
 		OrganizationName: listTeamMemOptions.org,

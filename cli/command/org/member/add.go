@@ -42,16 +42,13 @@ func addOrgMem(c cli.Interface, cmd *cobra.Command) error {
 	if !cmd.Flag("member").Changed {
 		addMemOrgOptions.member = c.Console().GetInput("member name")
 	}
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.AddUserToOrganizationRequest{
 		OrganizationName: addMemOrgOptions.name,
 		UserName:         addMemOrgOptions.member,
 	}
-	if _, err = client.AddUserToOrganization(context.Background(), request); err != nil {
+	if _, err := client.AddUserToOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Member has been added to organization.")

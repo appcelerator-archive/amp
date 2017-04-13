@@ -36,15 +36,12 @@ func NewForgotLoginCommand(c cli.Interface) *cobra.Command {
 }
 
 func forgotLogin(c cli.Interface, opt *forgotOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ForgotLoginRequest{
 		Email: opt.email,
 	}
-	if _, err = client.ForgotLogin(context.Background(), request); err != nil {
+	if _, err := client.ForgotLogin(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Your login name has been sent to the address: %s", opt.email)

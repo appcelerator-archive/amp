@@ -36,15 +36,12 @@ func NewVerifyCommand(c cli.Interface) *cobra.Command {
 }
 
 func verify(c cli.Interface, opt *verifyOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.VerificationRequest{
 		Token: opt.token,
 	}
-	_, err = client.Verify(context.Background(), request)
+	_, err := client.Verify(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}

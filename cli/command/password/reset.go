@@ -36,15 +36,12 @@ func NewResetCommand(c cli.Interface) *cobra.Command {
 }
 
 func reset(c cli.Interface, opt *resetOpts) error {
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordResetRequest{
 		Name: opt.username,
 	}
-	if _, err = client.PasswordReset(context.Background(), request); err != nil {
+	if _, err := client.PasswordReset(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Hi %s! Please check your email to complete the password reset process.\n", opt.username)

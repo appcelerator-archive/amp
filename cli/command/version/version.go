@@ -75,20 +75,18 @@ func showVersion(c cli.Interface) error {
 		},
 	}
 
-	conn, err := c.ClientConn()
-	if err == nil {
-		client := version.NewVersionClient(conn)
-		reply, err := client.Get(context.Background(), &version.GetRequest{})
-		if err != nil {
-			return fmt.Errorf("%s", grpc.ErrorDesc(err))
-		}
-		v.Server = &version.Info{
-			Version:   reply.Info.Version,
-			Build:     reply.Info.Build,
-			GoVersion: reply.Info.GoVersion,
-			Os:        reply.Info.Os,
-			Arch:      reply.Info.Arch,
-		}
+	conn := c.ClientConn()
+	client := version.NewVersionClient(conn)
+	reply, err := client.Get(context.Background(), &version.GetRequest{})
+	if err != nil {
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	v.Server = &version.Info{
+		Version:   reply.Info.Version,
+		Build:     reply.Info.Build,
+		GoVersion: reply.Info.GoVersion,
+		Os:        reply.Info.Os,
+		Arch:      reply.Info.Arch,
 	}
 
 	var doc bytes.Buffer

@@ -49,17 +49,14 @@ func remTeamMem(c cli.Interface, cmd *cobra.Command) error {
 		remTeamMemOptions.member = c.Console().GetInput("member name")
 	}
 
-	conn, err := c.ClientConn()
-	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
-	}
+	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.RemoveUserFromTeamRequest{
 		OrganizationName: remTeamMemOptions.org,
 		TeamName:         remTeamMemOptions.team,
 		UserName:         remTeamMemOptions.member,
 	}
-	if _, err = client.RemoveUserFromTeam(context.Background(), request); err != nil {
+	if _, err := client.RemoveUserFromTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Member has been removed from team.")
