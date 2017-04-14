@@ -49,9 +49,9 @@ func listFunction(c cli.Interface) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tIMAGE\tOWNER\tCREATED ON")
+	fmt.Fprintln(w, "ID\tNAME\tIMAGE\tOWNER\tOWNER TYPE\tCREATED ON")
 	for _, f := range reply.Functions {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t\n", f.Id, f.Name, f.Image, f.Owner.Name, time.ConvertTime(f.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", f.Id, f.Name, f.Image, f.Owner.Name, f.Owner.Type, time.ConvertTime(f.CreateDt))
 	}
 	w.Flush()
 	return nil

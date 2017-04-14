@@ -332,7 +332,7 @@ func (s *Server) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrg
 	if err := s.Accounts.ChangeOrganizationMemberRole(ctx, in.OrganizationName, in.UserName, in.Role); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully changed role of user %s from organization %s to %v\n", in.UserName, in.OrganizationName, in.Role)
+	log.Printf("Successfully changed role of user %s from organization %s to %s\n", in.UserName, in.OrganizationName, in.Role.String())
 	return &empty.Empty{}, nil
 }
 
@@ -402,7 +402,7 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully added member %s to team %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
+	log.Printf("Successfully added user %s to team %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -418,6 +418,33 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		}
 	}
 	log.Printf("Successfully removed user %s from teams %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
+// AddResourceToTeam implements account.AddResourceToTeam
+func (s *Server) AddResourceToTeam(ctx context.Context, in *AddResourceToTeamRequest) (*empty.Empty, error) {
+	if err := s.Accounts.AddResourceToTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
+// RemoveResourceFromTeam implements account.RemoveResourceFromTeam
+func (s *Server) RemoveResourceFromTeam(ctx context.Context, in *RemoveResourceFromTeamRequest) (*empty.Empty, error) {
+	if err := s.Accounts.RemoveResourceFromTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully removed resource %s from teams %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
+// ChangeTeamResourcePermissionLevel implements account.ChangeOrganizationMemberRole
+func (s *Server) ChangeTeamResourcePermissionLevel(ctx context.Context, in *ChangeTeamResourcePermissionLevelRequest) (*empty.Empty, error) {
+	if err := s.Accounts.ChangeTeamResourcePermissionLevel(ctx, in.OrganizationName, in.TeamName, in.ResourceId, in.PermissionLevel); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully changed permission level over resource %s in team %s to %s\n", in.ResourceId, in.TeamName, in.PermissionLevel.String())
 	return &empty.Empty{}, nil
 }
 

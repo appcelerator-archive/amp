@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker/docker/stack"
 	"github.com/docker/docker/cli/command"
@@ -20,7 +21,8 @@ import (
 
 // Server is used to implement stack.StackServer
 type Server struct {
-	Stacks stacks.Interface
+	Accounts accounts.Interface
+	Stacks   stacks.Interface
 }
 
 // Deploy implements stack.Server
@@ -146,7 +148,9 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 	} else {
 		return nil, fmt.Errorf("Stack %s is not an amp stack", in.Id)
 	}
-
+	if !s.Accounts.IsAuthorized(ctx, stackInst.Owner, accounts.DeleteAction, accounts.StackRN, stackInst.Id) {
+		return nil, grpc.Errorf(codes.PermissionDenied, "user not authorized")
+	}
 	rmOpt := stack.NewRemoveOptions([]string{name})
 	if err := stack.RunRemove(dockerCli, rmOpt); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)

@@ -34,7 +34,7 @@ func NewRemoveTeamMemCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&remTeamMemOptions.org, "org", "", "Organization name")
 	flags.StringVar(&remTeamMemOptions.team, "team", "", "Team name")
-	flags.StringVar(&remTeamMemOptions.team, "member", "", "Member name")
+	flags.StringVar(&remTeamMemOptions.member, "member", "", "Member name")
 	return cmd
 }
 

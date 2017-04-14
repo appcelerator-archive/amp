@@ -5,26 +5,23 @@ import (
 	"strings"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,128}$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{3,128}$`)
 
-func isEmpty(s string) bool {
-	return s == "" || strings.TrimSpace(s) == ""
-}
-
-// CheckName checks user name
-func CheckName(name string) error {
-	if isEmpty(name) {
-		return InvalidName
+// CheckName checks name
+func CheckName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", InvalidName
 	}
 	if !nameFormat.MatchString(name) {
-		return InvalidName
+		return "", InvalidName
 	}
-	return nil
+	return name, nil
 }
 
 // Validate validates Stack
 func (f *Stack) Validate() (err error) {
-	if err = CheckName(f.Name); err != nil {
+	if f.Name, err = CheckName(f.Name); err != nil {
 		return err
 	}
 	return nil

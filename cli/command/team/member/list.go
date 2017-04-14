@@ -59,7 +59,7 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
 	}
 	if listTeamMemOptions.quiet {
 		for _, member := range reply.Team.Members {
-			c.Console().Println(member.Name)
+			c.Console().Println(member)
 		}
 		return nil
 	}

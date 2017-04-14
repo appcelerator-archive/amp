@@ -8,7 +8,7 @@ import (
 	"github.com/holys/safe"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{4,128}$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{3,128}$`)
 
 // CheckName checks user name
 func CheckName(name string) (string, error) {
@@ -41,6 +41,15 @@ func CheckPassword(password string) (string, error) {
 		return "", PasswordTooWeak
 	}
 	return password, nil
+}
+
+// CheckID checks resource id
+func CheckID(ID string) (string, error) {
+	ID = strings.TrimSpace(ID)
+	if ID == "" {
+		return "", InvalidResourceID
+	}
+	return ID, nil
 }
 
 func checkOrganizationMember(member *OrganizationMember) (err error) {
@@ -85,6 +94,22 @@ func checkTeamMembers(members []string) error {
 	return nil
 }
 
+func checkTeamResource(resource *TeamResource) (err error) {
+	if resource.Id, err = CheckID(resource.Id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func checkTeamResources(resources []*TeamResource) error {
+	for _, resource := range resources {
+		if err := checkTeamResource(resource); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Validate validates User
 func (u *User) Validate() (err error) {
 	if u.Name, err = CheckName(u.Name); err != nil {
@@ -121,6 +146,9 @@ func (t *Team) Validate() (err error) {
 		return err
 	}
 	if err := checkTeamMembers(t.Members); err != nil {
+		return err
+	}
+	if err := checkTeamResources(t.Resources); err != nil {
 		return err
 	}
 	return nil

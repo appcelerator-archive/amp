@@ -3,6 +3,7 @@ package team
 import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/team/member"
+	"github.com/appcelerator/amp/cli/command/team/resource"
 	"github.com/spf13/cobra"
 )
 
@@ -19,5 +20,6 @@ func NewTeamCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewTeamRemoveCommand(c))
 	cmd.AddCommand(NewTeamGetCommand(c))
 	cmd.AddCommand(member.NewTeamMemberCommand(c))
+	cmd.AddCommand(resource.NewTeamResourceCommand(c))
 	return cmd
 }

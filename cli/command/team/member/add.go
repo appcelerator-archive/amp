@@ -33,7 +33,7 @@ func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&addTeamMemOptions.org, "org", "", "Organization name")
 	flags.StringVar(&addTeamMemOptions.team, "team", "", "Team name")
-	flags.StringVar(&addTeamMemOptions.team, "member", "", "Member name")
+	flags.StringVar(&addTeamMemOptions.member, "member", "", "Member name")
 	return cmd
 }
 

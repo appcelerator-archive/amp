@@ -3,6 +3,7 @@ package function
 import (
 	"log"
 
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -24,6 +25,8 @@ func convertError(err error) error {
 		return grpc.Errorf(codes.InvalidArgument, err.Error())
 	case functions.FunctionAlreadyExists:
 		return grpc.Errorf(codes.AlreadyExists, err.Error())
+	case accounts.NotAuthorized:
+		return grpc.Errorf(codes.PermissionDenied, err.Error())
 	}
 	return grpc.Errorf(codes.Internal, err.Error())
 }
@@ -45,7 +48,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully list functions")
+	log.Println("Successfully listed functions")
 	return &ListReply{Functions: functions}, nil
 }
 

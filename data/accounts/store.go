@@ -315,7 +315,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 // AddUserToOrganization adds a user to the given organization
 func (s *Store) AddUserToOrganization(ctx context.Context, organizationName string, userName string) (err error) {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
 		return NotAuthorized
 	}
 
@@ -346,7 +346,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 
 func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
 	// Check authorization
-	if auth.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+	if auth.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
 		return nil, NotAuthorized
 	}
 
@@ -391,7 +391,7 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 // ChangeOrganizationMemberRole changes the role of given user in the given organization
 func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationName string, userName string, role OrganizationRole) (err error) {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
 		return NotAuthorized
 	}
 
@@ -450,7 +450,7 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, name}, DeleteAction, OrganizationResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, name}, DeleteAction, OrganizationRN, "") {
 		return NotAuthorized
 	}
 
@@ -472,7 +472,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 // CreateTeam creates a new team
 func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, CreateAction, TeamResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, CreateAction, TeamRN, teamName) {
 		return NotAuthorized
 	}
 
@@ -491,7 +491,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	team := &Team{
 		Name:     teamName,
 		CreateDt: time.Now().Unix(),
-		Members: []string{auth.GetUser(ctx)},
+		Members:  []string{auth.GetUser(ctx)},
 	}
 
 	// Add the team to the organization
@@ -502,7 +502,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 // AddUserToTeam adds a user to the given team
 func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamRN, teamName) {
 		return NotAuthorized
 	}
 
@@ -542,7 +542,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 // RemoveUserFromTeam removes a user from the given team
 func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamRN, teamName) {
 		return NotAuthorized
 	}
 
@@ -575,6 +575,98 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 	return s.updateOrganization(ctx, organization)
 }
 
+// AddResourceToTeam adds a resource to the given team
+func (s *Store) AddResourceToTeam(ctx context.Context, organizationName string, teamName string, resourceID string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamRN, teamName) {
+		return NotAuthorized
+	}
+
+	// Get organization
+	organization, err := s.getOrganization(ctx, organizationName)
+	if err != nil {
+		return err
+	}
+
+	// Get team
+	team := organization.getTeam(teamName)
+	if team == nil {
+		return TeamNotFound
+	}
+
+	// Check if resource is already added to the team
+	if team.hasResource(resourceID) {
+		return nil // Resource is already added to the team, return
+	}
+
+	// Add the resource
+	team.Resources = append(team.Resources, &TeamResource{
+		Id:              resourceID,
+		PermissionLevel: TeamPermissionLevel_TEAM_READ,
+	})
+	return s.updateOrganization(ctx, organization)
+}
+
+// RemoveResourceFromTeam removes a resource from the given team
+func (s *Store) RemoveResourceFromTeam(ctx context.Context, organizationName string, teamName string, resourceID string) error {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamRN, teamName) {
+		return NotAuthorized
+	}
+
+	// Get organization
+	organization, err := s.getOrganization(ctx, organizationName)
+	if err != nil {
+		return err
+	}
+
+	// Get team
+	team := organization.getTeam(teamName)
+	if team == nil {
+		return TeamNotFound
+	}
+
+	// Check if resource is already present
+	resourceIndex := team.getResourceIndex(resourceID)
+	if resourceIndex == -1 {
+		return nil // Resource is not present, return
+	}
+
+	// Remove the resource from team resources. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+	team.Resources = append(team.Resources[:resourceIndex], team.Resources[resourceIndex+1:]...)
+	return s.updateOrganization(ctx, organization)
+}
+
+// ChangeTeamResourcePermissionLevel changes the permission level over the given resource in the given team
+func (s *Store) ChangeTeamResourcePermissionLevel(ctx context.Context, organizationName string, teamName string, resourceID string, permissionLevel TeamPermissionLevel) (err error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
+		return NotAuthorized
+	}
+
+	// Get organization
+	organization, err := s.getOrganization(ctx, organizationName)
+	if err != nil {
+		return err
+	}
+
+	// Get team
+	team := organization.getTeam(teamName)
+	if team == nil {
+		return TeamNotFound
+	}
+
+	// Check if resource is associated to the team
+	resource := team.getResourceById(resourceID)
+	if resource == nil {
+		return ResourceNotFound
+	}
+
+	// Change the permission level over the given resource
+	resource.PermissionLevel = permissionLevel
+	return s.updateOrganization(ctx, organization)
+}
+
 // GetTeam fetches a team by name
 func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*Team, error) {
 	// Get organization
@@ -604,7 +696,7 @@ func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*Team
 // DeleteTeam deletes a team by name
 func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamName string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, DeleteAction, TeamResource) {
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, DeleteAction, TeamRN, "") {
 		return NotAuthorized
 	}
 
