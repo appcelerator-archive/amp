@@ -41,7 +41,7 @@ func getTeam(c cli.Interface, cmd *cobra.Command) error {
 		getTeamOptions.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		getTeamOptions.org = c.Console().GetInput("team name")
+		getTeamOptions.team = c.Console().GetInput("team name")
 	}
 
 	conn := c.ClientConn()
