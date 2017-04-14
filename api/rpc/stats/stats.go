@@ -119,6 +119,9 @@ func (s *Stats) createBoolQuery(req *StatsRequest, period string) *elastic.BoolQ
 	if req.FilterContainerShortName != "" {
 		filters = append(filters, elastic.NewWildcardQuery("container_short_name", getWildcardValue(req.FilterContainerShortName)))
 	}
+	if req.FilterContainerState != "" {
+		filters = append(filters, elastic.NewWildcardQuery("container_state", getWildcardValue(req.FilterContainerState)))
+	}
 	if req.FilterServiceName != "" {
 		filters = append(filters, elastic.NewWildcardQuery("service_name", getWildcardValue(req.FilterServiceName)))
 	}
