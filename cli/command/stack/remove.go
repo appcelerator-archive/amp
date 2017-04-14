@@ -21,8 +21,8 @@ var (
 // NewRemoveCommand returns a new instance of the stack command.
 func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "remove STACKNAME",
-		Aliases: []string{"rm", "down", "stop"},
+		Use:     "rm STACKNAME",
+		Aliases: []string{"remove", "down", "stop"},
 		Short:   "Remove a deployed stack",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

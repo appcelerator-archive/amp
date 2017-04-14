@@ -26,9 +26,9 @@ var (
 // NewListCommand returns a new instance of the stack command.
 func NewListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list",
-		Aliases: []string{"ls"},
+		Use:     "ls",
 		Short:   "List deployed stacks",
+		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return list(c)

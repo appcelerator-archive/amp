@@ -5,8 +5,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/pkg/time"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -25,6 +25,7 @@ func NewListUserCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List users",
+		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listUser(c)

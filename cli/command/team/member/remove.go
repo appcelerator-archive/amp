@@ -25,7 +25,7 @@ func NewRemoveTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "rm [OPTIONS]",
 		Short:   "Remove member from team",
-		Aliases: []string{"del"},
+		Aliases: []string{"remove"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remTeamMem(c, cmd)
