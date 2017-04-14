@@ -82,7 +82,7 @@ set_deployment_variables(){
   case $(deployment_target) in
   local)
     dockerhost=m1
-    registryhost=localhost
+    registryhost=127.0.0.1
     amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     domainname=$localdomainname
