@@ -25,6 +25,7 @@ const (
 	TeamNotFound              = Error("team not found")
 	AtLeastOneOwner           = Error("organization must have at least one owner")
 	NotAuthorized             = Error("user not authorized")
+	NotPartOfOrganization     = Error("user is not part of the organization")
 )
 
 // Interface defines the user data access layer
@@ -88,9 +89,6 @@ type Interface interface {
 
 	// RemoveUserFromTeam removes a user from the given team
 	RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) (err error)
-
-	// ChangeTeamMemberRole changes the role of given user in the given team
-	ChangeTeamMemberRole(ctx context.Context, organizationName string, teamName string, userName string, role TeamRole) (err error)
 
 	// DeleteTeam deletes a team by name
 	DeleteTeam(ctx context.Context, organizationName string, teamName string) (err error)

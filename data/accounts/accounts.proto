@@ -10,20 +10,10 @@ message User {
   int64 create_dt = 5;
 }
 
-enum TeamRole {
-  TEAM_MEMBER = 0;
-  TEAM_OWNER = 1;
-}
-
-message TeamMember {
-  string name = 1;
-  TeamRole role = 2;
-}
-
 message Team {
   string name = 1;
   int64 create_dt = 2;
-  repeated TeamMember members = 3;
+  repeated string members = 3;
 }
 
 enum OrganizationRole {

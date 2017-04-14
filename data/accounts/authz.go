@@ -38,7 +38,7 @@ var (
 		},
 	}
 
-	teamsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+	teamsAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
 		Resources: []string{TeamResource},
@@ -46,13 +46,12 @@ var (
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
 			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_MEMBER,
 				OrganizationRole_ORGANIZATION_OWNER,
 			}},
 		},
 	}
 
-	functionsAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+	functionsAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
 		Resources: []string{FunctionResource},
@@ -60,7 +59,6 @@ var (
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
 			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_MEMBER,
 				OrganizationRole_ORGANIZATION_OWNER,
 			}},
 		},
@@ -77,7 +75,7 @@ var (
 		},
 	}
 
-	stacksAdminByOrgOwnersAndMembers = &ladon.DefaultPolicy{
+	stacksAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
 		Resources: []string{StackResource},
@@ -85,7 +83,6 @@ var (
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
 			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_MEMBER,
 				OrganizationRole_ORGANIZATION_OWNER,
 			}},
 		},
@@ -105,10 +102,10 @@ var (
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		organizationsAdminByOrgOwners,
-		teamsAdminByOrgOwnersAndMembers,
-		functionsAdminByOrgOwnersAndMembers,
+		teamsAdminByOrgOwners,
+		functionsAdminByOrgOwners,
 		functionsAdminByUserOwner,
-		stacksAdminByOrgOwnersAndMembers,
+		stacksAdminByOrgOwners,
 		stacksAdminByUserOwner,
 	}
 

@@ -69,14 +69,14 @@ func checkOrganizationMembers(members []*OrganizationMember) error {
 	return nil
 }
 
-func checkTeamMember(member *TeamMember) (err error) {
-	if member.Name, err = CheckName(member.Name); err != nil {
+func checkTeamMember(member string) (err error) {
+	if member, err = CheckName(member); err != nil {
 		return err
 	}
 	return nil
 }
 
-func checkTeamMembers(members []*TeamMember) error {
+func checkTeamMembers(members []string) error {
 	for _, member := range members {
 		if err := checkTeamMember(member); err != nil {
 			return err

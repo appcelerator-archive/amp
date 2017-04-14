@@ -16,6 +16,5 @@ func NewTeamMemberCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewAddTeamMemCommand(c))
 	cmd.AddCommand(NewRemoveTeamMemCommand(c))
 	cmd.AddCommand(NewListTeamMemCommand(c))
-	cmd.AddCommand(NewTeamChangeMemRoleCommand(c))
 	return cmd
 }
