@@ -48,6 +48,6 @@ func getOrg(c cli.Interface, opt *getOrgOpts) error {
 	}
 	c.Console().Printf("Organization: %s\n", reply.Organization.Name)
 	c.Console().Printf("Email: %s\n", reply.Organization.Email)
-	c.Console().Printf("Created: %s\n", time.ConvertTime(reply.Organization.CreateDt))
+	c.Console().Printf("Created On: %s\n", time.ConvertTime(reply.Organization.CreateDt))
 	return nil
 }

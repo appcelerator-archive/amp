@@ -59,7 +59,7 @@ func listTeam(c cli.Interface, opt *listTeamOpts) error {
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
 	fmt.Fprintln(w, "TEAM\tCREATED ON")
 	for _, team := range reply.Teams {
-		fmt.Fprintf(w, "%s\t%s\t\n", team.Name, time.ConvertTime(team.CreateDt))
+		fmt.Fprintf(w, "%s\t%s\n", team.Name, time.ConvertTime(team.CreateDt))
 	}
 	w.Flush()
 	return nil

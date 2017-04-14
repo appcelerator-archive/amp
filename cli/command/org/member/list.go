@@ -56,7 +56,7 @@ func listOrgMem(c cli.Interface, opt *listMemOrgOpts) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "USERNAME\tROLE")
+	fmt.Fprintln(w, "MEMBER\tROLE")
 	for _, user := range reply.Organization.Members {
 		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
 	}
