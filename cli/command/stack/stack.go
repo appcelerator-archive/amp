@@ -16,5 +16,6 @@ func NewStackCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewDeployCommand(c))
 	cmd.AddCommand(NewListCommand(c))
 	cmd.AddCommand(NewRemoveCommand(c))
+	cmd.AddCommand(NewLogsCommand(c))
 	return cmd
 }
