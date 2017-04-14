@@ -55,8 +55,8 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if in.Container != "" {
 		boolQuery := elastic.NewBoolQuery()
 		masterQuery.Filter(
-			boolQuery.Should(elastic.NewPrefixQuery("container_id", in.Service)),
-			boolQuery.Should(elastic.NewPrefixQuery("container_name", in.Service)),
+			boolQuery.Should(elastic.NewPrefixQuery("container_id", in.Container)),
+			boolQuery.Should(elastic.NewPrefixQuery("container_name", in.Container)),
 		)
 	}
 	if in.Service != "" {
