@@ -5,6 +5,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/pkg/time"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -48,9 +49,9 @@ func listUser(c cli.Interface) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "USERNAME\tEMAIL")
+	fmt.Fprintln(w, "USERNAME\tEMAIL\tCREATED ON")
 	for _, user := range reply.Users {
-		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Email)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", user.Name, user.Email, time.ConvertTime(user.CreateDt))
 	}
 	w.Flush()
 	return nil

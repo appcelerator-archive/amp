@@ -63,9 +63,9 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "TEAM\tROLE")
-	for _, team := range reply.Team.Members {
-		fmt.Fprintf(w, "%s\t%s\n", team.Name, team.Role)
+	fmt.Fprintln(w, "MEMBER\tROLE")
+	for _, user := range reply.Team.Members {
+		fmt.Fprintf(w, "%s\t%s\n", user.Name, user.Role)
 	}
 	w.Flush()
 	return nil

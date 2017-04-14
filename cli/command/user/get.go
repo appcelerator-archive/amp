@@ -49,6 +49,6 @@ func getUser(c cli.Interface, opt *getUserOpts) error {
 	c.Console().Printf("Username: %s\n", reply.User.Name)
 	c.Console().Printf("Email: %s\n", reply.User.Email)
 	c.Console().Printf("Verified?: %t\n", reply.User.IsVerified)
-	c.Console().Printf("Create Date: %s\n", time.ConvertTime(reply.User.CreateDt))
+	c.Console().Printf("Created On: %s\n", time.ConvertTime(reply.User.CreateDt))
 	return nil
 }

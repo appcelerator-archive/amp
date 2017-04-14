@@ -44,6 +44,6 @@ func forgotLogin(c cli.Interface, opt *forgotOpts) error {
 	if _, err := client.ForgotLogin(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	c.Console().Printf("Your login name has been sent to the address: %s", opt.email)
+	c.Console().Printf("Your login name has been sent to the address: %s\n", opt.email)
 	return nil
 }
