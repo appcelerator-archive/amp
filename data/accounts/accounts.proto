@@ -10,10 +10,22 @@ message User {
   int64 create_dt = 5;
 }
 
+enum TeamPermissionLevel {
+  TEAM_READ = 0;
+  TEAM_WRITE = 1;
+  TEAM_ADMIN = 2;
+}
+
+message TeamResource {
+  string id = 1;
+  TeamPermissionLevel permission_level = 2;
+}
+
 message Team {
   string name = 1;
   int64 create_dt = 2;
   repeated string members = 3;
+  repeated TeamResource resources = 4;
 }
 
 enum OrganizationRole {

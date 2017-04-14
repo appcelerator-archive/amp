@@ -48,3 +48,13 @@ func (o *Organization) getTeamIndex(teamName string) int {
 func (o *Organization) hasTeam(teamName string) bool {
 	return o.getTeamIndex(teamName) != -1
 }
+
+func (o *Organization) getMemberTeams(name string) []*Team {
+	memberTeams := []*Team{}
+	for _, t := range o.Teams {
+		if t.hasMember(name) {
+			memberTeams = append(memberTeams, t)
+		}
+	}
+	return memberTeams
+}

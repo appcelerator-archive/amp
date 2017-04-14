@@ -26,6 +26,8 @@ const (
 	AtLeastOneOwner           = Error("organization must have at least one owner")
 	NotAuthorized             = Error("user not authorized")
 	NotPartOfOrganization     = Error("user is not part of the organization")
+	InvalidResourceID         = Error("invalid resource ID")
+	ResourceNotFound          = Error("resource not found")
 )
 
 // Interface defines the user data access layer
@@ -90,11 +92,20 @@ type Interface interface {
 	// RemoveUserFromTeam removes a user from the given team
 	RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) (err error)
 
+	// AddResourceToTeam adds a resource to the given team
+	AddResourceToTeam(ctx context.Context, organizationName string, teamName string, resourceName string) (err error)
+
+	// RemoveResourceFromTeam removes a resource from the given team
+	RemoveResourceFromTeam(ctx context.Context, organizationName string, teamName string, resourceName string) (err error)
+
+	// ChangeTeamResourcePermissionLevel changes the permission level over the given resource in the given team
+	ChangeTeamResourcePermissionLevel(ctx context.Context, organizationName string, teamName string, resource string, permissionLevel TeamPermissionLevel) (err error)
+
 	// DeleteTeam deletes a team by name
 	DeleteTeam(ctx context.Context, organizationName string, teamName string) (err error)
 
 	// IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
-	IsAuthorized(ctx context.Context, owner *Account, action string, resource string) bool
+	IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceId string) bool
 
 	// Reset resets the user store
 	Reset(ctx context.Context)

@@ -71,8 +71,8 @@ func (s *Store) GetFunction(ctx context.Context, id string) (*Function, error) {
 }
 
 // GetFunctionByName fetches a function by name
-func (s *Store) GetFunctionByName(ctx context.Context, name string) (*Function, error) {
-	if err := CheckName(name); err != nil {
+func (s *Store) GetFunctionByName(ctx context.Context, name string) (function *Function, err error) {
+	if name, err = CheckName(name); err != nil {
 		return nil, err
 	}
 	functions, err := s.ListFunctions(ctx)
@@ -102,16 +102,16 @@ func (s *Store) ListFunctions(ctx context.Context) ([]*Function, error) {
 
 // DeleteFunction deletes a function by id
 func (s *Store) DeleteFunction(ctx context.Context, id string) error {
-	f, err := s.GetFunction(ctx, id)
+	function, err := s.GetFunction(ctx, id)
 	if err != nil {
 		return err
 	}
-	if f == nil {
+	if function == nil {
 		return FunctionNotFound
 	}
 
 	// Check authorization
-	if !s.accounts.IsAuthorized(ctx, f.Owner, accounts.DeleteAction, accounts.FunctionResource) {
+	if !s.accounts.IsAuthorized(ctx, function.Owner, accounts.DeleteAction, accounts.FunctionRN, function.Id) {
 		return accounts.NotAuthorized
 	}
 

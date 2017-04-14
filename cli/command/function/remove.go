@@ -1,9 +1,8 @@
 package function_
 
 import (
-	"fmt"
-
 	"errors"
+	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/cli"
@@ -25,7 +24,7 @@ func NewFunctionRemoveCommand(c cli.Interface) *cobra.Command {
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {
-				return errors.New("Function cannot be empty")
+				return errors.New("function cannot be empty")
 			}
 			opts := &removeFunctionOpts{}
 			opts.function = args[0]

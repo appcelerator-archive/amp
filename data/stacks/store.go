@@ -70,8 +70,8 @@ func (s *Store) GetStack(ctx context.Context, id string) (*Stack, error) {
 }
 
 // GetStackByName fetches a stack by name
-func (s *Store) GetStackByName(ctx context.Context, name string) (*Stack, error) {
-	if err := CheckName(name); err != nil {
+func (s *Store) GetStackByName(ctx context.Context, name string) (stack *Stack, err error) {
+	if name, err = CheckName(name); err != nil {
 		return nil, err
 	}
 	stacks, err := s.ListStacks(ctx)
@@ -101,16 +101,16 @@ func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
 
 // DeleteStack deletes a stack by id
 func (s *Store) DeleteStack(ctx context.Context, id string) error {
-	f, err := s.GetStack(ctx, id)
+	stack, err := s.GetStack(ctx, id)
 	if err != nil {
 		return err
 	}
-	if f == nil {
+	if stack == nil {
 		return StackNotFound
 	}
 
 	// Check authorization
-	if !s.accounts.IsAuthorized(ctx, f.Owner, accounts.DeleteAction, accounts.StackResource) {
+	if !s.accounts.IsAuthorized(ctx, stack.Owner, accounts.DeleteAction, accounts.StackRN, stack.Id) {
 		return accounts.NotAuthorized
 	}
 

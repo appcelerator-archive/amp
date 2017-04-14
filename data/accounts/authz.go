@@ -11,11 +11,11 @@ import (
 
 // Resources and actions
 const (
-	AmpResource          = "amprn"
-	OrganizationResource = AmpResource + ":organization"
-	TeamResource         = AmpResource + ":team"
-	FunctionResource     = AmpResource + ":function"
-	StackResource        = AmpResource + ":stack"
+	AmpResourceName = "amprn"
+	OrganizationRN  = AmpResourceName + ":organization"
+	TeamRN          = AmpResourceName + ":team"
+	FunctionRN      = AmpResourceName + ":function"
+	StackRN         = AmpResourceName + ":stack"
 
 	CreateAction = "create"
 	ReadAction   = "read"
@@ -28,46 +28,49 @@ var (
 	organizationsAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{OrganizationResource},
+		Resources: []string{OrganizationRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_OWNER,
-			}},
+			"organization": &OrganizationAccessCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{},
+			},
 		},
 	}
 
 	teamsAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{TeamResource},
+		Resources: []string{TeamRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_OWNER,
-			}},
+			"organization": &OrganizationAccessCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{},
+			},
 		},
 	}
 
-	functionsAdminByOrgOwners = &ladon.DefaultPolicy{
+	functionsAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{FunctionResource},
+		Resources: []string{FunctionRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_OWNER,
-			}},
+			"organization": &OrganizationAccessCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
+			},
 		},
 	}
 
 	functionsAdminByUserOwner = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{FunctionResource},
+		Resources: []string{FunctionRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
@@ -75,23 +78,24 @@ var (
 		},
 	}
 
-	stacksAdminByOrgOwners = &ladon.DefaultPolicy{
+	stacksAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{StackResource},
+		Resources: []string{StackRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
-			"organization": &OrganizationRoleCondition{[]OrganizationRole{
-				OrganizationRole_ORGANIZATION_OWNER,
-			}},
+			"organization": &OrganizationAccessCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
+			},
 		},
 	}
 
 	stacksAdminByUserOwner = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
-		Resources: []string{StackResource},
+		Resources: []string{StackRN},
 		Actions:   []string{"<" + AdminAction + ">"},
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
@@ -103,9 +107,9 @@ var (
 	policies = []ladon.Policy{
 		organizationsAdminByOrgOwners,
 		teamsAdminByOrgOwners,
-		functionsAdminByOrgOwners,
+		functionsAdminByOrgOwnersAndTeamAdmins,
 		functionsAdminByUserOwner,
-		stacksAdminByOrgOwners,
+		stacksAdminByOrgOwnersAndTeamAdmins,
 		stacksAdminByUserOwner,
 	}
 
@@ -142,7 +146,7 @@ func GetRequesterAccount(ctx context.Context) *Account {
 }
 
 // IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
-func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string, resource string) bool {
+func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceID string) bool {
 	if owner == nil {
 		return false
 	}
@@ -159,6 +163,7 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 			Resource: resource,
 			Context: ladon.Context{
 				"organization": organization,
+				"resourceID":   resourceID,
 			},
 		})
 		return err == nil
@@ -176,21 +181,25 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 	return false
 }
 
-// OrganizationRoleCondition is a condition which is fulfilled if the request's subject has the expected role in the organization
-type OrganizationRoleCondition struct {
-	ExpectedRoles []OrganizationRole
+// OrganizationAccessCondition is a condition which is fulfilled if the request's subject has the expected access in the organization (either by organization role or team access)
+type OrganizationAccessCondition struct {
+	ExpectedRoles            []OrganizationRole
+	ExpectedPermissionLevels []TeamPermissionLevel
 }
 
-// Fulfills returns true if the request's subject is equal to the given value string
-func (c *OrganizationRoleCondition) Fulfills(value interface{}, r *ladon.Request) bool {
+// Fulfills returns true if subject is granted resource access
+func (c *OrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Request) bool {
 	organization, ok := value.(*Organization)
+	log.Println("organization", organization)
 	if !ok {
+		log.Println("organization ok", ok)
 		return false
 	}
 	if organization == nil {
 		return false
 	}
 	member := organization.getMember(r.Subject)
+	log.Println("member", member)
 	if member == nil {
 		return false
 	}
@@ -199,10 +208,33 @@ func (c *OrganizationRoleCondition) Fulfills(value interface{}, r *ladon.Request
 			return true
 		}
 	}
+	log.Println("organization.getMemberTeams(r.Subject)", organization.getMemberTeams(r.Subject))
+	for _, team := range organization.getMemberTeams(r.Subject) {
+		resourceID, ok := r.Context["resourceID"].(string)
+		if !ok {
+			log.Println("resourceID ok", ok)
+			return false
+		}
+		log.Println("resourceID", resourceID)
+		resource := team.getResourceById(resourceID)
+		log.Println("resource", resource)
+		if resource == nil {
+			continue
+		}
+		log.Println("c.ExpectedPermissionLevels", c.ExpectedPermissionLevels)
+		for _, pl := range c.ExpectedPermissionLevels {
+			log.Println("pl", pl)
+			log.Println("resource.GetPermissionLevel()", resource.GetPermissionLevel())
+			log.Println("pl == resource.GetPermissionLevel()", pl == resource.GetPermissionLevel())
+			if pl == resource.GetPermissionLevel() {
+				return true
+			}
+		}
+	}
 	return false
 }
 
 // GetName returns the condition's name.
-func (c *OrganizationRoleCondition) GetName() string {
+func (c *OrganizationAccessCondition) GetName() string {
 	return "OrganizationRoleCondition"
 }

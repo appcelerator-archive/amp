@@ -191,6 +191,7 @@ func registerAccountServer(c *Configuration, s *grpc.Server) {
 
 func registerStackServer(c *Configuration, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
-		Stacks: stacks.NewStore(runtime.Store),
+		Accounts: accounts.NewStore(runtime.Store),
+		Stacks:   stacks.NewStore(runtime.Store),
 	})
 }
