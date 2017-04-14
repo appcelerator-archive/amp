@@ -24,7 +24,7 @@ func NewOrgRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "rm ORGANIZATION",
 		Short:   "Remove organization",
-		Aliases: []string{"del"},
+		Aliases: []string{"remove"},
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {

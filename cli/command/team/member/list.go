@@ -26,6 +26,7 @@ func NewListTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List members",
+		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listTeamMem(c, cmd)

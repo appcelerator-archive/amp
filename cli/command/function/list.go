@@ -25,6 +25,7 @@ func NewFunctionListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List function",
+		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return listFunction(c)

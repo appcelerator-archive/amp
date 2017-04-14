@@ -27,6 +27,7 @@ func NewTeamListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS] ORGANIZATION",
 		Short:   "List team",
+		Aliases: []string{"list"},
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if args[0] == "" {
