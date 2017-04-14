@@ -26,12 +26,10 @@ type statsOpts struct {
 	net            bool
 	period         string
 	timeGroup      string
-	timeZone       string
 	containerID    string
 	containerName  string
 	containerState string
 	serviceID      string
-	taskID         string
 	stackName      string
 	nodeID         string
 	follow         bool
@@ -70,14 +68,12 @@ func NewStatsCommand(c cli.Interface) *cobra.Command {
 	//historic
 	flags.StringVar(&opts.period, "period", "", `Historic period of metrics extraction, for instance: "now-1d", "now-10h", with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second`)
 	flags.StringVar(&opts.timeGroup, "time-group", "", `Historic extraction by time group, for instance: "1d", "3h", , with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second`)
-	flags.StringVar(&opts.timeZone, "time-zone", "", `Historic timeshift: "-01:00", "+03:00", ...`)
 	//filters
 	flags.StringVar(&opts.containerID, "container-id", "", "Filter on container id")
 	flags.StringVar(&opts.containerName, "container-name", "", "Filter on container name")
 	flags.StringVar(&opts.containerState, "container-state", "", "Filter on container state")
 	flags.StringVar(&opts.serviceID, "service-id", "", "Filter on service id")
 	flags.StringVar(&opts.stackName, "stack-name", "", "Filter on stack name")
-	flags.StringVar(&opts.taskID, "task-id", "", "Filter on task id")
 	flags.StringVar(&opts.nodeID, "node-id", "", "Filter on node id")
 	//Stream flag
 	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow stats output")
@@ -93,7 +89,6 @@ func getStats(c cli.Interface, args []string) error {
 	query.FilterContainerName = opts.containerName
 	query.FilterContainerState = opts.containerState
 	query.FilterServiceId = opts.serviceID
-	query.FilterTaskId = opts.taskID
 	query.FilterStackName = opts.stackName
 	query.FilterNodeId = opts.nodeID
 
@@ -128,7 +123,6 @@ func getStats(c cli.Interface, args []string) error {
 	//Set historic parameters
 	query.Period = opts.period
 	query.TimeGroup = opts.timeGroup
-	query.TimeZone = opts.timeZone
 
 	//set default for period only for current statistics
 	if query.TimeGroup == "" && query.Period == "" {

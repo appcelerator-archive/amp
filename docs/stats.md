@@ -31,7 +31,6 @@ The `amp stats` command is used to query or stream statistics. It provides group
            --container-state string  select only the container having their state starting by the given value
            --service-id string       select only the services having their id starting by the given value
            --stack-name string       select only the stacks having their name starting by the given value
-           --task-id string          select only the task having their id starting by the given value
            --node-id string          select only the node having their name starting by the given value
            if several filters are used they are considered linked by a logical AND
 
