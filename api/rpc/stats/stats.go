@@ -128,9 +128,6 @@ func (s *Stats) createBoolQuery(req *StatsRequest, period string) *elastic.BoolQ
 	if req.FilterServiceId != "" {
 		filters = append(filters, elastic.NewWildcardQuery("service_id", getWildcardValue(req.FilterServiceId)))
 	}
-	if req.FilterTaskId != "" {
-		filters = append(filters, elastic.NewWildcardQuery("task_id", getWildcardValue(req.FilterTaskId)))
-	}
 	if req.FilterStackName != "" {
 		filters = append(filters, elastic.NewWildcardQuery("stack_name", getWildcardValue(req.FilterStackName)))
 	}
@@ -186,9 +183,6 @@ func (s *Stats) createTermAggreggation(req *StatsRequest) *elastic.TermsAggregat
 // create the aggregation query on the main group (container, service, stacks. ...) and each sub aggregations related to the metrics
 func (s *Stats) createHistoAggreggation(req *StatsRequest) *elastic.DateHistogramAggregation {
 	agg := elastic.NewDateHistogramAggregation().Field("@timestamp").Interval(req.TimeGroup)
-	if req.TimeZone != "" {
-		agg = agg.TimeZone(req.TimeZone)
-	}
 	if req.StatsCpu {
 		agg = agg.SubAggregation("avgCPU", elastic.NewAvgAggregation().Field("cpu.total_usage"))
 		agg = agg.SubAggregation("avgCPUKernel", elastic.NewAvgAggregation().Field("cpu.usage_in_kernel_mode"))
