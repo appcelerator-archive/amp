@@ -491,12 +491,7 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 	team := &Team{
 		Name:     teamName,
 		CreateDt: time.Now().Unix(),
-		Members: []*TeamMember{
-			{
-				Name: auth.GetUser(ctx),
-				Role: TeamRole_TEAM_OWNER,
-			},
-		},
+		Members: []string{auth.GetUser(ctx)},
 	}
 
 	// Add the team to the organization
@@ -529,11 +524,10 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return err
 	}
 
-	// TODO: Does the user need to be part of the organization?
-	//// Check if user is part of the organization
-	//if !organization.HasMember(user.Name) {
-	//	return NotAnOrganizationMember
-	//}
+	// Check if user is part of the organization
+	if !organization.HasMember(user.Name) {
+		return NotPartOfOrganization
+	}
 
 	// Check if user is part of the team
 	if team.hasMember(user.Name) {
@@ -541,10 +535,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 	}
 
 	// Add the user as a team member
-	team.Members = append(team.Members, &TeamMember{
-		Name: user.Name,
-		Role: TeamRole_TEAM_MEMBER,
-	})
+	team.Members = append(team.Members, user.Name)
 	return s.updateOrganization(ctx, organization)
 }
 
@@ -581,42 +572,6 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
 	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
-	return s.updateOrganization(ctx, organization)
-}
-
-// ChangeTeamMemberRole changes the role of given user in the given team
-func (s *Store) ChangeTeamMemberRole(ctx context.Context, organizationName string, teamName string, userName string, role TeamRole) (err error) {
-	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, TeamResource) {
-		return NotAuthorized
-	}
-
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
-		return err
-	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
-	// Get the user
-	user, err := s.getVerifiedUser(ctx, userName)
-	if err != nil {
-		return err
-	}
-
-	// Check if user is already a member
-	member := team.getMember(user.Name)
-	if member == nil {
-		return UserNotFound
-	}
-
-	// Change the role of the user
-	member.Role = role
 	return s.updateOrganization(ctx, organization)
 }
 
