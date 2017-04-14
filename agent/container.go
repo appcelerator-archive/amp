@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -106,8 +105,8 @@ func (a *Agent) addContainer(ID string) {
 				logsReadError: false,
 			}
 			labels := inspect.Config.Labels
-			// data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
-			data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
+			data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
+			//data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
 			if data.serviceName == "" {
 				data.serviceName = "noService"
 			}
