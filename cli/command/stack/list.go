@@ -3,8 +3,11 @@ package stack
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
@@ -34,15 +37,33 @@ func list(c cli.Interface) error {
 		return errors.New(grpc.ErrorDesc(err))
 	}
 	lines := strings.Split(reply.Answer, "\n")
-	c.Console().Printf("%s\n", lines[0])
 	if len(lines) > 1 {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tNAME\tSERVICE")
 		lines = lines[1:]
 		sort.Strings(lines)
 		for _, line := range lines {
 			if line != "" {
-				c.Console().Printf("%s\n", line)
+				fmt.Fprintln(w, getOneStackListLine(line))
 			}
 		}
+		w.Flush()
 	}
 	return nil
+}
+
+func getOneStackListLine(line string) string {
+	cols := strings.Split(line, " ")
+	name := cols[0]
+	ll := strings.LastIndex(cols[0], "-")
+	if ll >= 0 {
+		name = name[0:ll]
+	}
+	ret := fmt.Sprintf("%s\t%s", cols[0], name)
+	for _, col := range cols[1:] {
+		if col != "" {
+			ret = fmt.Sprintf("%s\t%s", ret, col)
+		}
+	}
+	return ret
 }
