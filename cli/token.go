@@ -63,7 +63,7 @@ func RemoveToken() error {
 	}
 	filePath := filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile)
 	if _, err = os.Stat(filePath); os.IsNotExist(err) {
-		return nil
+		return fmt.Errorf("you are not logged in. Use `amp login` or `amp user signup`")
 	}
 	err = os.Remove(filePath)
 	if err != nil {

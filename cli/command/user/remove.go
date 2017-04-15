@@ -45,6 +45,9 @@ func removeUser(c cli.Interface, opt *removeUserOpts) error {
 	if _, err := client.DeleteUser(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
+	if err := cli.RemoveToken(); err != nil {
+		return err
+	}
 	c.Console().Println("User removed.")
 	return nil
 }
