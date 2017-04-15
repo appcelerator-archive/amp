@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/cli/exec"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +36,8 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 }
 
 func updateCluster(c cli.Interface, args []string) error {
-	return exec.Run(c, "bootstrap", args)
+	// return exec.Run(c, "bootstrap", args)
+	return Run(c, args)
 }
 
 // Map cli cluster flags to target bootstrap cluster command flags,
