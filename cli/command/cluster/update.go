@@ -5,12 +5,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewUpdateCommand returns a new instance of the update command for updating local development cluster.
+// NewUpdateCommand returns a new instance of the update command for updating an cluster.
 func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update [OPTIONS]",
-		Short:   "Update a local amp cluster",
-		PreRunE: cli.NoArgs,
+		Short:   "Update an amp cluster",
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return update(c, cmd)
 		},
