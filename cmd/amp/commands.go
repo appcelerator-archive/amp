@@ -63,7 +63,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 // addCommands adds the cli commands to the root command that we want to make available for a release.
 func addCommands(cmd *cobra.Command, c cli.Interface) {
 	cmd.AddCommand(
-		// bootstrap
+		// cluster
 		cluster.NewClusterCommand(c),
 
 		// function
