@@ -1,10 +1,9 @@
 package cluster
 
 import (
-"log"
+	"log"
 
-"github.com/golang/protobuf/ptypes/empty"
-"golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 // Server is used to implement cluster.ClusterServer
@@ -30,10 +29,26 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	return &ListReply{}, nil
 }
 
+// Status implements cluster.Server
+func (s *Server) Status(ctx context.Context, in *StatusRequest) (*StatusReply, error) {
+	log.Println("[cluster] Status", in.String())
+
+	log.Println("[cluster] Success: list")
+	return &StatusReply{}, nil
+}
+
+// Update implements cluster.Server
+func (s *Server) Update(ctx context.Context, in *UpdateRequest) (*UpdateReply, error) {
+	log.Println("[cluster] Update", in.String())
+
+	log.Println("[cluster] Success: list")
+	return &UpdateReply{}, nil
+}
+
 // Remove implements cluster.Server
-func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*empty.Empty, error) {
+func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	log.Println("[cluster] Remove", in.String())
 
 	log.Println("[cluster] Success: removed", in.Id)
-	return &empty.Empty{}, nil
+	return &RemoveReply{}, nil
 }
