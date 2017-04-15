@@ -144,7 +144,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 	if err == nil && stackInst != nil {
 		name = fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id)
 	} else {
-		return nil, fmt.Errorf("Stack %s is not a amp stack", in.Id)
+		return nil, fmt.Errorf("Stack %s is not an amp stack", in.Id)
 	}
 
 	rmOpt := stack.NewRemoveOptions([]string{name})
