@@ -90,8 +90,8 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp
-buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp
+build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
+buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -224,7 +224,7 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
-	
+
 # =============================================================================
 # BUILD FUNCHTTP (`funchttp`)
 # Saves binary to `cmd/funchttp/funchttp.alpine`,
@@ -284,6 +284,22 @@ rebuild-funcexec: clean-funcexec build-funcexec
 .PHONY: clean-funcexec
 clean-funcexec:
 	@rm -f $(FUNCEXECTARGET)
+
+# =============================================================================
+# BUILD BOOTSTRAP (`amp-bootstrap`)
+# Bootstrap local amp cluster
+# =============================================================================
+AMPBOOTDIR := bootstrap
+AMPBOOTBIN := bootstrap
+AMPBOOTIMG := appcelerator/amp-bootstrap:local
+AMPBOOTSRC := hack/deploy hack/dev $(shell find $(AMPBOOTDIR) -type f)
+
+.PHONY: build-bootstrap
+build-bootstrap:
+	@echo "Building $(AMPBOOTIMG)"
+	@cp hack/deploy hack/dev $(AMPBOOTDIR)
+	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+	@rm -f $(AMPBOOTDIR)/deploy $(AMPBOOTDIR)/hack/dev
 
 # =============================================================================
 # Quality checks
