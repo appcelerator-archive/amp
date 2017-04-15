@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -45,43 +43,24 @@ func list(c cli.Interface) error {
 	if err != nil {
 		return errors.New(grpc.ErrorDesc(err))
 	}
-	lines := strings.Split(reply.Answer, "\n")
-	if len(lines) > 1 {
-		if !lsopts.quiet {
-			w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
-			fmt.Fprintln(w, "ID\tNAME\tSERVICE")
-			lines = lines[1:]
-			sort.Strings(lines)
-			for _, line := range lines {
-				if line != "" {
-					fmt.Fprintln(w, getOneStackListLine(line))
-				}
+	if !lsopts.quiet {
+		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tNAME\tSERVICE\tOWNER")
+		for _, line := range reply.List {
+			if line.Id == "" {
+				line.Id = "none"
 			}
-			w.Flush()
-		} else {
-			for _, line := range lines[1:] {
-				if line != "" {
-					c.Console().Println(strings.Split(line, " ")[0])
-				}
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", line.Id, line.Name, line.Service, line.Owner)
+		}
+		w.Flush()
+	} else {
+		for _, line := range reply.List {
+			if line.Id == "" {
+				c.Console().Println(line.Name)
+			} else {
+				c.Console().Println(line.Id)
 			}
 		}
-
 	}
 	return nil
-}
-
-func getOneStackListLine(line string) string {
-	cols := strings.Split(line, " ")
-	name := cols[0]
-	ll := strings.LastIndex(cols[0], "-")
-	if ll >= 0 {
-		name = name[0:ll]
-	}
-	ret := fmt.Sprintf("%s\t%s", cols[0], name)
-	for _, col := range cols[1:] {
-		if col != "" {
-			ret = fmt.Sprintf("%s\t%s", ret, col)
-		}
-	}
-	return ret
 }

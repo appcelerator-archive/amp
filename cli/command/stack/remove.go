@@ -11,7 +11,7 @@ import (
 )
 
 type removeOpts struct {
-	name string
+	names []string
 }
 
 var (
@@ -24,9 +24,8 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 		Use:     "rm STACKNAME",
 		Aliases: []string{"remove", "down", "stop"},
 		Short:   "Remove a deployed stack",
-		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ropts.name = args[0]
+			ropts.names = args
 			return remove(c)
 		},
 	}
@@ -34,15 +33,20 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 }
 
 func remove(c cli.Interface) error {
-	req := &stack.RemoveRequest{
-		Id: ropts.name,
+	if len(ropts.names) == 0 {
+		return errors.New(`"amp stack rm" requires at least 1 argument(s)`)
 	}
+	for _, name := range ropts.names {
+		req := &stack.RemoveRequest{
+			Id: name,
+		}
 
-	client := stack.NewStackClient(c.ClientConn())
-	reply, err := client.Remove(context.Background(), req)
-	if err != nil {
-		return errors.New(grpc.ErrorDesc(err))
+		client := stack.NewStackClient(c.ClientConn())
+		reply, err := client.Remove(context.Background(), req)
+		if err != nil {
+			return errors.New(grpc.ErrorDesc(err))
+		}
+		c.Console().Println(reply.Answer)
 	}
-	c.Console().Println(reply.Answer)
 	return nil
 }
