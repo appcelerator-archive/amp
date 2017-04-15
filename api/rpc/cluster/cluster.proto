@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package cluster;
+
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
+
+service Cluster {
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc List (ListRequest) returns (ListReply);
+  rpc Remove (RemoveRequest) returns (google.protobuf.Empty);
+}
+
+message CreateRequest {
+  string name = 1;
+  bytes compose = 2;
+}
+
+message CreateReply {}
+
+message ListRequest {}
+
+message ListReply {}
+
+message RemoveRequest {
+  string id = 1;
+}
