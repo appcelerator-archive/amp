@@ -27,7 +27,6 @@ type opts struct {
 // newRootCommand returns a new instance of the amp cli root command.
 func newRootCommand(c cli.Interface) *cobra.Command {
 	opts := &opts{}
-
 	cmd := &cobra.Command{
 		Use:           "amp [OPTIONS] COMMAND [ARG...]",
 		Short:         "Deploy, manage, and monitor container stacks and functions.",
