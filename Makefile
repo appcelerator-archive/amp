@@ -299,7 +299,7 @@ build-bootstrap:
 	@echo "Building $(AMPBOOTIMG)"
 	@cp hack/deploy hack/dev $(AMPBOOTDIR)
 	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
-	@rm -f $(AMPBOOTDIR)/deploy $(AMPBOOTDIR)/hack/dev
+	@rm -f $(AMPBOOTDIR)/deploy $(AMPBOOTDIR)/dev
 
 # =============================================================================
 # Quality checks
