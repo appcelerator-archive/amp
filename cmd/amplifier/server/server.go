@@ -10,6 +10,7 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -52,6 +53,7 @@ var serviceInitializers = []serviceInitializer{
 	registerStatsServer,
 	registerFunctionServer,
 	registerAccountServer,
+	registerClusterServer,
 }
 
 // Start starts the amplifier server
@@ -193,4 +195,8 @@ func registerStackServer(c *Configuration, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
 		Stacks: stacks.NewStore(runtime.Store),
 	})
+}
+
+func registerClusterServer(c *Configuration, s *grpc.Server) {
+	cluster.RegisterClusterServer(s, &cluster.Server{})
 }
