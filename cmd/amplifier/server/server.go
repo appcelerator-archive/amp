@@ -124,7 +124,7 @@ func initDocker(config *Configuration) error {
 }
 
 func initMailer(config *Configuration) error {
-	runtime.Mailer = mail.NewMailer(config.EmailKey, config.EmailSender, config.PublicAddress)
+	runtime.Mailer = mail.NewMailer(config.EmailKey, config.EmailSender, config.PublicHost)
 	return nil
 }
 

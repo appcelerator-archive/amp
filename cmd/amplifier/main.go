@@ -33,7 +33,7 @@ func main() {
 		Version:          Version,
 		Build:            Build,
 		Port:             server.DefaultPort,
-		PublicAddress:    server.DefaultPublicAddress,
+		PublicHost:       server.DefaultPublicHost,
 		EmailSender:      mail.DefaultSender,
 		SmsSender:        sms.DefaultSender,
 		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
@@ -47,5 +47,6 @@ func main() {
 	if err := server.ReadConfig(config); err != nil {
 		log.Fatalln(err)
 	}
+	fmt.Println(config)
 	server.Start(config)
 }
