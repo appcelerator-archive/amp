@@ -95,12 +95,12 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	outs := strings.Replace(string(out), "docker", "amp", -1)
 	cols := strings.Split(outs, "\n")
 	ans := &ListReply{
-		List: []*StackReply{},
+		Stacks: []*StackReply{},
 	}
 	for _, col := range cols[1:] {
 		stack := s.getOneStackListLine(ctx, col)
-		if stack.Id != "" {
-			ans.List = append(ans.List, stack)
+		if stack.Stack.Id != "" {
+			ans.Stacks = append(ans.Stacks, stack)
 		}
 	}
 	return ans, nil
@@ -115,12 +115,13 @@ func (s *Server) getOneStackListLine(ctx context.Context, line string) *StackRep
 		id = name[ll+1:]
 		name = name[0:ll]
 	}
-	ret := &StackReply{
+	stackData := &stacks.Stack{
 		Id:   strings.Trim(id, " "),
 		Name: strings.Trim(name, " "),
 	}
+	ret := &StackReply{Stack: stackData}
 	if stackInst, err := s.Stacks.GetStack(ctx, id); err == nil && stackInst != nil {
-		ret.Owner = stackInst.Owner.Name
+		stackData.Owner = stackInst.Owner
 	}
 	for _, col := range cols[1:] {
 		if col != "" {

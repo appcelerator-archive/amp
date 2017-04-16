@@ -45,20 +45,20 @@ func list(c cli.Interface) error {
 	}
 	if !lsopts.quiet {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSERVICE\tOWNER")
-		for _, line := range reply.List {
-			if line.Id == "" {
-				line.Id = "none"
+		fmt.Fprintln(w, "ID\tNAME\tSERVICE\tOWNER\tOWNER TYPE")
+		for _, line := range reply.Stacks {
+			if line.Stack.Id == "" {
+				line.Stack.Id = "none"
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", line.Id, line.Name, line.Service, line.Owner)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", line.Stack.Id, line.Stack.Name, line.Service, line.Stack.Owner.Name, line.Stack.Owner.Type)
 		}
 		w.Flush()
 	} else {
-		for _, line := range reply.List {
-			if line.Id == "" {
-				c.Console().Println(line.Name)
+		for _, line := range reply.Stacks {
+			if line.Stack.Id == "" {
+				c.Console().Println(line.Stack.Name)
 			} else {
-				c.Console().Println(line.Id)
+				c.Console().Println(line.Stack.Id)
 			}
 		}
 	}
