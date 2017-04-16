@@ -1,8 +1,10 @@
 FROM docker:17.03
 
-# TODO: remove when no longer required for bootstrap
-RUN apk update && apk add bash
-COPY . /usr/local/bootstrap
-RUN ln -s /usr/local/bootstrap/bootstrap /usr/local/bin/bootstrap
+RUN apk --update --no-cache add bash openssl
 
-ENTRYPOINT [ "bootstrap" ]
+WORKDIR /usr/local
+COPY . /usr/local/bootstrap
+RUN mv bootstrap/hack hack && mv bootstrap/stacks stacks
+
+ENV PATH "/usr/local/bootstrap:/usr/local/hack:$PATH"
+ENTRYPOINT [ "hack/dev" ]

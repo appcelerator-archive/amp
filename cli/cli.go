@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -39,6 +40,11 @@ type cli struct {
 	clientConn *grpc.ClientConn
 }
 
+const (
+	//DefaultPort for server address
+	DefaultPort = ":50101"
+)
+
 // NewCLI returns a new CLI instance.
 func NewCLI(in io.ReadCloser, out, err io.Writer, config *Configuration) Interface {
 	c := &cli{
@@ -68,6 +74,9 @@ func (c *cli) Server() string {
 
 // SetServer sets the address of the grpc api (host:port) used for the client connection.
 func (c *cli) SetServer(server string) {
+	if !strings.Contains(server, ":") {
+		server += DefaultPort
+	}
 	c.Configuration.Server = server
 	c.clientConn = nil
 }

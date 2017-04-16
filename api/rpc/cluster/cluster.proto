@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package cluster;
+
+service Cluster {
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc List (ListRequest) returns (ListReply);
+  rpc Status (StatusRequest) returns (StatusReply);
+  rpc Update (UpdateRequest) returns (UpdateReply);
+  rpc Remove (RemoveRequest) returns (RemoveReply);
+}
+
+message CreateRequest {
+  string name = 1;
+  bytes compose = 2;
+}
+
+message CreateReply {
+    string id = 1;
+}
+
+
+message ListRequest {}
+
+message ListReply {}
+
+message StatusRequest {
+  string id = 1;
+}
+
+message StatusReply {
+  string id = 1;
+}
+
+message UpdateRequest {
+    string id = 1;
+}
+
+message UpdateReply {
+    string id = 1;
+}
+
+message RemoveRequest {
+  string id = 1;
+}
+
+message RemoveReply {
+  string id = 1;
+}
+

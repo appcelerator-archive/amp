@@ -76,6 +76,24 @@ cluster_status() {
   esac
 }
 
+# creates a amp-stacks volume by sending the stacks to the host in a build context
+create_amp_stacks_volume() {
+  local builddir=$(mktemp -d)
+  local dockerfile=$builddir/Dockerfile
+  local image=amp-stacks:local
+  cat > $dockerfile << EOF
+FROM alpine:3.5
+COPY stacks /stacks
+VOLUME /stacks
+CMD ["true"]
+EOF
+  cp -pr $SP/../stacks $builddir/stacks
+  docker build -t $image $builddir
+  rm -rf $builddir
+  docker run --rm -v amp-stacks:/stacks $image
+  docker image rm $image
+}
+
 # sets hosts for Docker remote API and for the Docker registry
 # depending on the deployment target
 set_deployment_variables(){
@@ -83,7 +101,8 @@ set_deployment_variables(){
   local)
     dockerhost=m1
     registryhost=127.0.0.1
-    amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
+    create_amp_stacks_volume
+    amps="docker run -t --rm --network=hostnet -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     domainname=$localdomainname
     ;;
@@ -125,6 +144,11 @@ pushimage() {
 
 deploystack() {
   echo "deploy $1 => $2"
+  ls -la
+  echo "==================================================================================="
+  ls -la stacks
+  echo "==================================================================================="
+  docker run -it --rm --network=hostnet -v amp-stacks:$stacks_path docker --host=$dockerhost ls $stacks_path
   $amps stack deploy -c $stacks_path/$1 $2
   checkexit $? "error deploying stack"
   ok
