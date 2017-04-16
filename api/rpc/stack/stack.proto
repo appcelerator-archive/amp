@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package stack;
 
+import "github.com/appcelerator/amp/data/stacks/stacks.proto";
+
 service Stack {
   rpc Deploy (DeployRequest) returns (DeployReply);
   rpc List (ListRequest) returns (ListReply);
@@ -21,14 +23,12 @@ message DeployReply {
 message ListRequest {}
 
 message ListReply {
- repeated StackReply list = 1;
+ repeated StackReply stacks = 1;
 }
 
 message StackReply {
-  string id = 1;
-  string name = 2;
-  string service = 3;
-  string owner = 4;
+  stacks.Stack stack = 1;
+  string service = 2;
 }
 
 message RemoveRequest {
