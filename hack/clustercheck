@@ -2,6 +2,7 @@
 
 # this command
 readonly CMD=$(basename $0)
+readonly BOOTSTRAPDIR="$(dirname $0)/../bootstrap"
 
 usage() {
   echo usage:  $CMD [-t timeout] [-i interval] clusterid
@@ -19,6 +20,7 @@ error() {
 
 main() {
   SECONDS=0
+  [[ ! -x $1 ]] && error "$1 is not an executable"
   while true; do
     "$@" &> /dev/null
     [[ $? -eq 0 ]] && ok
@@ -46,5 +48,4 @@ readonly INTERVAL
 shift $((OPTIND-1))
 
 [[ -z "$1" ]] && usage
-main ./bootstrap/bootstrap -s $1
-
+main $BOOTSTRAPDIR/bootstrap -s $1
