@@ -291,18 +291,19 @@ clean-funcexec:
 # =============================================================================
 AMPBOOTDIR := bootstrap
 AMPBOOTBIN := bootstrap
-AMPBOOTIMG := appcelerator/amp-bootstrap
+AMPBOOTIMG := appcelerator/amp-bootstrap:1.0.0
 AMPBOOTSRC := hack/deploy hack/dev $(shell find $(AMPBOOTDIR) -type f)
 
 .PHONY: build-bootstrap
 build-bootstrap:
 	@echo "Building $(AMPBOOTIMG)"
-	@cp -r hack $(AMPBOOTDIR)
-	@$(DOCKER_CMD) build -t $(AMPBOOTIMG) $(AMPBOOTDIR)
-	@rm -rf $(AMPBOOTDIR)/hack
+	@cp -r hack stacks $(AMPBOOTDIR)
+	@$(DOCKER_CMD) build --no-cache -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+	@rm -rf $(AMPBOOTDIR)/hack $(AMPBOOTDIR)/stacks
 
 .PHONY: push-bootstrap
 push-bootstrap:
+	@echo "Pushing $(AMPBOOTIMG)"
 	@$(AMPBOOTDIR)/build
 
 # =============================================================================

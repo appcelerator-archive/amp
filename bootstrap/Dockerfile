@@ -1,7 +1,12 @@
 FROM docker:17.03
 
-COPY . /usr/local/bootstrap
-WORKDIR /usr/local/bootstrap
-ENV PATH "/usr/local/bootstrap:/usr/local/bootstrap/hack:$PATH"
+RUN apk --update --no-cache add bash openssl
 
-ENTRYPOINT [ "dev" ]
+WORKDIR /usr/local
+COPY . /usr/local/bootstrap
+RUN mv bootstrap/hack hack
+RUN mv bootstrap/stacks stacks
+
+ENV PATH "/usr/local/bootstrap:/usr/local/hack:$PATH"
+ENTRYPOINT [ "hack/dev" ]
+

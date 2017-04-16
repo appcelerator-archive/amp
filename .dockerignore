@@ -1,0 +1,6 @@
+# this .dockerignore is intended for building `amp-bootstrap`
+./.git/
+./.glide/
+./.bin/
+./.dist/
+./.vendor
