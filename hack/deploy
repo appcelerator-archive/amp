@@ -83,8 +83,8 @@ set_deployment_variables(){
   local)
     dockerhost=m1
     registryhost=127.0.0.1
-    amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
+    amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:$stacks_path docker --host=$dockerhost"
     domainname=$localdomainname
     ;;
   aws)
@@ -107,7 +107,8 @@ checkexit() {
 }
 
 cleanup() {
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
+echo UNCOMMENT CLEANUP !!!
+#  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
 }
 
 ok() {
@@ -125,6 +126,13 @@ pushimage() {
 
 deploystack() {
   echo "deploy $1 => $2"
+  ls -la
+  echo "==================================================================================="
+  ls -la stacks
+  echo "==================================================================================="
+  ls -la /stacks
+  echo "==================================================================================="
+  docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:$stacks_path docker --host=$dockerhost sh
   $amps stack deploy -c $stacks_path/$1 $2
   checkexit $? "error deploying stack"
   ok
