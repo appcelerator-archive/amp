@@ -116,8 +116,8 @@ func (s *Server) getOneStackListLine(ctx context.Context, line string) *StackRep
 		name = name[0:ll]
 	}
 	stackData := &stacks.Stack{
-		Id:   strings.Trim(id, " "),
-		Name: strings.Trim(name, " "),
+		Id:   strings.TrimSpace(id),
+		Name: strings.TrimSpace(name),
 	}
 	ret := &StackReply{Stack: stackData}
 	if stackInst, err := s.Stacks.GetStack(ctx, id); err == nil && stackInst != nil {
