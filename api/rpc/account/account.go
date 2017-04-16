@@ -34,6 +34,7 @@ func convertError(err error) error {
 	case accounts.AtLeastOneOwner:
 		return grpc.Errorf(codes.FailedPrecondition, err.Error())
 	case accounts.UserAlreadyExists:
+	case accounts.EmailAlreadyUsed:
 	case accounts.OrganizationAlreadyExists:
 	case accounts.TeamAlreadyExists:
 		return grpc.Errorf(codes.AlreadyExists, err.Error())

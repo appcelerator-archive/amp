@@ -17,6 +17,7 @@ const (
 	WrongPassword             = Error("password is wrong")
 	InvalidToken              = Error("token is invalid")
 	UserAlreadyExists         = Error("user already exists")
+	EmailAlreadyUsed          = Error("email is already in use")
 	UserNotFound              = Error("user not found")
 	UserNotVerified           = Error("user not verified")
 	OrganizationAlreadyExists = Error("organization already exists")
