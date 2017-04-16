@@ -76,6 +76,24 @@ cluster_status() {
   esac
 }
 
+# creates a amp-stacks volume by sending the stacks to the host in a build context
+create_amp_stacks_volume() {
+  local builddir=$(mktemp -d)
+  local dockerfile=$builddir/Dockerfile
+  local image=amp-stacks:local
+  cat > $dockerfile << EOF
+FROM alpine:3.5
+COPY stacks /stacks
+VOLUME /stacks
+CMD ["true"]
+EOF
+  cp -pr $SP/../stacks $builddir/stacks
+  docker build -t $image $builddir
+  rm -rf $builddir
+  docker run --rm -v amp-stacks:/stacks $image
+  docker image rm $image
+}
+
 # sets hosts for Docker remote API and for the Docker registry
 # depending on the deployment target
 set_deployment_variables(){
@@ -83,8 +101,9 @@ set_deployment_variables(){
   local)
     dockerhost=m1
     registryhost=127.0.0.1
+    create_amp_stacks_volume
+    amps="docker run -t --rm --network=hostnet -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
-    amps="docker run -t --rm --network=hostnet -v $(dirname $SP)/stacks:$stacks_path docker --host=$dockerhost"
     domainname=$localdomainname
     ;;
   aws)
@@ -107,8 +126,7 @@ checkexit() {
 }
 
 cleanup() {
-echo UNCOMMENT CLEANUP !!!
-#  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
 }
 
 ok() {
@@ -130,9 +148,7 @@ deploystack() {
   echo "==================================================================================="
   ls -la stacks
   echo "==================================================================================="
-  ls -la /stacks
-  echo "==================================================================================="
-  docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:$stacks_path docker --host=$dockerhost sh
+  docker run -it --rm --network=hostnet -v amp-stacks:$stacks_path docker --host=$dockerhost ls $stacks_path
   $amps stack deploy -c $stacks_path/$1 $2
   checkexit $? "error deploying stack"
   ok
