@@ -10,7 +10,7 @@ func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update [OPTIONS]",
 		Short:   "Update an amp cluster",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return update(c, cmd)
 		},
@@ -29,6 +29,7 @@ func update(c cli.Interface, cmd *cobra.Command) error {
 		"managers": "-m",
 	}
 
-	args := []string{}
-	return updateCluster(c, reflag(cmd, m, args))
+	// TODO: only supporting local cluster management for this release
+	args := []string{"bootstrap/bootstrap", DefaultLocalClusterID}
+	return queryCluster(c, reflag(cmd, m, args))
 }

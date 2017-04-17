@@ -12,6 +12,10 @@ type clusterOpts struct {
 	name     string
 }
 
+const (
+	DefaultLocalClusterID = "f573e897-7aa0-4516-a195-42ee91039e97"
+)
+
 var (
 	opts = &clusterOpts{3, 2, "local", ""}
 )
@@ -22,7 +26,7 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 		Use:     "cluster",
 		Short:   "Cluster management operations",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			c.Console().Infoln("Note: only 'local' provider supported for preview")
+			c.Console().Infoln("Note: only 'local' cluster provider supported in this release")
 		},
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
@@ -35,9 +39,13 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-func updateCluster(c cli.Interface, args []string) error {
-	// return exec.Run(c, "bootstrap", args)
-	return Run(c, args)
+func queryCluster(c cli.Interface, args []string) error {
+	err := Run(c, args)
+	if err != nil {
+		// TODO: the local cluster is the only one that can be managed this release
+		c.Console().Println(DefaultLocalClusterID)
+	}
+	return err
 }
 
 // Map cli cluster flags to target bootstrap cluster command flags,

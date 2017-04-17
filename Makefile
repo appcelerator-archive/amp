@@ -291,7 +291,7 @@ clean-funcexec:
 # =============================================================================
 AMPBOOTDIR := bootstrap
 AMPBOOTBIN := bootstrap
-AMPBOOTIMG := appcelerator/amp-bootstrap:1.0.0
+AMPBOOTIMG := appcelerator/amp-bootstrap
 AMPBOOTSRC := hack/deploy hack/dev $(shell find $(AMPBOOTDIR) -type f)
 
 .PHONY: build-bootstrap
