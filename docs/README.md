@@ -47,4 +47,15 @@ three is generally the ideal number. More than seven is not recommended.
 To use the local cluster with the CLI, you need to specify it
 with the `--server (-s)` option (ex: `amp -s localhost cluster status`).
 
+The local cluster does not depend on the host system being a swarm manager.
+The cluster nodes are created as Docker-in-Docker containers and then
+joined to a swarm. The cluster includes its own registry. You can
+push images that you build directly to the registry using the following sequence of steps:
 
+    $ docker build -t foo/bar
+    $ docker tag foo/bar 127.0.0.1:5000/foo/bar
+    $ docker push 127.0.0.1:5000/foo/bar
+    
+The image is now available to be used by a stackfile you deploy to the
+cluster. You can always use images available on Docker Hub. Support for
+alternative and private registry is planned.

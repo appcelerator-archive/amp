@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 (2017-04-17)
+
+Major refactoring for Docker 1.13+
+* Docker Compose version 3 support
+* Local cluster and hosted platform use Infrakit
+* Significant refactoring and code cleanup.
+* All commands intended for 1.0 are functional.
+
 ## 0.5.0 (2017-01-03)
 
 ### Client
