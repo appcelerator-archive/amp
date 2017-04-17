@@ -1,9 +1,6 @@
 package cluster
 
 import (
-	"errors"
-	"strings"
-
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 )
@@ -28,15 +25,6 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster",
 		Short: "Cluster management operations",
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			// TODO special case handling for cluster this release
-			local := strings.HasPrefix(c.Server(), "127.0.0.1") ||
-				strings.HasPrefix(c.Server(), "localhost")
-			if !local {
-				return errors.New("Note: only cluster operations with '--server=localhost' supported in this release")
-			}
-			return nil
-		},
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
