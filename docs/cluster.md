@@ -3,23 +3,24 @@
 The `amp cluster` command manages all cluster-related operations for AMP.
 
 ```
-    $ amp cluster
+$ amp cluster
 
-    Usage:	amp cluster COMMAND
+Usage:  amp cluster [OPTIONS] COMMAND [ARGS...]
 
-    Cluster management operations
+Cluster management operations
 
-    Options:
-      -h, --help            Print usage
-      -s, --server string   Specify server (host:port)
+Options:
+  -h, --help            Print usage
+  -s, --server string   Specify server (host:port)
 
-    Commands:
-      create      Create a local amp cluster
-      destroy     Destroy a local amp cluster
-      status      Retrieve details about a local amp cluster
-      update      Update a local amp cluster
+Commands:
+  create      Create an amp cluster
+  ls          List deployed amp clusters
+  rm          Destroy an amp cluster
+  status      Retrieve details about an amp cluster
+  update      Update an amp cluster
 
-    Run 'amp cluster COMMAND --help' for more information on a command.
+Run 'amp cluster COMMAND --help' for more information on a command.
 ```
 
 ### Examples
