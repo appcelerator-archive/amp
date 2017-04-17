@@ -144,11 +144,6 @@ pushimage() {
 
 deploystack() {
   echo "deploy $1 => $2"
-  ls -la
-  echo "==================================================================================="
-  ls -la stacks
-  echo "==================================================================================="
-  docker run -it --rm --network=hostnet -v amp-stacks:$stacks_path docker --host=$dockerhost ls $stacks_path
   $amps stack deploy -c $stacks_path/$1 $2
   checkexit $? "error deploying stack"
   ok
@@ -191,6 +186,7 @@ prepare_certificates() {
 }
 
 trap cleanup EXIT
+
 echo "$(deployment_target) deployment"
 if [ -z $CID ]; then
   echo "bootstrapping cluster"
@@ -311,5 +307,6 @@ kurl elasticsearch:9200
 checkexit $? "service ping check failed: elasticsearch"
 ok "service ping check succeeded: elasticsearch"
 
+printf "\nCluster status: healthy\n$CID"
 SUCCESS=1
 

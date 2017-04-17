@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"bufio"
-	"os"
 	"os/exec"
 
 	"github.com/appcelerator/amp/cli"
@@ -18,15 +17,11 @@ func init() {
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
-		"appcelerator/amp-bootstrap:1.0.0",
+		"appcelerator/amp-bootstrap:1.0.1",
 	}
 }
 
 func Run(c cli.Interface, args []string) error {
-	if len(os.Args) > 1 {
-		args = append(args, os.Args[1:]...)
-	}
-
 	cmd := "docker"
 	args = append(dockerArgs, args...)
 

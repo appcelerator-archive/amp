@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-TAGS=( latest 1.0 1.0.0 )
+TAGS=( latest 1.0.1 )
 OWNER=appcelerator
-IMAGE=amp-bootstrap
+IMAGE="${1:-amp-bootstrap}"
 
 # This is built by the amp Makefile (without any tag) now
 #docker build -t ${OWNER}/${IMAGE} .

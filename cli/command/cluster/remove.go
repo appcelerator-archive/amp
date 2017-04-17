@@ -5,22 +5,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	destroyArgs = []string{"-d"}
-)
-
 // NewRemoveCommand returns a new instance of the remove command for destroying a cluster.
 func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:     "destroy",
+		Use:     "rm",
+		Aliases: []string{"remove", "destroy"},
 		Short:   "Destroy an amp cluster",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return destroy(c)
+			return remove(c)
 		},
 	}
 }
 
-func destroy(c cli.Interface) error {
-	return updateCluster(c, destroyArgs)
+func remove(c cli.Interface) error {
+	// TODO: only supporting local cluster management for this release
+	args := []string{"bootstrap/bootstrap", "-d", DefaultLocalClusterID}
+	return queryCluster(c, args)
 }

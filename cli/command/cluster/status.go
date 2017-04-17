@@ -10,14 +10,21 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "status",
 		Short:   "Retrieve details about an amp cluster",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return status(c)
+			return status(c, cmd)
 		},
 	}
 }
 
-func status(c cli.Interface) error {
+func status(c cli.Interface, cmd *cobra.Command) error {
 	// TODO call api to get status
+	args := []string{"bootstrap/bootstrap", "-s", DefaultLocalClusterID}
+	status := queryCluster(c, args)
+	if status != nil {
+		c.Console().Println("cluster status: not running")
+	} else {
+		c.Console().Println("cluster: running")
+	}
 	return nil
 }
