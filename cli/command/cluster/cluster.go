@@ -23,8 +23,8 @@ var (
 // NewClusterCommand returns a new instance of the cluster command.
 func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cluster",
-		Short: "Cluster management operations",
+		Use:     "cluster",
+		Short:   "Cluster management operations",
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
@@ -33,6 +33,7 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewRemoveCommand(c))
 	cmd.AddCommand(NewStatusCommand(c))
 	cmd.AddCommand(NewUpdateCommand(c))
+	cmd.AddCommand(NewNodeCommand(c))
 	return cmd
 }
 
