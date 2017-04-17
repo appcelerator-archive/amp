@@ -25,17 +25,17 @@ After installing locally, you can test the function like this:
 # Registering your function
 In order to register your function against amp, you need to run the following command:
 
-    $ amp fn create test appcelerator/amp-demo-function
+    $ amp -s localhost fn create test appcelerator/amp-demo-function
 
 # Invoking your function via HTTP
 In order to invoke a function, you can POST an HTTP request to `localhost:4242/<function>` (to be changed). Calls block until the function sends a response.
 Invoke your test function like this:
 
-    $ cat Makefile | curl localhost:4242/test --data-binary @-
+    $ cat Makefile | curl localhost:50102/test --data-binary @-
 
 The `@-` parameter tells `curl` to read from the standard input but you can also invoke your function like this:
 
-    $ curl localhost:4242/test --data-binary @Makefile
+    $ curl localhost:50102/test --data-binary @Makefile
 
 The `--data-binary` parameter tells `curl` to POST the content of the file exactly as specified with no extra processing whatsoever.
 Without this parameter, `curl` would pass the content of the file to the server using the content-type `application/x-www-form-urlencoded` which is not expected for amp functions.
