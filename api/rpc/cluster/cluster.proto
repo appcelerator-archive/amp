@@ -8,6 +8,7 @@ service Cluster {
   rpc Status (StatusRequest) returns (StatusReply);
   rpc Update (UpdateRequest) returns (UpdateReply);
   rpc Remove (RemoveRequest) returns (RemoveReply);
+  rpc NodeList (NodeListRequest) returns (NodeListReply);
 }
 
 message CreateRequest {
@@ -48,3 +49,17 @@ message RemoveReply {
   string id = 1;
 }
 
+message NodeListRequest {}
+
+message NodeListReply {
+  repeated NodeReply nodes = 1;
+}
+
+message NodeReply {
+  string id = 1;
+  string hostname = 2;
+  string status = 3;
+  string availability = 4;
+  string role = 5;
+  bool manager_leader = 6;
+}

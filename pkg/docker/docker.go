@@ -15,7 +15,9 @@ import (
 )
 
 const (
-	DefaultURL     = "unix:///var/run/docker.sock"
+	//DefaultURL docker default URL
+	DefaultURL = "unix:///var/run/docker.sock"
+	//DefaultVersion docker default version
 	DefaultVersion = "1.27"
 )
 

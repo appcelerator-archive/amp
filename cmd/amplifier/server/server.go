@@ -197,5 +197,7 @@ func registerStackServer(c *Configuration, s *grpc.Server) {
 }
 
 func registerClusterServer(c *Configuration, s *grpc.Server) {
-	cluster.RegisterClusterServer(s, &cluster.Server{})
+	cluster.RegisterClusterServer(s, &cluster.Server{
+		Docker: runtime.Docker,
+	})
 }

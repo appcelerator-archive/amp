@@ -3,11 +3,18 @@ package cluster
 import (
 	"log"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
+	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/docker/docker/api/types"
+
 	"golang.org/x/net/context"
 )
 
 // Server is used to implement cluster.ClusterServer
 type Server struct {
+	Docker *docker.Docker
 }
 
 // Create implements cluster.Server
@@ -51,4 +58,30 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 
 	log.Println("[cluster] Success: removed", in.Id)
 	return &RemoveReply{}, nil
+}
+
+// NodeList get cluster node list
+func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListReply, error) {
+	log.Println("[cluster] NodeList", in.String())
+
+	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	ret := &NodeListReply{}
+	for _, node := range list {
+		leader := false
+		if node.ManagerStatus != nil {
+			leader = node.ManagerStatus.Leader
+		}
+		ret.Nodes = append(ret.Nodes, &NodeReply{
+			Id:            node.ID,
+			Hostname:      node.Description.Hostname,
+			Status:        string(node.Status.State),
+			Availability:  string(node.Spec.Availability),
+			Role:          string(node.Spec.Role),
+			ManagerLeader: leader,
+		})
+	}
+	return ret, nil
 }
