@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"golang.org/x/net/context"
 	"gopkg.in/olivere/elastic.v5"
@@ -14,8 +13,7 @@ import (
 
 // Stats structure to implement StatsServer interface
 type Stats struct {
-	Docker *docker.Docker
-	Es     *elasticsearch.Elasticsearch
+	Es *elasticsearch.Elasticsearch
 }
 
 const (

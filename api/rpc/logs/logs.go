@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/labels"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -21,7 +20,6 @@ import (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Docker        *docker.Docker
 	Es            *elasticsearch.Elasticsearch
 	NatsStreaming *ns.NatsStreaming
 }
