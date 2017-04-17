@@ -158,7 +158,6 @@ func registerVersionServer(c *Configuration, s *grpc.Server) {
 
 func registerLogsServer(c *Configuration, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
-		Docker:        runtime.Docker,
 		Es:            runtime.Elasticsearch,
 		NatsStreaming: runtime.NatsStreaming,
 	})
@@ -172,8 +171,7 @@ func registerStorageServer(c *Configuration, s *grpc.Server) {
 
 func registerStatsServer(c *Configuration, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
-		Docker: runtime.Docker,
-		Es:     runtime.Elasticsearch,
+		Es: runtime.Elasticsearch,
 	})
 }
 
