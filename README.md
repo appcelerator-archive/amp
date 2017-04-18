@@ -1,4 +1,4 @@
-# ATOMIQ
+[![ATOMIQ](http://atomiq.io/images/logo/atomiq-logo-light-300x120.png)](http://atomiq.io)
 
 http://atomiq.io
 
