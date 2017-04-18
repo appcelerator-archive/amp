@@ -1,7 +1,7 @@
 Pinger
 ======
 
-Simple HTTP service (Go [source](https://github.com/appcelerator/docker-pinger)) that responds with "pong" when you GET /ping
+Simple HTTP service (Go [source](https://github.com/subfuzion/docker-pinger)) that responds with "pong" when you GET /ping
 
 Run in this directory:
 

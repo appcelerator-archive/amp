@@ -13,6 +13,9 @@ services:
       default:
         aliases:
           - pinger
+    environment:
+      SERVICE_PORTS: "3000"
+      VIRTUAL_HOST: "https://pinger.*"
     ports:
       - "50105:3000"
     deploy:
@@ -21,4 +24,3 @@ services:
         io.amp.role: "pinger"
       restart_policy:
         condition: on-failure
-
