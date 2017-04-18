@@ -1,7 +1,10 @@
+version: "3"
+
 services:
   pinger:
     image: appcelerator/pinger
-    public:
-      - name: www
-        internal_port: 3000
+    environment:
+      SERVICE_PORTS: "3000"
+      VIRTUAL_HOST: "https://pinger.*"
+
 
