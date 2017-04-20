@@ -18,9 +18,11 @@ services:
       replicas: 1
       labels:
         io.amp.role: "infrastructure"
-        io.amp.mapping: "funchttp:80"
     labels:
       io.amp.role: "infrastructure"
+    environment:
+      - "SERVICE_PORTS=80"
+      - "VIRTUAL_HOST=https://fn.*"
     ports:
       - "50102:80"
 
