@@ -5,4 +5,4 @@ install:
 	@go install .
 
 image:
-	@docker build -t appcelerator/amp-demo-function .
+	@docker build -t appcelerator/demo-function .

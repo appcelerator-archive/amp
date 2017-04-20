@@ -33,7 +33,7 @@ http://localhost:50106.
 
 ## Organization and teams
 
-To test the organization and teams features, 
+To test the organization and teams features,
 use the CLI to create your ATOMIQ ID (`amp user signup`), then
 log in (`amp login`).
 
@@ -55,7 +55,13 @@ push images that you build directly to the registry using the following sequence
     $ docker build -t foo/bar
     $ docker tag foo/bar 127.0.0.1:5000/foo/bar
     $ docker push 127.0.0.1:5000/foo/bar
-    
+
 The image is now available to be used by a stackfile you deploy to the
 cluster. You can always use images available on Docker Hub. Support for
 alternative and private registry is planned.
+
+## FaaS (Function as a Service)
+
+Please check the example function here `examples/functions/demo-function`.
+
+Also, read the associated [instructions](../examples/functions/demo-function/REAMDE.md).
