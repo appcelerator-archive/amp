@@ -1,6 +1,4 @@
-[![ATOMIQ](http://atomiq.io/images/logo/atomiq-logo-light-300x120.png)](http://atomiq.io)
-
-http://atomiq.io
+# AMP
 
 The open source unified CaaS/FaaS platform for Docker, batteries included.
 
@@ -34,7 +32,7 @@ IRC channel (#atomiq) and you can also join our Slack channel in the next day or
 
 ## License
 
-ATOMIQ is licensed under the Apache License, Version 2.0.
-See [LICENSE](https://github.com/atomiqio/atomiq/blob/master/LICENSE)
+AMP is licensed under the Apache License, Version 2.0.
+See [LICENSE](https://github.com/appcelerator/amp/blob/master/LICENSE)
 for the full license text.
 
