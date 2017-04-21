@@ -1,3 +1,4 @@
+# No shebang for sourced file
 export AMPCID="f573e897-7aa0-4516-a195-42ee91039e97"
-export AMPHOME="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
+export AMPHOME="$(dirname "$(cd "$(dirname "$0")" && pwd)")"
 alias amps="docker run -it --rm --network=hostnet -v $AMPHOME/stacks:/stacks docker --host=m1"

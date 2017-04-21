@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SUCCESS=0
 
@@ -26,7 +26,7 @@ readonly clouddomainname="cloud.atomiq.io"
 # returns the target of the deployment: local or a cloud provider
 deployment_target() {
   local _target
-  _target=$(echo $(basename $0) | cut -d- -f2) 
+  _target=$(echo $(basename $0) | cut -d- -f2)
   if [ $? -ne 0 ] || [ "$_target" = "$(basename $0)" ]; then
     _target="local"
   fi
