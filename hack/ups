@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # build and update a service for amp
 
 amps="docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1"
