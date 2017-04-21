@@ -1,0 +1,39 @@
+<div id="sidebar-wrapper">
+    <ul class="sidebar">
+      <li class="sidebar-title">
+        <span>Active endpoint</span>
+      </li>
+      <li class="sidebar-title">
+        <select class="select-endpoint form-control" ng-options="endpoint.Name for endpoint in endpoints">
+        </select>
+      </li>
+      <li class="sidebar-title"><span>Endpoint actions</span></li>
+      <li class="sidebar-list">
+        <a ui-sref="dashboard" routerLinkActive="active" (click)="menuService.setItemMenu('dashboard')">Dashboard <span class="menu-icon fa fa-tachometer"></span></a>
+      </li>
+      <li class="sidebar-list" ng-if="applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
+        <a ui-sref="nodes" routerLinkActive="active"  (click)="menuService.setItemMenu('nodes')">Nodes <span class="menu-icon fa fa-list-alt"></span></a>
+      </li>
+      <li class="sidebar-list">
+        <a ui-sref="stacks" routerLinkActive="active" (click)="menuService.setItemMenu('stacks')">Stacks <span class="menu-icon fa fa-server"></span></a>
+      </li>
+      <li class="sidebar-title"><span>Atomiq settings</span></li>
+      <li class="sidebar-list" ng-if="applicationState.application.authentication">
+        <a ui-sref="password" routerLinkActive="active" (click)="menuService.setItemMenu('password')">Password <span class="menu-icon fa fa-lock"></span></a>
+      </li>
+      <li class="sidebar-list" ng-if="applicationState.application.authentication && userRole === 1">
+        <a ui-sref="users" routerLinkActive="active" (click)="menuService.setItemMenu('users')">Users <span class="menu-icon fa fa-user"></span></a>
+      </li>
+      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
+        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">EndPoints <span class="menu-icon fa fa-plug"></span></a>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="col-xs-12">
+        <a href="https://github.com/atomiqio/atomiq" target="_blank">
+          <i class="fa fa-github" aria-hidden="true"></i>
+          AMP 0.9.0
+        </a>
+      </div>
+    </div>
+  </div>
