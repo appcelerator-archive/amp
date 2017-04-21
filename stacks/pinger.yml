@@ -6,7 +6,6 @@ networks:
       name: ampnet
 
 services:
-
   pinger:
     image: subfuzion/pinger
     networks:
@@ -19,6 +18,6 @@ services:
       replicas: 3
       labels:
         io.amp.role: "pinger"
+        io.amp.mapping: "account=tony name=mypinger port=3000"
       restart_policy:
         condition: on-failure
-

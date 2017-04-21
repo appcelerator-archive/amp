@@ -34,7 +34,6 @@ services:
       replicas: 1
       labels:
         io.amp.role: "infrastructure"
-        io.amp.mapping: "kibana:5601"
       placement:
         constraints: [node.role == worker]
     labels:

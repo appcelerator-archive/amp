@@ -46,3 +46,21 @@ services:
     volumes:
       - ampagent:/containers
       - /var/run/docker.sock:/var/run/docker.sock
+
+  haproxy:
+    image: appcelerator/amphaproxy:1.0.0
+    networks:
+      - default
+    ports:
+      - "50180:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == manager]
+    labels:
+      io.amp.role: "infrastructure"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
