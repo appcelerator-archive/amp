@@ -16,8 +16,6 @@ services:
     environment:
       SERVICE_PORTS: "3000"
       VIRTUAL_HOST: "https://pinger.*"
-    ports:
-      - "50105:3000"
     deploy:
       replicas: 3
       labels:
