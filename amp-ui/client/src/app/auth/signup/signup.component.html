@@ -1,0 +1,101 @@
+
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div icon="fa-plus" title="Add a new user">
+        </div>
+        <div style="height:50px">
+          <img src="/assets/images/axway.png" alt="axway" class="img-rounded" style="max-height:40px">
+        </div>
+        <div>
+          <form class="form-horizontal" (ngSubmit)="onSignup()" #f="ngForm">
+
+            <div class="form-group">
+              <label for="username" class="col-sm-2 control-label text-left">Username</label>
+              <div class="col-sm-8">
+                <input ngModel required type="text" class="form-control" name="username" id="username" placeholder="e.g. jdoe">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email" class="col-sm-2 control-label text-left">Email</label>
+              <div class="col-sm-8">
+                <input
+                  ngModel required email
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  id="email"
+                  placeholder=""
+                  #email="ngModel">
+                <span class="help-block" *ngIf="!email.valid && email.touched">Please enter a valid email</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="col-sm-2 control-label text-left">Password</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></span>
+                  <input
+                    ngModel required
+                    type="password"
+                    class="form-control"
+                    name="password"
+                    id="password">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm_password" class="col-sm-2 control-label text-left">Confirm password</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></span>
+                  <input ngModel required type="password" class="form-control" name="passwordVerif" id="passwordVerif">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="permissions" class="col-sm-2 control-label text-left">Permissions</label>
+              <div class="col-sm-8">
+                <div class="btn-group btn-group-sm">
+                  <label class="btn btn-default">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                    User
+                  </label>
+                  <label class="btn btn-default">
+                    <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                    Administrator
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="col-sm-12">
+                <span class="small text-muted">Note: non-administrator users do not have access to any endpoint by default. Head over the <a ui-sref="endpoints">endpoints view</a> to manage their accesses.</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="btn-group" role="group" aria-label="...">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  type="submit"
+                  [disabled]="!f.valid">
+                  <i class="fa fa-user-plus" aria-hidden="true"></i> Submit</button>
+                <button type="button"
+                  class="btn btn-default btn-sm"
+                  (click)="usersService.returnToCaller()">
+                  <i aria-hidden="true"></i> Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
