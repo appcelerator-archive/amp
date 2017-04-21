@@ -8,28 +8,32 @@ There are only 3 things to consider when writing a function:
 - Write your output to the standard output
 - If needed, log to the standard error
 
-# Installing the go binary
+# Function development
+
+## Installing the go binary
 
 Run `make`, it will install `demo-function` in your `$GOPATH/bin`
 
-# Building the `demo-function` image
+## Testing the function without deploying it
 
-Run `make image`, it will create a docker image with the tag `appcelerator/demo-function:latest`
-
-# Testing the function without deploying it
-
-After installing locally, you can test the function like this:
+After installing the binary, you can test the function like this:
 
     $ cat Dockerfile | demo-function
 
+# Preparing deployment
+
+## Build the `demo-function` image
+
+Run `make image`, it will create a docker image with the tag `appcelerator/demo-function:latest`
+
+## Push your image to a public registry (e.g. DockerHub)
+
+In order to use your function, you first need to push it to a public registry:
+
+    $ docker tag appcelerator/banner-function [docker_id]/demo-function
+    $ docker push [docker_id]/demo-function
+
 # Local deployment
-
-## Push your image to the local registry
-
-In order to use your function, you first need to push it to the local registry:
-
-    $ docker tag appcelerator/demo-function localhost:5000/appcelerator/demo-function
-    $ docker push localhost:5000/appcelerator/demo-function
 
 ## Registering your function
 
@@ -52,13 +56,6 @@ The `--data-binary` parameter tells `curl` to POST the content of the file exact
 Without this parameter, `curl` would pass the content of the file to the server using the content-type `application/x-www-form-urlencoded` which is not expected for amp functions.
 
 # Cloud deployment
-
-## Push your image to the ATOMIQ registry
-
-In order to use your function, you first need to push it to `registry.cloud.atomiq.io`:
-
-    $ docker tag appcelerator/demo-function registry.cloud.atomiq.io/appcelerator/demo-function
-    $ docker push registry.cloud.atomiq.io/appcelerator/demo-function
 
 ## Registering your function
 
