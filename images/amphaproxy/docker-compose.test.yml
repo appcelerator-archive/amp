@@ -1,0 +1,23 @@
+version: "2"
+services:
+  sut:
+    image: appcelerator/sut
+    build:
+      context: ./sut
+      dockerfile: Dockerfile
+    depends_on:
+      - haproxy
+
+  amplifier:
+    image: alpine
+    command: ["nc", "-l", "50101"]
+
+  haproxy:
+    image: appcelerator/amphaproxy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NO_DEFAULT_BACKEND: 'true'
+    depends_on:
+      - amplifier

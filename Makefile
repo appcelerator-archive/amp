@@ -21,6 +21,7 @@ export GOARCH := $(shell go env | grep GOARCH | sed 's/"//g' | cut -c8-)
 # COMMON DIRECTORIES
 # =============================================================================
 CMDDIR := cmd
+IMAGEDIR := images
 
 # =============================================================================
 # DEFAULT TARGET
@@ -81,7 +82,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-funcexec clean-funchttp
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-haproxy clean-funcexec clean-funchttp
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -90,8 +91,8 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
-buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
+build: install-deps protoc build-server build-cli build-beat build-agent build-haproxy build-funcexec build-funchttp build-bootstrap
+buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-haproxy build-funcexec build-funchttp build-bootstrap
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -224,6 +225,36 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
+
+# =============================================================================
+# BUILD HAPROXY (`amphaproxy`)
+# Saves binary to `cmd/agent/agent.alpine`,
+# then builds `appcelerator/agent` image
+# =============================================================================
+HAPROXY := amphaproxy
+HAPROXYBINARY=$(HAPROXY).alpine
+HAPROXYTAG := local
+HAPROXYIMG := appcelerator/$(HAPROXY):$(HAPROXYTAG)
+HAPROXYTARGET := $(IMAGEDIR)/$(HAPROXY)/$(HAPROXYBINARY)
+HAPROXYDIRS := cmd/$(HAPROXY) api data tests
+HAPROXYSRC := $(shell find $(HAPROXYDIRS) -type f -name '*.go')
+HAPROXYPKG := $(REPO)/$(CMDDIR)/$(HAPROXY)
+
+$(HAPROXYTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(HAPROXYSRC)
+	@echo "Compiling $(HAPROXY) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(HAPROXYTARGET) $(HAPROXYPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(HAPROXY)"
+
+build-haproxy: $(HAPROXYTARGET)
+	@echo "build $(HAPROXYIMG)"
+	@$(DOCKER_CMD) build -t $(HAPROXYIMG) $(IMAGEDIR)/$(HAPROXY) || (rm -f $(HAPROXYTARGET); exit 1)
+
+rebuild-haproxy: clean-haproxy build-haproxy
+
+.PHONY: clean-haproxy
+clean-haproxy:
+	@rm -f $(HAPROXYTARGET)
 
 # =============================================================================
 # BUILD FUNCHTTP (`funchttp`)

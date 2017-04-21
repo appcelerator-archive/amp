@@ -1,0 +1,29 @@
+global
+    maxconn 256
+    stats socket /var/run/haproxy.sock mode 600 level admin
+    stats timeout 2m
+
+resolvers docker
+    nameserver dnsmasq 127.0.0.1:53
+    resolve_retries      6
+    timeout retry        3s
+    hold valid           10s
+
+defaults
+    mode http
+    option dontlog-normal
+    option dontlognull
+    timeout connect 50000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend main_http-in
+    bind *:80
+    monitor-uri /healthcheck
+[frontendInline]
+    default_backend controler_api
+
+backend controler_api
+    server controler_api1 localhost:8090
+
+[backends]

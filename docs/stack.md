@@ -38,3 +38,29 @@ List the deployed stacks and give the following information:
 optionally -q can be used to display only the stack id
 
 Note that this command display only the amp stacks, all other stacks created out of amp are not displayed, infrastructure stacks are not displayed either.
+
+# amp dedicated labels
+
+## io.amp.mapping
+
+When this label is added as a service label in a stack file, amp create a mapping to reverse proxy the service.
+
+the label format is:
+
+io.amp.mapping = " account=[myAccount] name=[aName] port=[internalServicePort]"
+
+then the following urls can be used to request the service
+
+http://[aName].[stackName].[myAccount].local.appcelerator.io
+or
+http://[aName].[stackName].[myAccount].cluster.atomiq.io
+depending on your environment
+
+without account=..., the url become:
+http://[aName].[stackName].local.appcelerator.io
+or
+http://[aName].[stackName].cluster.atomiq.io
+
+if name=... doesn't exist then name is set as the service name
+
+[port] is mandatory

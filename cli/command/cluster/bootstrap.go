@@ -17,7 +17,7 @@ func init() {
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
-		"appcelerator/amp-bootstrap:1.0.1",
+		"appcelerator/amp-bootstrap:1.0.2",
 	}
 }
 
