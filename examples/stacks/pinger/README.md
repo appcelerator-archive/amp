@@ -5,12 +5,12 @@ Simple HTTP service (Go [source](https://github.com/subfuzion/docker-pinger)) th
 
 Run in this directory:
 
-    $ amp stack up -f stack.yml pinger
+    $ amp --server=localhost:50101 stack up -f stack.yml pinger
 
-The app will be available at [http://www.pinger.local.atomiq.io/ping](http://www.pinger.local.atomiq.io/ping)
+The app will be available at [https://pinger.local.atomiq.io/ping](https://pinger.local.atomiq.io/ping)
 
 Test with
 
-    $ curl http://www.pinger.local.atomiq.io/ping
+    $ curl -k https://pinger.local.atomiq.io/ping
     
 
