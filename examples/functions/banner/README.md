@@ -29,16 +29,16 @@ In order to register your function, you need to run the following command:
 
 ## Invoking your function via HTTP
 
-In order to invoke a function, you can POST an HTTP request to `localhost:50102/<function>`. Calls block until the function sends a response.
+In order to invoke a function, you can POST an HTTP request to `https://faas.local.atomiq.io/<function>`. Calls block until the function sends a response.
 Invoke your test function like this:
 
-    $ echo 'Atomiq Rocks!!' | curl localhost:50102/banner --data-binary @-
+    $ echo 'ATOMIQ rocks!' | curl -k https://faas.local.atomiq.io/banner --data-binary @-
 
 The `@-` parameter tells `curl` to read from the standard input.
 
 # Cloud deployment
 
-## Push your image to the atomiq registry
+## Push your image to the ATOMIQ registry
 
 In order to use your function, you first need to push it to `registry.cloud.atomiq.io`:
 
@@ -53,9 +53,9 @@ In order to register your function, you need to run the following command:
 
 ## Invoking your function via HTTP
 
-In order to invoke a function, you can POST an HTTP request to `localhost:50102/<function>`. Calls block until the function sends a response.
+In order to invoke a function, you can POST an HTTP request to `https://faas.cloud.atomiq.io/<function>`. Calls block until the function sends a response.
 Invoke your test function like this:
 
-    $ echo 'Atomiq Rocks!!' | curl localhost:50102/banner --data-binary @-
+    $ echo 'ATOMIQ rocks!' | curl -k https://faas.cloud.atomiq.io/banner --data-binary @-
 
 The `@-` parameter tells `curl` to read from the standard input.

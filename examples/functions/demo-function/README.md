@@ -35,25 +35,25 @@ In order to use your function, you first need to push it to the local registry:
 
 In order to register your function, you need to run the following command:
 
-    $ amp -s localhost fn create test appcelerator/demo-function
+    $ amp -s localhost fn create demo appcelerator/demo-function
 
 ## Invoking your function via HTTP
 
-In order to invoke a function, you can POST an HTTP request to `localhost:50102/<function>`. Calls block until the function sends a response.
+In order to invoke a function, you can POST an HTTP request to `https://faas.local.atomiq.io/<function>`. Calls block until the function sends a response.
 Invoke your test function like this:
 
-    $ cat Makefile | curl localhost:50102/test --data-binary @-
+    $ cat Makefile | curl -k https://faas.local.atomiq.io/demo --data-binary @-
 
 The `@-` parameter tells `curl` to read from the standard input but you can also invoke your function like this:
 
-    $ curl localhost:50102/test --data-binary @Makefile
+    $ curl -k https://faas.local.atomiq.io/demo --data-binary @Makefile
 
 The `--data-binary` parameter tells `curl` to POST the content of the file exactly as specified with no extra processing whatsoever.
 Without this parameter, `curl` would pass the content of the file to the server using the content-type `application/x-www-form-urlencoded` which is not expected for amp functions.
 
 # Cloud deployment
 
-## Push your image to the atomiq registry
+## Push your image to the ATOMIQ registry
 
 In order to use your function, you first need to push it to `registry.cloud.atomiq.io`:
 
@@ -64,18 +64,18 @@ In order to use your function, you first need to push it to `registry.cloud.atom
 
 In order to register your function, you need to run the following command:
 
-    $ amp fn create test appcelerator/demo-function
+    $ amp fn create demo appcelerator/demo-function
 
 ## Invoking your function via HTTP
 
-In order to invoke a function, you can POST an HTTP request to `cloud.atomiq.io:50102/<function>`. Calls block until the function sends a response.
+In order to invoke a function, you can POST an HTTP request to `https://faas.cloud.atomiq.io/<function>`. Calls block until the function sends a response.
 Invoke your test function like this:
 
-    $ cat Makefile | curl cloud.atomiq.io:50102/test --data-binary @-
+    $ cat Makefile | curl -k https://faas.cloud.atomiq.io/demo --data-binary @-
 
 The `@-` parameter tells `curl` to read from the standard input but you can also invoke your function like this:
 
-    $ curl cloud.atomiq.io:50102/test --data-binary @Makefile
+    $ curl -k https://faas.cloud.atomiq.io/demo --data-binary @Makefile
 
 The `--data-binary` parameter tells `curl` to POST the content of the file exactly as specified with no extra processing whatsoever.
 Without this parameter, `curl` would pass the content of the file to the server using the content-type `application/x-www-form-urlencoded` which is not expected for amp functions.
