@@ -8,24 +8,26 @@ There are only 3 things to consider when writing a function:
 - Write your output to the standard output
 - If needed, log to the standard error
 
-# Building the `banner-function` image
+# Preparing deployment
+
+## Build the `banner-function` image
 
 Run `make image`, it will create a docker image with the tag `appcelerator/banner-function:latest`
 
+## Push your image to a public registry (e.g. DockerHub)
+
+In order to use your function, you first need to push it to a public registry:
+
+    $ docker tag appcelerator/banner-function [docker_id]/banner-function
+    $ docker push [docker_id]/banner-function
+
 # Local deployment
-
-## Push your image to the local registry
-
-In order to use your function, you first need to push it to the local registry:
-
-    $ docker tag appcelerator/banner-function localhost:5000/appcelerator/banner-function
-    $ docker push localhost:5000/appcelerator/banner-function
 
 ## Registering your function
 
 In order to register your function, you need to run the following command:
 
-    $ amp -s localhost fn create banner appcelerator/banner-function
+    $ amp -s localhost fn create banner [docker_id]/banner-function
 
 ## Invoking your function via HTTP
 
@@ -37,13 +39,6 @@ Invoke your test function like this:
 The `@-` parameter tells `curl` to read from the standard input.
 
 # Cloud deployment
-
-## Push your image to the ATOMIQ registry
-
-In order to use your function, you first need to push it to `registry.cloud.atomiq.io`:
-
-    $ docker tag appcelerator/banner-function registry.cloud.atomiq.io/appcelerator/banner-function
-    $ docker push registry.cloud.atomiq.io/appcelerator/banner-function
 
 ## Registering your function
 
