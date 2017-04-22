@@ -14,4 +14,17 @@ export class User {
     this.verified = false;
     this.checked = false;
   }
+
+  match(item : User, value : string) : boolean {
+    if (item.name.includes(value)) {
+      return true
+    }
+    if (item.email.includes(value)) {
+      return true
+    }
+    if (item.role.includes(value)) {
+      return true
+    }
+    return false
+  }
 }
