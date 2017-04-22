@@ -12,8 +12,21 @@ export class UsersService {
   @Output() onUserLogout = new EventEmitter<void>();
 
   constructor(private router : Router, private http : Http) {
-    this.users.push(new User('freignat', 'freignat@axway.com', '', ''))
-    this.users.push(new User('bquenin', 'bquenin@axway.com', '', ''))
+    this.users.push(new User('freignat', 'freignat@axway.com', '', 'USER'))
+    this.users.push(new User('bquenin', 'bquenin@axway.com', '', 'USER'))
+  }
+
+  match(item : User, value : string) : boolean {
+    if (item.name.includes(value)) {
+      return true
+    }
+    if (item.email.includes(value)) {
+      return true
+    }
+    if (item.role.includes(value)) {
+      return true
+    }
+    return false
   }
 
   loadUsers() {

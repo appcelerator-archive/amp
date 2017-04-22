@@ -28,7 +28,13 @@
             </div>
           </div>
           <div class="pull-right">
-            <input type="text" id="filter" placeholder="Filter..." class="form-control input-sm" />
+            <input
+              #filter
+              type="text"
+              id="filter"
+              placeholder="Filter..."
+              class="form-control input-sm"
+              (keyup)="listService.filter(filter.value)"/>/>
           </div>
         </div>
       </div>
@@ -43,24 +49,24 @@
                     <input type="checkbox" (change)="selectAllItems()" />
                   </th>
                   <th>
-                    <a ui-sref="users" (click)="order('name')">
+                    <a>
                       Name
-                      <span  class="glyphicon glyphicon-chevron-down"></span>
-                      <span  class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
-                    <a ui-sref="users" (click)="order('email')">
+                    <a>
                       Email
-                      <span  class="glyphicon glyphicon-chevron-down"></span>
-                      <span  class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('email', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('email', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
-                    <a ui-sref="users" (click)="order('role')">
+                    <a>
                       Role
-                      <span  class="glyphicon glyphicon-chevron-down"></span>
-                      <span  class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('role', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('role', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
@@ -72,7 +78,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="ng-scope" *ngFor="let user of usersService.users">
+                <tr class="ng-scope" *ngFor="let user of listService.getData()">
                   <td><input type="checkbox" ng-change="selectItem(user)" class="ng-pristine ng-untouched ng-valid ng-empty"></td>
                   <td class="ng-binding">{{ user.name }}</td>
                   <td class="ng-binding">{{ user.email }}</td>

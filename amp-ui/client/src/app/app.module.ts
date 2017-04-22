@@ -15,11 +15,12 @@ import { PasswordComponent } from './password/password.component';
 import { EndpointsComponent } from './endpoints/endpoints.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { PageheaderComponent } from './pageheader/pageheader.component';
-import { UserListComponent } from './users/user-list/user-list.component';
+import { UsersComponent } from './users/users.component';
 import { PageErrorComponent } from './page-error/page-error.component';
 
 //Services
 import { UsersService } from './services/users.service';
+import { StacksService } from './services/stacks.service';
 import { MenuService } from './services/menu.service';
 import { AuthGuard } from './services/auth-guard.service';
 //Module
@@ -39,7 +40,7 @@ import { AmpComponent } from './amp/amp.component';
     EndpointsComponent,
     SidebarComponent,
     PageheaderComponent,
-    UserListComponent,
+    UsersComponent,
     PageErrorComponent,
     AmpComponent,
   ],
@@ -49,7 +50,7 @@ import { AmpComponent } from './amp/amp.component';
     HttpModule,
     AppRoutingModule
   ],
-  providers: [UsersService, MenuService, AuthGuard],
+  providers: [StacksService, UsersService, MenuService, AuthGuard],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

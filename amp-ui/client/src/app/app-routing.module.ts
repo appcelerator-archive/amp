@@ -15,7 +15,7 @@ import { PasswordComponent } from './password/password.component';
 import { EndpointsComponent } from './endpoints/endpoints.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { PageheaderComponent } from './pageheader/pageheader.component';
-import { UserListComponent } from './users/user-list/user-list.component';
+import { UsersComponent } from './users/users.component';
 
 //Services
 import { AuthGuard } from './services/auth-guard.service';
@@ -29,7 +29,7 @@ const appRoutes : Routes = [
       { path: ':name', component: StacksComponent, canActivate: [AuthGuard] }
     ]},
     { path: 'password', component: PasswordComponent, canActivate: [AuthGuard] },
-    { path: 'users', component: UserListComponent, canActivate: [AuthGuard] },
+    { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'signup', component: SignupComponent, canActivate: [AuthGuard] },
     { path: 'endpoints', component: EndpointsComponent, canActivate: [AuthGuard] }
   ]},
@@ -38,7 +38,7 @@ const appRoutes : Routes = [
     { path: 'signup', component: SignupComponent }
   ]},
   { path: 'not-found', component: AppComponent, data: { message: "Page not found"} },
-  { path: '**', redirectTo: '/not-found' }
+  { path: '**', redirectTo: '/auth/signin' }
 ];
 
 @NgModule({
