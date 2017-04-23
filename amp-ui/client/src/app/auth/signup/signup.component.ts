@@ -19,8 +19,8 @@ export class SignupComponent implements OnInit {
 
   onSignup() {
     console.log(this.form)
-    let user = new User(this.form.value.username, this.form.value.email, this.form.value.password, '')
-    this.usersService.signup(user)
+    let user = new User(this.form.value.username, this.form.value.email, '')
+    this.usersService.signup(user, this.form.value.password)
   }
 
 }

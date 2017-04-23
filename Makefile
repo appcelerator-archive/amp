@@ -81,7 +81,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-funcexec clean-funchttp
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-funcexec clean-funchttp clean-ui
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -90,8 +90,8 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
-buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap
+build: install-deps protoc build-server build-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap build-ui
+buildall: install-deps protoc build-server buildall-cli build-beat build-agent build-funcexec build-funchttp build-bootstrap build-ui
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -284,6 +284,39 @@ rebuild-funcexec: clean-funcexec build-funcexec
 .PHONY: clean-funcexec
 clean-funcexec:
 	@rm -f $(FUNCEXECTARGET)
+
+	# =============================================================================
+	# BUILD AMP-UI (`amp-ui`)
+	# Build amp-ui server binary
+	# then build `appcelerator/amp-ui` image
+	# =============================================================================
+
+AMPUI := amp-ui
+AMPUIBINARY=$(AMPUI).alpine
+AMPUIDIR=amp-ui
+AMPUISERVERDIR=$(AMPUIDIR)/server
+AMPUITAG := local
+AMPUIIMG := appcelerator/$(AMPUI):$(AMPUITAG)
+AMPUISERVERTARGET := $(AMPUISERVERDIR)/$(AMPUIBINARY)
+AMPUIDIRS := $(AMPUISERVERDIR) api data tests
+AMPUISRC := $(shell find $(AMPUIDIR) -type f -name '*.go')
+AMPUIPKG := $(REPO)/$(AMPUISERVERDIR)
+
+$(AMPUISERVERTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPUISRC)
+	@echo "Compiling $(AMPUI) server source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(AMPUISERVERTARGET) $(AMPUIPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(AMPUI)"
+
+build-ui: $(AMPUISERVERTARGET)
+	@echo "build $(AMPUIIMG)"
+	@$(DOCKER_CMD) build -t $(AMPUIIMG) $(AMPUIDIR)/server || (rm -f $(AMPUISERVERTARGET); exit 1)
+
+rebuild-ui: clean-ui build-ui
+
+.PHONY: clean-ui
+clean-ui:
+	@rm -f $(AMPUITARGET)
 
 # =============================================================================
 # BUILD BOOTSTRAP (`amp-bootstrap`)

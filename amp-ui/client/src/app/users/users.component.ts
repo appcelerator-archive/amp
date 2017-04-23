@@ -17,17 +17,22 @@ export class UsersComponent implements OnInit {
     public usersService : UsersService,
     public listService : ListService) {
       listService.setFilterFunction(usersService.match)
-      listService.setData(this.usersService.users)
     }
 
 
   ngOnInit() {
+    this.usersService.onUsersLoaded.subscribe(
+      () => {
+        this.listService.setData(this.usersService.users)
+      }
+    )
+    this.usersService.loadUsers()
   }
+
   setCreateMode(mode: boolean) {
     this.createMode = mode
   }
-  order(orderby: string) {
-  }
+
   selectAllItems() {
     for (let user of this.usersService.users) {
       user.checked=true

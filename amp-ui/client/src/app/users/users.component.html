@@ -6,9 +6,9 @@
           <div class="pull-left"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>Users</div>
           <div class="pull-right">
             Items per page:
-            <select  ng-change="changePaginationCount()">
+            <select  (change)="listService.setPageSize(+pageSize.value)" #pageSize>
               <option value="0">All</option>
-              <option value="10">10</option>
+              <option value="5">5</option>
               <option value="25">25</option>
               <option value="50">50</option>
               <option value="100">100</option>
@@ -34,7 +34,7 @@
               id="filter"
               placeholder="Filter..."
               class="form-control input-sm"
-              (keyup)="listService.filter(filter.value)"/>/>
+              (keyup)="listService.filter(filter.value)"/>
           </div>
         </div>
       </div>
@@ -88,7 +88,7 @@
                   </td>
                   <td>
                     <label class="switch" style="margin-left: 20px;">
-                      <input type="checkbox"><i></i>
+                      <input type="checkbox" checked="user.verified"><i></i>
                     </label>
                   </td>
                   <td>
@@ -97,8 +97,26 @@
                 </tr>
               </tbody>
             </table>
-            <div ng-if="users" class="pull-left pagination-controls">
-              <!--<dir-pagination-controls></dir-pagination-controls>-->
+            <div class="pull-left pagination-controls">
+              <nav aria-label="Page navigation">
+                <ul class="pagination">
+                  <li>
+                    <a aria-label="Previous" (click)="listService.setPageIndex(-1,0)">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  <li><a (click)="listService.setPageIndex(0,1)">1</a></li>
+                  <li><a (click)="listService.setPageIndex(0,2)">2</a></li>
+                  <li><a (click)="listService.setPageIndex(0,3)">3</a></li>
+                  <li><a (click)="listService.setPageIndex(0,4)">4</a></li>
+                  <li><a (click)="listService.setPageIndex(0,5)">5</a></li>
+                  <li>
+                    <a (click)="listService.setPageIndex(1, 0)" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
             </div>
           </div>
         </div>

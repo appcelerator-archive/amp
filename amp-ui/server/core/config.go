@@ -14,13 +14,11 @@ type ServerConfig struct {
 	port          string
 }
 
-var conf ServerConfig
-
 //update conf instance with default value and environment variables
 func (c *ServerConfig) init(version string, build string) {
-	conf.setDefault()
-	conf.loadConfigUsingEnvVariable()
-	conf.displayConfig(version, build)
+	c.setDefault()
+	c.loadConfigUsingEnvVariable()
+	c.displayConfig(version, build)
 }
 
 //Set default value of configuration
@@ -44,7 +42,7 @@ func (c *ServerConfig) displayConfig(version string, build string) {
 	fmt.Println("Configuration:")
 	fmt.Printf("Port: %s\n", c.port)
 	fmt.Printf("Local endpoint: %t\n", c.localEndpoint)
-	fmt.Printf("endpoint: %v\n", c.endpoints)
+	fmt.Printf("Endpoints: %v\n", c.endpoints)
 	fmt.Println("----------------------------------------------------------------------------")
 }
 

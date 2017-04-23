@@ -18,16 +18,17 @@ export class StacksComponent implements OnInit {
     public stacksService : StacksService,
     public listService : ListService) {
       listService.setFilterFunction(stacksService.match)
-      listService.setData(this.stacksService.stacks)
     }
 
   ngOnInit() {
+    this.stacksService.onStacksLoaded.subscribe(
+      () => {
+        this.listService.setData(this.stacksService.stacks)
+      }
+    )
+    this.stacksService.loadStacks()
     let name = this.route.snapshot.params['name']
-    //this.route.snapshot.queryParams
-    //this.route.snapshot.queryFragment
     this.currentStack = new Stack('', name, 0, '', '')
-    //this.route.queryParams.subscribe()
-    //this.route.queryFragment.subscribe()
     this.route.params.subscribe( //automatically unsubscribed by A on component destroy
       (params : Params) => {
         this.currentStack = new Stack('', name, 0, '', '')

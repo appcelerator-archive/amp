@@ -38,7 +38,7 @@ const appRoutes : Routes = [
     { path: 'signup', component: SignupComponent }
   ]},
   { path: 'not-found', component: AppComponent, data: { message: "Page not found"} },
-  { path: '**', redirectTo: '/auth/signin' }
+  //{ path: '**', redirectTo: '/auth/signin' }
 ];
 
 @NgModule({
