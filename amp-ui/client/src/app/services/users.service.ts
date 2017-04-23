@@ -1,17 +1,18 @@
 import { Injectable, Output, EventEmitter } from '@angular/core';
-import { Http, Headers, Response } from '@angular/http';
+import { HttpService } from '../services/http.service';
 import { User } from '../models/user.model';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs/Subject'
 
 @Injectable()
 export class UsersService {
   users : User[] = []
   noLoginUser = new User('not signin','','','')
   currentUser = this.noLoginUser
-  //@Output() onUserEndCreateMode = new EventEmitter<void>();
+  onUsersLoaded = new Subject();
   @Output() onUserLogout = new EventEmitter<void>();
 
-  constructor(private router : Router, private http : Http) {
+  constructor(private router : Router, private httpService : HttpService) {
     this.users.push(new User('freignat', 'freignat@axway.com', '', 'USER'))
     this.users.push(new User('bquenin', 'bquenin@axway.com', '', 'USER'))
   }
@@ -30,19 +31,13 @@ export class UsersService {
   }
 
   loadUsers() {
-  /*
-    this.http.get("http://...?auth=token").subcribe(
-      (error) => console.log(error),
-      (response : Response) => {
-        const data = response.json()
-      }
-    )
-  */
-  }
-
-  createModeOn(from : string) {
-    this.router.navigate(["auth/signup"])
-    //this.router.navigate(["auth/signup", var, 'bouturl'], { queryPrarams: { myParam : '1'}, fragment: "myFragment"});
+    this.httpService.getUsers().subscribe(
+      data => {
+        this.users = data
+        this.onUsersLoaded.next()
+      },
+      //error => {}
+    );
   }
 
   logout() {

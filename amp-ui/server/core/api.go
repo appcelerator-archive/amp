@@ -29,9 +29,24 @@ type aLogin struct {
 }
 
 func (s *serverAPI) handleAPIFunctions(r *mux.Router) {
+	r.HandleFunc("/api/v1/endpoints", s.endpoints).Methods("GET")
 	r.HandleFunc("/api/v1/connect", s.connectEndpoint).Methods("POST")
 	r.HandleFunc("/api/v1/login", s.login).Methods("POST")
 	r.HandleFunc("/api/v1/users", s.users).Methods("GET")
+}
+
+func (s *serverAPI) endpoints(w http.ResponseWriter, r *http.Request) {
+	log.Println("execute endpoints")
+	w.Header().Set("Content-Type", "application/json")
+	list := []string{}
+	if conf.localEndpoint {
+		list = append(list, "LocalEndpoint")
+	}
+	for _, ep := range conf.endpoints {
+		list = append(list, ep)
+	}
+	json.NewEncoder(w).Encode(list)
+	//http.Error(w, "error server 1", http.StatusInternalServerError)
 }
 
 func (s *serverAPI) users(w http.ResponseWriter, r *http.Request) {
