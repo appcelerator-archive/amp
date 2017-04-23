@@ -1,11 +1,12 @@
 package connectdb
 
 import (
-	"github.com/pkg/errors"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/go-sql-driver/mysql"
 	"fmt"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 func ConnectToMySQL(path string) (*sqlx.DB, error) {
@@ -15,7 +16,7 @@ func ConnectToMySQL(path string) (*sqlx.DB, error) {
 		return sqlx.Connect("mysql", path)
 	}
 
-	db, err := sqlx.Connect("mysql", strings.Join(parts[:len(parts)-1], "/") + "/mysql")
+	db, err := sqlx.Connect("mysql", strings.Join(parts[:len(parts)-1], "/")+"/mysql")
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}

@@ -1,10 +1,11 @@
 package env
 
 import (
-	"github.com/pborman/uuid"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/pborman/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIfFallbackWorks(t *testing.T) {
