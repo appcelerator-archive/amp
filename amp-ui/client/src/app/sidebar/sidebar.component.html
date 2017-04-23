@@ -5,7 +5,7 @@
       </li>
       <li class="sidebar-title">
         <select class="form-control custom-select" name="endpoint" [(ngModel)]="endpointsService.currentEndpoint" #endpoint>
-            <option *ngFor="let value of endpointsService.endpoints" [ngValue]="value">{{value}}</option>
+          <option *ngFor="let value of endpointsService.endpoints" [ngValue]="value">{{value.host}}</option>
         </select>
       </li>
       <li class="sidebar-title"><span>Endpoint actions</span></li>

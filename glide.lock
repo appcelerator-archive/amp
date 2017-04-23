@@ -1,5 +1,5 @@
 hash: fff401d3955c816110993c628fa41dd5f983036587ee137479f478b3e967dccb
-updated: 2017-04-26T21:39:21.015444832Z
+updated: 2017-04-26T23:59:00.032458759Z
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -138,7 +138,7 @@ imports:
 - name: github.com/docker/libtrust
   version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
 - name: github.com/docker/notary
-  version: 86e2ee95b8674efa2d4d30eb2c91ee88ce8d99ac
+  version: 3b3e77c4492a6b96a555da7abcd95cc0a1510ec2
   subpackages:
   - client
   - client/changelist

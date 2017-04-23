@@ -83,11 +83,6 @@
                       <span (click)="listService.orderNum('services', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
-                  <th>
-                    <a ui-sref="users">
-                      Update
-                    </a>
-                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -106,8 +101,26 @@
                 </tr>
               </tbody>
             </table>
-            <div ng-if="users" class="pull-left pagination-controls">
-              <!--<dir-pagination-controls></dir-pagination-controls>-->
+            <div class="pull-left pagination-controls">
+              <nav aria-label="Page navigation">
+                <ul class="pagination">
+                  <li>
+                    <a aria-label="Previous" (click)="listService.setPageIndex(-1,0)">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  <li><a (click)="listService.setPageIndex(0,1)">1</a></li>
+                  <li><a (click)="listService.setPageIndex(0,2)">2</a></li>
+                  <li><a (click)="listService.setPageIndex(0,3)">3</a></li>
+                  <li><a (click)="listService.setPageIndex(0,4)">4</a></li>
+                  <li><a (click)="listService.setPageIndex(0,5)">5</a></li>
+                  <li>
+                    <a (click)="listService.setPageIndex(1, 0)" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
             </div>
           </div>
         </div>

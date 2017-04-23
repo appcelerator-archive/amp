@@ -6,16 +6,14 @@ import { Subject } from 'rxjs/Subject'
 
 @Injectable()
 export class UsersService {
-  users : User[] = []
-  noLoginUser = new User('not signin','','','')
-  currentUser = this.noLoginUser
   onUsersLoaded = new Subject();
+  onUsersError = new Subject();
+  users : User[] = []
+  noLoginUser = new User('not signin','','')
+  currentUser = this.noLoginUser
   @Output() onUserLogout = new EventEmitter<void>();
 
-  constructor(private router : Router, private httpService : HttpService) {
-    this.users.push(new User('freignat', 'freignat@axway.com', '', 'USER'))
-    this.users.push(new User('bquenin', 'bquenin@axway.com', '', 'USER'))
-  }
+  constructor(private router : Router, private httpService : HttpService) {}
 
   match(item : User, value : string) : boolean {
     if (item.name.includes(value)) {
@@ -31,28 +29,49 @@ export class UsersService {
   }
 
   loadUsers() {
-    this.httpService.getUsers().subscribe(
+    this.httpService.users().subscribe(
       data => {
         this.users = data
+        console.log(data)
         this.onUsersLoaded.next()
       },
-      //error => {}
+      error => {
+        this.onUsersError.next(error)
+      }
     );
   }
 
   logout() {
     this.currentUser = this.noLoginUser
+    localStorage.removeItem('currentUser');
     this.router.navigate(["/auth/signin"])
   }
 
-  login(user : User) {
+  login(user : User, pwd : string, endpointName : string) {
     this.currentUser = user
-    //const headers = new Headers({'Content-Type' ,'application/json'})
-    //obs = this.http.post("http://...", user, {headers: headers})
-    this.router.navigate(["/amp"])
+    this.httpService.setToken(endpointName, "")
+    this.httpService.login(user, pwd).subscribe(
+      data => {
+        let ret = data.json()
+        this.httpService.setToken(endpointName, ret.data)
+        localStorage.setItem('currentUser', JSON.stringify({ username: user.name, endpointname: endpointName, token: ret.data, pwd: pwd }));
+        localStorage.setItem('lastUser', JSON.stringify({ username: user.name, endpointname: endpointName}));
+        this.router.navigate(["/amp"])
+      },
+      error => {
+        localStorage.removeItem('currentUser');
+        this.onUsersError.next(error)
+      }
+    );
   }
 
-  signup(user : User) {
+  setCurrentUser(currentUser : {username : string, endpointname: string, token : string}) {
+    this.currentUser = new User(currentUser.username, "", "")
+    this.httpService.setToken(currentUser.endpointname, currentUser.token)
+    this.router.navigate(["/amp"]);
+  }
+
+  signup(user : User, pwd : string) {
     this.users.push(user)
     //this.onUserEndCreateMode.emit();
     this.router.navigate(["/auth/signin"])
@@ -74,13 +93,3 @@ export class UsersService {
   }
 
 }
-
-
-/*
-this.usersService.storeServers(this.servers) {
-  .subcribe(
-    (response) => console.log(response)
-    (error) => console.log(error)
-  )
-}
-*/

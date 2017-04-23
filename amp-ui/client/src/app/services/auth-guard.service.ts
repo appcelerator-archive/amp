@@ -8,12 +8,11 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private usersService : UsersService, private router : Router ) {}
 
   canActivate(route : ActivatedRouteSnapshot, state : RouterStateSnapshot) {
-    let ok = this.usersService.isAuthenticated();
-    if (!ok) {
-      this.router.navigate(['auth/signin'])
-      return false
+    if (localStorage.getItem('currentUser')) {
+      return true;
     }
-    return true
+    this.router.navigate(['auth/signin'])
+    return false
   }
 
   canActivateChild(route : ActivatedRouteSnapshot, state : RouterStateSnapshot) {

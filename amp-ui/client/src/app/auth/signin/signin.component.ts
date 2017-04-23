@@ -15,13 +15,23 @@ export class SigninComponent implements OnInit, OnDestroy {
   constructor(public usersService : UsersService, public endpointsService : EndpointsService) { }
 
   ngOnInit() {
-    if (this.endpointsService.endpoints.length == 0) {
+    let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+      this.usersService.setCurrentUser(currentUser)
+    }
+    if (this.endpointsService.currentEndpoint == null ) {
       this.message="loading endpoints list..."
       this.endpointsService.loadEndpoints()
       this.endpointsService.onEndpointsLoaded.subscribe(
         () => {this.message="";}
       )
       this.endpointsService.onEndpointsError.subscribe(
+        (err : any) => {
+          console.log(err)
+          this.messageError=err.statusText+": "+err._body;
+        }
+      )
+      this.usersService.onUsersError.subscribe(
         (err : any) => {
           console.log(err)
           this.messageError=err.statusText+": "+err._body;
@@ -36,7 +46,9 @@ export class SigninComponent implements OnInit, OnDestroy {
   }
 
   signin(form : NgForm) {
-    let user = new User(form.value.username, '', form.value.password, '')
-    this.usersService.login(user)
+    let user = new User(form.value.username, '', '')
+    this.endpointsService.currentEndpoint = form.value.endpoint
+    this.endpointsService.connectAndLogin(user, form.value.password)
   }
+
 }

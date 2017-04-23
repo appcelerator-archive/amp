@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"google.golang.org/grpc"
+
 	"github.com/gorilla/mux"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/urfave/negroni"
@@ -16,14 +18,17 @@ import (
 
 //Server data
 type Server struct {
-	api *serverAPI
+	conf *ServerConfig
+	api  *serverAPI
 }
 
 //ServerInit Connect to docker engine, get initial containers list and start the agent
 func ServerInit(version string, build string) error {
-	server := Server{api: &serverAPI{}}
+	server := Server{api: &serverAPI{endpointConnMap: make(map[string]*grpc.ClientConn)}}
+	server.conf = &ServerConfig{}
+	server.api.conf = server.conf
 	server.trapSignal()
-	conf.init(version, build)
+	server.conf.init(version, build)
 	server.start()
 	return nil
 }
@@ -50,10 +55,10 @@ func (s *Server) start() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir(abspath)))
 	s.api.handleAPIFunctions(r)
-	log.Printf("AMP-UI server starting on %s\n", conf.port)
-	if err := http.ListenAndServe(":"+conf.port, n); err != nil {
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(abspath)))
+	log.Printf("AMP-UI server starting on %s\n", s.conf.port)
+	if err := http.ListenAndServe(":"+s.conf.port, n); err != nil {
 		log.Fatal("Server error: ", err)
 	}
 }

@@ -1,8 +1,5 @@
-FROM alpine:3.4
-
-COPY ./amp-agent.alpine /amp-agent
-
-HEALTHCHECK --interval=10s --timeout=15s --retries=12 CMD /amp-agent healthcheck
-
-CMD ["/amp-agent"]
-
+FROM alpine
+COPY amp-ui.alpine /amp-ui-server
+RUN chmod +x /amp-ui-server && mkdir /public
+COPY public/ /public/
+CMD [ "/amp-ui-server" ]
