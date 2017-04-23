@@ -1612,7 +1612,6 @@ slowConsumer:
 	}
 	sub.mu.Unlock()
 	nc.mu.Unlock()
-	return
 }
 
 // processSlowConsumer will set SlowConsumer state and fire the
@@ -2561,7 +2560,7 @@ func (nc *Conn) close(status Status, doCBs bool) {
 			close(s.mch)
 		}
 		s.mch = nil
-		// Mark as invalid, for signalling to deliverMsgs
+		// Mark as invalid, for signaling to deliverMsgs
 		s.closed = true
 		// Mark connection closed in subscription
 		s.connClosed = true

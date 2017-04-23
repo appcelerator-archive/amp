@@ -2,14 +2,15 @@ package broker
 
 import (
 	"fmt"
-	"os"
-	"gopkg.in/ory-am/dockertest.v3"
 	"log"
+	"os"
 	"testing"
+
 	"github.com/nats-io/go-nats"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ory-am/dockertest.v3"
 )
 
 var nc *nats.Conn
@@ -47,8 +48,12 @@ func TestMain(m *testing.M) {
 func TestBroker(t *testing.T) {
 	b := New(nc, "0.0.1")
 
-	type req struct{ Foo string `json:"foo"` }
-	type res struct{ Bar string `json:"bar"` }
+	type req struct {
+		Foo string `json:"foo"`
+	}
+	type res struct {
+		Bar string `json:"bar"`
+	}
 
 	t.Run("case=1/description=should encode and decode messages", func(t *testing.T) {
 		sub, err := nc.Subscribe("foo", func(m *nats.Msg) {
