@@ -13,22 +13,4 @@ export class Stack {
     this.ownerType = ownerType
   }
 
-  match(stack : Stack, value : string) : boolean {
-    if (stack.id.includes(value)) {
-      return true
-    }
-    if (stack.name.includes(value)) {
-      return true
-    }
-    if (stack.services.toString().includes(value)) {
-      return true
-    }
-    if (stack.ownerName.includes(value)) {
-      return true
-    }
-    if (stack.ownerType.includes(value)) {
-      return true
-    }
-    return false
-  }
 }

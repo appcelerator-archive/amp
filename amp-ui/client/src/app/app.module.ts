@@ -17,15 +17,19 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { PageheaderComponent } from './pageheader/pageheader.component';
 import { UsersComponent } from './users/users.component';
 import { PageErrorComponent } from './page-error/page-error.component';
+import { AmpComponent } from './amp/amp.component';
 
 //Services
 import { UsersService } from './services/users.service';
 import { StacksService } from './services/stacks.service';
 import { MenuService } from './services/menu.service';
 import { AuthGuard } from './services/auth-guard.service';
+import { EndpointsService } from './services/endpoints.service';
+import { HttpService } from './services/http.service';
+
 //Module
 import { AppRoutingModule} from './app-routing.module';
-import { AmpComponent } from './amp/amp.component';
+
 
 @NgModule({
   declarations: [
@@ -50,7 +54,7 @@ import { AmpComponent } from './amp/amp.component';
     HttpModule,
     AppRoutingModule
   ],
-  providers: [StacksService, UsersService, MenuService, AuthGuard],
+  providers: [StacksService, UsersService, EndpointsService, MenuService, HttpService, AuthGuard],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

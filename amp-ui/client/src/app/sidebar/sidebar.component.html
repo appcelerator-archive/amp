@@ -4,7 +4,8 @@
         <span>Active endpoint</span>
       </li>
       <li class="sidebar-title">
-        <select class="select-endpoint form-control" ng-options="endpoint.Name for endpoint in endpoints">
+        <select class="form-control custom-select" name="endpoint" [(ngModel)]="endpointsService.currentEndpoint" #endpoint>
+            <option *ngFor="let value of endpointsService.endpoints" [ngValue]="value">{{value}}</option>
         </select>
       </li>
       <li class="sidebar-title"><span>Endpoint actions</span></li>
