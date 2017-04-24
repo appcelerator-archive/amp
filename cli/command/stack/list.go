@@ -2,7 +2,6 @@ package stack
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -13,47 +12,43 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listOpts struct {
+type listStackOptions struct {
 	quiet bool
 }
 
-var (
-	lsopts = &listOpts{}
-)
-
 // NewListCommand returns a new instance of the stack command.
 func NewListCommand(c cli.Interface) *cobra.Command {
+	opts := listStackOptions{}
 	cmd := &cobra.Command{
-		Use:     "ls",
+		Use:     "ls [OPTIONS]",
 		Short:   "List deployed stacks",
 		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return list(c)
+			return list(c, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&lsopts.quiet, "quiet", "q", false, "Only display the stack id")
+	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display the stack id")
 	return cmd
 }
 
-func list(c cli.Interface) error {
+func list(c cli.Interface, opts listStackOptions) error {
 	req := &stack.ListRequest{}
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.List(context.Background(), req)
 	if err != nil {
-		return errors.New(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if !lsopts.quiet {
-		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tSERVICE\tOWNER\tOWNER TYPE")
-		for _, entry := range reply.Entries {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", entry.Stack.Id, entry.Stack.Name, entry.Services, entry.Stack.Owner.Name, entry.Stack.Owner.Type)
-		}
-		w.Flush()
-	} else {
+	if opts.quiet {
 		for _, line := range reply.Entries {
 			c.Console().Println(line.Stack.Id)
 		}
 	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
+	fmt.Fprintln(w, "ID\tNAME\tSERVICE\tOWNER\tOWNER TYPE")
+	for _, entry := range reply.Entries {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", entry.Stack.Id, entry.Stack.Name, entry.Services, entry.Stack.Owner.Name, entry.Stack.Owner.Type)
+	}
+	w.Flush()
 	return nil
 }

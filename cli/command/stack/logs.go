@@ -11,31 +11,29 @@ import (
 	"google.golang.org/grpc"
 )
 
-type logsOpts struct {
+type logsStackOptions struct {
 	meta   bool
 	follow bool
 }
 
-var (
-	lopts = &logsOpts{}
-)
-
 // NewLogsCommand returns a new instance of the stack command.
 func NewLogsCommand(c cli.Interface) *cobra.Command {
+	opts := logsStackOptions{}
 	cmd := &cobra.Command{
-		Use:     "logs",
+		Use:     "logs [OPTIONS] STACK",
 		Short:   "Get all logs of a given stack",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getLogs(c, args)
+			return getLogs(c, args, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&lopts.follow, "follow", "f", false, "Follow log output")
-	cmd.Flags().BoolVarP(&lopts.meta, "meta", "m", false, "Display entry metadata")
+	flags := cmd.Flags()
+	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
+	flags.BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
 	return cmd
 }
 
-func getLogs(c cli.Interface, args []string) error {
+func getLogs(c cli.Interface, args []string, opts logsStackOptions) error {
 	request := logs.GetRequest{Infra: true}
 	request.Stack = args[0]
 
@@ -48,9 +46,9 @@ func getLogs(c cli.Interface, args []string) error {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
-		displayLogEntry(c, entry, lopts.meta)
+		displayLogEntry(c, entry, opts.meta)
 	}
-	if !lopts.follow {
+	if !opts.follow {
 		return nil
 	}
 
@@ -67,7 +65,7 @@ func getLogs(c cli.Interface, args []string) error {
 		if err != nil {
 			return fmt.Errorf("%s", grpc.ErrorDesc(err))
 		}
-		displayLogEntry(c, entry, lopts.meta)
+		displayLogEntry(c, entry, opts.meta)
 	}
 	return nil
 }

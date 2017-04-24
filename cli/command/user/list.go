@@ -12,30 +12,27 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listUserOpts struct {
+type listUserOptions struct {
 	quiet bool
 }
 
-var (
-	listUserOptions = &listUserOpts{}
-)
-
 // NewListUserCommand returns a new instance of the list user command.
 func NewListUserCommand(c cli.Interface) *cobra.Command {
+	opts := listUserOptions{}
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List users",
 		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listUser(c)
+			return listUser(c, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&listUserOptions.quiet, "quiet", "q", false, "Only display user names")
+	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display user names")
 	return cmd
 }
 
-func listUser(c cli.Interface) error {
+func listUser(c cli.Interface, opts listUserOptions) error {
 	request := &account.ListUsersRequest{}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
@@ -43,7 +40,7 @@ func listUser(c cli.Interface) error {
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listUserOptions.quiet {
+	if opts.quiet {
 		for _, user := range reply.Users {
 			c.Console().Println(user.Name)
 		}

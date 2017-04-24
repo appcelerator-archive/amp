@@ -10,45 +10,42 @@ import (
 	"google.golang.org/grpc"
 )
 
-type changeOpts struct {
+type changePasswordOptions struct {
 	current_password string
 	new_password     string
 }
 
-var (
-	changeOptions = &changeOpts{}
-)
-
 // NewChangeCommand returns a new instance of the change command.
 func NewChangeCommand(c cli.Interface) *cobra.Command {
+	opts := changePasswordOptions{}
 	cmd := &cobra.Command{
 		Use:     "change [OPTIONS]",
 		Short:   "Change password",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return change(c, cmd)
+			return change(c, cmd, opts)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&changeOptions.current_password, "current", "", "Current password")
-	flags.StringVar(&changeOptions.new_password, "new", "", "New password")
+	flags.StringVar(&opts.current_password, "current", "", "Current password")
+	flags.StringVar(&opts.new_password, "new", "", "New password")
 	return cmd
 }
 
-func change(c cli.Interface, cmd *cobra.Command) error {
+func change(c cli.Interface, cmd *cobra.Command, opts changePasswordOptions) error {
 	if !cmd.Flag("current").Changed {
-		changeOptions.current_password = c.Console().GetSilentInput("current password")
+		opts.current_password = c.Console().GetSilentInput("current password")
 	}
 	if !cmd.Flag("new").Changed {
-		changeOptions.new_password = c.Console().GetSilentInput("new password")
+		opts.new_password = c.Console().GetSilentInput("new password")
 	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordChangeRequest{
-		ExistingPassword: changeOptions.current_password,
-		NewPassword:      changeOptions.new_password,
+		ExistingPassword: opts.current_password,
+		NewPassword:      opts.new_password,
 	}
 	if _, err := client.PasswordChange(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

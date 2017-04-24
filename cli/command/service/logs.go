@@ -11,31 +11,29 @@ import (
 	"google.golang.org/grpc"
 )
 
-type logsOpts struct {
+type logsServiceOptions struct {
 	meta   bool
 	follow bool
 }
 
-var (
-	opts = &logsOpts{}
-)
-
 // NewServiceLogsCommand returns a new instance of the stack command.
 func NewServiceLogsCommand(c cli.Interface) *cobra.Command {
+	opts := logsServiceOptions{}
 	cmd := &cobra.Command{
-		Use:     "logs",
+		Use:     "logs [OPTIONS] SERVICE",
 		Short:   "Get all logs of a given service",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getLogs(c, args)
+			return getLogs(c, args, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
-	cmd.Flags().BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
+	flags := cmd.Flags()
+	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
+	flags.BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
 	return cmd
 }
 
-func getLogs(c cli.Interface, args []string) error {
+func getLogs(c cli.Interface, args []string, opts logsServiceOptions) error {
 	request := logs.GetRequest{Infra: true}
 	request.Service = args[0]
 

@@ -1,7 +1,6 @@
 package org
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -12,14 +11,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type switchOpts struct {
-	account string
-}
-
-var (
-	switchOptions = &switchOpts{}
-)
-
 // NewSwitchCommand returns a new instance of the switch command.
 func NewSwitchCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
@@ -27,20 +18,16 @@ func NewSwitchCommand(c cli.Interface) *cobra.Command {
 		Short:   "Switch account",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("account name cannot be empty")
-			}
-			switchOptions.account = args[0]
-			return switch_(c, switchOptions)
+			return switch_(c, args)
 		},
 	}
 }
 
-func switch_(c cli.Interface, opt *switchOpts) error {
+func switch_(c cli.Interface, args []string) error {
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.SwitchRequest{
-		Account: opt.account,
+		Account: args[0],
 	}
 	header := metadata.MD{}
 	_, err := client.Switch(context.Background(), request, grpc.Header(&header))
@@ -50,6 +37,6 @@ func switch_(c cli.Interface, opt *switchOpts) error {
 	if err := cli.SaveToken(header); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	c.Console().Printf("You are now logged in as: %s\n", opt.account)
+	c.Console().Printf("You are now logged in as: %s\n", args[0])
 	return nil
 }

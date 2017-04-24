@@ -12,9 +12,9 @@ import (
 )
 
 type remTeamResOptions struct {
-	org      string
-	team     string
-	resource []string
+	org       string
+	team      string
+	resources []string
 }
 
 // NewRemoveTeamResCommand returns a new instance of the remove team resource command.

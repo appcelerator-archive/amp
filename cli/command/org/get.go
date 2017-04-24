@@ -1,7 +1,6 @@
 package org
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -12,14 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type getOrgOpts struct {
-	name string
-}
-
-var (
-	getOrgOptions = &getOrgOpts{}
-)
-
 // NewOrgGetCommand returns a new instance of the get organization command.
 func NewOrgGetCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
@@ -27,20 +18,16 @@ func NewOrgGetCommand(c cli.Interface) *cobra.Command {
 		Short:   "Get organization",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("organization name cannot be empty")
-			}
-			getOrgOptions.name = args[0]
-			return getOrg(c, getOrgOptions)
+			return getOrg(c, args)
 		},
 	}
 }
 
-func getOrg(c cli.Interface, opt *getOrgOpts) error {
+func getOrg(c cli.Interface, args []string) error {
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetOrganizationRequest{
-		Name: opt.name,
+		Name: args[0],
 	}
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {
