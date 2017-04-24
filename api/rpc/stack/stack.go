@@ -40,12 +40,15 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 
-	fullName, err := s.getStackInst(ctx, in.Name)
+	fullName, id, isCreated, err := s.getStackInst(ctx, in.Name)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	deployOpt := stack.NewDeployOptions(fullName, fileName, true)
 	if err := stack.RunDeploy(dockerCli, deployOpt); err != nil {
+		if isCreated {
+			s.Stacks.DeleteStack(ctx, id)
+		}
 		return nil, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	w.Close()
@@ -59,20 +62,20 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 }
 
 // verify if stack id alreaday exist, if yes, it's an update, if not create a new stack data entry
-func (s *Server) getStackInst(ctx context.Context, name string) (string, error) {
+func (s *Server) getStackInst(ctx context.Context, name string) (string, string, bool, error) {
 	if stackInst, err := s.Stacks.GetStack(ctx, name); err == nil && stackInst != nil {
-		return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), nil
+		return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), stackInst.Id, false, nil
 	}
 	ids := strings.Split(name, "-")
 	id := ids[len(ids)-1]
 	if stackInst, err := s.Stacks.GetStack(ctx, id); err == nil && stackInst != nil {
-		return name, nil
+		return name, id, false, nil
 	}
 	stackInst, err := s.Stacks.CreateStack(ctx, name)
 	if err != nil {
-		return "", err
+		return "", "", false, err
 	}
-	return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), nil
+	return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), stackInst.Id, true, nil
 }
 
 // List implements stack.Server
