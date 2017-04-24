@@ -10,43 +10,40 @@ import (
 	"google.golang.org/grpc"
 )
 
-type addMemOrgOpts struct {
+type addMemOrgOptions struct {
 	name   string
 	member string
 }
 
-var (
-	addMemOrgOptions = &addMemOrgOpts{}
-)
-
 // NewOrgAddMemCommand returns a new instance of the add organization member command.
 func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
+	opts := addMemOrgOptions{}
 	cmd := &cobra.Command{
 		Use:     "add [OPTIONS]",
 		Short:   "Add member to organization",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addOrgMem(c, cmd)
+			return addOrgMem(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&addMemOrgOptions.name, "org", "", "Organization name")
-	flags.StringVar(&addMemOrgOptions.member, "member", "", "Member name")
+	flags.StringVar(&opts.name, "org", "", "Organization name")
+	flags.StringVar(&opts.member, "member", "", "Member name")
 	return cmd
 }
 
-func addOrgMem(c cli.Interface, cmd *cobra.Command) error {
+func addOrgMem(c cli.Interface, cmd *cobra.Command, opts addMemOrgOptions) error {
 	if !cmd.Flag("org").Changed {
-		addMemOrgOptions.name = c.Console().GetInput("organization name")
+		opts.name = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("member").Changed {
-		addMemOrgOptions.member = c.Console().GetInput("member name")
+		opts.member = c.Console().GetInput("member name")
 	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.AddUserToOrganizationRequest{
-		OrganizationName: addMemOrgOptions.name,
-		UserName:         addMemOrgOptions.member,
+		OrganizationName: opts.name,
+		UserName:         opts.member,
 	}
 	if _, err := client.AddUserToOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

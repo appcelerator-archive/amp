@@ -43,21 +43,21 @@ func nodeList(c cli.Interface) error {
 	if err != nil {
 		return errors.New(grpc.ErrorDesc(err))
 	}
-	if !nodeListopts.quiet {
-		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tHOSTNAME\tSTATUS\tAVAILABILITY\tMANAGER STATUS")
-		for _, node := range reply.Nodes {
-			leader := ""
-			if node.ManagerLeader {
-				leader = "Leader"
-			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", node.Id, node.Hostname, node.Status, node.Availability, leader)
-		}
-		w.Flush()
-	} else {
+	if nodeListopts.quiet {
 		for _, node := range reply.Nodes {
 			c.Console().Println(node.Id)
 		}
+		return nil
 	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+	fmt.Fprintln(w, "ID\tHOSTNAME\tSTATUS\tAVAILABILITY\tMANAGER STATUS")
+	for _, node := range reply.Nodes {
+		leader := ""
+		if node.ManagerLeader {
+			leader = "Leader"
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", node.Id, node.Hostname, node.Status, node.Availability, leader)
+	}
+	w.Flush()
 	return nil
 }

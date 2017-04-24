@@ -1,7 +1,6 @@
 package user
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -12,14 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type getUserOpts struct {
-	username string
-}
-
-var (
-	getOptions = &getUserOpts{}
-)
-
 // NewGetUserCommand returns a new instance of the get user command.
 func NewGetUserCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
@@ -27,20 +18,16 @@ func NewGetUserCommand(c cli.Interface) *cobra.Command {
 		Short:   "Get user",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("username cannot be empty")
-			}
-			getOptions.username = args[0]
-			return getUser(c, getOptions)
+			return getUser(c, args)
 		},
 	}
 }
 
-func getUser(c cli.Interface, opt *getUserOpts) error {
+func getUser(c cli.Interface, args []string) error {
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetUserRequest{
-		Name: opt.username,
+		Name: args[0],
 	}
 	reply, err := client.GetUser(context.Background(), request)
 	if err != nil {

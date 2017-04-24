@@ -12,30 +12,27 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listOrgOpts struct {
+type listOrgOptions struct {
 	quiet bool
 }
 
-var (
-	listOrgOptions = &listOrgOpts{}
-)
-
 // NewOrgListCommand returns a new instance of the list organization command.
 func NewOrgListCommand(c cli.Interface) *cobra.Command {
+	opts := listOrgOptions{}
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List organization",
 		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listOrg(c)
+			return listOrg(c, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&listOrgOptions.quiet, "quiet", "q", false, "Only display organization name")
+	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display organization name")
 	return cmd
 }
 
-func listOrg(c cli.Interface) error {
+func listOrg(c cli.Interface, opts listOrgOptions) error {
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ListOrganizationsRequest{}
@@ -43,7 +40,7 @@ func listOrg(c cli.Interface) error {
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listOrgOptions.quiet {
+	if opts.quiet {
 		for _, org := range reply.Organizations {
 			c.Console().Println(org.Name)
 		}
