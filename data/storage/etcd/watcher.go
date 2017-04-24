@@ -129,7 +129,7 @@ func (wc *watchChan) startWatching() {
 	}
 	opts := []clientv3.OpOption{clientv3.WithRev(wc.initialRev + 1)}
 	if wc.recursive {
-		opts = append(opts, clientv3.WithPrefix())
+		opts = append(opts, clientv3.WithPrefix(), clientv3.WithPrevKV())
 	}
 	wch := wc.etcd.client.Watch(wc.ctx, wc.key, opts...)
 	for wres := range wch {
@@ -217,9 +217,14 @@ func parseKV(kv *mvccpb.KeyValue) *event {
 }
 
 func parseEvent(e *clientv3.Event) *event {
+	value := e.Kv.Value
+	// This is used for delete events where current value is not populated, so provide the previous value (last before deletion) instead
+	if value == nil && e.Type == clientv3.EventTypeDelete {
+		value = e.PrevKv.Value
+	}
 	return &event{
 		key:       string(e.Kv.Key),
-		value:     e.Kv.Value,
+		value:     value,
 		rev:       e.Kv.ModRevision,
 		isDeleted: e.Type == clientv3.EventTypeDelete,
 		isCreated: e.IsCreate(),

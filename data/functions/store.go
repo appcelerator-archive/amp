@@ -122,6 +122,11 @@ func (s *Store) DeleteFunction(ctx context.Context, id string) error {
 	return nil
 }
 
+// WatchFunctions watches function storage events
+func (s *Store) WatchFunctions(ctx context.Context) (storage.WatchInterface, error) {
+	return s.store.WatchList(ctx, functionsRootKey, 0, storage.Everything)
+}
+
 // Reset resets the account store
 func (s *Store) Reset(ctx context.Context) {
 	s.store.Delete(ctx, functionsRootKey, true, nil)

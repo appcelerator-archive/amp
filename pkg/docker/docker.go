@@ -85,7 +85,7 @@ func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, 
 	// if image not found try to pull it
 	if client.IsErrImageNotFound(err) && namedRef != nil {
 		fmt.Fprintf(os.Stderr, "Unable to find image '%s' locally\n", reference.FamiliarString(namedRef))
-		if err = d.PullImage(ctx, config.Image); err != nil {
+		if err = d.ImagePull(ctx, config.Image); err != nil {
 			return nil, err
 		}
 
@@ -100,7 +100,7 @@ func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, 
 }
 
 // PullImage pulls a docker image
-func (d *Docker) PullImage(ctx context.Context, image string) error {
+func (d *Docker) ImagePull(ctx context.Context, image string) error {
 	//ref, err := reference.ParseNormalizedNamed(image)
 	//if err != nil {
 	//	return err
@@ -134,4 +134,13 @@ func (d *Docker) PullImage(ctx context.Context, image string) error {
 		os.Stdout.Fd(),
 		false,
 		nil)
+}
+
+// ImageRemove remove a docker image from the local repository
+func (d *Docker) ImageRemove(ctx context.Context, image string) error {
+	_, err := d.client.ImageRemove(ctx, image, types.ImageRemoveOptions{Force: false, PruneChildren: true})
+	if err != nil {
+		return err
+	}
+	return nil
 }

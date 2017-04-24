@@ -9,7 +9,11 @@ import (
 	"os/signal"
 	"time"
 
+	"strings"
+
 	"github.com/appcelerator/amp/data/functions"
+	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -30,6 +34,12 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 
+	// store is the interface used to access the key/value storage backend
+	store storage.Interface
+
+	// functions is the interface used to access the function storage
+	fStore functions.Interface
+
 	// natsStreaming is the nats streaming client
 	natsStreaming *ns.NatsStreaming
 
@@ -45,6 +55,59 @@ const (
 
 func main() {
 	log.Printf("%s (version: %s, build: %s)\n", name, Version, Build)
+
+	// Docker
+	dock = docker.NewClient(docker.DefaultURL, docker.DefaultVersion)
+	log.Printf("Connecting to Docker API at %s version API: %s\n", docker.DefaultURL, docker.DefaultVersion)
+	if err := dock.Connect(); err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("Connected to Docker API at", docker.DefaultURL)
+
+	// Storage
+	store = etcd.New([]string{etcd.DefaultEndpoint}, "amp", connectionTimeout)
+	log.Println("Connecting to etcd at", etcd.DefaultEndpoint)
+	if err := store.Connect(); err != nil {
+		log.Fatalln("Unable to connect to etcd:", err)
+	}
+	log.Println("Connected to etcd at", strings.Join(store.Endpoints(), ","))
+
+	// Watch functions events
+	fStore = functions.NewStore(store)
+	watch, err := fStore.WatchFunctions(context.Background())
+	if err != nil {
+		log.Fatalln("Unable to watch functions:", err)
+	}
+	go func() {
+		for {
+			select {
+			case event := <-watch.ResultChan():
+				if event.IsError {
+					log.Println("Event Error:", event.Error)
+					continue
+				}
+				function := &functions.Function{}
+				if err := proto.Unmarshal(event.Value, function); err != nil {
+					log.Println("Unable to unmarshal function from event:", err)
+					continue
+				}
+				if event.IsCreated {
+					log.Printf("Function has been created: %v\n", function)
+					// Pulls the image
+					if err := dock.ImagePull(context.Background(), function.Image); err != nil {
+						log.Println("Error pulling image:", err)
+					}
+				}
+				if event.IsDeleted {
+					log.Printf("Function has been deleted: %v\n", function)
+					// Remove the image
+					if err := dock.ImageRemove(context.Background(), function.Image); err != nil {
+						log.Println("Error pulling image:", err)
+					}
+				}
+			}
+		}
+	}()
 
 	// Nats
 	hostname, err := os.Hostname()
@@ -64,14 +127,6 @@ func main() {
 		log.Fatalln("Unable to subscribe to subject", err)
 	}
 	log.Println("Subscribed to subject:", ns.FunctionSubject)
-
-	// Docker
-	dock = docker.NewClient(docker.DefaultURL, docker.DefaultVersion)
-	log.Printf("Connecting to Docker API at %s version API: %s\n", docker.DefaultURL, docker.DefaultVersion)
-	if err := dock.Connect(); err != nil {
-		log.Fatalln(err)
-	}
-	log.Println("Connected to Docker API at", docker.DefaultURL)
 
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
 	// Run cleanup when signal is received
