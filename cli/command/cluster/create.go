@@ -33,9 +33,14 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 		"managers": "-m",
 		"provider": "-t",
 		"name":     "-l",
+		"tag":      "-T",
 	}
 
 	// TODO: only supporting local cluster management for this release
-	args := []string{"hack/deploy", DefaultLocalClusterID}
-	return queryCluster(c, reflag(cmd, m, args))
+	// the following ensures that flags are added before the final command arg
+	// TODO: refactor reflag to handle this
+	args := []string{"hack/deploy"}
+	args = reflag(cmd, m, args)
+	args = append(args, DefaultLocalClusterID)
+	return queryCluster(c, args)
 }
