@@ -1,7 +1,6 @@
 package member
 
 import (
-	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -12,45 +11,43 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listMemOrgOpts struct {
+type listMemOrgOptions struct {
 	name  string
 	quiet bool
 }
 
-var (
-	listMemOrgOptions = &listMemOrgOpts{}
-)
-
 // NewOrgListMemCommand returns a new instance of the list organization member command.
 func NewOrgListMemCommand(c cli.Interface) *cobra.Command {
+	opts := listMemOrgOptions{}
 	cmd := &cobra.Command{
-		Use:     "ls [OPTIONS] ORGANIZATION",
+		Use:     "ls [OPTIONS]",
 		Short:   "List members",
 		Aliases: []string{"list"},
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("organization name cannot be empty")
-			}
-			listMemOrgOptions.name = args[0]
-			return listOrgMem(c, listMemOrgOptions)
+			return listOrgMem(c, cmd, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&listMemOrgOptions.quiet, "quiet", "q", false, "Only display member names")
+	flags := cmd.Flags()
+	flags.StringVar(&opts.name, "org", "", "Organization name")
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display member names")
 	return cmd
 }
 
-func listOrgMem(c cli.Interface, opt *listMemOrgOpts) error {
+func listOrgMem(c cli.Interface, cmd *cobra.Command, opts listMemOrgOptions) error {
+	if !cmd.Flag("org").Changed {
+		opts.name = c.Console().GetInput("organization name")
+	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetOrganizationRequest{
-		Name: opt.name,
+		Name: opts.name,
 	}
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listMemOrgOptions.quiet {
+	if opts.quiet {
 		for _, member := range reply.Organization.Members {
 			c.Console().Println(member.Name)
 		}

@@ -2,7 +2,7 @@ package function_
 
 import (
 	"errors"
-	"fmt"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/cli"
@@ -11,36 +11,34 @@ import (
 	"google.golang.org/grpc"
 )
 
-type removeFunctionOpts struct {
-	function string
-}
-
 // NewFunctionRemoveCommand returns a new instance of the function remove command.
 func NewFunctionRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:     "rm FUNCTION",
+		Use:     "rm FUNCTION(S)",
 		Short:   "Remove function",
 		Aliases: []string{"remove"},
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("function cannot be empty")
-			}
-			opts := &removeFunctionOpts{}
-			opts.function = args[0]
-			return removeFunction(c, opts)
+			return removeFunction(c, args)
 		},
 	}
 }
 
-func removeFunction(c cli.Interface, opts *removeFunctionOpts) error {
+func removeFunction(c cli.Interface, args []string) error {
+	var errs []string
 	client := function.NewFunctionClient(c.ClientConn())
-	request := &function.DeleteRequest{
-		Id: opts.function,
+	for _, fn := range args {
+		request := &function.DeleteRequest{
+			Id: fn,
+		}
+		if _, err := client.Delete(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
+		c.Console().Println(fn)
 	}
-	if _, err := client.Delete(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
-	c.Console().Println(opts.function)
 	return nil
 }

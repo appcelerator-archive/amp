@@ -1,7 +1,6 @@
 package team
 
 import (
-	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -13,45 +12,43 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listTeamOpts struct {
-	name  string
+type listTeamOptions struct {
+	org   string
 	quiet bool
 }
 
-var (
-	listTeamOptions = &listTeamOpts{}
-)
-
 // NewTeamListCommand returns a new instance of the team list command.
 func NewTeamListCommand(c cli.Interface) *cobra.Command {
+	opts := listTeamOptions{}
 	cmd := &cobra.Command{
-		Use:     "ls [OPTIONS] ORGANIZATION",
+		Use:     "ls [OPTIONS]",
 		Short:   "List team",
 		Aliases: []string{"list"},
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if args[0] == "" {
-				return errors.New("organization name cannot be empty")
-			}
-			listTeamOptions.name = args[0]
-			return listTeam(c, listTeamOptions)
+			return listTeam(c, cmd, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&listTeamOptions.quiet, "quiet", "q", false, "Only display team names")
+	flags := cmd.Flags()
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
 	return cmd
 }
 
-func listTeam(c cli.Interface, opt *listTeamOpts) error {
+func listTeam(c cli.Interface, cmd *cobra.Command, opts listTeamOptions) error {
+	if !cmd.Flag("org").Changed {
+		opts.org = c.Console().GetInput("organization name")
+	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ListTeamsRequest{
-		OrganizationName: opt.name,
+		OrganizationName: opts.org,
 	}
 	reply, err := client.ListTeams(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listTeamOptions.quiet {
+	if opts.quiet {
 		for _, team := range reply.Teams {
 			c.Console().Println(team.Name)
 		}
