@@ -8,7 +8,7 @@ networks:
 services:
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG-latest}
+    image: appcelerator/ampbeat:${TAG:-latest}
     networks:
       default:
         aliases:
