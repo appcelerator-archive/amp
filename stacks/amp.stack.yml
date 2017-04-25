@@ -11,7 +11,7 @@ volumes:
 services:
 
   amplifier:
-    image: appcelerator/amplifier:local
+    image: appcelerator/amplifier:${TAG-latest}
     networks:
       default:
         aliases:
@@ -32,7 +32,7 @@ services:
         constraints: [node.role == manager]
 
   agent:
-    image: appcelerator/agent:local
+    image: appcelerator/agent:${TAG-latest}
     networks:
       default:
         aliases:
