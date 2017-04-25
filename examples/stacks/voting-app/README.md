@@ -1,26 +1,15 @@
-Instavote
-=========
+Example Voting App
+==================
 
-A voting application based on the canonical Docker swarm example.
+The AMP version of the [Docker Example Voting App](https://github.com/docker/example-voting-app).
 
 Run in this directory:
 
-    $ amp stack up -f stack.yml instavote
+    $ amp -s localhost stack up -c voting.stack.yml instavote
 
-The voting app will be available at [http://vote.instavote.local.atomiq.io](http://vote.instavote.local.atomiq.io).
+The voting app will be available at [https://vote.local.atomiq.io](https://vote.local.atomiq.io).
 
-The results app will be available at [http://results.instavote.local.atomiq.io](http://results.instavote.local.atomiq.io).
-
-Architecture
-------------
-
-![Architecture diagram](architecture.png)
-
-* A Python webapp which lets you vote between two options
-* A Redis queue which collects new votes
-* A .NET worker which consumes votes and stores them in…
-* A Postgres database backed by a Docker volume
-* A Node.js webapp which shows the results of the voting in real time
+The results app will be available at [https://result.local.atomiq.io](https://result.local.atomiq.io).
 
 Credit: Docker ([LICENSE](https://github.com/docker/example-voting-app/blob/master/LICENSE))
 
