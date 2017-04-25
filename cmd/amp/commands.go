@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
-	//"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/function"
@@ -20,7 +20,6 @@ import (
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/appcelerator/amp/cli/command/whoami"
-	//"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 )
 
@@ -43,10 +42,8 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 				c.SetServer(opts.server)
 			}
 
-			err := info(c)
-			if err != nil {
-				return err
-			}
+			//print current context
+			info(c)
 
 			if cmd.Parent() != nil && cmd.Parent().Use == "cluster" {
 				// TODO special case handling for cluster this release
@@ -126,26 +123,7 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 	)
 }
 
-func info(c cli.Interface) error {
+func info(c cli.Interface) {
 	s := c.Server()
-	c.Console().Infof("[%s]\n", s)
-
-	//// TODO: pToken.Claims panics
-	//token, err := cli.ReadToken()
-	//if err != nil {
-	//	c.Console().Infof("[%s] Not logged in. Use `amp login` or `amp user signup`\n.", s)
-	//}
-
-	//pToken, _ := jwt.ParseWithClaims(token, &auth.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
-	//	return []byte{}, nil
-	//})
-
-	//if claims, ok := pToken.Claims.(*auth.AccountClaims); ok {
-	//	if claims.ActiveOrganization != "" {
-	//		c.Console().Infof("[%s] user: %s (organization: %s)\n", s, claims.AccountName, claims.ActiveOrganization)
-	//	} else {
-	//		c.Console().Infof("[%s] user: %s\n", s, claims.AccountName)
-	//	}
-	//}
-	return nil
+	fmt.Fprintf(c.Err(), "[%s]\n", s)
 }

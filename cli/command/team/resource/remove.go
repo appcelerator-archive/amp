@@ -1,7 +1,8 @@
 package resource
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -10,55 +11,54 @@ import (
 	"google.golang.org/grpc"
 )
 
-type remTeamResOpts struct {
+type remTeamResOptions struct {
 	org      string
 	team     string
-	resource string
+	resource []string
 }
-
-var (
-	remTeamResOptions = &remTeamResOpts{}
-)
 
 // NewRemoveTeamResCommand returns a new instance of the remove team resource command.
 func NewRemoveTeamResCommand(c cli.Interface) *cobra.Command {
+	opts := remTeamResOptions{}
 	cmd := &cobra.Command{
-		Use:     "rm [OPTIONS]",
+		Use:     "rm [OPTIONS] RESOURCE(S)",
 		Short:   "Remove resource from team",
 		Aliases: []string{"del"},
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return remTeamRes(c, cmd)
+			return remTeamRes(c, cmd, args, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&remTeamResOptions.org, "org", "", "Organization name")
-	flags.StringVar(&remTeamResOptions.team, "team", "", "Team name")
-	flags.StringVar(&remTeamResOptions.resource, "res", "", "Resource id")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
-func remTeamRes(c cli.Interface, cmd *cobra.Command) error {
+func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeamResOptions) error {
+	var errs []string
 	if !cmd.Flag("org").Changed {
-		remTeamResOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		remTeamResOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
-	if !cmd.Flag("res").Changed {
-		remTeamResOptions.resource = c.Console().GetInput("resource id")
-	}
-
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	request := &account.RemoveResourceFromTeamRequest{
-		OrganizationName: remTeamResOptions.org,
-		TeamName:         remTeamResOptions.team,
-		ResourceId:       remTeamResOptions.resource,
+	for _, res := range args {
+		request := &account.RemoveResourceFromTeamRequest{
+			OrganizationName: opts.org,
+			TeamName:         opts.team,
+			ResourceId:       res,
+		}
+		if _, err := client.RemoveResourceFromTeam(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
+		c.Console().Println(res)
 	}
-	if _, err := client.RemoveResourceFromTeam(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
-	c.Console().Println("Resource has been removed from team.")
 	return nil
 }

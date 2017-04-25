@@ -38,3 +38,18 @@ func ExactArgs(num int) func(cmd *cobra.Command, args []string) error {
 		)
 	}
 }
+
+// AtLeastArgs returns an error if the min number of args are not passed
+func AtLeastArgs(min int) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) >= min {
+			return nil
+		}
+		return fmt.Errorf(
+			"\"%s\" requires at least %d argument(s).\nSee '%s --help'",
+			cmd.CommandPath(),
+			min,
+			cmd.CommandPath(),
+		)
+	}
+}

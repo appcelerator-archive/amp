@@ -1,7 +1,8 @@
 package team
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -10,49 +11,47 @@ import (
 	"google.golang.org/grpc"
 )
 
-type removeTeamOpts struct {
+type removeTeamOptions struct {
 	org  string
-	team string
+	team []string
 }
-
-var (
-	removeTeamOptions = &removeTeamOpts{}
-)
 
 // NewTeamRemoveCommand returns a new instance of the team remove command.
 func NewTeamRemoveCommand(c cli.Interface) *cobra.Command {
+	opts := removeTeamOptions{}
 	cmd := &cobra.Command{
-		Use:     "rm [OPTIONS]",
+		Use:     "rm [OPTIONS] TEAM(S)",
 		Short:   "Remove team",
 		Aliases: []string{"remove"},
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return removeTeam(c, cmd)
+			return removeTeam(c, cmd, args, opts)
 		},
 	}
-	flags := cmd.Flags()
-	flags.StringVar(&removeTeamOptions.org, "org", "", "Organization name")
-	flags.StringVar(&removeTeamOptions.team, "team", "", "Team name")
+	cmd.Flags().StringVar(&opts.org, "org", "", "Organization name")
 	return cmd
 }
 
-func removeTeam(c cli.Interface, cmd *cobra.Command) error {
+func removeTeam(c cli.Interface, cmd *cobra.Command, args []string, opts removeTeamOptions) error {
+	var errs []string
 	if !cmd.Flag("org").Changed {
-		removeTeamOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
-	if !cmd.Flag("team").Changed {
-		removeTeamOptions.team = c.Console().GetInput("team name")
-	}
-
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	request := &account.DeleteTeamRequest{
-		OrganizationName: removeTeamOptions.org,
-		TeamName:         removeTeamOptions.team,
+	for _, team := range args {
+		request := &account.DeleteTeamRequest{
+			OrganizationName: opts.org,
+			TeamName:         team,
+		}
+		if _, err := client.DeleteTeam(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
+		c.Console().Println(team)
 	}
-	if _, err := client.DeleteTeam(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
-	c.Console().Println("Team has been removed from the organization.")
 	return nil
 }
