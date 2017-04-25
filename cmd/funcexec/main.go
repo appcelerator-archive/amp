@@ -58,7 +58,7 @@ func main() {
 
 	// NATS, subscribe to function topic
 	log.Println("Subscribing to subject:", ns.FunctionSubject)
-	_, err = natsStreaming.GetClient().Subscribe(ns.FunctionSubject, messageHandler, stan.DeliverAllAvailable())
+	_, err = natsStreaming.GetClient().QueueSubscribe(ns.FunctionSubject, ns.FunctionQueue, messageHandler, stan.DeliverAllAvailable())
 	if err != nil {
 		natsStreaming.Close()
 		log.Fatalln("Unable to subscribe to subject", err)

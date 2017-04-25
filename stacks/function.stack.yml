@@ -14,10 +14,11 @@ services:
         aliases:
           - funchttp
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
       labels:
         io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == worker]
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -33,9 +34,10 @@ services:
     volumes:
      - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
       labels:
         io.amp.role: "infrastructure"
+      placement:
+        constraints: [node.role == worker]
     labels:
       io.amp.role: "infrastructure"
