@@ -1,10 +1,11 @@
 package pkg_test
 
 import (
-	"github.com/ory-am/common/pkg"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/ory-am/common/pkg"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetIP(t *testing.T) {

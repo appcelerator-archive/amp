@@ -1,16 +1,16 @@
 package integration
 
 import (
-	r "gopkg.in/dancannon/gorethink.v2"
+	"fmt"
 	"log"
 	"time"
 
-	"fmt"
+	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"gopkg.in/ory-am/dockertest.v3"
-	"gopkg.in/redis.v5"
+	"github.com/ory-am/dockertest"
+	r "gopkg.in/gorethink/gorethink.v3"
 )
 
 var resources []*dockertest.Resource
@@ -88,7 +88,7 @@ func ConnectToRethinkDB(database string, tables ...string) *r.Session {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	resource, err := pool.Run("rethinkdb", "2.3", []string{""})
+	resource, err := pool.Run("rethinkdb", "2.3", nil)
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
