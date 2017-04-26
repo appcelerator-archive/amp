@@ -6,6 +6,7 @@ package elastic
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,14 +17,11 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 const (
 	// Version is the current version of Elastic.
-	Version = "5.0.35"
+	Version = "5.0.36"
 
 	// DefaultURL is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -1204,7 +1202,7 @@ func (c *Client) PerformRequest(ctx context.Context, method, path string, params
 		c.dumpRequest((*http.Request)(req))
 
 		// Get response
-		res, err := ctxhttp.Do(ctx, c.c, (*http.Request)(req))
+		res, err := c.c.Do((*http.Request)(req).WithContext(ctx))
 		if err == context.Canceled || err == context.DeadlineExceeded {
 			// Proceed, but don't mark the node as dead
 			return nil, err
