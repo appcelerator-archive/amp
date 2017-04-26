@@ -7,7 +7,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -78,7 +77,7 @@ func RunRemove(dockerCli command.Cli, opts removeOptions) error {
 	}
 
 	if len(errs) > 0 {
-		return errors.Errorf(strings.Join(errs, "\n"))
+		return fmt.Errorf(strings.Join(errs, "\n"))
 	}
 	return nil
 }

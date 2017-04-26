@@ -2,7 +2,7 @@
 
 readonly CID="f573e897-7aa0-4516-a195-42ee91039e97"
 readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
-readonly deploy="$SP/deploy"
+readonly deploy="$SP/deploy -T ${TAG:-local}"
 
 $deploy $CID
 status=$?
