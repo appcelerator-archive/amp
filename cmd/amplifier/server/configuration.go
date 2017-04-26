@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	DefaultPort          = ":50101"
-	DefaultPublicAddress = "local.appcelerator.io"
-	DefaultTimeout       = time.Minute
+	DefaultPort       = ":50101"
+	DefaultPublicHost = "127.0.0.1"
+	DefaultTimeout    = time.Minute
 )
 
 // Config is used for amplifier configuration settings
@@ -20,7 +20,7 @@ type Configuration struct {
 	Version          string
 	Build            string
 	Port             string
-	PublicAddress    string
+	PublicHost       string
 	EtcdEndpoints    []string
 	ElasticsearchURL string
 	NatsURL          string
@@ -33,11 +33,21 @@ type Configuration struct {
 	SmsSender        string
 }
 
+func (c *Configuration) String() string {
+	s := fmt.Sprintf("Version: %s\n", c.Version)
+	s += fmt.Sprintf("Build: %s\n", c.Build)
+	s += fmt.Sprintf("Port: %s\n", c.Port)
+	s += fmt.Sprintf("PublicHost: %s\n", c.PublicHost)
+	s += fmt.Sprintf("EtcdEndpoints: %s\n", c.EtcdEndpoints)
+	s += fmt.Sprintf("ElasticsearchURL: %s\n", c.ElasticsearchURL)
+	s += fmt.Sprintf("NatsURL: %s\n", c.NatsURL)
+	s += fmt.Sprintf("DockerURL: %s\n", c.DockerURL)
+	s += fmt.Sprintf("DockerVersion: %s\n", c.DockerVersion)
+	return s
+}
+
 // ReadConfig reads the configuration file
 func ReadConfig(config *Configuration) error {
-	// Add matching environment variables - will take precedence over config files.
-	viper.AutomaticEnv()
-
 	// Add default config file search paths in order of decreasing precedence.
 	viper.SetConfigName("amplifier")
 	viper.AddConfigPath("/etc/atomiq/")
@@ -49,6 +59,12 @@ func ReadConfig(config *Configuration) error {
 	if err := viper.Unmarshal(config); err != nil {
 		return fmt.Errorf("Fatal error unmarshalling configuration file: %s", err)
 	}
+
+	// Override with environment
+	viper.SetEnvPrefix("amp")
+	viper.AutomaticEnv()
+	config.PublicHost = viper.GetString("PublicHost")
+
 	log.Println("Configuration file successfully loaded")
 	return nil
 }
