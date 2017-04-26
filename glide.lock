@@ -1,5 +1,5 @@
 hash: b74c749313da9a134940d3d1c020e231f70fad35adf792e835cf28a0b4a307fa
-updated: 2017-04-22T18:35:56.909565962-07:00
+updated: 2017-04-26T00:59:36.422619827Z
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -154,7 +154,7 @@ imports:
   - tuf/utils
   - tuf/validation
 - name: github.com/docker/swarmkit
-  version: b5b2101320d418abd31335cb710bd6e8e21a352e
+  version: 03894d2e909a99ecabc2031305870ac84b3e8067
   subpackages:
   - api
   - api/deepcopy
@@ -347,7 +347,7 @@ imports:
   subpackages:
   - pb
 - name: github.com/nats-io/nats
-  version: 9c2ce0b1f855da8981394f9fb2ccca2bbf55e798
+  version: f3801cfe56be7d73e544dc3165758b6f4a316ca8
   subpackages:
   - encoders/builtin
   - util
@@ -362,7 +362,7 @@ imports:
 - name: github.com/opencontainers/go-digest
   version: aa2ec055abd10d26d539eb630a92241b781ce4bc
 - name: github.com/opencontainers/runc
-  version: e62817fefcb66450ecf1e404b6b232bfd89cf550
+  version: b6b70e53451794e8333e9b602cc096b47a20bd0f
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -404,7 +404,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 332f6238064950a97bc3ed3f5421f6418537e707
+  version: 6ac8c5d890d415025dd5aae7595bcb2a6e7e2fad
   subpackages:
   - xfs
 - name: github.com/rcrowley/go-metrics
@@ -531,7 +531,7 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v5
-  version: 00cf81dff7fdb9e31f70e99bd909339789e71a8e
+  version: 6f76abde0f1f149b7d6fc47aee4c54366844f775
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
