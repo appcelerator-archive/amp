@@ -1,9 +1,10 @@
 package path
 
 import (
-	"path"
-	"github.com/Sirupsen/logrus"
 	"net/url"
+	"path"
+
+	"github.com/Sirupsen/logrus"
 )
 
 func Join(u string, paths ...string) string {

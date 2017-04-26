@@ -3,10 +3,11 @@ package stack
 import (
 	"fmt"
 
+	"errors"
+
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/compose/convert"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -62,9 +63,9 @@ func RunDeploy(dockerCli *command.DockerCli, opts deployOptions) error {
 
 	switch {
 	case opts.bundlefile == "" && opts.composefile == "":
-		return errors.Errorf("Please specify either a bundle file (with --bundle-file) or a Compose file (with --compose-file).")
+		return errors.New("Please specify either a bundle file (with --bundle-file) or a Compose file (with --compose-file).")
 	case opts.bundlefile != "" && opts.composefile != "":
-		return errors.Errorf("You cannot specify both a bundle file and a Compose file.")
+		return errors.New("You cannot specify both a bundle file and a Compose file.")
 	case opts.bundlefile != "":
 		return deployBundle(ctx, dockerCli, opts)
 	default:

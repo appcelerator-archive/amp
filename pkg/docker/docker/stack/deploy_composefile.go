@@ -15,7 +15,6 @@ import (
 	composetypes "github.com/docker/docker/cli/compose/types"
 	apiclient "github.com/docker/docker/client"
 	dockerclient "github.com/docker/docker/client"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -28,7 +27,7 @@ func deployCompose(ctx context.Context, dockerCli *command.DockerCli, opts deplo
 	config, err := loader.Load(configDetails)
 	if err != nil {
 		if fpe, ok := err.(*loader.ForbiddenPropertiesError); ok {
-			return errors.Errorf("Compose file contains unsupported options:\n\n%s\n",
+			return fmt.Errorf("Compose file contains unsupported options:\n\n%s\n",
 				propertyWarnings(fpe.Properties))
 		}
 
@@ -135,7 +134,7 @@ func buildEnvironment(env []string) (map[string]string, error) {
 	for _, s := range env {
 		// if value is empty, s is like "K=", not "K".
 		if !strings.Contains(s, "=") {
-			return result, errors.Errorf("unexpected environment %q", s)
+			return result, fmt.Errorf("unexpected environment %q", s)
 		}
 		kv := strings.SplitN(s, "=", 2)
 		result[kv[0]] = kv[1]
@@ -168,12 +167,12 @@ func validateExternalNetworks(
 		network, err := client.NetworkInspect(ctx, networkName, false)
 		if err != nil {
 			if dockerclient.IsErrNetworkNotFound(err) {
-				return errors.Errorf("network %q is declared as external, but could not be found. You need to create the network before the stack is deployed (with overlay driver)", networkName)
+				return fmt.Errorf("network %q is declared as external, but could not be found. You need to create the network before the stack is deployed (with overlay driver)", networkName)
 			}
 			return err
 		}
 		if network.Scope != "swarm" {
-			return errors.Errorf("network %q is declared as external, but it is not in the right scope: %q instead of %q", networkName, network.Scope, "swarm")
+			return fmt.Errorf("network %q is declared as external, but it is not in the right scope: %q instead of %q", networkName, network.Scope, "swarm")
 		}
 	}
 
