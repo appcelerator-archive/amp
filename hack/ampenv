@@ -1,4 +1,12 @@
-#!/usr/bin/env bash
+# This script sources in the environment and creates an alias for accessing a local amp swarm
+# It attempts to do this in a way that works for sh, bash, and ideally other shells like zsh.
+#
+# It relies on BASH_SOURCE being defined under bash, but does not attempt to access it using
+# bash array syntax (ie, BASH_SOURCE[0]); instead it expands BASH_SOURCE as a simple string,
+# which should provide just the pathname (see:
+# http://mywiki.wooledge.org/BashFAQ/028#Using_BASH_SOURCE).
+
 export AMPCID="f573e897-7aa0-4516-a195-42ee91039e97"
-export AMPHOME="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
+export AMPHOME="$(dirname "$(cd "$(dirname "${BASH_SOURCE:$0}")" && pwd)")"
 alias amps="docker run -it --rm --network=hostnet -v $AMPHOME/stacks:/stacks docker --host=m1"
+
