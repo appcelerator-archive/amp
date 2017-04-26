@@ -1,5 +1,5 @@
 hash: fff401d3955c816110993c628fa41dd5f983036587ee137479f478b3e967dccb
-updated: 2017-04-26T07:40:35.620425326Z
+updated: 2017-04-26T21:39:21.015444832Z
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -154,7 +154,7 @@ imports:
   - tuf/utils
   - tuf/validation
 - name: github.com/docker/swarmkit
-  version: 0058562ac343bbc4f467a46714d300f98346d109
+  version: f807c19f9f16183139c05e291d6a8632dd625df2
   subpackages:
   - api
   - api/deepcopy
