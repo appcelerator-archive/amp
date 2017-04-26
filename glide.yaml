@@ -1,45 +1,50 @@
 package: github.com/appcelerator/amp
 import:
-- package: github.com/spf13/pflag
-  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
-- package: github.com/spf13/cobra
-  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
-- package: github.com/spf13/viper
-  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
-- package: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+- package: github.com/coreos/etcd
+  version: ^3.1.6
   subpackages:
-  - proto
-  - ptypes/empty
-- package: google.golang.org/grpc
-  version: ^1.2.0
+  - clientv3
+  - mvcc/mvccpb
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/docker/distribution
+  version: c3e06c6069653bf72034ed907d6749d3928fdacb
   subpackages:
-  - codes
-  - metadata
+  - reference
 - package: github.com/docker/docker
-  version: ^v17.04.0-ce
+  version: ^17.3.1-ce
   subpackages:
   - api/types
   - api/types/container
   - api/types/events
   - api/types/filters
   - api/types/network
-  - api/types/reference
   - api/types/swarm
+  - cli/command
+  - cli/command/bundlefile
+  - cli/compose/convert
+  - cli/compose/loader
+  - cli/compose/types
+  - cli/flags
   - client
+  - opts
+  - pkg/jsonmessage
   - pkg/stdcopy
   - pkg/stringid
-- package: github.com/coreos/etcd
-  version: ^3.1.4
+  - pkg/term
+- package: github.com/elastic/beats
+  version: 5.3.1
   subpackages:
-  - clientv3
-  - mvcc/mvccpb
-- package: github.com/dgrijalva/jwt-go
-  version: ^3.0.0
+  - libbeat/beat
+  - libbeat/common
+  - libbeat/logp
+  - libbeat/publisher
 - package: github.com/fatih/color
   version: ^1.4.1
-- package: github.com/fatih/structs
-  version: ^1.0.0
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+  - ptypes/empty
 - package: github.com/hlandau/passlib
   version: ^1.0.9
 - package: github.com/holys/safe
@@ -52,30 +57,48 @@ import:
 - package: github.com/nats-io/go-nats-streaming
   version: ^0.3.4
 - package: github.com/ory-am/ladon
-  version: ^0.4.3
+  version: ^0.5.0
 - package: github.com/sendgrid/sendgrid-go
   version: ^3.3.1
   subpackages:
   - helpers/mail
+- package: github.com/spf13/cobra
+  version: 35136c09d8da66b901337c6e86fd8e88a1a255bd
+- package: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+- package: github.com/spf13/viper
 - package: golang.org/x/net
-  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
   subpackages:
   - context
   - websocket
-  - lex/httplex
-- package: gopkg.in/olivere/elastic.v5
-  version: ^5.0.30
-- package: gopkg.in/yaml.v2
-- package: github.com/stretchr/testify
+- package: google.golang.org/grpc
+  version: ^1.2.1
   subpackages:
-  - assert
-- package: github.com/elastic/beats
-  version: 5.3.0
+  - codes
+  - grpclog
+  - metadata
+- package: gopkg.in/olivere/elastic.v5
+  version: ^5.0.35
+- package: gopkg.in/yaml.v2
 - package: github.com/pkg/errors
   version: ^0.8.0
-- package: github.com/mattn/go-shellwords
-  version: ^v1.0.3
-- package: github.com/xeipuuv/gojsonschema
+- package: github.com/gogo/protobuf
+  version: "0.4"
+  subpackages:
+  - types
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
+- package: github.com/gorilla/mux
+  version: ^1.3.0
+- package: github.com/gorilla/context
+  version: ^1.1.0
+- package: github.com/phyber/negroni-gzip
+  subpackages:
+  - gzip
+- package: github.com/urfave/negroni
+  version: ^0.2.0
 testImport:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/mhale/smtpd
