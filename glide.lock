@@ -1,5 +1,5 @@
-hash: b74c749313da9a134940d3d1c020e231f70fad35adf792e835cf28a0b4a307fa
-updated: 2017-04-26T00:59:36.422619827Z
+hash: fff401d3955c816110993c628fa41dd5f983036587ee137479f478b3e967dccb
+updated: 2017-04-26T07:40:35.620425326Z
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -154,7 +154,7 @@ imports:
   - tuf/utils
   - tuf/validation
 - name: github.com/docker/swarmkit
-  version: 03894d2e909a99ecabc2031305870ac84b3e8067
+  version: 0058562ac343bbc4f467a46714d300f98346d109
   subpackages:
   - api
   - api/deepcopy
@@ -267,9 +267,9 @@ imports:
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+  version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
 - name: github.com/gorilla/mux
-  version: 599cba5e7b6137d46ddf58fb1765f5d928e69604
+  version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -331,7 +331,7 @@ imports:
   subpackages:
   - pbutil
 - name: github.com/Microsoft/go-winio
-  version: fff283ad5116362ca252298cfc9b95828956d85d
+  version: f3b1913901892ada21d52d0cffe1d4c7080d36b7
 - name: github.com/miekg/pkcs11
   version: 7283ca79f35edb89bc1b4ecae7f86a3680ce737f
 - name: github.com/mitchellh/go-homedir
@@ -377,6 +377,10 @@ imports:
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
   version: fe206efb84b2bc8e8cfafe6b4c1826622be969e3
+- name: github.com/phyber/negroni-gzip
+  version: 8118ae63850fee22b2fe43cea81d3bc149774503
+  subpackages:
+  - gzip
 - name: github.com/pierrec/lz4
   version: 5c9560bfa9ace2bf86080bf40d46b34ae44604df
 - name: github.com/pierrec/xxHash
@@ -447,6 +451,8 @@ imports:
   subpackages:
   - assert
   - require
+- name: github.com/urfave/negroni
+  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: github.com/xeipuuv/gojsonpointer
   version: 6fe8760cad3569743d51ddbb243b26f8456742dc
 - name: github.com/xeipuuv/gojsonreference
