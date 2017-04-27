@@ -16,6 +16,9 @@ const (
 	RegistrationNone    = "none"
 	RegistrationEmail   = "email"
 	RegistrationDefault = RegistrationEmail
+	SecretsFolder       = "/run/secrets/"
+	ConfigSecret        = "amplifier"
+	CertificateSecret   = "cert0.pem"
 )
 
 // Configuration is used for amplifier configuration settings
@@ -50,8 +53,8 @@ func ReadConfig(config *Configuration) error {
 	viper.AutomaticEnv()
 
 	// Add default config file search paths in order of decreasing precedence.
-	viper.SetConfigName("amplifier")
-	viper.AddConfigPath("/run/secrets/")
+	viper.SetConfigName(ConfigSecret)
+	viper.AddConfigPath(SecretsFolder)
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Fatal error reading configuration file: %s", err)
 	}

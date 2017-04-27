@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp org ls | grep -q "org"
+amp -k org ls | grep -q "org"

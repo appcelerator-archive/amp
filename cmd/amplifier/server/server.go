@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -34,6 +35,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type serviceInitializer func(*Amplifier, *grpc.Server)
@@ -99,7 +101,14 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 }
 
 // Start starts the amplifier server
-func (a *Amplifier) Start() {
+func (a *Amplifier) Start() error {
+	// Create the TLS credentials
+	pemLocation := filepath.Join(configuration.SecretsFolder, configuration.CertificateSecret)
+	creds, err := credentials.NewServerTLSFromFile(pemLocation, pemLocation)
+	if err != nil {
+		return fmt.Errorf("could not load TLS keys: %s", err)
+	}
+
 	interceptors := &auth.Interceptors{Tokens: a.tokens}
 
 	// Enable prometheus time histograms
@@ -107,6 +116,7 @@ func (a *Amplifier) Start() {
 
 	// register services
 	s := grpc.NewServer(
+		grpc.Creds(creds),
 		grpc_middleware.WithUnaryServerChain(
 			grpc_prometheus.UnaryServerInterceptor,                // Prometheus interceptor
 			grpc.UnaryServerInterceptor(interceptors.Interceptor), // AMP authentication interceptor
@@ -138,7 +148,7 @@ func (a *Amplifier) Start() {
 		log.Fatalf("Unable to listen on %s: %v\n", a.config.Port[1:], err)
 	}
 	log.Infoln("Listening on port:", a.config.Port[1:])
-	log.Fatalln(s.Serve(lis))
+	return s.Serve(lis)
 }
 
 func registerServices(amp *Amplifier, s *grpc.Server) {

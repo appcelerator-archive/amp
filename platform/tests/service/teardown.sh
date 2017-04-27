@@ -1,6 +1,6 @@
 #!/bin/bash
 
-amp stack rm global
-amp stack rm replicated
-amp stack rm pinger
-amp stack rm counter
+amp -k stack rm global
+amp -k stack rm replicated
+amp -k stack rm pinger
+amp -k stack rm counter

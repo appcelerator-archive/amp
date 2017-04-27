@@ -68,5 +68,5 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	amplifier.Start()
+	log.Fatalln(amplifier.Start())
 }

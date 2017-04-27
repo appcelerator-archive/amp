@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 	"strings"
@@ -23,6 +24,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -73,9 +75,11 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	creds := credentials.NewTLS(tlsConfig)
 	mux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: true, EmitDefaults: true}))
 	opts := []grpc.DialOption{
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(creds),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Minute),
 		grpc.WithCompressor(grpc.NewGZIPCompressor()),

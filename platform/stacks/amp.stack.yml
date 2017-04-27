@@ -11,6 +11,8 @@ volumes:
 secrets:
   amplifier_yml:
     external: true
+  certificate_atomiq:
+    external: true
 
 services:
 
@@ -41,6 +43,9 @@ services:
     secrets:
       - source: amplifier_yml
         target: amplifier.yml
+        mode: 0400
+      - source: certificate_atomiq
+        target: cert0.pem
         mode: 0400
 
   gateway:

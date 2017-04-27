@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp team ls | grep -q "team"
+amp -k team ls | grep -q "team"

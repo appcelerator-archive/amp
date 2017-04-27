@@ -1,4 +1,4 @@
 #!/bin/bash
 
-amp stack rm pinger
-amp stack rm pi
+amp -k stack rm pinger
+amp -k stack rm pi

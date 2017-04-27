@@ -1,4 +1,4 @@
 #!/bin/bash
 
-amp team remove team | grep -q "team"
-amp org rm org
+amp -k team remove team | grep -q "team"
+amp -k org rm org

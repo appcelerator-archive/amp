@@ -1,4 +1,4 @@
 #!/bin/bash
 
-amp login --name su --password password
-amp logs -m | grep -q "timestamp:"
+amp -k login --name su --password password
+amp -k logs -m | grep -q "timestamp:"

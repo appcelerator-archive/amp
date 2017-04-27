@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -23,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/yaml.v2"
 )
@@ -33,8 +35,10 @@ const testAmplifierConfig = "test.amplifier.yml"
 func AmplifierConnection() (*grpc.ClientConn, error) {
 	amplifierEndpoint := "amplifier" + configuration.DefaultPort
 	log.Println("Connecting to amplifier")
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	creds := credentials.NewTLS(tlsConfig)
 	conn, err := grpc.Dial(amplifierEndpoint,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(creds),
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second),
 		grpc.WithCompressor(grpc.NewGZIPCompressor()),

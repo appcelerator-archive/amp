@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -22,6 +23,7 @@ type Interface interface {
 
 	Server() string
 	SetServer(server string)
+	SetSkipVerify(skipVerify bool)
 	Connect() (*grpc.ClientConn, error)
 	ClientConn() *grpc.ClientConn
 
@@ -38,6 +40,7 @@ type cli struct {
 	out        *OutStream
 	err        io.Writer
 	clientConn *grpc.ClientConn
+	skipVerify bool
 }
 
 const (
@@ -45,7 +48,7 @@ const (
 	DefaultAddress = "localhost"
 
 	// DefaultPort for amp connection
-	DefaultPort = ":50101"
+	DefaultPort = configuration.DefaultPort
 )
 
 // NewCLI returns a new CLI instance.
@@ -85,6 +88,16 @@ func (c *cli) SetServer(server string) {
 	c.clientConn = nil
 }
 
+// SetSkipVerify controls whether a client verifies the
+// server's certificate chain and host name.
+// If SetSkipVerify is set to true, TLS accepts any certificate
+// presented by the server and any host name in that certificate.
+// In this mode, TLS is susceptible to man-in-the-middle attacks.
+// This should be used only for testing.
+func (c *cli) SetSkipVerify(skipVerify bool) {
+	c.skipVerify = skipVerify
+}
+
 // In returns the reader used for stdin.
 func (c *cli) In() *InStream {
 	return c.in
@@ -114,7 +127,7 @@ func (c *cli) OnInitialize(initializers ...func()) {
 func (c *cli) Connect() (*grpc.ClientConn, error) {
 	if c.clientConn == nil {
 		var err error
-		c.clientConn, err = NewClientConn(c.Server(), GetToken(c.Server()))
+		c.clientConn, err = NewClientConn(c.Server(), GetToken(c.Server()), c.skipVerify)
 		if err != nil {
 			// extra newline helpful for grpc errors
 			return nil, fmt.Errorf("\nunable to establish grpc connection: %s", err)

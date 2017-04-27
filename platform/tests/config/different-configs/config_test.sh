@@ -11,7 +11,7 @@ test_cli_local_home() {
   echo "Server: HOME" > $HOME/.config/amp/amp.yml
 
   # server address passed as command line argument
-  amp -s SERVER version | pcregrep -q "Server:[[:space:]]+SERVER"
+  amp -k -s SERVER version | pcregrep -q "Server:[[:space:]]+SERVER"
   local ec=$?
 
   rm -R $PWD/.amp
@@ -29,7 +29,7 @@ test_local_home() {
   mkdir -p $HOME/.config/amp
   echo "Server: HOME" > $HOME/.config/amp/amp.yml
 
-  amp version | pcregrep -q "Server:[[:space:]]+LOCAL"
+  amp -k version | pcregrep -q "Server:[[:space:]]+LOCAL"
   local ec=$?
 
   rm -R $PWD/.amp
@@ -43,7 +43,7 @@ test_home() {
   mkdir -p $HOME/.config/amp
   echo "Server: HOME" > $HOME/.config/amp/amp.yml
 
-  amp version | pcregrep -q "Server:[[:space:]]+HOME"
+  amp -k version | pcregrep -q "Server:[[:space:]]+HOME"
   local ec=$?
 
   rm -R $HOME/.config/amp
