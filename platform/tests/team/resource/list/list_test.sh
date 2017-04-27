@@ -1,4 +1,4 @@
 #!/bin/bash
 
-ResId=$(amp stack ls -q)
-amp team resource ls | grep -q "$ResId"
+ResId=$(amp -k stack ls -q)
+amp -k team resource ls | grep -q "$ResId"

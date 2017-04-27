@@ -93,7 +93,7 @@ func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[s
 
 // RequireTransportSecurity implements credentials.PerRPCCredentials
 func (c *LoginCredentials) RequireTransportSecurity() bool {
-	return false
+	return true
 }
 
 // GetToken returns the stored token

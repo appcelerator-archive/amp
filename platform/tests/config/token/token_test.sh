@@ -1,7 +1,7 @@
 #!/bin/bash
 
 test_setup() {
-  amp user signup --name user1 --password password --email email@user1.amp
+  amp -k user signup --name user1 --password password --email email@user1.amp
 }
 
 test_name() {
@@ -9,5 +9,5 @@ test_name() {
 }
 
 test_teardown() {
-  amp user rm user1
+  amp -k user rm user1
 }

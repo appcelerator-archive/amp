@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp org member rm user | grep -q "user"
+amp -k org member rm user | grep -q "user"

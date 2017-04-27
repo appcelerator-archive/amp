@@ -582,6 +582,7 @@ deploy_stacks() {
 
   prepare_amplifier_configuration
   checkexit "secret creation for amplifier failed"
+  prepare_certificates $domainname
   echo "deploy amp stack to cluster"
   deploystack amp.stack.yml amp
   echo "wait for all amp service replicas to be running ($maxwait sec)"
@@ -589,7 +590,6 @@ deploy_stacks() {
   checkexit "amp service replica checks timed out"
   ok
 
-  prepare_certificates $domainname
   if [[ $? -eq 0 ]]; then
     echo "deploy amp proxy stack to cluster"
     deploystack ampproxy.stack.yml amp

@@ -26,8 +26,9 @@ import (
 )
 
 type opts struct {
-	version bool
-	server  string
+	version    bool
+	server     string
+	skipVerify bool
 }
 
 // newRootCommand returns a new instance of the amp cli root command.
@@ -43,6 +44,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 			if opts.server != "" {
 				c.SetServer(opts.server)
 			}
+			c.SetSkipVerify(opts.skipVerify)
 
 			//print current context
 			info(c)
@@ -72,6 +74,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&opts.version, "version", "v", false, "Print version information and quit")
 	cmd.PersistentFlags().StringVarP(&opts.server, "server", "s", "", "Specify server (host:port)")
+	cmd.PersistentFlags().BoolVarP(&opts.skipVerify, "insecure", "k", false, "Control whether amp verifies the server's certificate chain and host name")
 
 	cmd.SetOutput(c.Out())
 	addCommands(cmd, c)

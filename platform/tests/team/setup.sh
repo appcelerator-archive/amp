@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp org create --org=org --email=sample@user.amp
+amp -k org create --org=org --email=sample@user.amp

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 test_main() {
-  res=$(amp stats | wc -l)
+  res=$(amp -k stats | wc -l)
   echo $res
   if [ "$res" -lt 1 ]; then
      exit 1

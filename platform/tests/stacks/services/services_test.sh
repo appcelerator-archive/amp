@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp stack services global | grep -q "global"
+amp -k stack services global | grep -q "global"

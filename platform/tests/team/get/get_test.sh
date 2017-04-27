@@ -1,4 +1,4 @@
 #!/bin/bash
 
-amp team get team | grep -q "Team: team"
-amp team get team | grep -q "Organization: org"
+amp -k team get team | grep -q "Team: team"
+amp -k team get team | grep -q "Organization: org"
