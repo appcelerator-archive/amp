@@ -7,11 +7,11 @@ var accountResetPasswordEmailBody = `
         <div style="color:#404040;">
          	<h2>Hi <b style="color:red">{accountName}</b>!</h2>
             <h3>If you requested a new password for your AMP account, please use the following command line:</h4>
-            <h4>amp password --set {token}</h4>
+            <h4>amp -s {ampAddress} password set --token {token}</h4>
         <div style="height:20px"></div>
         <div style="color:#404040;">
             <h4>If you didn't make this request, you can safely ignore this email</h4>
-            <h4>This link is good for one hour only</h4>
+            <h4>This token is valid for one hour only</h4>
         </div>
     </body>
 </html>

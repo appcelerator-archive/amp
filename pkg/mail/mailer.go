@@ -21,15 +21,13 @@ type emailTemplate struct {
 type Mailer struct {
 	apiKey           string
 	emailSender      string
-	publicAddress    string
 	emailTemplateMap map[string]*emailTemplate
 }
 
-func NewMailer(apiKey string, emailSender string, publicAddress string) *Mailer {
+func NewMailer(apiKey string, emailSender string) *Mailer {
 	mailer := &Mailer{
 		apiKey:           apiKey,
 		emailSender:      emailSender,
-		publicAddress:    publicAddress,
 		emailTemplateMap: make(map[string]*emailTemplate),
 	}
 
@@ -55,12 +53,12 @@ func NewMailer(apiKey string, emailSender string, publicAddress string) *Mailer 
 }
 
 // SendAccountVerificationEmail send mail
-func (m *Mailer) SendAccountVerificationEmail(to string, accountName string, token string) error {
+func (m *Mailer) SendAccountVerificationEmail(to string, accountName string, token string, address string) error {
 	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
-		"ampAddress":  m.publicAddress,
+		"ampAddress":  address,
 	}
 	if err := m.SendTemplateEmail(to, "AccountVerification", variables); err != nil {
 		return err
@@ -185,12 +183,12 @@ func (m *Mailer) SendTeamRemovedEmail(to string, team string) error {
 }
 
 // SendAccountResetPasswordEmail send a AccountResetPassword email template
-func (m *Mailer) SendAccountResetPasswordEmail(to string, accountName string, token string) error {
+func (m *Mailer) SendAccountResetPasswordEmail(to string, accountName string, token string, address string) error {
 	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
-		"ampAddress":  m.publicAddress,
+		"ampAddress":  address,
 	}
 	if err := m.SendTemplateEmail(to, "AccountResetPassword", variables); err != nil {
 		return err
