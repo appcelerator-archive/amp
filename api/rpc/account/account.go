@@ -48,6 +48,18 @@ func convertError(err error) error {
 	return grpc.Errorf(codes.Internal, err.Error())
 }
 
+func getServerAddress(ctx context.Context) string {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return ""
+	}
+	authorities := md[":authority"]
+	if len(authorities) == 0 {
+		return ""
+	}
+	return authorities[0]
+}
+
 func (s *Server) getRequesterEmail(ctx context.Context) string {
 	activeOrganization := auth.GetActiveOrganization(ctx)
 	if activeOrganization != "" {
@@ -87,8 +99,10 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
+	// Get the server address used by the client
+
 	// Send the verification email
-	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
@@ -145,7 +159,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, convertError(err)
 	}
 	// Send the password reset email
-	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully reset password for user", user.Name)

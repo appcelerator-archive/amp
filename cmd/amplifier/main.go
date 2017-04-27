@@ -33,7 +33,6 @@ func main() {
 		Version:          Version,
 		Build:            Build,
 		Port:             server.DefaultPort,
-		PublicAddress:    server.DefaultPublicAddress,
 		EmailSender:      mail.DefaultSender,
 		SmsSender:        sms.DefaultSender,
 		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
