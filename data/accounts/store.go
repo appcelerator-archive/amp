@@ -203,6 +203,21 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error)
 	return nil, nil
 }
 
+// GetUserOrganizations gets the organizations the given user is member of
+func (s *Store) GetUserOrganizations(ctx context.Context, name string) ([]*Organization, error) {
+	organizations, err := s.ListOrganizations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userOrganizations := []*Organization{}
+	for _, o := range organizations {
+		if o.HasMember(name) {
+			userOrganizations = append(userOrganizations, o)
+		}
+	}
+	return userOrganizations, nil
+}
+
 // ListUsers lists users
 func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	protos := []proto.Message{}
@@ -224,8 +239,8 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 		return NotAuthorized
 	}
 
-	// Get organizations in which the user is a member
-	organizations, err := s.getUserOrganizations(ctx, name)
+	// Get organizations this user is member of
+	organizations, err := s.GetUserOrganizations(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -259,20 +274,6 @@ func (s *Store) getOrganization(ctx context.Context, name string) (organization 
 		return nil, OrganizationNotFound
 	}
 	return organization, nil
-}
-
-func (s *Store) getUserOrganizations(ctx context.Context, name string) ([]*Organization, error) {
-	organizations, err := s.ListOrganizations(ctx)
-	if err != nil {
-		return nil, err
-	}
-	userOrganizations := []*Organization{}
-	for _, o := range organizations {
-		if o.HasMember(name) {
-			userOrganizations = append(userOrganizations, o)
-		}
-	}
-	return userOrganizations, nil
 }
 
 func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {

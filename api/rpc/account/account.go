@@ -231,6 +231,17 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 	return &GetUserReply{User: user}, nil
 }
 
+// GetUserOrganizations implements account.GetUserOrganizations
+func (s *Server) GetUserOrganizations(ctx context.Context, in *GetUserOrganizationsRequest) (*GetUserOrganizationsReply, error) {
+	// Get the user's organizations
+	organizations, err := s.Accounts.GetUserOrganizations(ctx, in.Name)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	log.Printf("Successfully retrieved organizations for user %s \n", in.Name)
+	return &GetUserOrganizationsReply{Organizations: organizations}, nil
+}
+
 // ListUsers implements account.ListUsers
 func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUsersReply, error) {
 	users, err := s.Accounts.ListUsers(ctx)
