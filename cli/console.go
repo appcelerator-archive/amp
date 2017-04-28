@@ -125,75 +125,75 @@ func (c *Console) Infoln(args ...interface{}) {
 // Warn prints args using Theme.Warn().
 func (c *Console) Warn(args ...interface{}) {
 	c.warn()
-	c.theme.Normal.Fprint(c.OutStream(), args...) // nolint
+	c.theme.Warn.Fprint(c.OutStream(), args...) // nolint
 }
 
 // Warnf prints a formatted string using Theme.Warn().
 func (c *Console) Warnf(format string, args ...interface{}) {
 	c.warn()
-	c.theme.Normal.Fprintf(c.OutStream(), format, args...) // nolint
+	c.theme.Warn.Fprintf(c.OutStream(), format, args...) // nolint
 }
 
 // Warnln prints args using Theme.Warn() and appends a newline.
 func (c *Console) Warnln(args ...interface{}) {
 	c.warn()
-	c.theme.Normal.Fprintln(c.OutStream(), args...) // nolint
+	c.theme.Warn.Fprintln(c.OutStream(), args...) // nolint
 }
 
 // Error prints args using Theme.Error().
 func (c *Console) Error(args ...interface{}) {
 	c.error()
-	c.theme.Normal.Fprint(c.OutStream(), args...) // nolint
+	c.theme.Error.Fprint(c.OutStream(), args...) // nolint
 }
 
 // Errorf prints a formatted string using Theme.Error().
 func (c *Console) Errorf(format string, args ...interface{}) {
 	c.error()
-	c.theme.Normal.Fprintf(c.OutStream(), format, args...) // nolint
+	c.theme.Error.Fprintf(c.OutStream(), format, args...) // nolint
 }
 
 // Errorln prints args using Theme.Error() and appends a newline.
 func (c *Console) Errorln(args ...interface{}) {
 	c.error()
-	c.theme.Normal.Fprintln(c.OutStream(), args...) // nolint
+	c.theme.Error.Fprintln(c.OutStream(), args...) // nolint
 }
 
 // Success prints args Theme.Success().
 func (c *Console) Success(args ...interface{}) {
 	c.success()
-	c.theme.Normal.Fprint(c.OutStream(), args...) // nolint
+	c.theme.Success.Fprint(c.OutStream(), args...) // nolint
 }
 
 // Successf prints a formatted string using Theme.Success()
 func (c *Console) Successf(format string, args ...interface{}) {
 	c.success()
-	c.theme.Normal.Fprintf(c.OutStream(), format, args...) // nolint
+	c.theme.Success.Fprintf(c.OutStream(), format, args...) // nolint
 }
 
 // Successln prints args using Theme.Success() and appends a newline.
 func (c *Console) Successln(args ...interface{}) {
 	c.success()
-	c.theme.Normal.Fprintln(c.OutStream(), args...) // nolint
+	c.theme.Success.Fprintln(c.OutStream(), args...) // nolint
 }
 
 // Fatal prints args Theme.Error() and exits with code 1.
 func (c *Console) Fatal(args ...interface{}) {
 	c.fatal()
-	c.theme.Normal.Fprint(c.OutStream(), args...) // nolint
+	c.theme.Error.Fprint(c.OutStream(), args...) // nolint
 	os.Exit(1)
 }
 
 // Fatalf prints a formatted string using Theme.Error() and exits with code 1
 func (c *Console) Fatalf(format string, args ...interface{}) {
 	c.fatal()
-	c.theme.Normal.Fprintf(c.OutStream(), format, args...) // nolint
+	c.theme.Error.Fprintf(c.OutStream(), format, args...) // nolint
 	os.Exit(1)
 }
 
 // Fatalln prints args using Theme.Error(),appends a newline and exits with code 1
 func (c *Console) Fatalln(args ...interface{}) {
 	c.fatal()
-	c.theme.Normal.Fprintln(c.OutStream(), args...) // nolint
+	c.theme.Error.Fprintln(c.OutStream(), args...) // nolint
 	os.Exit(1)
 }
 
