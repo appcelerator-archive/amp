@@ -41,7 +41,7 @@ services:
         constraints: [node.role == worker]
 
   etcd:
-    image: appcelerator/etcd:3.1.5-1
+    image: appcelerator/etcd:3.1.6
     networks:
       default:
         aliases:
