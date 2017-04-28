@@ -12,7 +12,6 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { NodesComponent } from './nodes/nodes.component';
 import { StacksComponent } from './stacks/stacks.component';
 import { PasswordComponent } from './password/password.component';
-import { EndpointsComponent } from './endpoints/endpoints.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { PageheaderComponent } from './pageheader/pageheader.component';
 import { UsersComponent } from './users/users.component';
@@ -31,7 +30,6 @@ const appRoutes : Routes = [
     { path: 'password', component: PasswordComponent, canActivate: [AuthGuard] },
     { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'signup', component: SignupComponent, canActivate: [AuthGuard] },
-    { path: 'endpoints', component: EndpointsComponent, canActivate: [AuthGuard] }
   ]},
   { path: 'auth', component: AuthComponent, children: [
     { path: 'signin', component: SigninComponent },
