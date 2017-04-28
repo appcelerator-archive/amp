@@ -5,16 +5,6 @@
         <div>
           <div class="pull-left">
             <span class="fa fa-server" aria-hidden="true"></span> Stacks</div>
-          <div class="pull-right">
-            Items per page:
-            <select  ng-change="changePaginationCount()">
-              <option value="0">All</option>
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
         </div>
       </div>
 
@@ -23,9 +13,13 @@
           <div class="pull-left">
             <div class="btn-group" role="group" aria-label="...">
               <button type="button" class="btn btn-danger" ng-click="removeAction()">
-                <i class="fa fa-trash space-right" aria-hidden="true"></i>Remove</button>
-              <button type="button" class="btn btn-primary" routerLink="/amp/stack-deploy">
-                <i class="fa fa-user-plus" aria-hidden="true"></i> Deploy</button>
+                <i class="fa fa-trash space-right"></i>Remove</button>
+              <button type="button" class="btn btn-primary" (click)=deploy()>
+                <i class="glyphicon glyphicon-tasks"></i>{{ deployTitle }}</button>
+              <button type="button" class="btn btn-primary">
+                <i class="glyphicon glyphicon-list-alt"></i> Logs</button>
+              <button type="button" class="btn btn-primary">
+                <i class="glyphicon glyphicon-stats"></i> Metrics</button>
             </div>
           </div>
           <div class="pull-right">
@@ -45,9 +39,7 @@
             <table class="table table-hover">
               <thead>
                 <tr>
-                  <th>
-                    <input type="checkbox" />
-                  </th>
+                  <th></th>
                   <th>
                     <a>
                       Id
@@ -87,41 +79,20 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="ng-scope" *ngFor="let stack of listService.getData()">
-                  <td><input type="checkbox" ng-change="selectItem(stack)" class="ng-pristine ng-untouched ng-valid ng-empty"></td>
-                  <td class="ng-binding">{{ stack.id }}</td>
-                  <td class="ng-binding">{{ stack.name }}</td>
-                  <td class="ng-binding"> {{ stack.ownerName }}</td>
-                  <td class="ng-binding"> {{ stack.ownerType }}</td>
-                  <td class="ng-binding"> {{ stack.services }}</td>
+                <tr (click)="selectStack(stack.id)" *ngFor="let stack of listService.getData()">
+                  <td><input type="checkbox" [checked]="dockerStacksService.currentStack.id===stack.id"></td>
+                  <td>{{ stack.id }}</td>
+                  <td>{{ stack.name }}</td>
+                  <td> {{ stack.ownerName }}</td>
+                  <td> {{ stack.ownerType }}</td>
+                  <td> {{ stack.services }}</td>
                   <td>
-                    <a ui-sref="user({id: user.Id})" href="#/stacks/1">
-                      <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Update</a>
+                    <a (click)="serviceList(stack.id)">
+                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Services</a>
                   </td>
                 </tr>
               </tbody>
             </table>
-            <div class="pull-left pagination-controls">
-              <nav aria-label="Page navigation">
-                <ul class="pagination">
-                  <li>
-                    <a aria-label="Previous" (click)="listService.setPageIndex(-1,0)">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-                  <li><a (click)="listService.setPageIndex(0,1)">1</a></li>
-                  <li><a (click)="listService.setPageIndex(0,2)">2</a></li>
-                  <li><a (click)="listService.setPageIndex(0,3)">3</a></li>
-                  <li><a (click)="listService.setPageIndex(0,4)">4</a></li>
-                  <li><a (click)="listService.setPageIndex(0,5)">5</a></li>
-                  <li>
-                    <a (click)="listService.setPageIndex(1, 0)" aria-label="Next">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
           </div>
         </div>
       </div>
