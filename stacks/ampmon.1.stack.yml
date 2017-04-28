@@ -5,9 +5,6 @@ networks:
     external:
       name: ampnet
 
-volumes:
-  amp-etcd:
-
 services:
 
   elasticsearch:
@@ -46,11 +43,9 @@ services:
       default:
         aliases:
           - etcd
-    volumes:
-      - amp-etcd:/data
     environment:
       SERVICE_NAME: "etcd"
-      MIN_SEEDS_COUNT: 2
+      MIN_SEEDS_COUNT: 3
     command:
       - "--advertise-client-urls"
       - "http://etcd:2379"
@@ -58,7 +53,7 @@ services:
       io.amp.role: "infrastructure"
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 3
       labels:
         io.amp.role: "infrastructure"
       placement:
