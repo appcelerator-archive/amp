@@ -6,34 +6,21 @@ import { Subject } from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import { User } from '../models/user.model';
 import { Stack } from '../models/stack.model';
-import { Endpoint } from '../models/endpoint.model';
 
 @Injectable()
 export class HttpService {
   private token = ""
-  private currentEndpointName = ""
   onHttpError = new Subject();
   constructor(private http : Http) {}
 
-  setToken(endpointName: string, token : string) {
-    this.currentEndpointName = endpointName
+  setToken(token : string) {
     this.token=token
   }
 
   private setHeaders() {
     var headers = new Headers
     headers.set('TokenKey', this.token)
-    headers.set('Endpoint', this.currentEndpointName)
     return headers
-  }
-
-  endpoints() {
-    return this.http.get("/api/v1/endpoints")
-      .map((res : Response) => res.json())
-  }
-
-  connectEndpoint(endpoint : Endpoint) {
-    return this.http.post("/api/v1/connect", endpoint);
   }
 
   users() {

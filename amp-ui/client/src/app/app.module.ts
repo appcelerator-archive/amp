@@ -12,7 +12,6 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { NodesComponent } from './nodes/nodes.component';
 import { StacksComponent } from './stacks/stacks.component';
 import { PasswordComponent } from './password/password.component';
-import { EndpointsComponent } from './endpoints/endpoints.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { PageheaderComponent } from './pageheader/pageheader.component';
 import { UsersComponent } from './users/users.component';
@@ -24,8 +23,8 @@ import { UsersService } from './services/users.service';
 import { StacksService } from './services/stacks.service';
 import { MenuService } from './services/menu.service';
 import { AuthGuard } from './services/auth-guard.service';
-import { EndpointsService } from './services/endpoints.service';
 import { HttpService } from './services/http.service';
+import { OrganizationsService } from './services/organizations.service';
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
@@ -41,7 +40,6 @@ import { AppRoutingModule} from './app-routing.module';
     NodesComponent,
     StacksComponent,
     PasswordComponent,
-    EndpointsComponent,
     SidebarComponent,
     PageheaderComponent,
     UsersComponent,
@@ -54,7 +52,7 @@ import { AppRoutingModule} from './app-routing.module';
     HttpModule,
     AppRoutingModule
   ],
-  providers: [StacksService, UsersService, EndpointsService, MenuService, HttpService, AuthGuard],
+  providers: [StacksService, UsersService, MenuService, HttpService, OrganizationsService, AuthGuard],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
