@@ -5,7 +5,7 @@ import 'rxjs/add/operator/catch';
 import { Subject } from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import { User } from '../models/user.model';
-import { Stack } from '../models/stack.model';
+import { DockerStack } from '../models/docker-stack.model';
 
 @Injectable()
 export class HttpService {
@@ -45,16 +45,18 @@ export class HttpService {
     return this.http.get("/api/v1/stacks", { headers: this.setHeaders() })
     .map((res : Response) => {
       const data = res.json()
-      let list : Stack[] = []
-      for (let item of data.stacks) {
-        let stack = new Stack(
-          item.stack.id,
-          item.stack.name,
-          item.service,
-          item.stack.owner.name,
-          item.stack.owner.type
-        )
-        list.push(stack)
+      let list : DockerStack[] = []
+      if (data.stacks) {
+        for (let item of data.stacks) {
+          let stack = new DockerStack(
+            item.stack.id,
+            item.stack.name,
+            item.service,
+            item.stack.owner.name,
+            item.stack.owner.type
+          )
+          list.push(stack)
+        }
       }
       return list
     })

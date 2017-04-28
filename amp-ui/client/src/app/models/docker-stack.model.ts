@@ -1,4 +1,4 @@
-export class Stack {
+export class DockerStack {
   public id: string;
   public name: string;
   public services: number;

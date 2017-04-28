@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { User } from '../models/user.model';
 import { UsersService } from '../services/users.service';
 import { MenuService } from '../services/menu.service';
+import { OrganizationsService } from '../services/organizations.service';
 
 @Component({
   selector: 'app-pageheader',
@@ -13,11 +14,11 @@ export class PageheaderComponent implements OnInit {
   menuTitle = "title"
   menuItem = "item"
 
-  constructor(public usersService : UsersService, public menuService : MenuService) {}
+  constructor(public usersService : UsersService, public organizationsService : OrganizationsService, public menuService : MenuService) {}
 
   ngOnInit() {
   }
 
-  
+
 
 }

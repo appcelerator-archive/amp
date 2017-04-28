@@ -16,13 +16,13 @@ export class UsersService {
   constructor(private router : Router, private httpService : HttpService) {}
 
   match(item : User, value : string) : boolean {
-    if (item.name.includes(value)) {
+    if (item.name && item.name.includes(value)) {
       return true
     }
-    if (item.email.includes(value)) {
+    if (item.email && item.email.includes(value)) {
       return true
     }
-    if (item.role.includes(value)) {
+    if (item.role && item.role.includes(value)) {
       return true
     }
     return false
