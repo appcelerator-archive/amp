@@ -1,68 +1,68 @@
 <div id="sidebar-wrapper">
     <ul class="sidebar">
       <li class="sidebar-title">
-        <span>Active organization</span>
+        <span>Active swarm</span>
       </li>
       <li class="sidebar-title">
-        <select class="form-control custom-select" name="endpoint" [(ngModel)]="organizationsService.currentOrganization" #endpoint>
-          <option *ngFor="let value of organizationsService.organizations" [ngValue]="value">{{value.name}}</option>
+        <select class="form-control custom-select" name="endpoint" [(ngModel)]="swarmsService.currentSwarm" #endpoint>
+          <option *ngFor="let value of swarmsService.swarms" [ngValue]="value">{{value.name}}</option>
         </select>
       </li>
-      <li class="sidebar-title"><span>Organization actions</span></li>
+      <li class="sidebar-title"><span></span></li>
 
       <li class="sidebar-list">
-        <a ui-sref="dashboard" routerLinkActive="active" (click)="menuService.setItemMenu('dashboard')">
+        <a (click)="menuService.setItemMenu('dashboard', 'Dashboard view', '')">
           Dashboard
           <span class="menu-icon fa fa-tachometer"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a ui-sref="stacks" routerLinkActive="active" (click)="menuService.setItemMenu('stacks')">
+        <a (click)="menuService.setItemMenu('stacks', 'Stack list', '')">
           Stacks
           <span class="menu-icon fa fa-server"></span></a>
       </li>
 
-      <li class="sidebar-list" ng-if="applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
-        <a ui-sref="nodes" routerLinkActive="active"  (click)="menuService.setItemMenu('nodes')">
+      <li class="sidebar-list">
+        <a (click)="menuService.setItemMenu('logs', 'Logs view', '')">
           Logs
           <span class="menu-icon fa fa-list-alt"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a ui-sref="stacks" routerLinkActive="active" (click)="menuService.setItemMenu('stacks')">
+        <a (click)="menuService.setItemMenu('metrics', 'Metrics view', '')">
           Metrics
           <span class="menu-icon fa fa-server"></span></a>
       </li>
 
-      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
-        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">
+      <li class="sidebar-list">
+        <a (click)="menuService.setItemMenu('nodes', 'Node list', '')">
           Nodes
           <span class="menu-icon fa fa-plug"></span>
         </a>
       </li>
 
-      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
-        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">
+      <li class="sidebar-list">
+        <a (click)="menuService.setItemMenu('swarms', 'Swarm list', '')">
           Swarms
           <span class="menu-icon fa fa-plug"></span>
         </a>
       </li>
 
-      <li class="sidebar-title"><span>Users settings</span></li>
-
-      <li class="sidebar-list" ng-if="applicationState.application.authentication && userRole === 1">
-        <a ui-sref="users" routerLinkActive="active" (click)="menuService.setItemMenu('users')">
-          Users
-          <span class="menu-icon fa fa-user"></span>
+      <li class="sidebar-list">
+        <a (click)="menuService.setItemMenu('function', 'Function list', '')">
+          Functions
+          <span class="menu-icon fa fa-lock"></span>
         </a>
       </li>
 
-      <li class="sidebar-list" ng-if="applicationState.application.authentication">
-        <a ui-sref="password" routerLinkActive="active" (click)="menuService.setItemMenu('password')">
-          Password
-          <span class="menu-icon fa fa-lock"></span>
+      <li class="sidebar-title"><span>Users settings</span></li>
+
+      <li class="sidebar-list">
+        <a (click)="menuService.setItemMenu('users', 'User list', '')">
+          Users
+          <span class="menu-icon fa fa-user"></span>
         </a>
       </li>
 

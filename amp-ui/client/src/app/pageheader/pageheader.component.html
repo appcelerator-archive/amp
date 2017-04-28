@@ -2,25 +2,36 @@
 <div class="row header">
   <div class="col-xs-12">
     <div class="meta" ng-transclude>
-      <div title="Cluster overview" class="ng-scope ng-isolate-scope">
-        <div class="page white-space-normal ng-binding">{{menuService.currentMenuItem}}<span class="header_title_content" ng-transclude="">
-          <a data-toggle="tooltip" title="Refresh" class="ng-scope" [routerLink]="[menuService.currentMenuItem]">
-            <i class="fa fa-refresh" aria-hidden="true"></i>
-          </a>
+      <div title="Cluster overview">
+        <div class="page white-space-normal">
+          {{menuService.currentMenuItem.name}}
+          <span [hidden]="menuService.currentMenuItem.name==''" class="btn btn-default" class="header_title_content" (click)="menuService.refresh()">
+            <a data-toggle="tooltip" title="Refresh">
+              <i class="fa fa-refresh"></i>
+            </a>
           </span>
-          <span class="pull-right user-box ng-binding ng-scope" ng-if="username">
-            <i class="fa fa-user-circle-o" aria-hidden="true"></i> {{ usersService.currentUser.name }}
+          <span appDropdown class="pull-right user-box" style="cursor:pointer">
+            <i class="fa fa-user-circle-o" style="cursor:pointer"></i>
+            {{ usersService.currentUser.name }}
+            <span class="caret" style="cursor:pointer"></span>
+            <ul class="dropdown-menu">
+              <li class="disabled"><a>organizations</a></li>
+              <li *ngFor="let org of organizationsService.organizations" (click)="organizationsService.setOrganization(org)"><a>{{org.name}}</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a>Settings</a></li>
+              <li (click)="usersService.logout()"><a>Sign out</a></li>
+            </ul>
           </span>
         </div>
       </div>
       <div class="ng-scope">
         <div class="breadcrumb-links">
           <div class="pull-left" ng-transclude="">
-            <span class="ng-scope">{{menuService.getCurrentItemDescription()}}</span>
+            <span class="ng-scope">{{menuService.currentMenuItem.description}}</span>
           </div>
-          <div class="pull-right ng-scope" ng-if="username">
-            <a ui-sref="" class="text-danger" style="margin-right: 25px" (click)="usersService.logout()">
-              <u>log out <i class="fa fa-sign-out" aria-hidden="true"></i></u>
+          <div class="pull-right ng-scope">
+            <a ui-sref="" class="text-danger" routerLinkActive="active" (click)="organizationsService.edit()" style="margin-right:25px;font-size:15px;">
+              {{ organizationsService.currentOrganization.name }}
             </a>
           </div>
         </div>
