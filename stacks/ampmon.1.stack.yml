@@ -46,16 +46,19 @@ services:
       default:
         aliases:
           - etcd
-    command:
-      - "--listen-client-urls"
-      - "http://0.0.0.0:2379"
-      - "--advertise-client-urls"
-      - "http://etcd:2379"
     volumes:
       - amp-etcd:/data
+    environment:
+      SERVICE_NAME: "etcd"
+      MIN_SEEDS_COUNT: 2
+    command:
+      - "--advertise-client-urls"
+      - "http://etcd:2379"
     labels:
       io.amp.role: "infrastructure"
     deploy:
+      mode: replicated
+      replicas: 2
       labels:
         io.amp.role: "infrastructure"
       placement:
