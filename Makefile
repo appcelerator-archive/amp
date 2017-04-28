@@ -18,8 +18,10 @@ export REPO := github.com/$(OWNER)/amp
 export GOOS := $(shell go env | grep GOOS | sed 's/"//g' | cut -c6-)
 export GOARCH := $(shell go env | grep GOARCH | sed 's/"//g' | cut -c8-)
 
+# =============================================================================
 # COMMON DIRECTORIES
 # =============================================================================
+COMMONDIRS := pkg
 CMDDIR := cmd
 
 # =============================================================================
@@ -59,7 +61,7 @@ cleanall-deps: clean-deps
 # Generate *.pb.go, *.pb.gw.go files in any non-excluded directory
 # with *.proto files.
 # =============================================================================
-PROTODIRS := api cmd data tests
+PROTODIRS := api cmd data tests $(COMMONDIRS)
 PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
 PROTOOPTS := -I/go/src/ --go_out=plugins=grpc:/go/src/
@@ -99,7 +101,7 @@ buildall: install-deps protoc build-server buildall-cli build-beat build-agent b
 # =============================================================================
 AMP := amp
 AMPTARGET := bin/$(GOOS)/$(GOARCH)/$(AMP)
-AMPDIRS := $(CMDDIR)/$(AMP) cli tests
+AMPDIRS := $(CMDDIR)/$(AMP) cli tests $(COMMONDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
@@ -142,7 +144,7 @@ AMPLBINARY=$(AMPL).alpine
 AMPLTAG := local
 AMPLIMG := appcelerator/$(AMPL):$(AMPLTAG)
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
-AMPLDIRS := cmd/$(AMPL) api data tests
+AMPLDIRS := $(CMDDIR)/$(AMPL) api data tests $(COMMONDIRS)
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
@@ -175,7 +177,7 @@ BEATBINARY=$(BEAT).alpine
 BEATTAG := local
 BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
 BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
-BEATDIRS := cmd/$(BEAT) api data tests
+BEATDIRS := $(CMDDIR)/$(BEAT) api data tests $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
@@ -205,7 +207,7 @@ AGENTBINARY=$(AGENT).alpine
 AGENTTAG := local
 AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
 AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
-AGENTDIRS := cmd/$(AGENT) api data tests
+AGENTDIRS := $(CMDDIR)/$(AGENT) api data tests $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
@@ -235,7 +237,7 @@ FUNCHTTPBINARY=$(FUNCHTTP).alpine
 FUNCHTTPTAG := local
 FUNCHTTPIMG := appcelerator/$(FUNCHTTP):$(FUNCHTTPTAG)
 FUNCHTTPTARGET := $(CMDDIR)/$(FUNCHTTP)/$(FUNCHTTPBINARY)
-FUNCHTTPDIRS := cmd/$(FUNCHTTP) api data tests
+FUNCHTTPDIRS := $(CMDDIR)/$(FUNCHTTP) api data tests $(COMMONDIRS)
 FUNCHTTPSRC := $(shell find $(FUNCHTTPDIRS) -type f -name '*.go')
 FUNCHTTPPKG := $(REPO)/$(CMDDIR)/$(FUNCHTTP)
 
@@ -265,7 +267,7 @@ FUNCEXECBINARY=$(FUNCEXEC).alpine
 FUNCEXECTAG := local
 FUNCEXECIMG := appcelerator/$(FUNCEXEC):$(FUNCEXECTAG)
 FUNCEXECTARGET := $(CMDDIR)/$(FUNCEXEC)/$(FUNCEXECBINARY)
-FUNCEXECDIRS := cmd/$(FUNCEXEC) api data tests
+FUNCEXECDIRS := $(CMDDIR)/$(FUNCEXEC) api data tests $(COMMONDIRS)
 FUNCEXECSRC := $(shell find $(FUNCEXECDIRS) -type f -name '*.go')
 FUNCEXECPKG := $(REPO)/$(CMDDIR)/$(FUNCEXEC)
 
@@ -298,7 +300,7 @@ AMPUISERVERDIR=$(AMPUIDIR)/server
 AMPUITAG := local
 AMPUIIMG := appcelerator/$(AMPUI):$(AMPUITAG)
 AMPUISERVERTARGET := $(AMPUISERVERDIR)/$(AMPUIBINARY)
-AMPUIDIRS := $(AMPUISERVERDIR) api data tests
+AMPUIDIRS := $(AMPUISERVERDIR) api data tests $(COMMONDIRS)
 AMPUISRC := $(shell find $(AMPUIDIR) -type f -name '*.go')
 AMPUIPKG := $(REPO)/$(AMPUISERVERDIR)
 
@@ -342,7 +344,7 @@ push-bootstrap:
 # =============================================================================
 # Quality checks
 # =============================================================================
-CHECKDIRS := agent api cli cmd data pkg tests
+CHECKDIRS := agent api cli cmd data tests $(COMMONDIRS)
 CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' \))
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
@@ -403,16 +405,8 @@ env:
 	@echo "GOARCH=$(GOARCH)"
 
 # =============================================================================
-# Local deployment for development
-# =============================================================================
-# use well-known guid for local cluster
-CID := f573e897-7aa0-4516-a195-42ee91039e97
-
-deploy: build
-	@hack/deploy $(CID)
-
-# =============================================================================
 # Run check before submitting a pull request!
 # =============================================================================
 
 check: fmt buildall lint-fast
+
