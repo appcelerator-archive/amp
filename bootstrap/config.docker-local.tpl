@@ -1,11 +1,11 @@
 {{ source "default.ikt" }}
 {{ source "file:///infrakit/env.ikt" }}
-{{ $workerSize := ref "/swarm/size/worker" }}
+{{ $cattleWorkerSize := var "/swarm/size/worker/cattle" }}
 [
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-manager-{{ ref "/docker/label/cluster/value" }}",
+      "ID": "amp-manager-{{ var "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
           "LogicalIds": [
@@ -16,8 +16,8 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
-              "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
+              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "AutoRemove": true,
@@ -30,7 +30,7 @@
             ],
             "Tags": {
               "Name": "manager",
-              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "{{ var "/docker/label/cluster/key" }}": "{{ var "/docker/label/cluster/value" }}",
               "SwarmRole" : "manager"
             }
           }
@@ -42,17 +42,17 @@
               {
                 "Plugin": "flavor-swarm/manager",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/manager-init.tpl",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
+                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
                   }
                 }
               }, {
@@ -60,8 +60,8 @@
                 "Properties": {
                   "Init": [
                     "# create an overlay network",
-                    "docker network inspect {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "  docker network create -d overlay --attachable {{ ref "/amp/network" }}",
+                    "docker network inspect {{ var "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
+                    "  docker network create -d overlay --attachable {{ var "/amp/network" }}",
                     "exit 0"
                   ]
                 }
@@ -75,17 +75,17 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-{{ ref "/docker/label/cluster/value" }}",
+      "ID": "amp-worker-cattle-{{ var "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
-          "Size": {{ $workerSize }}
+          "Size": {{ $cattleWorkerSize }}
         },
         "Instance": {
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
-              "Cmd": ["--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"]{{ end }}
+              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "AutoRemove": true,
@@ -99,7 +99,7 @@
             "Tags": {
               "Name": "worker",
               "Deployment": "Infrakit",
-              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "{{ var "/docker/label/cluster/key" }}": "{{ var "/docker/label/cluster/value" }}",
               "SwarmRole" : "worker"
             }
           }
@@ -111,24 +111,24 @@
               {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
+                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
                   }
                 }
               }, {
                 "Plugin": "flavor-vanilla",
                 "Properties": {
                   "Init": [
-                    "docker run --rm  --network {{ ref "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
+                    "docker run --rm  --network {{ var "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
                     "if [ $? -ne 0 ]; then echo 'Docker Swarm DNS check failed'; exit 1; fi",
                     "exit 0"
                   ]
@@ -143,7 +143,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-proxy-{{ ref "/docker/label/cluster/value" }}",
+      "ID": "amp-proxy-{{ var "/docker/label/cluster/value" }}",
       "Properties": {
         "Allocation": {
           "LogicalIds": [ "amp-proxy" ]
@@ -152,14 +152,14 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if ref "/docker/registry/host" }},
-              "Cmd": "--registry-mirror={{ ref "/docker/registry/scheme" }}{{ ref "/docker/registry/host" }}:{{ ref "/docker/registry/port" }}"{{ end }} {{ if ref "/docker/ports/exposed" }},
-              "ExposedPorts": {{ ref "/docker/ports/exposed" | to_json }} {{ end }}
+              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Cmd": "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"{{ end }} {{ if var "/docker/ports/exposed" }},
+              "ExposedPorts": {{ var "/docker/ports/exposed" | jsonEncode }} {{ end }}
             },
             "HostConfig": {
               "AutoRemove": true,
-              "Privileged": true{{ if ref "/docker/ports/bindings" }},
-              "PortBindings": {{ ref "/docker/ports/bindings" | to_json }} {{ end }}
+              "Privileged": true{{ if var "/docker/ports/bindings" }},
+              "PortBindings": {{ var "/docker/ports/bindings" | jsonEncode }} {{ end }}
             },
             "NetworkAttachments": [
               {
@@ -168,7 +168,7 @@
             ],
             "Tags": {
               "Name": "worker",
-              "{{ ref "/docker/label/cluster/key" }}": "{{ ref "/docker/label/cluster/value" }}",
+              "{{ var "/docker/label/cluster/key" }}": "{{ var "/docker/label/cluster/value" }}",
               "SwarmRole" : "worker"
             }
           }
@@ -180,24 +180,25 @@
               {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "m1",
+                  "EngineLabels": { "proxy": "true" },
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://m1:{{ ref "/docker/remoteapi/port" }}"{{ end }}
+                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
                   }
                 }
               }, {
                 "Plugin": "flavor-vanilla",
                 "Properties": {
                   "Init": [
-                    "docker run --rm  --network {{ ref "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
+                    "docker run --rm  --network {{ var "/amp/network" }} alpine sh -c 'nslookup $(hostname)'",
                     "if [ $? -ne 0 ]; then echo 'Docker Swarm DNS check failed'; exit 1; fi",
                     "exit 0"
                   ]
