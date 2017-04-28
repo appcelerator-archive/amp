@@ -1,50 +1,71 @@
 <div id="sidebar-wrapper">
     <ul class="sidebar">
       <li class="sidebar-title">
-        <span>Active endpoint</span>
+        <span>Active organization</span>
       </li>
       <li class="sidebar-title">
-        <select class="form-control custom-select" name="endpoint" [(ngModel)]="endpointsService.currentEndpoint" #endpoint>
-          <option *ngFor="let value of endpointsService.endpoints" [ngValue]="value">{{value.host}}</option>
+        <select class="form-control custom-select" name="endpoint" [(ngModel)]="organizationsService.currentOrganization" #endpoint>
+          <option *ngFor="let value of organizationsService.organizations" [ngValue]="value">{{value.name}}</option>
         </select>
       </li>
-      <li class="sidebar-title"><span>Endpoint actions</span></li>
+      <li class="sidebar-title"><span>Organization actions</span></li>
+
       <li class="sidebar-list">
         <a ui-sref="dashboard" routerLinkActive="active" (click)="menuService.setItemMenu('dashboard')">
           Dashboard
           <span class="menu-icon fa fa-tachometer"></span>
         </a>
       </li>
-      <li class="sidebar-list" ng-if="applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
-        <a ui-sref="nodes" routerLinkActive="active"  (click)="menuService.setItemMenu('nodes')">
-          Nodes
-          <span class="menu-icon fa fa-list-alt"></span>
-        </a>
-      </li>
+
       <li class="sidebar-list">
         <a ui-sref="stacks" routerLinkActive="active" (click)="menuService.setItemMenu('stacks')">
           Stacks
           <span class="menu-icon fa fa-server"></span></a>
       </li>
-      <li class="sidebar-title"><span>Atomiq settings</span></li>
-      <li class="sidebar-list" ng-if="applicationState.application.authentication">
-        <a ui-sref="password" routerLinkActive="active" (click)="menuService.setItemMenu('password')">
-          Password
-          <span class="menu-icon fa fa-lock"></span>
+
+      <li class="sidebar-list" ng-if="applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
+        <a ui-sref="nodes" routerLinkActive="active"  (click)="menuService.setItemMenu('nodes')">
+          Logs
+          <span class="menu-icon fa fa-list-alt"></span>
         </a>
       </li>
+
+      <li class="sidebar-list">
+        <a ui-sref="stacks" routerLinkActive="active" (click)="menuService.setItemMenu('stacks')">
+          Metrics
+          <span class="menu-icon fa fa-server"></span></a>
+      </li>
+
+      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
+        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">
+          Nodes
+          <span class="menu-icon fa fa-plug"></span>
+        </a>
+      </li>
+
+      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
+        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">
+          Swarms
+          <span class="menu-icon fa fa-plug"></span>
+        </a>
+      </li>
+
+      <li class="sidebar-title"><span>Users settings</span></li>
+
       <li class="sidebar-list" ng-if="applicationState.application.authentication && userRole === 1">
         <a ui-sref="users" routerLinkActive="active" (click)="menuService.setItemMenu('users')">
           Users
           <span class="menu-icon fa fa-user"></span>
         </a>
       </li>
-      <li class="sidebar-list" ng-if="!applicationState.application.authentication || userRole === 1">
-        <a ui-sref="endpoint" routerLinkActive="active" (click)="menuService.setItemMenu('endpoints')">
-          EndPoints
-          <span class="menu-icon fa fa-plug"></span>
+
+      <li class="sidebar-list" ng-if="applicationState.application.authentication">
+        <a ui-sref="password" routerLinkActive="active" (click)="menuService.setItemMenu('password')">
+          Password
+          <span class="menu-icon fa fa-lock"></span>
         </a>
       </li>
+
     </ul>
     <div class="sidebar-footer">
       <div class="col-xs-12">
