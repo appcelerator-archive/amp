@@ -5,7 +5,7 @@
 INFRAKIT_HOME=/infrakit
 INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
 #INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.3.0
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.3.1
 INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
 TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
 AWS_FILES=(bootstrap.yml)
@@ -147,6 +147,7 @@ _prepare_configuration_volume() {
       local _dockerfile
       local _dockerimage
       _dockerfile=$(mktemp $_d/ikt.vol.XXXXXX)
+      cleanup_file_list="$cleanup_file_list $_dockerfile"
       _dockerimage=$(basename $_dockerfile | tr '[:upper:]' '[:lower:]')
 
       # in case a configuration file has been provided for the instance plugin
@@ -163,6 +164,7 @@ COPY . $INFRAKIT_HOME
 EOF
       if [ -n "$envfile" ]; then
         local _envfile=$(mktemp $_d/ikt.env.XXXXXX)
+        cleanup_file_list="$cleanup_file_list $_envfile"
         cp "$envfile" $_envfile
         cat >> $_dockerfile << EOF
 COPY $(basename $_envfile) $INFRAKIT_HOME/env.ikt
@@ -172,8 +174,8 @@ EOF
 RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
 EOF
+      cleanup_image_list="$cleanup_image_list $_dockerimage"
       docker build -t $_dockerimage -f $_dockerfile $_d >/dev/null|| exit 1
-      if [ -n "$envfile" ]; then rm "$_envfile"; fi
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
       if [ $? -eq 0 ]; then
         if [ $force_start -eq 1 ]; then
@@ -185,14 +187,11 @@ EOF
           fi
         else
           echo "the Docker volume $BOOTSTRAP_VOLUME already exists, a cluster is probably already running, abort. You may want to use the -f option to force start." >&2
-          rm -f $_dockerfile
           exit 1
         fi
       fi
       echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data" >&2
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true >&2
-      rm -f $_dockerfile
-      docker image rm $_dockerimage >/dev/null
 }
 
 _system_check() {
@@ -511,14 +510,13 @@ _clean_config() {
 _prepare_config_container() {
   echo "prepare the InfraKit configuration file..." >&2
   local _config=$(mktemp)
+  cleanup_file_list="$cleanup_file_list $_config"
   docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
   docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
   if [ $? -ne 0 ]; then
     echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
-    rm $_config
     exit 1
   fi
-  rm $_config
 }
 
 # deploy the infrakit configuration
@@ -610,6 +608,18 @@ _list(){
   done
 }
 
+_finish(){
+  local _f
+  for _f in $cleanup_file_list; do
+    echo "cleaning up file $_f "
+    rm -f "$_f"
+  done
+  for _i in $cleanup_image_list; do
+    echo "cleaning up image $_i "
+    docker image rm  "$_i" > /dev/null
+  done
+}
+
 # where to deploy
 VALID_TARGETS="aws local"
 # Infrakit plugins used for deployment
@@ -634,6 +644,8 @@ force_start=0
 status_request=""
 list_request=""
 block=0
+cleanup_file_list=""
+cleanup_image_list=""
 while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
   case $opt in
   1)
@@ -716,6 +728,8 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
   esac
 done
 shift "$((OPTIND-1))"
+
+trap _finish EXIT
 
 # in case only the target has been set, and it's not local, use terraform as default provider
 if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then

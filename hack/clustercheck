@@ -15,11 +15,13 @@ ok() {
 
 error() {
   echo "$CMD: $1" >&2
-  usage
+  [[ -n "$STATUS" ]] && $STATUS
+  exit 1
 }
 
 main() {
   SECONDS=0
+  STATUS="$@"
   [[ ! -x $1 ]] && error "$1 is not an executable"
   while true; do
     "$@" &> /dev/null
