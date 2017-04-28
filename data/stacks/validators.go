@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{3,128}$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{2,128}$`)
 
 // CheckName checks name
 func CheckName(name string) (string, error) {
