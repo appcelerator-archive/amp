@@ -345,17 +345,17 @@ Resources:
                 - path: /tmp/env.ikt
                   content: |
                     {{/* Global variables */}}
-                    {{ global "/aws/region" "${region}" }}
-                    {{ global "/aws/stackname" "${stackname}" }}
-                    {{ global "/aws/vpcid" "${Vpc}" }}
-                    {{ global "/aws/subnetid" "${PublicSubnet1}" }}
-                    {{ global "/aws/securitygroupid" "${SecurityGroup}" }}
-                    {{ global "/aws/amiid" "${ami}" }}
-                    {{ global "/aws/instancetype" "${InstanceType}" }}
-                    {{ global "/aws/instanceprofile" "${ClusterInstanceProfile}" }}
-                    {{ global "/aws/keyname" "${KeyName}" }}
-                    {{ global "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
-                    {{ global "/docker/aufs/size" "${AufsVolumeSize}" }}
+                    {{ var "/aws/region" "${region}" }}
+                    {{ var "/aws/stackname" "${stackname}" }}
+                    {{ var "/aws/vpcid" "${Vpc}" }}
+                    {{ var "/aws/subnetid" "${PublicSubnet1}" }}
+                    {{ var "/aws/securitygroupid" "${SecurityGroup}" }}
+                    {{ var "/aws/amiid" "${ami}" }}
+                    {{ var "/aws/instancetype" "${InstanceType}" }}
+                    {{ var "/aws/instanceprofile" "${ClusterInstanceProfile}" }}
+                    {{ var "/aws/keyname" "${KeyName}" }}
+                    {{ var "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
+                    {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
               runcmd:
                 - wget -qO- https://get.docker.com/ | sh
                 - usermod -G docker ubuntu
