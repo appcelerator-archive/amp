@@ -11,7 +11,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.3.0
+    image: appcelerator/elasticsearch-amp:5.3.2
     networks:
       - default
     labels:

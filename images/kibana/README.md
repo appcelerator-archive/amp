@@ -28,4 +28,4 @@ docker run -t -p 443:443 -v /etc/kibana/ssl:/etc/kibana/ssl -e SERVER_SSL_CERTIF
 
 ## Tags
 
-- 5.3.0-3, 5.3, latest
+- 5.3.2, 5.3, latest
