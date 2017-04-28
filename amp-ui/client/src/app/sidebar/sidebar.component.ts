@@ -1,6 +1,6 @@
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { MenuService } from '../services/menu.service'
-import { EndpointsService } from '../services/endpoints.service'
+import { OrganizationsService } from '../services/organizations.service'
 
 @Component({
   selector: 'app-sidebar',
@@ -10,7 +10,7 @@ import { EndpointsService } from '../services/endpoints.service'
 export class SidebarComponent implements OnInit {
   @Output() onMenu = new EventEmitter<string>();
 
-  constructor(public menuService : MenuService, public endpointsService : EndpointsService) { }
+  constructor(public menuService : MenuService, public organizationsService : OrganizationsService) { }
 
   ngOnInit() {
   }

@@ -47,15 +47,14 @@ export class UsersService {
     this.router.navigate(["/auth/signin"])
   }
 
-  login(user : User, pwd : string, endpointName : string) {
+  login(user : User, pwd : string) {
     this.currentUser = user
-    this.httpService.setToken(endpointName, "")
     this.httpService.login(user, pwd).subscribe(
       data => {
         let ret = data.json()
-        this.httpService.setToken(endpointName, ret.data)
-        localStorage.setItem('currentUser', JSON.stringify({ username: user.name, endpointname: endpointName, token: ret.data, pwd: pwd }));
-        localStorage.setItem('lastUser', JSON.stringify({ username: user.name, endpointname: endpointName}));
+        this.httpService.setToken(ret.data)
+        localStorage.setItem('currentUser', JSON.stringify({ username: user.name, token: ret.data, pwd: pwd }));
+        localStorage.setItem('lastUser', JSON.stringify({ username: user.name}));
         this.router.navigate(["/amp"])
       },
       error => {
@@ -67,7 +66,7 @@ export class UsersService {
 
   setCurrentUser(currentUser : {username : string, endpointname: string, token : string}) {
     this.currentUser = new User(currentUser.username, "", "")
-    this.httpService.setToken(currentUser.endpointname, currentUser.token)
+    this.httpService.setToken(currentUser.token)
     this.router.navigate(["/amp"]);
   }
 
