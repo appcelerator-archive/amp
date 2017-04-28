@@ -124,11 +124,16 @@ func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	if err != nil {
 		return nil, InvalidToken
 	}
-	user, err := s.getUser(ctx, claims.AccountName)
+	verificationClaims := claims.(*auth.AuthClaims)
+	user, err := s.getUser(ctx, verificationClaims.AccountName)
 	if err != nil {
 		return nil, err
 	}
+	if user.TokenUsed {
+		return nil, TokenAlreadyUsed
+	}
 	user.IsVerified = true
+	user.TokenUsed = true
 	if err := s.store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return nil, err
 	}

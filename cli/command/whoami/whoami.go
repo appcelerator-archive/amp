@@ -26,10 +26,10 @@ func whoami(c cli.Interface) error {
 	if err != nil {
 		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
 	}
-	pToken, _ := jwt.ParseWithClaims(token, &auth.AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+	pToken, _ := jwt.ParseWithClaims(token, &auth.LoginClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte{}, nil
 	})
-	if claims, ok := pToken.Claims.(*auth.AccountClaims); ok {
+	if claims, ok := pToken.Claims.(*auth.LoginClaims); ok {
 		if claims.ActiveOrganization != "" {
 			c.Console().Printf("Logged in as organization: %s (on behalf of user %s)\n", claims.ActiveOrganization, claims.AccountName)
 		} else {
