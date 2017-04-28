@@ -287,12 +287,11 @@ rebuild-funcexec: clean-funcexec build-funcexec
 clean-funcexec:
 	@rm -f $(FUNCEXECTARGET)
 
-	# =============================================================================
-	# BUILD AMP-UI (`amp-ui`)
-	# Build amp-ui server binary
-	# then build `appcelerator/amp-ui` image
-	# =============================================================================
-
+# =============================================================================
+# BUILD AMP-UI (`amp-ui`)
+# Build amp-ui server binary
+# then build `appcelerator/amp-ui` image
+# =============================================================================
 AMPUI := amp-ui
 AMPUIBINARY=$(AMPUI).alpine
 AMPUIDIR=amp-ui
