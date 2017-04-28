@@ -84,8 +84,9 @@ func authorize(ctx context.Context) (context.Context, error) {
 	if err != nil {
 		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}
+	loginClaims := claims.(*LoginClaims)
 	// Enrich the context
-	ctx = metadata.NewContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))
+	ctx = metadata.NewContext(ctx, metadata.Pairs(UserKey, loginClaims.AccountName, ActiveOrganizationKey, loginClaims.ActiveOrganization))
 	return ctx, nil
 }
 
