@@ -16,7 +16,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05-rc2"{{ if var "/docker/registry/host" }},
               "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
@@ -84,7 +84,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05-rc2"{{ if var "/docker/registry/host" }},
               "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
@@ -152,7 +152,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05-rc2"{{ if var "/docker/registry/host" }},
               "Cmd": "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"{{ end }} {{ if var "/docker/ports/exposed" }},
               "ExposedPorts": {{ var "/docker/ports/exposed" | jsonEncode }} {{ end }}
             },
