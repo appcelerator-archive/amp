@@ -32,31 +32,6 @@ func NewDeployOptions(namespace string, composefile string, sendRegistryAuth boo
 	}
 }
 
-/* {AMP} rmeove this function use it on cli side
-func newDeployCommand(dockerCli *command.DockerCli) *cobra.Command {
-	var opts deployOptions
-
-	cmd := &cobra.Command{
-		Use:     "deploy [OPTIONS] STACK",
-		Aliases: []string{"up"},
-		Short:   "Deploy a new stack or update an existing stack",
-		Args:    cli.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.namespace = args[0]
-			return runDeploy(dockerCli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	addBundlefileFlag(&opts.bundlefile, flags)
-	addComposefileFlag(&opts.composefile, flags)
-	addRegistryAuthFlag(&opts.sendRegistryAuth, flags)
-	flags.BoolVar(&opts.prune, "prune", false, "Prune services that are no longer referenced")
-	flags.SetAnnotation("prune", "version", []string{"1.27"})
-	return cmd
-}
-*/
-
 // RunDeploy {AMP} make it public
 func RunDeploy(dockerCli *command.DockerCli, opts deployOptions) error {
 	ctx := context.Background()

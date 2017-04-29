@@ -8,8 +8,8 @@ import (
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement function.FunctionServer
@@ -22,13 +22,13 @@ func convertError(err error) error {
 	switch err {
 	case functions.InvalidName:
 	case functions.InvalidImage:
-		return grpc.Errorf(codes.InvalidArgument, err.Error())
+		return status.Errorf(codes.InvalidArgument, err.Error())
 	case functions.FunctionAlreadyExists:
-		return grpc.Errorf(codes.AlreadyExists, err.Error())
+		return status.Errorf(codes.AlreadyExists, err.Error())
 	case accounts.NotAuthorized:
-		return grpc.Errorf(codes.PermissionDenied, err.Error())
+		return status.Errorf(codes.PermissionDenied, err.Error())
 	}
-	return grpc.Errorf(codes.Internal, err.Error())
+	return status.Errorf(codes.Internal, err.Error())
 }
 
 // Create implements function.Server
@@ -62,7 +62,7 @@ func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	if function == nil {
-		return nil, grpc.Errorf(codes.NotFound, "function not found: %s", in.Id)
+		return nil, status.Errorf(codes.NotFound, "function not found: %s", in.Id)
 	}
 
 	if err := s.Functions.DeleteFunction(ctx, in.Id); err != nil {

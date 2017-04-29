@@ -7,8 +7,8 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const storageRootKey = "storage"
@@ -35,7 +35,7 @@ func (s *Server) Get(ctx context.Context, in *GetStorage) (*StorageResponse, err
 	var response *StorageResponse
 	response = s.getStorageByKey(ctx, in.Key)
 	if response.Val == "" {
-		return nil, grpc.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
+		return nil, status.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
 	}
 	return response, nil
 }
@@ -53,7 +53,7 @@ func (s *Server) Delete(ctx context.Context, in *DeleteStorage) (*StorageRespons
 	var response *StorageResponse
 	response = s.getStorageByKey(ctx, in.Key)
 	if response.Val == "" {
-		return nil, grpc.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
+		return nil, status.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
 	}
 	//delete storage data in ETCD
 	s.Store.Delete(ctx, path.Join(storageRootKey, in.Key), true, nil)

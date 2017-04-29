@@ -23,24 +23,25 @@ message DeployRequest {
 
 message DeployReply {
   string full_name = 1;
-  string answer =2;
+  string answer = 2;
 }
 
-message ListRequest {}
+message ListRequest {
+}
 
 message ListReply {
- repeated StackReply stacks = 1;
+  repeated StackListEntry entries = 1;
 }
 
-message StackReply {
+message StackListEntry {
   stacks.Stack stack = 1;
-  string service = 2;
+  string services = 2;
 }
 
 message RemoveRequest {
-  string id = 1;
+  string stack = 1;
 }
 
 message RemoveReply {
-  string answer =1;
+  string answer = 1;
 }

@@ -2,6 +2,7 @@ package stacks
 
 import (
 	"path"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/data/accounts"
@@ -42,7 +43,7 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 
 	// Create the new stack
 	stack = &Stack{
-		Id:       stringid.GenerateNonCryptoID()[0:16],
+		Id:       stringid.GenerateNonCryptoID(),
 		Name:     name,
 		Owner:    accounts.GetRequesterAccount(ctx),
 		CreateDt: time.Now().Unix(),
@@ -86,6 +87,24 @@ func (s *Store) GetStackByName(ctx context.Context, name string) (stack *Stack, 
 	return nil, nil
 }
 
+// GetStackByFragmentOrName fetches a stack by fragment ID or name
+func (s *Store) GetStackByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error) {
+	stks, err := s.ListStacks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, stk := range stks {
+		if stk.Name == fragmentOrName || strings.HasPrefix(strings.ToLower(stk.Id), strings.ToLower(fragmentOrName)) {
+			stack = stk
+			break
+		}
+	}
+	if stack == nil {
+		return nil, StackNotFound
+	}
+	return stack, nil
+}
+
 // ListStacks lists stacks
 func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
 	protos := []proto.Message{}
@@ -115,7 +134,7 @@ func (s *Store) DeleteStack(ctx context.Context, id string) error {
 	}
 
 	// Delete the stack
-	if err := s.store.Delete(ctx, path.Join(stacksRootKey, id), false, nil); err != nil {
+	if err := s.store.Delete(ctx, path.Join(stacksRootKey, stack.Id), false, nil); err != nil {
 		return err
 	}
 	return nil

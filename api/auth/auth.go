@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // Keys used in context metadata
@@ -70,19 +71,19 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 func authorize(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	tokens := md[TokenKey]
 	if len(tokens) == 0 {
-		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	token := tokens[0]
 	if token == "" {
-		return nil, grpc.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	claims, err := ValidateToken(token, TokenTypeLogin)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}
 	// Enrich the context
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))

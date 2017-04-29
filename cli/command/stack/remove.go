@@ -14,7 +14,7 @@ import (
 // NewRemoveCommand returns a new instance of the stack command.
 func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:     "rm STACKNAME(S)",
+		Use:     "rm STACK(S)",
 		Aliases: []string{"remove", "down", "stop"},
 		Short:   "Remove a deployed stack",
 		PreRunE: cli.AtLeastArgs(1),
@@ -30,7 +30,7 @@ func remove(c cli.Interface, args []string) error {
 	client := stack.NewStackClient(conn)
 	for _, name := range args {
 		req := &stack.RemoveRequest{
-			Id: name,
+			Stack: name,
 		}
 		if _, err := client.Remove(context.Background(), req); err != nil {
 			errs = append(errs, grpc.ErrorDesc(err))

@@ -62,6 +62,5 @@ func deploy(c cli.Interface, args []string) error {
 		return errors.New(grpc.ErrorDesc(err))
 	}
 	c.Console().Println(reply.Answer)
-	c.Console().Printf("Stack id: %s\n", reply.FullName)
 	return nil
 }

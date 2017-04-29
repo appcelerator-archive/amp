@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement account.UserServer
@@ -26,26 +27,26 @@ func convertError(err error) error {
 	case accounts.InvalidEmail:
 	case accounts.InvalidToken:
 	case accounts.PasswordTooWeak:
-		return grpc.Errorf(codes.InvalidArgument, err.Error())
+		return status.Errorf(codes.InvalidArgument, err.Error())
 	case accounts.WrongPassword:
-		return grpc.Errorf(codes.Unauthenticated, err.Error())
+		return status.Errorf(codes.Unauthenticated, err.Error())
 	case accounts.UserNotVerified:
 	case accounts.AtLeastOneOwner:
 	case accounts.TokenAlreadyUsed:
-		return grpc.Errorf(codes.FailedPrecondition, err.Error())
+		return status.Errorf(codes.FailedPrecondition, err.Error())
 	case accounts.UserAlreadyExists:
 	case accounts.EmailAlreadyUsed:
 	case accounts.OrganizationAlreadyExists:
 	case accounts.TeamAlreadyExists:
-		return grpc.Errorf(codes.AlreadyExists, err.Error())
+		return status.Errorf(codes.AlreadyExists, err.Error())
 	case accounts.UserNotFound:
 	case accounts.OrganizationNotFound:
 	case accounts.TeamNotFound:
-		return grpc.Errorf(codes.NotFound, err.Error())
+		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
-		return grpc.Errorf(codes.PermissionDenied, err.Error())
+		return status.Errorf(codes.PermissionDenied, err.Error())
 	}
-	return grpc.Errorf(codes.Internal, err.Error())
+	return status.Errorf(codes.Internal, err.Error())
 }
 
 func getServerAddress(ctx context.Context) string {
@@ -151,7 +152,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, convertError(err)
 	}
 	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
+		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
 	token, err := auth.CreatePasswordToken(user.Name)
@@ -206,7 +207,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empt
 		return nil, convertError(err)
 	}
 	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Email)
+		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Email)
 	}
 	// Send the account name reminder email
 	if err := s.Mailer.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
@@ -224,7 +225,7 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 		return nil, convertError(err)
 	}
 	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
+		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	log.Println("Successfully retrieved user", user.Name)
 	return &GetUserReply{User: user}, nil
@@ -259,7 +260,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 		return nil, convertError(err)
 	}
 	if user == nil {
-		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
+		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 
 	if err := s.Accounts.DeleteUser(ctx, in.Name); err != nil {
@@ -285,10 +286,10 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 			return nil, convertError(err)
 		}
 		if organization == nil {
-			return nil, grpc.Errorf(codes.NotFound, "organization not found: %s", in.Account)
+			return nil, status.Errorf(codes.NotFound, "organization not found: %s", in.Account)
 		}
 		if !organization.HasMember(userName) {
-			return nil, grpc.Errorf(codes.FailedPrecondition, "user %s is not a member of organization  %s", userName, in.Account)
+			return nil, status.Errorf(codes.FailedPrecondition, "user %s is not a member of organization  %s", userName, in.Account)
 		}
 		activeOrganization = organization.Name
 	}
@@ -369,7 +370,7 @@ func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest
 		return nil, convertError(err)
 	}
 	if organization == nil {
-		return nil, grpc.Errorf(codes.NotFound, "organization not found: %s", in.Name)
+		return nil, status.Errorf(codes.NotFound, "organization not found: %s", in.Name)
 	}
 	log.Println("Successfully retrieved organization", organization.Name)
 	return &GetOrganizationReply{Organization: organization}, nil
@@ -481,7 +482,7 @@ func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply
 		return nil, convertError(err)
 	}
 	if team == nil {
-		return nil, grpc.Errorf(codes.NotFound, "team not found: %s", in.TeamName)
+		return nil, status.Errorf(codes.NotFound, "team not found: %s", in.TeamName)
 	}
 	log.Println("Successfully retrieved team", team.Name)
 	return &GetTeamReply{Team: team}, nil
