@@ -88,10 +88,10 @@
     "stackListReply": {
       "type": "object",
       "properties": {
-        "stacks": {
+        "entries": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/stackStackReply"
+            "$ref": "#/definitions/stackStackListEntry"
           }
         }
       }
@@ -110,18 +110,18 @@
     "stackRemoveRequest": {
       "type": "object",
       "properties": {
-        "id": {
+        "stack": {
           "type": "string"
         }
       }
     },
-    "stackStackReply": {
+    "stackStackListEntry": {
       "type": "object",
       "properties": {
         "stack": {
           "$ref": "#/definitions/stacksStack"
         },
-        "service": {
+        "services": {
           "type": "string"
         }
       }

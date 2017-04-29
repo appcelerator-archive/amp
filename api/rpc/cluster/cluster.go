@@ -3,13 +3,13 @@ package cluster
 import (
 	"log"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement cluster.ClusterServer
@@ -66,7 +66,7 @@ func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListRe
 
 	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	ret := &NodeListReply{}
 	for _, node := range list {

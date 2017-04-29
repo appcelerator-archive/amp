@@ -25,6 +25,9 @@ type Interface interface {
 	// GetStackByName fetches a stack by name
 	GetStackByName(ctx context.Context, name string) (stack *Stack, err error)
 
+	// GetStackByFragmentOrName fetches a stack by fragment ID or name
+	GetStackByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error)
+
 	// ListStacks lists stacks
 	ListStacks(ctx context.Context) (stacks []*Stack, err error)
 

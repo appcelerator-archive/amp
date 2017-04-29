@@ -13,8 +13,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/olivere/elastic.v5"
 )
 
@@ -85,7 +85,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Perform request
 	searchResult, err := request.Query(masterQuery).Do(ctx)
 	if err != nil {
-		return nil, grpc.Errorf(codes.FailedPrecondition, "%v", err)
+		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
 	}
 
 	// Build reply (from elasticsearch response)
@@ -94,7 +94,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	for i, hit := range searchResult.Hits.Hits {
 		entry := &LogEntry{}
 		if err := json.Unmarshal(*hit.Source, &entry); err != nil {
-			return nil, grpc.Errorf(codes.Internal, "%v", err)
+			return nil, status.Errorf(codes.Internal, "%v", err)
 		}
 		reply.Entries[i] = entry
 	}
@@ -125,7 +125,7 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	})
 	if err != nil {
 		sub.Unsubscribe()
-		return grpc.Errorf(codes.Internal, "%v", err)
+		return status.Errorf(codes.Internal, "%v", err)
 	}
 	for {
 		select {

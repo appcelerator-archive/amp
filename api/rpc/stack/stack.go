@@ -1,177 +1,123 @@
 package stack
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"strings"
-	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
-	"github.com/appcelerator/amp/pkg/docker/docker/stack"
-	"github.com/docker/docker/cli/command"
-	cliflags "github.com/docker/docker/cli/flags"
+	"github.com/appcelerator/amp/pkg/docker"
 	"golang.org/x/net/context"
 )
 
-// Server is used to implement stack.StackServer
+// Server is used to implement stack.Server
 type Server struct {
 	Accounts accounts.Interface
+	Docker   *docker.Docker
 	Stacks   stacks.Interface
+}
+
+func convertError(err error) error {
+	switch err {
+	case stacks.InvalidName:
+		return status.Errorf(codes.InvalidArgument, err.Error())
+	case stacks.StackAlreadyExists:
+		return status.Errorf(codes.AlreadyExists, err.Error())
+	case stacks.StackNotFound:
+		return status.Errorf(codes.NotFound, err.Error())
+	case accounts.NotAuthorized:
+		return status.Errorf(codes.PermissionDenied, err.Error())
+	}
+	return status.Errorf(codes.Internal, err.Error())
 }
 
 // Deploy implements stack.Server
 func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
 	log.Println("[stack] Deploy", in.String())
 
-	r, w, _ := os.Pipe()
-	dockerCli := command.NewDockerCli(os.Stdin, w, w)
-	opts := cliflags.NewClientOptions()
-	if err := dockerCli.Initialize(opts); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
-	}
-	fileName := fmt.Sprintf("/tmp/%d-%s.yml", time.Now().UnixNano(), in.Name)
-	if err := ioutil.WriteFile(fileName, []byte(in.Compose), 0666); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
-	}
-
-	fullName, id, isCreated, err := s.getStackInst(ctx, in.Name)
+	// Check if stack already exists
+	stack, err := s.Stacks.GetStackByName(ctx, in.Name)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, convertError(err)
 	}
-	deployOpt := stack.NewDeployOptions(fullName, fileName, true)
-	if err := stack.RunDeploy(dockerCli, deployOpt); err != nil {
-		if isCreated {
-			s.Stacks.DeleteStack(ctx, id)
+	if stack == nil {
+		if stack, err = s.Stacks.CreateStack(ctx, in.Name); err != nil {
+			return nil, convertError(err)
 		}
-		return nil, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	w.Close()
-	out, _ := ioutil.ReadAll(r)
-	outs := strings.Replace(string(out), "docker", "amp", -1)
-	ans := &DeployReply{
-		FullName: fullName,
-		Answer:   string(outs),
-	}
-	return ans, nil
-}
 
-// verify if stack id alreaday exist, if yes, it's an update, if not create a new stack data entry
-func (s *Server) getStackInst(ctx context.Context, name string) (string, string, bool, error) {
-	if stackInst, err := s.Stacks.GetStack(ctx, name); err == nil && stackInst != nil {
-		return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), stackInst.Id, false, nil
-	}
-	ids := strings.Split(name, "-")
-	id := ids[len(ids)-1]
-	if stackInst, err := s.Stacks.GetStack(ctx, id); err == nil && stackInst != nil {
-		return name, id, false, nil
-	}
-	stackInst, err := s.Stacks.CreateStack(ctx, name)
+	// Deploy stack
+	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose)
 	if err != nil {
-		return "", "", false, err
+		s.Stacks.DeleteStack(ctx, stack.Id)
+		return nil, convertError(err)
 	}
-	return fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id), stackInst.Id, true, nil
+	return &DeployReply{FullName: stack.Name, Answer: output}, nil
 }
 
 // List implements stack.Server
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	log.Println("[stack] List", in.String())
 
-	r, w, _ := os.Pipe()
-	dockerCli := command.NewDockerCli(os.Stdin, w, os.Stderr)
-	opts := cliflags.NewClientOptions()
-	if err := dockerCli.Initialize(opts); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
+	// List stacks
+	output, err := s.Docker.StackList(ctx)
+	if err != nil {
+		return nil, convertError(err)
 	}
-	listOpt := stack.NewListOptions()
-	if err := stack.RunList(dockerCli, listOpt); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
-	}
-
-	w.Close()
-	out, _ := ioutil.ReadAll(r)
-	outs := strings.Replace(string(out), "docker", "amp", -1)
-	cols := strings.Split(outs, "\n")
-	ans := &ListReply{
-		Stacks: []*StackReply{},
-	}
-	for _, col := range cols[1:] {
-		stack := s.getOneStackListLine(ctx, col)
-		if stack.Stack.Id != "" {
-			ans.Stacks = append(ans.Stacks, stack)
+	reply := &ListReply{}
+	lines := strings.Split(output, "\n")
+	for _, line := range lines[1:] {
+		if len(strings.Fields(line)) == 0 {
+			continue
 		}
+		entry := s.toStackListEntry(ctx, line)
+		if entry == nil {
+			continue
+		}
+		reply.Entries = append(reply.Entries, entry)
 	}
-	return ans, nil
+	return reply, nil
 }
 
-func (s *Server) getOneStackListLine(ctx context.Context, line string) *StackReply {
-	cols := strings.Split(line, " ")
+func (s *Server) toStackListEntry(ctx context.Context, line string) *StackListEntry {
+	cols := strings.Fields(line)
 	name := cols[0]
-	id := ""
-	ll := strings.LastIndex(cols[0], "-")
-	if ll >= 0 {
-		id = name[ll+1:]
-		name = name[0:ll]
+	services := cols[1]
+	stk, err := s.Stacks.GetStackByName(ctx, name)
+	if err != nil || stk == nil {
+		return nil
 	}
-	stackData := &stacks.Stack{
-		Id:   strings.TrimSpace(id),
-		Name: strings.TrimSpace(name),
-	}
-	ret := &StackReply{Stack: stackData}
-	if stackInst, err := s.Stacks.GetStack(ctx, id); err == nil && stackInst != nil {
-		stackData.Owner = stackInst.Owner
-	}
-	for _, col := range cols[1:] {
-		if col != "" {
-			ret.Service = col
-			return ret
-		}
-	}
-	return ret
+	return &StackListEntry{Stack: stk, Services: services}
 }
 
 // Remove implements stack.Server
 func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	log.Println("[stack] Remove", in.String())
 
-	r, w, _ := os.Pipe()
-	dockerCli := command.NewDockerCli(os.Stdin, w, w)
-	opts := cliflags.NewClientOptions()
-	if err := dockerCli.Initialize(opts); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
+	// Retrieve the stack
+	stack, dockerErr := s.Stacks.GetStackByFragmentOrName(ctx, in.Stack)
+	if dockerErr != nil {
+		return nil, convertError(dockerErr)
 	}
-	name := in.Id
-	stackInst, err := s.Stacks.GetStack(ctx, in.Id)
-	if err == nil && stackInst != nil {
-		name = fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id)
-	} else {
-		return nil, fmt.Errorf("Stack %s is not an amp stack", in.Id)
+
+	// Check authorization
+	if !s.Accounts.IsAuthorized(ctx, stack.Owner, accounts.DeleteAction, accounts.StackRN, stack.Id) {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
-	if !s.Accounts.IsAuthorized(ctx, stackInst.Owner, accounts.DeleteAction, accounts.StackRN, stackInst.Id) {
-		return nil, grpc.Errorf(codes.PermissionDenied, "user not authorized")
+
+	// Remove stack
+	output, dockerErr := s.Docker.StackRemove(ctx, stack.Name)
+	storageErr := s.Stacks.DeleteStack(ctx, stack.Id)
+	if dockerErr != nil {
+		return nil, convertError(dockerErr)
 	}
-	rmOpt := stack.NewRemoveOptions([]string{name})
-	if err := stack.RunRemove(dockerCli, rmOpt); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	if storageErr != nil {
+		return nil, convertError(dockerErr)
 	}
-	w.Close()
-	lid := strings.Split(name, "-")
-	if len(lid) >= 2 {
-		id := lid[len(lid)-1]
-		if err := s.Stacks.DeleteStack(ctx, id); err != nil {
-			return nil, grpc.Errorf(codes.Internal, "%v", err)
-		}
-	}
-	out, _ := ioutil.ReadAll(r)
-	outs := strings.Replace(string(out), "docker", "amp", -1)
-	ans := &RemoveReply{
-		Answer: string(outs),
-	}
-	log.Printf("Stack %s removed", in.Id)
-	return ans, nil
+
+	log.Printf("Stack %s removed", in.Stack)
+	return &RemoveReply{Answer: output}, nil
 }

@@ -192,6 +192,7 @@ func registerAccountServer(c *Configuration, s *grpc.Server) {
 func registerStackServer(c *Configuration, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
 		Accounts: accounts.NewStore(runtime.Store),
+		Docker:   runtime.Docker,
 		Stacks:   stacks.NewStore(runtime.Store),
 	})
 }
