@@ -1,0 +1,253 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/stats/stats.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "statsMetricsCPUEntry": {
+      "type": "object",
+      "properties": {
+        "total_usage": {
+          "type": "number",
+          "format": "double"
+        },
+        "usage_in_kernel_mode": {
+          "type": "number",
+          "format": "double"
+        },
+        "usage_in_user_mode": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "statsMetricsEntry": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string"
+        },
+        "container_id": {
+          "type": "string"
+        },
+        "container_name": {
+          "type": "string"
+        },
+        "container_short_name": {
+          "type": "string"
+        },
+        "container_state": {
+          "type": "string"
+        },
+        "service_name": {
+          "type": "string"
+        },
+        "service_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "stack_name": {
+          "type": "string"
+        },
+        "node_id": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "group": {
+          "type": "string"
+        },
+        "cpu": {
+          "$ref": "#/definitions/statsMetricsCPUEntry"
+        },
+        "io": {
+          "$ref": "#/definitions/statsMetricsIOEntry"
+        },
+        "mem": {
+          "$ref": "#/definitions/statsMetricsMemEntry"
+        },
+        "net": {
+          "$ref": "#/definitions/statsMetricsNetEntry"
+        }
+      }
+    },
+    "statsMetricsIOEntry": {
+      "type": "object",
+      "properties": {
+        "read": {
+          "type": "string",
+          "format": "int64"
+        },
+        "write": {
+          "type": "string",
+          "format": "int64"
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "statsMetricsMemEntry": {
+      "type": "object",
+      "properties": {
+        "failcnt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "maxusage": {
+          "type": "string",
+          "format": "int64"
+        },
+        "usage": {
+          "type": "string",
+          "format": "int64"
+        },
+        "usage_p": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "statsMetricsNetEntry": {
+      "type": "object",
+      "properties": {
+        "total_bytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rx_bytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rx_dropped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rx_errors": {
+          "type": "string",
+          "format": "int64"
+        },
+        "rx_packets": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tx_bytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tx_dropped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tx_errors": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tx_packets": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "statsStatsReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/statsMetricsEntry"
+          }
+        }
+      }
+    },
+    "statsStatsRequest": {
+      "type": "object",
+      "properties": {
+        "stats_cpu": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_mem": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_io": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "stats_net": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "group": {
+          "type": "string"
+        },
+        "filter_container_id": {
+          "type": "string"
+        },
+        "filter_container_name": {
+          "type": "string"
+        },
+        "filter_container_short_name": {
+          "type": "string"
+        },
+        "filter_container_state": {
+          "type": "string"
+        },
+        "filter_service_name": {
+          "type": "string"
+        },
+        "filter_service_id": {
+          "type": "string"
+        },
+        "filter_task_id": {
+          "type": "string"
+        },
+        "filter_stack_name": {
+          "type": "string"
+        },
+        "filter_node_id": {
+          "type": "string"
+        },
+        "since": {
+          "type": "string"
+        },
+        "until": {
+          "type": "string"
+        },
+        "period": {
+          "type": "string"
+        },
+        "time_group": {
+          "type": "string"
+        },
+        "time_zone": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
