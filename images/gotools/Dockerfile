@@ -14,11 +14,14 @@ ADD bin /usr/local/bin/
 
 # Install protoc (download source, build and install -- required by protoc-gen-go and related tools)
 RUN install-protoc
+RUN go get -u github.com/golang/protobuf/proto
+RUN go get -u github.com/golang/protobuf/protoc-gen-go
+RUN go get -u google.golang.org/grpc
+RUN go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+RUN go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 
-# Use go-getter for getting specific package versions (when possible).
-# Add go packages to be installed to Gofile
-ADD Gofile /go
-RUN go-getter /go/Gofile
+RUN go get -u github.com/alecthomas/gometalinter
+RUN gometalinter --install
 
 # Install glide for vendoring support
 RUN curl -s https://glide.sh/get | sh
@@ -28,10 +31,6 @@ VOLUME /tmp/glide
 
 # Custom settings for interactive shell
 ADD etc/profile.d /etc/profile.d
-
-# don't put in Gofile for now
-RUN go get -u github.com/alecthomas/gometalinter
-RUN gometalinter --install
 
 # TODO: might want to use /go as the work directory...
 WORKDIR /go/src

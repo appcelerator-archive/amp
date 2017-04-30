@@ -62,19 +62,32 @@ cleanall-deps: clean-deps
 # with *.proto files.
 # =============================================================================
 PROTODIRS := api cmd data tests $(COMMONDIRS)
+
+# standard protobuf files
 PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
-PROTOOPTS := -I/go/src/ --go_out=plugins=grpc:/go/src/
 
-%.pb.go: %.proto
+# grpc rest gateway protobuf files
+PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
+PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.pb.gw.go=.swagger.json)
+
+PROTOOPTS := -I/go/src/ \
+	-I /go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+	--go_out=plugins=grpc:/go/src/ \
+	--grpc-gateway_out=logtostderr=true:/go/src \
+	--swagger_out=logtostderr=true:/go/src/
+
+PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
+
+%.pb.go %.pb.gw.go %.swagger.json: %.proto
 	@echo $<
 	@protoc $(PROTOOPTS) /go/src/$(REPO)/$<
 
-protoc: $(PROTOTARGETS)
+protoc: $(PROTOALLTARGETS)
 
 .PHONY: clean-protoc
 clean-protoc:
-	@find $(PROTODIRS) \( -name "*.pb.go" \) -type f -delete
+	@find $(PROTODIRS) \( -name '*.pb.go' -o -name '*.pb.gw.go' -o -name '*.swagger.json' \) -type f -delete
 
 # =============================================================================
 # CLEAN
@@ -344,7 +357,7 @@ push-bootstrap:
 # Quality checks
 # =============================================================================
 CHECKDIRS := agent api cli cmd data tests $(COMMONDIRS)
-CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' \))
+CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' -and -not -name '*.pb.gw.go'  \))
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
 .PHONY: fmt

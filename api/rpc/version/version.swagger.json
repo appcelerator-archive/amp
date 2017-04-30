@@ -1,0 +1,51 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/version/version.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "versionGetReply": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "$ref": "#/definitions/versionInfo"
+        }
+      }
+    },
+    "versionGetRequest": {
+      "type": "object"
+    },
+    "versionInfo": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "build": {
+          "type": "string"
+        },
+        "go_version": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
