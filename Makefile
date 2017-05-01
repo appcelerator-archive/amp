@@ -71,17 +71,17 @@ PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
 PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
 PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.pb.gw.go=.swagger.json)
 
-PROTOOPTS := -I/go/src/ \
-	-I /go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	--go_out=plugins=grpc:/go/src/ \
-	--grpc-gateway_out=logtostderr=true:/go/src \
-	--swagger_out=logtostderr=true:/go/src/
+PROTOOPTS := -I$(GOPATH)/src/ \
+	-I $(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+	--go_out=plugins=grpc:$(GOPATH)/src/ \
+	--grpc-gateway_out=logtostderr=true:$(GOPATH)/src \
+	--swagger_out=logtostderr=true:$(GOPATH)/src/
 
 PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
 
 %.pb.go %.pb.gw.go %.swagger.json: %.proto
 	@echo $<
-	@protoc $(PROTOOPTS) /go/src/$(REPO)/$<
+	@protoc $(PROTOOPTS) $(GOPATH)/src/$(REPO)/$<
 
 protoc: $(PROTOALLTARGETS)
 
