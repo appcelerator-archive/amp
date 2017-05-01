@@ -180,6 +180,25 @@
         }
       }
     },
+    "accountGetUserOrganizationsReply": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsOrganization"
+          }
+        }
+      }
+    },
+    "accountGetUserOrganizationsRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "accountGetUserReply": {
       "type": "object",
       "properties": {
@@ -471,6 +490,10 @@
         "create_dt": {
           "type": "string",
           "format": "int64"
+        },
+        "token_used": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

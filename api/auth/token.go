@@ -21,15 +21,10 @@ const (
 
 // AuthClaims represents authentication claims
 type AuthClaims struct {
-	Type        string `json:"Type"`
-	AccountName string `json:"AccountName"`
-	jwt.StandardClaims
-}
-
-// LoginClaims represents login claims
-type LoginClaims struct {
+	Type               string `json:"Type"`
+	AccountName        string `json:"AccountName"`
 	ActiveOrganization string `json:"ActiveOrganization"`
-	AuthClaims
+	jwt.StandardClaims
 }
 
 // CreateVerificationToken creates a verification token for a given user
@@ -47,15 +42,13 @@ func CreateVerificationToken(name string) (string, error) {
 
 // CreateLoginToken creates a login token for a given account
 func CreateLoginToken(name string, activeOrganization string) (string, error) {
-	claims := LoginClaims{
+	claims := AuthClaims{
+		Type:               TokenTypeLogin,
+		AccountName:        name,
 		ActiveOrganization: activeOrganization,
-		AuthClaims: AuthClaims{
-			Type:        TokenTypeLogin,
-			AccountName: name,
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(LoginTokenValidFor).Unix(),
-				Issuer:    TokenIssuer,
-			},
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(LoginTokenValidFor).Unix(),
+			Issuer:    TokenIssuer,
 		},
 	}
 	return createToken(claims)
@@ -86,7 +79,7 @@ func createToken(claims jwt.Claims) (string, error) {
 }
 
 // ValidateToken validates a token and return its claims
-func ValidateToken(signedString string, tokenType string) (jwt.Claims, error) {
+func ValidateToken(signedString string, tokenType string) (*AuthClaims, error) {
 	token, err := jwt.ParseWithClaims(signedString, &AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
