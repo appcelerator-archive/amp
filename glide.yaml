@@ -1,5 +1,36 @@
 package: github.com/appcelerator/amp
 import:
+- package: golang.org/x/net
+# github.com/golang/net
+  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - websocket
+- package: golang.org/x/text
+# github.com/golang/text
+  version: 470f45bf29f4147d6fbd7dfd0a02a848e49f5bf4
+  subpackages:
+  - secure
+  - unicode
+- package: github.com/golang/protobuf
+  version: 18c9bb3261723cd5401db4d0c9fbc5c3b6c70fe8
+  subpackages:
+  - proto
+  - ptypes/empty
+- package: google.golang.org/grpc
+# github.com/grpc/grpc-go
+  version: 0eb507a2ca07f13baf499f89d66cc566bf644643
+  subpackages:
+  - codes
+  - grpclog
+  - metadata
+- package: github.com/grpc-ecosystem/grpc-gateway
+  version: 4539fc575ec06dbbddc6975e7e8b503260270c3c
+  subpackages:
+  - github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+  - github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 - package: github.com/coreos/etcd
   version: ^3.1.6
   subpackages:
@@ -12,7 +43,7 @@ import:
   subpackages:
   - reference
 - package: github.com/docker/docker
-  version: ^17.3.1-ce
+  version: v17.05.0-ce-rc2
   subpackages:
   - api/types
   - api/types/container
@@ -41,10 +72,6 @@ import:
   - libbeat/publisher
 - package: github.com/fatih/color
   version: ^1.4.1
-- package: github.com/golang/protobuf
-  subpackages:
-  - proto
-  - ptypes/empty
 - package: github.com/hlandau/passlib
   version: ^1.0.9
 - package: github.com/holys/safe
@@ -67,28 +94,18 @@ import:
 - package: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - package: github.com/spf13/viper
-- package: golang.org/x/net
-  subpackages:
-  - context
-  - websocket
-- package: google.golang.org/grpc
-  version: ^1.2.1
-  subpackages:
-  - codes
-  - grpclog
-  - metadata
 - package: gopkg.in/olivere/elastic.v5
   version: ^5.0.35
 - package: gopkg.in/yaml.v2
-## Required to fix package resolution from github.com/ory-am/ladon
+# Required to fix package resolution from github.com/ory-am/ladon
 - package: github.com/pkg/errors
   version: ^0.8.0
-## Required to fix package resolution from github.com/docker/docker
+# Required to fix package resolution from github.com/docker/docker
 - package: github.com/gogo/protobuf
   version: "0.4"
   subpackages:
   - types
-## Required to fix package resolution from github.com/coreos/etcd, should be located in testImport
+# Required to fix package resolution from github.com/coreos/etcd, should be located in testImport
 - package: github.com/stretchr/testify
   version: ^1.1.4
   subpackages:
@@ -105,3 +122,4 @@ import:
 testImport:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/mhale/smtpd
+

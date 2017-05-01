@@ -493,13 +493,24 @@ func TestRestartRemoved(t *testing.T) {
 func clusterMustProgress(t *testing.T, membs []*member) {
 	cc := MustNewHTTPClient(t, []string{membs[0].URL()}, nil)
 	kapi := client.NewKeysAPI(cc)
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	key := fmt.Sprintf("foo%d", rand.Int())
-	resp, err := kapi.Create(ctx, "/"+key, "bar")
+	var (
+		err  error
+		resp *client.Response
+	)
+	// retry in case of leader loss induced by slow CI
+	for i := 0; i < 3; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+		resp, err = kapi.Create(ctx, "/"+key, "bar")
+		cancel()
+		if err == nil {
+			break
+		}
+		t.Logf("failed to create key on %q (%v)", membs[0].URL(), err)
+	}
 	if err != nil {
 		t.Fatalf("create on %s error: %v", membs[0].URL(), err)
 	}
-	cancel()
 
 	for i, m := range membs {
 		u := m.URL()
@@ -555,5 +566,25 @@ func TestTransferLeader(t *testing.T) {
 	// new leader must be different than the old leader
 	if oldLeadID == newLeadIDs[0] {
 		t.Fatalf("expected old leader %d != new leader %d", oldLeadID, newLeadIDs[0])
+	}
+}
+
+func TestSpeedyTerminate(t *testing.T) {
+	defer testutil.AfterTest(t)
+	clus := NewClusterV3(t, &ClusterConfig{Size: 3})
+	// Stop/Restart so requests will time out on lost leaders
+	for i := 0; i < 3; i++ {
+		clus.Members[i].Stop(t)
+		clus.Members[i].Restart(t)
+	}
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+		clus.Terminate(t)
+	}()
+	select {
+	case <-time.After(10 * time.Second):
+		t.Fatalf("cluster took too long to terminate")
+	case <-donec:
 	}
 }

@@ -29,6 +29,10 @@ RPC: Put
 
 - prev-kv -- return the previous key-value pair before modification.
 
+- ignore-value -- updates the key using its current value.
+
+- ignore-lease -- updates the key using its current lease.
+
 #### Output
 
 `OK`
@@ -41,6 +45,18 @@ RPC: Put
 ./etcdctl get foo
 # foo
 # bar
+./etcdctl put foo --ignore-value # to detache lease
+# OK
+```
+
+```bash
+./etcdctl put foo bar --lease=1234abcd
+# OK
+./etcdctl put foo bar1 --ignore-lease # to use existing lease 1234abcd
+# OK
+./etcdctl get foo
+# foo
+# bar1
 ```
 
 ```bash
@@ -1198,7 +1214,7 @@ The provided transformer should read until EOF and flush the stdout before exiti
 #### Example
 
 ```
-./etcdctl --data-dir=/var/etcd --transformer=k8s-transformer
+./etcdctl migrate --data-dir=/var/etcd --transformer=k8s-transformer
 # finished transforming keys
 ```
 
