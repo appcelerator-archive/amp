@@ -134,6 +134,12 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
 	log.Println("[stack] Services", in.String())
 
+	stackFullName := in.StackName
+	stackInst, err := s.Stacks.GetStack(ctx, in.StackName)
+	if err == nil && stackInst != nil {
+		stackFullName = fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id)
+	}
+
 	r, w, _ := os.Pipe()
 	dockerCli := command.NewDockerCli(os.Stdin, w, os.Stderr)
 	opts := cliflags.NewClientOptions()
@@ -141,7 +147,7 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
 	}
 
-	servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), in.StackName)
+	servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), stackFullName)
 	if err := stack.RunServices(dockerCli, servicesOpt); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
