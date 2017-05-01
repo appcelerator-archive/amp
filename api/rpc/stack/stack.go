@@ -1,15 +1,23 @@
 package stack
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/amp/pkg/docker/docker/stack"
+	"github.com/docker/docker/cli/command"
+	cliflags "github.com/docker/docker/cli/flags"
+	dopts "github.com/docker/docker/opts"
 	"golang.org/x/net/context"
 )
 
@@ -120,4 +128,65 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 
 	log.Printf("Stack %s removed", in.Stack)
 	return &RemoveReply{Answer: output}, nil
+}
+
+// Services Ctx implements stack.Server
+func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
+	log.Println("[stack] Services", in.String())
+
+	r, w, _ := os.Pipe()
+	dockerCli := command.NewDockerCli(os.Stdin, w, os.Stderr)
+	opts := cliflags.NewClientOptions()
+	if err := dockerCli.Initialize(opts); err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
+	}
+
+	servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), in.StackName)
+	if err := stack.RunServices(dockerCli, servicesOpt); err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+
+	w.Close()
+	out, _ := ioutil.ReadAll(r)
+	outs := strings.Replace(string(out), "docker", "amp", -1)
+	cols := strings.Split(outs, "\n")
+	ans := &ServicesReply{
+		Services: []*StackService{},
+	}
+	for _, col := range cols[1:] {
+		service := s.getOneServiceListLine(ctx, col)
+		if service != nil {
+			ans.Services = append(ans.Services, service)
+		}
+	}
+	return ans, nil
+}
+
+func (s *Server) getOneServiceListLine(ctx context.Context, line string) *StackService {
+	cols := strings.Split(line, " ")
+	nn := 0
+	service := &StackService{}
+	for _, val := range cols {
+		if val != "" {
+			nn++
+			switch nn {
+			case 1:
+				service.Id = val
+				break
+			case 2:
+				service.Name = val
+				break
+			case 3:
+				service.Mode = val
+				break
+			case 4:
+				service.Replicas = val
+				break
+			case 5:
+				service.Image = val
+				break
+			}
+		}
+	}
+	return service
 }
