@@ -14,6 +14,7 @@ service Stack {
   }
   rpc List (ListRequest) returns (ListReply);
   rpc Remove (RemoveRequest) returns (RemoveReply);
+  rpc Services (ServicesRequest) returns (ServicesReply);
 }
 
 message DeployRequest {
@@ -44,4 +45,20 @@ message RemoveRequest {
 
 message RemoveReply {
   string answer = 1;
+}
+
+message ServicesRequest {
+  string stack_name = 1;
+}
+
+message StackService {
+  string id = 1;
+  string name = 2;
+  string mode = 3;
+  string replicas = 4;
+  string image = 5;
+}
+
+message ServicesReply {
+  repeated StackService services = 1;
 }
