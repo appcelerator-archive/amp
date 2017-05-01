@@ -124,8 +124,7 @@ func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	if err != nil {
 		return nil, InvalidToken
 	}
-	verificationClaims := claims.(*auth.AuthClaims)
-	user, err := s.getUser(ctx, verificationClaims.AccountName)
+	user, err := s.getUser(ctx, claims.AccountName)
 	if err != nil {
 		return nil, err
 	}

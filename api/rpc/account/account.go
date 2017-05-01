@@ -173,12 +173,11 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empt
 	if err != nil {
 		return nil, convertError(err)
 	}
-	passwordClaims := claims.(*auth.AuthClaims)
 	// Sets the new password
-	if err := s.Accounts.SetUserPassword(ctx, passwordClaims.AccountName, in.Password); err != nil {
+	if err := s.Accounts.SetUserPassword(ctx, claims.AccountName, in.Password); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Println("Successfully set new password for user", passwordClaims.AccountName)
+	log.Println("Successfully set new password for user", claims.AccountName)
 	return &empty.Empty{}, nil
 }
 
