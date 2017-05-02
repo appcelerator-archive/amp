@@ -20,7 +20,7 @@ script:
   - ampmake clean buildall
   - ls -la bin/linux/amd64
   - hack/deploy -T local
-  - hack/versioncheck 10
+  - hack/versioncheck 15
   - # TODO: amp cluster destroy
   - ampmake lint
 
