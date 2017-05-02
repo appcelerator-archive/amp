@@ -14,5 +14,6 @@ func NewServiceCommand(c cli.Interface) *cobra.Command {
 		RunE:    c.ShowHelp,
 	}
 	cmd.AddCommand(NewServiceLogsCommand(c))
+	cmd.AddCommand(NewServiceTasksCommand(c))
 	return cmd
 }
