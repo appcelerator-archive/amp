@@ -78,7 +78,7 @@ cluster_status() {
 create_amp_stacks_volume() {
   local builddir=$(mktemp -d)
   local dockerfile=$builddir/Dockerfile
-  local image=amp-stacks:local
+  local image=amp-stacks-builder:local
   cat > $dockerfile << EOF
 FROM alpine:3.5
 COPY stacks /stacks
@@ -86,10 +86,10 @@ VOLUME /stacks
 CMD ["true"]
 EOF
   cp -pr $SP/../stacks $builddir/stacks
-  docker build -t $image $builddir
+  docker build -t $image $builddir >/dev/null
   rm -rf $builddir
   docker run --rm -v amp-stacks:/stacks $image
-  docker image rm $image
+  docker image rm $image > /dev/null
 }
 
 # sets hosts for Docker remote API and for the Docker registry
@@ -124,6 +124,7 @@ checkexit() {
 }
 
 cleanup() {
+  docker volume rm amp-stacks >/dev/null 2>&1
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
 }
 
@@ -214,7 +215,7 @@ set_deployment_variables
 
 echo "wait for cluster"
 if [ $(deployment_target) = "local" ]; then
-  $clustercheck $CID
+  $clustercheck -t 100 $CID
 else
   echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
   echo "This script will need it in a moment"

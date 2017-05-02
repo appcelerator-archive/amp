@@ -18,28 +18,30 @@ if [ "x$provider" != "xdocker" ]; then
   cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ if ref "/certificate/ca/service" }}{{ ref "/docker/remoteapi/tlsport" }} --tlsverify --tlscacert={{ ref "/docker/remoteapi/cafile" }} --tlscert={{ ref "/docker/remoteapi/srvcertfile" }} --tlskey={{ ref "/docker/remoteapi/srvkeyfile" }}{{else }}{{ ref "/docker/remoteapi/port" }}{{ end }} -H unix:///var/run/docker.sock{{ if ref "/bootstrap/ip" }} --registry-mirror=http://{{ ref "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ ref "/bootstrap/ip" }}:5000{{ end }}
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ if var "/certificate/ca/service" }}{{ var "/docker/remoteapi/tlsport" }} --tlsverify --tlscacert={{ var "/docker/remoteapi/cafile" }} --tlscert={{ var "/docker/remoteapi/srvcertfile" }} --tlskey={{ var "/docker/remoteapi/srvkeyfile" }}{{else }}{{ var "/docker/remoteapi/port" }}{{ end }} -H unix:///var/run/docker.sock{{ if var "/bootstrap/ip" }} --registry-mirror=http://{{ var "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ var "/bootstrap/ip" }}:5000{{ end }}
 EOF
   systemctl daemon-reload
 fi
 # Use an EBS volume for the devicemapper
 if [ "x$provider" = "xaws" ]; then
   rm -rf /var/lib/docker
-  _attach_ebs_volume /dev/sdn /var/lib/docker "Docker AUFS" {{ ref "/docker/aufs/size" }}
+  _attach_ebs_volume /dev/sdn /var/lib/docker "Docker AUFS" {{ var "/docker/aufs/size" }}
 fi
 
 mkdir -p /etc/docker
 cat << EOF > /etc/docker/daemon.json
 {
-  "labels": {{ INFRAKIT_LABELS | to_json }}
+  "labels": {{ INFRAKIT_LABELS | jsonEncode }}
 }
 EOF
 
-{{ if ref "/certificate/ca/service" }}{{ include "request-certificate.sh" }}{{ end }}
+{{ if var "/certificate/ca/service" }}{{ include "request-certificate.sh" }}{{ end }}
 
 if [ "x$provider" != "xdocker" ]; then
   systemctl start docker.service
   sleep 2
+else
+  [ -f /var/run/docker.pid ] && kill -s HUP $(cat /var/run/docker.pid)
 fi
 
 docker swarm join --token {{  SWARM_JOIN_TOKENS.Worker }} {{ SWARM_MANAGER_ADDR }}
