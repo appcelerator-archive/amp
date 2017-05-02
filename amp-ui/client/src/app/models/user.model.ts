@@ -4,6 +4,8 @@ export class User {
   public role: string;
   public verified: boolean;
   public checked: boolean;
+  public pendingOrganizations: string[];
+  public label: string
 
   constructor(name: string, email: string, role: string) {
     this.name = name;
@@ -11,6 +13,11 @@ export class User {
     this.role = role;
     this.verified = false;
     this.checked = false;
+    this.pendingOrganizations = [];
+    this.label=name
+    if (role == "owner") {
+      this.label+=" (owner)"
+    }
   }
 
 }

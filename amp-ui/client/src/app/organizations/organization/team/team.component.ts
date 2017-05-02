@@ -1,63 +1,78 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { OrganizationsService } from '../../services/organizations.service'
-import { ListService } from '../../services/list.service';
-import { UsersService } from '../../services/users.service';
-import { User } from '../../models/user.model';
-import { Member } from '../../models/member.model';
-import { Organization } from '../../models/organization.model';
-import { Team } from '../../models/team.model';
+import { OrganizationsService } from '../../../services/organizations.service'
+import { ListService } from '../../../services/list.service';
+import { UsersService } from '../../../services/users.service';
+import { User } from '../../../models/user.model';
+import { Member } from '../../../models/member.model';
+import { Team } from '../../../models/team.model';
+import { Organization } from '../../../models/organization.model';
+import { TeamResource } from '../../../models/team-resource.model';
 import { ActivatedRoute } from '@angular/router';
-import { MenuService } from '../../services/menu.service';
-import { HttpService } from '../../services/http.service';
+import { MenuService } from '../../../services/menu.service';
+import { HttpService } from '../../../services/http.service';
 
 @Component({
   selector: 'app-organization',
-  templateUrl: './organization.component.html',
-  styleUrls: ['./organization.component.css']
-
-
+  templateUrl: './team.component.html',
+  styleUrls: ['./team.component.css']
 })
-export class OrganizationComponent implements OnInit, OnDestroy {
-  organization : Organization
-  name = ""
+
+export class TeamComponent implements OnInit, OnDestroy {
   routeSub : any
   modeCreation : boolean = false
+  userResourceToggle = false
   public listUserService : ListService = new ListService()
   public listUserAddedService : ListService = new ListService()
+  public listResourceService : ListService = new ListService()
+  organization : Organization
+  team : Team
   addedUsers : Member[] = []
   users : Member[] = []
   initialUserList : Member[] = []
-  updated = false
-  nbSaveInProgress = 0
+  resources : TeamResource[] = []
+  permisionLabel : string[] = ['node', 'read', 'write', 'admin']
+  updated = false;
+  nbSaveInProgress = 0;
   @ViewChild ('f') form: NgForm;
 
   constructor(
     private route: ActivatedRoute,
-    private usersService: UsersService,
     public organizationsService : OrganizationsService,
+    private usersService : UsersService,
     private menuService : MenuService,
     private httpService : HttpService) {
-    this.listUserService.setFilterFunction(this.match)
-    this.listUserAddedService.setFilterFunction(this.match)
+    this.listUserService.setFilterFunction(this.matchUser)
+    this.listUserAddedService.setFilterFunction(this.matchUser)
+    this.listResourceService.setFilterFunction(this.matchResource)
   }
 
   ngOnInit() {
-    this.menuService.setItemMenu('organization', 'Edit')
+    this.menuService.setItemMenu('organization', 'Team edit')
     this.routeSub = this.route.params.subscribe(params => {
-      this.name = params['orgName'];
+      let orgName = params['orgName'];
+      let name = params['teamName'];
       for (let org of this.organizationsService.organizations) {
-        if (org.name == this.name) {
+        if (org.name == orgName) {
           this.organization = org
         }
       }
       if (this.organization) {
-        console.log(this.organization)
-        this.initialUserList = this.usersService.getAllNoMembers(this.organization.members)
-        this.addedUsers = this.organization.members.slice()
-        this.users = this.initialUserList.slice()
-        this.listUserAddedService.setData(this.addedUsers)
-        this.listUserService.setData(this.users)
+        for (let team of this.organization.teams) {
+          if (team.name == name) {
+            this.team = team
+          }
+        }
+        if (this.team) {
+          this.initialUserList = this.usersService.getAllNoMembers(this.team.members)
+          this.addedUsers = this.team.members.slice()
+          this.resources = this.organization.resources.slice()
+          //
+          this.users = this.initialUserList.slice()
+          this.listUserAddedService.setData(this.addedUsers)
+          this.listUserService.setData(this.users)
+          this.listResourceService.setData(this.resources)
+        }
       }
     })
   }
@@ -66,11 +81,27 @@ export class OrganizationComponent implements OnInit, OnDestroy {
     this.routeSub.unsubscribe();
   }
 
-  match(item : Member, value : string) : boolean {
+  matchUser(item : Member, value : string) : boolean {
     if (value == '' || item.userName==='') {
       return true
     }
     if (item.userName && item.userName.includes(value)) {
+      return true
+    }
+    return false
+  }
+
+  matchResource(item : TeamResource, value : string) : boolean {
+    if (value == '') {
+      return true
+    }
+    if (item.id && item.id.includes(value)) {
+      return true
+    }
+    if (item.type && item.type.includes(value)) {
+      return true
+    }
+    if (item.name && item.name.includes(value)) {
       return true
     }
     return false
@@ -136,6 +167,45 @@ export class OrganizationComponent implements OnInit, OnDestroy {
     return false
   }
 
+  userManagement() {
+    this.userResourceToggle=false
+  }
+
+  resourceManagement(){
+    this.userResourceToggle=true
+  }
+
+  returnBack() {
+    this.menuService.navigate(['/amp', 'organizations', this.organization.name])
+  }
+
+  removeTeam() {
+    if(confirm("Are you sure to delete the team: "+this.team.name)) {
+      this.menuService.waitingCursor(true)
+      this.httpService.deleteTeam(this.organization, this.team).subscribe(
+        () => {
+          this.menuService.waitingCursor(false)
+          let list : Team[] = []
+          for (let team of this.organization.teams) {
+            if (team.name !== this.team.name) {
+              list.push(team)
+            }
+          }
+          this.organization.teams=list
+          this.menuService.navigate(['/amp', 'organizations', this.organization.name])
+        },
+        (error) => {
+          this.menuService.waitingCursor(false)
+          console.log(error)
+        }
+      )
+    }
+  }
+
+  setPermission(res : TeamResource, level : number) {
+    res.setPermission(level)
+  }
+
   applyUsers() {
     console.log("apply users")
     this.nbSaveInProgress=0
@@ -147,7 +217,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
       if (user.status == -1) {
         console.log("removing user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.removeUserFromOrganization(this.organization, user).subscribe(
+        this.httpService.removeUserFromTeam(this.organization, this.team, user).subscribe(
           () => {
             user.saved=true
             user.status=0
@@ -173,7 +243,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
       if (user.status == 1) {
         console.log("adding user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.addUserToOrganization(this.organization, user).subscribe(
+        this.httpService.addUserToTeam(this.organization, this.team, user).subscribe(
           () => {
             console.log("done")
             user.saved=true
@@ -194,7 +264,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
     if (this.nbSaveInProgress === 0) {
       this.menuService.waitingCursor(false)
     }
-    this.organization.members = this.addedUsers.slice()
+    this.team.members = this.addedUsers.slice()
     this.updated=false
   }
 
@@ -204,5 +274,4 @@ export class OrganizationComponent implements OnInit, OnDestroy {
       this.menuService.waitingCursor(false)
     }
   }
-
 }
