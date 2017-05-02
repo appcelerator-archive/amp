@@ -16,6 +16,9 @@ ok() {
 error() {
   echo "$CMD: $1" >&2
   [[ -n "$STATUS" ]] && $STATUS
+  docker ps
+  docker logs m1
+  docker exec infrakit cat /infrakit/logs/instance-docker.log
   exit 1
 }
 

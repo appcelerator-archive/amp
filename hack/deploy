@@ -215,7 +215,7 @@ set_deployment_variables
 
 echo "wait for cluster"
 if [ $(deployment_target) = "local" ]; then
-  $clustercheck $CID
+  $clustercheck -t 100 $CID
 else
   echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
   echo "This script will need it in a moment"
