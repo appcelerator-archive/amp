@@ -11,56 +11,56 @@
       <li class="sidebar-title"><span></span></li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('dashboard', 'Dashboard view', '')">
+        <a routerLink="/amp/dashboard">
           Dashboard
           <span class="menu-icon fa fa-tachometer"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('stacks', 'Stack list', '')">
+        <a routerLink="/amp/stacks">
           Stacks
           <span class="menu-icon fa fa-server"></span></a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('logs', 'Logs view', '')">
+        <a routerLink="/amp/logs">
           Logs
           <span class="menu-icon fa fa-list-alt"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('metrics', 'Metrics view', '')">
+        <a routerLink="/amp/metrics">
           Metrics
-          <span class="menu-icon fa fa-server"></span></a>
+          <span class="menu-icon glyphicon glyphicon-stats"></span></a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('nodes', 'Node list', '')">
+        <a routerLink="/amp/nodes">
           Nodes
           <span class="menu-icon fa fa-plug"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('swarms', 'Swarm list', '')">
+        <a routerLink="/amp/swarms">
           Swarms
-          <span class="menu-icon fa fa-plug"></span>
+          <span class="menu-icon glyphicon glyphicon-th-list"></span>
+        </a>
+      </li>
+
+      <li class="sidebar-title"><span>Settings</span></li>
+
+      <li class="sidebar-list">
+        <a routerLink="/amp/organizations">
+          Organizations
+          <span class="menu-icon glyphicon glyphicon-book"></span>
         </a>
       </li>
 
       <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('function', 'Function list', '')">
-          Functions
-          <span class="menu-icon fa fa-lock"></span>
-        </a>
-      </li>
-
-      <li class="sidebar-title"><span>Users settings</span></li>
-
-      <li class="sidebar-list">
-        <a (click)="menuService.setItemMenu('users', 'User list', '')">
+        <a routerLink="/amp/users">
           Users
           <span class="menu-icon fa fa-user"></span>
         </a>

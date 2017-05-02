@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { User } from '../../models/user.model';
-import { UsersService } from '../../services/users.service'
+import { UsersService } from '../../services/users.service';
 import { NgForm } from '@angular/forms';
+import { MenuService } from '../../services/menu.service';
 
 @Component({
   selector: 'app-signin',
@@ -11,13 +12,17 @@ import { NgForm } from '@angular/forms';
 export class SigninComponent implements OnInit, OnDestroy {
   message = ""
   messageError = ""
-  constructor(public usersService : UsersService) { }
+  constructor(
+    public usersService : UsersService,
+    private menuService : MenuService) { }
 
   ngOnInit() {
     let currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (currentUser) {
+      this.usersService.loadUsers()
       this.usersService.setCurrentUser(currentUser)
     }
+    this.menuService.navigate(['/amp', 'dashboard'])
   }
 
   ngOnDestroy() {

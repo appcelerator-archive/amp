@@ -212,6 +212,9 @@
         "group": {
           "type": "string"
         },
+        "sgroup": {
+          "type": "string"
+        },
         "cpu": {
           "$ref": "#/definitions/statsMetricsCPUEntry"
         },

@@ -13,13 +13,16 @@ import { OrganizationsService } from './services/organizations.service';
 import { DockerServicesService } from './services/docker-services.service';
 import { DockerContainersService } from './services/docker-containers.service';
 import { SwarmsService } from './services/swarms.service';
+import { DragService } from './services/drag.service';
+import { MetricsService } from './metrics/services/metrics.service';
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
-import { DropdownComponent } from './dropdown/dropdown.component';
 
 //Directive
 import { DropdownDirective } from './directives/dropdown.directive'
+import { DraggableDirective } from './directives/draggable.directive'
+import { DropTargetDirective } from './directives/drop-target.directive'
 
 //components
 import { AppComponent } from './app.component';
@@ -39,12 +42,21 @@ import { LogsComponent } from './logs/logs.component';
 import { MetricsComponent } from './metrics/metrics.component';
 import { OrganizationsComponent } from './organizations/organizations.component';
 import { OrganizationComponent } from './organizations/organization/organization.component';
+import { TeamComponent } from './organizations/organization/team/team.component';
 import { DockerStackDeployComponent } from './docker-stacks/docker-stack-deploy/docker-stack-deploy.component';
 import { DockerServicesComponent } from './docker-stacks/docker-services/docker-services.component';
 import { DockerContainersComponent } from './docker-stacks/docker-containers/docker-containers.component';
+import { OrganizationCreateComponent } from './organizations/organization-create/organization-create.component';
+import { TeamCreateComponent } from './organizations/organization/team/team-create/team-create.component';
+import { LinesComponent } from './metrics/graph/lines/lines.component';
 
 @NgModule({
   declarations: [
+    //Directives
+    DropdownDirective,
+    DraggableDirective,
+    DropTargetDirective,
+    //Components
     AppComponent,
     SignupComponent,
     SigninComponent,
@@ -61,12 +73,15 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
     MetricsComponent,
     OrganizationsComponent,
     OrganizationComponent,
-    DropdownComponent,
-    DropdownDirective,
+    TeamComponent,
     DockerStacksComponent,
     DockerStackDeployComponent,
     DockerServicesComponent,
-    DockerContainersComponent
+    DockerContainersComponent,
+    OrganizationCreateComponent,
+    TeamCreateComponent,
+    LinesComponent,
+
   ],
   imports: [
     BrowserModule,
@@ -83,6 +98,8 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
     HttpService,
     OrganizationsService,
     SwarmsService,
+    DragService,
+    MetricsService,
     AuthGuard
   ],
   bootstrap: [AppComponent]

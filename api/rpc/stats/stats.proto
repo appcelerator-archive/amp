@@ -25,10 +25,11 @@ message MetricsEntry {
   string node_id = 10;
   map<string, string> labels = 11;
   string group = 12;
-  MetricsCPUEntry cpu = 13;
-  MetricsIOEntry io = 14;
-  MetricsMemEntry mem = 15;
-  MetricsNetEntry net = 16;
+  string sgroup = 13;
+  MetricsCPUEntry cpu = 14;
+  MetricsIOEntry io = 15;
+  MetricsMemEntry mem = 16;
+  MetricsNetEntry net = 17;
 }
 
 message MetricsCPUEntry {

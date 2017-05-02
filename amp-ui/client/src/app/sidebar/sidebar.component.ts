@@ -11,7 +11,10 @@ import { SwarmsService } from '../services/swarms.service'
 export class SidebarComponent implements OnInit {
   @Output() onMenu = new EventEmitter<string>();
 
-  constructor(public menuService : MenuService, public organizationsService : OrganizationsService, public swarmsService : SwarmsService) { }
+  constructor(
+    public menuService : MenuService,
+    public organizationsService : OrganizationsService,
+    public swarmsService : SwarmsService) { }
 
   ngOnInit() {
   }

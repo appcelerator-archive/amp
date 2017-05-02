@@ -1,1 +1,98 @@
-<router-outlet></router-outlet>
+
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div>
+          <div class="pull-left">
+            <span class="glyphicon glyphicon-book" aria-hidden="true"></span> Organizations</div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div classes="col-lg-12">
+          <div class="pull-left">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-danger" [disabled]="this.organization.name===''" (click)="removeOrganization()">
+                <i class="fa fa-trash space-right"></i>Remove</button>
+              <button type="button" class="btn btn-primary" (click)="createOrganization()">
+                <i class="glyphicon glyphicon-tasks"></i>Create</button>
+            </div>
+          </div>
+          <div class="pull-right">
+            <input type="text"
+              #filter
+              id="filter"
+              placeholder="Filter..."
+              class="form-control"
+              (keyup)="listService.filter(filter.value)"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div classes="no-padding">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>
+                    <a>
+                      Name
+                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Email
+                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Teams
+                      <span (click)="listService.order('ownerName', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('ownerName', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Users
+                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Resources
+                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr (click)="selectOrganization(org)" *ngFor="let org of listService.getData()">
+                  <td><input type="checkbox" [checked]="organization.name===org.name"></td>
+                  <td>{{ org.name }}</td>
+                  <td>{{ org.email }}</td>
+                  <td> {{ org.teams.length }}</td>
+                  <td> {{ org.members.length }}</td>
+                  <td> {{ org.resources.length }}</td>
+                  <td>
+                    <a (click)="editOrganization(org)">
+                      <i class="glyphicon glyphicon-log-in" aria-hidden="true"></i> Edit</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
