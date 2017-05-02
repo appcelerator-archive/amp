@@ -1,0 +1,64 @@
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div icon="fa-plus" title="Login user"></div>
+        <div>
+
+          <div style="height:50px">
+            <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:40px">
+          </div>
+
+          <form class="form-horizontal" (ngSubmit)="signin(f)" #f="ngForm">
+
+            <div class="form-group">
+              <label for="username" class="col-sm-2 control-label text-left">Username</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-user" aria-hidden="true"></i></span>
+                  <input ngModel type="text" class="form-control" name="username" placeholder="e.g. jdoe" #username>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="col-sm-2 control-label text-left">Password</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></span>
+                  <input ngModel type="password" class="form-control" name="password" #userpwd>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="endpoint" class="col-sm-2 control-label text-left">Endpoint</label>
+              <div class="col-sm-8">
+                <div class="input-group">
+                  <span class="input-group-addon"><i class="fa fa-server" aria-hidden="true"></i></span>
+                  <select class="form-control custom-select" name="endpoint" [(ngModel)]="endpointsService.currentEndpoint" #endpoint>
+                    <option *ngFor="let value of endpointsService.endpoints" [ngValue]="value">{{value.host}}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <h5 style="color:green"> {{message}} </h5>
+            <h5 style="color:red"> {{messageError}} </h5>
+
+            <div style="height:20px"></div>
+            <div class="form-group">
+              <div class="col-sm-12">
+                <button type="button" class="btn btn-primary btn-sm" type="submit"><i class="glyphicon glyphicon-log-in" aria-hidden="true"></i> Logging</button>
+                <i id="createUserSpinner" class="fa fa-cog fa-spin" style="margin-left: 5px; display: none;"></i>
+                <a class="text-danger" style="margin-left: 20px" routerLink="/auth/signup">
+                  <u> SignUp </u>
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

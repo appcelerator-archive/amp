@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"fmt"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/nats-io/go-nats"
-	"github.com/pkg/errors"
 	"github.com/pborman/uuid"
-	"time"
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 type jsonError struct {
@@ -25,18 +26,18 @@ type Broker struct {
 
 func New(n *nats.Conn, version string) *Broker {
 	return &Broker{
-		Logger: logrus.New(),
+		Logger:  logrus.New(),
 		Version: version,
-		N: n,
+		N:       n,
 		Timeout: time.Second * 5,
 	}
 }
 
 type Container struct {
-	ID        string `json:"i"`
-	Version   string `json:"v"`
-	RequestID string `json:"r"`
-	Status    int `json:"s"`
+	ID        string      `json:"i"`
+	Version   string      `json:"v"`
+	RequestID string      `json:"r"`
+	Status    int         `json:"s"`
 	Payload   interface{} `json:"p"`
 }
 
@@ -68,10 +69,10 @@ func (h *Broker) Reply(m *nats.Msg, rid string, e interface{}) {
 
 func (h *Broker) WriteCode(message string, rid string, code int, e interface{}) {
 	p, err := json.Marshal(&Container{
-		ID: uuid.New(),
-		Version: h.Version,
-		Status: code,
-		Payload: e,
+		ID:        uuid.New(),
+		Version:   h.Version,
+		Status:    code,
+		Payload:   e,
 		RequestID: rid,
 	})
 	if err != nil {
@@ -109,10 +110,10 @@ func (h *Broker) Parse(m *nats.Msg, e interface{}) (*Container, error) {
 
 func (h *Broker) Request(message string, rid string, in, out interface{}) (*Container, error) {
 	p, err := json.Marshal(&Container{
-		ID: uuid.New(),
-		Version: h.Version,
-		Payload: in,
-		Status: http.StatusOK,
+		ID:        uuid.New(),
+		Version:   h.Version,
+		Payload:   in,
+		Status:    http.StatusOK,
 		RequestID: rid,
 	})
 	if err != nil {
@@ -127,12 +128,12 @@ func (h *Broker) Request(message string, rid string, in, out interface{}) (*Cont
 	return h.Parse(rep, out)
 }
 
-func (h *Broker) Publish(message string, rid string, in interface{}) (error) {
+func (h *Broker) Publish(message string, rid string, in interface{}) error {
 	p, err := json.Marshal(&Container{
-		ID: uuid.New(),
-		Version: h.Version,
-		Payload: in,
-		Status: http.StatusOK,
+		ID:        uuid.New(),
+		Version:   h.Version,
+		Payload:   in,
+		Status:    http.StatusOK,
 		RequestID: rid,
 	})
 	if err != nil {
@@ -146,8 +147,8 @@ func (h *Broker) Publish(message string, rid string, in interface{}) (error) {
 	return nil
 }
 
-func (h *Broker) MessageLogger(f func (m *nats.Msg)) func (m *nats.Msg) {
-	return func (m *nats.Msg) {
+func (h *Broker) MessageLogger(f func(m *nats.Msg)) func(m *nats.Msg) {
+	return func(m *nats.Msg) {
 		c, _ := h.Parse(m, nil)
 		logrus.WithField("id", c.ID).WithField("request", c.RequestID).WithField("subject", m.Subject).Info("Received message")
 		f(m)
@@ -173,7 +174,7 @@ func (h *Broker) WriteErrorCode(message string, rid string, code int, err error)
 		rid,
 		code,
 		&jsonError{
-			Message:   err.Error(),
+			Message: err.Error(),
 		},
 	)
 }

@@ -8,6 +8,7 @@ message User {
   string password_hash = 3;
   bool is_verified = 4;
   int64 create_dt = 5;
+  bool token_used = 6;
 }
 
 enum TeamPermissionLevel {

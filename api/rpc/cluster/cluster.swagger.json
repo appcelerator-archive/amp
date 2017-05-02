@@ -1,0 +1,132 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/cluster/cluster.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "clusterCreateReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "compose": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "clusterListReply": {
+      "type": "object"
+    },
+    "clusterListRequest": {
+      "type": "object"
+    },
+    "clusterNodeListReply": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clusterNodeReply"
+          }
+        }
+      }
+    },
+    "clusterNodeListRequest": {
+      "type": "object"
+    },
+    "clusterNodeReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "availability": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "manager_leader": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "clusterRemoveReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterStatusReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterStatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterUpdateReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

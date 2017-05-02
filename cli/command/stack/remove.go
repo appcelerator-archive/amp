@@ -1,52 +1,45 @@
 package stack
 
 import (
-	"context"
 	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-)
-
-type removeOpts struct {
-	names []string
-}
-
-var (
-	ropts = &removeOpts{}
 )
 
 // NewRemoveCommand returns a new instance of the stack command.
 func NewRemoveCommand(c cli.Interface) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "rm STACKNAME",
+	return &cobra.Command{
+		Use:     "rm STACKNAME(S)",
 		Aliases: []string{"remove", "down", "stop"},
 		Short:   "Remove a deployed stack",
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ropts.names = args
-			return remove(c)
+			return remove(c, args)
 		},
 	}
-	return cmd
 }
 
-func remove(c cli.Interface) error {
-	if len(ropts.names) == 0 {
-		return errors.New(`"amp stack rm" requires at least 1 argument(s)`)
-	}
-	for _, name := range ropts.names {
+func remove(c cli.Interface, args []string) error {
+	var errs []string
+	conn := c.ClientConn()
+	client := stack.NewStackClient(conn)
+	for _, name := range args {
 		req := &stack.RemoveRequest{
 			Id: name,
 		}
-
-		client := stack.NewStackClient(c.ClientConn())
-		reply, err := client.Remove(context.Background(), req)
-		if err != nil {
-			return errors.New(grpc.ErrorDesc(err))
+		if _, err := client.Remove(context.Background(), req); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
 		}
-		c.Console().Println(reply.Answer)
+		c.Console().Println(name)
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
 }

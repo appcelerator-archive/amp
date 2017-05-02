@@ -5,15 +5,15 @@ Mappings:
   AMI:
     # Ubuntu 16.04 HVM
     eu-central-1:
-      Ubuntu: ami-2830f947
+      Ubuntu: ami-1b4d9e74
     eu-west-1:
-      Ubuntu: ami-98ecb7fe
+      Ubuntu: ami-b5a893d3
     us-east-1:
-      Ubuntu: ami-f0768de6
+      Ubuntu: ami-e4139df2
     us-west-1:
-      Ubuntu: ami-79df8219
+      Ubuntu: ami-30476250
     us-west-2:
-      Ubuntu: ami-d206bdb2
+      Ubuntu: ami-17ba2a77
   VpcCidrs:
     subnet1:
       cidr: 192.168.2.0/24
@@ -32,7 +32,7 @@ Parameters:
     - m3.medium
     - m4.large
     ConstraintDescription: Must be a valid EC2 HVM instance type
-    Default: t2.micro
+    Default: m3.medium
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
   InstanceType:
     Type: String
@@ -44,7 +44,7 @@ Parameters:
     - m3.medium
     - m4.large
     ConstraintDescription: Must be a valid EC2 HVM instance type
-    Default: t2.micro
+    Default: t2.small
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
   BootstrapKeyName:
     Type: AWS::EC2::KeyPair::KeyName
@@ -345,17 +345,17 @@ Resources:
                 - path: /tmp/env.ikt
                   content: |
                     {{/* Global variables */}}
-                    {{ global "/aws/region" "${region}" }}
-                    {{ global "/aws/stackname" "${stackname}" }}
-                    {{ global "/aws/vpcid" "${Vpc}" }}
-                    {{ global "/aws/subnetid" "${PublicSubnet1}" }}
-                    {{ global "/aws/securitygroupid" "${SecurityGroup}" }}
-                    {{ global "/aws/amiid" "${ami}" }}
-                    {{ global "/aws/instancetype" "${InstanceType}" }}
-                    {{ global "/aws/instanceprofile" "${ClusterInstanceProfile}" }}
-                    {{ global "/aws/keyname" "${KeyName}" }}
-                    {{ global "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
-                    {{ global "/docker/aufs/size" "${AufsVolumeSize}" }}
+                    {{ var "/aws/region" "${region}" }}
+                    {{ var "/aws/stackname" "${stackname}" }}
+                    {{ var "/aws/vpcid" "${Vpc}" }}
+                    {{ var "/aws/subnetid" "${PublicSubnet1}" }}
+                    {{ var "/aws/securitygroupid" "${SecurityGroup}" }}
+                    {{ var "/aws/amiid" "${ami}" }}
+                    {{ var "/aws/instancetype" "${InstanceType}" }}
+                    {{ var "/aws/instanceprofile" "${ClusterInstanceProfile}" }}
+                    {{ var "/aws/keyname" "${KeyName}" }}
+                    {{ var "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
+                    {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
               runcmd:
                 - wget -qO- https://get.docker.com/ | sh
                 - usermod -G docker ubuntu

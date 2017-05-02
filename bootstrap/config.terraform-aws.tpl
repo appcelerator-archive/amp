@@ -1,14 +1,14 @@
 {{ source "default.ikt" }}
 {{ source "file:///infrakit/env.ikt" }}
-{{ $workerSize := ref "/swarm/size/worker" }}
+{{ $cattleWorkerSize := var "/swarm/size/worker/cattle" }}
 [
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-{{ ref "/aws/stackname" }}",
+      "ID": "amp-worker-cattle-{{ var "/aws/stackname" }}",
       "Properties": {
         "Allocation": {
-          "Size": {{ $workerSize }}
+          "Size": {{ $cattleWorkerSize }}
         },
         "Instance": {
           "Plugin": "instance-terraform",
@@ -44,14 +44,14 @@
               }, {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
-                  "SwarmJoinIP": "{{ ref "/bootstrap/ip" }}",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
+                  "SwarmJoinIP": "{{ var "/bootstrap/ip" }}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "unix:///var/run/docker.sock",
+                    {{ if var "/certificate/ca/service" }}"Host" : "unix:///var/run/docker.sock",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
                     {{ else }}"Host" : "unix:///var/run/docker.sock"

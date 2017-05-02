@@ -1,0 +1,506 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/account/account.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "accountAddResourceToTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "resource_id": {
+          "type": "string"
+        }
+      }
+    },
+    "accountAddUserToOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountAddUserToTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountChangeOrganizationMemberRoleRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/accountsOrganizationRole"
+        }
+      }
+    },
+    "accountChangeTeamResourcePermissionLevelRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "resource_id": {
+          "type": "string"
+        },
+        "permission_level": {
+          "$ref": "#/definitions/accountsTeamPermissionLevel"
+        }
+      }
+    },
+    "accountCreateOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "title": "Organizations"
+    },
+    "accountCreateTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      },
+      "title": "Teams"
+    },
+    "accountDeleteOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountDeleteTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountDeleteUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountForgotLoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "accountGetOrganizationReply": {
+      "type": "object",
+      "properties": {
+        "organization": {
+          "$ref": "#/definitions/accountsOrganization"
+        }
+      }
+    },
+    "accountGetOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountGetTeamReply": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "$ref": "#/definitions/accountsTeam"
+        }
+      }
+    },
+    "accountGetTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountGetUserOrganizationsReply": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsOrganization"
+          }
+        }
+      }
+    },
+    "accountGetUserOrganizationsRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountGetUserReply": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/accountsUser"
+        }
+      }
+    },
+    "accountGetUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountListOrganizationsReply": {
+      "type": "object",
+      "properties": {
+        "organizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsOrganization"
+          }
+        }
+      }
+    },
+    "accountListOrganizationsRequest": {
+      "type": "object"
+    },
+    "accountListTeamsReply": {
+      "type": "object",
+      "properties": {
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsTeam"
+          }
+        }
+      }
+    },
+    "accountListTeamsRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountListUsersReply": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsUser"
+          }
+        }
+      }
+    },
+    "accountListUsersRequest": {
+      "type": "object"
+    },
+    "accountLogInRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "accountPasswordChangeRequest": {
+      "type": "object",
+      "properties": {
+        "existingPassword": {
+          "type": "string"
+        },
+        "newPassword": {
+          "type": "string"
+        }
+      }
+    },
+    "accountPasswordResetRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountPasswordSetRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "accountRemoveResourceFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "resource_id": {
+          "type": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountSignUpRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "title": "Users"
+    },
+    "accountSwitchRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        }
+      }
+    },
+    "accountVerificationReply": {
+      "type": "object",
+      "properties": {
+        "reply": {
+          "type": "string"
+        }
+      }
+    },
+    "accountVerificationRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "accountsOrganization": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsOrganizationMember"
+          }
+        },
+        "teams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsTeam"
+          }
+        }
+      }
+    },
+    "accountsOrganizationMember": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/accountsOrganizationRole"
+        }
+      }
+    },
+    "accountsOrganizationRole": {
+      "type": "string",
+      "enum": [
+        "ORGANIZATION_MEMBER",
+        "ORGANIZATION_OWNER"
+      ],
+      "default": "ORGANIZATION_MEMBER"
+    },
+    "accountsTeam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accountsTeamResource"
+          }
+        }
+      }
+    },
+    "accountsTeamPermissionLevel": {
+      "type": "string",
+      "enum": [
+        "TEAM_READ",
+        "TEAM_WRITE",
+        "TEAM_ADMIN"
+      ],
+      "default": "TEAM_READ"
+    },
+    "accountsTeamResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "permission_level": {
+          "$ref": "#/definitions/accountsTeamPermissionLevel"
+        }
+      }
+    },
+    "accountsUser": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password_hash": {
+          "type": "string"
+        },
+        "is_verified": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "token_used": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    }
+  }
+}

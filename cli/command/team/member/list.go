@@ -11,53 +11,49 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listTeamMemOpts struct {
+type listTeamMemOptions struct {
 	org   string
 	team  string
 	quiet bool
 }
 
-var (
-	listTeamMemOptions = &listTeamMemOpts{}
-)
-
 // NewListTeamMemCommand returns a new instance of the list team member command.
 func NewListTeamMemCommand(c cli.Interface) *cobra.Command {
+	opts := listTeamMemOptions{}
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List members",
 		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTeamMem(c, cmd)
+			return listTeamMem(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&listTeamMemOptions.org, "org", "", "Organization name")
-	flags.StringVar(&listTeamMemOptions.team, "team", "", "Team name")
-	flags.BoolVarP(&listTeamMemOptions.quiet, "quiet", "q", false, "Only display team member names")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team member names")
 	return cmd
 }
 
-func listTeamMem(c cli.Interface, cmd *cobra.Command) error {
+func listTeamMem(c cli.Interface, cmd *cobra.Command, opts listTeamMemOptions) error {
 	if !cmd.Flag("org").Changed {
-		listTeamMemOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		listTeamMemOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
-
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
-		OrganizationName: listTeamMemOptions.org,
-		TeamName:         listTeamMemOptions.team,
+		OrganizationName: opts.org,
+		TeamName:         opts.team,
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listTeamMemOptions.quiet {
+	if opts.quiet {
 		for _, member := range reply.Team.Members {
 			c.Console().Println(member)
 		}

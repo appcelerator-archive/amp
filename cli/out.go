@@ -7,9 +7,9 @@ package cli
 
 import (
 	"io"
+	"log"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
 )
 
@@ -59,7 +59,7 @@ func (o *OutStream) GetTtySize() (uint, uint) {
 	}
 	ws, err := term.GetWinsize(o.fd)
 	if err != nil {
-		logrus.Debugf("Error getting size: %s", err)
+		log.Printf("Error getting size: %s\n", err)
 		if ws == nil {
 			return 0, 0
 		}

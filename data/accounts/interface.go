@@ -29,6 +29,7 @@ const (
 	NotPartOfOrganization     = Error("user is not part of the organization")
 	InvalidResourceID         = Error("invalid resource ID")
 	ResourceNotFound          = Error("resource not found")
+	TokenAlreadyUsed          = Error("token has already been used")
 )
 
 // Interface defines the user data access layer
@@ -47,6 +48,9 @@ type Interface interface {
 
 	// GetUserByEmail fetches a user by email
 	GetUserByEmail(ctx context.Context, email string) (user *User, err error)
+
+	// GetUserOrganizations gets the organizations the given user is member of
+	GetUserOrganizations(ctx context.Context, name string) (organizations []*Organization, err error)
 
 	// ListUsers lists users
 	ListUsers(ctx context.Context) (users []*User, err error)

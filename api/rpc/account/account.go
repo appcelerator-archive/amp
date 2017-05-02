@@ -3,7 +3,6 @@ package account
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/accounts"
@@ -32,6 +31,7 @@ func convertError(err error) error {
 		return grpc.Errorf(codes.Unauthenticated, err.Error())
 	case accounts.UserNotVerified:
 	case accounts.AtLeastOneOwner:
+	case accounts.TokenAlreadyUsed:
 		return grpc.Errorf(codes.FailedPrecondition, err.Error())
 	case accounts.UserAlreadyExists:
 	case accounts.EmailAlreadyUsed:
@@ -46,6 +46,18 @@ func convertError(err error) error {
 		return grpc.Errorf(codes.PermissionDenied, err.Error())
 	}
 	return grpc.Errorf(codes.Internal, err.Error())
+}
+
+func getServerAddress(ctx context.Context) string {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		return ""
+	}
+	authorities := md[":authority"]
+	if len(authorities) == 0 {
+		return ""
+	}
+	return authorities[0]
 }
 
 func (s *Server) getRequesterEmail(ctx context.Context) string {
@@ -82,13 +94,15 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	// Create a verification token valid for an hour
-	token, err := auth.CreateVerificationToken(user.Name, time.Hour)
+	token, err := auth.CreateVerificationToken(user.Name)
 	if err != nil {
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
+	// Get the server address used by the client
+
 	// Send the verification email
-	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
@@ -116,7 +130,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, err
 		return nil, convertError(err)
 	}
 	// Create an authentication token valid for a day
-	token, err := auth.CreateLoginToken(in.Name, "", 24*time.Hour)
+	token, err := auth.CreateLoginToken(in.Name, "")
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -140,12 +154,12 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, grpc.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
-	token, err := auth.CreatePasswordToken(user.Name, time.Hour)
+	token, err := auth.CreatePasswordToken(user.Name)
 	if err != nil {
 		return nil, convertError(err)
 	}
 	// Send the password reset email
-	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token); err != nil {
+	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
 		return nil, convertError(err)
 	}
 	log.Println("Successfully reset password for user", user.Name)
@@ -216,6 +230,17 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 	return &GetUserReply{User: user}, nil
 }
 
+// GetUserOrganizations implements account.GetUserOrganizations
+func (s *Server) GetUserOrganizations(ctx context.Context, in *GetUserOrganizationsRequest) (*GetUserOrganizationsReply, error) {
+	// Get the user's organizations
+	organizations, err := s.Accounts.GetUserOrganizations(ctx, in.Name)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	log.Printf("Successfully retrieved organizations for user %s \n", in.Name)
+	return &GetUserOrganizationsReply{Organizations: organizations}, nil
+}
+
 // ListUsers implements account.ListUsers
 func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUsersReply, error) {
 	users, err := s.Accounts.ListUsers(ctx)
@@ -269,7 +294,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 	}
 
 	// Create an authentication token valid for a day
-	token, err := auth.CreateLoginToken(userName, activeOrganization, 24*time.Hour)
+	token, err := auth.CreateLoginToken(userName, activeOrganization)
 	if err != nil {
 		return nil, convertError(err)
 	}

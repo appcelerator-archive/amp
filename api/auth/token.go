@@ -2,54 +2,75 @@ package auth
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
-// Token types
+// Token constants
 const (
+	TokenIssuer           = "amplifier"
 	TokenTypeVerification = "verification"
 	TokenTypeLogin        = "login"
 	TokenTypePassword     = "password"
+
+	VerificationTokenValidFor = time.Hour
+	LoginTokenValidFor        = 24 * time.Hour
+	PasswordTokenValidFor     = time.Hour
 )
 
-// AccountClaims represents account claims
-type AccountClaims struct {
+// AuthClaims represents authentication claims
+type AuthClaims struct {
+	Type               string `json:"Type"`
 	AccountName        string `json:"AccountName"`
 	ActiveOrganization string `json:"ActiveOrganization"`
-	Type               string `json:"Type"`
 	jwt.StandardClaims
 }
 
-// CreateVerificationToken creates a verification token for a given user name
-func CreateVerificationToken(name string, validFor time.Duration) (string, error) {
-	return createToken(name, "", TokenTypeVerification, validFor)
+// CreateVerificationToken creates a verification token for a given user
+func CreateVerificationToken(name string) (string, error) {
+	claims := AuthClaims{
+		Type:        TokenTypeVerification,
+		AccountName: name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(VerificationTokenValidFor).Unix(),
+			Issuer:    TokenIssuer,
+		},
+	}
+	return createToken(claims)
 }
 
-// CreateLoginToken creates a login token for a given user name
-func CreateLoginToken(name string, activeOrganization string, validFor time.Duration) (string, error) {
-	return createToken(name, activeOrganization, TokenTypeLogin, validFor)
+// CreateLoginToken creates a login token for a given account
+func CreateLoginToken(name string, activeOrganization string) (string, error) {
+	claims := AuthClaims{
+		Type:               TokenTypeLogin,
+		AccountName:        name,
+		ActiveOrganization: activeOrganization,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(LoginTokenValidFor).Unix(),
+			Issuer:    TokenIssuer,
+		},
+	}
+	return createToken(claims)
 }
 
 // CreatePasswordToken creates a password token for a given user name
-func CreatePasswordToken(name string, validFor time.Duration) (string, error) {
-	return createToken(name, "", TokenTypePassword, validFor)
+func CreatePasswordToken(name string) (string, error) {
+	claims := AuthClaims{
+		Type:        TokenTypePassword,
+		AccountName: name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(PasswordTokenValidFor).Unix(),
+			Issuer:    TokenIssuer,
+		},
+	}
+	return createToken(claims)
 }
 
 // createToken creates a token for a given user name
-func createToken(account string, activeOrganization string, tokenType string, validFor time.Duration) (string, error) {
+func createToken(claims jwt.Claims) (string, error) {
 	// Forge the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, AccountClaims{
-		account,
-		activeOrganization,
-		tokenType,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(validFor).Unix(),
-			Issuer:    os.Args[0],
-		},
-	})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to issue token")
@@ -58,8 +79,8 @@ func createToken(account string, activeOrganization string, tokenType string, va
 }
 
 // ValidateToken validates a token and return its claims
-func ValidateToken(signedString string, tokenType string) (*AccountClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &AccountClaims{}, func(t *jwt.Token) (interface{}, error) {
+func ValidateToken(signedString string, tokenType string) (*AuthClaims, error) {
+	token, err := jwt.ParseWithClaims(signedString, &AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
@@ -68,7 +89,7 @@ func ValidateToken(signedString string, tokenType string) (*AccountClaims, error
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
-	claims, ok := token.Claims.(*AccountClaims)
+	claims, ok := token.Claims.(*AuthClaims)
 	if !ok {
 		return nil, fmt.Errorf("invalid claims")
 	}

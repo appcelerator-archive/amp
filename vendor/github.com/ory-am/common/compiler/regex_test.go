@@ -1,9 +1,10 @@
 package compiler
 
 import (
-	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRegexCompiler(t *testing.T) {

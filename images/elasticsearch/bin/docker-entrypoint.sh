@@ -38,10 +38,54 @@ fi
 ES_JAVA_OPTS="${ES_JAVA_OPTS} -Djava.security.policy=file:///opt/elasticsearch/config/java.policy"
 export ES_JAVA_OPTS
 
+echo "memory lock limit:"
+ulimit -Hl
+ulimit -l
 echo -n "Hard limit max open fd:"
 ulimit -Hn
 echo -n "Max open fd:"
 ulimit -n
+
+SECONDS=0
+echo "resolving the container IP with Docker DNS..."
+while [ -z "$cip" ]; do
+  cip=$(dig +short $(hostname))
+  # checking that the returned IP is really an IP
+  echo "$cip" | egrep -qe "^[0-9\.]+$"
+  if [ -z "$cip" ]; then
+    sleep 1
+  fi
+  [[ $SECONDS -gt 10 ]] && break
+done
+if [[ -z "$cip" ]]; then
+  cip=$(grep $(hostname) /etc/hosts |awk '{print $1}' | head -1)
+fi
+if [[ -z "$cip" ]]; then
+  echo "unable to get this container's ip"
+  exit 1
+fi
+echo "this node ip is $cip"
+export PUBLISH_HOST=$cip
+
+# if the unicast hosts is the list of tasks from a swarm service, we need to substract this node IP
+echo "$UNICAST_HOSTS" | grep -q "^tasks."
+if [[ $? -eq 0 ]]; then
+  # wait for master nodes to be available
+  echo "waiting for other tasks to be available..."
+  SECONDS=0
+  typeset -i count=0
+  while [[ $count -lt $MIN_MASTER_NODES ]]; do
+    if [[ $SECONDS -gt 15 ]]; then
+      echo "Expecting $MIN_MASTER_NODES tasks, only found $count after $SECONDS sec, abort"
+      exit 1
+    fi
+    sleep 1
+    tips=$(dig +short $UNICAST_HOSTS | grep -v "$cip")
+    count=$(echo $tips | wc -w)
+  done
+  UNICAST_HOSTS=$(echo $tips | tr ' ' ',')
+  echo "$count tasks found for unicast zen discovery ($UNICAST_HOSTS)"
+fi
 
 if [[ -f $ES_CONF.tpl ]]; then
     mv $ES_CONF $ES_CONF.bak
@@ -62,7 +106,7 @@ if [[ $runes -eq 1 && "$(id -u)" = '0' ]]; then
     echo "INFO - setting user perms on elasticsearch data dir"
     # Change the ownership of /opt/elasticsearch/data to elasticsearch
     chown -R elastico:elastico /opt/elasticsearch/data
-    
+
     echo "INFO - running $1 as user elastico"
     set -- gosu elastico "$@"
 fi

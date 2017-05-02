@@ -3,9 +3,15 @@ syntax = "proto3";
 package stack;
 
 import "github.com/appcelerator/amp/data/stacks/stacks.proto";
+import "google/api/annotations.proto";
 
 service Stack {
-  rpc Deploy (DeployRequest) returns (DeployReply);
+  rpc Deploy (DeployRequest) returns (DeployReply) {
+    option (google.api.http) = {
+      post: "/v1/stack",
+      body: "*"
+    };
+  }
   rpc List (ListRequest) returns (ListReply);
   rpc Remove (RemoveRequest) returns (RemoveReply);
 }
@@ -36,5 +42,5 @@ message RemoveRequest {
 }
 
 message RemoveReply {
- string answer =1;
+  string answer =1;
 }

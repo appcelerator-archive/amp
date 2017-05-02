@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	DefaultPort          = ":50101"
-	DefaultPublicAddress = "local.appcelerator.io"
-	DefaultTimeout       = time.Minute
+	DefaultPort    = ":50101"
+	DefaultTimeout = time.Minute
 )
 
 // Config is used for amplifier configuration settings
@@ -20,7 +19,6 @@ type Configuration struct {
 	Version          string
 	Build            string
 	Port             string
-	PublicAddress    string
 	EtcdEndpoints    []string
 	ElasticsearchURL string
 	NatsURL          string

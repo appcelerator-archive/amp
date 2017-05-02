@@ -4,7 +4,7 @@ RUN apk --no-cache add nodejs
 
 # Kibana installation
 ENV KIBANA_MAJOR 5.3
-ENV KIBANA_VERSION 5.3.0
+ENV KIBANA_VERSION 5.3.2
 RUN curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz \
     && mkdir /opt \
     && tar xzf /kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz -C /opt \

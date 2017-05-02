@@ -1,0 +1,106 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/function/function.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/accountsAccountType"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountsAccountType": {
+      "type": "string",
+      "enum": [
+        "USER",
+        "ORGANIZATION"
+      ],
+      "default": "USER"
+    },
+    "functionCreateReply": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "$ref": "#/definitions/functionsFunction"
+        }
+      }
+    },
+    "functionCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        }
+      }
+    },
+    "functionDeleteRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "functionListReply": {
+      "type": "object",
+      "properties": {
+        "functions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/functionsFunction"
+          }
+        }
+      }
+    },
+    "functionListRequest": {
+      "type": "object"
+    },
+    "functionsFunction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    }
+  }
+}

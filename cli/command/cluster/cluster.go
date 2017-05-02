@@ -10,6 +10,7 @@ type clusterOpts struct {
 	workers  int
 	provider string
 	name     string
+	tag      string
 }
 
 const (
@@ -17,7 +18,13 @@ const (
 )
 
 var (
-	opts = &clusterOpts{3, 2, "local", ""}
+	opts = &clusterOpts{
+		managers: 3,
+		workers:  2,
+		provider: "local",
+		name:     "",
+		tag:      "latest",
+	}
 )
 
 // NewClusterCommand returns a new instance of the cluster command.

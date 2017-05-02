@@ -38,3 +38,34 @@ func ExactArgs(num int) func(cmd *cobra.Command, args []string) error {
 		)
 	}
 }
+
+// AtLeastArgs returns an error if the min number of args are not passed
+func AtLeastArgs(min int) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) >= min {
+			return nil
+		}
+		return fmt.Errorf(
+			"\"%s\" requires at least %d argument(s).\nSee '%s --help'",
+			cmd.CommandPath(),
+			min,
+			cmd.CommandPath(),
+		)
+	}
+}
+
+// RangeArgs returns an error if the min and max number of args are not passed
+func RangeArgs(min int, max int) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) >= min && len(args) <= max {
+			return nil
+		}
+		return fmt.Errorf(
+			"\"%s\" requires at least %d argument(s) and at most %d argument(s).\nSee '%s --help'",
+			cmd.CommandPath(),
+			min,
+			max,
+			cmd.CommandPath(),
+		)
+	}
+}
