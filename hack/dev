@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 readonly CID="f573e897-7aa0-4516-a195-42ee91039e97"
 readonly SP="$(cd "$(dirname "$0")"; pwd -P)"

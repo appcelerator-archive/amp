@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 DEST=$GOPATH/src/$1
 NAME=$2
