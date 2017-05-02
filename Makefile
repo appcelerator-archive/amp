@@ -124,7 +124,7 @@ $(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC)
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) hack/lbuild $(REPO)/bin $(AMP) $(AMPPKG) $(LDFLAGS)
 	@echo "bin/$(GOOS)/$(GOARCH)/$(AMP)"
 
-build-cli: $(AMPTARGET)
+build-cli: $(AMPTARGET) build-bootstrap
 
 .PHONY: rebuild-cli
 rebuild-cli: clean-cli build-cli
@@ -339,13 +339,14 @@ clean-ui:
 AMPBOOTDIR := bootstrap
 AMPBOOTBIN := bootstrap
 AMPBOOTIMG := appcelerator/amp-bootstrap
+AMPBOOTVER ?= local
 AMPBOOTSRC := hack/deploy hack/dev $(shell find $(AMPBOOTDIR) -type f)
 
 .PHONY: build-bootstrap
 build-bootstrap:
-	@echo "Building $(AMPBOOTIMG)"
+	@echo "Building $(AMPBOOTIMG):$(AMPBOOTVER)"
 	@cp -r hack stacks $(AMPBOOTDIR)
-	@$(DOCKER_CMD) build --no-cache -t $(AMPBOOTIMG) $(AMPBOOTDIR)
+	@$(DOCKER_CMD) build -t $(AMPBOOTIMG):$(AMPBOOTVER) $(AMPBOOTDIR) >/dev/null
 	@rm -rf $(AMPBOOTDIR)/hack $(AMPBOOTDIR)/stacks
 
 .PHONY: push-bootstrap
