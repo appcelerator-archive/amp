@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package service;
+
+service Service {
+  rpc Tasks (TasksRequest) returns (TasksReply);
+}
+
+message TasksRequest {
+  string service_id = 1;
+}
+
+message Task {
+  string id = 1;
+  string image = 2;
+  string state = 3;
+  string desired_state = 4;
+  string node_id = 5;
+}
+
+message TasksReply {
+  repeated Task tasks = 1;
+}

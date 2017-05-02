@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/flags"
 	"github.com/docker/docker/client"
@@ -166,6 +167,15 @@ func (d *Docker) StackRemove(ctx context.Context, stackName string) (output stri
 		return "", err
 	}
 	return string(output), nil
+}
+
+func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
+	if !d.connected {
+		if err := d.Connect(); err != nil {
+			return nil, err
+		}
+	}
+	return d.client.TaskList(ctx, options)
 }
 
 func cliWrapper(cmd func(cli *command.DockerCli) error) (string, error) {
