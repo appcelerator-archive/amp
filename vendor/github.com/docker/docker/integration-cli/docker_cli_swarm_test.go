@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudflare/cfssl/helpers"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/integration-cli/checker"
@@ -50,6 +51,13 @@ func (s *DockerSwarmSuite) TestSwarmUpdate(c *check.C) {
 	c.Assert(out, checker.Contains, "minimum certificate expiry time")
 	spec = getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
+
+	// passing an external CA (this is without starting a root rotation) does not fail
+	out, err = d.Cmd("swarm", "update", "--external-ca", "protocol=cfssl,url=https://something.org")
+	c.Assert(err, checker.IsNil, check.Commentf("out: %v", out))
+
+	spec = getSpec()
+	c.Assert(spec.CAConfig.ExternalCAs, checker.HasLen, 1)
 }
 
 func (s *DockerSwarmSuite) TestSwarmInit(c *check.C) {
@@ -60,12 +68,14 @@ func (s *DockerSwarmSuite) TestSwarmInit(c *check.C) {
 		return sw.Spec
 	}
 
-	cli.Docker(cli.Args("swarm", "init", "--cert-expiry", "30h", "--dispatcher-heartbeat", "11s"),
+	cli.Docker(cli.Args("swarm", "init", "--cert-expiry", "30h", "--dispatcher-heartbeat", "11s",
+		"--external-ca", "protocol=cfssl,url=https://something.org"),
 		cli.Daemon(d.Daemon)).Assert(c, icmd.Success)
 
 	spec := getSpec()
 	c.Assert(spec.CAConfig.NodeCertExpiry, checker.Equals, 30*time.Hour)
 	c.Assert(spec.Dispatcher.HeartbeatPeriod, checker.Equals, 11*time.Second)
+	c.Assert(spec.CAConfig.ExternalCAs, checker.HasLen, 1)
 
 	c.Assert(d.Leave(true), checker.IsNil)
 	time.Sleep(500 * time.Millisecond) // https://github.com/docker/swarmkit/issues/1421
@@ -1212,10 +1222,6 @@ func (s *DockerSwarmSuite) TestSwarmJoinPromoteLocked(c *check.C) {
 		c.Assert(getNodeStatus(c, d), checker.Equals, swarm.LocalNodeStateActive)
 	}
 
-	// get d3's cert
-	d3cert, err := ioutil.ReadFile(filepath.Join(d3.Folder, "root", "swarm", "certificates", "swarm-node.crt"))
-	c.Assert(err, checker.IsNil)
-
 	// demote manager back to worker - workers are not locked
 	outs, err = d1.Cmd("node", "demote", d3.Info.NodeID)
 	c.Assert(err, checker.IsNil)
@@ -1228,12 +1234,16 @@ func (s *DockerSwarmSuite) TestSwarmJoinPromoteLocked(c *check.C) {
 	// is set to autolock)
 	waitAndAssert(c, defaultReconciliationTimeout, d3.CheckControlAvailable, checker.False)
 	waitAndAssert(c, defaultReconciliationTimeout, func(c *check.C) (interface{}, check.CommentInterface) {
-		cert, err := ioutil.ReadFile(filepath.Join(d3.Folder, "root", "swarm", "certificates", "swarm-node.crt"))
+		certBytes, err := ioutil.ReadFile(filepath.Join(d3.Folder, "root", "swarm", "certificates", "swarm-node.crt"))
 		if err != nil {
 			return "", check.Commentf("error: %v", err)
 		}
-		return string(cert), check.Commentf("cert: %v", string(cert))
-	}, checker.Not(checker.Equals), string(d3cert))
+		certs, err := helpers.ParseCertificatesPEM(certBytes)
+		if err == nil && len(certs) > 0 && len(certs[0].Subject.OrganizationalUnit) > 0 {
+			return certs[0].Subject.OrganizationalUnit[0], nil
+		}
+		return "", check.Commentf("could not get organizational unit from certificate")
+	}, checker.Equals, "swarm-worker")
 
 	// by now, it should *never* be locked on restart
 	d3.Restart(c)

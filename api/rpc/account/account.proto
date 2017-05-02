@@ -16,6 +16,7 @@ service Account {
   rpc PasswordChange (PasswordChangeRequest) returns (google.protobuf.Empty);
   rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty);
   rpc GetUser (GetUserRequest) returns (GetUserReply);
+  rpc GetUserOrganizations (GetUserOrganizationsRequest) returns (GetUserOrganizationsReply);
   rpc ListUsers (ListUsersRequest) returns (ListUsersReply);
   rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
   rpc Switch (SwitchRequest) returns (google.protobuf.Empty);
@@ -89,6 +90,14 @@ message GetUserRequest {
 
 message GetUserReply {
   accounts.User user = 1;
+}
+
+message GetUserOrganizationsRequest {
+  string name = 1;
+}
+
+message GetUserOrganizationsReply {
+  repeated accounts.Organization organizations = 1;
 }
 
 message ListUsersRequest {

@@ -1,5 +1,5 @@
 _install_docker() {
   wget -qO- https://get.docker.com/ | sh
-  usermod -G docker ubuntu
-  systemctl enable docker.service
+  grep -qw docker /etc/group && grep -qw ubuntu /etc/passwd && usermod -G docker ubuntu || true
+  systemctl enable docker.service || true
 }

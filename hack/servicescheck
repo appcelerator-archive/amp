@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 TIMEOUT="${1:-300}"
 INTERVAL="${2:-2}"

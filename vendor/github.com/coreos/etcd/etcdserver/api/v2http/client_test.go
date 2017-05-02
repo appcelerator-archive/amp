@@ -104,18 +104,18 @@ func (s *serverRecorder) Process(_ context.Context, m raftpb.Message) error {
 	s.actions = append(s.actions, action{name: "Process", params: []interface{}{m}})
 	return nil
 }
-func (s *serverRecorder) AddMember(_ context.Context, m membership.Member) error {
+func (s *serverRecorder) AddMember(_ context.Context, m membership.Member) ([]*membership.Member, error) {
 	s.actions = append(s.actions, action{name: "AddMember", params: []interface{}{m}})
-	return nil
+	return nil, nil
 }
-func (s *serverRecorder) RemoveMember(_ context.Context, id uint64) error {
+func (s *serverRecorder) RemoveMember(_ context.Context, id uint64) ([]*membership.Member, error) {
 	s.actions = append(s.actions, action{name: "RemoveMember", params: []interface{}{id}})
-	return nil
+	return nil, nil
 }
 
-func (s *serverRecorder) UpdateMember(_ context.Context, m membership.Member) error {
+func (s *serverRecorder) UpdateMember(_ context.Context, m membership.Member) ([]*membership.Member, error) {
 	s.actions = append(s.actions, action{name: "UpdateMember", params: []interface{}{m}})
-	return nil
+	return nil, nil
 }
 
 func (s *serverRecorder) ClusterVersion() *semver.Version { return nil }
@@ -149,11 +149,17 @@ func (rs *resServer) Leader() types.ID { return types.ID(1) }
 func (rs *resServer) Do(_ context.Context, _ etcdserverpb.Request) (etcdserver.Response, error) {
 	return rs.res, nil
 }
-func (rs *resServer) Process(_ context.Context, _ raftpb.Message) error         { return nil }
-func (rs *resServer) AddMember(_ context.Context, _ membership.Member) error    { return nil }
-func (rs *resServer) RemoveMember(_ context.Context, _ uint64) error            { return nil }
-func (rs *resServer) UpdateMember(_ context.Context, _ membership.Member) error { return nil }
-func (rs *resServer) ClusterVersion() *semver.Version                           { return nil }
+func (rs *resServer) Process(_ context.Context, _ raftpb.Message) error { return nil }
+func (rs *resServer) AddMember(_ context.Context, _ membership.Member) ([]*membership.Member, error) {
+	return nil, nil
+}
+func (rs *resServer) RemoveMember(_ context.Context, _ uint64) ([]*membership.Member, error) {
+	return nil, nil
+}
+func (rs *resServer) UpdateMember(_ context.Context, _ membership.Member) ([]*membership.Member, error) {
+	return nil, nil
+}
+func (rs *resServer) ClusterVersion() *semver.Version { return nil }
 
 func boolp(b bool) *bool { return &b }
 
@@ -1211,56 +1217,6 @@ func TestWriteEvent(t *testing.T) {
 			t.Errorf("case %d: bad response code: got %d, want %v", i, rw.Code, tt.code)
 		}
 
-	}
-}
-
-func TestV2DeprecatedMachinesEndpoint(t *testing.T) {
-	tests := []struct {
-		method string
-		wcode  int
-	}{
-		{"GET", http.StatusOK},
-		{"HEAD", http.StatusOK},
-		{"POST", http.StatusMethodNotAllowed},
-	}
-
-	m := &deprecatedMachinesHandler{cluster: &fakeCluster{}}
-	s := httptest.NewServer(m)
-	defer s.Close()
-
-	for _, tt := range tests {
-		req, err := http.NewRequest(tt.method, s.URL+deprecatedMachinesPrefix, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if resp.StatusCode != tt.wcode {
-			t.Errorf("StatusCode = %d, expected %d", resp.StatusCode, tt.wcode)
-		}
-	}
-}
-
-func TestServeMachines(t *testing.T) {
-	cluster := &fakeCluster{
-		clientURLs: []string{"http://localhost:8080", "http://localhost:8081", "http://localhost:8082"},
-	}
-	writer := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	h := &deprecatedMachinesHandler{cluster: cluster}
-	h.ServeHTTP(writer, req)
-	w := "http://localhost:8080, http://localhost:8081, http://localhost:8082"
-	if g := writer.Body.String(); g != w {
-		t.Errorf("body = %s, want %s", g, w)
-	}
-	if writer.Code != http.StatusOK {
-		t.Errorf("code = %d, want %d", writer.Code, http.StatusOK)
 	}
 }
 

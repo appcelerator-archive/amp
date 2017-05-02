@@ -31,3 +31,20 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
+
+  amp-ui:
+    image: appcelerator/amp-ui:1.0.0
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+    environment:
+      SERVICE_PORTS: "3333"
+      VIRTUAL_HOST: "https://ui.*"
+      LOCAL_ENDPOINT: "true"
+      ENDPOINTS: "cloud.atomiq.io"
+    labels:
+      io.amp.role: "infrastructure"

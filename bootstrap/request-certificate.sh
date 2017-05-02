@@ -27,8 +27,8 @@ DNS.2       = $(hostname)
 IP.1       = 192.168.2.200
 EOF
 
-openssl genrsa -out {{ ref "/docker/remoteapi/srvkeyfile" }} 2048 || exit 1
-openssl req -subj "/CN=$(hostname)" -sha256 -new -key {{ ref "/docker/remoteapi/srvkeyfile" }} -out {{ ref "/docker/remoteapi/srvcertfile" }}.csr || exit 1
-curl --data "csr=$(sed 's/+/%2B/g' {{ ref "/docker/remoteapi/srvcertfile" }}.csr);ext=$(cat $cacfg)"  {{ ref "/certificate/ca/service" }}/csr > {{ ref "/docker/remoteapi/srvcertfile" }}
-curl {{ ref "/certificate/ca/service" }}/ca > {{ ref "/docker/remoteapi/cafile" }}
-rm -f {{ ref "/docker/remoteapi/srvcertfile" }}.csr $cfg $cacfg
+openssl genrsa -out {{ var "/docker/remoteapi/srvkeyfile" }} 2048 || exit 1
+openssl req -subj "/CN=$(hostname)" -sha256 -new -key {{ var "/docker/remoteapi/srvkeyfile" }} -out {{ var "/docker/remoteapi/srvcertfile" }}.csr || exit 1
+curl --data "csr=$(sed 's/+/%2B/g' {{ var "/docker/remoteapi/srvcertfile" }}.csr);ext=$(cat $cacfg)"  {{ var "/certificate/ca/service" }}/csr > {{ var "/docker/remoteapi/srvcertfile" }}
+curl {{ var "/certificate/ca/service" }}/ca > {{ var "/docker/remoteapi/cafile" }}
+rm -f {{ var "/docker/remoteapi/srvcertfile" }}.csr $cfg $cacfg

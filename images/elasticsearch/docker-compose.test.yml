@@ -4,5 +4,5 @@ services:
     build: .
     image: appcelerator/elasticsearch-amp
     environment:
-      FORCE_HOSTNAME: 127.0.0.1
+      HOST: 127.0.0.1
     command: "--version"

@@ -1,34 +1,34 @@
 {{ source "default.ikt" }}
 {{ source "file:///infrakit/env.ikt" }}
-{{ $workerSize := ref "/swarm/size/worker" }}
+{{ $workerSize := var "/swarm/size/worker" }}
 [
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-manager-{{ ref "/aws/vpcid" }}",
+      "ID": "amp-manager-{{ var "/aws/vpcid" }}",
       "Properties": {
         "Allocation": {
           "LogicalIds": [
-            "{{ ref "/m1/ip" }}",
-            "{{ ref "/m2/ip" }}",
-            "{{ ref "/m3/ip" }}"
+            "{{ var "/m1/ip" }}",
+            "{{ var "/m2/ip" }}",
+            "{{ var "/m3/ip" }}"
           ]
         },
         "Instance": {
           "Plugin": "instance-aws",
           "Properties": {
             "RunInstancesInput": {
-              "ImageId": "{{ ref "/aws/amiid" }}",
-              "InstanceType": "{{ ref "/aws/instancetype" }}",
-              "KeyName": "{{ ref "/aws/keyname" }}",
-              "SubnetId": "{{ ref "/aws/subnetid" }}",
-              {{ if ref "/aws/instanceprofile" }}"IamInstanceProfile": {
-                "Name": "{{ ref "/aws/instanceprofile" }}"
+              "ImageId": "{{ var "/aws/amiid" }}",
+              "InstanceType": "{{ var "/aws/instancetype" }}",
+              "KeyName": "{{ var "/aws/keyname" }}",
+              "SubnetId": "{{ var "/aws/subnetid" }}",
+              {{ if var "/aws/instanceprofile" }}"IamInstanceProfile": {
+                "Name": "{{ var "/aws/instanceprofile" }}"
               },{{ end }}
-              "SecurityGroupIds": [ "{{ ref "/aws/securitygroupid" }}" ]
+              "SecurityGroupIds": [ "{{ var "/aws/securitygroupid" }}" ]
             },
             "Tags": {
-              "Name": "{{ ref "/aws/stackname" }}-manager",
+              "Name": "{{ var "/aws/stackname" }}-manager",
               "Deployment": "Infrakit",
               "Role" : "manager"
             }
@@ -49,17 +49,17 @@
               }, {
                 "Plugin": "flavor-swarm/manager",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/manager-init.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.tpl",
+                  "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }
@@ -68,10 +68,10 @@
                 "Properties": {
                   "Init": [
                     "set -o errexit",
-                    "docker network inspect {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "  docker network create -d overlay --attachable {{ ref "/amp/network" }}",
-                    "docker service ls {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "docker service create --name amplifier --network {{ ref "/amp/network" }} {{ ref "/amp/amplifier/image" }}:{{ ref "/amp/amplifier/version" }} || true"
+                    "docker network inspect {{ var "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
+                    "  docker network create -d overlay --attachable {{ var "/amp/network" }}",
+                    "docker service ls {{ var "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
+                    "docker service create --name amplifier --network {{ var "/amp/network" }} {{ var "/amp/amplifier/image" }}:{{ var "/amp/amplifier/version" }} || true"
                   ]
                 }
               }
@@ -84,7 +84,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-{{ ref "/aws/vpcid" }}",
+      "ID": "amp-worker-{{ var "/aws/vpcid" }}",
       "Properties": {
         "Allocation": {
           "Size": {{ $workerSize }}
@@ -93,17 +93,17 @@
           "Plugin": "instance-aws",
           "Properties": {
             "RunInstancesInput": {
-              "ImageId": "{{ ref "/aws/amiid" }}",
-              "InstanceType": "{{ ref "/aws/instancetype" }}",
-              "KeyName": "{{ ref "/aws/keyname" }}",
-              "SubnetId": "{{ ref "/aws/subnetid" }}",
-              {{ if ref "/aws/instanceprofile" }}"IamInstanceProfile": {
-                "Name": "{{ ref "/aws/instanceprofile" }}"
+              "ImageId": "{{ var "/aws/amiid" }}",
+              "InstanceType": "{{ var "/aws/instancetype" }}",
+              "KeyName": "{{ var "/aws/keyname" }}",
+              "SubnetId": "{{ var "/aws/subnetid" }}",
+              {{ if var "/aws/instanceprofile" }}"IamInstanceProfile": {
+                "Name": "{{ var "/aws/instanceprofile" }}"
               },{{ end }}
-              "SecurityGroupIds": [ "{{ ref "/aws/securitygroupid" }}" ]
+              "SecurityGroupIds": [ "{{ var "/aws/securitygroupid" }}" ]
             },
             "Tags": {
-              "Name": "{{ ref "/aws/stackname" }}-worker",
+              "Name": "{{ var "/aws/stackname" }}-worker",
               "Deployment": "Infrakit",
               "Role" : "worker"
             }
@@ -124,17 +124,17 @@
               }, {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
+                  "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }

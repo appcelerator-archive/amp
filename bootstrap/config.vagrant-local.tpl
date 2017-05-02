@@ -1,6 +1,6 @@
 {{ source "default.ikt" }}
 {{ source "env.ikt" }}
-{{ $workerSize := ref "/swarm/size/worker" }}
+{{ $workerSize := var "/swarm/size/worker" }}
 [
   {
     "Plugin": "group",
@@ -9,9 +9,9 @@
       "Properties": {
         "Allocation": {
           "LogicalIds": [
-            "{{ ref "/m1/ip" }}",
-            "{{ ref "/m2/ip" }}",
-            "{{ ref "/m3/ip" }}"
+            "{{ var "/m1/ip" }}",
+            "{{ var "/m2/ip" }}",
+            "{{ var "/m3/ip" }}"
           ]
         },
         "Instance": {
@@ -35,17 +35,17 @@
               }, {
                 "Plugin": "flavor-swarm/manager",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/manager-init.vagrant.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.vagrant.tpl",
+                  "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }
@@ -54,10 +54,10 @@
                 "Properties": {
                   "Init": [
                     "set -o errexit",
-                    "docker network inspect {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "  docker network create -d overlay --attachable {{ ref "/amp/network" }}",
-                    "docker service ls {{ ref "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
-                    "docker service create --name amplifier --network {{ ref "/amp/network" }} {{ ref "/amp/amplifier/image" }}:{{ ref "/amp/amplifier/version" }} || true"
+                    "docker network inspect {{ var "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
+                    "  docker network create -d overlay --attachable {{ var "/amp/network" }}",
+                    "docker service ls {{ var "/amp/network" }} 2>&1 | grep -q 'No such network' && \\",
+                    "docker service create --name amplifier --network {{ var "/amp/network" }} {{ var "/amp/amplifier/image" }}:{{ var "/amp/amplifier/version" }} || true"
                   ]
                 }
               }
@@ -96,17 +96,17 @@
               }, {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
-                  "InitScriptTemplateURL": "{{ ref "/script/baseurl" }}/worker-init.vagrant.tpl",
-                  "SwarmJoinIP": "{{ ref "/m1/ip" }}",
+                  "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.vagrant.tpl",
+                  "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if ref "/certificate/ca/service" }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/tlsport" }}",
+                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
                     "TLS" : {
-                      "CAFile": "{{ ref "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ ref "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ ref "/docker/remoteapi/keyfile" }}",
+                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
+                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
+                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
                       "InsecureSkipVerify": false
                     }
-                    {{ else }}"Host" : "tcp://{{ ref "/m1/ip" }}:{{ ref "/docker/remoteapi/port" }}"
+                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                     {{ end }}
                   }
                 }

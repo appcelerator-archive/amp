@@ -1,7 +1,8 @@
 package member
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -10,55 +11,53 @@ import (
 	"google.golang.org/grpc"
 )
 
-type remTeamMemOpts struct {
-	org    string
-	team   string
-	member string
+type remTeamMemOptions struct {
+	org  string
+	team string
 }
-
-var (
-	remTeamMemOptions = &remTeamMemOpts{}
-)
 
 // NewRemoveTeamMemCommand returns a new instance of the remove team member command.
 func NewRemoveTeamMemCommand(c cli.Interface) *cobra.Command {
+	opts := remTeamMemOptions{}
 	cmd := &cobra.Command{
-		Use:     "rm [OPTIONS]",
+		Use:     "rm [OPTIONS] MEMBER(S)",
 		Short:   "Remove member from team",
 		Aliases: []string{"remove"},
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return remTeamMem(c, cmd)
+			return remTeamMem(c, cmd, args, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&remTeamMemOptions.org, "org", "", "Organization name")
-	flags.StringVar(&remTeamMemOptions.team, "team", "", "Team name")
-	flags.StringVar(&remTeamMemOptions.member, "member", "", "Member name")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
-func remTeamMem(c cli.Interface, cmd *cobra.Command) error {
+func remTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts remTeamMemOptions) error {
+	var errs []string
 	if !cmd.Flag("org").Changed {
-		remTeamMemOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		remTeamMemOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
-	if !cmd.Flag("member").Changed {
-		remTeamMemOptions.member = c.Console().GetInput("member name")
-	}
-
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	request := &account.RemoveUserFromTeamRequest{
-		OrganizationName: remTeamMemOptions.org,
-		TeamName:         remTeamMemOptions.team,
-		UserName:         remTeamMemOptions.member,
+	for _, member := range args {
+		request := &account.RemoveUserFromTeamRequest{
+			OrganizationName: opts.org,
+			TeamName:         opts.team,
+			UserName:         member,
+		}
+		if _, err := client.RemoveUserFromTeam(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
+		c.Console().Println(member)
 	}
-	if _, err := client.RemoveUserFromTeam(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
-	c.Console().Println("Member has been removed from team.")
 	return nil
 }

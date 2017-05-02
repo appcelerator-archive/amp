@@ -3,6 +3,8 @@ package stack
 import (
 	"errors"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
@@ -12,7 +14,6 @@ import (
 )
 
 type deployOpts struct {
-	name string
 	file string
 }
 
@@ -26,18 +27,24 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 		Use:     "deploy",
 		Aliases: []string{"up", "start"},
 		Short:   "Deploy a stack with a docker compose v3 file",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.name = args[0]
-			return deploy(c)
+			return deploy(c, args)
 		},
 	}
 	cmd.Flags().StringVarP(&opts.file, "compose-file", "c", "", "Path to a Compose v3 file")
 	return cmd
 }
 
-func deploy(c cli.Interface) error {
-	c.Console().Printf("Deploying stack %s using %s\n", opts.name, opts.file)
+func deploy(c cli.Interface, args []string) error {
+	var name string
+	if len(args) == 0 {
+		basename := filepath.Base(opts.file)
+		name = strings.TrimSuffix(basename, filepath.Ext(opts.file))
+	} else {
+		name = args[0]
+	}
+	c.Console().Printf("Deploying stack %s using %s\n", name, opts.file)
 
 	contents, err := ioutil.ReadFile(opts.file)
 	if err != nil {
@@ -45,7 +52,7 @@ func deploy(c cli.Interface) error {
 	}
 
 	req := &stack.DeployRequest{
-		Name:    opts.name,
+		Name:    name,
 		Compose: contents,
 	}
 

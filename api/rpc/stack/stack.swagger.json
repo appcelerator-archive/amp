@@ -1,0 +1,148 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/stack/stack.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/stack": {
+      "post": {
+        "operationId": "Deploy",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackDeployReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/stackDeployRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Stack"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/accountsAccountType"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountsAccountType": {
+      "type": "string",
+      "enum": [
+        "USER",
+        "ORGANIZATION"
+      ],
+      "default": "USER"
+    },
+    "stackDeployReply": {
+      "type": "object",
+      "properties": {
+        "full_name": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        }
+      }
+    },
+    "stackDeployRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "compose": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "stackListReply": {
+      "type": "object",
+      "properties": {
+        "stacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackStackReply"
+          }
+        }
+      }
+    },
+    "stackListRequest": {
+      "type": "object"
+    },
+    "stackRemoveReply": {
+      "type": "object",
+      "properties": {
+        "answer": {
+          "type": "string"
+        }
+      }
+    },
+    "stackRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "stackStackReply": {
+      "type": "object",
+      "properties": {
+        "stack": {
+          "$ref": "#/definitions/stacksStack"
+        },
+        "service": {
+          "type": "string"
+        }
+      }
+    },
+    "stacksStack": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

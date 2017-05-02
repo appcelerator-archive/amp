@@ -11,52 +11,48 @@ import (
 	"google.golang.org/grpc"
 )
 
-type listTeamResOpts struct {
+type listTeamResOptions struct {
 	org   string
 	team  string
 	quiet bool
 }
 
-var (
-	listTeamResOptions = &listTeamResOpts{}
-)
-
 // NewListTeamResCommand returns a new instance of the list team resource command.
 func NewListTeamResCommand(c cli.Interface) *cobra.Command {
+	opts := listTeamResOptions{}
 	cmd := &cobra.Command{
 		Use:     "ls [OPTIONS]",
 		Short:   "List resources",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listTeamRes(c, cmd)
+			return listTeamRes(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&listTeamResOptions.org, "org", "", "Organization name")
-	flags.StringVar(&listTeamResOptions.team, "team", "", "Team name")
-	flags.BoolVarP(&listTeamResOptions.quiet, "quiet", "q", false, "Only display team resource names")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team resource names")
 	return cmd
 }
 
-func listTeamRes(c cli.Interface, cmd *cobra.Command) error {
+func listTeamRes(c cli.Interface, cmd *cobra.Command, opts listTeamResOptions) error {
 	if !cmd.Flag("org").Changed {
-		listTeamResOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		listTeamResOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
-
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
-		OrganizationName: listTeamResOptions.org,
-		TeamName:         listTeamResOptions.team,
+		OrganizationName: opts.org,
+		TeamName:         opts.team,
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if listTeamResOptions.quiet {
+	if opts.quiet {
 		for _, resource := range reply.Team.Resources {
 			c.Console().Println(resource.Id)
 		}
