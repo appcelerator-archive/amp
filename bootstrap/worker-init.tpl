@@ -40,6 +40,8 @@ EOF
 if [ "x$provider" != "xdocker" ]; then
   systemctl start docker.service
   sleep 2
+else
+  [ -f /var/run/docker.pid ] && kill -s HUP $(cat /var/run/docker.pid)
 fi
 
 docker swarm join --token {{  SWARM_JOIN_TOKENS.Worker }} {{ SWARM_MANAGER_ADDR }}
