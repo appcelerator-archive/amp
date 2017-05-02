@@ -8,6 +8,7 @@ import { OrganizationsService } from '../../services/organizations.service'
   styleUrls: ['./organization.component.css']
 })
 export class OrganizationComponent implements OnInit {
+  createMode : boolean = false
   @ViewChild ('f') form: NgForm;
 
   constructor(public organizationsService : OrganizationsService) { }

@@ -6,6 +6,7 @@ import { Subject } from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import { User } from '../models/user.model';
 import { DockerStack } from '../models/docker-stack.model';
+import { Organization } from '../models/organization.model';
 
 @Injectable()
 export class HttpService {
@@ -35,6 +36,24 @@ export class HttpService {
         }
         return list
       })
+  }
+
+  userOrganization(userName : string) {
+    return this.http.get("/api/v1/account/users/organization/"+userName, { headers: this.setHeaders() })
+    .map((res : Response) => {
+      const data = res.json()
+      let list : Organization[] = []
+      if (data.organizations) {
+        for (let item of data.organization) {
+          let orga = new Organization(
+            '',
+            ''
+          )
+          list.push(orga)
+        }
+      }
+      return list
+    })
   }
 
   login(user : User, pwd : string) {
