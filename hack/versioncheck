@@ -18,7 +18,9 @@ while true; do
     $AMP version
     docker run -it --rm --network=hostnet -v $PWD/stacks:/stacks docker --host=m1 service ls
     echo "-------------------------------"
-    v=$($AMP version | grep 'not connected' | wc -l)
-    [[ $v -eq 0 ]] && [[ $SECONDS -lt $TIMEOUT ]] && $AMP version && break
+    # looking for the server information line
+    output=$($AMP version | grep '^Server:')
+    # try again if the text "not connected" appears
+    [[ -n "$output" ]] && echo "$output" | grep -qv "not connected" && [[ $SECONDS -lt $TIMEOUT ]] && $AMP version && break
     [[ $SECONDS -gt $TIMEOUT ]] && echo "version check timed out" && exit 1
 done
