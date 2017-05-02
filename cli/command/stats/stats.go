@@ -92,7 +92,8 @@ func getStats(c cli.Interface, args []string) error {
 	query.FilterStackName = opts.stackName
 	query.FilterNodeId = opts.nodeID
 
-	//set main group
+	//set main Group
+	//if opts.timeGroup == "" {
 	if len(args) > 0 {
 		query.Group = "service_name"
 		query.FilterServiceName = args[0]
@@ -107,6 +108,7 @@ func getStats(c cli.Interface, args []string) error {
 			query.Group = "service_name"
 		}
 	}
+	//}
 
 	//set metrics
 	query.StatsCpu = opts.cpu
@@ -139,6 +141,10 @@ func getStats(c cli.Interface, args []string) error {
 	}
 	if r.Entries == nil {
 		fmt.Println("No result found")
+		return nil
+	}
+	if query.TimeGroup != "" && query.Group != "" {
+		fmt.Printf("%+v\n", r)
 		return nil
 	}
 	if query.TimeGroup != "" {

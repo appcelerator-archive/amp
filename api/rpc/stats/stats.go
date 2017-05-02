@@ -35,7 +35,10 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 	if req.TimeGroup == "" {
 		return s.statsCurrentQuery(ctx, req)
 	}
-	return s.statsHistoricQuery(ctx, req)
+	if req.Group == "" {
+		return s.statsHistoricQuery(ctx, req)
+	}
+	return s.statsGroupedHistoricQuery(ctx, req)
 }
 
 // execute a current stats reauest
@@ -101,6 +104,50 @@ func (s *Stats) statsHistoricQuery(ctx context.Context, req *StatsRequest) (*Sta
 			return nil, err
 		}
 		ret.Entries = append(ret.Entries, entry)
+	}
+	return ret, nil
+}
+
+// execute a historic stats request grouped by object name
+func (s *Stats) statsGroupedHistoricQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	if req.Period == "" {
+		return nil, fmt.Errorf("Historical statistics (using --time-group option) should set --period option explicitelly")
+	}
+	boolQuery := s.createBoolQuery(req, req.Period)
+	agg := elastic.NewDateHistogramAggregation().Field("@timestamp").Interval(req.TimeGroup)
+	aggTerm := s.createTermAggreggation(req)
+	agg = agg.SubAggregation("groupByName", aggTerm)
+
+	result, err := s.Es.GetClient().Search().
+		Index(esIndex).
+		Query(boolQuery).
+		Aggregation("histo", agg).
+		Size(0).
+		Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if result.Hits.TotalHits == 0 {
+		return &StatsReply{}, nil
+	}
+	ranges, ok := result.Aggregations.Terms("histo")
+	if !ok {
+		return nil, errors.New("Request error 'histo' not found")
+	}
+	ret := &StatsReply{}
+	for _, bucket1 := range ranges.Buckets {
+		ranges2, ok := bucket1.Aggregations.Terms("groupByName")
+		if !ok {
+			return nil, errors.New("Request error 'groupByName' not found")
+		}
+		for _, bucket2 := range ranges2.Buckets {
+			entry := &MetricsEntry{Group: (*bucket1.KeyAsString)[0:19]}
+			entry.Sgroup = bucket2.Key.(string)
+			if err := s.updateEntry(bucket2, req, entry); err != nil {
+				return nil, err
+			}
+			ret.Entries = append(ret.Entries, entry)
+		}
 	}
 	return ret, nil
 }

@@ -19,6 +19,9 @@ import { SwarmsComponent } from './swarms/swarms.component';
 import { LogsComponent } from './logs/logs.component';
 import { MetricsComponent } from './metrics/metrics.component';
 import { OrganizationsComponent } from './organizations/organizations.component';
+import { OrganizationCreateComponent } from './organizations/organization-create/organization-create.component';
+import { TeamComponent } from './organizations/organization/team/team.component';
+import { TeamCreateComponent } from './organizations/organization/team/team-create/team-create.component';
 import { OrganizationComponent } from './organizations/organization/organization.component';
 import { DockerStackDeployComponent } from './docker-stacks/docker-stack-deploy/docker-stack-deploy.component';
 import { DockerServicesComponent } from './docker-stacks/docker-services/docker-services.component';
@@ -30,9 +33,11 @@ import { AuthGuard } from './services/auth-guard.service';
 const appRoutes : Routes = [
   { path: '', redirectTo: '/auth/signin', pathMatch: 'full'  },
   { path: 'amp', component: AmpComponent, canActivate: [AuthGuard], children: [
-    { path: 'organizations', component: OrganizationsComponent, children: [
-      { path: ':name', component: OrganizationComponent, canActivate: [AuthGuard] }
-    ]},
+    { path: 'organizations', component: OrganizationsComponent, canActivate: [AuthGuard] },
+    { path: 'organizations/create', component: OrganizationCreateComponent, canActivate: [AuthGuard] },
+    { path: 'organizations/:orgName', component: OrganizationComponent, canActivate: [AuthGuard] },
+    { path: 'organizations/:orgName/team/create', component: TeamCreateComponent, canActivate: [AuthGuard] },
+    { path: 'organizations/:orgName/team/:teamName', component: TeamComponent, canActivate: [AuthGuard] },
     { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
     { path: 'stacks', component: DockerStacksComponent, canActivate: [AuthGuard] },
     { path: 'stacks', component: DockerStacksComponent, canActivate: [AuthGuard] },
