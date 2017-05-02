@@ -25,11 +25,11 @@ export class OrganizationComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.users.push(new User("user1",'',''))
-    this.users.push(new User("user2",'',''))
-    this.users.push(new User("user3",'',''))
-    this.users.push(new User("user4",'',''))
-    this.users.push(new User("user5",'',''))
+    this.users.push(new User("user1",'','User'))
+    this.users.push(new User("user2",'','Owner'))
+    this.users.push(new User("user3",'','User'))
+    this.users.push(new User("user4",'','User'))
+    this.users.push(new User("user5",'','User'))
     this.listUserAddedService.setData(this.addedUsers)
     this.listUserService.setData(this.users)
   }
@@ -42,5 +42,18 @@ export class OrganizationComponent implements OnInit {
       return true
     }
     return false
+  }
+
+  onDrop( user : User) {
+    let list : User[] = []
+    for (let item of this.users) {
+      if (item.name !== user.name) {
+        list.push(item)
+      }
+    }
+    this.users=list
+    this.listUserService.setData(this.users)
+    this.addedUsers.push(user)
+    this.listUserAddedService.setData(this.addedUsers)
   }
 }

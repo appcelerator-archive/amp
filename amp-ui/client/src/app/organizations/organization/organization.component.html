@@ -1,6 +1,5 @@
 
-<h1>under construction</h1>
-<div class="row" style="width=100%">
+<div class="row">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
       <div class="panel-body">
@@ -31,22 +30,49 @@
               </div>
             </div>
 
-            <div style="width=100%">
-              <div style="width=25%" class="pull-left">
-                <div class="list-group">
-                  <a class="disabled list-group-item">Users to add</a>
-                  <a *ngFor="let user of listUserService.getData()" class="list-group-item">{{user.name}}</a>
-                </div>
-              </div>
-              <div class="pull-left" style="test-align:center;width:50%">
-                drag
-                <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i>
-                drop
-              </div>
-              <div style="width=25%" class="pull-right">
-                <div class="list-group">
-                  <a class="disabled list-group-item">Users added</a>
-                  <a *ngFor="let userAdded of listUserAddedService.getData()" class="list-group-item">{{userAdded.name}}</a>
+            <div class="col-lg-12 col-md-12 col-xs-12">
+              <div class="panel panel-default">
+                <div class="panel-body">
+
+                  <div class="col-sm-4">
+                    <div class="list-group">
+                      <input
+                        #filter1
+                        type="text"
+                        id="filter"
+                        placeholder="Filter..."
+                        class="form-control input-sm"
+                        style="margin-bottom:15px"
+                        (keyup)="listUserService.filter(filter1.value)"/>
+                      <a class="disabled list-group-item">Users to add</a>
+                      <a *ngFor="let user of listUserService.getData()" class="list-group-item" [appDraggable]="{data: user}" style="padding:5px;color:blue">
+                        {{user.name}}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-4" align="center" style="margin-top:50px">
+                    drag
+                    <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i>
+                    drop
+                  </div>
+
+                  <div class="col-sm-4">
+                    <div class="list-group" appDropTarget (appDrop)="onDrop($event)">
+                      <input
+                        #filter2
+                        type="text"
+                        id="filter"
+                        placeholder="Filter..."
+                        class="form-control input-sm"
+                        style="margin-bottom:15px"
+                        (keyup)="listUserAddedService.filter(filter2.value)"/>
+                      <a class="disabled list-group-item">Users added</a>
+                      <a *ngFor="let userAdded of listUserAddedService.getData()" class="list-group-item">
+                        {{userAdded.name}}
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

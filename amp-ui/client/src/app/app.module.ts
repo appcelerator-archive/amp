@@ -13,13 +13,15 @@ import { OrganizationsService } from './services/organizations.service';
 import { DockerServicesService } from './services/docker-services.service';
 import { DockerContainersService } from './services/docker-containers.service';
 import { SwarmsService } from './services/swarms.service';
+import { DragService } from './services/drag.service';
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
-import { DropdownComponent } from './dropdown/dropdown.component';
 
 //Directive
 import { DropdownDirective } from './directives/dropdown.directive'
+import { DraggableDirective } from './directives/draggable.directive'
+import { DropTargetDirective } from './directives/drop-target.directive'
 
 //components
 import { AppComponent } from './app.component';
@@ -45,6 +47,11 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
 
 @NgModule({
   declarations: [
+    //Directives
+    DropdownDirective,
+    DraggableDirective,
+    DropTargetDirective,
+    //Components
     AppComponent,
     SignupComponent,
     SigninComponent,
@@ -61,12 +68,11 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
     MetricsComponent,
     OrganizationsComponent,
     OrganizationComponent,
-    DropdownComponent,
-    DropdownDirective,
     DockerStacksComponent,
     DockerStackDeployComponent,
     DockerServicesComponent,
     DockerContainersComponent
+
   ],
   imports: [
     BrowserModule,
@@ -83,6 +89,7 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
     HttpService,
     OrganizationsService,
     SwarmsService,
+    DragService,
     AuthGuard
   ],
   bootstrap: [AppComponent]
