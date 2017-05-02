@@ -16,8 +16,8 @@ export class UsersComponent implements OnInit {
   constructor(
     public usersService : UsersService,
     public listService : ListService) {
-      listService.setFilterFunction(usersService.match)
-    }
+    listService.setFilterFunction(usersService.match)
+  }
 
 
   ngOnInit() {
