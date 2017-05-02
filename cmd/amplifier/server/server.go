@@ -161,3 +161,9 @@ func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 		Docker: amp.docker,
 	})
 }
+
+func registerServiceServer(c *Configuration, s *grpc.Server) {
+	service.RegisterServiceServer(s, &service.Server{
+		Docker: runtime.Docker,
+	})
+}

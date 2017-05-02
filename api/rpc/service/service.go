@@ -18,7 +18,7 @@ type Server struct {
 
 // Tasks implements service.Containers
 func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
-	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{})
+	list, err := s.Docker.GetClient().TaskList(ctx, types.TaskListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
