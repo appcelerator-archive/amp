@@ -1,6 +1,9 @@
 package functions
 
-import "golang.org/x/net/context"
+import (
+	"github.com/appcelerator/amp/data/storage"
+	"golang.org/x/net/context"
+)
 
 // Error type
 type Error string
@@ -31,6 +34,9 @@ type Interface interface {
 
 	// DeleteFunction deletes a function by id
 	DeleteFunction(ctx context.Context, id string) (err error)
+
+	// WatchFunctions watches function storage events
+	WatchFunctions(ctx context.Context) (watch storage.WatchInterface, err error)
 
 	// Reset resets the function store
 	Reset(ctx context.Context)
