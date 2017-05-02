@@ -31,6 +31,26 @@ services:
       placement:
         constraints: [node.role == manager]
 
+  amplifier-gateway:
+    image: appcelerator/amplifier-gateway:${TAG:-latest}
+    networks:
+      default:
+        aliases:
+          - amplifier-gateway
+    labels:
+      io.amp.role: "infrastructure"
+    environment:
+      - "SERVICE_PORTS=80"
+      - "VIRTUAL_HOST=https://gw.*"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.role == worker]
+
   agent:
     image: appcelerator/agent:${TAG:-latest}
     networks:

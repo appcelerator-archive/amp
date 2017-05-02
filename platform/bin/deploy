@@ -258,9 +258,9 @@ curlcheck "${registryhost}:5000/v2/" 200 180
 checkexit $? "registry timed out"
 ok
 
-if [[ "x$TAG" = "xlocal" ]]; then
+if [[ "$TAG" = "local" ]]; then
   echo "push images to cluster"
-  for image in amplifier ampbeat agent; do
+  for image in amplifier amplifier-gateway ampbeat agent; do
     pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
   done
 else
