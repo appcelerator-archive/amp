@@ -1,12 +1,13 @@
 
-<div class="row">
+<h1>under construction</h1>
+<div class="row" style="width=100%">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
       <div class="panel-body">
         <div icon="fa-plus" title="Organization">
         </div>
 
-        <div>
+        <div style="width=100%">
           <form class="form-horizontal" #f="ngForm">
 
             <div class="form-group">
@@ -30,14 +31,34 @@
               </div>
             </div>
 
-            <div class="form-group" [hidden]="!createMode">
+            <div style="width=100%">
+              <div style="width=25%" class="pull-left">
+                <div class="list-group">
+                  <a class="disabled list-group-item">Users to add</a>
+                  <a *ngFor="let user of listUserService.getData()" class="list-group-item">{{user.name}}</a>
+                </div>
+              </div>
+              <div class="pull-left" style="test-align:center;width:50%">
+                drag
+                <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i>
+                drop
+              </div>
+              <div style="width=25%" class="pull-right">
+                <div class="list-group">
+                  <a class="disabled list-group-item">Users added</a>
+                  <a *ngFor="let userAdded of listUserAddedService.getData()" class="list-group-item">{{userAdded.name}}</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" [hidden]="!modeCreation">
               <div class="btn-group" role="group" aria-label="...">
                 <button
                   type="button"
                   class="btn btn-primary btn-sm"
                   type="submit"
                   [disabled]="!f.valid">
-                  <i class="fa fa-user-plus" aria-hidden="true"></i> Create</button>
+                  <i class="fa fa-user-plus"></i> Create</button>
                 <button type="button"
                   class="btn btn-default btn-sm">
                   <i aria-hidden="true"></i> Cancel</button>
