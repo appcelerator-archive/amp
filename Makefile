@@ -105,7 +105,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-beat build-agent build-ui build-bootstrap
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-ui build-bootstrap
 build: build-base buildall-cli
 
 # =============================================================================
@@ -180,6 +180,37 @@ rebuild-server: clean-server build-server
 .PHONY: clean-server
 clean-server:
 	@rm -f $(AMPLTARGET)
+
+
+# =============================================================================
+# BUILD GATEWAY (`amplifier-gateway`)
+# Saves binary to `cmd/amplifier-gateway/amplifier-gateway.alpine`,
+# then builds `appcelerator/amplifier-gateway` image
+# =============================================================================
+GW := amplifier-gateway
+GWBINARY=$(GW).alpine
+GWTAG := local
+GWIMG := appcelerator/$(GW):$(GWTAG)
+GWTARGET := $(CMDDIR)/$(GW)/$(GWBINARY)
+GWDIRS := $(CMDDIR)/$(GW) api data tests $(COMMONDIRS)
+GWSRC := $(shell find $(GWDIRS) -type f -name '*.go')
+GWPKG := $(REPO)/$(CMDDIR)/$(GW)
+
+$(GWTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(GWSRC)
+	@echo "Compiling $(GW) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(GWTARGET) $(GWPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(GW)"
+
+build-gateway: $(GWTARGET)
+	@echo "build $(GWIMG)"
+	@$(DOCKER_CMD) build -t $(GWIMG) $(CMDDIR)/$(GW) || (rm -f $(GWTARGET); exit 1)
+
+rebuild-gateway: clean-gateway build-gateway
+
+.PHONY: clean-gateway
+clean-gateway:
+	@rm -f $(GWTARGET)
 
 
 # =============================================================================
