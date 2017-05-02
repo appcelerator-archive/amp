@@ -1,8 +1,10 @@
 import { Injectable, Output, EventEmitter } from '@angular/core';
 import { HttpService } from '../services/http.service';
+import { OrganizationsService } from '../services/organizations.service';
 import { User } from '../models/user.model';
-import { Router } from '@angular/router';
+import { Organization } from '../models/organization.model';
 import { Subject } from 'rxjs/Subject'
+import { MenuService } from '../services/menu.service'
 
 @Injectable()
 export class UsersService {
@@ -13,7 +15,10 @@ export class UsersService {
   currentUser = this.noLoginUser
   @Output() onUserLogout = new EventEmitter<void>();
 
-  constructor(private router : Router, private httpService : HttpService) {}
+  constructor(
+    private httpService : HttpService,
+    private organizationsService : OrganizationsService,
+    private menuService : MenuService) {}
 
   match(item : User, value : string) : boolean {
     if (item.name && item.name.includes(value)) {
@@ -44,7 +49,7 @@ export class UsersService {
   logout() {
     this.currentUser = this.noLoginUser
     localStorage.removeItem('currentUser');
-    this.router.navigate(["/auth/signin"])
+    this.menuService.navigate(["/auth", "signin"])
   }
 
   login(user : User, pwd : string) {
@@ -55,7 +60,7 @@ export class UsersService {
         this.httpService.setToken(ret.data)
         localStorage.setItem('currentUser', JSON.stringify({ username: user.name, token: ret.data, pwd: pwd }));
         localStorage.setItem('lastUser', JSON.stringify({ username: user.name}));
-        this.router.navigate(["/amp"])
+        this.menuService.navigate(["/amp", "dashboard"])
       },
       error => {
         localStorage.removeItem('currentUser');
@@ -67,13 +72,21 @@ export class UsersService {
   setCurrentUser(currentUser : {username : string, endpointname: string, token : string}) {
     this.currentUser = new User(currentUser.username, "", "")
     this.httpService.setToken(currentUser.token)
-    this.router.navigate(["/amp"]);
+    this.httpService.userOrganization(this.currentUser).subscribe(
+      data => {
+        this.organizationsService.organizations = data
+      },
+      error => {
+        this.onUsersError.next(error)
+      }
+    )
+    this.menuService.navigate(["/amp"]);
   }
 
   signup(user : User, pwd : string) {
     this.users.push(user)
     //this.onUserEndCreateMode.emit();
-    this.router.navigate(["/auth/signin"])
+    this.menuService.navigate(["/auth", "signin"])
   }
 
   isAuthenticated() {
@@ -85,9 +98,9 @@ export class UsersService {
 
   returnToCaller() {
     if (this.isAuthenticated()) {
-      this.router.navigate(["/amp/users"]);
+      this.menuService.navigate(["/amp", "users"]);
     } else {
-      this.router.navigate(["/auth/signin"]);
+      this.menuService.navigate(["/auth", "signin"]);
     }
   }
 

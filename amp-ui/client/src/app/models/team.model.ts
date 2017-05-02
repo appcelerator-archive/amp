@@ -7,5 +7,7 @@ export class Team {
 
   constructor(name : string) {
     this.name = name
+    this.members = []
+    this.resources = []
   }
 }

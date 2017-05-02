@@ -10,18 +10,11 @@
               <i class="fa fa-refresh"></i>
             </a>
           </span>
-          <span appDropdown class="pull-right user-box" style="cursor:pointer">
-            <i class="fa fa-user-circle-o" style="cursor:pointer"></i>
-            {{ usersService.currentUser.name }}
-            <span class="caret" style="cursor:pointer"></span>
-            <ul class="dropdown-menu">
-              <li class="disabled"><a>organizations</a></li>
-              <li *ngFor="let org of organizationsService.organizations" (click)="organizationsService.setOrganization(org)"><a>{{org.name}}</a></li>
-              <li role="separator" class="divider"></li>
-              <li><a>Settings</a></li>
-              <li (click)="usersService.logout()"><a>Sign out</a></li>
-            </ul>
-          </span>
+          <div class="pull-right ng-scope">
+            <a ui-sref="" class="text-danger" routerLinkActive="active" (click)="organizationsService.edit()" style="margin-right:25px;font-size:18px;">
+              {{ organizationsService.currentOrganization.name }}
+            </a>
+          </div>
         </div>
       </div>
       <div class="ng-scope">
@@ -29,11 +22,19 @@
           <div class="pull-left" ng-transclude="">
             <span class="ng-scope">{{menuService.currentMenuItem.description}}</span>
           </div>
-          <div class="pull-right ng-scope">
-            <a ui-sref="" class="text-danger" routerLinkActive="active" (click)="organizationsService.edit()" style="margin-right:25px;font-size:15px;">
-              {{ organizationsService.currentOrganization.name }}
-            </a>
-          </div>
+          <span appDropdown class="pull-right user-box" style="cursor:pointer;font-size:14px">
+            <i class="fa fa-user-circle-o" style="cursor:pointer"></i>
+            {{ usersService.currentUser.name }}
+            <span class="caret" style="cursor:pointer"></span>
+            <ul class="dropdown-menu">
+              <li class="disabled" [hidden]="organizationsService.organizations.length===0"><a>organizations</a></li>
+              <li *ngFor="let org of organizationsService.organizations" (click)="organizationsService.setOrganization(org)"><a>{{org.name}}</a></li>
+              <li role="separator" class="divider" [hidden]="organizationsService.organizations.length===0"></li>
+              <li><a (click)="createOrganization()">Create organization</a></li>
+              <li><a>Settings</a></li>
+              <li (click)="usersService.logout()"><a>Sign out</a></li>
+            </ul>
+          </span>
         </div>
       </div>
     </div>

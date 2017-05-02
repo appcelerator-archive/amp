@@ -5,6 +5,8 @@ import 'rxjs/add/operator/catch';
 import { Subject } from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import { User } from '../models/user.model';
+import { Team } from '../models/team.model';
+import { TeamResource } from '../models/team-resource.model';
 import { DockerStack } from '../models/docker-stack.model';
 import { Organization } from '../models/organization.model';
 
@@ -34,11 +36,39 @@ export class HttpService {
           user.verified = item.is_verified
           list.push(user)
         }
+        //debug
+        for (let ii=1; ii<=10;ii++) {
+          list.push(new User("user"+ii,'',"User"))
+        }
+        //---
         return list
       })
   }
 
-  userOrganization(userName : string) {
+  userOrganization(user : User) {
+    return this.http.get("/api/v1/users", { headers: this.setHeaders() })
+      .map((res : Response) => {
+        let list : Organization[] = []
+        //debug
+        user.role="owner"
+        let org1 = new Organization("amplifier", "amp@amplifier.com")
+        org1.teams = [ new Team("team-dev"), new Team("team-it")]
+        org1.resources = [
+          new TeamResource('12312a4b22cd', 'stack', 'pinger', 0),
+          new TeamResource('e7834c232af2', 'stack', 'mystack', 0)
+        ]
+        let org2 = new Organization("myOrg", "myorg@axway.com")
+        org2.teams = [ new Team("project1"), new Team("project2")]
+        org2.resources = [
+          new TeamResource('12312a4b22cd', 'stack', 'core-stack', 0),
+          new TeamResource('e7834c232af2', 'stack', 'func-stack', 0)
+        ]
+        list.push(org1)
+        list.push(org2)
+        //---
+        return list
+      })
+    /*
     return this.http.get("/api/v1/account/users/organization/"+userName, { headers: this.setHeaders() })
     .map((res : Response) => {
       const data = res.json()
@@ -54,6 +84,7 @@ export class HttpService {
       }
       return list
     })
+    */
   }
 
   login(user : User, pwd : string) {
@@ -77,6 +108,15 @@ export class HttpService {
           list.push(stack)
         }
       }
+      return list
+    })
+  }
+
+  organizationRessources() {
+    return this.http.get("/api/v1/...", { headers: this.setHeaders() })
+    .map((res : Response) => {
+      let list : Organization[] = []
+      //
       return list
     })
   }

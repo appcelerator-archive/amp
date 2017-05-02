@@ -1,0 +1,52 @@
+
+<div class="row">
+  <div class="col-sm-6 col-sm-offset-3">
+    <div class="panel panel-default" style="margin-bottom:5px">
+      <div class="panel-body" style="padding-bottom:5px">
+        <div class="panel-body">
+          <div>
+            <div class="pull-left">
+              <span class="glyphicon glyphicon-book" aria-hidden="true"></span> Organization creation</div>
+          </div>
+        </div>
+        <div style="margin: 10px 30px 10px 30px">
+          <form class="form-horizontal" (ngSubmit)="create(f)" #f="ngForm">
+            <div class="form-group">
+              <input
+                ngModel required
+                type="text"
+                class="form-control"
+                name="name"
+                id="name"
+                placeholder="name"
+                #name="ngModel">
+                <span class="help-block" *ngIf="name=='' && name.touched">An organization name is required</span>
+            </div>
+
+            <div class="form-group">
+              <input
+                ngModel required email
+                type="email"
+                class="form-control"
+                name="email"
+                id="email"
+                placeholder="email"
+                #email="ngModel">
+              <span class="help-block" *ngIf="!email.valid && email.touched">Please enter a valid email</span>
+            </div>
+
+            <div class="panel panel-default" style="border-style:none">
+              <div class="btn-group" role="group" aria-label="...">
+                <button [disabled]="!f.valid" type="button" class="btn btn-primary" autofocus type="submit"><i class="glyphicon glyphicon-book"></i> Create</button>
+                <button class="btn btn-primary" (click)="cancel()">
+                  <i class="glyphicon glyphicon-user" aria-hidden="true"></i>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

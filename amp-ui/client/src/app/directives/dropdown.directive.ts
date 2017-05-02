@@ -4,7 +4,6 @@ import { Directive, ElementRef, Output, HostListener, HostBinding } from '@angul
   selector: '[appDropdown]'
 })
 export class DropdownDirective {
-
   @HostBinding('class.open') isOpen = false;
 
   @HostListener('click') toggleOpen() {
@@ -28,6 +27,5 @@ export class DropdownDirective {
           this.isOpen = false
       }
   }
-
   constructor(private _elementRef: ElementRef) {}
 }

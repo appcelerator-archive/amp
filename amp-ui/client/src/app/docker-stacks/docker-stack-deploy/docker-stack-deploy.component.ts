@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { MenuService } from '../../services/menu.service';
 
 @Component({
   selector: 'app-stack-deploy',
@@ -9,9 +10,10 @@ import { NgForm } from '@angular/forms';
 export class DockerStackDeployComponent implements OnInit {
   @ViewChild ('f') form: NgForm;
 
-  constructor() { }
+  constructor(private menuService : MenuService) { }
 
   ngOnInit() {
+    this.menuService.setItemMenu('stack', 'Deploy')
   }
 
   onDeploy() {

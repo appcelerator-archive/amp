@@ -23,6 +23,7 @@ export class DockerContainersComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.menuService.setItemMenu('containers', 'List')
     this.listService.setData(this.dockerContainersService.containers)
   }
 
@@ -32,7 +33,7 @@ export class DockerContainersComponent implements OnInit {
 
   returnBack() {
     console.log("return back form container: "+this.dockerServicesService.currentService.id)
-    this.menuService.setItemMenu("stacks", "container list", "/amp/stacks/"+this.dockerServicesService.currentService.id)
+    this.menuService.navigate(["amp", "stacks", this.dockerServicesService.currentService.id])
   }
 
 }

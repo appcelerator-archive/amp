@@ -1,69 +1,88 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { OrganizationsService } from '../../services/organizations.service'
-import { ListService } from '../../services/list.service';
-import { UsersService } from '../../services/users.service';
-import { User } from '../../models/user.model';
-import { Organization } from '../../models/organization.model';
-import { Team } from '../../models/team.model';
+import { OrganizationsService } from '../../../services/organizations.service'
+import { ListService } from '../../../services/list.service';
+import { User } from '../../../models/user.model';
+import { Organization } from '../../../models/organization.model';
+import { TeamResource } from '../../../models/team-resource.model';
 import { ActivatedRoute } from '@angular/router';
-import { MenuService } from '../../services/menu.service'
+import { MenuService } from '../../../services/menu.service';
 
 @Component({
   selector: 'app-organization',
-  templateUrl: './organization.component.html',
-  styleUrls: ['./organization.component.css']
-
-
+  templateUrl: './team.component.html',
+  styleUrls: ['./team.component.css']
 })
-export class OrganizationComponent implements OnInit, OnDestroy {
-  organization : Organization
+
+export class TeamComponent implements OnInit {
+  orgName = ""
   name = ""
   routeSub : any
   modeCreation : boolean = false
+  userResourceToggle = false
   public listUserService : ListService = new ListService()
   public listUserAddedService : ListService = new ListService()
+  public listResourceService : ListService = new ListService()
+  organization : Organization
   addedUsers : User[] = []
   users : User[] = []
   initialUserList : User[] = []
+  resources : TeamResource[] = []
+  permisionLabel : string[] = ['node', 'read', 'write', 'admin']
   updated = false
   @ViewChild ('f') form: NgForm;
 
   constructor(
     private route: ActivatedRoute,
-    private usersService: UsersService,
     public organizationsService : OrganizationsService,
     private menuService : MenuService) {
-    this.listUserService.setFilterFunction(this.match)
-    this.listUserAddedService.setFilterFunction(this.match)
+    this.listUserService.setFilterFunction(this.matchUser)
+    this.listUserAddedService.setFilterFunction(this.matchUser)
+    this.listResourceService.setFilterFunction(this.matchResource)
   }
 
   ngOnInit() {
-    this.menuService.setItemMenu('organization', 'Edit')
+    this.menuService.setItemMenu('organization', 'Team edit')
     this.routeSub = this.route.params.subscribe(params => {
-      this.name = params['orgName'];
+      this.orgName = params['orgName'];
+      this.name = params['teamName'];
       for (let org of this.organizationsService.organizations) {
-        if (org.name == this.name) {
+        if (org.name == this.orgName) {
           this.organization = org
         }
       }
       if (this.organization) {
-        this.initialUserList = this.usersService.users.slice()
+        console.log("Team: "+this.orgName+":"+this.name)
+        this.initialUserList = this.organization.members.slice()
         this.addedUsers = []
+        this.resources = this.organization.resources.slice()
         //
         this.users = this.initialUserList.slice()
         this.listUserAddedService.setData(this.addedUsers)
         this.listUserService.setData(this.users)
+        this.listResourceService.setData(this.resources)
       }
     })
   }
 
-  ngOnDestroy() {
-    this.routeSub.unsubscribe();
+  matchUser(item : User, value : string) : boolean {
+    if (value == '' || item.name==='') {
+      return true
+    }
+    if (item.name && item.name.includes(value)) {
+      return true
+    }
+    return false
   }
 
-  match(item : User, value : string) : boolean {
-    if (value == '' || item.name==='') {
+  matchResource(item : TeamResource, value : string) : boolean {
+    if (value == '') {
+      return true
+    }
+    if (item.id && item.id.includes(value)) {
+      return true
+    }
+    if (item.type && item.type.includes(value)) {
       return true
     }
     if (item.name && item.name.includes(value)) {
@@ -119,9 +138,25 @@ export class OrganizationComponent implements OnInit, OnDestroy {
   }
 
   applyUsers() {
+    console.log("apply")
     //apply
-    this.organization.members = this.addedUsers.slice()
     this.updated=false
   }
 
+  userManagement() {
+    this.userResourceToggle=false
+  }
+
+  resourceManagement(){
+    this.userResourceToggle=true
+  }
+
+  returnBack() {
+    console.log(this.orgName)
+    this.menuService.navigate(['/amp/organizations', this.orgName])
+  }
+
+  setPermission(res : TeamResource, level : number) {
+    res.setPermission(level)
+  }
 }

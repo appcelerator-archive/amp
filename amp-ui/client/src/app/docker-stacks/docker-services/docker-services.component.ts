@@ -17,18 +17,19 @@ export class DockerServicesComponent implements OnInit {
     public listService : ListService,
     public dockerServicesService : DockerServicesService,
     public dockerStacksService : DockerStacksService,
-    public menuService : MenuService) {
+    public menuService : MenuService,) {
     listService.setFilterFunction(dockerServicesService.match)
   }
 
   ngOnInit() {
+    this.menuService.setItemMenu('services', 'List')
     this.listService.setData(this.dockerServicesService.services)
 
   }
 
   containerList(serviceId : string) {
     this.dockerServicesService.setCurrentService(serviceId)
-    this.menuService.setItemMenu("stacks", "container list", "/amp/services/"+serviceId)
+    this.menuService.navigate(["/amp/services", serviceId])
   }
 
   selectService(id : string) {
@@ -38,7 +39,7 @@ export class DockerServicesComponent implements OnInit {
 
   returnBack() {
     console.log("return back form service: "+this.dockerStacksService.currentStack.id)
-    this.menuService.setItemMenu("stacks", "container list", "/amp/stacks")
+    this.menuService.navigate(["/amp", "stacks"])
   }
 
 }

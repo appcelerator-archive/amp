@@ -41,9 +41,12 @@ import { LogsComponent } from './logs/logs.component';
 import { MetricsComponent } from './metrics/metrics.component';
 import { OrganizationsComponent } from './organizations/organizations.component';
 import { OrganizationComponent } from './organizations/organization/organization.component';
+import { TeamComponent } from './organizations/organization/team/team.component';
 import { DockerStackDeployComponent } from './docker-stacks/docker-stack-deploy/docker-stack-deploy.component';
 import { DockerServicesComponent } from './docker-stacks/docker-services/docker-services.component';
 import { DockerContainersComponent } from './docker-stacks/docker-containers/docker-containers.component';
+import { OrganizationCreateComponent } from './organizations/organization-create/organization-create.component';
+import { TeamCreateComponent } from './organizations/organization/team/team-create/team-create.component';
 
 @NgModule({
   declarations: [
@@ -68,10 +71,13 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
     MetricsComponent,
     OrganizationsComponent,
     OrganizationComponent,
+    TeamComponent,
     DockerStacksComponent,
     DockerStackDeployComponent,
     DockerServicesComponent,
-    DockerContainersComponent
+    DockerContainersComponent,
+    OrganizationCreateComponent,
+    TeamCreateComponent
 
   ],
   imports: [

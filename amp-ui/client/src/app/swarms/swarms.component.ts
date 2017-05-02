@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MenuService } from '../services/menu.service';
 
 @Component({
   selector: 'app-swarms',
@@ -7,9 +8,10 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SwarmsComponent implements OnInit {
 
-  constructor() { }
+  constructor(private menuService : MenuService) { }
 
   ngOnInit() {
+    this.menuService.setItemMenu('swarms', 'List')
   }
 
 }
