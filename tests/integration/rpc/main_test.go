@@ -79,7 +79,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[auth.TokenKey]
+	tokens := header[auth.AuthorizationHeader]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
