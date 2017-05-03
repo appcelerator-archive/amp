@@ -14,7 +14,6 @@ const (
 	AmpResourceName = "amprn"
 	OrganizationRN  = AmpResourceName + ":organization"
 	TeamRN          = AmpResourceName + ":team"
-	FunctionRN      = AmpResourceName + ":function"
 	StackRN         = AmpResourceName + ":stack"
 
 	CreateAction = "create"
@@ -53,31 +52,6 @@ var (
 		},
 	}
 
-	functionsAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{FunctionRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"organization": &OrganizationAccessCondition{
-				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
-				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
-			},
-		},
-	}
-
-	functionsAdminByUserOwner = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{FunctionRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"user": &ladon.EqualsSubjectCondition{},
-		},
-	}
-
 	stacksAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
@@ -107,8 +81,6 @@ var (
 	policies = []ladon.Policy{
 		organizationsAdminByOrgOwners,
 		teamsAdminByOrgOwners,
-		functionsAdminByOrgOwnersAndTeamAdmins,
-		functionsAdminByUserOwner,
 		stacksAdminByOrgOwnersAndTeamAdmins,
 		stacksAdminByUserOwner,
 	}

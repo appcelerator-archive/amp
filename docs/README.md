@@ -59,9 +59,3 @@ push images that you build directly to the registry using the following sequence
 The image is now available to be used by a stackfile you deploy to the
 cluster. You can always use images available on Docker Hub. Support for
 alternative and private registry is planned.
-
-## FaaS (Function as a Service)
-
-Please check the example function here `examples/functions/demo-function`.
-
-Also, read the associated [instructions](../examples/functions/demo-function/REAMDE.md).
