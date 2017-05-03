@@ -13,6 +13,7 @@ const (
 	DefaultURL      = "nats://nats:4222"
 	ClusterID       = "test-cluster"
 	FunctionSubject = "amp-function-calls"
+	FunctionQueue   = "amp-function-calls-queue"
 	LogsSubject     = "amp-logs"
 	MetricsSubject  = "amp-metrics"
 )
