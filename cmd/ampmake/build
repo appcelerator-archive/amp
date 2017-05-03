@@ -13,5 +13,5 @@ for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
   GOOS="${TARGETS[i]}"
   GOARCH="${TARGETS[i+1]}"
   echo $DEST/$GOOS/$GOARCH/ampmake
-  GOOS=$GOOS GOARCH=$GOARCH go build -o $DEST/$GOOS/$GOARCH/ampmake $PKG
+  GOOS=$GOOS GOARCH=$GOARCH go build -o $DEST/$GOOS/$GOARCH/ampmake $PKG || exit $?
 done

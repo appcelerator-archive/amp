@@ -3,20 +3,26 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strconv"
 
 	"github.com/mitchellh/go-homedir"
 )
 
 var (
-	ug         = "0:0"
-	version    = "0.0.0"
-	build      = "-"
-	owner      = "appcelerator"
-	repo       = "github.com/appcelerator/amp"
-	dockerCmd  = "sudo docker"
-	dockerArgs []string
+	ug              = "0:0"
+	version         = "0.0.0"
+	build           = "-"
+	owner           = "appcelerator"
+	repo            = "github.com/appcelerator/amp"
+	dockerCmd       = "sudo docker"
+	toolsImage      = "appcelerator/amptools"
+	localToolsImage = "amptools"
+	dockerArgs      []string
 )
 
 func init() {
@@ -30,9 +36,13 @@ func init() {
 		panic(err)
 	}
 
+	if runtime.GOOS == "linux" {
+		ug = fmt.Sprintf("%s:%s", strconv.Itoa(os.Getuid()), strconv.Itoa(os.Getgid()))
+	}
+
 	dockerArgs = []string{
 		"run", "-t", "--rm", "--name", "amptools",
-		"-u", ug, //fmt.Sprintf("%s:%s", strconv.Itoa(os.Getuid()), strconv.Itoa(os.Getgid())),
+		"-u", ug,
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-v", fmt.Sprintf("%s/.ssh:/root/.ssh:ro", homedir),
 		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp:ro", homedir),
@@ -44,8 +54,71 @@ func init() {
 		"-e", fmt.Sprintf("REPO=%s", repo),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
-		"appcelerator/amptools",
 	}
+	if runtime.GOOS == "linux" {
+		dockerArgs = append(dockerArgs, []string{localToolsImage}...)
+	} else {
+		dockerArgs = append(dockerArgs, []string{toolsImage}...)
+	}
+}
+
+// build a local image to avoid leaving files with broken permissions
+func buildLocalToolsImage() error {
+	// build the local image "amptools" for the current user
+	content := []byte(fmt.Sprintf("FROM appcelerator/amptools\nRUN sed -i \"s/sudoer:x:[0-9]*:[0-9]*/sudoer:x:%s/\" /etc/passwd", ug))
+	tmpdir, err := ioutil.TempDir("", "dockerbuild")
+	if err != nil {
+		return err
+	}
+
+	defer os.RemoveAll(tmpdir) // clean up
+
+	dockerfile := filepath.Join(tmpdir, "Dockerfile")
+	if err := ioutil.WriteFile(dockerfile, content, 0666); err != nil {
+		return err
+	}
+
+	// docker build -t amptools tmpdir
+	cmd := "docker"
+	buildArgs := []string{
+		"build",
+		"-t",
+		"amptools",
+		tmpdir,
+	}
+	proc := exec.Command(cmd, buildArgs...)
+	stdout, err := proc.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	outscanner := bufio.NewScanner(stdout)
+	go func() {
+		for outscanner.Scan() {
+			fmt.Printf("%s\n", outscanner.Text())
+		}
+	}()
+
+	stderr, err := proc.StderrPipe()
+	if err != nil {
+		return err
+	}
+	errscanner := bufio.NewScanner(stderr)
+	go func() {
+		for errscanner.Scan() {
+			fmt.Fprintf(os.Stderr, "%s\n", errscanner.Text())
+		}
+	}()
+
+	err = proc.Start()
+	if err != nil {
+		return err
+	}
+
+	err = proc.Wait()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func main() {
@@ -59,6 +132,12 @@ func main() {
 	}
 
 	cmd := "docker"
+	if runtime.GOOS == "linux" {
+		if err := buildLocalToolsImage(); err != nil {
+			panic(err)
+		}
+	}
+
 	args = append(dockerArgs, args...)
 	//fmt.Printf("%s %s\n", cmd, strings.Join(args, " "))
 
