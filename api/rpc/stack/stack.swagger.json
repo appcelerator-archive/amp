@@ -15,7 +15,21 @@
     "application/json"
   ],
   "paths": {
-    "/v1/stack": {
+    "/v1/stacks": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackListReply"
+            }
+          }
+        },
+        "tags": [
+          "Stack"
+        ]
+      },
       "post": {
         "operationId": "Deploy",
         "responses": {
@@ -34,6 +48,30 @@
             "schema": {
               "$ref": "#/definitions/stackDeployRequest"
             }
+          }
+        ],
+        "tags": [
+          "Stack"
+        ]
+      }
+    },
+    "/v1/stacks/{stack}": {
+      "delete": {
+        "operationId": "Remove",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackRemoveReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [

@@ -10,6 +10,12 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/cluster"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/rpc/storage"
+	"github.com/appcelerator/amp/api/rpc/version"
 )
 
 const (
@@ -45,8 +51,25 @@ func main() {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := stack.RegisterStackHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts)
-	if err != nil {
+	if err := account.RegisterAccountHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := cluster.RegisterClusterHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := logs.RegisterLogsHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := stack.RegisterStackHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := stats.RegisterStatsHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := storage.RegisterStorageHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := version.RegisterVersionHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 

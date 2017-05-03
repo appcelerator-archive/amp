@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"path"
 
 	"github.com/appcelerator/amp/data/storage"
@@ -18,77 +17,55 @@ type Server struct {
 	Store storage.Interface
 }
 
+func (s *Server) getStorageByKey(ctx context.Context, key string) *StorageEntry {
+	entry := &StorageEntry{}
+	s.Store.Get(ctx, path.Join(storageRootKey, key), entry, true)
+	return entry
+}
+
 // Put implements Server API for Storage service
-func (s *Server) Put(ctx context.Context, in *PutStorage) (*StorageResponse, error) {
-	response := &StorageResponse{
-		Key: in.Key,
-		Val: in.Val,
+func (s *Server) Put(ctx context.Context, in *PutRequest) (*PutReply, error) {
+	response := &PutReply{
+		Entry: &StorageEntry{
+			Key: in.Key,
+			Val: in.Val,
+		},
 	}
 	//save storage data in ETCD
 	s.Store.Put(ctx, path.Join(storageRootKey, in.Key), response, 0)
-
 	return response, nil
 }
 
 // Get implements Server API for Storage service
-func (s *Server) Get(ctx context.Context, in *GetStorage) (*StorageResponse, error) {
-	var response *StorageResponse
-	response = s.getStorageByKey(ctx, in.Key)
-	if response.Val == "" {
+func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+	entry := s.getStorageByKey(ctx, in.Key)
+	if entry.Val == "" {
 		return nil, status.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
 	}
-	return response, nil
-}
-
-// Retrieve storage key-value pair by key
-func (s *Server) getStorageByKey(ctx context.Context, key string) *StorageResponse {
-	response := &StorageResponse{}
-	//get storage data from ETCD
-	s.Store.Get(ctx, path.Join(storageRootKey, key), response, true)
-	return response
+	return &GetReply{Entry: entry}, nil
 }
 
 // Delete implements Server API for Storage service
-func (s *Server) Delete(ctx context.Context, in *DeleteStorage) (*StorageResponse, error) {
-	var response *StorageResponse
-	response = s.getStorageByKey(ctx, in.Key)
-	if response.Val == "" {
+func (s *Server) Delete(ctx context.Context, in *DeleteRequest) (*DeleteReply, error) {
+	entry := s.getStorageByKey(ctx, in.Key)
+	if entry.Val == "" {
 		return nil, status.Errorf(codes.NotFound, "storage key %s does not exist", in.Key)
 	}
 	//delete storage data in ETCD
 	s.Store.Delete(ctx, path.Join(storageRootKey, in.Key), true, nil)
-	return response, nil
+	return &DeleteReply{Entry: entry}, nil
 }
 
 // List implements Server API for Storage service
-func (s *Server) List(ctx context.Context, in *ListStorage) (*ListResponse, error) {
-	var idList []proto.Message
-	err := s.Store.List(ctx, storageRootKey, storage.Everything, &StorageKey{}, &idList)
+func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+	protos := []proto.Message{}
+	err := s.Store.List(ctx, storageRootKey, storage.Everything, &StorageEntry{}, &protos)
 	if err != nil {
 		return nil, err
 	}
-	listInfo := []*StorageInfo{}
-	for _, k := range idList {
-		obj, _ := k.(*StorageKey)
-		info := s.getStorageInfo(ctx, obj.Key)
-		fmt.Println("info ::", info)
-		listInfo = append(listInfo, s.getStorageInfo(ctx, obj.Key))
+	entries := []*StorageEntry{}
+	for _, proto := range protos {
+		entries = append(entries, proto.(*StorageEntry))
 	}
-	//set value for ListResponse
-	response := &ListResponse{
-		List: listInfo,
-	}
-	return response, nil
-}
-
-// return information to be displayed in storage ls
-func (s *Server) getStorageInfo(ctx context.Context, key string) *StorageInfo {
-	info := StorageInfo{}
-	storage := StorageResponse{}
-	err := s.Store.Get(ctx, path.Join(storageRootKey, key), &storage, true)
-	if err == nil {
-		info.Key = key
-		info.Val = storage.Val
-	}
-	return &info
+	return &ListReply{Entries: entries}, nil
 }
