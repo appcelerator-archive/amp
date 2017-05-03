@@ -40,7 +40,7 @@ func deploy(c cli.Interface, args []string) error {
 	var name string
 	if len(args) == 0 {
 		basename := filepath.Base(opts.file)
-		name = strings.TrimSuffix(basename, filepath.Ext(opts.file))
+		name = strings.Split(strings.TrimSuffix(basename, filepath.Ext(opts.file)), ".")[0]
 	} else {
 		name = args[0]
 	}
