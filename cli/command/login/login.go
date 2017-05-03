@@ -47,12 +47,12 @@ func login(c cli.Interface, cmd *cobra.Command, opts loginOptions) error {
 		Name:     opts.username,
 		Password: opts.password,
 	}
-	header := metadata.MD{}
-	_, err := client.Login(context.Background(), request, grpc.Header(&header))
+	headers := metadata.MD{}
+	_, err := client.Login(context.Background(), request, grpc.Header(&headers))
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if err := cli.SaveToken(header); err != nil {
+	if err := cli.SaveToken(headers); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Welcome back %s!\n", opts.username)

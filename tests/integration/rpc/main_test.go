@@ -79,12 +79,12 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[auth.TokenKey]
+	tokens := header[auth.AuthorizationHeader]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, token))
 }
 
 func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
@@ -128,12 +128,12 @@ func switchAccount(userCtx context.Context, t *testing.T, accountName string) co
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[auth.TokenKey]
+	tokens := header[auth.AuthorizationHeader]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(auth.TokenKey, token))
+	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, token))
 }
 
 func changeOrganizationMemberRole(userCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest, role accounts.OrganizationRole) {
