@@ -178,6 +178,11 @@ prepare_certificates() {
     echo "can't find certificate $certfile" >&2
     return 1
   fi
+  # copy the certificate in the amp-stacks volume
+  cid=$(docker run -d --rm -v amp-stacks:/stacks alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp $certfile $cid:/stacks/$name.pem
+  docker kill $cid
   echo "checking if the certificate secret is already defined"
   $amps secret ls | grep -q "certificate_atomiq" && return 0
   echo "creating the certificate secret"

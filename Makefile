@@ -346,6 +346,7 @@ AMPBOOTSRC := hack/deploy hack/dev $(shell find $(AMPBOOTDIR) -type f)
 build-bootstrap:
 	@echo "Building $(AMPBOOTIMG):$(AMPBOOTVER)"
 	@cp -r hack stacks $(AMPBOOTDIR)
+	@rm -f $(AMPBOOTDIR)/stacks/*.pem
 	@$(DOCKER_CMD) build -t $(AMPBOOTIMG):$(AMPBOOTVER) $(AMPBOOTDIR) >/dev/null
 	@rm -rf $(AMPBOOTDIR)/hack $(AMPBOOTDIR)/stacks
 
