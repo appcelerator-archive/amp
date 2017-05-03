@@ -18,7 +18,7 @@ INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
 BRIDGE_NETWORK=hostnet
 CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-atomiq.clusterid}
-INFRAKIT_LOG_LEVEL=3
+INFRAKIT_LOG_LEVEL=4
 #WORKER_GROUP_LIST=(data:2)
 WORKER_GROUP_LIST=()
 
@@ -527,11 +527,11 @@ _prepare_config_container() {
   local _config=$(mktemp)
   cleanup_file_list="$cleanup_file_list $_config"
   docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
-  docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
   if [ $? -ne 0 ]; then
     echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
     exit 1
   fi
+  docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
 }
 
 # deploy the infrakit configuration
