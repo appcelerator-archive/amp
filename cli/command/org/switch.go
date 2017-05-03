@@ -29,12 +29,12 @@ func switch_(c cli.Interface, args []string) error {
 	request := &account.SwitchRequest{
 		Account: args[0],
 	}
-	header := metadata.MD{}
-	_, err := client.Switch(context.Background(), request, grpc.Header(&header))
+	headers := metadata.MD{}
+	_, err := client.Switch(context.Background(), request, grpc.Header(&headers))
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if err := cli.SaveToken(header); err != nil {
+	if err := cli.SaveToken(headers); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("You are now logged in as: %s\n", args[0])
