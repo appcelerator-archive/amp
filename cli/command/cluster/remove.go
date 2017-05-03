@@ -21,5 +21,5 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 func remove(c cli.Interface) error {
 	// TODO: only supporting local cluster management for this release
 	args := []string{"bootstrap/bootstrap", "-d", DefaultLocalClusterID}
-	return queryCluster(c, args)
+	return queryCluster(c, args, nil)
 }

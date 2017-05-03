@@ -44,8 +44,8 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-func queryCluster(c cli.Interface, args []string) error {
-	err := Run(c, args)
+func queryCluster(c cli.Interface, args []string, env map[string]string) error {
+	err := Run(c, args, env)
 	if err != nil {
 		// TODO: the local cluster is the only one that can be managed this release
 		c.Console().Println(DefaultLocalClusterID)
