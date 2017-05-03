@@ -11,7 +11,6 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
-	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -19,7 +18,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/api/runtime"
 	"github.com/appcelerator/amp/data/accounts"
-	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
@@ -51,7 +49,6 @@ var serviceInitializers = []serviceInitializer{
 	registerLogsServer,
 	registerStackServer,
 	registerStatsServer,
-	registerFunctionServer,
 	registerAccountServer,
 	registerClusterServer,
 }
@@ -172,13 +169,6 @@ func registerStorageServer(c *Configuration, s *grpc.Server) {
 func registerStatsServer(c *Configuration, s *grpc.Server) {
 	stats.RegisterStatsServer(s, &stats.Stats{
 		Es: runtime.Elasticsearch,
-	})
-}
-
-func registerFunctionServer(c *Configuration, s *grpc.Server) {
-	function.RegisterFunctionServer(s, &function.Server{
-		Functions:     functions.NewStore(runtime.Store),
-		NatsStreaming: runtime.NatsStreaming,
 	})
 }
 

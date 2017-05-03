@@ -253,7 +253,7 @@ ok
 
 if [[ "x$TAG" = "xlocal" ]]; then
   echo "push images to cluster"
-  for image in amplifier ampbeat agent funcexec funchttp; do
+  for image in amplifier ampbeat agent; do
     pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
   done
 else
@@ -280,13 +280,6 @@ deploystack amp.stack.yml amp
 echo "wait for all amp service replicas to be running ($maxwait sec)"
 $servicescheck $maxwait
 checkexit $? "amp service replica checks timed out"
-ok
-
-echo "deploy function stack to cluster"
-deploystack function.stack.yml amp
-echo "wait for all function service replicas to be running ($maxwait sec)"
-$servicescheck $maxwait
-checkexit $? "amp function service replica checks timed out"
 ok
 
 prepare_certificates $domainname

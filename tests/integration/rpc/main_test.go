@@ -8,13 +8,11 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/api/rpc/function"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/data/accounts"
-	"github.com/appcelerator/amp/data/functions"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/stretchr/testify/assert"
@@ -24,29 +22,26 @@ import (
 )
 
 var (
-	ctx            context.Context
-	store          storage.Interface
-	functionClient function.FunctionClient
-	statsClient    stats.StatsClient
-	logsClient     logs.LogsClient
-	accountClient  account.AccountClient
-	accountStore   accounts.Interface
-	functionStore  functions.Interface
+	ctx           context.Context
+	store         storage.Interface
+	statsClient   stats.StatsClient
+	logsClient    logs.LogsClient
+	accountClient account.AccountClient
+	accountStore  accounts.Interface
 )
 
 func TestMain(m *testing.M) {
 	ctx = context.Background()
 
 	// Stores
-	store = etcd.New([]string{server.EtcdDefaultEndpoint}, "amp")
-	if err := store.Connect(5 * time.Second); err != nil {
-		log.Panicf("Unable to connect to etcd on: %s\n%v", amp.EtcdDefaultEndpoint, err)
+	store = etcd.New([]string{etcd.DefaultEndpoint}, "amp", 5*time.Second)
+	if err := store.Connect(); err != nil {
+		log.Panicf("Unable to connect to etcd on: %s\n%v", etcd.DefaultEndpoint, err)
 	}
 	accountStore = accounts.NewStore(store)
-	functionStore = functions.NewStore(store)
 
 	// Create a valid user token
-	token, _ := auth.CreateLoginToken("default", "", time.Hour)
+	token, _ := auth.CreateLoginToken("default", "")
 
 	// Connect to amplifier
 	amplifierEndpoint := "amplifier" + server.DefaultPort
@@ -79,7 +74,6 @@ func TestMain(m *testing.M) {
 
 	// Anonymous clients
 	accountClient = account.NewAccountClient(anonymousConn)
-	functionClient = function.NewFunctionClient(anonymousConn)
 
 	// Start tests
 	code := m.Run()
@@ -96,7 +90,7 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Create a verify token
-	verificationToken, err := auth.CreateVerificationToken(user.Name, time.Hour)
+	verificationToken, err := auth.CreateVerificationToken(user.Name)
 	assert.NoError(t, err)
 
 	// Verify
