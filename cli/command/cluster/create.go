@@ -21,7 +21,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.IntVarP(&opts.managers, "managers", "m", 3, "Intial number of manager nodes")
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
-	flags.StringVar(&opts.tag, "tag", "latest", "Specify tag for cluster images (default is 'latest', use 'local' for development)")
+	flags.StringVarP(&opts.tag, "tag","t","latest", "Specify tag for cluster images (default is 'latest', use 'local' for development)")
 	return cmd
 }
 
