@@ -153,25 +153,6 @@
         }
       }
     },
-    "stackServicesReply": {
-      "type": "object",
-      "properties": {
-        "services": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackStackService"
-          }
-        }
-      }
-    },
-    "stackServicesRequest": {
-      "type": "object",
-      "properties": {
-        "stack_name": {
-          "type": "string"
-        }
-      }
-    },
     "stackStackListEntry": {
       "type": "object",
       "properties": {
@@ -179,26 +160,6 @@
           "$ref": "#/definitions/stacksStack"
         },
         "services": {
-          "type": "string"
-        }
-      }
-    },
-    "stackStackService": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "mode": {
-          "type": "string"
-        },
-        "replicas": {
-          "type": "string"
-        },
-        "image": {
           "type": "string"
         }
       }

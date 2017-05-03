@@ -22,8 +22,6 @@ service Stack {
       delete: "/v1/stacks/{stack}"
     };
   }
-  rpc Services (ServicesRequest) returns (ServicesReply);
-
 }
 
 message DeployRequest {
