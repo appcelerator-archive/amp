@@ -18,9 +18,8 @@ var (
 )
 
 // SaveToken saves the authentication token to file
-func SaveToken(metadata metadata.MD) error {
-	// Extract token from header
-	tokens := metadata[auth.TokenKey]
+func SaveToken(headers metadata.MD) error {
+	tokens := headers[auth.TokenKey]
 	if len(tokens) == 0 {
 		return fmt.Errorf("invalid token")
 	}
@@ -28,7 +27,6 @@ func SaveToken(metadata metadata.MD) error {
 	if token == "" {
 		return fmt.Errorf("invalid token")
 	}
-
 	usr, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("cannot get current user: %s", err)
@@ -80,7 +78,7 @@ type LoginCredentials struct {
 // GetRequestMetadata implements credentials.PerRPCCredentials
 func (c *LoginCredentials) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
-		auth.TokenKey: c.Token,
+		auth.AuthorizationHeader: auth.ForgeAuthorizationHeader(c.Token),
 	}, nil
 }
 

@@ -45,7 +45,7 @@ func (s *serverAPI) handleAPIFunctions(r *mux.Router) {
 }
 
 func (s *serverAPI) setToken(r *http.Request) context.Context {
-	md := metadata.Pairs(auth.TokenKey, r.Header.Get("TokenKey"))
+	md := metadata.Pairs(auth.AuthorizationHeader, r.Header.Get("AuthorizationHeader"))
 	return metadata.NewContext(context.Background(), md)
 }
 
@@ -145,7 +145,7 @@ func (s *serverAPI) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//return token
-	tokens := header[auth.TokenKey]
+	tokens := header[auth.AuthorizationHeader]
 	if len(tokens) == 0 {
 		log.Println("invalid token.")
 		http.Error(w, "invalid token.", http.StatusInternalServerError)
