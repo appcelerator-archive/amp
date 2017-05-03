@@ -42,5 +42,6 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	args := []string{"hack/deploy"}
 	args = reflag(cmd, m, args)
 	args = append(args, DefaultLocalClusterID)
-	return queryCluster(c, args)
+	env := map[string]string{"TAG": opts.tag}
+	return queryCluster(c, args, env)
 }

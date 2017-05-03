@@ -2,9 +2,15 @@ package cluster
 
 import (
 	"bufio"
+	"fmt"
 	"os/exec"
 
 	"github.com/appcelerator/amp/cli"
+)
+
+const (
+	bootstrapImg = "appcelerator/amp-bootstrap:%s"
+	bootstrapTag = "1.1.0"
 )
 
 var (
@@ -17,11 +23,29 @@ func init() {
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
-		"appcelerator/amp-bootstrap:1.1.0",
 	}
 }
 
-func Run(c cli.Interface, args []string) error {
+func Run(c cli.Interface, args []string, env map[string]string) error {
+	// make environment variables available to container
+	if env != nil {
+		for k, v := range env {
+			dockerArgs = append(dockerArgs, "-e", fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+
+	// update the bootstrapImg template string to use either the default tag
+	// or the tag specified by the TAG environment variable
+	img := bootstrapImg
+	tag := bootstrapTag
+	if env != nil && env["TAG"] != "" {
+		tag = env["TAG"]
+	}
+	img = fmt.Sprintf(img, tag)
+
+	// this completes the docker args
+	dockerArgs = append(dockerArgs, img)
+
 	cmd := "docker"
 	args = append(dockerArgs, args...)
 

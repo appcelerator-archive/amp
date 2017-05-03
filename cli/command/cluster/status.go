@@ -20,7 +20,7 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 func status(c cli.Interface, cmd *cobra.Command) error {
 	// TODO call api to get status
 	args := []string{"bootstrap/bootstrap", "-s", DefaultLocalClusterID}
-	status := queryCluster(c, args)
+	status := queryCluster(c, args, nil)
 	if status != nil {
 		c.Console().Println("cluster status: not running")
 	} else {
