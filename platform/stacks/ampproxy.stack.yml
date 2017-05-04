@@ -23,7 +23,6 @@ services:
         constraints: [node.role == manager]
     environment:
       CERT_FOLDER: "/run/secrets"
-      EXTRA_FRONTEND_SETTINGS_80: redirect scheme https code 301 if !{ ssl_fc }
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:

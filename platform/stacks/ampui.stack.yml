@@ -43,7 +43,8 @@ services:
         io.amp.role: "infrastructure"
     environment:
       SERVICE_PORTS: "3333"
-      VIRTUAL_HOST: "https://ui.*"
+      VIRTUAL_HOST: "http://ui.*,https://ui.*"
+      FORCE_SSL: 1
       LOCAL_ENDPOINT: "true"
       ENDPOINTS: "cloud.atomiq.io"
     labels:
