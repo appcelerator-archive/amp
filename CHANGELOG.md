@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.1 (2017-05-03)
+
+* usability improvements for stack deployment
+* HA etcd and elasticsearch
+* voting app example
+* user verification token can only be used once
+* fix local deployment with CLI in fresh environment
+* fix context in the user verification email
+
 ## 0.9.0 (2017-04-17)
 
 Major refactoring for Docker 1.13+
