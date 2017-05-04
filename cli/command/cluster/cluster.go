@@ -45,6 +45,9 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 }
 
 func queryCluster(c cli.Interface, args []string, env map[string]string) error {
+	if err := check(opts.provider); err != nil {
+		return err
+	}
 	err := Run(c, args, env)
 	if err != nil {
 		// TODO: the local cluster is the only one that can be managed this release
