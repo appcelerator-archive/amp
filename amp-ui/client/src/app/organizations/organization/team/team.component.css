@@ -6,19 +6,3 @@ button.ebutton {
 td {
   padding: 20px 20px 1px 1px;
 }
-
-a.none {
-  color: black
-}
-
-a.read {
-  color:green
-}
-
-a.write {
-  color: orange
-}
-
-a.admin {
-  color: red
-}

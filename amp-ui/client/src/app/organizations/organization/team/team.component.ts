@@ -3,6 +3,7 @@ import { NgForm } from '@angular/forms';
 import { OrganizationsService } from '../../../services/organizations.service'
 import { ListService } from '../../../services/list.service';
 import { User } from '../../../models/user.model';
+import { Team } from '../../../models/team.model';
 import { Organization } from '../../../models/organization.model';
 import { TeamResource } from '../../../models/team-resource.model';
 import { ActivatedRoute } from '@angular/router';
@@ -15,8 +16,6 @@ import { MenuService } from '../../../services/menu.service';
 })
 
 export class TeamComponent implements OnInit {
-  orgName = ""
-  name = ""
   routeSub : any
   modeCreation : boolean = false
   userResourceToggle = false
@@ -24,6 +23,7 @@ export class TeamComponent implements OnInit {
   public listUserAddedService : ListService = new ListService()
   public listResourceService : ListService = new ListService()
   organization : Organization
+  team : Team
   addedUsers : User[] = []
   users : User[] = []
   initialUserList : User[] = []
@@ -44,23 +44,29 @@ export class TeamComponent implements OnInit {
   ngOnInit() {
     this.menuService.setItemMenu('organization', 'Team edit')
     this.routeSub = this.route.params.subscribe(params => {
-      this.orgName = params['orgName'];
-      this.name = params['teamName'];
+      let orgName = params['orgName'];
+      let name = params['teamName'];
       for (let org of this.organizationsService.organizations) {
-        if (org.name == this.orgName) {
+        if (org.name == orgName) {
           this.organization = org
         }
       }
       if (this.organization) {
-        console.log("Team: "+this.orgName+":"+this.name)
-        this.initialUserList = this.organization.members.slice()
-        this.addedUsers = []
-        this.resources = this.organization.resources.slice()
-        //
-        this.users = this.initialUserList.slice()
-        this.listUserAddedService.setData(this.addedUsers)
-        this.listUserService.setData(this.users)
-        this.listResourceService.setData(this.resources)
+        for (let team of this.organization.teams) {
+          if (team.name == name) {
+            this.team = team
+          }
+        }
+        if (this.team) {
+          this.initialUserList = this.organization.members.slice()
+          this.addedUsers = this.team.members.slice()
+          this.resources = this.organization.resources.slice()
+          //
+          this.users = this.initialUserList.slice()
+          this.listUserAddedService.setData(this.addedUsers)
+          this.listUserService.setData(this.users)
+          this.listResourceService.setData(this.resources)
+        }
       }
     })
   }
@@ -139,7 +145,7 @@ export class TeamComponent implements OnInit {
 
   applyUsers() {
     console.log("apply")
-    //apply
+    this.team.members=this.addedUsers.slice()
     this.updated=false
   }
 
@@ -152,8 +158,18 @@ export class TeamComponent implements OnInit {
   }
 
   returnBack() {
-    console.log(this.orgName)
-    this.menuService.navigate(['/amp/organizations', this.orgName])
+    this.menuService.navigate(['/amp/organizations', this.organization.name])
+  }
+
+  removeTeam() {
+    let list : Team[] = []
+    for (let team of this.organization.teams) {
+      if (team.name !== this.team.name) {
+        list.push(team)
+      }
+    }
+    this.organization.teams=list
+    this.menuService.navigate(['/amp/organizations', this.organization.name])
   }
 
   setPermission(res : TeamResource, level : number) {
