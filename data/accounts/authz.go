@@ -12,6 +12,7 @@ import (
 // Resources and actions
 const (
 	AmpResourceName = "amprn"
+	UserRN          = AmpResourceName + ":user"
 	OrganizationRN  = AmpResourceName + ":organization"
 	TeamRN          = AmpResourceName + ":team"
 	StackRN         = AmpResourceName + ":stack"
@@ -77,28 +78,26 @@ var (
 		},
 	}
 
+	usersAdminByThemselves = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{UserRN},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
+		},
+	}
+
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		organizationsAdminByOrgOwners,
-		teamsAdminByOrgOwners,
 		stacksAdminByOrgOwnersAndTeamAdmins,
 		stacksAdminByUserOwner,
-	}
-
-	warden = &ladon.Ladon{
-		Manager: ladon.NewMemoryManager(),
+		teamsAdminByOrgOwners,
+		usersAdminByThemselves,
 	}
 )
-
-// TODO: Create a real policy manager?
-func init() {
-	// Register all policies
-	for _, policy := range policies {
-		if err := warden.Manager.Create(policy); err != nil {
-			log.Fatal("Unable to create policy:", err)
-		}
-	}
-}
 
 // Authorization
 
@@ -129,7 +128,7 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 		if err != nil {
 			return false
 		}
-		err = warden.IsAllowed(&ladon.Request{
+		err = s.warden.IsAllowed(&ladon.Request{
 			Subject:  subject,
 			Action:   action,
 			Resource: resource,
@@ -140,7 +139,7 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 		})
 		return err == nil
 	case AccountType_USER:
-		err := warden.IsAllowed(&ladon.Request{
+		err := s.warden.IsAllowed(&ladon.Request{
 			Subject:  subject,
 			Action:   action,
 			Resource: resource,
@@ -151,6 +150,25 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 		return err == nil
 	}
 	return false
+}
+
+// SuperOrganizationAccessCondition is a condition which is fulfilled if the request's subject is a member of the super organization
+type SuperOrganizationAccessCondition struct {
+	accounts *Store
+}
+
+// Fulfills returns true if subject is granted resource access
+func (c *SuperOrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Request) bool {
+	so, err := c.accounts.GetOrganization(context.Background(), superOrganization)
+	if err != nil {
+		return false
+	}
+	return so.getMember(r.Subject) != nil
+}
+
+// GetName returns the condition's name.
+func (c *SuperOrganizationAccessCondition) GetName() string {
+	return "SuperOrganizationAccessCondition"
 }
 
 // OrganizationAccessCondition is a condition which is fulfilled if the request's subject has the expected access in the organization (either by organization role or team access)
@@ -164,7 +182,7 @@ func (c *OrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Reque
 	organization, ok := value.(*Organization)
 	log.Println("organization", organization)
 	if !ok {
-		log.Println("organization ok", ok)
+		log.Println("organization ok:", ok)
 		return false
 	}
 	if organization == nil {

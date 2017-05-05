@@ -112,6 +112,6 @@ type Interface interface {
 	// IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
 	IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceId string) bool
 
-	// Reset resets the user store
+	// Reset resets the user storage
 	Reset(ctx context.Context)
 }

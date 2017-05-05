@@ -46,5 +46,6 @@ func main() {
 	if err := server.ReadConfig(config); err != nil {
 		log.Fatalln(err)
 	}
-	server.Start(config)
+	amplifier := server.New(config)
+	amplifier.Start()
 }

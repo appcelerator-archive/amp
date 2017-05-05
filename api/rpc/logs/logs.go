@@ -20,8 +20,8 @@ import (
 
 // Server is used to implement log.LogServer
 type Server struct {
-	Es            *elasticsearch.Elasticsearch
-	NatsStreaming *ns.NatsStreaming
+	Es *elasticsearch.Elasticsearch
+	Ns *ns.NatsStreaming
 }
 
 // Get implements logs.LogsServer
@@ -109,12 +109,12 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 
 // GetStream implements log.LogServer
 func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
-	if err := s.NatsStreaming.Connect(); err != nil {
+	if err := s.Ns.Connect(); err != nil {
 		return errors.New("unable to connect to nats service")
 	}
 	log.Println("rpc-logs: GetStream", in.String())
 
-	sub, err := s.NatsStreaming.GetClient().Subscribe(ns.LogsSubject, func(msg *stan.Msg) {
+	sub, err := s.Ns.GetClient().Subscribe(ns.LogsSubject, func(msg *stan.Msg) {
 		entry := &LogEntry{}
 		if err := proto.Unmarshal(msg.Data, entry); err != nil {
 			return
