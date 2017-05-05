@@ -20,8 +20,20 @@ have gnu make installed on your system.)*
 To deploy a standard Docker Compose version 3 stackfile, use
 `amp stack deploy`. There are sample stackfiles under `examples`.
 
-To deploy serverless functions, see the examples under
-`examples/functions`.
+## Linux
+
+If you're running on Linux, there are a few things you must do first.
+
+    # increase virtual memory
+    $ sudo sysctl -w vm.max_map_count=262144
+
+    # load the IPVS kernel module for swarm mode to work for Docker-in-Docker
+    # (not necessary if your host is already a member of a swarm)
+    $ sudo modprobe ip_vs
+
+## Docker for Mac
+
+Docker for Mac v.17+ should work just fine.
 
 ## Monitoring
 
