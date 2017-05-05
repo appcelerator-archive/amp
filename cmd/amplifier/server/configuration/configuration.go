@@ -28,6 +28,7 @@ type Configuration struct {
 	DockerURL        string
 	DockerVersion    string
 	JWTSecretKey     string
+	SUPassword       string
 	EmailKey         string
 	EmailSender      string
 	SmsAccountID     string
