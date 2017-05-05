@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/api/registration"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Server is used to implement account.UserServer
+// Server is used to implement account.AccountServer
 type Server struct {
-	Accounts     accounts.Interface
-	Mailer       *mail.Mailer
-	Registration string
+	Accounts accounts.Interface
+	Mailer   *mail.Mailer
+	Config   *configuration.Configuration
 }
 
 func convertError(err error) error {
@@ -97,8 +97,8 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 
-	switch s.Registration {
-	case registration.Email:
+	switch s.Config.Registration {
+	case configuration.RegistrationEmail:
 		// Create a verification token valid for an hour
 		token, err := auth.CreateVerificationToken(user.Name)
 		if err != nil {

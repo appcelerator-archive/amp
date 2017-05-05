@@ -104,7 +104,7 @@ set_deployment_variables(){
     dockerhost=m1
     registryhost=127.0.0.1
     create_amp_stacks_volume
-    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -v amp-stacks:/stacks docker --host=$dockerhost"
+    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     domainname=$localdomainname
     ;;
@@ -112,7 +112,7 @@ set_deployment_variables(){
     # todo: use a secured remote API
     dockerhost=$($terraform output -state=/data/terraform.tfstate leader_ip)
     registryhost=$dockerhost
-    amps="TAG=$TAG REGISTRATION=$REGISTRATION docker -H $dockerhost"
+    amps="TAG=$TAG REGISTRATION=$REGISTRATION NOTIFICATIONS=$NOTIFICATIONS docker -H $dockerhost"
     stacks_path=stacks
     domainname=$clouddomainname
     # variable used in sub scripts
@@ -193,7 +193,7 @@ prepare_certificates() {
   $amps secret create "certificate_atomiq" /stacks/$name.pem
 }
 
-while getopts ":w:m:t:l:T:c:r:" opt; do
+while getopts ":w:m:t:l:T:c:r:n:" opt; do
   case $opt in
   w|m|t|l) # just pass it to the bootstrap script
     BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
@@ -201,8 +201,11 @@ while getopts ":w:m:t:l:T:c:r:" opt; do
   T) # tag for images to deploy
     export TAG=$OPTARG
     ;;
-  r) # tag for images to deploy
+  r) # registration policy
     export REGISTRATION=$OPTARG
+    ;;
+  n) # notifications
+    export NOTIFICATIONS=$OPTARG
     ;;
   c)
     CHECK=1

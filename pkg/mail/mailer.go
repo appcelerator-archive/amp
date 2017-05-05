@@ -20,13 +20,15 @@ type emailTemplate struct {
 
 type Mailer struct {
 	apiKey           string
+	enabled          bool
 	emailSender      string
 	emailTemplateMap map[string]*emailTemplate
 }
 
-func NewMailer(apiKey string, emailSender string) *Mailer {
+func NewMailer(apiKey string, emailSender string, enabled bool) *Mailer {
 	mailer := &Mailer{
 		apiKey:           apiKey,
+		enabled:          enabled,
 		emailSender:      emailSender,
 		emailTemplateMap: make(map[string]*emailTemplate),
 	}
@@ -222,6 +224,9 @@ func (m *Mailer) SendTemplateEmail(to string, templateEmailName string, variable
 
 // SendMail send an email to "to" with subject and body, use configuration
 func (m *Mailer) SendMail(to string, subject string, isHTML bool, body string) error {
+	if !m.enabled {
+		return nil
+	}
 	if m.apiKey == "" {
 		return fmt.Errorf("SendGrid API key is empty")
 	}

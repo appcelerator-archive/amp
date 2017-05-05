@@ -18,6 +18,7 @@ services:
           - amplifier
     environment:
       REGISTRATION: ${REGISTRATION:-email}
+      NOTIFICATIONS: ${NOTIFICATIONS:-true}
     ports:
       - "50101:50101"
     volumes:
