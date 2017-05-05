@@ -3,6 +3,8 @@ Websocket Bash
 
 Serves up a websocket connected to a bash session
 
+A local AMP cluster should be up, and the amp CLI should be in the PATH.
+
 Run in this directory:
 
     $ ./deploy.sh

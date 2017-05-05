@@ -3,6 +3,7 @@ Javascript Microservice
 
 Single function (serverless style) application.
 
+Start a local AMP cluster.
 Run in this directory:
 
     $ ./deploy.sh

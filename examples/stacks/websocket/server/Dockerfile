@@ -1,5 +1,6 @@
 FROM node:6
 
+RUN mv /usr/local/bin/yarn /usr/local/bin/yarn.bak
 RUN npm i yarn -g
 WORKDIR /app
 ADD yarn.lock /app
