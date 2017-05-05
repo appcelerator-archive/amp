@@ -13,7 +13,7 @@ import (
 
 // Stats structure to implement StatsServer interface
 type Stats struct {
-	Es *elasticsearch.Elasticsearch
+	ES *elasticsearch.Elasticsearch
 }
 
 const (
@@ -29,7 +29,7 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 	if err := s.validateTimeGroup(req.TimeGroup); err != nil {
 		return nil, err
 	}
-	if err := s.Es.Connect(); err != nil {
+	if err := s.ES.Connect(); err != nil {
 		return nil, errors.New("unable to connect to elasticsearch service")
 	}
 	if req.TimeGroup == "" {
@@ -43,7 +43,7 @@ func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*Stat
 	boolQuery := s.createBoolQuery(req, "now-10s")
 	agg := s.createTermAggreggation(req)
 
-	result, err := s.Es.GetClient().Search().
+	result, err := s.ES.GetClient().Search().
 		Index(esIndex).
 		Query(boolQuery).
 		Aggregation("group", agg).
@@ -78,7 +78,7 @@ func (s *Stats) statsHistoricQuery(ctx context.Context, req *StatsRequest) (*Sta
 	boolQuery := s.createBoolQuery(req, req.Period)
 	agg := s.createHistoAggreggation(req)
 
-	result, err := s.Es.GetClient().Search().
+	result, err := s.ES.GetClient().Search().
 		Index(esIndex).
 		Query(boolQuery).
 		Aggregation("histo", agg).

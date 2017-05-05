@@ -1,8 +1,10 @@
 package cluster
 
 import (
-	"github.com/appcelerator/amp/api/registration"
+	"strconv"
+
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +25,8 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
 	flags.StringVarP(&opts.tag, "tag", "t", "latest", "Specify tag for cluster images (default is 'latest', use 'local' for development)")
-	flags.StringVarP(&opts.registration, "registration", "r", registration.Default, "Specify the registration policy (default is 'email', possible values are 'none' or 'email')")
+	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationDefault, "Specify the registration policy (default is 'email', possible values are 'none' or 'email')")
+	flags.BoolVarP(&opts.notifications, "notifications", "n", true, "Enable/disable server notifications (emails, sms, etc.)")
 	return cmd
 }
 
@@ -31,12 +34,13 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 func create(c cli.Interface, cmd *cobra.Command) error {
 	// This is a map from cli cluster flag name to bootstrap script flag name
 	m := map[string]string{
-		"workers":      "-w",
-		"managers":     "-m",
-		"provider":     "-t",
-		"name":         "-l",
-		"tag":          "-T",
-		"registration": "-r",
+		"workers":       "-w",
+		"managers":      "-m",
+		"provider":      "-t",
+		"name":          "-l",
+		"tag":           "-T",
+		"registration":  "-r",
+		"notifications": "-n",
 	}
 
 	// TODO: only supporting local cluster management for this release
@@ -45,6 +49,6 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	args := []string{"bin/deploy"}
 	args = reflag(cmd, m, args)
 	args = append(args, DefaultLocalClusterID)
-	env := map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration}
+	env := map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications)}
 	return queryCluster(c, args, env)
 }

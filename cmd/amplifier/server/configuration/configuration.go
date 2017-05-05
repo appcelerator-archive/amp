@@ -1,23 +1,23 @@
-package server
+package configuration
 
 import (
 	"fmt"
 	"log"
-
+	"strings"
 	"time"
 
-	"strings"
-
-	"github.com/appcelerator/amp/api/registration"
 	"github.com/spf13/viper"
 )
 
 const (
-	DefaultPort    = ":50101"
-	DefaultTimeout = time.Minute
+	DefaultPort         = ":50101"
+	DefaultTimeout      = time.Minute
+	RegistrationNone    = "none"
+	RegistrationEmail   = "email"
+	RegistrationDefault = RegistrationEmail
 )
 
-// Config is used for amplifier configuration settings
+// Configuration is used for amplifier configuration settings
 type Configuration struct {
 	Version          string
 	Build            string
@@ -33,6 +33,11 @@ type Configuration struct {
 	SmsKey           string
 	SmsSender        string
 	Registration     string
+	Notifications    bool
+}
+
+func (c *Configuration) String() string {
+	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
 }
 
 // ReadConfig reads the configuration file
@@ -53,18 +58,19 @@ func ReadConfig(config *Configuration) error {
 	}
 
 	// Read environment variable
-	r, match := viper.GetString("registration"), false
-	for _, valid := range []string{registration.None, registration.Email} {
-		if strings.EqualFold(valid, r) {
+	registration, match := viper.GetString("registration"), false
+	for _, valid := range []string{RegistrationNone, RegistrationEmail} {
+		if strings.EqualFold(valid, registration) {
 			match = true
 			break
 		}
 	}
 	if match {
-		config.Registration = strings.ToLower(r)
+		config.Registration = strings.ToLower(registration)
 	} else {
-		log.Printf("Invalid registration provided: %s, defaulting to: %s\n", r, registration.Default)
+		log.Printf("Invalid registration policy specified: %s, defaulting to: %s\n", registration, RegistrationDefault)
 	}
+	config.Notifications = viper.GetBool("notifications")
 
 	log.Println("Configuration file successfully loaded")
 	return nil

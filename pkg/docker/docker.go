@@ -27,9 +27,10 @@ const (
 
 // Docker wrapper
 type Docker struct {
-	url     string
-	version string
-	client  *client.Client
+	client    *client.Client
+	connected bool
+	url       string
+	version   string
 }
 
 // NewClient instantiates a new Docker wrapper
@@ -53,22 +54,14 @@ func (d *Docker) GetClient() *client.Client {
 	return d.client
 }
 
-// DoesServiceExist returns whether the given service exists
-func (d *Docker) DoesServiceExist(ctx context.Context, name string) bool {
-	list, err := d.client.ServiceList(ctx, types.ServiceListOptions{})
-	if err != nil || len(list) == 0 {
-		return false
-	}
-	for _, service := range list {
-		if service.Spec.Annotations.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
 // ContainerCreate creates a container and pulls the image if needed
 func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, name string) (*container.ContainerCreateCreatedBody, error) {
+	if !d.connected {
+		if err := d.Connect(); err != nil {
+			return nil, err
+		}
+	}
+
 	var (
 		namedRef reference.Named
 	)
@@ -105,6 +98,11 @@ func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, 
 
 // ImagePull pulls a docker image
 func (d *Docker) ImagePull(ctx context.Context, image string) error {
+	if !d.connected {
+		if err := d.Connect(); err != nil {
+			return err
+		}
+	}
 	responseBody, err := d.client.ImageCreate(ctx, image, types.ImageCreateOptions{})
 	if err != nil {
 		return err

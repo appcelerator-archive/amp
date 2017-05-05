@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/api/registration"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
@@ -18,20 +18,20 @@ const organizationsRootKey = "organizations"
 
 // Store implements user data.Interface
 type Store struct {
-	registration string
-	store        storage.Interface
+	cfg     *configuration.Configuration
+	storage storage.Interface
 }
 
 // NewStore returns an etcd implementation of user.Interface
-func NewStore(store storage.Interface, registration string) *Store {
-	return &Store{store: store, registration: registration}
+func NewStore(storage storage.Interface, cfg *configuration.Configuration) *Store {
+	return &Store{storage: storage, cfg: cfg}
 }
 
 // Users
 
 func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	user := &User{}
-	if err := s.store.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
+	if err := s.storage.Get(ctx, path.Join(usersRootKey, name), user, true); err != nil {
 		return nil, err
 	}
 	if user.GetName() == "" { // If there's no "name" in the answer, it means the user has not been found, so return nil
@@ -104,7 +104,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		IsVerified: false,
 		CreateDt:   time.Now().Unix(),
 	}
-	if s.registration == registration.None {
+	if s.cfg.Registration == configuration.RegistrationNone {
 		user.IsVerified = true
 	}
 	if password, err = CheckPassword(password); err != nil {
@@ -116,7 +116,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
-	if err := s.store.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
+	if err := s.storage.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
 		return nil, err
 	}
 	return secureUser(user), nil
@@ -138,7 +138,7 @@ func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
 	}
 	user.IsVerified = true
 	user.TokenUsed = true
-	if err := s.store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+	if err := s.storage.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return nil, err
 	}
 	return secureUser(user), nil
@@ -172,7 +172,7 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 	}
 
 	// Update user
-	if err := s.store.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+	if err := s.storage.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
 		return err
 	}
 	return nil
@@ -225,7 +225,7 @@ func (s *Store) GetUserOrganizations(ctx context.Context, name string) ([]*Organ
 // ListUsers lists users
 func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	protos := []proto.Message{}
-	if err := s.store.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
+	if err := s.storage.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
 		return nil, err
 	}
 	users := []*User{}
@@ -262,7 +262,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	}
 
 	// Delete the user
-	if err := s.store.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
+	if err := s.storage.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -284,7 +284,7 @@ func (s *Store) updateOrganization(ctx context.Context, in *Organization) error 
 	if err := in.Validate(); err != nil {
 		return err
 	}
-	if err := s.store.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
+	if err := s.storage.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
 		return err
 	}
 	return nil
@@ -325,7 +325,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 	if err := organization.Validate(); err != nil {
 		return err
 	}
-	if err := s.store.Create(ctx, path.Join(organizationsRootKey, organization.Name), organization, nil, 0); err != nil {
+	if err := s.storage.Create(ctx, path.Join(organizationsRootKey, organization.Name), organization, nil, 0); err != nil {
 		return err
 	}
 	return nil
@@ -443,7 +443,7 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (organization 
 		return nil, err
 	}
 	organization = &Organization{}
-	if err := s.store.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
+	if err := s.storage.Get(ctx, path.Join(organizationsRootKey, name), organization, true); err != nil {
 		return nil, err
 	}
 	// If there's no "name" in the answer, it means the organization has not been found, so return nil
@@ -456,7 +456,7 @@ func (s *Store) GetOrganization(ctx context.Context, name string) (organization 
 // ListOrganizations lists organizations
 func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) {
 	protos := []proto.Message{}
-	if err := s.store.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {
+	if err := s.storage.List(ctx, organizationsRootKey, storage.Everything, &Organization{}, &protos); err != nil {
 		return nil, err
 	}
 	organizations := []*Organization{}
@@ -480,7 +480,7 @@ func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	}
 
 	// Delete organization
-	if err := s.store.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
+	if err := s.storage.Delete(ctx, path.Join(organizationsRootKey, name), false, nil); err != nil {
 		return err
 	}
 	return nil
@@ -736,8 +736,8 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 	return s.updateOrganization(ctx, organization)
 }
 
-// Reset resets the account store
+// Reset resets the account storage
 func (s *Store) Reset(ctx context.Context) {
-	s.store.Delete(ctx, usersRootKey, true, nil)
-	s.store.Delete(ctx, organizationsRootKey, true, nil)
+	s.storage.Delete(ctx, usersRootKey, true, nil)
+	s.storage.Delete(ctx, organizationsRootKey, true, nil)
 }

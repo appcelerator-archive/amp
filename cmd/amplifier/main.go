@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
-	"github.com/appcelerator/amp/api/registration"
 	"github.com/appcelerator/amp/cmd/amplifier/server"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
@@ -23,17 +22,17 @@ var (
 	Build string
 
 	// Amplifier configuration
-	config *server.Configuration
+	cfg *configuration.Configuration
 )
 
 func main() {
-	fmt.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
+	log.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
 
 	// Default Configuration
-	config = &server.Configuration{
+	cfg = &configuration.Configuration{
 		Version:          Version,
 		Build:            Build,
-		Port:             server.DefaultPort,
+		Port:             configuration.DefaultPort,
 		EmailSender:      mail.DefaultSender,
 		SmsSender:        sms.DefaultSender,
 		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
@@ -41,12 +40,19 @@ func main() {
 		NatsURL:          ns.DefaultURL,
 		DockerURL:        docker.DefaultURL,
 		DockerVersion:    docker.DefaultVersion,
-		Registration:     registration.Default,
+		Registration:     configuration.RegistrationDefault,
+		Notifications:    true,
 	}
 
 	// Override with configuration file
-	if err := server.ReadConfig(config); err != nil {
+	if err := configuration.ReadConfig(cfg); err != nil {
 		log.Fatalln(err)
 	}
-	server.Start(config)
+
+	log.Println(cfg)
+	amplifier, err := server.New(cfg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	amplifier.Start()
 }

@@ -4,8 +4,10 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -28,6 +30,17 @@ func removeUser(c cli.Interface, args []string) error {
 	var errs []string
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
+	token, err := cli.ReadToken()
+	if err != nil {
+		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
+	}
+	pToken, _ := jwt.ParseWithClaims(token, &auth.AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte{}, nil
+	})
+	claims, ok := pToken.Claims.(*auth.AuthClaims)
+	if !ok {
+		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
+	}
 	for _, name := range args {
 		request := &account.DeleteUserRequest{
 			Name: name,
@@ -36,11 +49,14 @@ func removeUser(c cli.Interface, args []string) error {
 			errs = append(errs, grpc.ErrorDesc(err))
 			continue
 		}
+		if name == claims.AccountName {
+			if err := cli.RemoveToken(); err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
 		c.Console().Println(name)
 	}
-	if err := cli.RemoveToken(); err != nil {
-		errs = append(errs, err.Error())
-	}
+
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}

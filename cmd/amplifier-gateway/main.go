@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
-	"github.com/appcelerator/amp/cmd/amplifier/server"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 const (
-	amplifierEndpoint = "amplifier" + server.DefaultPort
+	amplifierEndpoint = "amplifier" + configuration.DefaultPort
 )
 
 func allowCORS(h http.Handler) http.Handler {
