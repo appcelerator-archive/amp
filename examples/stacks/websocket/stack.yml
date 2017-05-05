@@ -1,11 +1,30 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
 services:
   bash-server:
-    image: 'registry.local.appcelerator.io/ws-bash-server'
-    public:
-      - name: ws
-        internal_port: 4000
+    image: 'examples/ws-bash-server'
+    networks:
+      - default
+    environment:
+      SERVICE_PORTS: "4000"
+      VIRTUAL_HOST: "http://ws.*,https://ws.*"
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
   web:
-    image: 'registry.local.appcelerator.io/ws-bash-web'
-    public:
-      - name: web
-        internal_port: 80
+    image: 'examples/ws-bash-web'
+    networks:
+      - default
+    environment:
+      SERVICE_PORTS: "80"
+      VIRTUAL_HOST: "http://web.*,https://web.*"
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]

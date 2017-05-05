@@ -1,7 +1,8 @@
 #!/bin/sh
-amp stack rm -f websocket || true
-docker build -t examples/ws-bash-server server
-amp registry push examples/ws-bash-server
-docker build -t examples/ws-bash-web web
-amp registry push examples/ws-bash-web
-amp stack up -f stack.yml websocket
+set -o errexit
+amp -s localhost stack rm websocket || true
+docker build -t 127.0.0.1:5000/examples/ws-bash-server server
+docker build -t 127.0.0.1:5000/examples/ws-bash-web web
+docker push 127.0.0.1:5000/examples/ws-bash-server
+docker push 127.0.0.1:5000/examples/ws-bash-web
+amp -s localhost stack deploy -c stack.yml websocket

@@ -160,26 +160,7 @@ export RC_VERSION=${VERSION}-rcN
 echo ${RC_VERSION#v} > VERSION
 ```
 
-### 5. Test the docs
-
-Make sure that your tree includes documentation for any modified or
-new features, syntax or semantic changes.
-
-To test locally:
-
-```bash
-make docs
-```
-
-To make a shared test at https://beta-docs.docker.io:
-
-(You will need the `awsconfig` file added to the `docs/` dir)
-
-```bash
-make AWS_S3_BUCKET=beta-docs.appcelerator.io BUILD_ROOT=yes docs-release
-```
-
-### 6. Commit and create a pull request to the "release" branch
+### 5. Commit and create a pull request to the "release" branch
 
 ```bash
 git add VERSION CHANGELOG.md
@@ -192,86 +173,16 @@ That last command will give you the proper link to visit to ensure that you
 open the PR against the "release" branch instead of accidentally against
 "master" (like so many brave souls before you already have).
 
-### 7. Create a PR to update the AUTHORS file for the release
+### 6. Create a PR to update the AUTHORS file for the release
 
-Update the AUTHORS file, by running the `hack/generate-authors.sh` on the
-release branch. To prevent duplicate entries, you may need to update the
-`.mailmap` file accordingly.
+Update the AUTHORS file.
 
-### 8. Build release candidate rpms and debs
-
-**NOTE**: It will be a lot faster if you pass a different graphdriver with
-`DOCKER_GRAPHDRIVER` than `vfs`.
+### 7. Publish artifacts
 
 ```bash
-docker build -t docker .
-docker run \
-    --rm -t --privileged \
-    -e DOCKER_GRAPHDRIVER=aufs \
-    -v $(pwd)/bundles:/go/src/github.com/appcelerator/amp/bundles \
-    docker \
-    hack/make.sh binary build-deb build-rpm
+aws --profile $PROFILE s3 --region=$REGION cp --acl public-read $BINDIR/$sos/$sarch/$ARCHIVE.tgz s3://$BUCKET/$S3DIR/$dos/$darch/${ARCHIVE}-v$VERSION.tgz
 ```
 
-### 9. Publish release candidate rpms and debs
-
-With the rpms and debs you built from the last step you can release them on the
-same server, or ideally, move them to a dedicated release box via scp into
-another appcelerator/amp directory in bundles. This next step assumes you have
-a checkout of the amp source code at the same commit you used to build, with
-the artifacts from the last step in `bundles`.
-
-**NOTE:** If you put a space before the command your `.bash_history` will not
-save it. (for the `GPG_PASSPHRASE`).
-
-```bash
-docker build -t amp .
-docker run --rm -it --privileged \
-    -v /volumes/repos:/volumes/repos \
-    -v $(pwd)/bundles:/go/src/github.com/appcelerator/amp/bundles \
-    -v $HOME/.gnupg:/root/.gnupg \
-    -e DOCKER_RELEASE_DIR=/volumes/repos \
-    -e GPG_PASSPHRASE \
-    -e KEEPBUNDLE=1 \
-    docker \
-    hack/make.sh release-deb release-rpm sign-repos generate-index-listing
-```
-
-### 10. Upload the changed repos to wherever you host
-
-For example, above we bind mounted `/volumes/repos` as the storage for
-`AMP_RELEASE_DIR`. In this case `/volumes/repos/apt` can be synced with
-a specific s3 bucket for the apt repo and `/volumes/repos/yum` can be synced with
-a s3 bucket for the yum repo.
-
-### 11. Publish release candidate binaries
-
-To run this you will need access to the release credentials. Get them from the
-Core maintainers.
-
-```bash
-docker build -t amp .
-
-# static binaries are still pushed to s3
-docker run \
-    -e AWS_S3_BUCKET=test.appcelerator.io \
-    -e AWS_ACCESS_KEY_ID \
-    -e AWS_SECRET_ACCESS_KEY \
-    -e AWS_DEFAULT_REGION \
-    -i -t --privileged \
-    docker \
-    hack/release.sh
-```
-
-It will run the test suite, build the binaries and upload to the specified bucket,
-so this is a good time to verify that you're running against **test**.appcelerator.io.
-
-### 12. Purge the cache!
-
-After the binaries are uploaded to test.docker.com and the packages are on
-apt.appcelerator.io and yum.appcelerator.io, make sure
-they get tested in both Ubuntu and Debian for any obvious installation
-issues or runtime issues.
 
 If everything looks good, it's time to create a git tag for this candidate:
 
@@ -284,12 +195,8 @@ Announcing on multiple medias is the best way to get some help testing! An easy
 way to get some useful links for sharing:
 
 ```bash
-echo "Ubuntu/Debian: curl -sSL https://test.docker.com/ | sh"
-echo "Linux 64bit binary: https://test.appcelerator.io/builds/Linux/x86_64/docker-${VERSION#v}"
-echo "Darwin/OSX 64bit client binary: https://test.appcelerator.io/builds/Darwin/x86_64/docker-${VERSION#v}"
-echo "Linux 64bit tgz: https://test.docker.com/builds/Linux/x86_64/docker-${VERSION#v}.tgz"
-echo "Windows 64bit client binary: https://test.docker.com/builds/Windows/x86_64/docker-${VERSION#v}.exe"
-echo "Windows 32bit client binary: https://test.docker.com/builds/Windows/i386/docker-${VERSION#v}.exe"
+echo "Linux 64bit binary: https://test.appcelerator.io/builds/Linux/x86_64/amp-${VERSION#v}"
+echo "Darwin/OSX 64bit client binary: https://test.appcelerator.io/builds/Darwin/x86_64/amp-${VERSION#v}"
 ```
 
 We recommend announcing the release candidate on:
@@ -366,47 +273,6 @@ You will then repeat step 6 to publish the binaries to test
 
 ### 15. Get 2 other maintainers to validate the pull request
 
-### 16. Build final rpms and debs
-
-```bash
-docker build -t amp .
-docker run \
-    --rm -t --privileged \
-    -v $(pwd)/bundles:/go/src/github.com/appcelerator/amp/bundles \
-    docker \
-    hack/make.sh binary build-deb build-rpm
-```
-
-### 17. Publish final rpms and debs
-
-With the rpms and debs you built from the last step you can release them on the
-same server, or ideally, move them to a dedicated release box via scp into
-another appcelerator/amp directory in bundles. This next step assumes you have
-a checkout of the AMP source code at the same commit you used to build, with
-the artifacts from the last step in `bundles`.
-
-**NOTE:** If you put a space before the command your `.bash_history` will not
-save it. (for the `GPG_PASSPHRASE`).
-
-```bash
-docker build -t docker .
-docker run --rm -it --privileged \
-    -v /volumes/repos:/volumes/repos \
-    -v $(pwd)/bundles:/go/src/github.com/appcelerator/amp/bundles \
-    -v $HOME/.gnupg:/root/.gnupg \
-    -e DOCKER_RELEASE_DIR=/volumes/repos \
-    -e GPG_PASSPHRASE \
-    -e KEEPBUNDLE=1 \
-    docker \
-    hack/make.sh release-deb release-rpm sign-repos generate-index-listing
-```
-
-### 18. Upload the changed repos to wherever you host
-
-For example, above we bind mounted `/volumes/repos` as the storage for
-`DOCKER_RELEASE_DIR`. In this case `/volumes/repos/apt` can be synced with
-a specific s3 bucket for the apt repo and `/volumes/repos/yum` can be synced with
-a s3 bucket for the yum repo.
 
 ### 19. Publish final binaries
 
@@ -414,24 +280,13 @@ Once they're tested and reasonably believed to be working, run against
 get.appcelerator.io:
 
 ```bash
-docker build -t amp .
-# static binaries are still pushed to s3
-docker run \
-    -e AWS_S3_BUCKET=get.appcelerator.io \
-    -e AWS_ACCESS_KEY_ID \
-    -e AWS_SECRET_ACCESS_KEY \
-    -e AWS_DEFAULT_REGION \
-    -i -t --privileged \
-    docker \
-    hack/release.sh
+aws --profile $PROFILE s3 --region=$REGION cp --acl public-read $BINDIR/$sos/$sarch/$ARCHIVE.tgz s3://$BUCKET/$S3DIR/$dos/$darch/${ARCHIVE}-v$VERSION.tgz
 ```
-
-### 20. Purge the cache!
 
 ### 21. Apply tag and create release
 
 It's very important that we don't make the tag until after the official
-release is uploaded to get.docker.com!
+release is uploaded to get.appcelerator.io!
 
 ```bash
 git tag -a $VERSION -m $VERSION bump_$VERSION
@@ -444,8 +299,8 @@ If the tag is for an RC make sure you check `This is a pre-release` at the botto
 Select the tag that you just pushed as the version and paste the changelog in the description of the release.
 You can see examples in this two links:
 
-https://github.com/docker/docker/releases/tag/v1.8.0
-https://github.com/docker/docker/releases/tag/v1.8.0-rc3
+https://github.com/appcelerator/amp/releases/tag/v1.8.0
+https://github.com/appcelerator/amp/releases/tag/v1.8.0-rc3
 
 ### 22. Go to github to merge the `bump_$VERSION` branch into release
 
