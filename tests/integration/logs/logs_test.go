@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	. "github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/tests"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
-	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 )
 
 var (

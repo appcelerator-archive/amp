@@ -67,7 +67,10 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		return nil, err
 	}
 	etcd := etcd.New(config.EtcdEndpoints, "amp", configuration.DefaultTimeout)
-	accounts := accounts.NewStore(etcd, config.Registration)
+	accounts, err := accounts.NewStore(etcd, config.Registration, config.SUPassword)
+	if err != nil {
+		return nil, err
+	}
 	amp := &Amplifier{
 		config:     config,
 		storage:    etcd,

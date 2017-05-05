@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"fmt"
+	"log"
 	"path"
 	"strings"
 	"time"
@@ -9,23 +10,120 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
+	"github.com/ory-am/ladon"
 	"golang.org/x/net/context"
 )
 
+const superAccountRootKey = "sa"
 const usersRootKey = "users"
 const organizationsRootKey = "organizations"
+const superUser = "su"
+const superOrganization = "so"
 
 // Store implements user data.Interface
 type Store struct {
 	registration string
 	storage      storage.Interface
+	warden       *ladon.Ladon
 }
 
-// NewStore returns an etcd implementation of user.Interface
-func NewStore(storage storage.Interface, registration string) *Store {
-	return &Store{storage: storage, registration: registration}
+// NewStore returns a new accounts storage
+func NewStore(s storage.Interface, registration string, SUPassword string) (*Store, error) {
+	store := &Store{
+		storage:      s,
+		registration: registration,
+		warden: &ladon.Ladon{
+			Manager: ladon.NewMemoryManager(),
+		},
+	}
+
+	// Register policies
+	for _, policy := range policies {
+		if err := store.warden.Manager.Create(policy); err != nil {
+			log.Fatal("Unable to create policy:", err)
+		}
+	}
+
+	if err := store.createSuperAccounts(SUPassword); err != nil {
+		return nil, err
+	}
+	return store, nil
+}
+
+func (s *Store) createSuperAccounts(SUPassword string) error {
+	// Add a policy giving full access to super organization members
+	s.warden.Manager.Create(&ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{"<.*>"},
+		Actions:   []string{"<.*>"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"so": &SuperOrganizationAccessCondition{accounts: s},
+		},
+	})
+
+	// Check if super accounts haven been created already
+	ctx := context.Background()
+	err := s.storage.Create(ctx, path.Join(superAccountRootKey, "created"), &User{}, nil, 0)
+	switch err {
+	case nil: // No error, do nothing
+	case storage.AlreadyExists: // Super accounts have already been created, just return
+		log.Println("Super accounts already created")
+		return nil
+	default:
+		return err
+	}
+
+	// Create the initial super user
+	user, err := s.GetUser(ctx, superUser)
+	if err != nil {
+		return err
+	}
+	if user != nil {
+		return fmt.Errorf("Initial super user should not exist already. Check the storage.")
+	}
+	su := &User{
+		Name:       superUser,
+		Email:      "super@user.amp",
+		IsVerified: true,
+		CreateDt:   time.Now().Unix(),
+	}
+	if su.PasswordHash, err = passlib.Hash(SUPassword); err != nil {
+		return err
+	}
+	if err := s.storage.Create(ctx, path.Join(usersRootKey, su.Name), su, nil, 0); err != nil {
+		return err
+	}
+	log.Println("Successfully created initial super user")
+
+	// Create the super organization
+	org, err := s.GetOrganization(ctx, superOrganization)
+	if err != nil {
+		return err
+	}
+	if org != nil {
+		return fmt.Errorf("Super organization should not exist already. Check the storage.")
+	}
+	so := &Organization{
+		Name:     superOrganization,
+		Email:    "super@organization.amp",
+		CreateDt: time.Now().Unix(),
+		Members: []*OrganizationMember{
+			{
+				Name: superUser,
+				Role: OrganizationRole_ORGANIZATION_OWNER,
+			},
+		},
+	}
+	if err := s.storage.Create(ctx, path.Join(organizationsRootKey, so.Name), so, nil, 0); err != nil {
+		return err
+	}
+	log.Println("Successfully created super organization")
+	return nil
 }
 
 // Users
@@ -290,6 +388,16 @@ func (s *Store) getOrganization(ctx context.Context, name string) (organization 
 	return organization, nil
 }
 
+func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {
+	if err := in.Validate(); err != nil {
+		return err
+	}
+	if err := s.storage.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
+		return err
+	}
+	return nil
+}
+
 // CreateOrganization creates a new organization
 func (s *Store) CreateOrganization(ctx context.Context, name string, email string) error {
 	// Check if user with the same name already exists
@@ -519,14 +627,11 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, name}, DeleteAction, OrganizationRN, "") {
+	if name == superOrganization {
 		return NotAuthorized
 	}
-
-	// Get organization
-	_, err := s.getOrganization(ctx, name)
-	if err != nil {
-		return err
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, name}, DeleteAction, OrganizationRN, name) {
+		return NotAuthorized
 	}
 
 	// Delete organization

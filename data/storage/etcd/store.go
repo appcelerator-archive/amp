@@ -103,7 +103,7 @@ func (s *etcd) Create(ctx context.Context, key string, val proto.Message, out pr
 	}
 
 	if !txn.Succeeded {
-		return fmt.Errorf("key already exists: %q", key)
+		return storage.AlreadyExists
 	}
 
 	if out != nil {
