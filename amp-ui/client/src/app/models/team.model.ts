@@ -1,9 +1,9 @@
 import { TeamResource } from './team-resource.model'
-import { User } from './user.model'
+import { Member } from './member.model'
 
 export class Team {
   public name: string
-  public members: User[]
+  public members: Member[]
   public resources: TeamResource[]
 
   constructor(name : string) {

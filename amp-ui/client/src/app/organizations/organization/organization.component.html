@@ -53,7 +53,9 @@
               (keyup)="listUserService.filter(filter1.value)"/>
             <a class="disabled list-group-item">Available users</a>
             <a *ngFor="let user of listUserService.getData()" (click)="addUser(user)" class="list-group-item" style="padding:5px;color:blue">
-              {{user.label}}
+              {{user.getLabeledName()}}
+              <div *ngIf="user.saved && user.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+              <div *ngIf="user.saved && user.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
             </a>
           </div>
         </div>
@@ -68,14 +70,14 @@
               <i class="glyphicon glyphicon-chevron-left"></i>
               Remove all
             </a>
-            <button class="btn btn-primary" (click)="applyUsers()">
+            <button [disabled]="nbSaveInProgress>0" class="btn btn-primary" (click)="applyUsers()">
               <i class="glyphicon glyphicon-send" aria-hidden="true"></i>
               Apply
             </button>
           </div>
         </div>
 
-        <div class="col-sm-4" style="height=100%;">
+        <div class="col-sm-4">
           <div class="list-group">
             <input
               #filter2
@@ -86,8 +88,10 @@
               style="margin-bottom:15px"
               (keyup)="listUserAddedService.filter(filter2.value)"/>
             <a class="disabled list-group-item">Organization users</a>
-            <a *ngFor="let userAdded of listUserAddedService.getData()" (click)="removeUser(userAdded)" class="list-group-item" style="padding:5px;color:blue">
-              {{userAdded.label}}
+            <a *ngFor="let addedUser of listUserAddedService.getData()" (click)="removeUser(addedUser)" class="list-group-item" style="padding:5px;color:blue">
+              {{addedUser.getLabeledName()}}
+              <div *ngIf="addedUser.saved && addedUser.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+              <div *ngIf="addedUser.saved && addedUser.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
             </a>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { MenuService } from '../services/menu.service';
 import { OrganizationsService } from '../services/organizations.service';
 import { ListService } from '../services/list.service';
 import { Observable } from 'rxjs/Observable';
+import { HttpService } from '../services/http.service';
 
 @Component({
   selector: 'app-organizations',
@@ -21,7 +22,8 @@ export class OrganizationsComponent implements OnInit {
     private route : ActivatedRoute,
     public organizationsService : OrganizationsService,
     public listService : ListService,
-    private menuService : MenuService) {
+    private menuService : MenuService,
+    private httpService : HttpService) {
       listService.setFilterFunction(organizationsService.match)
     }
 
@@ -31,14 +33,26 @@ export class OrganizationsComponent implements OnInit {
   }
 
   removeOrganization() {
-    let list : Organization[] = []
-    for (let org of this.organizationsService.organizations) {
-      if (org.name != this.organization.name) {
-        list.push(org)
-      }
+    if(confirm("Are you sure to delete the organization: "+this.organization.name)) {
+      this.menuService.waitingCursor(true)
+      this.httpService.deleteOrganization(this.organization).subscribe(
+        () => {
+          this.menuService.waitingCursor(false)
+          let list : Organization[] = []
+          for (let org of this.organizationsService.organizations) {
+            if (org.name != this.organization.name) {
+              list.push(org)
+            }
+          }
+          this.organizationsService.organizations=list
+          this.listService.setData(this.organizationsService.organizations)
+        },
+        (error) => {
+          this.menuService.waitingCursor(false)
+          console.log(error)
+        }
+      )
     }
-    this.organizationsService.organizations=list
-    this.listService.setData(this.organizationsService.organizations)
   }
 
   selectOrganization(org : Organization) {

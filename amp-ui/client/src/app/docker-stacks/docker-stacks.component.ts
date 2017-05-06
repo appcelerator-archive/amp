@@ -76,7 +76,7 @@ export class DockerStacksComponent implements OnInit {
 
   serviceList(stackId : string) {
     this.dockerStacksService.setCurrentStack(stackId)
-    this.menuService.navigate(["/amp/stacks/", stackId])
+    this.menuService.navigate(["/amp", "stacks", stackId])
   }
 
   selectStack(id : string) {
@@ -95,7 +95,7 @@ export class DockerStacksComponent implements OnInit {
       this.update()
       return
     }
-    this.menuService.navigate(["/amp/stacks/deploy"])
+    this.menuService.navigate(["/amp", "stacks", "deploy"])
   }
 
   update() {

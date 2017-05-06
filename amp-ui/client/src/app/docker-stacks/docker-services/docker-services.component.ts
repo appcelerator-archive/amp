@@ -29,7 +29,7 @@ export class DockerServicesComponent implements OnInit {
 
   containerList(serviceId : string) {
     this.dockerServicesService.setCurrentService(serviceId)
-    this.menuService.navigate(["/amp/services", serviceId])
+    this.menuService.navigate(["/amp", "services", serviceId])
   }
 
   selectService(id : string) {

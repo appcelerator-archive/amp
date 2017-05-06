@@ -1,13 +1,13 @@
-import { Injectable, Output, EventEmitter } from '@angular/core';
+import { Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { ItemMenu } from '../models/item-menu.model';
 import { Subject } from 'rxjs/Subject';
 
-@Injectable()
 export class MenuService {
   currentMenuItem : ItemMenu = new ItemMenu("","")
   autoRefresh : boolean = false
   onRefreshClicked = new Subject()
+  private cursorClass = ""
 
   constructor(private router : Router) { }
 
@@ -23,6 +23,18 @@ export class MenuService {
   refresh() {
     this.autoRefresh=false
     this.onRefreshClicked.next()
+  }
+
+  waitingCursor(mode : boolean) {
+      if (mode) {
+        this.cursorClass='waiting';
+      } else {
+        this.cursorClass='';
+      }
+  }
+
+  getCursorClass() {
+    return this.cursorClass
   }
 
 }

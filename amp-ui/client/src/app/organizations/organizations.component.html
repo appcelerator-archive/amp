@@ -13,7 +13,7 @@
         <div classes="col-lg-12">
           <div class="pull-left">
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-danger" (click)="removeOrganization()">
+              <button type="button" class="btn btn-danger" [disabled]="this.organization.name===''" (click)="removeOrganization()">
                 <i class="fa fa-trash space-right"></i>Remove</button>
               <button type="button" class="btn btn-primary" (click)="createOrganization()">
                 <i class="glyphicon glyphicon-tasks"></i>Create</button>

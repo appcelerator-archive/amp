@@ -2,6 +2,7 @@ import { Injectable, Output, EventEmitter } from '@angular/core';
 import { HttpService } from '../services/http.service';
 import { OrganizationsService } from '../services/organizations.service';
 import { User } from '../models/user.model';
+import { Member } from '../models/member.model';
 import { Organization } from '../models/organization.model';
 import { Subject } from 'rxjs/Subject'
 import { MenuService } from '../services/menu.service'
@@ -37,7 +38,6 @@ export class UsersService {
     this.httpService.users().subscribe(
       data => {
         this.users = data
-        console.log(data)
         this.onUsersLoaded.next()
       },
       error => {
@@ -102,6 +102,24 @@ export class UsersService {
     } else {
       this.menuService.navigate(["/auth", "signin"]);
     }
+  }
+
+  //to be refactor with associative array
+  getAllNoMembers( members : Member[]) {
+    let list : Member [] = []
+    for (let user of this.users) {
+      let found = false
+      for (let member of members) {
+        if (member.userName == user.name) {
+          found= true
+          break;
+        }
+      }
+      if (!found) {
+        list.push(new Member(user.name, 0))
+      }
+    }
+    return list
   }
 
 }

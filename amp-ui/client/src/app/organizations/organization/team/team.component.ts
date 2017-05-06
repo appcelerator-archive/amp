@@ -1,13 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { OrganizationsService } from '../../../services/organizations.service'
 import { ListService } from '../../../services/list.service';
+import { UsersService } from '../../../services/users.service';
 import { User } from '../../../models/user.model';
+import { Member } from '../../../models/member.model';
 import { Team } from '../../../models/team.model';
 import { Organization } from '../../../models/organization.model';
 import { TeamResource } from '../../../models/team-resource.model';
 import { ActivatedRoute } from '@angular/router';
 import { MenuService } from '../../../services/menu.service';
+import { HttpService } from '../../../services/http.service';
 
 @Component({
   selector: 'app-organization',
@@ -15,7 +18,7 @@ import { MenuService } from '../../../services/menu.service';
   styleUrls: ['./team.component.css']
 })
 
-export class TeamComponent implements OnInit {
+export class TeamComponent implements OnInit, OnDestroy {
   routeSub : any
   modeCreation : boolean = false
   userResourceToggle = false
@@ -24,18 +27,21 @@ export class TeamComponent implements OnInit {
   public listResourceService : ListService = new ListService()
   organization : Organization
   team : Team
-  addedUsers : User[] = []
-  users : User[] = []
-  initialUserList : User[] = []
+  addedUsers : Member[] = []
+  users : Member[] = []
+  initialUserList : Member[] = []
   resources : TeamResource[] = []
   permisionLabel : string[] = ['node', 'read', 'write', 'admin']
-  updated = false
+  updated = false;
+  nbSaveInProgress = 0;
   @ViewChild ('f') form: NgForm;
 
   constructor(
     private route: ActivatedRoute,
     public organizationsService : OrganizationsService,
-    private menuService : MenuService) {
+    private usersService : UsersService,
+    private menuService : MenuService,
+    private httpService : HttpService) {
     this.listUserService.setFilterFunction(this.matchUser)
     this.listUserAddedService.setFilterFunction(this.matchUser)
     this.listResourceService.setFilterFunction(this.matchResource)
@@ -58,7 +64,7 @@ export class TeamComponent implements OnInit {
           }
         }
         if (this.team) {
-          this.initialUserList = this.organization.members.slice()
+          this.initialUserList = this.usersService.getAllNoMembers(this.team.members)
           this.addedUsers = this.team.members.slice()
           this.resources = this.organization.resources.slice()
           //
@@ -71,11 +77,15 @@ export class TeamComponent implements OnInit {
     })
   }
 
-  matchUser(item : User, value : string) : boolean {
-    if (value == '' || item.name==='') {
+  ngOnDestroy() {
+    this.routeSub.unsubscribe();
+  }
+
+  matchUser(item : Member, value : string) : boolean {
+    if (value == '' || item.userName==='') {
       return true
     }
-    if (item.name && item.name.includes(value)) {
+    if (item.userName && item.userName.includes(value)) {
       return true
     }
     return false
@@ -97,10 +107,12 @@ export class TeamComponent implements OnInit {
     return false
   }
 
-  addUser( user : User) {
-    let list : User[] = []
+  addUser( user : Member) {
+    user.status++;
+    user.saved = false
+    let list : Member[] = []
     for (let item of this.users) {
-      if (item.name !== user.name) {
+      if (item.userName !== user.userName) {
         list.push(item)
       }
     }
@@ -108,13 +120,15 @@ export class TeamComponent implements OnInit {
     this.listUserService.setData(this.users)
     this.addedUsers.push(user)
     this.listUserAddedService.setData(this.addedUsers)
-    this.updated=true
+    this.updated=this.isUpdated()
   }
 
-  removeUser( user : User) {
-    let list : User[] = []
+  removeUser( user : Member) {
+    user.status--;
+    user.saved = false
+    let list : Member[] = []
     for (let item of this.addedUsers) {
-      if (item.name !== user.name) {
+      if (item.userName !== user.userName) {
         list.push(item)
       }
     }
@@ -122,31 +136,35 @@ export class TeamComponent implements OnInit {
     this.listUserAddedService.setData(this.addedUsers)
     this.users.push(user)
     this.listUserService.setData(this.users)
-    if (this.users.length === this.initialUserList.length) {
-      this.updated=false
-    }
+    this.updated=this.isUpdated()
   }
 
   addAll() {
-    this.addedUsers=this.initialUserList.slice()
-    this.users=[]
-    this.listUserAddedService.setData(this.addedUsers)
-    this.listUserService.setData(this.users)
-    this.updated=true
+    for (let user of this.users) {
+      this.addUser(user)
+    }
+    this.updated=this.isUpdated()
   }
 
   removeAll() {
-    this.updated=false
-    this.users = this.initialUserList.slice()
-    this.addedUsers=[]
-    this.listUserAddedService.setData(this.addedUsers)
-    this.listUserService.setData(this.users)
+    for (let user of this.addedUsers) {
+      this.removeUser(user)
+    }
+    this.updated=this.isUpdated()
   }
 
-  applyUsers() {
-    console.log("apply")
-    this.team.members=this.addedUsers.slice()
-    this.updated=false
+  isUpdated() : boolean {
+    for (let user of this.users) {
+      if (user.status !== 0) {
+        return true
+      }
+    }
+    for (let user of this.addedUsers) {
+      if (user.status !== 0) {
+        return true
+      }
+    }
+    return false
   }
 
   userManagement() {
@@ -158,21 +176,100 @@ export class TeamComponent implements OnInit {
   }
 
   returnBack() {
-    this.menuService.navigate(['/amp/organizations', this.organization.name])
+    this.menuService.navigate(['/amp', 'organizations', this.organization.name])
   }
 
   removeTeam() {
-    let list : Team[] = []
-    for (let team of this.organization.teams) {
-      if (team.name !== this.team.name) {
-        list.push(team)
+    this.menuService.waitingCursor(true)
+    this.httpService.deleteTeam(this.organization, this.team).subscribe(
+      () => {
+        this.menuService.waitingCursor(false)
+        let list : Team[] = []
+        for (let team of this.organization.teams) {
+          if (team.name !== this.team.name) {
+            list.push(team)
+          }
+        }
+        this.organization.teams=list
+        this.menuService.navigate(['/amp', 'organizations', this.organization.name])
+      },
+      (error) => {
+        this.menuService.waitingCursor(false)
+        console.log(error)
       }
-    }
-    this.organization.teams=list
-    this.menuService.navigate(['/amp/organizations', this.organization.name])
+    )
   }
 
   setPermission(res : TeamResource, level : number) {
     res.setPermission(level)
+  }
+
+  applyUsers() {
+    console.log("apply users")
+    this.nbSaveInProgress=0
+    this.menuService.waitingCursor(true)
+    for (let user of this.users) {
+      console.log(user)
+      user.saved=false
+      user.saveError=""
+      if (user.status == -1) {
+        console.log("removing user "+user.userName)
+        this.nbSaveInProgress++
+        this.httpService.removeUserFromTeam(this.organization, this.team, user).subscribe(
+          () => {
+            user.saved=true
+            user.status=0
+            user.saveError=""
+            this.decrSaveInProgress()
+            console.log("done")
+          },
+          (error) => {
+            this.addUser(user)
+            user.saved=true
+            user.saveError="save error"
+            this.decrSaveInProgress()
+            console.log(error)
+          }
+        )
+      }
+    }
+    console.log("apply addedUsers")
+    for (let user of this.addedUsers) {
+      console.log(user)
+      user.saved=false
+      user.saveError=""
+      if (user.status == 1) {
+        console.log("adding user "+user.userName)
+        this.nbSaveInProgress++
+        this.httpService.addUserToTeam(this.organization, this.team, user).subscribe(
+          () => {
+            console.log("done")
+            user.saved=true
+            user.saveError=""
+            user.status=0
+            this.decrSaveInProgress()
+          },
+          (error) => {
+            console.log(error)
+            this.removeUser(user)
+            user.saved=true
+            user.saveError="save error"
+            this.decrSaveInProgress()
+          }
+        )
+      }
+    }
+    if (this.nbSaveInProgress === 0) {
+      this.menuService.waitingCursor(false)
+    }
+    this.team.members = this.addedUsers.slice()
+    this.updated=false
+  }
+
+  private decrSaveInProgress() {
+    this.nbSaveInProgress--
+    if (this.nbSaveInProgress === 0) {
+      this.menuService.waitingCursor(false)
+    }
   }
 }

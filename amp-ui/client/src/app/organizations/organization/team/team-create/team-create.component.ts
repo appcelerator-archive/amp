@@ -3,8 +3,9 @@ import { Organization } from '../../../../models/organization.model'
 import { Team } from '../../../../models/team.model'
 import { OrganizationsService } from '../../../../services/organizations.service'
 import { NgForm } from '@angular/forms';
-import { MenuService } from '../../../../services/menu.service'
+import { MenuService } from '../../../../services/menu.service';
 import { ActivatedRoute } from '@angular/router';
+import { HttpService } from '../../../../services/http.service';
 
 @Component({
   selector: 'app-team-create',
@@ -19,7 +20,8 @@ export class TeamCreateComponent implements OnInit {
   constructor(
     private organizationsService : OrganizationsService,
     private menuService : MenuService,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private httpService : HttpService) {
     }
 
   ngOnInit() {
@@ -35,15 +37,23 @@ export class TeamCreateComponent implements OnInit {
   }
 
   create(form : NgForm) {
-    if (form.valid) {
-      this.team.name = form.value.name
-      this.organization.teams.push(this.team)
-      this.menuService.navigate(['amp', 'organizations', this.organization.name, 'team', this.team.name])
-    }
+    this.team.name = form.value.name
+    this.organization.teams.push(this.team)
+    this.menuService.waitingCursor(true)
+    this.httpService.createTeam(this.organization, this.team).subscribe(
+      () => {
+        this.menuService.waitingCursor(false)
+        this.menuService.navigate(['/amp', 'organizations', this.organization.name, 'team', this.team.name])
+      },
+      (error) => {
+        this.menuService.waitingCursor(false)
+        console.log(error)
+      }
+    )
   }
 
   cancel() {
-    this.menuService.navigate(['amp', 'organizations'])
+    this.menuService.navigate(['/amp', 'organizations'])
   }
 
 }

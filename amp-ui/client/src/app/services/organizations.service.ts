@@ -11,7 +11,10 @@ export class OrganizationsService {
   currentOrganization = this.noOrganization
   @Output() onUserLogout = new EventEmitter<void>();
 
-  constructor(private router : Router, private httpService : HttpService, private menuService : MenuService) {
+  constructor(
+    private router : Router,
+    private httpService : HttpService,
+    private menuService : MenuService) {
   }
 
   match(item : Organization, value : string) : boolean {
@@ -30,7 +33,7 @@ export class OrganizationsService {
   }
 
   edit() {
-    this.menuService.navigate(["/amp/organizations/", this.currentOrganization.name])
+    this.menuService.navigate(["/amp", "organizations", this.currentOrganization.name])
   }
 
 }

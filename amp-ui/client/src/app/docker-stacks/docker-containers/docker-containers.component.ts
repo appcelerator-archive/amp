@@ -33,7 +33,7 @@ export class DockerContainersComponent implements OnInit {
 
   returnBack() {
     console.log("return back form container: "+this.dockerServicesService.currentService.id)
-    this.menuService.navigate(["amp", "stacks", this.dockerServicesService.currentService.id])
+    this.menuService.navigate(["/amp", "stacks", this.dockerServicesService.currentService.id])
   }
 
 }

@@ -22,7 +22,7 @@ export class SigninComponent implements OnInit, OnDestroy {
       this.usersService.loadUsers()
       this.usersService.setCurrentUser(currentUser)
     }
-    this.menuService.navigate(['amp', 'dashboard'])
+    this.menuService.navigate(['/amp', 'dashboard'])
   }
 
   ngOnDestroy() {
