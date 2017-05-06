@@ -195,15 +195,29 @@ EOF
 }
 
 _system_check() {
-  docker info | grep -q "Swarm: active" && return 0
-  if [ $? -ne 0 ] && [ $(uname) = "Darwin" ]; then
-    echo "Warning: Swarm mode is not enabled on your Mac, the DinD cluster will probably not work correctly"
-    return 1
+  local mmcmin=262144
+  typeset -i mmc
+  # only check elasticsearch prerequisites on systems where it makes sense (Linux system)
+  mmc=$(sysctl -n vm.max_map_count)
+  if [[ $? -eq 0 ]]; then
+    if [[ $mmc -lt $mmcmin ]]; then
+      echo "your max map count limit is too low for elasticsearch" >&2
+      echo "you should edit your /etc/sysctl.conf file and add the line 'vm.max_map_count = 262144'" >&2
+      echo "or add a /etc/sysctl.d/99-amp.conf with that single line" >&2
+      echo "to set it in your current session, you can run 'sudo sysctl -w vm.max_map_count=262144'" >&2
+      return 1
+    fi
   fi
-  lsmod | grep -q ip_vs
-  if [ $? -ne 0 ]; then
-    echo "Warning: the IPVS module is not loaded, consider modprobing ip_vs or alternatively initializing your host Docker Swarm"
-    return 1
+
+  # if swarm is initialized, the modules will already be loaded
+  docker info | grep -q "Swarm: active" && return 0
+  # on Linux system, we have to make sure that the modules are loaded
+  if [[ $(uname) = "Linux" ]]; then
+    lsmod | grep -q ip_vs
+    if [[ $? -ne 0 ]]; then
+      echo "Warning: the IPVS modules are not loaded, consider loading them ($ sudo modprobe ip_vs_rr) or alternatively initializing your host Docker Swarm"
+      return 1
+    fi
   fi
   return 0
 }
@@ -758,6 +772,9 @@ fi
 if [ -n "$swarm_join_ip" ]; then
   _init_swarm $swarm_join_ip || exit 1
   exit 0
+fi
+if [[ "x$target" = "xlocal" ]]; then
+  _system_check || exit 1
 fi
 _set_source $1
 _set_size
