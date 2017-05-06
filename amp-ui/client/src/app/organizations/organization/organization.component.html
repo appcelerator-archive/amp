@@ -23,8 +23,8 @@
                 <ul class="dropdown-menu">
                   <li><a [routerLink]="['/amp/organizations', organization.name, 'team', 'create']">Create team</a></li>
                   <li role="separator" class="divider"></li>
-                  <li *ngFor="let team of organizationsService.currentOrganization.teams">
-                    <a [routerLink]="['/amp/organizations', name, 'team', team.name]">{{ team.name}}</a>
+                  <li *ngFor="let team of organization.teams">
+                    <a [routerLink]="['/amp/organizations', name, 'team', team.name]">{{ team.name }}</a>
                   </li>
                 </ul>
               </button>

@@ -180,24 +180,26 @@ export class TeamComponent implements OnInit, OnDestroy {
   }
 
   removeTeam() {
-    this.menuService.waitingCursor(true)
-    this.httpService.deleteTeam(this.organization, this.team).subscribe(
-      () => {
-        this.menuService.waitingCursor(false)
-        let list : Team[] = []
-        for (let team of this.organization.teams) {
-          if (team.name !== this.team.name) {
-            list.push(team)
+    if(confirm("Are you sure to delete the team: "+this.team.name)) {
+      this.menuService.waitingCursor(true)
+      this.httpService.deleteTeam(this.organization, this.team).subscribe(
+        () => {
+          this.menuService.waitingCursor(false)
+          let list : Team[] = []
+          for (let team of this.organization.teams) {
+            if (team.name !== this.team.name) {
+              list.push(team)
+            }
           }
+          this.organization.teams=list
+          this.menuService.navigate(['/amp', 'organizations', this.organization.name])
+        },
+        (error) => {
+          this.menuService.waitingCursor(false)
+          console.log(error)
         }
-        this.organization.teams=list
-        this.menuService.navigate(['/amp', 'organizations', this.organization.name])
-      },
-      (error) => {
-        this.menuService.waitingCursor(false)
-        console.log(error)
-      }
-    )
+      )
+    }
   }
 
   setPermission(res : TeamResource, level : number) {

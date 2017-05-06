@@ -83,21 +83,26 @@ export class HttpService {
         let list : Organization[] = []
         for (let org of data.organizations) {
           let newOrg = new Organization(org.name, org.email)
-          for (let mem of org.members) {
-            newOrg.members.push(new Member(mem.name, mem.role))
-          }
-          for (let team of org.teams) {
-            let newTeam = new Team(team.name)
-            for (let mname of team.members) {
-              newTeam.members.push(new Member(mname, 0))
+          if (org.members) {
+            for (let mem of org.members) {
+              newOrg.members.push(new Member(mem.name, mem.role))
             }
-            newOrg.teams.push(newTeam)
+          }
+          if (org.teams) {
+            for (let team of org.teams) {
+              let newTeam = new Team(team.name)
+              for (let mname of team.members) {
+                newTeam.members.push(new Member(mname, 0))
+              }
+              newOrg.teams.push(newTeam)
+            }
           }
           list.push(newOrg)
         }
         console.log(list)
         return list
-      })
+      }
+    )
   }
 
   login(user : User, pwd : string) {

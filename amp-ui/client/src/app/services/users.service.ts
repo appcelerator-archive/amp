@@ -77,6 +77,7 @@ export class UsersService {
         this.organizationsService.organizations = data
       },
       error => {
+        console.log(error)
         this.onUsersError.next(error)
       }
     )

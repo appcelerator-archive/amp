@@ -52,16 +52,12 @@ export class OrganizationComponent implements OnInit, OnDestroy {
         }
       }
       if (this.organization) {
-        this.usersService.onUsersLoaded.subscribe(
-          () => {
-            this.initialUserList = this.usersService.getAllNoMembers(this.organization.members)
-            this.addedUsers = this.organization.members.slice()
-            this.users = this.initialUserList.slice()
-            this.listUserAddedService.setData(this.addedUsers)
-            this.listUserService.setData(this.users)
-          }
-        )
-        this.usersService.loadUsers()
+        console.log(this.organization)
+        this.initialUserList = this.usersService.getAllNoMembers(this.organization.members)
+        this.addedUsers = this.organization.members.slice()
+        this.users = this.initialUserList.slice()
+        this.listUserAddedService.setData(this.addedUsers)
+        this.listUserService.setData(this.users)
       }
     })
   }
