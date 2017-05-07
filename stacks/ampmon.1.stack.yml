@@ -22,8 +22,6 @@ services:
       replicas: 3
       labels:
         io.amp.role: "infrastructure"
-      placement:
-        constraints: [node.role == worker]
 
   nats:
     image: appcelerator/amp-nats-streaming:v0.3.8
@@ -38,8 +36,6 @@ services:
       replicas: 1
       labels:
         io.amp.role: "infrastructure"
-      placement:
-        constraints: [node.role == worker]
 
   etcd:
     image: appcelerator/etcd:3.1.6
@@ -60,6 +56,4 @@ services:
       replicas: 3
       labels:
         io.amp.role: "infrastructure"
-      placement:
-        constraints: [node.role == worker]
 
