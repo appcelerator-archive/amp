@@ -24,12 +24,23 @@ To deploy a standard Docker Compose version 3 stackfile, use
 
 If you're running on Linux, there are a few things you must do first.
 
-    # increase virtual memory
+    # increase virtual memory (needed for Elasticsearch)
     $ sudo sysctl -w vm.max_map_count=262144
 
-    # load the IPVS kernel module for swarm mode to work for Docker-in-Docker
-    # (not necessary if your host is already a member of a swarm)
-    $ sudo modprobe ip_vs
+    # check if you have IPVS kernel modules loaded:
+    $ lsmod | grep ip_vs
+    # verify ip_vs and ip_vs_rr
+    #
+    # if necessary, load IPVS kernel modules (ip_vs, ip_vs_rr) for swarm mode networking and load-balancing
+    # Note: these modules are needed to run a local swarm using Docker-in-Docker on the host,
+    # but this step is not necessary if the host is already a member of a swarm.
+    # Note: loading ip_vs_rr will also ensure ip_vs is loaded.
+    $ sudo modprobe ip_vs_rr
+
+To make these changes permanent, you can run the following and reboot:
+
+    $ echo "vm.max_map_count = 262144" | sudo tee -a /etc/sysctl.conf
+    $ echo "ip_vs_rr" | sudo tee -a /etc/modules
 
 ## Docker for Mac
 
