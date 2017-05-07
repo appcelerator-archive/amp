@@ -1,6 +1,7 @@
 #!/bin/bash
 
 [ -z "$DOCKERHOST" ] && DOCKERHOST=m1
+[[ "$DOCKERHOST" = "localhost" ]] && exit $(docker node ls >/dev/null)
 [ "$DOCKERHOST" = "m1" ] && amps="docker run -t --rm --network=hostnet docker --host=m1" || amps="docker run -t --rm docker --host=$DOCKERHOST"
 
 usage() {

@@ -21,7 +21,7 @@ readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
 readonly localdomainname="local.atomiq.io"
 readonly clouddomainname="cloud.atomiq.io"
 
-# returns the target of the deployment: local or a cloud provider
+# returns the target of the deployment: local (a single existing local Swarm manager node), dind or a cloud provider
 deployment_target() {
   local _target
   _target=$(echo $(basename $0) | cut -d- -f2)
@@ -34,13 +34,17 @@ deployment_target() {
 # create the cluster and echo the cluster id
 cluster_create() {
   case $(deployment_target) in
-  local)
+  dind)
     # async
     if [ $# -eq 0 ]; then
       $bootstrap $BOOTSTRAP_OPTIONS -f
     else
       $bootstrap $BOOTSTRAP_OPTIONS -fi $1
     fi ;;
+  local)
+    # the cluster already exist, pass
+    return 0
+    ;;
   aws)
     # sync (modulo user data execution)
     if [ $# -ne 0 ]; then
@@ -56,7 +60,8 @@ cluster_create() {
 # destroy the cluster
 cluster_destroy() {
   case $(deployment_target) in
-  local)
+  local) ;;
+  dind)
     $bootstrap -d ;;
   aws)
     $terraform destroy /data;;
@@ -67,10 +72,11 @@ cluster_destroy() {
 # 0 means healthy
 cluster_status() {
   case $(deployment_target) in
-  local)
+  local) return 0 ;;
+  dind)
     $bootstrap -s $1 >/dev/null 2>&1 ;;
   aws)
-    $terraform output -state=/data/terraform.tfstate $cluster_id >/dev/null ;;
+    $terraform output -state=/data/terraform.tfstate cluster_id >/dev/null ;;
   esac
 }
 
@@ -97,6 +103,14 @@ EOF
 set_deployment_variables(){
   case $(deployment_target) in
   local)
+    dockerhost=localhost
+    registryhost=""
+    stacks_path=$SP/../stacks
+    amps="docker"
+    domainname=$localdomainname
+    export DOCKERHOST=$dockerhost
+    ;;
+  dind)
     dockerhost=m1
     registryhost=127.0.0.1
     create_amp_stacks_volume
@@ -116,7 +130,7 @@ set_deployment_variables(){
     ;;
   esac
   echo "Docker host = $dockerhost"
-  echo "Docker registry = $registryhost"
+  echo "Docker registry = ${registryhost:-none}"
 }
 
 checkexit() {
@@ -125,7 +139,7 @@ checkexit() {
 
 cleanup() {
   docker volume rm amp-stacks >/dev/null 2>&1
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && $bootstrap -d $CID
 }
 
 ok() {
@@ -139,6 +153,14 @@ pushimage() {
   docker push $1/$2
   checkexit $? "error pushing image"
   ok
+}
+
+create_network(){
+  name=$1
+  driver=${2:-overlay}
+  # if it already exists, nothing to do
+  $amps network inspect $name >/dev/null 2>&1 && return 0
+  $amps network create -d $driver --attachable $name
 }
 
 deploystack() {
@@ -161,7 +183,7 @@ kurl() {
 }
 
 # pushes certificates in a Docker secret, ready to use by services in stack files
-# for local bootstrap, a self signed certificate is created
+# for local and dind bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
 # it has to be in the stacks folder, to allow access to the Docker client
 prepare_certificates() {
@@ -170,9 +192,11 @@ prepare_certificates() {
   fi
   local name=$1
   local certfile="$SP/../stacks/$name.pem"
-  if [[ $(deployment_target) = "local" ]]; then
+  case $(deployment_target) in
+  local|dind)
     mv $($mkcert) $certfile
-  fi
+    ;;
+  esac 
   if [[ ! -f "$certfile" ]]; then
     # TODO use certbot
     echo "can't find certificate $certfile" >&2
@@ -182,11 +206,11 @@ prepare_certificates() {
   cid=$(docker run -d --rm -v amp-stacks:/stacks alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp $certfile $cid:/stacks/$name.pem
-  docker kill $cid
+  docker kill $cid >/dev/null 2>&1
   echo "checking if the certificate secret is already defined"
   $amps secret ls | grep -q "certificate_atomiq" && return 0
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" /stacks/$name.pem
+  $amps secret create "certificate_atomiq" $stacks_path/$name.pem
 }
 
 while getopts ":w:m:t:l:T:" opt; do
@@ -219,39 +243,47 @@ fi
 set_deployment_variables
 
 echo "wait for cluster"
-if [ $(deployment_target) = "local" ]; then
-  $clustercheck $CID
-else
-  echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
-  echo "This script will need it in a moment"
-  clustersize=5
-  maxwait=560
-  SECONDS=0
-  while [ $($amps node ls -q | wc -l) -lt $clustersize ]; do
-    sleep 5
-    [ $SECONDS -gt $maxwait ] && break
-    if [ $((SECONDS % 20)) -eq 0 ]; then
-      echo "still waiting, $($amps node ls -q | wc -l) nodes on $clustersize"
-      echo "will timeout in $((maxwait - SECONDS))"
-    fi
-  done
-  [ $SECONDS -le $maxwait ]
-fi
+case $(deployment_target) in
+  dind)
+    $clustercheck $CID
+    ;;
+  local)
+    true
+    ;;
+  *)
+    echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
+    echo "This script will need it in a moment"
+    clustersize=5
+    maxwait=560
+    SECONDS=0
+    while [ $($amps node ls -q | wc -l) -lt $clustersize ]; do
+      sleep 5
+      [ $SECONDS -gt $maxwait ] && break
+      if [ $((SECONDS % 20)) -eq 0 ]; then
+        echo "still waiting, $($amps node ls -q | wc -l) nodes on $clustersize"
+        echo "will timeout in $((maxwait - SECONDS))"
+      fi
+    done
+    [ $SECONDS -le $maxwait ]
+    ;;
+esac
 checkexit $? "cluster timed out"
 ok
 
 echo "wait for swarm mode"
-# todo: fix swarmcheck, it now checks the local swarm, not the one from the cluster
+# todo: fix swarmcheck, it now checks the dind swarm, not the one from the cluster
 $swarmcheck 300
 checkexit $? "swarm mode timed out"
 ok
 
 echo "wait for registry"
-$curlcheck "${registryhost}:5000/v2/" 200 180
+if [[ -n "$registryhost" ]]; then
+  $curlcheck "${registryhost}:5000/v2/" 200 180
+fi
 checkexit $? "registry timed out"
 ok
 
-if [[ "x$TAG" = "xlocal" ]]; then
+if [[ -n "$registryhost" && "x$TAG" = "xlocal" ]]; then
   echo "push images to cluster"
   for image in amplifier ampbeat agent; do
     pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
@@ -260,6 +292,7 @@ else
   echo "image push to cluster is ignored (tag=${TAG:-latest})"
 fi
 
+create_network ampnet
 maxwait=580
 echo "deploy amp monitoring stack to cluster - stage 1"
 deploystack ampmon.1.stack.yml amp

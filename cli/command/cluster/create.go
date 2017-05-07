@@ -39,7 +39,7 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	// TODO: only supporting local cluster management for this release
 	// the following ensures that flags are added before the final command arg
 	// TODO: refactor reflag to handle this
-	args := []string{"hack/deploy"}
+	args := []string{"hack/deploy-dind"}
 	args = reflag(cmd, m, args)
 	args = append(args, DefaultLocalClusterID)
 	env := map[string]string{"TAG": opts.tag}
