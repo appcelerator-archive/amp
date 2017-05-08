@@ -6,14 +6,15 @@ SUCCESS=0
 # This gets absolute path to script (resolving symlinks)
 readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
 
+# dirs
+readonly PLATFORMDIR="$(dirname $SP)"
+readonly BOOTSTRAPDIR="$PLATFORMDIR/bootstrap"
+readonly TESTSDIR="$PLATFORMDIR/tests"
+readonly terraformdir="$BOOTSTRAPDIR/terraform-aws"
+
+export PATH="$SP:$BOOTSTRAPDIR:$PATH"
+
 # commands
-readonly bootstrap="$SP/../bootstrap/bootstrap"
-readonly clustercheck="$SP/clustercheck"
-readonly curlcheck="$SP/curlcheck"
-readonly swarmcheck="$SP/swarmcheck"
-readonly servicescheck="$SP/servicescheck"
-readonly mkcert="$SP/mkcert"
-readonly terraformdir="$SP/../bootstrap/terraform-aws"
 readonly terraform="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $terraformdir:/data --workdir=/data hashicorp/terraform"
 
 # IP range that should have access to the docker remote API
@@ -37,9 +38,9 @@ cluster_create() {
   local)
     # async
     if [ $# -eq 0 ]; then
-      $bootstrap $BOOTSTRAP_OPTIONS -f
+      bootstrap $BOOTSTRAP_OPTIONS -f
     else
-      $bootstrap $BOOTSTRAP_OPTIONS -fi $1
+      bootstrap $BOOTSTRAP_OPTIONS -fi $1
     fi ;;
   aws)
     # sync (modulo user data execution)
@@ -57,7 +58,7 @@ cluster_create() {
 cluster_destroy() {
   case $(deployment_target) in
   local)
-    $bootstrap -d ;;
+    bootstrap -d ;;
   aws)
     $terraform destroy /data;;
   esac
@@ -68,7 +69,7 @@ cluster_destroy() {
 cluster_status() {
   case $(deployment_target) in
   local)
-    $bootstrap -s $1 >/dev/null 2>&1 ;;
+    bootstrap -s $1 >/dev/null 2>&1 ;;
   aws)
     $terraform output -state=/data/terraform.tfstate $cluster_id >/dev/null ;;
   esac
@@ -125,7 +126,7 @@ checkexit() {
 
 cleanup() {
   docker volume rm amp-stacks >/dev/null 2>&1
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && $bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && bootstrap -d $CID
 }
 
 ok() {
@@ -171,7 +172,7 @@ prepare_certificates() {
   local name=$1
   local certfile="$SP/../stacks/$name.pem"
   if [[ $(deployment_target) = "local" ]]; then
-    mv $($mkcert) $certfile
+    mv $(mkcert) $certfile
   fi
   if [[ ! -f "$certfile" ]]; then
     # TODO use certbot
@@ -220,7 +221,7 @@ set_deployment_variables
 
 echo "wait for cluster"
 if [ $(deployment_target) = "local" ]; then
-  $clustercheck $CID
+  clustercheck $CID
 else
   echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
   echo "This script will need it in a moment"
@@ -242,12 +243,12 @@ ok
 
 echo "wait for swarm mode"
 # todo: fix swarmcheck, it now checks the local swarm, not the one from the cluster
-$swarmcheck 300
+swarmcheck 300
 checkexit $? "swarm mode timed out"
 ok
 
 echo "wait for registry"
-$curlcheck "${registryhost}:5000/v2/" 200 180
+curlcheck "${registryhost}:5000/v2/" 200 180
 checkexit $? "registry timed out"
 ok
 
@@ -264,21 +265,21 @@ maxwait=580
 echo "deploy amp monitoring stack to cluster - stage 1"
 deploystack ampmon.1.stack.yml amp
 echo "wait for all amp monitoring stage 1 stack service replicas to be running"
-$servicescheck $maxwait
+servicescheck $maxwait
 checkexit $? "amp monitoring stage 1 service replica checks timed out"
 ok
 
 echo "deploy amp monitoring stack to cluster - stage 2"
 deploystack ampmon.2.stack.yml amp
 echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
-$servicescheck $maxwait
+servicescheck $maxwait
 checkexit $? "amp monitoring stage 2 service replica checks timed out"
 ok
 
 echo "deploy amp stack to cluster"
 deploystack amp.stack.yml amp
 echo "wait for all amp service replicas to be running ($maxwait sec)"
-$servicescheck $maxwait
+servicescheck $maxwait
 checkexit $? "amp service replica checks timed out"
 ok
 
@@ -287,7 +288,7 @@ if [[ $? -eq 0 ]]; then
   echo "deploy amp proxy stack to cluster"
   deploystack ampproxy.stack.yml amp
   echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
-  $servicescheck $maxwait
+  servicescheck $maxwait
   checkexit $? "amp proxy service replica checks timed out"
   ok
 else
@@ -297,7 +298,7 @@ fi
 # final sanity checks
 # ===================
 
-$servicescheck 0
+servicescheck 0
 checkexit $? "final service replica smoke check failed"
 ok
 
