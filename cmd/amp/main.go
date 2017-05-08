@@ -24,7 +24,7 @@ func main() {
 	config = &cli.Configuration{
 		Version: Version,
 		Build:   Build,
-		Server:  "cloud.atomiq.io:50101",
+		Server:  "cloud.appcelerator.io:50101",
 	}
 
 	// Set terminal emulation based on platform as required.
