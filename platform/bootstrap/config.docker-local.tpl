@@ -17,7 +17,7 @@
           "Properties": {
             "Config": {
               "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
-              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
+              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "AutoRemove": true,
@@ -85,7 +85,7 @@
           "Properties": {
             "Config": {
               "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
-              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
+              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
               "AutoRemove": true,
@@ -153,7 +153,7 @@
           "Properties": {
             "Config": {
               "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
-              "Cmd": "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"{{ end }} {{ if var "/docker/ports/exposed" }},
+              "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }} {{ if var "/docker/ports/exposed" }},
               "ExposedPorts": {{ var "/docker/ports/exposed" | jsonEncode }} {{ end }}
             },
             "HostConfig": {

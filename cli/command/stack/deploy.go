@@ -1,7 +1,7 @@
 package stack
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -13,18 +13,18 @@ import (
 	"google.golang.org/grpc"
 )
 
-type deployOpts struct {
+type deployStackOptions struct {
 	file string
 }
 
 var (
-	opts = &deployOpts{}
+	opts = deployStackOptions{}
 )
 
 // NewDeployCommand returns a new instance of the stack command.
 func NewDeployCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deploy",
+		Use:     "deploy [OPTIONS] STACK",
 		Aliases: []string{"up", "start"},
 		Short:   "Deploy a stack with a docker compose v3 file",
 		PreRunE: cli.RangeArgs(0, 1),
@@ -59,7 +59,7 @@ func deploy(c cli.Interface, args []string) error {
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.Deploy(context.Background(), req)
 	if err != nil {
-		return errors.New(grpc.ErrorDesc(err))
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println(reply.Answer)
 	return nil

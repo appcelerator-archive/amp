@@ -11,57 +11,54 @@ import (
 	"google.golang.org/grpc"
 )
 
-type changeMemOrgOpts struct {
+type changeMemOrgOptions struct {
 	name   string
 	member string
 	role   string
 }
 
-var (
-	changeMemOrgOptions = &changeMemOrgOpts{}
-)
-
 // NewOrgChangeMemRoleCommand returns a new instance of the organization member role change command.
 func NewOrgChangeMemRoleCommand(c cli.Interface) *cobra.Command {
+	opts := changeMemOrgOptions{}
 	cmd := &cobra.Command{
 		Use:     "role [OPTIONS]",
 		Short:   "Change member role",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return changeOrgMemRole(c, cmd)
+			return changeOrgMemRole(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&changeMemOrgOptions.name, "org", "", "Organization name")
-	flags.StringVar(&changeMemOrgOptions.member, "member", "", "Member name")
-	flags.StringVar(&changeMemOrgOptions.role, "role", "", "Organization role")
+	flags.StringVar(&opts.name, "org", "", "Organization name")
+	flags.StringVar(&opts.member, "member", "", "Member name")
+	flags.StringVar(&opts.role, "role", "", "Organization role")
 	return cmd
 }
 
-func changeOrgMemRole(c cli.Interface, cmd *cobra.Command) error {
+func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeMemOrgOptions) error {
 	if !cmd.Flag("org").Changed {
-		changeMemOrgOptions.name = c.Console().GetInput("organization name")
+		opts.name = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("member").Changed {
-		changeMemOrgOptions.member = c.Console().GetInput("member name")
+		opts.member = c.Console().GetInput("member name")
 	}
 	if !cmd.Flag("role").Changed {
-		changeMemOrgOptions.role = c.Console().GetInput("organization role")
+		opts.role = c.Console().GetInput("organization role")
 	}
 	orgRole := accounts.OrganizationRole_ORGANIZATION_MEMBER
-	switch changeMemOrgOptions.role {
+	switch opts.role {
 	case "owner":
 		orgRole = accounts.OrganizationRole_ORGANIZATION_OWNER
 	case "member":
 		orgRole = accounts.OrganizationRole_ORGANIZATION_MEMBER
 	default:
-		return fmt.Errorf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", changeMemOrgOptions.role)
+		return fmt.Errorf("invalid organization role: %s. Please specify 'owner' or 'member' as role value.", opts.role)
 	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ChangeOrganizationMemberRoleRequest{
-		OrganizationName: changeMemOrgOptions.name,
-		UserName:         changeMemOrgOptions.member,
+		OrganizationName: opts.name,
+		UserName:         opts.member,
 		Role:             orgRole,
 	}
 	if _, err := client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {

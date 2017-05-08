@@ -10,44 +10,41 @@ import (
 	"google.golang.org/grpc"
 )
 
-type createTeamOpts struct {
+type createTeamOptions struct {
 	org  string
 	team string
 }
 
-var (
-	createTeamOptions = &createTeamOpts{}
-)
-
 // NewTeamCreateCommand returns a new instance of the team create command.
 func NewTeamCreateCommand(c cli.Interface) *cobra.Command {
+	opts := createTeamOptions{}
 	cmd := &cobra.Command{
 		Use:     "create [OPTIONS]",
 		Short:   "Create team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createTeam(c, cmd)
+			return createTeam(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&createTeamOptions.org, "org", "", "Organization name")
-	flags.StringVar(&createTeamOptions.team, "team", "", "Team name")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
-func createTeam(c cli.Interface, cmd *cobra.Command) error {
+func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) error {
 	if !cmd.Flag("org").Changed {
-		createTeamOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		createTeamOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.CreateTeamRequest{
-		OrganizationName: createTeamOptions.org,
-		TeamName:         createTeamOptions.team,
+		OrganizationName: opts.org,
+		TeamName:         opts.team,
 	}
 	if _, err := client.CreateTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

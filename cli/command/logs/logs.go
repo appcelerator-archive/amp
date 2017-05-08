@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type logsOpts struct {
+type logsOptions struct {
 	follow    bool
 	infra     bool
 	meta      bool
@@ -22,31 +22,29 @@ type logsOpts struct {
 	node      string
 }
 
-var (
-	opts = &logsOpts{}
-)
-
 // NewLogsCommand returns a new instance of the logs command.
 func NewLogsCommand(c cli.Interface) *cobra.Command {
+	opts := logsOptions{}
 	cmd := &cobra.Command{
 		Use:   "logs [OPTIONS] SERVICE",
 		Short: "Fetch log entries matching provided criteria",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getLogs(c, args)
+			return getLogs(c, args, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
-	cmd.Flags().BoolVarP(&opts.infra, "infra", "i", false, "Include infrastructure logs")
-	cmd.Flags().BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
-	cmd.Flags().Int64VarP(&opts.number, "number", "n", 1000, "Number of results")
-	cmd.Flags().StringVar(&opts.msg, "msg", "", "Filter the message content by the given pattern")
-	cmd.Flags().StringVar(&opts.container, "container", "", "Filter by the given container")
-	cmd.Flags().StringVar(&opts.stack, "stack", "", "Filter by the given stack")
-	cmd.Flags().StringVar(&opts.node, "node", "", "Filter by the given node")
+	flags := cmd.Flags()
+	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
+	flags.BoolVarP(&opts.infra, "infra", "i", false, "Include infrastructure logs")
+	flags.BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
+	flags.Int64VarP(&opts.number, "number", "n", 1000, "Number of results")
+	flags.StringVar(&opts.msg, "msg", "", "Filter the message content by the given pattern")
+	flags.StringVar(&opts.container, "container", "", "Filter by the given container")
+	flags.StringVar(&opts.stack, "stack", "", "Filter by the given stack")
+	flags.StringVar(&opts.node, "node", "", "Filter by the given node")
 	return cmd
 }
 
-func getLogs(c cli.Interface, args []string) error {
+func getLogs(c cli.Interface, args []string, opts logsOptions) error {
 	request := logs.GetRequest{}
 	if len(args) > 0 {
 		request.Service = args[0]

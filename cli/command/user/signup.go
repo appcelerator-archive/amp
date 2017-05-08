@@ -10,33 +10,31 @@ import (
 	"google.golang.org/grpc"
 )
 
-type signUpOpts struct {
+type signUpOptions struct {
 	username string
 	email    string
 	password string
 }
 
-var (
-	opts = &signUpOpts{}
-)
-
 // NewSignUpCommand returns a new instance of the signup command.
 func NewSignUpCommand(c cli.Interface) *cobra.Command {
+	opts := signUpOptions{}
 	cmd := &cobra.Command{
 		Use:     "signup [OPTIONS]",
 		Short:   "Signup for a new account",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return signUp(c, cmd)
+			return signUp(c, cmd, opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.username, "name", "", "User name")
-	cmd.Flags().StringVar(&opts.email, "email", "", "User email")
-	cmd.Flags().StringVar(&opts.password, "password", "", "User password")
+	flags := cmd.Flags()
+	flags.StringVar(&opts.username, "name", "", "User name")
+	flags.StringVar(&opts.email, "email", "", "User email")
+	flags.StringVar(&opts.password, "password", "", "User password")
 	return cmd
 }
 
-func signUp(c cli.Interface, cmd *cobra.Command) error {
+func signUp(c cli.Interface, cmd *cobra.Command, opts signUpOptions) error {
 	if !cmd.Flag("name").Changed {
 		opts.username = c.Console().GetInput("username")
 	}
@@ -54,8 +52,7 @@ func signUp(c cli.Interface, cmd *cobra.Command) error {
 		Email:    opts.email,
 		Password: opts.password,
 	}
-	_, err := client.SignUp(context.Background(), request)
-	if err != nil {
+	if _, err := client.SignUp(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Hi %s! Please check your email to complete the signup process.\n", opts.username)

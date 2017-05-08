@@ -21,5 +21,7 @@
 {{ var "/docker/registry/scheme" "http://" }}
 {{ var "/docker/registry/host" "registry" }}
 {{ var "/docker/registry/port" "5000" }}
+{{ var "/docker/registry-cache/host" "registry-cache" }}
+{{ var "/docker/registry-cache/port" "5000" }}
 {{ var "/aws/stackname" "unset" }}
 {{ var "/docker/label/cluster/key" "atomiq.clusterid" }}

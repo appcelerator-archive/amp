@@ -39,10 +39,10 @@ services:
         constraints: [node.role == worker]
     labels:
       io.amp.role: "infrastructure"
-    environment: [
-      "ELASTICSEARCH_URL=http://elasticsearch:9200",
-      "SERVICE_PORTS=5601",
-      "VIRTUAL_HOST=https://dashboard.*"
-    ]
+    environment:
+      ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      SERVICE_PORTS: 5601
+      VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+      FORCE_SSL: 1
     ports:
       - "50106:5601"

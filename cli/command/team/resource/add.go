@@ -10,50 +10,47 @@ import (
 	"google.golang.org/grpc"
 )
 
-type addTeamResOpts struct {
+type addTeamResOptions struct {
 	org      string
 	team     string
 	resource string
 }
 
-var (
-	addTeamResOptions = &addTeamResOpts{}
-)
-
 // NewAddTeamResCommand returns a new instance of the add team resource command.
 func NewAddTeamResCommand(c cli.Interface) *cobra.Command {
+	opts := addTeamResOptions{}
 	cmd := &cobra.Command{
 		Use:     "add [OPTIONS]",
 		Short:   "Add resource to team",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addTeamRes(c, cmd)
+			return addTeamRes(c, cmd, opts)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&addTeamResOptions.org, "org", "", "Organization name")
-	flags.StringVar(&addTeamResOptions.team, "team", "", "Team name")
-	flags.StringVar(&addTeamResOptions.resource, "res", "", "Resource id")
+	flags.StringVar(&opts.org, "org", "", "Organization name")
+	flags.StringVar(&opts.team, "team", "", "Team name")
+	flags.StringVar(&opts.resource, "res", "", "Resource id")
 	return cmd
 }
 
-func addTeamRes(c cli.Interface, cmd *cobra.Command) error {
+func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) error {
 	if !cmd.Flag("org").Changed {
-		addTeamResOptions.org = c.Console().GetInput("organization name")
+		opts.org = c.Console().GetInput("organization name")
 	}
 	if !cmd.Flag("team").Changed {
-		addTeamResOptions.team = c.Console().GetInput("team name")
+		opts.team = c.Console().GetInput("team name")
 	}
 	if !cmd.Flag("res").Changed {
-		addTeamResOptions.resource = c.Console().GetInput("resource id")
+		opts.resource = c.Console().GetInput("resource id")
 	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.AddResourceToTeamRequest{
-		OrganizationName: addTeamResOptions.org,
-		TeamName:         addTeamResOptions.team,
-		ResourceId:       addTeamResOptions.resource,
+		OrganizationName: opts.org,
+		TeamName:         opts.team,
+		ResourceId:       opts.resource,
 	}
 	if _, err := client.AddResourceToTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

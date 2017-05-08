@@ -31,7 +31,7 @@ type opts struct {
 func newRootCommand(c cli.Interface) *cobra.Command {
 	opts := &opts{}
 	cmd := &cobra.Command{
-		Use:           "amp [OPTIONS] COMMAND [ARG...]",
+		Use:           "amp",
 		Short:         "Deploy, manage, and monitor container stacks and functions.",
 		SilenceUsage:  true,
 		SilenceErrors: true,

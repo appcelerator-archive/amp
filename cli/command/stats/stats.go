@@ -165,7 +165,7 @@ func displayCurrentResult(query *stats.StatsRequest, result *stats.StatsReply, c
 	if opts.follow {
 		c.Console().Printf("\033[2J\033[0;0H")
 	}
-	w := tabwriter.NewWriter(c.Out(), 0, 8, 2, ' ', 0)
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
 	c.Console().Println(getGroupByFilterText(query))
 	fmt.Fprintln(w, getStatTitle(query))
 	for _, entry := range result.Entries {
@@ -176,7 +176,7 @@ func displayCurrentResult(query *stats.StatsRequest, result *stats.StatsReply, c
 
 // Display historic stats
 func displayHistoricResult(query *stats.StatsRequest, result *stats.StatsReply, c cli.Interface, displayTitle bool) {
-	w := tabwriter.NewWriter(c.Out(), 0, 8, 2, ' ', 0)
+	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
 	if displayTitle {
 		c.Console().Println(getGroupByFilterText(query))
 		fmt.Fprintln(w, getStatTitle(query))

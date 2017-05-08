@@ -10,45 +10,42 @@ import (
 	"google.golang.org/grpc"
 )
 
-type setOpts struct {
+type setPasswordOptions struct {
 	token    string
 	password string
 }
 
-var (
-	setOptions = &setOpts{}
-)
-
 // NewSetCommand returns a new instance of the set command.
 func NewSetCommand(c cli.Interface) *cobra.Command {
+	opts := setPasswordOptions{}
 	cmd := &cobra.Command{
 		Use:     "set [OPTIONS]",
 		Short:   "Set password",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return set(c, cmd)
+			return set(c, cmd, opts)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&setOptions.token, "token", "", "Verification token")
-	flags.StringVar(&setOptions.password, "password", "", "User password")
+	flags.StringVar(&opts.token, "token", "", "Verification token")
+	flags.StringVar(&opts.password, "password", "", "User password")
 	return cmd
 }
 
-func set(c cli.Interface, cmd *cobra.Command) error {
+func set(c cli.Interface, cmd *cobra.Command, opts setPasswordOptions) error {
 	if !cmd.Flag("token").Changed {
-		setOptions.token = c.Console().GetInput("token")
+		opts.token = c.Console().GetInput("token")
 	}
 	if !cmd.Flag("password").Changed {
-		setOptions.password = c.Console().GetSilentInput("password")
+		opts.password = c.Console().GetSilentInput("password")
 	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordSetRequest{
-		Token:    setOptions.token,
-		Password: setOptions.password,
+		Token:    opts.token,
+		Password: opts.password,
 	}
 	if _, err := client.PasswordSet(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

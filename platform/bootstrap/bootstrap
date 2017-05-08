@@ -18,7 +18,7 @@ INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
 BRIDGE_NETWORK=hostnet
 CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-atomiq.clusterid}
-INFRAKIT_LOG_LEVEL=3
+INFRAKIT_LOG_LEVEL=4
 #WORKER_GROUP_LIST=(data:2)
 WORKER_GROUP_LIST=()
 
@@ -69,6 +69,8 @@ _get_dirname() {
 }
 
 # expose the Docker remote api
+# and set the registry mirrors
+# only applies to non local deployments
 _expose_remote_api() {
   local _registry_opt
   mkdir -p /etc/systemd/system/docker.service.d
@@ -497,6 +499,7 @@ _kill_ikt() {
 # kill the registry container (but keep the volume)
 _kill_registry(){
   docker container rm -f registry >/dev/null 2>&1 && echo "registry has been destroyed" >&2
+  docker container rm -f registry-cache >/dev/null 2>&1 && echo "registry-cache has been destroyed" >&2
 }
 
 # kill the infrakit plugins (container or process)
@@ -527,11 +530,11 @@ _prepare_config_container() {
   local _config=$(mktemp)
   cleanup_file_list="$cleanup_file_list $_config"
   docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
-  docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
   if [ $? -ne 0 ]; then
     echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
     exit 1
   fi
+  docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
 }
 
 # deploy the infrakit configuration
@@ -540,7 +543,7 @@ _deploy_config_container() {
   docker exec infrakit infrakit manager commit file://$INFRAKIT_HOME/config.json >&2
 }
 
-# run a registry service for Docker image availability in the cluster
+# run registry services for Docker image availability in the cluster
 _run_registry() {
   local _nwopt
   docker network inspect $BRIDGE_NETWORK >/dev/null 2>&1 && _nwopt="--network=$BRIDGE_NETWORK"
@@ -550,6 +553,15 @@ _run_registry() {
              --volume=registry:/var/lib/registry \
              --label="$CLUSTER_LABEL_NAME=$clusterid" --label="io.amp.role=$ROLE_LABEL" \
              -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+             registry:2 >&2
+  # for local deployment a registry cache is also created to boost the pulls
+  [[ "$target" = "local" ]] && \
+  docker run --name=registry-cache --detach $_nwopt \
+             --restart=unless-stopped \
+             --volume=registry-cache:/var/lib/registry \
+             --label="$CLUSTER_LABEL_NAME=$clusterid" --label="io.amp.role=$ROLE_LABEL" \
+             -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+             -e REGISTRY_PROXY_REMOTEURL="https://registry-1.docker.io" \
              registry:2 >&2
 }
 

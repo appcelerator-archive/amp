@@ -12,8 +12,8 @@ import (
 )
 
 type removeTeamOptions struct {
-	org  string
-	team []string
+	org   string
+	teams []string
 }
 
 // NewTeamRemoveCommand returns a new instance of the team remove command.
