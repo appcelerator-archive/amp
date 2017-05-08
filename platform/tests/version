@@ -5,7 +5,7 @@ result=$(amp -s localhost version)
 echo $result
 
 # not finding the version is an error
-version="v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+version="v[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}"
 echo $result | grep -E "Version:[[:space:]]+$version"
 if [[ $? -ne 0 ]]; then
 	((ec++))
