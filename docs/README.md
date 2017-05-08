@@ -24,10 +24,8 @@ To deploy a standard Docker Compose version 3 stackfile, use
 
 If you're running on Linux, there are a few things you must do first.
 
-    # increase virtual memory (needed for Elasticsearch)
-    $ sudo sysctl -w vm.max_map_count=262144
+Check if you have IPVS kernel modules loaded:
 
-    # check if you have IPVS kernel modules loaded:
     $ lsmod | grep ip_vs
     # verify ip_vs and ip_vs_rr
     #
@@ -37,14 +35,18 @@ If you're running on Linux, there are a few things you must do first.
     # Note: loading ip_vs_rr will also ensure ip_vs is loaded.
     $ sudo modprobe ip_vs_rr
 
+Increase virtual memory (needed for Elasticsearch):
+
+    $ sudo sysctl -w vm.max_map_count=262144
+
 To make these changes permanent, you can run the following and reboot:
 
-    $ echo "vm.max_map_count = 262144" | sudo tee -a /etc/sysctl.conf
     $ echo "ip_vs_rr" | sudo tee -a /etc/modules
+    $ echo "vm.max_map_count = 262144" | sudo tee -a /etc/sysctl.conf
 
 ## Docker for Mac
 
-Docker for Mac v.17+ should work just fine.
+Versions of Docker for Mac v.17.03 and higher work with the default settings. 
 
 ## Monitoring
 
