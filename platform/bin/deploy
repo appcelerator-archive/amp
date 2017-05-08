@@ -2,6 +2,9 @@
 
 SUCCESS=0
 
+# run checks (tests); will be set to 1 by -c option
+CHECK=0
+
 # This script uses other scripts expected to be in the same directory
 # This gets absolute path to script (resolving symlinks)
 readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
@@ -190,13 +193,16 @@ prepare_certificates() {
   $amps secret create "certificate_atomiq" /stacks/$name.pem
 }
 
-while getopts ":w:m:t:l:T:" opt; do
+while getopts ":w:m:t:l:T:c" opt; do
   case $opt in
   w|m|t|l) # just pass it to the bootstrap script
     BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
     ;;
   T) # tag for images to deploy
     export TAG=$OPTARG
+    ;;
+  c)
+    CHECK=1
     ;;
   esac
 done
@@ -322,6 +328,15 @@ ok "service lookup check succeeded: elasticsearch"
 kurl elasticsearch:9200
 checkexit $? "service ping check failed: elasticsearch"
 ok "service ping check succeeded: elasticsearch"
+
+# checks
+# ======
+if [[ $CHECK -eq 1 ]]; then
+  time testscheck $TESTSDIR
+  rv=$?
+  checkexit $rv "tests failed: $rv"
+  ok "tests passed"
+fi
 
 printf "\nCluster status: healthy\n$CID"
 SUCCESS=1
