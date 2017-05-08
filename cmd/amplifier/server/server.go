@@ -174,16 +174,17 @@ func registerStatsServer(c *Configuration, s *grpc.Server) {
 
 func registerAccountServer(c *Configuration, s *grpc.Server) {
 	account.RegisterAccountServer(s, &account.Server{
-		Accounts: accounts.NewStore(runtime.Store),
-		Mailer:   runtime.Mailer,
+		Accounts:     accounts.NewStore(runtime.Store, c.Registration),
+		Mailer:       runtime.Mailer,
+		Registration: c.Registration,
 	})
 }
 
 func registerStackServer(c *Configuration, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
-		Accounts: accounts.NewStore(runtime.Store),
+		Accounts: accounts.NewStore(runtime.Store, c.Registration),
 		Docker:   runtime.Docker,
-		Stacks:   stacks.NewStore(runtime.Store),
+		Stacks:   stacks.NewStore(runtime.Store, accounts.NewStore(runtime.Store, c.Registration)),
 	})
 }
 

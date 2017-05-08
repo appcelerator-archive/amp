@@ -21,10 +21,10 @@ type Store struct {
 }
 
 // NewStore returns an etcd implementation of stacks.Interface
-func NewStore(store storage.Interface) *Store {
+func NewStore(store storage.Interface, accounts accounts.Interface) *Store {
 	return &Store{
 		store:    store,
-		accounts: accounts.NewStore(store),
+		accounts: accounts,
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/registration"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
@@ -17,12 +18,13 @@ const organizationsRootKey = "organizations"
 
 // Store implements user data.Interface
 type Store struct {
-	store storage.Interface
+	registration string
+	store        storage.Interface
 }
 
 // NewStore returns an etcd implementation of user.Interface
-func NewStore(store storage.Interface) *Store {
-	return &Store{store: store}
+func NewStore(store storage.Interface, registration string) *Store {
+	return &Store{store: store, registration: registration}
 }
 
 // Users
@@ -101,6 +103,9 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		Name:       name,
 		IsVerified: false,
 		CreateDt:   time.Now().Unix(),
+	}
+	if s.registration == registration.None {
+		user.IsVerified = true
 	}
 	if password, err = CheckPassword(password); err != nil {
 		return nil, err

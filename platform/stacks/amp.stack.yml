@@ -16,6 +16,8 @@ services:
       default:
         aliases:
           - amplifier
+    environment:
+      REGISTRATION: ${REGISTRATION:-email}
     ports:
       - "50101:50101"
     volumes:
