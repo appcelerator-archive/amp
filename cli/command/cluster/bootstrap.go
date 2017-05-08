@@ -10,7 +10,7 @@ import (
 
 const (
 	bootstrapImg = "appcelerator/amp-bootstrap:%s"
-	bootstrapTag = "1.3.0"
+	bootstrapTag = "1.3.1"
 )
 
 var (
