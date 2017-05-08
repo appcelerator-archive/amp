@@ -9,19 +9,19 @@ install:
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
   - sudo apt-get install docker-engine
-  - sudo modprobe ip_vs
+  - sudo modprobe ip_vs ip_vs_rr
 
 before_script:
-  - export PATH=bin/linux/amd64:$PATH
+  - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:$PATH
   - docker network create hostnet
 
 script:
   - set -e
-  - ampmake clean buildall
+  - ampmake clean build
   - ls -la bin/linux/amd64
-  - hack/deploy -T local
-  - hack/versioncheck 15
-  - # TODO: amp cluster destroy
+  - amp --server localhost cluster create --tag local
+  - versioncheck 15
+  - amp --server localhost cluster rm
   - ampmake lint
 
 after_success:
