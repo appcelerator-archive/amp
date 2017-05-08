@@ -2,18 +2,19 @@
 
 readonly CID="f573e897-7aa0-4516-a195-42ee91039e97"
 readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
-readonly deploy="$SP/deploy -T ${TAG:-local}"
+readonly AMPPATH=$(dirname $SP)
+readonly deploy="$AMPPATH/platform/bin/deploy -T ${TAG:-local}"
 
 $deploy $CID
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
-docker run -it --rm --network=hostnet -v $(dirname $SP)/stacks:/stacks docker --host=m1 service ls
+docker run -it --rm --network=hostnet -v $AMPPATH/platform/stacks:/stacks docker --host=m1 service ls
 
 cat <<EOF
 
 Run the following command to update your environment to use docker swarm commands for the local amp swarm:
-  $ source "$SP/ampenv"
+  $ source "$AMPPATH/platform/bin/ampenv"
 
 To see your updated environment
   $ env | grep AMP

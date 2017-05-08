@@ -7,6 +7,11 @@
 # http://mywiki.wooledge.org/BashFAQ/028#Using_BASH_SOURCE).
 
 export AMPCID="f573e897-7aa0-4516-a195-42ee91039e97"
-export AMPHOME="$(dirname "$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)")"
-alias amps="docker run -it --rm --network=hostnet -v $AMPHOME/stacks:/stacks docker --host=m1"
+export AMPHOME="$(dirname $(dirname "$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"))"
+
+alias amps="docker run -it --rm --network=hostnet \
+  -v "$AMPHOME:/go/src/github.com/appcelerator/amp" \
+  -w /go/src/github.com/appcelerator/amp \
+  -e "PATH=$AMPHOME/bin/linux/amd64:$AMPHOME/platform/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  docker --host=m1"
 

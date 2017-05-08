@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-TAGS=( latest 1.2.0 )
+TAGS=( latest 1.3.0 )
 OWNER=appcelerator
 IMAGE="${1:-amp-bootstrap}"
 
-# This is built by the amp Makefile (without any tag) now
+# This is now built by the amp Makefile with the tag `:local`
 #docker build -t ${OWNER}/${IMAGE} .
 
 for tag in "${TAGS[@]}"
