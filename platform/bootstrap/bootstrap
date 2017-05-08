@@ -213,9 +213,10 @@ _system_check() {
   docker info | grep -q "Swarm: active" && return 0
   # on Linux system, we have to make sure that the modules are loaded
   if [[ $(uname) = "Linux" ]]; then
-    lsmod | grep -q ip_vs
+    # grep for ip_vs_rr (if it's present then so is ip_vs)
+    lsmod | grep -q ip_vs_rr
     if [[ $? -ne 0 ]]; then
-      echo "Warning: the IPVS modules are not loaded, consider loading them ($ sudo modprobe ip_vs_rr) or alternatively initializing your host Docker Swarm"
+      echo "Warning: required IPVS modules are not loaded. See: https://github.com/appcelerator/amp/tree/master/docs#linux"
       return 1
     fi
   fi
@@ -773,9 +774,7 @@ if [ -n "$swarm_join_ip" ]; then
   _init_swarm $swarm_join_ip || exit 1
   exit 0
 fi
-if [[ "x$target" = "xlocal" ]]; then
-  _system_check || exit 1
-fi
+[[ $target = "local" ]] && ( _system_check || exit 1 )
 _set_source $1
 _set_size
 #if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
