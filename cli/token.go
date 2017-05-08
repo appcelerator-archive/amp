@@ -31,13 +31,13 @@ func SaveToken(metadata metadata.MD) error {
 
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("cannot get current user")
+		return fmt.Errorf("cannot get current user: %s", err)
 	}
 	if err := os.MkdirAll(filepath.Join(usr.HomeDir, ampConfigFolder), os.ModePerm); err != nil {
-		return fmt.Errorf("cannot create folder")
+		return fmt.Errorf("cannot create folder: %s", err)
 	}
 	if err := ioutil.WriteFile(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile), []byte(token), 0600); err != nil {
-		return fmt.Errorf("cannot write token")
+		return fmt.Errorf("cannot write token: %s", err)
 	}
 	return nil
 }
@@ -46,11 +46,11 @@ func SaveToken(metadata metadata.MD) error {
 func ReadToken() (string, error) {
 	usr, err := user.Current()
 	if err != nil {
-		return "", fmt.Errorf("cannot get current user")
+		return "", fmt.Errorf("cannot get current user: %s", err)
 	}
 	data, err := ioutil.ReadFile(filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile))
 	if err != nil {
-		return "", fmt.Errorf("cannot read token")
+		return "", fmt.Errorf("cannot read token: %s", err)
 	}
 	return string(data), nil
 }
@@ -59,7 +59,7 @@ func ReadToken() (string, error) {
 func RemoveToken() error {
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("cannot get current user")
+		return fmt.Errorf("cannot get current user: %s", err)
 	}
 	filePath := filepath.Join(usr.HomeDir, ampConfigFolder, ampTokenFile)
 	if _, err = os.Stat(filePath); os.IsNotExist(err) {
@@ -67,7 +67,7 @@ func RemoveToken() error {
 	}
 	err = os.Remove(filePath)
 	if err != nil {
-		return fmt.Errorf("cannot remove token")
+		return fmt.Errorf("cannot remove token: %s", err)
 	}
 	return nil
 }
