@@ -50,7 +50,7 @@ main() {
     else
       ((fail++))
     fi
-  done < <(find "$testdir" -type file -perm -u=x)
+  done < <(find "$testdir" -type f -perm -u=x)
 
   printresults $SECONDS $count $pass $fail
   exit $fail

@@ -1,6 +1,15 @@
 #!/bin/bash
 
+ec=0
 result=$(amp -s localhost version)
 
+# not finding the version is an error
 version="v[0..9]{1,2}\.[0..9]{1,3}\.[0..9]{1,3}"
 echo $result | grep -E "Version:[[:space:]]+$version"
+[[ $? -ne 0 ]] && ((ec++)) && >&2 echo "error: missing version"
+
+# finding "not connected" is an error
+echo $result | grep "not connected"
+[[ $? -eq 0 ]] && ((ec++)) && >&2 echo "error: not connected"
+
+exit $ec
