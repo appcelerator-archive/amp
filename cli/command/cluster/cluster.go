@@ -1,16 +1,18 @@
 package cluster
 
 import (
+	"github.com/appcelerator/amp/api/registration"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 )
 
 type clusterOpts struct {
-	managers int
-	workers  int
-	provider string
-	name     string
-	tag      string
+	managers     int
+	workers      int
+	provider     string
+	name         string
+	tag          string
+	registration string
 }
 
 const (
@@ -19,11 +21,12 @@ const (
 
 var (
 	opts = &clusterOpts{
-		managers: 3,
-		workers:  2,
-		provider: "local",
-		name:     "",
-		tag:      "latest",
+		managers:     3,
+		workers:      2,
+		provider:     "local",
+		name:         "",
+		tag:          "latest",
+		registration: registration.Default,
 	}
 )
 

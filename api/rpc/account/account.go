@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/registration"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -17,8 +18,9 @@ import (
 
 // Server is used to implement account.UserServer
 type Server struct {
-	Accounts accounts.Interface
-	Mailer   *mail.Mailer
+	Accounts     accounts.Interface
+	Mailer       *mail.Mailer
+	Registration string
 }
 
 func convertError(err error) error {
@@ -94,21 +96,26 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		s.Accounts.DeleteUser(ctx, in.Name)
 		return nil, convertError(err)
 	}
-	// Create a verification token valid for an hour
-	token, err := auth.CreateVerificationToken(user.Name)
-	if err != nil {
-		s.Accounts.DeleteUser(ctx, in.Name)
-		return nil, convertError(err)
-	}
-	// Get the server address used by the client
 
-	// Send the verification email
-	if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
-		s.Accounts.DeleteUser(ctx, in.Name)
-		return nil, convertError(err)
+	switch s.Registration {
+	case registration.Email:
+		// Create a verification token valid for an hour
+		token, err := auth.CreateVerificationToken(user.Name)
+		if err != nil {
+			s.Accounts.DeleteUser(ctx, in.Name)
+			return nil, convertError(err)
+		}
+
+		// Send the verification email
+		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
+			s.Accounts.DeleteUser(ctx, in.Name)
+			return nil, convertError(err)
+		}
 	}
+
 	log.Println("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
+
 }
 
 // Verify implements account.Verify

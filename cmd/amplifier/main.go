@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/appcelerator/amp/api/registration"
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
@@ -40,6 +41,7 @@ func main() {
 		NatsURL:          ns.DefaultURL,
 		DockerURL:        docker.DefaultURL,
 		DockerVersion:    docker.DefaultVersion,
+		Registration:     registration.Default,
 	}
 
 	// Override with configuration file

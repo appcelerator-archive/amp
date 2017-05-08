@@ -6,6 +6,9 @@ import (
 
 	"time"
 
+	"strings"
+
+	"github.com/appcelerator/amp/api/registration"
 	"github.com/spf13/viper"
 )
 
@@ -29,6 +32,7 @@ type Configuration struct {
 	SmsAccountID     string
 	SmsKey           string
 	SmsSender        string
+	Registration     string
 }
 
 // ReadConfig reads the configuration file
@@ -47,6 +51,21 @@ func ReadConfig(config *Configuration) error {
 	if err := viper.Unmarshal(config); err != nil {
 		return fmt.Errorf("Fatal error unmarshalling configuration file: %s", err)
 	}
+
+	// Read environment variable
+	r, match := viper.GetString("registration"), false
+	for _, valid := range []string{registration.None, registration.Email} {
+		if strings.EqualFold(valid, r) {
+			match = true
+			break
+		}
+	}
+	if match {
+		config.Registration = strings.ToLower(r)
+	} else {
+		log.Printf("Invalid registration provided: %s, defaulting to: %s\n", r, registration.Default)
+	}
+
 	log.Println("Configuration file successfully loaded")
 	return nil
 }
