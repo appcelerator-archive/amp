@@ -16,7 +16,7 @@ runtest() {
   file=$2
   f="${file#$testdir/}"
   echo "#$count [$f]"
-  $SHELL $file 1>/dev/null
+  $file 1>/dev/null
   ec=$?
   [[ $ec -eq 0 ]] && echo PASS || echo "*** FAIL (exit code: $ec) ***"
   return $ec
@@ -50,7 +50,7 @@ main() {
     else
       ((fail++))
     fi
-  done < <(find "$testdir" -type file -name '*.sh')
+  done < <(find "$testdir" -type file -perm -u=x)
 
   printresults $SECONDS $count $pass $fail
   exit $fail
