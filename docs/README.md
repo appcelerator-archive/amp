@@ -3,7 +3,7 @@ ATOMIQ
 
 ## Getting started
 
-> NOTE: by default, the CLI will connect to `cloud.atomiq.io:50101`.
+> NOTE: by default, the CLI will connect to `cloud.appcelerator.io:50101`.
 This is currently for testing and evaluation only and anything you
 create will be deleted periodically over the next few weeks.
 
@@ -52,7 +52,7 @@ Versions of Docker for Mac v.17.03 and higher work with the default settings.
 
 The `amp stats` and `amp logs` commands provide rich filtered
 query support for both realtime feeds and historical queries.
-You can connect to the hosted dashboard at https://dashboard.cloud.atomiq.io/.
+You can connect to the hosted dashboard at https://dashboard.cloud.appcelerator.io/.
 If you create a local cluster, you can connect to it at:
 http://localhost:50106.
 
