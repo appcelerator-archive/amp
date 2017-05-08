@@ -1,0 +1,60 @@
+#!/bin/bash
+
+testdir=$1
+[[ -z "$testdir" ]] && echo "usage: $0 TESTDIR" && exit 1
+
+# get full path, strip trailing slash if present
+testdir="$(cd "$testdir"; pwd -P)"
+
+formattime() {
+  echo $(printf '%02dh:%02dm:%02ds\n' $(($1/3600)) $(($1%3600/60)) $(($1%60)))
+}
+
+runtest() {
+  echo -------------------------------------
+  count=$1
+  file=$2
+  f="${file#$testdir/}"
+  echo "#$count [$f]"
+  $SHELL $file 1>/dev/null
+  ec=$?
+  [[ $ec -eq 0 ]] && echo PASS || echo "*** FAIL (exit code: $ec) ***"
+  return $ec
+}
+
+printresults() {
+  elapsed=$1
+  count=$2
+  pass=$3
+  fail=$4
+  echo =====================================
+  echo "DONE: $((count)) test(s)"
+  echo "TIME: $(formattime $elapsed)"
+  echo "PASS: $pass"
+  echo "FAIL: $fail"
+  echo =====================================
+}
+
+main() {
+  SECONDS=0
+  count=0
+  pass=0
+  fail=0
+
+  while read file
+  do
+    ((count++))
+    runtest $count $file
+    if [[ $? -eq 0 ]]; then
+      ((pass++))
+    else
+      ((fail++))
+    fi
+  done < <(find "$testdir" -type file -name '*.sh')
+
+  printresults $SECONDS $count $pass $fail
+  exit $fail
+}
+
+main
+
