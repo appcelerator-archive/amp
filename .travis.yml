@@ -19,7 +19,7 @@ script:
   - set -e
   - ampmake clean build
   - ls -la bin/linux/amd64
-  - amp --server localhost cluster create --tag local
+  - amp --server=localhost cluster create --tag=local --registration=none
   - testscheck platform/tests
   - amp --server localhost cluster rm
   - ampmake lint
