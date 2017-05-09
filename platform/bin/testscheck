@@ -1,7 +1,7 @@
 #!/bin/bash
 
 testdir=$1
-[[ -z "$testdir" ]] && echo "usage: $0 TESTDIR" && exit 1
+[[ ! -d "$testdir" ]] && echo "usage: $0 TESTDIR" && exit 1
 
 # get full path, strip trailing slash if present
 testdir="$(cd "$testdir"; pwd -P)"
@@ -16,10 +16,12 @@ runtest() {
   file=$2
   f="${file#$testdir/}"
   echo "#$count [$f]"
+
   # TODO: add verbose mode for stderr
-  #$file 1>/dev/null
-  $file
+  #($file 1>/dev/null)
+  ($file)
   ec=$?
+
   [[ $ec -eq 0 ]] && echo PASS || echo "*** FAIL (exit code: $ec) ***"
   return $ec
 }
@@ -37,7 +39,17 @@ printresults() {
   echo =====================================
 }
 
-main() {
+include() {
+  if [[ -d "$TESTINCLUDE" ]]; then
+    files=$(find "$TESTINCLUDE" -type f -mindepth 1 -maxdepth 1 -name "*.sh")
+    for f in $files; do
+      echo "source $f"
+      source $f
+    done
+  fi
+}
+
+runtests() {
   SECONDS=0
   count=0
   pass=0
@@ -58,5 +70,10 @@ main() {
   exit $fail
 }
 
-main
+main() {
+  (runtests $@)
+  exit $?
+}
+
+main $@
 
