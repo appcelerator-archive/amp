@@ -18,7 +18,7 @@ if [ "x$provider" != "xdocker" ]; then
   cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ if var "/certificate/ca/service" }}{{ var "/docker/remoteapi/tlsport" }} --tlsverify --tlscacert={{ var "/docker/remoteapi/cafile" }} --tlscert={{ var "/docker/remoteapi/srvcertfile" }} --tlskey={{ var "/docker/remoteapi/srvkeyfile" }}{{else }}{{ var "/docker/remoteapi/port" }}{{ end }} -H unix:///var/run/docker.sock{{ if var "/bootstrap/ip" }} --registry-mirror=http://{{ var "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ var "/bootstrap/ip" }}:5000{{ end }}
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ var "/docker/remoteapi/port" }} -H unix:///var/run/docker.sock{{ if var "/bootstrap/ip" }} --registry-mirror=http://{{ var "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ var "/bootstrap/ip" }}:5000{{ end }}
 EOF
   systemctl daemon-reload
 fi
@@ -34,8 +34,6 @@ cat << EOF > /etc/docker/daemon.json
   "labels": {{ INFRAKIT_LABELS | jsonEncode }}
 }
 EOF
-
-{{ if var "/certificate/ca/service" }}{{ include "request-certificate.sh" }}{{ end }}
 
 if [ "x$provider" != "xdocker" ]; then
   systemctl start docker.service

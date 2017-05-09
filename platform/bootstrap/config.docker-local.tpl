@@ -45,14 +45,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
@@ -114,14 +107,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
@@ -184,14 +170,7 @@
                   "SwarmJoinIP": "m1",
                   "EngineLabels": { "proxy": "true" },
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {

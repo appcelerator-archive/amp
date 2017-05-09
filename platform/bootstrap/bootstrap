@@ -7,8 +7,6 @@ INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-latest}
 INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
 AWS_FILES=(bootstrap.yml)
 SSL_KEY_LENGTH=2048
-CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
-CERT_DIR=~/.config/infrakit/certs
 BOOTSTRAP_VOLUME=amp-bootstrap
 ROLE_LABEL=tools
 INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
@@ -313,56 +311,6 @@ _get_ip() {
   echo $_ip
 }
 
-# run a certificate signing service
-_run_certificate_service() {
-  local IP
-  IP=$(_get_ip)
-  docker container ls --format '{{.Names}}' | grep -qw certauth
-  if [ $? -eq 0 ]; then
-    echo "the certificate management service is already running" >&2
-  else
-    echo "warning: the certificate service is not production ready, use it only for development purposes" >&2
-    cad=$(mktemp -d)
-    if [ $? -ne 0 ] || [ -z "$cad" ]; then
-      echo "unable to create a temporary directory to build the certificate management" >&2
-      exit 1
-    fi
-    echo "build a certificate management service (in $cad)..." >&2
-    pushd $cad
-    git clone https://github.com/ndegory/certificate.authority.git
-    pushd certificate.authority 2>/dev/null
-    docker build -t $CERTIFICATE_SERVER_IMAGE . || exit 1
-    popd -1 2>/dev/null && popd 2>/dev/null
-    rm -rf $cad
-    echo "temporary directory has been removed" >&2
-    echo "run the certificate management service..." >&2
-    docker run -d --restart always -p 80 --name certauth $CERTIFICATE_SERVER_IMAGE || exit 1
-  fi
-  CERTIFICATE_SERVER_PORT=$(docker inspect certauth --format='{{(index (index .NetworkSettings.Ports "80/tcp") 0).HostPort}}')
-  echo "certificate server listening on port $CERTIFICATE_SERVER_PORT" >&2
-  _vars="{{ var \"/certificate/ca/service\" \"$IP:$CERTIFICATE_SERVER_PORT\" }}"
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" || exit 1
-}
-
-# generate a certificate for the Docker client
-_get_client_certificate() {
-  mkdir -p $CERT_DIR
-  if [ $? -ne 0 ]; then
-    exit 1
-  fi
-  if [ ! -f $CERT_DIR/ca.pem ]; then
-    echo "generating a self-signed CA..." >&2
-    # (used by the Swarm flavor plugin)
-    curl http://localhost:$CERTIFICATE_SERVER_PORT/ca > $CERT_DIR/ca.pem
-    echo "generating a certificate for the Docker client in $CERT_DIR..." >&2
-    openssl genrsa -out $CERT_DIR/client-key.pem $SSL_KEY_LENGTH
-    openssl req -subj '/CN=client' -new -key $CERT_DIR/client-key.pem -out $CERT_DIR/client.csr
-    curl --data "csr=$(cat $CERT_DIR/client.csr | sed 's/+/%2B/g');ext=extendedKeyUsage=clientAuth" http://localhost:$CERTIFICATE_SERVER_PORT/csr > $CERT_DIR/client.pem
-    ls -l $CERT_DIR/client.pem
-    rm -f $CERT_DIR/client.csr
-  fi
-}
-
 # run the infrakit containers
 # return 1 if a new container has been started
 _run_ikt_container() {
@@ -411,7 +359,6 @@ _run_ikt_container() {
 
     echo "starting up InfraKit (image $_infrakit_image)" >&2
     docker run -d --restart always --name infrakit \
-         -v $CERT_DIR:/etc/docker \
          $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS -e PLUGIN_DIR=$INFRAKIT_HOME/${provider} -e INFRAKIT_LOG_LEVEL=$INFRAKIT_LOG_LEVEL $_infrakit_image \
          infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log $INFRAKIT_LOG_LEVEL \
          manager group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >&2
@@ -500,10 +447,6 @@ _kill_plugins() {
 
 # removes the configuration files
 _clean_config() {
-  if [ -d $CERT_DIR ]; then
-    rm -f $CERT_DIR/ca.pem $CERT_DIR/client.pem $CERT_DIR/client-key.pem
-    echo "client certificates have been removed" >&2
-  fi
   docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     docker volume rm $BOOTSTRAP_VOLUME >/dev/null 2>&1 && echo "configuration volume deleted" >&2
@@ -775,7 +718,6 @@ fi
 [[ $target = "local" ]] && ( _system_check || exit 1 )
 _set_source "$1"
 _set_size
-#if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 clusterid=$(_set_clusterid)
 if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge "$BRIDGE_NETWORK"  2>/dev/null; _run_registry; fi
 _pull_images "$provider"
