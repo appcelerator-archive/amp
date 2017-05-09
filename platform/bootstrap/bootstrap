@@ -3,11 +3,8 @@
 # @(#) if no argument is provided, the configuration is expected to be in same directory
 
 INFRAKIT_HOME=/infrakit
-INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
-#INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.3.1
-INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
-TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
+INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-latest}
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
 AWS_FILES=(bootstrap.yml)
 SSL_KEY_LENGTH=2048
 BOOTSTRAP_VOLUME=amp-bootstrap
@@ -30,7 +27,7 @@ _am_i_in_a_container() {
 
 # pull docker images
 _pull_images() {
-  local _images="infrakit $@"
+  local _images="infrakit $*"
   local _image
   local i
   for i in $_images; do
@@ -38,11 +35,9 @@ _pull_images() {
     if [ -z "$_image" ]; then
       continue
     fi
-    docker pull $_image >&2
-    if [ $? -ne 0 ]; then
+    if ! docker pull "$_image" >&2; then
       # fall back to locally generated image
-      docker image ls $_image > /dev/null 2>&1
-      if [ $? -ne 0 ]; then
+      if ! docker image ls "$_image" > /dev/null 2>&1; then
         echo "no image with name $_image" >&2
         exit 1
       fi
@@ -60,7 +55,7 @@ _get_dirname() {
     if [ $? -eq 0 ]; then
       _d=$(realpath $_d)
     fi
-    if [ ! -d $_d ]; then
+    if [ ! -d "$_d" ]; then
       _d=$(dirname $_d)
     fi
     echo "$_d"
@@ -103,10 +98,10 @@ _init_swarm() {
   systemctl start docker.service && \
   if [ -n "$1" ]; then
     _manager=$1
-    _expose_remote_api $_manager
+    _expose_remote_api "$_manager"
     echo "joining a Docker Swarm..." >&2
     while [ $((++_loop)) -lt $_maxloop ]; do
-      _token=$(docker -H $_manager:2375 swarm join-token -q manager 2>/dev/null)
+      _token=$(docker -H "$_manager:2375" swarm join-token -q manager 2>/dev/null)
       if [ $? -eq 0 ] && [ -n "$_token" ]; then
         break
       fi
@@ -117,7 +112,7 @@ _init_swarm() {
       _maxloop=10
       while [ $((++_loop)) -lt $_maxloop ]; do
         sleep 1
-        docker swarm join --token $_token $_manager:2377
+        docker swarm join --token "$_token" "$_manager:2377"
         if [ $? -eq 0 ]; then
           break
         fi
@@ -148,7 +143,7 @@ _prepare_configuration_volume() {
       local _dockerimage
       _dockerfile=$(mktemp $_d/ikt.vol.XXXXXX)
       cleanup_file_list="$cleanup_file_list $_dockerfile"
-      _dockerimage=$(basename $_dockerfile | tr '[:upper:]' '[:lower:]')
+      _dockerimage=$(basename "$_dockerfile" | tr '[:upper:]' '[:lower:]')
 
       # in case a configuration file has been provided for the instance plugin
       if [ -n "$providerfile" ]; then
@@ -165,7 +160,7 @@ EOF
       if [ -n "$envfile" ]; then
         local _envfile=$(mktemp $_d/ikt.env.XXXXXX)
         cleanup_file_list="$cleanup_file_list $_envfile"
-        cp "$envfile" $_envfile
+        cp "$envfile" "$_envfile"
         cat >> $_dockerfile << EOF
 COPY $(basename $_envfile) $INFRAKIT_HOME/env.ikt
 EOF
@@ -175,7 +170,7 @@ RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
 EOF
       cleanup_image_list="$cleanup_image_list $_dockerimage"
-      docker build -t $_dockerimage -f $_dockerfile $_d >/dev/null|| exit 1
+      docker build -t "$_dockerimage" -f "$_dockerfile" "$_d" >/dev/null|| exit 1
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
       if [ $? -eq 0 ]; then
         if [ $force_start -eq 1 ]; then
@@ -191,14 +186,14 @@ EOF
         fi
       fi
       echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data" >&2
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true >&2
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME "$_dockerimage" true >&2
 }
 
 _system_check() {
   local mmcmin=262144
   typeset -i mmc
   # only check elasticsearch prerequisites on systems where it makes sense (Linux system)
-  mmc=$(sysctl -n vm.max_map_count)
+  mmc=$(sysctl -n vm.max_map_count 2>/dev/null)
   if [[ $? -eq 0 ]]; then
     if [[ $mmc -lt $mmcmin ]]; then
       echo "your max map count limit is too low for elasticsearch" >&2
@@ -238,13 +233,6 @@ _set_source() {
       echo "trying to fetch remote files for $provider ($target)..." >&2
       mkdir -p "$_d/$provider"
       for i in "${AWS_FILES[@]}"; do
-        curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
-      done
-      echo "fetch done" >&2
-    elif [ "x$provider" = "xterraform" ]; then
-      echo "trying to fetch remote files for $provider ($target)..." >&2
-      mkdir -p "$_d/$provider"
-      for i in "${TERRAFORM_FILES[@]}"; do
         curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
       done
       echo "fetch done" >&2
@@ -321,6 +309,15 @@ _get_ip() {
     exit 1
   fi
   echo $_ip
+}
+
+# the aws instance plugin has subtypes
+_instance_plugin_compute_subtype(){
+  case "$1" in
+  aws)
+    echo "ec2-instance"
+    ;;
+  esac
 }
 
 # run the infrakit containers
@@ -561,16 +558,16 @@ _status(){
 }
 
 _list(){
-  local _clusterid=$1
+  local _clusterid="$1"
   local _groups
   local _group
-  _groups=$(docker exec infrakit infrakit group ls -q | grep $_clusterid)
+  _groups=$(docker exec infrakit infrakit group ls -q | grep "$_clusterid")
   if [ $? -ne 0 ]; then
     echo "no InfraKit group definition found for this cluster" >&2
     return 1
   fi
   for _group in $_groups; do
-    docker exec infrakit infrakit instance --name=instance-$provider describe --tags atomiq.clusterid=$_clusterid --tags infrakit.group=$_group -q 2>&1 | awk -v clusterid=$_clusterid -v group=$_group '{print clusterid, group, $2, $1}'
+    docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe --tags atomiq.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
     if [ $? -ne 0 ]; then
       echo "failed to describe group $_group" >&2
       return 1
@@ -593,13 +590,12 @@ _finish(){
 # where to deploy
 VALID_TARGETS="aws local"
 # Infrakit plugins used for deployment
-VALID_PROVIDERS="aws docker terraform"
+VALID_PROVIDERS="aws docker"
 # we can't run InfraKit in a container for these plugins
 NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
-MANAGED_PLUGINS="docker terraform"
+MANAGED_PLUGINS="docker aws"
 target=local
-default_target=1
 provider=docker
 default_provider=1
 envfile=""
@@ -640,7 +636,6 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
           echo "valid targets are $VALID_TARGETS" >&2
           exit 1
       fi
-      default_target=0
       ;;
   p)
       # provider[:envfilepath]]
@@ -701,17 +696,18 @@ shift "$((OPTIND-1))"
 
 trap _finish EXIT
 
-# in case only the target has been set, and it's not local, use terraform as default provider
+# in case only the target has been set, and it's not local, use the native plugin as default provider
 if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
-    provider=terraform
+    provider="$target"
 fi
+subtype=$(_instance_plugin_compute_subtype $provider)
 
 if [ -n "$status_request" ]; then
-  _status $status_request
+  _status "$status_request"
   exit $?
 fi
 if [ -n "$list_request" ]; then
-  _list $list_request
+  _list "$list_request"
   exit $?
 fi
 if [ $clean -eq 1 ]; then
@@ -726,36 +722,38 @@ if [ $init_swarm -eq 1 ]; then
   _init_swarm || exit 1
 fi
 if [ -n "$swarm_join_ip" ]; then
-  _init_swarm $swarm_join_ip || exit 1
+  _init_swarm "$swarm_join_ip" || exit 1
   exit 0
 fi
 [[ $target = "local" ]] && ( _system_check || exit 1 )
-_set_source $1
+_set_source "$1"
 _set_size
 clusterid=$(_set_clusterid)
-if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null; _run_registry; fi
-_pull_images $provider
-_run_ikt_container $provider
+if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge "$BRIDGE_NETWORK"  2>/dev/null; _run_registry; fi
+_pull_images "$provider"
+_run_ikt_container "$provider"
 started=$?
-_run_ikt_plugin_container $provider
+_run_ikt_plugin_container "$provider"
 started=$((started + $?))
 if [ $started -gt 0 ]; then
+  # wait for infrakit and its plugins to be available, at least 3 consecutive times"
   echo -n "waiting for plugins to be available..." >&2
   rc=1
   loop=1
-  looplimit=10
-  while [ $rc -ne 0 ]; do
+  looplimit=20
+  ready=0
+  while [ $ready -lt 3 ]; do
     docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
     rc=$?
     docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
     rc=$((rc+$?))
-    docker exec infrakit infrakit instance --name=instance-$provider describe >/dev/null 2>&1
+    docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe >/dev/null 2>&1
     rc=$((rc+$?))
     if [ $((++loop)) -gt $looplimit ]; then
       echo " aborting after $looplimit attempts" >&2
       docker exec infrakit infrakit manager inspect >/dev/null
       docker exec infrakit infrakit plugin ls 2>/dev/null
-      docker exec infrakit infrakit instance --name=instance-$provider describe
+      docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe
       # docker inspect infrakit >&2
       docker logs infrakit >&2
       echo "#####################      manager logs        ############################" >&2
@@ -763,7 +761,7 @@ if [ $started -gt 0 ]; then
       echo "#####################        group logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
       echo "#####################     instance logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/instance-docker.log >&2
+      docker exec infrakit cat "/infrakit/logs/instance-$provider.log" >&2
       echo "#####################       flavor logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
       echo "#####################       configuration      ############################" >&2
@@ -772,6 +770,7 @@ if [ $started -gt 0 ]; then
     fi
     sleep 1
     echo -n "." >&2
+    [[ $rc -eq 0 ]] && ((ready++))
   done
   echo >&2
 fi
@@ -790,4 +789,4 @@ if [ $block -gt 0 ]; then
     fi
   done
 fi
-echo done >&2
+echo "done" >&2
