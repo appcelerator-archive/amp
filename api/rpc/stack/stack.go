@@ -1,23 +1,15 @@
 package stack
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"strings"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/appcelerator/amp/pkg/docker/docker/stack"
-	"github.com/docker/docker/cli/command"
-	cliflags "github.com/docker/docker/cli/flags"
-	dopts "github.com/docker/docker/opts"
 	"golang.org/x/net/context"
 )
 
@@ -110,6 +102,9 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 	if dockerErr != nil {
 		return nil, convertError(dockerErr)
 	}
+	if stack == nil {
+		return nil, stacks.StackNotFound
+	}
 
 	// Check authorization
 	if !s.Accounts.IsAuthorized(ctx, stack.Owner, accounts.DeleteAction, accounts.StackRN, stack.Id) {
@@ -134,28 +129,21 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
 	log.Println("[stack] Services", in.String())
 
-	stackFullName := in.StackName
-	stackInst, err := s.Stacks.GetStack(ctx, in.StackName)
-	if err == nil && stackInst != nil {
-		stackFullName = fmt.Sprintf("%s-%s", stackInst.Name, stackInst.Id)
+	stack, err := s.Stacks.GetStackByFragmentOrName(ctx, in.StackName)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	if stack == nil {
+		return nil, stacks.StackNotFound
 	}
 
-	r, w, _ := os.Pipe()
-	dockerCli := command.NewDockerCli(os.Stdin, w, os.Stderr)
-	opts := cliflags.NewClientOptions()
-	if err := dockerCli.Initialize(opts); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", fmt.Errorf("error in cli initialize: %v", err))
+	output, dockerErr := s.Docker.StackServices(ctx, stack.Name)
+	if dockerErr != nil {
+		log.Printf("error : %v\n", dockerErr)
+		return nil, convertError(dockerErr)
 	}
 
-	servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), stackFullName)
-	if err := stack.RunServices(dockerCli, servicesOpt); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
-	}
-
-	w.Close()
-	out, _ := ioutil.ReadAll(r)
-	outs := strings.Replace(string(out), "docker", "amp", -1)
-	cols := strings.Split(outs, "\n")
+	cols := strings.Split(output, "\n")
 	ans := &ServicesReply{
 		Services: []*StackService{},
 	}

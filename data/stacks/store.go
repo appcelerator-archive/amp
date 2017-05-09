@@ -99,9 +99,6 @@ func (s *Store) GetStackByFragmentOrName(ctx context.Context, fragmentOrName str
 			break
 		}
 	}
-	if stack == nil {
-		return nil, StackNotFound
-	}
 	return stack, nil
 }
 
