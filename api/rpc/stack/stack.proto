@@ -23,6 +23,7 @@ service Stack {
     };
   }
   rpc Services (ServicesRequest) returns (ServicesReply);
+
 }
 
 message DeployRequest {

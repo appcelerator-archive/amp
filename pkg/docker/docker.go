@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/flags"
 	"github.com/docker/docker/client"
+	dopts "github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"golang.org/x/net/context"
 )
@@ -118,6 +119,7 @@ func (d *Docker) ImagePull(ctx context.Context, image string) error {
 		nil)
 }
 
+// StackDeploy deploy a stack
 func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		// Write the compose file to a temporary file
@@ -141,6 +143,7 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 	return string(output), nil
 }
 
+// StackList list the stacks
 func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		listOpt := stack.NewListOptions()
@@ -155,6 +158,7 @@ func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 	return string(output), nil
 }
 
+// StackRemove remoce a stack
 func (d *Docker) StackRemove(ctx context.Context, stackName string) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		rmOpt := stack.NewRemoveOptions([]string{stackName})
@@ -176,6 +180,21 @@ func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([
 		}
 	}
 	return d.client.TaskList(ctx, options)
+}
+
+// StackServices list the services of a stack
+func (d *Docker) StackServices(ctx context.Context, stackName string) (output string, err error) {
+	cmd := func(cli *command.DockerCli) error {
+		servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), stackName)
+		if err := stack.RunServices(cli, servicesOpt); err != nil {
+			return err
+		}
+		return nil
+	}
+	if output, err = cliWrapper(cmd); err != nil {
+		return "", err
+	}
+	return string(output), nil
 }
 
 func cliWrapper(cmd func(cli *command.DockerCli) error) (string, error) {
