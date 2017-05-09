@@ -2,52 +2,61 @@ syntax = "proto3";
 
 package storage;
 
+import "google/api/annotations.proto";
+
 service Storage {
-  rpc Put (PutStorage) returns (StorageResponse);
-  rpc Get (GetStorage) returns (StorageResponse);
-  rpc Delete (DeleteStorage) returns (StorageResponse);
-  rpc List (ListStorage) returns (ListResponse);
+  rpc Get (GetRequest) returns (GetReply) {
+    option (google.api.http) = {
+      get: "/v1/kv/{key}"
+    };
+  }
+  rpc Put (PutRequest) returns (PutReply) {
+    option (google.api.http) = {
+      post: "/v1/kv/{key}/{val}",
+      body: "*"
+    };
+  }
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/kv"
+    };
+  }
+  rpc Delete (DeleteRequest) returns (DeleteReply) {
+    option (google.api.http) = {
+      delete: "/v1/kv/{key}"
+    };
+  }
 }
 
-// struct for get storage request function
-message GetStorage {
-  string key = 1;
-}
-
-// struct for delete storage request function
-message DeleteStorage {
-  string key = 1;
-}
-
-// struct for put storage request function
-message PutStorage {
-  string key = 1;
-  string val = 2;
-}
-
-// struct for list storage request function
-message ListStorage {
-
-}
-
-// struct for storage object key response
-message StorageResponse {
+message StorageEntry {
   string key = 1;
   string val = 2;
 }
 
-// struct for list storage response function
-message ListResponse {
-  repeated StorageInfo list = 1;
+message GetRequest {
+  string key = 1;
+}
+message GetReply {
+  StorageEntry entry = 1;
 }
 
-// struct part of ListResponse Struct
-message StorageInfo {
+message PutRequest {
   string key = 1;
   string val = 2;
 }
+message PutReply {
+  StorageEntry entry = 1;
+}
 
-// struct to store Storage Key in ETCD
-message StorageKey {
+message ListRequest {
+}
+message ListReply {
+  repeated StorageEntry entries = 1;
+}
+
+message DeleteRequest {
   string key = 1;
+}
+message DeleteReply {
+  StorageEntry entry = 1;
 }
