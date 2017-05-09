@@ -3,14 +3,12 @@ Websocket Bash
 
 Serves up a websocket connected to a bash session
 
-A local AMP cluster should be up, and the amp CLI should be in the PATH.
-
 Run in this directory:
 
     $ ./deploy.sh
 
-The app will be serving a websocket at [http://ws.websocket.local.atomiq.io/](http://ws.websocket.local.atomiq.io/)
-and a web interface at [http://web.websocket.local.atomiq.io/](http://web.websocket.local.atomiq.io/)
+The app will be serving a websocket at [http://ws.websocket.local.appcelerator.io/](http://ws.websocket.local.appcelerator.io/)
+and a web interface at [http://web.websocket.local.appcelerator.io/](http://web.websocket.local.appcelerator.io/)
 
 Test using
 
