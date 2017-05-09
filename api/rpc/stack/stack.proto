@@ -15,6 +15,7 @@ service Stack {
   rpc List (ListRequest) returns (ListReply);
   rpc Remove (RemoveRequest) returns (RemoveReply);
   rpc Services (ServicesRequest) returns (ServicesReply);
+
 }
 
 message DeployRequest {

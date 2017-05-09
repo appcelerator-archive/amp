@@ -32,7 +32,7 @@ func NewServicesCommand(c cli.Interface) *cobra.Command {
 			return services(c, args[0])
 		},
 	}
-	cmd.Flags().BoolVarP(&lsopts.quiet, "quiet", "q", false, "Only display the stack id")
+	cmd.Flags().BoolVarP(&sopts.quiet, "quiet", "q", false, "Only display the stack id")
 	return cmd
 }
 
@@ -43,7 +43,7 @@ func services(c cli.Interface, stackName string) error {
 	if err != nil {
 		return errors.New(grpc.ErrorDesc(err))
 	}
-	if !lsopts.quiet {
+	if !sopts.quiet {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
 		fmt.Fprintln(w, "ID\tNAME\tMODE\tREPLICAS\tIMAGE")
 		for _, line := range reply.Services {
