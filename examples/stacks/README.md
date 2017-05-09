@@ -4,7 +4,5 @@ The `examples/` directory contains example applications running from stackfiles 
 
 To run them:
   - start docker
-  - run `amp pf pull`
-  - run `amp pf start`
-  - run `amp pf monitor` not mandatory, but useful to follow the amp start up in another console
-  - follow the instructions in the README.md in the example directory
+  - start a local amp cluster
+  - follow the instructions in the README for each of the examples in their respective directories
