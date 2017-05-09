@@ -3,11 +3,8 @@
 # @(#) if no argument is provided, the configuration is expected to be in same directory
 
 INFRAKIT_HOME=/infrakit
-INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
-#INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.3.1
-INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
-TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
+INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-latest}
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
 AWS_FILES=(bootstrap.yml)
 SSL_KEY_LENGTH=2048
 CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
@@ -240,13 +237,6 @@ _set_source() {
       echo "trying to fetch remote files for $provider ($target)..." >&2
       mkdir -p "$_d/$provider"
       for i in "${AWS_FILES[@]}"; do
-        curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
-      done
-      echo "fetch done" >&2
-    elif [ "x$provider" = "xterraform" ]; then
-      echo "trying to fetch remote files for $provider ($target)..." >&2
-      mkdir -p "$_d/$provider"
-      for i in "${TERRAFORM_FILES[@]}"; do
         curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
       done
       echo "fetch done" >&2
@@ -650,11 +640,11 @@ _finish(){
 # where to deploy
 VALID_TARGETS="aws local"
 # Infrakit plugins used for deployment
-VALID_PROVIDERS="aws docker terraform"
+VALID_PROVIDERS="aws docker"
 # we can't run InfraKit in a container for these plugins
 NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
-MANAGED_PLUGINS="docker terraform"
+MANAGED_PLUGINS="docker aws"
 target=local
 default_target=1
 provider=docker
@@ -758,9 +748,9 @@ shift "$((OPTIND-1))"
 
 trap _finish EXIT
 
-# in case only the target has been set, and it's not local, use terraform as default provider
+# in case only the target has been set, and it's not local, use the native plugin as default provider
 if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
-    provider=terraform
+    provider=$target
 fi
 
 if [ -n "$status_request" ]; then
@@ -821,7 +811,7 @@ if [ $started -gt 0 ]; then
       echo "#####################        group logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
       echo "#####################     instance logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/instance-docker.log >&2
+      docker exec infrakit cat /infrakit/logs/instance-$provider.log >&2
       echo "#####################       flavor logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
       echo "#####################       configuration      ############################" >&2
