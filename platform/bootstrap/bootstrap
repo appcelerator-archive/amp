@@ -193,7 +193,7 @@ _system_check() {
   local mmcmin=262144
   typeset -i mmc
   # only check elasticsearch prerequisites on systems where it makes sense (Linux system)
-  mmc=$(sysctl -n vm.max_map_count)
+  mmc=$(sysctl -n vm.max_map_count 2>/dev/null)
   if [[ $? -eq 0 ]]; then
     if [[ $mmc -lt $mmcmin ]]; then
       echo "your max map count limit is too low for elasticsearch" >&2
@@ -726,11 +726,13 @@ started=$?
 _run_ikt_plugin_container "$provider"
 started=$((started + $?))
 if [ $started -gt 0 ]; then
+  # wait for infrakit and its plugins to be available, at least 3 consecutive times"
   echo -n "waiting for plugins to be available..." >&2
   rc=1
   loop=1
-  looplimit=10
-  while [ $rc -ne 0 ]; do
+  looplimit=20
+  ready=0
+  while [ $ready -lt 3 ]; do
     docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
     rc=$?
     docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
@@ -758,6 +760,7 @@ if [ $started -gt 0 ]; then
     fi
     sleep 1
     echo -n "." >&2
+    [[ $rc -eq 0 ]] && ((ready++))
   done
   echo >&2
 fi
