@@ -14,7 +14,24 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v1/version": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/versionGetReply"
+            }
+          }
+        },
+        "tags": [
+          "Version"
+        ]
+      }
+    }
+  },
   "definitions": {
     "versionGetReply": {
       "type": "object",

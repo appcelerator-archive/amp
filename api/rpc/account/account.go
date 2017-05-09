@@ -1,7 +1,6 @@
 package account
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/appcelerator/amp/api/auth"
@@ -119,7 +118,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 }
 
 // Verify implements account.Verify
-func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*VerificationReply, error) {
+func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Empty, error) {
 	user, err := s.Accounts.VerifyUser(ctx, in.Token)
 	if err != nil {
 		return nil, convertError(err)
@@ -128,7 +127,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 		return nil, convertError(err)
 	}
 	log.Println("Successfully verified user", user.Name)
-	return &VerificationReply{Reply: fmt.Sprintf("Account %s is ready", user.Name)}, nil
+	return &empty.Empty{}, nil
 }
 
 // Login implements account.Login
@@ -194,7 +193,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	// Get requesting user
 	requester := auth.GetUser(ctx)
 
-	// Check the existing password password
+	// Check the existing password
 	if err := s.Accounts.CheckUserPassword(ctx, requester, in.ExistingPassword); err != nil {
 		return nil, convertError(err)
 	}

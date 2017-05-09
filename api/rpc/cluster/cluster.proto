@@ -2,12 +2,36 @@ syntax = "proto3";
 
 package cluster;
 
+import "google/api/annotations.proto";
+
 service Cluster {
-  rpc Create (CreateRequest) returns (CreateReply);
-  rpc List (ListRequest) returns (ListReply);
-  rpc Status (StatusRequest) returns (StatusReply);
-  rpc Update (UpdateRequest) returns (UpdateReply);
-  rpc Remove (RemoveRequest) returns (RemoveReply);
+  rpc Create (CreateRequest) returns (CreateReply) {
+    option (google.api.http) = {
+      post: "/v1/clusters",
+      body: "*"
+    };
+  };
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/clusters"
+    };
+  };
+  rpc Status (StatusRequest) returns (StatusReply) {
+    option (google.api.http) = {
+      get: "/v1/clusters/{id}"
+    };
+  };
+  rpc Update (UpdateRequest) returns (UpdateReply) {
+    option (google.api.http) = {
+      put: "/v1/clusters/{id}",
+      body: "*"
+    };
+  };
+  rpc Remove (RemoveRequest) returns (RemoveReply) {
+    option (google.api.http) = {
+      delete: "/v1/clusters/{id}"
+    };
+  };
   rpc NodeList (NodeListRequest) returns (NodeListReply);
 }
 
@@ -17,13 +41,14 @@ message CreateRequest {
 }
 
 message CreateReply {
-    string id = 1;
+  string id = 1;
 }
 
+message ListRequest {
+}
 
-message ListRequest {}
-
-message ListReply {}
+message ListReply {
+}
 
 message StatusRequest {
   string id = 1;
@@ -34,11 +59,11 @@ message StatusReply {
 }
 
 message UpdateRequest {
-    string id = 1;
+  string id = 1;
 }
 
 message UpdateReply {
-    string id = 1;
+  string id = 1;
 }
 
 message RemoveRequest {
@@ -49,7 +74,8 @@ message RemoveReply {
   string id = 1;
 }
 
-message NodeListRequest {}
+message NodeListRequest {
+}
 
 message NodeListReply {
   repeated NodeReply nodes = 1;

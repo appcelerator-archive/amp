@@ -9,20 +9,22 @@ It is generated from these files:
 	github.com/appcelerator/amp/api/rpc/storage/storage.proto
 
 It has these top-level messages:
-	GetStorage
-	DeleteStorage
-	PutStorage
-	ListStorage
-	StorageResponse
-	ListResponse
-	StorageInfo
-	StorageKey
+	StorageEntry
+	GetRequest
+	GetReply
+	PutRequest
+	PutReply
+	ListRequest
+	ListReply
+	DeleteRequest
+	DeleteReply
 */
 package storage
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import _ "google.golang.org/genproto/googleapis/api/annotations"
 
 import (
 	context "golang.org/x/net/context"
@@ -40,167 +42,168 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// struct for get storage request function
-type GetStorage struct {
-	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
-}
-
-func (m *GetStorage) Reset()                    { *m = GetStorage{} }
-func (m *GetStorage) String() string            { return proto.CompactTextString(m) }
-func (*GetStorage) ProtoMessage()               {}
-func (*GetStorage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *GetStorage) GetKey() string {
-	if m != nil {
-		return m.Key
-	}
-	return ""
-}
-
-// struct for delete storage request function
-type DeleteStorage struct {
-	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
-}
-
-func (m *DeleteStorage) Reset()                    { *m = DeleteStorage{} }
-func (m *DeleteStorage) String() string            { return proto.CompactTextString(m) }
-func (*DeleteStorage) ProtoMessage()               {}
-func (*DeleteStorage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *DeleteStorage) GetKey() string {
-	if m != nil {
-		return m.Key
-	}
-	return ""
-}
-
-// struct for put storage request function
-type PutStorage struct {
+type StorageEntry struct {
 	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
 	Val string `protobuf:"bytes,2,opt,name=val" json:"val,omitempty"`
 }
 
-func (m *PutStorage) Reset()                    { *m = PutStorage{} }
-func (m *PutStorage) String() string            { return proto.CompactTextString(m) }
-func (*PutStorage) ProtoMessage()               {}
-func (*PutStorage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (m *StorageEntry) Reset()                    { *m = StorageEntry{} }
+func (m *StorageEntry) String() string            { return proto.CompactTextString(m) }
+func (*StorageEntry) ProtoMessage()               {}
+func (*StorageEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *PutStorage) GetKey() string {
+func (m *StorageEntry) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
-func (m *PutStorage) GetVal() string {
+func (m *StorageEntry) GetVal() string {
 	if m != nil {
 		return m.Val
 	}
 	return ""
 }
 
-// struct for list storage request function
-type ListStorage struct {
-}
-
-func (m *ListStorage) Reset()                    { *m = ListStorage{} }
-func (m *ListStorage) String() string            { return proto.CompactTextString(m) }
-func (*ListStorage) ProtoMessage()               {}
-func (*ListStorage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-// struct for storage object key response
-type StorageResponse struct {
+type GetRequest struct {
 	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
-	Val string `protobuf:"bytes,2,opt,name=val" json:"val,omitempty"`
 }
 
-func (m *StorageResponse) Reset()                    { *m = StorageResponse{} }
-func (m *StorageResponse) String() string            { return proto.CompactTextString(m) }
-func (*StorageResponse) ProtoMessage()               {}
-func (*StorageResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (m *GetRequest) Reset()                    { *m = GetRequest{} }
+func (m *GetRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()               {}
+func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *StorageResponse) GetKey() string {
+func (m *GetRequest) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
-func (m *StorageResponse) GetVal() string {
-	if m != nil {
-		return m.Val
-	}
-	return ""
+type GetReply struct {
+	Entry *StorageEntry `protobuf:"bytes,1,opt,name=entry" json:"entry,omitempty"`
 }
 
-// struct for list storage response function
-type ListResponse struct {
-	List []*StorageInfo `protobuf:"bytes,1,rep,name=list" json:"list,omitempty"`
-}
+func (m *GetReply) Reset()                    { *m = GetReply{} }
+func (m *GetReply) String() string            { return proto.CompactTextString(m) }
+func (*GetReply) ProtoMessage()               {}
+func (*GetReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *ListResponse) Reset()                    { *m = ListResponse{} }
-func (m *ListResponse) String() string            { return proto.CompactTextString(m) }
-func (*ListResponse) ProtoMessage()               {}
-func (*ListResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *ListResponse) GetList() []*StorageInfo {
+func (m *GetReply) GetEntry() *StorageEntry {
 	if m != nil {
-		return m.List
+		return m.Entry
 	}
 	return nil
 }
 
-// struct part of ListResponse Struct
-type StorageInfo struct {
+type PutRequest struct {
 	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
 	Val string `protobuf:"bytes,2,opt,name=val" json:"val,omitempty"`
 }
 
-func (m *StorageInfo) Reset()                    { *m = StorageInfo{} }
-func (m *StorageInfo) String() string            { return proto.CompactTextString(m) }
-func (*StorageInfo) ProtoMessage()               {}
-func (*StorageInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (m *PutRequest) Reset()                    { *m = PutRequest{} }
+func (m *PutRequest) String() string            { return proto.CompactTextString(m) }
+func (*PutRequest) ProtoMessage()               {}
+func (*PutRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
-func (m *StorageInfo) GetKey() string {
+func (m *PutRequest) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
-func (m *StorageInfo) GetVal() string {
+func (m *PutRequest) GetVal() string {
 	if m != nil {
 		return m.Val
 	}
 	return ""
 }
 
-// struct to store Storage Key in ETCD
-type StorageKey struct {
+type PutReply struct {
+	Entry *StorageEntry `protobuf:"bytes,1,opt,name=entry" json:"entry,omitempty"`
+}
+
+func (m *PutReply) Reset()                    { *m = PutReply{} }
+func (m *PutReply) String() string            { return proto.CompactTextString(m) }
+func (*PutReply) ProtoMessage()               {}
+func (*PutReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *PutReply) GetEntry() *StorageEntry {
+	if m != nil {
+		return m.Entry
+	}
+	return nil
+}
+
+type ListRequest struct {
+}
+
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+type ListReply struct {
+	Entries []*StorageEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
+}
+
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (m *ListReply) String() string            { return proto.CompactTextString(m) }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *ListReply) GetEntries() []*StorageEntry {
+	if m != nil {
+		return m.Entries
+	}
+	return nil
+}
+
+type DeleteRequest struct {
 	Key string `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
 }
 
-func (m *StorageKey) Reset()                    { *m = StorageKey{} }
-func (m *StorageKey) String() string            { return proto.CompactTextString(m) }
-func (*StorageKey) ProtoMessage()               {}
-func (*StorageKey) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
+func (m *DeleteRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteRequest) ProtoMessage()               {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
-func (m *StorageKey) GetKey() string {
+func (m *DeleteRequest) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
+type DeleteReply struct {
+	Entry *StorageEntry `protobuf:"bytes,1,opt,name=entry" json:"entry,omitempty"`
+}
+
+func (m *DeleteReply) Reset()                    { *m = DeleteReply{} }
+func (m *DeleteReply) String() string            { return proto.CompactTextString(m) }
+func (*DeleteReply) ProtoMessage()               {}
+func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *DeleteReply) GetEntry() *StorageEntry {
+	if m != nil {
+		return m.Entry
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterType((*GetStorage)(nil), "storage.GetStorage")
-	proto.RegisterType((*DeleteStorage)(nil), "storage.DeleteStorage")
-	proto.RegisterType((*PutStorage)(nil), "storage.PutStorage")
-	proto.RegisterType((*ListStorage)(nil), "storage.ListStorage")
-	proto.RegisterType((*StorageResponse)(nil), "storage.StorageResponse")
-	proto.RegisterType((*ListResponse)(nil), "storage.ListResponse")
-	proto.RegisterType((*StorageInfo)(nil), "storage.StorageInfo")
-	proto.RegisterType((*StorageKey)(nil), "storage.StorageKey")
+	proto.RegisterType((*StorageEntry)(nil), "storage.StorageEntry")
+	proto.RegisterType((*GetRequest)(nil), "storage.GetRequest")
+	proto.RegisterType((*GetReply)(nil), "storage.GetReply")
+	proto.RegisterType((*PutRequest)(nil), "storage.PutRequest")
+	proto.RegisterType((*PutReply)(nil), "storage.PutReply")
+	proto.RegisterType((*ListRequest)(nil), "storage.ListRequest")
+	proto.RegisterType((*ListReply)(nil), "storage.ListReply")
+	proto.RegisterType((*DeleteRequest)(nil), "storage.DeleteRequest")
+	proto.RegisterType((*DeleteReply)(nil), "storage.DeleteReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -214,10 +217,10 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Storage service
 
 type StorageClient interface {
-	Put(ctx context.Context, in *PutStorage, opts ...grpc.CallOption) (*StorageResponse, error)
-	Get(ctx context.Context, in *GetStorage, opts ...grpc.CallOption) (*StorageResponse, error)
-	Delete(ctx context.Context, in *DeleteStorage, opts ...grpc.CallOption) (*StorageResponse, error)
-	List(ctx context.Context, in *ListStorage, opts ...grpc.CallOption) (*ListResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error)
+	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutReply, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
 }
 
 type storageClient struct {
@@ -228,17 +231,8 @@ func NewStorageClient(cc *grpc.ClientConn) StorageClient {
 	return &storageClient{cc}
 }
 
-func (c *storageClient) Put(ctx context.Context, in *PutStorage, opts ...grpc.CallOption) (*StorageResponse, error) {
-	out := new(StorageResponse)
-	err := grpc.Invoke(ctx, "/storage.Storage/Put", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *storageClient) Get(ctx context.Context, in *GetStorage, opts ...grpc.CallOption) (*StorageResponse, error) {
-	out := new(StorageResponse)
+func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error) {
+	out := new(GetReply)
 	err := grpc.Invoke(ctx, "/storage.Storage/Get", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -246,18 +240,27 @@ func (c *storageClient) Get(ctx context.Context, in *GetStorage, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *storageClient) Delete(ctx context.Context, in *DeleteStorage, opts ...grpc.CallOption) (*StorageResponse, error) {
-	out := new(StorageResponse)
-	err := grpc.Invoke(ctx, "/storage.Storage/Delete", in, out, c.cc, opts...)
+func (c *storageClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutReply, error) {
+	out := new(PutReply)
+	err := grpc.Invoke(ctx, "/storage.Storage/Put", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *storageClient) List(ctx context.Context, in *ListStorage, opts ...grpc.CallOption) (*ListResponse, error) {
-	out := new(ListResponse)
+func (c *storageClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
 	err := grpc.Invoke(ctx, "/storage.Storage/List", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storageClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := grpc.Invoke(ctx, "/storage.Storage/Delete", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -267,36 +270,18 @@ func (c *storageClient) List(ctx context.Context, in *ListStorage, opts ...grpc.
 // Server API for Storage service
 
 type StorageServer interface {
-	Put(context.Context, *PutStorage) (*StorageResponse, error)
-	Get(context.Context, *GetStorage) (*StorageResponse, error)
-	Delete(context.Context, *DeleteStorage) (*StorageResponse, error)
-	List(context.Context, *ListStorage) (*ListResponse, error)
+	Get(context.Context, *GetRequest) (*GetReply, error)
+	Put(context.Context, *PutRequest) (*PutReply, error)
+	List(context.Context, *ListRequest) (*ListReply, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteReply, error)
 }
 
 func RegisterStorageServer(s *grpc.Server, srv StorageServer) {
 	s.RegisterService(&_Storage_serviceDesc, srv)
 }
 
-func _Storage_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutStorage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StorageServer).Put(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/storage.Storage/Put",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Put(ctx, req.(*PutStorage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStorage)
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -308,31 +293,31 @@ func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: "/storage.Storage/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Get(ctx, req.(*GetStorage))
+		return srv.(StorageServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Storage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteStorage)
+func _Storage_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StorageServer).Delete(ctx, in)
+		return srv.(StorageServer).Put(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/storage.Storage/Delete",
+		FullMethod: "/storage.Storage/Put",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Delete(ctx, req.(*DeleteStorage))
+		return srv.(StorageServer).Put(ctx, req.(*PutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Storage_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListStorage)
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -344,7 +329,25 @@ func _Storage_List_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/storage.Storage/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).List(ctx, req.(*ListStorage))
+		return srv.(StorageServer).List(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Storage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/storage.Storage/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -354,20 +357,20 @@ var _Storage_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*StorageServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Put",
-			Handler:    _Storage_Put_Handler,
-		},
-		{
 			MethodName: "Get",
 			Handler:    _Storage_Get_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _Storage_Delete_Handler,
+			MethodName: "Put",
+			Handler:    _Storage_Put_Handler,
 		},
 		{
 			MethodName: "List",
 			Handler:    _Storage_List_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Storage_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -379,24 +382,30 @@ func init() {
 }
 
 var fileDescriptor0 = []byte{
-	// 289 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xdf, 0x4a, 0xc3, 0x30,
-	0x14, 0xc6, 0xa9, 0x1d, 0x1b, 0x9e, 0x39, 0x94, 0xf8, 0x87, 0xb2, 0x8b, 0x31, 0x73, 0xd5, 0xab,
-	0x46, 0xb7, 0x09, 0xea, 0xb5, 0x30, 0x44, 0x2f, 0x46, 0x7d, 0x82, 0xac, 0x1c, 0x67, 0x31, 0x5b,
-	0x42, 0x92, 0x0e, 0x7c, 0x61, 0x9f, 0x43, 0xba, 0x36, 0xfd, 0x23, 0x6c, 0xec, 0xaa, 0x39, 0xa7,
-	0xe7, 0xf7, 0xf5, 0xf4, 0xfb, 0x02, 0x4f, 0xab, 0xd4, 0x7e, 0x65, 0xcb, 0x28, 0x91, 0x6b, 0xc6,
-	0x95, 0x4a, 0x50, 0xa0, 0xe6, 0x56, 0x6a, 0xc6, 0xd7, 0x8a, 0x71, 0x95, 0x32, 0xad, 0x12, 0x66,
-	0xac, 0xd4, 0x7c, 0x85, 0xee, 0x19, 0x29, 0x2d, 0xad, 0x24, 0xbd, 0xb2, 0xa4, 0x23, 0x80, 0x39,
-	0xda, 0x8f, 0xa2, 0x22, 0x17, 0xe0, 0x7f, 0xe3, 0x4f, 0xe0, 0x8d, 0xbd, 0xf0, 0x34, 0xce, 0x8f,
-	0xf4, 0x16, 0x06, 0x2f, 0x28, 0xd0, 0xe2, 0xfe, 0x91, 0x3b, 0x80, 0x45, 0xb6, 0x5f, 0x22, 0xef,
-	0x6c, 0xb9, 0x08, 0x4e, 0x8a, 0xce, 0x96, 0x0b, 0x3a, 0x80, 0xfe, 0x7b, 0x6a, 0x1c, 0x42, 0x1f,
-	0xe0, 0xbc, 0x3c, 0xc6, 0x68, 0x94, 0xdc, 0x98, 0xe3, 0x54, 0x1e, 0xe1, 0x2c, 0x57, 0xa9, 0x98,
-	0x10, 0x3a, 0x22, 0x35, 0x36, 0xf0, 0xc6, 0x7e, 0xd8, 0x9f, 0x5c, 0x45, 0xee, 0x8f, 0x4b, 0xed,
-	0xd7, 0xcd, 0xa7, 0x8c, 0x77, 0x13, 0xf4, 0x1e, 0xfa, 0x8d, 0xe6, 0x51, 0x1f, 0x1b, 0x01, 0x94,
-	0xc8, 0x5b, 0xf1, 0xbe, 0x4d, 0x4c, 0x7e, 0x3d, 0xe8, 0x39, 0x0b, 0x66, 0xe0, 0x2f, 0x32, 0x4b,
-	0x2e, 0xab, 0x0d, 0x6a, 0x7b, 0x86, 0xc1, 0xff, 0xb5, 0xaa, 0xf5, 0x67, 0xe0, 0xcf, 0xb1, 0x49,
-	0xd5, 0xb9, 0x1c, 0xa0, 0x9e, 0xa1, 0x5b, 0xe4, 0x43, 0x6e, 0xaa, 0x99, 0x56, 0x60, 0x07, 0xd8,
-	0x29, 0x74, 0x72, 0x03, 0x49, 0x6d, 0x55, 0x23, 0x95, 0xe1, 0x75, 0xab, 0xeb, 0xa0, 0x65, 0x77,
-	0x77, 0x81, 0xa6, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x68, 0x50, 0xc0, 0x4b, 0x7d, 0x02, 0x00,
-	0x00,
+	// 390 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0x4f, 0x6e, 0xda, 0x40,
+	0x14, 0xc6, 0x65, 0xdc, 0xf2, 0xe7, 0xf1, 0x47, 0xed, 0x94, 0xb6, 0xc8, 0x6a, 0x2b, 0x3a, 0xab,
+	0x88, 0x48, 0x4c, 0x42, 0x16, 0x28, 0x28, 0x8b, 0x48, 0x49, 0xc4, 0x86, 0x05, 0x22, 0x27, 0x18,
+	0xd0, 0x93, 0x63, 0x31, 0x78, 0x26, 0xf6, 0xd8, 0x92, 0x85, 0xd8, 0xe4, 0x0a, 0xb9, 0x46, 0x6e,
+	0x93, 0x2b, 0xe4, 0x20, 0x91, 0x6d, 0x0c, 0x26, 0x84, 0x05, 0x2b, 0x7b, 0xbe, 0xf9, 0xde, 0xef,
+	0xbd, 0xf7, 0xd9, 0x70, 0x69, 0x3b, 0xfa, 0x21, 0x98, 0x76, 0x67, 0x72, 0xc1, 0xb8, 0x52, 0x33,
+	0x14, 0xe8, 0x71, 0x2d, 0x3d, 0xc6, 0x17, 0x8a, 0x71, 0xe5, 0x30, 0x4f, 0xcd, 0x98, 0xaf, 0xa5,
+	0xc7, 0x6d, 0xcc, 0x9e, 0x5d, 0xe5, 0x49, 0x2d, 0x49, 0x69, 0x7d, 0xb4, 0xfe, 0xd8, 0x52, 0xda,
+	0x02, 0x13, 0x3b, 0x77, 0x5d, 0xa9, 0xb9, 0x76, 0xa4, 0xeb, 0xa7, 0x36, 0xda, 0x83, 0xda, 0x7d,
+	0x6a, 0xbc, 0x73, 0xb5, 0x17, 0x91, 0x6f, 0x60, 0xce, 0x31, 0x6a, 0x19, 0x6d, 0xe3, 0xa4, 0x32,
+	0x89, 0x5f, 0x63, 0x25, 0xe4, 0xa2, 0x55, 0x48, 0x95, 0x90, 0x0b, 0xfa, 0x0f, 0x60, 0x88, 0x7a,
+	0x82, 0x8f, 0x01, 0xfa, 0x7a, 0xbf, 0x82, 0xf6, 0xa1, 0x9c, 0xdc, 0x2b, 0x11, 0x91, 0x53, 0xf8,
+	0x8a, 0x31, 0x38, 0xb9, 0xaf, 0xf6, 0x7e, 0x76, 0xb3, 0x29, 0xf3, 0x5d, 0x27, 0xa9, 0x87, 0x9e,
+	0x01, 0x8c, 0x83, 0xc3, 0xe0, 0x4f, 0x46, 0xe9, 0x43, 0x39, 0xa9, 0x38, 0xba, 0x55, 0x1d, 0xaa,
+	0x23, 0xc7, 0xcf, 0x7a, 0xd1, 0x2b, 0xa8, 0xa4, 0xc7, 0x18, 0xc4, 0xa0, 0x14, 0x9b, 0x1c, 0xf4,
+	0x5b, 0x46, 0xdb, 0x3c, 0x8c, 0xca, 0x5c, 0xf4, 0x3f, 0xd4, 0x6f, 0x51, 0xa0, 0xc6, 0xc3, 0x99,
+	0x0c, 0xa0, 0x9a, 0x59, 0x8e, 0x9d, 0xb5, 0xf7, 0x52, 0x80, 0xd2, 0x5a, 0x27, 0x37, 0x60, 0x0e,
+	0x51, 0x93, 0x1f, 0x9b, 0x82, 0xed, 0x97, 0xb0, 0xbe, 0xef, 0x8a, 0x4a, 0x44, 0xb4, 0xf9, 0xf4,
+	0xfa, 0xf6, 0x5c, 0x68, 0x90, 0x1a, 0x0b, 0xcf, 0xd9, 0x3c, 0x64, 0xcb, 0x39, 0x46, 0x2b, 0x32,
+	0x02, 0x73, 0x1c, 0xe4, 0x21, 0xdb, 0xd4, 0x73, 0x90, 0x2c, 0x58, 0xfa, 0x37, 0x81, 0xfc, 0xa6,
+	0x24, 0x0f, 0x61, 0xcb, 0x90, 0x8b, 0xd5, 0xc0, 0xe8, 0x90, 0x6b, 0xf8, 0x12, 0x67, 0x47, 0x9a,
+	0x9b, 0xca, 0x5c, 0xb2, 0x16, 0xf9, 0xa0, 0xc6, 0xc0, 0x46, 0x02, 0x2c, 0x93, 0x62, 0x0a, 0x24,
+	0x23, 0x28, 0xa6, 0xe1, 0x90, 0x5f, 0x1b, 0xf7, 0x4e, 0xa0, 0x56, 0x73, 0x4f, 0xcf, 0x6d, 0xd7,
+	0xd9, 0xd9, 0x6e, 0x5a, 0x4c, 0xfe, 0xec, 0x8b, 0xf7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x4e, 0x60,
+	0x3c, 0x2c, 0x3d, 0x03, 0x00, 0x00,
 }

@@ -14,43 +14,164 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v1/kv": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageListReply"
+            }
+          }
+        },
+        "tags": [
+          "Storage"
+        ]
+      }
+    },
+    "/v1/kv/{key}": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageGetReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      },
+      "delete": {
+        "operationId": "Delete",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageDeleteReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      }
+    },
+    "/v1/kv/{key}/{val}": {
+      "post": {
+        "operationId": "Put",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storagePutReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "val",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/storagePutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Storage"
+        ]
+      }
+    }
+  },
   "definitions": {
-    "storageDeleteStorage": {
+    "storageDeleteReply": {
+      "type": "object",
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/storageStorageEntry"
+        }
+      }
+    },
+    "storageDeleteRequest": {
       "type": "object",
       "properties": {
         "key": {
           "type": "string"
         }
-      },
-      "title": "struct for delete storage request function"
+      }
     },
-    "storageGetStorage": {
+    "storageGetReply": {
+      "type": "object",
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/storageStorageEntry"
+        }
+      }
+    },
+    "storageGetRequest": {
       "type": "object",
       "properties": {
         "key": {
           "type": "string"
         }
-      },
-      "title": "struct for get storage request function"
+      }
     },
-    "storageListResponse": {
+    "storageListReply": {
       "type": "object",
       "properties": {
-        "list": {
+        "entries": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/storageStorageInfo"
+            "$ref": "#/definitions/storageStorageEntry"
           }
         }
-      },
-      "title": "struct for list storage response function"
+      }
     },
-    "storageListStorage": {
+    "storageListRequest": {
+      "type": "object"
+    },
+    "storagePutReply": {
       "type": "object",
-      "title": "struct for list storage request function"
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/storageStorageEntry"
+        }
+      }
     },
-    "storagePutStorage": {
+    "storagePutRequest": {
       "type": "object",
       "properties": {
         "key": {
@@ -59,10 +180,9 @@
         "val": {
           "type": "string"
         }
-      },
-      "title": "struct for put storage request function"
+      }
     },
-    "storageStorageInfo": {
+    "storageStorageEntry": {
       "type": "object",
       "properties": {
         "key": {
@@ -71,20 +191,7 @@
         "val": {
           "type": "string"
         }
-      },
-      "title": "struct part of ListResponse Struct"
-    },
-    "storageStorageResponse": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "val": {
-          "type": "string"
-        }
-      },
-      "title": "struct for storage object key response"
+      }
     }
   }
 }
