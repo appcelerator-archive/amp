@@ -52,15 +52,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.tpl",
                   "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
-                    {{ end }}
+                    "Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
@@ -127,15 +119,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "{{ var "/m1/ip" }}",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
-                    {{ end }}
+                    "Host" : "tcp://{{ var "/m1/ip" }}:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }

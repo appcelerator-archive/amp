@@ -1,11 +1,6 @@
 {{ var "/script/baseurl" "file:///infrakit" }}
 {{ var "/docker/remoteapi/port" "2375" }}
 {{ var "/docker/remoteapi/tlsport" "2376" }}
-{{ var "/docker/remoteapi/cafile" "/etc/docker/ca.pem" }}
-{{ var "/docker/remoteapi/certfile" "/etc/docker/client.pem" }}
-{{ var "/docker/remoteapi/keyfile" "/etc/docker/client-key.pem" }}
-{{ var "/docker/remoteapi/srvcertfile" "/etc/docker/server.pem" }}
-{{ var "/docker/remoteapi/srvkeyfile" "/etc/docker/server-key.pem" }}
 {{ var "/docker/aufs/size" "20" }}
 {{ var "/amp/amplifier/image" "appcelerator/amplifier" }}
 {{ var "/amp/amplifier/version" "latest" }}

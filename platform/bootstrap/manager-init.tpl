@@ -34,8 +34,6 @@ if [ "x$provider" != "xdocker" ]; then
   sleep 2
 fi
 
-{{ if var "/certificate/ca/service" }}{{ include "request-certificate.sh" }}{{ end }}
-
 # INSTANCE_LOGICAL_ID can be an IP or a hostname, we need an IP
 IP="{{ INSTANCE_LOGICAL_ID }}"
 if ! $(echo "$IP" | egrep -q "([0-9.]+){4}"); then
@@ -55,7 +53,7 @@ if [ "x$provider" != "xdocker" ]; then
   cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ if var "/certificate/ca/service" }}{{ var "/docker/remoteapi/tlsport" }} --tlsverify --tlscacert={{ var "/docker/remoteapi/cafile" }} --tlscert={{ var "/docker/remoteapi/srvcertfile" }} --tlskey={{ var "/docker/remoteapi/srvkeyfile" }}{{else }}{{ var "/docker/remoteapi/port" }}{{ end }} -H unix:///var/run/docker.sock
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ var "/docker/remoteapi/port" }} -H unix:///var/run/docker.sock
 EOF
 
   # Restart Docker to let port listening take effect.
