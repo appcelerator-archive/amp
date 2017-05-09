@@ -36,10 +36,10 @@
     }
     ,
     {
-        "Plugin" : "instance-terraform",
+        "Plugin" : "instance-aws",
         "Launch" : {
             "os" : {
-                "Cmd" : "infrakit-instance-terraform --dir={{env "PLUGIN_DIR"}} --log {{ env "INFRAKIT_LOG_LEVEL" }} > {{env "INFRAKIT_HOME"}}/logs/instance-terraform.log 2>&1"
+                "Cmd" : "infrakit-instance-aws --log {{ env "INFRAKIT_LOG_LEVEL" }} > {{env "INFRAKIT_HOME"}}/logs/instance-aws.log 2>&1"
             }
         }
     }
