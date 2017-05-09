@@ -325,8 +325,10 @@ _instance_plugin_compute_subtype(){
 _run_ikt_container() {
   local _should_wait_for_plugins=0
   local _infrakit_image
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
 
+  if [ "$manager_plugin" = "os" ]; then
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
+  fi
   # remove old customized configuration just in case
   docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "sed -i.bak 's/^{{ var \"\/script\/baseurl\".\*$//' $INFRAKIT_HOME/env.ikt" || exit 1
   local _extra_plugins=""
@@ -356,7 +358,7 @@ _run_ikt_container() {
       local _ip
       _ip=$(_get_ip)
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/bootstrap/ip\" \"$_ip\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
-      echo "bootstrap ip ($_ip) added in env.ikt" >&2 
+      echo "bootstrap ip ($_ip) added in env.ikt" >&2
     fi
     if [ "x$provider" = "xdocker" ]; then
         echo "making sure the network $BRIDGE_NETWORK is created" >&2
@@ -370,7 +372,7 @@ _run_ikt_container() {
     docker run -d --restart always --name infrakit \
          $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS -e PLUGIN_DIR=$INFRAKIT_HOME/${provider} -e INFRAKIT_LOG_LEVEL=$INFRAKIT_LOG_LEVEL $_infrakit_image \
          infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log $INFRAKIT_LOG_LEVEL \
-         manager group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >&2
+         manager-${manager_plugin} group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >&2
     _should_wait_for_plugins=1
   else
     echo "infraKit container is already started" >&2
@@ -598,6 +600,7 @@ MANAGED_PLUGINS="docker aws"
 target=local
 provider=docker
 default_provider=1
+manager_plugin=swarm
 envfile=""
 providerfile=""
 manager_count=1
@@ -700,7 +703,12 @@ trap _finish EXIT
 if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
     provider="$target"
 fi
+
 subtype=$(_instance_plugin_compute_subtype $provider)
+
+if [ "x$target" = "xlocal" ]; then
+    manager_plugin=os
+fi
 
 if [ -n "$status_request" ]; then
   _status "$status_request"
@@ -722,8 +730,7 @@ if [ $init_swarm -eq 1 ]; then
   _init_swarm || exit 1
 fi
 if [ -n "$swarm_join_ip" ]; then
-  _init_swarm "$swarm_join_ip" || exit 1
-  exit 0
+  _init_swarm $swarm_join_ip || exit 1
 fi
 [[ $target = "local" ]] && ( _system_check || exit 1 )
 _set_source "$1"
@@ -743,29 +750,38 @@ if [ $started -gt 0 ]; then
   looplimit=20
   ready=0
   while [ $ready -lt 3 ]; do
-    docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
-    rc=$?
     docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
-    rc=$((rc+$?))
+    rc=$?
     docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe >/dev/null 2>&1
     rc=$((rc+$?))
+
+    # Only performed on Leader node
+    if [ $init_swarm -eq 1 ]; then
+      docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
+      rc=$((rc+$?))
+    fi
     if [ $((++loop)) -gt $looplimit ]; then
       echo " aborting after $looplimit attempts" >&2
-      docker exec infrakit infrakit manager inspect >/dev/null
       docker exec infrakit infrakit plugin ls 2>/dev/null
       docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe
       # docker inspect infrakit >&2
       docker logs infrakit >&2
-      echo "#####################      manager logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/manager.log >&2
       echo "#####################        group logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
       echo "#####################     instance logs        ############################" >&2
       docker exec infrakit cat "/infrakit/logs/instance-$provider.log" >&2
       echo "#####################       flavor logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
-      echo "#####################       configuration      ############################" >&2
-      docker exec infrakit cat /infrakit/config.json >&2
+
+      # Only performed on Leader node
+      if [ $init_swarm -eq 1 ]; then
+        echo "#####################      leader operations   ############################" >&2
+        docker exec infrakit infrakit manager inspect >/dev/null
+        echo "#####################      manager logs        ############################" >&2
+        docker exec infrakit cat /infrakit/logs/manager.log >&2
+        echo "#####################       configuration      ############################" >&2
+        docker exec infrakit cat /infrakit/config.json >&2
+      fi
       exit 1
     fi
     sleep 1
@@ -774,19 +790,22 @@ if [ $started -gt 0 ]; then
   done
   echo >&2
 fi
-_prepare_config_container
-_deploy_config_container
-if [ $block -gt 0 ]; then
-  rc=1
-  SECONDS=0
-  echo "waiting for cluster to be ready..." >&2
-  while [ $rc -ne 0 ]; do
-    _status $clusterid 2>/dev/null
-    rc=$?
-    if [ $SECONDS -gt $block ]; then
-      echo "cluster is still not ready after $block sec" >&2
-      exit 1
-    fi
-  done
+_node=$(docker node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)\
+if [ "$_node" = "true" ]; then
+  _prepare_config_container
+  _deploy_config_container
+  if [ $block -gt 0 ]; then
+    rc=1
+    SECONDS=0
+    echo "waiting for cluster to be ready..." >&2
+    while [ $rc -ne 0 ]; do
+      _status $clusterid 2>/dev/null
+      rc=$?
+      if [ $SECONDS -gt $block ]; then
+        echo "cluster is still not ready after $block sec" >&2
+        exit 1
+      fi
+    done
+  fi
 fi
 echo "done" >&2
