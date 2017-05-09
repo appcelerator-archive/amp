@@ -1,0 +1,126 @@
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div>
+          <div class="pull-left"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Users</div>
+          <div class="pull-right">
+            Items per page:
+            <select  (change)="listService.setPageSize(+pageSize.value)" #pageSize>
+              <option value="0">All</option>
+              <option value="5">5</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div classes="col-lg-12">
+          <div class="pull-left">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-danger" ng-click="removeAction()">
+                <i class="fa fa-trash space-right" aria-hidden="true"></i>Remove</button>
+              <button type="button" class="btn btn-primary" routerLink="/amp/signup">
+                <i class="fa fa-user-plus" aria-hidden="true"></i> Add user</button>
+            </div>
+          </div>
+          <div class="pull-right">
+            <input
+              #filter
+              type="text"
+              id="filter"
+              placeholder="Filter..."
+              class="form-control input-sm"
+              (keyup)="listService.filter(filter.value)"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div classes="no-padding">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>
+                    <input type="checkbox" (change)="selectAllItems()" />
+                  </th>
+                  <th>
+                    <a>
+                      Name
+                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Email
+                      <span (click)="listService.order('email', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('email', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Role
+                      <span (click)="listService.order('role', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('role', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a ui-sref="users">
+                      Verified
+                    </a>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="ng-scope" *ngFor="let user of listService.getData()">
+                  <td><input type="checkbox"></td>
+                  <td class="ng-binding">{{ user.name }}</td>
+                  <td class="ng-binding">{{ user.email }}</td>
+                  <td class="ng-binding">
+                    {{ user.role }}
+                    <i class="fa fa-user-circle-o" ng-class="user.RoleId === 1 ? 'fa-user-circle-o' : 'fa-user'" aria-hidden="true" style="margin-left: 2px;"></i>
+                  </td>
+                  <td>
+                    <label class="switch" style="margin-left: 20px;">
+                      <input type="checkbox" checked="user.verified"><i></i>
+                    </label>
+                  </td>
+                  <td>
+                    <a ui-sref="user({id: user.Id})" href="#/users/1"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Edit</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="pull-left pagination-controls">
+              <nav aria-label="Page navigation">
+                <ul class="pagination">
+                  <li>
+                    <a aria-label="Previous" (click)="listService.setPageIndex(-1,0)">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  <li><a (click)="listService.setPageIndex(0,1)">1</a></li>
+                  <li><a (click)="listService.setPageIndex(0,2)">2</a></li>
+                  <li><a (click)="listService.setPageIndex(0,3)">3</a></li>
+                  <li><a (click)="listService.setPageIndex(0,4)">4</a></li>
+                  <li><a (click)="listService.setPageIndex(0,5)">5</a></li>
+                  <li>
+                    <a (click)="listService.setPageIndex(1, 0)" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
