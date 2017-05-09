@@ -4,24 +4,80 @@ Description: Docker Swarm cluster deployed with InfraKit
 Mappings:
   AMI:
     # Ubuntu 16.04 HVM
-    eu-central-1:
-      Ubuntu: ami-1b4d9e74
+    ap-southeast-2:
+      Ubuntu: ami-92e8e6f1
     eu-west-1:
       Ubuntu: ami-b5a893d3
-    us-east-1:
-      Ubuntu: ami-e4139df2
-    us-west-1:
-      Ubuntu: ami-30476250
+    us-east-2:
+      Ubuntu: ami-33ab8f56
     us-west-2:
       Ubuntu: ami-17ba2a77
   VpcCidrs:
     subnet1:
-      cidr: 192.168.2.0/24
+      cidr: 192.168.0.0/24
+    subnet2:
+      cidr: 192.168.16.0/24
+    subnet3:
+      cidr: 192.168.32.0/24
     vpc:
       cidr: 192.168.0.0/16
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Swarm Properties
+      Parameters:
+      - KeyName
+    - Label:
+        default: Swarm Manager Properties
+      Parameters:
+      - ManagerSize
+      - ManagerInstanceType
+    - Label:
+        default: Swarm Worker Properties
+      Parameters:
+      - WorkerSize
+      - WorkerInstanceType
+    - Label:
+        default: InfraKit Configuration
+      Parameters:
+      - InfraKitConfigurationBaseURL
+    - Label:
+        default: Docker Configuration
+      Parameters:
+      - AufsVolumeSize
+    ParameterLabels:
+      KeyName:
+        default: Which SSH key to use?
+      ManagerSize:
+        default: Number of Swarm managers?
+      ManagerInstanceType:
+        default: Swarm manager instance type?
+      WorkerSize:
+        default: Number of Swarm workers?
+      WorkerInstanceType:
+        default: Swarm worker instance type?
+      InfraKitConfigurationBaseURL:
+        default: InfraKit configuration base URL
+      AufsVolumeSize:
+        default: EBS Volume Size
+
 Parameters:
-  BootstrapInstanceType:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances.
+    MinLength: '1'
+  ManagerSize:
+    Type: Number
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+    Default: 3
+    Description: Number of Swarm manager nodes (1, 3, 5).
+  ManagerInstanceType:
     Type: String
     AllowedValues:
     - t2.nano
@@ -31,40 +87,47 @@ Parameters:
     - t2.large
     - m3.medium
     - m4.large
-    ConstraintDescription: Must be a valid EC2 HVM instance type
-    Default: m3.medium
-    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
-  InstanceType:
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.micro
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc).
+  WorkerSize:
+    Type: Number
+    Default: 2
+    MaxValue: 1000
+    MinValue: 0
+    Description: Number of Swarm worker nodes.
+  WorkerInstanceType:
     Type: String
     AllowedValues:
+    - t2.nano
     - t2.micro
     - t2.small
     - t2.medium
     - t2.large
     - m3.medium
     - m4.large
-    ConstraintDescription: Must be a valid EC2 HVM instance type
-    Default: t2.small
-    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
-  BootstrapKeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    ConstraintDescription: must be the name of an existing EC2 KeyPair
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the bootstrap instances
-    MinLength: '1'
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    ConstraintDescription: must be the name of an existing EC2 KeyPair
-    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
-    MinLength: '1'
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.medium
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc).
   InfraKitConfigurationBaseURL:
     Type: String
-    ConstraintDescription: must be an URL
-    Description: Base URL for InfraKit configuration. there should be a bootstrap script, a default.ikt and a config.aws.tpl file
-    Default: https://raw.githubusercontent.com/appcelerator/amp/master/bootstrap
+    ConstraintDescription: must be an URL.
+    Description: Base URL for InfraKit configuration. there should be a bootstrap script, a default.ikt and a config.aws.tpl file.
+    Default: https://raw.githubusercontent.com/appcelerator/amp/master/platform/bootstrap
     AllowedPattern: "https?://[0-9a-z\\.-]+\\.[a-z\\.]{2,6}[/\\w\\.-]*/?"
   AufsVolumeSize:
     Type: Number
-    Description: Size in GB of the EBS volume for the Docker AUFS storage on each node
+    Description: Size in GB of the EBS volume for the Docker AUFS storage on each node.
     Default: 26
 
 Resources:
@@ -106,7 +169,7 @@ Resources:
         Ref: InternetGateway
       VpcId:
         Ref: Vpc
-  RouteViaIgw:
+  RouteTable:
     Type: AWS::EC2::RouteTable
     DependsOn: Vpc
     Properties:
@@ -119,43 +182,17 @@ Resources:
             - RT
       VpcId:
         Ref: Vpc
-  PublicRouteViaIgw:
+  PublicRoute:
     Type: AWS::EC2::Route
     DependsOn:
     - AttachGateway
-    - RouteViaIgw
+    - RouteTable
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId:
         Ref: InternetGateway
       RouteTableId:
-        Ref: RouteViaIgw
-  SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DependsOn: InternetGateway
-    Properties:
-      GroupDescription: VPC-wide security group
-      SecurityGroupIngress:
-      - CidrIp:
-          Fn::FindInMap:
-          - VpcCidrs
-          - vpc
-          - cidr
-        IpProtocol: '-1'
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-        FromPort: '80'
-        ToPort: '80'
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-        FromPort: '443'
-        ToPort: '443'
-      VpcId:
-        Ref: Vpc
+        Ref: RouteTable
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     DependsOn: Vpc
@@ -180,16 +217,118 @@ Resources:
             - PublicSubnet1
       VpcId:
         Ref: Vpc
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - subnet2
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - PublicSubnet2
+      VpcId:
+        Ref: Vpc
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '2'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - subnet3
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - PublicSubnet3
+      VpcId:
+        Ref: Vpc
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
     - PublicSubnet1
-    - RouteViaIgw
+    - RouteTable
     Properties:
       RouteTableId:
-        Ref: RouteViaIgw
+        Ref: RouteTable
       SubnetId:
         Ref: PublicSubnet1
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicSubnet2
+    - RouteTable
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: PublicSubnet2
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicSubnet3
+    - RouteTable
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: PublicSubnet3
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: VPC-wide security group
+      SecurityGroupIngress:
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: '-1'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '2375'
+        ToPort: '2375'
+      VpcId:
+        Ref: Vpc
   ProvisionerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -212,6 +351,8 @@ Resources:
           - 'ec2:Describe*'
           - 'ec2:Get*'
           - 'ec2:CreateTags'
+          - 'autoscaling:Describe*'
+          - 'autoscaling:CreateOrUpdateTags'
           Resource: '*'
           Effect: Allow
         - Action:
@@ -222,6 +363,7 @@ Resources:
           - 'ec2:TerminateInstances'
           - 'ec2:AttachVolume'
           - 'ec2:DetachVolume'
+          - 'autoscaling:*'
           Resource: !Sub 'arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:subnet/*'
           Condition:
             StringEquals:
@@ -300,36 +442,64 @@ Resources:
       Path: /
       Roles:
       - Ref: ClusterRole
-  BootstrapInstance:
-    Type: AWS::EC2::Instance
-    DependsOn: PublicSubnet1
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT10M
+        WaitOnResourceSignals: true
     Properties:
-      SubnetId: !Ref PublicSubnet1
-      SecurityGroupIds:
-        - !GetAtt SecurityGroup.GroupId
-      AvailabilityZone: !GetAtt PublicSubnet1.AvailabilityZone
+      DesiredCapacity: !Ref ManagerSize
+      HealthCheckGracePeriod: 200
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref AsgLaunchConfig
+      MaxSize: 5
+      MinSize: 0
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - manager
+      - Key: Deployment
+        PropagateAtLaunch: true
+        Value: Infrakit
+      - Key: Role
+        PropagateAtLaunch: true
+        Value: manager
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  AsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:
+      - ProvisionerInstanceProfile
+      - SecurityGroup
+    Properties:
+      AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ProvisionerInstanceProfile
       ImageId:
         Fn::FindInMap:
         - AMI
         - Ref: AWS::Region
         - Ubuntu
-      InstanceType: !Ref BootstrapInstanceType
-      PrivateIpAddress: "192.168.2.254"
-      KeyName: !Ref BootstrapKeyName
-      Tags:
-      - Key: Name
-        Value:
-          Fn::Join:
-          - '-'
-          - - Ref: AWS::StackName
-            - controller
-      - Key: infrakit.group
-        Value: swarm-managers
-      - Key: infrakit.role
-        Value: managers
+      InstanceType: !Ref ManagerInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: SecurityGroup
       UserData:
-        "Fn::Base64":
+        Fn::Base64:
           !Sub
             - |
               #cloud-config
@@ -341,6 +511,7 @@ Resources:
                 - git
                 - curl
                 - unzip
+                - awscli
               write_files:
                 - path: /tmp/env.ikt
                   content: |
@@ -348,59 +519,39 @@ Resources:
                     {{ var "/aws/region" "${region}" }}
                     {{ var "/aws/stackname" "${stackname}" }}
                     {{ var "/aws/vpcid" "${Vpc}" }}
-                    {{ var "/aws/subnetid" "${PublicSubnet1}" }}
+                    {{ var "/aws/subnetid1" "${PublicSubnet1}" }}
+                    {{ var "/aws/subnetid2" "${PublicSubnet2}" }}
+                    {{ var "/aws/subnetid3" "${PublicSubnet3}" }}
                     {{ var "/aws/securitygroupid" "${SecurityGroup}" }}
                     {{ var "/aws/amiid" "${ami}" }}
-                    {{ var "/aws/instancetype" "${InstanceType}" }}
+                    {{ var "/aws/instancetype" "${ManagerInstanceType}"}}
                     {{ var "/aws/instanceprofile" "${ClusterInstanceProfile}" }}
                     {{ var "/aws/keyname" "${KeyName}" }}
                     {{ var "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
                     {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
               runcmd:
-                - wget -qO- https://get.docker.com/ | sh
-                - usermod -G docker ubuntu
-                - systemctl enable docker.service
-                - systemctl start docker.service
+                - wget -qO- https://get.docker.com/ | sh && \
+                - usermod -G docker ubuntu && \
+                - systemctl enable docker.service && \
+                - systemctl start docker.service && \
                 - curl ${InfraKitConfigurationBaseURL}/bootstrap -o /usr/local/bin/bootstrap.sh
-                - bash /usr/local/bin/bootstrap.sh -p aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}
+                - '_myip=$(curl 169.254.169.254/latest/meta-data/local-ipv4)'
+                - '_allips=$(aws ec2 describe-instances --region=${AWS::Region} --filters "Name=tag:Name,Values=${AWS::StackName}-manager" "Name=instance-state-name,Values=pending,running" "Name=vpc-id,Values=${Vpc}" --query="Reservations[*].Instances[*].PrivateIpAddress" --output=text | sort -n)'
+                - '_leaderip=$(echo $_allips | cut -f1 -d " ")'
+                - '_rc=0'
+                - '_nodestatus=()'
+                - 'COUNTER=0'
+                - 'for i in $_allips; do'
+                -   '_nodestatus[$COUNTER]=$(docker -H "$i:2375" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)'
+                -   '_rc=$((_rc+$?))'
+                -   'COUNTER=$((COUNTER+1))'
+                - 'done'
+                - 'if [ "$_myip" = "$_leaderip" ] && [ "$_rc" = "${ManagerSize}" ]; then'
+                -   'bash /usr/local/bin/bootstrap.sh -1 -p aws -t aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}'
+                - 'fi'
+                - 'for i in $_nodestatus; do'
+                -   'if [ "$i" = "true" ]; then'
+                -     'bash /usr/local/bin/bootstrap.sh -j $(echo $_allips | cut -f1 -d " ") -p aws -t aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}'
+                -   'fi'
+                - 'done'
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
-
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-    - Label:
-        default: Cluster Properties
-      Parameters:
-      - BootstrapInstanceType
-      - BootstrapKeyName
-      - InstanceType
-      - KeyName
-    - Label:
-        default: InfraKit Configuration
-      Parameters:
-      - InfraKitConfigurationBaseURL
-    - Label:
-        default: Docker Configuration
-      Parameters:
-      - AufsVolumeSize
-    ParameterLabels:
-      BootstrapInstanceType:
-        default: Bootstrap instance type
-      InstanceType:
-        default: Cluster instances type
-      BootstrapKeyName:
-        default: Bootstrap instance SSH key
-      KeyName:
-        default: Cluster instances SSH key
-      InfraKitConfigurationBaseURL:
-        default: InfraKit configuration base URL
-      AufsVolumeSize:
-        default: EBS Volume Size
-
-Outputs:
-  BootNodePublicIP:
-    Description: The public IP of the boot node
-    Value:
-      Fn::GetAtt:
-      - BootstrapInstance
-      - PublicIp
