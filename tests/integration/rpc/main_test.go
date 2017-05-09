@@ -79,12 +79,12 @@ func createUser(t *testing.T, user *account.SignUpRequest) context.Context {
 	assert.NoError(t, err)
 
 	// Extract token from header
-	tokens := header[auth.AuthorizationHeader]
+	tokens := header[auth.TokenKey]
 	assert.NotEmpty(t, tokens)
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, token))
+	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
 }
 
 func createOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
