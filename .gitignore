@@ -6,6 +6,10 @@ bin/**/amd64/amp
 coverage.out
 coverage-all.out
 
+# tests
+*.log
+test_*/
+
 # terraform
 instance*.tf.json
 *.tfstate

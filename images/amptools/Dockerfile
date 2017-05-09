@@ -1,6 +1,8 @@
 FROM appcelerator/gotools:1.8.0
 #RUN apk --no-cache add sudo iproute2
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  man \
+  pcregrep \
   iproute2 \
   sudo \
   && rm -rf /var/lib/apt/lists/*

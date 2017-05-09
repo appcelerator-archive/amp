@@ -1,0 +1,292 @@
+#!/bin/bash
+
+TESTINCLUDE="${TESTINCLUDE:-$PWD}"
+source $TESTINCLUDE/testing.sh
+
+pexit() {
+  >&2 echo "ERROR:" $@
+  exit 1
+}
+
+pfail() {
+  echo "ERROR:" $@
+}
+
+# temp dir for accumulating results of current test run until finished
+TMPDIR=$(mktemp -qd /tmp/$(basename $0).XXXXXX)
+if (( $? != 0 )); then
+  pexit "unable to create temp directory"
+fi
+
+cleanup() {
+  rm -rf "$TMPDIR"
+}
+
+trap cleanup EXIT
+
+# The path to the directory under test (ie, "root test suite")
+# default: "./tests"
+TEST_DIR="$(trimb# ${1:-tests} '/')"
+if [[ ! -d "$TEST_DIR" ]]; then
+  pexit "unable to find test directory: $1"
+fi
+
+# Files for recording passing and failing tests
+PLOG="$TMPDIR/passing.log"
+FLOG="$TMPDIR/failing.log"
+
+pgrep="pcregrep -o -e "
+
+TBEG="\033["
+TEND="\033[0m"
+TRED="${TBEG}0;31m"
+TGRAY="${TBEG}0;37m"
+
+print_red() {
+  #echo -ne "${TRED}"$@"${TEND}"
+  printf "${TRED}%s${TEND}" $@
+}
+
+print_gray() {
+  #echo -ne "${TGRAY}"$@"${TEND}"
+  printf "${TGRAY}$@${TEND}"
+}
+
+# 3 levels of increasing verbosity
+# 0=default - only prints results at the end of the test run
+# 1=errors - prints results plus output of failing tests
+# 2=verbose - prints results plus output of all tests
+VERBOSE=${VERBOSE:-1}
+
+# Takes a severity level and a string(s) and returns the string(s)
+# if the severity level passes the VERBOSE filter
+# 1=std
+# 2=err
+pfilter() {
+  (( 3 - $1 >= $VERBOSE )) && echo ${@:2}
+}
+
+_result() {
+  if (( $VERBOSE >= $1 )); then
+     local suite=$(cat $TMPDIR/suite)
+     local file=$(cat $TMPDIR/file)
+
+     printf "[%s] %s %s\n%s\n" $2 "$3" "$4"
+     printf "$TGRAY"
+     cat "$TMPDIR/run.log"
+     printf "$TEND\n"
+  fi
+  # empty run.log for next test
+  cat /dev/null > $TMPDIR/run.log
+}
+
+passed() {
+  _result 2 "PASS" "$1" "$2"
+  # accumulate results
+  echo $@ >> "$PLOG"
+}
+
+failed() {
+  _result 1 $(print_red "FAIL") "$1" "$2"
+  # accumulate results
+  echo $@ >> "$FLOG"
+}
+
+put_suite() {
+  printf "$1" > $TMPDIR/suite
+}
+
+put_file() {
+  printf $1 > $TMPDIR/file
+}
+
+put_test() {
+  cat $1 > $TMPDIR/unit
+}
+
+print_suite() {
+  cat $TMPDIR/suite
+}
+
+print_setup() {
+#  echo "[$1] "
+  true
+}
+
+print_test() {
+#  echo "[$1] "
+  true
+}
+
+print_teardown() {
+#  echo "[$1] ";
+  true
+}
+
+printresults() {
+  elapsed=$1
+  count=$2
+  pass=$3
+  fail=$4
+  echo ===========================================================
+  echo "DONE: $((count)) test(s)"
+  echo "TIME: $elapsed"
+  echo "PASS: $pass"
+  if (( $fail > 0 )); then
+    print_red "FAIL"
+  else
+    printf "FAIL"
+  fi
+  echo ": $fail"
+  if (( $fail > 0 )); then
+    echo
+    echo "FAILED TESTS:"
+    cat "$FLOG"
+  fi
+
+  if (( $VERBOSE > 1 )); then
+    echo
+    echo "PASSING TESTS:"
+    cat "$PLOG"
+  fi
+  echo ===========================================================
+}
+
+
+checkexit() {
+  local ec=$?
+  [[ $ec -ne 0 ]] && pexit "${1:-} (exit code: $ec)"
+}
+
+check() {
+  local ec=$?
+  [[ $ec -ne 0 ]] && pfail "${1:-} (exit code: $ec)"
+  return $ec
+}
+
+test_timestamp() {
+  echo "$(date +%Y-%m-%d_%H.%M.%S)"
+}
+
+start() {
+  run_suite "$1"
+}
+
+run_suite() {
+  if [[ ! -d "$1" ]]; then
+    # this is a serious error and shouldn't be able to happen, so if it does, abort
+    pexit "no such directory: $1"
+  fi
+
+  put_suite "$1"
+
+  run_setup "$1"
+  check "test suite setup failed" || return $?
+
+  run_tests "$1"
+
+  run_child_suites "$1" || return 1
+
+  run_teardown "$1"
+  check "test suite setup failed"
+}
+
+run_child_suites() {
+  local -a dirs=($(dir_children "$1"))
+  checkexit "unable to read sub-directories"
+  for d in ${dirs[@]}; do
+    run_suite "$d"
+    checkexit "test suite at $d"
+  done
+  # if any sub suites ran, then this shows that we're back
+  # in the parent suite of the children
+  if (( ${#dirs[@]} > 0)); then
+    put_suite "$1"
+  fi
+}
+
+run_setup() {
+  local files=($(ls "$1"/*setup.sh 2>/dev/null))
+  for f in ${files[@]}; do
+    run_file "$f" "[setup]"
+    local ec=$?
+    (( $ec != 0 )) || failed "$f" "[suite setup]"
+    return $ec
+  done
+  return 0
+}
+
+run_tests() {
+  local files=($(ls "$1"/*test.sh 2>/dev/null))
+  for f in ${files[@]}; do
+    run_file "$f" "[test setup]"
+    #(( $? == 0 )) && passed "$f" "[setup]" || failed "$f" "[test setup]"
+    (( $? != 0 )) && failed "$f" "[test setup]"
+  done
+}
+
+run_teardown() {
+  local files=($(ls "$1"/*teardown.sh 2>/dev/null))
+  for f in ${files[@]}; do
+    run_file "$f" "[teardown]"
+    (( $ec != 0 )) || failed "$f" "[suite teardown]"
+    return $ec
+  done
+}
+
+# loads, parses, and runs in a subshell
+run_file() {
+  (load_file "$1" "$2")
+}
+
+load_file() {
+  local f="$1"
+
+  # this is a serious error and shouldn't be able to happen, so if it does, abort
+  if [[ ! -f "$f" ]]; then
+    pexit "no such file: $f"
+  fi
+
+  put_file "$f"
+  local tests=$(parse_file "$f")
+  checkexit "error parsing $f"
+
+  source $f >> "$TMPDIR/run.log" 2>&1
+  checkexit "$f exited with an error ($?)"
+
+  # so far so good
+  passed "$1" "$2"
+
+  run_file_tests $f $tests
+}
+
+parse_file() {
+  echo $($pgrep "^[[:blank:]]*(test_[^(]+)" $1)
+}
+
+run_file_tests() {
+  local f=$1
+  local tests=${@:2}
+  for t in ${tests[@]}; do
+    run_test "$f" "$t"
+  done
+}
+
+run_test() {
+  put_test $1
+  "$2" > "$TMPDIR"/run.log 2>&1
+  (( $? == 0 )) && passed "$1" "$2()" || failed "$1" "$2()"
+}
+
+run() {
+  start "$1"
+
+  local passed=$(cat "$PLOG" 2>/dev/null | wc -l) || 0
+  local failed=$(cat "$FLOG" 2>/dev/null | wc -l) || 0
+  local count=$(( passed + failed ))
+  printresults $(elapsed_hms) $count $passed $failed
+}
+
+run "$TEST_DIR"
+echo
+
