@@ -1,8 +1,11 @@
 #!/bin/bash
 
-set -e
-
 amp="amp -s localhost"
+set -e
+function cleanup {
+  $amp user rm user
+}
+trap cleanup EXIT
 
 rm -f ~/.config/amp/token
 
@@ -23,4 +26,5 @@ sleep 15
 # TODO: use jq
 $ curl -k --header "Authorization: amp $TOKEN" https://gw.local.atomiq.io/v1/stacks | grep "{\"stacks\":"
 #  {"stacks":[{"stack":{"id":"f48137d2c207f352","name":"pinger","owner":{"name":"qube"}},"service":"1"}]}
+
 
