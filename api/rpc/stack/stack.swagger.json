@@ -55,6 +55,30 @@
         ]
       }
     },
+    "/v1/stacks/{stack_name}/services": {
+      "get": {
+        "operationId": "Services",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/stackServicesReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stack_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Stack"
+        ]
+      }
+    },
     "/v1/stacks/{stack}": {
       "delete": {
         "operationId": "Remove",

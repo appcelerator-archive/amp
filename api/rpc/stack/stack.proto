@@ -22,6 +22,11 @@ service Stack {
       delete: "/v1/stacks/{stack}"
     };
   }
+  rpc Services (ServicesRequest) returns (ServicesReply) {
+    option (google.api.http) = {
+      get: "/v1/stacks/{stack_name}/services"
+    };
+  }
 }
 
 message DeployRequest {
