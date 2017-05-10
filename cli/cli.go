@@ -41,6 +41,9 @@ type cli struct {
 }
 
 const (
+	//DefaultAddress is the default server address
+	DefaultAddress = "cloud.appcelerator.io"
+
 	//DefaultPort for server address
 	DefaultPort = ":50101"
 )
@@ -54,6 +57,7 @@ func NewCLI(in io.ReadCloser, out, err io.Writer, config *Configuration) Interfa
 		err:           err,
 	}
 	c.console = NewConsole(c.Out(), config.Verbose)
+	c.SetServer(config.Server)
 	return c
 }
 
@@ -110,7 +114,7 @@ func (c *cli) OnInitialize(initializers ...func()) {
 func (c *cli) Connect() (*grpc.ClientConn, error) {
 	if c.clientConn == nil {
 		var err error
-		c.clientConn, err = NewClientConn(c.Server(), GetToken())
+		c.clientConn, err = NewClientConn(c.Server(), GetToken(c.Server()))
 		if err != nil {
 			// extra newline helpful for grpc errors
 			return nil, fmt.Errorf("\nunable to establish grpc connection: %s", err)

@@ -24,7 +24,7 @@ func NewForgotLoginCommand(c cli.Interface) *cobra.Command {
 }
 
 func forgotLogin(c cli.Interface, args []string) error {
-	if token := cli.GetToken(); token != "" {
+	if token := cli.GetToken(c.Server()); token != "" {
 		return errors.New("you are already logged into an account. Use 'amp whoami' to view your username")
 	}
 	conn := c.ClientConn()
