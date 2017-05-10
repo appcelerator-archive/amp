@@ -311,6 +311,15 @@ _get_ip() {
   echo $_ip
 }
 
+# the aws instance plugin has subtypes
+_instance_plugin_compute_subtype(){
+  case "$1" in
+  aws)
+    echo "ec2-instance"
+    ;;
+  esac
+}
+
 # run the infrakit containers
 # return 1 if a new container has been started
 _run_ikt_container() {
@@ -558,7 +567,7 @@ _list(){
     return 1
   fi
   for _group in $_groups; do
-    docker exec infrakit infrakit instance --name="instance-$provider" describe --tags atomiq.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
+    docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe --tags atomiq.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
     if [ $? -ne 0 ]; then
       echo "failed to describe group $_group" >&2
       return 1
@@ -691,6 +700,7 @@ trap _finish EXIT
 if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
     provider="$target"
 fi
+subtype=$(_instance_plugin_compute_subtype $provider)
 
 if [ -n "$status_request" ]; then
   _status "$status_request"
@@ -737,13 +747,13 @@ if [ $started -gt 0 ]; then
     rc=$?
     docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
     rc=$((rc+$?))
-    docker exec infrakit infrakit instance --name="instance-$provider" describe >/dev/null 2>&1
+    docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe >/dev/null 2>&1
     rc=$((rc+$?))
     if [ $((++loop)) -gt $looplimit ]; then
       echo " aborting after $looplimit attempts" >&2
       docker exec infrakit infrakit manager inspect >/dev/null
       docker exec infrakit infrakit plugin ls 2>/dev/null
-      docker exec infrakit infrakit instance --name="instance-$provider" describe
+      docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe
       # docker inspect infrakit >&2
       docker logs infrakit >&2
       echo "#####################      manager logs        ############################" >&2
