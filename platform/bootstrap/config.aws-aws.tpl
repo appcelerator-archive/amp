@@ -15,7 +15,7 @@
           ]
         },
         "Instance": {
-          "Plugin": "instance-aws",
+          "Plugin": "instance-aws/ec2-instance",
           "Properties": {
             "RunInstancesInput": {
               "ImageId": "{{ var "/aws/amiid" }}",
@@ -82,7 +82,7 @@
           "Size": {{ $workerSize }}
         },
         "Instance": {
-          "Plugin": "instance-aws",
+          "Plugin": "instance-aws/ec2-instance",
           "Properties": {
             "RunInstancesInput": {
               "ImageId": "{{ var "/aws/amiid" }}",
