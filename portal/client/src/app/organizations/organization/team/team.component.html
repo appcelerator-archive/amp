@@ -58,6 +58,7 @@
                 {{user.getLabeledName()}}
                 <div *ngIf="user.saved && user.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
                 <div *ngIf="user.saved && user.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
+                <div *ngIf="user.saved && user.saveError!==''" style="color:red">{{user.saveError}}</div>
               </a>
             </div>
           </div>
@@ -94,6 +95,7 @@
                 {{addedUser.getLabeledName()}}
                 <div *ngIf="addedUser.saved && addedUser.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
                 <div *ngIf="addedUser.saved && addedUser.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
+                <div *ngIf="addedUser.saved && addedUser.saveError!==''" style="color:red">{{addedUser.saveError}}</div>
               </a>
             </div>
           </div>

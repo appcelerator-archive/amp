@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { OrganizationsService } from '../../../services/organizations.service'
+import { OrganizationsService } from '../../../organizations/services/organizations.service'
 import { ListService } from '../../../services/list.service';
 import { UsersService } from '../../../services/users.service';
 import { User } from '../../../models/user.model';
@@ -25,8 +25,8 @@ export class TeamComponent implements OnInit, OnDestroy {
   public listUserService : ListService = new ListService()
   public listUserAddedService : ListService = new ListService()
   public listResourceService : ListService = new ListService()
-  organization : Organization
-  team : Team
+  organization : Organization = new Organization("", "")
+  team : Team = new Team("")
   addedUsers : Member[] = []
   users : Member[] = []
   initialUserList : Member[] = []
@@ -55,6 +55,7 @@ export class TeamComponent implements OnInit, OnDestroy {
       for (let org of this.organizationsService.organizations) {
         if (org.name == orgName) {
           this.organization = org
+          this.organizationsService.setCurrentOrganization(org)//in case on the page is called directly by url
         }
       }
       if (this.organization) {
@@ -64,7 +65,7 @@ export class TeamComponent implements OnInit, OnDestroy {
           }
         }
         if (this.team) {
-          this.initialUserList = this.usersService.getAllNoMembers(this.team.members)
+          this.initialUserList = this.organizationsService.getAllNoMembers(this.team.members)
           this.addedUsers = this.team.members.slice()
           this.resources = this.organization.resources.slice()
           //
@@ -211,7 +212,6 @@ export class TeamComponent implements OnInit, OnDestroy {
     this.nbSaveInProgress=0
     this.menuService.waitingCursor(true)
     for (let user of this.users) {
-      console.log(user)
       user.saved=false
       user.saveError=""
       if (user.status == -1) {
@@ -226,18 +226,23 @@ export class TeamComponent implements OnInit, OnDestroy {
             console.log("done")
           },
           (error) => {
+            console.log(error)
+            try {
+              let data = JSON.parse(error._body)
+                user.saveError=data.error
+            } catch (errorj) {
+              console.log(errorj)
+            }
             this.addUser(user)
             user.saved=true
-            user.saveError="save error"
+            user.saveError=error
             this.decrSaveInProgress()
-            console.log(error)
           }
         )
       }
     }
     console.log("apply addedUsers")
     for (let user of this.addedUsers) {
-      console.log(user)
       user.saved=false
       user.saveError=""
       if (user.status == 1) {
@@ -253,9 +258,14 @@ export class TeamComponent implements OnInit, OnDestroy {
           },
           (error) => {
             console.log(error)
+            try {
+              let data = JSON.parse(error._body)
+                user.saveError=data.error
+            } catch (errorj) {
+              console.log(errorj)
+            }
             this.removeUser(user)
             user.saved=true
-            user.saveError="save error"
             this.decrSaveInProgress()
           }
         )

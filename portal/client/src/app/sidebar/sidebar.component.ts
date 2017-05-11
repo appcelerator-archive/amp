@@ -1,6 +1,6 @@
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { MenuService } from '../services/menu.service'
-import { OrganizationsService } from '../services/organizations.service'
+import { OrganizationsService } from '../organizations/services/organizations.service'
 import { SwarmsService } from '../services/swarms.service'
 
 @Component({

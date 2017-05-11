@@ -18,7 +18,7 @@
                 <i class="glyphicon glyphicon-tasks"></i>{{ deployTitle }}</button>
               <button type="button" class="btn btn-primary">
                 <i class="glyphicon glyphicon-list-alt"></i> Logs</button>
-              <button type="button" class="btn btn-primary">
+              <button type="button" class="btn btn-primary" [disabled]="dockerStacksService.currentStack.name===''" (click)="metrics(dockerStacksService.currentStack.name)">
                 <i class="glyphicon glyphicon-stats"></i> Metrics</button>
             </div>
           </div>
@@ -68,27 +68,19 @@
                       <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
-                  <th>
-                    <a>
-                      Services
-                      <span (click)="listService.orderNum('services', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.orderNum('services', -1)" class="glyphicon glyphicon-chevron-up"></span>
-                    </a>
-                  </th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                <tr (click)="selectStack(stack.id)" *ngFor="let stack of listService.getData()">
+                <tr (click)="selectStack(stack.name)" *ngFor="let stack of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerStacksService.currentStack.id===stack.id"></td>
-                  <td>{{ stack.id }}</td>
+                  <td>{{ stack.shortId }}</td>
                   <td>{{ stack.name }}</td>
                   <td> {{ stack.ownerName }}</td>
                   <td> {{ stack.ownerType }}</td>
-                  <td> {{ stack.services }}</td>
                   <td>
-                    <a (click)="serviceList(stack.id)">
-                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Services</a>
+                    <a (click)="serviceList(stack.name)">
+                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Services ({{stack.services}})</a>
                   </td>
                 </tr>
               </tbody>

@@ -47,13 +47,15 @@ func (s *Server) trapSignal() {
 }
 
 func (s *Server) start() {
-	log.Println("Waiting for amplifier ready...")
-	err := s.connectAmplifier()
-	for err != nil {
-		time.Sleep(5 * time.Second)
-		err = s.connectAmplifier()
-	}
-	log.Printf("connected to amplifier: %s\n", s.conf.amplifierAddr)
+	/*
+		log.Println("Waiting for amplifier ready...")
+		err := s.connectAmplifier()
+		for err != nil {
+			time.Sleep(5 * time.Second)
+			err = s.connectAmplifier()
+		}
+		log.Printf("connected to amplifier: %s\n", s.conf.amplifierAddr)
+	*/
 	r := mux.NewRouter()
 	n := negroni.Classic()
 	n.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -63,7 +65,7 @@ func (s *Server) start() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	s.api.handleAPIFunctions(r)
+	//s.api.handleAPIFunctions(r)
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(abspath)))
 	log.Printf("AMP-UI server starting on %s\n", s.conf.port)
 	if err := http.ListenAndServe(":"+s.conf.port, n); err != nil {

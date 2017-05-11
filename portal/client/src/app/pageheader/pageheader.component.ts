@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MenuService } from '../services/menu.service';
 import { UsersService } from '../services/users.service';
-import { OrganizationsService } from '../services/organizations.service';
+import { OrganizationsService } from '../organizations/services/organizations.service';
 import { User } from '../models/user.model';
 import { Organization } from '../models/organization.model';
 

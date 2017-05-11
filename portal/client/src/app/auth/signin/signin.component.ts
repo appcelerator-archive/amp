@@ -19,10 +19,8 @@ export class SigninComponent implements OnInit, OnDestroy {
   ngOnInit() {
     let currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (currentUser) {
-      this.usersService.loadUsers()
-      this.usersService.setCurrentUser(currentUser)
+      this.usersService.setCurrentUser(currentUser.username, currentUser.token, true)
     }
-    this.menuService.navigate(['/amp', 'dashboard'])
   }
 
   ngOnDestroy() {
@@ -31,8 +29,7 @@ export class SigninComponent implements OnInit, OnDestroy {
   }
 
   signin(form : NgForm) {
-    let user = new User(form.value.username, '', '')
-    this.usersService.login(user, form.value.password)
+    this.usersService.login(form.value.username, form.value.password)
   }
 
 }

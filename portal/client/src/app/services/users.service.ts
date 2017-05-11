@@ -1,6 +1,6 @@
 import { Injectable, Output, EventEmitter } from '@angular/core';
 import { HttpService } from '../services/http.service';
-import { OrganizationsService } from '../services/organizations.service';
+import { OrganizationsService } from '../organizations/services/organizations.service';
 import { User } from '../models/user.model';
 import { Member } from '../models/member.model';
 import { Organization } from '../models/organization.model';
@@ -52,15 +52,13 @@ export class UsersService {
     this.menuService.navigate(["/auth", "signin"])
   }
 
-  login(user : User, pwd : string) {
-    this.currentUser = user
-    this.httpService.login(user, pwd).subscribe(
+  login(username : string, pwd : string) {
+    this.httpService.login(username, pwd).subscribe(
       data => {
         let ret = data.json()
-        this.httpService.setToken(ret.data)
-        localStorage.setItem('currentUser', JSON.stringify({ username: user.name, token: ret.data, pwd: pwd }));
-        localStorage.setItem('lastUser', JSON.stringify({ username: user.name}));
-        this.menuService.navigate(["/amp", "dashboard"])
+        localStorage.setItem('currentUser', JSON.stringify({ username: username, token: ret.auth }));
+        localStorage.setItem('lastUser', JSON.stringify({ username: username}));
+        this.setCurrentUser(username, ret.auth, true)
       },
       error => {
         localStorage.removeItem('currentUser');
@@ -69,19 +67,30 @@ export class UsersService {
     );
   }
 
-  setCurrentUser(currentUser : {username : string, endpointname: string, token : string}) {
-    this.currentUser = new User(currentUser.username, "", "")
-    this.httpService.setToken(currentUser.token)
+  setCurrentUser(username : string, token : string, nav : boolean) {
+    this.httpService.setToken(token)
+    this.currentUser = new User(username, "", "")
     this.httpService.userOrganization(this.currentUser).subscribe(
       data => {
         this.organizationsService.organizations = data
+        this.httpService.users().subscribe(
+          data => {
+            this.users = data
+            if (nav) {
+              this.menuService.navigate(['/amp', 'dashboard'])
+            }
+          },
+          error => {
+            console.log(error)
+            this.onUsersError.next(error)
+          }
+        );
       },
       error => {
         console.log(error)
         this.onUsersError.next(error)
       }
     )
-    this.menuService.navigate(["/amp"]);
   }
 
   signup(user : User, pwd : string) {
@@ -106,7 +115,7 @@ export class UsersService {
   }
 
   //to be refactor with associative array
-  getAllNoMembers( members : Member[]) {
+  getAllNoMembers(members : Member[]) {
     let list : Member [] = []
     for (let user of this.users) {
       let found = false

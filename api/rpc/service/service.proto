@@ -2,8 +2,14 @@ syntax = "proto3";
 
 package service;
 
+import "google/api/annotations.proto";
+
 service Service {
-  rpc Tasks (TasksRequest) returns (TasksReply);
+  rpc Tasks (TasksRequest) returns (TasksReply) {
+    option (google.api.http) = {
+      get: "/v1/tasks/{service_id}"
+    };
+  }
 }
 
 message TasksRequest {

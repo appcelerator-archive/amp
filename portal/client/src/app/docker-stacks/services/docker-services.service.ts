@@ -1,16 +1,20 @@
 import { Injectable } from '@angular/core';
 import { DockerService } from '../models/docker-service.model';
+import { DockerStacksService } from './docker-stacks.service';
+import { HttpService } from '../../services/http.service';
+import { Subject } from 'rxjs/Subject'
 
 @Injectable()
 export class DockerServicesService {
   services : DockerService[] = []
-  currentService : DockerService = new DockerService("", "")
+  currentService : DockerService = new DockerService("", "", "", "", "")
+  onServicesLoaded = new Subject();
+  onServicesError = new Subject();
 
-  constructor() {
-    //temporary for debug
-    this.services.push(new DockerService("3ab23e42cd8", "testService1"))
-    this.services.push(new DockerService("4534a34bc29", "testService2"))
-  }
+  constructor(
+    private dockerStacksService : DockerStacksService,
+    private httpService : HttpService
+  ) {}
 
   match(serv : DockerService, value : string) : boolean {
     if (value == "") {
@@ -37,6 +41,20 @@ export class DockerServicesService {
         this.currentService = service
       }
     }
+  }
+
+  loadServices() {
+    this.httpService.services(this.dockerStacksService.currentStack.name).subscribe(
+      data => {
+        this.services = data
+        this.onServicesLoaded.next()
+      },
+      error => {
+        //console.log("loadStacksError")
+        //console.log(error)
+        this.onServicesError.next(error)
+      }
+    );
   }
 
 }

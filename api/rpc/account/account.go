@@ -139,7 +139,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Em
 }
 
 // Login implements account.Login
-func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, error) {
+func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInAnswer, error) {
 	// Check password
 	if err := s.Accounts.CheckUserPassword(ctx, in.Name, in.Password); err != nil {
 		return nil, convertError(err)
@@ -155,7 +155,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*empty.Empty, err
 		return nil, convertError(err)
 	}
 	log.Println("Successfully logged user in", in.Name)
-	return &empty.Empty{}, nil
+	return &LogInAnswer{Auth: token}, nil //Angular issue with custom header
 }
 
 // PasswordReset implements account.PasswordReset

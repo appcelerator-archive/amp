@@ -40,12 +40,13 @@ const appRoutes : Routes = [
     { path: 'organizations/:orgName/team/:teamName', component: TeamComponent, canActivate: [AuthGuard] },
     { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
     { path: 'stacks', component: DockerStacksComponent, canActivate: [AuthGuard] },
-    { path: 'stacks', component: DockerStacksComponent, canActivate: [AuthGuard] },
-    { path: 'stacks/deploy', component: DockerStackDeployComponent, canActivate: [AuthGuard] },
-    { path: 'stacks/:stackId', component: DockerServicesComponent, canActivate: [AuthGuard] },
-    { path: 'stacks/:stackId/deploy', component: DockerStackDeployComponent, canActivate: [AuthGuard] },
-    { path: 'services/:serviceId', component: DockerContainersComponent, canActivate: [AuthGuard] },
+    { path: 'stacks/:stackName/deploy', component: DockerStackDeployComponent, canActivate: [AuthGuard] },
+    { path: 'stacks/:stackName/services', component: DockerServicesComponent, canActivate: [AuthGuard] },
+    { path: 'stacks/:stackName/services/:serviceId/containers', component: DockerContainersComponent, canActivate: [AuthGuard] },
     { path: 'logs', component: LogsComponent, canActivate: [AuthGuard] },
+    { path: 'metrics/stack/:stacks', component: MetricsComponent, canActivate: [AuthGuard] },
+    { path: 'metrics/service/:serviceId', component: MetricsComponent, canActivate: [AuthGuard] },
+    { path: 'metrics/container/:containerId', component: MetricsComponent, canActivate: [AuthGuard] },
     { path: 'metrics', component: MetricsComponent, canActivate: [AuthGuard] },
     { path: 'nodes', component: NodesComponent, canActivate: [AuthGuard] },
     { path: 'swarms', component: SwarmsComponent, canActivate: [AuthGuard] },
@@ -57,8 +58,7 @@ const appRoutes : Routes = [
   { path: 'auth', component: AuthComponent, children: [
     { path: 'signin', component: SigninComponent },
     { path: 'signup', component: SignupComponent }
-  ]},
-  { path: 'not-found', component: AppComponent, data: { message: "Page not found"} },
+  ]}
   //{ path: '**', redirectTo: '/auth/signin' }
 ];
 

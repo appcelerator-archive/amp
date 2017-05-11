@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { OrganizationsService } from '../../services/organizations.service'
+import { OrganizationsService } from '../../organizations/services/organizations.service'
 import { ListService } from '../../services/list.service';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
@@ -19,7 +19,7 @@ import { HttpService } from '../../services/http.service';
 
 })
 export class OrganizationComponent implements OnInit, OnDestroy {
-  organization : Organization
+  organization : Organization = new Organization("", "")
   name = ""
   routeSub : any
   modeCreation : boolean = false
@@ -49,6 +49,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
       for (let org of this.organizationsService.organizations) {
         if (org.name == this.name) {
           this.organization = org
+          this.organizationsService.setCurrentOrganization(this.organization)
         }
       }
       if (this.organization) {
@@ -76,6 +77,9 @@ export class OrganizationComponent implements OnInit, OnDestroy {
     return false
   }
 
+  returnBack() {
+    this.menuService.navigate(["/amp", "organizations"])
+  }
   addUser( user : Member) {
     user.status++;
     user.saved = false
@@ -156,11 +160,16 @@ export class OrganizationComponent implements OnInit, OnDestroy {
             console.log("done")
           },
           (error) => {
+            console.log(error)
+            try {
+              let data = JSON.parse(error._body)
+                user.saveError=data.error
+            } catch (errorj) {
+              console.log(errorj)
+            }
             this.addUser(user)
             user.saved=true
-            user.saveError="save error"
             this.decrSaveInProgress()
-            console.log(error)
           }
         )
       }
@@ -183,9 +192,14 @@ export class OrganizationComponent implements OnInit, OnDestroy {
           },
           (error) => {
             console.log(error)
+            try {
+              let data = JSON.parse(error._body)
+                user.saveError=data.error
+            } catch (errorj) {
+              console.log(errorj)
+            }
             this.removeUser(user)
             user.saved=true
-            user.saveError="save error"
             this.decrSaveInProgress()
           }
         )
