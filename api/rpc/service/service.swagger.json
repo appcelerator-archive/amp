@@ -14,7 +14,32 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v1/tasks/{service_id}": {
+      "get": {
+        "operationId": "Tasks",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/serviceTasksReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "service_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    }
+  },
   "definitions": {
     "serviceTask": {
       "type": "object",

@@ -6,8 +6,11 @@ export class DockerService {
   public replicas: string
   public ports: string
 
-  constructor(id : string, name : string) {
+  constructor(id : string, name : string, mode : string, replicas : string, image : string) {
     this.id = id
     this.name = name
+    this.mode = mode
+    this.replicas = replicas
+    this.image = image
   }
 }

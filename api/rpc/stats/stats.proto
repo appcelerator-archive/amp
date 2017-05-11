@@ -7,7 +7,8 @@ import "google/api/annotations.proto";
 service Stats {
   rpc StatsQuery (StatsRequest) returns (StatsReply) {
     option (google.api.http) = {
-      get: "/v1/stats"
+      post: "/v1/stats",
+      body: "*"
     };
   };
 }

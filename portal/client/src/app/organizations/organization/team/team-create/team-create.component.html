@@ -23,11 +23,12 @@
                 ngModel required
                 type="text"
                 class="form-control"
+                pattern="^[a-z0-9\-]{3,128}$"
                 name="name"
                 id="name"
                 placeholder="name"
                 #name="ngModel">
-                <span class="help-block" *ngIf="name=='' && name.touched">A team name is required</span>
+                <span class="help-block" *ngIf="!name.valid && name.touched">Name should be lowercase and must not start by a number</span>
             </div>
 
             <div class="panel panel-default" style="border-style:none">

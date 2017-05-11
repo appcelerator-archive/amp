@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Organization } from '../../../../models/organization.model'
 import { Team } from '../../../../models/team.model'
-import { OrganizationsService } from '../../../../services/organizations.service'
+import { OrganizationsService } from '../../../../organizations/services/organizations.service'
 import { NgForm } from '@angular/forms';
 import { MenuService } from '../../../../services/menu.service';
 import { ActivatedRoute } from '@angular/router';

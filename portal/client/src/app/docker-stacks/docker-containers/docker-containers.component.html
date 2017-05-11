@@ -5,7 +5,7 @@
         <div>
           <div class="pull-left">
             <span class="fa fa-server" aria-hidden="true"></span>
-            Service: {{ dockerServicesService.currentService.name }}
+            Service: {{ service.name }}
           </div>
         </div>
       </div>
@@ -18,7 +18,7 @@
                 <i class="glyphicon glyphicon-arrow-left"></i></button>
               <button type="button" class="btn btn-primary">
                 <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i> Logs</button>
-              <button type="button" class="btn btn-primary">
+              <button type="button" class="btn btn-primary" [disabled]="dockerContainersService.currentContainer.id===''" (click)="metrics(dockerContainersService.currentContainer.id)">
                 <i class="glyphicon glyphicon-stats" aria-hidden="true"></i> Metrics</button>
             </div>
           </div>
@@ -49,30 +49,30 @@
                   </th>
                   <th>
                     <a>
-                      Name
-                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
-                    </a>
-                  </th>
-                  <th>
-                    <a>
                       Image
-                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('image', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('image', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
                     <a>
-                      Status
-                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      State
+                      <span (click)="listService.order('state', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('state', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
                     <a>
-                      Command
-                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      Desired state
+                      <span (click)="listService.order('desiredState', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('desiredState', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Node Id
+                      <span (click)="listService.order('nodeId', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('nodeId', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th></th>
@@ -81,11 +81,11 @@
               <tbody>
                 <tr (click)="selectContainer(cont.id)" *ngFor="let cont of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerContainersService.currentContainer.id===cont.id"></td>
-                  <td class="{{select_class}}">{{ cont.id }}</td>
-                  <td class="{{select_class}}">{{ cont.name }}</td>
+                  <td class="{{select_class}}">{{ cont.shortId }}</td>
                   <td class="{{select_class}}">{{ cont.image }}</td>
-                  <td class="{{select_class}}">{{ cont.status }}</td>
-                  <td class="{{select_class}}">{{ cont.command }}</td>
+                  <td class="{{select_class}}">{{ cont.state }}</td>
+                  <td class="{{select_class}}">{{ cont.desiredState }}</td>
+                  <td class="{{select_class}}">{{ cont.nodeId }}</td>
                   <td>
                     <a (click)="serviceList(stack.id)">
                       <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> details</a>

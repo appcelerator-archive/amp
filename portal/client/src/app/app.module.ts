@@ -5,13 +5,13 @@ import { HttpModule } from '@angular/http';
 
 //Services
 import { UsersService } from './services/users.service';
-import { DockerStacksService } from './services/docker-stacks.service';
+import { DockerStacksService } from './docker-stacks/services/docker-stacks.service';
 import { MenuService } from './services/menu.service';
 import { AuthGuard } from './services/auth-guard.service';
 import { HttpService } from './services/http.service';
-import { OrganizationsService } from './services/organizations.service';
-import { DockerServicesService } from './services/docker-services.service';
-import { DockerContainersService } from './services/docker-containers.service';
+import { OrganizationsService } from './organizations/services/organizations.service';
+import { DockerServicesService } from './docker-stacks/services/docker-services.service';
+import { DockerContainersService } from './docker-stacks/services/docker-containers.service';
 import { SwarmsService } from './services/swarms.service';
 import { DragService } from './services/drag.service';
 import { MetricsService } from './metrics/services/metrics.service';

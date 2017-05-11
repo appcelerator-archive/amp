@@ -1,8 +1,9 @@
-import { Output, EventEmitter } from '@angular/core';
+import { Injectable, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { ItemMenu } from '../models/item-menu.model';
 import { Subject } from 'rxjs/Subject';
 
+@Injectable()
 export class MenuService {
   currentMenuItem : ItemMenu = new ItemMenu("","")
   autoRefresh : boolean = false
@@ -25,7 +26,7 @@ export class MenuService {
     this.onRefreshClicked.next()
   }
 
-  waitingCursor(mode : boolean) {
+  public waitingCursor(mode : boolean) {
       if (mode) {
         this.cursorClass='waiting';
       } else {
@@ -33,7 +34,7 @@ export class MenuService {
       }
   }
 
-  getCursorClass() {
+  public getCursorClass() : string {
     return this.cursorClass
   }
 

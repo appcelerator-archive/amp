@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -68,6 +69,7 @@ func (s *serverAPI) handleAPIFunctions(r *mux.Router) {
 }
 
 func (s *serverAPI) setToken(r *http.Request) context.Context {
+	fmt.Printf("token: %s\n", r.Header.Get("TokenKey"))
 	md := metadata.Pairs(auth.TokenKey, r.Header.Get("TokenKey"))
 	return metadata.NewContext(context.Background(), md)
 }

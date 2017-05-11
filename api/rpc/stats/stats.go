@@ -23,6 +23,7 @@ const (
 
 // StatsQuery extracts stat information according to StatsRequest
 func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	fmt.Printf("request: %+v\n", req)
 	if err := s.validatePeriod(req.Period); err != nil {
 		return nil, err
 	}
@@ -175,6 +176,9 @@ func (s *Stats) createBoolQuery(req *StatsRequest, period string) *elastic.BoolQ
 	}
 	if req.FilterStackName != "" {
 		filters = append(filters, elastic.NewWildcardQuery("stack_name", getWildcardValue(req.FilterStackName)))
+	}
+	if req.FilterTaskId != "" {
+		filters = append(filters, elastic.NewWildcardQuery("task_id", getWildcardValue(req.FilterTaskId)))
 	}
 	if req.FilterNodeId != "" {
 		filters = append(filters, elastic.NewWildcardQuery("node_id", getWildcardValue(req.FilterNodeId)))

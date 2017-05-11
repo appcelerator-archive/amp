@@ -6,7 +6,7 @@
         <div>
           <div class="pull-left">
             <span class="fa fa-server" aria-hidden="true"></span>
-            Stack: {{ dockerStacksService.currentStack.name }}
+            Stack: {{ stack.name }}
           </div>
         </div>
       </div>
@@ -19,7 +19,7 @@
                 <i class="glyphicon glyphicon-arrow-left"></i></button>
               <button type="button" class="btn btn-primary">
                 <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i> Logs</button>
-              <button type="button" class="btn btn-primary">
+              <button type="button" class="btn btn-primary" [disabled]="dockerServicesService.currentService.id===''" (click)="metrics(dockerServicesService.currentService.id)">
                 <i class="glyphicon glyphicon-stats" aria-hidden="true"></i> Metrics</button>
             </div>
           </div>
@@ -51,29 +51,29 @@
                   <th>
                     <a>
                       Name
-                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
                     <a>
                       Mode
-                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('mode', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('mode', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
                     <a>
                       Replicas
-                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('replicas', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('replicas', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
                     <a>
                       Image
-                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      <span (click)="listService.order('image', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('image', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>

@@ -28,7 +28,7 @@
             <span class="caret" style="cursor:pointer"></span>
             <ul class="dropdown-menu">
               <li class="disabled" [hidden]="organizationsService.organizations.length===0"><a>organizations</a></li>
-              <li *ngFor="let org of organizationsService.organizations" (click)="organizationsService.setOrganization(org)"><a>{{org.name}}</a></li>
+              <li *ngFor="let org of organizationsService.organizations" (click)="organizationsService.setCurrentOrganization(org)"><a>{{org.name}}</a></li>
               <li role="separator" class="divider" [hidden]="organizationsService.organizations.length===0"></li>
               <li><a (click)="createOrganization()">Create organization</a></li>
               <li><a>Settings</a></li>

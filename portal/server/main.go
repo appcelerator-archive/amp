@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/appcelerator/amp/amp-ui/server/core"
+	"github.com/appcelerator/amp/portal/server/core"
 )
 
 // build vars

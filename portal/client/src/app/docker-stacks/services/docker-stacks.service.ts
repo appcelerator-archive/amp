@@ -3,7 +3,7 @@ import { DockerStack } from '../models/docker-stack.model';
 import { DockerService } from '../models/docker-service.model';
 import { DockerContainer } from '../models/docker-container.model';
 import { Subject } from 'rxjs/Subject'
-import { HttpService } from '../services/http.service';
+import { HttpService } from '../../services/http.service';
 
 @Injectable()
 export class DockerStacksService {
@@ -38,13 +38,13 @@ export class DockerStacksService {
     return false
   }
 
-  setCurrentStack(id) {
-    if (id == "") {
+  setCurrentStack(name) {
+    if (name == "") {
       this.currentStack = this.emptyStack
       return
     }
     for (let stack of this.stacks) {
-      if (stack.id === id) {
+      if (stack.name === name) {
         this.currentStack = stack
       }
     }

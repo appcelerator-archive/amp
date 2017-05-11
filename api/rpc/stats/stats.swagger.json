@@ -16,7 +16,7 @@
   ],
   "paths": {
     "/v1/stats": {
-      "get": {
+      "post": {
         "operationId": "StatsQuery",
         "responses": {
           "200": {
@@ -28,122 +28,12 @@
         },
         "parameters": [
           {
-            "name": "stats_cpu",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "stats_mem",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "stats_io",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "stats_net",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
-            "name": "group",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_container_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_container_name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_container_short_name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_container_state",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_service_name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_service_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_task_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_stack_name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter_node_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "since",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "until",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "period",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "time_group",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "time_zone",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/statsStatsRequest"
+            }
           }
         ],
         "tags": [

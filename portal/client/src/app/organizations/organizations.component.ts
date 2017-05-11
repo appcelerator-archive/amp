@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Organization } from '../models/organization.model';
 import { MenuService } from '../services/menu.service';
-import { OrganizationsService } from '../services/organizations.service';
+import { OrganizationsService } from '../organizations/services/organizations.service';
+import { UsersService } from '../services/users.service';
 import { ListService } from '../services/list.service';
 import { Observable } from 'rxjs/Observable';
 import { HttpService } from '../services/http.service';
@@ -23,13 +24,22 @@ export class OrganizationsComponent implements OnInit {
     public organizationsService : OrganizationsService,
     public listService : ListService,
     private menuService : MenuService,
-    private httpService : HttpService) {
+    private httpService : HttpService,
+    private usersService : UsersService) {
       listService.setFilterFunction(organizationsService.match)
     }
 
   ngOnInit() {
     this.menuService.setItemMenu('organizations', 'List')
-    this.listService.setData(this.organizationsService.organizations)
+    this.httpService.userOrganization(this.usersService.currentUser).subscribe(
+      data => {
+        this.organizationsService.organizations = data
+        this.listService.setData(this.organizationsService.organizations)
+      },
+      error => {
+        console.log(error)
+      }
+    )
   }
 
   removeOrganization() {

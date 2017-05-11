@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { DockerStack } from '../models/docker-stack.model';
-import { DockerStacksService } from '../services/docker-stacks.service';
+import { DockerStack } from './models/docker-stack.model';
+import { DockerStacksService } from './services/docker-stacks.service';
 import { MenuService } from '../services/menu.service';
 import { ListService } from '../services/list.service';
 import {Observable} from 'rxjs/Observable';
@@ -74,9 +74,9 @@ export class DockerStacksComponent implements OnInit {
     }
   }
 
-  serviceList(stackId : string) {
-    this.dockerStacksService.setCurrentStack(stackId)
-    this.menuService.navigate(["/amp", "stacks", stackId])
+  serviceList(stackName : string) {
+    this.dockerStacksService.setCurrentStack(stackName)
+    this.menuService.navigate(["/amp", "stacks", stackName, "services"])
   }
 
   selectStack(id : string) {
@@ -101,6 +101,10 @@ export class DockerStacksComponent implements OnInit {
   update() {
     let stackId = this.dockerStacksService.currentStack.id
     this.menuService.navigate(["/amp", "stacks", stackId, "deploy"])
+  }
+
+  metrics(stackName : string) {
+    this.menuService.navigate(['/amp', 'metrics', 'stack', stackName])
   }
 
 }
