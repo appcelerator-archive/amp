@@ -56,7 +56,7 @@ type Interface interface {
 	ListUsers(ctx context.Context) (users []*User, err error)
 
 	// VerifyUser verifies a user account
-	VerifyUser(ctx context.Context, token string) (user *User, err error)
+	VerifyUser(ctx context.Context, name string) (err error)
 
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
@@ -112,6 +112,6 @@ type Interface interface {
 	// IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
 	IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceId string) bool
 
-	// Reset resets the user store
+	// Reset resets the user storage
 	Reset(ctx context.Context)
 }

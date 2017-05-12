@@ -39,11 +39,6 @@ type etcd struct {
 	pathPrefix string
 	timeout    time.Duration
 	connected  bool
-
-	//if err := runtime.Store.Connect(amp.DefaultTimeout); err != nil {
-	//return fmt.Errorf("unable to connect to etcd at %s: %v", config.EtcdEndpoints, err)
-	//}
-	//
 }
 
 // New returns an etcd implementation of storage.Interface
@@ -134,13 +129,13 @@ func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNot
 	}
 
 	if len(getResp.Kvs) == 0 {
-		if ignoreNotFound {
-			if out != nil {
-				out.Reset()
-			}
-			return nil
+		if !ignoreNotFound {
+			return storage.NotFound
 		}
-		return fmt.Errorf("key not found: %q", key)
+		if out != nil {
+			out.Reset()
+		}
+		return nil
 	}
 
 	kv := getResp.Kvs[0]
@@ -149,7 +144,7 @@ func (s *etcd) Get(ctx context.Context, key string, out proto.Message, ignoreNot
 }
 
 // Update implements storage.Interface.Update
-func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl int64) error {
+func (s *etcd) Update(ctx context.Context, key string, uf storage.UpdateFunc, template proto.Message) error {
 	if !s.connected {
 		if err := s.Connect(); err != nil {
 			return err
@@ -157,36 +152,55 @@ func (s *etcd) Update(ctx context.Context, key string, val proto.Message, ttl in
 	}
 	key = s.prefix(key)
 
-	// must exist
-	_, err := s.client.KV.Get(ctx, key)
+	// current state
+	getResp, err := s.client.KV.Get(ctx, key)
 	if err != nil {
 		return err
 	}
-
-	opts, err := s.options(ctx, int64(ttl))
-	if err != nil {
-		return err
+	if len(getResp.Kvs) == 0 {
+		return storage.NotFound
 	}
+	current := getResp.Kvs[0]
 
-	data, err := proto.Marshal(val)
+	// Begin update loop
+	for {
+		input := proto.Clone(template)
+		if err := proto.Unmarshal(current.Value, input); err != nil {
+			return err
+		}
+		update, err := uf(input)
+		if err != nil {
+			return fmt.Errorf("Error updating object: %s", err)
+		}
 
-	txn, err := s.client.KV.Txn(ctx).
-		If().
-		Then(clientv3.OpPut(key, string(data), opts...)).
-		Commit()
-	if err != nil {
-		return err
+		data, err := proto.Marshal(update)
+		if err != nil {
+			return err
+		}
+
+		opts, err := s.options(ctx, 0)
+		if err != nil {
+			return err
+		}
+
+		txn, err := s.client.KV.Txn(ctx).
+			If(clientv3.Compare(clientv3.ModRevision(key), "=", current.ModRevision)).
+			Then(clientv3.OpPut(key, string(data), opts...)).
+			Else(clientv3.OpGet(key)).
+			Commit()
+		if err != nil {
+			return err
+		}
+		if !txn.Succeeded {
+			getResp := (*clientv3.GetResponse)(txn.Responses[0].GetResponseRange())
+			if len(getResp.Kvs) == 0 {
+				return storage.NotFound
+			}
+			current = getResp.Kvs[0]
+			continue
+		}
+		return nil
 	}
-
-	if !txn.Succeeded {
-		// TODO: implement guaranteed update support
-		return fmt.Errorf("update for %s failed because of a conflict", key)
-	}
-
-	// TODO: save metatdata
-	// putResp := txn.Responses[0].GetResponsePut()
-	// fmt.Println(putResp)
-	return nil
 }
 
 // Delete implements storage.Interface.Delete
@@ -213,7 +227,7 @@ func (s *etcd) Delete(ctx context.Context, key string, recurse bool, out proto.M
 
 	getResp := txn.Responses[0].GetResponseRange()
 	if len(getResp.Kvs) == 0 {
-		return fmt.Errorf("key not found: %q", key)
+		return storage.NotFound
 	}
 	if out == nil {
 		return nil
