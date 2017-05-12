@@ -2,8 +2,7 @@
 
 TIMEOUT="${1:-300}"
 INTERVAL="${2:-2}"
-
-[ "$DOCKERHOST" = "m1" ] && amps="docker run -it --rm --network=hostnet docker --host=m1" || amps="docker run -it --rm docker --host=$DOCKERHOST"
+[[ "$DOCKERHOST" = "m1" ]] && amps="docker run -it --rm --network=hostnet docker --host=m1" || amps="docker --host=$DOCKERHOST"
 
 check() {
   list=$($amps service ls)
@@ -52,4 +51,3 @@ while true; do
     $amps service ls
   fi
 done
-

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Docker Swarm cluster deployed with InfraKit
+Description: Swarm cluster managed with InfraKit
 
 Mappings:
   AMI:
@@ -26,19 +26,16 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: Swarm Properties
+        default: Cluster Properties
       Parameters:
       - KeyName
+      - TrustedCidr
     - Label:
         default: Swarm Manager Properties
       Parameters:
       - ManagerSize
       - ManagerInstanceType
-    - Label:
-        default: Swarm Worker Properties
-      Parameters:
-      - WorkerSize
-      - WorkerInstanceType
+      - DrainManager
     - Label:
         default: InfraKit Configuration
       Parameters:
@@ -47,6 +44,8 @@ Metadata:
         default: Docker Configuration
       Parameters:
       - AufsVolumeSize
+      - MirrorRegistries
+      - OverlayNetworks
     ParameterLabels:
       KeyName:
         default: Which SSH key to use?
@@ -54,14 +53,16 @@ Metadata:
         default: Number of Swarm managers?
       ManagerInstanceType:
         default: Swarm manager instance type?
-      WorkerSize:
-        default: Number of Swarm workers?
-      WorkerInstanceType:
-        default: Swarm worker instance type?
+      DrainManager:
+        default: Drain manager nodes?
+      OverlayNetworks:
+        default: Docker overlay networks
       InfraKitConfigurationBaseURL:
         default: InfraKit configuration base URL
       AufsVolumeSize:
         default: EBS Volume Size
+      MirrorRegistries:
+        default: Docker mirror registries
 
 Parameters:
   KeyName:
@@ -100,35 +101,13 @@ Parameters:
     ConstraintDescription: Must be a valid EC2 HVM instance type.
     Default: t2.medium
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc).
-  WorkerSize:
-    Type: Number
-    Default: 2
-    MaxValue: 1000
-    MinValue: 0
-    Description: Number of Swarm worker nodes.
-  WorkerInstanceType:
+  DrainManager:
     Type: String
+    Description: Disable the services on the manager nodes.
     AllowedValues:
-    - t2.nano
-    - t2.micro
-    - t2.small
-    - t2.medium
-    - t2.large
-    - m3.medium
-    - m4.large
-    - m4.xlarge
-    - m4.2xlarge
-    - c4.large
-    - c4.xlarge
-    - c4.2xlarge
-    - c4.4xlarge
-    - r4.large
-    - r4.xlarge
-    - r4.2xlarge
-    - r4.4xlarge
-    ConstraintDescription: Must be a valid EC2 HVM instance type.
-    Default: t2.medium
-    Description: EC2 HVM instance type (t2.micro, m3.medium, etc).
+    - false
+    - true
+    Default: false
   InfraKitConfigurationBaseURL:
     Type: String
     ConstraintDescription: must be an URL.
@@ -139,6 +118,20 @@ Parameters:
     Type: Number
     Description: Size in GB of the EBS volume for the Docker AUFS storage on each node.
     Default: 26
+  MirrorRegistries:
+    Type: String
+    Description: Docker mirror registries, with scheme (https://) separated by space
+  OverlayNetworks:
+    Type: String
+    Description: Docker overlay networks to create on the swarm, separated by space
+    Default: ampnet
+  TrustedCidr:
+    Type: String
+    Description: CIDR of a trusted origin
+
+Conditions:
+  WithTrustedCidr:
+    !Not [ !Equals [ TrustedCidr, "" ] ]
 
 Resources:
   Vpc:
@@ -339,6 +332,28 @@ Resources:
         ToPort: '2375'
       VpcId:
         Ref: Vpc
+  EngineAPIIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: WithTrustedCidr
+    Properties:
+      GroupId:
+        Ref: SecurityGroup
+      IpProtocol: tcp
+      FromPort: '2375'
+      ToPort: '2375'
+      CidrIp:
+        Ref: TrustedCidr
+  InfrakitIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: WithTrustedCidr
+    Properties:
+      GroupId:
+        Ref: SecurityGroup
+      IpProtocol: tcp
+      FromPort: '24864'
+      ToPort: '24864'
+      CidrIp:
+        Ref: TrustedCidr
   ProvisionerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -462,7 +477,7 @@ Resources:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
         MinInstancesInService: 0
-        PauseTime: PT10M
+        PauseTime: PT3M
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref ManagerSize
@@ -471,6 +486,9 @@ Resources:
       LaunchConfigurationName: !Ref AsgLaunchConfig
       MaxSize: 5
       MinSize: 0
+      LoadBalancerNames:
+      - !Ref ManagerInternalELB
+      - !Ref ManagerExternalELB
       Tags:
       - Key: Name
         PropagateAtLaunch: true
@@ -479,10 +497,10 @@ Resources:
           - '-'
           - - Ref: AWS::StackName
             - manager
-      - Key: Deployment
+      - Key: atomiq.clusterid
         PropagateAtLaunch: true
-        Value: Infrakit
-      - Key: Role
+        Value: !Ref AWS::StackName
+      - Key: SwarmRole
         PropagateAtLaunch: true
         Value: manager
       VPCZoneIdentifier:
@@ -518,12 +536,11 @@ Resources:
               packages:
                 - ca-certificates
                 - jq
-                - git
                 - curl
                 - unzip
                 - awscli
               write_files:
-                - path: /tmp/env.ikt
+                - path: /etc/infrakit.conf
                   content: |
                     {{/* Global variables */}}
                     {{ var "/aws/region" "${region}" }}
@@ -539,9 +556,104 @@ Resources:
                     {{ var "/aws/keyname" "${KeyName}" }}
                     {{ var "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
                     {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
+                    {{ var "/docker/mirrorregistries" "${MirrorRegistries}" }}
               runcmd:
-                - curl ${InfraKitConfigurationBaseURL}/bootstrap -o /usr/local/bin/bootstrap.sh
                 - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
-                - chmod +x /usr/local/bin/bootstrap.sh /usr/local/bin/asg-init.sh
-                - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} ENV_FILE=/tmp/env.ikt /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/asg-init.sh
+                - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} MIRROR_REGISTRIES=${MirrorRegistries} DRAIN_MANAGER=${DrainManager} /usr/local/bin/asg-init.sh
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+  ManagerInternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: internal
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: SecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '2375'
+        InstancePort: '2375'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '2377'
+        InstancePort: '2377'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      HealthCheck:
+        Target: TCP:2375
+        HealthyThreshold: 3
+        UnhealthyThreshold: 5
+        Interval: 30
+        Timeout: 5
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+  ManagerExternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: SecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '22'
+        InstancePort: '22'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '2375'
+        InstancePort: '2375'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '24864'
+        InstancePort: '24864'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+Outputs:
+  PrivateManagerHost:
+    Description: internal endpoint for the swarm managers
+    Value: !GetAtt ManagerInternalELB.DNSName
+  PublicManagerHost:
+    Description: public facing endpoint for the swarm managers
+    Value: !GetAtt ManagerExternalELB.DNSName
+  MirrorRegistries:
+    Description: mirror registries used by the Docker engines
+    Value: !Ref MirrorRegistries
+  KeyName:
+    Description: Keypair name
+    Value: !Ref KeyName
+  Region:
+    Description: Deployment region
+    Value: !Ref AWS::Region
+  VpcId:
+    Description: VPC ID
+    Value: !Ref Vpc
+  SubnetIds:
+    Description: Subnet ID list
+    Value:
+      Fn::Join:
+        - ','
+        - - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
+          - !Ref PublicSubnet3
+  SecurityGroup:
+    Description: Security Group
+    Value: !Ref SecurityGroup
+  AMI:
+    Description: AMI
+    Value: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ]
+  InstanceProfile:
+    Description: IAM instance profile
+    Value: !Ref ClusterInstanceProfile
+  BaseURL:
+    Description: Scripts base URL
+    Value: !Ref InfraKitConfigurationBaseURL

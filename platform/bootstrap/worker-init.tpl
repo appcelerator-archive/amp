@@ -14,13 +14,6 @@ set -o xtrace
 if [ "x$provider" != "xdocker" ]; then
   _install_docker
   systemctl stop docker.service
-  mkdir -p /etc/systemd/system/docker.service.d
-  cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
-[Service]
-ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:{{ var "/docker/remoteapi/port" }} -H unix:///var/run/docker.sock{{ if var "/bootstrap/ip" }} --registry-mirror=http://{{ var "/bootstrap/ip" }}:5000 --insecure-registry=http://{{ var "/bootstrap/ip" }}:5000{{ end }}
-EOF
-  systemctl daemon-reload
 fi
 # Use an EBS volume for the devicemapper
 if [ "x$provider" = "xaws" ]; then
@@ -28,10 +21,17 @@ if [ "x$provider" = "xaws" ]; then
   _attach_ebs_volume /dev/sdn /var/lib/docker "Docker AUFS" {{ var "/docker/aufs/size" }}
 fi
 
+# if mirrorregistries is defined, it's a comma separated list (or just a list) of registries, it has to be correctly quoted to be inserted in the json file
+{{ if var "/docker/mirrorregistries" }}
+mirrorregistries="$(echo {{ var "/docker/mirrorregistries" }} | tr ',' ' ' | sed 's/  */", "/g')"
+{{ end }}
+
+
 mkdir -p /etc/docker
 cat << EOF > /etc/docker/daemon.json
 {
-  "labels": {{ INFRAKIT_LABELS | jsonEncode }}
+  "labels": {{ INFRAKIT_LABELS | jsonEncode }}{{ if var "/docker/mirrorregistries" }},
+  "registry-mirrors": [ "$mirrorregistries" ]{{ end }}
 }
 EOF
 
@@ -42,5 +42,6 @@ else
   # TODO: send kill -HUP to reload the labels, see appcelerator/amp#1123
   kill -s HUP $(cat /var/run/docker.pid)
 fi
+# TODO: send kill -HUP to reload the labels, see appcelerator/amp#1123
 
 docker swarm join --token {{  SWARM_JOIN_TOKENS.Worker }} {{ SWARM_MANAGER_ADDR }}
