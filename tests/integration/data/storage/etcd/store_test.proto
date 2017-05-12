@@ -5,4 +5,5 @@ package etcd;
 message TestMessage {
   string id = 1;
   string name = 2;
+  repeated string names = 3;
 }

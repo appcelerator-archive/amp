@@ -12,6 +12,7 @@ import (
 // Resources and actions
 const (
 	AmpResourceName = "amprn"
+	UserRN          = AmpResourceName + ":user"
 	OrganizationRN  = AmpResourceName + ":organization"
 	TeamRN          = AmpResourceName + ":team"
 	StackRN         = AmpResourceName + ":stack"
@@ -20,10 +21,33 @@ const (
 	ReadAction   = "read"
 	UpdateAction = "update"
 	DeleteAction = "delete"
-	AdminAction  = CreateAction + "|" + ReadAction + "|" + UpdateAction + "|" + DeleteAction
+	LeaveAction  = "leave"
+	AdminAction  = CreateAction + "|" + ReadAction + "|" + UpdateAction + "|" + LeaveAction + "|" + DeleteAction
 )
 
 var (
+	usersCanDeleteThemselves = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{UserRN},
+		Actions:   []string{"<" + DeleteAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
+		},
+	}
+
+	usersCanLeaveOrganizations = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{OrganizationRN},
+		Actions:   []string{"<" + LeaveAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
+		},
+	}
+
 	organizationsAdminByOrgOwners = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
@@ -79,6 +103,8 @@ var (
 
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
+		usersCanDeleteThemselves,
+		usersCanLeaveOrganizations,
 		organizationsAdminByOrgOwners,
 		teamsAdminByOrgOwners,
 		stacksAdminByOrgOwnersAndTeamAdmins,
@@ -140,6 +166,8 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 		})
 		return err == nil
 	case AccountType_USER:
+		log.Println("subject", subject)
+		log.Println("user", owner.Name)
 		err := warden.IsAllowed(&ladon.Request{
 			Subject:  subject,
 			Action:   action,

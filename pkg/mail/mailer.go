@@ -69,7 +69,7 @@ func (m *Mailer) SendAccountVerificationEmail(to string, accountName string, tok
 }
 
 // SendAccountCreatedEmail send mail
-func (m *Mailer) SendAccountCreatedEmail(to string, accountName string) error {
+func (m *Mailer) SendAccountVerifiedEmail(to string, accountName string) error {
 	//config := conf.GetRegularConfig(false)
 	variables := map[string]string{
 		"accountName": accountName,

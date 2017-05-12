@@ -543,7 +543,7 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
-	// Create another  user
+	// Create another user
 	createUser(t, &testMember)
 
 	// Delete
@@ -748,7 +748,7 @@ func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
+func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -770,7 +770,7 @@ func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveUser(t *testing.T) {
@@ -906,7 +906,7 @@ func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
+func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -935,7 +935,7 @@ func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
@@ -1346,7 +1346,7 @@ func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
+func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -1370,7 +1370,7 @@ func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestTeamRemoveUser(t *testing.T) {
@@ -1562,7 +1562,7 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
+func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -1578,7 +1578,7 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestTeamGet(t *testing.T) {
@@ -1740,7 +1740,7 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
+func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
 	// Reset the storage
 	accountStore.Reset(context.Background())
 
@@ -1752,5 +1752,5 @@ func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
