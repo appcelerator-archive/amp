@@ -768,7 +768,7 @@ if [ $started -gt 0 ]; then
       docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe
       docker logs infrakit >&2
       echo "#####################      manager logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/manager.log >&2
+      docker exec infrakit cat /infrakit/logs/manager-${manager_plugin}.log >&2
       echo "#####################        group logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
       echo "#####################     instance logs        ############################" >&2
