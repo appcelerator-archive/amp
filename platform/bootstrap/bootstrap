@@ -100,6 +100,7 @@ _init_swarm() {
     _manager=$1
     _expose_remote_api "$_manager"
     echo "joining a Docker Swarm..." >&2
+    i_am_the_leader=0
     while [ $((++_loop)) -lt $_maxloop ]; do
       _token=$(docker -H "$_manager:2375" swarm join-token -q manager 2>/dev/null)
       if [ $? -eq 0 ] && [ -n "$_token" ]; then
@@ -127,6 +128,7 @@ _init_swarm() {
     fi
   else
     echo "initializing Docker Swarm" >&2
+    i_am_the_leader=1
     _expose_remote_api 127.0.0.1
     docker swarm init
   fi
@@ -615,6 +617,8 @@ list_request=""
 block=0
 cleanup_file_list=""
 cleanup_image_list=""
+# assume by default that this node is the Swarm manager leader
+i_am_the_leader=1
 while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
   case $opt in
   1)
@@ -730,7 +734,7 @@ if [ $init_swarm -eq 1 ]; then
   _init_swarm || exit 1
 fi
 if [ -n "$swarm_join_ip" ]; then
-  _init_swarm $swarm_join_ip || exit 1
+  _init_swarm "$swarm_join_ip" || exit 1
 fi
 [[ $target = "local" ]] && ( _system_check || exit 1 )
 _set_source "$1"
@@ -754,9 +758,7 @@ if [ $started -gt 0 ]; then
     rc=$?
     docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe >/dev/null 2>&1
     rc=$((rc+$?))
-
-    # Only performed on Leader node
-    if [ $init_swarm -eq 1 ]; then
+    if [ $i_am_the_leader -eq 1 ]; then
       docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
       rc=$((rc+$?))
     fi
@@ -764,24 +766,15 @@ if [ $started -gt 0 ]; then
       echo " aborting after $looplimit attempts" >&2
       docker exec infrakit infrakit plugin ls 2>/dev/null
       docker exec infrakit infrakit instance --name="instance-$provider${subtype:+/$subtype}" describe
-      # docker inspect infrakit >&2
       docker logs infrakit >&2
+      echo "#####################      manager logs        ############################" >&2
+      docker exec infrakit cat /infrakit/logs/manager.log >&2
       echo "#####################        group logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
       echo "#####################     instance logs        ############################" >&2
       docker exec infrakit cat "/infrakit/logs/instance-$provider.log" >&2
       echo "#####################       flavor logs        ############################" >&2
       docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
-
-      # Only performed on Leader node
-      if [ $init_swarm -eq 1 ]; then
-        echo "#####################      leader operations   ############################" >&2
-        docker exec infrakit infrakit manager inspect >/dev/null
-        echo "#####################      manager logs        ############################" >&2
-        docker exec infrakit cat /infrakit/logs/manager.log >&2
-        echo "#####################       configuration      ############################" >&2
-        docker exec infrakit cat /infrakit/config.json >&2
-      fi
       exit 1
     fi
     sleep 1
@@ -790,8 +783,9 @@ if [ $started -gt 0 ]; then
   done
   echo >&2
 fi
-_node=$(docker node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)\
-if [ "$_node" = "true" ]; then
+#_node=$(docker node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)\
+#if [ "$_node" = "true" ]; then
+if [ "$i_am_the_leader" -eq 1 ]; then
   _prepare_config_container
   _deploy_config_container
   if [ $block -gt 0 ]; then

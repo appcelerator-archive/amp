@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o errexit
+
+REGION=${REGION:-us-west-2}
+STACK_NAME=${STACK_NAME:-unset}
+VPC_ID=${VPC_ID:-unset}
+BASE_URL=${BASE_URL:-unset}
+MANAGER_SIZE=${MANAGER_SIZE:-3}
+ENV_FILE=${ENV_FILE:-/tmp/env.ikt}
+
+wget -qO- https://get.docker.com/ | sh
+usermod -G docker ubuntu || true
+systemctl enable docker.service
+systemctl start docker.service || true
+
+_myip=$(curl 169.254.169.254/latest/meta-data/local-ipv4)
+_allips=$(aws ec2 describe-instances --region=${REGION} --filters "Name=tag:Name,Values=${STACK_NAME}-manager" "Name=instance-state-name,Values=pending,running" "Name=vpc-id,Values=${VPC_ID}" --query="Reservations[*].Instances[*].PrivateIpAddress" --output=text | sort -n)
+_leaderip=$(echo $_allips | cut -f1 -d " ")
+_rc=0
+_nodestatus=()
+COUNTER=0
+for i in $_allips; do
+  _nodestatus[$COUNTER]=$(docker -H "$i:2375" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)
+  _rc=$((_rc+$?))
+  COUNTER=$((COUNTER+1))
+done
+if [ "$_myip" = "$_leaderip" ] && [ "$_rc" = "${MANAGER_SIZE}" ]; then
+  bash /usr/local/bin/bootstrap.sh -1 -p aws -t aws -e "$ENV_FILE" "${BASE_URL}"
+fi
+for i in $_nodestatus; do
+  if [ "$i" = "true" ]; then
+    bash /usr/local/bin/bootstrap.sh -j $(echo $_allips | cut -f1 -d " ") -p aws -t aws -e "$ENV_FILE" "${BASE_URL}"
+  fi
+done
