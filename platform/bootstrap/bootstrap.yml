@@ -530,28 +530,7 @@ Resources:
                     {{ var "/script/baseurl" "${InfraKitConfigurationBaseURL}" }}
                     {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
               runcmd:
-                - wget -qO- https://get.docker.com/ | sh && \
-                - usermod -G docker ubuntu && \
-                - systemctl enable docker.service && \
-                - systemctl start docker.service && \
                 - curl ${InfraKitConfigurationBaseURL}/bootstrap -o /usr/local/bin/bootstrap.sh
-                - '_myip=$(curl 169.254.169.254/latest/meta-data/local-ipv4)'
-                - '_allips=$(aws ec2 describe-instances --region=${AWS::Region} --filters "Name=tag:Name,Values=${AWS::StackName}-manager" "Name=instance-state-name,Values=pending,running" "Name=vpc-id,Values=${Vpc}" --query="Reservations[*].Instances[*].PrivateIpAddress" --output=text | sort -n)'
-                - '_leaderip=$(echo $_allips | cut -f1 -d " ")'
-                - '_rc=0'
-                - '_nodestatus=()'
-                - 'COUNTER=0'
-                - 'for i in $_allips; do'
-                -   '_nodestatus[$COUNTER]=$(docker -H "$i:2375" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)'
-                -   '_rc=$((_rc+$?))'
-                -   'COUNTER=$((COUNTER+1))'
-                - 'done'
-                - 'if [ "$_myip" = "$_leaderip" ] && [ "$_rc" = "${ManagerSize}" ]; then'
-                -   'bash /usr/local/bin/bootstrap.sh -1 -p aws -t aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}'
-                - 'fi'
-                - 'for i in $_nodestatus; do'
-                -   'if [ "$i" = "true" ]; then'
-                -     'bash /usr/local/bin/bootstrap.sh -j $(echo $_allips | cut -f1 -d " ") -p aws -t aws -e /tmp/env.ikt ${InfraKitConfigurationBaseURL}'
-                -   'fi'
-                - 'done'
+                - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
+                - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} ENV_FILE=/tmp/env.ikt /usr/local/bin/asg-init.sh
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
