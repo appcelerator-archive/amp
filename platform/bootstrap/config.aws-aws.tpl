@@ -5,7 +5,7 @@
   {
     "Plugin": "group",
     "Properties": {
-      "ID": "amp-worker-{{ var "/aws/vpcid" }}",
+      "ID": "amp-worker-{{ var "/aws/stackname" }}",
       "Properties": {
         "Allocation": {
           "Size": {{ $workerSize }}
@@ -25,8 +25,9 @@
             },
             "Tags": {
               "Name": "{{ var "/aws/stackname" }}-worker",
-              "Deployment": "Infrakit",
-              "Role" : "worker"
+              "{{ var "/docker/label/cluster/key" }}": "{{ var "/docker/label/cluster/value" }}",
+              "SwarmRole" : "worker",
+              "ManagedBy": "InfraKit"
             }
           }
         },
@@ -39,14 +40,16 @@
                 "Properties": {
                   "Init": [
                     "#!/bin/bash",
-                    "apt-get install -y awscli jq"
+                    "apt-get install -y awscli jq",
+                    "sysctl -w vm.max_map_count=262144",
+                    "echo 'vm.max_map_count = 262144' > /etc/sysctl.d/99-amp.conf"
                   ]
                 }
               }, {
                 "Plugin": "flavor-swarm/worker",
                 "Properties": {
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
-                  "SwarmJoinIP": "{{ var "/bootstrap/ip" }}",
+                  "SwarmJoinIP": "{{ var "/docker/manager/host" }}",
                   "Docker" : {
                     "Host" : "unix:///var/run/docker.sock"
                   }

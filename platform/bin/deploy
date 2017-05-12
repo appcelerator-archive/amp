@@ -13,18 +13,17 @@ readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
 readonly PLATFORMDIR="$(dirname $SP)"
 readonly BOOTSTRAPDIR="$PLATFORMDIR/bootstrap"
 readonly STACKSDIR="$PLATFORMDIR/stacks"
+readonly SECRETSDIR="$PLATFORMDIR/secrets"
 readonly TESTSDIR="$PLATFORMDIR/tests"
-readonly terraformdir="$BOOTSTRAPDIR/terraform-aws"
 
 export PATH="$SP:$BOOTSTRAPDIR:$PATH"
 
 # commands
-readonly terraform="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $terraformdir:/data --workdir=/data hashicorp/terraform"
+readonly awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $BOOTSTRAPDIR:$BOOTSTRAPDIR:ro cgswong/aws:latest aws"
 
 # IP range that should have access to the docker remote API
 readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
 readonly localdomainname="local.atomiq.io"
-readonly clouddomainname="cloud.atomiq.io"
 
 # global vars
 DEPLOYMENT_TARGET=local
@@ -39,45 +38,73 @@ deployment_target() {
 
 # create the cluster and echo the cluster id
 cluster_create() {
-  case $(deployment_target) in
+  local _clusterid
+  local _status
+  local _target
+  _target="$(deployment_target)"
+  case $_target in
   local)
+    docker node inspect self -f '{{.ID}}' 2>/dev/null || echo "unset"
     ;;
-  dind)
+  dind|aws)
     # async
     if [[ $# -eq 0 ]]; then
-      bootstrap $BOOTSTRAP_OPTIONS -f
+      bootstrap $BOOTSTRAP_OPTIONS -t "$_target" -f
     else
-      bootstrap $BOOTSTRAP_OPTIONS -fi $1
-    fi
-    ;;
-  aws)
-    # sync (modulo user data execution)
-    if [[ $# -ne 0 ]]; then
-      echo "cluster creation with id set is not available for this deployment target" >&2
-      return 1
-    fi
-    $terraform apply --var "cidr_remote_api=$rapi_cidr" /data >/dev/null || return 1
-    $terraform output -state=/data/terraform.tfstate cluster_id
-    ;;
+      bootstrap $BOOTSTRAP_OPTIONS -t "$_target" -fi $1
+    fi ;;
   esac
 }
 
 # destroy the cluster
 cluster_destroy() {
-  case $(deployment_target) in
-  local) ;;
-  dind) bootstrap -d ;;
-  aws) $terraform destroy /data ;;
+  local _target
+  _target="$(deployment_target)"
+  case $_target in
+  dind|aws)
+    bootstrap -t $_target -di $1 ;;
+  local)
+    docker stack rm amp ;;
   esac
 }
 
 # status of cluster, expects the cluster id as argument
 # exit 0 means healthy
 cluster_status() {
-  case $(deployment_target) in
+  local _clusterid=$1
+  local _status
+  local _target
+  _target=$(deployment_target)
+  case $_target in
   local) ;;
-  dind) bootstrap -s $1 &>/dev/null ;;
-  aws) $terraform output -state=/data/terraform.tfstate $cluster_id &>/dev/null ;;
+  dind|aws)
+    bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
+  esac
+}
+
+# size of cluster, expects the cluster id as argument
+cluster_nodecount() {
+  local _clusterid=$1
+  local _target
+  local _count
+  _target=$(deployment_target)
+  case $_target in
+  local) # single manager node
+    echo 1
+    ;;
+  dind|aws)
+    _count=$(bootstrap -t $_target -l $_clusterid | wc -l)
+    if [[ $_count -gt 0 ]]; then
+      echo $_count
+      return 0
+    fi
+    echo "node count failed" >&2
+    bootstrap -t $_target -l $_clusterid >&2
+    return 1
+    ;;
+  *)
+    echo "unknown deployment target ($_target)" >&2
+    return 1 ;;
   esac
 }
 
@@ -99,12 +126,32 @@ EOF
   docker image rm $image > /dev/null
 }
 
+# creates a amp-secrets volume by sending the local secrets to the host in a build context
+create_amp_secrets_volume() {
+  local builddir=$(mktemp -d)
+  local dockerfile=$builddir/Dockerfile
+  local image=amp-secrets-builder:local
+  cat > $dockerfile << EOF
+FROM alpine:3.5
+COPY secrets /secrets
+VOLUME /secrets
+CMD ["true"]
+EOF
+  mkdir -p "$SECRETSDIR"
+  cp -pr "$SECRETSDIR" "$builddir/secrets"
+  docker build -t $image $builddir >/dev/null
+  rm -rf $builddir
+  docker run --rm -v amp-secrets:/secrets $image
+  docker image rm $image > /dev/null
+}
+
 # sets hosts for Docker remote API and for the Docker registry
 # depending on the deployment target
 set_deployment_variables(){
   case $(deployment_target) in
   local)
     stacks_path="$STACKSDIR"
+    secrets_path="$SECRETSDIR"
     amps="docker"
     domainname=$localdomainname
     return
@@ -113,25 +160,42 @@ set_deployment_variables(){
     dockerhost=m1
     registryhost=127.0.0.1
     create_amp_stacks_volume
-    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-stacks:/stacks docker --host=$dockerhost"
+    create_amp_secrets_volume
+    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-secrets:/secrets -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
+    secrets_path=/secrets
     domainname=$localdomainname
     export DOCKERHOST=$dockerhost
     ;;
   aws)
+    local awscf="$awscli --profile ${PROFILE:-default} --region ${REGION:-us-west-2} cloudformation"
+    local _clusterid
+    local _publicip
+    _clusterid="$CID"
+    echo "$CID" | grep -q "/" && _clusterid="$(echo $CID | awk -F/ '{print $2}')"
     # todo: use a secured remote API
-    dockerhost=$($terraform output -state=/data/terraform.tfstate leader_ip)
-    registryhost=$dockerhost
-    amps="TAG=$TAG REGISTRATION=$REGISTRATION NOTIFICATIONS=$NOTIFICATIONS docker -H $dockerhost"
-    stacks_path=stacks
-    domainname=$clouddomainname
+    dockerhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`PublicManagerHost`].OutputValue' --output text) || exit 1
+    # if the DNS name point to several engines, we need a single one to avoid strange CLI issues (run = 2 calls, create + start)
+    _publicip=$(docker -H "$dockerhost" node inspect self -f '{{.Spec.Labels.PublicIP}}')
+    [[ -n "$_publicip" && "$_publicip" != "<no value>" ]] && dockerhost=$_publicip
+    registryhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`MirrorRegistries`].OutputValue' --output text) || exit 1
+    # if a single registry is defined on this cluster, we'll push images on it
+    # else, we'll skip the image push
+    echo "$registryhost" | grep -q " " && registryhost=""
+    amps="docker -H $dockerhost"
+    stacks_path=$STACKSDIR
+    secrets_path=$SECRETSDIR
+    domainname=$DOMAIN
     # variable used in sub scripts
     export DOCKERHOST=$dockerhost
     ;;
   esac
 
+  registryurl=$(echo $registryhost | cut -d, -f1)
+  # if no scheme, add the default port
+  if echo $registryurl | grep -qv "://" && [[ -n "$registryurl" ]]; then registryurl=$registryurl:5000; fi
   echo "Docker host = $dockerhost"
-  echo "Docker registry = $registryhost"
+  echo "Docker registry = $registryurl"
 }
 
 checkexit() {
@@ -141,7 +205,9 @@ checkexit() {
 
 cleanup() {
   docker volume rm amp-stacks &>/dev/null
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && bootstrap -d $CID
+  docker volume rm amp-secrets &>/dev/null
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && docker stack rm amp
 }
 
 ok() {
@@ -180,49 +246,58 @@ kurl() {
 # TODO: empty for now
 prepare_amplifier_configuration(){
   local _conf
-  _conf="$HOME/.config/amp/amplifier.yml"
+  local cid
   $amps secret ls | grep -q "amplifier_yml" && return 0
-  if [[ -f "$_conf" ]]; then
-    echo "creating the amplifier_yml secret from the local configuration" >&2
-    $amps secret create "amplifier_yml" "$_conf"
+  _conf="$SECRETSDIR/amplifier.yml"
+  if [[ ! -f "$_conf" ]]; then
+    mkdir -p "$SECRETSDIR"
+    echo "---" > "$_conf"
   else
-    echo "creating an empty amplifier_yml secret" >&2
-    echo "---" | $amps secret create "amplifier_yml" -
+    echo "using existing configuration for the amplifier_yml secret" >&2
   fi
+  # copy the configuration in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp "$_conf" $cid:/secrets/
+  docker kill "$cid" >/dev/null 2>&1
+  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" && echo "secret amplifier_yml successfully created" >&2
 }
 
 # pushes certificates in a Docker secret, ready to use by services in stack files
-# for local bootstrap, a self signed certificate is created
+# for local/dind bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
 # it has to be in the stacks folder, to allow access to the Docker client
 prepare_certificates() {
   if [[ $# -ne 1 ]]; then
     return 1
   fi
+  $amps secret ls | grep -q "certificate_atomiq" && return 0
+
   local name=$1
-  local certfile="$SP/../stacks/$name.pem"
-  if [[ $(deployment_target) = "local" ]]; then
-    mv $(mkcert) $certfile
-  fi
+  local certfile="$SECRETSDIR/$name.pem"
+
+  mkdir -p "$SECRETSDIR"
+  case $(deployment_target) in
+  local|dind)
+    mv "$(mkcert)" "$certfile" ;;
+  esac
   if [[ ! -f "$certfile" ]]; then
     # TODO use certbot
     echo "can't find certificate $certfile" >&2
     return 1
   fi
-  # copy the certificate in the amp-stacks volume
-  cid=$(docker run -d --rm -v amp-stacks:/stacks alpine:3.5 sleep 15)
+  # copy the certificate in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
-  docker cp $certfile $cid:/stacks/$name.pem
-  docker kill $cid
-  echo "checking if the certificate secret is already defined"
-  $amps secret ls | grep -q "certificate_atomiq" && return 0
+  docker cp "$certfile" $cid:/secrets/$name.pem
+  docker kill "$cid" >/dev/null 2>&1
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" $stacks_path/$name.pem
+  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" && echo "secret certificate_atomiq successfully created" >&2
 }
 
 # process the command line options and arguments
 parse_cmd() {
-  while getopts ":w:m:t:l:T:c:r:n:p:" opt; do
+  while getopts ":w:m:t:l:T:c:r:n:p:g:D:" opt; do
     case $opt in
     w|m|t|l) # just pass it to the bootstrap script
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
@@ -236,11 +311,22 @@ parse_cmd() {
     n) # notifications
       export NOTIFICATIONS=$OPTARG
       ;;
+    D) # domain for cluster deployment
+      BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+      DOMAIN=$OPTARG
+      if [[ ! -f $SECRETSDIR/${DOMAIN}.pem ]]; then
+        echo "can't find ${DOMAIN}.pem in $SECRETSDIR, abort" >&2
+        exit 1
+      fi
+      ;;
     c)
       CHECK=1
       ;;
     p) # provider
-      deployment_target $OPTARG
+      deployment_target $OPTARG >/dev/null
+      ;;
+    g) # region for cluster deployment
+      REGION=$OPTARG
       ;;
     esac
   done
@@ -250,11 +336,12 @@ parse_cmd() {
 }
 
 bootstrap_cluster() {
-  if [[ -z $CID ]]; then
-    echo "bootstrapping cluster"
+  if [[ -z "$CID" ]]; then
+    echo "bootstrapping cluster on $DEPLOYMENT_TARGET"
     CID=$(cluster_create)
     checkexit "bootstrap failed"
-    [[ ! -z $CID ]] && echo $CID
+    [[ -n "$CID" ]] && echo $CID
+    checkexit "no clusterid"
   else
     cluster_status $CID || cluster_create $CID
     checkexit "bootstrap failed"
@@ -267,52 +354,42 @@ bootstrap_cluster() {
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
-      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null
+      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null && CID=$(docker node inspect self -f '{{.ID}}')
     fi
     docker network ls | grep ampnet &>/dev/null
     if [[ $? -ne 0 ]]; then
       docker network create --attachable -d overlay ampnet
     fi
     ;;
-  dind)
-    clustercheck $CID
-    ;;
   *)
-    echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
-    echo "This script will need it in a moment"
-    clustersize=5
-    maxwait=560
-    SECONDS=0
-    while (( $($amps node ls -q | wc -l) < $clustersize )); do
-      sleep 5
-      (( $SECONDS > $maxwait )) && break
-      if [[ $((SECONDS % 20)) -eq 0 ]]; then
-        echo "still waiting, $($amps node ls -q | wc -l) nodes on $clustersize"
-        echo "will timeout in $((maxwait - SECONDS))"
-      fi
-    done
-    (( $SECONDS <= $maxwait ))
+    clustercheck -t 150 -p $(deployment_target) $CID
     ;;
   esac
   checkexit "cluster timed out"
   ok
 
+  typeset -i nodecount
+  nodecount=$(cluster_nodecount $CID)
+  checkexit "failed to count cluster nodes"
+  echo "cluster size is $nodecount"
+
   if [[ $(deployment_target) != "local" ]]; then
     echo "wait for swarm mode"
-    # TODO: fix swarmcheck, it now checks the local swarm, not the one from the cluster
-    swarmcheck 300
+    swarmcheck -t 300 -c $nodecount
     checkexit "swarm mode timed out"
     ok
 
-    echo "wait for registry"
-    curlcheck "${registryhost}:5000/v2/" 200 180
-    checkexit "registry timed out"
-    ok
+    if [[ -n "$registryurl" ]]; then
+      echo "wait for registry"
+      curlcheck "${registryurl}/v2/" 200 180
+      checkexit "registry timed out"
+      ok
+    fi
 
-    if [[ "$TAG" = "local" ]]; then
+    if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
       echo "push images to cluster"
       for image in amplifier amplifier-gateway ampbeat agent; do
-        pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
+        pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
       done
     else
       echo "image push to cluster is ignored (tag=${TAG:-latest})"
@@ -323,7 +400,7 @@ bootstrap_cluster() {
 deploy_stacks() {
   local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
 
-  if [[ $(deployment_target) == "local" ]]; then
+  if [[ "$(deployment_target)" = "local" ]]; then
     # force all placement constraints to deploy to a single manager
     export NODE_ROLE=manager
   fi
@@ -331,6 +408,7 @@ deploy_stacks() {
   echo "deploy amp monitoring stack to cluster - stage 1"
   deploystack ampmon.1.stack.yml amp
   echo "wait for all amp monitoring stage 1 stack service replicas to be running"
+
   servicescheck $maxwait
   checkexit "amp monitoring stage 1 service replica checks timed out"
   ok
