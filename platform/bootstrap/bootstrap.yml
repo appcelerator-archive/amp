@@ -463,7 +463,7 @@ Resources:
         MaxBatchSize: 1
         MinInstancesInService: 0
         PauseTime: PT10M
-        WaitOnResourceSignals: true
+        WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref ManagerSize
       HealthCheckGracePeriod: 200
