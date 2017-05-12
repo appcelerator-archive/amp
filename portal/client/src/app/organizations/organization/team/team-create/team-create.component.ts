@@ -53,7 +53,7 @@ export class TeamCreateComponent implements OnInit {
   }
 
   cancel() {
-    this.menuService.navigate(['/amp', 'organizations'])
+    this.menuService.returnToPreviousPath()
   }
 
 }

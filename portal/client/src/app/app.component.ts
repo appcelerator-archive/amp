@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Renderer } from '@angular/core';
 import { MenuService } from './services/menu.service';
-
+import { Router } from '@angular/router';
+import 'rxjs/add/operator/pairwise';
 
 
 @Component({
@@ -11,9 +12,21 @@ import { MenuService } from './services/menu.service';
 
 export class AppComponent {
 
-  constructor(public menuService : MenuService) { }
+  constructor(
+    public menuService : MenuService,
+    private renderer: Renderer,
+    private router : Router) { }
 
   ngOnInit() {
     this.menuService.waitingCursor(false)
+    let that = this
+    this.renderer.listen('window', 'resize', (evt) => {
+      this.menuService.resize(evt)
+    })
+    this.router.events
+      .subscribe((e: any) => {
+        this.menuService.pushPath(e.urlAfterRedirects);
+      });
+
   }
 }

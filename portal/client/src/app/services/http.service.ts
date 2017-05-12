@@ -27,19 +27,31 @@ export class HttpService {
   private token = ""
   onHttpError = new Subject();
   parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+  //default dev debug url
   addr = "http://localhost:8080/v1"
 
-  constructor(private http : Http) {}
+
+  constructor(private http : Http) {
+    let host = window.location.host
+    if (host.substring(0,3) == 'ui.') {
+      host = "gw."+host.substring(3)
+      this.addr=window.location.protocol +"//"+host+"/v1"
+      //this.addr="http//"+host+"/v1"
+      console.log("Gateway url: "+this.addr)
+    }
+  }
 
   users() {
     return this.httpGet("/users")
       .map((res : Response) => {
         const data = res.json()
         let list : User[] = []
-        for (let item of data.users) {
-          let user = new User(item.name, item.email, "User")
-          user.verified = item.is_verified
-          list.push(user)
+        if (data.users) {
+          for (let item of data.users) {
+            let user = new User(item.name, item.email, "User")
+            user.verified = item.is_verified
+            list.push(user)
+          }
         }
         return list
       }
@@ -86,25 +98,27 @@ export class HttpService {
         //console.log("data")
         //console.log(data)
         let list : Organization[] = []
-        for (let org of data.organizations) {
-          let newOrg = new Organization(org.name, org.email)
-          if (org.members) {
-            for (let mem of org.members) {
-              newOrg.members.push(new Member(mem.name, mem.role))
-            }
-          }
-          if (org.teams) {
-            for (let team of org.teams) {
-              let newTeam = new Team(team.name)
-              for (let mname of team.members) {
-                newTeam.members.push(new Member(mname, 0))
+        if (data.organizations) {
+          for (let org of data.organizations) {
+            let newOrg = new Organization(org.name, org.email)
+            if (org.members) {
+              for (let mem of org.members) {
+                newOrg.members.push(new Member(mem.name, mem.role))
               }
-              newOrg.teams.push(newTeam)
             }
+            if (org.teams) {
+              for (let team of org.teams) {
+                let newTeam = new Team(team.name)
+                for (let mname of team.members) {
+                  newTeam.members.push(new Member(mname, 0))
+                }
+                newOrg.teams.push(newTeam)
+              }
+            }
+            list.push(newOrg)
           }
-          list.push(newOrg)
         }
-        console.log(list)
+        //console.log(list)
         return list
       }
     )
@@ -112,6 +126,14 @@ export class HttpService {
 
   login(username : string, pwd : string) {
     return this.httpPost("/login", {name: username, password: pwd})
+  }
+
+  signup(username : string, pwd : string, email : string) {
+    return this.httpPost("/signup", {name: username, password: pwd, email: email})
+  }
+
+  removeUser(username : string) {
+    return this.httpDelete("/users/"+username)
   }
 
   stacks() {
@@ -133,6 +155,18 @@ export class HttpService {
       }
       return list
     })
+  }
+
+  deployStack(stackName : string, fileContent : string) {
+    var data = [];
+    for (let i = 0; i < fileContent.length; i++){
+        data.push(fileContent.charCodeAt(i));
+    }
+    return this.httpPost("/stacks", { name : stackName, compose: data});
+  }
+
+  removeStack(stackName : string) {
+    return this.httpDelete("/stacks/"+stackName)
   }
 
   services(stackName : string) {
@@ -211,7 +245,7 @@ export class HttpService {
             this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
             this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
             this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
-            this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 1, 1)
+            this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
           }
           if (request.stats_net) {
             this.setValue(datal, 'net-rx-bytes', item.net.rx_bytes, 1, 1)
@@ -223,6 +257,7 @@ export class HttpService {
           list.push(
             new GraphHistoricData(
               this.parseTime(item.group),
+              item.sgroup,
               datal
             )
           )
@@ -259,7 +294,7 @@ export class HttpService {
     return this.http.get(this.addr+url, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
         console.log("retry: "+errorCount)
-        if (errorCount >= httpRetryNumber) {
+        if (errorCount >= httpRetryNumber-1) {
             throw err;
         }
         return errorCount + 1;
@@ -272,7 +307,7 @@ export class HttpService {
     return this.http.delete(this.addr+url, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
         console.log("retry: "+errorCount)
-        if (errorCount >= httpRetryNumber) {
+        if (errorCount >= httpRetryNumber-1) {
             throw err;
         }
         return errorCount + 1;
@@ -285,7 +320,7 @@ export class HttpService {
     return this.http.post(this.addr+url, data, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
         console.log("retry: "+errorCount)
-        if (errorCount >= httpRetryNumber) {
+        if (errorCount >= httpRetryNumber-1) {
             throw err;
         }
         return errorCount + 1;

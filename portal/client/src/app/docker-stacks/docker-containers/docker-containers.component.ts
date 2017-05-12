@@ -7,6 +7,7 @@ import { DockerContainer } from '../models/docker-container.model';
 import { DockerService } from '../models/docker-service.model';
 import { MenuService } from '../../services/menu.service';
 import { ActivatedRoute } from '@angular/router';
+import { MetricsService } from '../../metrics/services/metrics.service';
 
 @Component({
   selector: 'app-containers',
@@ -26,7 +27,8 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
     public dockerContainersService : DockerContainersService,
     private dockerServicesService : DockerServicesService,
     public menuService : MenuService,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private metricsService : MetricsService) {
       listService.setFilterFunction(dockerContainersService.match)
   }
 
@@ -78,12 +80,11 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
   }
 
   returnBack() {
-    console.log("return back from container: "+this.service.id)
-    this.menuService.navigate(["/amp", "stacks", this.stackName, "services"])
+    this.menuService.returnToPreviousPath()
   }
 
   metrics(containerId : string) {
-    this.menuService.navigate(['/amp', 'metrics', 'container', containerId])
+    this.menuService.navigate(['/amp', 'metrics', 'task', 'single', containerId])
   }
 
 }

@@ -52,19 +52,10 @@ export class UsersService {
     this.menuService.navigate(["/auth", "signin"])
   }
 
-  login(username : string, pwd : string) {
-    this.httpService.login(username, pwd).subscribe(
-      data => {
-        let ret = data.json()
-        localStorage.setItem('currentUser', JSON.stringify({ username: username, token: ret.auth }));
-        localStorage.setItem('lastUser', JSON.stringify({ username: username}));
-        this.setCurrentUser(username, ret.auth, true)
-      },
-      error => {
-        localStorage.removeItem('currentUser');
-        this.onUsersError.next(error)
-      }
-    );
+  login(username : string, token : string) {
+    localStorage.setItem('currentUser', JSON.stringify({ username: username, token: token }));
+    localStorage.setItem('lastUser', JSON.stringify({ username: username}));
+    this.setCurrentUser(username, token, true)
   }
 
   setCurrentUser(username : string, token : string, nav : boolean) {
@@ -88,6 +79,7 @@ export class UsersService {
       },
       error => {
         console.log(error)
+        this.logout()
         this.onUsersError.next(error)
       }
     )

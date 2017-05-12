@@ -1,17 +1,32 @@
 import { Injectable } from '@angular/core';
 import { GraphHistoricData } from '../models/graph-historic-data.model';
 import { StatsRequest } from '../models/stats-request.model';
+import { GraphDataAnswer } from '../models/graph-data-answer.model';
+import { GraphLine} from '../models/graph-line.model';
 import { HttpService } from '../../services/http.service';
+import { MenuService } from '../../services/menu.service';
 import { Subject } from 'rxjs/Subject'
 
 @Injectable()
 export class MetricsService {
   histoData : GraphHistoricData[] = []
+  public lineVisibleMap = {}
+  lines : GraphLine[] = []
+  public graphColors = ['DodgerBlue', 'slateblue', 'blue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red', 'yellow', 'blue']
   statsRequest : StatsRequest
   onNewData = new Subject();
+  timePeriod = "now-10m"
+  timeGroup = "30s"
+  periodRefresh = 30
+  object = ""
+  type = ""
+  ref = ""
+  clickPossible : true
   timer : any
 
-  constructor(private httpService : HttpService) { }
+  constructor(
+    private httpService : HttpService,
+    private menuService : MenuService) { }
 
   setHistoricRequest(request : StatsRequest, period : number) {
     this.statsRequest = request
@@ -24,23 +39,69 @@ export class MetricsService {
 
   cancelRequests() {
     if (this.timer) {
+      console.log("clear interval")
       clearInterval(this.timer);
     }
   }
 
-  getHistoricData(fields : string[]) : GraphHistoricData[] {
+  getHistoricData(fields : string[], object : string, graphType : string) : GraphDataAnswer {
     let data = []
-    this.histoData.forEach( (ele) => {
-      let ret = []
-      for (let field of fields) {
-        ret.push(ele.values[field])
+    let lines : GraphLine[] = []
+    //console.log(fields)
+    //console.log("type="+graphType+" data.length="+this.histoData.length)
+    //console.log(this.histoData)
+    if (graphType=='single') {
+      for (let ii=0; ii<fields.length; ii++) {
+        let name = fields[ii]
+        lines.push(new GraphLine(name, this.graphColors[ii]))
+        if (this.lineVisibleMap[name] === undefined) {
+          this.lineVisibleMap[name]=true
+        }
       }
-      let newEle = new GraphHistoricData(ele.date, undefined)
-      newEle.graphValues = ret
-      data.push(newEle)
-    })
+      this.histoData.forEach( (ele) => {
+        let ret = []
+        for (let field of fields) {
+          ret.push(ele.values[field])
+        }
+        let newEle = new GraphHistoricData(ele.date, '', undefined)
+        newEle.graphValues = ret
+        data.push(newEle)
+      })
+    }
+    else {
+      if (this.histoData.length>0) {
+        let date = this.histoData[0].date
+        let ret = []
+        let localLineRefMap = {}
+        this.histoData.forEach( (ele : GraphHistoricData) => {
+          if (date.getTime() !== ele.date.getTime()) {
+            let newEle = new GraphHistoricData(ele.date, '', undefined)
+            newEle.graphValues = ret
+            data.push(newEle)
+            date = ele.date
+            ret = []
+          }
+          if (ele.name.toLowerCase() != 'nostack' && ele.name.toLowerCase() != 'noservice') {
+            ret.push(ele.values[fields[0]])
+            if (localLineRefMap[ele.name] === undefined) {
+              localLineRefMap[ele.name] = ele.name
+              let line = new GraphLine(ele.name, this.graphColors[lines.length])
+              lines.push(line)
+              if (this.lineVisibleMap[line.name] === undefined) {
+                this.lineVisibleMap[line.name]=true
+              }
+            }
+          }
+        })
+        let newEle = new GraphHistoricData(date, '', undefined)
+        newEle.graphValues = ret
+        data.push(newEle)
+      }
+    }
+    //console.log(lines)
     //console.log(data)
-    return data
+    this.lines=lines
+    return new GraphDataAnswer(lines, data)
   }
 
   updateHistoricData() {
@@ -57,17 +118,54 @@ export class MetricsService {
     );
   }
 
-  setPeriod(period :string, group : string) : string {
+  set(object : string, type : string, ref : string) {
+    this.object = object
+    this.type = type
+    this.ref = ref
+  }
+
+  setTimePeriod(period :string, group : string) {
+    this.timePeriod = period
+    this.timeGroup = group
     if (this.statsRequest) {
       this.statsRequest.period = period
       this.statsRequest.time_group = group
       this.updateHistoricData()
-      return this.buildPeriodLabel(period, group)
     }
   }
 
-  buildPeriodLabel(period : string, group : string) : string {
-    return "time selection"
+  setRefreshPeriod(period :string) {
+    this.periodRefresh = parseInt(period)
+    clearInterval(this.timer)
+    this.timer = setInterval(() => this.updateHistoricData(), parseInt(period) * 1000)
   }
 
+  toggleLine(name: string) {
+    this.lineVisibleMap[name]=!this.lineVisibleMap[name]
+    this.onNewData.next()
+  }
+
+  route(ref : string) {
+    if (this.object == 'global') {
+      if (this.type == 'multi') {
+        this.menuService.navigate(['/amp', 'metrics', 'stack', 'multi', 'all'])
+      } else {
+        this.menuService.navigate(['/amp', 'metrics', 'stack', 'multi', 'all'])
+      }
+    }
+    if (this.object == 'stack') {
+      if (this.type == 'multi') {
+        this.menuService.navigate(['/amp', 'metrics', 'service', 'multi', ref])
+      } else {
+        this.menuService.navigate(['/amp', 'metrics', 'service', 'single', this.ref])
+      }
+    }
+    if (this.object == 'service') {
+      if (this.type == 'multi') {
+        this.menuService.navigate(['/amp', 'metrics', 'task', 'multi', ref])
+    } else {
+        this.menuService.navigate(['/amp', 'metrics', 'task', 'single', this.ref])
+      }
+    }
+  }
 }

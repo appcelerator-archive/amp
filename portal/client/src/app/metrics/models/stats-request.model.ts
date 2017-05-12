@@ -8,7 +8,7 @@ export class StatsRequest {
   group: string
   filter_container_id: string
   filter_container_name: string
-  filter_container_shortName: string
+  filter_container_short_name: string
   filter_container_state: string
   filter_service_name: string
   filter_service_id: string

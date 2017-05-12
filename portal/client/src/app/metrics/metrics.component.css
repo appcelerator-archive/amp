@@ -1,0 +1,19 @@
+.panel-default {
+  margin-top:5px;
+  margin-bottom:5px;
+}
+
+.legend-item {
+  font-size:12px;
+  float: left;
+  margin: 2px 4px 2px 4px;
+  padding: 2px 5px 2px 5px;
+  border-style: solid;
+  color:black;
+  border-width: 2px;
+}
+
+.line-hidden {
+  color: grey;
+  background-color: lightgrey;
+}

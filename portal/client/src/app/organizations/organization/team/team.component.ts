@@ -177,7 +177,7 @@ export class TeamComponent implements OnInit, OnDestroy {
   }
 
   returnBack() {
-    this.menuService.navigate(['/amp', 'organizations', this.organization.name])
+    this.menuService.returnToPreviousPath()
   }
 
   removeTeam() {

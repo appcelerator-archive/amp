@@ -3,6 +3,7 @@ import { User } from '../models/user.model';
 import { UsersService } from '../services/users.service'
 import { ListService } from '../services/list.service';
 import { MenuService } from '../services/menu.service';
+import { HttpService } from '../services/http.service';
 
 @Component({
   selector: 'app-user-list',
@@ -13,11 +14,15 @@ import { MenuService } from '../services/menu.service';
 export class UsersComponent implements OnInit {
   currentUser : User
   createMode = false
+  emptyUser : User = new User("", "", "")
+  selectedUser : User = this.emptyUser
+  message = ""
 
   constructor(
     public usersService : UsersService,
     public listService : ListService,
-    private menuService : MenuService) {
+    private menuService : MenuService,
+    private httpService : HttpService) {
     listService.setFilterFunction(usersService.match)
   }
 
@@ -40,6 +45,25 @@ export class UsersComponent implements OnInit {
     for (let user of this.usersService.users) {
       user.checked=true
     }
+  }
+
+  selectUser(name : string) {
+    this.selectedUser = this.emptyUser
+    for (let user of this.usersService.users) {
+      if (user.name == name) {
+        this.selectedUser = user
+      }
+    }
+  }
+
+  removeUser() {
+    this.httpService.removeUser(this.selectedUser.name).subscribe(
+      data => {},
+      error => {
+        let data = error.json()
+        this.message = data.error
+      }
+    )
   }
 
 }

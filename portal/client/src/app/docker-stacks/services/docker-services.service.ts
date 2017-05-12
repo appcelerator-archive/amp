@@ -7,7 +7,8 @@ import { Subject } from 'rxjs/Subject'
 @Injectable()
 export class DockerServicesService {
   services : DockerService[] = []
-  currentService : DockerService = new DockerService("", "", "", "", "")
+  emptyService : DockerService = new DockerService("", "", "", "", "")
+  currentService : DockerService = this.emptyService
   onServicesLoaded = new Subject();
   onServicesError = new Subject();
 
@@ -35,9 +36,10 @@ export class DockerServicesService {
     return false
   }
 
-  setCurrentService(id) {
+  setCurrentService(name) {
+    this.currentService= this.emptyService
     for (let service of this.services) {
-      if (service.id === id) {
+      if (service.name === name) {
         this.currentService = service
       }
     }
