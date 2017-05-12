@@ -48,7 +48,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "{{ var "/bootstrap/ip" }}",
                   "Docker" : {
-                    "Host" : "tcp://localhost:{{ var "/docker/remoteapi/port" }}"
+                    "Host" : "unix:///var/run/docker.sock"
                   }
                 }
               }

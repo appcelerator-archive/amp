@@ -12,7 +12,7 @@
         "Plugin" : "manager-swarm",
         "Launch" : {
             "os": {
-                "Cmd" : "infrakit-manager --name group  --proxy-for-group group-stateless swarm --leader-file {{env "INFRAKIT_HOME"}}/leader --store-dir {{env "INFRAKIT_HOME"}}/configs > {{env "INFRAKIT_HOME"}}/logs/manager-swarm.log 2>&1"
+                "Cmd" : "infrakit-manager --name group  --proxy-for-group group-stateless swarm > {{env "INFRAKIT_HOME"}}/logs/manager-swarm.log 2>&1"
             }
         }
     }
