@@ -87,8 +87,18 @@ Parameters:
     - t2.large
     - m3.medium
     - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
     ConstraintDescription: Must be a valid EC2 HVM instance type.
-    Default: t2.micro
+    Default: t2.medium
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc).
   WorkerSize:
     Type: Number
@@ -532,5 +542,6 @@ Resources:
               runcmd:
                 - curl ${InfraKitConfigurationBaseURL}/bootstrap -o /usr/local/bin/bootstrap.sh
                 - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/bootstrap.sh /usr/local/bin/asg-init.sh
                 - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} ENV_FILE=/tmp/env.ikt /usr/local/bin/asg-init.sh
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
