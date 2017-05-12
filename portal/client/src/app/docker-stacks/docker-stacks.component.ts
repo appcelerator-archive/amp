@@ -3,8 +3,10 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { DockerStack } from './models/docker-stack.model';
 import { DockerStacksService } from './services/docker-stacks.service';
 import { MenuService } from '../services/menu.service';
+import { MetricsService } from '../metrics/services/metrics.service';
 import { ListService } from '../services/list.service';
-import {Observable} from 'rxjs/Observable';
+import { HttpService } from '../services/http.service';
+import { Observable } from 'rxjs/Observable';
 
 @Component({
   selector: 'app-stacks',
@@ -16,12 +18,15 @@ export class DockerStacksComponent implements OnInit {
   currentStack : DockerStack
   deployTitle = "Deploy"
   timer : any = null;
+  message = ""
 
   constructor(
     private route : ActivatedRoute,
     public dockerStacksService : DockerStacksService,
     public listService : ListService,
-    private menuService : MenuService) {
+    private menuService : MenuService,
+    private metricsService : MetricsService,
+    private httpService : HttpService) {
       listService.setFilterFunction(dockerStacksService.match)
     }
 
@@ -79,32 +84,34 @@ export class DockerStacksComponent implements OnInit {
     this.menuService.navigate(["/amp", "stacks", stackName, "services"])
   }
 
-  selectStack(id : string) {
-    let lastId = this.dockerStacksService.currentStack.id
-    if (lastId == id) {
-        this.dockerStacksService.setCurrentStack("")
-        this.deployTitle="Deploy"
-        return
-    }
-    this.deployTitle="Update"
-    this.dockerStacksService.setCurrentStack(id)
+  selectStack(name : string) {
+    this.dockerStacksService.setCurrentStack(name)
   }
 
   deploy() {
-    if (this.deployTitle == "Update") {
-      this.update()
-      return
-    }
     this.menuService.navigate(["/amp", "stacks", "deploy"])
   }
 
   update() {
-    let stackId = this.dockerStacksService.currentStack.id
-    this.menuService.navigate(["/amp", "stacks", stackId, "deploy"])
+    let stackName = this.dockerStacksService.currentStack.name
+    this.menuService.navigate(["/amp", "stacks", stackName, "update"])
+  }
+
+  remove() {
+    this.httpService.removeStack(this.dockerStacksService.currentStack.name).subscribe(
+      data => {
+        this.selectStack("")
+        this.dockerStacksService.loadStacks()
+      },
+      error => {
+        let data = error.json()
+        this.message = data.error
+      }
+    )
   }
 
   metrics(stackName : string) {
-    this.menuService.navigate(['/amp', 'metrics', 'stack', stackName])
+    this.menuService.navigate(['/amp', 'metrics', 'stack', 'single', stackName])
   }
 
 }

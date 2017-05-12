@@ -3,6 +3,7 @@ import { User } from '../../models/user.model';
 import { UsersService } from '../../services/users.service';
 import { NgForm } from '@angular/forms';
 import { MenuService } from '../../services/menu.service';
+import { HttpService } from '../../services/http.service';
 
 @Component({
   selector: 'app-signin',
@@ -12,13 +13,16 @@ import { MenuService } from '../../services/menu.service';
 export class SigninComponent implements OnInit, OnDestroy {
   message = ""
   messageError = ""
+  byPass = false
   constructor(
     public usersService : UsersService,
-    private menuService : MenuService) { }
+    private menuService : MenuService,
+    private httpService : HttpService) { }
 
   ngOnInit() {
     let currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (currentUser) {
+      this.byPass = true
       this.usersService.setCurrentUser(currentUser.username, currentUser.token, true)
     }
   }
@@ -29,7 +33,16 @@ export class SigninComponent implements OnInit, OnDestroy {
   }
 
   signin(form : NgForm) {
-    this.usersService.login(form.value.username, form.value.password)
+    this.httpService.login(form.value.username, form.value.password).subscribe(
+      data => {
+        let ret = data.json()
+        this.usersService.login(form.value.username, ret.auth)
+      },
+      error => {
+        let data = error.json()
+        this.messageError = data.error
+      }
+    )
   }
 
 }

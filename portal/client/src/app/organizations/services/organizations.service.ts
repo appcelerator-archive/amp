@@ -29,7 +29,6 @@ export class OrganizationsService {
   }
 
   setCurrentOrganization(org : Organization) {
-    console.log(org.name)
     this.currentOrganization = org
   }
 

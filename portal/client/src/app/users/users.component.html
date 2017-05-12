@@ -21,10 +21,16 @@
         <div classes="col-lg-12">
           <div class="pull-left">
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-danger" ng-click="removeAction()">
-                <i class="fa fa-trash space-right" aria-hidden="true"></i>Remove</button>
+              <button type="button" class="btn btn-danger"
+                [disabled]="selectedUser.name==''"
+                (click)="removeUser()">
+                <i class="fa fa-trash space-right" aria-hidden="true"></i>
+                Remove
+              </button>
               <button type="button" class="btn btn-primary" routerLink="/amp/signup">
-                <i class="fa fa-user-plus" aria-hidden="true"></i> Add user</button>
+                <i class="fa fa-user-plus" aria-hidden="true"></i>
+                Add user
+              </button>
             </div>
           </div>
           <div class="pull-right">
@@ -38,6 +44,8 @@
           </div>
         </div>
       </div>
+
+      <span class="help-block" style="color:red;margin-left:20px">{{ message }}</span>
 
       <div class="row">
         <div classes="no-padding">
@@ -79,7 +87,7 @@
               </thead>
               <tbody>
                 <tr class="ng-scope" *ngFor="let user of listService.getData()">
-                  <td><input type="checkbox"></td>
+                  <td><input type="checkbox" [checked]="user.name===selectedUser.name" (click)=selectUser(user.name)></td>
                   <td class="ng-binding">{{ user.name }}</td>
                   <td class="ng-binding">{{ user.email }}</td>
                   <td class="ng-binding">

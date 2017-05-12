@@ -41,7 +41,7 @@ export class OrganizationCreateComponent implements OnInit {
   }
 
   cancel() {
-    this.menuService.navigate(['/amp', 'organizations'])
+    this.menuService.returnToPreviousPath()
   }
 
 }

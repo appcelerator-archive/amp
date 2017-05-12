@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/appcelerator/amp/pkg/docker"
@@ -24,8 +23,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 	}
 	taskList := &TasksReply{}
 	for _, item := range list {
-		fmt.Printf("task: %v\n", item)
-		if strings.HasPrefix(item.ServiceID, in.ServiceId) {
+		if strings.HasPrefix(item.ServiceID, in.ServiceId) || item.Name == in.ServiceId {
 			task := &Task{
 				Id:           item.ID,
 				Image:        strings.Split(item.Spec.ContainerSpec.Image, "@")[0],

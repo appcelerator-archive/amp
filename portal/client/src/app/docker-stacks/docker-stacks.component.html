@@ -12,14 +12,36 @@
         <div classes="col-lg-12">
           <div class="pull-left">
             <div class="btn-group" role="group" aria-label="...">
-              <button type="button" class="btn btn-danger" ng-click="removeAction()">
-                <i class="fa fa-trash space-right"></i>Remove</button>
-              <button type="button" class="btn btn-primary" (click)=deploy()>
-                <i class="glyphicon glyphicon-tasks"></i>{{ deployTitle }}</button>
-              <button type="button" class="btn btn-primary">
-                <i class="glyphicon glyphicon-list-alt"></i> Logs</button>
-              <button type="button" class="btn btn-primary" [disabled]="dockerStacksService.currentStack.name===''" (click)="metrics(dockerStacksService.currentStack.name)">
-                <i class="glyphicon glyphicon-stats"></i> Metrics</button>
+              <button type="button" class="btn btn-primary"
+                (click)=deploy()>
+                <i class="glyphicon glyphicon-tasks space-right"></i>
+                Deploy
+              </button>
+            </div>
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-danger"
+                [disabled]="dockerStacksService.currentStack.name==''"
+                (click)="remove()">
+                <i class="fa fa-trash space-right"></i>
+                Remove
+              </button>
+              <button type="button" class="btn btn-primary"
+                [disabled]="dockerStacksService.currentStack.name==''"
+                (click)=update()>
+                <i class="glyphicon glyphicon-tasks space-right"></i>
+                Update
+              </button>
+              <button type="button" class="btn btn-primary"
+                [disabled]="dockerStacksService.currentStack.name==''">
+                <i class="glyphicon glyphicon-list-alt space-right"></i>
+                Logs
+              </button>
+              <button type="button" class="btn btn-primary"
+                [disabled]="dockerStacksService.currentStack.name==''"
+                (click)="metrics(dockerStacksService.currentStack.name)">
+                <i class="glyphicon glyphicon-stats space-right"></i>
+                Metrics
+              </button>
             </div>
           </div>
           <div class="pull-right">
@@ -32,6 +54,8 @@
           </div>
         </div>
       </div>
+
+      <span class="help-block" style="color:red;margin-left:20px">{{ message }}</span>
 
       <div class="row">
         <div classes="no-padding">
@@ -73,7 +97,7 @@
               </thead>
               <tbody>
                 <tr (click)="selectStack(stack.name)" *ngFor="let stack of listService.getData()">
-                  <td><input type="checkbox" [checked]="dockerStacksService.currentStack.id===stack.id"></td>
+                  <td><input type="checkbox" [checked]="dockerStacksService.currentStack.id===stack.id" (click)=selectStack(stack.name)></td>
                   <td>{{ stack.shortId }}</td>
                   <td>{{ stack.name }}</td>
                   <td> {{ stack.ownerName }}</td>

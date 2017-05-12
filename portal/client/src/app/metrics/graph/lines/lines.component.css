@@ -1,9 +1,13 @@
 
+app-graph-line {
+  position: absolute;
+}
+
 .d3-chart {
-  width: 100%;
-  height: 280px;
   margin: 0px;
   padding: 0px;
+  height: 100%;
+  width: 100%;
 }
 
 .d3-chart .axis path,
@@ -17,8 +21,16 @@
 
 .line {
   fill: none;
-  stroke: steelblue;
   stroke-width: 2px;
+}
+
+.selectedLine {
+  fill: none;
+  stroke-width: 3px;
+}
+
+.info {
+  font-size: 12px;
 }
 
 .grid line {
@@ -48,14 +60,4 @@
 
 .text-label {
   font: 12px sans-serif;
-}
-
-.toolTip {
-  position: absolute;
-  min-width: 80px;
-  height: auto;
-  background: none repeat scroll 0 0 #ffffff;
-  border: 1px solid #6F257F;
-  padding: 14px;
-  text-align: center;
 }

@@ -53,7 +53,6 @@ export class OrganizationComponent implements OnInit, OnDestroy {
         }
       }
       if (this.organization) {
-        console.log(this.organization)
         this.initialUserList = this.usersService.getAllNoMembers(this.organization.members)
         this.addedUsers = this.organization.members.slice()
         this.users = this.initialUserList.slice()
@@ -78,7 +77,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
   }
 
   returnBack() {
-    this.menuService.navigate(["/amp", "organizations"])
+    this.menuService.returnToPreviousPath()
   }
   addUser( user : Member) {
     user.status++;

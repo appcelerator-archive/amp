@@ -592,20 +592,6 @@
         "tags": [
           "Account"
         ]
-      },
-      "delete": {
-        "operationId": "DeleteUser",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "tags": [
-          "Account"
-        ]
       }
     },
     "/v1/users/password/change": {
@@ -700,6 +686,28 @@
             "description": "",
             "schema": {
               "$ref": "#/definitions/accountGetUserReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      },
+      "delete": {
+        "operationId": "DeleteUser",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
             }
           }
         },

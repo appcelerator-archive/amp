@@ -6,6 +6,7 @@ import { DockerService } from '../models/docker-service.model';
 import { DockerStack } from '../models/docker-stack.model';
 import { MenuService } from '../../services/menu.service';
 import { ActivatedRoute } from '@angular/router';
+import { MetricsService } from '../../metrics/services/metrics.service';
 
 @Component({
   selector: 'app-services',
@@ -16,15 +17,14 @@ import { ActivatedRoute } from '@angular/router';
 export class DockerServicesComponent implements OnInit, OnDestroy {
   routeSub : any
   timer : any
-  currentService : DockerService = new DockerService("", "", "", "", "")
-  stack : DockerStack = new DockerStack("", "", 0, "", "")
 
   constructor(
     public listService : ListService,
     public dockerServicesService : DockerServicesService,
-    private dockerStacksService : DockerStacksService,
+    public dockerStacksService : DockerStacksService,
     public menuService : MenuService,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private metricsService : MetricsService) {
     listService.setFilterFunction(dockerServicesService.match)
   }
 
@@ -34,7 +34,6 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
       let stackName = params['stackName'];
       for (let stack of this.dockerStacksService.stacks) {
         if (stack.name == stackName) {
-          this.stack = stack
           this.dockerStacksService.currentStack = stack
         }
       }
@@ -72,21 +71,23 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
 
   containerList(serviceId : string) {
     this.dockerServicesService.setCurrentService(serviceId)
-    this.menuService.navigate(["/amp", "stacks", this.stack.name, "services", serviceId, "containers"])
+    this.menuService.navigate(["/amp", "stacks", this.dockerStacksService.currentStack.name, "services", serviceId, "containers"])
   }
 
-  selectService(id : string) {
-    console.log("select service: "+id)
-    this.dockerServicesService.setCurrentService(id)
+  selectService(name : string) {
+    if (this.dockerServicesService.currentService.name== name) {
+      this.dockerServicesService.setCurrentService("")
+      return
+    }
+    this.dockerServicesService.setCurrentService(name)
   }
 
   returnBack() {
-    console.log("return back form service: "+this.dockerStacksService.currentStack.id)
-    this.menuService.navigate(["/amp", "stacks"])
+    this.menuService.returnToPreviousPath()
   }
 
-  metrics(serviceId : string) {
-    this.menuService.navigate(['/amp', 'metrics', 'service', serviceId])
+  metrics(serviceName : string) {
+    this.menuService.navigate(['/amp', 'metrics', 'service', 'single', serviceName])
   }
 
 

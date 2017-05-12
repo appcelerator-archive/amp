@@ -18,7 +18,7 @@
                 <i class="glyphicon glyphicon-arrow-left"></i></button>
               <button type="button" class="btn btn-primary">
                 <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i> Logs</button>
-              <button type="button" class="btn btn-primary" [disabled]="dockerContainersService.currentContainer.id===''" (click)="metrics(dockerContainersService.currentContainer.id)">
+              <button type="button" class="btn btn-primary" (click)="metrics(dockerContainersService.currentContainer.id)">
                 <i class="glyphicon glyphicon-stats" aria-hidden="true"></i> Metrics</button>
             </div>
           </div>

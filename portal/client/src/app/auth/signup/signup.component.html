@@ -58,21 +58,7 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="permissions" class="col-sm-2 control-label text-left">Permissions</label>
-              <div class="col-sm-8">
-                <div class="btn-group btn-group-sm">
-                  <label class="btn btn-default">
-                    <i class="fa fa-user" aria-hidden="true"></i>
-                    User
-                  </label>
-                  <label class="btn btn-default">
-                    <i class="fa fa-user-circle-o" aria-hidden="true"></i>
-                    Administrator
-                  </label>
-                </div>
-              </div>
-            </div>
+            <span class="help-block" style="color:red;margin-left:20px">{{ message }}</span>
 
             <div class="form-group">
               <div class="btn-group" role="group" aria-label="...">
@@ -81,10 +67,10 @@
                   class="btn btn-primary btn-sm"
                   type="submit"
                   [disabled]="!f.valid">
-                  <i class="fa fa-user-plus" aria-hidden="true"></i> Submit</button>
+                  <i class="fa fa-user-plus" aria-hidden="true"></i> {{ submitCaption }}</button>
                 <button type="button"
                   class="btn btn-default btn-sm"
-                  (click)="usersService.returnToCaller()">
+                  (click)="returnBack()">
                   <i aria-hidden="true"></i> Cancel</button>
               </div>
             </div>
