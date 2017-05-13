@@ -8,12 +8,20 @@ import "google/api/annotations.proto";
 service Stack {
   rpc Deploy (DeployRequest) returns (DeployReply) {
     option (google.api.http) = {
-      post: "/v1/stack",
+      post: "/v1/stacks",
       body: "*"
     };
   }
-  rpc List (ListRequest) returns (ListReply);
-  rpc Remove (RemoveRequest) returns (RemoveReply);
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/stacks"
+    };
+  }
+  rpc Remove (RemoveRequest) returns (RemoveReply) {
+    option (google.api.http) = {
+      delete: "/v1/stacks/{stack}"
+    };
+  }
 }
 
 message DeployRequest {

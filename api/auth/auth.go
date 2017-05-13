@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"strings"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -10,6 +12,8 @@ import (
 
 // Keys used in context metadata
 const (
+	AuthorizationHeader   = "authorization" // HTTP2 authorization header name, cf. https://http2.github.io/http2-spec/compression.html#static.table.definition
+	AuthorizationScheme   = "amp"
 	TokenKey              = "amp.token"
 	UserKey               = "amp.user"
 	ActiveOrganizationKey = "amp.organization"
@@ -68,17 +72,34 @@ func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInf
 	return handler(ctx, req)
 }
 
+// Authorization header is formatted like this: "Authorization: <scheme> <token>", cf. https://tools.ietf.org/html/rfc7235#section-4.2
+func parseAuthorizationHeader(header string) (scheme string, token string) {
+	fields := strings.Fields(header)
+	if len(fields) != 2 {
+		return "", ""
+	}
+	scheme = fields[0]
+	token = fields[1]
+	return scheme, token
+}
+
+// ForgeAuthorizationHeader forges an amp authorization header
+func ForgeAuthorizationHeader(token string) string {
+	return AuthorizationScheme + " " + token
+}
+
 func authorize(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
-	tokens := md[TokenKey]
-	if len(tokens) == 0 {
+	authorizations := md[AuthorizationHeader]
+	if len(authorizations) == 0 {
 		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
-	token := tokens[0]
-	if token == "" {
+	authorization := authorizations[0]
+	scheme, token := parseAuthorizationHeader(authorization)
+	if scheme != AuthorizationScheme || token == "" {
 		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	claims, err := ValidateToken(token, TokenTypeLogin)
@@ -92,7 +113,7 @@ func authorize(ctx context.Context) (context.Context, error) {
 
 // GetUser gets the user from context metadata
 func GetUser(ctx context.Context) string {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ""
 	}
@@ -106,7 +127,7 @@ func GetUser(ctx context.Context) string {
 
 // GetActiveOrganization gets the active organization from context metadata
 func GetActiveOrganization(ctx context.Context) string {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ""
 	}
