@@ -14,7 +14,7 @@ install:
   - sudo chown -R $(id -u):$(id -g) $HOME/.config/amp
 
 before_script:
-  - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:$PATH
+  - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:platform/testing:$PATH
   - docker network create hostnet
 
 script:
@@ -22,7 +22,7 @@ script:
   - ampmake clean build
   - ls -la bin/linux/amd64
   - amp --server=localhost cluster create --tag=local --registration=none --notifications=false
-  - testscheck platform/tests
+  - TESTINCLUDE=platform/testing testrunner platform/tests
   - amp --server localhost cluster rm
   - ampmake lint
 
