@@ -14,6 +14,7 @@ export class MenuService {
   private paths : string[] = []
   private lastPath = ""
   private cursorClass = ""
+  paddingLeftMenu = 250
   public appWindow : AppWindow = new AppWindow(document.documentElement.clientWidth, document.documentElement.clientHeight)
 
   constructor(private router : Router) {

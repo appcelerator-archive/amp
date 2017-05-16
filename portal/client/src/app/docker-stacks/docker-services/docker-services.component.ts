@@ -90,5 +90,8 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
     this.menuService.navigate(['/amp', 'metrics', 'service', 'single', serviceName])
   }
 
+  logs(serviceName : string) {
+    this.menuService.navigate(['/amp', 'logs', 'service', serviceName])
+  }
 
 }

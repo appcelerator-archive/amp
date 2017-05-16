@@ -290,19 +290,6 @@ func (s *Store) getOrganization(ctx context.Context, name string) (organization 
 	return organization, nil
 }
 
-<<<<<<< HEAD
-=======
-func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {
-	if err := in.Validate(); err != nil {
-		return err
-	}
-	if err := s.store.Update(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
-		return err
-	}
-	return nil
-}
-
->>>>>>> switch on amplifier-gateway
 // CreateOrganization creates a new organization
 func (s *Store) CreateOrganization(ctx context.Context, name string, email string) error {
 	// Check if user with the same name already exists

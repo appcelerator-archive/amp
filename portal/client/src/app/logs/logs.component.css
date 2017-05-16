@@ -1,0 +1,53 @@
+
+table.tableLog {
+  font-family:courier, "courier new", monospace;
+  font-size: 14px;
+  color: black;
+  background-color: white;
+  border: none;
+  width: 100%;
+  overflow-x: scroll;
+}
+
+tr.rowLog {
+  padding: 1px 5px 1px 5px;
+  margin: 1px 5px 1px 5px;
+}
+
+tr.rowTitleLog {
+  padding: 1px 5px 1px 5px;
+  margin: 1px 5px 1px 5px;
+}
+
+th.titleLog {
+  padding: 3px 10px 3px 10px;
+  border: 1px solid #ddd;
+  border-top:none;
+  border-bottom:none;
+  border-right:none;
+  border-left:none;
+  display: inline-block;
+}
+
+td.cellLog {
+  padding: 3px 10px 3px 10px;
+  border: 1px solid #ddd;
+  border-top:none;
+  border-bottom:none;
+  border-right:none;
+  min-width: 20px
+}
+
+tbody {
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: block;
+  padding: 0px;
+  margin: 0px;
+  border: 1px solid #ddd;
+}
+
+thead {
+  overflow-x: scroll;
+  display: table-header-group;
+}

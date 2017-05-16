@@ -32,7 +32,8 @@
                 Update
               </button>
               <button type="button" class="btn btn-primary"
-                [disabled]="dockerStacksService.currentStack.name==''">
+                [disabled]="dockerStacksService.currentStack.name==''"
+                (click)="logs(dockerStacksService.currentStack.name)">
                 <i class="glyphicon glyphicon-list-alt space-right"></i>
                 Logs
               </button>
@@ -96,15 +97,14 @@
                 </tr>
               </thead>
               <tbody>
-                <tr (click)="selectStack(stack.name)" *ngFor="let stack of listService.getData()">
-                  <td><input type="checkbox" [checked]="dockerStacksService.currentStack.id===stack.id" (click)=selectStack(stack.name)></td>
+                <tr (click)="dockerStacksService.setCurrentStack(stack.name)" *ngFor="let stack of listService.getData()">
+                  <td><input type="checkbox" [checked]="dockerStacksService.currentStack.name===stack.name" (click)=dockerStacksService.setCurrentStack(stack.name)></td>
                   <td>{{ stack.shortId }}</td>
                   <td>{{ stack.name }}</td>
                   <td> {{ stack.ownerName }}</td>
                   <td> {{ stack.ownerType }}</td>
                   <td>
-                    <a (click)="serviceList(stack.name)">
-                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Services ({{stack.services}})</a>
+                    <a (click)="serviceList(stack.name)">Services ({{stack.services}})</a>
                   </td>
                 </tr>
               </tbody>

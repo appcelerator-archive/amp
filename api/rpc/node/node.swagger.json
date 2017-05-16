@@ -1,0 +1,99 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/node/node.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/nodes": {
+      "get": {
+        "operationId": "GetNodes",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/nodeGetNodesReply"
+            }
+          }
+        },
+        "tags": [
+          "Node"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "nodeGetNodesReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nodeNodeEntry"
+          }
+        }
+      }
+    },
+    "nodeGetNodesRequest": {
+      "type": "object"
+    },
+    "nodeNodeEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "engine": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "availability": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "leader": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "addr": {
+          "type": "string"
+        },
+        "reachability": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

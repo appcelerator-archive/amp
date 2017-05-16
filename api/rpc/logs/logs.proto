@@ -7,7 +7,8 @@ import "google/api/annotations.proto";
 service Logs {
   rpc Get (GetRequest) returns (GetReply) {
     option (google.api.http) = {
-      get: "/v1/logs"
+      post: "/v1/logs",
+      body: "*"
     };
   };
   rpc GetStream (GetRequest) returns (stream LogEntry) {

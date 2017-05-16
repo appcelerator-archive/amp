@@ -15,6 +15,7 @@ import { DockerContainersService } from './docker-stacks/services/docker-contain
 import { SwarmsService } from './services/swarms.service';
 import { DragService } from './services/drag.service';
 import { MetricsService } from './metrics/services/metrics.service';
+import { LogsService } from './logs/services/logs.service';
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
@@ -100,6 +101,7 @@ import { LinesComponent } from './metrics/graph/lines/lines.component';
     SwarmsService,
     DragService,
     MetricsService,
+    LogsService,
     AuthGuard
   ],
   bootstrap: [AppComponent]

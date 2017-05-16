@@ -26,7 +26,7 @@ export class AppComponent {
     this.router.events
       .subscribe((e: any) => {
         this.menuService.pushPath(e.urlAfterRedirects);
-      });
-
+      }
+    );
   }
 }

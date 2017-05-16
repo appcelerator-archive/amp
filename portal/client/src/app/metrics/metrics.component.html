@@ -9,7 +9,7 @@
       <div class="panel-body" style="padding:5px 20px 5px 20px">
         <div class="col-lg-12 col-md-12 col-xs-12">
           <button type="button" class="btn btn-primary" (click)=returnBack()>
-            <i class="glyphicon glyphicon-arrow-left"></i>
+            <i class="glyphicon glyphicon-backward"></i>
           </button>
           <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
             <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="timeperiod" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -52,7 +52,7 @@
       </div>
     </div>
     <div style="position:relative;overflow:hidden" class="graph-container panel panel-default">
-      <div [style.height.px]="graphPanelHeight" class="panel-body" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px">
+      <div [style.height.px]="graphPanelHeight" [style.width.px]="graphPanelWidth" class="panel-body" style="padding-top:0px;padding-bottom:0px;margin-bottom:0px">
         <app-graph-line *ngFor="let graph of graphs"
           [style.top.px]="graph.y"
           [style.left.px]="graph.x"

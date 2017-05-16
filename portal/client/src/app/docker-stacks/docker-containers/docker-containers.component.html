@@ -5,7 +5,7 @@
         <div>
           <div class="pull-left">
             <span class="fa fa-server" aria-hidden="true"></span>
-            Service: {{ service.name }}
+            Service: {{ dockerServicesService.currentService.name }}
           </div>
         </div>
       </div>
@@ -15,11 +15,19 @@
           <div class="pull-left">
             <div class="btn-group" role="group" aria-label="...">
               <button type="button" class="btn btn-primary" (click)="returnBack()">
-                <i class="glyphicon glyphicon-arrow-left"></i></button>
-              <button type="button" class="btn btn-primary">
-                <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i> Logs</button>
-              <button type="button" class="btn btn-primary" (click)="metrics(dockerContainersService.currentContainer.id)">
-                <i class="glyphicon glyphicon-stats" aria-hidden="true"></i> Metrics</button>
+                <i class="glyphicon glyphicon-backward"></i>
+              </button>
+              <button type="button" class="btn btn-primary"
+                (click)="logs(dockerContainersService.currentContainer.id)">
+                <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i>
+                Logs
+              </button>
+              <button type="button"
+                class="btn btn-primary"
+                (click)="metrics(dockerContainersService.currentContainer.id)">
+                <i class="glyphicon glyphicon-stats" aria-hidden="true"></i>
+                Metrics
+              </button>
             </div>
           </div>
           <div class="pull-right">
@@ -75,11 +83,11 @@
                       <span (click)="listService.order('nodeId', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
-                  <th></th>
+                  <<th></th>
                 </tr>
               </thead>
               <tbody>
-                <tr (click)="selectContainer(cont.id)" *ngFor="let cont of listService.getData()">
+                <tr (click)="selectContainer(cont.id)" [style.color]=getColor(cont) *ngFor="let cont of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerContainersService.currentContainer.id===cont.id"></td>
                   <td class="{{select_class}}">{{ cont.shortId }}</td>
                   <td class="{{select_class}}">{{ cont.image }}</td>
@@ -87,8 +95,7 @@
                   <td class="{{select_class}}">{{ cont.desiredState }}</td>
                   <td class="{{select_class}}">{{ cont.nodeId }}</td>
                   <td>
-                    <a (click)="serviceList(stack.id)">
-                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> details</a>
+                    <a>details</a>
                   </td>
                 </tr>
               </tbody>

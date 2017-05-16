@@ -16,7 +16,7 @@
   ],
   "paths": {
     "/v1/logs": {
-      "get": {
+      "post": {
         "operationId": "Get",
         "responses": {
           "200": {
@@ -28,6 +28,7 @@
         },
         "parameters": [
           {
+<<<<<<< HEAD
             "name": "container",
             "in": "query",
             "required": false,
@@ -76,6 +77,14 @@
             "required": false,
             "type": "boolean",
             "format": "boolean"
+=======
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/logsGetRequest"
+            }
+>>>>>>> add logs
           }
         ],
         "tags": [
