@@ -67,6 +67,9 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if in.Stack != "" {
 		masterQuery.Filter(elastic.NewPrefixQuery("stack_name", in.Stack))
 	}
+	if in.Task != "" {
+		masterQuery.Filter(elastic.NewPrefixQuery("task_id", in.Task))
+	}
 	if in.Node != "" {
 		masterQuery.Filter(elastic.NewPrefixQuery("node_id", in.Node))
 	}
@@ -93,7 +96,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
 		entry := &LogEntry{}
-		if err := json.Unmarshal(*hit.Source, &entry); err != nil {
+		if err := s.unmarshal(*hit.Source, entry); err != nil {
 			return nil, status.Errorf(codes.Internal, "%v", err)
 		}
 		reply.Entries[i] = entry
@@ -105,6 +108,22 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 	log.Printf("rpc-logs: Get successful, returned %d entries\n", len(reply.Entries))
 	return &reply, nil
+}
+
+//custom unmarshal for @timestamp
+func (s *Server) unmarshal(data []byte, entry *LogEntry) error {
+	type Alias LogEntry
+	aux := &struct {
+		TimestampTmp string `json:"@timestamp"`
+		*Alias
+	}{
+		Alias: (*Alias)(entry),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	entry.Timestamp = aux.TimestampTmp
+	return nil
 }
 
 // GetStream implements log.LogServer
@@ -150,6 +169,9 @@ func filter(entry *LogEntry, in *GetRequest) bool {
 	}
 	if in.Stack != "" {
 		match = strings.HasPrefix(strings.ToLower(entry.StackName), strings.ToLower(in.Stack))
+	}
+	if in.Task != "" {
+		match = strings.HasPrefix(strings.ToLower(entry.TaskId), strings.ToLower(in.Task))
 	}
 	if in.Node != "" {
 		match = strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
