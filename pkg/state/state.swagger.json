@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "github.com/appcelerator/amp/api/state/state.proto",
+    "title": "github.com/appcelerator/amp/pkg/state/state.proto",
     "version": "version not set"
   },
   "schemes": [

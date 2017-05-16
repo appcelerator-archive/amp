@@ -39,7 +39,8 @@ message GetRequest {
   sint64 size = 4;
   string service = 5;
   string stack = 6;
-  bool infra = 7;
+  string task = 7;
+  bool infra = 8;
 }
 
 message GetReply {
