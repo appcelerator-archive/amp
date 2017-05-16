@@ -15,7 +15,6 @@ import { Observable } from 'rxjs/Observable';
   providers: [ ListService ]
 })
 export class DockerStacksComponent implements OnInit {
-  currentStack : DockerStack
   deployTitle = "Deploy"
   timer : any = null;
   message = ""
@@ -49,13 +48,6 @@ export class DockerStacksComponent implements OnInit {
       }
     )
     this.loadStacks()
-    let name = this.route.snapshot.params['name']
-    this.currentStack = new DockerStack('', name, 0, '', '')
-    this.route.params.subscribe( //automatically unsubscribed by A on component destroy
-      (params : Params) => {
-        this.currentStack = new DockerStack('', name, 0, '', '')
-      }
-    );
   }
 
   ngOnDestroy() {
@@ -84,10 +76,6 @@ export class DockerStacksComponent implements OnInit {
     this.menuService.navigate(["/amp", "stacks", stackName, "services"])
   }
 
-  selectStack(name : string) {
-    this.dockerStacksService.setCurrentStack(name)
-  }
-
   deploy() {
     this.menuService.navigate(["/amp", "stacks", "deploy"])
   }
@@ -100,7 +88,7 @@ export class DockerStacksComponent implements OnInit {
   remove() {
     this.httpService.removeStack(this.dockerStacksService.currentStack.name).subscribe(
       data => {
-        this.selectStack("")
+        this.dockerStacksService.setCurrentStack("")
         this.dockerStacksService.loadStacks()
       },
       error => {
@@ -112,6 +100,10 @@ export class DockerStacksComponent implements OnInit {
 
   metrics(stackName : string) {
     this.menuService.navigate(['/amp', 'metrics', 'stack', 'single', stackName])
+  }
+
+  logs(stackName : string) {
+    this.menuService.navigate(['/amp', 'logs', 'stack', stackName])
   }
 
 }

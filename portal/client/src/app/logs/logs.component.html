@@ -1,0 +1,87 @@
+
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default" style="border-style:none;margin-bottom:5px">
+      <div class="panel-body" style="padding:05px 20px 5px 20px;margin-top:5px">
+        <div class="pull-left"><span class="menu-icon fa fa-list-alt" aria-hidden="true"></span> {{ object }}</div>
+        <div class="pull-right" style="color:blue">{{ ref }}</div>
+      </div>
+      <div class="panel-body" style="padding:5px 20px 5px 20px">
+        <div class="pull-left">
+          <button *ngIf="isReturnBack" type="button" class="btn btn-primary" (click)=returnBack()>
+            <i class="glyphicon glyphicon-backward"></i>
+          </button>
+          <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+            <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="fields" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              Fields
+              <span class="caret" style="cursor:pointer;color:white"></span>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="refreshperiod">
+              <li><a (click)="logsService.toggleColVisibility('timestamp')"><input type="checkbox" [checked]="logsService.isColVisible('timestamp')"> Timestamp</a></li>
+              <li><a (click)="logsService.toggleColVisibility('stackName')"><input type="checkbox" [checked]="logsService.isColVisible('stackName')"> Stack name</a></li>
+              <li><a (click)="logsService.toggleColVisibility('serviceName')"><input type="checkbox" [checked]="logsService.isColVisible('serviceName')"> Service name</a></li>
+              <li><a (click)="logsService.toggleColVisibility('containerShortName')"><input type="checkbox" [checked]="logsService.isColVisible('containerShortName')"> Container short name</a></li>
+              <!--<li><a (click)="columnToggle('containerState')"><input type="checkbox" [checked]="columnVisible['containerState']"> Container state</a></li>-->
+              <li><a (click)="logsService.toggleColVisibility('nodeId')"><input type="checkbox" [checked]="logsService.isColVisible('nodeId')"> Node id</a></li>
+              <div class="dropdown-divider"></div>
+              <li><a (click)="logsService.toggleColVisibility('serviceId')"><input type="checkbox" [checked]="logsService.isColVisible('serviceId')"> Service id</a></li>
+              <li><a (click)="logsService.toggleColVisibility('containerId')"><input type="checkbox" [checked]="logsService.isColVisible('containerId')"> Container id</a></li>
+              <!--<li><a (click)="columnToggle('containerName')"><input type="checkbox" [checked]="columnVisible['containerName']"> Container name</a></li>-->
+              <li><a (click)="logsService.toggleColVisibility('taskId')"><input type="checkbox" [checked]="logsService.isColVisible('taskId')"> Task id</a></li>
+            </div>
+          </div>
+          <input type="checkbox" [checked]="autoRefreshToggle"  (click)=autoRefresh()>
+            Follow
+        </div>
+        <div class="pull-right">
+          <input
+            style="width:400px"
+            #filter
+            type="text"
+            id="filter"
+            placeholder="Filter... (enter to execute)"
+            class="form-control input-sm"
+            (keydown.enter)="setFilter(filter.value)"/>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-12 col-md-12 col-xs-12" style="padding:0px">
+      <div class="panel panel-default" style="border-style:none;margin-bottom:5px">
+        <div class="panel-body" style="overflow-x:scroll;padding:0px;margin-top:5px">
+          <table class="tableLog">
+            <thead>
+              <tr class='rowTitleLog'>
+                <th class="titleLog timestampTitle" style="min-width:230px" *ngIf="logsService.isColVisible('timestamp')">Timestamp</th>
+                <th class="titleLog stackNameTitle" *ngIf="logsService.isColVisible('stackName')">Stack</th>
+                <th class="titleLog serviceNameTitle" *ngIf="logsService.isColVisible('serviceName')">Service</th>
+                <th class="titleLog containerShortNameTitle" *ngIf="logsService.isColVisible('containerShortName')">Container</th>
+                <!--<th class="titleLog containerStateTitle" *ngIf="columnVisible['containerState']">State</th>-->
+                <th class="titleLog nodeIdTitle" *ngIf="logsService.isColVisible('nodeId')">Node id</th>
+                <th class="titleLog serviceIdTitle" *ngIf="logsService.isColVisible('serviceId')">Service id</th>
+                <th class="titleLog containerIdTitle" *ngIf="logsService.isColVisible('containerId')">Container id</th>
+                <!--<th class="titleLog containerNameTitle" *ngIf="columnVisible['containerName']">Container name</th>-->
+                <th class="titleLog taskIdTitle" *ngIf="logsService.isColVisible('taskId')">Task id</th>
+                <th class='titleLog'>Message</th>
+              </tr>
+            </thead>
+            <tbody #logScroll [style.height.px]="logsPanelHeight">
+              <tr class='rowLog' *ngFor="let log of logs">
+                <td class="cellLog timestampCell" style="min-width:230px" *ngIf="logsService.isColVisible('timestamp')">{{log.timestamp}}</td>
+                <td class="cellLog stackNameCell" *ngIf="logsService.isColVisible('stackName')">{{log.stack_name}}</td>
+                <td class="cellLog serviceNameCell" *ngIf="logsService.isColVisible('serviceName')">{{log.service_name}}</td>
+                <td class="cellLog containerShortNameCell" *ngIf="logsService.isColVisible('containerShortName')">{{log.container_short_name}}</td>
+                <!--<td class="cellLog containerStateCell" *ngIf="columnVisible['containerState']">{{log.container_state}}</td>-->
+                <td class="cellLog nodeIdCell" *ngIf="logsService.isColVisible('nodeId')">{{log.node_id}}</td>
+                <td class="cellLog serviceIdCell" *ngIf="logsService.isColVisible('serviceId')">{{log.service_id}}</td>
+                <td class="cellLog containerIdCell" *ngIf="logsService.isColVisible('containerId')">{{log.container_id}}</td>
+                <!--<td class="cellLog containerNameCell" *ngIf="columnVisible['containerName']">{{log.container_name}}</td>-->
+                <td class="cellLog taskIdCell" *ngIf="logsService.isColVisible('taskId')">{{log.task_id}}</td>
+                <td class="cellLog">{{log.msg}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

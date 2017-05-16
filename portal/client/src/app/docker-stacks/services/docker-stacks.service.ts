@@ -39,6 +39,10 @@ export class DockerStacksService {
   }
 
   setCurrentStack(name) {
+    if (this.currentStack.name == name) {
+      this.currentStack = this.emptyStack
+      return
+    }
     this.currentStack = this.emptyStack
     for (let stack of this.stacks) {
       if (stack.name === name) {

@@ -36,10 +36,23 @@ export class DockerServicesService {
     return false
   }
 
-  setCurrentService(name) {
-    this.currentService= this.emptyService
+  setCurrentService(name : string) {
+    if (this.currentService.name == name) {
+      this.currentService = this.emptyService
+      return
+    }
+    this.currentService = this.emptyService
     for (let service of this.services) {
       if (service.name === name) {
+        this.currentService = service
+      }
+    }
+  }
+
+  setCurrentServiceById(id : string) {
+    this.currentService = this.emptyService
+    for (let service of this.services) {
+      if (service.id === id) {
         this.currentService = service
       }
     }

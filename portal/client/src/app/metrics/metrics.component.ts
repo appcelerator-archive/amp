@@ -21,6 +21,7 @@ export class MetricsComponent implements OnInit, OnDestroy {
   dashboardName = ""
   refName =""
   graphPanelHeight = 250
+  graphPanelWidth = 500
   graphs : Graph[] = []
 
   constructor(
@@ -134,11 +135,13 @@ export class MetricsComponent implements OnInit, OnDestroy {
 
   //[style.height.px]="parentdiv.offsetHeight"
   resizeGraphs(win : AppWindow) {
-    let cww = $('.graph-container').width()
+    //let cww = $('.graph-container').width()
+    let cww = win.width-25-this.menuService.paddingLeftMenu
     let chh = win.height- 240;
     //console.log("Window: "+win.width+","+win.height)
     //console.log("Container: "+cww+","+chh)
     this.graphPanelHeight = chh
+    this.graphPanelWidth = cww
     let xx=10
     let yy=10
     for (let graph of this.graphs) {

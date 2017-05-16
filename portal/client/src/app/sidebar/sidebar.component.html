@@ -1,78 +1,150 @@
-<div id="sidebar-wrapper">
-    <ul class="sidebar">
-      <li class="sidebar-title">
-        <span>Active swarm</span>
-      </li>
-      <li class="sidebar-title">
-        <select class="form-control custom-select" name="endpoint" [(ngModel)]="swarmsService.currentSwarm" #endpoint>
-          <option *ngFor="let value of swarmsService.swarms" [ngValue]="value">{{value.name}}</option>
-        </select>
-      </li>
-      <li class="sidebar-title"><span></span></li>
+<!--
+ to be completly refactor in pur bootstrap classes in v1.1
+-->
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/dashboard">
-          Dashboard
-          <span class="menu-icon fa fa-tachometer"></span>
-        </a>
-      </li>
+<div id="sidebar-wrapper" *ngIf="!mini">
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/stacks">
-          Stacks
-          <span class="menu-icon fa fa-server"></span></a>
-      </li>
+  <ul class="sidebar">
+    <li class="sidebar-main">
+      <a (click)="minimize()" class="interactive amp-title">
+        <!--<img src="images/atomiq.png" class="img-responsive logo" alt="amp">-->
+        AMP
+        <span class="menu-icon glyphicon glyphicon-transfer"></span>
+      </a>
+    </li>
+    <li class="sidebar-title">
+      <span>Active swarm</span>
+    </li>
+    <li class="sidebar-title">
+      <select class="form-control custom-select" name="endpoint" [(ngModel)]="swarmsService.currentSwarm" #endpoint>
+        <option *ngFor="let value of swarmsService.swarms" [ngValue]="value">{{value.name}}</option>
+      </select>
+    </li>
+    <li class="sidebar-title"><span></span></li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/logs">
-          Logs
-          <span class="menu-icon fa fa-list-alt"></span>
-        </a>
-      </li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/dashboard">
+        Dashboard
+        <span class="menu-icon fa fa-tachometer"></span>
+      </a>
+    </li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/metrics/global/single/all">
-          Metrics
-          <span class="menu-icon glyphicon glyphicon-stats"></span></a>
-      </li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/stacks">
+        Stacks
+        <span class="menu-icon fa fa-server"></span></a>
+    </li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/nodes">
-          Nodes
-          <span class="menu-icon fa fa-plug"></span>
-        </a>
-      </li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/logs">
+        Logs
+        <span class="menu-icon fa fa-list-alt"></span>
+      </a>
+    </li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/swarms">
-          Swarms
-          <span class="menu-icon glyphicon glyphicon-th-list"></span>
-        </a>
-      </li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/metrics/global/single/all">
+        Metrics
+        <span class="menu-icon glyphicon glyphicon-stats"></span></a>
+    </li>
 
-      <li class="sidebar-title"><span>Settings</span></li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/nodes">
+        Nodes
+        <span class="menu-icon fa fa-plug"></span>
+      </a>
+    </li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/organizations">
-          Organizations
-          <span class="menu-icon glyphicon glyphicon-book"></span>
-        </a>
-      </li>
+    <li class="sidebar-list">
+      <a routerLink="/amp/swarms">
+        Swarms
+        <span class="menu-icon glyphicon glyphicon-th-list"></span>
+      </a>
+    </li>
 
-      <li class="sidebar-list">
-        <a routerLink="/amp/users">
-          Users
-          <span class="menu-icon fa fa-user"></span>
-        </a>
-      </li>
+    <li class="sidebar-title"><span>Settings</span></li>
 
-    </ul>
-    <div class="sidebar-footer">
-      <div class="col-xs-12">
-        <a href="https://github.com/atomiqio/atomiq" target="_blank">
-          <i class="fa fa-github" aria-hidden="true"></i>
-          AMP 0.9.0
-        </a>
-      </div>
+    <li class="sidebar-list">
+      <a routerLink="/amp/organizations">
+        Organizations
+        <span class="menu-icon glyphicon glyphicon-book"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a routerLink="/amp/users">
+        Users
+        <span class="menu-icon fa fa-user"></span>
+      </a>
+    </li>
+
+  </ul>
+  <div class="sidebar-footer">
+    <div class="col-xs-12">
+      <a href="https://github.com/atomiqio/atomiq" target="_blank">
+        <i class="fa fa-github" aria-hidden="true"></i>
+        AMP 0.9.0
+      </a>
     </div>
   </div>
+</div>
+
+<div *ngIf="mini" id="sidebar-wrapper" style="width:70px;margin-right:0px;padding-right:0px">
+  <ul class="sidebar" style="width:70px;margin-right:0px;padding-right:0px">
+
+    <li class="sidebar-list">
+      <a class="sidebarm" (click)="minimize()">
+        <span style="color:white;font-size: 18px;margin-top:20px;margin-bottom:25px" class="menu-icon glyphicon glyphicon-transfer"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/dashboard">
+        <span class="menu-icon fa fa-tachometer"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/stacks">
+        <span class="menu-icon fa fa-server"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/logs">
+        <span class="menu-icon fa fa-list-alt"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/metrics/global/single/all">
+        <span class="menu-icon glyphicon glyphicon-stats"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/nodes">
+        <span class="menu-icon fa fa-plug"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/swarms">
+        <span class="menu-icon glyphicon glyphicon-th-list"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/organizations">
+        <span class="menu-icon glyphicon glyphicon-book"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a class="sidebarm" routerLink="/amp/users">
+        <span class="menu-icon fa fa-user"></span>
+      </a>
+    </li>
+
+  </ul>
+</div>

@@ -7,7 +7,8 @@ import { Subject } from 'rxjs/Subject'
 @Injectable()
 export class DockerContainersService {
   containers : DockerContainer[] = []
-  currentContainer : DockerContainer = new DockerContainer("", "", "", "", "")
+  emptyContainer : DockerContainer = new DockerContainer("", "", "", "", "")
+  currentContainer : DockerContainer = this.emptyContainer;
   onContainersLoaded = new Subject();
   onContainersError = new Subject();
 
@@ -39,6 +40,11 @@ export class DockerContainersService {
   }
 
   setCurrentContainer(id) {
+    if (this.currentContainer.id == id) {
+      this.currentContainer = this.emptyContainer
+      return
+    }
+    this.currentContainer = this.emptyContainer
     for (let cont of this.containers) {
       if (cont.id === id) {
         this.currentContainer = cont

@@ -18,11 +18,12 @@
               <button type="button"
                 class="btn btn-primary"
                 (click)="returnBack()">
-                <i class="glyphicon glyphicon-arrow-left"></i>
+                <i class="glyphicon glyphicon-backward"></i>
               </button>
               <button type="button"
                 class="btn btn-primary"
-                [disabled]="dockerServicesService.currentService.name==''">
+                [disabled]="dockerServicesService.currentService.name==''"
+                (click)="logs(dockerServicesService.currentService.name)">
                 <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i>
                 Logs
               </button>
@@ -102,8 +103,7 @@
                   <td>{{ service.replicas }}</td>
                   <td>{{ service.image }}</td>
                   <td>
-                    <a (click)="containerList(service.name)">
-                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Containers</a>
+                    <a (click)="containerList(service.id)">Containers</a>
                   </td>
                 </tr>
               </tbody>

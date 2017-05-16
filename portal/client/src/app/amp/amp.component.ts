@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MenuService } from '../services/menu.service'
 
 @Component({
   selector: 'app-amp',
@@ -7,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AmpComponent implements OnInit {
 
-  constructor() { }
+  constructor(public menuService : MenuService) { }
 
   ngOnInit() {
   }

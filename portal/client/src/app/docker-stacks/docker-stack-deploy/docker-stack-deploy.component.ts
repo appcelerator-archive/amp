@@ -3,6 +3,7 @@ import { NgForm } from '@angular/forms';
 import { MenuService } from '../../services/menu.service';
 import { HttpService } from '../../services/http.service';
 import { ActivatedRoute, Params } from '@angular/router';
+import { AppWindow } from '../../models/app-window.model';
 
 @Component({
   selector: 'app-stack-deploy',
@@ -12,15 +13,24 @@ import { ActivatedRoute, Params } from '@angular/router';
 export class DockerStackDeployComponent implements OnInit {
   @ViewChild ('f') form: NgForm;
   message = ""
+  deployPanelHeight = 300
+  deployPanelWidth = 500
 
   constructor(
     private menuService : MenuService,
     private route : ActivatedRoute,
     private httpService : HttpService) { }
-    private updateStackName = "new stack"
+    public updateStackName = "new stack"
     fileText=""
 
   ngOnInit() {
+    this.menuService.setItemMenu('logs', 'View')
+    this.resizeDeploy(this.menuService.appWindow)
+    this.menuService.onWindowResize.subscribe(
+      (win) => {
+        this.resizeDeploy(win)
+      }
+    )
     this.menuService.setItemMenu('stack', 'Deploy')
     this.route.params.subscribe(
       (params : Params) => {
@@ -66,6 +76,11 @@ export class DockerStackDeployComponent implements OnInit {
 
   returnBack() {
     this.menuService.returnToPreviousPath()
+  }
+
+  resizeDeploy(win :AppWindow) {
+    this.deployPanelHeight = win.height-340
+    this.deployPanelWidth = win.width-90-this.menuService.paddingLeftMenu
   }
 
 }

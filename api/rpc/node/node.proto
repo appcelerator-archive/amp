@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package node;
+
+import "google/api/annotations.proto";
+
+service Node {
+  rpc GetNodes (GetNodesRequest) returns (GetNodesReply) {
+    option (google.api.http) = {
+      get: "/v1/nodes"
+    };
+  };
+}
+
+message NodeEntry {
+  string id = 1;
+  string name = 2;
+  string hostname = 3;
+  string role = 4;
+  string architecture = 5;
+  string os = 6;
+  string engine = 7;
+  string status = 8;
+  string availability = 9;
+  map<string, string> labels = 10;
+  bool leader = 11;
+  string addr = 12;
+  string reachability = 13;
+}
+
+message GetNodesRequest {
+}
+
+message GetNodesReply {
+  repeated NodeEntry entries = 1;
+}

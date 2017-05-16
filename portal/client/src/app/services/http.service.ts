@@ -14,6 +14,8 @@ import { DockerService } from '../docker-stacks/models/docker-service.model';
 import { DockerContainer } from '../docker-stacks/models/docker-container.model';
 import { StatsRequest } from '../metrics/models/stats-request.model';
 import { GraphHistoricData } from '../metrics/models/graph-historic-data.model';
+import { LogsRequest } from '../logs/models/logs-request.model';
+import { Log } from '../logs/models/log.model';
 import * as d3 from 'd3';
 import 'rxjs/add/operator/retrywhen';
 import 'rxjs/add/operator/scan';
@@ -166,6 +168,7 @@ export class HttpService {
   }
 
   removeStack(stackName : string) {
+
     return this.httpDelete("/stacks/"+stackName)
   }
 
@@ -224,47 +227,72 @@ export class HttpService {
     })
   }
 
+  logs(req : LogsRequest) {
+    return this.httpPost("/logs", req)
+      .map((res : Response) => {
+        let data = res.json()
+        let list : Log[] = []
+        if (data.entries) {
+          for (let item of data.entries) {
+            let log = new Log(item.timestamp, item.msg)
+            log.container_id = item.container_id
+            log.container_name = item.container_mame
+            log.container_short_name = item.container_short_name
+            log.service_name = item.service_name
+            log.service_id = item.service_id
+            log.task_id = item.task_id
+            log.stack_name = item.stack_name
+            log.node_id = item.node_id
+            list.push(log);
+          }
+        }
+        return list
+      }
+    )
+  }
+
   stats(request : StatsRequest) {
     return this.httpPost("/stats", request)
-    .map((res : Response) => {
-      let data = res.json()
-      //console.log(data)
-      let list : GraphHistoricData[] = []
-      if (data.entries) {
-        for (let item of data.entries) {
-          let datal : { [name:string]: number; } = {}
-          if (request.stats_cpu) {
-            this.setValue(datal, 'cpu-usage', item.cpu.total_usage, 1, 1)
-          }
-          if (request.stats_io) {
-            this.setValue(datal, 'io-total', item.io.total, 1, 1)
-            this.setValue(datal, 'io-write', item.io.write, 1, 1)
-            this.setValue(datal, 'io-read', item.io.read, 1, 1)
-          }
-          if (request.stats_mem) {
-            this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
-            this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
-            this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
-            this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
-          }
-          if (request.stats_net) {
-            this.setValue(datal, 'net-rx-bytes', item.net.rx_bytes, 1, 1)
-            this.setValue(datal, 'net-rx-packets', item.net.rx_packets, 1, 1)
-            this.setValue(datal, 'net-tx-bytes', item.net.tx_bytes, 1, 1)
-            this.setValue(datal, 'net-tx-packets', item.net.tx_packets, 1, 1)
-            this.setValue(datal, 'net-total-bytes', item.net.total_bytes, 1, 1)
-          }
-          list.push(
-            new GraphHistoricData(
-              this.parseTime(item.group),
-              item.sgroup,
-              datal
+      .map((res : Response) => {
+        let data = res.json()
+        //console.log(data)
+        let list : GraphHistoricData[] = []
+        if (data.entries) {
+          for (let item of data.entries) {
+            let datal : { [name:string]: number; } = {}
+            if (request.stats_cpu) {
+              this.setValue(datal, 'cpu-usage', item.cpu.total_usage, 1, 1)
+            }
+            if (request.stats_io) {
+              this.setValue(datal, 'io-total', item.io.total, 1, 1)
+              this.setValue(datal, 'io-write', item.io.write, 1, 1)
+              this.setValue(datal, 'io-read', item.io.read, 1, 1)
+            }
+            if (request.stats_mem) {
+              this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
+              this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
+              this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
+              this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
+            }
+            if (request.stats_net) {
+              this.setValue(datal, 'net-rx-bytes', item.net.rx_bytes, 1, 1)
+              this.setValue(datal, 'net-rx-packets', item.net.rx_packets, 1, 1)
+              this.setValue(datal, 'net-tx-bytes', item.net.tx_bytes, 1, 1)
+              this.setValue(datal, 'net-tx-packets', item.net.tx_packets, 1, 1)
+              this.setValue(datal, 'net-total-bytes', item.net.total_bytes, 1, 1)
+            }
+            list.push(
+              new GraphHistoricData(
+                this.parseTime(item.group),
+                item.sgroup,
+                datal
+              )
             )
-          )
+          }
         }
+        return list
       }
-      return list
-    });
+    );
   }
 
   setValue(datal :{ [name:string]: number; }, name : string, val : number, mul : number, div : number) {
@@ -293,7 +321,7 @@ export class HttpService {
     let headers = this.setHeaders()
     return this.http.get(this.addr+url, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
-        console.log("retry: "+errorCount)
+        console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {
             throw err;
         }
@@ -306,7 +334,7 @@ export class HttpService {
     let headers = this.setHeaders()
     return this.http.delete(this.addr+url, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
-        console.log("retry: "+errorCount)
+        console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {
             throw err;
         }
@@ -319,7 +347,7 @@ export class HttpService {
     let headers = this.setHeaders()
     return this.http.post(this.addr+url, data, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
-        console.log("retry: "+errorCount)
+        console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {
             throw err;
         }

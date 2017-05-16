@@ -19,13 +19,13 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
   routeSub : any
   timer : any
   currentContainer : DockerContainer = new DockerContainer("", "", "", "", "")
-  service = new DockerService("", "", "", "", "")
-  stackName = ""
+
 
   constructor(
     public listService : ListService,
     public dockerContainersService : DockerContainersService,
-    private dockerServicesService : DockerServicesService,
+    public dockerServicesService : DockerServicesService,
+    public dockerStacksService : DockerStacksService,
     public menuService : MenuService,
     private route: ActivatedRoute,
     private metricsService : MetricsService) {
@@ -35,14 +35,11 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.menuService.setItemMenu('containers', 'List')
     this.routeSub = this.route.params.subscribe(params => {
-      this.stackName = params['stackName'];
+      let stackName = params['stackName'];
+      this.dockerStacksService.setCurrentStack(stackName)
       let serviceId = params['serviceId'];
-      for (let serv of this.dockerServicesService.services) {
-        if (serv.id == serviceId) {
-          this.service = serv
-          this.dockerServicesService.currentService = serv
-        }
-      }
+      this.dockerServicesService.setCurrentServiceById(serviceId)
+
       this.dockerContainersService.onContainersLoaded.subscribe(
         () => {
           this.listService.setData(this.dockerContainersService.containers)
@@ -75,6 +72,19 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
     }
   }
 
+  getColor(cont : DockerContainer) : string {
+    if (cont.state == 'running') {
+      return 'limegreen'
+    }
+    if (cont.state == 'failed') {
+      return 'red'
+    }
+    if (cont.state == 'shutdown') {
+      return 'lightgrey'
+    }
+    return 'black';
+  }
+
   selectContainer(id : string) {
     this.dockerContainersService.setCurrentContainer(id)
   }
@@ -83,8 +93,12 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
     this.menuService.returnToPreviousPath()
   }
 
-  metrics(containerId : string) {
-    this.menuService.navigate(['/amp', 'metrics', 'task', 'single', containerId])
+  metrics(taskId : string) {
+    this.menuService.navigate(['/amp', 'metrics', 'task', 'single', taskId])
   }
 
+  logs(taskId : string) {
+    console.log(taskId)
+    this.menuService.navigate(['/amp', 'logs', 'task', taskId])
+  }
 }
