@@ -5,7 +5,7 @@ Simple HTTP service (Go [source](https://github.com/subfuzion/docker-pinger)) th
 
 Run in this directory:
 
-    $ amp --server=localhost:50101 stack deploy -c pinger.yml pinger
+    $ amp -s localhost stack deploy -c pinger.yml
 
 The app will be available at [https://pinger.local.appcelerator.io/ping](https://pinger.local.appcelerator.io/ping)
 
@@ -13,7 +13,7 @@ Test with
 
     $ curl -k https://pinger.local.appcelerator.io/ping
     [9a58616b614d] pong
-    
+
     $ curl -k https://pinger.local.appcelerator.io/ping
     [81c3c0958600] pong
 
