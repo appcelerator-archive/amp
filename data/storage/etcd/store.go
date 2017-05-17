@@ -164,6 +164,7 @@ func (s *etcd) Update(ctx context.Context, key string, uf storage.UpdateFunc, te
 
 	// Begin update loop
 	for {
+		// create a new empty message from the typed instance template to receive current value
 		input := proto.Clone(template)
 		if err := proto.Unmarshal(current.Value, input); err != nil {
 			return err
