@@ -8,9 +8,10 @@ LDFLAGS=$4
 # target => $GOOS $GOARCH
 # see: https://golang.org/doc/install/source#environment
 TARGETS=(
+    alpine amd64
     darwin amd64
     linux amd64
-    alpine amd64
+    windows amd64
 )
 
 for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
