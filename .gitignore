@@ -1,6 +1,7 @@
 .glide/
 /dist
 bin/**/amd64/amp
+bin/**/amd64/amp.exe
 *.alpine
 /*.exe
 coverage.out

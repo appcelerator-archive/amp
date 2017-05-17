@@ -13,6 +13,8 @@ TARGETS=(
 for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
   GOOS="${TARGETS[i]}"
   GOARCH="${TARGETS[i+1]}"
-  echo $DEST/$GOOS/$GOARCH/ampmake
-  GOOS=$GOOS GOARCH=$GOARCH go build -o $DEST/$GOOS/$GOARCH/ampmake $PKG || exit $?
+  OUTPUT=$DEST/$GOOS/$GOARCH/ampmake
+  if [[ $GOOS = "windows" ]]; then OUTPUT=$OUTPUT".exe"; fi
+  echo $OUTPUT
+  GOOS=$GOOS GOARCH=$GOARCH go build -o $OUTPUT $PKG || exit $?
 done
