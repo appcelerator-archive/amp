@@ -208,9 +208,9 @@ run_child_suites() {
 run_setup() {
   local files=($(ls "$1"/*setup.sh 2>/dev/null))
   for f in ${files[@]}; do
-    run_file "$f" "[setup]"
+    run_file "$f" "[suite setup]"
     local ec=$?
-    (( $ec != 0 )) && failed "$f" "[suite setup]"
+    (( $ec == 0 )) || failed "$f" "[suite setup]"
     return $ec
   done
   return 0
@@ -220,19 +220,22 @@ run_tests() {
   local files=($(ls "$1"/*test.sh 2>/dev/null))
   for f in ${files[@]}; do
     run_file "$f" "[test setup]"
-    #(( $? == 0 )) && passed "$f" "[setup]" || failed "$f" "[test setup]"
-    (( $? != 0 )) && failed "$f" "[test setup]"
+    local ec=$?
+    (( $ec == 0 )) || failed "$f" "[test setup]"
+    return $ec
   done
+  return 0
 }
 
 run_teardown() {
   local files=($(ls "$1"/*teardown.sh 2>/dev/null))
   for f in ${files[@]}; do
-    run_file "$f" "[teardown]"
+    run_file "$f" "[suite teardown]"
     local ec=$?
-    (( $ec != 0 )) && failed "$f" "[suite teardown]"
+    (( $ec == 0 )) || failed "$f" "[suite teardown]"
     return $ec
   done
+  return 0
 }
 
 # loads, parses, and runs in a subshell
