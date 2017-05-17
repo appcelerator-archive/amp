@@ -210,7 +210,7 @@ run_setup() {
   for f in ${files[@]}; do
     run_file "$f" "[setup]"
     local ec=$?
-    (( $ec != 0 )) || failed "$f" "[suite setup]"
+    (( $ec != 0 )) && failed "$f" "[suite setup]"
     return $ec
   done
   return 0
@@ -229,7 +229,8 @@ run_teardown() {
   local files=($(ls "$1"/*teardown.sh 2>/dev/null))
   for f in ${files[@]}; do
     run_file "$f" "[teardown]"
-    (( $ec != 0 )) || failed "$f" "[suite teardown]"
+    local ec=$?
+    (( $ec != 0 )) && failed "$f" "[suite teardown]"
     return $ec
   done
 }
