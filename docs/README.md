@@ -1,6 +1,3 @@
-ATOMIQ
-======
-
 ## Getting started
 
 > NOTE: by default, the CLI will connect to `cloud.appcelerator.io:50101`.
