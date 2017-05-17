@@ -197,22 +197,6 @@ func (d *Docker) StackServices(ctx context.Context, stackName string) (output st
 	return string(output), nil
 }
 
-/*
-func (d *Docker)  NodeList(ctx context.Context, options types.NodeListOptions) ([]swarm.Node, error) {
-	cmd := func(cli *command.DockerCli) error {
-		//servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), stackName)
-		if err := stack.RunServices(cli, servicesOpt); err != nil {
-			return err
-		}
-		return nil
-	}
-	if output, err = cliWrapper(cmd); err != nil {
-		return "", err
-	}
-	return string(output), nil
-}
-*/
-
 func cliWrapper(cmd func(cli *command.DockerCli) error) (string, error) {
 	r, w, _ := os.Pipe()
 	cli := command.NewDockerCli(os.Stdin, w, w)

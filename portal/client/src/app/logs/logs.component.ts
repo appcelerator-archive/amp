@@ -68,6 +68,10 @@ export class LogsComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.req.task = ref
         this.menuService.setItemMenu('logs', 'View container')
       }
+      if (object=='node') {
+        this.req.node = ref
+        this.menuService.setItemMenu('logs', 'View node')
+      }
       console.log(this.req)
       this.executeRequest()
 

@@ -2,8 +2,10 @@ package node
 
 import (
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 // Server is used to implement log.LogServer
@@ -13,11 +15,10 @@ type Server struct {
 
 // GetNodes implements Node.GetNodes
 func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesReply, error) {
-	//list, err := s.Docker.GetClient().NodesList(ctx, types.NodeListOptions{})
-	list := []swarm.Node{}
-	//if err != nil {
-	//return nil, grpc.Errorf(codes.Internal, "%v", err)
-	//}
+	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
 	nodeList := &GetNodesReply{}
 	for _, item := range list {
 		node := &NodeEntry{

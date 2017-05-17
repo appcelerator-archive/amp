@@ -1,0 +1,141 @@
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div>
+          <div class="pull-left">
+            <span class="fa fa-server" aria-hidden="true"></span> Nodes</div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div classes="col-lg-12">
+          <div class="pull-left">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-primary"
+                [disabled]="nodesService.currentNode.id==''"
+                (click)="logs(nodesService.currentNode.id)">
+                <i class="glyphicon glyphicon-list-alt space-right"></i>
+                Logs
+              </button>
+              <button type="button" class="btn btn-primary"
+                (click)="metrics(nodesService.currentNode.id)">
+                <i class="glyphicon glyphicon-stats space-right"></i>
+                Metrics
+              </button>
+            </div>
+          </div>
+          <div class="pull-right">
+            <input type="text"
+              #filter
+              id="filter"
+              placeholder="Filter..."
+              class="form-control"
+              (keyup)="listService.filter(filter.value)"/>
+          </div>
+        </div>
+      </div>
+
+      <span class="help-block" style="color:red;margin-left:20px">{{ message }}</span>
+
+      <div class="row">
+        <div classes="no-padding">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>
+                    <a>
+                      Role
+                      <span (click)="listService.order('role', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('role', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Id
+                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Hostname
+                      <span (click)="listService.order('hostname', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('hostname', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Archi.
+                      <span (click)="listService.order('architecture', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('architecture', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      OS
+                      <span (click)="listService.order('os', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('os', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Engine
+                      <span (click)="listService.order('engine', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('engine', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Status
+                      <span (click)="listService.order('status', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('status', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Avail.
+                      <span (click)="listService.order('availability', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('availability', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Addr
+                      <span (click)="listService.order('addr', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('addr', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Reach.
+                      <span (click)="listService.order('reachability', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('reachability', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr (click)="nodesService.setCurrentNode(node.id)" [style.color]="getColor(node)" *ngFor="let node of listService.getData()">
+                  <td><input type="checkbox" [checked]="nodesService.currentNode.id===node.id" (click)=nodesService.setCurrentNode(node.id)></td>
+                  <td>{{ node.role }}</td>
+                  <td>{{ node.shortId }}</td>
+                  <td>{{ node.hostname }}</td>
+                  <td>{{ node.architecture }}</td>
+                  <td>{{ node.os }}</td>
+                  <td>{{ node.engine }}</td>
+                  <td>{{ node.status }}</td>
+                  <td>{{ node.availability }}</td>
+                  <td>{{ node.addr }}</td>
+                  <td>{{ node.reachability }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

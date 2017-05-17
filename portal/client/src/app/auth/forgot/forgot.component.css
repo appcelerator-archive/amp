@@ -1,0 +1,10 @@
+button.ebutton {
+  color:white;
+  background: rgb(26, 89, 144);
+    border: 1px solid #ccc;
+    box-shadow: 1px 1px 10px black inset,
+                 0 1px 0 rgba( 255, 255, 255, 0.4);
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+}

@@ -12,14 +12,6 @@
         <span class="menu-icon glyphicon glyphicon-transfer"></span>
       </a>
     </li>
-    <li class="sidebar-title">
-      <span>Active swarm</span>
-    </li>
-    <li class="sidebar-title">
-      <select class="form-control custom-select" name="endpoint" [(ngModel)]="swarmsService.currentSwarm" #endpoint>
-        <option *ngFor="let value of swarmsService.swarms" [ngValue]="value">{{value.name}}</option>
-      </select>
-    </li>
     <li class="sidebar-title"><span></span></li>
 
     <li class="sidebar-list">
@@ -55,13 +47,6 @@
       </a>
     </li>
 
-    <li class="sidebar-list">
-      <a routerLink="/amp/swarms">
-        Swarms
-        <span class="menu-icon glyphicon glyphicon-th-list"></span>
-      </a>
-    </li>
-
     <li class="sidebar-title"><span>Settings</span></li>
 
     <li class="sidebar-list">
@@ -74,6 +59,13 @@
     <li class="sidebar-list">
       <a routerLink="/amp/users">
         Users
+        <span class="menu-icon fa fa-user"></span>
+      </a>
+    </li>
+
+    <li class="sidebar-list">
+      <a routerLink="/amp/password">
+        Password
         <span class="menu-icon fa fa-user"></span>
       </a>
     </li>

@@ -90,6 +90,15 @@ export class MetricsComponent implements OnInit, OnDestroy {
           req.filter_service_name = ref
           this.menuService.setItemMenu('metrics', 'View containers')
         }
+        if (object=='node') {
+          req.group = 'node_id'
+          if (ref != '') {
+            req.filter_node_id = ref
+            this.menuService.setItemMenu('metrics', 'View node')
+          } else {
+            this.menuService.setItemMenu('metrics', 'View nodes')
+          }
+        }
       }
       //console.log(req)
       this.metricsService.setHistoricRequest(req, this.metricsService.periodRefresh)
@@ -123,13 +132,20 @@ export class MetricsComponent implements OnInit, OnDestroy {
       this.refName = ""
     }
     if (this.metricsService.object == 'stack') {
-      this.dashboardName="Stacks"
+      this.dashboardName="All stacks"
     }
     if (this.metricsService.object == 'service') {
       this.dashboardName="Services of stack:"
     }
     if (this.metricsService.object == 'task') {
       this.dashboardName="Containers of service:"
+    }
+    if (this.metricsService.object == 'node') {
+      if (this.metricsService.ref == "") {
+        this.dashboardName="All nodes"
+      } else {
+        this.dashboardName="Node: "+this.metricsService.ref
+      }
     }
   }
 

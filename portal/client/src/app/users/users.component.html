@@ -82,7 +82,6 @@
                       Verified
                     </a>
                   </th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -96,11 +95,8 @@
                   </td>
                   <td>
                     <label class="switch" style="margin-left: 20px;">
-                      <input type="checkbox" checked="user.verified"><i></i>
+                      <input type="checkbox" [checked]="user.verified"><i></i>
                     </label>
-                  </td>
-                  <td>
-                    <a ui-sref="user({id: user.Id})" href="#/users/1"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Edit</a>
                   </td>
                 </tr>
               </tbody>

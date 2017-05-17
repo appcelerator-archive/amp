@@ -16,6 +16,7 @@ import { SwarmsService } from './services/swarms.service';
 import { DragService } from './services/drag.service';
 import { MetricsService } from './metrics/services/metrics.service';
 import { LogsService } from './logs/services/logs.service';
+import { NodesService } from './nodes/services/nodes.service';
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
@@ -50,6 +51,8 @@ import { DockerContainersComponent } from './docker-stacks/docker-containers/doc
 import { OrganizationCreateComponent } from './organizations/organization-create/organization-create.component';
 import { TeamCreateComponent } from './organizations/organization/team/team-create/team-create.component';
 import { LinesComponent } from './metrics/graph/lines/lines.component';
+import { SettingsComponent } from './settings/settings/settings.component';
+import { ForgotComponent } from './auth/forgot/forgot.component';
 
 @NgModule({
   declarations: [
@@ -82,6 +85,8 @@ import { LinesComponent } from './metrics/graph/lines/lines.component';
     OrganizationCreateComponent,
     TeamCreateComponent,
     LinesComponent,
+    SettingsComponent,
+    ForgotComponent,
 
   ],
   imports: [
@@ -102,6 +107,7 @@ import { LinesComponent } from './metrics/graph/lines/lines.component';
     DragService,
     MetricsService,
     LogsService,
+    NodesService,
     AuthGuard
   ],
   bootstrap: [AppComponent]
