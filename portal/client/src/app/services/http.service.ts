@@ -16,6 +16,7 @@ import { StatsRequest } from '../metrics/models/stats-request.model';
 import { GraphHistoricData } from '../metrics/models/graph-historic-data.model';
 import { LogsRequest } from '../logs/models/logs-request.model';
 import { Log } from '../logs/models/log.model';
+import { Node } from '../nodes/models/node.model';
 import * as d3 from 'd3';
 import 'rxjs/add/operator/retrywhen';
 import 'rxjs/add/operator/scan';
@@ -58,6 +59,18 @@ export class HttpService {
         return list
       }
     );
+  }
+
+  changePassword(currentPwd : string, newPwd : string) {
+    return this.httpPut("/users/password/change", { existingPassword: currentPwd, newPassword: newPwd});
+  }
+
+  retrieveLogin(email : string) {
+    return this.httpPost("/users/"+email+"/reminder", { email : email});
+  }
+
+  resetPassword(name : string) {
+    return this.httpPost("/users/"+name+"/password/reset", {name : name});
   }
 
   createOrganization(org : Organization) {
@@ -227,6 +240,37 @@ export class HttpService {
     })
   }
 
+  nodes() {
+    return this.httpGet("/nodes")
+      .map((res : Response) => {
+        let data = res.json()
+        let list : Node[] = []
+        if (data.entries) {
+          for (let item of data.entries) {
+            let node = new Node(item.id)
+            node.name = item.name;
+            node.hostname = item.hostname;
+            node.role = item.role;
+            node.architecture = item.architecture
+            node.os = item.os
+            node.engine = item.engine
+            node.status = item.status
+            node.availability = item.availability
+            node.leader = item.leader
+            if (node.leader) {
+              node.role = 'leader'
+            }
+            node.addr = item.addr
+            node.reachability = item.reachability
+            list.push(node);
+          }
+        }
+        return list
+      }
+    )
+  }
+
+
   logs(req : LogsRequest) {
     return this.httpPost("/logs", req)
       .map((res : Response) => {
@@ -346,6 +390,19 @@ export class HttpService {
   httpPost(url : string, data : any) : Observable<any> {
     let headers = this.setHeaders()
     return this.http.post(this.addr+url, data, { headers: this.setHeaders() })
+      .retryWhen(e => e.scan<number>((errorCount, err) => {
+        console.log("retry: "+(errorCount+1))
+        if (errorCount >= httpRetryNumber-1) {
+            throw err;
+        }
+        return errorCount + 1;
+      }, 0).delay(httpRetryDelay)
+    )
+  }
+
+  httpPut(url : string, data : any) : Observable<any> {
+    let headers = this.setHeaders()
+    return this.http.put(this.addr+url, data, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
         console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {

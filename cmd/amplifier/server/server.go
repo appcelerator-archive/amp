@@ -11,6 +11,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -51,6 +52,7 @@ var serviceInitializers = []serviceInitializer{
 	registerAccountServer,
 	registerClusterServer,
 	registerServiceServer,
+	registerNodeServer,
 }
 
 func New(config *configuration.Configuration) (*Amplifier, error) {
@@ -164,6 +166,12 @@ func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 
 func registerServiceServer(c *Configuration, s *grpc.Server) {
 	service.RegisterServiceServer(s, &service.Server{
+		Docker: runtime.Docker,
+	})
+}
+
+func registerNodeServer(c *Configuration, s *grpc.Server) {
+	node.RegisterNodeServer(s, &node.Server{
 		Docker: runtime.Docker,
 	})
 }

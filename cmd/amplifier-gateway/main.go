@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
@@ -72,6 +73,9 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := service.RegisterServiceHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := node.RegisterNodeHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 	if err := storage.RegisterStorageHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {

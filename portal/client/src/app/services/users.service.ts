@@ -38,6 +38,7 @@ export class UsersService {
     this.httpService.users().subscribe(
       data => {
         this.users = data
+        console.log(data)
         this.onUsersLoaded.next()
       },
       error => {

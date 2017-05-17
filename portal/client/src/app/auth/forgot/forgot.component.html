@@ -8,15 +8,31 @@
         <div style="height:50px">
           <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:40px">
         </div>
-        <div style="color:blue">Sign Up</div>
+        <div style="color:blue;margin-top=20px">Forgot login or password</div>
         <div>
-          <form class="form-horizontal" (ngSubmit)="onSignup(f)" #f="ngForm">
+        <div style="margin-top=15px;margin-bottom:20Px">
+          <button
+            [class]="forgotToggle?'btn btn-primary ebutton':'btn btn-primary'"
+            (click)="forgotLogin()">
+            <i class="glyphicon glyphicon-user" aria-hidden="true"></i>
+            Login
+          </button>
+          <button
+            [class]="!forgotToggle?'btn btn-primary ebutton':'btn btn-primary'"
+            (click)="forgotPassword()">
+            <i  class="fa fa-lock" aria-hidden="true"></i>
+            Password
+          </button>
+        </div>
+        <div>
+          <form class="form-horizontal" (ngSubmit)="onForgot(f)" #f="ngForm">
 
             <div class="form-group">
               <div class="col-sm-12">
                 <input
+                  [readonly]="forgotToggle"
                   ngModel
-                  required
+                  [required]="!forgotToggle"
                   type="text"
                   class="form-control"
                   name="username"
@@ -28,9 +44,10 @@
             <div class="form-group">
               <div class="col-sm-12">
                 <input
+                  [readonly]="!forgotToggle"
                   ngModel
-                  required
-                  email
+                  [required]="forgotToggle"
+                  [email]="forgotToggle"
                   type="email"
                   class="form-control"
                   name="email"
@@ -38,38 +55,6 @@
                   placeholder="email"
                   #email="ngModel">
                 <span class="help-block" *ngIf="!email.valid && email.touched">Please enter a valid email</span>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <div class="col-sm-12">
-                <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></span>
-                  <input
-                    ngModel
-                    required
-                    type="password"
-                    class="form-control"
-                    name="password"
-                    placeholder="password"
-                    id="password">
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <div class="col-sm-12">
-                <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-lock" aria-hidden="true"></i></span>
-                  <input
-                    ngModel
-                    required
-                    type="password"
-                    class="form-control"
-                    name="passwordVerif"
-                    placeholder="password confirmation"
-                    id="passwordVerif">
-                </div>
               </div>
             </div>
 
