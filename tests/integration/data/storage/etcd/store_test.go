@@ -147,7 +147,7 @@ func TestConcurrentUpdates(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(iterations)
 	for i := 0; i < iterations; i++ {
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 			uf := func(current proto.Message) (proto.Message, error) {
 				msg, ok := current.(*TestMessage)
@@ -161,7 +161,7 @@ func TestConcurrentUpdates(t *testing.T) {
 			if err := store.Update(ctx, key, uf, &TestMessage{}); err != nil {
 				t.Error(err)
 			}
-		}()
+		}(i)
 	}
 	wg.Wait()
 
