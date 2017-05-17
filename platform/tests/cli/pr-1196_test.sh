@@ -11,7 +11,7 @@ test_setup() {
 }
 
 test_main() {
-  $amp logs -m --infra | grep -q 'timestamp:'
+  $amp logs -m --infra | grep -q "timestamp:"
 }
 
 test_teardown() {
