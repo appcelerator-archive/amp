@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"fmt"
 	"path"
 	"strings"
 	"time"
@@ -123,25 +124,28 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 }
 
 // VerifyUser verifies a user account
-func (s *Store) VerifyUser(ctx context.Context, token string) (*User, error) {
-	// Validate the token
-	claims, err := auth.ValidateToken(token, auth.TokenTypeVerification)
-	if err != nil {
-		return nil, InvalidToken
+func (s *Store) VerifyUser(ctx context.Context, userName string) error {
+	// Update user
+	uf := func(current proto.Message) (proto.Message, error) {
+		user, ok := current.(*User)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected User): %T", user)
+		}
+
+		if user.TokenUsed {
+			return nil, TokenAlreadyUsed
+		}
+		user.IsVerified = true
+		user.TokenUsed = true
+		return user, nil
 	}
-	user, err := s.getUser(ctx, claims.AccountName)
-	if err != nil {
-		return nil, err
+	if err := s.storage.Update(ctx, path.Join(usersRootKey, userName), uf, &User{}); err != nil {
+		if err == storage.NotFound {
+			return UserNotFound
+		}
+		return err
 	}
-	if user.TokenUsed {
-		return nil, TokenAlreadyUsed
-	}
-	user.IsVerified = true
-	user.TokenUsed = true
-	if err := s.storage.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
-		return nil, err
-	}
-	return secureUser(user), nil
+	return nil
 }
 
 // CheckUserPassword checks the given user password
@@ -158,21 +162,28 @@ func (s *Store) CheckUserPassword(ctx context.Context, name string, password str
 
 // SetUserPassword sets the given user password
 func (s *Store) SetUserPassword(ctx context.Context, name string, password string) error {
-	user, err := s.getUser(ctx, name)
+	// Password
+	if _, err := CheckPassword(password); err != nil {
+		return err
+	}
+	passwordHash, err := passlib.Hash(password)
 	if err != nil {
 		return err
 	}
 
-	// Password
-	if password, err = CheckPassword(password); err != nil {
-		return err
-	}
-	if user.PasswordHash, err = passlib.Hash(password); err != nil {
-		return err
-	}
-
 	// Update user
-	if err := s.storage.Put(ctx, path.Join(usersRootKey, user.Name), user, 0); err != nil {
+	uf := func(current proto.Message) (proto.Message, error) {
+		user, ok := current.(*User)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected User): %T", user)
+		}
+		user.PasswordHash = passwordHash
+		return user, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(usersRootKey, name), uf, &User{}); err != nil {
+		if err == storage.NotFound {
+			return UserNotFound
+		}
 		return err
 	}
 	return nil
@@ -237,9 +248,8 @@ func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 
 // DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
-	// Get requester
-	requester := auth.GetUser(ctx)
-	if requester != name {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_USER, name}, DeleteAction, UserRN, name) {
 		return NotAuthorized
 	}
 
@@ -250,7 +260,7 @@ func (s *Store) DeleteUser(ctx context.Context, name string) error {
 	}
 	// Check if user can be removed from all organizations
 	for _, o := range organizations {
-		if _, err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
+		if err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
 			return err
 		}
 	}
@@ -278,16 +288,6 @@ func (s *Store) getOrganization(ctx context.Context, name string) (organization 
 		return nil, OrganizationNotFound
 	}
 	return organization, nil
-}
-
-func (s *Store) updateOrganization(ctx context.Context, in *Organization) error {
-	if err := in.Validate(); err != nil {
-		return err
-	}
-	if err := s.storage.Put(ctx, path.Join(organizationsRootKey, in.Name), in, 0); err != nil {
-		return err
-	}
-	return nil
 }
 
 // CreateOrganization creates a new organization
@@ -338,73 +338,115 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
-		return err
-	}
-
 	// Get the user
 	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
 		return err
 	}
 
-	// Check if user is already a member
-	if organization.HasMember(user.Name) {
-		return nil // User is already a member of the organization, return
-	}
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
 
-	// Add the user as a team member
-	organization.Members = append(organization.Members, &OrganizationMember{
-		Name: user.Name,
-		Role: OrganizationRole_ORGANIZATION_MEMBER,
-	})
-	return s.updateOrganization(ctx, organization)
+		// Check if user is already a member
+		if organization.HasMember(user.Name) {
+			return nil, nil // User is already a member of the organization, return
+		}
+
+		// Add the user as a team member
+		organization.Members = append(organization.Members, &OrganizationMember{
+			Name: user.Name,
+			Role: OrganizationRole_ORGANIZATION_MEMBER,
+		})
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
+		return err
+	}
+	return nil
 }
 
-func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (*Organization, error) {
-	// Check authorization
-	if auth.GetUser(ctx) != userName && !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
-		return nil, NotAuthorized
-	}
-
+func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) error {
 	// Get organization
 	organization, err := s.getOrganization(ctx, organizationName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Get the user
 	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Check if user is part of the organization
 	memberIndex := organization.getMemberIndex(user.Name)
 	if memberIndex == -1 {
-		return nil, nil // User is not a member of the organization, return
+		return nil // User is not a member of the organization, return
 	}
 
 	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
 	organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
 	if err := organization.Validate(); err != nil {
-		return nil, err
+		return err
 	}
-	return organization, nil
+	return nil
 }
 
 // RemoveUserFromOrganization removes a user from the given organization
 func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName string, userName string) (err error) {
-	organization, err := s.canRemoveUserFromOrganization(ctx, organizationName, userName)
+	// Check authorization
+	if !(s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) ||
+		s.IsAuthorized(ctx, &Account{AccountType_USER, userName}, LeaveAction, OrganizationRN, organizationName)) {
+		return NotAuthorized
+	}
+
+	// Get the user
+	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
 		return err
 	}
-	if organization == nil {
-		return nil
+
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Check if user is part of the organization
+		memberIndex := organization.getMemberIndex(user.Name)
+		if memberIndex == -1 {
+			return nil, nil // User is not a member of the organization, return
+		}
+
+		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+		organization.Members = append(organization.Members[:memberIndex], organization.Members[memberIndex+1:]...)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
 	}
-	return s.updateOrganization(ctx, organization)
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 // ChangeOrganizationMemberRole changes the role of given user in the given organization
@@ -414,27 +456,35 @@ func (s *Store) ChangeOrganizationMemberRole(ctx context.Context, organizationNa
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Check if user is already a member
+		member := organization.getMember(userName)
+		if member == nil {
+			return nil, UserNotFound
+		}
+
+		// Change the role of the user
+		member.Role = role
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Get the user
-	user, err := s.getVerifiedUser(ctx, userName)
-	if err != nil {
-		return err
-	}
-
-	// Check if user is already a member
-	member := organization.getMember(user.Name)
-	if member == nil {
-		return UserNotFound
-	}
-
-	// Change the role of the user
-	member.Role = role
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // GetOrganization fetches a organization by name
@@ -495,27 +545,41 @@ func (s *Store) CreateTeam(ctx context.Context, organizationName, teamName strin
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Check if team already exists
+		if organization.hasTeam(teamName) {
+			return nil, TeamAlreadyExists
+		}
+
+		// Create the new team
+		team := &Team{
+			Name:     teamName,
+			CreateDt: time.Now().Unix(),
+			Members:  []string{auth.GetUser(ctx)},
+		}
+
+		// Add the team to the organization
+		organization.Teams = append(organization.Teams, team)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Check if team already exists
-	if organization.hasTeam(teamName) {
-		return TeamAlreadyExists
-	}
-
-	// Create the new team
-	team := &Team{
-		Name:     teamName,
-		CreateDt: time.Now().Unix(),
-		Members:  []string{auth.GetUser(ctx)},
-	}
-
-	// Add the team to the organization
-	organization.Teams = append(organization.Teams, team)
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // AddUserToTeam adds a user to the given team
@@ -525,37 +589,51 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
-		return err
-	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
 	// Get the user
 	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
 		return err
 	}
 
-	// Check if user is part of the organization
-	if !organization.HasMember(user.Name) {
-		return NotPartOfOrganization
-	}
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
 
-	// Check if user is part of the team
-	if team.hasMember(user.Name) {
-		return nil // User is already a member of the team, return
-	}
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
 
-	// Add the user as a team member
-	team.Members = append(team.Members, user.Name)
-	return s.updateOrganization(ctx, organization)
+		// Check if user is part of the organization
+		if !organization.HasMember(user.Name) {
+			return nil, NotPartOfOrganization
+		}
+
+		// Check if user is part of the team
+		if team.hasMember(user.Name) {
+			return nil, nil // User is already a member of the team, return
+		}
+
+		// Add the user as a team member
+		team.Members = append(team.Members, user.Name)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 // RemoveUserFromTeam removes a user from the given team
@@ -565,33 +643,47 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
-		return err
-	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
 	// Get the user
 	user, err := s.getVerifiedUser(ctx, userName)
 	if err != nil {
 		return err
 	}
 
-	// Check if user is actually a member
-	memberIndex := team.getMemberIndex(user.Name)
-	if memberIndex == -1 {
-		return nil // User is not a member of the team, return
-	}
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
 
-	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
-	return s.updateOrganization(ctx, organization)
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Check if user is actually a member
+		memberIndex := team.getMemberIndex(user.Name)
+		if memberIndex == -1 {
+			return nil, nil // User is not a member of the team, return
+		}
+
+		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+		team.Members = append(team.Members[:memberIndex], team.Members[memberIndex+1:]...)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 // AddResourceToTeam adds a resource to the given team
@@ -601,29 +693,43 @@ func (s *Store) AddResourceToTeam(ctx context.Context, organizationName string, 
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Check if resource is already added to the team
+		if team.hasResource(resourceID) {
+			return nil, nil // Resource is already added to the team, return
+		}
+
+		// Add the resource
+		team.Resources = append(team.Resources, &TeamResource{
+			Id:              resourceID,
+			PermissionLevel: TeamPermissionLevel_TEAM_READ,
+		})
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
-	// Check if resource is already added to the team
-	if team.hasResource(resourceID) {
-		return nil // Resource is already added to the team, return
-	}
-
-	// Add the resource
-	team.Resources = append(team.Resources, &TeamResource{
-		Id:              resourceID,
-		PermissionLevel: TeamPermissionLevel_TEAM_READ,
-	})
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // RemoveResourceFromTeam removes a resource from the given team
@@ -633,27 +739,41 @@ func (s *Store) RemoveResourceFromTeam(ctx context.Context, organizationName str
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Check if resource is already present
+		resourceIndex := team.getResourceIndex(resourceID)
+		if resourceIndex == -1 {
+			return nil, nil // Resource is not present, return
+		}
+
+		// Remove the resource from team resources. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+		team.Resources = append(team.Resources[:resourceIndex], team.Resources[resourceIndex+1:]...)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
-	// Check if resource is already present
-	resourceIndex := team.getResourceIndex(resourceID)
-	if resourceIndex == -1 {
-		return nil // Resource is not present, return
-	}
-
-	// Remove the resource from team resources. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	team.Resources = append(team.Resources[:resourceIndex], team.Resources[resourceIndex+1:]...)
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // ChangeTeamResourcePermissionLevel changes the permission level over the given resource in the given team
@@ -663,27 +783,41 @@ func (s *Store) ChangeTeamResourcePermissionLevel(ctx context.Context, organizat
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Check if resource is associated to the team
+		resource := team.getResourceById(resourceID)
+		if resource == nil {
+			return nil, ResourceNotFound
+		}
+
+		// Change the permission level over the given resource
+		resource.PermissionLevel = permissionLevel
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Get team
-	team := organization.getTeam(teamName)
-	if team == nil {
-		return TeamNotFound
-	}
-
-	// Check if resource is associated to the team
-	resource := team.getResourceById(resourceID)
-	if resource == nil {
-		return ResourceNotFound
-	}
-
-	// Change the permission level over the given resource
-	resource.PermissionLevel = permissionLevel
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // GetTeam fetches a team by name
@@ -719,21 +853,35 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 		return NotAuthorized
 	}
 
-	// Get organization
-	organization, err := s.getOrganization(ctx, organizationName)
-	if err != nil {
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Check if the team is actually a team in the organization
+		teamIndex := organization.getTeamIndex(teamName)
+		if teamIndex == -1 {
+			return nil, nil // Team is not part of the organization, return
+		}
+
+		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
+		organization.Teams = append(organization.Teams[:teamIndex], organization.Teams[teamIndex+1:]...)
+
+		// Validate update
+		if err := organization.Validate(); err != nil {
+			return nil, err
+		}
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
 		return err
 	}
-
-	// Check if the team is actually a team in the organization
-	teamIndex := organization.getTeamIndex(teamName)
-	if teamIndex == -1 {
-		return nil // Team is not part of the organization, return
-	}
-
-	// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
-	organization.Teams = append(organization.Teams[:teamIndex], organization.Teams[teamIndex+1:]...)
-	return s.updateOrganization(ctx, organization)
+	return nil
 }
 
 // Reset resets the account storage

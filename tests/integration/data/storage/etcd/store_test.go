@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,10 +26,6 @@ const (
 var (
 	store storage.Interface
 )
-
-func newContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), defTimeout)
-}
 
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stdout)
@@ -130,39 +127,52 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
-	key := "foo"
-	val := &TestMessage{Id: "100", Name: "bar"}
-	ttl := int64(0)
-
-	ctx1, cancel1 := newContext()
-	err := store.Update(ctx1, key, val, ttl)
-	// cancel timeout (release resources) if operation completes before timeout
-	defer cancel1()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// confirm
-	out := &TestMessage{}
-	ignoreNotFound := false
-	ctx2, cancel2 := newContext()
-	err = store.Get(ctx2, key, out, ignoreNotFound)
-	// cancel timeout (release resources) if operation completes before timeout
-	defer cancel2()
-	if err != nil {
-		t.Error(err)
-	}
-	if !proto.Equal(val, out) {
-		t.Errorf("expected %v, got %v", val, out)
-	}
+func TestConcurrentUpdates(t *testing.T) {
+	ctx := context.Background()
+	key := "entry"
 
 	// cleanup
-	ctx3, cancel3 := newContext()
-	err = store.Delete(ctx3, key, false, out)
-	// cancel timeout (release resources) if operation completes before timeout
-	defer cancel3()
-	if err != nil {
+	if err := store.Delete(ctx, key, false, nil); err != nil {
+		if err != storage.NotFound {
+			t.Error(err)
+		}
+	}
+
+	// Create an empty entry
+	value := &TestMessage{}
+	store.Create(ctx, key, value, nil, 0)
+
+	// Perform updates concurrently
+	const iterations = 100
+	var wg sync.WaitGroup
+	wg.Add(iterations)
+	for i := 0; i < iterations; i++ {
+		go func(i int) {
+			defer wg.Done()
+			uf := func(current proto.Message) (proto.Message, error) {
+				msg, ok := current.(*TestMessage)
+				if !ok {
+					return nil, fmt.Errorf("value is not the right type (expected TestMessage): %T", msg)
+				}
+
+				msg.Names = append(msg.Names, fmt.Sprintf("%d", i))
+				return msg, nil
+			}
+			if err := store.Update(ctx, key, uf, &TestMessage{}); err != nil {
+				t.Error(err)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	current := &TestMessage{}
+	if err := store.Get(ctx, key, current, false); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, len(current.Names), iterations)
+
+	// cleanup
+	if err := store.Delete(ctx, key, false, nil); err != nil {
 		t.Error(err)
 	}
 }

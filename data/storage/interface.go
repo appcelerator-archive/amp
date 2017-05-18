@@ -5,6 +5,18 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Error type
+type Error string
+
+func (e Error) Error() string {
+	return string(e)
+}
+
+// Errors
+const (
+	NotFound = Error("key not found")
+)
+
 // Interface must be implemented for a key/value store
 type Interface interface {
 	// Endpoints returns an array of endpoints for the storage
@@ -38,9 +50,7 @@ type Interface interface {
 	Delete(ctx context.Context, key string, recurse bool, out proto.Message) error
 
 	// Update performs a guaranteed update, which means it will continue to retry until an update succeeds or the request is canceled.
-	// Update(ctx context.Context, key string, type interface, ignoreNotFound bool, preconditions *Preconditions, tryUpdate UpdateFunc) error
-	// TODO: the following is a temporary interface
-	Update(ctx context.Context, key string, val proto.Message, ttl int64) error
+	Update(ctx context.Context, key string, uf UpdateFunc, template proto.Message) error
 
 	// List returns all the values that match the filter.
 	List(ctx context.Context, key string, filter Filter, obj proto.Message, out *[]proto.Message) error
@@ -54,6 +64,10 @@ type Interface interface {
 	// CompareAndSet atomically sets the value to the given updated value if the current value == the expected value
 	CompareAndSet(ctx context.Context, key string, expect proto.Message, update proto.Message) error
 }
+
+// UpdateFunc represents a function that will perform the update on a given object
+// It gets the current object as input and returns the updated object as output
+type UpdateFunc func(current proto.Message) (updated proto.Message, err error)
 
 // Filter is the interface used for storage operations that apply to sets (list, find, update).
 type Filter interface {
