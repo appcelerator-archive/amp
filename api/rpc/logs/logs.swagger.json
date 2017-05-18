@@ -105,7 +105,7 @@
         "task": {
           "type": "string"
         },
-        "infra": {
+        "includeAmpLogs": {
           "type": "boolean",
           "format": "boolean"
         }

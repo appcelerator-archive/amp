@@ -43,7 +43,7 @@ message GetRequest {
   string service = 5;
   string stack = 6;
   string task = 7;
-  bool infra = 8;
+  bool includeAmpLogs = 8;
 }
 
 message GetReply {

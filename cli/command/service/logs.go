@@ -34,7 +34,7 @@ func NewServiceLogsCommand(c cli.Interface) *cobra.Command {
 }
 
 func getLogs(c cli.Interface, args []string, opts logsServiceOptions) error {
-	request := logs.GetRequest{Infra: true}
+	request := logs.GetRequest{IncludeAmpLogs: false}
 	request.Service = args[0]
 
 	// Get logs from amplifier

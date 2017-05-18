@@ -12,14 +12,14 @@ import (
 )
 
 type logsOptions struct {
-	follow    bool
-	infra     bool
-	meta      bool
-	number    int64
-	msg       string
-	container string
-	stack     string
-	node      string
+	follow         bool
+	includeAmpLogs bool
+	meta           bool
+	number         int64
+	msg            string
+	container      string
+	stack          string
+	node           string
 }
 
 // NewLogsCommand returns a new instance of the logs command.
@@ -34,7 +34,7 @@ func NewLogsCommand(c cli.Interface) *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow log output")
-	flags.BoolVarP(&opts.infra, "infra", "i", false, "Include infrastructure logs")
+	flags.BoolVarP(&opts.includeAmpLogs, "include", "i", false, "Include AMP logs")
 	flags.BoolVarP(&opts.meta, "meta", "m", false, "Display entry metadata")
 	flags.Int64VarP(&opts.number, "number", "n", 1000, "Number of results")
 	flags.StringVar(&opts.msg, "msg", "", "Filter the message content by the given pattern")
@@ -54,7 +54,7 @@ func getLogs(c cli.Interface, args []string, opts logsOptions) error {
 	request.Stack = opts.stack
 	request.Node = opts.node
 	request.Size = opts.number
-	request.Infra = opts.infra
+	request.IncludeAmpLogs = opts.includeAmpLogs
 
 	// Get logs from amplifier
 	ctx := context.Background()
