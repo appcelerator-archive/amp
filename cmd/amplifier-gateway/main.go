@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/cluster"
+	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/api/rpc/storage"
+	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/api/rpc/cluster"
-	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/api/rpc/storage"
-	"github.com/appcelerator/amp/api/rpc/version"
 )
 
 const (
