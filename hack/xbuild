@@ -14,17 +14,17 @@ TARGETS=(
     windows amd64
 )
 
-for ((i=0; i<"${#TARGETS[@]}"; $((i=$i+2)) )); do
+for ((i=0; i<"${#TARGETS[@]}"; $((i=i+2)) )); do
   GOOS="${TARGETS[i]}"
   GOARCH="${TARGETS[i+1]}"
-  OUTPUT=$DEST/$GOOS/$GOARCH/$NAME
-  if [[ $GOOS = "windows" ]]; then OUTPUT=$OUTPUT".exe"; fi
-  echo $OUTPUT
-  if [[ $GOOS = "alpine" ]]; then
+  OUTPUT="$DEST/$GOOS/$GOARCH/$NAME"
+  [[ "$GOOS" = "windows" ]] && OUTPUT="${OUTPUT}.exe"
+  echo "$OUTPUT"
+  if [[ "$GOOS" = "alpine" ]]; then
     # build alpine as a special case
     GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -ldflags "$LDFLAGS" \
-      -o $DEST/alpine/$GOARCH/$NAME $PKG
+      -o "$DEST/alpine/$GOARCH/$NAME" "$PKG"
   else
-    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o $OUTPUT $PKG
+    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$OUTPUT" "$PKG"
   fi
 done
