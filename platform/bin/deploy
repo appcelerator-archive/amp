@@ -248,7 +248,16 @@ bootstrap_cluster() {
 
   echo "wait for cluster"
   case $(deployment_target) in
-  local) ;;
+  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
+    docker node ls &>/dev/null
+    if [[ $? -ne 0 ]]; then
+      docker swarm init &>/dev/null
+    fi
+    docker network ls | grep ampnet &>/dev/null
+    if [[ $? -ne 0 ]]; then
+      docker network create -d overlay ampnet
+    fi
+    ;;
   dind)
     clustercheck $CID
     ;;
