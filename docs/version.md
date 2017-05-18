@@ -4,7 +4,6 @@ The `amp version` command displays the current version of AMP.
 
 ### Usage
 
-```
     $ amp version
 
     Client:
@@ -19,4 +18,3 @@ The `amp version` command displays the current version of AMP.
      Build:         04daab98
      Go version:    go1.8.1
      OS/Arch:       linux/amd64
-```

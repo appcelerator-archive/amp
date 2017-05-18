@@ -32,7 +32,7 @@ The `amp password` command manages password-related operations for any AMP accou
 ```
     $ amp password reset
 ```
-    [An email with instructions to reset password will be sent to the registered email address.]
+    An email with instructions to reset password will be sent to the registered email address.
 
 
 * To set a new password:

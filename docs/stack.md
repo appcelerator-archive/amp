@@ -1,40 +1,48 @@
+### Stacks
 
-### Stack
+The `amp stack` command is used to manage AMP stacks.
 
-The `amp stack` command is used to manage amp stacks
+    $ amp stack --help
 
-    $ `amp stack --help`  : display help
+    Usage:	amp stack [OPTIONS] COMMAND
 
-## amp stack deploy -c [stackFile] [stackName]
+    Stack management operations
 
-Deploy a stack using the compose file [stackFile] which is mandatory.
+    Options:
+      -h, --help            Print usage
+      -s, --server string   Specify server (host:port)
 
-The docker name of the stack is going to be [stackName]-[id], where [id] is an unique id given by amp.
+    Commands:
+      deploy      Deploy a stack with a docker compose v3 file
+      logs        Get all logs of a given stack
+      ls          List deployed stacks
+      rm          Remove a deployed stack
 
-To update a stack with a new compose file use the id or the full name of the already deployed stack as with these commands:
+    Run 'amp stack COMMAND --help' for more information on a command.
 
-`amp stack deploy -c [newStackFile] [id]`
-or
-`amp stack deploy -c [newStackFile] [stackName]-[id]`
+### Examples
 
-## amp stack rm [id]
+To be able to perform any stack related operations, you must be logged in to AMP using a verified account.
 
-Remove the stack having the id [id]
+* To deploy a stack using a compose file:
+```
+    $ amp stack deploy -c [path-to-stackfile] [stackname]
+```
+The Docker name of the stack will be `[stackName]-[id]`, where `[id]` is a unique id given by AMP.
 
-## amp stack rm [stackName]-[id]
+* To update a stack with a new compose file:
+```
+    $ amp stack deploy -c [path-to-stackfile] [stackname]
+```
+Use the name of the already deployed stack as the argument.
 
-Remove the stack having the full name [stackName]-[id]
+* To remove a stack:
+```
+    $ amp stack rm [stackname]
+```
 
-## amp stack ls
-
-List the deployed stacks and give the following information:
-
-- id: unique id given by amp
-- name: short name given by user
-- number of service
-- owner: the owner name
-- owner type: the owner type
-
-optionally -q can be used to display only the stack id
-
-Note that this command display only the amp stacks, all other stacks created out of amp are not displayed, infrastructure stacks are not displayed either.
+* To list the deployed stacks:
+```
+    $ amp stack ls
+```
+Note that this command only displays stacks created by the user. No infrastructure stacks are displayed.
