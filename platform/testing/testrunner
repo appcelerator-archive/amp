@@ -289,6 +289,8 @@ run() {
   local failed=$(cat "$FLOG" 2>/dev/null | wc -l) || 0
   local count=$(( passed + failed ))
   printresults $(elapsed_hms) $count $passed $failed
+
+  exit $failed
 }
 
 run "$TEST_DIR"

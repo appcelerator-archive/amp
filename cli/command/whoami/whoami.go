@@ -22,7 +22,7 @@ func NewWhoAmICommand(c cli.Interface) *cobra.Command {
 }
 
 func whoami(c cli.Interface) error {
-	token, err := cli.ReadToken()
+	token, err := cli.ReadToken(c.Server())
 	if err != nil {
 		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
 	}

@@ -18,7 +18,7 @@ func NewLogoutCommand(c cli.Interface) *cobra.Command {
 }
 
 func logout(c cli.Interface) error {
-	if err := cli.RemoveToken(); err != nil {
+	if err := cli.RemoveToken(c.Server()); err != nil {
 		return err
 	}
 	c.Console().Println("You have been logged out!")

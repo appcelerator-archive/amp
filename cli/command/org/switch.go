@@ -34,7 +34,7 @@ func switch_(c cli.Interface, args []string) error {
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if err := cli.SaveToken(headers); err != nil {
+	if err := cli.SaveToken(headers, c.Server()); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("You are now logged in as: %s\n", args[0])

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/appcelerator/amp/api/auth"
 	"golang.org/x/net/context"
@@ -14,12 +15,18 @@ import (
 
 var (
 	ampConfigFolder = filepath.Join(".config", "amp")
-	ampTokenFile    = "token"
+)
+
+const (
+	//Credentials suffix for authentication token file
+	Credentials = ".credentials"
 )
 
 // SaveToken saves the authentication token to file
-func SaveToken(headers metadata.MD) error {
+func SaveToken(headers metadata.MD, server string) error {
 	tokens := headers[auth.TokenKey]
+	ampTokenFile := strings.TrimSuffix(server, DefaultPort) + Credentials
+	// Extract token from header
 	if len(tokens) == 0 {
 		return fmt.Errorf("invalid token")
 	}
@@ -41,7 +48,8 @@ func SaveToken(headers metadata.MD) error {
 }
 
 // ReadToken reads the authentication token from file
-func ReadToken() (string, error) {
+func ReadToken(server string) (string, error) {
+	ampTokenFile := strings.TrimSuffix(server, DefaultPort) + Credentials
 	usr, err := user.Current()
 	if err != nil {
 		return "", fmt.Errorf("cannot get current user: %s", err)
@@ -54,7 +62,8 @@ func ReadToken() (string, error) {
 }
 
 // RemoveToken deletes the authentication token file
-func RemoveToken() error {
+func RemoveToken(server string) error {
+	ampTokenFile := strings.TrimSuffix(server, DefaultPort) + Credentials
 	usr, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("cannot get current user: %s", err)
@@ -88,8 +97,8 @@ func (c *LoginCredentials) RequireTransportSecurity() bool {
 }
 
 // GetToken returns the stored token
-func GetToken() string {
-	token, err := ReadToken()
+func GetToken(server string) string {
+	token, err := ReadToken(server)
 	if err != nil {
 		return ""
 	}

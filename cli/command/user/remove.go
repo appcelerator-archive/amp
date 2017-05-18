@@ -30,7 +30,7 @@ func removeUser(c cli.Interface, args []string) error {
 	var errs []string
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	token, err := cli.ReadToken()
+	token, err := cli.ReadToken(c.Server())
 	if err != nil {
 		return errors.New("you are not logged in. Use `amp login` or `amp user signup`.")
 	}
@@ -50,7 +50,7 @@ func removeUser(c cli.Interface, args []string) error {
 			continue
 		}
 		if name == claims.AccountName {
-			if err := cli.RemoveToken(); err != nil {
+			if err := cli.RemoveToken(c.Server()); err != nil {
 				errs = append(errs, err.Error())
 			}
 		}
