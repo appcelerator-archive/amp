@@ -12,6 +12,7 @@ readonly SP="$(cd "$(dirname "$0")"; pwd -P)"
 # dirs
 readonly PLATFORMDIR="$(dirname $SP)"
 readonly BOOTSTRAPDIR="$PLATFORMDIR/bootstrap"
+readonly STACKSDIR="$PLATFORMDIR/stacks"
 readonly TESTSDIR="$PLATFORMDIR/tests"
 readonly terraformdir="$BOOTSTRAPDIR/terraform-aws"
 
@@ -25,29 +26,33 @@ readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
 readonly localdomainname="local.atomiq.io"
 readonly clouddomainname="cloud.atomiq.io"
 
-# returns the target of the deployment: local or a cloud provider
+# global vars
+DEPLOYMENT_TARGET=local
+CID=
+amps=docker
+
+# get and optionally set the target of the deployment: local | dind | aws
 deployment_target() {
-  local _target
-  _target=$(echo $(basename $0) | cut -d- -f2)
-  if [ $? -ne 0 ] || [ "$_target" = "$(basename $0)" ]; then
-    _target="local"
-  fi
-  echo $_target
+  [[ ! -z $1 ]] && DEPLOYMENT_TARGET=$1
+  echo $DEPLOYMENT_TARGET
 }
 
 # create the cluster and echo the cluster id
 cluster_create() {
   case $(deployment_target) in
   local)
+    ;;
+  dind)
     # async
-    if [ $# -eq 0 ]; then
+    if [[ $# -eq 0 ]]; then
       bootstrap $BOOTSTRAP_OPTIONS -f
     else
       bootstrap $BOOTSTRAP_OPTIONS -fi $1
-    fi ;;
+    fi
+    ;;
   aws)
     # sync (modulo user data execution)
-    if [ $# -ne 0 ]; then
+    if [[ $# -ne 0 ]]; then
       echo "cluster creation with id set is not available for this deployment target" >&2
       return 1
     fi
@@ -60,21 +65,19 @@ cluster_create() {
 # destroy the cluster
 cluster_destroy() {
   case $(deployment_target) in
-  local)
-    bootstrap -d ;;
-  aws)
-    $terraform destroy /data;;
+  local) ;;
+  dind) bootstrap -d ;;
+  aws) $terraform destroy /data ;;
   esac
 }
 
 # status of cluster, expects the cluster id as argument
-# 0 means healthy
+# exit 0 means healthy
 cluster_status() {
   case $(deployment_target) in
-  local)
-    bootstrap -s $1 >/dev/null 2>&1 ;;
-  aws)
-    $terraform output -state=/data/terraform.tfstate $cluster_id >/dev/null ;;
+  local) ;;
+  dind) bootstrap -s $1 &>/dev/null ;;
+  aws) $terraform output -state=/data/terraform.tfstate $cluster_id &>/dev/null ;;
   esac
 }
 
@@ -101,6 +104,12 @@ EOF
 set_deployment_variables(){
   case $(deployment_target) in
   local)
+    stacks_path="$STACKSDIR"
+    amps="docker"
+    domainname=$localdomainname
+    return
+    ;;
+  dind)
     dockerhost=m1
     registryhost=127.0.0.1
     create_amp_stacks_volume
@@ -119,16 +128,18 @@ set_deployment_variables(){
     export DOCKERHOST=$dockerhost
     ;;
   esac
+
   echo "Docker host = $dockerhost"
   echo "Docker registry = $registryhost"
 }
 
 checkexit() {
-  [[ $1 -ne 0 ]] && printf "${@:2} (exit $1)\n" && exit $1
+  ec=$?
+  (( $ec != 0 )) && printf "$@ (exit code: $ec)\n" && exit $ec
 }
 
 cleanup() {
-  docker volume rm amp-stacks >/dev/null 2>&1
+  docker volume rm amp-stacks &>/dev/null
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && bootstrap -d $CID
 }
 
@@ -139,16 +150,16 @@ ok() {
 pushimage() {
   echo "push image: $1/$2"
   docker tag $2 $1/$2
-  checkexit $? "error tagging image"
+  checkexit "error tagging image"
   docker push $1/$2
-  checkexit $? "error pushing image"
+  checkexit "error pushing image"
   ok
 }
 
 deploystack() {
   echo "deploy $1 => $2"
   $amps stack deploy -c $stacks_path/$1 $2
-  checkexit $? "error deploying stack"
+  checkexit "error deploying stack"
   ok
 }
 
@@ -190,160 +201,196 @@ prepare_certificates() {
   echo "checking if the certificate secret is already defined"
   $amps secret ls | grep -q "certificate_atomiq" && return 0
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" /stacks/$name.pem
+  $amps secret create "certificate_atomiq" $stacks_path/$name.pem
 }
 
-while getopts ":w:m:t:l:T:c:r:n:" opt; do
-  case $opt in
-  w|m|t|l) # just pass it to the bootstrap script
-    BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+# process the command line options and arguments
+parse_cmd() {
+  while getopts ":w:m:t:l:T:c:r:n:p:" opt; do
+    case $opt in
+    w|m|t|l) # just pass it to the bootstrap script
+      BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+      ;;
+    T) # tag for images to deploy
+      export TAG=$OPTARG
+      ;;
+    r) # registration policy
+      export REGISTRATION=$OPTARG
+      ;;
+    n) # notifications
+      export NOTIFICATIONS=$OPTARG
+      ;;
+    c)
+      CHECK=1
+      ;;
+    p) # provider
+      deployment_target $OPTARG
+      ;;
+    esac
+  done
+  shift "$((OPTIND-1))"
+
+  CID=$1
+}
+
+bootstrap_cluster() {
+  if [[ -z $CID ]]; then
+    echo "bootstrapping cluster"
+    CID=$(cluster_create)
+    checkexit "bootstrap failed"
+    [[ ! -z $CID ]] && echo $CID
+  else
+    cluster_status $CID || cluster_create $CID
+    checkexit "bootstrap failed"
+  fi
+
+  set_deployment_variables
+
+  echo "wait for cluster"
+  case $(deployment_target) in
+  local) ;;
+  dind)
+    clustercheck $CID
     ;;
-  T) # tag for images to deploy
-    export TAG=$OPTARG
-    ;;
-  r) # registration policy
-    export REGISTRATION=$OPTARG
-    ;;
-  n) # notifications
-    export NOTIFICATIONS=$OPTARG
-    ;;
-  c)
-    CHECK=1
+  *)
+    echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
+    echo "This script will need it in a moment"
+    clustersize=5
+    maxwait=560
+    SECONDS=0
+    while (( $($amps node ls -q | wc -l) < $clustersize )); do
+      sleep 5
+      (( $SECONDS > $maxwait )) && break
+      if [[ $((SECONDS % 20)) -eq 0 ]]; then
+        echo "still waiting, $($amps node ls -q | wc -l) nodes on $clustersize"
+        echo "will timeout in $((maxwait - SECONDS))"
+      fi
+    done
+    (( $SECONDS <= $maxwait ))
     ;;
   esac
-done
-shift "$((OPTIND-1))"
+  checkexit "cluster timed out"
+  ok
 
-CID=$1
+  if [[ $(deployment_target) != "local" ]]; then
+    echo "wait for swarm mode"
+    # TODO: fix swarmcheck, it now checks the local swarm, not the one from the cluster
+    swarmcheck 300
+    checkexit "swarm mode timed out"
+    ok
+
+    echo "wait for registry"
+    curlcheck "${registryhost}:5000/v2/" 200 180
+    checkexit "registry timed out"
+    ok
+
+    if [[ "$TAG" = "local" ]]; then
+      echo "push images to cluster"
+      for image in amplifier amplifier-gateway ampbeat agent; do
+        pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
+      done
+    else
+      echo "image push to cluster is ignored (tag=${TAG:-latest})"
+    fi
+  fi
+}
+
+deploy_stacks() {
+  local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
+
+  if [[ $(deployment_target) == "local" ]]; then
+    # force all placement constraints to deploy to a single manager
+    export NODE_ROLE=manager
+  fi
+
+  echo "deploy amp monitoring stack to cluster - stage 1"
+  deploystack ampmon.1.stack.yml amp
+  echo "wait for all amp monitoring stage 1 stack service replicas to be running"
+  servicescheck $maxwait
+  checkexit "amp monitoring stage 1 service replica checks timed out"
+  ok
+
+  echo "deploy amp monitoring stack to cluster - stage 2"
+  deploystack ampmon.2.stack.yml amp
+  echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
+  servicescheck $maxwait
+  checkexit "amp monitoring stage 2 service replica checks timed out"
+  ok
+
+  echo "deploy amp stack to cluster"
+  deploystack amp.stack.yml amp
+  echo "wait for all amp service replicas to be running ($maxwait sec)"
+  servicescheck $maxwait
+  checkexit "amp service replica checks timed out"
+  ok
+
+  prepare_certificates $domainname
+  if [[ $? -eq 0 ]]; then
+    echo "deploy amp proxy stack to cluster"
+    deploystack ampproxy.stack.yml amp
+    echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
+    servicescheck $maxwait
+    checkexit "amp proxy service replica checks timed out"
+    ok
+  else
+    echo "won't deploy the proxy stack, there's no certificate"
+  fi
+}
+
+smoke_tests() {
+  (( $CHECK == 0 )) && return
+
+  #####
+  # following checks need to move to $TESTSDIR
+  #
+  servicescheck 0
+  checkexit "service replica check failed"
+  ok
+
+  echo
+  $amps service ls
+  echo
+
+  # sanity service lookup and ping checks after starting monitoring stack
+  echo "test nats availability"
+  lookup nats >/dev/null
+  checkexit "service lookup check failed: nats"
+  ok "service lookup check succeeded: nats"
+  kurl nats:8222
+  checkexit "service ping check failed: nats"
+  ok "service ping check succeeded: nats"
+
+  echo "test elasticsearch availability"
+  lookup elasticsearch >/dev/null
+  checkexit "service lookup check failed: elasticsearch"
+  ok "service lookup check succeeded: elasticsearch"
+  kurl elasticsearch:9200
+  checkexit "service ping check failed: elasticsearch"
+  ok "service ping check succeeded: elasticsearch"
+  #
+  #
+  #####
+
+  # run additional smoke tests if CHECK > 1
+  if (( $CHECK > 1 )); then
+    $PLATFORMDIR/testing/testrunner $TESTSDIR
+    checkexit "smoke tests failed"
+  fi
+
+  ok "smoke tests passed"
+}
+
+main() {
+  parse_cmd $@
+  bootstrap_cluster
+  deploy_stacks
+  smoke_tests
+
+  # set SUCCESS for EXIT trap
+  SUCCESS=1
+  printf "\nCluster status: healthy\n$CID"
+}
 
 trap cleanup EXIT
-
-echo "$(deployment_target) deployment"
-if [ -z $CID ]; then
-  echo "bootstrapping cluster"
-  CID=$(cluster_create)
-  checkexit $? "bootstrap failed"
-  echo $CID
-else
-  cluster_status $CID || cluster_create $CID
-  checkexit $? "bootstrap failed"
-fi
-
-set_deployment_variables
-
-echo "wait for cluster"
-if [ $(deployment_target) = "local" ]; then
-  clustercheck $CID
-else
-  echo "Make sure ${registryhost}:5000 is declared as an insecure registry in your Docker settings"
-  echo "This script will need it in a moment"
-  clustersize=5
-  maxwait=560
-  SECONDS=0
-  while [ $($amps node ls -q | wc -l) -lt $clustersize ]; do
-    sleep 5
-    [ $SECONDS -gt $maxwait ] && break
-    if [ $((SECONDS % 20)) -eq 0 ]; then
-      echo "still waiting, $($amps node ls -q | wc -l) nodes on $clustersize"
-      echo "will timeout in $((maxwait - SECONDS))"
-    fi
-  done
-  [ $SECONDS -le $maxwait ]
-fi
-checkexit $? "cluster timed out"
-ok
-
-echo "wait for swarm mode"
-# todo: fix swarmcheck, it now checks the local swarm, not the one from the cluster
-swarmcheck 300
-checkexit $? "swarm mode timed out"
-ok
-
-echo "wait for registry"
-curlcheck "${registryhost}:5000/v2/" 200 180
-checkexit $? "registry timed out"
-ok
-
-if [[ "$TAG" = "local" ]]; then
-  echo "push images to cluster"
-  for image in amplifier amplifier-gateway ampbeat agent; do
-    pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
-  done
-else
-  echo "image push to cluster is ignored (tag=${TAG:-latest})"
-fi
-
-maxwait=580
-echo "deploy amp monitoring stack to cluster - stage 1"
-deploystack ampmon.1.stack.yml amp
-echo "wait for all amp monitoring stage 1 stack service replicas to be running"
-servicescheck $maxwait
-checkexit $? "amp monitoring stage 1 service replica checks timed out"
-ok
-
-echo "deploy amp monitoring stack to cluster - stage 2"
-deploystack ampmon.2.stack.yml amp
-echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
-servicescheck $maxwait
-checkexit $? "amp monitoring stage 2 service replica checks timed out"
-ok
-
-echo "deploy amp stack to cluster"
-deploystack amp.stack.yml amp
-echo "wait for all amp service replicas to be running ($maxwait sec)"
-servicescheck $maxwait
-checkexit $? "amp service replica checks timed out"
-ok
-
-prepare_certificates $domainname
-if [[ $? -eq 0 ]]; then
-  echo "deploy amp proxy stack to cluster"
-  deploystack ampproxy.stack.yml amp
-  echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit $? "amp proxy service replica checks timed out"
-  ok
-else
-  echo "won't deploy the proxy stack, there's no certificate"
-fi
-
-# final sanity checks
-# ===================
-
-servicescheck 0
-checkexit $? "final service replica smoke check failed"
-ok
-
-echo
-$amps service ls
-echo
-
-# sanity service lookup and ping checks after starting monitoring stack
-echo "test nats availability"
-lookup nats >/dev/null
-checkexit $? "service lookup check failed: nats"
-ok "service lookup check succeeded: nats"
-kurl nats:8222
-checkexit $? "service ping check failed: nats"
-ok "service ping check succeeded: nats"
-
-echo "test elasticsearch availability"
-lookup elasticsearch >/dev/null
-checkexit $? "service lookup check failed: elasticsearch"
-ok "service lookup check succeeded: elasticsearch"
-kurl elasticsearch:9200
-checkexit $? "service ping check failed: elasticsearch"
-ok "service ping check succeeded: elasticsearch"
-
-# checks
-# ======
-if [[ $CHECK -eq 1 ]]; then
-  time testscheck $TESTSDIR
-  rv=$?
-  checkexit $rv "tests failed: $rv"
-  ok "tests passed"
-fi
-
-printf "\nCluster status: healthy\n$CID"
-SUCCESS=1
+main $@
 

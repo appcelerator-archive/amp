@@ -19,7 +19,8 @@ services:
       labels:
         io.amp.role: "infrastructure"
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
     labels:
       io.amp.role: "infrastructure"
 
@@ -36,7 +37,8 @@ services:
         io.amp.role: "infrastructure"
         io.amp.mapping: "kibana:5601"
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
     labels:
       io.amp.role: "infrastructure"
     environment:

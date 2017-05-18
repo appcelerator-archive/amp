@@ -52,7 +52,8 @@ services:
       restart_policy:
         condition: on-failure
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
 
   agent:
     image: appcelerator/agent:${TAG:-latest}
