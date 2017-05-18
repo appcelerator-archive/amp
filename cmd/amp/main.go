@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 
 	"github.com/appcelerator/amp/cli"
@@ -24,7 +25,12 @@ func main() {
 	config = &cli.Configuration{
 		Version: Version,
 		Build:   Build,
-		Server:  "cloud.appcelerator.io:50101",
+		Server:  cli.DefaultAddress + cli.DefaultPort,
+	}
+
+	// Read the cli config
+	if err := cli.ReadClientConfig(config); err != nil {
+		log.Fatalln(err)
 	}
 
 	// Set terminal emulation based on platform as required.

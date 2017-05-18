@@ -52,7 +52,7 @@ func login(c cli.Interface, cmd *cobra.Command, opts loginOptions) error {
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
-	if err := cli.SaveToken(headers); err != nil {
+	if err := cli.SaveToken(headers, c.Server()); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Printf("Welcome back %s!\n", opts.username)
