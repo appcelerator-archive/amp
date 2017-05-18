@@ -255,7 +255,7 @@ bootstrap_cluster() {
     fi
     docker network ls | grep ampnet &>/dev/null
     if [[ $? -ne 0 ]]; then
-      docker network create -d overlay ampnet
+      docker network create --attachable -d overlay ampnet
     fi
     ;;
   dind)
