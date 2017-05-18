@@ -32,7 +32,7 @@ To be able to perform any organization related operations, you must be logged in
 
 * To create an organization:
 ```
-    $ amp org create
+    $ amp org create --org org --email email@org
 ```
 
 * To retrieve a list of organizations:
@@ -42,19 +42,18 @@ To be able to perform any organization related operations, you must be logged in
 
 * To retrieve details of a specific organization:
 ```
-    $ amp org get
+    $ amp org get org
 ```
 
 * To switch between accounts (user or org):
 ```
-    $ amp org switch
+    $ amp org switch foo
 ```
+`foo` is the currently logged-in user account.
 
 * To remove an organization:
 ```
-    $ amp org rm
-    [or]
-    $ amp org del
+    $ amp org rm org
 ```
 
 #### Organization Member Management Commands
@@ -83,22 +82,22 @@ To be able to perform any organization related operations, you must be logged in
 
 * To add a member to an organization:
 ```
-    $ amp org member add
+    $ amp org member add --org org --member johndoe
 ```
+Note that the member to be added to the organization must be a existing and verified user account.
 
 * To list members in an organization:
 ```
-    $ amp org member ls
+    $ amp org member ls --org org
 ```
 
 * To change role of a member in an organization:
 ```
-    $ amp org member role
+    $ amp org member role --org org --member johndoe --role owner
 ```
+Note that when a member to be added to the organization, the default role is `member`. The role can be changed to `owner`.
 
 * To remove a member from an organization:
 ```
-    $ amp org member rm
-    [or]
-    $ amp org member del
+    $ amp org member rm --org org johndoe
 ```

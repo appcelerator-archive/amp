@@ -1,4 +1,3 @@
-
 ### Logs
 
 The `amp logs` command is used to query or stream logs. It provides useful filtering options to manage what is presented.

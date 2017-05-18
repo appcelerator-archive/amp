@@ -32,24 +32,22 @@ To be able to perform any team related operations, you must be logged in to AMP 
 
 * To create a team in an organization:
 ```
-    $ amp team create
+    $ amp team create --org org --team team
 ```
 
 * To retrieve the list of teams:
 ```
-    $ amp team ls
+    $ amp team ls --org org
 ```
 
 * To retrieve details of a specific team:
 ```
-    $ amp team get
+    $ amp team get --org org --team team
 ```
 
 * To remove a team:
 ```
-    $ amp team rm
-    [or]
-    $ amp team del
+    $ amp team rm --org org team
 ```
 
 ### Team Member Management Commands
@@ -77,19 +75,18 @@ To be able to perform any team related operations, you must be logged in to AMP 
 
 * To add a member to a team:
 ```
-    $ amp team member add
+    $ amp team member add --org org --team team --member johndoe
 ```
+Note that the member to be added to the team must be a existing and verified user account.
 
 * To list members in a team:
 ```
-    $ amp team member ls
+    $ amp team member ls --org org --team team
 ```
 
 * To remove a member from a team:
 ```
-    $ amp team member rm
-    [or]
-    $ amp team member del
+    $ amp team member rm --org org --team team
 ```
 
 ### Team Resource Management Commands
@@ -118,22 +115,21 @@ To be able to perform any team related operations, you must be logged in to AMP 
 
 * To add a resource to a team:
 ```
-    $ amp team resource add
+    $ amp team resource add --org org --team team --res RESOURCEID
 ```
 
 * To list resources available to a team:
 ```
-    $ amp team resource ls
+    $ amp team resource ls --org org --team team
 ```
 
 * To remove a resource from a team:
 ```
-    $ amp team resource rm
-    [or]
-    $ amp team resource del
+    $ amp team resource rm --org org --team team RESOURCEID
 ```
 
-* To change the permission level over a resource:
+* To change the permission level of a resource:
 ```
-    $ amp team resource perm RESOURCEID read|write|admin
+    $ amp team resource perm RESOURCEID write
 ```
+The default permission level of a resource is `read`. The permission level can be changed to `read`, `write` or `admin`.
