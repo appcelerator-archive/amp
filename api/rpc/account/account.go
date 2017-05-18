@@ -131,6 +131,9 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Em
 	if err != nil {
 		return nil, convertError(err)
 	}
+	if user == nil {
+		return nil, accounts.UserNotFound
+	}
 	if err := s.Mailer.SendAccountVerifiedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}

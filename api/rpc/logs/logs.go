@@ -18,6 +18,10 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+const (
+	NumberOfEntries = 100
+)
+
 // Server is used to implement log.LogServer
 type Server struct {
 	ES *elasticsearch.Elasticsearch
@@ -46,7 +50,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if in.Size != 0 {
 		request.Size(int(in.Size))
 	} else {
-		request.Size(100)
+		request.Size(NumberOfEntries)
 	}
 
 	masterQuery := elastic.NewBoolQuery()
@@ -78,20 +82,17 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		queryString.Field("msg")
 		masterQuery.Filter(queryString)
 	}
-	if !in.Infra {
-		masterQuery.MustNot(elastic.NewTermQuery(convertLabelNameToESName(labels.LabelsNameRole), labels.LabelsValuesRoleInfrastructure))
-		//For now Tools role is manage as Infrastructure role
-		//Later: ToolsRole should be manage with a user premission (admin)
-		masterQuery.MustNot(elastic.NewTermQuery(convertLabelNameToESName(labels.LabelsNameRole), labels.LabelsValuesRoleTools))
+	if !in.IncludeAmpLogs {
+		masterQuery.MustNot(elastic.NewExistsQuery(dockerToEsLabel(labels.KeyRole)))
 	}
 
-	// Perform request
+	// Perform ES request
 	searchResult, err := request.Query(masterQuery).Do(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
 	}
 
-	// Build reply (from elasticsearch response)
+	// Build reply
 	reply := GetReply{}
 	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
 	for i, hit := range searchResult.Hits.Hits {
@@ -100,6 +101,13 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 			return nil, status.Errorf(codes.Internal, "%v", err)
 		}
 		reply.Entries[i] = entry
+
+		// Convert ES labels to Docker labels
+		labels := make(map[string]string)
+		for k, v := range entry.Labels {
+			labels[esToDockerLabel(k)] = v
+		}
+		reply.Entries[i].Labels = labels
 	}
 
 	// Reverse entries
@@ -110,7 +118,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	return &reply, nil
 }
 
-//custom unmarshal for @timestamp
+// custom unmarshal for @timestamp
 func (s *Server) unmarshal(data []byte, entry *LogEntry) error {
 	type Alias LogEntry
 	aux := &struct {
@@ -134,58 +142,66 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	log.Println("rpc-logs: GetStream", in.String())
 
 	sub, err := s.NS.GetClient().Subscribe(ns.LogsSubject, func(msg *stan.Msg) {
-		entry := &LogEntry{}
-		if err := proto.Unmarshal(msg.Data, entry); err != nil {
+		entries := &GetReply{}
+		if err := proto.Unmarshal(msg.Data, entries); err != nil {
+			log.Println("error while unmarshalling message", err)
 			return
 		}
-		if filter(entry, in) {
-			stream.Send(entry)
+		for _, entry := range entries.Entries {
+			if match(entry, in) {
+				stream.Send(entry)
+			}
 		}
 	})
 	if err != nil {
-		sub.Unsubscribe()
 		return status.Errorf(codes.Internal, "%v", err)
 	}
+	defer sub.Unsubscribe()
 	for {
 		select {
 		case <-stream.Context().Done():
-			sub.Unsubscribe()
 			return stream.Context().Err()
 		}
 	}
 }
 
-func filter(entry *LogEntry, in *GetRequest) bool {
+func match(entry *LogEntry, in *GetRequest) bool {
 	match := true
 	if in.Container != "" {
+		prefix := strings.ToLower(in.Container)
 		containerID := strings.ToLower(entry.ContainerId)
 		containerName := strings.ToLower(entry.ContainerName)
-		match = strings.HasPrefix(containerID, strings.ToLower(in.Container)) || strings.HasPrefix(containerName, strings.ToLower(in.Container))
+		match = match && (strings.HasPrefix(containerID, prefix) || strings.HasPrefix(containerName, prefix))
 	}
 	if in.Service != "" {
+		prefix := strings.ToLower(in.Service)
 		serviceID := strings.ToLower(entry.ServiceId)
 		serviceName := strings.ToLower(entry.ServiceName)
-		match = strings.HasPrefix(serviceID, strings.ToLower(in.Service)) || strings.HasPrefix(serviceName, strings.ToLower(in.Service))
+		match = match && (strings.HasPrefix(serviceID, prefix) || strings.HasPrefix(serviceName, prefix))
 	}
 	if in.Stack != "" {
-		match = strings.HasPrefix(strings.ToLower(entry.StackName), strings.ToLower(in.Stack))
+		match = match && strings.HasPrefix(strings.ToLower(entry.StackName), strings.ToLower(in.Stack))
 	}
 	if in.Task != "" {
-		match = strings.HasPrefix(strings.ToLower(entry.TaskId), strings.ToLower(in.Task))
+		match = match && strings.HasPrefix(strings.ToLower(entry.TaskId), strings.ToLower(in.Task))
 	}
 	if in.Node != "" {
-		match = strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
+		match = match && strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
 	}
 	if in.Message != "" {
-		match = strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
+		match = match && strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
-	if !in.Infra {
-		role := entry.Labels[labels.LabelsNameRole]
-		match = role != labels.LabelsValuesRoleInfrastructure && role != labels.LabelsValuesRoleTools
+	if !in.IncludeAmpLogs {
+		_, ampLogs := entry.Labels[labels.KeyRole]
+		match = match && !ampLogs
 	}
 	return match
 }
 
-func convertLabelNameToESName(name string) string {
+func dockerToEsLabel(name string) string {
 	return "labels." + strings.Replace(name, ".", "-", -1)
+}
+
+func esToDockerLabel(name string) string {
+	return strings.Replace(name, "-", ".", -1)
 }
