@@ -23,7 +23,8 @@ services:
       labels:
         io.amp.role: "infrastructure"
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
 
   nats:
     image: appcelerator/amp-nats-streaming:v0.3.8
@@ -39,7 +40,8 @@ services:
       labels:
         io.amp.role: "infrastructure"
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
 
   etcd:
     image: appcelerator/etcd:3.1.6
@@ -61,5 +63,6 @@ services:
       labels:
         io.amp.role: "infrastructure"
       placement:
-        constraints: [node.role == worker]
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
 
