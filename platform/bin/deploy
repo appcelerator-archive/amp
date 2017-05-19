@@ -175,6 +175,20 @@ kurl() {
   $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
 }
 
+# pushes the amplifier configuration in a secret
+# TODO: empty for now
+prepare_amplifier_configuration(){
+  local _conf
+  _conf="$HOME/.config/amp/amplifier.yml"
+  if [[ -f "$_conf" ]]; then
+    echo "creating the amplifier_yml secret from the local configuration" >&2
+    $amps secret create "amplifier_yml" "$_conf"
+  else
+    echo "creating an empty amplifier_yml secret" >&2
+    echo "---" | $amps secret create "amplifier_yml" -
+  fi
+}
+
 # pushes certificates in a Docker secret, ready to use by services in stack files
 # for local bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
@@ -326,6 +340,8 @@ deploy_stacks() {
   checkexit "amp monitoring stage 2 service replica checks timed out"
   ok
 
+  prepare_amplifier_configuration
+  checkexit "secret creation for amplifier failed"
   echo "deploy amp stack to cluster"
   deploystack amp.stack.yml amp
   echo "wait for all amp service replicas to be running ($maxwait sec)"
