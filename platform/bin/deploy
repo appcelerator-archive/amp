@@ -116,6 +116,7 @@ set_deployment_variables(){
     amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     domainname=$localdomainname
+    export DOCKERHOST=$dockerhost
     ;;
   aws)
     # todo: use a secured remote API
@@ -180,6 +181,7 @@ kurl() {
 prepare_amplifier_configuration(){
   local _conf
   _conf="$HOME/.config/amp/amplifier.yml"
+  $amps secret ls | grep -q "amplifier_yml" && return 0
   if [[ -f "$_conf" ]]; then
     echo "creating the amplifier_yml secret from the local configuration" >&2
     $amps secret create "amplifier_yml" "$_conf"
@@ -265,7 +267,7 @@ bootstrap_cluster() {
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
-      docker swarm init &>/dev/null
+      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null
     fi
     docker network ls | grep ampnet &>/dev/null
     if [[ $? -ne 0 ]]; then

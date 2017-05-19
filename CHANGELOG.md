@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.1 (2017-05-18)
+
+* Simplifies the developer local workflow (flags for registration and notifications are not required by default)
+* Synchronizes all the images to the same tag
+
 ## 0.10.0 (2017-05-18)
 
 * Add CLI for Windows (amp.exe)
