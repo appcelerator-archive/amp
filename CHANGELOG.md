@@ -6,6 +6,7 @@
 * Faster local deployment (uses host swarm mode instead of a DinD cluster)
 * Email verification can be disabled for local develpment and testing
 * Updated docs and examples
+* Fix file permission issues for builds on Linux 
 
 ## 0.9.1 (2017-05-03)
 
