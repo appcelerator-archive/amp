@@ -3,7 +3,6 @@
 TIMEOUT="${1:-300}"
 INTERVAL="${2:-2}"
 
-[ -z "$DOCKERHOST" ] && DOCKERHOST=m1
 [ "$DOCKERHOST" = "m1" ] && amps="docker run -it --rm --network=hostnet docker --host=m1" || amps="docker run -it --rm docker --host=$DOCKERHOST"
 
 check() {
