@@ -1,8 +1,6 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
-import { SidebarComponent } from './sidebar/sidebar.component';
-import { PageheaderComponent } from './pageheader/pageheader.component';
-import { UsersService } from './services/users.service';
-import { Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { MenuService } from './services/menu.service';
+
 
 
 @Component({
@@ -12,11 +10,10 @@ import { Router } from '@angular/router';
 })
 
 export class AppComponent {
-  @ViewChild(PageheaderComponent)
-  private pageHeader: PageheaderComponent;
 
-  constructor(public usersService : UsersService, private router : Router) { }
+  constructor(public menuService : MenuService) { }
 
   ngOnInit() {
+    this.menuService.waitingCursor(false)
   }
 }

@@ -3,7 +3,7 @@
     <div class="panel panel-default">
       <div class="panel-body">
         <div>
-          <div class="pull-left"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>Users</div>
+          <div class="pull-left"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Users</div>
           <div class="pull-right">
             Items per page:
             <select  (change)="listService.setPageSize(+pageSize.value)" #pageSize>
@@ -79,7 +79,7 @@
               </thead>
               <tbody>
                 <tr class="ng-scope" *ngFor="let user of listService.getData()">
-                  <td><input type="checkbox" ng-change="selectItem(user)" class="ng-pristine ng-untouched ng-valid ng-empty"></td>
+                  <td><input type="checkbox"></td>
                   <td class="ng-binding">{{ user.name }}</td>
                   <td class="ng-binding">{{ user.email }}</td>
                   <td class="ng-binding">

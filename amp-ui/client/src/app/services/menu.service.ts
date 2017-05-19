@@ -1,29 +1,40 @@
-import { Injectable, Output, EventEmitter } from '@angular/core';
+import { Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
+import { ItemMenu } from '../models/item-menu.model';
+import { Subject } from 'rxjs/Subject';
 
-@Injectable()
 export class MenuService {
-  currentMenuItem = ""
-  itemDescription = {
-    "dashboard" : "Home",
-    "nodes" : "Node list",
-    "stacks" : "Stack list",
-    "password" : "Settings",
-    "users" : "Users management",
-    "endpoints" : "Endpoints management"
-  }
-
-  @Output() onMenuItemSelected = new EventEmitter<string>();
+  currentMenuItem : ItemMenu = new ItemMenu("","")
+  autoRefresh : boolean = false
+  onRefreshClicked = new Subject()
+  private cursorClass = ""
 
   constructor(private router : Router) { }
 
-  getCurrentItemDescription() {
-    return this.itemDescription[this.currentMenuItem]
+  setItemMenu(name : string, description : string) {
+    let item = new ItemMenu(name, description)
+    this.currentMenuItem = item
   }
 
-  setItemMenu(item : string) {
-    this.currentMenuItem = item
-    this.onMenuItemSelected.emit(item)
-    this.router.navigate(["/amp", item])
+  navigate(path) {
+    this.router.navigate(path)
   }
+
+  refresh() {
+    this.autoRefresh=false
+    this.onRefreshClicked.next()
+  }
+
+  waitingCursor(mode : boolean) {
+      if (mode) {
+        this.cursorClass='waiting';
+      } else {
+        this.cursorClass='';
+      }
+  }
+
+  getCursorClass() {
+    return this.cursorClass
+  }
+
 }

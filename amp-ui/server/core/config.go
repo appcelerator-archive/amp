@@ -9,9 +9,8 @@ import (
 
 //ServerConfig configuration parameters
 type ServerConfig struct {
-	localEndpoint bool
-	endpoints     []string
 	port          string
+	amplifierAddr string
 }
 
 //update conf instance with default value and environment variables
@@ -24,15 +23,13 @@ func (c *ServerConfig) init(version string, build string) {
 //Set default value of configuration
 func (c *ServerConfig) setDefault() {
 	c.port = "3333" //warning 8080 css
-	c.localEndpoint = true
-	c.endpoints = []string{}
+	c.amplifierAddr = "amp_amplifier:50101"
 }
 
 //Update config with env variables
 func (c *ServerConfig) loadConfigUsingEnvVariable() {
 	c.port = getStringParameter("SERVER_PORT", c.port)
-	c.localEndpoint = getBoolParameter("LOCAL_ENDPOINT", c.localEndpoint)
-	c.endpoints = getArrayParameter("ENDPOINTS", c.endpoints)
+	c.amplifierAddr = getStringParameter("AMPLIFIER_ADDR", c.amplifierAddr)
 }
 
 //display amp-pilot configuration
@@ -41,8 +38,7 @@ func (c *ServerConfig) displayConfig(version string, build string) {
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Println("Configuration:")
 	fmt.Printf("Port: %s\n", c.port)
-	fmt.Printf("Local endpoint: %t\n", c.localEndpoint)
-	fmt.Printf("Endpoints: %v\n", c.endpoints)
+	fmt.Printf("Amplifier addr: %s\n", c.amplifierAddr)
 	fmt.Println("----------------------------------------------------------------------------")
 }
 

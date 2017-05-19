@@ -1,0 +1,104 @@
+
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div>
+          <div class="pull-left">
+            <span class="fa fa-server" aria-hidden="true"></span>
+            Stack: {{ dockerStacksService.currentStack.name }}
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div classes="col-lg-12">
+          <div class="pull-left">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button" class="btn btn-primary" (click)="returnBack()">
+                <i class="glyphicon glyphicon-arrow-left"></i></button>
+              <button type="button" class="btn btn-primary">
+                <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i> Logs</button>
+              <button type="button" class="btn btn-primary">
+                <i class="glyphicon glyphicon-stats" aria-hidden="true"></i> Metrics</button>
+            </div>
+          </div>
+          <div class="pull-right">
+            <input type="text"
+              #filter
+              id="filter"
+              placeholder="Filter..."
+              class="form-control"
+              (keyup)="listService.filter(filter.value)"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div classes="no-padding">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>
+                    <a>
+                      Id
+                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Name
+                      <span (click)="listService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Mode
+                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Replicas
+                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Image
+                      <span (click)="listService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr (click)="selectService(service.id)" *ngFor="let service of listService.getData()">
+                  <td><input type="checkbox" [checked]="dockerServicesService.currentService.id===service.id"></td>
+                  <td>{{ service.id }}</td>
+                  <td>{{ service.name }}</td>
+                  <td>{{ service.mode }}</td>
+                  <td>{{ service.replicas }}</td>
+                  <td>{{ service.image }}</td>
+                  <td>
+                    <a (click)="containerList(service.id)">
+                      <i class="glyphicon glyphicon-arrow-right" aria-hidden="true"></i> Containers</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
