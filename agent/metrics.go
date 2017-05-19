@@ -61,26 +61,28 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 		a.setNetMetrics(data, statsData, metricsEntry)
 		a.setCPUMetrics(statsData, metricsEntry)
 		a.addMetricsEntry(metricsEntry)
-		a.nbMetrics++
 	}
 }
 
 func (a *Agent) addMetricsEntry(entry *stats.MetricsEntry) {
+	if conf.metricsBufferPeriod == 0 || conf.metricsBufferSize == 0 {
+		a.metricsBuffer.Entries[0] = entry
+		a.sendMetricsBuffer()
+		return
+	}
 	a.metricsBufferMutex.Lock()
 	defer a.metricsBufferMutex.Unlock()
 	if a.metricsBuffer == nil {
-		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, metricsBufferSize, metricsBufferSize)
+		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, conf.metricsBufferSize)
 	}
 	a.metricsBuffer.Entries = append(a.metricsBuffer.Entries, entry)
-	if len(a.metricsBuffer.Entries) >= metricsBufferSize {
+	if len(a.metricsBuffer.Entries) >= conf.metricsBufferSize {
 		a.sendMetricsBuffer()
+		a.metricsBuffer.Entries = nil
 	}
 }
 
 func (a *Agent) sendMetricsBuffer() {
-	defer func() {
-		a.metricsBuffer.Entries = nil
-	}()
 	encoded, err := proto.Marshal(a.metricsBuffer)
 	if err != nil {
 		log.Printf("error marshalling metrics entries: %v\n", err)
@@ -90,6 +92,7 @@ func (a *Agent) sendMetricsBuffer() {
 		log.Printf("error sending metrics entries: %v\n", err)
 		return
 	}
+	a.nbMetrics += len(a.metricsBuffer.Entries)
 }
 
 // close all metrics streams
