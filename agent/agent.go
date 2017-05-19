@@ -18,11 +18,7 @@ import (
 )
 
 const (
-	containersDataDir    = "/containers"
-	metricsBufferSize    = 100
-	metricsBuffersPeriod = 2
-	logsBufferSize       = 100
-	logsBuffersPeriod    = 2
+	containersDataDir = "/containers"
 )
 
 // Agent data
@@ -43,14 +39,12 @@ type Agent struct {
 // AgentInit Connect to docker engine, get initial containers list and start the agent
 func AgentInit(version, build string) error {
 	agent := Agent{
-		logsSavedDatePeriod: 10,
+		logsSavedDatePeriod: 60,
 		metricsBuffer:       &stats.StatsReply{},
 		metricsBufferMutex:  &sync.Mutex{},
 		logsBuffer:          &logs.GetReply{},
 		logsBufferMutex:     &sync.Mutex{},
 	}
-	agent.metricsBuffer.Entries = make([]*stats.MetricsEntry, metricsBufferSize, metricsBufferSize)
-	agent.logsBuffer.Entries = make([]*logs.LogEntry, logsBufferSize, logsBufferSize)
 	agent.trapSignal()
 	conf.init(version, build)
 
@@ -113,8 +107,12 @@ func (a *Agent) start() {
 }
 
 func (a *Agent) startMetricsBufferSender() {
+	if conf.metricsBufferPeriod == 0 || conf.metricsBufferSize == 0 {
+		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, 1)
+		return
+	}
 	go func() {
-		time.Sleep(time.Second * metricsBuffersPeriod)
+		time.Sleep(time.Second * time.Duration(conf.metricsBufferPeriod))
 		if len(a.metricsBuffer.Entries) > 0 {
 			a.metricsBufferMutex.Lock()
 			a.sendMetricsBuffer()
@@ -124,8 +122,12 @@ func (a *Agent) startMetricsBufferSender() {
 }
 
 func (a *Agent) startLogsBufferSender() {
+	if conf.logsBufferPeriod == 0 || conf.logsBufferSize == 0 {
+		a.logsBuffer.Entries = make([]*logs.LogEntry, 1)
+		return
+	}
 	go func() {
-		time.Sleep(time.Second * logsBuffersPeriod)
+		time.Sleep(time.Second * time.Duration(conf.logsBufferPeriod))
 		if len(a.logsBuffer.Entries) > 0 {
 			a.logsBufferMutex.Lock()
 			a.sendLogsBuffer()
