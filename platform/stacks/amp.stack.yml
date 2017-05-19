@@ -1,4 +1,4 @@
-version: "3"
+version: "3.1"
 
 networks:
   default:
@@ -7,6 +7,10 @@ networks:
 
 volumes:
   ampagent:
+
+secrets:
+  amplifier_yml:
+    external: true
 
 services:
 
@@ -33,6 +37,10 @@ services:
         condition: on-failure
       placement:
         constraints: [node.role == manager]
+    secrets:
+      - source: amplifier_yml
+        target: amplifier.yml
+        mode: 0400
 
   amplifier-gateway:
     image: appcelerator/amplifier-gateway:${TAG:-latest}

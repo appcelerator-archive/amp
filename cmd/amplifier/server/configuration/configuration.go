@@ -47,7 +47,7 @@ func ReadConfig(config *Configuration) error {
 
 	// Add default config file search paths in order of decreasing precedence.
 	viper.SetConfigName("amplifier")
-	viper.AddConfigPath("/etc/atomiq/")
+	viper.AddConfigPath("/run/secrets/")
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Fatal error reading configuration file: %s", err)
 	}
