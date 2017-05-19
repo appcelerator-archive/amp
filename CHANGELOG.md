@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0 (2017-05-18)
+
+* Add CLI for Windows (amp.exe)
+* Faster local deployment (uses host swarm mode instead of a DinD cluster)
+* Email verification can be disabled for local develpment and testing
+* Updated docs and examples
+
 ## 0.9.1 (2017-05-03)
 
 * usability improvements for stack deployment
