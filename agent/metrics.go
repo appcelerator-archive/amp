@@ -60,16 +60,35 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 		a.setIOMetrics(data, statsData, metricsEntry)
 		a.setNetMetrics(data, statsData, metricsEntry)
 		a.setCPUMetrics(statsData, metricsEntry)
-		encoded, err := proto.Marshal(metricsEntry)
-		if err != nil {
-			log.Printf("error marshalling metrics entry: %v\n", err)
-		}
-		_, err = a.natsStreaming.GetClient().PublishAsync(ns.MetricsSubject, encoded, nil)
-		if err != nil {
-			log.Printf("error sending log entry: %v\n", err)
-			return
-		}
+		a.addMetricsEntry(metricsEntry)
 		a.nbMetrics++
+	}
+}
+
+func (a *Agent) addMetricsEntry(entry *stats.MetricsEntry) {
+	a.metricsBufferMutex.Lock()
+	defer a.metricsBufferMutex.Unlock()
+	if a.metricsBuffer == nil {
+		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, metricsBufferSize, metricsBufferSize)
+	}
+	a.metricsBuffer.Entries = append(a.metricsBuffer.Entries, entry)
+	if len(a.metricsBuffer.Entries) >= metricsBufferSize {
+		a.sendMetricsBuffer()
+	}
+}
+
+func (a *Agent) sendMetricsBuffer() {
+	defer func() {
+		a.metricsBuffer.Entries = nil
+	}()
+	encoded, err := proto.Marshal(a.metricsBuffer)
+	if err != nil {
+		log.Printf("error marshalling metrics entries: %v\n", err)
+	}
+	_, err = a.natsStreaming.GetClient().PublishAsync(ns.MetricsSubject, encoded, nil)
+	if err != nil {
+		log.Printf("error sending metrics entries: %v\n", err)
+		return
 	}
 }
 

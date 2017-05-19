@@ -1,14 +1,16 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	"fmt"
-
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -16,7 +18,11 @@ import (
 )
 
 const (
-	containersDataDir = "/containers"
+	containersDataDir    = "/containers"
+	metricsBufferSize    = 100
+	metricsBuffersPeriod = 2
+	logsBufferSize       = 100
+	logsBuffersPeriod    = 2
 )
 
 // Agent data
@@ -28,11 +34,23 @@ type Agent struct {
 	natsStreaming       *ns.NatsStreaming
 	nbLogs              int
 	nbMetrics           int
+	metricsBuffer       *stats.StatsReply
+	metricsBufferMutex  *sync.Mutex
+	logsBuffer          *logs.GetReply
+	logsBufferMutex     *sync.Mutex
 }
 
 // AgentInit Connect to docker engine, get initial containers list and start the agent
 func AgentInit(version, build string) error {
-	agent := Agent{}
+	agent := Agent{
+		logsSavedDatePeriod: 10,
+		metricsBuffer:       &stats.StatsReply{},
+		metricsBufferMutex:  &sync.Mutex{},
+		logsBuffer:          &logs.GetReply{},
+		logsBufferMutex:     &sync.Mutex{},
+	}
+	agent.metricsBuffer.Entries = make([]*stats.MetricsEntry, metricsBufferSize, metricsBufferSize)
+	agent.logsBuffer.Entries = make([]*logs.LogEntry, logsBufferSize, logsBufferSize)
 	agent.trapSignal()
 	conf.init(version, build)
 
@@ -79,6 +97,8 @@ func AgentInit(version, build string) error {
 func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
+	a.startMetricsBufferSender()
+	a.startLogsBufferSender()
 	for {
 		a.updateStreams()
 		nb++
@@ -90,6 +110,28 @@ func (a *Agent) start() {
 		}
 		time.Sleep(time.Duration(conf.period) * time.Second)
 	}
+}
+
+func (a *Agent) startMetricsBufferSender() {
+	go func() {
+		time.Sleep(time.Second * metricsBuffersPeriod)
+		if len(a.metricsBuffer.Entries) > 0 {
+			a.metricsBufferMutex.Lock()
+			a.sendMetricsBuffer()
+			a.metricsBufferMutex.Unlock()
+		}
+	}()
+}
+
+func (a *Agent) startLogsBufferSender() {
+	go func() {
+		time.Sleep(time.Second * logsBuffersPeriod)
+		if len(a.logsBuffer.Entries) > 0 {
+			a.logsBufferMutex.Lock()
+			a.sendLogsBuffer()
+			a.logsBufferMutex.Unlock()
+		}
+	}()
 }
 
 // Starts logs and metrics stream of eech new started container
