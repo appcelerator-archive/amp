@@ -66,7 +66,7 @@ func NewStatsCommand(c cli.Interface) *cobra.Command {
 	flags.BoolVar(&opts.io, "io", false, "Display disk io stats")
 	flags.BoolVar(&opts.net, "net", false, "Display net rx/tx stats")
 	//historic
-	flags.StringVar(&opts.period, "period", "", `Historic period of metrics extraction, for instance: "now-1d", "now-10h", with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second`)
+	flags.StringVar(&opts.period, "period", "now-10m", `Historic period of metrics extraction, for instance: "now-1d", "now-10h", with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second`)
 	flags.StringVar(&opts.timeGroup, "time-group", "", `Historic extraction by time group, for instance: "1d", "3h", , with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second`)
 	//filters
 	flags.StringVar(&opts.containerID, "container-id", "", "Filter on container id")
@@ -93,22 +93,22 @@ func getStats(c cli.Interface, args []string) error {
 	query.FilterNodeId = opts.nodeID
 
 	//set main Group
-	//if opts.timeGroup == "" {
-	if len(args) > 0 {
-		query.Group = "service_name"
-		query.FilterServiceName = args[0]
-	} else {
-		if opts.container {
-			query.Group = "container_short_name"
-		} else if opts.node {
-			query.Group = "node_id"
-		} else if opts.stack {
-			query.Group = "stack_name"
-		} else {
+	if opts.timeGroup == "" {
+		if len(args) > 0 {
 			query.Group = "service_name"
+			query.FilterServiceName = args[0]
+		} else {
+			if opts.container {
+				query.Group = "container_short_name"
+			} else if opts.node {
+				query.Group = "node_id"
+			} else if opts.stack {
+				query.Group = "stack_name"
+			} else {
+				query.Group = "service_name"
+			}
 		}
 	}
-	//}
 
 	//set metrics
 	query.StatsCpu = opts.cpu
