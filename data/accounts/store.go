@@ -89,7 +89,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		return nil, EmailAlreadyUsed
 	}
 
-	// Check if organization with the same name already exists
+	// Check if organization with the same name already exists.
 	orgAlreadyExists, err := s.GetOrganization(ctx, name)
 	if err != nil {
 		return nil, err

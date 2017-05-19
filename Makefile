@@ -280,7 +280,7 @@ clean-agent:
 # =============================================================================
 AMPUI := amp-ui
 AMPUIBINARY=$(AMPUI).alpine
-AMPUIDIR=amp-ui
+AMPUIDIR=portal
 AMPUISERVERDIR=$(AMPUIDIR)/server
 AMPUITAG := local
 AMPUIIMG := appcelerator/$(AMPUI):$(AMPUITAG)
@@ -394,4 +394,3 @@ env:
 # =============================================================================
 
 check: fmt buildall lint-fast
-

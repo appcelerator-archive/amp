@@ -17,7 +17,7 @@
   "paths": {
     "/v1/stacks": {
       "get": {
-        "operationId": "List",   
+        "operationId": "List",
         "responses": {
           "200": {
             "description": "",
@@ -246,5 +246,4 @@
       }
     }
   }
-
 }

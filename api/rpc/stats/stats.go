@@ -119,7 +119,7 @@ func (s *Stats) statsGroupedHistoricQuery(ctx context.Context, req *StatsRequest
 	aggTerm := s.createTermAggreggation(req)
 	agg = agg.SubAggregation("groupByName", aggTerm)
 
-	result, err := s.Es.GetClient().Search().
+	result, err := s.ES.GetClient().Search().
 		Index(esIndex).
 		Query(boolQuery).
 		Aggregation("histo", agg).
