@@ -9,7 +9,7 @@ networks:
 services:
 
   portal:
-    image: appcelerator/amp-ui:1.0.0
+    image: appcelerator/amp-portal:${TAG:-0.10.1}
     networks:
       - default
     deploy:
