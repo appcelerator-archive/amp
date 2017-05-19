@@ -15,7 +15,7 @@ type Server struct {
 
 // GetNodes implements Node.GetNodes
 func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesReply, error) {
-	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
+	list, err := s.Docker.NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}

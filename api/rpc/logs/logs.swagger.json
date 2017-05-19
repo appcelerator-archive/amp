@@ -28,63 +28,12 @@
         },
         "parameters": [
           {
-<<<<<<< HEAD
-            "name": "container",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "message",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "node",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          },
-          {
-            "name": "service",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "stack",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "task",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "infra",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-=======
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/logsGetRequest"
             }
->>>>>>> add logs
           }
         ],
         "tags": [
@@ -93,7 +42,7 @@
       }
     },
     "/v1/logs/stream": {
-      "get": {
+      "post": {
         "operationId": "GetStream",
         "responses": {
           "200": {
@@ -105,54 +54,12 @@
         },
         "parameters": [
           {
-            "name": "container",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "message",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "node",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          },
-          {
-            "name": "service",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "stack",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "task",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "infra",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/logsGetRequest"
+            }
           }
         ],
         "tags": [

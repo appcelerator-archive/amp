@@ -296,7 +296,6 @@ bootstrap_cluster() {
   esac
   checkexit "cluster timed out"
   ok
-<<<<<<< HEAD
 
   if [[ $(deployment_target) != "local" ]]; then
     echo "wait for swarm mode"
@@ -341,6 +340,13 @@ deploy_stacks() {
   echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
   servicescheck $maxwait
   checkexit "amp monitoring stage 2 service replica checks timed out"
+  ok
+
+  echo "deploy portal stack to cluster"
+  deploystack portal.stack.yml amp
+  echo "wait for all portal service replicas to be running ($maxwait sec)"
+  servicescheck $maxwait
+  checkexit "portal service replica checks timed out"
   ok
 
   prepare_amplifier_configuration
@@ -375,84 +381,6 @@ smoke_tests() {
   checkexit "service replica check failed"
   ok
 
-=======
-
-  if [[ $(deployment_target) != "local" ]]; then
-    echo "wait for swarm mode"
-    # TODO: fix swarmcheck, it now checks the local swarm, not the one from the cluster
-    swarmcheck 300
-    checkexit "swarm mode timed out"
-    ok
-
-    echo "wait for registry"
-    curlcheck "${registryhost}:5000/v2/" 200 180
-    checkexit "registry timed out"
-    ok
-
-    if [[ "$TAG" = "local" ]]; then
-      echo "push images to cluster"
-      for image in amplifier amplifier-gateway ampbeat agent; do
-        pushimage ${registryhost}:5000 appcelerator/${image}:${TAG:-local}
-      done
-    else
-      echo "image push to cluster is ignored (tag=${TAG:-latest})"
-    fi
-  fi
-}
-
-deploy_stacks() {
-  local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
-
-  if [[ $(deployment_target) == "local" ]]; then
-    # force all placement constraints to deploy to a single manager
-    export NODE_ROLE=manager
-  fi
-
-  echo "deploy amp monitoring stack to cluster - stage 1"
-  deploystack ampmon.1.stack.yml amp
-  echo "wait for all amp monitoring stage 1 stack service replicas to be running"
-  servicescheck $maxwait
-  checkexit "amp monitoring stage 1 service replica checks timed out"
-  ok
-
-  echo "deploy amp monitoring stack to cluster - stage 2"
-  deploystack ampmon.2.stack.yml amp
-  echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "amp monitoring stage 2 service replica checks timed out"
-  ok
-
-  echo "deploy amp stack to cluster"
-  deploystack amp.stack.yml amp
-  echo "wait for all amp service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "amp service replica checks timed out"
-  ok
-
-  prepare_certificates $domainname
-  if [[ $? -eq 0 ]]; then
-    echo "deploy amp proxy stack to cluster"
-    deploystack ampproxy.stack.yml amp
-    echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
-    servicescheck $maxwait
-    checkexit "amp proxy service replica checks timed out"
-    ok
-  else
-    echo "won't deploy the proxy stack, there's no certificate"
-  fi
-}
-
-smoke_tests() {
-  (( $CHECK == 0 )) && return
-
-  #####
-  # following checks need to move to $TESTSDIR
-  #
-  servicescheck 0
-  checkexit "service replica check failed"
-  ok
-
->>>>>>> modifications to support single-manager local bootstrap
   echo
   $amps service ls
   echo

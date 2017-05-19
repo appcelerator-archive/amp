@@ -173,6 +173,7 @@ func (d *Docker) StackRemove(ctx context.Context, stackName string) (output stri
 	return string(output), nil
 }
 
+// TaskList list the tasks
 func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
 	if !d.connected {
 		if err := d.Connect(); err != nil {
@@ -180,6 +181,16 @@ func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([
 		}
 	}
 	return d.client.TaskList(ctx, options)
+}
+
+// NodeList list the nodes
+func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([]swarm.Node, error) {
+	if !d.connected {
+		if err := d.Connect(); err != nil {
+			return nil, err
+		}
+	}
+	return d.client.NodeList(ctx, options)
 }
 
 // StackServices list the services of a stack

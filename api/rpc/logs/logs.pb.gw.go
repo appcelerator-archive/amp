@@ -40,15 +40,11 @@ func request_Logs_Get_0(ctx context.Context, marshaler runtime.Marshaler, client
 
 }
 
-var (
-	filter_Logs_GetStream_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Logs_GetStream_0(ctx context.Context, marshaler runtime.Marshaler, client LogsClient, req *http.Request, pathParams map[string]string) (Logs_GetStreamClient, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Logs_GetStream_0); err != nil {
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
 		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -123,7 +119,7 @@ func RegisterLogsHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 
 	})
 
-	mux.Handle("GET", pattern_Logs_GetStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Logs_GetStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {

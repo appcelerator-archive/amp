@@ -164,14 +164,8 @@ func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 	})
 }
 
-func registerServiceServer(c *Configuration, s *grpc.Server) {
-	service.RegisterServiceServer(s, &service.Server{
-		Docker: runtime.Docker,
-	})
-}
-
-func registerNodeServer(c *Configuration, s *grpc.Server) {
+func registerNodeServer(amp *Amplifier, s *grpc.Server) {
 	node.RegisterNodeServer(s, &node.Server{
-		Docker: runtime.Docker,
+		Docker: amp.docker,
 	})
 }
