@@ -24,9 +24,9 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.IntVarP(&opts.managers, "managers", "m", 3, "Intial number of manager nodes")
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
-	flags.StringVarP(&opts.tag, "tag", "t", "latest", "Specify tag for cluster images (default is 'latest', use 'local' for development)")
-	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationDefault, "Specify the registration policy (default is 'email', possible values are 'none' or 'email')")
-	flags.BoolVarP(&opts.notifications, "notifications", "n", true, "Enable/disable server notifications (emails, sms, etc.)")
+	flags.StringVarP(&opts.tag, "tag", "t", "0.10.1", "Specify tag for cluster images (default is '0.10.1', use 'local' for development)")
+	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (default is 'none', possible values are 'none' or 'email')")
+	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
 	return cmd
 }
 

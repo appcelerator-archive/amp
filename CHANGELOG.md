@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 (2017-05-18)
+## 0.10.1 (2017-05-18)
 
 * Add CLI for Windows (amp.exe)
 * Faster local deployment (uses host swarm mode instead of a DinD cluster)
