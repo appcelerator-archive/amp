@@ -2,6 +2,36 @@
 
 set -e
 which openssl >/dev/null
+ls /etc/ssl/openssl.cnf >/dev/null
+
+# Prepare an openssl configuration for alternate subject names
+cfg="$(mktemp)"
+cp /etc/ssl/openssl.cnf "$cfg"
+sed -i.bak '/^\[ req \]$/ a\
+req_extensions = v3_req\
+' "$cfg"
+sed -i.bak '/^\[ v3_req \]$/ a\
+subjectAltName          = @alternate_names\
+' "$cfg"
+cat >> "$cfg" << EOF
+
+[ alternate_names ]
+DNS.1       = *.local.appcelerator.io
+DNS.2       = *.local.atomiq.io
+IP.1       = 127.0.0.1
+EOF
+cacfg="$(mktemp)"
+cat >> "$cacfg" << EOF
+
+basicConstraints=CA:FALSE
+subjectAltName          = @alternate_names
+subjectKeyIdentifier = hash
+
+[ alternate_names ]
+DNS.1       = *.local.appcelerator.io
+DNS.2       = *.local.atomiq.io
+IP.1       = 127.0.0.1
+EOF
 
 CAKEY=$(mktemp).pem
 CACERT=$(mktemp).pem
@@ -10,9 +40,9 @@ CSR=$(mktemp).csr
 CERT=$(mktemp).pem
 PEM=$(mktemp).pem
 KEYLEN=2048
-EXPIRE=30
+EXPIRE=356
 CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=ca-$(hostname)"
-SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=dashboard.local.atomiq.io"
+SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=*.local.appcelerator.io"
 
 openssl genrsa -out $CAKEY $KEYLEN
 openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT"
@@ -20,6 +50,7 @@ openssl genrsa -out $KEY $KEYLEN
 openssl req -subj "$SUBJECT" -sha256 -new -key $KEY -out $CSR
 openssl x509 -req -days $EXPIRE -sha256 -in $CSR -CA $CACERT -CAkey $CAKEY -CAcreateserial -out $CERT
 
-cat $KEY $CERT > $PEM
+cat $KEY $CERT $CACERT > $PEM
 echo $PEM
 rm $CAKEY $CACERT $KEY $CSR $CERT
+rm -f $cfg $cacfg ${cfg}.bak
