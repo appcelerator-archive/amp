@@ -526,6 +526,11 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroups:
         - Ref: SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdn
+          Ebs:
+            VolumeSize: !Ref AufsVolumeSize
+            DeleteOnTermination: true
       UserData:
         Fn::Base64:
           !Sub
@@ -539,6 +544,8 @@ Resources:
                 - curl
                 - unzip
                 - awscli
+                - sysstat
+                - iotop
               write_files:
                 - path: /etc/infrakit.conf
                   content: |
@@ -560,7 +567,7 @@ Resources:
               runcmd:
                 - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
-                - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} MIRROR_REGISTRIES=${MirrorRegistries} DRAIN_MANAGER=${DrainManager} /usr/local/bin/asg-init.sh
+                - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} MIRROR_REGISTRIES=${MirrorRegistries} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdn /usr/local/bin/asg-init.sh
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer

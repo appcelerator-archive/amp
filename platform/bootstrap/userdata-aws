@@ -8,6 +8,8 @@ MANAGER_SIZE=${MANAGER_SIZE:-3}
 ENV_FILE=${ENV_FILE:-/tmp/env.ikt}
 DRAIN_MANAGER=${DRAIN_MANAGER:-false}
 OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
+#MIRROR_REGISTRIES=
+#DOCKER_DEVICE=/dev/sdn
 
 _install_docker(){
   wget -qO- https://get.docker.com/ | sh || return 1
@@ -37,6 +39,19 @@ _sanity_check(){
   which aws >/dev/null || return 1
   which jq >/dev/null || return 1
   which base64 >/dev/null || return 1
+}
+
+_mount_docker_volume(){
+  local _mount_point="/var/lib/docker"
+  local _device
+  local _fstype=xfs
+  [[ -z "$1" ]] && return 0
+  _device=$(echo $1 | sed 's/\/sd/\/xvd/')
+  mkfs.$_fstype $_device || return 1
+  echo "$_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
+  rm -rf "$_mount_point"
+  mkdir -p "$_mount_point"
+  mount "$_mount_point"
 }
 
 _system_prerequisites(){
@@ -243,6 +258,7 @@ _get_node_ip(){
 
 
 _sanity_check || exit 1
+_mount_docker_volume $DOCKER_DEVICE || exit 1
 _system_prerequisites || exit 1
 nodeip=$(_get_node_ip)
 _install_docker || exit 1
