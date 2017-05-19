@@ -158,7 +158,7 @@ func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 	return string(output), nil
 }
 
-// StackRemove remoce a stack
+// StackRemove remove a stack
 func (d *Docker) StackRemove(ctx context.Context, stackName string) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		rmOpt := stack.NewRemoveOptions([]string{stackName})
