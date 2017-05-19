@@ -17,6 +17,6 @@ services:
       SERVICE_PORTS: "3000"
       VIRTUAL_HOST: "https://pinger.*"
     deploy:
-      replicas: 4
+      replicas: 2
       restart_policy:
         condition: on-failure

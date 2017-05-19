@@ -51,9 +51,9 @@ test_home() {
 }
 
 # no server passed; read default server address
-test_cloud() {
-  amp version | pcregrep -q "Server:[[:space:]]+cloud.appcelerator.io"
-}
+#test_cloud() {
+#  amp version | pcregrep -q "Server:\s+cloud.appcelerator.io"
+#}
 
 test_teardown() {
   rm -Rf $PWD/.amp

@@ -1,11 +1,7 @@
 #!/bin/bash
 
 SECONDS=0
-
-test_setup() {
-  amp="amp -s localhost"
-  $amp user signup --name user102 --password password --email email@user102.amp
-}
+amp="amp -s localhost"
 
 test_stack_deploy() {
   $amp stack up -c platform/tests/stacks/list/global.service.yml global
@@ -39,10 +35,4 @@ test_stack_replicated_running() {
      sleep 1
      SECONDS=$[$SECONDS+1]
   done
-}
-
-test_teardown() {
-  $amp stack rm global
-  $amp stack rm replicated
-  $amp user rm user102
 }
