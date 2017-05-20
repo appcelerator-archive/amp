@@ -44,29 +44,15 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
       )
       this.menuService.onRefreshClicked.subscribe(
         () => {
-          this.loadServices()
+          this.dockerServicesService.loadServices(true)
         }
       )
-      this.loadServices()
+        this.dockerServicesService.loadServices(false)
     })
   }
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
-  }
-
-  loadServices() {
-    this.dockerServicesService.loadServices()
-    if (this.menuService.autoRefresh) {
-      this.timer = setInterval( () => {
-          this.dockerServicesService.loadServices()
-        }, 3000
-      )
-      return;
-    }
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
   }
 
   containerList(serviceId : string) {

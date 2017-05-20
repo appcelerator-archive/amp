@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { MenuService } from '../../services/menu.service';
 import { HttpService } from '../../services/http.service';
+import { DockerStacksService } from '../services/docker-stacks.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { AppWindow } from '../../models/app-window.model';
 
@@ -19,7 +20,8 @@ export class DockerStackDeployComponent implements OnInit {
   constructor(
     private menuService : MenuService,
     private route : ActivatedRoute,
-    private httpService : HttpService) { }
+    private httpService : HttpService,
+    private dockerStacksService : DockerStacksService) { }
     public updateStackName = "new stack"
     fileText=""
 
@@ -52,6 +54,7 @@ export class DockerStackDeployComponent implements OnInit {
     this.httpService.deployStack(name, form.value.filedata).subscribe(
       data => {
         this.message=""
+        this.dockerStacksService.loadStacks(false)
         this.menuService.returnToPreviousPath()
       },
       error => {

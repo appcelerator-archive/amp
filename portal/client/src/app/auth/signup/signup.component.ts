@@ -12,6 +12,7 @@ import { HttpService } from '../../services/http.service'
 })
 export class SignupComponent implements OnInit {
   message = ""
+  messageError = ""
   submitCaption = "Submit"
 
   constructor(
@@ -28,17 +29,21 @@ export class SignupComponent implements OnInit {
       this.menuService.returnToPreviousPath()
       return
     }
-    if (event.form.value.password != event.form.value.passwordVerif) {
-        this.message = "your password is not the same than your password confirmation"
+    if (event.form.value.password != event.form.value.passwordConfirm) {
+        this.messageError = "your password must match"
         return
     }
     this.httpService.signup(event.form.value.username, event.form.value.password, event.form.value.email).subscribe(
       data => {
-        this.message = "Your account is created, you are going to receive an email. Confirmed you received it, before sign in"
+        this.message = "Your account is created, you are going to receive an email to validate your account"
         this.submitCaption = "Done"
       },
       error => {
+        console.log(error)
         let data = error.json()
+        if (!data.error) {
+          this.messageError = "Certificat issue: You need to import amp certificate in your browser. See documentation"
+        }
         this.message = data.error
       }
     )

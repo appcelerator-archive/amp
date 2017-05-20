@@ -1,5 +1,5 @@
 FROM alpine
-COPY amp-ui.alpine /amp-ui-server
-RUN chmod +x /amp-ui-server && mkdir /public
+COPY portal.alpine /portal-server
+RUN chmod +x /portal-server && mkdir /public
 COPY public/ /public/
-CMD [ "/amp-ui-server" ]
+CMD [ "/portal-server" ]

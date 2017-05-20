@@ -51,7 +51,11 @@ export class DockerStacksService {
     }
   }
 
-  loadStacks() {
+  loadStacks(refresh : boolean) {
+    if (!refresh && this.stacks.length > 0) {
+      this.onStacksLoaded.next()
+      return
+    }
     this.httpService.stacks().subscribe(
       data => {
         this.stacks = data

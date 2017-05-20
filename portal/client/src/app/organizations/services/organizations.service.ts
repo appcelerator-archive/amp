@@ -4,13 +4,17 @@ import { MenuService } from '../../services/menu.service';
 import { Organization } from '../../models/organization.model';
 import { Member } from '../../models/member.model';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs/Subject'
 
 @Injectable()
 export class OrganizationsService {
   noOrganization : Organization = new Organization("", "")
   organizations : Organization[] = []
   currentOrganization = this.noOrganization
+  onOrganizationsLoaded = new Subject();
+  onOrganizationsError = new Subject();
   @Output() onUserLogout = new EventEmitter<void>();
+  currentLoadedUser = ""
 
   constructor(
     private router : Router,
@@ -26,6 +30,24 @@ export class OrganizationsService {
       return true
     }
     return false
+  }
+
+  loadOrganizations(userName : string, refresh : boolean) {
+    if (!refresh && this.currentLoadedUser == userName) {
+      this.onOrganizationsLoaded.next()
+      return
+    }
+    this.httpService.userOrganization(userName).subscribe(
+      data => {
+        this.organizations = data
+        this.currentLoadedUser = userName
+        this.onOrganizationsLoaded.next()
+      },
+      error => {
+        this.onOrganizationsError.next(error)
+        console.log(error)
+      }
+    )
   }
 
   setCurrentOrganization(org : Organization) {

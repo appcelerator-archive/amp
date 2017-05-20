@@ -59,7 +59,11 @@ export class NodesService {
     return false
   }
 
-  loadNodes() {
+  loadNodes(refresh : boolean) {
+    if (!refresh && this.nodes.length>0) {
+      this.onNodesLoaded.next()
+      return  
+    }
     this.httpService.nodes().subscribe(
       data => {
         this.nodes = data;

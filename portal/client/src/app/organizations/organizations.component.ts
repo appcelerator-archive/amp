@@ -31,15 +31,18 @@ export class OrganizationsComponent implements OnInit {
 
   ngOnInit() {
     this.menuService.setItemMenu('organizations', 'List')
-    this.httpService.userOrganization(this.usersService.currentUser).subscribe(
-      data => {
-        this.organizationsService.organizations = data
+    this.organizationsService.onOrganizationsLoaded.subscribe(
+      () => {
         this.listService.setData(this.organizationsService.organizations)
-      },
-      error => {
-        console.log(error)
       }
     )
+    this.menuService.onRefreshClicked.subscribe(
+      () => {
+        this.organizationsService.loadOrganizations(this.usersService.currentUser.name, true)
+        this.usersService.loadUsers(true)
+      }
+    )
+    this.organizationsService.loadOrganizations(this.usersService.currentUser.name, false)
   }
 
   removeOrganization() {

@@ -11,6 +11,7 @@ export class DockerServicesService {
   currentService : DockerService = this.emptyService
   onServicesLoaded = new Subject();
   onServicesError = new Subject();
+  currentLoadedStackName = ""
 
   constructor(
     private dockerStacksService : DockerStacksService,
@@ -58,9 +59,14 @@ export class DockerServicesService {
     }
   }
 
-  loadServices() {
+  loadServices(refresh : boolean) {
+    if (!refresh && this.currentLoadedStackName==this.dockerStacksService.currentStack.name) {
+      this.onServicesLoaded.next()
+      return
+    }
     this.httpService.services(this.dockerStacksService.currentStack.name).subscribe(
       data => {
+        this.currentLoadedStackName = this.dockerStacksService.currentStack.name
         this.services = data
         this.onServicesLoaded.next()
       },

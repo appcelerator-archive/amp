@@ -96,7 +96,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-ui
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-portal
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -105,7 +105,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-ui build-bootstrap
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-portal build-bootstrap
 build: build-base buildall-cli
 
 # =============================================================================
@@ -274,36 +274,36 @@ clean-agent:
 	@rm -f $(AGENTTARGET)
 
 # =============================================================================
-# BUILD AMP-UI (`amp-ui`)
-# Build amp-ui server binary
-# then build `appcelerator/amp-ui` image
+# BUILD PORTAL (`amp-portal`)
+# Build portal server binary
+# then build `appcelerator/portal` image
 # =============================================================================
-AMPUI := amp-ui
-AMPUIBINARY=$(AMPUI).alpine
-AMPUIDIR=portal
-AMPUISERVERDIR=$(AMPUIDIR)/server
-AMPUITAG := local
-AMPUIIMG := appcelerator/$(AMPUI):$(AMPUITAG)
-AMPUISERVERTARGET := $(AMPUISERVERDIR)/$(AMPUIBINARY)
-AMPUIDIRS := $(AMPUISERVERDIR) api data tests $(COMMONDIRS)
-AMPUISRC := $(shell find $(AMPUIDIR) -type f -name '*.go')
-AMPUIPKG := $(REPO)/$(AMPUISERVERDIR)
+PORTAL := portal
+PORTALBINARY=$(PORTAL).alpine
+PORTALDIR=portal
+PORTALSERVERDIR=$(PORTALDIR)/server
+PORTALTAG := local
+PORTALIMG := appcelerator/$(PORTAL):$(PORTALTAG)
+PORTALSERVERTARGET := $(PORTALSERVERDIR)/$(PORTALBINARY)
+PORTALDIRS := $(PORTALSERVERDIR) api data tests $(COMMONDIRS)
+SRC := $(shell find $(PORTALDIR) -type f -name '*.go')
+PORTALPKG := $(REPO)/$(PORTALSERVERDIR)
 
-$(AMPUISERVERTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPUISRC)
-	@echo "Compiling $(AMPUI) server source(s):"
+$(PORTALSERVERTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(PORTALSRC)
+	@echo "Compiling $(PORTAL) server source(s):"
 	@echo $?
-	@hack/build4alpine $(REPO)/$(AMPUISERVERTARGET) $(AMPUIPKG) $(LDFLAGS)
-	@echo "bin/$(GOOS)/$(GOARCH)/$(AMPUI)"
+	@hack/build4alpine $(REPO)/$(PORTALSERVERTARGET) $(PORTALPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(PORTAL)"
 
-build-ui: $(AMPUISERVERTARGET)
-	@echo "build $(AMPUIIMG)"
-	@$(DOCKER_CMD) build -t $(AMPUIIMG) $(AMPUIDIR)/server || (rm -f $(AMPUISERVERTARGET); exit 1)
+build-portal: $(PORTALSERVERTARGET)
+	@echo "build $(PORTALIMG)"
+	@$(DOCKER_CMD) build -t $(PORTALIMG) $(PORTALDIR)/server || (rm -f $(PORTALSERVERTARGET); exit 1)
 
-rebuild-ui: clean-ui build-ui
+rebuild-portal: clean-portal build-portal
 
-.PHONY: clean-ui
-clean-ui:
-	@rm -f $(AMPUITARGET)
+.PHONY: clean-portal
+clean-portal:
+	@rm -f $(PORTALTARGET)
 
 # =============================================================================
 # BUILD BOOTSTRAP (`amp-bootstrap`)

@@ -11,6 +11,7 @@ export class DockerContainersService {
   currentContainer : DockerContainer = this.emptyContainer;
   onContainersLoaded = new Subject();
   onContainersError = new Subject();
+  currentLoadedServiceId = ""
 
   constructor(
     private dockerServicesService : DockerServicesService,
@@ -52,10 +53,15 @@ export class DockerContainersService {
     }
   }
 
-  loadContainers() {
+  loadContainers(refresh : boolean) {
+    if (!refresh && this.currentLoadedServiceId == this.dockerServicesService.currentService.id) {
+      this.onContainersLoaded.next()
+      return
+    }
     this.httpService.tasks(this.dockerServicesService.currentService.id).subscribe(
       data => {
         this.containers = data
+        this.currentLoadedServiceId = this.dockerServicesService.currentService.id
         this.onContainersLoaded.next()
       },
       error => {
