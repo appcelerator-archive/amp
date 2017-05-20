@@ -105,9 +105,9 @@ export class HttpService {
     return this.httpDelete("/organizations/"+org.name+"/teams/"+team.name+"/members/"+member.userName);
   }
 
-  userOrganization(user : User) {
+  userOrganization(userName : string) {
     //return this.http.get(this.addr+"/users/"+user.name+"/organizations", { headers: this.setHeaders() })
-    return this.httpGet("/users/"+user.name+"/organizations")
+    return this.httpGet("/users/"+userName+"/organizations")
       .map((res : Response) => {
         const data = res.json()
         //console.log("data")

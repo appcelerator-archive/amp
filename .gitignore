@@ -2,6 +2,7 @@
 /dist
 bin/**/amd64/amp
 bin/**/amd64/amp.exe
+portal/client/node_modules/**
 *.alpine
 /*.exe
 coverage.out

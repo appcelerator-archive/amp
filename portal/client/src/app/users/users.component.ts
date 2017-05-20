@@ -34,7 +34,12 @@ export class UsersComponent implements OnInit {
         this.listService.setData(this.usersService.users)
       }
     )
-    this.usersService.loadUsers()
+    this.menuService.onRefreshClicked.subscribe(
+      () => {
+      this.usersService.loadUsers(true)
+      }
+    )
+    this.usersService.loadUsers(false)
   }
 
   setCreateMode(mode: boolean) {

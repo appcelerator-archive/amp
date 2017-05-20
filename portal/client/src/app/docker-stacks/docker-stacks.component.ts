@@ -44,10 +44,10 @@ export class DockerStacksComponent implements OnInit {
     )
     this.menuService.onRefreshClicked.subscribe(
       () => {
-        this.loadStacks()
+        this.dockerStacksService.loadStacks(true)
       }
     )
-    this.loadStacks()
+    this.dockerStacksService.loadStacks(false)
   }
 
   ngOnDestroy() {
@@ -55,20 +55,6 @@ export class DockerStacksComponent implements OnInit {
       clearInterval(this.timer);
     }
     //this.dockerStacksService.onStacksLoaded.unsubscribe();
-  }
-
-  loadStacks() {
-    this.dockerStacksService.loadStacks()
-    if (this.menuService.autoRefresh) {
-      this.timer = setInterval( () => {
-          this.dockerStacksService.loadStacks()
-        }, 3000
-      )
-      return;
-    }
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
   }
 
   serviceList(stackName : string) {
@@ -89,7 +75,7 @@ export class DockerStacksComponent implements OnInit {
     this.httpService.removeStack(this.dockerStacksService.currentStack.name).subscribe(
       data => {
         this.dockerStacksService.setCurrentStack("")
-        this.dockerStacksService.loadStacks()
+        this.dockerStacksService.loadStacks(true)
       },
       error => {
         let data = error.json()

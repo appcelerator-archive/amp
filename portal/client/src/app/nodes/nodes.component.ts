@@ -29,7 +29,12 @@ export class NodesComponent implements OnInit {
         this.listService.setData(this.nodesService.nodes)
       }
     )
-    this.nodesService.loadNodes()
+    this.menuService.onRefreshClicked.subscribe(
+      () => {
+      this.nodesService.loadNodes(true)
+      }
+    )
+    this.nodesService.loadNodes(false)
   }
 
   getColor(node : Node) {

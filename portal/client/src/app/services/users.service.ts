@@ -34,7 +34,11 @@ export class UsersService {
     return false
   }
 
-  loadUsers() {
+  loadUsers(refresh : boolean) {
+    if (!refresh && this.users.length>0) {
+      this.onUsersLoaded.next()
+      return
+    }
     this.httpService.users().subscribe(
       data => {
         this.users = data
@@ -62,7 +66,7 @@ export class UsersService {
   setCurrentUser(username : string, token : string, nav : boolean) {
     this.httpService.setToken(token)
     this.currentUser = new User(username, "", "")
-    this.httpService.userOrganization(this.currentUser).subscribe(
+    this.httpService.userOrganization(this.currentUser.name).subscribe(
       data => {
         this.organizationsService.organizations = data
         this.httpService.users().subscribe(

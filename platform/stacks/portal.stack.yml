@@ -9,7 +9,7 @@ networks:
 services:
 
   portal:
-    image: appcelerator/amp-portal:${TAG:-0.10.1}
+    image: appcelerator/portal:${TAG:-0.10.1}
     networks:
       - default
     deploy:
@@ -17,9 +17,12 @@ services:
       replicas: 1
       labels:
         io.amp.role: "infrastructure"
+      placement:
+        constraints:
+          - node.role == ${NODE_ROLE:-worker}
     environment:
       SERVICE_PORTS: "3333"
-      VIRTUAL_HOST: "http://ui.*,https://ui.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
+      VIRTUAL_HOST: "http://portal.*, https://portal.*,http://ui.*,https://ui.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
       FORCE_SSL: 1
     labels:
       io.amp.role: "infrastructure"
