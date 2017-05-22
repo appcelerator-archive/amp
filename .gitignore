@@ -18,7 +18,10 @@ instance*.tf.json
 *.tfstate.backup
 *.tfvars
 *.lock.info
+# custom configuration
+parameters.json
 ikt.vol.*
 
-# certificates
+# secrets
 *.pem
+platform/secrets/*

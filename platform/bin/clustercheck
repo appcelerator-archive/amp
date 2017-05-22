@@ -5,7 +5,7 @@ readonly CMD=$(basename $0)
 readonly BOOTSTRAPDIR="$(dirname $0)/../bootstrap"
 
 usage() {
-  echo usage:  $CMD [-t timeout] [-i interval] clusterid
+  echo usage:  $CMD [-t timeout] [-i interval] [-p target] clusterid
   exit 1
 }
 
@@ -35,10 +35,11 @@ main() {
 TIMEOUT=360
 INTERVAL=2
 
-while getopts 't:i:' opt; do
+while getopts 't:i:p:' opt; do
   case $opt in
     t) TIMEOUT=$OPTARG ;;
     i) INTERVAL=$OPTARG ;;
+    p) PROVIDER=$OPTARG ;;
   esac
 done
 readonly TIMEOUT
@@ -50,4 +51,4 @@ readonly INTERVAL
 shift $((OPTIND-1))
 
 [[ -z "$1" ]] && usage
-main $BOOTSTRAPDIR/bootstrap -s $1
+main $BOOTSTRAPDIR/bootstrap -t ${PROVIDER:-local} -s $1

@@ -1,9 +1,18 @@
 [
     {
-        "Plugin" : "manager",
+        "Plugin" : "manager-os",
         "Launch" : {
             "os": {
-                "Cmd" : "infrakit-manager --name group  --proxy-for-group group-stateless os --leader-file {{env "INFRAKIT_HOME"}}/leader --store-dir {{env "INFRAKIT_HOME"}}/configs > {{env "INFRAKIT_HOME"}}/logs/manager.log 2>&1"
+                "Cmd" : "infrakit-manager --name group  --proxy-for-group group-stateless os --leader-file {{env "INFRAKIT_HOME"}}/leader --store-dir {{env "INFRAKIT_HOME"}}/configs > {{env "INFRAKIT_HOME"}}/logs/manager-os.log 2>&1"
+            }
+        }
+    }
+    ,
+    {
+        "Plugin" : "manager-swarm",
+        "Launch" : {
+            "os": {
+                "Cmd" : "infrakit-manager --name group  --proxy-for-group group-stateless swarm > {{env "INFRAKIT_HOME"}}/logs/manager-swarm.log 2>&1"
             }
         }
     }
@@ -36,10 +45,10 @@
     }
     ,
     {
-        "Plugin" : "instance-terraform",
+        "Plugin" : "instance-aws",
         "Launch" : {
             "os" : {
-                "Cmd" : "infrakit-instance-terraform --dir={{env "PLUGIN_DIR"}} --log {{ env "INFRAKIT_LOG_LEVEL" }} > {{env "INFRAKIT_HOME"}}/logs/instance-terraform.log 2>&1"
+                "Cmd" : "infrakit-instance-aws --log {{ env "INFRAKIT_LOG_LEVEL" }} > {{env "INFRAKIT_HOME"}}/logs/instance-aws.log 2>&1"
             }
         }
     }

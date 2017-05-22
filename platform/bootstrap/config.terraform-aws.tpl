@@ -47,15 +47,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "{{ var "/bootstrap/ip" }}",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "unix:///var/run/docker.sock",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "unix:///var/run/docker.sock"
-                    {{ end }}
+                    "Host" : "unix:///var/run/docker.sock"
                   }
                 }
               }

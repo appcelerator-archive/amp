@@ -3,16 +3,9 @@
 # @(#) if no argument is provided, the configuration is expected to be in same directory
 
 INFRAKIT_HOME=/infrakit
-INFRAKIT_IMAGE_VERSION=${INFRAKIT_IMAGE_VERSION:-0.4.1}
-#INFRAKIT_INFRAKIT_IMAGE=infrakit/devbundle:$INFRAKIT_IMAGE_VERSION
-INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.3.1
-INFRAKIT_AWS_IMAGE=infrakit/aws:$INFRAKIT_IMAGE_VERSION
-TERRAFORM_FILES=(cluster.tf variables.tf terraform.tfvars user-data)
+INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
 AWS_FILES=(bootstrap.yml)
-SSL_KEY_LENGTH=2048
-CERTIFICATE_SERVER_IMAGE=ndegory/certauth:latest
-CERT_DIR=~/.config/infrakit/certs
-BOOTSTRAP_VOLUME=amp-bootstrap
+BOOTSTRAP_VOLUME="amp-bootstrap-$(date +%s)"
 ROLE_LABEL=tools
 INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
@@ -24,7 +17,7 @@ WORKER_GROUP_LIST=()
 
 # check if the bootstrap script is executed inside a container
 _am_i_in_a_container() {
-  if [ ! -d /proc ]; then
+  if [[ ! -d /proc ]]; then
     return 1
   fi
   awk -F/ '$2 == "docker"' /proc/self/cgroup | read
@@ -32,19 +25,17 @@ _am_i_in_a_container() {
 
 # pull docker images
 _pull_images() {
-  local _images="infrakit $@"
+  local _images="infrakit $*"
   local _image
   local i
   for i in $_images; do
-    _image=$(eval echo \$INFRAKIT_$(echo $i | tr '[:lower:]' '[:upper:]')_IMAGE)
-    if [ -z "$_image" ]; then
+    _image="$(eval echo \$INFRAKIT_$(echo $i | tr '[:lower:]' '[:upper:]')_IMAGE)"
+    if  [[ -z "$_image" ]]; then
       continue
     fi
-    docker pull $_image >&2
-    if [ $? -ne 0 ]; then
+    if ! docker pull "$_image" >&2; then
       # fall back to locally generated image
-      docker image ls $_image > /dev/null 2>&1
-      if [ $? -ne 0 ]; then
+      if ! docker image ls "$_image" > /dev/null 2>&1; then
         echo "no image with name $_image" >&2
         exit 1
       fi
@@ -54,18 +45,14 @@ _pull_images() {
 
 _get_dirname() {
     local _d=$1
-    if [ -z "$_d" ]; then
+    if [[ -z "$_d" ]]; then
       echo "_get_dirname() expects an argument" >&2
       exit 1
     fi
-    which realpath >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      _d=$(realpath $_d)
+    if [[ ! -d "$_d" ]]; then
+      _d=$(dirname "$_d")
     fi
-    if [ ! -d $_d ]; then
-      _d=$(dirname $_d)
-    fi
-    echo "$_d"
+    echo $(cd "$_d"; pwd -P)
 }
 
 # expose the Docker remote api
@@ -74,9 +61,9 @@ _get_dirname() {
 _expose_remote_api() {
   local _registry_opt
   mkdir -p /etc/systemd/system/docker.service.d
-  if [ $# -gt 0 ]; then
+  if [[ $# -gt 0 ]]; then
     _registry_opt="--registry-mirror=http://$1:5000"
-    if [ "$1" != "127.0.0.1" ]; then
+    if [[ "$1" != "127.0.0.1" ]]; then
       _registry_opt="$_registry_opt --insecure-registry=http://$1:5000"
     fi
   fi
@@ -90,55 +77,6 @@ EOF
   systemctl restart docker.service
 }
 
-# init a Swarm cluster
-# to be used when bootstrapping a full cluster with InfraKit, Infrakit running on the Swarm manager
-# if an argument is provided, it's the ip of an existing manager that should be joined
-_init_swarm() {
-  local _token
-  local _manager
-  local _loop=0
-  local _maxloop=120
-  echo "initializing Docker" >&2
-  wget -qO- https://get.docker.com/ | sh && \
-  usermod -G docker ubuntu && \
-  systemctl enable docker.service && \
-  systemctl start docker.service && \
-  if [ -n "$1" ]; then
-    _manager=$1
-    _expose_remote_api $_manager
-    echo "joining a Docker Swarm..." >&2
-    while [ $((++_loop)) -lt $_maxloop ]; do
-      _token=$(docker -H $_manager:2375 swarm join-token -q manager 2>/dev/null)
-      if [ $? -eq 0 ] && [ -n "$_token" ]; then
-        break
-      fi
-      sleep 1
-    done
-    if [ $_loop -lt $_maxloop ]; then
-      _loop=0
-      _maxloop=10
-      while [ $((++_loop)) -lt $_maxloop ]; do
-        sleep 1
-        docker swarm join --token $_token $_manager:2377
-        if [ $? -eq 0 ]; then
-          break
-        fi
-      done
-      if [ $_loop -ge $_maxloop ]; then
-        echo "failed to join" >&2
-        return 1
-      fi
-    else
-      echo "failed to get the join token" >&2
-      return 1
-    fi
-  else
-    echo "initializing Docker Swarm" >&2
-    _expose_remote_api 127.0.0.1
-    docker swarm init
-  fi
-}
-
 
 # prepare a Docker volume for the infrakit configuration
 # works even when the Docker host is not local (running from inside a container on the host)
@@ -150,24 +88,23 @@ _prepare_configuration_volume() {
       local _dockerimage
       _dockerfile=$(mktemp $_d/ikt.vol.XXXXXX)
       cleanup_file_list="$cleanup_file_list $_dockerfile"
-      _dockerimage=$(basename $_dockerfile | tr '[:upper:]' '[:lower:]')
+      _dockerimage=$(basename "$_dockerfile" | tr '[:upper:]' '[:lower:]')
 
       # in case a configuration file has been provided for the instance plugin
-      if [ -n "$providerfile" ]; then
+      if [[ -n "$providerfile" ]]; then
         mkdir -p "$_d/$provider"
         cp "$providerfile" "$_d/$provider/"
       fi
 
-      echo "preparing a Docker image with the configuration data" >&2
       cat >> $_dockerfile << EOF
 FROM alpine:3.5
 WORKDIR $INFRAKIT_HOME
 COPY . $INFRAKIT_HOME
 EOF
-      if [ -n "$envfile" ]; then
+      if [[ -n "$envfile" ]]; then
         local _envfile=$(mktemp $_d/ikt.env.XXXXXX)
         cleanup_file_list="$cleanup_file_list $_envfile"
-        cp "$envfile" $_envfile
+        cp "$envfile" "$_envfile"
         cat >> $_dockerfile << EOF
 COPY $(basename $_envfile) $INFRAKIT_HOME/env.ikt
 EOF
@@ -177,13 +114,13 @@ RUN mkdir -p $INFRAKIT_HOME/logs $INFRAKIT_HOME/plugins $INFRAKIT_HOME/configs
 VOLUME $INFRAKIT_HOME
 EOF
       cleanup_image_list="$cleanup_image_list $_dockerimage"
-      docker build -t $_dockerimage -f $_dockerfile $_d >/dev/null|| exit 1
+      docker build -t "$_dockerimage" -f "$_dockerfile" "$_d" >/dev/null|| exit 1
       docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        if [ $force_start -eq 1 ]; then
+      if [[ $? -eq 0 ]]; then
+        if [[ $force_start -eq 1 ]]; then
           echo "warning: force start, removing Docker volume $BOOTSTRAP_VOLUME" >&2
           docker volume rm $BOOTSTRAP_VOLUME >&2
-          if [ $? -ne 0 ]; then
+          if [[ $? -ne 0 ]]; then
             echo "force start failed, unable to remove the Docker volume $BOOTSTRAP_VOLUME, it's probably still used by an infrakit container" >&2
             exit 1
           fi
@@ -193,14 +130,17 @@ EOF
         fi
       fi
       echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data" >&2
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME $_dockerimage true >&2
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME "$_dockerimage" true >/dev/null
 }
 
 _system_check() {
   local mmcmin=262144
   typeset -i mmc
+  if [[ "x$provider" != "xdocker" ]]; then
+    return 0
+  fi
   # only check elasticsearch prerequisites on systems where it makes sense (Linux system)
-  mmc=$(sysctl -n vm.max_map_count)
+  mmc=$(sysctl -n vm.max_map_count 2>/dev/null)
   if [[ $? -eq 0 ]]; then
     if [[ $mmc -lt $mmcmin ]]; then
       echo "your max map count limit is too low for elasticsearch" >&2
@@ -216,7 +156,7 @@ _system_check() {
   # on Linux system, we have to make sure that the modules are loaded
   if [[ $(uname) = "Linux" ]]; then
     # grep for ip_vs_rr (if it's present then so is ip_vs)
-    lsmod | grep -q ip_vs_rr
+    lsmod | grep -q ip_vs
     if [[ $? -ne 0 ]]; then
       echo "Warning: required IPVS modules are not loaded. See: https://github.com/appcelerator/amp/tree/master/docs#linux"
       return 1
@@ -226,6 +166,8 @@ _system_check() {
 }
 
 # define and prepare the source directory
+# creates the files needed for the preparation of the InfraKit configuration file
+# it sets CONTAINER_CONFIG_TPL and CONTAINER_PLUGINS_CFG
 _set_source() {
   local _d
   # Location of InfraKit templates
@@ -236,17 +178,10 @@ _set_source() {
     CONTAINER_PLUGINS_CFG=$InfraKitConfigurationBaseURL/plugins.json
     # a new random temporary directory used as the source
     _d=$(mktemp -d)
-    if [ "x$provider" = "xaws" ]; then
+    if [[ "x$provider" = "xaws" ]]; then
       echo "trying to fetch remote files for $provider ($target)..." >&2
       mkdir -p "$_d/$provider"
       for i in "${AWS_FILES[@]}"; do
-        curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
-      done
-      echo "fetch done" >&2
-    elif [ "x$provider" = "xterraform" ]; then
-      echo "trying to fetch remote files for $provider ($target)..." >&2
-      mkdir -p "$_d/$provider"
-      for i in "${TERRAFORM_FILES[@]}"; do
         curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
       done
       echo "fetch done" >&2
@@ -257,10 +192,10 @@ _set_source() {
     # the provided path, or just use the local directory as the source
     _d=${InfraKitConfigurationBaseURL:-$0}
     which realpath >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       _d=$(realpath $_d)
     fi
-    if [ ! -d $_d ]; then
+    if [[ ! -d $_d ]]; then
       _d=$(dirname $_d)
     fi
   fi
@@ -274,11 +209,11 @@ _set_size() {
   local _s
   local _t
   local _w
-  if [ "x$provider" = "xdocker" ]; then
+  if [[ "x$provider" = "xdocker" ]]; then
     # we're adding a container to proxy the ports, so let's remove it from the overall count
     ((--worker_count))
   fi
-  if [ $worker_count -le 0 ] || [ $manager_count -le 0 ]; then
+  if [[ $worker_count -le 0 || $manager_count -le 0 ]]; then
     echo "asking for $manager_count manager(s) and $worker_count worker(s), abort" >&2
     exit 1
   fi
@@ -291,18 +226,17 @@ _set_size() {
     _cattle_count=$((_cattle_count - _s))
   done
   _vars="$_vars {{ var \"/swarm/size/worker/cattle\" \"$_cattle_count\" }}"
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" >&2 || exit 1
-  echo "cluster size added to $INFRAKIT_HOME/env.ikt" >&2
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" >/dev/null || exit 1
 }
 
 # return a cluster id
 _set_clusterid(){
   local _cid
-  if [ -n "$label" ]; then
+  if [[ -n "$label" ]]; then
     _cid=$label
   else
-    _cid=$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    if [ ${PIPESTATUS[0]} -ne 0 ] || [ -z "$_cid" ]; then
+    _cid="amp$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]' | cut -d- -f1)"
+    if [[ ${PIPESTATUS[0]} -ne 0 || -z "$_cid" ]]; then
       # fall back to the hostname if uuidgen is not available, probably the case in a container
       _cid=$(hostname)
     fi
@@ -315,105 +249,104 @@ _set_clusterid(){
 _get_ip() {
   local _ip
   _ip=$(curl -m 3 -f 169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null) || _ip=$(ip a show dev eth0 2>/dev/null | grep inet | grep eth0 | tail -1 | sed -e 's/^.*inet.//g' -e 's/\/.*$//g')
-  if [ -z "$_ip" ];then
+  if [[ -z "$_ip" ]];then
     _ip=$(ifconfig $(netstat -nr | awk 'NF==6 && $1 ~/default/ {print $6}' | tail -1) | awk '$1 == "inet" {print $2}' | grep -v "127.0.0.1" | sed -e 's/addr://')
   fi
-  if [ -z "$_ip" ];then
+  if [[ -z "$_ip" ]];then
     echo "unable to guess the private IP" >&2
     exit 1
   fi
   echo $_ip
 }
 
-# run a certificate signing service
-_run_certificate_service() {
-  local IP
-  IP=$(_get_ip)
-  docker container ls --format '{{.Names}}' | grep -qw certauth
-  if [ $? -eq 0 ]; then
-    echo "the certificate management service is already running" >&2
-  else
-    echo "warning: the certificate service is not production ready, use it only for development purposes" >&2
-    cad=$(mktemp -d)
-    if [ $? -ne 0 ] || [ -z "$cad" ]; then
-      echo "unable to create a temporary directory to build the certificate management" >&2
-      exit 1
+# find the leader manager
+# this is necessary when trying to reach InfraKit
+_set_leader_manager(){
+  local _nodes
+  local _node
+  local _remote=$1
+  local _leader
+  local _ip
+  local _tmout=90
+  [[ -z "$_remote" ]] && return 1
+  # try 3 times, in case we don't get all nodes at first pass
+  for pass in $(seq 3); do
+    # we may have to try several times, until the remote node is a swarm manager
+    SECONDS=0
+    while [[ $SECONDS -lt $_tmout ]]; do
+      _nodes=$(docker -H $_remote node ls -q --filter "role=manager" 2>/dev/null)
+      [[ -n "$_nodes" ]] && break
+      sleep 2
+    done
+    if [[ $SECONDS -ge $_tmout ]]; then
+      echo "unable to list manager nodes" >&2
     fi
-    echo "build a certificate management service (in $cad)..." >&2
-    pushd $cad
-    git clone https://github.com/ndegory/certificate.authority.git
-    pushd certificate.authority 2>/dev/null
-    docker build -t $CERTIFICATE_SERVER_IMAGE . || exit 1
-    popd -1 2>/dev/null && popd 2>/dev/null
-    rm -rf $cad
-    echo "temporary directory has been removed" >&2
-    echo "run the certificate management service..." >&2
-    docker run -d --restart always -p 80 --name certauth $CERTIFICATE_SERVER_IMAGE || exit 1
-  fi
-  CERTIFICATE_SERVER_PORT=$(docker inspect certauth --format='{{(index (index .NetworkSettings.Ports "80/tcp") 0).HostPort}}')
-  echo "certificate server listening on port $CERTIFICATE_SERVER_PORT" >&2
-  _vars="{{ var \"/certificate/ca/service\" \"$IP:$CERTIFICATE_SERVER_PORT\" }}"
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" || exit 1
+    for _node in $_nodes; do
+      _leader=$(docker -H $_remote node inspect $_node -f '{{ .ManagerStatus.Leader }}')
+      if [[ "$_leader" = "true" ]]; then
+        # use a custom label containing the public IP of the node
+        SECONDS=0
+        while [[ $SECONDS -lt 15 ]]; do
+          _ip=$(docker -H $_remote node inspect $_node -f '{{ .Spec.Labels.PublicIP }}')
+          if [[ $? -eq 0 && -n "$_ip" ]]; then
+            LEADER_HOST="$_ip"
+            return 0
+          fi
+          sleep 2
+        done
+        echo "unable to establish the swarm leader public IP" >&2
+        return 1
+      fi
+    done
+  done
+  echo "unable to find the leader manager" >&2
+  return 1
 }
 
-# generate a certificate for the Docker client
-_get_client_certificate() {
-  mkdir -p $CERT_DIR
-  if [ $? -ne 0 ]; then
-    exit 1
+# the aws instance plugin has subtypes
+_instance_plugin_compute_subtype(){
+  case "$1" in
+  aws)
+    echo "ec2-instance"
+    ;;
+  esac
+}
+
+# add variables to env.ikt, needed to prepare the InfraKit configuration file
+_update_env_ikt(){
+  # set a stackname if it's not already set. Useful when deploying on the cloud
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
+  if [[ $? -ne 0 ]]; then
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
   fi
-  if [ ! -f $CERT_DIR/ca.pem ]; then
-    echo "generating a self-signed CA..." >&2
-    # (used by the Swarm flavor plugin)
-    curl http://localhost:$CERTIFICATE_SERVER_PORT/ca > $CERT_DIR/ca.pem
-    echo "generating a certificate for the Docker client in $CERT_DIR..." >&2
-    openssl genrsa -out $CERT_DIR/client-key.pem $SSL_KEY_LENGTH
-    openssl req -subj '/CN=client' -new -key $CERT_DIR/client-key.pem -out $CERT_DIR/client.csr
-    curl --data "csr=$(cat $CERT_DIR/client.csr | sed 's/+/%2B/g');ext=extendedKeyUsage=clientAuth" http://localhost:$CERTIFICATE_SERVER_PORT/csr > $CERT_DIR/client.pem
-    ls -l $CERT_DIR/client.pem
-    rm -f $CERT_DIR/client.csr
+  # set a docker engine label if it's not already set. Useful when deploying locally
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/cluster/value $INFRAKIT_HOME/env.ikt"
+  if [[ $? -ne 0 ]]; then
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/docker/label/cluster/value\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
   fi
 }
 
 # run the infrakit containers
 # return 1 if a new container has been started
+# _set_source should have been executed before
 _run_ikt_container() {
   local _should_wait_for_plugins=0
   local _infrakit_image
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
 
-  # remove old customized configuration just in case
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "sed -i.bak 's/^{{ var \"\/script\/baseurl\".\*$//' $INFRAKIT_HOME/env.ikt" || exit 1
+  if [[ "$manager_plugin" = "os" ]]; then
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
+  fi
   local _extra_plugins=""
   # managed plugins should be started in the main infrakit container
   echo "$MANAGED_PLUGINS" | grep -qw $provider
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     _extra_plugins=instance-$provider
   fi
   docker container ls --format '{{.Names}}' | grep -qw infrakit
-  if [ $? -ne 0 ]; then
+  if [[ $? -ne 0 ]]; then
     # cleanup
     docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "rm -f $INFRAKIT_HOME/plugins/flavor-* $INFRAKIT_HOME/plugins/group* $INFRAKIT_HOME/plugins/instance-*" || exit 1
-    # set a stackname if it's not already set. Useful when deploying on AWS
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ]; then
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
-    fi
-    # set a docker engine label if it's not already set. Useful when deploying locally
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/cluster/value $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ]; then
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/docker/label/cluster/value\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
-      echo "$clusterid"
-    fi
-    # set the provisioner IP if not already set. Useful when bootstraping with the first manager
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /bootstrap/ip $INFRAKIT_HOME/env.ikt"
-    if [ $? -ne 0 ] && [ ! $(_am_i_in_a_container) ]; then
-      local _ip
-      _ip=$(_get_ip)
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/bootstrap/ip\" \"$_ip\" }}' >> $INFRAKIT_HOME/env.ikt" || exit 1
-      echo "bootstrap ip ($_ip) added in env.ikt" >&2 
-    fi
-    if [ "x$provider" = "xdocker" ]; then
+    if [[ "x$provider" = "xdocker" ]]; then
         echo "making sure the network $BRIDGE_NETWORK is created" >&2
         docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null
         INFRAKIT_OPTIONS="$INFRAKIT_OPTIONS --network $BRIDGE_NETWORK"
@@ -423,10 +356,9 @@ _run_ikt_container() {
 
     echo "starting up InfraKit (image $_infrakit_image)" >&2
     docker run -d --restart always --name infrakit \
-         -v $CERT_DIR:/etc/docker \
          $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS -e PLUGIN_DIR=$INFRAKIT_HOME/${provider} -e INFRAKIT_LOG_LEVEL=$INFRAKIT_LOG_LEVEL $_infrakit_image \
          infrakit plugin start --wait --config-url $CONTAINER_PLUGINS_CFG --exec os --log $INFRAKIT_LOG_LEVEL \
-         manager group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >&2
+         manager-${manager_plugin} group-stateless flavor-swarm flavor-vanilla flavor-combo $_extra_plugins >/dev/null
     _should_wait_for_plugins=1
   else
     echo "infraKit container is already started" >&2
@@ -442,30 +374,30 @@ _run_ikt_plugin_container() {
   local _image
   for _plugin in $@; do
     echo $MANAGED_PLUGINS | grep -qw $_plugin
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       # already managed by the main infrakit, no need to run it separately
       continue
     fi
     echo "$NON_CONTAINERIZED_PLUGINS" | grep -qw $_plugin
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
       docker container ls --format '{{.Names}}' | grep -qw instance-plugin-$_plugin
-      if [ $? -ne 0 ]; then
+      if [[ $? -ne 0 ]]; then
         # first, cleanup the pid and socket files
         # TODO: container way
         rm -f $INFRAKIT_HOME/plugins/instance-${_plugin}*
         _image=$(eval echo \${INFRAKIT_$(echo $_plugin | tr '[:lower:]' '[:upper:]')_IMAGE})
-        if [ -z "$_image" ]; then
+        if [[ -z "$_image" ]]; then
             echo "no image defined for plugin $_plugin" >&2
             exit 1
         fi
-        if [ "$_plugin" = "docker" ]; then
+        if [[ "$_plugin" = "docker" ]]; then
             INFRAKIT_OPTIONS="$INFRAKIT_OPTIONS --network $BRIDGE_NETWORK"
         fi
         echo "starting up InfraKit $_plugin plugin (image $_image)..." >&2
         docker run -d --restart always --name instance-plugin-$_plugin \
              $INFRAKIT_OPTIONS $INFRAKIT_PLUGINS_OPTIONS $_image \
-             infrakit-instance-$_plugin --log $INFRAKIT_LOG_LEVEL >&2
-        if [ $? -ne 0 ]; then
+             infrakit-instance-$_plugin --log $INFRAKIT_LOG_LEVEL >/dev/null
+        if [[ $? -ne 0 ]]; then
             echo "unable to start the $_plugin plugin" >&2
             exit 1
         fi
@@ -482,22 +414,34 @@ _run_ikt_plugin_container() {
 _destroy_groups() {
   local _groups
   local _group
-  _groups=$(docker exec infrakit infrakit group ls 2>/dev/null | tail -n +2)
+  local _remote=""
+  _set_remote_host $1
+  if [[ -n "$REMOTE_HOST" ]]; then
+    _set_leader_manager $REMOTE_HOST
+    _remote=$LEADER_HOST
+  fi
+  _groups=$(docker ${_remote:+-H $_remote} exec infrakit infrakit group ls 2>/dev/null | tail -n +2)
   for _group in $_groups; do
-    docker exec infrakit grep -q "\"$_group\"" $INFRAKIT_HOME/config.json
-    if [ $? -eq 0 ]; then
-      docker exec infrakit infrakit group destroy $_group
+    docker ${_remote:+-H $_remote} exec infrakit grep -q "\"$_group\"" $INFRAKIT_HOME/config.json
+    if [[ $? -eq 0 ]]; then
+      docker ${_remote:+-H $_remote} exec infrakit infrakit group destroy "$_group"
     fi
   done
 }
 
 # kill the infrakit container
 _kill_ikt() {
-  docker container rm -f infrakit >/dev/null 2>&1 || killall infrakit >/dev/null 2>&1 && echo "infrakit has been destroyed" >&2
+  local _v
+  # no point to do it on remote cluster, it's probably HA
+  [[ "x$target" != "xlocal" ]] && return 0
+  _v=$(docker inspect infrakit | grep ':/infrakit",' | sed 's/.*"\([^"]*\):.*/\1/')
+  docker container rm -f infrakit >/dev/null 2>&1 && echo "infrakit has been destroyed" >&2
+  [[ -n "$_v" ]] && docker ${REMOTE_HOST:+-H $REMOTE_HOST} volume rm "$_v" >&2 2>/dev/null
 }
 
 # kill the registry container (but keep the volume)
 _kill_registry(){
+  [[ "x$provider" != "xdocker" ]] && return 0
   docker container rm -f registry >/dev/null 2>&1 && echo "registry has been destroyed" >&2
   docker container rm -f registry-cache >/dev/null 2>&1 && echo "registry-cache has been destroyed" >&2
 }
@@ -506,41 +450,47 @@ _kill_registry(){
 _kill_plugins() {
   local _plugin
   for _plugin in $VALID_PROVIDERS; do
-    docker container rm -f instance-plugin-$_plugin >/dev/null 2>&1 || killall infrakit-instance-$_plugin >/dev/null 2>&1 && echo "$_plugin plugin has been destroyed" >&2
+    docker ${REMOTE_HOST:+-H $REMOTE_HOST} container rm -f instance-plugin-$_plugin >/dev/null 2>&1 && echo "$_plugin plugin has been destroyed" >&2
   done
 }
 
-# removes the configuration files
-_clean_config() {
-  if [ -d $CERT_DIR ]; then
-    rm -f $CERT_DIR/ca.pem $CERT_DIR/client.pem $CERT_DIR/client-key.pem
-    echo "client certificates have been removed" >&2
-  fi
-  docker volume inspect $BOOTSTRAP_VOLUME >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
-    docker volume rm $BOOTSTRAP_VOLUME >/dev/null 2>&1 && echo "configuration volume deleted" >&2
-  else
-    echo "no configuration volume to delete" >&2
-  fi
+_destroy_cluster(){
+  local _stackname=$1
+  case $target in
+  aws)
+    # stackid to stackname, if needed
+    echo "$_stackname" | grep -q "/" && _stackname="$(echo $_stackname | awk -F/ '{print $2}')"
+    $awscf delete-stack --stack-name "$_stackname"
+    ;;
+  esac
 }
 
 # convert the template of the configuration file
+# _set_source should have been called before
 _prepare_config_container() {
   echo "prepare the InfraKit configuration file..." >&2
   local _config=$(mktemp)
+  local _cid
+  local _volume
   cleanup_file_list="$cleanup_file_list $_config"
-  docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
-  if [ $? -ne 0 ]; then
-    echo "failed, template URL was $CONTAINER_CONFIG_TPL" >&2
-    exit 1
+  [[ $provider = "docker" ]] && _volume=$BOOTSTRAP_VOLUME || _volume=infrakit 
+  if [[ "x$provider" = "xdocker" ]]; then
+    docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
   fi
-  docker cp $_config infrakit:$INFRAKIT_HOME/config.json || exit 1
+
+  # prepare the configuration file locally
+  docker run --rm -v $BOOTSTRAP_VOLUME:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit template  --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config || exit 1
+  # copy it inside the InfraKit container
+  _cid=$(docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -d -v $_volume:/infrakit alpine:3.5 sleep 15)
+  docker ${LEADER_HOST:+-H $LEADER_HOST} cp $_config $_cid:$INFRAKIT_HOME/config.json || exit 1
 }
 
 # deploy the infrakit configuration
 _deploy_config_container() {
   echo "deploy the configuration..." >&2
-  docker exec infrakit infrakit manager commit file://$INFRAKIT_HOME/config.json >&2
+  local _volume
+  [[ $provider = "docker" ]] && _volume=$BOOTSTRAP_VOLUME || _volume=infrakit 
+  docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $_volume:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit manager commit file://$INFRAKIT_HOME/config.json >&2
 }
 
 # run registry services for Docker image availability in the cluster
@@ -553,7 +503,7 @@ _run_registry() {
              --volume=registry:/var/lib/registry \
              --label="$CLUSTER_LABEL_NAME=$clusterid" --label="io.amp.role=$ROLE_LABEL" \
              -e REGISTRY_STORAGE_DELETE_ENABLED=true \
-             registry:2 >&2
+             registry:2 >/dev/null
   # for local deployment a registry cache is also created to boost the pulls
   [[ "$target" = "local" ]] && \
   docker run --name=registry-cache --detach $_nwopt \
@@ -562,110 +512,309 @@ _run_registry() {
              --label="$CLUSTER_LABEL_NAME=$clusterid" --label="io.amp.role=$ROLE_LABEL" \
              -e REGISTRY_STORAGE_DELETE_ENABLED=true \
              -e REGISTRY_PROXY_REMOTEURL="https://registry-1.docker.io" \
-             registry:2 >&2
+             registry:2 >/dev/null
+}
+
+# set the REMOTE_HOST variable
+# for docker remote access to the cluster
+_set_remote_host(){
+    local _clusterid=$1
+    case $provider in
+    aws)
+      # remote endpoint may be an ELB
+      REMOTE_HOST=$($awscf describe-stacks --stack-name "$_clusterid" --query 'Stacks[0].Outputs[?OutputKey==`PublicManagerHost`].OutputValue' --output text) || return 1
+      ;;
+    local)
+      REMOTE_HOST=""
+    esac
 }
 
 _status(){
   local _clusterid=$1
+  local _status
   local _groups
   local _group
   local _esize
   local _csize
   local _rc=0
   local _c
-  _groups=$(docker exec infrakit infrakit group ls -q | grep $_clusterid)
-  if [ $? -ne 0 ]; then
-    echo "no InfraKit group definition found for this cluster" >&2
+
+  # first check if the infrakit infra has been deployed
+  if [[ $provider = "aws" ]]; then
+    echo "$_clusterid" | grep -q "/" && _clusterid="$(echo $_clusterid | awk -F/ '{print $2}')"
+    _status=$($awscf describe-stacks --stack-name "$_clusterid" --query "Stacks[0].StackStatus" --output text) || return 1
+    echo "InfraKit stack status is $_status" >&2
+    [[ "x$_status" != "xCREATE_COMPLETE" ]] && return 1
+  fi
+  # then check the status of the infrakit deployment
+  [[ -z "$REMOTE_HOST" ]] && _set_remote_host $_clusterid && _set_leader_manager $REMOTE_HOST
+  _groups=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit group ls -q | grep "$_clusterid")
+  if [[ $? -ne 0 ]]; then
+    echo "no InfraKit group definition found for cluster $_clusterid" >&2
     return 1
   fi
   for _group in $_groups; do
     # first look for convergence in the group metadata, that will make sure the expected size is defined
-    _c=$(docker exec infrakit infrakit metadata cat group-stateless/groups/$_group/Converged)
-    if [ "x$_c" != "xtrue" ]; then
+    _c=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit metadata cat group-stateless/groups/$_group/Converged)
+    if [[ "x$_c" != "xtrue" ]]; then
       echo "group specifications are not ready yet" >&2
       return 1
     fi
     # expected size
-    _esize=$(docker exec infrakit infrakit metadata cat group-stateless/specs/$_group/Properties/Allocation/Size)
-    if [ $? -ne 0 ]; then
+    _esize=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit metadata cat group-stateless/specs/$_group/Properties/Allocation/Size)
+    if [[ $? -ne 0 ]]; then
       echo "failed to get metadata for group $_group" >&2
       return 1
     fi
-    if [ $_esize -eq 0 ]; then
-      _esize=$(docker exec infrakit infrakit metadata cat group-stateless/specs/$_group/Properties/Allocation/LogicalIDs | awk -F ',' '{print NF}')
-      if [ $? -ne 0 ]; then
+    if [[ $_esize -eq 0 ]]; then
+      _esize=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit metadata cat group-stateless/specs/$_group/Properties/Allocation/LogicalIDs | awk -F ',' '{print NF}')
+      if [[ $? -ne 0 ]]; then
         echo "failed to get metadata for group $_group" >&2
         return 1
       fi
     fi
     # current size
-    _csize=$(docker exec infrakit infrakit metadata ls group-stateless/groups/$_group/Instances | wc -l)
-    if [ $? -ne 0 ]; then
+    _csize=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit metadata ls group-stateless/groups/$_group/Instances | wc -l)
+    if [[ $? -ne 0 ]]; then
       echo "failed to get metadata for group $_group" >&2
       return 1
     fi
-    if [ $_csize -ne $_esize ]; then
+    if [[ $_csize -ne $_esize ]]; then
       echo "$_group has not converged: expected size = $_esize, current size: $_csize" >&2
       ((++_rc))
     else
       echo "$_group has converged: size = $_esize" >&2
     fi
   done
-  if [ $_rc -eq 0 ]; then
+  if [[ $_rc -eq 0 ]]; then
     echo "all groups have converged" >&2
   fi
   return $_rc
 }
 
 _list(){
-  local _clusterid=$1
+  local _clusterid="$1"
   local _groups
   local _group
-  _groups=$(docker exec infrakit infrakit group ls -q | grep $_clusterid)
-  if [ $? -ne 0 ]; then
+  local _instance_plugin
+  _instance_plugin=instance-$provider/$(_instance_plugin_compute_subtype $provider)
+  _instance_plugin=${_instance_plugin%/}
+  if [[ $provider = "aws" ]]; then
+    # short form of the clusterid
+    echo "$_clusterid" | grep -q "/" && _clusterid="$(echo $_clusterid | awk -F/ '{print $2}')"
+  fi
+  # first check if the infrakit infra has been deployed
+  [[ -z "$REMOTE_HOST" ]] && _set_remote_host $_clusterid && _set_leader_manager $REMOTE_HOST
+  _groups=$(docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit group ls -q | grep "$_clusterid")
+  if [[ $? -ne 0 ]]; then
     echo "no InfraKit group definition found for this cluster" >&2
     return 1
   fi
   for _group in $_groups; do
-    docker exec infrakit infrakit instance --name=instance-$provider describe --tags atomiq.clusterid=$_clusterid --tags infrakit.group=$_group -q 2>&1 | awk -v clusterid=$_clusterid -v group=$_group '{print clusterid, group, $2, $1}'
-    if [ $? -ne 0 ]; then
+    docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags atomiq.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
+    if [[ $? -ne 0 ]]; then
       echo "failed to describe group $_group" >&2
       return 1
     fi
   done
+  # also list instances outside of a group
+  docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags atomiq.clusterid="$_clusterid" -q 2>&1 | grep -v "infrakit.group" | grep -v registry | awk -v clusterid="$_clusterid" -v group="none" '{print clusterid, group, $2, $1}'
+}
+
+_create_seed_aws(){
+    local _template="file://$(_get_dirname $0)/bootstrap.yml"
+    local _parameters="$(_get_dirname $0)/parameters.json"
+    local _stackname
+    local _ip
+    local _params
+    local _tmp
+    local _k
+    local _v
+    local _s
+    _stackname=$1
+
+    echo "cluster create request on AWS." >&2
+    echo "  PROFILE=${PROFILE:-default}" >&2
+    echo "  REGION=${REGION:-us-west-2}" >&2
+    if [[ -z "$DOMAIN" ]]; then
+      echo "before creating a cluster on AWS, you should specify the domain name for that cluster (-D my.doma.in), prepare a certificate and place it in stacks/my.doma.in.pem" >&2
+      return 1
+    fi
+    cp "$_parameters" "${_parameters}.mod"
+    cleanup_file_list="$cleanup_file_list ${_parameters}.mod"
+    grep -q "TrustedCidr" $_parameters
+    if [[ $? -ne 0 ]]; then
+      which jq >/dev/null 2>&1
+      if [[ $? -ne 0 ]]; then
+        echo "jq is not available, security group settings will have to be done manually to give access to the engine API" >&2
+        break
+      fi
+      _ip=$(curl -sf ifconfig.co/ip)
+      [[ -z "$_ip" ]] && return 1
+      echo "opening the Docker engine API from ${_ip}/32" >&2
+      cat "$_parameters" | jq ". |= .+ [{\"ParameterKey\": \"TrustedCidr\", \"ParameterValue\": \"${_ip}/32\"}]" > ${_parameters}.mod || return 1
+    else
+      echo "parameters.json already contains a trusted origin, make sure this is the correct CIDR" >&2
+    fi
+    _stackid=$($awscf create-stack --stack-name "$_stackname" --template-body "$_template" --parameters "file://${_parameters}.mod" --capabilities "CAPABILITY_IAM" --output text) || return 1
+    echo "waiting for AWS stack outputs..." >&2
+    _status="CREATE_IN_PROGRESS"
+    SECONDS=0
+    while [[ "x$_status" != "xCREATE_COMPLETE" ]]; do
+      _status=$($awscf describe-stacks --stack-name "$_stackname" --query 'Stacks[0].StackStatus' --output text) || return 1
+        if [[ $SECONDS -gt 300 ]]; then
+          echo "timeout exceeded" >&2
+          echo $_status >&2
+          return 1
+        fi
+        case $_status in
+        CREATE_COMPLETE|CREATE_IN_PROGRESS) : ;;
+        *) echo "Stack reached status $_status" >&2
+           echo "Deployment is canceled, the Cloudformation stack won't be deleted so you can check what happened." >&2
+           return 1
+           ;;
+        esac
+      sleep 2
+    done
+
+    # we need a few stack information to customize the InfraKit configuration file
+    _set_remote_host "$_stackname"
+    echo "Stack $_stackid: creation complete" >&2
+    #docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+    _params="PrivateManagerHost:/docker/manager/host KeyName:/aws/keyname VpcId:/aws/vpcid SubnetIds:/aws/subnetids SecurityGroup:/aws/securitygroupid AMI:/aws/amiid InstanceProfile:/aws/instanceprofile BaseURL:/script/baseurl"
+    for _tmp in $_params; do
+      _k=$(echo $_tmp | cut -d: -f1)
+      _v=$($awscf describe-stacks --stack-name "$_stackname" --query "Stacks[0].Outputs[?OutputKey=='${_k}'].OutputValue" --output text) || return 1
+      echo "$_k = $_v" >&2
+      _k=$(echo $_tmp | cut -d: -f2)
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"$_k\" \"$_v\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+      if [[ "$_k" = "/aws/subnetids" ]]; then
+        # split
+        for i in $(seq 3); do
+          _s=$(echo $_v | cut -d, -f$i)
+          docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/subnetid$i\" \"$_s\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+        done
+      fi
+    done
+    echo $_stackid >&2
+}
+
+_create_seed(){
+  _create_seed_$target $*
+}
+
+_timeout(){
+  local _loop=0
+  local _pid
+  local _code
+  local _max=$1
+  shift
+  $@ &
+  _pid=$!
+  while [[ $_loop -lt $_max ]]; do
+    sleep 1
+    ((_loop++))
+    kill -0 $_pid >/dev/null 2>&1 || break
+  done
+  kill $_pid >/dev/null 2>&1
+  wait $_pid >/dev/null 2>&1
+  _code=$?
+  [[ $_code -eq 143 ]] && return 124
+  return $_code
+}
+
+_wait_for_engine_api(){
+  local _code=1
+  local _tmout=360
+  echo -n "waiting for remote host engine API availability..." >&2
+  [[ -z "$REMOTE_HOST" ]] && return 1
+  # no need to rush, the stack creation is asynchronous
+  [[ "$provider" = "aws" ]] && sleep 10
+  SECONDS=0
+  while [[ $_code -ne 0 ]]; do
+    if [[ $SECONDS -gt $_tmout ]]; then
+      echo >&2
+      echo "timeout after $_tmout sec" >&2
+      return 1
+    fi
+    _timeout 5 docker -H "$REMOTE_HOST:2375" version >/dev/null 2>&1
+    _code=$?
+    echo -n "." >&2
+  done
+  echo >&2
+}
+
+_wait_for_plugin_availability(){
+  # wait for infrakit and its plugins to be available, at least 3 consecutive times"
+  echo -n "waiting for plugins to be available..." >&2
+  local rc=1
+  local timeout=120
+  local ready=0
+  local volume
+  local instance_plugin
+  instance_plugin="instance-$provider/$(_instance_plugin_compute_subtype $provider)"
+  instance_plugin=${instance_plugin%/}
+  [[ $provider = "docker" ]] && volume=$BOOTSTRAP_VOLUME || volume=infrakit 
+  SECONDS=0
+  while [[ $ready -lt 3 ]]; do
+    _timeout 5 docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit "$INFRAKIT_INFRAKIT_IMAGE" infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
+    rc=$?
+    _timeout 5 docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit -e INFRAKIT_HOME="$INFRAKIT_HOME" "$INFRAKIT_INFRAKIT_IMAGE" infrakit instance --name="$instance_plugin" describe >/dev/null 2>&1
+    rc=$((rc+$?))
+    _timeout 5 docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit -e INFRAKIT_HOME="$INFRAKIT_HOME" "$INFRAKIT_INFRAKIT_IMAGE" infrakit manager inspect 2>&1 | grep -vq 'non-leader'
+    rc=$((rc+$?))
+    if [[ $SECONDS -gt $timeout ]]; then
+      echo " aborting after $SECONDS sec" >&2
+      docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit "$INFRAKIT_INFRAKIT_IMAGE" infrakit plugin ls
+      echo $?
+      docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit -e INFRAKIT_HOME="$INFRAKIT_HOME" "$INFRAKIT_INFRAKIT_IMAGE" infrakit instance --name="$instance_plugin" describe
+      echo $?
+      docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $volume:/infrakit -e INFRAKIT_HOME="$INFRAKIT_HOME" "$INFRAKIT_INFRAKIT_IMAGE" infrakit manager inspect
+      echo $?
+      if [[ "x$provider" = "xdocker" ]]; then
+        docker logs infrakit >&2
+        echo "#####################      manager logs        ############################" >&2
+        docker exec infrakit cat "/infrakit/logs/manager-${manager_plugin}.log" >&2
+        echo "#####################        group logs        ############################" >&2
+        docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
+        echo "#####################     instance logs        ############################" >&2
+        docker exec infrakit cat "/infrakit/logs/instance-$provider.log" >&2
+        echo "#####################       flavor logs        ############################" >&2
+        docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
+      fi
+      return 1
+    fi
+    sleep 1
+    echo -n "." >&2
+    [[ $rc -eq 0 ]] && ((ready++))
+  done
+  echo >&2
 }
 
 _finish(){
-  local _f
-  for _f in $cleanup_file_list; do
-    echo "cleaning up file $_f "
-    rm -f "$_f"
-  done
-  for _i in $cleanup_image_list; do
-    echo "cleaning up image $_i "
-    docker image rm  "$_i" > /dev/null
-  done
+  [[ -n "$cleanup_file_list" ]] && rm -f $cleanup_file_list
+  [[ -n "$cleanup_image_list" ]] && docker image rm $cleanup_image_list >/dev/null 2>&1
+  # delete the amp-bootstrap volume, only if not in use
+  docker volume rm "$BOOTSTRAP_VOLUME" >/dev/null 2>&1 || true
 }
 
 # where to deploy
 VALID_TARGETS="aws local"
 # Infrakit plugins used for deployment
-VALID_PROVIDERS="aws docker terraform"
+VALID_PROVIDERS="aws docker"
 # we can't run InfraKit in a container for these plugins
 NON_CONTAINERIZED_PLUGINS=""
 # providers managed by infrakit (integrated plugin)
-MANAGED_PLUGINS="docker terraform"
+MANAGED_PLUGINS="docker aws"
 target=local
-default_target=1
 provider=docker
 default_provider=1
+manager_plugin=os
 envfile=""
 providerfile=""
 manager_count=1
 worker_count=2
 clean=0
-init_swarm=0
-swarm_join_ip=""
 label=""
 force_start=0
 status_request=""
@@ -673,14 +822,12 @@ list_request=""
 block=0
 cleanup_file_list=""
 cleanup_image_list=""
-while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
+# commands for aws target
+awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $(_get_dirname $0):$(_get_dirname $0):ro cgswong/aws:latest aws"
+awscf="$awscli --profile ${PROFILE:-default} --region ${REGION:-us-west-2} cloudformation"
+
+while getopts ":t:p:e:m:w:i:l:s:hfdb:D:" opt; do
   case $opt in
-  1)
-      init_swarm=1
-      ;;
-  j)
-      swarm_join_ip=$OPTARG
-      ;;
   w)
       worker_count=$OPTARG
       ;;
@@ -693,25 +840,24 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
       ;;
   t)
       echo "$VALID_TARGETS" | grep -wq "$OPTARG" && target=$OPTARG
-      if [ -z "$target" ]; then
+      if [[ -z "$target" ]]; then
           echo "valid targets are $VALID_TARGETS" >&2
           exit 1
       fi
-      default_target=0
       ;;
   p)
       # provider[:envfilepath]]
       f1=$(echo "$OPTARG" | cut -f1 -d:)
       f2=$(echo "$OPTARG" | cut -f2 -d:)
-      if [ -n "$f2" ] && [ "x$f1" != "x$f2" ]; then
+      if [[ -n "$f2" && "x$f1" != "x$f2" ]]; then
         providerfile="$f2"
-        if [ ! -f "$providerfile" ]; then
+        if [[ ! -f "$providerfile" ]]; then
           echo "Configuration file for $f1 was not found ($providerfile)" >&2
           exit 1
         fi
       fi
       echo "$VALID_PROVIDERS" | grep -wq "$f1" && provider=$f1
-      if [ -z "$provider" ]; then
+      if [[ -z "$provider" ]]; then
           echo "valid providers are $VALID_PROVIDERS" >&2
           exit 1
       fi
@@ -727,7 +873,7 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
       block=$OPTARG
       ;;
   h)
-      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-i CLUSTERID] [-b TIMEOUT] [-l CLUSTERID] [-s CLUSTERID] [--init-swarm] [--join-swarm] [-f] [-h]"
+      echo "usage: $(basename $0) [-t target] [-p provider] [-m manager_count] [-w worker_count] [-i CLUSTERID] [-b TIMEOUT] [-l CLUSTERID] [-s CLUSTERID] [-f] [-h]"
       exit 0
       ;;
   f)
@@ -739,10 +885,13 @@ while getopts ":1j:t:p:e:m:w:i:l:s:hfdb:" opt; do
       ;;
   e)
       envfile=$OPTARG
-      if [ ! -f "$envfile" ]; then
+      if [[ ! -f "$envfile" ]]; then
         echo "$envfile does not exist" >&2
         exit 1
       fi
+      ;;
+  D)
+      DOMAIN=$OPTARG
       ;;
   \?)
       echo "invalid option: -$OPTARG" >&2
@@ -758,94 +907,69 @@ shift "$((OPTIND-1))"
 
 trap _finish EXIT
 
-# in case only the target has been set, and it's not local, use terraform as default provider
-if [ "x$target" != "xlocal" ] && [ $default_provider -eq 1 ]; then
-    provider=terraform
+# in case only the target has been set, and it's not local, use the native plugin as default provider
+if [[ "x$target" != "xlocal" && $default_provider -eq 1 ]]; then
+    provider="$target"
 fi
 
-if [ -n "$status_request" ]; then
-  _status $status_request
+if [[ -n "$status_request" ]]; then
+  _status "$status_request"
   exit $?
 fi
-if [ -n "$list_request" ]; then
-  _list $list_request
+if [[ -n "$list_request" ]]; then
+  _list "$list_request"
   exit $?
 fi
-if [ $clean -eq 1 ]; then
-  _destroy_groups
+if [[ $clean -eq 1 ]]; then
+  _destroy_groups $label
   _kill_plugins
   _kill_ikt
   _kill_registry
-  _clean_config
+  _destroy_cluster $label
   exit
 fi
-if [ $init_swarm -eq 1 ]; then
-  _init_swarm || exit 1
-fi
-if [ -n "$swarm_join_ip" ]; then
-  _init_swarm $swarm_join_ip || exit 1
-  exit 0
-fi
-[[ $target = "local" ]] && ( _system_check || exit 1 )
-_set_source $1
+_system_check || exit 1
+_set_source "$1"
 _set_size
-#if [ "$provider" != "docker" ]; then _run_certificate_service; _get_client_certificate; fi
 clusterid=$(_set_clusterid)
-if [ "$provider" = "docker" ] || [ $init_swarm -eq 1 ]; then docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null; _run_registry; fi
-_pull_images $provider
-_run_ikt_container $provider
-started=$?
-_run_ikt_plugin_container $provider
-started=$((started + $?))
-if [ $started -gt 0 ]; then
-  echo -n "waiting for plugins to be available..." >&2
-  rc=1
-  loop=1
-  looplimit=10
-  while [ $rc -ne 0 ]; do
-    docker exec infrakit infrakit manager inspect 2>&1 | grep -vq 'non-leader'
-    rc=$?
-    docker exec infrakit infrakit plugin ls 2>/dev/null | grep -q "instance-$provider"
-    rc=$((rc+$?))
-    docker exec infrakit infrakit instance --name=instance-$provider describe >/dev/null 2>&1
-    rc=$((rc+$?))
-    if [ $((++loop)) -gt $looplimit ]; then
-      echo " aborting after $looplimit attempts" >&2
-      docker exec infrakit infrakit manager inspect >/dev/null
-      docker exec infrakit infrakit plugin ls 2>/dev/null
-      docker exec infrakit infrakit instance --name=instance-$provider describe
-      # docker inspect infrakit >&2
-      docker logs infrakit >&2
-      echo "#####################      manager logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/manager.log >&2
-      echo "#####################        group logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/group-stateless.log >&2
-      echo "#####################     instance logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/instance-docker.log >&2
-      echo "#####################       flavor logs        ############################" >&2
-      docker exec infrakit cat /infrakit/logs/flavor-swarm.log >&2
-      echo "#####################       configuration      ############################" >&2
-      docker exec infrakit cat /infrakit/config.json >&2
-      exit 1
-    fi
-    sleep 1
-    echo -n "." >&2
-  done
-  echo >&2
+_update_env_ikt || exit 1
+
+if [[ "$target" = "local" ]]; then
+  # special case target = local
+  REMOTE_HOST=""
+  LEADER_HOST=""
+  docker network create -d bridge "$BRIDGE_NETWORK"  2>/dev/null
+  _run_registry
+  _pull_images "$provider"
+  _run_ikt_container "$provider"
+  started=$?
+  _run_ikt_plugin_container "$provider"
+  started=$((started + $?))
+  if [[ $started -gt 0 ]]; then
+    _wait_for_plugin_availability || exit 1
+  fi
+else
+  _pull_images
+  _create_seed "$clusterid" || exit 1
+  _wait_for_engine_api || exit 1
+  _set_leader_manager $REMOTE_HOST || exit 1
+  _wait_for_plugin_availability || exit 1
 fi
+
 _prepare_config_container
 _deploy_config_container
-if [ $block -gt 0 ]; then
+if [[ $block -gt 0 ]]; then
   rc=1
   SECONDS=0
   echo "waiting for cluster to be ready..." >&2
-  while [ $rc -ne 0 ]; do
-    _status $clusterid 2>/dev/null
+  while [[ $rc -ne 0 ]]; do
+    _status "$clusterid" 2>/dev/null
     rc=$?
-    if [ $SECONDS -gt $block ]; then
+    if [[ $SECONDS -gt $block ]]; then
       echo "cluster is still not ready after $block sec" >&2
       exit 1
     fi
   done
 fi
-echo done >&2
+echo $clusterid
+echo "done" >&2

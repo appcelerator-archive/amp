@@ -16,7 +16,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05.0"{{ if var "/docker/registry/host" }},
               "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
@@ -45,14 +45,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/manager-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
@@ -84,7 +77,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05.0"{{ if var "/docker/registry/host" }},
               "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }}
             },
             "HostConfig": {
@@ -114,14 +107,7 @@
                   "InitScriptTemplateURL": "{{ var "/script/baseurl" }}/worker-init.tpl",
                   "SwarmJoinIP": "m1",
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
@@ -152,7 +138,7 @@
           "Plugin": "instance-docker",
           "Properties": {
             "Config": {
-              "Image": "subfuzion/dind:17.05-ce-rc1"{{ if var "/docker/registry/host" }},
+              "Image": "subfuzion/dind:17.05.0"{{ if var "/docker/registry/host" }},
               "Cmd": ["--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry-cache/host" }}:{{ var "/docker/registry-cache/port" }}", "--registry-mirror={{ var "/docker/registry/scheme" }}{{ var "/docker/registry/host" }}:{{ var "/docker/registry/port" }}"]{{ end }} {{ if var "/docker/ports/exposed" }},
               "ExposedPorts": {{ var "/docker/ports/exposed" | jsonEncode }} {{ end }}
             },
@@ -184,14 +170,7 @@
                   "SwarmJoinIP": "m1",
                   "EngineLabels": { "proxy": "true" },
                   "Docker" : {
-                    {{ if var "/certificate/ca/service" }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/tlsport" }}",
-                    "TLS" : {
-                      "CAFile": "{{ var "/docker/remoteapi/cafile" }}",
-                      "CertFile": "{{ var "/docker/remoteapi/certfile" }}",
-                      "KeyFile": "{{ var "/docker/remoteapi/keyfile" }}",
-                      "InsecureSkipVerify": false
-                    }
-                    {{ else }}"Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"{{ end }}
+                    "Host" : "tcp://m1:{{ var "/docker/remoteapi/port" }}"
                   }
                 }
               }, {
