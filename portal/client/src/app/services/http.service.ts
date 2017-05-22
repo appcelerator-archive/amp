@@ -35,13 +35,9 @@ export class HttpService {
 
 
   constructor(private http : Http) {
-    let host = window.location.host
-    if (host.substring(0,3) == 'ui.') {
-      host = "gw."+host.substring(3)
-      this.addr=window.location.protocol +"//"+host+"/v1"
-      //this.addr="http//"+host+"/v1"
-      console.log("Gateway url: "+this.addr)
-    }
+    let host = "gw."+window.location.host
+    this.addr=window.location.protocol +"//"+host+"/v1"
+    console.log("Gateway url: "+this.addr)
   }
 
   users() {
@@ -140,11 +136,15 @@ export class HttpService {
   }
 
   login(username : string, pwd : string) {
-    return this.httpPost("/login", {name: username, password: pwd})
+    return this.httpPost("/login", {name: username, password: pwd});
   }
 
   signup(username : string, pwd : string, email : string) {
-    return this.httpPost("/signup", {name: username, password: pwd, email: email})
+    return this.httpPost("/signup", {name: username, password: pwd, email: email});
+  }
+
+  registration() {
+    return this.httpGet("/clusters/registration");
   }
 
   removeUser(username : string) {

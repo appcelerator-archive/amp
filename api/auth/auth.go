@@ -38,7 +38,7 @@ var (
 		"/account.Account/ListOrganizations",
 		"/account.Account/GetTeam",
 		"/account.Account/ListTeams",
-
+		"/cluster.Cluster/GetRegistrationStatus",
 		"/version.Version/Get",
 	}
 )

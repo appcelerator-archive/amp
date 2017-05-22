@@ -35,8 +35,21 @@ export class SignupComponent implements OnInit {
     }
     this.httpService.signup(event.form.value.username, event.form.value.password, event.form.value.email).subscribe(
       data => {
-        this.message = "Your account is created, you are going to receive an email to validate your account"
-        this.submitCaption = "Done"
+        this.httpService.registration().subscribe(
+          rep => {
+            let ret = rep.json()
+            if (ret.emailConfirmation) {
+              this.message = "Your account is created, you are going to receive an email to validate your account"
+            } else {
+              this.message = "Your account is created"
+            }
+            this.submitCaption = "Done"
+          },
+          err => {
+            console.log(err)
+            this.message = data.error
+          }
+        )
       },
       error => {
         console.log(error)

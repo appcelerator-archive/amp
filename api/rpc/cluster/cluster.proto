@@ -16,6 +16,16 @@ service Cluster {
       get: "/v1/clusters"
     };
   };
+  rpc NodeList (NodeListRequest) returns (NodeListReply) {
+    option (google.api.http) = {
+      get: "/v1/clusters/nodes"
+    };
+  };
+  rpc GetRegistrationStatus (GetRegistrationStatusRequest) returns (GetRegistrationStatusReply) {
+    option (google.api.http) = {
+      get: "/v1/clusters/registration"
+    };
+  };
   rpc Status (StatusRequest) returns (StatusReply) {
     option (google.api.http) = {
       get: "/v1/clusters/{id}"
@@ -32,7 +42,6 @@ service Cluster {
       delete: "/v1/clusters/{id}"
     };
   };
-  rpc NodeList (NodeListRequest) returns (NodeListReply);
 }
 
 message CreateRequest {
@@ -88,4 +97,12 @@ message NodeReply {
   string availability = 4;
   string role = 5;
   bool manager_leader = 6;
+}
+
+message GetRegistrationStatusRequest {
+
+}
+
+message GetRegistrationStatusReply {
+  bool email_confirmation = 1;
 }
