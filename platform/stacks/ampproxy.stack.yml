@@ -6,7 +6,9 @@ networks:
       name: ampnet
 
 secrets:
-  certificate_atomiq:
+  certificate_appcelerator:
+    external: true
+  certificate_atomiq_fc:
     external: true
 
 services:
@@ -32,6 +34,9 @@ services:
       - "443:443"
       - "1936:1936"
     secrets:
-      - source: certificate_atomiq
+      - source: certificate_atomiq_fc
         target: cert0.pem
+        mode: 0400
+      - source: certificate_appcelerator
+        target: cert1.pem
         mode: 0400
