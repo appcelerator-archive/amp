@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { GraphHistoricData } from '../models/graph-historic-data.model';
-import { StatsRequest } from '../models/stats-request.model';
+import { StatsRequest } from '../../models/stats-request.model';
 import { GraphDataAnswer } from '../models/graph-data-answer.model';
 import { GraphLine} from '../models/graph-line.model';
 import { HttpService } from '../../services/http.service';
@@ -106,7 +106,7 @@ export class MetricsService {
   }
 
   updateHistoricData() {
-    this.httpService.stats(this.statsRequest).subscribe(
+    this.httpService.statsHisto(this.statsRequest).subscribe(
       data => {
         this.histoData = data
         //console.log(data)

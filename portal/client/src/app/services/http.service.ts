@@ -12,11 +12,12 @@ import { TeamResource } from '../models/team-resource.model';
 import { DockerStack } from '../docker-stacks/models/docker-stack.model';
 import { DockerService } from '../docker-stacks/models/docker-service.model';
 import { DockerContainer } from '../docker-stacks/models/docker-container.model';
-import { StatsRequest } from '../metrics/models/stats-request.model';
+import { StatsRequest } from '../models/stats-request.model';
 import { GraphHistoricData } from '../metrics/models/graph-historic-data.model';
 import { LogsRequest } from '../logs/models/logs-request.model';
 import { Log } from '../logs/models/log.model';
 import { Node } from '../nodes/models/node.model';
+import { GraphStats } from '../models/graph-stats.model';
 import * as d3 from 'd3';
 import 'rxjs/add/operator/retrywhen';
 import 'rxjs/add/operator/scan';
@@ -35,14 +36,14 @@ export class HttpService {
 
 
   constructor(private http : Http) {
-      if (window.location.host.substring(0,9)=="localhost") {
-        console.log("Dev mode, Gateway url: "+this.addr)
-        return
-      }
-      let host = "gw."+window.location.host
-      this.addr=window.location.protocol +"//"+host+"/v1"
-      console.log("Gateway url: "+this.addr)
+    if (window.location.host.substring(0,9)=="localhost") {
+      console.log("Dev mode, Gateway url: "+this.addr)
+      return
     }
+    let host = "gw."+window.location.host
+    this.addr=window.location.protocol +"//"+host+"/v1"
+    console.log("Gateway url: "+this.addr)
+  }
 
   users() {
     return this.httpGet("/users")
@@ -303,7 +304,13 @@ export class HttpService {
     )
   }
 
-  stats(request : StatsRequest) {
+  stats(req : StatsRequest) {
+    if (req.time_group == "") {
+      return this.statsCurrent(req);
+    }
+    return this.statsHisto(req);
+  }
+  statsHisto(request : StatsRequest) {
     return this.httpPost("/stats", request)
       .map((res : Response) => {
         let data = res.json()
@@ -347,12 +354,53 @@ export class HttpService {
     );
   }
 
+  statsCurrent(request : StatsRequest) {
+    return this.httpPost("/stats", request)
+      .map((res : Response) => {
+        let data = res.json()
+        //console.log(data)
+        let list : GraphStats[] = []
+        if (data.entries) {
+          for (let item of data.entries) {
+            let datal : { [name:string]: number; } = {}
+            if (request.stats_cpu) {
+              this.setValue(datal, 'cpu-usage', item.cpu.total_usage, 1, 1)
+            }
+            if (request.stats_io) {
+              this.setValue(datal, 'io-total', item.io.total, 1, 1)
+              this.setValue(datal, 'io-write', item.io.write, 1, 1)
+              this.setValue(datal, 'io-read', item.io.read, 1, 1)
+            }
+            if (request.stats_mem) {
+              this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
+              this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
+              this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
+              this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
+            }
+            if (request.stats_net) {
+              this.setValue(datal, 'net-rx-bytes', item.net.rx_bytes, 1, 1)
+              this.setValue(datal, 'net-rx-packets', item.net.rx_packets, 1, 1)
+              this.setValue(datal, 'net-tx-bytes', item.net.tx_bytes, 1, 1)
+              this.setValue(datal, 'net-tx-packets', item.net.tx_packets, 1, 1)
+              this.setValue(datal, 'net-total-bytes', item.net.total_bytes, 1, 1)
+            }
+            list.push(new GraphStats(item.group, datal))
+          }
+        }
+        return list
+      }
+    );
+  }
+
   setValue(datal :{ [name:string]: number; }, name : string, val : number, mul : number, div : number) {
+    datal[name] = this.getValue(val, mul, div)
+  }
+
+  getValue(val: number, mul: number, div: number) {
     if (val) {
-      datal[name] = (val * mul) / div
-    } else {
-      datal[name] = 0
+      return (val*mul)/div
     }
+    return 0
   }
 
 //--------------------------------------------------------------------------------------
