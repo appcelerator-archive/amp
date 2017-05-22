@@ -32,9 +32,11 @@ func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesRe
 			Addr:         item.Status.Addr,
 			Status:       string(item.Status.State),
 			Availability: string(item.Spec.Availability),
-			Leader:       item.ManagerStatus.Leader,
-			Reachability: string(item.ManagerStatus.Reachability),
 			Labels:       item.Description.Engine.Labels,
+		}
+		if item.ManagerStatus != nil {
+			node.Leader = item.ManagerStatus.Leader
+			node.Reachability = string(item.ManagerStatus.Reachability)
 		}
 		nodeList.Entries = append(nodeList.Entries, node)
 	}
