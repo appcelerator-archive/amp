@@ -13,7 +13,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 )
 
 // verify all containers to open logs stream if not already done
@@ -100,18 +100,41 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			Labels:             data.labels,
 			Msg:                slog,
 		}
-		encoded, err := proto.Marshal(&logEntry)
-		if err != nil {
-			log.Printf("error marshalling log entry: %v\n", err)
-		}
-		_, err = a.natsStreaming.GetClient().PublishAsync(ns.LogsSubject, encoded, nil)
-		if err != nil {
-			log.Printf("error sending log entry: %v\n", err)
-			return
-		}
-		a.periodicDataSave(data, date)
-		a.nbLogs++
+		a.addLogEntry(&logEntry, data, date)
 	}
+}
+
+func (a *Agent) addLogEntry(entry *logs.LogEntry, data *ContainerData, date string) {
+	if conf.logsBufferPeriod == 0 || conf.logsBufferSize == 0 {
+		a.logsBuffer.Entries[0] = entry
+		a.sendLogsBuffer()
+		a.periodicDataSave(data, date)
+		return
+	}
+	a.logsBufferMutex.Lock()
+	defer a.logsBufferMutex.Unlock()
+	if a.logsBuffer == nil {
+		a.logsBuffer.Entries = make([]*logs.LogEntry, conf.logsBufferSize)
+	}
+	a.logsBuffer.Entries = append(a.logsBuffer.Entries, entry)
+	if len(a.logsBuffer.Entries) >= conf.logsBufferSize {
+		a.sendLogsBuffer()
+		a.logsBuffer.Entries = nil
+		a.periodicDataSave(data, date)
+	}
+}
+
+func (a *Agent) sendLogsBuffer() {
+	encoded, err := proto.Marshal(a.logsBuffer)
+	if err != nil {
+		log.Printf("error marshalling log entries: %v\n", err)
+	}
+	_, err = a.natsStreaming.GetClient().PublishAsync(ns.LogsSubject, encoded, nil)
+	if err != nil {
+		log.Printf("error sending log entry: %v\n", err)
+		return
+	}
+	a.nbLogs += len(a.logsBuffer.Entries)
 }
 
 func (a *Agent) periodicDataSave(data *ContainerData, date string) {

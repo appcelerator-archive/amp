@@ -11,12 +11,16 @@ import (
 
 // AgentConfig configuration parameters
 type AgentConfig struct {
-	dockerEngine string
-	apiPort      string
-	period       int
-	natsURL      string
-	clientID     string
-	clusterID    string
+	dockerEngine        string
+	apiPort             string
+	period              int
+	natsURL             string
+	clientID            string
+	clusterID           string
+	metricsBufferSize   int
+	metricsBufferPeriod int
+	logsBufferSize      int
+	logsBufferPeriod    int
 }
 
 var conf AgentConfig
@@ -25,6 +29,7 @@ var conf AgentConfig
 func (cfg *AgentConfig) init(version, build string) {
 	cfg.setDefault()
 	cfg.loadConfigUsingEnvVariable()
+	cfg.controlConfig()
 	cfg.displayConfig(version, build)
 }
 
@@ -36,6 +41,10 @@ func (cfg *AgentConfig) setDefault() {
 	cfg.period = 3
 	cfg.clientID = "agent-" + os.Getenv("HOSTNAME")
 	cfg.clusterID = ns.ClusterID
+	cfg.metricsBufferSize = 1000
+	cfg.metricsBufferPeriod = 30
+	cfg.logsBufferSize = 0
+	cfg.logsBufferPeriod = 0
 }
 
 // Update config with env variables
@@ -46,6 +55,25 @@ func (cfg *AgentConfig) loadConfigUsingEnvVariable() {
 	cfg.period = getenvi("PERIOD", cfg.period)
 	cfg.clientID = getenv("CLIENTID", cfg.clientID)
 	cfg.clusterID = getenv("CLIENTID", cfg.clusterID)
+	cfg.metricsBufferSize = getenvi("METRICS_BUFFER_SIZE", cfg.metricsBufferSize)
+	cfg.logsBufferSize = getenvi("LOGS_BUFFER_SIZE", cfg.logsBufferSize)
+	cfg.metricsBufferPeriod = getenvi("METRICS_BUFFER_PERIOD", cfg.metricsBufferPeriod)
+	cfg.logsBufferPeriod = getenvi("LOGS_BUFFER_PERIOD", cfg.logsBufferPeriod)
+}
+
+func (cfg *AgentConfig) controlConfig() {
+	if cfg.metricsBufferPeriod < 0 {
+		cfg.metricsBufferPeriod = 0
+	}
+	if cfg.logsBufferPeriod < 0 {
+		cfg.logsBufferPeriod = 0
+	}
+	if cfg.metricsBufferSize < 0 {
+		cfg.metricsBufferSize = 0
+	}
+	if cfg.logsBufferSize < 0 {
+		cfg.logsBufferSize = 0
+	}
 }
 
 // Display agent version and configuration information
@@ -57,6 +85,10 @@ func (cfg *AgentConfig) displayConfig(version, build string) {
 	log.Printf("Nats URL: %s\n", conf.natsURL)
 	log.Printf("ClientId: %s\n", conf.clientID)
 	log.Printf("ClusterId: %s\n", conf.clusterID)
+	log.Printf("MetricsBufferSize: %d\n", conf.metricsBufferSize)
+	log.Printf("MetricsBufferPeriod: %d second(s)\n", conf.metricsBufferPeriod)
+	log.Printf("LogsBufferSize: %d\n", conf.logsBufferSize)
+	log.Printf("LogsBufferPeriod: %d second(s)\n", conf.logsBufferPeriod)
 	log.Println("----------------------------------------------------------------------------")
 }
 

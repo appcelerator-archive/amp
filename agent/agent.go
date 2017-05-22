@@ -1,14 +1,16 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	"fmt"
-
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -28,11 +30,21 @@ type Agent struct {
 	natsStreaming       *ns.NatsStreaming
 	nbLogs              int
 	nbMetrics           int
+	metricsBuffer       *stats.StatsReply
+	metricsBufferMutex  *sync.Mutex
+	logsBuffer          *logs.GetReply
+	logsBufferMutex     *sync.Mutex
 }
 
 // AgentInit Connect to docker engine, get initial containers list and start the agent
 func AgentInit(version, build string) error {
-	agent := Agent{}
+	agent := Agent{
+		logsSavedDatePeriod: 60,
+		metricsBuffer:       &stats.StatsReply{},
+		metricsBufferMutex:  &sync.Mutex{},
+		logsBuffer:          &logs.GetReply{},
+		logsBufferMutex:     &sync.Mutex{},
+	}
 	agent.trapSignal()
 	conf.init(version, build)
 
@@ -75,11 +87,16 @@ func AgentInit(version, build string) error {
 	return nil
 }
 
-// Main agent loop, verify if events and logs stream are started if not start them
+// Main agent loop, starts buffers thread if any and looks for new containers added or removed (according to docker events)
 func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
+	//start a thread looking for the Metrics Buffer to send it if full or period time reached
+	a.startMetricsBufferSender()
+	//start a thread looking for the Logs Buffer to send it if full or period time reached
+	a.startLogsBufferSender()
 	for {
+		//looks for new containers to add or to remove, for each added, opem a stream for logs and a stream for metrics feeding the buffers
 		a.updateStreams()
 		nb++
 		if nb == 10 {
@@ -90,6 +107,38 @@ func (a *Agent) start() {
 		}
 		time.Sleep(time.Duration(conf.period) * time.Second)
 	}
+}
+
+//start a thread looking for the Metrics Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
+func (a *Agent) startMetricsBufferSender() {
+	if conf.metricsBufferPeriod == 0 || conf.metricsBufferSize == 0 {
+		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, 1)
+		return
+	}
+	go func() {
+		time.Sleep(time.Second * time.Duration(conf.metricsBufferPeriod))
+		if len(a.metricsBuffer.Entries) > 0 {
+			a.metricsBufferMutex.Lock()
+			a.sendMetricsBuffer()
+			a.metricsBufferMutex.Unlock()
+		}
+	}()
+}
+
+//start a thread looking for the Logs Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
+func (a *Agent) startLogsBufferSender() {
+	if conf.logsBufferPeriod == 0 || conf.logsBufferSize == 0 {
+		a.logsBuffer.Entries = make([]*logs.LogEntry, 1)
+		return
+	}
+	go func() {
+		time.Sleep(time.Second * time.Duration(conf.logsBufferPeriod))
+		if len(a.logsBuffer.Entries) > 0 {
+			a.logsBufferMutex.Lock()
+			a.sendLogsBuffer()
+			a.logsBufferMutex.Unlock()
+		}
+	}()
 }
 
 // Starts logs and metrics stream of eech new started container
