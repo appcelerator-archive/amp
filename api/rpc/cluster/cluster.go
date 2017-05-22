@@ -2,13 +2,12 @@ package cluster
 
 import (
 	"log"
-
-	"google.golang.org/grpc/codes"
+	"os"
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
-
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -82,6 +81,15 @@ func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListRe
 			Role:          string(node.Spec.Role),
 			ManagerLeader: leader,
 		})
+	}
+	return ret, nil
+}
+
+// GetRegistrationStatus get the registration status
+func (s *Server) GetRegistrationStatus(ctx context.Context, in *GetRegistrationStatusRequest) (*GetRegistrationStatusReply, error) {
+	ret := &GetRegistrationStatusReply{EmailConfirmation: true}
+	if os.Getenv("registration") == "none" {
+		ret.EmailConfirmation = false
 	}
 	return ret, nil
 }

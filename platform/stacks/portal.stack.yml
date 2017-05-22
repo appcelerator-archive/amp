@@ -19,10 +19,10 @@ services:
         io.amp.role: "infrastructure"
       placement:
         constraints:
-          - node.role == ${NODE_ROLE:-worker}
+        - node.role == ${NODE_ROLE:-worker}
     environment:
       SERVICE_PORTS: "3333"
-      VIRTUAL_HOST: "http://portal.*, https://portal.*,http://ui.*,https://ui.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
+      VIRTUAL_HOST: "http://cloud.*,http://local.*,https://cloud.*,https://local.*"
       FORCE_SSL: 1
     labels:
       io.amp.role: "infrastructure"
