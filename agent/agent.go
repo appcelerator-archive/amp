@@ -87,13 +87,16 @@ func AgentInit(version, build string) error {
 	return nil
 }
 
-// Main agent loop, verify if events and logs stream are started if not start them
+// Main agent loop, starts buffers thread if any and looks for new containers added or removed (according to docker events)
 func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
+	//start a thread looking for the Metrics Buffer to send it if full or period time reached
 	a.startMetricsBufferSender()
+	//start a thread looking for the Logs Buffer to send it if full or period time reached
 	a.startLogsBufferSender()
 	for {
+		//looks for new containers to add or to remove, for each added, opem a stream for logs and a stream for metrics feeding the buffers
 		a.updateStreams()
 		nb++
 		if nb == 10 {
@@ -106,6 +109,7 @@ func (a *Agent) start() {
 	}
 }
 
+//start a thread looking for the Metrics Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
 func (a *Agent) startMetricsBufferSender() {
 	if conf.metricsBufferPeriod == 0 || conf.metricsBufferSize == 0 {
 		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, 1)
@@ -121,6 +125,7 @@ func (a *Agent) startMetricsBufferSender() {
 	}()
 }
 
+//start a thread looking for the Logs Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
 func (a *Agent) startLogsBufferSender() {
 	if conf.logsBufferPeriod == 0 || conf.logsBufferSize == 0 {
 		a.logsBuffer.Entries = make([]*logs.LogEntry, 1)
