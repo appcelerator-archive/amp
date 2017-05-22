@@ -4,7 +4,7 @@ import { MetricsService } from '../../services/metrics.service';
 import { MenuService } from '../../../services/menu.service';
 import { GraphHistoricData } from '../../models/graph-historic-data.model';
 import { GraphLine } from '../../models/graph-line.model';
-import { Graph } from '../../models/graph.model';
+import { Graph } from '../../../models/graph.model';
 
 //style="height:parentdiv.offsetHeight;width:parentdiv.offsetWidth"
 @Component({

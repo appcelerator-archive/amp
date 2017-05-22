@@ -2,10 +2,10 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { MenuService } from '../services/menu.service';
 import { MetricsService } from './services/metrics.service';
 import { DockerStacksService } from '../docker-stacks/services/docker-stacks.service';
-import { StatsRequest } from './models/stats-request.model';
+import { StatsRequest } from '../models/stats-request.model';
 import { ActivatedRoute } from '@angular/router';
 import { AppWindow } from '../models/app-window.model';
-import { Graph } from './models/graph.model';
+import { Graph } from '../models/graph.model';
 declare var $: any
 
 @Component({
@@ -29,10 +29,10 @@ export class MetricsComponent implements OnInit, OnDestroy {
     public metricsService : MetricsService,
     private route: ActivatedRoute,
     private dockerStacksService : DockerStacksService) {
-      this.graphs.push(new Graph(0, 0, 0, 0, ['cpu-usage'], "cpu", "usage %"))
-      this.graphs.push(new Graph(0, 0, 0, 0, ['mem-usage'], "memory", "usage MB"))
-      this.graphs.push(new Graph(0, 0, 0, 0, ['net-total-bytes'], "network", "total bytes"))
-      this.graphs.push(new Graph(0, 0, 0, 0, ['io-total'], "disk io", "total bytes"))
+      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['cpu-usage'], "cpu", "usage %"))
+      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['mem-usage'], "memory", "usage MB"))
+      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['net-total-bytes'], "network", "total bytes"))
+      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['io-total'], "disk io", "total bytes"))
       this.resizeGraphs(this.menuService.appWindow)
     }
 
