@@ -56,6 +56,7 @@ export class DockerStackDeployComponent implements OnInit {
         this.message=""
         this.dockerStacksService.loadStacks(false)
         this.menuService.returnToPreviousPath()
+        this.menuService.onRefreshClicked.next()
       },
       error => {
         let data = error.json()
