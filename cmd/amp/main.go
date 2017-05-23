@@ -17,25 +17,25 @@ var (
 	Build string
 
 	//address string
-	config *cli.Configuration
+	cfg *cli.Configuration
 )
 
 func main() {
 	// Initial configuration (before processing environment and flags)
-	config = &cli.Configuration{
+	cfg = &cli.Configuration{
 		Version: Version,
 		Build:   Build,
 		Server:  cli.DefaultAddress + cli.DefaultPort,
 	}
 
 	// Read the cli config
-	if err := cli.ReadClientConfig(config); err != nil {
+	if err := cli.ReadClientConfig(cfg); err != nil {
 		log.Fatalln(err)
 	}
 
 	// Set terminal emulation based on platform as required.
 	stdin, stdout, stderr := term.StdStreams()
-	c := cli.NewCLI(stdin, stdout, stderr, config)
+	c := cli.NewCLI(stdin, stdout, stderr, cfg)
 	cmd := newRootCommand(c)
 
 	if err := cmd.Execute(); err != nil {
