@@ -34,6 +34,7 @@ export class MetricsService {
       period = 5;
     }
     this.updateHistoricData()
+    this.cancelRequests()
     this.timer = setInterval(() => this.updateHistoricData(), period * 1000)
   }
 
