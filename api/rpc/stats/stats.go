@@ -44,7 +44,7 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 
 // execute a current stats reauest
 func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
-	boolQuery := s.createBoolQuery(req, "now-10s")
+	boolQuery := s.createBoolQuery(req, req.Period)
 	agg := s.createTermAggreggation(req)
 
 	result, err := s.ES.GetClient().Search().
