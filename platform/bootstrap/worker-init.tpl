@@ -30,7 +30,13 @@ mirrorregistries="$(echo {{ var "/docker/mirrorregistries" }} | tr ',' ' ' | sed
 mkdir -p /etc/docker
 cat << EOF > /etc/docker/daemon.json
 {
-  "labels": {{ INFRAKIT_LABELS | jsonEncode }}{{ if var "/docker/mirrorregistries" }},
+  "labels": {{ INFRAKIT_LABELS | jsonEncode }},
+  "experimental": true,
+  "metrics-addr": "127.0.0.1:9323",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }{{ if var "/docker/mirrorregistries" }},
   "registry-mirrors": [ "$mirrorregistries" ]{{ end }}
 }
 EOF

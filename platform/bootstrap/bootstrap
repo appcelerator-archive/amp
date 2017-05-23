@@ -279,7 +279,7 @@ _set_leader_manager(){
       sleep 2
     done
     if [[ $SECONDS -ge $_tmout ]]; then
-      echo "unable to list manager nodes" >&2
+      echo "unable to list manager nodes (pass $pass)" >&2
     fi
     for _node in $_nodes; do
       _leader=$(docker -H $_remote node inspect $_node -f '{{ .ManagerStatus.Leader }}')
@@ -415,9 +415,9 @@ _destroy_groups() {
   local _groups
   local _group
   local _remote=""
-  _set_remote_host $1
+  _set_remote_host $1 || return 1
   if [[ -n "$REMOTE_HOST" ]]; then
-    _set_leader_manager $REMOTE_HOST
+    _set_leader_manager $REMOTE_HOST || return 1
     _remote=$LEADER_HOST
   fi
   _groups=$(docker ${_remote:+-H $_remote} exec infrakit infrakit group ls 2>/dev/null | tail -n +2)
@@ -678,7 +678,7 @@ _create_seed_aws(){
     done
 
     # we need a few stack information to customize the InfraKit configuration file
-    _set_remote_host "$_stackname"
+    _set_remote_host "$_stackname" || return 1
     echo "Stack $_stackid: creation complete" >&2
     #docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
     _params="PrivateManagerHost:/docker/manager/host KeyName:/aws/keyname VpcId:/aws/vpcid SubnetIds:/aws/subnetids SecurityGroup:/aws/securitygroupid AMI:/aws/amiid InstanceProfile:/aws/instanceprofile BaseURL:/script/baseurl"
@@ -921,7 +921,7 @@ if [[ -n "$list_request" ]]; then
   exit $?
 fi
 if [[ $clean -eq 1 ]]; then
-  _destroy_groups $label
+  _destroy_groups $label || exit 1
   _kill_plugins
   _kill_ikt
   _kill_registry
