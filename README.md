@@ -9,8 +9,8 @@ An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-ca
  * Logs and metrics realtime filtered feeds and historical query support
  * [Kibana dashboard](https://www.elastic.co/guide/en/kibana/current/dashboard.html) service included
 
-The current version is `0.11.0`. While not recommended for production use quite yet, it's getting close
-(about six weeks away). In the meantime, you can use the current playground hosted at `cloud.appcelerator.io`,
+While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.12 in mid-June).
+In the meantime, you can use the current playground hosted at `cloud.appcelerator.io`,
 and you can also host your own cluster. You can even create a full cluster on your own laptop
 with `amp cluster create` using the CLI.
 
