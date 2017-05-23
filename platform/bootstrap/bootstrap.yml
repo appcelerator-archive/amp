@@ -632,6 +632,13 @@ Outputs:
   PublicManagerHost:
     Description: public facing endpoint for the swarm managers
     Value: !GetAtt ManagerExternalELB.DNSName
+  MetricsURL:
+    Description: URL for cluster health dashboard
+    Value:
+      Fn::Join:
+        - ':'
+        - - !GetAtt ManagerExternalELB.DNSName
+          - "9090"
   MirrorRegistries:
     Description: mirror registries used by the Docker engines
     Value: !Ref MirrorRegistries
