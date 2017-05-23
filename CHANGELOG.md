@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 (2017-05-22)
+
+* Significant new functionality in web UI
+* Various stability enhancements
+
 ## 0.10.1 (2017-05-18)
 
 * Simplifies the developer local workflow (flags for registration and notifications are not required by default)

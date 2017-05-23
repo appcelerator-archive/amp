@@ -1,8 +1,8 @@
-# Version
+### Version
 
 The `amp version` command displays the current version of AMP.
 
-### Usage
+#### Usage
 
     $ amp version
 
