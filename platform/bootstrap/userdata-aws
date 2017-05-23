@@ -10,6 +10,7 @@ DRAIN_MANAGER=${DRAIN_MANAGER:-false}
 OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
 #MIRROR_REGISTRIES=
 #DOCKER_DEVICE=/dev/sdn
+SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
 
 _install_docker(){
   wget -qO- https://get.docker.com/ | sh || return 1
@@ -20,12 +21,12 @@ _install_docker(){
 
 # expose the Docker remote api
 _expose_remote_api() {
-  mkdir -p /etc/systemd/system/docker.service.d
+  mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
   echo "exposing the engine API" >&2
-  cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
+  cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock --experimental
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
 EOF
   systemctl daemon-reload
 }
@@ -83,9 +84,33 @@ _set_mirror_registries(){
       continue
     fi
     echo "adding registry $_registry" >&2
-    cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp"
+    cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp" || return 1
     mv "$_tmp" /etc/docker/daemon.json
   done
+}
+
+_set_log_rotation(){
+  local _max_size=${1:-10m}
+  local _max_file=${2:-3}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting log rotation" >&2
+  cat /etc/docker/daemon.json | jq ".\"log-opts\".\"max-size\" = \"$_max_size\" | .\"log-opts\".\"max-file\" = \"$_max_file\"" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_set_metrics_address(){
+  local _host=${1:-127.0.0.1}
+  local _port=${2:-9323}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting the metrics address ($_host:$_port)" >&2
+  cat /etc/docker/daemon.json | jq ".\"metrics-addr\" = \"${_host}:${_port}\" | .experimental = true" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
 }
 
 _wait_for_quorum(){
@@ -264,6 +289,8 @@ nodeip=$(_get_node_ip)
 _install_docker || exit 1
 _expose_remote_api || exit 1
 _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
+_set_log_rotation "10m" "3" || exit 1
+_set_metrics_address "127.0.0.1" "9323" || exit 1
 _restart_docker || exit 1
 ips=$(_wait_for_quorum) || exit 1
 leader="$(_elect_leader $nodeip $ips)" || exit 1
