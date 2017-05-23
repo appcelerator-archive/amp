@@ -681,7 +681,7 @@ _create_seed_aws(){
     _set_remote_host "$_stackname" || return 1
     echo "Stack $_stackid: creation complete" >&2
     #docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
-    _params="PrivateManagerHost:/docker/manager/host KeyName:/aws/keyname VpcId:/aws/vpcid SubnetIds:/aws/subnetids SecurityGroup:/aws/securitygroupid AMI:/aws/amiid InstanceProfile:/aws/instanceprofile BaseURL:/script/baseurl"
+    _params="PublicManagerHost:/docker/lb/public PrivateManagerHost:/docker/manager/host KeyName:/aws/keyname VpcId:/aws/vpcid SubnetIds:/aws/subnetids SecurityGroup:/aws/securitygroupid AMI:/aws/amiid InstanceProfile:/aws/instanceprofile BaseURL:/script/baseurl"
     for _tmp in $_params; do
       _k=$(echo $_tmp | cut -d: -f1)
       _v=$($awscf describe-stacks --stack-name "$_stackname" --query "Stacks[0].Outputs[?OutputKey=='${_k}'].OutputValue" --output text) || return 1

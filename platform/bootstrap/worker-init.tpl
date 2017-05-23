@@ -32,7 +32,7 @@ cat << EOF > /etc/docker/daemon.json
 {
   "labels": {{ INFRAKIT_LABELS | jsonEncode }},
   "experimental": true,
-  "metrics-addr": "127.0.0.1:9323",
+  "metrics-addr": "0.0.0.0:9323",
   "log-opts": {
     "max-size": "10m",
     "max-file": "3"
