@@ -21,24 +21,6 @@ func NewRemoveOptions(namespace []string) removeOptions {
 	}
 }
 
-/* {AMP} rmeove this function use it cli side
-func newRemoveCommand(dockerCli command.Cli) *cobra.Command {
-	var opts removeOptions
-
-	cmd := &cobra.Command{
-		Use:     "rm STACK [STACK...]",
-		Aliases: []string{"remove", "down"},
-		Short:   "Remove one or more stacks",
-		Args:    cli.RequiresMinArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.namespaces = args
-			return runRemove(dockerCli, opts)
-		},
-	}
-	return cmd
-}
-*/
-
 // RunRemove {AMP}: make it public
 func RunRemove(dockerCli command.Cli, opts removeOptions) error {
 	namespaces := opts.namespaces

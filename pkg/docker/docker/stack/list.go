@@ -6,14 +6,11 @@ import (
 	"strconv"
 	"text/tabwriter"
 
-	"golang.org/x/net/context"
-
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/cli/compose/convert" //{AMP} make it local
-	//"github.com/docker/docker/cli" {AMP}: remove it
 	"github.com/docker/docker/cli/command"
+	"github.com/docker/docker/cli/compose/convert" //{AMP} make it local
 	"github.com/docker/docker/client"
-	//"github.com/spf13/cobra" //{AMP}:remove it
+	"golang.org/x/net/context"
 )
 
 const (
@@ -22,24 +19,6 @@ const (
 
 type listOptions struct {
 }
-
-/* {AMP}:Remove it
-func newListCommand(dockerCli *command.DockerCli) *cobra.Command {
-	opts := listOptions{}
-
-	cmd := &cobra.Command{
-		Use:     "ls",
-		Aliases: []string{"list"},
-		Short:   "List stacks",
-		Args:    cli.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runList(dockerCli, opts)
-		},
-	}
-
-	return cmd
-}
-*/
 
 // NewListOptions {AMP}:add constuctor on this private struct
 func NewListOptions() listOptions {

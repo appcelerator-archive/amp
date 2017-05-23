@@ -4,13 +4,12 @@ import (
 	"log"
 	"strings"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement stack.Server
@@ -70,34 +69,28 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	log.Println("[stack] List", in.String())
 
 	// List stacks
-	output, err := s.Docker.StackList(ctx)
+	reply := &ListReply{}
+	stacks, err := s.Stacks.ListStacks(ctx)
 	if err != nil {
 		return nil, convertError(err)
 	}
-	reply := &ListReply{}
-	lines := strings.Split(output, "\n")
-	for _, line := range lines[1:] {
-		if len(strings.Fields(line)) == 0 {
-			continue
-		}
-		entry := s.toStackListEntry(ctx, line)
-		if entry == nil {
-			continue
+	for _, stack := range stacks {
+		entry, err := s.toStackListEntry(ctx, stack)
+		if err != nil {
+			return nil, convertError(err)
 		}
 		reply.Entries = append(reply.Entries, entry)
 	}
 	return reply, nil
 }
 
-func (s *Server) toStackListEntry(ctx context.Context, line string) *StackListEntry {
-	cols := strings.Fields(line)
-	name := cols[0]
-	services := cols[1]
-	stk, err := s.Stacks.GetStackByName(ctx, name)
-	if err != nil || stk == nil {
-		return nil
+func (s *Server) toStackListEntry(ctx context.Context, stack *stacks.Stack) (*StackListEntry, error) {
+	status, err := s.Docker.StackStatus(ctx, stack.Name)
+	if err != nil {
+		return nil, convertError(err)
 	}
-	return &StackListEntry{Stack: stk, Services: services}
+	log.Println("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services")
+	return &StackListEntry{Stack: stack, RunningServices: status.RunningServices, TotalServices: status.TotalServices, Status: status.Status}, nil
 }
 
 // Remove implements stack.Server
@@ -144,7 +137,7 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 		return nil, stacks.NotFound
 	}
 
-	output, dockerErr := s.Docker.StackServices(ctx, stack.Name)
+	output, dockerErr := s.Docker.StackServices(ctx, stack.Name, false)
 	if dockerErr != nil {
 		log.Printf("error : %v\n", dockerErr)
 		return nil, convertError(dockerErr)
