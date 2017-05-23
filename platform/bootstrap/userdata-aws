@@ -290,7 +290,7 @@ _install_docker || exit 1
 _expose_remote_api || exit 1
 _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
 _set_log_rotation "10m" "3" || exit 1
-_set_metrics_address "127.0.0.1" "9323" || exit 1
+_set_metrics_address "$nodeip" "9323" || exit 1
 _restart_docker || exit 1
 ips=$(_wait_for_quorum) || exit 1
 leader="$(_elect_leader $nodeip $ips)" || exit 1

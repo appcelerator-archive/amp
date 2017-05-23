@@ -1,9 +1,12 @@
-version: "3"
+version: "3.2"
 
 networks:
   default:
     external:
       name: ampnet
+
+volumes:
+  prometheus:
 
 services:
 
@@ -66,3 +69,22 @@ services:
         constraints:
         - node.role == ${NODE_ROLE:-worker}
 
+  prometheus:
+    image: prom/prometheus
+    networks:
+      default:
+        aliases:
+          - prometheus
+    volumes:
+      - prometheus:/etc/prometheus
+    ports:
+      - target: 9090
+        published: 9090
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.role == ${NODE_ROLE:-worker}
