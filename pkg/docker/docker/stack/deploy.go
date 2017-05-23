@@ -1,9 +1,8 @@
 package stack
 
 import (
-	"fmt"
-
 	"errors"
+	"fmt"
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command"

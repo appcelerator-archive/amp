@@ -11,6 +11,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/cli/command"
@@ -20,14 +21,19 @@ import (
 	"github.com/docker/docker/client"
 	dopts "github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/swarmkit/api"
+	"github.com/docker/swarmkit/manager/constraint"
 	"golang.org/x/net/context"
 )
 
+// Docker constants
 const (
-	//DefaultURL docker default URL
-	DefaultURL = "unix:///var/run/docker.sock"
-	//DefaultVersion docker default version
-	DefaultVersion = "1.27"
+	DefaultURL               = "unix:///var/run/docker.sock"
+	DefaultVersion           = "1.27"
+	StackStateStarting       = "STARTING"
+	StackStateRunning        = "RUNNING"
+	StackStateNoMatchingNode = "NO MATCHING NODE"
+	NoMatchingNodes          = -1
 )
 
 // Docker wrapper
@@ -36,6 +42,12 @@ type Docker struct {
 	connected bool
 	url       string
 	version   string
+}
+
+type StackStatus struct {
+	RunningServices int32
+	TotalServices   int32
+	Status          string
 }
 
 // NewClient instantiates a new Docker wrapper
@@ -276,9 +288,9 @@ func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([
 }
 
 // StackServices list the services of a stack
-func (d *Docker) StackServices(ctx context.Context, stackName string) (output string, err error) {
+func (d *Docker) StackServices(ctx context.Context, stackName string, quietOption bool) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
-		servicesOpt := stack.NewServicesOptions(false, "", dopts.NewFilterOpt(), stackName)
+		servicesOpt := stack.NewServicesOptions(quietOption, "", dopts.NewFilterOpt(), stackName)
 		if err := stack.RunServices(cli, servicesOpt); err != nil {
 			return err
 		}
@@ -303,4 +315,171 @@ func cliWrapper(cmd func(cli *command.DockerCli) error) (string, error) {
 	out, _ := ioutil.ReadAll(r)
 	outs := strings.Replace(string(out), "docker", "amp", -1)
 	return string(outs), nil
+}
+
+// serviceIDs returns service ids of all services in a given stack
+func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, error) {
+	result, err := d.StackServices(ctx, stackName, true)
+	if err != nil {
+		return nil, err
+	}
+	serviceIDs := strings.Fields(result)
+	return serviceIDs, nil
+}
+
+// ServiceStatus returns service status
+func (d *Docker) ServiceStatus(ctx context.Context, service string) (string, error) {
+	args := filters.NewArgs()
+	args.Add("service", service)
+	var readyTasks int = 0
+	serviceTasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
+	if err != nil {
+		return "", err
+	}
+	for _, serviceTask := range serviceTasks {
+		if serviceTask.Status.State == swarm.TaskStateRunning {
+			readyTasks++
+		}
+	}
+	expectedTasks, err := d.ExpectedNumberOfTasks(ctx, service)
+	if err != nil {
+		return "", err
+	}
+	if readyTasks == 1001 {
+		return StackStateNoMatchingNode, nil
+	}
+	if readyTasks == expectedTasks {
+		return StackStateRunning, nil
+	}
+	return StackStateStarting, nil
+}
+
+// StackStatus returns stack status
+func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
+	var readyServices int32 = 0
+	services, err := d.serviceIDs(ctx, stackName)
+	if err != nil {
+		return nil, err
+	}
+	totalServices := int32(len(services))
+	for _, service := range services {
+		status, err := d.ServiceStatus(ctx, service)
+		if err != nil {
+			return nil, err
+		}
+		if status == StackStateRunning {
+			readyServices++
+		}
+	}
+	if readyServices == totalServices {
+		return &StackStatus{
+			RunningServices: readyServices,
+			TotalServices:   totalServices,
+			Status:          StackStateRunning,
+		}, nil
+	}
+	return &StackStatus{
+		RunningServices: readyServices,
+		TotalServices:   totalServices,
+		Status:          StackStateStarting,
+	}, nil
+}
+
+// ServiceInspect inspects a service
+func (d *Docker) ServiceInspect(ctx context.Context, service string) (swarm.Service, error) {
+	serviceEntity, _, err := d.client.ServiceInspectWithRaw(ctx, service, types.ServiceInspectOptions{InsertDefaults: true})
+	if err != nil {
+		return swarm.Service{}, err
+	}
+	return serviceEntity, nil
+}
+
+// NodeInspect inspects a node
+func (d *Docker) NodeInspect(ctx context.Context, nodeID string) (swarm.Node, error) {
+	nodeEntity, _, err := d.client.NodeInspectWithRaw(ctx, nodeID)
+	if err != nil {
+		return swarm.Node{}, err
+	}
+	return nodeEntity, nil
+}
+
+// ExpectedNumberOfTasks returns expected number of tasks of a service
+func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (int, error) {
+	var expectedTasks int
+	serviceInfo, err := d.ServiceInspect(ctx, serviceID)
+	if err != nil {
+		return 0, err
+	}
+	matchingNodeCount, err := d.numberOfMatchingNodes(ctx, serviceInfo)
+	if err != nil {
+		return 0, err
+	}
+	if serviceInfo.Spec.Mode.Global != nil {
+		expectedTasks = matchingNodeCount
+	} else {
+		expectedTasks = int(*serviceInfo.Spec.Mode.Replicated.Replicas)
+	}
+	return expectedTasks, nil
+}
+
+// numberOfMatchingNodes returns number of nodes matching placement constraints
+func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Service) (int, error) {
+	var matchingNodes int
+	// placement constraints
+	constraints, _ := constraint.Parse(serviceInfo.Spec.TaskTemplate.Placement.Constraints)
+	// list all nodes in the swarm
+	nodes, err := d.client.NodeList(ctx, types.NodeListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	// inspect every node on the swarm to check for satisfying constraints
+	for _, node := range nodes {
+		apiNode := d.nodeToNode(ctx, node)
+		if !constraint.NodeMatches(constraints, apiNode) {
+			return NoMatchingNodes, nil
+		}
+		matchingNodes++
+	}
+	return matchingNodes, nil
+}
+
+// nodeToNode converts a swarm node type into an api node type
+func (d *Docker) nodeToNode(ctx context.Context, swarmNode swarm.Node) *api.Node {
+	apiNode := &api.Node{
+		ID: swarmNode.ID,
+		Status: api.NodeStatus{
+			Addr:  swarmNode.Status.Addr,
+			State: api.NodeStatus_State(api.NodeStatus_State_value[strings.ToUpper(string(swarmNode.Status.State))]),
+		},
+		Spec: api.NodeSpec{
+			Availability: api.NodeSpec_Availability(api.NodeSpec_Availability_value[strings.ToUpper(string(swarmNode.Spec.Availability))]),
+			Annotations: api.Annotations{
+				Labels: swarmNode.Spec.Labels,
+			},
+		},
+		Description: &api.NodeDescription{
+			Hostname: swarmNode.Description.Hostname,
+			Platform: &api.Platform{
+				OS:           swarmNode.Description.Platform.OS,
+				Architecture: swarmNode.Description.Platform.Architecture,
+			},
+			Engine: &api.EngineDescription{
+				EngineVersion: swarmNode.Description.Engine.EngineVersion,
+				Labels:        swarmNode.Description.Engine.Labels,
+			},
+		},
+		Role: api.NodeRole(api.NodeRole_value[strings.ToUpper(string(swarmNode.Spec.Role))]),
+	}
+	if swarmNode.ManagerStatus != nil {
+		apiNode.ManagerStatus = &api.ManagerStatus{
+			Leader:       swarmNode.ManagerStatus.Leader,
+			Addr:         swarmNode.ManagerStatus.Addr,
+			Reachability: api.RaftMemberStatus_Reachability(api.RaftMemberStatus_Reachability_value[strings.ToUpper(string(swarmNode.ManagerStatus.Reachability))]),
+		}
+	}
+
+	for _, plugin := range swarmNode.Description.Engine.Plugins {
+		apiNode.Description.Engine.Plugins = append(apiNode.Description.Engine.Plugins, api.PluginDescription{Type: plugin.Type, Name: plugin.Name})
+	}
+	return apiNode
 }

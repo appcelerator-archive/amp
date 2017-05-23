@@ -38,6 +38,7 @@ $(GLIDETARGETS): glide.yaml
 	@glide install || (rm -rf vendor; exit 1)
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
+	@rm -rf vendor/github.com/docker/swarmkit/vendor/golang.org/x/net/trace
 
 install-deps: $(GLIDETARGETS)
 
@@ -46,6 +47,7 @@ update-deps:
 	@glide update
 # TODO: temporary fix for trace conflict, remove when resolved
 	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
+	@rm -rf vendor/github.com/docker/swarmkit/vendor/golang.org/x/net/trace
 
 .PHONY: clean-deps
 clean-deps:

@@ -48,7 +48,9 @@ message ListReply {
 
 message StackListEntry {
   stacks.Stack stack = 1;
-  string services = 2;
+  int32 running_services = 2;
+  int32 total_services = 3;
+  string status = 4;
 }
 
 message RemoveRequest {

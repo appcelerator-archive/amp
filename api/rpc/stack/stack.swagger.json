@@ -202,7 +202,15 @@
         "stack": {
           "$ref": "#/definitions/stacksStack"
         },
-        "services": {
+        "running_services": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total_services": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
           "type": "string"
         }
       }
