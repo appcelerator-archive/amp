@@ -46,7 +46,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Prepare request to elasticsearch
 	request := s.ES.GetClient().Search().Index(indices...).IgnoreUnavailable(true)
 	request.Type("logs")
-	request.Sort("@timestamp", false)
+	request.Sort("time_id", false)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
 	} else {

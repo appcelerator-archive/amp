@@ -1,0 +1,5 @@
+= Ampbeat Docs
+
+Welcome to the Ampbeat documentation.
+
+
