@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"strconv"
+	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -62,7 +62,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
-			TimeId:             strconv.FormatInt(now, 16),
+			TimeId:             fmt.Sprintf("%016X", now),
 			Labels:             data.labels,
 		}
 		a.setMemMetrics(statsData, metricsEntry)
