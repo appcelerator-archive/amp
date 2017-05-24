@@ -1,15 +1,16 @@
 package logs
 
 import (
+	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"strconv"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/labels"
@@ -200,6 +201,22 @@ func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 			t.Error(err)
 		}
 		assert.Equal(t, i, int64(len(r.Entries)))
+	}
+}
+
+func TestLogsShouldBeOrdered(t *testing.T) {
+	r, err := client.Get(ctx, &GetRequest{Container: testContainerID})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
+	var current, previous int64
+	for _, entry := range r.Entries {
+		log.Println(entry)
+		current, err = strconv.ParseInt(strings.TrimPrefix(entry.Msg, testMessage), 16, 64)
+		assert.NoError(t, err)
+		assert.True(t, current > previous, "Should be true but got current: %v <= previous: %v", current, previous)
+		previous = current
 	}
 }
 
@@ -434,11 +451,13 @@ func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntr
 type LogProducer struct {
 	ns              *ns.NatsStreaming
 	asyncProduction int32
+	counter         int64
 }
 
 func NewLogProducer() *LogProducer {
 	lp := &LogProducer{
-		ns: ns.NewClient(ns.DefaultURL, ns.ClusterID, stringid.GenerateNonCryptoID(), 60*time.Second),
+		ns:      ns.NewClient(ns.DefaultURL, ns.ClusterID, stringid.GenerateNonCryptoID(), 60*time.Second),
+		counter: 0,
 	}
 	if err := lp.ns.Connect(); err != nil {
 		log.Fatalln("Cannot connect to NATS", err)
@@ -457,6 +476,7 @@ func NewLogProducer() *LogProducer {
 }
 
 func (lp *LogProducer) buildLogEntry(infrastructure bool) *LogEntry {
+	atomic.AddInt64(&lp.counter, 1)
 	entry := &LogEntry{
 		Timestamp:          time.Now().UTC().Format(time.RFC3339Nano),
 		ContainerId:        testContainerID,
@@ -468,8 +488,9 @@ func (lp *LogProducer) buildLogEntry(infrastructure bool) *LogEntry {
 		TaskId:             testTaskID,
 		StackName:          testStackName,
 		NodeId:             testNodeID,
+		TimeId:             fmt.Sprintf("%016X", lp.counter),
 		Labels:             make(map[string]string),
-		Msg:                testMessage + strconv.Itoa(rand.Int()),
+		Msg:                testMessage + fmt.Sprintf("%016X", lp.counter),
 	}
 	if infrastructure {
 		entry.Labels[labels.KeyRole] = labels.ValueRoleInfrastructure

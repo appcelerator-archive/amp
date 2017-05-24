@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"strconv"
+	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -104,7 +104,7 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
-			TimeId:             strconv.FormatInt(now, 16),
+			TimeId:             fmt.Sprintf("%016X", now),
 			Labels:             data.labels,
 			Msg:                slog,
 		}
