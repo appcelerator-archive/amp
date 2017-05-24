@@ -73,10 +73,6 @@ export class GraphText {
     this.chart = this.svg.append('g')
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
-    this.x = d3.scaleLinear().range([100, 0]);
-    this.y = d3.scaleLinear().range([0, 100]);
-
-
   if (graph.title != '') {
     let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
     this.svg.append("text")

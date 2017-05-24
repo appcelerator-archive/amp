@@ -10,12 +10,13 @@ import { GraphLines } from '../services/graph-lines.service'
 import { GraphBars} from '../services/graph-bars.service'
 import { GraphAreas } from '../services/graph-areas.service'
 import { GraphBubbles } from '../services/graph-bubbles.service'
+import { GraphCounter } from '../services/graph-counter.service'
 
 @Component({
   selector: 'app-dgraph',
   templateUrl: "./dgraph.component.html",
   styleUrls: ['./dgraph.component.css'],
-  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles ]
+  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounter ]
 
 
 })
@@ -40,13 +41,15 @@ export class DGraphComponent implements OnInit, OnDestroy {
     private graphBars : GraphBars,
     private graphAreas : GraphAreas,
     private graphBubbles : GraphBubbles,
-    private graphText : GraphText) {
+    private graphText : GraphText,
+    private graphCounter : GraphCounter) {
     this.serviceMap['text'] = graphText;
     this.serviceMap['pie'] = graphPie;
     this.serviceMap['lines'] = graphLines;
     this.serviceMap['bars'] = graphBars;
     this.serviceMap['areas'] = graphAreas;
     this.serviceMap['bubbles'] = graphBubbles;
+    this.serviceMap['counter'] = graphCounter;
   }
 
   ngOnInit() {

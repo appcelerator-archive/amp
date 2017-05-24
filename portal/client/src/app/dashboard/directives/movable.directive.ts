@@ -7,6 +7,7 @@ import { Directive, EventEmitter, ElementRef, OnInit } from '@angular/core';
 		'(mousedown)': 'onMouseDown($event)',
 		'(document: mousemove)': 'onMouseMove($event)',
 		'(document: mouseup)': 'onMouseUp($event)',
+    /*
 		'(keydown.ArrowUp)': 'onNudge($event)',
 		'(keydown.ArrowRight)': 'onNudge($event)',
 		'(keydown.ArrowDown)': 'onNudge($event)',
@@ -15,6 +16,7 @@ import { Directive, EventEmitter, ElementRef, OnInit } from '@angular/core';
 		'(keyup.ArrowRight)': 'onNudge($event)',
 		'(keyup.ArrowDown)': 'onNudge($event)',
 		'(keyup.ArrowLeft)': 'onNudge($event)'
+    */
 	}
 })
 
@@ -50,7 +52,7 @@ export class MovableDirective implements OnInit {
 
   onMouseMove($event) {
     if (this.movable) {
-		  this.eRef.nativeElement.style.left = (($event.clientX - this.clientx0) + this.graphx0) + 'px';
+      this.eRef.nativeElement.style.left = (($event.clientX - this.clientx0) + this.graphx0) + 'px';
       this.eRef.nativeElement.style.top = (($event.clientY - this.clienty0) + this.graphy0) + 'px';
     }
   }

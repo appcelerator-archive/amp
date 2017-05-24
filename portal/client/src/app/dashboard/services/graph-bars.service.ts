@@ -88,7 +88,7 @@ export class GraphBars {
   }
 
   updateGraph(graph : Graph) {
-    this.data = this.dashboardService.getData(graph.requestId)
+    this.data = this.dashboardService.getData(graph)
     let xDomain = this.data.map(d => d.group);
     let yDomain = [0, d3.max(this.data, d => d.values[graph.field])];
 
@@ -109,12 +109,23 @@ export class GraphBars {
     this.colors = d3.scaleOrdinal()
         .range(["#6F257F", "#CA0D59"]);
 
-
+    let angle =15
+    let anchor = "start"
+    if (this.data.length <= 3) {
+      angle = 0
+      anchor = "middle"
+    }
     this.xAxis = this.svg.append('g')
       .attr('class', 'axis axis-x')
       .attr('transform', `translate(${0}, ${this.height})`)
       .call(d3.axisBottom(this.xScale))
-      .style("font-size", fontSize*2/3+'px');
+      .style("font-size", fontSize*2/3+'px')
+      .selectAll("text")
+        .style("text-anchor", anchor)
+        //.attr("dx", "-.8em")
+        //.attr("dy", ".15em")
+        .attr("transform", "rotate("+angle+")");
+
 
     this.yAxis = this.svg.append('g')
       .attr('class', 'axis axis-y')
@@ -127,11 +138,12 @@ export class GraphBars {
       .data(this.data)
       .enter().append("rect")
       .attr("class", "bar")
-      .attr("x", (d) => { return ethis.xScale(d[0]) })
+      .attr("x", (d) => { return ethis.xScale(d.group) })
       .attr("width", ethis.xScale.bandwidth())
-      .attr("y", (d) => { return ethis.yScale(d[1]); })
+      .attr("y", (d) => { return ethis.yScale(d.values[graph.field]); })
       .attr("height", (d) => { return ethis.height - ethis.yScale(d.values[graph.field]) })
-      .attr("fill", (d) => { return this.colors(d.group); })
+      //.attr("fill", (d) => { return this.colors(d.group); })
+      .attr("fill", function(d,i){ return d3.interpolateCool(Math.random()) })
 
     this.svg.append("rect")
       .attr('width', this.width)
@@ -139,9 +151,6 @@ export class GraphBars {
       .attr('stroke', 'lightgrey')
       .style('fill', 'none')
 
-    if (graph.title == '') {
-      graph.title = graph.object
-    }
     if (graph.title != '') {
       this.svg.append("text")
        .attr("class", "wtitle")
