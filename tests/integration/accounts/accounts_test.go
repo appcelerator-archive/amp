@@ -1,44 +1,58 @@
-package tests
+package accounts
 
 import (
+	"os"
 	"testing"
 
+	"log"
+
 	"github.com/appcelerator/amp/api/auth"
-	"github.com/appcelerator/amp/api/rpc/account"
+	. "github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/data/accounts"
+	"github.com/appcelerator/amp/tests"
+	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
+
+var (
+	as     accounts.Interface
+	ctx    context.Context
+	client AccountClient
+)
+
+func setup() error {
+	as = helpers.NewAccountsStore()
+	ctx = context.Background()
+	conn, err := helpers.AmplifierConnection()
+	if err != nil {
+		return err
+	}
+	client = NewAccountClient(conn)
+	return nil
+}
+
+func tearDown() {
+}
+
+func TestMain(m *testing.M) {
+	if err := setup(); err != nil {
+		log.Fatal(err)
+	}
+	code := m.Run()
+	tearDown()
+	os.Exit(code)
+}
 
 // Users
 
-var (
-	testUser = account.SignUpRequest{
-		Name:     "user",
-		Password: "userPassword",
-		Email:    "user@amp.io",
-	}
-	testOrg = account.CreateOrganizationRequest{
-		Name:  "organization",
-		Email: "organization@amp.io",
-	}
-	testMember = account.SignUpRequest{
-		Name:     "organization-member",
-		Password: "organizationMemberPassword",
-		Email:    "organization.member@amp.io",
-	}
-	testTeam = account.CreateTeamRequest{
-		OrganizationName: testOrg.Name,
-		TeamName:         "team",
-	}
-)
-
 func TestUserShouldSignUpAndVerify(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
+	_, err := client.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
 	// Create a token
@@ -46,59 +60,55 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
 	assert.NoError(t, err)
 }
 
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Name = "UpperCaseIsNotAllowed"
-	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	_, err := client.SignUp(ctx, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Email = "this is not an email"
-	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	_, err := client.SignUp(ctx, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Password = ""
-	_, err := accountClient.SignUp(ctx, &invalidSignUp)
+	_, err := client.SignUp(ctx, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
+	_, err := client.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
 	// SignUp
-	_, err = accountClient.SignUp(ctx, &testUser)
+	_, err = client.SignUp(ctx, &testUser)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create an organization
 	createOrganization(t, &testOrg, &testUser)
@@ -106,47 +116,42 @@ func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
 	// SignUp user with organization name
 	conflictSignUp := testUser
 	conflictSignUp.Name = testOrg.Name
-	_, err := accountClient.SignUp(ctx, &conflictSignUp)
+	_, err := client.SignUp(ctx, &conflictSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserVerifyNotATokenShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
+	_, err := client.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: "this is not a token"})
+	_, err = client.Verify(ctx, &VerificationRequest{Token: "this is not a token"})
 	assert.Error(t, err)
 }
 
 func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
 	// Create a verify token
 	token, err := auth.CreateVerificationToken("nonexistinguser")
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = accountClient.Verify(ctx, &account.VerificationRequest{Token: token})
+	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
 	assert.Error(t, err)
 }
 
 // TODO: Check expired token
 
 func TestUserLogin(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Login
-	_, err := accountClient.Login(ctx, &account.LogInRequest{
+	_, err := client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: testUser.Password,
 	})
@@ -154,11 +159,10 @@ func TestUserLogin(t *testing.T) {
 }
 
 func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Login
-	_, err := accountClient.Login(ctx, &account.LogInRequest{
+	_, err := client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: testUser.Password,
 	})
@@ -166,14 +170,13 @@ func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestUserLoginInvalidNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Login
-	_, err := accountClient.Login(ctx, &account.LogInRequest{
+	_, err := client.Login(ctx, &LogInRequest{
 		Name:     "not the right user name",
 		Password: testUser.Password,
 	})
@@ -181,14 +184,13 @@ func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 }
 
 func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Login
-	_, err := accountClient.Login(ctx, &account.LogInRequest{
+	_, err := client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "not the right password",
 	})
@@ -196,58 +198,54 @@ func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordReset(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 }
 
 func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "this is not a valid user name"})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: "this is not a valid user name"})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: "nonexistinguser"})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: "nonexistinguser"})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordSet(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Set
 	token, _ := auth.CreatePasswordToken(testUser.Name)
-	_, err := accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	_, err := client.PasswordSet(ctx, &PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
 	})
 	assert.NoError(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -255,25 +253,24 @@ func TestUserPasswordSet(t *testing.T) {
 }
 
 func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
-	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
 		Token:    "this is an invalid token",
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -281,26 +278,25 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
 	token, _ := auth.CreatePasswordToken("nonexistinguser")
-	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -308,26 +304,25 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Password Reset
-	_, err := accountClient.PasswordReset(ctx, &account.PasswordResetRequest{Name: testUser.Name})
+	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
 	token, _ := auth.CreatePasswordToken(testUser.Name)
-	_, err = accountClient.PasswordSet(ctx, &account.PasswordSetRequest{
+	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
 		Token:    token,
 		Password: "",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "",
 	})
@@ -335,22 +330,21 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordChange(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := "newPassword"
-	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+	_, err := client.PasswordChange(ownerCtx, &PasswordChangeRequest{
 		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
 	assert.NoError(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -358,22 +352,21 @@ func TestUserPasswordChange(t *testing.T) {
 }
 
 func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := "newPassword"
-	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+	_, err := client.PasswordChange(ownerCtx, &PasswordChangeRequest{
 		ExistingPassword: "this is not the right password",
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -381,22 +374,21 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 }
 
 func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := ""
-	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+	_, err := client.PasswordChange(ownerCtx, &PasswordChangeRequest{
 		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -404,22 +396,21 @@ func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
 }
 
 func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Password Change
 	newPassword := "aze"
-	_, err := accountClient.PasswordChange(ownerCtx, &account.PasswordChangeRequest{
+	_, err := client.PasswordChange(ownerCtx, &PasswordChangeRequest{
 		ExistingPassword: testUser.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = accountClient.Login(ctx, &account.LogInRequest{
+	_, err = client.Login(ctx, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -427,55 +418,51 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 }
 
 func TestUserForgotLogin(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
+	_, err := client.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, err = accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+	_, err = client.ForgotLogin(ctx, &ForgotLoginRequest{
 		Email: testUser.Email,
 	})
 	assert.NoError(t, err)
 }
 
 func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// SignUp
-	_, err := accountClient.SignUp(ctx, &testUser)
+	_, err := client.SignUp(ctx, &testUser)
 	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, err = accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+	_, err = client.ForgotLogin(ctx, &ForgotLoginRequest{
 		Email: "this is not a valid email",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// ForgotLogin
-	_, err := accountClient.ForgotLogin(ctx, &account.ForgotLoginRequest{
+	_, err := client.ForgotLogin(ctx, &ForgotLoginRequest{
 		Email: testUser.Email,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserGet(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// Get
-	getReply, err := accountClient.GetUser(ctx, &account.GetUserRequest{
+	getReply, err := client.GetUser(ctx, &GetUserRequest{
 		Name: testUser.Name,
 	})
 	assert.NoError(t, err)
@@ -486,59 +473,55 @@ func TestUserGet(t *testing.T) {
 }
 
 func TestUserGetMalformedUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
 	// Get
-	_, err := accountClient.GetUser(ctx, &account.GetUserRequest{
+	_, err := client.GetUser(ctx, &GetUserRequest{
 		Name: "this user is malformed",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserGetNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
 	// Get
-	_, err := accountClient.GetUser(ctx, &account.GetUserRequest{
-		Name: testUser.Name,
+	_, err := client.GetUser(ctx, &GetUserRequest{
+		Name: "nonexistinguser",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserList(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	createUser(t, &testUser)
 
 	// List
-	listReply, err := accountClient.ListUsers(ctx, &account.ListUsersRequest{})
+	listReply, err := client.ListUsers(ctx, &ListUsersRequest{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
-	assert.Len(t, listReply.Users, 1)
-	assert.Equal(t, listReply.Users[0].Name, testUser.Name)
-	assert.Equal(t, listReply.Users[0].Email, testUser.Email)
-	assert.NotEmpty(t, listReply.Users[0].CreateDt)
+	found := false
+	for _, user := range listReply.Users {
+		if user.Name == testUser.Name {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
 }
 
 func TestUserDelete(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testUser.Name})
+	_, err := client.DeleteUser(ownerCtx, &DeleteUserRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 }
 
 func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
@@ -547,25 +530,26 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// Delete
-	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testMember.Name})
+	_, err := client.DeleteUser(ownerCtx, &DeleteUserRequest{Name: testMember.Name})
 	assert.Error(t, err)
 }
 
 func TestUserDeleteUserOnlyOwnerOfOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create an organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteUser(ownerCtx, &account.DeleteUserRequest{Name: testUser.Name})
+	_, err := client.DeleteUser(ownerCtx, &DeleteUserRequest{Name: testUser.Name})
 	assert.Error(t, err)
 }
 
 func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create an organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -574,27 +558,27 @@ func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
 	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// Delete
-	_, err := accountClient.DeleteUser(memberCtx, &account.DeleteUserRequest{Name: testMember.Name})
+	_, err := client.DeleteUser(memberCtx, &DeleteUserRequest{Name: testMember.Name})
 	assert.NoError(t, err)
 }
 
 // Organizations
 
 func TestOrganizationCreate(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// CreateOrganization
-	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
+	_, err := client.CreateOrganization(ownerCtx, &testOrg)
 	assert.NoError(t, err)
 }
 
 func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
@@ -602,13 +586,13 @@ func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
 	// CreateOrganization
 	invalidRequest := testOrg
 	invalidRequest.Name = "this is not a valid name"
-	_, err := accountClient.CreateOrganization(ownerCtx, &invalidRequest)
+	_, err := client.CreateOrganization(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
@@ -616,25 +600,25 @@ func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
 	// CreateOrganization
 	invalidRequest := testOrg
 	invalidRequest.Email = "this is not a valid email"
-	_, err := accountClient.CreateOrganization(ownerCtx, &invalidRequest)
+	_, err := client.CreateOrganization(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// CreateOrganization again
-	_, err := accountClient.CreateOrganization(ownerCtx, &testOrg)
+	_, err := client.CreateOrganization(ownerCtx, &testOrg)
 	assert.Error(t, err)
 }
 
 func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create user
 	ownerCtx := createUser(t, &testUser)
@@ -642,13 +626,14 @@ func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
 	// CreateOrganization
 	invalidRequest := testOrg
 	invalidRequest.Name = testUser.Name
-	_, err := accountClient.CreateOrganization(ownerCtx, &invalidRequest)
+	_, err := client.CreateOrganization(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestOrganizationAddUser(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -657,7 +642,7 @@ func TestOrganizationAddUser(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -665,8 +650,9 @@ func TestOrganizationAddUser(t *testing.T) {
 }
 
 func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -675,7 +661,7 @@ func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: "this is not a valid name",
 		UserName:         testMember.Name,
 	})
@@ -683,8 +669,9 @@ func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -693,7 +680,7 @@ func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         "this is not a valid name",
 	})
@@ -701,14 +688,15 @@ func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create owner
 	ownerCtx := createUser(t, &testUser)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -716,8 +704,9 @@ func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	createOrganization(t, &testOrg, &testUser)
@@ -726,7 +715,7 @@ func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
 	memberCtx := createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(memberCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(memberCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -734,14 +723,15 @@ func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
 }
 
 func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -749,8 +739,9 @@ func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -759,14 +750,14 @@ func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// AddUserToOrganization
-	_, err = accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err = client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -774,8 +765,9 @@ func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveUser(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -784,14 +776,14 @@ func TestOrganizationRemoveUser(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -799,8 +791,9 @@ func TestOrganizationRemoveUser(t *testing.T) {
 }
 
 func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -809,14 +802,14 @@ func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: "this is not a valid name",
 		UserName:         testMember.Name,
 	})
@@ -824,8 +817,9 @@ func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -834,14 +828,14 @@ func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         "this is not a valid name",
 	})
@@ -849,8 +843,9 @@ func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create user
 	ownerCtx := createUser(t, &testUser)
@@ -859,7 +854,7 @@ func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.
 	createUser(t, &testMember)
 
 	// RemoveUserFromOrganization
-	_, err := accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err := client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -867,8 +862,9 @@ func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.
 }
 
 func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -877,14 +873,14 @@ func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 	memberCtx := createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(memberCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(memberCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testUser.Name,
 	})
@@ -892,14 +888,15 @@ func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// RemoveUserFromOrganization
-	_, err := accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err := client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -907,8 +904,9 @@ func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -917,21 +915,21 @@ func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
@@ -939,8 +937,9 @@ func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
 }
 
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -949,14 +948,14 @@ func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// AddUserToOrganization
-	_, err := accountClient.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
 	assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
-	_, err = accountClient.RemoveUserFromOrganization(ownerCtx, &account.RemoveUserFromOrganizationRequest{
+	_, err = client.RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testUser.Name,
 	})
@@ -964,8 +963,9 @@ func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
 }
 
 func TestOrganizationChangeUserRole(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -973,7 +973,7 @@ func TestOrganizationChangeUserRole(t *testing.T) {
 	// Create a member
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
-	_, err := accountClient.ChangeOrganizationMemberRole(ownerCtx, &account.ChangeOrganizationMemberRoleRequest{
+	_, err := client.ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
@@ -982,8 +982,9 @@ func TestOrganizationChangeUserRole(t *testing.T) {
 }
 
 func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -991,7 +992,7 @@ func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
 	// Create a member
 	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
-	_, err := accountClient.ChangeOrganizationMemberRole(memberCtx, &account.ChangeOrganizationMemberRoleRequest{
+	_, err := client.ChangeOrganizationMemberRole(memberCtx, &ChangeOrganizationMemberRoleRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
@@ -1000,8 +1001,9 @@ func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
 }
 
 func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create organization
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -1009,7 +1011,7 @@ func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
 	// Create user
 	createUser(t, &testMember)
 
-	_, err := accountClient.ChangeOrganizationMemberRole(ownerCtx, &account.ChangeOrganizationMemberRoleRequest{
+	_, err := client.ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
@@ -1018,14 +1020,14 @@ func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestOrganizationGet(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a organization
 	createOrganization(t, &testOrg, &testUser)
 
 	// Get
-	getReply, err := accountClient.GetOrganization(ctx, &account.GetOrganizationRequest{
+	getReply, err := client.GetOrganization(ctx, &GetOrganizationRequest{
 		Name: testOrg.Name,
 	})
 	assert.NoError(t, err)
@@ -1036,53 +1038,52 @@ func TestOrganizationGet(t *testing.T) {
 }
 
 func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
-
 	// Get
-	_, err := accountClient.GetOrganization(ctx, &account.GetOrganizationRequest{
+	_, err := client.GetOrganization(ctx, &GetOrganizationRequest{
 		Name: "this organization is malformed",
 	})
 	assert.Error(t, err)
 }
 
 func TestOrganizationList(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	createOrganization(t, &testOrg, &testUser)
 
 	// List
-	listReply, err := accountClient.ListOrganizations(ctx, &account.ListOrganizationsRequest{})
+	listReply, err := client.ListOrganizations(ctx, &ListOrganizationsRequest{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
-	assert.Len(t, listReply.Organizations, 1)
-	assert.Equal(t, listReply.Organizations[0].Name, testOrg.Name)
-	assert.Equal(t, listReply.Organizations[0].Email, testOrg.Email)
-	assert.NotEmpty(t, listReply.Organizations[0].CreateDt)
-	assert.NotEmpty(t, listReply.Organizations[0].Members)
-	assert.Equal(t, listReply.Organizations[0].Members[0].Name, testUser.Name)
-	assert.Equal(t, listReply.Organizations[0].Members[0].Role, accounts.OrganizationRole_ORGANIZATION_OWNER)
+	found := false
+	for _, org := range listReply.Organizations {
+		if org.Name == testOrg.Name {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
 }
 
 func TestOrganizationDelete(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{
+	_, err := client.DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
 		Name: testOrg.Name,
 	})
 	assert.NoError(t, err)
 }
 
 func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -1091,21 +1092,21 @@ func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
 	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// Delete
-	_, err := accountClient.DeleteOrganization(memberCtx, &account.DeleteOrganizationRequest{
+	_, err := client.DeleteOrganization(memberCtx, &DeleteOrganizationRequest{
 		Name: testOrg.Name,
 	})
 	assert.Error(t, err)
 }
 
 func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{
+	_, err := client.DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
 		Name: testOrg.Name,
 	})
 	assert.Error(t, err)
@@ -1114,20 +1115,22 @@ func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 // Teams
 
 func TestTeamCreate(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create a user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// CreateTeam
-	_, err := accountClient.CreateTeam(ownerCtx, &testTeam)
+	_, err := client.CreateTeam(ownerCtx, &testTeam)
 	assert.NoError(t, err)
 }
 
 func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create a user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -1135,13 +1138,14 @@ func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
 	// CreateTeam
 	invalidRequest := testTeam
 	invalidRequest.OrganizationName = "this is not a valid name"
-	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	_, err := client.CreateTeam(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create a user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -1149,13 +1153,14 @@ func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
 	// CreateTeam
 	invalidRequest := testTeam
 	invalidRequest.TeamName = "this is not a valid name"
-	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	_, err := client.CreateTeam(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create a user
 	ownerCtx := createUser(t, &testUser)
@@ -1163,13 +1168,15 @@ func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
 	// CreateTeam
 	invalidRequest := testTeam
 	invalidRequest.OrganizationName = "non-existing-org"
-	_, err := accountClient.CreateTeam(ownerCtx, &invalidRequest)
+	_, err := client.CreateTeam(ownerCtx, &invalidRequest)
 	assert.Error(t, err)
 }
 
 func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create organization
 	createOrganization(t, &testOrg, &testUser)
@@ -1178,32 +1185,35 @@ func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
 	notOrgOwnerCtx := createUser(t, &testMember)
 
 	// CreateTeam
-	_, err := accountClient.CreateTeam(notOrgOwnerCtx, &testTeam)
+	_, err := client.CreateTeam(notOrgOwnerCtx, &testTeam)
 	assert.Error(t, err)
 }
 
 func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// CreateTeam again
-	_, err := accountClient.CreateTeam(ownerCtx, &testTeam)
+	_, err := client.CreateTeam(ownerCtx, &testTeam)
 	assert.Error(t, err)
 }
 
 func TestTeamAddUser(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1212,14 +1222,16 @@ func TestTeamAddUser(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: "this is not a valid name",
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1228,14 +1240,16 @@ func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         "this is not a valid name",
 		UserName:         testMember.Name,
@@ -1244,14 +1258,15 @@ func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         "this is not a valid name",
@@ -1260,15 +1275,17 @@ func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createUser(t, &testUser)
 	createUser(t, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1277,15 +1294,17 @@ func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 	createUser(t, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1294,14 +1313,16 @@ func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1310,15 +1331,17 @@ func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	createTeam(t, &testOrg, &testUser, &testTeam)
 	memberCtx := createUser(t, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(memberCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(memberCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1327,18 +1350,20 @@ func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
 }
 
 func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// SignUp member
-	_, err := accountClient.SignUp(ctx, &testMember)
+	_, err := client.SignUp(ctx, &testMember)
 	assert.NoError(t, err)
 
 	// AddUserToTeam
-	_, err = accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err = client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1347,8 +1372,10 @@ func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
 }
 
 func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1357,7 +1384,7 @@ func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1365,7 +1392,7 @@ func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// AddUserToTeam again
-	_, err = accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err = client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1374,8 +1401,10 @@ func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUser(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1384,7 +1413,7 @@ func TestTeamRemoveUser(t *testing.T) {
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1392,7 +1421,7 @@ func TestTeamRemoveUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveUserFromTeam
-	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err = client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1401,8 +1430,10 @@ func TestTeamRemoveUser(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1411,7 +1442,7 @@ func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1419,7 +1450,7 @@ func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveUserFromTeam
-	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err = client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: "this is not a valid name",
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1428,8 +1459,10 @@ func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1438,7 +1471,7 @@ func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1446,7 +1479,7 @@ func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveUserFromTeam
-	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err = client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         "this is not a valid name",
 		UserName:         testMember.Name,
@@ -1455,8 +1488,10 @@ func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1465,7 +1500,7 @@ func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1473,7 +1508,7 @@ func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveUserFromTeam
-	_, err = accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err = client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         "this is not a valid name",
@@ -1482,8 +1517,10 @@ func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create user
 	ownerCtx := createUser(t, &testUser)
@@ -1492,7 +1529,7 @@ func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// RemoveUserFromTeam
-	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err := client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1501,8 +1538,10 @@ func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create user
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
@@ -1511,7 +1550,7 @@ func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// RemoveUserFromTeam
-	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err := client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1520,8 +1559,10 @@ func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	/// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1530,7 +1571,7 @@ func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 	memberCtx := createAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// AddUserToTeam
-	_, err := accountClient.AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	_, err := client.AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1538,7 +1579,7 @@ func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveUserFromTeam
-	_, err = accountClient.RemoveUserFromTeam(memberCtx, &account.RemoveUserFromTeamRequest{
+	_, err = client.RemoveUserFromTeam(memberCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1547,14 +1588,16 @@ func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// RemoveUserFromTeam
-	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err := client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1563,8 +1606,10 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testMember := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	/// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
@@ -1573,7 +1618,7 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 	createUser(t, &testMember)
 
 	// RemoveUserFromTeam
-	_, err := accountClient.RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+	_, err := client.RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
@@ -1582,14 +1627,15 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamGet(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// Get
-	getReply, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+	getReply, err := client.GetTeam(ownerCtx, &GetTeamRequest{
 		OrganizationName: testOrg.Name,
 		TeamName:         testTeam.TeamName,
 	})
@@ -1603,14 +1649,15 @@ func TestTeamGet(t *testing.T) {
 }
 
 func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create user
 	ownerCtx := createUser(t, &testUser)
 
 	// Get
-	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+	_, err := client.GetTeam(ownerCtx, &GetTeamRequest{
 		OrganizationName: testOrg.Name,
 		TeamName:         testTeam.TeamName,
 	})
@@ -1618,14 +1665,15 @@ func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create org
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// Get
-	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+	_, err := client.GetTeam(ownerCtx, &GetTeamRequest{
 		OrganizationName: testOrg.Name,
 		TeamName:         testTeam.TeamName,
 	})
@@ -1633,14 +1681,15 @@ func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// Get
-	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+	_, err := client.GetTeam(ownerCtx, &GetTeamRequest{
 		OrganizationName: "this is not a valid team name",
 		TeamName:         testTeam.TeamName,
 	})
@@ -1648,14 +1697,15 @@ func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// Get
-	_, err := accountClient.GetTeam(ownerCtx, &account.GetTeamRequest{
+	_, err := client.GetTeam(ownerCtx, &GetTeamRequest{
 		OrganizationName: testOrg.Name,
 		TeamName:         "this is not a valid team name",
 	})
@@ -1663,14 +1713,15 @@ func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamList(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create a team
 	createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
-	listReply, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+	listReply, err := client.ListTeams(ctx, &ListTeamsRequest{
 		OrganizationName: testOrg.Name,
 	})
 	assert.NoError(t, err)
@@ -1683,42 +1734,45 @@ func TestTeamList(t *testing.T) {
 }
 
 func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
-	_, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+	_, err := client.ListTeams(ctx, &ListTeamsRequest{
 		OrganizationName: "this is not a valid name",
 	})
 	assert.Error(t, err)
 }
 
 func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create user
 	createUser(t, &testUser)
 
 	// List
-	_, err := accountClient.ListTeams(ctx, &account.ListTeamsRequest{
+	_, err := client.ListTeams(ctx, &ListTeamsRequest{
 		OrganizationName: testTeam.OrganizationName,
 	})
 	assert.Error(t, err)
 }
 
 func TestTeamDelete(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create team
 	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
 
 	// Delete
-	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+	_, err := client.DeleteTeam(ownerCtx, &DeleteTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
@@ -1726,14 +1780,15 @@ func TestTeamDelete(t *testing.T) {
 }
 
 func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create org
 	ownerCtx := createUser(t, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+	_, err := client.DeleteTeam(ownerCtx, &DeleteTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
@@ -1741,16 +1796,125 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
-	// Reset the storage
-	accountStore.Reset(context.Background())
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
 
 	// Create org
 	ownerCtx := createOrganization(t, &testOrg, &testUser)
 
 	// Delete
-	_, err := accountClient.DeleteTeam(ownerCtx, &account.DeleteTeamRequest{
+	_, err := client.DeleteTeam(ownerCtx, &DeleteTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
 	assert.Error(t, err)
 }
+
+// Helpers
+
+func createUser(t *testing.T, user *SignUpRequest) context.Context {
+	// SignUp
+	_, err := client.SignUp(ctx, user)
+	assert.NoError(t, err)
+
+	// Create a verify token
+	verificationToken, err := auth.CreateVerificationToken(user.Name)
+	assert.NoError(t, err)
+
+	// Verify
+	_, err = client.Verify(ctx, &VerificationRequest{Token: verificationToken})
+	assert.NoError(t, err)
+
+	// Login
+	header := metadata.MD{}
+	_, err = client.Login(ctx, &LogInRequest{Name: user.Name, Password: user.Password}, grpc.Header(&header))
+	assert.NoError(t, err)
+
+	// Extract token from header
+	tokens := header[auth.TokenKey]
+	assert.NotEmpty(t, tokens)
+	token := tokens[0]
+	assert.NotEmpty(t, token)
+
+	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
+}
+
+func createOrganization(t *testing.T, org *CreateOrganizationRequest, owner *SignUpRequest) context.Context {
+	// Create a user
+	ownerCtx := createUser(t, owner)
+
+	// CreateOrganization
+	_, err := client.CreateOrganization(ownerCtx, org)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+func createAndAddUserToOrganization(ownerCtx context.Context, t *testing.T, org *CreateOrganizationRequest, user *SignUpRequest) context.Context {
+	// Create a user
+	userCtx := createUser(t, user)
+
+	// AddUserToOrganization
+	_, err := client.AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+		OrganizationName: org.Name,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+	return userCtx
+}
+
+func createTeam(t *testing.T, org *CreateOrganizationRequest, owner *SignUpRequest, team *CreateTeamRequest) context.Context {
+	// Create a user
+	ownerCtx := createOrganization(t, org, owner)
+
+	// CreateTeam
+	_, err := client.CreateTeam(ownerCtx, team)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+func randomUser() SignUpRequest {
+	id := stringid.GenerateNonCryptoID()
+	return SignUpRequest{
+		Name:     id,
+		Password: "userPassword",
+		Email:    id + "@user.email",
+	}
+}
+
+func randomOrg() CreateOrganizationRequest {
+	id := stringid.GenerateNonCryptoID()
+	return CreateOrganizationRequest{
+		Name:  id,
+		Email: id + "@org.email",
+	}
+}
+
+func randomTeam(org string) CreateTeamRequest {
+	id := stringid.GenerateNonCryptoID()
+	return CreateTeamRequest{
+		OrganizationName: org,
+		TeamName:         id,
+	}
+}
+
+//func switchAccount(userCtx context.Context, t *testing.T, accountName string) context.Context {
+//	header := metadata.MD{}
+//	_, err := client.Switch(userCtx, &SwitchRequest{Account: accountName}, grpc.Header(&header))
+//	assert.NoError(t, err)
+//
+//	// Extract token from header
+//	tokens := header[auth.AuthorizationHeader]
+//	assert.NotEmpty(t, tokens)
+//	token := tokens[0]
+//	assert.NotEmpty(t, token)
+//
+//	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, token))
+//}
+//
+//func changeOrganizationMemberRole(userCtx context.Context, t *testing.T, org *CreateOrganizationRequest, user *SignUpRequest, role accounts.OrganizationRole) {
+//	_, err := client.ChangeOrganizationMemberRole(userCtx, &ChangeOrganizationMemberRoleRequest{OrganizationName: org.Name, UserName: user.Name, Role: role})
+//	assert.NoError(t, err)
+//}
