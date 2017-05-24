@@ -8,7 +8,7 @@ import { GraphStats } from '../../models/graph-stats.model';
 import * as d3 from 'd3';
 
 @Injectable()
-export class GraphPie {
+export class GraphCounter {
   onNewData = new Subject();
   private margin: any = { top: 40, bottom: 30, left: 60, right: 20};
   private svg : any
@@ -88,96 +88,60 @@ export class GraphPie {
     this.updateGraph(graph)
   }
 
-  updateGraph(graph : Graph) {
+  updateGraph(graph : Graph)
+  {
     this.data = this.dashboardService.getData(graph)
-    let xDomain = this.data.map(d => d.group);
-    let yDomain = [0, d3.max(this.data, d => d.values[graph.field])];
-
-    let fontSize = this.height/10
 
     this.svg.selectAll("*").remove();
-
-    let arcs = d3.pie<GraphStats>()
-      .value((d) => { return d.values[graph.field]; })
-      (this.data)
-
-    let arc = d3.arc()
-      .outerRadius(this.height/2)
-      .innerRadius(this.height/4)
-      .padAngle(0.03)
-      .cornerRadius(8)
-
-    let pieG = this.svg.selectAll("g")
-      .data([this.data])
-      .enter()
-      .append("g")
-      .attr("transform", "translate("+[this.width/2, this.height/2]+")")
-
-    let block = pieG.selectAll(".arc")
-      .data(arcs)
-
-    var newBlock = block.enter().append("g").classed("arc", true)
-
-    let athis=this
-    newBlock.append("path")
-      .attr("d", arc)
-      .attr("id", function(d, i) { return "arc-" + i })
-      .attr("stroke", "gray")
-      .attr("fill", function(d,i){ return athis.dashboardService.graphColors[i] })
-
-    if (this.data.length == 1) {
-      this.svg.append("text")
-       .attr("class", "wtitle")
-       .attr("transform", "translate("+this.width/2+","+this.height/2+")")
-       .style("text-anchor", "middle")
-       .style("font-size", fontSize+'px')
-       .text(this.data[0].group);
-     this.svg.append("text")
-      .attr("class", "wtitle")
-      .attr("transform", "translate("+this.width/2+","+this.height/2+")")
-      .style("text-anchor", "middle")
-      .style("font-size", fontSize+'px')
-      .attr("dy", ".95em")
-      .text(Math.floor(this.data[0].values[graph.field]));
-    } else {
-      newBlock.append("text")
-        .attr("transform", function(d) {
-          d.outerRadius = 100;
-          return "translate(" + arc.centroid(d) + ")";
-        })
-        .style("text-anchor", "middle")
-        .attr("dy", ".35em")
-        .style("font-size", fontSize/2+'px')
-        .text(function(d) { return d.data.group; });
-
-      newBlock.append("text")
-        .attr("transform", function(d) {
-          d.outerRadius = 100;
-          return "translate(" + arc.centroid(d) + ")";
-        })
-        .style("text-anchor", "middle")
-        .attr("dy", "-.70em")
-        .style("font-size", fontSize/2+'px')
-        .text(function(d) { return Math.floor(d.data.values[graph.field]); });
-    }
+    let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
+    let fontSize = this.width/wwt*7*0.90;
 
     if (graph.title != '') {
       this.svg.append("text")
        .attr("class", "wtitle")
-       .attr("transform", "translate("+this.width/2+",-"+this.margin.top*0.5+")")
+       .attr("transform", "translate("+this.width/2+","+this.height/2+")")
        .style("text-anchor", "middle")
-       .attr("dy", ".35em")
+       .attr("dy", "-.36em")
        .style("font-size", fontSize+'px')
        .text(graph.title);
      }
 
-     if (graph.yTitle != '') {
+     if (this.data.length>0) {
+       let val = Math.floor(this.data[0].values[graph.field])
+
+
+       let dec = ".75em"
+       if (graph.title == "") {
+         dec = ".34em"
+         wwt = this.dashboardService.getTextWidth(val, "10", "Arial")
+         fontSize = this.width/wwt*7*0.90;
+       }
+
        this.svg.append("text")
         .attr("class", "wtitle")
-        .attr("transform", "translate(-5,"+this.height+this.margin.top*0.1+")")
-        .style("text-anchor", "left")
+         .attr("transform", "translate("+this.width/2+","+this.height/2+")")
+        .style("text-anchor", "middle")
+        .attr("dy", dec)
         .style("font-size", fontSize+'px')
-        .text(graph.title);
-      }
+        .text(val);
+
+        if (graph.alert) {
+          let color="green"
+          if (val>graph.alertMin) {
+            color="orange"
+            if (val>graph.alertMax) {
+              color="red"
+            }
+          }
+          this.svg.append("rect")
+            .attr('width', this.width+this.margin.left+this.margin.right)
+            .attr('height', this.height+this.margin.top+this.margin.bottom)
+            .attr("transform", "translate(-"+this.margin.left+",-"+this.margin.top+")")
+            .attr('stroke', 'lightgrey')
+            .style('fill', color)
+            .attr('fill-opacity', 0.4)
+        }
+    }
   }
+
 }

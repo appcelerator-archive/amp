@@ -13,3 +13,18 @@
 
 .graph-not-selected {
 }
+
+input.bound {
+  padding:1px;
+  margin:0px;
+  height:28px;
+  text-align:center;
+  border: none;
+}
+
+input.text {
+  padding:1px;
+  margin:0px;
+  width:220px;
+  height:28px;
+}

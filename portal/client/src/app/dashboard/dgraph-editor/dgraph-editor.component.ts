@@ -11,7 +11,6 @@ import { MenuService } from '../../services/menu.service';
 })
 
 export class DGraphEditorComponent implements OnInit, OnDestroy {
-  @ViewChild('chart') private chartContainer: ElementRef;
   @Input() public graph : Graph;
 
   constructor(

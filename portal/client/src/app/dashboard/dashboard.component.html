@@ -13,14 +13,30 @@
               <span class="caret" style="cursor:pointer;color:white"></span>
             </button>
             <div class="dropdown-menu" aria-labelledby="refreshperiod">
-              <li><a (click)="dashboardService.setRefreshPeriod(10)">10 sec</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(30)">30 sec</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(60)">1 min</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(120)">2 min</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(300)">5 min</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(600)">10 min</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(1800)">30 min</a></li>
-              <li><a (click)="dashboardService.setRefreshPeriod(3600)">1 hour</a></li>
+              <li><a (click)="setRefreshPeriod(10, '10 sec')">10 sec</a></li>
+              <li><a (click)="setRefreshPeriod(30, '30 sec')">30 sec</a></li>
+              <li><a (click)="setRefreshPeriod(60, '1 min')">1 min</a></li>
+              <li><a (click)="setRefreshPeriod(120, '2 min')">2 min</a></li>
+              <li><a (click)="setRefreshPeriod(300, '5 min')">5 min</a></li>
+              <li><a (click)="setRefreshPeriod(600, '10 min')">10 min</a></li>
+              <li><a (click)="setRefreshPeriod(1800, '30 min')">30 min</a></li>
+              <li><a (click)="setRefreshPeriod(3600, '1 hour')">1 hour</a></li>
+            </div>
+          </div>
+          <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+            <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="refreshperiod" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              Period: {{ periodLabel }}
+              <span class="caret" style="cursor:pointer;color:white"></span>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="refreshperiod">
+              <li><a (click)="setPeriod('1m', '1 min')">1 min</a></li>
+              <li><a (click)="setPeriod('2m', '2 min')">2 min</a></li>
+              <li><a (click)="setPeriod('5m', '5 min')">5 min</a></li>
+              <li><a (click)="setPeriod('10m', '10 min')">10 min</a></li>
+              <li><a (click)="setPeriod('30m', '30 min')">30 min</a></li>
+              <li><a (click)="setPeriod('1h', '1 hour')">1 hour</a></li>
+              <li><a (click)="setPeriod('2h', '2 hours')">2 hours</a></li>
+              <li><a (click)="setPeriod('4h', '4 hours')">4 hours</a></li>
             </div>
           </div>
           <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
@@ -34,7 +50,8 @@
               <li><a (click)="dashboardService.addGraph('areas')">Areas</a></li>
               <li><a (click)="dashboardService.addGraph('bars')">Bars</a></li>
               <li><a (click)="dashboardService.addGraph('pie')">Pie</a></li>
-              <li><a (click)="dashboardService.addGraph('bubbles')">bubbles</a></li>
+              <li><a (click)="dashboardService.addGraph('bubbles')">Bubbles</a></li>
+              <li><a (click)="dashboardService.addGraph('counter')">Counter</a></li>
             </div>
           </div>
           <button type="button"
@@ -67,6 +84,10 @@
           *ngIf="dashboardService.showEditor"
           [graph]="editorGraph">
         </app-dgraph-editor>
+        <app-dgraph-alert
+          *ngIf="dashboardService.showAlert"
+          [graph]="editorGraph">
+        </app-dgraph-alert>
       </div>
     </div>
   </div>

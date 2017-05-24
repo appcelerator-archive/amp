@@ -14,6 +14,7 @@ import { Graph } from '../models/graph.model';
 export class DashboardComponent implements OnInit, OnDestroy {
   dashboardName = "default"
   periodRefreshLabel = "30 seconds"
+  periodLabel = '2 min'
   graphPanelHeight = 250
   graphPanelWidth = 500
 
@@ -51,4 +52,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.graphPanelWidth = cww
   }
 
+  setRefreshPeriod(refresh : number, label : string) {
+    this.periodRefreshLabel = label
+    this.dashboardService.setRefreshPeriod(refresh)
+  }
+
+  setPeriod(period : string, label : string) {
+    this.periodLabel = label
+    this.dashboardService.setPeriod(period)
+  }
 }

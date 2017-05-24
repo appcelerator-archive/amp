@@ -58,6 +58,7 @@ import { ForgotComponent } from './auth/forgot/forgot.component';
 import { VerifyComponent } from './auth/verify/verify.component';
 import { DGraphComponent } from './dashboard/dgraph/dgraph.component';
 import { DGraphEditorComponent } from './dashboard/dgraph-editor/dgraph-editor.component';
+import { DgraphAlertComponent } from './dashboard/dgraph-alert/dgraph-alert.component';
 
 @NgModule({
   declarations: [
@@ -95,7 +96,8 @@ import { DGraphEditorComponent } from './dashboard/dgraph-editor/dgraph-editor.c
     ForgotComponent,
     VerifyComponent,
     DGraphComponent,
-    DGraphEditorComponent
+    DGraphEditorComponent,
+    DgraphAlertComponent
   ],
   imports: [
     BrowserModule,

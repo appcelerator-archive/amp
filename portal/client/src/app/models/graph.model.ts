@@ -14,6 +14,12 @@ export class Graph {
   public object : string
   public field: string
   public border: boolean
+  public topNumber: number
+  public alert : boolean
+  public alertMin: number
+  public alertMax: number
+  public criterion: string//not used
+  public criterionValue: string
 
   constructor(id: number, x : number, y : number, w: number, h: number, type: string, fields : string[], title : string, yTitle : string) {
     this.id = id
@@ -27,6 +33,12 @@ export class Graph {
     this.yTitle = yTitle
     this.modeParameter = false
     this.border = false
+    this.topNumber = 3
+    this.alert = false
+    this.alertMin = 0
+    this.alertMax = 1000
+    this.criterion = ""
+    this.criterionValue = ""
   }
 
 }
