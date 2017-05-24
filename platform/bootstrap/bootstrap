@@ -4,7 +4,7 @@
 
 INFRAKIT_HOME=/infrakit
 INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
-AWS_FILES=(bootstrap.yml)
+AWS_FILES=(bootstrap.yml config-gp.tpl config-cpu.tpl config-mem.tpl config-dat.tpl config-monit.tpl)
 BOOTSTRAP_VOLUME="amp-bootstrap-$(date +%s)"
 ROLE_LABEL=tools
 INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
@@ -12,8 +12,7 @@ INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAK
 BRIDGE_NETWORK=hostnet
 CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-atomiq.clusterid}
 INFRAKIT_LOG_LEVEL=4
-#WORKER_GROUP_LIST=(data:2)
-WORKER_GROUP_LIST=()
+WORKER_GROUP_LIST="gp cpu mem dat monit proxy"
 
 # check if the bootstrap script is executed inside a container
 _am_i_in_a_container() {
@@ -174,7 +173,7 @@ _set_source() {
   InfraKitConfigurationBaseURL=$1
   # if a remote location is provided, the configuration will be searched there
   if $(echo "$InfraKitConfigurationBaseURL" | grep -q "://"); then
-    CONTAINER_CONFIG_TPL=$InfraKitConfigurationBaseURL/config.${provider}-${target}.tpl
+    CONTAINER_CONFIG_TPL=$InfraKitConfigurationBaseURL/${provider}-${target}
     CONTAINER_PLUGINS_CFG=$InfraKitConfigurationBaseURL/plugins.json
     # a new random temporary directory used as the source
     _d=$(mktemp -d)
@@ -182,12 +181,12 @@ _set_source() {
       echo "trying to fetch remote files for $provider ($target)..." >&2
       mkdir -p "$_d/$provider"
       for i in "${AWS_FILES[@]}"; do
-        curl -sL $InfraKitConfigurationBaseURL/${provider}-$target/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}-$target/$i" >&2
+        curl -sL $InfraKitConfigurationBaseURL/${provider}/$i -o $_d/$provider/$i && echo "  fetched $InfraKitConfigurationBaseURL/${provider}/$i" >&2
       done
       echo "fetch done" >&2
     fi
   else
-    CONTAINER_CONFIG_TPL=file://$INFRAKIT_HOME/config.${provider}-${target}.tpl
+    CONTAINER_CONFIG_TPL=file://$INFRAKIT_HOME/${provider}-${target}
     CONTAINER_PLUGINS_CFG=file://$INFRAKIT_HOME/plugins.json
     # the provided path, or just use the local directory as the source
     _d=${InfraKitConfigurationBaseURL:-$0}
@@ -205,27 +204,63 @@ _set_source() {
 # sets the number of managers and workers
 _set_size() {
   local _vars
-  local _cattle_count
   local _s
+  local _l
   local _t
   local _w
   if [[ "x$provider" = "xdocker" ]]; then
-    # we're adding a container to proxy the ports, so let's remove it from the overall count
+    # one worker specialized for proxying the ports and for cluster monitoring
     ((--worker_count))
+    proxy_count=1
+    monit_count=0
+    proxy_labels='{"amp.type.metrics": "true"}'
+    monit_labels='{}'
+  else
+    ((--worker_count))
+    # one worker specialized for cluster monitoring
+    proxy_count=0
+    monit_count=1
+    monit_labels='{"amp.type.metrics": "true"}'
+    proxy_labels='{}'
   fi
   if [[ $worker_count -le 0 || $manager_count -le 0 ]]; then
     echo "asking for $manager_count manager(s) and $worker_count worker(s), abort" >&2
     exit 1
   fi
-  _vars="{{ var \"/swarm/size/manager\" \"$manager_count\" }} {{ var \"/swarm/size/worker\" \"$worker_count\" }}"
-  _cattle_count=$worker_count
-  for _w in ${WORKER_GROUP_LIST[@]}; do
-    _t=$(echo $_w | cut -d: -f1)
-    _s=$(echo $_w | cut -d: -f2)
-    _vars="$_vars {{ var \"/swarm/size/worker/$_t\" \"$_s\" }}"
-    _cattle_count=$((_cattle_count - _s))
+  manager_labels='{"amp.type.api": "true", "amp.type.route": "true"}'
+  _vars="{{ var \"/swarm/size/manager\" \"$manager_count\" }} {{ var \"/swarm/labels/manager\" \`${manager_labels}\` }} {{ var \"/swarm/size/worker\" \"$worker_count\" }}"
+  if [[ $worker_count -le 3 ]]; then
+    cpu_count=0
+    mem_count=0
+    dat_count=0
+    gp_count=$worker_count
+    gp_labels='{"amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.core": "true", "amp.type.user": "true"}'
+  elif [[ $worker_count -le 9 ]]; then
+    cpu_count=1
+    mem_count=1
+    dat_count=1
+    gp_count=$((worker_count - 3 ))
+    cpu_labels='{"amp.type.mq": "true"}'
+    dat_labels='{"amp.type.kv": "true"}'
+    mem_labels='{"amp.type.search": "true"}'
+    gp_labels='{"amp.type.core": "true", "amp.type.user": "true"}'
+  else
+    # fits the ampmon-cluster.1.stack.yml
+    cpu_count=1
+    mem_count=3
+    dat_count=3
+    gp_count=$((worker_count - 7))
+    cpu_labels='{"amp.type.mq": "true"}'
+    dat_labels='{"amp.type.kv": "true"}'
+    mem_labels='{"amp.type.search": "true"}'
+    gp_labels='{"amp.type.core": "true", "amp.type.user": "true"}'
+  fi
+  for _w in $WORKER_GROUP_LIST; do
+    _s=$(eval echo \$${_w}_count)
+    _l=$(eval echo \$${_w}_labels)
+    [[ -z "$_l" ]] && _l="{}"
+    _vars="$_vars {{ var \"/swarm/size/worker/$_w\" \"$_s\" }} {{ var \"/swarm/labels/worker/$_w\" \`${_l}\` }}"
   done
-  _vars="$_vars {{ var \"/swarm/size/worker/cattle\" \"$_cattle_count\" }}"
   docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" >/dev/null || exit 1
 }
 
@@ -415,6 +450,11 @@ _destroy_groups() {
   local _groups
   local _group
   local _remote=""
+  if [[ -z "$label" ]]; then
+    echo "a cluster id should be provided" >&2
+    echo "destruction aborted" >&2
+    return 1
+  fi
   _set_remote_host $1 || return 1
   if [[ -n "$REMOTE_HOST" ]]; then
     _set_leader_manager $REMOTE_HOST || return 1
@@ -422,7 +462,7 @@ _destroy_groups() {
   fi
   _groups=$(docker ${_remote:+-H $_remote} exec infrakit infrakit group ls 2>/dev/null | tail -n +2)
   for _group in $_groups; do
-    docker ${_remote:+-H $_remote} exec infrakit grep -q "\"$_group\"" $INFRAKIT_HOME/config.json
+    docker ${_remote:+-H $_remote} exec infrakit sh -c "grep -q "\"$_group\"" $INFRAKIT_HOME/config-*.json"
     if [[ $? -eq 0 ]]; then
       docker ${_remote:+-H $_remote} exec infrakit infrakit group destroy "$_group"
     fi
@@ -467,30 +507,61 @@ _destroy_cluster(){
 
 # convert the template of the configuration file
 # _set_source should have been called before
+# echoes the name of the configuration files
 _prepare_config_container() {
   echo "prepare the InfraKit configuration file..." >&2
-  local _config=$(mktemp)
-  local _cid
+  local _config
   local _volume
-  cleanup_file_list="$cleanup_file_list $_config"
+  local _groups
+  local _group
+  local _size
   [[ $provider = "docker" ]] && _volume=$BOOTSTRAP_VOLUME || _volume=infrakit 
-  if [[ "x$provider" = "xdocker" ]]; then
-    docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config
-  fi
-
   # prepare the configuration file locally
-  docker run --rm -v $BOOTSTRAP_VOLUME:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit template  --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL > $_config || exit 1
-  # copy it inside the InfraKit container
-  _cid=$(docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -d -v $_volume:/infrakit alpine:3.5 sleep 15)
-  docker ${LEADER_HOST:+-H $LEADER_HOST} cp $_config $_cid:$INFRAKIT_HOME/config.json || exit 1
+  if [[ "x$provider" = "xdocker" ]]; then
+    # TODO: simplify this block, merge with the other block
+    # the docker in docker mode is a Swarm+1 Infrakit configuration, as opposed to the other modes that are Swarm InfraKit configurations
+    local manager_count=1 # it doesn't matter if it's true, as long as it's not null
+    for _group in manager $WORKER_GROUP_LIST; do
+      # if size is not 0, get the template
+      _size=$(eval echo \$${_group}_count)
+      [[ $_size -eq 0 ]] && continue
+      echo "  prepare the $_group group" >&2
+      # the --suffix .conf option of mktemp is not generic, does not work on Mac OS
+      _config=$(mktemp) && mv $_config ${_config}.conf && _config="${_config}.conf" || return 1
+      cleanup_file_list="$cleanup_file_list $_config"
+      docker exec infrakit infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL/config-${_group}.tpl > "$_config" || return 1
+      # copy it inside the InfraKit container
+      docker cp "$_config" infrakit:$INFRAKIT_HOME/config-${_group}.json  || exit 1
+      echo "config-${_group}.json"
+   done
+  else
+    docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -d --name infrakit-config-copy -v $_volume:/infrakit alpine:3.5 sleep 60 >/dev/null
+    for _group in $WORKER_GROUP_LIST; do
+      # if size is not 0, get the template
+      _size=$(eval echo \$${_group}_count)
+      [[ $_size -eq 0 ]] && continue
+      echo "  prepare the $_group group" >&2
+      _config=$(mktemp) && mv $_config ${_config}.conf && _config="${_config}.conf" || return 1
+      cleanup_file_list="$cleanup_file_list $_config"
+      docker run --rm -v $BOOTSTRAP_VOLUME:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit template --log $INFRAKIT_LOG_LEVEL $CONTAINER_CONFIG_TPL/config-${_group}.tpl > $_config || exit 1
+      # copy it inside the InfraKit container
+      docker ${LEADER_HOST:+-H $LEADER_HOST} cp $_config infrakit-config-copy:$INFRAKIT_HOME/config-${_group}.json || exit 1
+      echo "config-${_group}.json"
+    done
+    docker ${LEADER_HOST:+-H $LEADER_HOST} kill infrakit-config-copy >/dev/null 2>&1
+  fi
 }
 
 # deploy the infrakit configuration
 _deploy_config_container() {
   echo "deploy the configuration..." >&2
   local _volume
+  local _configs=$*
   [[ $provider = "docker" ]] && _volume=$BOOTSTRAP_VOLUME || _volume=infrakit 
-  docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $_volume:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit manager commit file://$INFRAKIT_HOME/config.json >&2
+  for _c in $_configs; do
+    echo " deploying $(basename $_c)" >&2
+    docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -v $_volume:/infrakit $INFRAKIT_INFRAKIT_IMAGE infrakit group commit file://$INFRAKIT_HOME/$_c >&2 || return 1
+  done
 }
 
 # run registry services for Docker image availability in the cluster
@@ -863,6 +934,8 @@ while getopts ":t:p:e:m:w:i:l:s:hfdb:D:" opt; do
           exit 1
       fi
       default_provider=0
+      # set the target if it's not already set, default is the name of the provider
+      [[ "$target" = "local" ]] && target=$provider
       ;;
   l)
       list_request=$OPTARG
@@ -957,8 +1030,8 @@ else
   _wait_for_plugin_availability || exit 1
 fi
 
-_prepare_config_container
-_deploy_config_container
+configs=$(_prepare_config_container) || exit 1
+_deploy_config_container $configs || exit 1
 if [[ $block -gt 0 ]]; then
   rc=1
   SECONDS=0

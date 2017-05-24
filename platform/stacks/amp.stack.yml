@@ -36,7 +36,8 @@ services:
       restart_policy:
         condition: on-failure
       placement:
-        constraints: [node.role == manager]
+        constraints:
+        - node.labels.amp.type.api == true
     secrets:
       - source: amplifier_yml
         target: amplifier.yml
@@ -61,7 +62,7 @@ services:
         condition: on-failure
       placement:
         constraints:
-        - node.role == ${NODE_ROLE:-worker}
+        - node.labels.amp.type.core == true
 
   agent:
     image: appcelerator/agent:${TAG:-0.10.1}

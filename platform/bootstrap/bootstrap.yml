@@ -565,7 +565,7 @@ Resources:
                     {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
                     {{ var "/docker/mirrorregistries" "${MirrorRegistries}" }}
               runcmd:
-                - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
+                - curl -sf ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
                 - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} MIRROR_REGISTRIES=${MirrorRegistries} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdn /usr/local/bin/asg-init.sh
             - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
