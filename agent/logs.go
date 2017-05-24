@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"strconv"
+
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -66,6 +68,7 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 	reader := bufio.NewReader(stream)
 	data.lastDateSaveTime = time.Now()
 	log.Printf("start reading logs on container: %s\n", data.name)
+	var previous, now int64
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
@@ -79,13 +82,17 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			// mt.Printf("invalid log: [%s]\n", line)
 			continue
 		}
-
 		date := line[8:38]
 		slog := strings.TrimSuffix(line[39:], "\n")
 		timestamp, err := time.Parse("2006-01-02T15:04:05.000000000Z", date)
 		if err != nil {
 			timestamp = time.Now()
 		}
+		now = time.Now().UnixNano()
+		if now <= previous {
+			now = previous + 1
+		}
+		previous = now
 		logEntry := logs.LogEntry{
 			Timestamp:          timestamp.Format(time.RFC3339Nano),
 			ContainerId:        ID,
@@ -97,6 +104,7 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
+			TimeId:             strconv.FormatInt(now, 16),
 			Labels:             data.labels,
 			Msg:                slog,
 		}

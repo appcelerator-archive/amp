@@ -144,6 +144,9 @@
         "node_id": {
           "type": "string"
         },
+        "time_id": {
+          "type": "string"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {

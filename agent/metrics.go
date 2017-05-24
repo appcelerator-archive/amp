@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"strconv"
+
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -35,6 +37,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 	log.Printf("start reading metrics on container: %s\n", data.name)
 	decoder := json.NewDecoder(stream)
 	statsData := new(types.StatsJSON)
+	var previous, now int64
 	for err := decoder.Decode(statsData); err != io.EOF; err = decoder.Decode(statsData) {
 		if err != nil {
 			log.Printf("close metrics stream on container %s (%v)\n", data.name, err)
@@ -43,6 +46,11 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 			a.removeContainer(ID)
 			return
 		}
+		now = time.Now().UnixNano()
+		if now <= previous {
+			now = previous + 1
+		}
+		previous = now
 		metricsEntry := &stats.MetricsEntry{
 			Timestamp:          statsData.Read.Format(time.RFC3339Nano),
 			ContainerId:        ID,
@@ -54,6 +62,7 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 			TaskId:             data.taskID,
 			StackName:          data.stackName,
 			NodeId:             data.nodeID,
+			TimeId:             strconv.FormatInt(now, 16),
 			Labels:             data.labels,
 		}
 		a.setMemMetrics(statsData, metricsEntry)
