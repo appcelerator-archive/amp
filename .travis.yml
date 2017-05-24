@@ -6,6 +6,7 @@ services:
 language: bash
 
 install:
+  - sudo ufw status verbose
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
   - sudo apt-get install docker-engine
