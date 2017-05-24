@@ -104,6 +104,7 @@ func logMessageHandler(msg *stan.Msg) {
 			"task_id":              e.TaskId,
 			"stack_name":           e.StackName,
 			"node_id":              e.NodeId,
+			"time_id":              e.TimeId,
 			"msg":                  e.Msg,
 		}
 		if len(e.Labels) > 0 {
@@ -137,6 +138,7 @@ func metricsMessageHandler(msg *stan.Msg) {
 			"task_id":              e.TaskId,
 			"stack_name":           e.StackName,
 			"node_id":              e.NodeId,
+			"time_id":              e.TimeId,
 		}
 		if len(e.Labels) > 0 {
 			event["labels"] = getLabels(e.Labels)

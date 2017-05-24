@@ -25,3 +25,7 @@ ikt.vol.*
 # secrets
 *.pem
 platform/secrets/*
+
+# ampbeat
+cmd/ampbeat/build/
+cmd/ampbeat/ampbeat.full.yml

@@ -24,13 +24,14 @@ message MetricsEntry {
   string task_id = 8;
   string stack_name = 9;
   string node_id = 10;
-  map<string, string> labels = 11;
-  string group = 12;
-  string sgroup = 13;
-  MetricsCPUEntry cpu = 14;
-  MetricsIOEntry io = 15;
-  MetricsMemEntry mem = 16;
-  MetricsNetEntry net = 17;
+  string time_id = 11;
+  map<string, string> labels = 12;
+  string group = 13;
+  string sgroup = 14;
+  MetricsCPUEntry cpu = 15;
+  MetricsIOEntry io = 16;
+  MetricsMemEntry mem = 17;
+  MetricsNetEntry net = 18;
 }
 
 message MetricsCPUEntry {

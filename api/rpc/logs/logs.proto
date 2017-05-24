@@ -30,9 +30,9 @@ message LogEntry {
   string task_id = 8;
   string stack_name = 9;
   string node_id = 10;
-  map<string, string> labels = 11;
-  string msg = 12;
-
+  string time_id = 11;
+  map<string, string> labels = 12;
+  string msg = 13;
 }
 
 message GetRequest {

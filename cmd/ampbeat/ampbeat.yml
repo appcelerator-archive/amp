@@ -61,3 +61,4 @@ output.elasticsearch:
 # To enable all selectors use ["*"]. Examples of other selectors are "beat",
 # "publish", "service".
 #logging.selectors: ["*"]
+logging.to_files: false
