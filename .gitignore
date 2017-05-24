@@ -25,3 +25,11 @@ ikt.vol.*
 # secrets
 *.pem
 platform/secrets/*
+
+# ampbeat
+cmd/ampbeat/build/
+cmd/ampbeat/config/config_test.go
+cmd/ampbeat/docs/
+cmd/ampbeat/tests/
+cmd/ampbeat/ampbeat.full.yml
+cmd/ampbeat/main_test.go
