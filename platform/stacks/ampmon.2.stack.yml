@@ -8,7 +8,7 @@ networks:
 services:
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG:-0.10.1}
+    image: appcelerator/ampbeat:${TAG:-0.11.0}
     networks:
       default:
         aliases:
@@ -25,7 +25,7 @@ services:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:5.3.1
+    image: appcelerator/kibana:5.3.2
     networks:
       default:
         aliases:
