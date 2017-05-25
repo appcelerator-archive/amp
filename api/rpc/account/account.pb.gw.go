@@ -20,10 +20,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/status"
 )
 
 var _ codes.Code
 var _ io.Reader
+var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
@@ -32,7 +34,7 @@ func request_Account_SignUp_0(ctx context.Context, marshaler runtime.Marshaler, 
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.SignUp(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -53,7 +55,7 @@ func request_Account_Verify_0(ctx context.Context, marshaler runtime.Marshaler, 
 
 	val, ok = pathParams["token"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "token")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "token")
 	}
 
 	protoReq.Token, err = runtime.String(val)
@@ -72,7 +74,7 @@ func request_Account_Login_0(ctx context.Context, marshaler runtime.Marshaler, c
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.Login(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -85,7 +87,7 @@ func request_Account_Switch_0(ctx context.Context, marshaler runtime.Marshaler, 
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.Switch(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -98,7 +100,7 @@ func request_Account_PasswordReset_0(ctx context.Context, marshaler runtime.Mars
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -110,7 +112,7 @@ func request_Account_PasswordReset_0(ctx context.Context, marshaler runtime.Mars
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -129,7 +131,7 @@ func request_Account_PasswordSet_0(ctx context.Context, marshaler runtime.Marsha
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.PasswordSet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -142,7 +144,7 @@ func request_Account_PasswordChange_0(ctx context.Context, marshaler runtime.Mar
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.PasswordChange(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -155,7 +157,7 @@ func request_Account_ForgotLogin_0(ctx context.Context, marshaler runtime.Marsha
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -167,7 +169,7 @@ func request_Account_ForgotLogin_0(ctx context.Context, marshaler runtime.Marsha
 
 	val, ok = pathParams["email"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "email")
 	}
 
 	protoReq.Email, err = runtime.String(val)
@@ -194,7 +196,7 @@ func request_Account_GetUser_0(ctx context.Context, marshaler runtime.Marshaler,
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -221,7 +223,7 @@ func request_Account_GetUserOrganizations_0(ctx context.Context, marshaler runti
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -257,7 +259,7 @@ func request_Account_DeleteUser_0(ctx context.Context, marshaler runtime.Marshal
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -276,7 +278,7 @@ func request_Account_CreateOrganization_0(ctx context.Context, marshaler runtime
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.CreateOrganization(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -289,7 +291,7 @@ func request_Account_AddUserToOrganization_0(ctx context.Context, marshaler runt
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -301,7 +303,7 @@ func request_Account_AddUserToOrganization_0(ctx context.Context, marshaler runt
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -328,7 +330,7 @@ func request_Account_RemoveUserFromOrganization_0(ctx context.Context, marshaler
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -339,7 +341,7 @@ func request_Account_RemoveUserFromOrganization_0(ctx context.Context, marshaler
 
 	val, ok = pathParams["user_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
 	}
 
 	protoReq.UserName, err = runtime.String(val)
@@ -358,7 +360,7 @@ func request_Account_ChangeOrganizationMemberRole_0(ctx context.Context, marshal
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -370,7 +372,7 @@ func request_Account_ChangeOrganizationMemberRole_0(ctx context.Context, marshal
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -381,7 +383,7 @@ func request_Account_ChangeOrganizationMemberRole_0(ctx context.Context, marshal
 
 	val, ok = pathParams["user_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
 	}
 
 	protoReq.UserName, err = runtime.String(val)
@@ -408,7 +410,7 @@ func request_Account_GetOrganization_0(ctx context.Context, marshaler runtime.Ma
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -444,7 +446,7 @@ func request_Account_DeleteOrganization_0(ctx context.Context, marshaler runtime
 
 	val, ok = pathParams["name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
 
 	protoReq.Name, err = runtime.String(val)
@@ -463,7 +465,7 @@ func request_Account_CreateTeam_0(ctx context.Context, marshaler runtime.Marshal
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -475,7 +477,7 @@ func request_Account_CreateTeam_0(ctx context.Context, marshaler runtime.Marshal
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -494,7 +496,7 @@ func request_Account_AddUserToTeam_0(ctx context.Context, marshaler runtime.Mars
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -506,7 +508,7 @@ func request_Account_AddUserToTeam_0(ctx context.Context, marshaler runtime.Mars
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -517,7 +519,7 @@ func request_Account_AddUserToTeam_0(ctx context.Context, marshaler runtime.Mars
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -544,7 +546,7 @@ func request_Account_RemoveUserFromTeam_0(ctx context.Context, marshaler runtime
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -555,7 +557,7 @@ func request_Account_RemoveUserFromTeam_0(ctx context.Context, marshaler runtime
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -566,7 +568,7 @@ func request_Account_RemoveUserFromTeam_0(ctx context.Context, marshaler runtime
 
 	val, ok = pathParams["user_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_name")
 	}
 
 	protoReq.UserName, err = runtime.String(val)
@@ -585,7 +587,7 @@ func request_Account_AddResourceToTeam_0(ctx context.Context, marshaler runtime.
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -597,7 +599,7 @@ func request_Account_AddResourceToTeam_0(ctx context.Context, marshaler runtime.
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -608,7 +610,7 @@ func request_Account_AddResourceToTeam_0(ctx context.Context, marshaler runtime.
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -639,7 +641,7 @@ func request_Account_RemoveResourceFromTeam_0(ctx context.Context, marshaler run
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -650,7 +652,7 @@ func request_Account_RemoveResourceFromTeam_0(ctx context.Context, marshaler run
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -660,7 +662,7 @@ func request_Account_RemoveResourceFromTeam_0(ctx context.Context, marshaler run
 	}
 
 	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Account_RemoveResourceFromTeam_0); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.RemoveResourceFromTeam(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -673,7 +675,7 @@ func request_Account_ChangeTeamResourcePermissionLevel_0(ctx context.Context, ma
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	var (
@@ -685,7 +687,7 @@ func request_Account_ChangeTeamResourcePermissionLevel_0(ctx context.Context, ma
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -696,7 +698,7 @@ func request_Account_ChangeTeamResourcePermissionLevel_0(ctx context.Context, ma
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -707,7 +709,7 @@ func request_Account_ChangeTeamResourcePermissionLevel_0(ctx context.Context, ma
 
 	val, ok = pathParams["resource_id"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_id")
 	}
 
 	protoReq.ResourceId, err = runtime.String(val)
@@ -734,7 +736,7 @@ func request_Account_GetTeam_0(ctx context.Context, marshaler runtime.Marshaler,
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -745,7 +747,7 @@ func request_Account_GetTeam_0(ctx context.Context, marshaler runtime.Marshaler,
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
@@ -772,7 +774,7 @@ func request_Account_ListTeams_0(ctx context.Context, marshaler runtime.Marshale
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -799,7 +801,7 @@ func request_Account_DeleteTeam_0(ctx context.Context, marshaler runtime.Marshal
 
 	val, ok = pathParams["organization_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "organization_name")
 	}
 
 	protoReq.OrganizationName, err = runtime.String(val)
@@ -810,7 +812,7 @@ func request_Account_DeleteTeam_0(ctx context.Context, marshaler runtime.Marshal
 
 	val, ok = pathParams["team_name"]
 	if !ok {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "team_name")
 	}
 
 	protoReq.TeamName, err = runtime.String(val)
