@@ -11,12 +11,13 @@ import { GraphBars} from '../services/graph-bars.service'
 import { GraphAreas } from '../services/graph-areas.service'
 import { GraphBubbles } from '../services/graph-bubbles.service'
 import { GraphCounter } from '../services/graph-counter.service'
+import { GraphLegend } from '../services/graph-legend.service'
 
 @Component({
   selector: 'app-dgraph',
   templateUrl: "./dgraph.component.html",
   styleUrls: ['./dgraph.component.css'],
-  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounter ]
+  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounter, GraphLegend ]
 
 
 })
@@ -32,6 +33,7 @@ export class DGraphComponent implements OnInit, OnDestroy {
   draggingWindow: boolean = false;
   resizer: Function;
   private serviceMap = {}
+  private svg : any
 
   constructor(
     public dashboardService : DashboardService,
@@ -42,7 +44,8 @@ export class DGraphComponent implements OnInit, OnDestroy {
     private graphAreas : GraphAreas,
     private graphBubbles : GraphBubbles,
     private graphText : GraphText,
-    private graphCounter : GraphCounter) {
+    private graphCounter : GraphCounter,
+    private graphLegend : GraphLegend) {
     this.serviceMap['text'] = graphText;
     this.serviceMap['pie'] = graphPie;
     this.serviceMap['lines'] = graphLines;
@@ -50,10 +53,12 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.serviceMap['areas'] = graphAreas;
     this.serviceMap['bubbles'] = graphBubbles;
     this.serviceMap['counter'] = graphCounter;
+    this.serviceMap['legend'] = graphLegend;
   }
 
   ngOnInit() {
-    this.serviceMap[this.graph.type].init(this.graph, this.chartContainer)
+    //this.serviceMap[this.graph.type].init(this.graph, this.chartContainer)
+    this.serviceMap[this.graph.type].createGraph(this.graph, this.chartContainer);
     this.dashboardService.onNewData.subscribe(
       () => {
         this.updateGraph();
@@ -71,22 +76,13 @@ export class DGraphComponent implements OnInit, OnDestroy {
     //this.metricsService.onNewData.unsubscribe()
   }
 
-  createGraph() {
-    this.serviceMap[this.graph.type].createGraph(this.graph, this.chartContainer)
-  }
-
-  clearGraph() {
-    this.serviceMap[this.graph.type].clearGraph()
-  }
-
   resizeGraph() {
-    this.serviceMap[this.graph.type].resizeGraph(this.graph, this.chartContainer)
+    this.serviceMap[this.graph.type].resizeGraph(this.graph)
   }
 
   updateGraph() {
     this.serviceMap[this.graph.type].updateGraph(this.graph)
   }
-
 
 //----------------------------------------------------------------------------
 // Edition mode
@@ -96,7 +92,9 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.draggingWindow = true;
     this.px = event.clientX;
     this.py = event.clientY;
-    this.dashboardService.selected = this.graph
+    if (this.graph.id != 'graph00') {
+      this.dashboardService.selected = this.graph
+    }
     //event.stopPropagation();
     return false
   }

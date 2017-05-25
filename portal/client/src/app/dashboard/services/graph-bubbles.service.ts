@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
+import { DashboardService } from './dashboard.service'
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
 import * as d3 from 'd3';
@@ -10,8 +11,9 @@ export class GraphBubbles {
   onNewData = new Subject();
   private margin: any = { top: 40, bottom: 30, left: 60, right: 20};
   private svg : any
-  private x : any;
-  private y : any;
+  private xScale : any;
+  private yScale : any;
+  private sScale : any;
   private xAxis: any;
   private yAxis: any;
   private legend : any
@@ -21,76 +23,134 @@ export class GraphBubbles {
   private chart: any;
   private width: number;
   private height: number;
+  data = []
 
   constructor(
     private httpService : HttpService,
-    private menuService : MenuService) { }
-
-  init(graph : Graph, chartContainer : any) {
-    this.createGraph(graph, chartContainer);
-    this.resizeGraph(graph, chartContainer);
-  }
+    private menuService : MenuService,
+    private dashboardService : DashboardService) { }
 
   destroy() {
     this.svg.selectAll("*").remove();
   }
 
-  createGraph(graph : Graph, chartContainer : any) {
-    // set the dimensions and margins of the graph
-    this.element = chartContainer.nativeElement;
-    //console.log("create parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
+  computeSize(graph : Graph) {
+    this.margin.top = graph.height * 0.10
+    this.margin.bottom = graph.height * 0.15
+    this.margin.left = graph.width * 0.15
+    this.margin.right = graph.width * 0.15
     this.width = graph.width - this.margin.left - this.margin.right;
     this.height = graph.height - this.margin.top - this.margin.bottom;
-    //console.log("create: "+this.graph.title+": "+this.width+","+this.height)
+  }
+
+  createGraph(graph : Graph, chartContainer : any) {
+    this.element = chartContainer.nativeElement;
+
+    this.computeSize(graph)
     this.svg = d3.select(this.element)
       .append('svg')
-        //.attr('width', this.element.offsetWidth)
-        //.attr('height', this.element.offsetHeight)
-        .attr('width',2000)// this.graph.width)
-        .attr('height', 2000)//this.graph.height)
-      .append("g")
-        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
-    //this.updateGraph()
+      .attr('width', 2000)//graph.width)
+      .attr('height', 2000)//graph.height)
+
     this.created=true
+    this.updateGraph(graph)
   }
 
-  clearGraph() {
-    this.svg.selectAll("*").remove();
-  }
-
-  resizeGraph(graph : Graph, chartContainer : any) {
+  resizeGraph(graph : Graph) {
     if (!this.created) {
       return
     }
-    this.element = chartContainer.nativeElement;
-    //console.log("resize parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
-    this.width = graph.width - this.margin.left - this.margin.right;
-    this.height = graph.height - this.margin.top - this.margin.bottom;
-    console.log("resize: "+graph.title+": "+this.width+","+this.height)
-    d3.select('svg')
-      //.attr('width', this.element.offsetWidth)
-      //.attr('height', this.element.offsetHeight)
-      .attr('width', graph.width)
-      .attr('height', graph.height)
-    //d3.select("g").attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+    this.computeSize(graph)
     this.updateGraph(graph)
   }
 
   updateGraph(graph : Graph) {
-    this.chart = this.svg.append('g')
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+    this.data = this.dashboardService.getCurrentData(graph)
 
-    if (graph.title != '') {
+    this.svg.selectAll("*").remove();
+
+    this.xScale = d3.scaleLinear()
+      .range([0, this.width])
+    this.yScale = d3.scaleLinear()
+      .range([this.height, 0]);
+
+    this.xScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleXField]; })]);
+    this.yScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleYField]; })]);
+
+    //let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
+    let fontSize = this.height/10
+    let dx = this.margin.left
+    let dy = this.margin.top
+
+    this.xAxis = this.svg.append('g')
+      .attr('class', 'axis axis-x')
+      .attr('transform', "translate(" + [dx, this.height+dy] +")")
+      .call(d3.axisBottom(this.xScale))
+      .style("font-size", fontSize/2+'px')
+
+    this.yAxis = this.svg.append('g')
+      .attr('class', 'axis axis-y')
+      .attr('transform', "translate(" + [dx, dy] +")")
+      .call(d3.axisLeft(this.yScale))
+      .style("font-size", fontSize/2+'px')
+
+    let ethis=this
+
+    let d=0
+    let size = 400
+    if (graph.bubbleScale == 'large') {
+      size = size*2
+    }
+    if (graph.bubbleScale == 'small') {
+      size = size/2
+    }
+    if (graph.bubbleSizeField != 'none') {
+      this.sScale = d3.scaleLinear().range([0, size]);
+      this.sScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleSizeField]; })]);
+    }
+    for (let dat of this.data) {
+      d++
+      let x = this.xScale(dat.values[graph.bubbleXField])+dx
+      let y = this.yScale(dat.values[graph.bubbleYField])+dy
+      let s = size
+      if (graph.bubbleSizeField != 'none') {
+        s = Math.sqrt(this.sScale(dat.values[graph.bubbleSizeField]))
+      }
+      this.svg.append('circle')
+        .attr('class', 'circle')
+        .attr('r', s)
+        .attr("transform", "translate(" + [x, y] + ")")
+        .style('fill', ethis.dashboardService.getObjectColor(graph.object, dat.group))
+        .style("stroke", 'black')
+    }
+
+    if (graph.title) {
+      let xt = -5
+      let anchor = 'left'
+      if (graph.centerTitle) {
+        xt = (this.width)/2;
+        anchor = 'middle'
+      }
       this.svg.append("text")
        .attr("class", "wtitle")
-       .attr("transform", "translate(-"+(this.margin.left-5)+",-"+(this.margin.top-10)+")")
-       .style("text-anchor", "left")
+       .attr("transform", "translate(" + [xt+dx,dy-this.margin.top] + ")")
+       .attr("dy", "1em")
+       .style("text-anchor", anchor)
+       .style("font-size", fontSize+'px')
        .text(graph.title);
-    }
-  }
+     }
 
+     graph.yTitle = this.dashboardService.yTitleMap[graph.field]
+     if (graph.yTitle) {
+       this.svg.append("text")
+         .attr("class", "y-title")
+         .attr("transform", "rotate(-90)")
+         .attr("y", dx - this.margin.left)
+         .attr("x", dy - (this.height+this.margin.top+this.margin.bottom) / 2)
+         .attr("dy", "1em")
+         .style("text-anchor", "middle")
+         .style("font-size", fontSize*2/3+'px')
+         .text(graph.yTitle);
+       }
+   }
 }

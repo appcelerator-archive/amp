@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Input, ViewEncapsu
 import * as d3 from 'd3';
 import { MetricsService } from '../../services/metrics.service';
 import { MenuService } from '../../../services/menu.service';
-import { GraphHistoricData } from '../../models/graph-historic-data.model';
+import { GraphHistoricData } from '../../../models/graph-historic-data.model';
 import { GraphLine } from '../../models/graph-line.model';
 import { Graph } from '../../../models/graph.model';
 
@@ -68,16 +68,11 @@ export class LinesComponent implements OnInit, OnDestroy {
   createGraph() {
     // set the dimensions and margins of the graph
     this.element = this.chartContainer.nativeElement;
-    //console.log("create parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
     this.width = this.graph.width - this.margin.left - this.margin.right;
     this.height = this.graph.height - this.margin.top - this.margin.bottom;
     //console.log("create: "+this.graph.title+": "+this.width+","+this.height)
     this.svg = d3.select(this.element)
       .append('svg')
-        //.attr('width', this.element.offsetWidth)
-        //.attr('height', this.element.offsetHeight)
         .attr('width',2000)// this.graph.width)
         .attr('height', 2000)//this.graph.height)
       .append("g")
@@ -92,18 +87,11 @@ export class LinesComponent implements OnInit, OnDestroy {
       return
     }
     this.element = this.chartContainer.nativeElement;
-    //console.log("resize parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
     this.width = this.graph.width - this.margin.left - this.margin.right;
     this.height = this.graph.height - this.margin.top - this.margin.bottom;
-    //console.log("resize: "+this.graph.title+": "+this.width+","+this.height)
     d3.select('svg')
-      //.attr('width', this.element.offsetWidth)
-      //.attr('height', this.element.offsetHeight)
       .attr('width', this.graph.width)
       .attr('height', this.graph.height)
-    //d3.select("g").attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
     this.updateGraph()
   }
 
@@ -250,11 +238,6 @@ export class LinesComponent implements OnInit, OnDestroy {
       this.removeSelected()
       this.selectedLine = yy
       this.focus.style('display', null)
-      //console.log("mouse: "+pt[0]+","+pt[1])
-      //console.log("pointe: "+eptx+","+epty)
-      //console.log(dist2)
-      //console.log(Math.sqrt(dist2))
-      //console.log("line="+yy)
       let valueLine = d3.line<GraphHistoricData>()
           .x((d: GraphHistoricData) => { return this.x(d.date); })
           .y((d: GraphHistoricData) => { return this.y(d.graphValues[yy]); })

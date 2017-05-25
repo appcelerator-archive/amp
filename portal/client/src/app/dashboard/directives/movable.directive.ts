@@ -1,5 +1,5 @@
-import { Directive, EventEmitter, ElementRef, OnInit } from '@angular/core';
-
+import { Directive, EventEmitter, ElementRef, OnInit, Input } from '@angular/core';
+import { Graph } from '../../models/graph.model'
 
 @Directive({
   selector: '[graphMovable]',
@@ -21,6 +21,7 @@ import { Directive, EventEmitter, ElementRef, OnInit } from '@angular/core';
 })
 
 export class MovableDirective implements OnInit {
+  @Input() graph: Graph;
   private keys: Array<number> = [37, 38, 39, 40];
   private clienty0 = 0
   private clientx0 = 0
@@ -52,8 +53,13 @@ export class MovableDirective implements OnInit {
 
   onMouseMove($event) {
     if (this.movable) {
-      this.eRef.nativeElement.style.left = (($event.clientX - this.clientx0) + this.graphx0) + 'px';
-      this.eRef.nativeElement.style.top = (($event.clientY - this.clienty0) + this.graphy0) + 'px';
+      if (!this.graph) {
+        this.eRef.nativeElement.style.left = (($event.clientX - this.clientx0) + this.graphx0) + 'px';
+        this.eRef.nativeElement.style.top = (($event.clientY - this.clienty0) + this.graphy0) + 'px';
+      } else {
+        this.graph.x = (($event.clientX - this.clientx0) + this.graphx0);
+        this.graph.y = (($event.clientY - this.clienty0) + this.graphy0);
+      }
     }
   }
 

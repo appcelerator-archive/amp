@@ -1,4 +1,4 @@
-import { GraphHistoricData } from './graph-historic-data.model'
+import { GraphHistoricData } from '../../models/graph-historic-data.model'
 import { GraphLine} from './graph-line.model'
 
 export class GraphDataAnswer {

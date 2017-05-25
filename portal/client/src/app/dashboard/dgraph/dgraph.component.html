@@ -1,4 +1,5 @@
-<div id='dgraph' #chart
+<div class='dgraph' #chart
+  style="overflow:hidden"
   [class.graph-selected]="dashboardService.selected.id==graph.id"
   [class.graph-not-selected]="dashboardService.selected.id!=graph.id"
   [class.graph-border]="graph.border"

@@ -3,9 +3,12 @@ import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
+import { GraphColors } from '../models/graph-colors.model';
 import { StatsRequest } from '../../models/stats-request.model';
 import { StatsRequestItem } from '../models/stats-request-item.model';
-import { GraphStats } from '../../models/graph-stats.model'
+import { GraphCurrentData } from '../../models/graph-current-data.model'
+import { GraphHistoricData } from '../../models/graph-historic-data.model'
+import { GraphHistoricAnswer } from '../../models/graph-historic-answer.model'
 import * as d3 from 'd3';
 
 @Injectable()
@@ -15,20 +18,22 @@ export class DashboardService {
     onNewData = new Subject<string>();
     onGraphSelect = new Subject<Graph>()
     yTitleMap = {}
-    x0 = 20
-    y0 = 20
+    x0 = 280
+    y0 = 5
     w0 = 300
     h0 = 150
     refresh : number = 30
-    period : string = '2m'
+    period : string = 'now-2m'
     timer : any
     requestMap = {}
     nbGraph = 1
     public showEditor = false;
     public showAlert = false;
-    public graphColors = []
-    editorGraph : Graph = new Graph(1, this.x0, this.y0, this.w0, this.h0, 'editor', [''], '','')
-    public notSelected : Graph = new Graph(0, 0, 0, 0, 0, "", [], "","")
+    public graphColors = ['DodgerBlue', 'slateblue', 'blue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red']
+    public graphObjectColorMap : { [name:string]: GraphColors; } = {}
+    public nodeColorIndex = 0
+    public editorGraph : Graph = new Graph('graph1', this.x0, this.y0, this.w0, this.h0, 'editor','')
+    public notSelected : Graph = new Graph('', 0, 0, 0, 0, "", "")
     public selected : Graph = this.notSelected
 
   constructor(
@@ -37,6 +42,10 @@ export class DashboardService {
       for (let i=0;i<20;i++) {
         this.graphColors.push(d3.interpolateCool(Math.random()))
       }
+      this.graphObjectColorMap['stack'] = new GraphColors('stack')
+      this.graphObjectColorMap['service'] = new GraphColors('service')
+      this.graphObjectColorMap['container'] = new GraphColors('container')
+      this.graphObjectColorMap['node'] = new GraphColors('node')
       this.notSelected.title = ""
       this.notSelected.object="stack"
       this.notSelected.field="cpu-usage"
@@ -58,7 +67,13 @@ export class DashboardService {
       this.cancelRequests()
       this.timer = setInterval(() => this.executeRequests(), this.refresh * 1000)
       this.menuService.onRefreshClicked.subscribe(
-        () => this.executeRequests()
+        () => {
+          for (let key in this.graphObjectColorMap) {
+            this.graphObjectColorMap[key].clear()
+          }
+          this.executeRequests()
+          this.onNewData.next()
+        }
       )
     }
 
@@ -69,21 +84,45 @@ export class DashboardService {
     }
   }
 
-  addGraph(type : string) {
-    this.x0 += 20
-    this.y0 += 20
+  addGraph(type : string, offTop : number, offLeft : number) {
     this.nbGraph++;
-    let graph = new Graph(this.nbGraph, this.x0, this.y0, this.w0, this.h0, type, [''], "essai de titre",'')
+    let graph = new Graph('graph'+this.nbGraph, this.x0-offLeft, this.y0-offTop, this.w0, this.h0, type, '')
+    this.x0 += 2
+    this.y0 += 2
     if (graph.type == "pie") {
       graph.width = graph.height
     }
     graph.title = this.notSelected.title
     graph.object = this.notSelected.object
     graph.field = this.notSelected.field
-    graph.border = this.notSelected.border
+    if (graph.type == 'counter') {
+      graph.field = 'number'
+    }
+    if (graph.type == 'lines' || graph.type == 'areas') {
+      graph.histoPeriod = 'now-10m'
+    }
+    if (graph.type == 'bubbles') {
+      graph.bubbleXField = 'mem-usage'
+      graph.bubbleYField = 'cpu-usage'
+      graph.bubbleSizeField = 'net-total-bytes'
+      graph.bubbleScale = 'medium'
+      graph.topNumber = 0
+    }
+    if (graph.type == 'areas') {
+      graph.stackedAreas = true
+    }
     this.graphs.push(graph)
     this.addRequest(graph)
     this.onNewData.next()
+  }
+
+  addLegend(object : string) {
+    this.x0 += 2
+    this.y0 += 2
+    this.nbGraph++;
+    let graph = new Graph('graph'+this.nbGraph, this.x0, this.y0, this.w0*2/3, this.h0, "legend", "Legend "+object+"s")
+    graph.object=object
+    this.graphs.push(graph)
   }
 
   removeSelectedGraph() {
@@ -94,6 +133,19 @@ export class DashboardService {
       }
     }
     this.graphs = list
+    delete this.requestMap[this.selected.requestId];
+    this.selected = this.notSelected
+  }
+
+  toggleEditor(offsetTop : number, offsetLeft : number) {
+    if (this.showEditor) {
+      this.showEditor = false
+    } else {
+      this.showEditor = true
+      console.log(offsetTop)
+      this.editorGraph.x = -offsetLeft
+      this.editorGraph.y = -offsetTop
+    }
   }
 
   getTopLabel() : string {
@@ -103,14 +155,38 @@ export class DashboardService {
     return 'top'+this.selected.topNumber
   }
 
+  getObjectColor(object : string, name : string) : string {
+    let col = "black"
+    let colorObject = this.graphObjectColorMap[object]
+    if (colorObject) {
+      col = colorObject.getColor(name)
+      if (!col) {
+        col = this.graphColors[colorObject.getIndex()]
+        colorObject.setColor(name, col)
+      }
+    }
+    return col
+  }
+
   setRefreshPeriod(refresh : number) {
     this.refresh = refresh;
     this.cancelRequests()
-    this.timer = setInterval(() => this.executeRequests(), this.refresh * 1000)
+    this.timer = setInterval(() => {
+      this.menuService.onRefreshClicked.next()},
+      this.refresh * 1000)
   }
 
   setPeriod(period : string) {
     this.period = period;
+    for (let id in this.requestMap) {
+      let req = this.requestMap[id]
+      if (req) {
+        console.log(req)
+        req.period = period
+      }
+    }
+    this.menuService.onRefreshClicked.next()
+    //this.executeRequests()
   }
 
   setObject(name : string) {
@@ -136,6 +212,11 @@ export class DashboardService {
     this.onNewData.next()
   }
 
+  setTitleCenter(val : boolean) {
+    this.selected.centerTitle = val
+    this.onNewData.next()
+  }
+
   setAlert(val : boolean) {
     this.selected.alert = val;
     this.onNewData.next()
@@ -155,9 +236,71 @@ export class DashboardService {
     this.onNewData.next()
   }
 
+  setCriterion(name: string) {
+    this.selected.criterion = name
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
   setCriterionValue(val : string) {
     this.selected.criterionValue = val
     this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setHistoPeriod(val : string) {
+    this.selected.histoPeriod = val
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setBubbleXField(name : string) {
+    this.selected.bubbleXField = name
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setBubbleYField(name : string) {
+    this.selected.bubbleYField = name
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setBubbleSizeField(name : string) {
+    this.selected.bubbleSizeField = name
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setBubbleScale(name : string) {
+    this.selected.bubbleScale = name
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setStackedAreas(val : boolean) {
+    this.selected.stackedAreas = val
+    if (val) {
+      this.selected.percentAreas = false
+    }
+    this.onNewData.next()
+  }
+
+  setPercentAreas(val : boolean) {
+    this.selected.percentAreas = val
+    if (val) {
+      this.selected.stackedAreas = false
+    }
+    this.onNewData.next()
+  }
+
+  setTransparentLegend(val : boolean) {
+    this.selected.transparentLegend = val
+    this.onNewData.next()
+  }
+
+  setRemoveLocalLegend(val : boolean) {
+    this.selected.removeLocalLegend = val
     this.onNewData.next()
   }
 
@@ -169,6 +312,7 @@ export class DashboardService {
   }
 
   executeRequests() {
+    console.log("nbRequest: "+Object.keys(this.requestMap).length)
     for (let id in this.requestMap) {
       this.executeRequest(this.requestMap[id])
     }
@@ -178,28 +322,39 @@ export class DashboardService {
     if (!req) {
       return
     }
-    console.log("execute request: "+req.request.group)
-    console.log(req.request)
-    this.httpService.statsCurrent(req.request).subscribe(
-      (data) => {
-        req.result = data
-        this.onNewData.next(req.id)
-      },
-      (err) => {
-        console.log("request error")
-        console.log(err)
-      }
-    )
+    if (!req.request.time_group) {
+      this.httpService.statsCurrent(req.request).subscribe(
+        (data) => {
+          req.currentResult = data
+          req.historicResult = []
+          this.onNewData.next(req.id)
+        },
+        (err) => {
+          console.log("request error")
+          console.log(err)
+        }
+      )
+    } else {
+      this.httpService.statsHistoric(req.request).subscribe(
+        (data) => {
+          req.historicResult = data
+          req.currentResult = []
+          this.onNewData.next(req.id)
+        },
+        (err) => {
+          console.log("request error")
+          console.log(err)
+        }
+      )
+    }
   }
 
   addRequest(graph : Graph) : string {
+    if (graph.type == "legend") {
+      return
+    }
     if (graph.title == '' || graph.title == 'stacks' || graph.title == 'services' || graph.title == 'containers' || graph.title == 'nodes') {
       graph.title = graph.object+'s'
-    }
-    let item = this.requestMap[graph.object]
-    if (item) {
-      graph.requestId = item.id;
-      return
     }
     let req = new StatsRequest()
     if (graph.object == "stack") {
@@ -214,22 +369,25 @@ export class DashboardService {
       return
     }
 
-    req.period = "now-2m"
+    req.period = this.period
+    if (graph.type == 'lines' || graph.type == 'areas') {
+      req.time_group = this.period.substring(4);
+      req.period = graph.histoPeriod
+    }
     req.stats_cpu = true
     req.stats_mem = true
     req.stats_net = true
     req.stats_io = true
-    console.log(graph)
-    if (graph.object == 'stack') {
+    if (graph.criterion == 'stack_name') {
       req.filter_stack_name = graph.criterionValue
-    } else if (graph.object == 'service') {
+    } else if (graph.criterion == 'service_name') {
       req.filter_service_name = graph.criterionValue
-    } else if (graph.object == 'container') {
+    } else if (graph.criterion == 'container_id') {
       req.filter_container_id = graph.criterionValue
-    } else if (graph.object == 'node') {
+    } else if (graph.criterion == 'node_id') {
       req.filter_node_id = graph.criterionValue
     }
-    let id = graph.object+"-"+graph.criterionValue
+    let id = graph.id
     let newItem = new StatsRequestItem(id, req)
     newItem.subscriberNumber=1
     this.requestMap[id]=newItem
@@ -238,26 +396,23 @@ export class DashboardService {
     return id;
   }
 
-  getData(graph : Graph) : GraphStats[] {
-    if (!graph.requestId) {
-      return []
-    }
-    let item = this.requestMap[graph.requestId]
+  getCurrentData(graph : Graph) : GraphCurrentData[] {
+    let item = this.requestMap[graph.id]
     if (!item) {
       return []
     }
-    if (!item.result) {
+    if (!item.currentResult) {
       return []
     }
-    let list = this.sortByField(item.result, graph.field)
-    if (graph.topNumber == 0) {
-      return list
+    this.sortCurrentByField(item.currentResult, graph.field)
+    if (graph.topNumber == 0 || graph.type == 'counter') {
+      return item.currentResult
     }
-    return list.slice(0, graph.topNumber)
+    return item.currentResult.slice(0, graph.topNumber)
   }
 
-  sortByField(data : GraphStats[], field : string) : GraphStats[] {
-    return data.sort((a, b) => {
+  sortCurrentByField(data : GraphCurrentData[], field : string) {
+    data.sort((a, b) => {
       if (a.values[field] < b.values[field]) {
         return 1;
       }
@@ -265,26 +420,57 @@ export class DashboardService {
     })
   }
 
-  isVisible(type : string) {
-    if (type == 'object' || type == 'field') {
-      if (this.selected.type != 'text') {
-        return true
-      }
-      return false
+  getHistoricData(graph : Graph) : GraphHistoricAnswer {
+    let item = this.requestMap[graph.id]
+    if (!item) {
+      return new GraphHistoricAnswer([], [])
     }
-    if (type == 'top') {
-      if (this.selected.type != 'text' && this.selected.type != 'counter') {
-        return true
-      }
-      return false;
+    if (!item.historicResult) {
+      return new GraphHistoricAnswer([], [])
     }
-    if (type == 'alert' || type == 'criterion' || type == 'criterionValue') {
-      if (this.selected.type == 'counter') {
-        return true
+    //let list = this.sortHistoricByField(item.historicResult, graph.field)
+    let dateMap = {}
+    let list : GraphHistoricData[] = []
+    let names : string[] = []
+    let nameMap = {}
+    for (let dat of item.historicResult) {
+      let pdata = dateMap[dat.sdate]
+      if (!pdata) {
+        pdata = new GraphHistoricData(dat.date)
+        dateMap[dat.sdate] = pdata
+        list.push(pdata)
       }
-      return false
+      let max = nameMap[dat.name]
+      if (!max) {
+        names.push(dat.name)
+        nameMap[dat.name]=dat.values[graph.field]
+      } else if (dat.values[graph.field] > max) {
+        nameMap[dat.name]=dat.values[graph.field]
+      }
+      pdata.graphValues.push(dat.values[graph.field])
     }
-    return false
+    if (graph.topNumber > 0) {
+      names = names.slice(0, graph.topNumber)
+      for (let dat of list) {
+        dat.graphValues = dat.graphValues.slice(0, graph.topNumber)
+      }
+    }
+    return new GraphHistoricAnswer(names, list)
+  }
+
+  clear() {
+    this.requestMap = {}
+    this.graphs = []
+    this.selected = this.notSelected
+    this.nbGraph = 1
+  }
+
+  save() {
+
+  }
+
+  load() {
+
   }
 
 }

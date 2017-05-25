@@ -1,12 +1,13 @@
 
 import { StatsRequest } from '../../models/stats-request.model'
-import { GraphStats } from '../../models/graph-stats.model'
-
+import { GraphCurrentData } from '../../models/graph-current-data.model'
+import { GraphHistoricData } from '../../models/graph-historic-data.model'
 
 export class StatsRequestItem {
   public id : string
   public request : StatsRequest
-  public result : GraphStats[]
+  public currentResult : GraphCurrentData[]
+  public historicResult : GraphHistoricData[]
   public subscriberNumber : number
 
 

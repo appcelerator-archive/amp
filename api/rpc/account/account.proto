@@ -19,6 +19,7 @@ service Account {
       post: "/v1/verify/{token}"
     };
   };
+  
   rpc Login (LogInRequest) returns (LogInAnswer) {
     option (google.api.http) = {
       post: "/v1/login",

@@ -28,61 +28,47 @@ export class GraphText {
     private menuService : MenuService,
     private dashboardService : DashboardService) { }
 
-  init(graph : Graph, chartContainer : any) {
-    this.createGraph(graph, chartContainer);
-    this.resizeGraph(graph, chartContainer);
-  }
 
   destroy() {
     this.svg.selectAll("*").remove();
   }
 
-  createGraph(graph : Graph, chartContainer : any) {
-    this.element = chartContainer.nativeElement;
+  computeSize(graph : Graph) {
     this.width = graph.width - this.margin.left - this.margin.right;
     this.height = graph.height - this.margin.top - this.margin.bottom;
+  }
+
+  createGraph(graph : Graph, chartContainer : any) {
+    this.element = chartContainer.nativeElement;
+    this.computeSize(graph)
     this.svg = d3.select(this.element)
       .append('svg')
-        .attr('width',2000)
-        .attr('height', 2000)
-      .append("g")
-        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+      .attr('width', 2000)//graph.width)
+      .attr('height', 2000)//graph.height)
     this.created=true
+    this.updateGraph(graph)
   }
 
-  clearGraph() {
-    this.svg.selectAll("*").remove();
-  }
-
-  resizeGraph(graph : Graph, chartContainer : any) {
+  resizeGraph(graph : Graph) {
     if (!this.created) {
       return
     }
-    this.svg.selectAll("*").remove();
-    this.element = chartContainer.nativeElement;
-    this.width = graph.width - this.margin.left - this.margin.right;
-    this.height = graph.height - this.margin.top - this.margin.bottom;
-    //console.log("resize: "+graph.title+": "+this.width+","+this.height)
-    d3.select('svg')
-      .attr('width', graph.width)
-      .attr('height', graph.height)
+    this.computeSize(graph)
     this.updateGraph(graph)
   }
 
   updateGraph(graph : Graph) {
-    this.chart = this.svg.append('g')
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
-
-  if (graph.title != '') {
-    let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
-    this.svg.append("text")
-      .text(graph.title)
-      .style("text-anchor", "middle")
-      .attr("transform", "translate("+(this.width/2)+","+(this.height/2)+")")
-      .style("font-size",this.width/wwt*10*0.90 +"px")
-      //.style("font-size", (this.width / this.getComputedTextLength() *24) + "px"; })
-      .attr("dy", ".35em");
+    this.svg.selectAll("*").remove();
+    if (graph.title) {
+      let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
+      this.svg.append("text")
+        .text(graph.title)
+        .style("text-anchor", "middle")
+        .attr("transform", "translate("+[this.width/2+this.margin.left, this.height/2+this.margin.top]+")")
+        .style("font-size",this.width/wwt*10*0.90 +"px")
+        //.style("font-size", (this.width / this.getComputedTextLength() *24) + "px"; })
+        .attr("dy", ".35em");
+    }
   }
-}
 
 }
