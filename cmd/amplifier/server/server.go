@@ -15,7 +15,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	kv "github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
@@ -46,7 +45,6 @@ type Amplifier struct {
 // Service initializers register the services with the grpc server
 var serviceInitializers = []serviceInitializer{
 	registerVersionServer,
-	registerStorageServer,
 	registerLogsServer,
 	registerStackServer,
 	registerStatsServer,
@@ -124,12 +122,6 @@ func registerLogsServer(amp *Amplifier, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
 		ES: amp.es,
 		NS: amp.ns,
-	})
-}
-
-func registerStorageServer(amp *Amplifier, s *grpc.Server) {
-	kv.RegisterStorageServer(s, &kv.Server{
-		Store: amp.store,
 	})
 }
 

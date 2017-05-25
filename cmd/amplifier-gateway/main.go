@@ -12,7 +12,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/appcelerator/amp/api/rpc/storage"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -76,9 +75,6 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := node.RegisterNodeHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
-		log.Fatal(err)
-	}
-	if err := storage.RegisterStorageHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 	if err := version.RegisterVersionHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
