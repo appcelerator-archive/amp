@@ -1,5 +1,5 @@
 
-export class GraphStats {
+export class GraphCurrentData {
   public group : string
   public values: { [name:string]: number; }
 

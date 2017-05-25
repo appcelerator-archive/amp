@@ -1,9 +1,12 @@
 
-#dgraph {
+.dgraph {
     position: absolute;
     cursor:move;
     background-color: white;
-    overflow: hidden;
+}
+
+.graph-transparent {
+  opacity: .50;
 }
 
 .dgraph-corner-resize {

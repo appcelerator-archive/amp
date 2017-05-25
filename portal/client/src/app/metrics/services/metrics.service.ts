@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GraphHistoricData } from '../models/graph-historic-data.model';
+import { GraphHistoricData } from '../../models/graph-historic-data.model';
 import { StatsRequest } from '../../models/stats-request.model';
 import { GraphDataAnswer } from '../models/graph-data-answer.model';
 import { GraphLine} from '../models/graph-line.model';
@@ -64,7 +64,7 @@ export class MetricsService {
         for (let field of fields) {
           ret.push(ele.values[field])
         }
-        let newEle = new GraphHistoricData(ele.date, '', undefined)
+        let newEle = new GraphHistoricData(ele.date)
         newEle.graphValues = ret
         data.push(newEle)
       })
@@ -76,7 +76,7 @@ export class MetricsService {
         let localLineRefMap = {}
         this.histoData.forEach( (ele : GraphHistoricData) => {
           if (date.getTime() !== ele.date.getTime()) {
-            let newEle = new GraphHistoricData(ele.date, '', undefined)
+            let newEle = new GraphHistoricData(ele.date)
             newEle.graphValues = ret
             data.push(newEle)
             date = ele.date
@@ -94,7 +94,7 @@ export class MetricsService {
             }
           }
         })
-        let newEle = new GraphHistoricData(date, '', undefined)
+        let newEle = new GraphHistoricData(date)
         newEle.graphValues = ret
         data.push(newEle)
       }
@@ -106,7 +106,7 @@ export class MetricsService {
   }
 
   updateHistoricData() {
-    this.httpService.statsHisto(this.statsRequest).subscribe(
+    this.httpService.statsHistoric(this.statsRequest).subscribe(
       data => {
         this.histoData = data
         //console.log(data)

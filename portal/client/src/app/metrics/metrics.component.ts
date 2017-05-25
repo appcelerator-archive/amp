@@ -29,10 +29,26 @@ export class MetricsComponent implements OnInit, OnDestroy {
     public metricsService : MetricsService,
     private route: ActivatedRoute,
     private dockerStacksService : DockerStacksService) {
-      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['cpu-usage'], "cpu", "usage %"))
-      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['mem-usage'], "memory", "usage MB"))
-      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['net-total-bytes'], "network", "total bytes"))
-      this.graphs.push(new Graph(0, 0, 0, 0, 0, "", ['io-total'], "disk io", "total bytes"))
+      let graph_nw = new Graph('', 0, 0, 0, 0, "lines", "cpu")
+      graph_nw.fields = ['cpu-usage']
+      graph_nw.yTitle = "usage %"
+      this.graphs.push(graph_nw)
+
+      let graph_ne = new Graph('', 0, 0, 0, 0, "lines", "memory")
+      graph_ne.fields = ['mem-usage']
+      graph_ne.yTitle = "usage MB"
+      this.graphs.push(graph_ne)
+
+      let graph_sw = new Graph('', 0, 0, 0, 0, "lines", "network")
+      graph_sw.fields = ['net-total-bytes']
+      graph_sw.yTitle = "total bytes"
+      this.graphs.push(graph_sw)
+
+      let graph_se= new Graph('', 0, 0, 0, 0, "lines", "disk io")
+      graph_se.fields = ['io-total']
+      graph_se.yTitle = "total bytes"
+      this.graphs.push(graph_se)
+
       this.resizeGraphs(this.menuService.appWindow)
     }
 

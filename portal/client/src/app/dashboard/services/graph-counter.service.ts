@@ -4,7 +4,7 @@ import { MenuService } from '../../services/menu.service';
 import { DashboardService } from './dashboard.service'
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
-import { GraphStats } from '../../models/graph-stats.model';
+import { GraphCurrentData } from '../../models/graph-current-data.model';
 import * as d3 from 'd3';
 
 @Injectable()
@@ -31,21 +31,6 @@ export class GraphCounter {
     private menuService : MenuService,
     private dashboardService : DashboardService) { }
 
-  init(graph : Graph, chartContainer : any) {
-    this.createGraph(graph, chartContainer);
-    this.dashboardService.onNewData.subscribe(
-      () => {
-        this.updateGraph(graph);
-      }
-    )
-    this.menuService.onWindowResize.subscribe(
-      (win) => {
-        this.svg.selectAll("*").remove();
-        this.resizeGraph(graph, chartContainer)
-      }
-    );
-  }
-
   destroy() {
     this.svg.selectAll("*").remove();
   }
@@ -65,41 +50,36 @@ export class GraphCounter {
     this.computeSize(graph)
     this.svg = d3.select(this.element)
       .append('svg')
-        .attr('width', graph.width)
-        .attr('height', graph.height)
-      .append("g")
-        .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
+      .attr('width', 2000)//graph.width)
+      .attr('height', 2000)//graph.height)
 
     this.created=true
     this.updateGraph(graph)
   }
 
-  resizeGraph(graph : Graph, chartContainer : any) {
+  resizeGraph(graph : Graph) {
     if (!this.created) {
       return
     }
-    this.element = chartContainer.nativeElement;
     this.computeSize(graph)
-    //console.log("resize: "+graph.title+": "+this.width+","+this.height)
-    d3.select('svg')
-      .attr('width', graph.width)
-      .attr('height', graph.height)
-    d3.select("g").attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
     this.updateGraph(graph)
   }
 
   updateGraph(graph : Graph)
   {
-    this.data = this.dashboardService.getData(graph)
+    this.data = this.dashboardService.getCurrentData(graph)
 
     this.svg.selectAll("*").remove();
     let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
+
     let fontSize = this.width/wwt*7*0.90;
+    let dx = this.margin.left
+    let dy = this.margin.top
 
     if (graph.title != '') {
       this.svg.append("text")
        .attr("class", "wtitle")
-       .attr("transform", "translate("+this.width/2+","+this.height/2+")")
+       .attr("transform", "translate("+ [this.width/2+dx, this.height/2+dy] + ")")
        .style("text-anchor", "middle")
        .attr("dy", "-.36em")
        .style("font-size", fontSize+'px')
@@ -107,9 +87,10 @@ export class GraphCounter {
      }
 
      if (this.data.length>0) {
-       let val = Math.floor(this.data[0].values[graph.field])
-
-
+       let val = this.data.length
+       if (graph.field != 'number') {
+         val = Math.floor(this.data[0].values[graph.field])
+       }
        let dec = ".75em"
        if (graph.title == "") {
          dec = ".34em"
@@ -119,7 +100,7 @@ export class GraphCounter {
 
        this.svg.append("text")
         .attr("class", "wtitle")
-         .attr("transform", "translate("+this.width/2+","+this.height/2+")")
+         .attr("transform", "translate(" + [this.width/2+dx, this.height/2+dy] + ")")
         .style("text-anchor", "middle")
         .attr("dy", dec)
         .style("font-size", fontSize+'px')
@@ -136,7 +117,7 @@ export class GraphCounter {
           this.svg.append("rect")
             .attr('width', this.width+this.margin.left+this.margin.right)
             .attr('height', this.height+this.margin.top+this.margin.bottom)
-            .attr("transform", "translate(-"+this.margin.left+",-"+this.margin.top+")")
+            .attr("transform", "translate(" + [0,0] +")")
             .attr('stroke', 'lightgrey')
             .style('fill', color)
             .attr('fill-opacity', 0.4)

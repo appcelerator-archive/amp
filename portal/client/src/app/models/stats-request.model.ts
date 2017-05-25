@@ -20,4 +20,5 @@ export class StatsRequest {
 
   constructor() {
   }
+  
 }

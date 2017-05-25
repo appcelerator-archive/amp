@@ -13,11 +13,11 @@ import { DockerStack } from '../docker-stacks/models/docker-stack.model';
 import { DockerService } from '../docker-stacks/models/docker-service.model';
 import { DockerContainer } from '../docker-stacks/models/docker-container.model';
 import { StatsRequest } from '../models/stats-request.model';
-import { GraphHistoricData } from '../metrics/models/graph-historic-data.model';
+import { GraphHistoricData } from '../models/graph-historic-data.model';
+import { GraphCurrentData } from '../models/graph-current-data.model';
 import { LogsRequest } from '../logs/models/logs-request.model';
 import { Log } from '../logs/models/log.model';
 import { Node } from '../nodes/models/node.model';
-import { GraphStats } from '../models/graph-stats.model';
 import * as d3 from 'd3';
 import 'rxjs/add/operator/retrywhen';
 import 'rxjs/add/operator/scan';
@@ -76,6 +76,10 @@ export class HttpService {
 
   createOrganization(org : Organization) {
     return this.httpPost("/organizations", {name: org.name, email: org.email});
+  }
+
+  switchOrganization(orgName : string) {
+    return this.httpPost("/switch", { account: orgName });
   }
 
   deleteOrganization(org : Organization) {
@@ -308,9 +312,10 @@ export class HttpService {
     if (req.time_group == "") {
       return this.statsCurrent(req);
     }
-    return this.statsHisto(req);
+    return this.statsHistoric(req);
   }
-  statsHisto(request : StatsRequest) {
+
+  statsHistoric(request : StatsRequest) {
     return this.httpPost("/stats", request)
       .map((res : Response) => {
         let data = res.json()
@@ -340,13 +345,11 @@ export class HttpService {
               this.setValue(datal, 'net-tx-packets', item.net.tx_packets, 1, 1)
               this.setValue(datal, 'net-total-bytes', item.net.total_bytes, 1, 1)
             }
-            list.push(
-              new GraphHistoricData(
-                this.parseTime(item.group),
-                item.sgroup,
-                datal
-              )
-            )
+            let hgraph = new GraphHistoricData(this.parseTime(item.group))
+            hgraph.name =item.sgroup
+            hgraph.values = datal
+            hgraph.sdate = item.group
+            list.push(hgraph)
           }
         }
         return list
@@ -359,7 +362,7 @@ export class HttpService {
       .map((res : Response) => {
         let data = res.json()
         //console.log(data)
-        let list : GraphStats[] = []
+        let list : GraphCurrentData[] = []
         if (data.entries) {
           for (let item of data.entries) {
             let datal : { [name:string]: number; } = {}
@@ -384,7 +387,7 @@ export class HttpService {
               this.setValue(datal, 'net-tx-packets', item.net.tx_packets, 1, 1)
               this.setValue(datal, 'net-total-bytes', item.net.total_bytes, 1, 1)
             }
-            list.push(new GraphStats(item.group, datal))
+            list.push(new GraphCurrentData(item.group, datal))
           }
         }
         return list

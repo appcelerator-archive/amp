@@ -12,20 +12,36 @@ import { MenuService } from '../../services/menu.service';
 
 export class DGraphEditorComponent implements OnInit, OnDestroy {
   @Input() public graph : Graph;
+  all="[centertitle][request][setting][top][histoperiod][bubble][areas][alert]"
+  visibility : { [name:string]: string; } = {}
 
   constructor(
     public dashboardService : DashboardService) {
+    this.visibility['text']=""
+    this.visibility['lines']="[request][centertitle][setting][top][histoperiod]"
+    this.visibility['areas']="[request][centertitle][setting][top][histoperiod][areas]"
+    this.visibility['bars']="[request][centertitle][setting][top][removelegend]"
+    this.visibility['pie']="[request][setting][top]"
+    this.visibility['bubbles']="[request][centertitle][setting][top][bubble]"
+    this.visibility['counter']="[request][alert]"
+    this.visibility['legend']="[centertitle][setting][legend]"
   }
 
   ngOnInit() {
-    this.dashboardService.onGraphSelect.subscribe(
-      (graph) => {
-
-      }
-    )
   }
 
   ngOnDestroy() {
+  }
+
+  isVisible(name : string) : boolean {
+    let visibility = this.visibility[this.dashboardService.selected.type]
+    if (!visibility) {
+      return false
+    }
+    if (visibility.indexOf("["+name+"]")>=0) {
+      return true
+    }
+    return false
   }
 
 }
