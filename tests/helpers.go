@@ -71,18 +71,6 @@ func Login() (metadata.MD, error) {
 		return nil, fmt.Errorf("SignUp error: %v", err)
 	}
 
-	// Create a verify token
-	verificationToken, err := auth.CreateVerificationToken(randomUser.Name)
-	if err != nil {
-		return nil, fmt.Errorf("CreateVerificationToken error: %v", err)
-	}
-
-	// Verify
-	_, err = client.Verify(ctx, &account.VerificationRequest{Token: verificationToken})
-	if err != nil {
-		return nil, fmt.Errorf("Verify error: %v", err)
-	}
-
 	// Login
 	header := metadata.MD{}
 	_, err = client.Login(ctx, &account.LogInRequest{Name: randomUser.Name, Password: randomUser.Password}, grpc.Header(&header))

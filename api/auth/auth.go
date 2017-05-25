@@ -21,10 +21,6 @@ const (
 )
 
 var (
-	// TODO: this MUST NOT be public
-	// TODO: find a way to store this key secretly
-	secretKey = []byte("&kv@l3go-f=@^*@ush0(o5*5utxe6932j9di+ume=$mkj%d&&9*%k53(bmpksf&!c2&zpw$z=8ndi6ib)&nxms0ia7rf*sj9g8r4")
-
 	anonymousAllowed = []string{
 		"/account.Account/SignUp",
 		"/account.Account/Verify",
@@ -43,6 +39,10 @@ var (
 	}
 )
 
+type Interceptors struct {
+	Tokens *Tokens
+}
+
 func isAnonymous(elem string) bool {
 	for _, e := range anonymousAllowed {
 		if e == elem {
@@ -53,9 +53,9 @@ func isAnonymous(elem string) bool {
 }
 
 // StreamInterceptor is an interceptor checking for authentication tokens
-func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (i *Interceptors) StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	if !isAnonymous(info.FullMethod) {
-		if _, err := authorize(stream.Context()); err != nil {
+		if _, err := i.authorize(stream.Context()); err != nil {
 			return err
 		}
 	}
@@ -63,9 +63,9 @@ func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 }
 
 // Interceptor is an interceptor checking for authentication tokens
-func Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (i interface{}, err error) {
+func (i *Interceptors) Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (h interface{}, err error) {
 	if !isAnonymous(info.FullMethod) {
-		if ctx, err = authorize(ctx); err != nil {
+		if ctx, err = i.authorize(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -88,7 +88,7 @@ func ForgeAuthorizationHeader(token string) string {
 	return AuthorizationScheme + " " + token
 }
 
-func authorize(ctx context.Context) (context.Context, error) {
+func (i *Interceptors) authorize(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
@@ -102,7 +102,7 @@ func authorize(ctx context.Context) (context.Context, error) {
 	if scheme != AuthorizationScheme || token == "" {
 		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
-	claims, err := ValidateToken(token, TokenTypeLogin)
+	claims, err := i.Tokens.ValidateToken(token, TokenTypeLogin)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}

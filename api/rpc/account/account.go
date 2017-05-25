@@ -20,6 +20,7 @@ type Server struct {
 	Accounts accounts.Interface
 	Mailer   *mail.Mailer
 	Config   *configuration.Configuration
+	Tokens   *auth.Tokens
 }
 
 func convertError(err error) error {
@@ -99,7 +100,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 	switch s.Config.Registration {
 	case configuration.RegistrationEmail:
 		// Create a verification token valid for an hour
-		token, err := auth.CreateVerificationToken(user.Name)
+		token, err := s.Tokens.CreateVerificationToken(user.Name)
 		if err != nil {
 			s.Accounts.DeleteUser(ctx, in.Name)
 			return nil, convertError(err)
@@ -120,7 +121,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 // Verify implements account.Verify
 func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Empty, error) {
 	// Validate the token
-	claims, err := auth.ValidateToken(in.Token, auth.TokenTypeVerification)
+	claims, err := s.Tokens.ValidateToken(in.Token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, accounts.InvalidToken
 	}
@@ -148,7 +149,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInAnswer, err
 		return nil, convertError(err)
 	}
 	// Create an authentication token valid for a day
-	token, err := auth.CreateLoginToken(in.Name, "")
+	token, err := s.Tokens.CreateLoginToken(in.Name, "")
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -172,7 +173,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
 	// Create a password reset token valid for an hour
-	token, err := auth.CreatePasswordToken(user.Name)
+	token, err := s.Tokens.CreatePasswordToken(user.Name)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -187,7 +188,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 // PasswordSet implements account.PasswordSet
 func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empty.Empty, error) {
 	// Validate token
-	claims, err := auth.ValidateToken(in.Token, auth.TokenTypePassword)
+	claims, err := s.Tokens.ValidateToken(in.Token, auth.TokenTypePassword)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -312,7 +313,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 	}
 
 	// Create an authentication token valid for a day
-	token, err := auth.CreateLoginToken(userName, activeOrganization)
+	token, err := s.Tokens.CreateLoginToken(userName, activeOrganization)
 	if err != nil {
 		return nil, convertError(err)
 	}
