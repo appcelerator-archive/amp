@@ -153,6 +153,12 @@ service Account {
       body: "*"
     };
   };
+  rpc ChangeTeamName (ChangeTeamNameRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/organizations/{organization_name}/teams/{team_name}/name/{new_name}",
+      body: "*"
+    };
+  };
   rpc GetTeam (GetTeamRequest) returns (GetTeamReply) {
     option (google.api.http) = {
       get: "/v1/organizations/{organization_name}/teams/{team_name}"
@@ -311,6 +317,12 @@ message ChangeTeamResourcePermissionLevelRequest {
   string team_name = 2;
   string resource_id = 3;
   accounts.TeamPermissionLevel permission_level = 4;
+}
+
+message ChangeTeamNameRequest {
+  string organization_name = 1;
+  string team_name = 2;
+  string new_name = 3;
 }
 
 message GetTeamRequest {
