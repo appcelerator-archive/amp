@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/config"
@@ -20,6 +21,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/appcelerator/amp/cli/command/whoami"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 )
 
@@ -125,5 +127,20 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 func info(c cli.Interface) {
 	s := c.Server()
-	fmt.Fprintf(c.Err(), "[%s]\n", s)
+	tkn, err := cli.ReadToken(s)
+	if err != nil {
+		fmt.Fprintf(c.Err(), "[%s]\n", s)
+	}
+	if tkn != "" {
+		pToken, _ := jwt.ParseWithClaims(tkn, &auth.AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
+			return []byte{}, nil
+		})
+		if claims, ok := pToken.Claims.(*auth.AuthClaims); ok {
+			if claims.ActiveOrganization != "" {
+				fmt.Fprintf(c.Err(), "[organization %s @ %s]\n", claims.ActiveOrganization, s)
+			} else {
+				fmt.Fprintf(c.Err(), "[user %s @ %s]\n", claims.AccountName, s)
+			}
+		}
+	}
 }
