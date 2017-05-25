@@ -1397,6 +1397,23 @@ func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestTeamChangeName(t *testing.T) {
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Change team name
+	_, err := client.ChangeTeamName(ownerCtx, &ChangeTeamNameRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		NewName:          "newteamname",
+	})
+	assert.NoError(t, err)
+}
+
 func TestTeamRemoveUser(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
