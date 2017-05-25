@@ -5,12 +5,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"strconv"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/labels"
@@ -212,7 +211,6 @@ func TestLogsShouldBeOrdered(t *testing.T) {
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	var current, previous int64
 	for _, entry := range r.Entries {
-		log.Println(entry)
 		current, err = strconv.ParseInt(strings.TrimPrefix(entry.Msg, testMessage), 16, 64)
 		assert.NoError(t, err)
 		assert.True(t, current > previous, "Should be true but got current: %v <= previous: %v", current, previous)

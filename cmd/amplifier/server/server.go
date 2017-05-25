@@ -40,6 +40,7 @@ type Amplifier struct {
 	ns       *ns.NatsStreaming
 	mailer   *mail.Mailer
 	accounts accounts.Interface
+	tokens   *auth.Tokens
 }
 
 // Service initializers register the services with the grpc server
@@ -69,16 +70,18 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		docker:   docker.NewClient(config.DockerURL, config.DockerVersion),
 		mailer:   mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
 		accounts: accounts.NewStore(etcd, config.Registration),
+		tokens:   auth.New(config.JWTSecretKey),
 	}
 	return amp, nil
 }
 
 // Start starts the amplifier server
 func (a *Amplifier) Start() {
+	interceptors := &auth.Interceptors{Tokens: a.tokens}
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(auth.StreamInterceptor),
-		grpc.UnaryInterceptor(auth.Interceptor),
+		grpc.StreamInterceptor(interceptors.StreamInterceptor),
+		grpc.UnaryInterceptor(interceptors.Interceptor),
 	)
 	registerServices(a, s)
 
@@ -139,8 +142,9 @@ func registerStatsServer(amp *Amplifier, s *grpc.Server) {
 func registerAccountServer(amp *Amplifier, s *grpc.Server) {
 	account.RegisterAccountServer(s, &account.Server{
 		Accounts: amp.accounts,
-		Mailer:   amp.mailer,
 		Config:   amp.config,
+		Mailer:   amp.mailer,
+		Tokens:   amp.tokens,
 	})
 }
 

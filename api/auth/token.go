@@ -27,8 +27,16 @@ type AuthClaims struct {
 	jwt.StandardClaims
 }
 
+type Tokens struct {
+	secretKey []byte
+}
+
+func New(secretKey string) *Tokens {
+	return &Tokens{secretKey: []byte(secretKey)}
+}
+
 // CreateVerificationToken creates a verification token for a given user
-func CreateVerificationToken(name string) (string, error) {
+func (t *Tokens) CreateVerificationToken(name string) (string, error) {
 	claims := AuthClaims{
 		Type:        TokenTypeVerification,
 		AccountName: name,
@@ -37,11 +45,11 @@ func CreateVerificationToken(name string) (string, error) {
 			Issuer:    TokenIssuer,
 		},
 	}
-	return createToken(claims)
+	return t.createToken(claims)
 }
 
 // CreateLoginToken creates a login token for a given account
-func CreateLoginToken(name string, activeOrganization string) (string, error) {
+func (t *Tokens) CreateLoginToken(name string, activeOrganization string) (string, error) {
 	claims := AuthClaims{
 		Type:               TokenTypeLogin,
 		AccountName:        name,
@@ -51,11 +59,11 @@ func CreateLoginToken(name string, activeOrganization string) (string, error) {
 			Issuer:    TokenIssuer,
 		},
 	}
-	return createToken(claims)
+	return t.createToken(claims)
 }
 
 // CreatePasswordToken creates a password token for a given user name
-func CreatePasswordToken(name string) (string, error) {
+func (t *Tokens) CreatePasswordToken(name string) (string, error) {
 	claims := AuthClaims{
 		Type:        TokenTypePassword,
 		AccountName: name,
@@ -64,14 +72,14 @@ func CreatePasswordToken(name string) (string, error) {
 			Issuer:    TokenIssuer,
 		},
 	}
-	return createToken(claims)
+	return t.createToken(claims)
 }
 
 // createToken creates a token for a given user name
-func createToken(claims jwt.Claims) (string, error) {
+func (t *Tokens) createToken(claims jwt.Claims) (string, error) {
 	// Forge the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(secretKey)
+	ss, err := token.SignedString(t.secretKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to issue token")
 	}
@@ -79,9 +87,9 @@ func createToken(claims jwt.Claims) (string, error) {
 }
 
 // ValidateToken validates a token and return its claims
-func ValidateToken(signedString string, tokenType string) (*AuthClaims, error) {
-	token, err := jwt.ParseWithClaims(signedString, &AuthClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+func (t *Tokens) ValidateToken(signedString string, tokenType string) (*AuthClaims, error) {
+	token, err := jwt.ParseWithClaims(signedString, &AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return t.secretKey, nil
 	})
 	if err != nil {
 		return nil, err
