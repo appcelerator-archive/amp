@@ -173,6 +173,9 @@ func (s *etcd) Update(ctx context.Context, key string, uf storage.UpdateFunc, te
 		if err != nil {
 			return fmt.Errorf("Error updating object: %s", err)
 		}
+		if update == nil { // update function returned no error and nil data, no update to perform
+			return nil
+		}
 
 		data, err := proto.Marshal(update)
 		if err != nil {
