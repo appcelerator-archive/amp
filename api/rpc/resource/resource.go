@@ -35,9 +35,12 @@ func (s *Server) ListResources(ctx context.Context, in *ListResourcesRequest) (*
 		return nil, convertError(err)
 	}
 	reply := &ListResourcesReply{}
-	user := auth.GetUser(ctx)
+	account := auth.GetActiveOrganization(ctx)
+	if account == "" {
+		account = auth.GetUser(ctx)
+	}
 	for _, stack := range stacks {
-		if stack.Owner.Name == user {
+		if stack.Owner.Name == account {
 			reply.Resources = append(reply.Resources, &ResourceEntry{Id: stack.Id, Type: ResourceType_RESOURCE_STACK, Name: stack.Name})
 		}
 	}

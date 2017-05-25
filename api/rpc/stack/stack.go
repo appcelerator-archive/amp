@@ -36,8 +36,6 @@ func convertError(err error) error {
 
 // Deploy implements stack.Server
 func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
-	log.Println("[stack] Deploy", in.String())
-
 	// Check if stack already exists
 	stack, err := s.Stacks.GetStackByName(ctx, in.Name)
 	if err != nil {
@@ -55,6 +53,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		s.Stacks.DeleteStack(ctx, stack.Id)
 		return nil, convertError(err)
 	}
+	log.Println("Successfully deployed stack:", stack)
 	return &DeployReply{FullName: stack.Name, Answer: output}, nil
 }
 

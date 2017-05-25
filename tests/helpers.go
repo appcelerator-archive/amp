@@ -2,16 +2,24 @@ package helpers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"sync/atomic"
+	"testing"
 	"time"
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/resource"
+	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
-	"github.com/appcelerator/amp/data/accounts"
-	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/labels"
+	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -19,7 +27,6 @@ import (
 
 // AmplifierConnection returns a grpc connection to amplifier
 func AmplifierConnection() (*grpc.ClientConn, error) {
-	// Connect to amplifier
 	amplifierEndpoint := "amplifier" + configuration.DefaultPort
 	log.Println("Connecting to amplifier")
 	conn, err := grpc.Dial(amplifierEndpoint,
@@ -33,40 +40,61 @@ func AmplifierConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-// NewAccountsStore returns a new account store instance
-func NewAccountsStore() accounts.Interface {
-	store := etcd.New([]string{etcd.DefaultEndpoint}, "amp", 5*time.Second)
-	if err := store.Connect(); err != nil {
-		log.Panicf("Unable to connect to store on: %store\n%v", etcd.DefaultEndpoint, err)
-	}
-	return accounts.NewStore(store, configuration.RegistrationNone)
+// Helper is a test helper
+type Helper struct {
+	accounts  account.AccountClient
+	logs      logs.LogsClient
+	resources resource.ResourceClient
+	stacks    stack.StackClient
 }
 
-// ResetStorage resets the storage
-func ResetStorage() {
-	NewAccountsStore().Reset(context.Background())
-}
-
-// Login sign-up, verify and log-in a random user and returns the associated credentials
-func Login() (metadata.MD, error) {
-	id := stringid.GenerateNonCryptoID()
-	randomUser := &account.SignUpRequest{
-		Name:     id,
-		Password: "password",
-		Email:    id + "@user.amp",
-	}
-
+// New returns a new test helper
+func New() (*Helper, error) {
 	conn, err := AmplifierConnection()
 	if err != nil {
 		return nil, err
 	}
+	h := &Helper{
+		accounts:  account.NewAccountClient(conn),
+		logs:      logs.NewLogsClient(conn),
+		stacks:    stack.NewStackClient(conn),
+		resources: resource.NewResourceClient(conn),
+	}
+	return h, nil
+}
 
+// Accounts returns an account client
+func (h *Helper) Accounts() account.AccountClient {
+	return h.accounts
+}
+
+// Logs returns a log client
+func (h *Helper) Logs() logs.LogsClient {
+	return h.logs
+}
+
+// Stacks returns a stack client
+func (h *Helper) Stacks() stack.StackClient {
+	return h.stacks
+}
+
+// Resources returns a resource client
+func (h *Helper) Resources() resource.ResourceClient {
+	return h.resources
+}
+
+// Login sign-up, verify and log-in a random user and returns the associated credentials
+func (h *Helper) Login() (metadata.MD, error) {
+	randomUser := h.RandomUser()
+	conn, err := AmplifierConnection()
+	if err != nil {
+		return nil, err
+	}
 	client := account.NewAccountClient(conn)
-
 	ctx := context.Background()
 
 	// SignUp
-	_, err = client.SignUp(ctx, randomUser)
+	_, err = client.SignUp(ctx, &randomUser)
 	if err != nil {
 		return nil, fmt.Errorf("SignUp error: %v", err)
 	}
@@ -85,4 +113,256 @@ func Login() (metadata.MD, error) {
 	}
 	token := tokens[0]
 	return metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)), nil
+}
+
+// RandomUser returns a random user SignUpRequest
+func (h *Helper) RandomUser() account.SignUpRequest {
+	id := stringid.GenerateNonCryptoID()
+	return account.SignUpRequest{
+		Name:     id,
+		Password: "userPassword",
+		Email:    id + "@user.email",
+	}
+}
+
+// RandomOrg returns a random organization CreateOrganizationRequest
+func (h *Helper) RandomOrg() account.CreateOrganizationRequest {
+	id := stringid.GenerateNonCryptoID()
+	return account.CreateOrganizationRequest{
+		Name:  id,
+		Email: id + "@org.email",
+	}
+}
+
+// RandomTeam returns a random team CreateTeamRequest
+func (h *Helper) RandomTeam(org string) account.CreateTeamRequest {
+	id := stringid.GenerateNonCryptoID()
+	return account.CreateTeamRequest{
+		OrganizationName: org,
+		TeamName:         id,
+	}
+}
+
+// DeployStack deploys a stack with given name and file location
+func (h *Helper) DeployStack(ctx context.Context, name string, composeFile string) error {
+	contents, err := ioutil.ReadFile(composeFile)
+	if err != nil {
+		return err
+	}
+	request := &stack.DeployRequest{
+		Name:    name,
+		Compose: contents,
+	}
+	_, err = h.stacks.Deploy(ctx, request)
+	return err
+}
+
+// CreateUser signs up and logs in the given user
+func (h *Helper) CreateUser(t *testing.T, user *account.SignUpRequest) context.Context {
+	ctx := context.Background()
+
+	// SignUp
+	_, err := h.accounts.SignUp(ctx, user)
+	assert.NoError(t, err)
+
+	// Login
+	header := metadata.MD{}
+	_, err = h.accounts.Login(ctx, &account.LogInRequest{Name: user.Name, Password: user.Password}, grpc.Header(&header))
+	assert.NoError(t, err)
+
+	// Extract token from header
+	tokens := header[auth.TokenKey]
+	assert.NotEmpty(t, tokens)
+	token := tokens[0]
+	assert.NotEmpty(t, token)
+
+	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
+}
+
+// CreateOrganization signs up and logs in the given user and creates an organization
+func (h *Helper) CreateOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
+	// Create a user
+	ownerCtx := h.CreateUser(t, owner)
+
+	// CreateOrganization
+	_, err := h.accounts.CreateOrganization(ownerCtx, org)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+// CreateAndAddUserToOrganization signs up and logs in the given user and adds them to the given organization
+func (h *Helper) CreateAndAddUserToOrganization(ownerCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest) context.Context {
+	// Create a user
+	userCtx := h.CreateUser(t, user)
+
+	// AddUserToOrganization
+	_, err := h.accounts.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
+		OrganizationName: org.Name,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+	return userCtx
+}
+
+// CreateTeam creates the given owner, creates the given organization and creates a team in this organization
+func (h *Helper) CreateTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest, team *account.CreateTeamRequest) context.Context {
+	// Create a user
+	ownerCtx := h.CreateOrganization(t, org, owner)
+
+	// CreateTeam
+	_, err := h.accounts.CreateTeam(ownerCtx, team)
+	assert.NoError(t, err)
+
+	return ownerCtx
+}
+
+// Switch switches from the given user context to the given account name
+func (h *Helper) Switch(userCtx context.Context, t *testing.T, accountName string) context.Context {
+	header := metadata.MD{}
+	_, err := h.accounts.Switch(userCtx, &account.SwitchRequest{Account: accountName}, grpc.Header(&header))
+	assert.NoError(t, err)
+
+	// Extract token from header
+	tokens := header[auth.TokenKey]
+	assert.NotEmpty(t, tokens)
+	token := tokens[0]
+	assert.NotEmpty(t, token)
+
+	return metadata.NewContext(context.Background(), metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
+}
+
+// Log Producer constants
+var (
+	TestMessage            = "test message "
+	TestContainerID        = stringid.GenerateNonCryptoID()
+	TestContainerName      = "testcontainer"
+	TestContainerShortName = "testcontainershortname"
+	TestContainerState     = "testcontainerstate"
+	TestServiceID          = stringid.GenerateNonCryptoID()
+	TestServiceName        = "testservice"
+	TestStackName          = "teststack"
+	TestNodeID             = stringid.GenerateNonCryptoID()
+	TestTaskID             = stringid.GenerateNonCryptoID()
+)
+
+// LogProducer is a test log producer
+type LogProducer struct {
+	ns              *ns.NatsStreaming
+	asyncProduction int32
+	counter         int64
+	h               *Helper
+}
+
+// NewLogProducer instantiates a new log producer
+func NewLogProducer(h *Helper) *LogProducer {
+	lp := &LogProducer{
+		ns:      ns.NewClient(ns.DefaultURL, ns.ClusterID, stringid.GenerateNonCryptoID(), 60*time.Second),
+		counter: 0,
+		h:       h,
+	}
+	if err := lp.ns.Connect(); err != nil {
+		log.Fatalln("Cannot connect to NATS", err)
+	}
+	go func(lp *LogProducer) {
+		for {
+			time.Sleep(50 * time.Millisecond)
+			if lp.asyncProduction > 0 {
+				if err := lp.produce(logs.NumberOfEntries); err != nil {
+					log.Println("error producing async messages", err)
+				}
+			}
+		}
+	}(lp)
+	return lp
+}
+
+func (lp *LogProducer) buildLogEntry(infrastructure bool) *logs.LogEntry {
+	atomic.AddInt64(&lp.counter, 1)
+	entry := &logs.LogEntry{
+		Timestamp:          time.Now().UTC().Format(time.RFC3339Nano),
+		ContainerId:        TestContainerID,
+		ContainerName:      TestContainerName,
+		ContainerShortName: TestContainerShortName,
+		ContainerState:     TestContainerState,
+		ServiceName:        TestServiceName,
+		ServiceId:          TestServiceID,
+		TaskId:             TestTaskID,
+		StackName:          TestStackName,
+		NodeId:             TestNodeID,
+		TimeId:             fmt.Sprintf("%016X", lp.counter),
+		Labels:             make(map[string]string),
+		Msg:                TestMessage + fmt.Sprintf("%016X", lp.counter),
+	}
+	if infrastructure {
+		entry.Labels[labels.KeyRole] = labels.ValueRoleInfrastructure
+	}
+	return entry
+}
+
+func (lp *LogProducer) produce(howMany int) error {
+	entries := logs.GetReply{}
+	for i := 0; i < howMany; i++ {
+		// User log entry
+		user := lp.buildLogEntry(false)
+		entries.Entries = append(entries.Entries, user)
+
+		// Infrastructure log entry
+		infra := lp.buildLogEntry(true)
+		entries.Entries = append(entries.Entries, infra)
+	}
+	message, err := proto.Marshal(&entries)
+	if err != nil {
+		return err
+	}
+	if err := lp.ns.GetClient().Publish(ns.LogsSubject, message); err != nil {
+		return err
+	}
+	return nil
+}
+
+// StartAsyncProducer starts producing log messages in the background
+func (lp *LogProducer) StartAsyncProducer() {
+	atomic.CompareAndSwapInt32(&lp.asyncProduction, 0, 1)
+}
+
+// StopAsyncProducer stops producing log messages in the background
+func (lp *LogProducer) StopAsyncProducer() {
+	atomic.CompareAndSwapInt32(&lp.asyncProduction, 1, 0)
+}
+
+// PopulateLogs populate elasticsearch with log entries, by producing test messages and making sure their got indexed
+func (lp *LogProducer) PopulateLogs() error {
+	// Connect to amplifier
+	conn, err := AmplifierConnection()
+	if err != nil {
+		return err
+	}
+	client := logs.NewLogsClient(conn)
+
+	// Login context
+	credentials, err := lp.h.Login()
+	if err != nil {
+		return err
+	}
+	ctx := metadata.NewContext(context.Background(), credentials)
+
+	// Populate logs
+	if err := lp.produce(logs.NumberOfEntries); err != nil {
+		return err
+	}
+
+	// Wait for them to be indexed in elasticsearch
+	for {
+		time.Sleep(1 * time.Second)
+		r, err := client.Get(ctx, &logs.GetRequest{Service: TestServiceID})
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		if len(r.Entries) == logs.NumberOfEntries {
+			break
+		}
+	}
+	return nil
 }

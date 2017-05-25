@@ -1,79 +1,53 @@
 package logs
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/labels"
-	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/appcelerator/amp/tests"
-	"github.com/docker/docker/pkg/stringid"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )
 
 var (
-	testMessage            = "test message "
-	testContainerID        = stringid.GenerateNonCryptoID()
-	testContainerName      = "testcontainer"
-	testContainerShortName = "testcontainershortname"
-	testContainerState     = "testcontainerstate"
-	testServiceID          = stringid.GenerateNonCryptoID()
-	testServiceName        = "testservice"
-	testStackName          = "teststack"
-	testNodeID             = stringid.GenerateNonCryptoID()
-	testTaskID             = stringid.GenerateNonCryptoID()
-)
-
-var (
-	ctx         context.Context
-	client      LogsClient
-	credentials metadata.MD
-	lp          *LogProducer
+	ctx context.Context
+	h   *helpers.Helper
+	lp  *helpers.LogProducer
 )
 
 func setup() (err error) {
-	if credentials, err = helpers.Login(); err != nil {
+	// Test helper
+	if h, err = helpers.New(); err != nil {
 		return err
 	}
-	conn, err := helpers.AmplifierConnection()
+
+	// Login context
+	credentials, err := h.Login()
 	if err != nil {
 		return err
 	}
-	client = NewLogsClient(conn)
-	lp = NewLogProducer()
 	ctx = metadata.NewContext(context.Background(), credentials)
 
-	// Populate logs
-	if err := lp.produce(NumberOfEntries); err != nil {
+	// Log producer helper
+	lp = helpers.NewLogProducer(h)
+	if err := lp.PopulateLogs(); err != nil {
 		return err
-	}
-	for {
-		time.Sleep(1 * time.Second)
-		r, err := client.Get(ctx, &GetRequest{Service: testServiceID})
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if len(r.Entries) == NumberOfEntries {
-			break
-		}
 	}
 	return nil
 }
 
 func tearDown() {
 }
+
+//client = NewLogsClient(conn)
 
 func TestMain(m *testing.M) {
 	if err := setup(); err != nil {
@@ -88,7 +62,7 @@ func TestLogsShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	expected := NumberOfEntries
 	actual := -1
 	for i := 0; i < 60; i++ {
-		r, err := client.Get(ctx, &GetRequest{})
+		r, err := h.Logs().Get(ctx, &GetRequest{})
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -103,49 +77,49 @@ func TestLogsShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 }
 
 func TestLogsShouldFilterByContainer(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Container: testContainerID})
+	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Equal(t, testContainerID, entry.ContainerId)
+		assert.Equal(t, helpers.TestContainerID, entry.ContainerId)
 	}
 }
 
 func TestLogsShouldFilterByNode(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Node: testNodeID})
+	r, err := h.Logs().Get(ctx, &GetRequest{Node: helpers.TestNodeID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Equal(t, testNodeID, entry.NodeId)
+		assert.Equal(t, helpers.TestNodeID, entry.NodeId)
 	}
 }
 
 func TestLogsShouldFilterByService(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Service: "test"})
+	r, err := h.Logs().Get(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, helpers.TestServiceName) || strings.HasPrefix(entry.ServiceId, helpers.TestServiceID))
 	}
 
-	r, err = client.Get(ctx, &GetRequest{Service: testServiceName})
+	r, err = h.Logs().Get(ctx, &GetRequest{Service: helpers.TestServiceName})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, helpers.TestServiceName) || strings.HasPrefix(entry.ServiceId, helpers.TestServiceID))
 	}
 }
 
 func TestLogsShouldFilterByMessage(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Message: "test"})
+	r, err := h.Logs().Get(ctx, &GetRequest{Message: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -156,18 +130,18 @@ func TestLogsShouldFilterByMessage(t *testing.T) {
 }
 
 func TestLogsShouldFilterByStackName(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Stack: "test"})
+	r, err := h.Logs().Get(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, testStackName))
+		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName))
 	}
 }
 
 func TestLogsShouldExcludeAmpLogs(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{})
+	r, err := h.Logs().Get(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -178,7 +152,7 @@ func TestLogsShouldExcludeAmpLogs(t *testing.T) {
 }
 
 func TestLogsShouldIncludeAmpLogs(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Service: "amp_amplifier", IncludeAmpLogs: true})
+	r, err := h.Logs().Get(ctx, &GetRequest{Service: "amp_amplifier", IncludeAmpLogs: true})
 	if err != nil {
 		t.Error(err)
 	}
@@ -195,7 +169,7 @@ func TestLogsShouldIncludeAmpLogs(t *testing.T) {
 
 func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int64(1); i < 100; i += 10 {
-		r, err := client.Get(ctx, &GetRequest{Size: i})
+		r, err := h.Logs().Get(ctx, &GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
 		}
@@ -204,14 +178,14 @@ func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 }
 
 func TestLogsShouldBeOrdered(t *testing.T) {
-	r, err := client.Get(ctx, &GetRequest{Container: testContainerID})
+	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	var current, previous int64
 	for _, entry := range r.Entries {
-		current, err = strconv.ParseInt(strings.TrimPrefix(entry.Msg, testMessage), 16, 64)
+		current, err = strconv.ParseInt(strings.TrimPrefix(entry.Msg, helpers.TestMessage), 16, 64)
 		assert.NoError(t, err)
 		assert.True(t, current > previous, "Should be true but got current: %v <= previous: %v", current, previous)
 		previous = current
@@ -219,169 +193,129 @@ func TestLogsShouldBeOrdered(t *testing.T) {
 }
 
 func TestLogsShouldStreamLogs(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 }
 
 func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Container: testContainerID})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.Equal(t, testContainerID, entry.ContainerId)
+		assert.Equal(t, helpers.TestContainerID, entry.ContainerId)
 	}
 }
 
 func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Node: testNodeID})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Node: helpers.TestNodeID})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.Equal(t, testNodeID, entry.NodeId)
+		assert.Equal(t, helpers.TestNodeID, entry.NodeId)
 	}
 }
 
 func TestLogsShouldStreamAndFilterByService(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Service: "test"})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.True(t, strings.HasPrefix(entry.ServiceName, testServiceName) || strings.HasPrefix(entry.ServiceId, testServiceID))
+		assert.True(t, strings.HasPrefix(entry.ServiceName, helpers.TestServiceName) || strings.HasPrefix(entry.ServiceId, helpers.TestServiceID))
 	}
 }
 
 func TestLogsShouldStreamAndFilterByMessage(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Message: testMessage})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Message: helpers.TestMessage})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.Contains(t, strings.ToLower(entry.Msg), testMessage)
+		assert.Contains(t, strings.ToLower(entry.Msg), helpers.TestMessage)
 	}
 }
 
 func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Message: strings.ToUpper(testMessage)})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Message: strings.ToUpper(helpers.TestMessage)})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.Contains(t, strings.ToLower(entry.Msg), testMessage)
+		assert.Contains(t, strings.ToLower(entry.Msg), helpers.TestMessage)
 	}
 }
 
 func TestLogsShouldStreamAndFilterByStackName(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{Stack: "test"})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, testStackName))
+		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName))
 	}
 }
 
 func TestLogsShouldStreamAndExcludeAmpLogs(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
@@ -391,19 +325,14 @@ func TestLogsShouldStreamAndExcludeAmpLogs(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndIncludeAmpLogs(t *testing.T) {
-	conn, err := helpers.AmplifierConnection()
-	assert.NoError(t, err)
-	defer conn.Close()
-	client = NewLogsClient(conn)
-
-	stream, err := client.GetStream(ctx, &GetRequest{IncludeAmpLogs: true})
+	stream, err := h.Logs().GetStream(ctx, &GetRequest{IncludeAmpLogs: true})
 	if err != nil {
 		t.Error(err)
 	}
 
-	lp.startAsyncProducer()
+	lp.StartAsyncProducer()
 	entries, err := listenToLogEntries(stream, NumberOfEntries)
-	lp.stopAsyncProducer()
+	lp.StopAsyncProducer()
 	assert.NoError(t, err)
 	assert.Equal(t, NumberOfEntries, len(entries))
 
@@ -444,83 +373,4 @@ func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntr
 			return entries, nil
 		}
 	}
-}
-
-type LogProducer struct {
-	ns              *ns.NatsStreaming
-	asyncProduction int32
-	counter         int64
-}
-
-func NewLogProducer() *LogProducer {
-	lp := &LogProducer{
-		ns:      ns.NewClient(ns.DefaultURL, ns.ClusterID, stringid.GenerateNonCryptoID(), 60*time.Second),
-		counter: 0,
-	}
-	if err := lp.ns.Connect(); err != nil {
-		log.Fatalln("Cannot connect to NATS", err)
-	}
-	go func(lp *LogProducer) {
-		for {
-			time.Sleep(50 * time.Millisecond)
-			if lp.asyncProduction > 0 {
-				if err := lp.produce(NumberOfEntries); err != nil {
-					log.Println("error producing async messages", err)
-				}
-			}
-		}
-	}(lp)
-	return lp
-}
-
-func (lp *LogProducer) buildLogEntry(infrastructure bool) *LogEntry {
-	atomic.AddInt64(&lp.counter, 1)
-	entry := &LogEntry{
-		Timestamp:          time.Now().UTC().Format(time.RFC3339Nano),
-		ContainerId:        testContainerID,
-		ContainerName:      testContainerName,
-		ContainerShortName: testContainerShortName,
-		ContainerState:     testContainerState,
-		ServiceName:        testServiceName,
-		ServiceId:          testServiceID,
-		TaskId:             testTaskID,
-		StackName:          testStackName,
-		NodeId:             testNodeID,
-		TimeId:             fmt.Sprintf("%016X", lp.counter),
-		Labels:             make(map[string]string),
-		Msg:                testMessage + fmt.Sprintf("%016X", lp.counter),
-	}
-	if infrastructure {
-		entry.Labels[labels.KeyRole] = labels.ValueRoleInfrastructure
-	}
-	return entry
-}
-
-func (lp *LogProducer) produce(howMany int) error {
-	entries := GetReply{}
-	for i := 0; i < howMany; i++ {
-		// User log entry
-		user := lp.buildLogEntry(false)
-		entries.Entries = append(entries.Entries, user)
-
-		// Infrastructure log entry
-		infra := lp.buildLogEntry(true)
-		entries.Entries = append(entries.Entries, infra)
-	}
-	message, err := proto.Marshal(&entries)
-	if err != nil {
-		return err
-	}
-	if err := lp.ns.GetClient().Publish(ns.LogsSubject, message); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (lp *LogProducer) startAsyncProducer() {
-	atomic.CompareAndSwapInt32(&lp.asyncProduction, 0, 1)
-}
-
-func (lp *LogProducer) stopAsyncProducer() {
-	atomic.CompareAndSwapInt32(&lp.asyncProduction, 1, 0)
 }
