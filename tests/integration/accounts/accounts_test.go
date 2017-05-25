@@ -1,10 +1,9 @@
 package accounts
 
 import (
+	"log"
 	"os"
 	"testing"
-
-	"log"
 
 	"github.com/appcelerator/amp/api/auth"
 	. "github.com/appcelerator/amp/api/rpc/account"
@@ -736,7 +735,7 @@ func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
+func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
 	testOrg := randomOrg()
@@ -759,7 +758,7 @@ func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func TestOrganizationRemoveUser(t *testing.T) {
@@ -901,7 +900,7 @@ func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
+func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
 	testOrg := randomOrg()
@@ -931,7 +930,7 @@ func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
@@ -1369,7 +1368,7 @@ func TestTeamAddNonValidatedUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
+func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
 	testOrg := randomOrg()
@@ -1395,7 +1394,7 @@ func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func TestTeamRemoveUser(t *testing.T) {
@@ -1603,7 +1602,7 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
+func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
 	testOrg := randomOrg()
@@ -1621,7 +1620,7 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func TestTeamGet(t *testing.T) {
@@ -1793,7 +1792,7 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
+func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
 	testUser := randomUser()
 	testOrg := randomOrg()
 	testTeam := randomTeam(testOrg.Name)
@@ -1806,7 +1805,7 @@ func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 // Helpers
