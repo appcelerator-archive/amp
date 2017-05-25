@@ -251,7 +251,7 @@ prepare_amplifier_configuration(){
   _conf="$SECRETSDIR/amplifier.yml"
   if [[ ! -f "$_conf" ]]; then
     mkdir -p "$SECRETSDIR"
-    echo "---" > "$_conf"
+    echo "JWTSecretKey: "$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-128}') > "$_conf"
   else
     echo "using existing configuration for the amplifier_yml secret" >&2
   fi

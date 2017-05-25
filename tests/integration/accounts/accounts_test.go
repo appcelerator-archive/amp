@@ -48,21 +48,21 @@ func TestMain(m *testing.M) {
 
 // Users
 
-func TestUserShouldSignUpAndVerify(t *testing.T) {
-	testUser := randomUser()
-
-	// SignUp
-	_, err := client.SignUp(ctx, &testUser)
-	assert.NoError(t, err)
-
-	// Create a token
-	token, err := auth.CreateVerificationToken(testUser.Name)
-	assert.NoError(t, err)
-
-	// Verify
-	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
-	assert.NoError(t, err)
-}
+//func TestUserShouldSignUpAndVerify(t *testing.T) {
+//	testUser := randomUser()
+//
+//	// SignUp
+//	_, err := client.SignUp(ctx, &testUser)
+//	assert.NoError(t, err)
+//
+//	// Create a token
+//	token, err := auth.CreateVerificationToken(testUser.Name)
+//	assert.NoError(t, err)
+//
+//	// Verify
+//	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
+//	assert.NoError(t, err)
+//}
 
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	testUser := randomUser()
@@ -132,17 +132,15 @@ func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
-	// Create a verify token
-	token, err := auth.CreateVerificationToken("nonexistinguser")
-	assert.NoError(t, err)
-
-	// Verify
-	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
-	assert.Error(t, err)
-}
-
-// TODO: Check expired token
+//func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
+//	// Create a verify token
+//	token, err := auth.CreateVerificationToken("nonexistinguser")
+//	assert.NoError(t, err)
+//
+//	// Verify
+//	_, err = client.Verify(ctx, &VerificationRequest{Token: token})
+//	assert.Error(t, err)
+//}
 
 func TestUserLogin(t *testing.T) {
 	testUser := randomUser()
@@ -230,27 +228,27 @@ func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserPasswordSet(t *testing.T) {
-	testUser := randomUser()
-
-	// Create a user
-	createUser(t, &testUser)
-
-	// Password Set
-	token, _ := auth.CreatePasswordToken(testUser.Name)
-	_, err := client.PasswordSet(ctx, &PasswordSetRequest{
-		Token:    token,
-		Password: "newPassword",
-	})
-	assert.NoError(t, err)
-
-	// Login
-	_, err = client.Login(ctx, &LogInRequest{
-		Name:     testUser.Name,
-		Password: "newPassword",
-	})
-	assert.NoError(t, err)
-}
+//func TestUserPasswordSet(t *testing.T) {
+//	testUser := randomUser()
+//
+//	// Create a user
+//	createUser(t, &testUser)
+//
+//	// Password Set
+//	token, _ := auth.CreatePasswordToken(testUser.Name)
+//	_, err := client.PasswordSet(ctx, &PasswordSetRequest{
+//		Token:    token,
+//		Password: "newPassword",
+//	})
+//	assert.NoError(t, err)
+//
+//	// Login
+//	_, err = client.Login(ctx, &LogInRequest{
+//		Name:     testUser.Name,
+//		Password: "newPassword",
+//	})
+//	assert.NoError(t, err)
+//}
 
 func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	testUser := randomUser()
@@ -277,57 +275,57 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
-	testUser := randomUser()
+//func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
+//	testUser := randomUser()
+//
+//	// Create a user
+//	createUser(t, &testUser)
+//
+//	// Password Reset
+//	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+//	assert.NoError(t, err)
+//
+//	// Password Set
+//	token, _ := auth.CreatePasswordToken("nonexistinguser")
+//	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
+//		Token:    token,
+//		Password: "newPassword",
+//	})
+//	assert.Error(t, err)
+//
+//	// Login
+//	_, err = client.Login(ctx, &LogInRequest{
+//		Name:     testUser.Name,
+//		Password: "newPassword",
+//	})
+//	assert.Error(t, err)
+//}
 
-	// Create a user
-	createUser(t, &testUser)
-
-	// Password Reset
-	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
-	assert.NoError(t, err)
-
-	// Password Set
-	token, _ := auth.CreatePasswordToken("nonexistinguser")
-	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
-		Token:    token,
-		Password: "newPassword",
-	})
-	assert.Error(t, err)
-
-	// Login
-	_, err = client.Login(ctx, &LogInRequest{
-		Name:     testUser.Name,
-		Password: "newPassword",
-	})
-	assert.Error(t, err)
-}
-
-func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
-	testUser := randomUser()
-
-	// Create a user
-	createUser(t, &testUser)
-
-	// Password Reset
-	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
-	assert.NoError(t, err)
-
-	// Password Set
-	token, _ := auth.CreatePasswordToken(testUser.Name)
-	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
-		Token:    token,
-		Password: "",
-	})
-	assert.Error(t, err)
-
-	// Login
-	_, err = client.Login(ctx, &LogInRequest{
-		Name:     testUser.Name,
-		Password: "",
-	})
-	assert.Error(t, err)
-}
+//func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
+//	testUser := randomUser()
+//
+//	// Create a user
+//	createUser(t, &testUser)
+//
+//	// Password Reset
+//	_, err := client.PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+//	assert.NoError(t, err)
+//
+//	// Password Set
+//	token, _ := auth.CreatePasswordToken(testUser.Name)
+//	_, err = client.PasswordSet(ctx, &PasswordSetRequest{
+//		Token:    token,
+//		Password: "",
+//	})
+//	assert.Error(t, err)
+//
+//	// Login
+//	_, err = client.Login(ctx, &LogInRequest{
+//		Name:     testUser.Name,
+//		Password: "",
+//	})
+//	assert.Error(t, err)
+//}
 
 func TestUserPasswordChange(t *testing.T) {
 	testUser := randomUser()
@@ -1816,14 +1814,6 @@ func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
 func createUser(t *testing.T, user *SignUpRequest) context.Context {
 	// SignUp
 	_, err := client.SignUp(ctx, user)
-	assert.NoError(t, err)
-
-	// Create a verify token
-	verificationToken, err := auth.CreateVerificationToken(user.Name)
-	assert.NoError(t, err)
-
-	// Verify
-	_, err = client.Verify(ctx, &VerificationRequest{Token: verificationToken})
 	assert.NoError(t, err)
 
 	// Login
