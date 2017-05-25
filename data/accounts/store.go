@@ -834,6 +834,12 @@ func (s *Store) ChangeTeamName(ctx context.Context, organizationName string, tea
 			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
 		}
 
+		// Check if team already exists
+		alreadyExists := organization.getTeam(newName)
+		if alreadyExists != nil {
+			return nil, TeamAlreadyExists
+		}
+
 		// Get team
 		team := organization.getTeam(teamName)
 		if team == nil {

@@ -1414,6 +1414,28 @@ func TestTeamChangeName(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestTeamChangeNameToAlreadyExistingTeamShouldFail(t *testing.T) {
+	testUser := randomUser()
+	testOrg := randomOrg()
+	testTeam := randomTeam(testOrg.Name)
+	anotherTeam := randomTeam(testOrg.Name)
+
+	// Create team
+	ownerCtx := createTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Create another team
+	_, err := client.CreateTeam(ownerCtx, &anotherTeam)
+	assert.NoError(t, err)
+
+	// Change team name
+	_, err = client.ChangeTeamName(ownerCtx, &ChangeTeamNameRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		NewName:          anotherTeam.TeamName,
+	})
+	assert.Error(t, err)
+}
+
 func TestTeamRemoveUser(t *testing.T) {
 	testUser := randomUser()
 	testMember := randomUser()
