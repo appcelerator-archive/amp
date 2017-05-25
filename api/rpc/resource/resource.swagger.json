@@ -1,0 +1,72 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/resource/resource.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/resources": {
+      "get": {
+        "operationId": "ListResources",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/resourceListResourcesReply"
+            }
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "resourceListResourcesReply": {
+      "type": "object",
+      "properties": {
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/resourceResourceEntry"
+          }
+        }
+      }
+    },
+    "resourceListResourcesRequest": {
+      "type": "object"
+    },
+    "resourceResourceEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/resourceResourceType"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "resourceResourceType": {
+      "type": "string",
+      "enum": [
+        "RESOURCE_STACK"
+      ],
+      "default": "RESOURCE_STACK"
+    }
+  }
+}

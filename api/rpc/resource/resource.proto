@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package resource;
+
+import "google/api/annotations.proto";
+
+service Resource {
+  rpc ListResources (ListResourcesRequest) returns (ListResourcesReply) {
+    option (google.api.http) = {
+      get: "/v1/resources"
+    };
+  };
+}
+
+enum ResourceType {
+  RESOURCE_STACK = 0;
+}
+
+message ResourceEntry {
+  string id = 1;
+  ResourceType type = 2;
+  string name = 3;
+}
+
+message ListResourcesRequest {
+}
+
+message ListResourcesReply {
+  repeated ResourceEntry resources = 1;
+}
