@@ -656,7 +656,8 @@ _create_seed_aws(){
     else
       echo "parameters.json already contains a trusted origin, make sure this is the correct CIDR" >&2
     fi
-    _stackid=$($awscf create-stack --stack-name "$_stackname" --template-body "$_template" --parameters "file://${_parameters}.mod" --capabilities "CAPABILITY_IAM" --output text) || return 1
+    [[ -n "$USER" && "$USER" != "root" ]] && CREATE_STACK_TAGS="--tags Key=Deployer,Value=$USER"
+    _stackid=$($awscf create-stack --stack-name "$_stackname" --template-body "$_template" --parameters "file://${_parameters}.mod" $CREATE_STACK_TAGS --capabilities "CAPABILITY_IAM" --output text) || return 1
     echo "waiting for AWS stack outputs..." >&2
     _status="CREATE_IN_PROGRESS"
     SECONDS=0
