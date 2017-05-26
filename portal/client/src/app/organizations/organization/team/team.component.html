@@ -25,16 +25,22 @@
                   Remove
                 </button>
                 <button
-                  [class]="!userResourceToggle?'btn btn-primary ebutton':'btn btn-primary'"
+                  [class]="teamMode=='user'?'btn btn-primary ebutton':'btn btn-primary'"
                   (click)="userManagement()">
                   <i class="glyphicon glyphicon-user" aria-hidden="true"></i>
                   Users
                 </button>
                 <button
-                  [class]="userResourceToggle?'btn btn-primary ebutton':'btn btn-primary'"
+                  [class]="teamMode=='resource'?'btn btn-primary ebutton':'btn btn-primary'"
                   (click)="resourceManagement()">
-                  <i  class="glyphicon glyphicon-duplicate" aria-hidden="true"></i>
+                  <i  lass="glyphicon glyphicon-duplicate" aria-hidden="true"></i>
                   Resources
+                </button>
+                <button
+                  [class]="teamMode=='authorization'?'btn btn-primary ebutton':'btn btn-primary'"
+                  (click)="authorizationManagement()">
+                  <i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i>
+                  Authorizations
                 </button>
               </div>
             </div>
@@ -45,7 +51,7 @@
   </div>
 </div>
 
-<div class="row" [hidden]="userResourceToggle">
+<div class="row" [hidden]="teamMode!='user'">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
       <div class="panel-body" style="padding-top:5px">
@@ -80,11 +86,11 @@
 
           <div class="col-sm-4 btn-group btn-group-vertical" align="center" style="margin-top:50px">
             <div style="">
-              <a (click)="addAll()" style="background-color:white;display:block;margin:20px">
+              <a (click)="addAllUsers()" style="background-color:white;display:block;margin:20px">
                 Add all
                 <i class="glyphicon glyphicon-chevron-right"></i>
               </a>
-              <a (click)="removeAll()" style="background-color:white;display:block;margin:20px">
+              <a (click)="removeAllUsers()" style="background-color:white;display:block;margin:20px">
                 <i class="glyphicon glyphicon-chevron-left"></i>
                 Remove all
               </a>
@@ -120,7 +126,7 @@
   </div>
 </div>
 
-<div class="row" [hidden]="!userResourceToggle">
+<div class="row" [hidden]="teamMode!='resource'">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
       <div class="panel-body" style="padding-top:5px">
@@ -132,14 +138,89 @@
             </div>
           </div>
         </div>
-        <div *ngIf="resources.length == 0">
+        <div class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px">
+          <div class="col-sm-4">
+            <div class="list-group">
+              <input
+                #filter1
+                type="text"
+                id="filter"
+                placeholder="Filter..."
+                class="form-control input-sm"
+                style="margin-bottom:15px"
+                (keyup)="listResourceService.filter(filter1.value)"/>
+              <a class="disabled list-group-item">Org. resources</a>
+              <a *ngFor="let res of listResourceService.getData()" (click)="addResource(res)" class="list-group-item" style="padding:5px;color:blue">
+                {{res.getLabeledName()}}
+                <div *ngIf="res.saved && res.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+                <div *ngIf="res.saved && res.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
+                <div *ngIf="res.saved && res.saveError!==''" style="color:red">{{res.saveError}}</div>
+              </a>
+            </div>
+          </div>
+
+          <div class="col-sm-4 btn-group btn-group-vertical" align="center" style="margin-top:50px">
+            <div style="">
+              <a (click)="addAllResources()" style="background-color:white;display:block;margin:20px">
+                Add all
+                <i class="glyphicon glyphicon-chevron-right"></i>
+              </a>
+              <a (click)="removeAllResources()" style="background-color:white;display:block;margin:20px">
+                <i class="glyphicon glyphicon-chevron-left"></i>
+                Remove all
+              </a>
+              <button [disabled]="nbSaveInProgress>0" class="btn btn-primary" (click)="applyResources()">
+                <i class="glyphicon glyphicon-send" aria-hidden="true"></i>
+                Apply
+              </button>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="list-group">
+              <input
+                #filter2
+                type="text"
+                id="filter"
+                placeholder="Filter..."
+                class="form-control input-sm"
+                style="margin-bottom:15px"
+                (keyup)="listResourceAddedService.filter(filter2.value)"/>
+              <a class="disabled list-group-item">Team ressources</a>
+              <a *ngFor="let addedRes of listResourceAddedService.getData()" (click)="removeResource(addedRes)" class="list-group-item" style="padding:5px;color:blue">
+                {{addedRes.getLabeledName()}}
+                <div *ngIf="addedRes.saved && addedRes.saveError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+                <div *ngIf="addedRes.saved && addedRes.saveError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
+                <div *ngIf="addedRes.saved && addedRes.saveError!==''" style="color:red">{{addedRes.saveError}}</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" [hidden]="teamMode!='authorization'">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default">
+      <div class="panel-body" style="padding-top:5px">
+        <div class="form-group">
+          <div class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px">
+            <div>
+              <div class="pull-left"><span class="fa fa-user-plus" aria-hidden="true"></span> Team</div>
+              <div class="pull-right" style="color:blue">{{team.name}}</div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="resources.length==0">
           <div class="col-sm-6">
             <div class="list-group" style="color:blue;margin:20px">
               There is no resource available in this organization
             </div>
           </div>
         </div>
-        <div *ngIf="resources.length > 0" class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px">
+        <div *ngIf="resources.length > 0" class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px;margin-bottom:40px">
           <div class="col-sm-2">
             <div class="list-group">
               <input
@@ -181,24 +262,31 @@
                         <span (click)="listResourceService.order('permissionLabel', -1)" class="glyphicon glyphicon-chevron-up"></span>
                       </a>
                     </th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let res of listResourceService.getData()">
-                    <td style="min-width:200px">{{res.id}}</td>
+                  <tr *ngFor="let res of listResourceAddedService.getData()">
+                    <td style="min-width:100px">{{res.id.substring(0,12)}}</td>
                     <td style="min-width:100px">{{res.type}}</td>
-                    <td style="min-width:300px">{{res.name}}</td>
+                    <td style="min-width:200px">{{res.name}}</td>
                     <td style="min-width:200px">
-                      <span appDropdown class="user-box" style="cursor:pointer;color:blue">
-                        {{res.permissionLabel}}
-                        <span class="caret" style="cursor:pointer;color:blue"></span>
-                        <div class="dropdown-menu" style="position:relative;top:0px">
-                          <li><a (click)="setPermission(res, 0)">none</a></li>
-                          <li><a (click)="setPermission(res, 1)">read</a></li>
-                          <li><a (click)="setPermission(res, 2)">write</a></li>
-                          <li><a (click)="setPermission(res, 3)">admin</a></li>
+                      <div class="btn dropdown" style="padding:0px">
+                        <button class="dropdown btn btn-default dropdown-toggle" style="border:none;padding:2px" type="button" id="object" data-toggle="dropdown">
+                          {{res.permissionLabel}}
+                          <span class="caret" style="cursor:pointer;color:black"></span>
+                        </button>
+                        <div class="dropdown-menu">
+                          <li><a (click)="setAuthorization(res, 0)">read</a></li>
+                          <li><a (click)="setAuthorization(res, 1)">write</a></li>
+                          <li><a (click)="setAuthorization(res, 2)">admin</a></li>
                         </div>
-                      </span>
+                      </div>
+                    </td>
+                    <td style="min-width:200px">
+                      <div *ngIf="res.changeAuth && res.changeAuthError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+                      <div *ngIf="res.changeAuth && res.changeAuthError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
+                      <div *ngIf="res.changeAuth && res.changeAuthError!==''" style="color:red">{{res.changeAuthError}}</div>
                     </td>
                   </tr>
                 </tbody>

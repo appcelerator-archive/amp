@@ -16,7 +16,7 @@ import * as $ from 'jquery';
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('container') private container: ElementRef;
   dashboardName = "default"
-  periodRefreshLabel = "30 seconds"
+  periodRefreshLabel = "30 secs"
   periodLabel = '2 min'
   graphPanelHeight = 250
   graphPanelWidth = 500
@@ -101,7 +101,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   save() {
-    
+
   }
 
 }

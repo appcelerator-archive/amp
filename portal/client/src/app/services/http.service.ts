@@ -8,7 +8,7 @@ import { User } from '../models/user.model';
 import { Team } from '../models/team.model';
 import { Organization } from '../models/organization.model';
 import { Member } from '../models/member.model';
-import { TeamResource } from '../models/team-resource.model';
+import { OrganizationResource } from '../models/organization-resource.model';
 import { DockerStack } from '../docker-stacks/models/docker-stack.model';
 import { DockerService } from '../docker-stacks/models/docker-service.model';
 import { DockerContainer } from '../docker-stacks/models/docker-container.model';
@@ -129,8 +129,15 @@ export class HttpService {
             if (org.teams) {
               for (let team of org.teams) {
                 let newTeam = new Team(team.name)
-                for (let mname of team.members) {
-                  newTeam.members.push(new Member(mname, 0))
+                if (team.members) {
+                  for (let mname of team.members) {
+                    newTeam.members.push(new Member(mname, 0))
+                  }
+                }
+                if (team.resources) {
+                  for (let res of team.resources) {
+                    newTeam.resources.push(new OrganizationResource(res.id, "", ""))
+                  }
                 }
                 newOrg.teams.push(newTeam)
               }
@@ -245,12 +252,41 @@ export class HttpService {
   }
 
   organizationRessources() {
-    return this.httpGet("/...")
+    return this.httpGet("/resources")
     .map((res : Response) => {
-      let list : Organization[] = []
-      //
+      let data = res.json()
+      //console.log(data)
+      let list : OrganizationResource[] = []
+      if (data.resources) {
+        for (let item of data.resources) {
+          let type="unknow:"+item.type
+          if (!item.type || item.type == 0) {
+            type = "Stack"
+          } else if (item.type == 1) {
+            type = "Dashboard"
+          }
+          let res = new OrganizationResource(item.id, type, item.name)
+          list.push(res)
+        }
+      }
       return list
     })
+  }
+
+  addResourceToTeam(orgName : string, teamName : string, resourceId : string) {
+    return this.httpPost("/organizations/"+orgName+"/teams/"+teamName+"/resources",
+      { organization_name: orgName, team_name: teamName, resource_id: resourceId}
+    )
+  }
+
+  removeResourceFromTeam(orgName : string, teamName : string, resourceId : string) {
+    return this.httpDelete("/organizations/"+orgName+"/teams/"+teamName+"/resources/"+resourceId)
+  }
+
+  changeTeamResourcePermissionLevel(orgName : string, teamName : string, resourceId : string, level : number) {
+    return this.httpPut("/organizations/"+orgName+"/teams/"+teamName+"/resources/"+resourceId,
+      { organization_name: orgName, team_name: teamName, resource_id: resourceId, permission_level: level }
+    )
   }
 
   nodes() {

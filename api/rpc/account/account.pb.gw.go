@@ -622,10 +622,6 @@ func request_Account_AddResourceToTeam_0(ctx context.Context, marshaler runtime.
 
 }
 
-var (
-	filter_Account_RemoveResourceFromTeam_0 = &utilities.DoubleArray{Encoding: map[string]int{"organization_name": 0, "team_name": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
-)
-
 func request_Account_RemoveResourceFromTeam_0(ctx context.Context, marshaler runtime.Marshaler, client AccountClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq RemoveResourceFromTeamRequest
 	var metadata runtime.ServerMetadata
@@ -659,8 +655,15 @@ func request_Account_RemoveResourceFromTeam_0(ctx context.Context, marshaler run
 		return nil, metadata, err
 	}
 
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Account_RemoveResourceFromTeam_0); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["resource_id"]
+	if !ok {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "resource_id")
+	}
+
+	protoReq.ResourceId, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, err
 	}
 
 	msg, err := client.RemoveResourceFromTeam(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1769,7 +1772,7 @@ var (
 
 	pattern_Account_AddResourceToTeam_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "organizations", "organization_name", "teams", "team_name", "resources"}, ""))
 
-	pattern_Account_RemoveResourceFromTeam_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1", "organizations", "organization_name", "teams", "team_name", "resources"}, ""))
+	pattern_Account_RemoveResourceFromTeam_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"v1", "organizations", "organization_name", "teams", "team_name", "resources", "resource_id"}, ""))
 
 	pattern_Account_ChangeTeamResourcePermissionLevel_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"v1", "organizations", "organization_name", "teams", "team_name", "resources", "resource_id"}, ""))
 

@@ -79,7 +79,7 @@ export class DashboardService {
 
   cancelRequests() {
     if (this.timer) {
-      console.log("clear interval")
+      //console.log("clear interval")
       clearInterval(this.timer);
     }
   }

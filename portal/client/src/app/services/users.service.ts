@@ -78,6 +78,7 @@ export class UsersService {
           },
           error => {
             console.log(error)
+            this.logout()
             this.onUsersError.next(error)
           }
         );
@@ -88,6 +89,31 @@ export class UsersService {
         this.onUsersError.next(error)
       }
     )
+  }
+
+  switchToUserOnly() {
+    if (this.currentUser) {
+      this.httpService.switchOrganization(this.currentUser.name).subscribe(
+        (rep) => {
+          let data = rep.json()
+          let token = data.auth
+          this.httpService.setToken(token)
+          localStorage.setItem('token', JSON.stringify({ token: token }));
+          this.organizationsService.currentOrganization = this.organizationsService.noOrganization
+        }
+      )
+    }
+  }
+
+  parseJwt (token) {
+    if (!token) {
+      return {}
+    }
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace('-', '+').replace('_', '/');
+    let ret = JSON.parse(window.atob(base64));
+    console.log("token: account="+ret.AccountName+", organization="+ret.ActiveOrganization)
+    return ret
   }
 
   signup(user : User, pwd : string) {
