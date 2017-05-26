@@ -415,6 +415,50 @@
         ]
       }
     },
+    "/v1/organizations/{organization_name}/teams/{team_name}/name/{new_name}": {
+      "put": {
+        "operationId": "ChangeTeamName",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "new_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountChangeTeamNameRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/organizations/{organization_name}/teams/{team_name}/resources": {
       "delete": {
         "operationId": "RemoveResourceFromTeam",
@@ -860,6 +904,20 @@
         }
       }
     },
+    "accountChangeTeamNameRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "new_name": {
+          "type": "string"
+        }
+      }
+    },
     "accountChangeTeamResourcePermissionLevelRequest": {
       "type": "object",
       "properties": {
@@ -1052,6 +1110,9 @@
     "accountsOrganization": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "name": {
           "type": "string"
         },

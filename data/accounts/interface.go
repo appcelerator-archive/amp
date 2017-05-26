@@ -106,6 +106,9 @@ type Interface interface {
 	// ChangeTeamResourcePermissionLevel changes the permission level over the given resource in the given team
 	ChangeTeamResourcePermissionLevel(ctx context.Context, organizationName string, teamName string, resource string, permissionLevel TeamPermissionLevel) (err error)
 
+	// ChangeTeamName changes the name of given team
+	ChangeTeamName(ctx context.Context, organizationName string, teamName, newName string) (err error)
+
 	// DeleteTeam deletes a team by name
 	DeleteTeam(ctx context.Context, organizationName string, teamName string) (err error)
 

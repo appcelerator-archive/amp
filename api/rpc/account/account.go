@@ -493,6 +493,15 @@ func (s *Server) ChangeTeamResourcePermissionLevel(ctx context.Context, in *Chan
 	return &empty.Empty{}, nil
 }
 
+// ChangeTeamName implements account.ChangeTeamName
+func (s *Server) ChangeTeamName(ctx context.Context, in *ChangeTeamNameRequest) (*empty.Empty, error) {
+	if err := s.Accounts.ChangeTeamName(ctx, in.OrganizationName, in.TeamName, in.NewName); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully changed name of team %s to %s in organization %s\n", in.TeamName, in.NewName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
 // GetTeam implements account.GetTeam
 func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply, error) {
 	team, err := s.Accounts.GetTeam(ctx, in.OrganizationName, in.TeamName)
