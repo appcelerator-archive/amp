@@ -1,0 +1,92 @@
+version: "3.2"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+
+secrets:
+  prometheus_alerts_rules:
+    external: true
+  alertmanager_yml:
+    external: true
+
+services:
+
+  alertmanager:
+    image: prom/alertmanager
+    networks:
+      default:
+        aliases:
+          - alertmanager
+    volumes:
+      - alertmanager-data:/alertmanager
+    ports:
+      - target: 9093
+        published: 9093
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+    secrets:
+      - source: alertmanager_yml
+        target: alertmanager.yml
+        mode: 0400
+    command: [ "-config.file=/run/secrets/alertmanager.yml",
+             "-storage.path=/alertmanager",
+             "-web.external-url=http://localhost:9093" ]
+
+  prometheus:
+    image: prom/prometheus
+    networks:
+      default:
+        aliases:
+          - prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    ports:
+      - target: 9090
+        published: 9090
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+    secrets:
+      - source: prometheus_alerts_rules
+        target: alerts.rules
+        mode: 0400
+    command: [
+      "-config.file=/etc/prometheus/prometheus.yml",
+      "-storage.local.path=/prometheus",
+      "-web.console.libraries=/etc/prometheus/console_libraries",
+      "-web.console.templates=/etc/prometheus/consoles",
+      "-web.external-url=http://localhost:9090",
+      "-alertmanager.url=http://alertmanager:9093" ]
+
+  telegraf:
+    image: appcelerator/telegraf:telegraf-1.2.1-1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/utmp:/var/run/utmp:ro
+    ports:
+      - target: 9126
+        published: 9126
+    environment:
+      OUTPUT_INFLUXDB_ENABLED: "false"
+      OUTPUT_PROMETHEUS_ENABLED: "true"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
