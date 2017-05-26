@@ -959,6 +959,33 @@
       },
       "title": "Teams"
     },
+    "accountDeleteOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountDeleteTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountDeleteUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "accountForgotLoginRequest": {
       "type": "object",
       "properties": {
@@ -975,11 +1002,30 @@
         }
       }
     },
+    "accountGetOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "accountGetTeamReply": {
       "type": "object",
       "properties": {
         "team": {
           "$ref": "#/definitions/accountsTeam"
+        }
+      }
+    },
+    "accountGetTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
         }
       }
     },
@@ -994,11 +1040,27 @@
         }
       }
     },
+    "accountGetUserOrganizationsRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "accountGetUserReply": {
       "type": "object",
       "properties": {
         "user": {
           "$ref": "#/definitions/accountsUser"
+        }
+      }
+    },
+    "accountGetUserRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
         }
       }
     },
@@ -1013,6 +1075,9 @@
         }
       }
     },
+    "accountListOrganizationsRequest": {
+      "type": "object"
+    },
     "accountListTeamsReply": {
       "type": "object",
       "properties": {
@@ -1021,6 +1086,14 @@
           "items": {
             "$ref": "#/definitions/accountsTeam"
           }
+        }
+      }
+    },
+    "accountListTeamsRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
         }
       }
     },
@@ -1034,6 +1107,9 @@
           }
         }
       }
+    },
+    "accountListUsersRequest": {
+      "type": "object"
     },
     "accountLogInAnswer": {
       "type": "object",
@@ -1084,6 +1160,45 @@
         }
       }
     },
+    "accountRemoveResourceFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "resource_id": {
+          "type": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromOrganizationRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountRemoveUserFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
     "accountSignUpRequest": {
       "type": "object",
       "properties": {
@@ -1107,12 +1222,17 @@
         }
       }
     },
+    "accountVerificationRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
     "accountsOrganization": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
         "name": {
           "type": "string"
         },

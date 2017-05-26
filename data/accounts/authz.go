@@ -16,6 +16,7 @@ const (
 	OrganizationRN  = AmpResourceName + ":organization"
 	TeamRN          = AmpResourceName + ":team"
 	StackRN         = AmpResourceName + ":stack"
+	DashboardRN     = AmpResourceName + ":dashboard"
 
 	CreateAction = "create"
 	ReadAction   = "read"
@@ -101,6 +102,31 @@ var (
 		},
 	}
 
+	dashboardsAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{DashboardRN},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"organization": &OrganizationAccessCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
+			},
+		},
+	}
+
+	dashboardsAdminByUserOwner = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{DashboardRN},
+		Actions:   []string{"<" + AdminAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"user": &ladon.EqualsSubjectCondition{},
+		},
+	}
+
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		usersCanDeleteThemselves,
@@ -109,6 +135,8 @@ var (
 		teamsAdminByOrgOwners,
 		stacksAdminByOrgOwnersAndTeamAdmins,
 		stacksAdminByUserOwner,
+		dashboardsAdminByOrgOwnersAndTeamAdmins,
+		dashboardsAdminByUserOwner,
 	}
 
 	warden = &ladon.Ladon{

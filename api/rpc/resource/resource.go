@@ -18,9 +18,9 @@ func convertError(err error) error {
 	switch err {
 	case stacks.InvalidName:
 		return status.Errorf(codes.InvalidArgument, err.Error())
-	case stacks.StackAlreadyExists:
+	case stacks.AlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
-	case stacks.StackNotFound:
+	case stacks.NotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())

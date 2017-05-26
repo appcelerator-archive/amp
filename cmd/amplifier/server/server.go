@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
+	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/resource"
@@ -19,6 +20,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
+	"github.com/appcelerator/amp/data/dashboards"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -35,7 +37,7 @@ type serviceInitializer func(*Amplifier, *grpc.Server)
 type Amplifier struct {
 	config   *configuration.Configuration
 	docker   *docker.Docker
-	store    storage.Interface
+	storage  storage.Interface
 	es       *elasticsearch.Elasticsearch
 	ns       *ns.NatsStreaming
 	mailer   *mail.Mailer
@@ -54,6 +56,7 @@ var serviceInitializers = []serviceInitializer{
 	registerServiceServer,
 	registerNodeServer,
 	registerResourceServer,
+	registerDashboardServer,
 }
 
 func New(config *configuration.Configuration) (*Amplifier, error) {
@@ -64,7 +67,7 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	etcd := etcd.New(config.EtcdEndpoints, "amp", configuration.DefaultTimeout)
 	amp := &Amplifier{
 		config:   config,
-		store:    etcd,
+		storage:  etcd,
 		es:       elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
 		ns:       ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
 		docker:   docker.NewClient(config.DockerURL, config.DockerVersion),
@@ -146,7 +149,7 @@ func registerStackServer(amp *Amplifier, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
 		Accounts: amp.accounts,
 		Docker:   amp.docker,
-		Stacks:   stacks.NewStore(amp.store, amp.accounts),
+		Stacks:   stacks.NewStore(amp.storage, amp.accounts),
 	})
 }
 
@@ -170,6 +173,12 @@ func registerNodeServer(amp *Amplifier, s *grpc.Server) {
 
 func registerResourceServer(amp *Amplifier, s *grpc.Server) {
 	resource.RegisterResourceServer(s, &resource.Server{
-		Stacks: stacks.NewStore(amp.store, amp.accounts),
+		Stacks: stacks.NewStore(amp.storage, amp.accounts),
+	})
+}
+
+func registerDashboardServer(amp *Amplifier, s *grpc.Server) {
+	dashboard.RegisterDashboardServer(s, &dashboard.Server{
+		Dashboards: dashboards.NewStore(amp.storage, amp.accounts),
 	})
 }
