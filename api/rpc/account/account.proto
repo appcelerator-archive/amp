@@ -19,7 +19,7 @@ service Account {
       post: "/v1/verify/{token}"
     };
   };
-  
+
   rpc Login (LogInRequest) returns (LogInAnswer) {
     option (google.api.http) = {
       post: "/v1/login",
@@ -145,7 +145,7 @@ service Account {
   };
   rpc RemoveResourceFromTeam (RemoveResourceFromTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}/resources"
+      delete: "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}"
     };
   };
   rpc ChangeTeamResourcePermissionLevel (ChangeTeamResourcePermissionLevelRequest) returns (google.protobuf.Empty) {

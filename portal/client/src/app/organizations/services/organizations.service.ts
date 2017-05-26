@@ -3,6 +3,7 @@ import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
 import { Organization } from '../../models/organization.model';
 import { Member } from '../../models/member.model';
+import { OrganizationResource } from '../../models/organization-resource.model';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs/Subject'
 
@@ -42,6 +43,7 @@ export class OrganizationsService {
         this.organizations = data
         this.currentLoadedUser = userName
         this.onOrganizationsLoaded.next()
+        console.log(data)
       },
       error => {
         this.onOrganizationsError.next(error)
@@ -51,7 +53,35 @@ export class OrganizationsService {
   }
 
   setCurrentOrganization(org : Organization) {
-    this.currentOrganization = org
+    this.httpService.switchOrganization(org.name).subscribe(
+      (rep) => {
+        let data = rep.json()
+        let token = data.auth
+        this.httpService.setToken(token)
+        localStorage.setItem('token', JSON.stringify({ token: token }));
+        this.currentOrganization = org
+        this.httpService.organizationRessources().subscribe(
+          (data) => {
+            org.resources = data
+            for (let team of org.teams) {
+              for (let res of team.resources) {
+                for (let ref of data) {
+                  if (ref.id == res.id) {
+                    res.name = ref.name
+                    res.type = ref.type
+                    break;
+                  }
+                }
+              }
+            }
+            this.currentOrganization = org
+          },
+          (err) => {
+            console.log(err)
+          }
+        )
+      }
+    )
   }
 
   edit() {
@@ -76,4 +106,21 @@ export class OrganizationsService {
     return list
   }
 
+  //to be refactor with associative array
+  getAllNoResources(resources : OrganizationResource[]) {
+    let list : OrganizationResource [] = []
+    for (let ref of this.currentOrganization.resources) {
+      let found = false
+      for (let res of resources) {
+        if (ref.id == res.id) {
+          found= true
+          break;
+        }
+      }
+      if (!found) {
+        list.push(new OrganizationResource(ref.id, ref.type, ref.name))
+      }
+    }
+    return list
+  }
 }

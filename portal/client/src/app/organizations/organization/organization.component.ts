@@ -79,6 +79,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
   returnBack() {
     this.menuService.returnToPreviousPath()
   }
+  
   addUser( user : Member) {
     user.status++;
     user.saved = false

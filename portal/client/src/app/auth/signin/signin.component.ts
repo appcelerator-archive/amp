@@ -22,8 +22,11 @@ export class SigninComponent implements OnInit, OnDestroy {
   ngOnInit() {
     let currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (currentUser) {
-      this.byPass = true
-      this.usersService.setCurrentUser(currentUser.username, currentUser.token, true)
+      let token = JSON.parse(localStorage.getItem('token'));
+      if (token) {
+        this.byPass = true
+        this.usersService.setCurrentUser(currentUser.username, token.token, true)
+      }
     }
   }
 
