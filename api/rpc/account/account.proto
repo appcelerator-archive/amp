@@ -26,7 +26,7 @@ service Account {
       body: "*"
     };
   };
-  rpc Switch (SwitchRequest) returns (google.protobuf.Empty) {
+  rpc Switch (SwitchRequest) returns (SwitchAnswer) {
     option (google.api.http) = {
       post: "/v1/switch",
       body: "*"
@@ -196,6 +196,10 @@ message LogInRequest {
 
 message SwitchRequest {
   string account = 1;
+}
+
+message SwitchAnswer {
+  string auth = 1;
 }
 
 message PasswordResetRequest {
