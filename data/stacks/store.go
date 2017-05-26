@@ -12,19 +12,19 @@ import (
 	"golang.org/x/net/context"
 )
 
-const stacksRootKey = "stacks"
+const rootKey = "stacks"
 
 // Store implements stack data.Interface
 type Store struct {
-	store    storage.Interface
 	accounts accounts.Interface
+	storage  storage.Interface
 }
 
 // NewStore returns an etcd implementation of stacks.Interface
-func NewStore(store storage.Interface, accounts accounts.Interface) *Store {
+func NewStore(storage storage.Interface, accounts accounts.Interface) *Store {
 	return &Store{
-		store:    store,
 		accounts: accounts,
+		storage:  storage,
 	}
 }
 
@@ -38,7 +38,7 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 		return nil, err
 	}
 	if stackAlreadyExists != nil {
-		return nil, StackAlreadyExists
+		return nil, AlreadyExists
 	}
 
 	// Create the new stack
@@ -51,7 +51,7 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 	if err := stack.Validate(); err != nil {
 		return nil, err
 	}
-	if err := s.store.Create(ctx, path.Join(stacksRootKey, stack.Id), stack, nil, 0); err != nil {
+	if err := s.storage.Create(ctx, path.Join(rootKey, stack.Id), stack, nil, 0); err != nil {
 		return nil, err
 	}
 	return stack, nil
@@ -60,7 +60,7 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 // GetStack fetches a stack by id
 func (s *Store) GetStack(ctx context.Context, id string) (*Stack, error) {
 	stack := &Stack{}
-	if err := s.store.Get(ctx, path.Join(stacksRootKey, id), stack, true); err != nil {
+	if err := s.storage.Get(ctx, path.Join(rootKey, id), stack, true); err != nil {
 		return nil, err
 	}
 	// If there's no "id" in the answer, it means the stack has not been found, so return nil
@@ -105,7 +105,7 @@ func (s *Store) GetStackByFragmentOrName(ctx context.Context, fragmentOrName str
 // ListStacks lists stacks
 func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
 	protos := []proto.Message{}
-	if err := s.store.List(ctx, stacksRootKey, storage.Everything, &Stack{}, &protos); err != nil {
+	if err := s.storage.List(ctx, rootKey, storage.Everything, &Stack{}, &protos); err != nil {
 		return nil, err
 	}
 	stacks := []*Stack{}
@@ -122,7 +122,7 @@ func (s *Store) DeleteStack(ctx context.Context, id string) error {
 		return err
 	}
 	if stack == nil {
-		return StackNotFound
+		return NotFound
 	}
 
 	// Check authorization
@@ -131,13 +131,13 @@ func (s *Store) DeleteStack(ctx context.Context, id string) error {
 	}
 
 	// Delete the stack
-	if err := s.store.Delete(ctx, path.Join(stacksRootKey, stack.Id), false, nil); err != nil {
+	if err := s.storage.Delete(ctx, path.Join(rootKey, stack.Id), false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Reset resets the account store
+// Reset resets the account storage
 func (s *Store) Reset(ctx context.Context) {
-	s.store.Delete(ctx, stacksRootKey, true, nil)
+	s.storage.Delete(ctx, rootKey, true, nil)
 }

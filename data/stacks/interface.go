@@ -9,9 +9,9 @@ func (e Error) Error() string { return string(e) }
 
 // Errors
 const (
-	InvalidName        = Error("name is invalid")
-	StackAlreadyExists = Error("stack already exists")
-	StackNotFound      = Error("stack not found")
+	InvalidName   = Error("name is invalid")
+	AlreadyExists = Error("stack already exists")
+	NotFound      = Error("stack not found")
 )
 
 // Interface defines the stack data access layer
@@ -34,6 +34,6 @@ type Interface interface {
 	// DeleteStack deletes a stack by id
 	DeleteStack(ctx context.Context, id string) (err error)
 
-	// Reset resets the stack store
+	// Reset resets the stack storage
 	Reset(ctx context.Context)
 }

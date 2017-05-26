@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package dashboard;
+
+import "github.com/appcelerator/amp/data/dashboards/dashboards.proto";
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
+import "google/api/annotations.proto";
+
+service Dashboard {
+  rpc Create (CreateRequest) returns (CreateReply) {
+    option (google.api.http) = {
+      post: "/v1/dashboards",
+      body: "*"
+    };
+  }
+  rpc Get (GetRequest) returns (GetReply) {
+    option (google.api.http) = {
+      get: "/v1/dashboards/{id}"
+    };
+  }
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/dashboards"
+    };
+  }
+  rpc UpdateName (UpdateNameRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/dashboards/{id}/name/{name}"
+    };
+  }
+  rpc UpdateData (UpdateDataRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/dashboards/{id}/data",
+      body: "*"
+    };
+  }
+  rpc Remove (RemoveRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/dashboards/{id}"
+    };
+  }
+}
+
+message CreateRequest {
+  string name = 1;
+  string data = 2;
+}
+
+message CreateReply {
+  dashboards.Dashboard dashboard = 1;
+}
+
+message GetRequest {
+  string id = 1;
+}
+
+message GetReply {
+  dashboards.Dashboard dashboard = 1;
+}
+
+message UpdateNameRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message UpdateDataRequest {
+  string id = 1;
+  string data = 2;
+}
+
+message ListRequest {
+}
+
+message ListReply {
+  repeated dashboards.Dashboard dashboards = 1;
+}
+
+message RemoveRequest {
+  string id = 1;
+}

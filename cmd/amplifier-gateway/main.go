@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
+	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/resource"
@@ -61,6 +62,9 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := cluster.RegisterClusterHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := dashboard.RegisterDashboardHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 	if err := logs.RegisterLogsHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {

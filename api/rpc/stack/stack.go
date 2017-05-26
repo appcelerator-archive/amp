@@ -24,9 +24,9 @@ func convertError(err error) error {
 	switch err {
 	case stacks.InvalidName:
 		return status.Errorf(codes.InvalidArgument, err.Error())
-	case stacks.StackAlreadyExists:
+	case stacks.AlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
-	case stacks.StackNotFound:
+	case stacks.NotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())
@@ -102,7 +102,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 		return nil, convertError(dockerErr)
 	}
 	if stack == nil {
-		return nil, stacks.StackNotFound
+		return nil, stacks.NotFound
 	}
 
 	// Check authorization
@@ -133,7 +133,7 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 		return nil, convertError(err)
 	}
 	if stack == nil {
-		return nil, stacks.StackNotFound
+		return nil, stacks.NotFound
 	}
 
 	output, dockerErr := s.Docker.StackServices(ctx, stack.Name)
