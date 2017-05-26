@@ -67,6 +67,8 @@ type Interface interface {
 
 // UpdateFunc represents a function that will perform the update on a given object
 // It gets the current object as input and returns the updated object as output
+// If the function returns an error, the update is cancelled. Interface.Update will return this error
+// If the function returns no error and nil data, the update doesn't need to be performed. Interface.Update will exit successfully without updating the object.
 type UpdateFunc func(current proto.Message) (updated proto.Message, err error)
 
 // Filter is the interface used for storage operations that apply to sets (list, find, update).

@@ -820,6 +820,46 @@ func (s *Store) ChangeTeamResourcePermissionLevel(ctx context.Context, organizat
 	return nil
 }
 
+// ChangeTeamName changes the name of given team
+func (s *Store) ChangeTeamName(ctx context.Context, organizationName string, teamName, newName string) (err error) {
+	// Check authorization
+	if !s.IsAuthorized(ctx, &Account{AccountType_ORGANIZATION, organizationName}, UpdateAction, OrganizationRN, organizationName) {
+		return NotAuthorized
+	}
+
+	// Update organization
+	uf := func(current proto.Message) (proto.Message, error) {
+		organization, ok := current.(*Organization)
+		if !ok {
+			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
+		}
+
+		// Check if team already exists
+		alreadyExists := organization.getTeam(newName)
+		if alreadyExists != nil {
+			return nil, TeamAlreadyExists
+		}
+
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Update team name
+		team.Name = newName
+
+		return organization, nil
+	}
+	if err := s.storage.Update(ctx, path.Join(organizationsRootKey, organizationName), uf, &Organization{}); err != nil {
+		if err == storage.NotFound {
+			return OrganizationNotFound
+		}
+		return err
+	}
+	return nil
+}
+
 // GetTeam fetches a team by name
 func (s *Store) GetTeam(ctx context.Context, organizationName string, teamName string) (*Team, error) {
 	// Get organization
