@@ -14,6 +14,7 @@ service Resource {
 
 enum ResourceType {
   RESOURCE_STACK = 0;
+  RESOURCE_DASHBOARD = 1;
 }
 
 message ResourceEntry {
