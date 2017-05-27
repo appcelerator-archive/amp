@@ -51,6 +51,7 @@
   </div>
 </div>
 
+<!-- Panel: Users exchange between organization and team -->
 <div class="row" [hidden]="teamMode!='user'">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
@@ -63,17 +64,18 @@
             </div>
           </div>
         </div>
+        <!-- Panel: Users exchange between organization and team -->
         <div class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px">
           <div class="col-sm-4">
             <div class="list-group">
               <input
-                #filter1
+                #filteru1
                 type="text"
                 id="filter"
                 placeholder="Filter..."
                 class="form-control input-sm"
                 style="margin-bottom:15px"
-                (keyup)="listUserService.filter(filter1.value)"/>
+                (keyup)="listUserService.filter(filteru1.value)"/>
               <a class="disabled list-group-item">Organization users</a>
               <a *ngFor="let user of listUserService.getData()" (click)="addUser(user)" class="list-group-item" style="padding:5px;color:blue">
                 {{user.getLabeledName()}}
@@ -100,17 +102,16 @@
               </button>
             </div>
           </div>
-
           <div class="col-sm-4">
             <div class="list-group">
               <input
-                #filter2
+                #filteru2
                 type="text"
                 id="filter"
                 placeholder="Filter..."
                 class="form-control input-sm"
                 style="margin-bottom:15px"
-                (keyup)="listUserAddedService.filter(filter2.value)"/>
+                (keyup)="listUserAddedService.filter(filteru2.value)"/>
               <a class="disabled list-group-item">Team users</a>
               <a *ngFor="let addedUser of listUserAddedService.getData()" (click)="removeUser(addedUser)" class="list-group-item" style="padding:5px;color:blue">
                 {{addedUser.getLabeledName()}}
@@ -126,6 +127,7 @@
   </div>
 </div>
 
+<!-- Panel: Resources exchange between organization and team -->
 <div class="row" [hidden]="teamMode!='resource'">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
@@ -142,13 +144,13 @@
           <div class="col-sm-4">
             <div class="list-group">
               <input
-                #filter1
+                #filterr1
                 type="text"
                 id="filter"
                 placeholder="Filter..."
                 class="form-control input-sm"
                 style="margin-bottom:15px"
-                (keyup)="listResourceService.filter(filter1.value)"/>
+                (keyup)="listResourceService.filter(filterr1.value)"/>
               <a class="disabled list-group-item">Org. resources</a>
               <a *ngFor="let res of listResourceService.getData()" (click)="addResource(res)" class="list-group-item" style="padding:5px;color:blue">
                 {{res.getLabeledName()}}
@@ -179,13 +181,13 @@
           <div class="col-sm-4">
             <div class="list-group">
               <input
-                #filter2
+                #filterr2
                 type="text"
                 id="filter"
                 placeholder="Filter..."
                 class="form-control input-sm"
                 style="margin-bottom:15px"
-                (keyup)="listResourceAddedService.filter(filter2.value)"/>
+                (keyup)="listResourceAddedService.filter(filterr2.value)"/>
               <a class="disabled list-group-item">Team ressources</a>
               <a *ngFor="let addedRes of listResourceAddedService.getData()" (click)="removeResource(addedRes)" class="list-group-item" style="padding:5px;color:blue">
                 {{addedRes.getLabeledName()}}
@@ -201,6 +203,7 @@
   </div>
 </div>
 
+<!-- Panel: set team resources authorizations -->
 <div class="row" [hidden]="teamMode!='authorization'">
   <div class="col-lg-12 col-md-12 col-xs-12">
     <div class="panel panel-default">
@@ -213,53 +216,46 @@
             </div>
           </div>
         </div>
-        <div *ngIf="resources.length==0">
-          <div class="col-sm-6">
-            <div class="list-group" style="color:blue;margin:20px">
-              There is no resource available in this organization
-            </div>
-          </div>
-        </div>
-        <div *ngIf="resources.length > 0" class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px;margin-bottom:40px">
+        <div class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px;margin-bottom:40px">
           <div class="col-sm-2">
             <div class="list-group">
               <input
-                #filter1
+                #filtera1
                 type="text"
                 id="filter1"
                 placeholder="Filter..."
                 class="form-control input-sm"
                 style="margin-bottom:15px"
-                (keyup)="listUserService.filter(filter1.value)"/>
+                (keyup)="listResourceAddedService.filter(filtera1.value)"/>
               <table class="table table-hover">
                 <thead>
                   <tr>
                     <th>
                       <a>
                         Id
-                        <span (click)="listResourceService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                        <span (click)="listResourceService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                        <span (click)="listResourceAddedService.order('id', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                        <span (click)="listResourceAddedService.order('id', -1)" class="glyphicon glyphicon-chevron-up"></span>
                       </a>
                     </th>
                     <th>
                       <a>
                         Type
-                        <span (click)="listResourceService.order('type', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                        <span (click)="listResourceService.order('type', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                        <span (click)="listResourceAddedService.order('type', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                        <span (click)="listResourceAddedService.order('type', -1)" class="glyphicon glyphicon-chevron-up"></span>
                       </a>
                     </th>
                     <th>
                       <a>
                         Name
-                        <span (click)="listResourceService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                        <span (click)="listResourceService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                        <span (click)="listResourceAddedService.order('name', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                        <span (click)="listResourceAddedService.order('name', -1)" class="glyphicon glyphicon-chevron-up"></span>
                       </a>
                     </th>
                     <th>
                       <a>
                         Permission
-                        <span (click)="listResourceService.order('permissionLabel', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                        <span (click)="listResourceService.order('permissionLabel', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                        <span (click)="listResourceAddedService.order('permissionLabel', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                        <span (click)="listResourceAddedService.order('permissionLabel', -1)" class="glyphicon glyphicon-chevron-up"></span>
                       </a>
                     </th>
                     <th></th>
@@ -284,7 +280,7 @@
                       </div>
                     </td>
                     <td style="min-width:200px">
-                      <div *ngIf="res.changeAuth && res.changeAuthError===''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
+                      <div *ngIf="res.changeAuth && res.changeAuthError==''" style="color:green" class="menu-icon glyphicon glyphicon-ok space-left"></div>
                       <div *ngIf="res.changeAuth && res.changeAuthError!==''" style="color:red" class="menu-icon glyphicon glyphicon-remove space-left space-right"></div>
                       <div *ngIf="res.changeAuth && res.changeAuthError!==''" style="color:red">{{res.changeAuthError}}</div>
                     </td>

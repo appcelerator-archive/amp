@@ -1,9 +1,9 @@
 import { Injectable, Output, EventEmitter } from '@angular/core';
 import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
-import { Organization } from '../../models/organization.model';
-import { Member } from '../../models/member.model';
-import { OrganizationResource } from '../../models/organization-resource.model';
+import { Organization } from '../../organizations/models/organization.model';
+import { Member } from '../../organizations/models/member.model';
+import { OrganizationResource } from '../../organizations/models/organization-resource.model';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs/Subject'
 

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Organization } from '../models/organization.model';
+import { Organization } from '../organizations/models/organization.model';
 import { MenuService } from '../services/menu.service';
 import { OrganizationsService } from '../organizations/services/organizations.service';
 import { UsersService } from '../services/users.service';

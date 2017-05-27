@@ -2,8 +2,8 @@ import { Injectable, Output, EventEmitter } from '@angular/core';
 import { HttpService } from '../services/http.service';
 import { OrganizationsService } from '../organizations/services/organizations.service';
 import { User } from '../models/user.model';
-import { Member } from '../models/member.model';
-import { Organization } from '../models/organization.model';
+import { Member } from '../organizations/models/member.model';
+import { Organization } from '../organizations/models/organization.model';
 import { Subject } from 'rxjs/Subject'
 import { MenuService } from '../services/menu.service'
 

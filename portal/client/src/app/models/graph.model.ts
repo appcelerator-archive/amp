@@ -19,6 +19,7 @@ export class Graph {
   public object : string
   public field: string
   public border: boolean
+  public counterHorizontal: boolean
   public topNumber: number
   public alert : boolean
   public alertMin: number
