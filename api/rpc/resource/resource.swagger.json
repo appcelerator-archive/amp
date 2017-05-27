@@ -64,7 +64,8 @@
     "resourceResourceType": {
       "type": "string",
       "enum": [
-        "RESOURCE_STACK"
+        "RESOURCE_STACK",
+        "RESOURCE_DASHBOARD"
       ],
       "default": "RESOURCE_STACK"
     }
