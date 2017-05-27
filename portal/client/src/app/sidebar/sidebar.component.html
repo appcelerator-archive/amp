@@ -2,12 +2,12 @@
  to be completly refactor in pur bootstrap classes in v1.1
 -->
 
-<div id="sidebar-wrapper" *ngIf="!mini">
+<div id="sidebar-wrapper" *ngIf="sidebarDisplay=='normal'">
 
   <ul class="sidebar">
     <li class="sidebar-main">
       <a (click)="minimize()" class="interactive amp-title">
-        <!--<img src="images/atomiq.png" class="img-responsive logo" alt="amp">-->
+        <!--<img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:35px">-->
         AMP
         <span class="menu-icon glyphicon glyphicon-transfer"></span>
       </a>
@@ -81,7 +81,7 @@
   </div>
 </div>
 
-<div *ngIf="mini" id="sidebar-wrapper" style="width:70px;margin-right:0px;padding-right:0px">
+<div *ngIf="sidebarDisplay=='mini'" id="sidebar-wrapper" style="width:70px;margin-right:0px;padding-right:0px">
   <ul class="sidebar" style="width:70px;margin-right:0px;padding-right:0px">
 
     <li class="sidebar-list">
@@ -90,7 +90,7 @@
       </a>
     </li>
 
-    <li class="sidebar-list">
+    <li class="sidebar-list" tooltip>
       <a class="sidebarm" routerLink="/amp/dashboard">
         <span class="menu-icon fa fa-tachometer"></span>
       </a>

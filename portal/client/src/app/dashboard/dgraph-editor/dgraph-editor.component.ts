@@ -23,7 +23,7 @@ export class DGraphEditorComponent implements OnInit, OnDestroy {
     this.visibility['bars']="[request][centertitle][setting][top][removelegend]"
     this.visibility['pie']="[request][setting][top]"
     this.visibility['bubbles']="[request][centertitle][setting][top][bubble]"
-    this.visibility['counter']="[request][alert]"
+    this.visibility['counter']="[horizontal][request][alert]"
     this.visibility['legend']="[centertitle][setting][legend]"
   }
 

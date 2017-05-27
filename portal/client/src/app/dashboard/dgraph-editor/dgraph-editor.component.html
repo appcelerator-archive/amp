@@ -37,6 +37,15 @@
               #centerTitle
               id="centerTitle"
               (click)="dashboardService.setTitleCenter(centerTitle.checked)"> Center title</label>
+            <label *ngIf="isVisible('horizontal')" style="margin-top:5px;margin-left:20px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.counterHorizontal"
+              #horizontal
+              id="horizontal"
+              (click)="dashboardService.setCounterHorizontal(horizontal.checked)"> Horizontal value</label>
           </div>
 
           <div class="col-sm-12" *ngIf="isVisible('request')"  style="padding:0px;margin:0px;margin-top:5px">

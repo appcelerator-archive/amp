@@ -64,9 +64,9 @@ export class GraphLegend {
   updateGraph(graph : Graph) {
     this.svg.selectAll("*").remove();
     if (graph.transparentLegend) {
-      this.element.className = "dgraph graph-transparent"
+      this.addClass("graph-transparent")
     } else {
-      this.element.className = "dgraph"
+      this.removeClass("graph-transparent")
     }
 
     let fontSize = this.height/7
@@ -119,6 +119,21 @@ export class GraphLegend {
   }
 
   titleClick() {
+  }
+
+  addClass(name : string) {
+    if (this.element.className.indexOf(name)>=0) {
+      return
+    }
+    this.element.className += " " + name
+  }
+
+  removeClass(name : string) {
+    if (this.element.className.indexOf(name)<0) {
+      return
+    }
+    //warning: works only for this component
+    this.element.className = this.element.className.replace(name, "")
   }
 
 }

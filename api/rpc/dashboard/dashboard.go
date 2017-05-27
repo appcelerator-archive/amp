@@ -60,6 +60,9 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	if err != nil {
 		return nil, convertError(err)
 	}
+	for _, dashboard := range dashboards {
+		dashboard.Data = "" //remove data, data are loaded one by one using get
+	}
 	log.Println("Successfully listed dashboards")
 	return &ListReply{Dashboards: dashboards}, nil
 }
@@ -78,7 +81,7 @@ func (s *Server) UpdateData(ctx context.Context, in *UpdateDataRequest) (*empty.
 	if err := s.Dashboards.UpdateData(ctx, in.Id, in.Data); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully updated dashboard %d data\n", in.Id)
+	log.Printf("Successfully updated dashboard %s data\n", in.Id)
 	return &empty.Empty{}, nil
 }
 

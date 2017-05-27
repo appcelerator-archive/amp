@@ -4,10 +4,10 @@ import { OrganizationsService } from '../../../organizations/services/organizati
 import { ListService } from '../../../services/list.service';
 import { UsersService } from '../../../services/users.service';
 import { User } from '../../../models/user.model';
-import { Member } from '../../../models/member.model';
-import { Team } from '../../../models/team.model';
-import { Organization } from '../../../models/organization.model';
-import { OrganizationResource } from '../../../models/organization-resource.model';
+import { Member } from '../../../organizations/models/member.model';
+import { Team } from '../../../organizations/models/team.model';
+import { Organization } from '../../../organizations/models/organization.model';
+import { OrganizationResource } from '../../../organizations/models/organization-resource.model';
 import { ActivatedRoute } from '@angular/router';
 import { MenuService } from '../../../services/menu.service';
 import { HttpService } from '../../../services/http.service';

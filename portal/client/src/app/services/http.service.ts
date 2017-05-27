@@ -5,10 +5,10 @@ import 'rxjs/add/operator/catch';
 import { Subject } from 'rxjs/Subject';
 import { Observable } from 'RxJS/Rx';
 import { User } from '../models/user.model';
-import { Team } from '../models/team.model';
-import { Organization } from '../models/organization.model';
-import { Member } from '../models/member.model';
-import { OrganizationResource } from '../models/organization-resource.model';
+import { Team } from '../organizations/models/team.model';
+import { Organization } from '../organizations/models/organization.model';
+import { Member } from '../organizations/models/member.model';
+import { OrganizationResource } from '../organizations/models/organization-resource.model';
 import { DockerStack } from '../docker-stacks/models/docker-stack.model';
 import { DockerService } from '../docker-stacks/models/docker-service.model';
 import { DockerContainer } from '../docker-stacks/models/docker-container.model';
@@ -18,6 +18,7 @@ import { GraphCurrentData } from '../models/graph-current-data.model';
 import { LogsRequest } from '../logs/models/logs-request.model';
 import { Log } from '../logs/models/log.model';
 import { Node } from '../nodes/models/node.model';
+import { Dashboard } from '../dashboard/models/dashboard.model'
 import * as d3 from 'd3';
 import 'rxjs/add/operator/retrywhen';
 import 'rxjs/add/operator/scan';
@@ -260,9 +261,9 @@ export class HttpService {
       if (data.resources) {
         for (let item of data.resources) {
           let type="unknow:"+item.type
-          if (!item.type || item.type == 0) {
+          if (!item.type || item.type == 'RESOURCE_STACK') {
             type = "Stack"
-          } else if (item.type == 1) {
+          } else if (item.type == 'RESOURCE_DASHBOARD') {
             type = "Dashboard"
           }
           let res = new OrganizationResource(item.id, type, item.name)
@@ -371,7 +372,11 @@ export class HttpService {
             if (request.stats_mem) {
               this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
               this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
-              this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
+              if (request.format) {
+                this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
+              } else {
+                this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1)
+              }
               this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
             }
             if (request.stats_net) {
@@ -413,7 +418,7 @@ export class HttpService {
             if (request.stats_mem) {
               this.setValue(datal, 'mem-limit', item.mem.limit, 1, 1)
               this.setValue(datal, 'mem-maxusage', item.mem.maxusage, 1, 1)
-              this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1024*1024)
+              this.setValue(datal, 'mem-usage', item.mem.usage, 1, 1)
               this.setValue(datal, 'mem-usage-p', item.mem.usage_p, 100, 1)
             }
             if (request.stats_net) {
@@ -441,6 +446,69 @@ export class HttpService {
     }
     return 0
   }
+
+  createDashboard(name : string, data : string) {
+    return this.httpPost("/dashboards", { name: name, data: data})
+      .map((res : Response) => {
+        let data = res.json()
+        if (data.dashboard) {
+          return data.dashboard.id
+        }
+        return undefined
+      }
+    )
+  }
+
+  getDashboard(id : string) {
+    return this.httpGet("/dashboards/"+id)
+      .map((res : Response) => {
+        let data = res.json()
+        if (data.dashboard) {
+          let dashboard = new Dashboard(data.dashboard.id, data.dashboard.name, data.dashboard.data)
+          dashboard.set(data.dashboard.owner.name, data.dashboard.owner.type, data.dashboard.create_dt)
+          return dashboard
+        }
+        return undefined
+      }
+    )
+  }
+
+  listDashboard() {
+    return this.httpGet("/dashboards")
+      .map((res : Response) => {
+        let data = res.json()
+        let list : Dashboard[] = []
+        if (data.dashboards) {
+            for (let dash of data.dashboards) {
+              let dashboard = new Dashboard(dash.id, dash.name, dash.data)
+              dashboard.set(dash.owner.name, dash.owner.type, dash.create_dt)
+              list.push(dashboard)
+            }
+        }
+        list.sort((a ,b) => {
+          if (a.date < b.date) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        return list
+      }
+    )
+  }
+
+  updateDashboardName(id : string, name : string) {
+    return this.httpPut("/dashboards/"+id+"/name/"+name, {});
+  }
+
+  updateDashboard(id : string, data : string) {
+    return this.httpPut("/dashboards/"+id+"/data", {id: id, data: data});
+  }
+
+  removeDashboard(id : string) {
+    return this.httpDelete("/dashboards/"+id)
+  }
+
 
 //--------------------------------------------------------------------------------------
 // http core functions

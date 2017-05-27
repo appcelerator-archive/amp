@@ -26,6 +26,7 @@ import { AppRoutingModule} from './app-routing.module';
 import { DropdownDirective } from './directives/dropdown.directive'
 import { DraggableDirective } from './directives/draggable.directive'
 import { DropTargetDirective } from './directives/drop-target.directive'
+import { TooltipDirective } from './directives/tooltip.directive'
 import { MovableDirective } from './dashboard/directives/movable.directive'
 
 //components
@@ -66,6 +67,7 @@ import { DgraphAlertComponent } from './dashboard/dgraph-alert/dgraph-alert.comp
     DropdownDirective,
     DraggableDirective,
     DropTargetDirective,
+    TooltipDirective,
     MovableDirective,
     //Components
     AppComponent,

@@ -106,6 +106,7 @@ export class MetricsService {
   }
 
   updateHistoricData() {
+    this.statsRequest.format=true
     this.httpService.statsHistoric(this.statsRequest).subscribe(
       data => {
         this.histoData = data

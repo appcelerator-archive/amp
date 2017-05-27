@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, Renderer2 } from '@angular/core';
 import { MenuService } from '../services/menu.service';
+import { HttpService } from '../services/http.service';
 import { DashboardService } from './services/dashboard.service';
 import { ActivatedRoute } from '@angular/router';
 import { AppWindow } from '../models/app-window.model';
 import { Graph } from '../models/graph.model';
+import { Dashboard } from './models/dashboard.model';
 import { NgForm } from '@angular/forms';
 import * as $ from 'jquery';
 
@@ -15,7 +17,7 @@ import * as $ from 'jquery';
 
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('container') private container: ElementRef;
-  dashboardName = "default"
+  saveAsDashboardName = ""
   periodRefreshLabel = "30 secs"
   periodLabel = '2 min'
   graphPanelHeight = 250
@@ -23,6 +25,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   offsetTop0 : number
   offsetLeft0 : number
   graph00 : Graph = new Graph("graph00", 0, 0, 10, 10, 'text', undefined)
+  dialogGraph : Graph = new Graph("dialog", 0, 0, 10, 10, 'text', undefined)
+  dashboards : Dashboard[] = []
+  private noDashboard = new Dashboard("", "", "")
+  public currentDashboard : Dashboard = this.noDashboard
+  public selected : Dashboard = this.noDashboard
+  public message = ""
   public dialogx = 0
   public dialogy = 0
   public dialogHidden = true
@@ -31,6 +39,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private menuService : MenuService,
     public dashboardService : DashboardService,
+    private httpService : HttpService,
     private route: ActivatedRoute,
     private elementRef : ElementRef,
     private renderer : Renderer2) {
@@ -47,6 +56,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.resizeGraphs(win)
       }
     )
+    let dashboardId = localStorage.getItem('dashboard')
+    if (dashboardId) {
+      this.openOneDashboard(dashboardId)
+    }
   }
 
   ngOnDestroy() {
@@ -73,7 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   resizeGraphs(win : AppWindow) {
     let cww = win.width-25-this.menuService.paddingLeftMenu
-    let chh = win.height- 210;
+    let chh = win.height- 190;
     this.graphPanelHeight = chh
     this.graphPanelWidth = cww
   }
@@ -89,18 +102,89 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   moveDialog() {
-    let offtop = this.container.nativeElement.getBoundingClientRect().top - this.offsetTop0
-    let offleft = this.container.nativeElement.getBoundingClientRect().left - this.offsetLeft0
-    let ww = this.container.nativeElement.getBoundingClientRect().width
-    this.dialogx = offleft + ww/2
-    this.dialogy = offtop + 100
+    this.message = ""
+    this.dialogx = this.menuService.appWindow.width/2 - 250/2;
+    //this.dialogy = this.menuService.appWindow.height/2
+    this.dialogy = 180
   }
 
-  load() {
-
+  create() {
+    this.currentDashboard = this.noDashboard
+    this.dashboardService.clear()
   }
 
   save() {
+    if (this.currentDashboard.id == "") {
+      this.saveAs()
+      return
+    }
+    let data = this.dashboardService.getData()
+    this.httpService.updateDashboard(this.currentDashboard.id, data).subscribe(
+      () => {
+        this.dialogHidden = true
+      },
+      (err) => {
+        let error = err.json()
+        this.message = error.error
+      }
+    )
+  }
+
+  saveAs() {
+    this.moveDialog()
+    this.dialogMode = "SaveAs"
+    this.dialogHidden = false
+  }
+
+  open() {
+    this.httpService.listDashboard().subscribe(
+      (data) => {
+        this.dashboards = data
+        //console.log(this.dashboards)
+        this.moveDialog()
+        this.dialogMode = "Open"
+        this.dialogHidden = false
+        //console.log(data)
+      },
+      (err) => {
+        let error = err.json()
+        this.message = error.error
+      }
+    )
+  }
+
+  saveNewDashboard() {
+    let data = this.dashboardService.getData()
+    this.httpService.createDashboard(this.saveAsDashboardName, data).subscribe(
+      (id) => {
+        this.dialogHidden = true
+        this.currentDashboard = new Dashboard(id, this.saveAsDashboardName, '')
+        localStorage.setItem('dashboard', id);
+      },
+      (err) => {
+        let error = err.json()
+        this.message = error.error
+      }
+    )
+  }
+
+  openOneDashboard(id : string) {
+    this.httpService.getDashboard(id).subscribe(
+      (dashboard) => {
+        this.currentDashboard = dashboard
+        this.dialogHidden = true
+        this.dashboardService.setData(dashboard.data)
+        localStorage.setItem('dashboard', dashboard.id);
+      },
+      (err) => {
+        console.log(err)
+        let error = err.json()
+        this.message = error.error
+      }
+    )
+  }
+
+  delete() {
 
   }
 

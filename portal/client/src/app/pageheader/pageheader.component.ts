@@ -3,7 +3,7 @@ import { MenuService } from '../services/menu.service';
 import { UsersService } from '../services/users.service';
 import { OrganizationsService } from '../organizations/services/organizations.service';
 import { User } from '../models/user.model';
-import { Organization } from '../models/organization.model';
+import { Organization } from '../organizations/models/organization.model';
 
 @Component({
   selector: 'app-pageheader',

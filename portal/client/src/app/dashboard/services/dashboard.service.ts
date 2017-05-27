@@ -18,6 +18,7 @@ export class DashboardService {
     onNewData = new Subject<string>();
     onGraphSelect = new Subject<Graph>()
     yTitleMap = {}
+    unit = {}
     x0 = 280
     y0 = 5
     w0 = 300
@@ -51,19 +52,33 @@ export class DashboardService {
       this.notSelected.field="cpu-usage"
       this.notSelected.topNumber=3
       this.notSelected.border=true
-      this.yTitleMap['cpu-usage'] = 'cpu usage (%)'
-      this.yTitleMap['mem-limit'] = 'memory limit (bytes)'
-      this.yTitleMap['mem-maxusage'] = 'memory max usage (bytes)'
-      this.yTitleMap['mem-usage'] = 'memory usage (MB)'
-      this.yTitleMap['mem-usage-p'] = 'memory usage (%)'
-      this.yTitleMap['net-total-bytes'] = 'network traffic (bytes)'
-      this.yTitleMap['net-rx-bytes'] = 'network rx traffic (bytes)'
-      this.yTitleMap['net-rx-packets'] = 'network rx traffic (packets)'
-      this.yTitleMap['net-tx-bytes'] = 'network tx traffic (bytes)'
-      this.yTitleMap['net-tx-packets'] = 'network tx traffic (packets)'
-      this.yTitleMap['io-total'] = 'io r/w (bytes)'
-      this.yTitleMap['io-write'] = 'io write (bytes)'
-      this.yTitleMap['io-read'] = 'io read (bytes)'
+      this.yTitleMap['cpu-usage'] = 'avg cpu usage (%)'
+      this.yTitleMap['mem-limit'] = 'avg memory limit (bytes)'
+      this.yTitleMap['mem-maxusage'] = 'avg memory max usage (bytes)'
+      this.yTitleMap['mem-usage'] = 'avg memory usage (MB)'
+      this.yTitleMap['mem-usage-p'] = 'avg memory usage (%)'
+      this.yTitleMap['net-total-bytes'] = 'avg network traffic (bytes)'
+      this.yTitleMap['net-rx-bytes'] = 'avg network rx traffic (bytes)'
+      this.yTitleMap['net-rx-packets'] = 'avg network rx traffic (packets)'
+      this.yTitleMap['net-tx-bytes'] = 'avg network tx traffic (bytes)'
+      this.yTitleMap['net-tx-packets'] = 'avg network tx traffic (packets)'
+      this.yTitleMap['io-total'] = 'avg io r/w (bytes)'
+      this.yTitleMap['io-write'] = 'avg io write (bytes)'
+      this.yTitleMap['io-read'] = 'avg io read (bytes)'
+      //
+      this.unit['cpu-usage'] = '%'
+      this.unit['mem-limit'] = 'bytes'
+      this.unit['mem-maxusage'] = 'bytes'
+      this.unit['mem-usage'] = 'bytes'
+      this.unit['mem-usage-p'] = '%'
+      this.unit['net-total-bytes'] = 'bytes'
+      this.unit['net-rx-bytes'] = 'bytes'
+      this.unit['net-rx-packets'] = 'packets'
+      this.unit['net-tx-bytes'] = 'bytes'
+      this.unit['net-tx-packets'] = 'packets'
+      this.unit['io-total'] = 'bytes'
+      this.unit['io-write'] = 'bytes'
+      this.unit['io-read'] = 'bytes'
       this.cancelRequests()
       this.timer = setInterval(() => this.executeRequests(), this.refresh * 1000)
       this.menuService.onRefreshClicked.subscribe(
@@ -168,6 +183,20 @@ export class DashboardService {
     return col
   }
 
+  computeUnit(graph : Graph, val : number) : {val: number, unit: string} {
+    if (this.unit[graph.field]!='bytes') {
+      return { val: val, unit: this.unit[graph.field]}
+    }
+  	if (val < 1024) {
+  		return {val: val, unit: 'Bytes'}
+  	} else if (val < 1048576) {
+  		return {val: (val/1024), unit: 'KB'}
+  	} else if (val < 1073741824) {
+  		return {val: (val/1048576), unit: 'MB'}
+  	}
+  	return {val: (val/1073741824), unit: 'GB'}
+  }
+
   setRefreshPeriod(refresh : number) {
     this.refresh = refresh;
     this.cancelRequests()
@@ -251,6 +280,11 @@ export class DashboardService {
   setHistoPeriod(val : string) {
     this.selected.histoPeriod = val
     this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setCounterHorizontal(val : boolean) {
+    this.selected.counterHorizontal = val
     this.onNewData.next()
   }
 
@@ -349,6 +383,11 @@ export class DashboardService {
     }
   }
 
+  sumRequest(data : GraphCurrentData[]) : GraphCurrentData[] {
+    //console.log(data)
+    return data
+  }
+
   addRequest(graph : Graph) : string {
     if (graph.type == "legend") {
       return
@@ -367,6 +406,10 @@ export class DashboardService {
       req.group="node_id"
     } else {
       return
+    }
+
+    if (graph.type == "counter" && graph.field != "number") {
+      req.group="container_short_name"
     }
 
     req.period = this.period
@@ -465,12 +508,18 @@ export class DashboardService {
     this.nbGraph = 1
   }
 
-  save() {
-
+  getData() : string {
+    return JSON.stringify(this.graphs)
   }
 
-  load() {
-
+  setData(data : string) {
+    this.clear()
+    this.graphs = JSON.parse(data)
+    for (let graph of this.graphs) {
+      this.addRequest(graph)
+    }
+    this.nbGraph=this.graphs.length+1
+    this.menuService.onRefreshClicked.next()
   }
 
 }
