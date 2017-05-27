@@ -10,12 +10,10 @@ import (
 	"github.com/appcelerator/amp/tests"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 var (
-	ctx context.Context
-	h   *helpers.Helper
+	h *helpers.Helper
 )
 
 func setup() (err error) {
@@ -23,7 +21,6 @@ func setup() (err error) {
 	if err != nil {
 		return err
 	}
-	ctx = context.Background()
 	return nil
 }
 

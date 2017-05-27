@@ -10,6 +10,7 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -42,10 +43,11 @@ func AmplifierConnection() (*grpc.ClientConn, error) {
 
 // Helper is a test helper
 type Helper struct {
-	accounts  account.AccountClient
-	logs      logs.LogsClient
-	resources resource.ResourceClient
-	stacks    stack.StackClient
+	accounts   account.AccountClient
+	logs       logs.LogsClient
+	resources  resource.ResourceClient
+	stacks     stack.StackClient
+	dashboards dashboard.DashboardClient
 }
 
 // New returns a new test helper
@@ -55,10 +57,11 @@ func New() (*Helper, error) {
 		return nil, err
 	}
 	h := &Helper{
-		accounts:  account.NewAccountClient(conn),
-		logs:      logs.NewLogsClient(conn),
-		stacks:    stack.NewStackClient(conn),
-		resources: resource.NewResourceClient(conn),
+		accounts:   account.NewAccountClient(conn),
+		logs:       logs.NewLogsClient(conn),
+		stacks:     stack.NewStackClient(conn),
+		resources:  resource.NewResourceClient(conn),
+		dashboards: dashboard.NewDashboardClient(conn),
 	}
 	return h, nil
 }
@@ -81,6 +84,11 @@ func (h *Helper) Stacks() stack.StackClient {
 // Resources returns a resource client
 func (h *Helper) Resources() resource.ResourceClient {
 	return h.resources
+}
+
+// Dashboards returns a dashbord client
+func (h *Helper) Dashboards() dashboard.DashboardClient {
+	return h.dashboards
 }
 
 // Login sign-up, verify and log-in a random user and returns the associated credentials
