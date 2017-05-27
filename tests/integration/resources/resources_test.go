@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/tests"
@@ -44,29 +45,39 @@ func TestResourcesListUserShouldOnlyGetHisOwnResources(t *testing.T) {
 	userCtx := h.CreateOrganization(t, &testOrg, &testUser)
 
 	// Deploy stack as user
-	userStack := stringid.GenerateNonCryptoID()[:32]
-	err := h.DeployStack(userCtx, userStack, "pinger.yml")
+	userID := stringid.GenerateNonCryptoID()[:32]
+	err := h.DeployStack(userCtx, userID, "pinger.yml")
+	assert.NoError(t, err)
+
+	// Create a dashboard as user
+	_, err = h.Dashboards().Create(userCtx, &dashboard.CreateRequest{Name: userID, Data: "data"})
 	assert.NoError(t, err)
 
 	// Switch to organization account
 	orgCtx := h.Switch(userCtx, t, testOrg.Name)
 
 	// Deploy stack as organization
-	orgStack := stringid.GenerateNonCryptoID()[:32]
-	err = h.DeployStack(orgCtx, orgStack, "pinger.yml")
+	orgID := stringid.GenerateNonCryptoID()[:32]
+	err = h.DeployStack(orgCtx, orgID, "pinger.yml")
 	assert.NoError(t, err)
 
-	// Make sure we only get only our stack as user
+	// Create a dashboard as organization
+	_, err = h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{Name: orgID, Data: "data"})
+	assert.NoError(t, err)
+
+	// Make sure we only get only our user resources
 	reply, err := h.Resources().ListResources(userCtx, &resource.ListResourcesRequest{})
-	assert.Len(t, reply.Resources, 1)
+	assert.NoError(t, err)
+	assert.Len(t, reply.Resources, 2)
 
-	// Make sure we only get only our stack as organization
+	// Make sure we only get only our organization resources
 	reply, err = h.Resources().ListResources(orgCtx, &resource.ListResourcesRequest{})
-	assert.Len(t, reply.Resources, 1)
+	assert.NoError(t, err)
+	assert.Len(t, reply.Resources, 2)
 
-	_, err = h.Stacks().Remove(userCtx, &stack.RemoveRequest{Stack: userStack})
+	_, err = h.Stacks().Remove(userCtx, &stack.RemoveRequest{Stack: userID})
 	assert.NoError(t, err)
 
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: orgStack})
+	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: orgID})
 	assert.NoError(t, err)
 }
