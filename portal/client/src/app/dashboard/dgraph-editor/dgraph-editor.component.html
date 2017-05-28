@@ -52,7 +52,21 @@
             <div style="color:blue">Request</div>
           </div>
 
-          <div class="col-sm-12" *ngIf="isVisible('request')" style="padding:0px;margin-top:5px">
+          <div class="col-sm-12" *ngIf="isVisible('request')" style="padding:0px;margin:0px;margin-top:2px">
+            <div class="form-inline" style="padding:0px">
+              <label>
+                <input
+                  style="height:12px"
+                  type="checkbox"
+                  class="form-control"
+                  [checked]="dashboardService.selected.containerAvg"
+                  #containerAvg
+                  id="containerAvg"
+                  (click)="dashboardService.setContainerAvg(containerAvg.checked)">
+                Containers Avg
+              </label>
+            </div>
+
             <div class="btn dropdown" style="padding:0px">
               <button class="dropdown btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="object" data-toggle="dropdown">
                 Request on: {{ dashboardService.selected.object }}
@@ -299,7 +313,7 @@
 
     <div *ngIf="isVisible('alert')">
       <div class="panel-body" style="padding:10px">
-        <div style="color:blue">Color alerts</div>
+        <div style="color:blue">Color events</div>
         <div class="form-inline" style="padding:0px">
           <label style="margin-top:5px">
           <input
