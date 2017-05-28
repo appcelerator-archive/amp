@@ -15,7 +15,7 @@
               placeholder="title"
               [value]="dashboardService.selected.title"
               #title
-              (change)="dashboardService.setTitle(title.value)">
+              (keyup.enter)="dashboardService.setTitle(title.value)">
           </div>
 
           <div class="form-inline" style="padding:0px">
@@ -37,15 +37,15 @@
               #centerTitle
               id="centerTitle"
               (click)="dashboardService.setTitleCenter(centerTitle.checked)"> Center title</label>
-            <label *ngIf="isVisible('horizontal')" style="margin-top:5px;margin-left:20px">
+            <label style="margin-top:5px;margin-left:0px">
             <input
               style="height:12px"
               type="checkbox"
               class="form-control"
-              [checked]="dashboardService.selected.counterHorizontal"
-              #horizontal
-              id="horizontal"
-              (click)="dashboardService.setCounterHorizontal(horizontal.checked)"> Horizontal value</label>
+              [checked]="dashboardService.selected.roundedBox"
+              #roundedBox
+              id="roundedBox"
+              (click)="dashboardService.setRoundedBox(roundedBox.checked)"> Rounded box</label>
           </div>
 
           <div class="col-sm-12" *ngIf="isVisible('request')"  style="padding:0px;margin:0px;margin-top:5px">
@@ -73,6 +73,7 @@
                 <span class="caret" style="cursor:pointer;color:black"></span>
               </button>
               <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setObject('all')">All</a></li>
                 <li><a (click)="dashboardService.setObject('stack')">Stack</a></li>
                 <li><a (click)="dashboardService.setObject('service')">Service</a></li>
                 <li><a (click)="dashboardService.setObject('container')">Container</a></li>
@@ -127,7 +128,7 @@
                 placeholder="filter value"
                 [value]="dashboardService.selected.criterionValue"
                 #criterionValue
-                (change)="dashboardService.setCriterionValue(criterionValue.value)">
+                (keyup.enter)="dashboardService.setCriterionValue(criterionValue.value)">
             </div>
           </div>
 
@@ -251,31 +252,6 @@
           <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin-top:3px">
             <div class="btn dropup" style="padding:0px">
               <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
-                Size: {{ dashboardService.selected.bubbleSizeField }}
-                <span class="caret" style="cursor:pointer;color:black"></span>
-              </button>
-              <div class="dropdown-menu">
-                <li><a (click)="dashboardService.setBubbleSizeField('none')">size fixe</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('cpu-usage')">cpu-usage</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('mem-limit')">mem-limit</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('mem-maxusage')">mem-maxusage</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('mem-usage')">mem-usage</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('mem-usage-p')">mem-usage-p</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('net-total-bytes')">net-total-bytes</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('net-rx-bytes')">net-rx-bytes</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('net-rx-packets')">net-rx-packets</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('net-tx-bytes')">net-tx-bytes</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('net-tx-packets')">net-tx-packets</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('io-total')">io-total</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('io-write')">io-write</a></li>
-                <li><a (click)="dashboardService.setBubbleSizeField('io-read')">io-read</a></li>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin-top:3px">
-            <div class="btn dropup" style="padding:0px">
-              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
                 Scale: {{ dashboardService.selected.bubbleScale }}
                 <span class="caret" style="cursor:pointer;color:black"></span>
               </button>
@@ -333,7 +309,7 @@
                 placeholder="warn"
                 [value]="dashboardService.selected.alertMin"
                 #minValue
-                (change)="dashboardService.setMinAlert(minValue.value)">
+                (keyup.enter)="dashboardService.setMinAlert(minValue.value)">
             </div>
             <div class="col-sm-4 col-sm-offset-0" style="padding:0px">
               <input
@@ -342,7 +318,7 @@
                 placeholder="alert"
                 [value]="dashboardService.selected.alertMax"
                 #maxValue
-                (change)="dashboardService.setMaxAlert(maxValue.value)">
+                (keyup.enter)="dashboardService.setMaxAlert(maxValue.value)">
             </div>
             <div class="col-sm-12" style="padding:0px;margin:0px">
               <div class="pull-left" style="background-color:green;width:70px;height:25px"></div>

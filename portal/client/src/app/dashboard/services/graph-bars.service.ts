@@ -71,8 +71,17 @@ export class GraphBars {
 
   updateGraph(graph : Graph) {
     this.data = this.dashboardService.getCurrentData(graph)
+    if (this.data.length == 0) {
+      return
+    }
+    
     let xDomain = this.data.map(d => d.group);
-    let yDomain = [0, d3.max(this.data, d => d.values[graph.field])];
+
+    let ymax = d3.max(this.data, d => d.values[graph.field])
+    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
+    this.data = this.dashboardService.adjustCurrentDataToUnit(yunit, graph.field, this.data)
+    ymax = ymax / this.dashboardService.unitdivider(yunit)
+    let yDomain = [0, ymax];
 
     this.computeSize(graph)
     this.svg.selectAll("*").remove();
@@ -84,7 +93,7 @@ export class GraphBars {
       .range([this.height, 0]);
 
     this.xScale.domain(this.data.map((d) => { return d.group; }));
-    this.yScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.field]; })]);
+    this.yScale.domain([0, d3.max(this.data, (d) => { return d.valueUnit; })]);
 
     //let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
     let fontSize = this.height/10
@@ -123,17 +132,9 @@ export class GraphBars {
       .attr("class", "bar")
       .attr("x", (d) => { return ethis.xScale(d.group)+dx })
       .attr("width", ethis.xScale.bandwidth())
-      .attr("y", (d) => { return ethis.yScale(d.values[graph.field])+dy; })
-      .attr("height", (d) => { return ethis.height - ethis.yScale(d.values[graph.field]) })
+      .attr("y", (d) => { return ethis.yScale(d.valueUnit)+dy; })
+      .attr("height", (d) => { return ethis.height - ethis.yScale(d.valueUnit) })
       .attr("fill", function(d,i){ return ethis.dashboardService.getObjectColor(graph.object, d.group) })
-
-      /*
-    this.svg.append("rect")
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('stroke', 'lightgrey')
-      .style('fill', 'none')
-      */
 
     if (graph.title) {
       let xt = -5
@@ -161,7 +162,15 @@ export class GraphBars {
          .attr("dy", "1em")
          .style("text-anchor", "middle")
          .style("font-size", fontSize*2/3+'px')
-         .text(graph.yTitle);
+         .text(graph.yTitle+" ("+yunit+")");
        }
+
+       /*
+     this.svg.append("rect")
+       .attr('width', this.width)
+       .attr('height', this.height)
+       .attr('stroke', 'lightgrey')
+       .style('fill', 'none')
+       */
    }
 }

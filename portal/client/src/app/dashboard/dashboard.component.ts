@@ -56,9 +56,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.resizeGraphs(win)
       }
     )
-    let dashboardId = localStorage.getItem('dashboard')
-    if (dashboardId) {
-      this.openOneDashboard(dashboardId)
+    if (this.dashboardService.graphs.length == 0) {
+      let dashboardId = localStorage.getItem('dashboard')
+      if (dashboardId) {
+        this.openOneDashboard(dashboardId)
+      }
     }
   }
 
@@ -67,8 +69,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onMouseUp($event) {
-    if ($event.target.className == 'panel-body') {
-      this.dashboardService.selected = this.dashboardService.notSelected;
+    if (!this.dashboardService.showEditor) {
+      if ($event.target.className == 'panel-body') {
+        this.dashboardService.selected = this.dashboardService.notSelected;
+      }
     }
   }
 
@@ -185,7 +189,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   delete() {
-
+    this.httpService.removeDashboard(this.currentDashboard.id).subscribe(
+      () => {
+        this.dashboardService.clear()
+      },
+      (err) => {
+        console.log(err)
+      }
+    )
   }
 
 }

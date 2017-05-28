@@ -105,7 +105,7 @@ func TestDashboardGet(t *testing.T) {
 	assert.Equal(t, r.Dashboard, rGet.Dashboard)
 }
 
-func TestDashboardList(t *testing.T) {
+func xTestDashboardList(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// Create user

@@ -12,7 +12,10 @@ export class MetricsService {
   histoData : GraphHistoricData[] = []
   public lineVisibleMap = {}
   lines : GraphLine[] = []
-  public graphColors = ['DodgerBlue', 'slateblue', 'blue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red', 'yellow', 'blue']
+  graphColorsStack = ['blue', 'slateblue', 'blue', 'pink', 'green', 'pink', 'orange', 'red', 'yellow', 'blue']
+  graphColorsService = ['slateblue', 'blue', 'DodgerBlue', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
+  graphColorsContainer = ['green', 'orange', 'blue', 'magenta', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
+  graphColors = ['dodgerBlue', 'pink', 'blue', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
   statsRequest : StatsRequest
   onNewData = new Subject();
   timePeriod = "now-10m"
@@ -42,6 +45,18 @@ export class MetricsService {
     if (this.timer) {
       console.log("clear interval")
       clearInterval(this.timer);
+    }
+  }
+
+  getColor(index : number) {
+    if (this.object == 'stack') {
+      return this.graphColorsStack[index]
+    } else if (this.object == 'service') {
+      return this.graphColorsService[index]
+    } else if (this.object == 'container') {
+      return this.graphColorsContainer[index]
+    } else {
+      return this.graphColors[index]
     }
   }
 
@@ -134,6 +149,11 @@ export class MetricsService {
       this.statsRequest.time_group = group
       this.updateHistoricData()
     }
+  }
+
+  setContainerAvg(val : boolean) {
+    this.statsRequest.avg = val
+    this.updateHistoricData()
   }
 
   setRefreshPeriod(period :string) {

@@ -10,14 +10,15 @@ import { GraphLines } from '../services/graph-lines.service'
 import { GraphBars} from '../services/graph-bars.service'
 import { GraphAreas } from '../services/graph-areas.service'
 import { GraphBubbles } from '../services/graph-bubbles.service'
-import { GraphCounter } from '../services/graph-counter.service'
+import { GraphCounterSquare } from '../services/graph-counter-square.service'
+import { GraphCounterCircle } from '../services/graph-counter-circle.service'
 import { GraphLegend } from '../services/graph-legend.service'
 
 @Component({
   selector: 'app-dgraph',
   templateUrl: "./dgraph.component.html",
   styleUrls: ['./dgraph.component.css'],
-  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounter, GraphLegend ]
+  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounterSquare, GraphCounterCircle, GraphLegend ]
 
 
 })
@@ -44,7 +45,8 @@ export class DGraphComponent implements OnInit, OnDestroy {
     private graphAreas : GraphAreas,
     private graphBubbles : GraphBubbles,
     private graphText : GraphText,
-    private graphCounter : GraphCounter,
+    private graphCounterSquare : GraphCounterSquare,
+    private graphCounterCircle : GraphCounterCircle,
     private graphLegend : GraphLegend) {
     this.serviceMap['text'] = graphText;
     this.serviceMap['pie'] = graphPie;
@@ -52,7 +54,8 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.serviceMap['bars'] = graphBars;
     this.serviceMap['areas'] = graphAreas;
     this.serviceMap['bubbles'] = graphBubbles;
-    this.serviceMap['counter'] = graphCounter;
+    this.serviceMap['counterSquare'] = graphCounterSquare;
+    this.serviceMap['counterCircle'] = graphCounterCircle;
     this.serviceMap['legend'] = graphLegend;
   }
 
@@ -66,7 +69,7 @@ export class DGraphComponent implements OnInit, OnDestroy {
     )
     this.menuService.onWindowResize.subscribe(
       (win) => {
-        this.resizeGraph()
+        //this.resizeGraph()
       }
     );
   }

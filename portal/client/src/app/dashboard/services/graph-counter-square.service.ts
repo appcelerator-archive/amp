@@ -8,7 +8,7 @@ import { GraphCurrentData } from '../../models/graph-current-data.model';
 import * as d3 from 'd3';
 
 @Injectable()
-export class GraphCounter {
+export class GraphCounterSquare {
   onNewData = new Subject();
   private margin: any = { top: 0, bottom: 0, left: 0, right: 0};
   private svg : any
@@ -36,7 +36,7 @@ export class GraphCounter {
   }
 
   computeSize(graph : Graph) {
-    this.margin.top = graph.height * 0
+    this.margin.top = 0
     this.margin.bottom = 0
     this.margin.left = 0
     this.margin.right = 0
@@ -68,67 +68,71 @@ export class GraphCounter {
   updateGraph(graph : Graph)
   {
     this.data = this.dashboardService.getCurrentData(graph)
+    if (this.data.length == 0) {
+      return
+    }
 
     this.svg.selectAll("*").remove();
 
     let dx = this.margin.left
     let dy = this.margin.top
-    let title = graph.title
     let val = this.data.length
+    let uval = val
     let sval = ""+val
-    let dec = "0.9em"
-    let dect = "-.02em"
     if (this.data.length>0) {
       if (graph.field != 'number') {
         val = 0
         for (let dat of this.data) {
-          //console.log(dat)
           val += dat.values[graph.field]
         }
-        let unit=this.dashboardService.computeUnit(graph, Math.floor(val))
-        val = unit.val
+        val = Math.floor(val)
+        let unit=this.dashboardService.computeUnit(graph.field, val)
+        uval = unit.val
         sval = unit.sval
       }
     }
-    let fontCoef = 0.7
-    if (graph.counterHorizontal) {
-      title+=" "+sval
-      dect = ".36em"
-      fontCoef = 0.8
-    }
-    let wwt = this.dashboardService.getTextWidth(title, "10", "Arial")
-    if (title == "") {
-      dec = ".34em"
-      wwt = this.dashboardService.getTextWidth(sval, "10", "Arial")
-    }
-    let fontSize = this.width/wwt*10*fontCoef;
 
-    if (title != '') {
-      this.svg.append("text")
-       .attr("class", "wtitle")
-       .attr("transform", "translate("+ [this.width/2+dx, this.height/2+dy] + ")")
-       .style("text-anchor", "middle")
-       .attr("dy", dect)
-       .style("font-size", fontSize+'px')
-       .text(title);
+    let title = graph.title+" "+sval
+    if (title == " ") {
+      return
     }
 
-    if (!graph.counterHorizontal) {
-      this.svg.append("text")
-        .attr("class", "wtitle")
-         .attr("transform", "translate(" + [this.width/2+dx, this.height/2+dy] + ")")
-        .style("text-anchor", "middle")
-        .attr("dy", dec)
+    this.svg.append("text")
+     .attr("id", "title")
+     .attr("class", "wtitle")
+     .style("text-anchor", "middle")
+     .text(title);
+
+    let padding = 10;
+    let titleBox : any
+    this.svg.selectAll("#title").each(function(d, i) {
+      titleBox = this.getBBox();
+    });
+
+    let fontSize = this.computeFontSize(titleBox, padding)
+    let dty = this.computeDty(titleBox, fontSize)
+
+    this.svg.select("#title")
+        .attr("transform", "translate("+ [(this.width-padding)/2+dx, (this.height-padding)/2+dy+dty] + ")")
         .style("font-size", fontSize+'px')
-        .text(sval);
-    }
 
+    let color="green"
+    let alertMin = this.getRealNumber(graph.alertMin)
+    let alertMax = this.getRealNumber(graph.alertMax)
     if (graph.alert) {
-      let color="green"
-      if (val>graph.alertMin) {
-        color="orange"
-        if (val>graph.alertMax) {
-          color="red"
+      if (alertMin < alertMax) {
+        if (val>=alertMin) {
+          color="orange"
+          if (val>=alertMax) {
+            color="red"
+          }
+        }
+      } else {
+        if (val<=alertMin) {
+          color="orange"
+          if (val<=alertMax) {
+            color="red"
+          }
         }
       }
       this.svg.append("rect")
@@ -138,7 +142,39 @@ export class GraphCounter {
         .attr('stroke', 'lightgrey')
         .style('fill', color)
         .attr('fill-opacity', 0.4)
+        .attr("rx", 10)
+        .attr("ry", 10)
     }
+
   }
+
+  getRealNumber(val : string) : number {
+    if (!val) {
+      return 0
+    }
+    let ret = parseInt(val)
+    if (val.length<=2) {
+      return ret
+    }
+    if (val.substring(val.length-2)=='KB') return ret * 1024;
+    if (val.substring(val.length-2)=='MB') return ret * 1048576;
+    if (val.substring(val.length-2)=='GB') return ret * 1073741824;
+    return ret
+  }
+
+  //box1 mandatory, box2 optionnal
+  computeFontSize(box1 : any, padding : number) : number {
+    let nn : number
+    let dd : number
+    nn = Math.max(this.width - padding, this.height - padding)
+    dd = Math.max(box1.width, box1.height)
+    //console.log(nn+","+dd)
+    return nn / dd *12
+  }
+
+  computeDty(box : any, fontSize : number) : number {
+    return fontSize / 12 * box.height / 3;
+  }
+
 
 }

@@ -44,6 +44,9 @@ func (s *Stats) StatsQuery(ctx context.Context, req *StatsRequest) (*StatsReply,
 
 // execute a current stats reauest
 func (s *Stats) statsCurrentQuery(ctx context.Context, req *StatsRequest) (*StatsReply, error) {
+	if req.Group == "" {
+		req.Group = "container_id"
+	}
 	boolQuery := s.createBoolQuery(req, req.Period)
 	agg := s.createTermAggreggation(req)
 
@@ -233,6 +236,7 @@ func (s *Stats) createTermAggreggation(req *StatsRequest) *elastic.TermsAggregat
 // create the aggregation query on the main group (container, service, stacks. ...) and each sub aggregations related to the metrics
 func (s *Stats) createHistoAggreggation(req *StatsRequest) *elastic.DateHistogramAggregation {
 	agg := elastic.NewDateHistogramAggregation().Field("@timestamp").Interval(req.TimeGroup)
+	agg = agg.SubAggregation("countContainer", elastic.NewCardinalityAggregation().Field("container_id"))
 	if req.StatsCpu {
 		agg = agg.SubAggregation("avgCPU", elastic.NewAvgAggregation().Field("cpu.total_usage"))
 		agg = agg.SubAggregation("avgCPUKernel", elastic.NewAvgAggregation().Field("cpu.usage_in_kernel_mode"))

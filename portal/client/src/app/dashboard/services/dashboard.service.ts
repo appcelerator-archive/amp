@@ -30,7 +30,7 @@ export class DashboardService {
     nbGraph = 1
     public showEditor = false;
     public showAlert = false;
-    public graphColors = ['DodgerBlue', 'slateblue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red']
+    public graphColors = ['DodgerBlue', '#396AB1', '#DA7C30', '#3E9651', '#CC2529', '#535154', '#6B4C9A', '#922428', '#948B3D']
     public graphObjectColorMap : { [name:string]: GraphColors; } = {}
     public nodeColorIndex = 0
     public editorGraph : Graph = new Graph('graph1', this.x0, this.y0, this.w0, this.h0, 'editor','')
@@ -52,19 +52,19 @@ export class DashboardService {
       this.notSelected.field="cpu-usage"
       this.notSelected.topNumber=3
       this.notSelected.border=true
-      this.yTitleMap['cpu-usage'] = 'cpu usage (%)'
-      this.yTitleMap['mem-limit'] = 'memory limit (bytes)'
-      this.yTitleMap['mem-maxusage'] = 'memory max usage (bytes)'
-      this.yTitleMap['mem-usage'] = 'memory usage (MB)'
-      this.yTitleMap['mem-usage-p'] = 'memory usage (%)'
-      this.yTitleMap['net-total-bytes'] = 'network traffic (bytes)'
-      this.yTitleMap['net-rx-bytes'] = 'network rx traffic (bytes)'
-      this.yTitleMap['net-rx-packets'] = 'network rx traffic (packets)'
-      this.yTitleMap['net-tx-bytes'] = 'network tx traffic (bytes)'
-      this.yTitleMap['net-tx-packets'] = 'network tx traffic (packets)'
-      this.yTitleMap['io-total'] = 'io r/w (bytes)'
-      this.yTitleMap['io-write'] = 'io write (bytes)'
-      this.yTitleMap['io-read'] = 'io read (bytes)'
+      this.yTitleMap['cpu-usage'] = 'cpu usage'
+      this.yTitleMap['mem-limit'] = 'memory limit'
+      this.yTitleMap['mem-maxusage'] = 'memory max usage'
+      this.yTitleMap['mem-usage'] = 'memory usage'
+      this.yTitleMap['mem-usage-p'] = 'memory usage'
+      this.yTitleMap['net-total-bytes'] = 'network traffic'
+      this.yTitleMap['net-rx-bytes'] = 'network rx traffic'
+      this.yTitleMap['net-rx-packets'] = 'network rx traffic'
+      this.yTitleMap['net-tx-bytes'] = 'network tx traffic'
+      this.yTitleMap['net-tx-packets'] = 'network tx traffic'
+      this.yTitleMap['io-total'] = 'io r/w'
+      this.yTitleMap['io-write'] = 'io write'
+      this.yTitleMap['io-read'] = 'io read'
       //
       this.unit['cpu-usage'] = '%'
       this.unit['mem-limit'] = 'bytes'
@@ -87,7 +87,7 @@ export class DashboardService {
             this.graphObjectColorMap[key].clear()
           }
           this.executeRequests()
-          this.onNewData.next()
+          //this.onNewData.next()
         }
       )
     }
@@ -110,8 +110,12 @@ export class DashboardService {
     graph.title = this.notSelected.title
     graph.object = this.notSelected.object
     graph.field = this.notSelected.field
-    if (graph.type == 'counter') {
+    if (graph.type == 'counterSquare' || graph.type == 'counterCircle') {
       graph.field = 'number'
+      if (graph.type == 'counterSquare') {
+        graph.counterHorizontal = true
+        graph.height /= 2;
+      }
     }
     if (graph.type == 'lines' || graph.type == 'areas') {
       graph.histoPeriod = 'now-10m'
@@ -119,7 +123,7 @@ export class DashboardService {
     if (graph.type == 'bubbles') {
       graph.bubbleXField = 'mem-usage'
       graph.bubbleYField = 'cpu-usage'
-      graph.bubbleSizeField = 'net-total-bytes'
+      graph.field = 'net-total-bytes'
       graph.bubbleScale = 'medium'
       graph.topNumber = 0
     }
@@ -128,7 +132,12 @@ export class DashboardService {
     }
     this.graphs.push(graph)
     this.addRequest(graph)
-    this.onNewData.next()
+    //this.onNewData.next()
+    this.selected = graph
+  }
+
+  copySelected() {
+    //
   }
 
   addLegend(object : string) {
@@ -155,9 +164,9 @@ export class DashboardService {
   toggleEditor(offsetTop : number, offsetLeft : number) {
     if (this.showEditor) {
       this.showEditor = false
+      this.selected = this.notSelected
     } else {
       this.showEditor = true
-      console.log(offsetTop)
       this.editorGraph.x = -offsetLeft
       this.editorGraph.y = -offsetTop
     }
@@ -171,7 +180,7 @@ export class DashboardService {
   }
 
   getObjectColor(object : string, name : string) : string {
-    let col = "black"
+    let col = "magenta"
     let colorObject = this.graphObjectColorMap[object]
     if (colorObject) {
       col = colorObject.getColor(name)
@@ -183,12 +192,15 @@ export class DashboardService {
     return col
   }
 
-  computeUnit(graph : Graph, val : number) : {val: number, sval: string, unit: string} {
-    if (this.unit[graph.field]!='bytes') {
-      return { val: val, sval: val+" "+this.unit[graph.field], unit: this.unit[graph.field]}
+  computeUnit(field : string, val : number) : {val: number, sval: string, unit: string} {
+    if (this.unit[field] == '%') {
+      return { val: val, sval: val.toFixed(1)+' %', unit: '%'}
+    }
+    if (this.unit[field]!='bytes') {
+      return { val: val, sval: val.toFixed(0)+" "+this.unit[field], unit: this.unit[field]}
     }
   	if (val < 1024) {
-  		return {val: val, sval: val+' Bytes', unit: 'Bytes'}
+  		return {val: val, sval: val.toFixed(0)+' Bytes', unit: 'Bytes'}
   	} else if (val < 1048576) {
   		return {val: (val/1024), sval: (val/1024).toFixed(1)+' KB', unit: 'KB'}
   	} else if (val < 1073741824) {
@@ -196,6 +208,55 @@ export class DashboardService {
   	}
   	return {val: (val/1073741824), sval: (val/1073741824).toFixed(1)+' GB', unit: 'GB'}
   }
+
+  adjustCurrentDataToUnit(unit : string, field : string, data : GraphCurrentData[]) : GraphCurrentData[] {
+    let div = this.unitdivider(unit)
+    for (let gdata of data) {
+      gdata.valueUnit = gdata.values[field]/div
+    }
+    return data
+  }
+
+  adjustCurrentXYDataToUnit(unitx : string, unity : string, fieldx : string, fieldy : string, data : GraphCurrentData[]) : GraphCurrentData[] {
+    let divx = this.unitdivider(unitx)
+    let divy = this.unitdivider(unity)
+    for (let gdata of data) {
+      gdata.valueUnitx = gdata.values[fieldx]/divx
+      gdata.valueUnity = gdata.values[fieldy]/divy
+    }
+    return data
+  }
+
+  adjustHistoricDataToUnit(unit : string, field : string, data : GraphHistoricData[]) : GraphHistoricData[] {
+    let div = this.unitdivider(unit)
+    for (let hdata of data) {
+      for (let ii=0; ii< hdata.graphValues.length; ii++) {
+        hdata.graphValuesUnit[ii] = hdata.graphValues[ii] / div
+      }
+    }
+    return data
+  }
+
+  unitdivider(unit : string) : number {
+    if (unit == 'KB') {
+      return 1024
+    } else if (unit == 'MB') {
+      return 1048576
+    } else if (unit == 'GB') {
+      return 1073741824
+    }
+    return 1;
+  }
+
+/*
+  computeUnitFormUnit(graph : Graph, val : number, unit : string) {
+    if (this.unit[graph.field] != "bytes") {
+      return val
+    }
+    let div = this.byesUnitDivider(unit)
+    return val/div;
+  }
+  */
 
   setRefreshPeriod(refresh : number) {
     this.refresh = refresh;
@@ -247,17 +308,22 @@ export class DashboardService {
     this.onNewData.next()
   }
 
+  setRoundedBox(val : boolean) {
+    this.selected.roundedBox = val
+    this.onNewData.next()
+  }
+
   setAlert(val : boolean) {
     this.selected.alert = val;
     this.onNewData.next()
   }
   setMinAlert(val : string) {
-    this.selected.alertMin = +val;
+    this.selected.alertMin = val;
     this.onNewData.next()
   }
 
   setMaxAlert(val : string) {
-    this.selected.alertMax = +val;
+    this.selected.alertMax = val;
     this.onNewData.next()
   }
 
@@ -303,12 +369,6 @@ export class DashboardService {
 
   setBubbleYField(name : string) {
     this.selected.bubbleYField = name
-    this.addRequest(this.selected)
-    this.onNewData.next()
-  }
-
-  setBubbleSizeField(name : string) {
-    this.selected.bubbleSizeField = name
     this.addRequest(this.selected)
     this.onNewData.next()
   }
@@ -363,9 +423,12 @@ export class DashboardService {
     if (!req) {
       return
     }
+    //console.log(req.id)
+    //console.log(req.request)
     if (!req.request.time_group) {
       this.httpService.statsCurrent(req.request).subscribe(
         (data) => {
+          //console.log("data size: "+data.length)
           req.currentResult = data
           req.historicResult = []
           this.onNewData.next(req.id)
@@ -400,7 +463,13 @@ export class DashboardService {
       return
     }
     if (graph.title == '' || graph.title == 'stacks' || graph.title == 'services' || graph.title == 'containers' || graph.title == 'nodes') {
-      graph.title = graph.object+'s'
+      graph.title = graph.object
+      if (graph.object != 'all') {
+        graph.title += 's'
+      }
+      if (graph.type=='counterSquare' && graph.counterHorizontal) {
+        graph.title +=": "
+      }
     }
     let req = new StatsRequest()
     if (graph.object == "stack") {
@@ -411,14 +480,19 @@ export class DashboardService {
       req.group="container_short_name"
     } else if (graph.object == "node") {
       req.group="node_id"
+    } else if (graph.object == 'all') {
+      req.group=""
     } else {
       return
     }
     req.avg = graph.containerAvg
-
-    if (graph.type == "counter" && graph.field != "number") {
-      req.group="container_short_name"
+    if (!req.avg) {
+      req.avg = false
     }
+
+    //if (graph.type == "counter" && graph.field != "number") {
+    //  req.group="container_short_name"
+    //}
 
     req.period = this.period
     if (graph.type == 'lines' || graph.type == 'areas') {
@@ -438,7 +512,6 @@ export class DashboardService {
     } else if (graph.criterion == 'node_id') {
       req.filter_node_id = graph.criterionValue
     }
-    console.log(req)
     let id = graph.id
     let newItem = new StatsRequestItem(id, req)
     newItem.subscriberNumber=1
@@ -457,7 +530,7 @@ export class DashboardService {
       return []
     }
     this.sortCurrentByField(item.currentResult, graph.field)
-    if (graph.topNumber == 0 || graph.type == 'counter') {
+    if (graph.topNumber == 0 || graph.type == 'counterSquare' || graph.type == 'counterCircle') {
       return item.currentResult
     }
     return item.currentResult.slice(0, graph.topNumber)
@@ -500,6 +573,7 @@ export class DashboardService {
         nameMap[dat.name]=dat.values[graph.field]
       }
       pdata.graphValues.push(dat.values[graph.field])
+      pdata.graphValuesUnit.push(0) //graphValues and valuesUnit should have the same size
     }
     if (graph.topNumber > 0) {
       names = names.slice(0, graph.topNumber)
@@ -523,12 +597,20 @@ export class DashboardService {
 
   setData(data : string) {
     this.clear()
-    this.graphs = JSON.parse(data)
-    for (let graph of this.graphs) {
+    let graphs = JSON.parse(data)
+    this.nbGraph = 1
+    for (let graph of graphs) {
+      this.ascendingCompatibilityAdjustment(graph)
+      this.nbGraph++
+      graph.id="graph"+this.nbGraph
+      this.graphs.push(graph)
       this.addRequest(graph)
     }
-    this.nbGraph=this.graphs.length+1
     this.menuService.onRefreshClicked.next()
+  }
+
+  ascendingCompatibilityAdjustment(graph : Graph) {
+    //nothing to do for now
   }
 
 }

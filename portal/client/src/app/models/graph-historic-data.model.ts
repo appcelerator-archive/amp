@@ -6,9 +6,11 @@ export class GraphHistoricData {
   public max: number[]
   public values: { [name:string]: number; }
   public graphValues: number[]
+  public graphValuesUnit: number[]
 
   constructor(date : Date) {
     this.date = date
     this.graphValues = []
+    this.graphValuesUnit = []
   }
 }

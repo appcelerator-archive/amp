@@ -16,6 +16,7 @@ declare var $: any
 export class MetricsComponent implements OnInit, OnDestroy {
   periodTimeLabel = "10 min"
   periodRefreshLabel = "30 sec"
+  containerAvg = "Total"
   routeSub : any
   name = ""
   dashboardName = ""
@@ -123,6 +124,16 @@ export class MetricsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.metricsService.cancelRequests()
+  }
+
+  containerAvgToggle() {
+    if (this.containerAvg == 'Total') {
+      this.containerAvg = "Containers Avg"
+      this.metricsService.setContainerAvg(true)
+    } else {
+      this.containerAvg = "Total"
+      this.metricsService.setContainerAvg(false)
+    }
   }
 
   setTimePeriod(label : string, period, group : string) {

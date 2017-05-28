@@ -72,6 +72,9 @@ export class GraphAreas {
     let ans = this.dashboardService.getHistoricData(graph)
     this.data = ans.data
     this.names = ans.names
+    if (this.data.length == 0) {
+      return
+    }
 
     //stack data
     if (graph.stackedAreas) {
