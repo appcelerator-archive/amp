@@ -198,6 +198,7 @@ func getWildcardValue(val string) string {
 // create the aggregation query on the main group (container, service, stacks. ...) and each sub aggregations related to the metrics
 func (s *Stats) createTermAggreggation(req *StatsRequest) *elastic.TermsAggregation {
 	agg := elastic.NewTermsAggregation().Field(req.Group).Size(100).OrderByTermAsc()
+	agg = agg.SubAggregation("countContainer", elastic.NewCardinalityAggregation().Field("container_id"))
 	if req.StatsCpu {
 		agg = agg.SubAggregation("avgCPU", elastic.NewAvgAggregation().Field("cpu.total_usage"))
 		agg = agg.SubAggregation("avgCPUKernel", elastic.NewAvgAggregation().Field("cpu.usage_in_kernel_mode"))
@@ -264,8 +265,8 @@ func (s *Stats) createHistoAggreggation(req *StatsRequest) *elastic.DateHistogra
 }
 
 // extract float value and return error if not exist
-func (s *Stats) getFloat64AvgValue(bucket *elastic.AggregationBucketKeyItem, name string) (float64, error) {
-	avg, found := bucket.Avg(name)
+func (s *Stats) getInt64CountValue(bucket *elastic.AggregationBucketKeyItem, name string) (float64, error) {
+	avg, found := bucket.Cardinality(name)
 	if !found {
 		return 0, fmt.Errorf("Request error '%s' not found", name)
 	}
@@ -276,9 +277,22 @@ func (s *Stats) getFloat64AvgValue(bucket *elastic.AggregationBucketKeyItem, nam
 	return *value, nil
 }
 
+// extract float value and return error if not exist
+func (s *Stats) getFloat64AvgValue(bucket *elastic.AggregationBucketKeyItem, name string, nbc float64) (float64, error) {
+	avg, found := bucket.Avg(name)
+	if !found {
+		return 0, fmt.Errorf("Request error '%s' not found", name)
+	}
+	value := avg.Value
+	if value == nil {
+		return 0, nil
+	}
+	return (*value) * nbc, nil
+}
+
 // extract int value and return error if not exist
-func (s *Stats) getInt64AvgValue(bucket *elastic.AggregationBucketKeyItem, name string) (int64, error) {
-	val, err := s.getFloat64AvgValue(bucket, name)
+func (s *Stats) getInt64AvgValue(bucket *elastic.AggregationBucketKeyItem, name string, nbc float64) (int64, error) {
+	val, err := s.getFloat64AvgValue(bucket, name, nbc)
 	if err != nil {
 		return 0, err
 	}
@@ -288,75 +302,81 @@ func (s *Stats) getInt64AvgValue(bucket *elastic.AggregationBucketKeyItem, name 
 // update the entry with all the metrics values get by the reauest answer
 func (s *Stats) updateEntry(bucket *elastic.AggregationBucketKeyItem, req *StatsRequest, entry *MetricsEntry) error {
 	var err error
+	var nbc float64 = 1
+	if !req.Avg {
+		if nbc, err = s.getInt64CountValue(bucket, "countContainer"); err != nil {
+			return err
+		}
+	}
 	if req.StatsCpu {
 		entry.Cpu = &MetricsCPUEntry{}
-		if entry.Cpu.TotalUsage, err = s.getFloat64AvgValue(bucket, "avgCPU"); err != nil {
+		if entry.Cpu.TotalUsage, err = s.getFloat64AvgValue(bucket, "avgCPU", nbc); err != nil {
 			return err
 		}
-		if entry.Cpu.UsageInKernelMode, err = s.getFloat64AvgValue(bucket, "avgCPUKernel"); err != nil {
+		if entry.Cpu.UsageInKernelMode, err = s.getFloat64AvgValue(bucket, "avgCPUKernel", nbc); err != nil {
 			return err
 		}
-		if entry.Cpu.UsageInUserMode, err = s.getFloat64AvgValue(bucket, "avgCPUUser"); err != nil {
+		if entry.Cpu.UsageInUserMode, err = s.getFloat64AvgValue(bucket, "avgCPUUser", nbc); err != nil {
 			return err
 		}
 	}
 	if req.StatsMem {
 		entry.Mem = &MetricsMemEntry{}
-		if entry.Mem.Failcnt, err = s.getInt64AvgValue(bucket, "avgMemFailcnt"); err != nil {
+		if entry.Mem.Failcnt, err = s.getInt64AvgValue(bucket, "avgMemFailcnt", nbc); err != nil {
 			return err
 		}
-		if entry.Mem.Limit, err = s.getInt64AvgValue(bucket, "avgMemLimit"); err != nil {
+		if entry.Mem.Limit, err = s.getInt64AvgValue(bucket, "avgMemLimit", nbc); err != nil {
 			return err
 		}
-		if entry.Mem.Maxusage, err = s.getInt64AvgValue(bucket, "avgMemMaxUsage"); err != nil {
+		if entry.Mem.Maxusage, err = s.getInt64AvgValue(bucket, "avgMemMaxUsage", nbc); err != nil {
 			return err
 		}
-		if entry.Mem.Usage, err = s.getInt64AvgValue(bucket, "avgMemUsage"); err != nil {
+		if entry.Mem.Usage, err = s.getInt64AvgValue(bucket, "avgMemUsage", nbc); err != nil {
 			return err
 		}
-		if entry.Mem.UsageP, err = s.getFloat64AvgValue(bucket, "avgMemUsageP"); err != nil {
+		if entry.Mem.UsageP, err = s.getFloat64AvgValue(bucket, "avgMemUsageP", nbc); err != nil {
 			return err
 		}
 	}
 	if req.StatsNet {
 		entry.Net = &MetricsNetEntry{}
-		if entry.Net.TotalBytes, err = s.getInt64AvgValue(bucket, "avgTotalBytes"); err != nil {
+		if entry.Net.TotalBytes, err = s.getInt64AvgValue(bucket, "avgTotalBytes", nbc); err != nil {
 			return err
 		}
-		if entry.Net.RxBytes, err = s.getInt64AvgValue(bucket, "avgRxBytes"); err != nil {
+		if entry.Net.RxBytes, err = s.getInt64AvgValue(bucket, "avgRxBytes", nbc); err != nil {
 			return err
 		}
-		if entry.Net.RxDropped, err = s.getInt64AvgValue(bucket, "avgRxDropped"); err != nil {
+		if entry.Net.RxDropped, err = s.getInt64AvgValue(bucket, "avgRxDropped", nbc); err != nil {
 			return err
 		}
-		if entry.Net.RxErrors, err = s.getInt64AvgValue(bucket, "avgRxErrors"); err != nil {
+		if entry.Net.RxErrors, err = s.getInt64AvgValue(bucket, "avgRxErrors", nbc); err != nil {
 			return err
 		}
-		if entry.Net.RxPackets, err = s.getInt64AvgValue(bucket, "avgRxPackets"); err != nil {
+		if entry.Net.RxPackets, err = s.getInt64AvgValue(bucket, "avgRxPackets", nbc); err != nil {
 			return err
 		}
-		if entry.Net.TxBytes, err = s.getInt64AvgValue(bucket, "avgTxBytes"); err != nil {
+		if entry.Net.TxBytes, err = s.getInt64AvgValue(bucket, "avgTxBytes", nbc); err != nil {
 			return err
 		}
-		if entry.Net.TxDropped, err = s.getInt64AvgValue(bucket, "avgTxDropped"); err != nil {
+		if entry.Net.TxDropped, err = s.getInt64AvgValue(bucket, "avgTxDropped", nbc); err != nil {
 			return err
 		}
-		if entry.Net.TxErrors, err = s.getInt64AvgValue(bucket, "avgTxErrors"); err != nil {
+		if entry.Net.TxErrors, err = s.getInt64AvgValue(bucket, "avgTxErrors", nbc); err != nil {
 			return err
 		}
-		if entry.Net.TxPackets, err = s.getInt64AvgValue(bucket, "avgTxPackets"); err != nil {
+		if entry.Net.TxPackets, err = s.getInt64AvgValue(bucket, "avgTxPackets", nbc); err != nil {
 			return err
 		}
 	}
 	if req.StatsIo {
 		entry.Io = &MetricsIOEntry{}
-		if entry.Io.Total, err = s.getInt64AvgValue(bucket, "avgIOTotal"); err != nil {
+		if entry.Io.Total, err = s.getInt64AvgValue(bucket, "avgIOTotal", nbc); err != nil {
 			return err
 		}
-		if entry.Io.Read, err = s.getInt64AvgValue(bucket, "avgIORead"); err != nil {
+		if entry.Io.Read, err = s.getInt64AvgValue(bucket, "avgIORead", nbc); err != nil {
 			return err
 		}
-		if entry.Io.Write, err = s.getInt64AvgValue(bucket, "avgIOWrite"); err != nil {
+		if entry.Io.Write, err = s.getInt64AvgValue(bucket, "avgIOWrite", nbc); err != nil {
 			return err
 		}
 	}

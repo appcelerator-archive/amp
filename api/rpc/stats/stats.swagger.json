@@ -279,6 +279,10 @@
         },
         "time_zone": {
           "type": "string"
+        },
+        "avg": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     }
