@@ -86,6 +86,7 @@ message StatsRequest {
   string period = 17;
   string time_group = 18;
   string time_zone = 19;
+  bool avg = 20;
 }
 
 message StatsReply {
