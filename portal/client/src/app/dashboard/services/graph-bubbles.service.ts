@@ -66,6 +66,9 @@ export class GraphBubbles {
 
   updateGraph(graph : Graph) {
     this.data = this.dashboardService.getCurrentData(graph)
+    if (this.data.length == 0) {
+      return
+    }
 
     this.svg.selectAll("*").remove();
 
@@ -74,8 +77,17 @@ export class GraphBubbles {
     this.yScale = d3.scaleLinear()
       .range([this.height, 0]);
 
-    this.xScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleXField]; })]);
-    this.yScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleYField]; })]);
+    let xmax = d3.max(this.data, d => d.values[graph.bubbleXField])
+    let ymax = d3.max(this.data, d => d.values[graph.bubbleYField])
+
+    let xunit = this.dashboardService.computeUnit(graph.bubbleXField, xmax).unit
+    let yunit = this.dashboardService.computeUnit(graph.bubbleYField, ymax).unit
+    this.data = this.dashboardService.adjustCurrentXYDataToUnit(xunit, yunit, graph.bubbleXField, graph.bubbleYField, this.data)
+    xmax = xmax / this.dashboardService.unitdivider(xunit)
+    ymax = ymax / this.dashboardService.unitdivider(yunit)
+
+    this.xScale.domain([0, xmax]);
+    this.yScale.domain([0, ymax]);
 
     //let wwt = this.dashboardService.getTextWidth(graph.title, "10", "Arial")
     let fontSize = this.height/10
@@ -104,17 +116,17 @@ export class GraphBubbles {
     if (graph.bubbleScale == 'small') {
       size = size/2
     }
-    if (graph.bubbleSizeField != 'none') {
+    if (graph.field != 'none') {
       this.sScale = d3.scaleLinear().range([0, size]);
-      this.sScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.bubbleSizeField]; })]);
+      this.sScale.domain([0, d3.max(this.data, (d) => { return d.values[graph.field]; })]);
     }
     for (let dat of this.data) {
       d++
-      let x = this.xScale(dat.values[graph.bubbleXField])+dx
-      let y = this.yScale(dat.values[graph.bubbleYField])+dy
+      let x = this.xScale(dat.valueUnitx)+dx
+      let y = this.yScale(dat.valueUnity)+dy
       let s = size
-      if (graph.bubbleSizeField != 'none') {
-        s = Math.sqrt(this.sScale(dat.values[graph.bubbleSizeField]))
+      if (graph.field != 'none') {
+        s = Math.sqrt(this.sScale(dat.values[graph.field]))
       }
       this.svg.append('circle')
         .attr('class', 'circle')
@@ -140,8 +152,8 @@ export class GraphBubbles {
        .text(graph.title);
      }
 
-     graph.yTitle = this.dashboardService.yTitleMap[graph.field]
-     if (graph.yTitle) {
+     let yTitle = this.dashboardService.yTitleMap[graph.bubbleYField]
+     //if (graph.yTitle) {
        this.svg.append("text")
          .attr("class", "y-title")
          .attr("transform", "rotate(-90)")
@@ -150,7 +162,19 @@ export class GraphBubbles {
          .attr("dy", "1em")
          .style("text-anchor", "middle")
          .style("font-size", fontSize*2/3+'px')
-         .text(graph.yTitle);
-       }
+         .text(yTitle+" ("+yunit+")");
+      // }
+
+     let xTitle = this.dashboardService.yTitleMap[graph.bubbleXField]
+     //if (graph.yTitle) {
+       this.svg.append("text")
+         .attr("class", "y-title")
+         .attr("y", this.height+this.margin.bottom+dy)
+         .attr("x", dx+(this.width) / 2)
+         .attr("dy", "-0.50em")
+         .style("text-anchor", "middle")
+         .style("font-size", fontSize*2/3+'px')
+         .text(xTitle+" ("+xunit+")");
+       //}
    }
 }

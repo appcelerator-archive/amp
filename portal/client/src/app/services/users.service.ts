@@ -19,7 +19,9 @@ export class UsersService {
   constructor(
     private httpService : HttpService,
     private organizationsService : OrganizationsService,
-    private menuService : MenuService) {}
+    private menuService : MenuService) {
+      this.loadUsers(true)
+    }
 
   match(item : User, value : string) : boolean {
     if (item.name && item.name.includes(value)) {
@@ -42,7 +44,6 @@ export class UsersService {
     this.httpService.users().subscribe(
       data => {
         this.users = data
-        console.log(data)
         this.onUsersLoaded.next()
       },
       error => {
@@ -53,22 +54,32 @@ export class UsersService {
 
   logout() {
     this.currentUser = this.noLoginUser
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
     this.menuService.navigate(["/auth", "signin"])
   }
 
-  login(username : string, token : string) {
-    localStorage.setItem('currentUser', JSON.stringify({ username: username, token: token }));
-    localStorage.setItem('lastUser', JSON.stringify({ username: username}));
-    this.setCurrentUser(username, token, true)
+  login(token : string) {
+    localStorage.setItem('token', JSON.stringify({ token: token }));
+    this.setCurrentUser(token, true)
   }
 
-  setCurrentUser(username : string, token : string, nav : boolean) {
+  setCurrentUser(token : string, nav : boolean) {
+    let plainToken = this.parseJwt(token)
+    if (plainToken.Type != 'login' || plainToken.iss !='amplifier') {
+      return
+    }
     this.httpService.setToken(token)
-    this.currentUser = new User(username, "", "")
+    this.currentUser = new User(plainToken.AccountName, "", "")
+    localStorage.setItem('currentUser', JSON.stringify({ username: this.currentUser.name, email: this.currentUser.email }));
     this.httpService.userOrganization(this.currentUser.name).subscribe(
       data => {
         this.organizationsService.organizations = data
+        let currentOrganization : Organization
+        for (let org of data) {
+          if (org.name == plainToken.ActiveOrganization) {
+            this.organizationsService.currentOrganization = org
+          }
+        }
         this.httpService.users().subscribe(
           data => {
             this.users = data
@@ -112,13 +123,13 @@ export class UsersService {
     let base64Url = token.split('.')[1];
     let base64 = base64Url.replace('-', '+').replace('_', '/');
     let ret = JSON.parse(window.atob(base64));
-    console.log("token: account="+ret.AccountName+", organization="+ret.ActiveOrganization)
     return ret
   }
 
   signup(user : User, pwd : string) {
     this.users.push(user)
     //this.onUserEndCreateMode.emit();
+    localStorage.setItem('currentUser', JSON.stringify({ username: user.name, email: user.email }));
     this.menuService.navigate(["/auth", "signin"])
   }
 
@@ -153,6 +164,22 @@ export class UsersService {
       }
     }
     return list
+  }
+
+  getUserList(orgName : string) : User[] {
+    let userList : User[] = []
+    for (let org of this.organizationsService.organizations) {
+      if (org.name == orgName) {
+        for (let member of org.members) {
+          for (let user of this.users) {
+            if (member.userName == user.name) {
+              userList.push(user)
+            }
+          }
+        }
+      }
+    }
+    return userList
   }
 
 }

@@ -40,7 +40,7 @@ export class TooltipDirective implements OnInit {
     let div = document.getElementById('ampTooltip')
     this.renderer.setStyle(div, 'left', x+"px")
     this.renderer.setStyle(div, 'top', y+"px")
-    this.renderer.setProperty(div, 'hidden', false);
+    //this.renderer.setProperty(div, 'hidden', false);
   }
 
   onMouseLeave() {

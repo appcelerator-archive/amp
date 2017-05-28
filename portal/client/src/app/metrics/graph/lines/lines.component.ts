@@ -138,7 +138,7 @@ export class LinesComponent implements OnInit, OnDestroy {
         this.svg.append("path")
           .data([this.data])
           .attr("class", this.lines[ll].name+" line ")
-          .style("stroke", this.metricsService.graphColors[ll])
+          .style("stroke", this.metricsService.getColor(ll))
           .attr("d", this.valuelines[ll]);
       }
     }
@@ -244,7 +244,7 @@ export class LinesComponent implements OnInit, OnDestroy {
       this.svg.append("path")
         .data([this.data])
         .attr("class", "selectedLine")
-        .style("stroke", this.metricsService.graphColors[yy])
+        .style("stroke", this.metricsService.getColor(yy))
         .attr("d", valueLine);
       this.focus.attr('transform', `translate(${eptx}, ${epty})`);
       this.svg.append("text")
@@ -252,7 +252,7 @@ export class LinesComponent implements OnInit, OnDestroy {
          .attr("transform", "translate(10,-10)")
          .style("text-anchor", "left")
          //.attr("font-size", "10")
-         .style("fill", this.metricsService.graphColors[yy])
+         .style("fill", this.metricsService.getColor(yy))
          .text(this.lines[yy].displayedName+": "+this.dateFormat(ptx)+" -> "+this.formatValue(pty));
       this.focus.selectAll('rect').classed('toolTip', true)
         .style("left", 10)

@@ -11,8 +11,9 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (localStorage.getItem('currentUser')) {
       let currentUser = JSON.parse(localStorage.getItem('currentUser'));
       if (this.usersService.currentUser.name !== currentUser.username) {
+        let token = JSON.parse(localStorage.getItem('token'));
         //console.log(this.usersService.currentUser.name + "<>" + currentUser.username + "-> reload user")
-        this.usersService.setCurrentUser(currentUser.username, currentUser.token, false)
+        this.usersService.setCurrentUser(token.token, false)
       }
       return true;
     }

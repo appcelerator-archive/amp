@@ -72,6 +72,9 @@ export class GraphLines {
     let ans = this.dashboardService.getHistoricData(graph)
     this.data = ans.data
     this.names = ans.names
+    if (this.data.length == 0) {
+      return
+    }
 
     this.svg.selectAll("*").remove();
 
@@ -92,12 +95,17 @@ export class GraphLines {
         }
       }
     }
+    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
+    this.data = this.dashboardService.adjustHistoricDataToUnit(yunit, graph.field, this.data)
+    ymax = ymax / this.dashboardService.unitdivider(yunit)
+    let yDomain = [0, ymax];
+
     this.yScale.domain([0, ymax])
     for (let ll=0; ll<this.names.length; ll++) {
       let valueline = d3.line<GraphHistoricData>()
-        .defined( d => { return d.graphValues[ll] !== undefined; })
+        .defined( d => { return d.graphValuesUnit[ll] !== undefined; })
         .x((d: GraphHistoricData) => { return this.xScale(d.date); })
-        .y((d: GraphHistoricData) => { return this.yScale(d.graphValues[ll]); })
+        .y((d: GraphHistoricData) => { return this.yScale(d.graphValuesUnit[ll]); })
 
       this.svg.append("path")
         .data([this.data])
@@ -151,7 +159,7 @@ export class GraphLines {
          .attr("dy", "1em")
          .style("text-anchor", "middle")
          .style("font-size", fontSize/2+'px')
-         .text(graph.yTitle);
+         .text(graph.yTitle+" ("+yunit+")");
        }
     }
 

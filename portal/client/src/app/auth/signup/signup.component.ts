@@ -38,7 +38,8 @@ export class SignupComponent implements OnInit {
         this.httpService.registration().subscribe(
           rep => {
             let ret = rep.json()
-            if (ret.email_confirmation) {
+            this.messageError = ""
+            if (ret.emailConfirmation) {
               this.message = "Your account is created, you are going to receive an email to validate your account"
             } else {
               this.message = "Your account is created"
@@ -47,7 +48,7 @@ export class SignupComponent implements OnInit {
           },
           err => {
             console.log(err)
-            this.message = data.error
+            this.messageError = data.error
           }
         )
       },
@@ -57,7 +58,7 @@ export class SignupComponent implements OnInit {
         if (!data.error) {
           this.messageError = "Certificat issue: You need to import amp certificate in your browser. See documentation"
         }
-        this.message = data.error
+        this.messageError = data.error
       }
     )
   }

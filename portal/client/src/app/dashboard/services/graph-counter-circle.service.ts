@@ -8,9 +8,9 @@ import { GraphCurrentData } from '../../models/graph-current-data.model';
 import * as d3 from 'd3';
 
 @Injectable()
-export class GraphPie {
+export class GraphCounterCircle {
   onNewData = new Subject();
-  private margin: any = { top: 40, bottom: 30, left: 60, right: 20};
+  private margin: any = { top: 0, bottom: 0, left: 0, right: 0};
   private svg : any
   private xScale : any;
   private yScale : any;
@@ -24,12 +24,12 @@ export class GraphPie {
   private width: number;
   private height: number;
   data = []
+  colors : any
 
   constructor(
     private httpService : HttpService,
     private menuService : MenuService,
     private dashboardService : DashboardService) { }
-
 
   destroy() {
     this.svg.selectAll("*").remove();
@@ -52,8 +52,6 @@ export class GraphPie {
       .append('svg')
       .attr('width', 2000)//graph.width)
       .attr('height', 2000)//graph.height)
-      //.append("g")
-
 
     this.created=true
     this.updateGraph(graph)
@@ -68,17 +66,39 @@ export class GraphPie {
   }
 
   updateGraph(graph : Graph) {
-    this.data = this.dashboardService.getCurrentData(graph)
-    if (this.data.length == 0) {
+    let tmpdata = this.dashboardService.getCurrentData(graph)
+    if (tmpdata.length == 0) {
       return
     }
-    let xDomain = this.data.map(d => d.group);
 
-    let ymax = d3.max(this.data, d => d.values[graph.field])
-    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
-    this.data = this.dashboardService.adjustCurrentDataToUnit(yunit, graph.field, this.data)
-    ymax = ymax / this.dashboardService.unitdivider(yunit)
-    let yDomain = [0, ymax];
+    this.svg.selectAll("*").remove();
+
+    let title = graph.title
+    let val = this.data.length
+    let sval =  ""
+    if (this.data.length>0) {
+      if (graph.field != 'number') {
+        val = 0
+        for (let dat of this.data) {
+          val += dat.values[graph.field]
+        }
+        let unit=this.dashboardService.computeUnit(graph.field, Math.floor(val))
+        val = unit.val
+        sval = unit.sval
+      }
+    }
+
+    let values0 : { [name:string]: number; } = {}
+    values0[graph.field] = 0
+    let values : { [name:string]: number; } = {}
+    values[graph.field] = val
+    this.data = [
+      new GraphCurrentData(graph.object, values0),
+      new GraphCurrentData(graph.object, values)
+    ]
+
+    let xDomain = this.data.map(d => d.group);
+    let yDomain = [0, d3.max(this.data, d => d.values[graph.field])];
 
     let fontSize = this.height/10
     let dx = this.margin.left
@@ -94,6 +114,7 @@ export class GraphPie {
         }
       )
       (this.data)
+
 
     let arc = d3.arc()
       .outerRadius(Math.min(this.height,this.width)/2)
@@ -126,7 +147,17 @@ export class GraphPie {
      .attr("dy", ".36em")
      .style("font-size", fontSize/2+'px')
      .text(graph.field);
+   /*
+   this.svg.append("text")
+    .attr("class", "wtitle")
+    .attr("transform", "translate("+[this.width/2+dx,this.height/2+dy] +")")
+    .style("text-anchor", "middle")
+    .style("font-size", fontSize/2+'px')
+    .attr("dy", ".95em")
+    .text(this.dashboardService.unit[graph.field]);
+  */
 
+/*
     newBlock.append("text")
       .attr("transform", function(d) {
         d.outerRadius = 100;
@@ -136,10 +167,11 @@ export class GraphPie {
       .attr("dy", ".35em")
       .style("font-size", fontSize/2+'px')
       .text(function(d) {
-        let val = d.data.valueUnit
-        let format = athis.dashboardService.computeUnit(graph.field, val)
+        let val = d.data.values[graph.field]
+        let format = athis.dashboardService.computeUnit(graph, val)
         return format.sval
       });
+*/
 
 
     if (graph.title) {
@@ -151,15 +183,6 @@ export class GraphPie {
        .style("font-size", fontSize+'px')
        .text(graph.title);
      }
+   }
 
-     /*
-     this.svg.append("rect")
-       .attr('width', this.width)
-       .attr('height', this.height)
-       .attr("transform", "translate("+[dx,dy]+")")
-       .attr('stroke', 'lightgrey')
-       .style('fill', 'none')
-    */
-
-  }
-}
+ }

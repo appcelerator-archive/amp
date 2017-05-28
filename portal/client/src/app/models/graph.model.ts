@@ -23,14 +23,14 @@ export class Graph {
   public counterHorizontal: boolean
   public topNumber: number
   public alert : boolean
-  public alertMin: number
-  public alertMax: number
+  public alertMin: string
+  public alertMax: string
+  public maxValue: number
   public criterion: string
   public criterionValue: string
   public histoPeriod: string //for historic request
   public bubbleXField: string
   public bubbleYField: string
-  public bubbleSizeField: string
   public bubbleScale: string
   public stackedAreas: boolean
   public percentAreas: boolean
@@ -38,6 +38,8 @@ export class Graph {
   public legendColors: string[]
   public transparentLegend: boolean
   public removeLocalLegend: boolean
+  public roundedBox : boolean
+
 
   constructor(id: string, x : number, y : number, w: number, h: number, type: string, title : string) {
     this.id = id
@@ -53,13 +55,15 @@ export class Graph {
     this.modeParameter = false
     this.topNumber = 3
     this.alert = false
-    this.alertMin = 0
-    this.alertMax = 1000
+    this.alertMin = ""
+    this.alertMax = ""
     this.criterion = ""
     this.criterionValue = ""
     this.stackedAreas = true
     this.legendNames = []
     this.legendColors = []
+    this.containerAvg = false
+    this.roundedBox = true
   }
 
 }
