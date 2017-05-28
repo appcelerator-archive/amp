@@ -79,7 +79,12 @@ export class GraphPie {
     this.svg.selectAll("*").remove();
 
     let arcs = d3.pie<GraphCurrentData>()
-      .value((d) => { return d.values[graph.field]; })
+      .value((d) => {
+          let val = d.values[graph.field];
+          let format = this.dashboardService.computeUnit(graph, val)
+          return format.val
+        }
+      )
       (this.data)
 
     let arc = d3.arc()
@@ -106,42 +111,37 @@ export class GraphPie {
       .attr("stroke", "gray")
       .attr("fill", function(d,i){ return athis.dashboardService.getObjectColor(graph.object, d.data.group) })
 
-    if (this.data.length == 1) {
-      this.svg.append("text")
-       .attr("class", "wtitle")
-       .attr("transform", "translate("+[this.width/2+dx,this.height/2+dy]+")")
-       .style("text-anchor", "middle")
-       .style("font-size", fontSize+'px')
-       .text(this.data[0].group);
-     this.svg.append("text")
-      .attr("class", "wtitle")
-      .attr("transform", "translate("+[this.width/2+dx,this.height/2+dy] +")")
+    this.svg.append("text")
+     .attr("class", "wtitle")
+     .attr("transform", "translate("+[this.width/2+dx,this.height/2+dy]+")")
+     .style("text-anchor", "middle")
+     .attr("dy", ".36em")
+     .style("font-size", fontSize/2+'px')
+     .text(graph.field);
+   /*
+   this.svg.append("text")
+    .attr("class", "wtitle")
+    .attr("transform", "translate("+[this.width/2+dx,this.height/2+dy] +")")
+    .style("text-anchor", "middle")
+    .style("font-size", fontSize/2+'px')
+    .attr("dy", ".95em")
+    .text(this.dashboardService.unit[graph.field]);
+  */
+
+    newBlock.append("text")
+      .attr("transform", function(d) {
+        d.outerRadius = 100;
+        return "translate(" + arc.centroid(d) + ")";
+      })
       .style("text-anchor", "middle")
-      .style("font-size", fontSize+'px')
-      .attr("dy", ".95em")
-      .text(Math.floor(this.data[0].values[graph.field]));
-    } else {
-      /*
-      newBlock.append("text")
-        .attr("transform", function(d) {
-          d.outerRadius = 100;
-          return "translate(" + arc.centroid(d) + ")";
-        })
-        .style("text-anchor", "middle")
-        .attr("dy", ".35em")
-        .style("font-size", fontSize/2+'px')
-        .text(function(d) { return d.data.group; });
-      */
-      newBlock.append("text")
-        .attr("transform", function(d) {
-          d.outerRadius = 100;
-          return "translate(" + arc.centroid(d) + ")";
-        })
-        .style("text-anchor", "middle")
-        .attr("dy", ".35em")
-        .style("font-size", fontSize/2+'px')
-        .text(function(d) { return Math.floor(d.data.values[graph.field]); });
-    }
+      .attr("dy", ".35em")
+      .style("font-size", fontSize/2+'px')
+      .text(function(d) {
+        let val = d.data.values[graph.field]
+        let format = athis.dashboardService.computeUnit(graph, val)
+        return format.sval
+      });
+
 
     if (graph.title) {
       this.svg.append("text")

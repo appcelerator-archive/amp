@@ -76,8 +76,8 @@ export class GraphCounter {
     let title = graph.title
     let val = this.data.length
     let sval = ""+val
-    let dec = "1.0em"
-    let dect = "-.12em"
+    let dec = "0.9em"
+    let dect = "-.02em"
     if (this.data.length>0) {
       if (graph.field != 'number') {
         val = 0
@@ -87,7 +87,7 @@ export class GraphCounter {
         }
         let unit=this.dashboardService.computeUnit(graph, Math.floor(val))
         val = unit.val
-        sval = val.toFixed(1)+" "+unit.unit
+        sval = unit.sval
       }
     }
     let fontCoef = 0.7

@@ -30,7 +30,7 @@ export class DashboardService {
     nbGraph = 1
     public showEditor = false;
     public showAlert = false;
-    public graphColors = ['DodgerBlue', 'slateblue', 'blue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red']
+    public graphColors = ['DodgerBlue', 'slateblue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red']
     public graphObjectColorMap : { [name:string]: GraphColors; } = {}
     public nodeColorIndex = 0
     public editorGraph : Graph = new Graph('graph1', this.x0, this.y0, this.w0, this.h0, 'editor','')
@@ -52,19 +52,19 @@ export class DashboardService {
       this.notSelected.field="cpu-usage"
       this.notSelected.topNumber=3
       this.notSelected.border=true
-      this.yTitleMap['cpu-usage'] = 'avg cpu usage (%)'
-      this.yTitleMap['mem-limit'] = 'avg memory limit (bytes)'
-      this.yTitleMap['mem-maxusage'] = 'avg memory max usage (bytes)'
-      this.yTitleMap['mem-usage'] = 'avg memory usage (MB)'
-      this.yTitleMap['mem-usage-p'] = 'avg memory usage (%)'
-      this.yTitleMap['net-total-bytes'] = 'avg network traffic (bytes)'
-      this.yTitleMap['net-rx-bytes'] = 'avg network rx traffic (bytes)'
-      this.yTitleMap['net-rx-packets'] = 'avg network rx traffic (packets)'
-      this.yTitleMap['net-tx-bytes'] = 'avg network tx traffic (bytes)'
-      this.yTitleMap['net-tx-packets'] = 'avg network tx traffic (packets)'
-      this.yTitleMap['io-total'] = 'avg io r/w (bytes)'
-      this.yTitleMap['io-write'] = 'avg io write (bytes)'
-      this.yTitleMap['io-read'] = 'avg io read (bytes)'
+      this.yTitleMap['cpu-usage'] = 'cpu usage (%)'
+      this.yTitleMap['mem-limit'] = 'memory limit (bytes)'
+      this.yTitleMap['mem-maxusage'] = 'memory max usage (bytes)'
+      this.yTitleMap['mem-usage'] = 'memory usage (MB)'
+      this.yTitleMap['mem-usage-p'] = 'memory usage (%)'
+      this.yTitleMap['net-total-bytes'] = 'network traffic (bytes)'
+      this.yTitleMap['net-rx-bytes'] = 'network rx traffic (bytes)'
+      this.yTitleMap['net-rx-packets'] = 'network rx traffic (packets)'
+      this.yTitleMap['net-tx-bytes'] = 'network tx traffic (bytes)'
+      this.yTitleMap['net-tx-packets'] = 'network tx traffic (packets)'
+      this.yTitleMap['io-total'] = 'io r/w (bytes)'
+      this.yTitleMap['io-write'] = 'io write (bytes)'
+      this.yTitleMap['io-read'] = 'io read (bytes)'
       //
       this.unit['cpu-usage'] = '%'
       this.unit['mem-limit'] = 'bytes'
@@ -183,18 +183,18 @@ export class DashboardService {
     return col
   }
 
-  computeUnit(graph : Graph, val : number) : {val: number, unit: string} {
+  computeUnit(graph : Graph, val : number) : {val: number, sval: string, unit: string} {
     if (this.unit[graph.field]!='bytes') {
-      return { val: val, unit: this.unit[graph.field]}
+      return { val: val, sval: val+" "+this.unit[graph.field], unit: this.unit[graph.field]}
     }
   	if (val < 1024) {
-  		return {val: val, unit: 'Bytes'}
+  		return {val: val, sval: val+' Bytes', unit: 'Bytes'}
   	} else if (val < 1048576) {
-  		return {val: (val/1024), unit: 'KB'}
+  		return {val: (val/1024), sval: (val/1024).toFixed(1)+' KB', unit: 'KB'}
   	} else if (val < 1073741824) {
-  		return {val: (val/1048576), unit: 'MB'}
+  		return {val: (val/1048576), sval: (val/1048576).toFixed(1)+ ' MB', unit: 'MB'}
   	}
-  	return {val: (val/1073741824), unit: 'GB'}
+  	return {val: (val/1073741824), sval: (val/1073741824).toFixed(1)+' GB', unit: 'GB'}
   }
 
   setRefreshPeriod(refresh : number) {
@@ -210,12 +210,13 @@ export class DashboardService {
     for (let id in this.requestMap) {
       let req = this.requestMap[id]
       if (req) {
-        console.log(req)
         req.period = period
       }
     }
     this.menuService.onRefreshClicked.next()
-    //this.executeRequests()
+    for (let graph of this.graphs) {
+      this.addRequest(graph)
+    }
   }
 
   setObject(name : string) {
@@ -273,6 +274,12 @@ export class DashboardService {
 
   setCriterionValue(val : string) {
     this.selected.criterionValue = val
+    this.addRequest(this.selected)
+    this.onNewData.next()
+  }
+
+  setContainerAvg(val : boolean) {
+    this.selected.containerAvg = val
     this.addRequest(this.selected)
     this.onNewData.next()
   }
@@ -407,6 +414,7 @@ export class DashboardService {
     } else {
       return
     }
+    req.avg = graph.containerAvg
 
     if (graph.type == "counter" && graph.field != "number") {
       req.group="container_short_name"
@@ -430,6 +438,7 @@ export class DashboardService {
     } else if (graph.criterion == 'node_id') {
       req.filter_node_id = graph.criterionValue
     }
+    console.log(req)
     let id = graph.id
     let newItem = new StatsRequestItem(id, req)
     newItem.subscriberNumber=1

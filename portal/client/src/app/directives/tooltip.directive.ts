@@ -29,11 +29,10 @@ export class TooltipDirective implements OnInit {
     this.renderer.setProperty(div, 'hidden', true);
     this.renderer.appendChild(this.eRef.nativeElement, div)
     this.tooltip = div
-    console.log(div)
   }
 
   onMouseEnter($event) {
-    console.log("enter")
+    //console.log("enter")
     //let x = parseInt(this.eRef.nativeElement.style.left.replace('px', ''));
     //let y = parseInt(this.eRef.nativeElement.style.top.replace('px', ''));
     let x = $event.clientX
@@ -45,7 +44,7 @@ export class TooltipDirective implements OnInit {
   }
 
   onMouseLeave() {
-    console.log("leave")
+    //console.log("leave")
     let div = document.getElementById('ampTooltip')
     this.renderer.setProperty(div, 'hidden', true);
   }

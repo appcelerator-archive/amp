@@ -11,6 +11,7 @@ export class Graph {
   public reelHeight: number
   public type: string
   public fields: string[]
+  public containerAvg: boolean
   public title: string
   public centerTitle: boolean
   public yTitle: string
