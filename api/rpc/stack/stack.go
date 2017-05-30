@@ -41,6 +41,14 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if err != nil {
 		return nil, convertError(err)
 	}
+	// Check if stack is using restricted resources
+	compose, err := s.Docker.ComposeParse(ctx, in.Compose)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	if !s.Docker.ComposeIsAuthorized(compose) {
+		return nil, accounts.NotAuthorized
+	}
 	if stack == nil {
 		if stack, err = s.Stacks.CreateStack(ctx, in.Name); err != nil {
 			return nil, convertError(err)

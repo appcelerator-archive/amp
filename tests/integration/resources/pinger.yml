@@ -18,7 +18,5 @@ services:
       VIRTUAL_HOST: "https://pinger.*"
     deploy:
       replicas: 1
-      labels:
-        io.amp.role: "pinger"
       restart_policy:
         condition: on-failure

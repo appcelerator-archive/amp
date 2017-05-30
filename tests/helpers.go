@@ -10,12 +10,12 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
-	"github.com/appcelerator/amp/pkg/labels"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
@@ -303,7 +303,7 @@ func (lp *LogProducer) buildLogEntry(infrastructure bool) *logs.LogEntry {
 		Msg:                TestMessage + fmt.Sprintf("%016X", lp.counter),
 	}
 	if infrastructure {
-		entry.Labels[labels.KeyRole] = labels.ValueRoleInfrastructure
+		entry.Labels[constants.LabelKeyRole] = "infra"
 	}
 	return entry
 }
