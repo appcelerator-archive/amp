@@ -44,9 +44,6 @@
         }
       }
     },
-    "resourceListResourcesRequest": {
-      "type": "object"
-    },
     "resourceResourceEntry": {
       "type": "object",
       "properties": {

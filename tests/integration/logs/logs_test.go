@@ -10,11 +10,11 @@ import (
 	"time"
 
 	. "github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/pkg/labels"
 	"github.com/appcelerator/amp/tests"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
+	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 )
 
 var (
@@ -147,7 +147,7 @@ func TestLogsShouldExcludeAmpLogs(t *testing.T) {
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.Empty(t, entry.Labels[labels.KeyRole])
+		assert.Empty(t, entry.Labels[constants.LabelKeyRole])
 	}
 }
 
@@ -159,7 +159,7 @@ func TestLogsShouldIncludeAmpLogs(t *testing.T) {
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	gotInfraEntry := false
 	for _, entry := range r.Entries {
-		if entry.Labels[labels.KeyRole] != "" {
+		if entry.Labels[constants.LabelKeyRole] != "" {
 			gotInfraEntry = true
 			break
 		}
@@ -320,7 +320,7 @@ func TestLogsShouldStreamAndExcludeAmpLogs(t *testing.T) {
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.True(t, entry.Labels[labels.KeyRole] != labels.ValueRoleInfrastructure)
+		assert.NotContains(t, entry.Labels, constants.LabelKeyRole)
 	}
 }
 
@@ -338,7 +338,7 @@ func TestLogsShouldStreamAndIncludeAmpLogs(t *testing.T) {
 
 	gotInfraEntry := false
 	for entry := range entries {
-		if entry.Labels[labels.KeyRole] == labels.ValueRoleInfrastructure {
+		if _, exists := entry.Labels[constants.LabelKeyRole]; exists {
 			gotInfraEntry = true
 			break
 		}
