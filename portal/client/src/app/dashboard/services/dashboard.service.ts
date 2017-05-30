@@ -3,6 +3,7 @@ import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
+import { DashboardInnerStats } from '../models/dashboard-inner-stats.model';
 import { StatsRequest } from '../../models/stats-request.model';
 import { StatsRequestItem } from '../models/stats-request-item.model';
 import { GraphCurrentData } from '../../models/graph-current-data.model'
@@ -28,6 +29,7 @@ export class DashboardService {
     timer : any
     requestMap = {}
     nbGraph = 1
+    public innerStats : DashboardInnerStats = new DashboardInnerStats()
     public showEditor = false;
     public showAlert = false;
     public nodeColorIndex = 0
@@ -144,6 +146,14 @@ export class DashboardService {
     this.graphs.push(graph)
   }
 
+  addInnerStats() {
+    this.x0 += 2
+    this.y0 += 2
+    this.nbGraph++;
+    let graph = new Graph('graph'+this.nbGraph, this.x0, this.y0, this.w0*2/3, this.h0, "innerStats", "Inner stats")
+    this.graphs.push(graph)
+  }
+
   removeSelectedGraph() {
     let list = []
     for (let graph of this.graphs) {
@@ -178,12 +188,16 @@ export class DashboardService {
     return this.colorsService.getColor(object, name, "")
   }
 
-  computeUnit(field : string, val : number) : {val: number, sval: string, unit: string} {
+  computeUnit(field : string, val : number, refUnit: string) : {val: number, sval: string, unit: string} {
     if (this.unit[field] == '%') {
       return { val: val, sval: val.toFixed(1)+' %', unit: '%'}
     }
     if (this.unit[field]!='bytes') {
       return { val: val, sval: val.toFixed(0)+" "+this.unit[field], unit: this.unit[field]}
+    }
+    if (refUnit) {
+      //force to compute in the refUnit unit
+      return {val: val, sval: (val/this.unitdivider(refUnit)).toFixed(1)+" "+refUnit, unit: refUnit }
     }
   	if (val < 1024) {
   		return {val: val, sval: val.toFixed(0)+' Bytes', unit: 'Bytes'}
@@ -234,15 +248,13 @@ export class DashboardService {
     return 1;
   }
 
-/*
-  computeUnitFormUnit(graph : Graph, val : number, unit : string) {
+  computeUnitFormat(graph : Graph, val : number, unit : string): string {
     if (this.unit[graph.field] != "bytes") {
-      return val
+      return val +" "+unit
     }
-    let div = this.byesUnitDivider(unit)
-    return val/div;
+    let div = this.unitdivider(unit)
+    return val/div+" "+unit
   }
-  */
 
   setRefreshPeriod(refresh : number) {
     this.refresh = refresh;
@@ -400,6 +412,7 @@ export class DashboardService {
 
   executeRequests() {
     console.log("nbRequest: "+Object.keys(this.requestMap).length)
+    this.innerStats.initNewRefresh()
     for (let id in this.requestMap) {
       this.executeRequest(this.requestMap[id])
     }
@@ -411,15 +424,18 @@ export class DashboardService {
     }
     //console.log(req.id)
     //console.log(req.request)
+    let t0 = new Date().getTime()
     if (!req.request.time_group) {
       this.httpService.statsCurrent(req.request).subscribe(
         (data) => {
           //console.log("data size: "+data.length)
+          this.innerStats.setRequestTime(t0, req.graphTitle)
           req.currentResult = data
           req.historicResult = []
           this.onNewData.next(req.id)
         },
         (err) => {
+          this.innerStats.setRequestError()
           console.log("request error")
           console.log(err)
         }
@@ -427,11 +443,13 @@ export class DashboardService {
     } else {
       this.httpService.statsHistoric(req.request).subscribe(
         (data) => {
+          this.innerStats.setRequestTime(t0, req.graphTitle)
           req.historicResult = data
           req.currentResult = []
           this.onNewData.next(req.id)
         },
         (err) => {
+          this.innerStats.setRequestError()
           console.log("request error")
           console.log(err)
         }
@@ -445,7 +463,7 @@ export class DashboardService {
   }
 
   addRequest(graph : Graph) : string {
-    if (graph.type == "legend") {
+    if (graph.type == "legend" || graph.type == "innerStats") {
       return
     }
     if (graph.title == '' || graph.title == 'stacks' || graph.title == 'services' || graph.title == 'containers' || graph.title == 'nodes') {
@@ -499,7 +517,7 @@ export class DashboardService {
       req.filter_node_id = graph.criterionValue
     }
     let id = graph.id
-    let newItem = new StatsRequestItem(id, req)
+    let newItem = new StatsRequestItem(id, req, graph.title)
     newItem.subscriberNumber=1
     this.requestMap[id]=newItem
     graph.requestId = id

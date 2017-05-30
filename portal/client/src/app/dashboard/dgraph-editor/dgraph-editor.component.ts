@@ -26,6 +26,7 @@ export class DGraphEditorComponent implements OnInit, OnDestroy {
     this.visibility['counterSquare']="[horizontal][request][alert]"
     this.visibility['counterCircle']="[horizontal][request][alert]"
     this.visibility['legend']="[centertitle][setting][legend]"
+    this.visibility['innerStats']="[centertitle][setting][legend]"
   }
 
   ngOnInit() {

@@ -85,7 +85,7 @@ export class GraphCounterSquare {
         for (let dat of this.data) {
           val += dat.values[graph.field]
         }
-        let unit=this.dashboardService.computeUnit(graph.field, val)
+        let unit=this.dashboardService.computeUnit(graph.field, val, "")
         uval = unit.val
         sval = unit.sval
       }
@@ -119,7 +119,19 @@ export class GraphCounterSquare {
     let alertMin = this.getRealNumber(graph.alertMin)
     let alertMax = this.getRealNumber(graph.alertMax)
     if (graph.alert) {
-      if (alertMin < alertMax) {
+      if (!graph.alertMax ) {
+        if (val < alertMin) {
+          color="orange"
+        } else if (val < alertMin/2) {
+          color="red"
+        }
+      } else if (!graph.alertMin) {
+        if (val < alertMax) {
+          color="orange"
+        } else if (val < alertMax/2) {
+          color="red"
+        }
+      } else if (alertMin < alertMax) {
         if (val>=alertMin) {
           color="orange"
           if (val>=alertMax) {

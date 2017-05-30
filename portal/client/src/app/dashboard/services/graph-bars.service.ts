@@ -74,11 +74,11 @@ export class GraphBars {
     if (this.data.length == 0) {
       return
     }
-    
+
     let xDomain = this.data.map(d => d.group);
 
     let ymax = d3.max(this.data, d => d.values[graph.field])
-    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
+    let yunit = this.dashboardService.computeUnit(graph.field, ymax, "").unit
     this.data = this.dashboardService.adjustCurrentDataToUnit(yunit, graph.field, this.data)
     ymax = ymax / this.dashboardService.unitdivider(yunit)
     let yDomain = [0, ymax];

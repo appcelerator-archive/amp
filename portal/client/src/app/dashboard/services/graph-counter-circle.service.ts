@@ -82,7 +82,7 @@ export class GraphCounterCircle {
         for (let dat of this.data) {
           val += dat.values[graph.field]
         }
-        let unit=this.dashboardService.computeUnit(graph.field, Math.floor(val))
+        let unit=this.dashboardService.computeUnit(graph.field, Math.floor(val), "")
         val = unit.val
         sval = unit.sval
       }
@@ -109,7 +109,7 @@ export class GraphCounterCircle {
     let arcs = d3.pie<GraphCurrentData>()
       .value((d) => {
           let val = d.values[graph.field];
-          let format = this.dashboardService.computeUnit(graph.field, val)
+          let format = this.dashboardService.computeUnit(graph.field, val,"")
           return format.val
         }
       )
