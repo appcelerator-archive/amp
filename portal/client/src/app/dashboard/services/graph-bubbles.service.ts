@@ -80,8 +80,8 @@ export class GraphBubbles {
     let xmax = d3.max(this.data, d => d.values[graph.bubbleXField])
     let ymax = d3.max(this.data, d => d.values[graph.bubbleYField])
 
-    let xunit = this.dashboardService.computeUnit(graph.bubbleXField, xmax).unit
-    let yunit = this.dashboardService.computeUnit(graph.bubbleYField, ymax).unit
+    let xunit = this.dashboardService.computeUnit(graph.bubbleXField, xmax, "").unit
+    let yunit = this.dashboardService.computeUnit(graph.bubbleYField, ymax, "").unit
     this.data = this.dashboardService.adjustCurrentXYDataToUnit(xunit, yunit, graph.bubbleXField, graph.bubbleYField, this.data)
     xmax = xmax / this.dashboardService.unitdivider(xunit)
     ymax = ymax / this.dashboardService.unitdivider(yunit)

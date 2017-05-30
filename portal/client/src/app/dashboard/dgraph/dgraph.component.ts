@@ -13,12 +13,13 @@ import { GraphBubbles } from '../services/graph-bubbles.service'
 import { GraphCounterSquare } from '../services/graph-counter-square.service'
 import { GraphCounterCircle } from '../services/graph-counter-circle.service'
 import { GraphLegend } from '../services/graph-legend.service'
+import { GraphInnerStats } from '../services/graph-inner-stats.service'
 
 @Component({
   selector: 'app-dgraph',
   templateUrl: "./dgraph.component.html",
   styleUrls: ['./dgraph.component.css'],
-  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounterSquare, GraphCounterCircle, GraphLegend ]
+  providers: [ GraphText, GraphPie, GraphLines, GraphBars, GraphAreas, GraphBubbles, GraphCounterSquare, GraphCounterCircle, GraphLegend, GraphInnerStats ]
 
 
 })
@@ -47,7 +48,8 @@ export class DGraphComponent implements OnInit, OnDestroy {
     private graphText : GraphText,
     private graphCounterSquare : GraphCounterSquare,
     private graphCounterCircle : GraphCounterCircle,
-    private graphLegend : GraphLegend) {
+    private graphLegend : GraphLegend,
+    private graphInnerStats : GraphInnerStats) {
     this.serviceMap['text'] = graphText;
     this.serviceMap['pie'] = graphPie;
     this.serviceMap['lines'] = graphLines;
@@ -57,6 +59,7 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.serviceMap['counterSquare'] = graphCounterSquare;
     this.serviceMap['counterCircle'] = graphCounterCircle;
     this.serviceMap['legend'] = graphLegend;
+    this.serviceMap['innerStats'] = graphInnerStats
   }
 
   ngOnInit() {

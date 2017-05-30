@@ -95,7 +95,7 @@ export class GraphLines {
         }
       }
     }
-    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
+    let yunit = this.dashboardService.computeUnit(graph.field, ymax, "").unit
     this.data = this.dashboardService.adjustHistoricDataToUnit(yunit, graph.field, this.data)
     ymax = ymax / this.dashboardService.unitdivider(yunit)
     let yDomain = [0, ymax];

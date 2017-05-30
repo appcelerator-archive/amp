@@ -73,9 +73,8 @@ export class GraphPie {
       return
     }
     let xDomain = this.data.map(d => d.group);
-
     let ymax = d3.max(this.data, d => d.values[graph.field])
-    let yunit = this.dashboardService.computeUnit(graph.field, ymax).unit
+    let yunit = this.dashboardService.computeUnit(graph.field, d3.min(this.data, d => d.values[graph.field]), "").unit
     this.data = this.dashboardService.adjustCurrentDataToUnit(yunit, graph.field, this.data)
     ymax = ymax / this.dashboardService.unitdivider(yunit)
     let yDomain = [0, ymax];
@@ -89,7 +88,7 @@ export class GraphPie {
     let arcs = d3.pie<GraphCurrentData>()
       .value((d) => {
           let val = d.values[graph.field];
-          let format = this.dashboardService.computeUnit(graph.field, val)
+          let format = this.dashboardService.computeUnit(graph.field, val, yunit)
           return format.val
         }
       )
@@ -136,8 +135,8 @@ export class GraphPie {
       .attr("dy", ".35em")
       .style("font-size", fontSize/2+'px')
       .text(function(d) {
-        let val = d.data.valueUnit
-        let format = athis.dashboardService.computeUnit(graph.field, val)
+        let val = d.data.values[graph.field]
+        let format = athis.dashboardService.computeUnit(graph.field, val, yunit)
         return format.sval
       });
 
