@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
-	"github.com/appcelerator/amp/pkg/labels"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
@@ -83,7 +83,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		masterQuery.Filter(queryString)
 	}
 	if !in.IncludeAmpLogs {
-		masterQuery.MustNot(elastic.NewExistsQuery(dockerToEsLabel(labels.KeyRole)))
+		masterQuery.MustNot(elastic.NewExistsQuery(dockerToEsLabel(constants.LabelKeyRole)))
 	}
 
 	// Perform ES request
@@ -192,7 +192,7 @@ func match(entry *LogEntry, in *GetRequest) bool {
 		match = match && strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
 	}
 	if !in.IncludeAmpLogs {
-		_, ampLogs := entry.Labels[labels.KeyRole]
+		_, ampLogs := entry.Labels[constants.LabelKeyRole]
 		match = match && !ampLogs
 	}
 	return match
