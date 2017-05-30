@@ -149,17 +149,17 @@ func (a *Agent) updateStreams() {
 }
 
 // Close AgentInit resources
-func (a *Agent) stop() {
+func (a *Agent) stop(status int) {
 	a.closeLogsStreams()
 	a.closeMetricsStreams()
-	err := a.dock.GetClient().Close()
-	if err != nil {
-		log.Println("error closing connection to docker client: ", err)
+	if err := a.dock.GetClient().Close(); err != nil {
+		log.Printf("Docker api close error: %v\n", err)
 	}
-	err = a.natsStreaming.Close()
-	if err != nil {
-		log.Println("error closing connection to NATS: ", err)
+
+	if err := a.natsStreaming.Close(); err != nil {
+		log.Printf("Nats close error: %v\n", err)
 	}
+	os.Exit(status)
 }
 
 // Launch a routine to catch SIGTERM Signal
@@ -170,7 +170,6 @@ func (a *Agent) trapSignal() {
 	go func() {
 		<-ch
 		log.Println("\nagent received SIGTERM signal")
-		a.stop()
-		os.Exit(1)
+		a.stop(1)
 	}()
 }
