@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
 import { DashboardService } from './dashboard.service'
+import { ColorsService } from './colors.service'
+import { GraphColor } from '../../dashboard/models/graph-color.model'
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
 import * as d3 from 'd3';
@@ -26,7 +28,8 @@ export class GraphLegend {
   constructor(
     private httpService : HttpService,
     private menuService : MenuService,
-    private dashboardService : DashboardService) { }
+    private dashboardService : DashboardService,
+    private colorsService : ColorsService) { }
 
 
   destroy() {
@@ -90,31 +93,29 @@ export class GraphLegend {
        .style("font-size", fontSize+'px')
        .text(graph.title);
     }
-    let colorObject = this.dashboardService.graphObjectColorMap[graph.object]
-    if (!colorObject) {
+    //let colorObject = this.dashboardService.graphObjectColorMap[graph.object]
+    let colorList : GraphColor[] = this.colorsService.getColors(graph.object)
+    if (colorList.length ==0) {
       return
     }
+
     let yy = dy*1.2
-    let dh = this.height/colorObject.getIndex()
-    for (let i=0 ;i<colorObject.getIndex(); i++) {
-      let name = colorObject.getName(i)
+    let dh = this.height/colorList.length
+    for (let col of colorList) {
+        this.svg.append("rect")
+          .attr('width', dh*.90)
+          .attr('height', dh*.90)
+          .attr("transform", "translate(" + [dx, yy] + ")")
+          .attr('stroke', 'lightgrey')
+          .style('fill', col.color)
 
-      this.svg.append("rect")
-        .attr('width', dh*.90)
-        .attr('height', dh*.90)
-        .attr("transform", "translate(" + [dx, yy] + ")")
-        .attr('stroke', 'lightgrey')
-        .style('fill', colorObject.getColor(name))
-
-      this.svg.append("text")
-       .attr("class", "wtitle")
-       .attr("transform", "translate(" + [dx+dh, yy+dh*.65] + ")")
-       //.attr("dy", "1em")
-       .style("text-anchor", "start")
-       .style("font-size", fontSize*.75+'px')
-       //.style("fill", colorObject.getColor(name))
-       .text(name);
-      yy+=dh
+        this.svg.append("text")
+         .attr("class", "wtitle")
+         .attr("transform", "translate(" + [dx+dh, yy+dh*.65] + ")")
+         .style("text-anchor", "start")
+         .style("font-size", fontSize*.75+'px')
+         .text(col.name);
+        yy+=dh
     }
   }
 

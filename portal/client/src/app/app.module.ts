@@ -18,6 +18,7 @@ import { MetricsService } from './metrics/services/metrics.service';
 import { LogsService } from './logs/services/logs.service';
 import { NodesService } from './nodes/services/nodes.service';
 import { DashboardService } from './dashboard/services/dashboard.service';
+import { ColorsService } from './dashboard/services/colors.service'
 
 //Module
 import { AppRoutingModule} from './app-routing.module';
@@ -121,6 +122,7 @@ import { DgraphAlertComponent } from './dashboard/dgraph-alert/dgraph-alert.comp
     LogsService,
     NodesService,
     DashboardService,
+    ColorsService,
     AuthGuard
   ],
   bootstrap: [AppComponent]
