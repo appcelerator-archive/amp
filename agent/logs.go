@@ -136,6 +136,7 @@ func (a *Agent) sendLogsBuffer() {
 	encoded, err := proto.Marshal(a.logsBuffer)
 	if err != nil {
 		log.Printf("error marshalling log entries: %v\n", err)
+		return
 	}
 	_, err = a.natsStreaming.GetClient().PublishAsync(ns.LogsSubject, encoded, nil)
 	if err != nil {

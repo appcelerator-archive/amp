@@ -42,7 +42,7 @@ func (cfg *AgentConfig) setDefault() {
 	cfg.clientID = "agent-" + os.Getenv("HOSTNAME")
 	cfg.clusterID = ns.ClusterID
 	cfg.metricsBufferSize = 1000
-	cfg.metricsBufferPeriod = 30
+	cfg.metricsBufferPeriod = 10
 	cfg.logsBufferSize = 0
 	cfg.logsBufferPeriod = 0
 }

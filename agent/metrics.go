@@ -95,6 +95,7 @@ func (a *Agent) sendMetricsBuffer() {
 	encoded, err := proto.Marshal(a.metricsBuffer)
 	if err != nil {
 		log.Printf("error marshalling metrics entries: %v\n", err)
+		return
 	}
 	_, err = a.natsStreaming.GetClient().PublishAsync(ns.MetricsSubject, encoded, nil)
 	if err != nil {
