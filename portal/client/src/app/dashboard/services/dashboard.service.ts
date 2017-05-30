@@ -3,12 +3,12 @@ import { HttpService } from '../../services/http.service';
 import { MenuService } from '../../services/menu.service';
 import { Subject } from 'rxjs/Subject'
 import { Graph } from '../../models/graph.model';
-import { GraphColors } from '../models/graph-colors.model';
 import { StatsRequest } from '../../models/stats-request.model';
 import { StatsRequestItem } from '../models/stats-request-item.model';
 import { GraphCurrentData } from '../../models/graph-current-data.model'
 import { GraphHistoricData } from '../../models/graph-historic-data.model'
 import { GraphHistoricAnswer } from '../../models/graph-historic-answer.model'
+import { ColorsService } from './colors.service'
 import * as d3 from 'd3';
 
 @Injectable()
@@ -30,8 +30,6 @@ export class DashboardService {
     nbGraph = 1
     public showEditor = false;
     public showAlert = false;
-    public graphColors = ['DodgerBlue', '#396AB1', '#DA7C30', '#3E9651', '#CC2529', '#535154', '#6B4C9A', '#922428', '#948B3D']
-    public graphObjectColorMap : { [name:string]: GraphColors; } = {}
     public nodeColorIndex = 0
     public editorGraph : Graph = new Graph('graph1', this.x0, this.y0, this.w0, this.h0, 'editor','')
     public notSelected : Graph = new Graph('', 0, 0, 0, 0, "", "")
@@ -39,14 +37,8 @@ export class DashboardService {
 
   constructor(
     private httpService : HttpService,
-    private menuService : MenuService) {
-      for (let i=0;i<20;i++) {
-        this.graphColors.push(d3.interpolateCool(Math.random()))
-      }
-      this.graphObjectColorMap['stack'] = new GraphColors('stack')
-      this.graphObjectColorMap['service'] = new GraphColors('service')
-      this.graphObjectColorMap['container'] = new GraphColors('container')
-      this.graphObjectColorMap['node'] = new GraphColors('node')
+    private menuService : MenuService,
+    private colorsService: ColorsService) {
       this.notSelected.title = ""
       this.notSelected.object="stack"
       this.notSelected.field="cpu-usage"
@@ -83,9 +75,12 @@ export class DashboardService {
       this.timer = setInterval(() => this.executeRequests(), this.refresh * 1000)
       this.menuService.onRefreshClicked.subscribe(
         () => {
+          /*
           for (let key in this.graphObjectColorMap) {
             this.graphObjectColorMap[key].clear()
           }
+          */
+          this.colorsService.refresh()
           this.executeRequests()
           //this.onNewData.next()
         }
@@ -180,16 +175,7 @@ export class DashboardService {
   }
 
   getObjectColor(object : string, name : string) : string {
-    let col = "magenta"
-    let colorObject = this.graphObjectColorMap[object]
-    if (colorObject) {
-      col = colorObject.getColor(name)
-      if (!col) {
-        col = this.graphColors[colorObject.getIndex()]
-        colorObject.setColor(name, col)
-      }
-    }
-    return col
+    return this.colorsService.getColor(object, name, "")
   }
 
   computeUnit(field : string, val : number) : {val: number, sval: string, unit: string} {

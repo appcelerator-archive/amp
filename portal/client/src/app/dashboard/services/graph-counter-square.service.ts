@@ -85,7 +85,6 @@ export class GraphCounterSquare {
         for (let dat of this.data) {
           val += dat.values[graph.field]
         }
-        val = Math.floor(val)
         let unit=this.dashboardService.computeUnit(graph.field, val)
         uval = unit.val
         sval = unit.sval
