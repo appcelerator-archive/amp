@@ -9,7 +9,7 @@ ALERTMANAGER_DIR=/etc/alertmanager
 ALERTMANAGER_FILE=config.yml
 D4MIP="192.168.65.1"
 DOCKER_METRICS_PORT=9323
-TELEGRAF_METRICS_PORT=9126
+NODE_EXPORTER_METRICS_PORT=9100
 DRY_RUN=0
 
 manager_list(){
@@ -32,7 +32,6 @@ prepare_prometheus_conf(){
   local _remotes=$*
   local _remote
   local _docker_remotes
-  local _telegraf_remotes
 
   if [[ $# -eq 1 && "$_remotes" = "127.0.0.1" ]]; then
     # Docker for Mac/Windows: loopback address won't work, fix it
@@ -88,12 +87,12 @@ EOF
     echo "        - '${_remote}:$DOCKER_METRICS_PORT'" >> $prometheus_conf
   done
   cat >> $prometheus_conf << EOF
-  - job_name: 'system'
+  - job_name: 'nodes'
     static_configs:
       - targets:
 EOF
   for _remote in $_remotes; do
-    echo "        - '${_remote}:$TELEGRAF_METRICS_PORT'" >> $prometheus_conf
+    echo "        - '${_remote}:$NODE_EXPORTER_METRICS_PORT'" >> $prometheus_conf
   done
 }
 
