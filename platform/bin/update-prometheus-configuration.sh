@@ -9,7 +9,7 @@ ALERTMANAGER_DIR=/etc/alertmanager
 ALERTMANAGER_FILE=config.yml
 D4MIP="192.168.65.1"
 DOCKER_METRICS_PORT=9323
-NODE_EXPORTER_METRICS_PORT=9100
+TELEGRAF_METRICS_PORT=9126
 DRY_RUN=0
 
 manager_list(){
@@ -32,6 +32,7 @@ prepare_prometheus_conf(){
   local _remotes=$*
   local _remote
   local _docker_remotes
+  local _telegraf_remotes
 
   if [[ $# -eq 1 && "$_remotes" = "127.0.0.1" ]]; then
     # Docker for Mac/Windows: loopback address won't work, fix it
@@ -62,10 +63,9 @@ rule_files:
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets:
-        - localhost:9090
+#  - job_name: 'prometheus'
+#    static_configs:
+#      - targets: ['localhost:9090']
   - job_name: 'etcd'
     dns_sd_configs:
       - names:
@@ -80,13 +80,6 @@ scrape_configs:
     static_configs:
       - targets:
         - nats_exporter:7777
-  - job_name: 'elasticsearch'
-    metrics_path: "/_prometheus/metrics"
-    dns_sd_configs:
-      - names:
-        - 'tasks.elasticsearch'
-        type: 'A'
-        port: 9200
   - job_name: 'docker-engine'
     static_configs:
       - targets:
@@ -95,12 +88,12 @@ EOF
     echo "        - '${_remote}:$DOCKER_METRICS_PORT'" >> $prometheus_conf
   done
   cat >> $prometheus_conf << EOF
-  - job_name: 'nodes'
+  - job_name: 'system'
     static_configs:
       - targets:
 EOF
   for _remote in $_remotes; do
-    echo "        - '${_remote}:$NODE_EXPORTER_METRICS_PORT'" >> $prometheus_conf
+    echo "        - '${_remote}:$TELEGRAF_METRICS_PORT'" >> $prometheus_conf
   done
 }
 
