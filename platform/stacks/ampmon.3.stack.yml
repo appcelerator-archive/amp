@@ -90,3 +90,18 @@ services:
       mode: global
       labels:
         io.amp.role: "infrastructure"
+
+  nats_exporter:
+    image: appcelerator/prometheus-nats-exporter:latest
+    command: ["-varz", "-routez", "-connz", "-subz", "nats,http://nats:8222"]
+    #ports:
+      #- target: 7777
+      #- published: 7777
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true

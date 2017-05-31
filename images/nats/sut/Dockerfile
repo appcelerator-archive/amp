@@ -1,4 +1,4 @@
-From appcelerator/alpine:3.5.1
+From appcelerator/alpine:3.5.2
 ENV GOPATH          /go
 ENV GOBIN           /go/bin
 RUN apk update && apk upgrade && \

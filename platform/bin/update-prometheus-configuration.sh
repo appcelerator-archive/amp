@@ -28,14 +28,6 @@ manager_list(){
   echo $_managers
 }
 
-get_telegraf_remotes(){
-  local _telegraf_service=telegraf
-  local _remotes
-  _remotes=$(dig +short tasks.$_telegraf_service)
-  [[ -n "$_remotes" ]] && echo $_remotes
-
-}
-
 prepare_prometheus_conf(){
   local _remotes=$*
   local _remote
@@ -74,6 +66,10 @@ scrape_configs:
 #  - job_name: 'prometheus'
 #    static_configs:
 #      - targets: ['localhost:9090']
+  - job_name: 'nats'
+    static_configs:
+      - targets:
+        - nats_exporter:7777
   - job_name: 'docker-engine'
     static_configs:
       - targets:
@@ -168,7 +164,7 @@ for node in $nodes; do
       break
     elif [[ -n "$remote" && "$remote" = "0.0.0.0" ]]; then
       # try the manager address instead
-      remote=$(docker -H $manager node inspect $node -f '{{.ManagerStatus.Addr}}' | cut -d: -f1) 
+      remote=$(docker -H $manager node inspect $node -f '{{.ManagerStatus.Addr}}' | cut -d: -f1)
       if [[ ${PIPESTATUS[0]} -ne 0 || "x$remote" = "x0.0.0.0" ]]; then
         echo "Failed to get IP of node $node, abort" >&2
         exit 1
