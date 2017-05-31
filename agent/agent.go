@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -28,20 +27,18 @@ type Agent struct {
 	eventStreamReading  bool
 	logsSavedDatePeriod int
 	natsStreaming       *ns.NatsStreaming
-	nbLogs              int
 	nbMetrics           int
-	metricsBuffer       *stats.StatsReply
-	metricsBufferMutex  *sync.Mutex
+	nbMetricsComputed   int
+	nbLogs              int
 	logsBuffer          *logs.GetReply
 	logsBufferMutex     *sync.Mutex
+	first10Min          int //send metrics every 10 sec, the first 10 min and then use the setting value
 }
 
 // AgentInit Connect to docker engine, get initial containers list and start the agent
 func AgentInit(version, build string) error {
 	agent := Agent{
 		logsSavedDatePeriod: 60,
-		metricsBuffer:       &stats.StatsReply{},
-		metricsBufferMutex:  &sync.Mutex{},
 		logsBuffer:          &logs.GetReply{},
 		logsBufferMutex:     &sync.Mutex{},
 	}
@@ -92,7 +89,7 @@ func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
 	//start a thread looking for the Metrics Buffer to send it if full or period time reached
-	a.startMetricsBufferSender()
+	a.startMetricsSender()
 	//start a thread looking for the Logs Buffer to send it if full or period time reached
 	a.startLogsBufferSender()
 	for {
@@ -100,27 +97,28 @@ func (a *Agent) start() {
 		a.updateStreams()
 		nb++
 		if nb == 10 {
-			log.Printf("Sent %d logs and %d metrics on the last %d seconds\n", a.nbLogs, a.nbMetrics, nb*conf.period)
+			log.Printf("Sent %d logs and %d metrics (%d computed) on the last %d seconds\n", a.nbLogs, a.nbMetrics, a.nbMetricsComputed, nb*conf.period)
 			nb = 0
 			a.nbLogs = 0
 			a.nbMetrics = 0
+			a.nbMetricsComputed = 0
 		}
 		time.Sleep(time.Duration(conf.period) * time.Second)
 	}
 }
 
 //start a thread looking for the Metrics Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
-func (a *Agent) startMetricsBufferSender() {
-	if conf.metricsBufferPeriod == 0 || conf.metricsBufferSize == 0 {
-		a.metricsBuffer.Entries = make([]*stats.MetricsEntry, 1)
-		return
-	}
+func (a *Agent) startMetricsSender() {
+	a.first10Min = 60
 	go func() {
-		time.Sleep(time.Second * time.Duration(conf.metricsBufferPeriod))
-		if len(a.metricsBuffer.Entries) > 0 {
-			a.metricsBufferMutex.Lock()
-			a.sendMetricsBuffer()
-			a.metricsBufferMutex.Unlock()
+		for {
+			if conf.metricsPeriod > 10 && a.first10Min > 0 {
+				a.first10Min--
+				time.Sleep(10 * time.Second)
+			} else {
+				time.Sleep(time.Second * time.Duration(conf.metricsPeriod))
+			}
+			a.sendSquashedMetricsMessages()
 		}
 	}()
 }

@@ -31,14 +31,18 @@ export class HttpService {
   onHttpError = new Subject();
   parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
   //default dev debug url
-  addr = "http://localhost:8080/v1"
+  addr = "https://gw.local.appcelerator.io/v1"
 
 
   constructor(private http : Http) {
-    let host = "gw."+window.location.host
-    this.addr=window.location.protocol +"//"+host+"/v1"
-    console.log("Gateway url: "+this.addr)
-  }
+      if (window.location.host.substring(0,9)=="localhost") {
+        console.log("Dev mode, Gateway url: "+this.addr)
+        return
+      }
+      let host = "gw."+window.location.host
+      this.addr=window.location.protocol +"//"+host+"/v1"
+      console.log("Gateway url: "+this.addr)
+    }
 
   users() {
     return this.httpGet("/users")

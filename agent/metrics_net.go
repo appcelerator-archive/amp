@@ -45,17 +45,15 @@ func (a *Agent) setNetMetrics(data *ContainerData, statsData *types.StatsJSON, e
 		return
 	}
 	data.previousNetStats = net
-	entry.Net = &stats.MetricsNetEntry{
-		TotalBytes: diff.RxBytes + diff.TxBytes,
-		RxBytes:    diff.RxBytes,
-		RxDropped:  diff.RxDropped,
-		RxErrors:   diff.RxErrors,
-		RxPackets:  diff.RxPackets,
-		TxBytes:    diff.TxBytes,
-		TxDropped:  diff.TxDropped,
-		TxErrors:   diff.TxErrors,
-		TxPackets:  diff.TxPackets,
-	}
+	entry.Net.TotalBytes += diff.RxBytes + diff.TxBytes
+	entry.Net.RxBytes += diff.RxBytes
+	entry.Net.RxDropped += diff.RxDropped
+	entry.Net.RxErrors += diff.RxErrors
+	entry.Net.RxPackets += diff.RxPackets
+	entry.Net.TxBytes += diff.TxBytes
+	entry.Net.TxDropped += diff.TxDropped
+	entry.Net.TxErrors += diff.TxErrors
+	entry.Net.TxPackets += diff.TxPackets
 }
 
 // create a new net stats

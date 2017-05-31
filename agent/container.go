@@ -9,6 +9,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -16,26 +17,28 @@ import (
 
 // ContainerData data
 type ContainerData struct {
-	name             string
-	ID               string
-	shortName        string
-	serviceName      string
-	serviceID        string
-	stackName        string
-	taskID           string
-	nodeID           string
-	role             string
-	pid              int
-	state            string
-	health           string
-	logsStream       io.ReadCloser
-	logsReadError    bool
-	metricsStream    io.ReadCloser
-	metricsReadError bool
-	previousIOStats  *IOStats
-	previousNetStats *NetStats
-	lastDateSaveTime time.Time
-	labels           map[string]string
+	name                     string
+	ID                       string
+	shortName                string
+	serviceName              string
+	serviceID                string
+	stackName                string
+	taskID                   string
+	nodeID                   string
+	role                     string
+	pid                      int
+	state                    string
+	health                   string
+	logsStream               io.ReadCloser
+	logsReadError            bool
+	metricsStream            io.ReadCloser
+	metricsReadError         bool
+	previousIOStats          *IOStats
+	previousNetStats         *NetStats
+	lastDateSaveTime         time.Time
+	labels                   map[string]string
+	squashedMetricsMessage   stats.MetricsEntry
+	squashedMetricsMessageNb int64
 }
 
 // Verify if the event stream is working, if not start it
@@ -104,6 +107,11 @@ func (a *Agent) addContainer(ID string) {
 				logsStream:    nil,
 				logsReadError: false,
 			}
+			data.squashedMetricsMessage.Cpu = &stats.MetricsCPUEntry{}
+			data.squashedMetricsMessage.Mem = &stats.MetricsMemEntry{}
+			data.squashedMetricsMessage.Net = &stats.MetricsNetEntry{}
+			data.squashedMetricsMessage.Io = &stats.MetricsIOEntry{}
+			a.clearMetricsMessage(&data)
 			labels := inspect.Config.Labels
 			data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
 			//data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
@@ -153,7 +161,7 @@ func (a *Agent) removeContainer(ID string) {
 	}
 	err := os.Remove(path.Join(containersDataDir, ID))
 	if err != nil {
-		log.Println("Error removing container data directory: ", err)
+		log.Println("")
 	}
 }
 

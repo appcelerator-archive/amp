@@ -36,11 +36,9 @@ func (a *Agent) setCPUMetrics(statsData *types.StatsJSON, entry *stats.MetricsEn
 	if diff == nil {
 		return
 	}
-	entry.Cpu = &stats.MetricsCPUEntry{
-		TotalUsage:        diff.TotalUsage,
-		UsageInKernelMode: diff.UsageInKernelmode,
-		UsageInUserMode:   diff.UsageInUsermode,
-	}
+	entry.Cpu.TotalUsage += diff.TotalUsage
+	entry.Cpu.UsageInKernelMode += diff.UsageInKernelmode
+	entry.Cpu.UsageInUserMode += diff.UsageInUsermode
 }
 
 // build a new cpu metrics stats
