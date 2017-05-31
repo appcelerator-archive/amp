@@ -66,6 +66,16 @@ scrape_configs:
 #  - job_name: 'prometheus'
 #    static_configs:
 #      - targets: ['localhost:9090']
+  - job_name: 'etcd'
+    dns_sd_configs:
+      - names:
+        - 'tasks.etcd'
+        type: 'A'
+        port: 2379
+  - job_name: 'haproxy'
+    static_configs:
+      - targets:
+        - haproxy_exporter:9101
   - job_name: 'nats'
     static_configs:
       - targets:
