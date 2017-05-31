@@ -35,11 +35,9 @@ func (a *Agent) setIOMetrics(data *ContainerData, statsData *types.StatsJSON, en
 		return
 	}
 	data.previousIOStats = io
-	entry.Io = &stats.MetricsIOEntry{
-		Read:  diff.Reads,
-		Write: diff.Writes,
-		Total: diff.Totals,
-	}
+	entry.Io.Read += diff.Reads
+	entry.Io.Write += diff.Writes
+	entry.Io.Total += diff.Totals
 }
 
 // create new io stats

@@ -7,13 +7,11 @@ import (
 
 // publish one memory metrics event
 func (a *Agent) setMemMetrics(statsData *types.StatsJSON, entry *stats.MetricsEntry) {
-	entry.Mem = &stats.MetricsMemEntry{
-		Failcnt:  int64(statsData.MemoryStats.Failcnt),
-		Limit:    int64(statsData.MemoryStats.Limit),
-		Maxusage: int64(statsData.MemoryStats.MaxUsage),
-		Usage:    int64(statsData.MemoryStats.Usage),
-		UsageP:   a.getMemUsage(statsData),
-	}
+	entry.Mem.Failcnt += int64(statsData.MemoryStats.Failcnt)
+	entry.Mem.Limit += int64(statsData.MemoryStats.Limit)
+	entry.Mem.Maxusage += int64(statsData.MemoryStats.MaxUsage)
+	entry.Mem.Usage += int64(statsData.MemoryStats.Usage)
+	entry.Mem.UsageP += a.getMemUsage(statsData)
 }
 
 // compute memory usage

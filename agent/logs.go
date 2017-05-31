@@ -72,7 +72,11 @@ func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			log.Printf("error reading logs, closing logs stream on container %s (%v)\n", data.name, err)
+			if err.Error() == "EOF" {
+				log.Printf("Stream log EOF container terminated: %s\n", data.name)
+			} else {
+				log.Printf("error reading logs, closing logs stream on container %s (%v)\n", data.name, err)
+			}
 			data.logsReadError = true
 			_ = stream.Close()
 			a.removeContainer(ID)

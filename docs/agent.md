@@ -21,18 +21,11 @@ if LOGS_BUFFER_SIZE = 0 then the logs are sent one by one
 Default: 0
 
 
-#### metricsBufferPeriod
+#### metricsPeriod
 
-System Variable: METRICS_BUFFER_PERIOD
+System Variable: METRICS_PERIOD
 
-indicate to the agent to keep the metrics in memory and send them in one message every METRICS_BUFFER_PERIOD seconds
-if METRICS_BUFFER_PERIOD = 0 then the metrics are sent one by one
+indicate to the agent to keep the metrics in memory and send them in one message every METRICS_PERIOD seconds.
+During the period, the metrics values add added in order to send their average value at the end of the period.
+So it sends only one metrics message to Nats per container each period.
 Default: 30 seconds
-
-#### metricsBufferSize
-
-System Variable: METRICS_BUFFER_SIZE
-
-It's the maximum number of metrics messages the agent can keep in memory. If the end of buffer is reached before the end of the time period then the agent send the metrics in one message anyway
-if METRICS_BUFFER_SIZE = 0 then the metrics are sent one by one
-Default: 1000

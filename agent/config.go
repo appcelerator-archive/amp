@@ -11,16 +11,15 @@ import (
 
 // AgentConfig configuration parameters
 type AgentConfig struct {
-	dockerEngine        string
-	apiPort             string
-	period              int
-	natsURL             string
-	clientID            string
-	clusterID           string
-	metricsBufferSize   int
-	metricsBufferPeriod int
-	logsBufferSize      int
-	logsBufferPeriod    int
+	dockerEngine     string
+	apiPort          string
+	period           int
+	natsURL          string
+	clientID         string
+	clusterID        string
+	metricsPeriod    int
+	logsBufferSize   int
+	logsBufferPeriod int
 }
 
 var conf AgentConfig
@@ -41,8 +40,7 @@ func (cfg *AgentConfig) setDefault() {
 	cfg.period = 3
 	cfg.clientID = "agent-" + os.Getenv("HOSTNAME")
 	cfg.clusterID = ns.ClusterID
-	cfg.metricsBufferSize = 1000
-	cfg.metricsBufferPeriod = 10
+	cfg.metricsPeriod = 30
 	cfg.logsBufferSize = 0
 	cfg.logsBufferPeriod = 0
 }
@@ -55,21 +53,17 @@ func (cfg *AgentConfig) loadConfigUsingEnvVariable() {
 	cfg.period = getenvi("PERIOD", cfg.period)
 	cfg.clientID = getenv("CLIENTID", cfg.clientID)
 	cfg.clusterID = getenv("CLIENTID", cfg.clusterID)
-	cfg.metricsBufferSize = getenvi("METRICS_BUFFER_SIZE", cfg.metricsBufferSize)
+	cfg.metricsPeriod = getenvi("METRICS_PERIOD", cfg.metricsPeriod)
 	cfg.logsBufferSize = getenvi("LOGS_BUFFER_SIZE", cfg.logsBufferSize)
-	cfg.metricsBufferPeriod = getenvi("METRICS_BUFFER_PERIOD", cfg.metricsBufferPeriod)
 	cfg.logsBufferPeriod = getenvi("LOGS_BUFFER_PERIOD", cfg.logsBufferPeriod)
 }
 
 func (cfg *AgentConfig) controlConfig() {
-	if cfg.metricsBufferPeriod < 0 {
-		cfg.metricsBufferPeriod = 0
+	if cfg.metricsPeriod < 0 {
+		cfg.metricsPeriod = 3 //Min 3 seconds
 	}
 	if cfg.logsBufferPeriod < 0 {
 		cfg.logsBufferPeriod = 0
-	}
-	if cfg.metricsBufferSize < 0 {
-		cfg.metricsBufferSize = 0
 	}
 	if cfg.logsBufferSize < 0 {
 		cfg.logsBufferSize = 0
@@ -85,8 +79,7 @@ func (cfg *AgentConfig) displayConfig(version, build string) {
 	log.Printf("Nats URL: %s\n", conf.natsURL)
 	log.Printf("ClientId: %s\n", conf.clientID)
 	log.Printf("ClusterId: %s\n", conf.clusterID)
-	log.Printf("MetricsBufferSize: %d\n", conf.metricsBufferSize)
-	log.Printf("MetricsBufferPeriod: %d second(s)\n", conf.metricsBufferPeriod)
+	log.Printf("MetricsPeriod: %d second(s)\n", conf.metricsPeriod)
 	log.Printf("LogsBufferSize: %d\n", conf.logsBufferSize)
 	log.Printf("LogsBufferPeriod: %d second(s)\n", conf.logsBufferPeriod)
 	log.Println("----------------------------------------------------------------------------")
