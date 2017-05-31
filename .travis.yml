@@ -10,13 +10,11 @@ install:
   - sudo apt-get update
   - sudo apt-get install docker-engine
   - sudo apt-get install pcregrep
-  - sudo modprobe ip_vs ip_vs_rr
   - sudo mkdir -p $HOME/.config/amp
   - sudo chown -R $(id -u):$(id -g) $HOME/.config/amp
 
 before_script:
   - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:platform/testing:$PATH
-  - docker network create hostnet
 
 script:
   - set -e
