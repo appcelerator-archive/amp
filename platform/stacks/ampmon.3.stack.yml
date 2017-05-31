@@ -105,3 +105,22 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.metrics == true
+
+  haproxy_exporter:
+    image: prom/haproxy-exporter:latest
+    command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
+    networks:
+      default:
+        aliases:
+          - haproxy_exporter
+    #ports:
+      #- target: 9101
+      #- published: 9101
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
