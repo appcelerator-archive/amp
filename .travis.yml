@@ -23,6 +23,10 @@ script:
   - ampmake clean build
   - ls -la bin/linux/amd64
   - amp --server=localhost cluster create --tag=local --registration=none --notifications=false
+  - nc -vz gw.local.appcelerator.io 443
+  - nc -vz localhost 443
+  - nc -vz 127.0.0.1 443
+  - nc -vz ::1 443
   - TESTINCLUDE=platform/testing testrunner platform/tests
   - docker run --rm --network ampnet -v $PWD:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools go test github.com/appcelerator/amp/tests/integration/...
   - amp --server localhost cluster rm
