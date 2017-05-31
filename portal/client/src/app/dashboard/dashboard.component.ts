@@ -184,6 +184,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.log(err)
         let error = err.json()
         this.message = error.error
+        let dashboard = new Dashboard("", "default", this.dashboardService.defaultDefaultDashboard())
+        this.currentDashboard = dashboard
+        this.dialogHidden = true
+        this.dashboardService.setData(dashboard.data)
+        localStorage.setItem('dashboard', dashboard.id);
       }
     )
   }
