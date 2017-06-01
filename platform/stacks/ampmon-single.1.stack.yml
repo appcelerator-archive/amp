@@ -8,7 +8,7 @@ networks:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.3.2
+    image: appcelerator/elasticsearch-amp:5.4.0
     networks:
       - default
     labels:
