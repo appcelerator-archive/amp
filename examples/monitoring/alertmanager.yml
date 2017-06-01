@@ -1,0 +1,15 @@
+---
+global:
+  slack_api_url: "https://hooks.slack.com/services/YOUR_URL"
+templates:
+- '/etc/alertmanager/template/*.tmpl'
+route:
+  receiver: slack-receiver
+receivers:
+- name: "slack-receiver"
+  slack_configs:
+  - channel: "#YOUR_CHANNEL"
+    username: "Alertmanager"
+    title: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
+    text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+    send_resolved: true
