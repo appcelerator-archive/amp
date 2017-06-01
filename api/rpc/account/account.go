@@ -118,14 +118,15 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 }
 
 // Verify implements account.Verify
-func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*VerificationReply, error) {
+func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Empty, error) {
 	// Validate the token
+	log.Printf("verify token=%s\n", in.Token)
 	claims, err := s.Tokens.ValidateToken(in.Token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, accounts.InvalidToken
 	}
-	if err := s.Accounts.VerifyUser(ctx, claims.AccountName); err != nil {
-		return nil, convertError(err)
+	if errv := s.Accounts.VerifyUser(ctx, claims.AccountName); err != nil {
+		return nil, convertError(errv)
 	}
 	user, err := s.Accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
@@ -138,8 +139,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*Verifica
 		return nil, convertError(err)
 	}
 	log.Println("Successfully verified user", user.Name)
-	//This message and the field name are visible on the web page after clicking on the email button
-	return &VerificationReply{Reply: "Your account has been verified successfully"}, nil
+	return &empty.Empty{}, nil
 }
 
 // Login implements account.Login

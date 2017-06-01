@@ -10,7 +10,7 @@ var accountVerificationBody = `
             <h3>Please click on the link below to verify your email address and complete your registration.</h3>
             <div style="height:30px"></div>
             <a
-                href="{ampUrl}/verify/{token}"
+                href="{ampUrl}/auth/verify/{token}"
                 style="font-family: arial;
                     font-weight: bold;
                     text-decoration: none;

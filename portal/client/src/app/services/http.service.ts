@@ -144,7 +144,11 @@ export class HttpService {
   }
 
   signup(username : string, pwd : string, email : string) {
-    return this.httpPost("/signup", {name: username, password: pwd, email: email, url: this.addr});
+    return this.httpPost("/signup", {name: username, password: pwd, email: email, url: window.location.protocol +"//"+window.location.host});
+  }
+
+  verify(token : string) {
+    return this.httpPost("/verify/"+token, { token: token});
   }
 
   registration() {
