@@ -44,7 +44,7 @@ services:
     environment:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
       SERVICE_PORTS: 5601
-      VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+      VIRTUAL_HOST: "http://kibana.*,https://kibana.*"
       FORCE_SSL: 1
     ports:
       - "50106:5601"

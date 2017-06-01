@@ -64,7 +64,8 @@ rule_files:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets:
+        - localhost:9090
   - job_name: 'etcd'
     dns_sd_configs:
       - names:

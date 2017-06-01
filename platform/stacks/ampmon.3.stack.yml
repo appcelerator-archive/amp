@@ -8,6 +8,7 @@ networks:
 volumes:
   prometheus-data:
   alertmanager-data:
+  grafana-data:
 
 secrets:
   prometheus_alerts_rules:
@@ -115,6 +116,26 @@ services:
     #ports:
       #- target: 9101
       #- published: 9101
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+
+  grafana:
+    image: appcelerator/grafana-amp:1.2.0
+    networks:
+      default:
+        aliases:
+          - grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      SERVICE_PORTS: 3000
+      VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
     deploy:
       mode: replicated
       replicas: 1
