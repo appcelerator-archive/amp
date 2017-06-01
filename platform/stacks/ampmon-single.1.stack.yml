@@ -5,12 +5,18 @@ networks:
     external:
       name: ampnet
 
+volumes:
+  elasticsearch-data:
+  etcd-data:
+
 services:
 
   elasticsearch:
     image: appcelerator/elasticsearch-amp:5.4.0
     networks:
       - default
+    volumes:
+      - elasticsearch-data:/opt/elasticsearch-5.4.0/data
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -47,6 +53,8 @@ services:
       default:
         aliases:
           - etcd
+    volumes:
+      - etcd-data:/data
     environment:
       SERVICE_NAME: "etcd"
       MIN_SEEDS_COUNT: 1
