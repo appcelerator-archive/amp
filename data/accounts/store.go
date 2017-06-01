@@ -349,8 +349,25 @@ func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	return users, nil
 }
 
+// DeleteNotVerifiedUser deletes the user by name only if it's not verified
+func (s *Store) DeleteNotVerifiedUser(ctx context.Context, name string) error {
+
+	//Get user to verify it is well not verified
+	user, err := s.GetUser(ctx, name)
+	if err != nil {
+		return err
+	}
+	if user != nil && !user.IsVerified {
+		if err := s.storage.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // DeleteUser deletes a user by name
 func (s *Store) DeleteUser(ctx context.Context, name string) error {
+
 	// Check authorization
 	if !s.IsAuthorized(ctx, &Account{AccountType_USER, name}, DeleteAction, UserRN, name) {
 		return NotAuthorized

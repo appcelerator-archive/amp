@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/appcelerator/amp/api/auth"
@@ -86,14 +87,14 @@ func (s *Server) getRequesterEmail(ctx context.Context) string {
 	return user.Email
 }
 
-// Users
-
 // SignUp implements account.SignUp
 func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, error) {
 	// Create user
 	user, err := s.Accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
-		s.Accounts.DeleteUser(ctx, in.Name)
+		if errd := s.Accounts.DeleteNotVerifiedUser(ctx, in.Name); errd != nil {
+			return nil, convertError(fmt.Errorf("Delete user error [%v] comming after CreateUser error [%v]", errd, err))
+		}
 		return nil, convertError(err)
 	}
 
@@ -102,19 +103,22 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		// Create a verification token valid for an hour
 		token, err := s.Tokens.CreateVerificationToken(user.Name)
 		if err != nil {
-			s.Accounts.DeleteUser(ctx, in.Name)
+			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
+				return nil, convertError(fmt.Errorf("Delete user error [%v] comming after to VerificationToken error [%v]", errd, err))
+			}
 			return nil, convertError(err)
 		}
 
 		// Send the verification email
-		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, in.Url); err != nil {
-			s.Accounts.DeleteUser(ctx, in.Name)
-			return nil, convertError(err)
+		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
+			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
+				return nil, convertError(fmt.Errorf("Delete user error [%v] comming after SendAccountVerificationEmail error [%v]", errd, err))
+			}
+			return nil, err
 		}
 	}
 	log.Println("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
-
 }
 
 // Verify implements account.Verify
