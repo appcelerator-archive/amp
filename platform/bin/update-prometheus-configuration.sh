@@ -62,9 +62,9 @@ rule_files:
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
-#  - job_name: 'prometheus'
-#    static_configs:
-#      - targets: ['localhost:9090']
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
   - job_name: 'etcd'
     dns_sd_configs:
       - names:
@@ -79,6 +79,13 @@ scrape_configs:
     static_configs:
       - targets:
         - nats_exporter:7777
+  - job_name: 'elasticsearch'
+    metrics_path: "/_prometheus/metrics"
+    dns_sd_configs:
+      - names:
+        - 'tasks.elasticsearch'
+        type: 'A'
+        port: 9200
   - job_name: 'docker-engine'
     static_configs:
       - targets:
