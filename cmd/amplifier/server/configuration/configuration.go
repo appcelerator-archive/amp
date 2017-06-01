@@ -27,9 +27,9 @@ type Configuration struct {
 	NatsURL          string
 	DockerURL        string
 	DockerVersion    string
-	JWTSecretKey     string
-	SUPassword       string
-	EmailKey         string
+	JWTSecretKey     string `yaml:"JWTSecretKey"`
+	SUPassword       string `yaml:"SUPassword"`
+	EmailKey         string `yaml:"EmailKey"`
 	EmailSender      string
 	SmsAccountID     string
 	SmsKey           string

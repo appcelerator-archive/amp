@@ -17,7 +17,7 @@ install:
 before_script:
   - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:platform/testing:$PATH
   - docker swarm init --advertise-addr 127.0.0.1
-  - docker secret create amplifier_yml amplifier.travis
+  - docker secret create amplifier_yml tests/test.amplifier.yml
 
 script:
   - set -e

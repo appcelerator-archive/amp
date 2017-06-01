@@ -161,7 +161,7 @@ AMPLBINARY=$(AMPL).alpine
 AMPLTAG := local
 AMPLIMG := appcelerator/$(AMPL):$(AMPLTAG)
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
-AMPLDIRS := $(CMDDIR)/$(AMPL) api data tests $(COMMONDIRS)
+AMPLDIRS := $(CMDDIR)/$(AMPL) api data $(COMMONDIRS)
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
@@ -194,7 +194,7 @@ GWBINARY=$(GW).alpine
 GWTAG := local
 GWIMG := appcelerator/$(GW):$(GWTAG)
 GWTARGET := $(CMDDIR)/$(GW)/$(GWBINARY)
-GWDIRS := $(CMDDIR)/$(GW) api data tests $(COMMONDIRS)
+GWDIRS := $(CMDDIR)/$(GW) api data $(COMMONDIRS)
 GWSRC := $(shell find $(GWDIRS) -type f -name '*.go')
 GWPKG := $(REPO)/$(CMDDIR)/$(GW)
 
@@ -225,7 +225,7 @@ BEATBINARY=$(BEAT).alpine
 BEATTAG := local
 BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
 BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
-BEATDIRS := $(CMDDIR)/$(BEAT) api data tests $(COMMONDIRS)
+BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
@@ -255,7 +255,7 @@ AGENTBINARY=$(AGENT).alpine
 AGENTTAG := local
 AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
 AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
-AGENTDIRS := $(CMDDIR)/$(AGENT) api data tests $(COMMONDIRS)
+AGENTDIRS := $(CMDDIR)/$(AGENT) api data $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
@@ -287,7 +287,7 @@ PORTALSERVERDIR=$(PORTALDIR)/server
 PORTALTAG := local
 PORTALIMG := appcelerator/$(PORTAL):$(PORTALTAG)
 PORTALSERVERTARGET := $(PORTALSERVERDIR)/$(PORTALBINARY)
-PORTALDIRS := $(PORTALSERVERDIR) api data tests $(COMMONDIRS)
+PORTALDIRS := $(PORTALSERVERDIR) api data $(COMMONDIRS)
 SRC := $(shell find $(PORTALDIR) -type f -name '*.go')
 PORTALPKG := $(REPO)/$(PORTALSERVERDIR)
 
