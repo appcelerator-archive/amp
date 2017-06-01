@@ -38,7 +38,6 @@ export class SignupComponent implements OnInit {
         this.httpService.registration().subscribe(
           rep => {
             let ret = rep.json()
-            console.log(ret)
             if (ret.email_confirmation) {
               this.message = "Your account is created, you are going to receive an email to validate your account"
             } else {

@@ -8,6 +8,7 @@ import { AmpComponent } from './amp/amp.component';
 import { SignupComponent } from './auth/signup/signup.component';
 import { SigninComponent } from './auth/signin/signin.component';
 import { ForgotComponent } from './auth/forgot/forgot.component';
+import { VerifyComponent } from './auth/verify/verify.component';
 import { AuthComponent } from './auth/auth/auth.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { NodesComponent } from './nodes/nodes.component';
@@ -54,12 +55,13 @@ const appRoutes : Routes = [
     { path: 'password', component: PasswordComponent, canActivate: [AuthGuard] },
     { path: 'users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'password', component: PasswordComponent, canActivate: [AuthGuard] },
-    { path: 'signup', component: SignupComponent, canActivate: [AuthGuard] },
+    { path: 'signup', component: SignupComponent, canActivate: [AuthGuard] }
   ]},
   { path: 'auth', component: AuthComponent, children: [
     { path: 'signin', component: SigninComponent },
     { path: 'signup', component: SignupComponent },
-    { path: 'forgot', component: ForgotComponent }
+    { path: 'forgot', component: ForgotComponent },
+    { path: 'verify/:token', component: VerifyComponent }
   ]}
   //{ path: '**', redirectTo: '/auth/signin' }
 ];
