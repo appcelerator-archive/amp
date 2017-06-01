@@ -181,8 +181,9 @@ func registerNodeServer(amp *Amplifier, s *grpc.Server) {
 
 func registerResourceServer(amp *Amplifier, s *grpc.Server) {
 	resource.RegisterResourceServer(s, &resource.Server{
-		Stacks:     amp.stacks,
+		Accounts:   amp.accounts,
 		Dashboards: amp.dashboards,
+		Stacks:     amp.stacks,
 	})
 }
 
