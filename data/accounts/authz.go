@@ -171,10 +171,11 @@ func GetRequesterAccount(ctx context.Context) *Account {
 
 // IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
 func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceID string) bool {
+	subject := auth.GetUser(ctx)
+	log.Printf("IsAuthorized: ctx(subject): %s, owner: %v, action: %s, resource: %s, resourceID: %s\n", subject, owner, action, resource, resourceID)
 	if owner == nil {
 		return false
 	}
-	subject := auth.GetUser(ctx)
 	switch owner.Type {
 	case AccountType_ORGANIZATION:
 		organization, err := s.getOrganization(ctx, owner.Name)
@@ -192,8 +193,6 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 		})
 		return err == nil
 	case AccountType_USER:
-		log.Println("subject", subject)
-		log.Println("user", owner.Name)
 		err := s.warden.IsAllowed(&ladon.Request{
 			Subject:  subject,
 			Action:   action,
@@ -237,7 +236,6 @@ func (c *OrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Reque
 	organization, ok := value.(*Organization)
 	log.Println("organization", organization)
 	if !ok {
-		log.Println("organization ok:", ok)
 		return false
 	}
 	if organization == nil {

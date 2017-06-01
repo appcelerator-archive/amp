@@ -5,9 +5,15 @@ package resource;
 import "google/api/annotations.proto";
 
 service Resource {
-  rpc ListResources (ListResourcesRequest) returns (ListResourcesReply) {
+  rpc List (ListRequest) returns (ListReply) {
     option (google.api.http) = {
       get: "/v1/resources"
+    };
+  };
+  rpc Authorizations (AuthorizationsRequest) returns (AuthorizationsReply) {
+    option (google.api.http) = {
+      post: "/v1/resources/authorizations",
+      body: "*"
     };
   };
 }
@@ -15,6 +21,16 @@ service Resource {
 enum ResourceType {
   RESOURCE_STACK = 0;
   RESOURCE_DASHBOARD = 1;
+  RESOURCE_USER = 2;
+  RESOURCE_ORGANIZATION = 3;
+  RESOURCE_TEAM = 4;
+}
+
+enum Action {
+  ACTION_CREATE = 0;
+  ACTION_READ = 1;
+  ACTION_UPDATE = 2;
+  ACTION_DELETE = 3;
 }
 
 message ResourceEntry {
@@ -23,9 +39,31 @@ message ResourceEntry {
   string name = 3;
 }
 
-message ListResourcesRequest {
+message ListRequest {
 }
 
-message ListResourcesReply {
+message ListReply {
   repeated ResourceEntry resources = 1;
 }
+
+message IsAuthorizedRequest {
+  string id = 1;
+  ResourceType type = 2;
+  Action action = 3;
+}
+
+message IsAuthorizedReply {
+  string id = 1;
+  ResourceType type = 2;
+  Action action = 3;
+  bool authorized = 4;
+}
+
+message AuthorizationsRequest {
+  repeated IsAuthorizedRequest requests = 1;
+}
+
+message AuthorizationsReply {
+  repeated IsAuthorizedReply replies = 1;
+}
+
