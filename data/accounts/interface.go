@@ -58,6 +58,9 @@ type Interface interface {
 	// VerifyUser verifies a user account
 	VerifyUser(ctx context.Context, name string) (err error)
 
+	// DeleteNotVerifedUser deletes a not verified user by-passing the authorization check
+	DeleteNotVerifiedUser(ctx context.Context, name string) (err error)
+
 	// DeleteUser deletes a user by name
 	DeleteUser(ctx context.Context, name string) (err error)
 
