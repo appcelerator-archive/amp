@@ -24,7 +24,10 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v2"
 )
+
+const testAmplifierConfig = "test.amplifier.yml"
 
 // AmplifierConnection returns a grpc connection to amplifier
 func AmplifierConnection() (*grpc.ClientConn, error) {
@@ -48,6 +51,8 @@ type Helper struct {
 	resources  resource.ResourceClient
 	stacks     stack.StackClient
 	dashboards dashboard.DashboardClient
+	tokens     *auth.Tokens
+	suPassword string
 }
 
 // New returns a new test helper
@@ -56,12 +61,26 @@ func New() (*Helper, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	data, err := ioutil.ReadFile("../../" + testAmplifierConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := configuration.Configuration{}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+	fmt.Println("cfg:", cfg)
+
 	h := &Helper{
 		accounts:   account.NewAccountClient(conn),
 		logs:       logs.NewLogsClient(conn),
 		stacks:     stack.NewStackClient(conn),
 		resources:  resource.NewResourceClient(conn),
 		dashboards: dashboard.NewDashboardClient(conn),
+		tokens:     auth.New(cfg.JWTSecretKey),
+		suPassword: cfg.SUPassword,
 	}
 	return h, nil
 }
@@ -89,6 +108,11 @@ func (h *Helper) Resources() resource.ResourceClient {
 // Dashboards returns a dashbord client
 func (h *Helper) Dashboards() dashboard.DashboardClient {
 	return h.dashboards
+}
+
+// Tokens returns a token manager instance
+func (h *Helper) Tokens() *auth.Tokens {
+	return h.tokens
 }
 
 // Login sign-up, verify and log-in a random user and returns the associated credentials
@@ -121,6 +145,41 @@ func (h *Helper) Login() (metadata.MD, error) {
 	}
 	token := tokens[0]
 	return metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)), nil
+}
+
+// SuperLogin logs in as super user and returns the associated credentials
+func (h *Helper) SuperLogin() (context.Context, error) {
+	su := h.SuperUser()
+	conn, err := AmplifierConnection()
+	if err != nil {
+		return nil, err
+	}
+	client := account.NewAccountClient(conn)
+
+	// Login
+	header := metadata.MD{}
+	_, err = client.Login(context.Background(), &account.LogInRequest{Name: su.Name, Password: su.Password}, grpc.Header(&header))
+	if err != nil {
+		return nil, fmt.Errorf("Login error: %v", err)
+	}
+
+	// Extract token from header
+	tokens := header[auth.TokenKey]
+	if len(tokens) == 0 {
+		return nil, errors.New("No token in response header")
+	}
+	token := tokens[0]
+	credentials := metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token))
+	return metadata.NewContext(context.Background(), credentials), nil
+}
+
+// SuperUser returns the super user SignUpRequest
+func (h *Helper) SuperUser() account.SignUpRequest {
+	return account.SignUpRequest{
+		Name:     "su",
+		Password: h.suPassword,
+		Email:    "super@user.amp",
+	}
 }
 
 // RandomUser returns a random user SignUpRequest
