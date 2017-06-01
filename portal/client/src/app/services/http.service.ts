@@ -144,7 +144,7 @@ export class HttpService {
   }
 
   signup(username : string, pwd : string, email : string) {
-    return this.httpPost("/signup", {name: username, password: pwd, email: email});
+    return this.httpPost("/signup", {name: username, password: pwd, email: email, url: this.addr});
   }
 
   registration() {

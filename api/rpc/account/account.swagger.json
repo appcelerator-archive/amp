@@ -826,13 +826,13 @@
       }
     },
     "/v1/verify/{token}": {
-      "post": {
+      "get": {
         "operationId": "Verify",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountVerificationReply"
             }
           }
         },
@@ -1210,6 +1210,9 @@
         },
         "email": {
           "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       },
       "title": "Users"
@@ -1218,6 +1221,14 @@
       "type": "object",
       "properties": {
         "account": {
+          "type": "string"
+        }
+      }
+    },
+    "accountVerificationReply": {
+      "type": "object",
+      "properties": {
+        "reply": {
           "type": "string"
         }
       }

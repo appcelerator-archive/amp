@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -87,9 +88,10 @@ func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListRe
 
 // GetRegistrationStatus get the registration status
 func (s *Server) GetRegistrationStatus(ctx context.Context, in *GetRegistrationStatusRequest) (*GetRegistrationStatusReply, error) {
-	ret := &GetRegistrationStatusReply{EmailConfirmation: true}
-	if os.Getenv("registration") == "none" {
-		ret.EmailConfirmation = false
+	ret := &GetRegistrationStatusReply{EmailConfirmation: false}
+	fmt.Printf("Registration: %s\n", os.Getenv("REGISTRATION"))
+	if os.Getenv("REGISTRATION") == "email" {
+		ret.EmailConfirmation = true
 	}
 	return ret, nil
 }
