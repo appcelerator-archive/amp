@@ -6,6 +6,7 @@ services:
 language: bash
 
 install:
+  - sudo ufw status verbose
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
   - sudo apt-get install docker-engine
@@ -24,6 +25,9 @@ script:
   - ampmake clean build
   - ls -la bin/linux/amd64
   - amp --server=localhost cluster create --tag=local --registration=none --notifications=false
+  - sudo netstat -plnt
+  - nslookup gw.local.atomiq.io
+  - nc -zv gw.local.atomiq.io 443
   - TESTINCLUDE=platform/testing testrunner platform/tests
   - docker run --rm --network ampnet -v $PWD:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools go test github.com/appcelerator/amp/tests/integration/...
   - amp --server localhost cluster rm
