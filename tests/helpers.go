@@ -71,7 +71,6 @@ func New() (*Helper, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
-	fmt.Println("cfg:", cfg)
 
 	h := &Helper{
 		accounts:   account.NewAccountClient(conn),
