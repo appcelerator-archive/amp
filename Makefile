@@ -98,7 +98,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-portal
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -281,31 +281,17 @@ clean-agent:
 # then build `appcelerator/portal` image
 # =============================================================================
 PORTAL := portal
-PORTALBINARY=$(PORTAL).alpine
 PORTALDIR=portal
 PORTALSERVERDIR=$(PORTALDIR)/server
 PORTALTAG := local
 PORTALIMG := appcelerator/$(PORTAL):$(PORTALTAG)
-PORTALSERVERTARGET := $(PORTALSERVERDIR)/$(PORTALBINARY)
-PORTALDIRS := $(PORTALSERVERDIR) api data $(COMMONDIRS)
-SRC := $(shell find $(PORTALDIR) -type f -name '*.go')
-PORTALPKG := $(REPO)/$(PORTALSERVERDIR)
-
-$(PORTALSERVERTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(PORTALSRC)
-	@echo "Compiling $(PORTAL) server source(s):"
-	@echo $?
-	@hack/build4alpine $(REPO)/$(PORTALSERVERTARGET) $(PORTALPKG) $(LDFLAGS)
-	@echo "bin/$(GOOS)/$(GOARCH)/$(PORTAL)"
 
 build-portal: $(PORTALSERVERTARGET)
 	@echo "build $(PORTALIMG)"
 	@$(DOCKER_CMD) build -t $(PORTALIMG) $(PORTALDIR)/server || (rm -f $(PORTALSERVERTARGET); exit 1)
 
-rebuild-portal: clean-portal build-portal
+rebuild-portal: build-portal
 
-.PHONY: clean-portal
-clean-portal:
-	@rm -f $(PORTALTARGET)
 
 # =============================================================================
 # BUILD BOOTSTRAP (`amp-bootstrap`)
