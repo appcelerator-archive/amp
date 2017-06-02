@@ -8,7 +8,7 @@ import (
 	"github.com/holys/safe"
 )
 
-var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{3,128}$`)
+var nameFormat = regexp.MustCompile(`^[a-z0-9\-]{2,128}$`)
 
 // CheckName checks user name
 func CheckName(name string) (string, error) {

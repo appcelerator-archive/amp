@@ -250,8 +250,12 @@ prepare_amplifier_configuration(){
   $amps secret ls | grep -q "amplifier_yml" && return 0
   _conf="$SECRETSDIR/amplifier.yml"
   if [[ ! -f "$_conf" ]]; then
+    local supasswd
     mkdir -p "$SECRETSDIR"
     echo "JWTSecretKey: "$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-128}') > "$_conf"
+    supasswd=$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-32}')
+    echo "SUPassword: " "$supasswd" > "$_conf"
+    echo "The super user password for this deployment is: $supasswd"
   else
     echo "using existing configuration for the amplifier_yml secret" >&2
   fi

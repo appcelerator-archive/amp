@@ -14,7 +14,8 @@ func (e Error) Error() string {
 
 // Errors
 const (
-	NotFound = Error("key not found")
+	NotFound      = Error("key not found")
+	AlreadyExists = Error("key already exists")
 )
 
 // Interface must be implemented for a key/value store
