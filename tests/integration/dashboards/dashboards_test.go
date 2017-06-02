@@ -105,7 +105,7 @@ func TestDashboardGet(t *testing.T) {
 	assert.Equal(t, r.Dashboard, rGet.Dashboard)
 }
 
-func xTestDashboardList(t *testing.T) {
+func TestDashboardList(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// Create user
@@ -115,7 +115,7 @@ func xTestDashboardList(t *testing.T) {
 	id := stringid.GenerateNonCryptoID()
 	rq := &dashboard.CreateRequest{
 		Name: "my awesome dashboard" + id,
-		Data: "my awesome data",
+		Data: "",
 	}
 	r, err := h.Dashboards().Create(userCtx, rq)
 	assert.NoError(t, err)
