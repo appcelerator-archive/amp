@@ -1,5 +1,6 @@
-FROM alpine
-COPY portal.alpine /portal-server
-RUN chmod +x /portal-server && mkdir /public
-COPY public/ /public/
-CMD [ "/portal-server" ]
+FROM nginx
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY public/ /path/dist-nginx
+
+EXPOSE 80
