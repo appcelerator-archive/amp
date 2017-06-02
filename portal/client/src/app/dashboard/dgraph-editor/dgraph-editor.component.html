@@ -37,15 +37,6 @@
               #centerTitle
               id="centerTitle"
               (click)="dashboardService.setTitleCenter(centerTitle.checked)"> Center title</label>
-            <label style="margin-top:5px;margin-left:0px">
-            <input
-              style="height:12px"
-              type="checkbox"
-              class="form-control"
-              [checked]="dashboardService.selected.roundedBox"
-              #roundedBox
-              id="roundedBox"
-              (click)="dashboardService.setRoundedBox(roundedBox.checked)"> Rounded box</label>
           </div>
 
           <div class="col-sm-12" *ngIf="isVisible('request')"  style="padding:0px;margin:0px;margin-top:5px">
@@ -179,11 +170,11 @@
           <div class="col-sm-12" *ngIf="isVisible('histoperiod')" style="padding:0px;margin-top:3px">
             <div class="btn dropup" style="padding:0px">
               <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="topNumber" data-toggle="dropdown">
-                Histo period: {{ dashboardService.selected.histoPeriod }}
+                Range: {{ dashboardService.selected.histoPeriod }}
               <span class="caret" style="cursor:pointer;color:black"></span>
               </button>
               <div class="dropdown-menu">
-                <li><a (click)="dashboardService.setHistoPeriod('now-5m')">10 min</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-5m')">5 min</a></li>
                 <li><a (click)="dashboardService.setHistoPeriod('now-10m')">10 min</a></li>
                 <li><a (click)="dashboardService.setHistoPeriod('now-30m')">30 min</a></li>
                 <li><a (click)="dashboardService.setHistoPeriod('now-1h')">1 hour</a></li>
@@ -194,7 +185,7 @@
                 <li><a (click)="dashboardService.setHistoPeriod('now-1M')">1 month</a></li>
                 <li><a (click)="dashboardService.setHistoPeriod('now-6M')">6 months</a></li>
                 <li><a (click)="dashboardService.setHistoPeriod('now-1y')">1 year</a></li>
-                <li><a (click)="dashboardService.setHistoPeriod('now-2y')">1 years</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-2y')">2 years</a></li>
               </div>
             </div>
           </div>
