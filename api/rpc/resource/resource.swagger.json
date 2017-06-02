@@ -17,12 +17,12 @@
   "paths": {
     "/v1/resources": {
       "get": {
-        "operationId": "ListResources",
+        "operationId": "List",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/resourceListResourcesReply"
+              "$ref": "#/definitions/resourceListReply"
             }
           }
         },
@@ -30,10 +30,100 @@
           "Resource"
         ]
       }
+    },
+    "/v1/resources/authorizations": {
+      "post": {
+        "operationId": "Authorizations",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/resourceAuthorizationsReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/resourceAuthorizationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Resource"
+        ]
+      }
     }
   },
   "definitions": {
-    "resourceListResourcesReply": {
+    "resourceAction": {
+      "type": "string",
+      "enum": [
+        "ACTION_CREATE",
+        "ACTION_READ",
+        "ACTION_UPDATE",
+        "ACTION_DELETE"
+      ],
+      "default": "ACTION_CREATE"
+    },
+    "resourceAuthorizationsReply": {
+      "type": "object",
+      "properties": {
+        "replies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/resourceIsAuthorizedReply"
+          }
+        }
+      }
+    },
+    "resourceAuthorizationsRequest": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/resourceIsAuthorizedRequest"
+          }
+        }
+      }
+    },
+    "resourceIsAuthorizedReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/resourceResourceType"
+        },
+        "action": {
+          "$ref": "#/definitions/resourceAction"
+        },
+        "authorized": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "resourceIsAuthorizedRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/resourceResourceType"
+        },
+        "action": {
+          "$ref": "#/definitions/resourceAction"
+        }
+      }
+    },
+    "resourceListReply": {
       "type": "object",
       "properties": {
         "resources": {
@@ -62,7 +152,10 @@
       "type": "string",
       "enum": [
         "RESOURCE_STACK",
-        "RESOURCE_DASHBOARD"
+        "RESOURCE_DASHBOARD",
+        "RESOURCE_USER",
+        "RESOURCE_ORGANIZATION",
+        "RESOURCE_TEAM"
       ],
       "default": "RESOURCE_STACK"
     }
