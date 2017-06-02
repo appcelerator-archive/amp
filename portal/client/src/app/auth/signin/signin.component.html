@@ -31,6 +31,7 @@
 
             <h5 style="color:green"> {{message}} </h5>
             <h5 style="color:red"> {{messageError}} </h5>
+            <a *ngIf="validateLink" [href]="httpService.addr+'/gw/validate'" >please validate this link: {{ httpService.addr }}</a>
 
             <div style="height:20px"></div>
             <div class="form-group">

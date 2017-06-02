@@ -75,6 +75,7 @@
 
             <span class="help-block" style="color:green;margin-left:20px">{{ message }}</span>
             <span class="help-block" style="color:red;margin-left:20px">{{ messageError }}</span>
+            <a *ngIf="validateLink" [href]="httpService.addr+'/gw/validate'" >please validate this link: {{ httpService.addr }}</a>
 
             <div class="form-group">
               <div class="btn-group" role="group" aria-label="...">

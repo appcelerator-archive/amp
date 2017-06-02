@@ -13,3 +13,10 @@ type Server struct {
 func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	return &GetReply{Info: s.Info}, nil
 }
+
+// ValidateGtwURL validation of the gtw url
+func (s *Server) ValidateGtwURL(ctx context.Context, in *ValidateGtwURLRequest) (*ValidateGtwURLReply, error) {
+	return &ValidateGtwURLReply{
+		Reply: "Success, click back on our browser to go back to the login page",
+	}, nil
+}

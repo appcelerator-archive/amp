@@ -15,6 +15,22 @@
     "application/json"
   ],
   "paths": {
+    "/v1/gw/validate": {
+      "get": {
+        "operationId": "ValidateGtwURL",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/versionValidateGtwURLReply"
+            }
+          }
+        },
+        "tags": [
+          "Version"
+        ]
+      }
+    },
     "/v1/version": {
       "get": {
         "operationId": "Get",
@@ -63,6 +79,17 @@
           "type": "string"
         }
       }
+    },
+    "versionValidateGtwURLReply": {
+      "type": "object",
+      "properties": {
+        "reply": {
+          "type": "string"
+        }
+      }
+    },
+    "versionValidateGtwURLRequest": {
+      "type": "object"
     }
   }
 }

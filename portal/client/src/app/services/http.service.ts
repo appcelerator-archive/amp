@@ -554,6 +554,7 @@ export class HttpService {
     let headers = this.setHeaders()
     return this.http.post(this.addr+url, data, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
+        console.log(err)
         console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {
             throw err;

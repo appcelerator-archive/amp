@@ -60,6 +60,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       let dashboardId = localStorage.getItem('dashboard')
       if (dashboardId) {
         this.openOneDashboard(dashboardId)
+      } else {
+        this.openOneDashboard("")
       }
     }
   }

@@ -10,6 +10,11 @@ service Version {
       get: "/v1/version"
     };
   }
+  rpc ValidateGtwURL (ValidateGtwURLRequest) returns (ValidateGtwURLReply) {
+    option (google.api.http) = {
+      get: "/v1/gw/validate"
+    };
+  };
 }
 
 message Info {
@@ -24,4 +29,9 @@ message GetRequest {
 }
 message GetReply {
   Info info = 1;
+}
+message ValidateGtwURLRequest {
+}
+message ValidateGtwURLReply {
+  string reply = 1;
 }

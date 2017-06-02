@@ -292,7 +292,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 }
 
 // Switch implements account.Switch
-func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, error) {
+func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*SwitchAnswer, error) {
 	// Get user name
 	userName := auth.GetUser(ctx)
 	orgName := auth.GetActiveOrganization(ctx)
@@ -324,7 +324,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	log.Printf("Successfully switched from account: %s (activeOrg: %s), to %s (activeOrg: %s)", userName, orgName, userName, activeOrganization)
-	return &empty.Empty{}, nil
+	return &SwitchAnswer{Auth: token}, nil
 }
 
 // Organizations
