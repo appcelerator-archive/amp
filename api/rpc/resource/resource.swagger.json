@@ -134,6 +134,9 @@
         }
       }
     },
+    "resourceListRequest": {
+      "type": "object"
+    },
     "resourceResourceEntry": {
       "type": "object",
       "properties": {

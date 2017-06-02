@@ -39,11 +39,13 @@ export class MenuService {
     this.paths.push(path)
   }
 
+  getPreviousPath() : string {
+    return this.paths.pop()
+  }
+
   returnToPreviousPath() {
     let path = this.paths.pop()
-    //console.log("return path1: "+path)
     path = this.paths.pop()
-    //console.log("return path2: "+path)
     if (path) {
       this.navigate(path.split('/'))
     }
