@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"sync"
 
+	"fmt"
+
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
@@ -62,6 +64,9 @@ var serviceInitializers = []serviceInitializer{
 }
 
 func New(config *configuration.Configuration) (*Amplifier, error) {
+	if config.JWTSecretKey == "" {
+		return nil, fmt.Errorf("JWTSecret key cannot be empty. Please check amplifier configuration.")
+	}
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
