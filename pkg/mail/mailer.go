@@ -60,10 +60,15 @@ func NewMailer(apiKey string, emailSender string, enabled bool) *Mailer {
 // SendAccountVerificationEmail send mail
 func (m *Mailer) SendAccountVerificationEmail(to string, accountName string, token string, url string) error {
 	//config := conf.GetRegularConfig(false)
+	cliAddr := url
+	if x := strings.Index(url, "://"); x > 0 {
+		cliAddr = url[x+3:]
+	}
 	variables := map[string]string{
 		"accountName": accountName,
 		"token":       token,
 		"ampUrl":      url,
+		"cliAddr":     cliAddr,
 	}
 	if err := m.SendTemplateEmail(to, "AccountVerification", variables); err != nil {
 		return err

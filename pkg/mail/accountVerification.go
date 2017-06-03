@@ -27,7 +27,7 @@ var accountVerificationBody = `
             <div style="height:20px"></div>
             <div style="color:#404040;">
                 <h4>You can also validate your AMP account using this commande.</h4>
-                <h5>amp -s {ampUrl}:50101 user verify {token}</h5>
+                <h5>amp -s {cliAddr}:50101 user verify {token}</h5>
             </div>
             <div style="color:#404040;">
                 <h4>If you didn't make this request, you can safely ignore this email</h4>

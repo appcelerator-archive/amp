@@ -125,8 +125,8 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Em
 	if err != nil {
 		return nil, accounts.InvalidToken
 	}
-	if errv := s.Accounts.VerifyUser(ctx, claims.AccountName); err != nil {
-		return nil, convertError(errv)
+	if err := s.Accounts.VerifyUser(ctx, claims.AccountName); err != nil {
+		return nil, convertError(err)
 	}
 	user, err := s.Accounts.GetUser(ctx, claims.AccountName)
 	if err != nil {
