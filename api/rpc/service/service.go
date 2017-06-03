@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"log"
 	"strings"
 
 	"github.com/appcelerator/amp/pkg/docker"
@@ -25,6 +27,7 @@ const (
 
 // Tasks implements service.Containers
 func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
+	log.Println("[service] Tasks", in.ServiceId)
 	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
@@ -47,6 +50,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 
 // ListService implements service.ListService
 func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*ServiceListReply, error) {
+	log.Println("[service] List")
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
@@ -93,4 +97,14 @@ func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEnti
 		return nil, err
 	}
 	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, Status: statusReplicas.Status}, nil
+}
+
+func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) (*ServiceInspectReply, error) {
+	log.Println("[service] Inspect", in.ServiceId)
+	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	entity, _ := json.MarshalIndent(serviceEntity, "", "	")
+	return &ServiceInspectReply{ServiceEntity: string(entity)}, nil
 }
