@@ -24,14 +24,14 @@ func NewServiceListCommand(c cli.Interface) *cobra.Command {
 		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return listServices(c, cmd, opts)
+			return listServices(c, opts)
 		},
 	}
 	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
 	return cmd
 }
 
-func listServices(c cli.Interface, cmd *cobra.Command, opts listServiceOptions) error {
+func listServices(c cli.Interface, opts listServiceOptions) error {
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
 	request := &service.ServiceListRequest{}

@@ -119,7 +119,7 @@
         "image": {
           "type": "string"
         },
-        "state": {
+        "current_state": {
           "type": "string"
         },
         "desired_state": {

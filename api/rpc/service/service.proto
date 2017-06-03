@@ -24,7 +24,7 @@ message TasksRequest {
 message Task {
   string id = 1;
   string image = 2;
-  string state = 3;
+  string current_state = 3;
   string desired_state = 4;
   string node_id = 5;
 }
