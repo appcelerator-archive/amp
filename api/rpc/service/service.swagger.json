@@ -15,6 +15,22 @@
     "application/json"
   ],
   "paths": {
+    "/v1/services": {
+      "get": {
+        "operationId": "ListService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/serviceServiceListReply"
+            }
+          }
+        },
+        "tags": [
+          "Service"
+        ]
+      }
+    },
     "/v1/tasks/{service_id}": {
       "get": {
         "operationId": "Tasks",
@@ -41,6 +57,59 @@
     }
   },
   "definitions": {
+    "serviceServiceEntity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceServiceListEntry": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "$ref": "#/definitions/serviceServiceEntity"
+        },
+        "ready_tasks": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total_tasks": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceServiceListReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceServiceListEntry"
+          }
+        }
+      }
+    },
+    "serviceServiceListRequest": {
+      "type": "object"
+    },
     "serviceTask": {
       "type": "object",
       "properties": {
