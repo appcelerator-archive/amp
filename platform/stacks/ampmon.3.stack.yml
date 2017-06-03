@@ -1,4 +1,4 @@
-version: "3.2"
+version: "3.1"
 
 networks:
   default:
@@ -27,8 +27,7 @@ services:
     volumes:
       - alertmanager-data:/alertmanager
     ports:
-      - target: 9093
-        published: 9093
+      - "9093:9093"
     deploy:
       mode: replicated
       replicas: 1
@@ -54,8 +53,7 @@ services:
     volumes:
       - prometheus-data:/prometheus
     ports:
-      - target: 9090
-        published: 9090
+      - "9090:9090"
     deploy:
       mode: replicated
       replicas: 1
@@ -83,8 +81,7 @@ services:
       - /sys:/host/sys
       - /:/rootfs
     ports:
-      - target: 9100
-        published: 9100
+      - "9100:9100"
     command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
     deploy:
       mode: global
