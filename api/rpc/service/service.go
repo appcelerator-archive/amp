@@ -10,10 +10,18 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// Server is used to implement log.LogServer
+// Server is used to implement ServiceServer
 type Server struct {
 	Docker *docker.Docker
 }
+
+// Service constants
+const (
+	RoleLabel      = "io.amp.role"
+	LatestTag      = "latest"
+	GlobalMode     = "global"
+	ReplicatedMode = "replicated"
+)
 
 // Tasks implements service.Containers
 func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
@@ -35,4 +43,54 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 		}
 	}
 	return taskList, nil
+}
+
+// ListService implements service.ListService
+func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*ServiceListReply, error) {
+	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	reply := &ServiceListReply{}
+	for _, service := range serviceList {
+		if _, ok := service.Spec.Labels[RoleLabel]; !ok {
+			entity := &ServiceEntity{
+				Id:   service.ID,
+				Name: service.Spec.Name,
+			}
+			if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, "@") {
+				imageTag := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, "@")[0]
+				it := strings.Split(imageTag, ":")
+				entity.Image = it[0]
+				entity.Tag = it[1]
+			} else if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, ":") {
+				it := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, ":")
+				entity.Image = it[0]
+				entity.Tag = it[1]
+			} else {
+				entity.Image = service.Spec.TaskTemplate.ContainerSpec.Image
+				entity.Tag = LatestTag
+			}
+			if service.Spec.Mode.Global != nil {
+				entity.Mode = GlobalMode
+			} else {
+				entity.Mode = ReplicatedMode
+			}
+			response, err := s.serviceStatusReplicas(ctx, entity)
+			if err != nil {
+				return nil, grpc.Errorf(codes.Internal, "%v", err)
+			}
+			reply.Entries = append(reply.Entries, response)
+
+		}
+	}
+	return reply, nil
+}
+
+func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEntity) (*ServiceListEntry, error) {
+	statusReplicas, err := s.Docker.ServiceState(ctx, service.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, Status: statusReplicas.Status}, nil
 }
