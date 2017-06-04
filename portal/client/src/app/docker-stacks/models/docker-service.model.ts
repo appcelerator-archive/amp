@@ -9,12 +9,12 @@ export class DockerService {
   public readyTasks : number
   public totalTasks : number
 
-  constructor(id : string, name : string, mode : string, replicas : string, image : string) {
+  constructor(id : string, name : string, mode : string, image : string, tag : string) {
     this.id = id
-    this.name = name
+    this.name = this.getServiceName(name)
     this.mode = mode
-    this.replicas = replicas
     this.image = image
+    this.tag = tag
   }
 
   set(status : string, totalTasks : number, readyTasks : number) {
@@ -22,5 +22,16 @@ export class DockerService {
     this.totalTasks = totalTasks
     this.readyTasks = readyTasks
     this.replicas = ""+this.readyTasks + "/" + this.totalTasks
+  }
+
+  getServiceName(fullName : string) {
+    if (!fullName) {
+      return "unknow"
+    }
+    let ll = fullName.indexOf('_')
+    if (ll<0) {
+      return fullName
+    }
+    return fullName.substring(ll+1)
   }
 }
