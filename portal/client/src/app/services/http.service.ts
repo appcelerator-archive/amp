@@ -219,7 +219,7 @@ export class HttpService {
   }
 
   services(stackName : string) {
-    return this.httpGet("/stacks/"+stackName+"/services")
+    return this.httpGet("/services")//+stackName+"/services")
     .map((res : Response) => {
       const data = res.json()
       console.log(data)
@@ -228,17 +228,18 @@ export class HttpService {
         for (let item of data.entries) {
           if (item.service && item.service.id) {
             let serv = new DockerService(
-              item.id,
-              item.name,
-              item.mode,
-              item.imge,
-              item.tag
+              item.service.id,
+              item.service.name,
+              item.service.mode,
+              item.service.image,
+              item.service.tag
             )
-            serv.set(item.status, item.total_task, item.ready_task)
+            serv.set(this.convertStatus(item.status), item.total_tasks, item.ready_tasks)
             list.push(serv)
           }
         }
       }
+      console.log(list)
       return list
     })
   }
@@ -247,16 +248,17 @@ export class HttpService {
     return this.httpGet("/tasks/"+serviceId)
     .map((res : Response) => {
       const data = res.json()
+      console.log(data)
       let list : DockerContainer[] = []
       if (data.tasks) {
         for (let item of data.tasks) {
           if (item.id) {
             let cont = new DockerContainer(
-              item.id,
+              this.shortcutId(item.id),
               item.image,
-              item.state,
-              item.desired_state,
-              item.node_id
+              this.convertStatus(item.current_state),
+              this.convertStatus(item.desired_state),
+              this.shortcutId(item.node_id)
             )
             list.push(cont)
           }
@@ -551,6 +553,13 @@ export class HttpService {
       return status.toLowerCase()
     }
     return "unknow"
+  }
+
+  shortcutId(id : string) {
+    if (!id) {
+      return "unknow"
+    }
+    return id.substring(0, 12)
   }
 
   private setHeaders() {
