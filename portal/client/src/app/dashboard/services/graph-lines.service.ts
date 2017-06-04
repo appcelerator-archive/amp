@@ -126,7 +126,7 @@ export class GraphLines {
     }
 
     // add the Y Axis
-    if (this.height>50) {
+    if (this.height>80) {
       this.yAxis = this.svg.append("g")
         .attr("class", "axisy")
         .attr("transform", "translate(" + [dx, dy] + ")")
