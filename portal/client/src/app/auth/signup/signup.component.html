@@ -6,7 +6,7 @@
         <div icon="fa-plus" title="Add a new user">
         </div>
         <div style="height:50px">
-          <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:40px">
+          <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:25px">
         </div>
         <div style="color:blue">Sign Up</div>
         <div>
@@ -75,6 +75,7 @@
 
             <span class="help-block" style="color:green;margin-left:20px">{{ message }}</span>
             <span class="help-block" style="color:red;margin-left:20px">{{ messageError }}</span>
+            <a *ngIf="validateLink" [href]="httpService.addr+'/gw/validate'" >please validate this link: {{ httpService.addr }}</a>
 
             <div class="form-group">
               <div class="btn-group" role="group" aria-label="...">

@@ -36,6 +36,7 @@ var (
 		"/account.Account/ListTeams",
 		"/cluster.Cluster/GetRegistrationStatus",
 		"/version.Version/Get",
+		"/version.Version/ValidateGtwURL",
 	}
 )
 

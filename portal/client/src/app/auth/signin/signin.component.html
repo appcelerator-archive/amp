@@ -6,7 +6,7 @@
         <div>
 
           <div style="height:50px">
-            <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:40px">
+            <img src="/assets/images/amp.png" alt="amp" class="img-rounded" style="max-height:25px">
           </div>
 
           <form class="form-horizontal" (ngSubmit)="signin(f)" #f="ngForm">
@@ -15,7 +15,7 @@
               <div class="col-sm-12">
                 <div class="input-group">
                   <span class="input-group-addon"><i class="fa fa-user" aria-hidden="true"></i></span>
-                  <input ngModel type="text" class="form-control" name="username" placeholder="username" #username>
+                  <input [(ngModel)]="login" type="text" class="form-control" name="username" placeholder="username" #username>
                 </div>
               </div>
             </div>
@@ -31,6 +31,7 @@
 
             <h5 style="color:green"> {{message}} </h5>
             <h5 style="color:red"> {{messageError}} </h5>
+            <a *ngIf="validateLink" [href]="httpService.addr+'/gw/validate'" >please validate this link: {{ httpService.addr }}</a>
 
             <div style="height:20px"></div>
             <div class="form-group">

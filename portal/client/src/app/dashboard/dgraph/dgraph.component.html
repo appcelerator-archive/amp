@@ -1,0 +1,36 @@
+<div class='dgraph' #chart
+  style="overflow:hidden"
+  [class.graph-selected]="dashboardService.selected.id==graph.id"
+  [class.graph-not-selected]="dashboardService.selected.id!=graph.id"
+  [class.graph-border]="graph.border"
+  [style.top.px]='graph.y'
+  [style.left.px]='graph.x'
+  [style.width.px]='graph.width'
+  [style.height.px]='graph.height'
+  (mousedown)='onWindowPress($event)'
+  (mousemove)='onWindowDrag($event)'>
+  <div
+    (mousedown)='onCornerClick($event, topLeftResize)'
+    [class.corner]="dashboardService.selected.id==graph.id"
+    id='dgraph-top-left-resize'
+    class='dgraph-corner-resize'>
+  </div>
+  <div
+    (mousedown)='onCornerClick($event, topRightResize)'
+    [class.corner]="dashboardService.selected.id==graph.id"
+    id='dgraph-top-right-resize'
+    class='dgraph-corner-resize'>
+  </div>
+  <div
+    (mousedown)='onCornerClick($event, bottomLeftResize)'
+    [class.corner]="dashboardService.selected.id==graph.id"
+    id='dgraph-bottom-left-resize'
+    class='dgraph-corner-resize'>
+  </div>
+  <div
+    (mousedown)='onCornerClick($event, bottomRightResize)'
+    [class.corner]="dashboardService.selected.id==graph.id"
+    id='dgraph-bottom-right-resize'
+    class='dgraph-corner-resize'>
+  </div>
+</div>

@@ -115,7 +115,7 @@ func TestDashboardList(t *testing.T) {
 	id := stringid.GenerateNonCryptoID()
 	rq := &dashboard.CreateRequest{
 		Name: "my awesome dashboard" + id,
-		Data: "my awesome data",
+		Data: "",
 	}
 	r, err := h.Dashboards().Create(userCtx, rq)
 	assert.NoError(t, err)

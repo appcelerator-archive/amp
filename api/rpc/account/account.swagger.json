@@ -460,34 +460,6 @@
       }
     },
     "/v1/organizations/{organization_name}/teams/{team_name}/resources": {
-      "delete": {
-        "operationId": "RemoveResourceFromTeam",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "team_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      },
       "post": {
         "operationId": "AddResourceToTeam",
         "responses": {
@@ -526,6 +498,40 @@
       }
     },
     "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}": {
+      "delete": {
+        "operationId": "RemoveResourceFromTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      },
       "put": {
         "operationId": "ChangeTeamResourcePermissionLevel",
         "responses": {
@@ -603,7 +609,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/protobufEmpty"
+              "$ref": "#/definitions/accountSwitchAnswer"
             }
           }
         },
@@ -1210,9 +1216,20 @@
         },
         "email": {
           "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       },
       "title": "Users"
+    },
+    "accountSwitchAnswer": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "string"
+        }
+      }
     },
     "accountSwitchRequest": {
       "type": "object",

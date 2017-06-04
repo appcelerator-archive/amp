@@ -1,0 +1,52 @@
+
+.dgraph {
+    position: absolute;
+    cursor:move;
+    background-color: white;
+    font-size: 12px;
+    border-radius: 10px;
+}
+
+.graph-transparent {
+  opacity: .50;
+}
+
+.dgraph-corner-resize {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+}
+#dgraph-top-left-resize {
+  top: 0px; left: 0px;
+  cursor: nwse-resize;
+}
+
+#dgraph-top-right-resize {
+  top: 0px; right: 0px;
+  cursor: nesw-resize;
+}
+
+#dgraph-bottom-left-resize {
+  bottom: 0px; left: 0px;
+  cursor: nesw-resize;
+}
+
+#dgraph-bottom-right-resize {
+  bottom: 0px; right: 0px;
+  cursor: nwse-resize;
+}
+
+.corner {
+
+}
+
+.graph-selected {
+  box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.graph-not-selected {
+}
+
+.graph-border {
+  border: 1px solid black;
+}

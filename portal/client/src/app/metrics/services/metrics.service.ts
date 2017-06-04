@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { GraphHistoricData } from '../models/graph-historic-data.model';
-import { StatsRequest } from '../models/stats-request.model';
+import { GraphHistoricData } from '../../models/graph-historic-data.model';
+import { StatsRequest } from '../../models/stats-request.model';
 import { GraphDataAnswer } from '../models/graph-data-answer.model';
 import { GraphLine} from '../models/graph-line.model';
 import { HttpService } from '../../services/http.service';
@@ -12,7 +12,10 @@ export class MetricsService {
   histoData : GraphHistoricData[] = []
   public lineVisibleMap = {}
   lines : GraphLine[] = []
-  public graphColors = ['DodgerBlue', 'slateblue', 'blue', 'magenta', 'pink', 'green', 'ping', 'orange', 'red', 'yellow', 'blue']
+  graphColorsStack = ['blue', 'slateblue', 'blue', 'pink', 'green', 'pink', 'orange', 'red', 'yellow', 'blue']
+  graphColorsService = ['slateblue', 'blue', 'DodgerBlue', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
+  graphColorsContainer = ['green', 'orange', 'blue', 'magenta', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
+  graphColors = ['dodgerBlue', 'pink', 'blue', 'pink', 'green', 'orange', 'red', 'yellow', 'blue']
   statsRequest : StatsRequest
   onNewData = new Subject();
   timePeriod = "now-10m"
@@ -45,6 +48,18 @@ export class MetricsService {
     }
   }
 
+  getColor(index : number) {
+    if (this.object == 'stack') {
+      return this.graphColorsStack[index]
+    } else if (this.object == 'service') {
+      return this.graphColorsService[index]
+    } else if (this.object == 'container') {
+      return this.graphColorsContainer[index]
+    } else {
+      return this.graphColors[index]
+    }
+  }
+
   getHistoricData(fields : string[], object : string, graphType : string) : GraphDataAnswer {
     let data = []
     let lines : GraphLine[] = []
@@ -64,7 +79,7 @@ export class MetricsService {
         for (let field of fields) {
           ret.push(ele.values[field])
         }
-        let newEle = new GraphHistoricData(ele.date, '', undefined)
+        let newEle = new GraphHistoricData(ele.date)
         newEle.graphValues = ret
         data.push(newEle)
       })
@@ -76,7 +91,7 @@ export class MetricsService {
         let localLineRefMap = {}
         this.histoData.forEach( (ele : GraphHistoricData) => {
           if (date.getTime() !== ele.date.getTime()) {
-            let newEle = new GraphHistoricData(ele.date, '', undefined)
+            let newEle = new GraphHistoricData(ele.date)
             newEle.graphValues = ret
             data.push(newEle)
             date = ele.date
@@ -94,7 +109,7 @@ export class MetricsService {
             }
           }
         })
-        let newEle = new GraphHistoricData(date, '', undefined)
+        let newEle = new GraphHistoricData(date)
         newEle.graphValues = ret
         data.push(newEle)
       }
@@ -106,7 +121,8 @@ export class MetricsService {
   }
 
   updateHistoricData() {
-    this.httpService.stats(this.statsRequest).subscribe(
+    this.statsRequest.format=true
+    this.httpService.statsHistoric(this.statsRequest).subscribe(
       data => {
         this.histoData = data
         //console.log(data)
@@ -133,6 +149,11 @@ export class MetricsService {
       this.statsRequest.time_group = group
       this.updateHistoricData()
     }
+  }
+
+  setContainerAvg(val : boolean) {
+    this.statsRequest.avg = val
+    this.updateHistoricData()
   }
 
   setRefreshPeriod(period :string) {

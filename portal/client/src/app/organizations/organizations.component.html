@@ -65,13 +65,6 @@
                       <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
-                  <th>
-                    <a>
-                      Resources
-                      <span (click)="listService.order('ownerType', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
-                    </a>
-                  </th>
                   <th></th>
                 </tr>
               </thead>
@@ -82,7 +75,6 @@
                   <td>{{ org.email }}</td>
                   <td> {{ org.teams.length }}</td>
                   <td> {{ org.members.length }}</td>
-                  <td> {{ org.resources.length }}</td>
                   <td>
                     <a (click)="editOrganization(org)">
                       <i class="glyphicon glyphicon-log-in" aria-hidden="true"></i> Edit</a>

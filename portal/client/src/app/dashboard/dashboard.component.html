@@ -1,1 +1,224 @@
 
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12" style="margin-bottom:0px">
+    <div class="panel panel-default" style="border-style:none;margin-bottom:0px">
+      <div class="panel-body" style="padding:05px 20px 5px 20px;margin-top:5px">
+        <div class="pull-left"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> {{ currentDashboard.name }}</div>
+      </div>
+      <div class="panel-body" style="padding:5px 20px 5px 20px">
+        <div class="col-lg-12 col-md-12 col-xs-12">
+          <div class="btn dropdown" style="padding:0px;padding-left:2px;padding-right:2px">
+
+            <div class="btn dropdown" style="padding:0px">
+              <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="object" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-file"></span>
+                File
+                <span class="caret" style="cursor:pointer;color:white"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.clear()">Clear all</a></li>
+                <li><a (click)="create()">New</a></li>
+                <li><a (click)="open()">Open...</a></li>
+                <li><a (click)="save()">Save</a></li>
+                <li><a (click)="saveAs()">Save As...</a></li>
+                <li><a (click)="delete()">Delete</a></li>
+              </div>
+            </div>
+
+            <button type="button"
+              class="btn btn-primary"
+              (click)="toggleEditor()">
+              Editor
+            </button>
+
+            <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+              <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="refreshperiod" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Add graphs
+                <span class="caret" style="cursor:pointer;color:white"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="addGraph('text')">Text</a></li>
+                <li><a (click)="addGraph('lines')">Lines</a></li>
+                <li><a (click)="addGraph('areas')">Areas</a></li>
+                <li><a (click)="addGraph('bars')">Bars</a></li>
+                <li><a (click)="addGraph('pie')">Pie</a></li>
+                <li><a (click)="addGraph('bubbles')">Bubbles</a></li>
+                <li><a (click)="addGraph('counterSquare')">Square counter</a></li>
+                <!--<li><a (click)="addGraph('counterCircle')">Circle counter</a></li>-->
+                <li role="separator" class="divider"></li>
+                <li><a (click)="dashboardService.addInnerStats()">InnerStats</a></li>
+                <!--<li><a (click)="dashboardService.copySelected()">Copy selected</a></li>-->
+              </div>
+            </div>
+
+            <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+              <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="refreshperiod" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Legends
+                <span class="caret" style="cursor:pointer;color:white"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.addLegend('stack')">Stacks</a></li>
+                <li><a (click)="dashboardService.addLegend('service')">Services</a></li>
+                <li><a (click)="dashboardService.addLegend('container')">Containers</a></li>
+                <li><a (click)="dashboardService.addLegend('node')">Nodes</a></li>
+              </div>
+            </div>
+
+            <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+              <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="refreshperiod" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Refresh: {{ periodRefreshLabel }}
+                <span class="caret" style="cursor:pointer;color:white"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="setRefreshPeriod(10, '10 sec')">10 sec</a></li>
+                <li><a (click)="setRefreshPeriod(30, '30 sec')">30 sec</a></li>
+                <li><a (click)="setRefreshPeriod(60, '1 min')">1 min</a></li>
+                <li><a (click)="setRefreshPeriod(120, '2 min')">2 min</a></li>
+                <li><a (click)="setRefreshPeriod(300, '5 min')">5 min</a></li>
+                <li><a (click)="setRefreshPeriod(600, '10 min')">10 min</a></li>
+                <li><a (click)="setRefreshPeriod(1800, '30 min')">30 min</a></li>
+                <li><a (click)="setRefreshPeriod(3600, '1 hour')">1 hour</a></li>
+              </div>
+            </div>
+
+          <div class="btn dropdown" style="padding-left:2px;padding-right:2px">
+            <button class="dropdown btn btn-primary dropdown-toggle" type="button" id="refreshperiod" data-toggle="dropdown">
+              Period: {{ periodLabel }}
+              <span class="caret" style="cursor:pointer;color:white"></span>
+            </button>
+            <div class="dropdown-menu">
+              <li><a (click)="setPeriod('now-1m', '1 min')">1 min</a></li>
+              <li><a (click)="setPeriod('now-2m', '2 min')">2 min</a></li>
+              <li><a (click)="setPeriod('now-5m', '5 min')">5 min</a></li>
+              <li><a (click)="setPeriod('now-10m', '10 min')">10 min</a></li>
+              <li><a (click)="setPeriod('now-30m', '30 min')">30 min</a></li>
+              <li><a (click)="setPeriod('now-1h', '1 hour')">1 hour</a></li>
+              <li><a (click)="setPeriod('now-2h', '2 hours')">2 hours</a></li>
+              <li><a (click)="setPeriod('now-4h', '4 hours')">4 hours</a></li>
+            </div>
+          </div>
+
+          <button type="button"
+            class="btn btn-danger"
+            [disabled]="this.dashboardService.selected.id==''"
+            (click)="dashboardService.removeSelectedGraph()">
+            <i class="fa fa-trash space-right"></i>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-xs-12">
+    <div class="panel panel-default" style="border-style:none;margin-bottom:5px;margin-top:5px">
+      <div style="position:relative;overflow:scroll;margin-top:00px" class="graph-container panel panel-default"
+        [style.height.px]="graphPanelHeight"
+        [style.width.px]="graphPanelWidth">
+        <div
+          class="panel-body" #container
+          style="width:2000px;height:2000px;padding:0px;margin:0px"
+          (mouseup)='onMouseUp($event)'>
+            <app-dgraph [graph]="graph00"></app-dgraph>
+            <app-dgraph *ngFor="let graph of dashboardService.graphs"
+              style="position:absolute"
+              [graph]="graph">
+            </app-dgraph>
+            <app-dgraph-editor
+              *ngIf="dashboardService.showEditor"
+              [graph]="editorGraph">
+            </app-dgraph-editor>
+            <app-dgraph-alert
+              *ngIf="dashboardService.showAlert"
+              [graph]="editorGraph">
+            </app-dgraph-alert>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="row" graphMovable
+  style="position:absolute"
+  [hidden] = "dialogHidden"
+  [style.left.px]="dialogx"
+  [style.top.px]="dialogy">
+  <div class="col-lg-12 col-md-12 col-xs-12" style="margin-bottom:5px">
+    <div class="panel panel-default" style="margin-bottom:5px">
+      <div class="panel-body" style="padding-bottom:5px;background-color:#f0f0f0">
+        <div class="form-group">
+          <div>
+            <div class="pull-left"><span class="menu-icon fa fa-server" aria-hidden="true"></span> {{ dialogMode }} Dashboard</div>
+          </div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-xs-12" style="margin-top:20px">
+          <div class="panel panel-default" style="border-style:none;background-color:#f0f0f0">
+            <form class="form-horizontal">
+
+              <div *ngIf="dialogMode=='SaveAs'" class="form-group">
+                <div class="col-sm-8" style="padding:0px;margin-bottom:10px">
+                  <input
+                    type="text"
+                    style="width:400px"
+                    class="form-control"
+                    name="name"
+                    placeholder="name"
+                    id="name"
+                    (change)="saveAsDashboardName=dashboardName.value"
+                    #dashboardName>
+                </div>
+              </div>
+
+              <span class="help-block" style="color:red;margin-left:0px">{{ message }}</span>
+
+              <div *ngIf="dialogMode=='Open'" style="max-height:200px;overflow:scroll">
+                <div class="list-group">
+                  <table class="table-condensed table-hover" style="font-size:12px;background-color:white">
+                    <thead>
+                      <th style="padding-left:5px">Name</th>
+                      <th style="padding-left:5px">Type</th>
+                      <th style="padding-left:5px">Owner</th>
+                      <th style="padding-left:5px">Date</th>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let dash of dashboards"
+                        (click)="openOneDashboard(dash.id)">
+                          <td>{{ dash.name }}</td>
+                          <td>{{ dash.ownerType }}</td>
+                          <td>{{ dash.ownerName }}</td>
+                          <td>{{ dash.formatedDate() }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:10px">
+                <div class="btn-group" role="group" aria-label="...">
+                  <button *ngIf="dialogMode=='SaveAs'"
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="saveNewDashboard()">
+                    <i class="glyphicon glyphicon-save-file"></i>
+                    {{ dialogMode }}
+                  </button>
+                  <button type="button"
+                    class="btn btn-default btn-sm"
+                    (click)="dialogHidden=true">
+                    <i aria-hidden="true"></i> Cancel
+                  </button>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

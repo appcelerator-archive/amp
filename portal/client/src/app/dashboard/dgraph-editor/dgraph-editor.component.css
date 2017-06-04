@@ -1,0 +1,30 @@
+
+#dgraph-editor {
+    position: absolute;
+    cursor:move;
+    background-color: white;
+    width: 250px;
+    border: 1px solid black;
+}
+
+.graph-selected {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.graph-not-selected {
+}
+
+input.bound {
+  padding:1px;
+  margin:0px;
+  height:28px;
+  text-align:center;
+  border: none;
+}
+
+input.text {
+  padding:1px;
+  margin:0px;
+  width:220px;
+  height:28px;
+}

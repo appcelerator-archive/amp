@@ -11,7 +11,7 @@ import * as $ from 'jquery';
 })
 export class SidebarComponent implements OnInit {
   @Output() onMenu = new EventEmitter<string>();
-  mini = false;
+  sidebarDisplay = "normal";
 
   constructor(
     public menuService : MenuService,
@@ -19,16 +19,30 @@ export class SidebarComponent implements OnInit {
     public swarmsService : SwarmsService) { }
 
   ngOnInit() {
+    this.sidebarDisplay = localStorage.getItem('sidebar')
+    if (!this.sidebarDisplay) {
+      this.sidebarDisplay = 'normal'
+    }
+    this.resize()
   }
 
   minimize() {
-    this.mini=!this.mini
-    if (this.mini) {
+    if (this.sidebarDisplay == 'normal') {
+      this.sidebarDisplay = 'mini'
+    } else {
+      this.sidebarDisplay = 'normal'
+    }
+    localStorage.setItem('sidebar', this.sidebarDisplay);
+    this.resize()
+  }
+
+  resize() {
+    if (this.sidebarDisplay == 'mini') {
       this.menuService.paddingLeftMenu=70
       $('.sidebar-list').width(70)
     } else {
-      this.menuService.paddingLeftMenu=250
-      $('.sidebar-list').width(250)
+        this.menuService.paddingLeftMenu=250
+        $('.sidebar-list').width(250)
     }
     this.menuService.onWindowResize.next(this.menuService.appWindow)
   }

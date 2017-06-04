@@ -2,9 +2,9 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Input, ViewEncapsu
 import * as d3 from 'd3';
 import { MetricsService } from '../../services/metrics.service';
 import { MenuService } from '../../../services/menu.service';
-import { GraphHistoricData } from '../../models/graph-historic-data.model';
+import { GraphHistoricData } from '../../../models/graph-historic-data.model';
 import { GraphLine } from '../../models/graph-line.model';
-import { Graph } from '../../models/graph.model';
+import { Graph } from '../../../models/graph.model';
 
 //style="height:parentdiv.offsetHeight;width:parentdiv.offsetWidth"
 @Component({
@@ -68,16 +68,11 @@ export class LinesComponent implements OnInit, OnDestroy {
   createGraph() {
     // set the dimensions and margins of the graph
     this.element = this.chartContainer.nativeElement;
-    //console.log("create parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
     this.width = this.graph.width - this.margin.left - this.margin.right;
     this.height = this.graph.height - this.margin.top - this.margin.bottom;
     //console.log("create: "+this.graph.title+": "+this.width+","+this.height)
     this.svg = d3.select(this.element)
       .append('svg')
-        //.attr('width', this.element.offsetWidth)
-        //.attr('height', this.element.offsetHeight)
         .attr('width',2000)// this.graph.width)
         .attr('height', 2000)//this.graph.height)
       .append("g")
@@ -92,18 +87,11 @@ export class LinesComponent implements OnInit, OnDestroy {
       return
     }
     this.element = this.chartContainer.nativeElement;
-    //console.log("resize parent: "+this.element.offsetWidth+","+this.element.offsetHeight)
-    //this.width = this.element.offsetWidth - this.margin.left - this.margin.right;
-    //this.height = this.element.offsetHeight - this.margin.top - this.margin.bottom;
     this.width = this.graph.width - this.margin.left - this.margin.right;
     this.height = this.graph.height - this.margin.top - this.margin.bottom;
-    //console.log("resize: "+this.graph.title+": "+this.width+","+this.height)
     d3.select('svg')
-      //.attr('width', this.element.offsetWidth)
-      //.attr('height', this.element.offsetHeight)
       .attr('width', this.graph.width)
       .attr('height', this.graph.height)
-    //d3.select("g").attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")")
     this.updateGraph()
   }
 
@@ -150,7 +138,7 @@ export class LinesComponent implements OnInit, OnDestroy {
         this.svg.append("path")
           .data([this.data])
           .attr("class", this.lines[ll].name+" line ")
-          .style("stroke", this.metricsService.graphColors[ll])
+          .style("stroke", this.metricsService.getColor(ll))
           .attr("d", this.valuelines[ll]);
       }
     }
@@ -250,18 +238,13 @@ export class LinesComponent implements OnInit, OnDestroy {
       this.removeSelected()
       this.selectedLine = yy
       this.focus.style('display', null)
-      //console.log("mouse: "+pt[0]+","+pt[1])
-      //console.log("pointe: "+eptx+","+epty)
-      //console.log(dist2)
-      //console.log(Math.sqrt(dist2))
-      //console.log("line="+yy)
       let valueLine = d3.line<GraphHistoricData>()
           .x((d: GraphHistoricData) => { return this.x(d.date); })
           .y((d: GraphHistoricData) => { return this.y(d.graphValues[yy]); })
       this.svg.append("path")
         .data([this.data])
         .attr("class", "selectedLine")
-        .style("stroke", this.metricsService.graphColors[yy])
+        .style("stroke", this.metricsService.getColor(yy))
         .attr("d", valueLine);
       this.focus.attr('transform', `translate(${eptx}, ${epty})`);
       this.svg.append("text")
@@ -269,7 +252,7 @@ export class LinesComponent implements OnInit, OnDestroy {
          .attr("transform", "translate(10,-10)")
          .style("text-anchor", "left")
          //.attr("font-size", "10")
-         .style("fill", this.metricsService.graphColors[yy])
+         .style("fill", this.metricsService.getColor(yy))
          .text(this.lines[yy].displayedName+": "+this.dateFormat(ptx)+" -> "+this.formatValue(pty));
       this.focus.selectAll('rect').classed('toolTip', true)
         .style("left", 10)

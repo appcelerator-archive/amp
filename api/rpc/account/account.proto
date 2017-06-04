@@ -19,13 +19,14 @@ service Account {
       post: "/v1/verify/{token}"
     };
   };
+
   rpc Login (LogInRequest) returns (LogInAnswer) {
     option (google.api.http) = {
       post: "/v1/login",
       body: "*"
     };
   };
-  rpc Switch (SwitchRequest) returns (google.protobuf.Empty) {
+  rpc Switch (SwitchRequest) returns (SwitchAnswer) {
     option (google.api.http) = {
       post: "/v1/switch",
       body: "*"
@@ -144,7 +145,7 @@ service Account {
   };
   rpc RemoveResourceFromTeam (RemoveResourceFromTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}/resources"
+      delete: "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}"
     };
   };
   rpc ChangeTeamResourcePermissionLevel (ChangeTeamResourcePermissionLevelRequest) returns (google.protobuf.Empty) {
@@ -181,6 +182,7 @@ message SignUpRequest {
   string name = 1;
   string password = 2;
   string email = 3;
+  string url = 4;
 }
 
 message VerificationRequest {
@@ -194,6 +196,10 @@ message LogInRequest {
 
 message SwitchRequest {
   string account = 1;
+}
+
+message SwitchAnswer {
+  string auth = 1;
 }
 
 message PasswordResetRequest {

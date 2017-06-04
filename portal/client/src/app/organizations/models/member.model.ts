@@ -1,9 +1,10 @@
 export class Member {
-  userName: string
-  role: number
-  status: number //pure UI: use to detect with one is removed or added 0: not moved, 1:added, -1: removed
-  saved: boolean
-  saveError: string
+  public userName: string
+  public role: number
+  //UI
+  public status: number //pure UI: use to detect with one is removed or added 0: not moved, 1:added, -1: removed
+  public saved: boolean
+  public saveError: string
 
   constructor(name: string, role: number) {
     this.userName = name

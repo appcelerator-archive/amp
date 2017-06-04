@@ -107,12 +107,11 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		}
 
 		// Send the verification email
-		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
+		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, in.Url); err != nil {
 			s.Accounts.DeleteUser(ctx, in.Name)
 			return nil, convertError(err)
 		}
 	}
-
 	log.Println("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
 
@@ -121,6 +120,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 // Verify implements account.Verify
 func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Empty, error) {
 	// Validate the token
+	log.Printf("verify token=%s\n", in.Token)
 	claims, err := s.Tokens.ValidateToken(in.Token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, accounts.InvalidToken
@@ -292,7 +292,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 }
 
 // Switch implements account.Switch
-func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, error) {
+func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*SwitchAnswer, error) {
 	// Get user name
 	userName := auth.GetUser(ctx)
 	orgName := auth.GetActiveOrganization(ctx)
@@ -324,7 +324,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 	log.Printf("Successfully switched from account: %s (activeOrg: %s), to %s (activeOrg: %s)", userName, orgName, userName, activeOrganization)
-	return &empty.Empty{}, nil
+	return &SwitchAnswer{Auth: token}, nil
 }
 
 // Organizations

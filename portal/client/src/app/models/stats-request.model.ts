@@ -17,7 +17,11 @@ export class StatsRequest {
   filter_node_id: string
   period: string
   time_group: string
+  avg: boolean
+  //
+  format: boolean
 
   constructor() {
   }
+
 }

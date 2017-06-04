@@ -4,9 +4,9 @@ import { OrganizationsService } from '../../organizations/services/organizations
 import { ListService } from '../../services/list.service';
 import { UsersService } from '../../services/users.service';
 import { User } from '../../models/user.model';
-import { Member } from '../../models/member.model';
-import { Organization } from '../../models/organization.model';
-import { Team } from '../../models/team.model';
+import { Member } from '../../organizations/models/member.model';
+import { Organization } from '../../organizations/models/organization.model';
+import { Team } from '../../organizations/models/team.model';
 import { ActivatedRoute } from '@angular/router';
 import { MenuService } from '../../services/menu.service';
 import { HttpService } from '../../services/http.service';
@@ -15,9 +15,8 @@ import { HttpService } from '../../services/http.service';
   selector: 'app-organization',
   templateUrl: './organization.component.html',
   styleUrls: ['./organization.component.css']
-
-
 })
+
 export class OrganizationComponent implements OnInit, OnDestroy {
   organization : Organization = new Organization("", "")
   name = ""
@@ -79,6 +78,7 @@ export class OrganizationComponent implements OnInit, OnDestroy {
   returnBack() {
     this.menuService.returnToPreviousPath()
   }
+
   addUser( user : Member) {
     user.status++;
     user.saved = false

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Organization } from '../../models/organization.model'
+import { Organization } from '../../organizations/models/organization.model'
 import { OrganizationsService } from '../../organizations/services/organizations.service'
 import { NgForm } from '@angular/forms';
 import { MenuService } from '../../services/menu.service'

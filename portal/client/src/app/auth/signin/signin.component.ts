@@ -14,16 +14,23 @@ export class SigninComponent implements OnInit, OnDestroy {
   message = ""
   messageError = ""
   byPass = false
+  login = ""
+  validateLink = false
   constructor(
     public usersService : UsersService,
     private menuService : MenuService,
     private httpService : HttpService) { }
 
   ngOnInit() {
+    this.validateLink = false
     let currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (currentUser) {
-      this.byPass = true
-      this.usersService.setCurrentUser(currentUser.username, currentUser.token, true)
+      this.login = currentUser.username
+      let token = JSON.parse(localStorage.getItem('token'));
+      if (token) {
+        this.byPass = true
+        this.usersService.setCurrentUser(token.token, true)
+      }
     }
   }
 
@@ -36,13 +43,22 @@ export class SigninComponent implements OnInit, OnDestroy {
     this.httpService.login(form.value.username, form.value.password).subscribe(
       data => {
         let ret = data.json()
-        this.usersService.login(form.value.username, ret.auth)
+        this.usersService.login(ret.auth)
       },
       error => {
         let data = error.json()
+        if (!data.error) {
+          this.validateGtw()
+          return
+        }
         this.messageError = data.error
       }
     )
+  }
+
+  validateGtw() {
+    this.validateLink = true
+    this.messageError = "First time: Certificat issue: Please, clic on the link below and accept the connection"
   }
 
 }

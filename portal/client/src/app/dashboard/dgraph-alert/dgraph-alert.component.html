@@ -1,0 +1,32 @@
+<div id='dgraph-editor' graphMovable>
+  <div class="panel panel-default">
+    <div class="panel-body" style="padding:10px;width:320px">
+      <div style="color:blue">Alerts</div>
+        <div class="col-sm-12" style="padding:0px;margin-top:5px;margin-left:0px;">
+          <div class="col-sm-4 col-sm-offset-2" style="padding:0px">
+            <input
+              type="text"
+              class="form-control bound"
+              placeholder="warn"
+              [value]="dashboardService.selected.alertMin"
+              #minValue
+              (change)="dashboardService.setMinAlert(minValue.value)">
+          </div>
+          <div class="col-sm-4 col-sm-offset-0" style="padding:0px">
+            <input
+              type="text"
+              class="form-control bound"
+              placeholder="alert"
+              [value]="dashboardService.selected.alertMax"
+              #maxValue
+              (change)="dashboardService.setMaxAlert(maxValue.value)">
+          </div>
+          <div class="col-sm-12" style="padding:0px;margin:0px">
+            <div class="pull-left" style="background-color:green;width:100px;height:25px"></div>
+            <div class="pull-left" style="background-color:orange;width:100px;height:25px"></div>
+            <div class="pull-left" style="background-color:red;width:100px;height:25px"></div>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>

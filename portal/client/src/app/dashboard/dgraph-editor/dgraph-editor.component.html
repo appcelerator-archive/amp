@@ -1,0 +1,325 @@
+<div id='dgraph-editor'
+  graphMovable
+  [graph]="dashboardService.editorGraph"
+  [style.top.px]='dashboardService.editorGraph.y'
+  [style.left.px]='dashboardService.editorGraph.x'>
+  <div class="panel panel-default" style="margin:0px">
+    <div class="panel-body" style="padding:10px">
+      <div style="color:blue">Title</div>
+
+        <form class="form-horizontal">
+          <div class="col-sm-12" style="padding:0px">
+            <input
+              type="text"
+              class="form-control text"
+              placeholder="title"
+              [value]="dashboardService.selected.title"
+              #title
+              (keyup.enter)="dashboardService.setTitle(title.value)">
+          </div>
+
+          <div class="form-inline" style="padding:0px">
+            <label style="margin-top:5px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.border"
+              #border
+              id="border"
+              (click)="dashboardService.setBorder(border.checked)"> Border</label>
+            <label *ngIf="isVisible('centertitle')" style="margin-top:5px;margin-left:20px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.centerTitle"
+              #centerTitle
+              id="centerTitle"
+              (click)="dashboardService.setTitleCenter(centerTitle.checked)"> Center title</label>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('request')"  style="padding:0px;margin:0px;margin-top:5px">
+            <div style="color:blue">Request</div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('request')" style="padding:0px;margin:0px;margin-top:2px">
+            <div class="form-inline" style="padding:0px">
+              <label>
+                <input
+                  style="height:12px"
+                  type="checkbox"
+                  class="form-control"
+                  [checked]="dashboardService.selected.containerAvg"
+                  #containerAvg
+                  id="containerAvg"
+                  (click)="dashboardService.setContainerAvg(containerAvg.checked)">
+                Containers Avg
+              </label>
+            </div>
+
+            <div class="btn dropdown" style="padding:0px">
+              <button class="dropdown btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="object" data-toggle="dropdown">
+                Request on: {{ dashboardService.selected.object }}
+                <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setObject('all')">All</a></li>
+                <li><a (click)="dashboardService.setObject('stack')">Stack</a></li>
+                <li><a (click)="dashboardService.setObject('service')">Service</a></li>
+                <li><a (click)="dashboardService.setObject('container')">Container</a></li>
+                <li><a (click)="dashboardService.setObject('node')">Node</a></li>
+              </div>
+            </div>
+
+            <div class="col-sm-12" style="padding:0px;margin-top:3px">
+              <div class="btn dropdown" style="padding:0px">
+                <button class="dropdown btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
+                  Field: {{ dashboardService.selected.field }}
+                  <span class="caret" style="cursor:pointer;color:black"></span>
+                </button>
+                <div class="dropdown-menu">
+                  <li *ngIf="dashboardService.selected.type=='counter'"><a (click)="dashboardService.setField('number')">number</a></li>
+                  <li><a (click)="dashboardService.setField('cpu-usage')">cpu-usage</a></li>
+                  <li><a (click)="dashboardService.setField('mem-limit')">mem-limit</a></li>
+                  <li><a (click)="dashboardService.setField('mem-maxusage')">mem-maxusage</a></li>
+                  <li><a (click)="dashboardService.setField('mem-usage')">mem-usage</a></li>
+                  <li><a (click)="dashboardService.setField('mem-usage-p')">mem-usage-p</a></li>
+                  <li><a (click)="dashboardService.setField('net-total-bytes')">net-total-bytes</a></li>
+                  <li><a (click)="dashboardService.setField('net-rx-bytes')">net-rx-bytes</a></li>
+                  <li><a (click)="dashboardService.setField('net-rx-packets')">net-rx-packets</a></li>
+                  <li><a (click)="dashboardService.setField('net-tx-bytes')">net-tx-bytes</a></li>
+                  <li><a (click)="dashboardService.setField('net-tx-packets')">net-tx-packets</a></li>
+                  <li><a (click)="dashboardService.setField('io-total')">io-total</a></li>
+                  <li><a (click)="dashboardService.setField('io-write')">io-write</a></li>
+                  <li><a (click)="dashboardService.setField('io-read')">io-read</a></li>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-12" style="padding:0px;margin-top:3px">
+              <div class="btn dropdown" style="padding:0px">
+                <button class="dropdown btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="topNumber" data-toggle="dropdown">
+                  Filter: {{ dashboardService.selected.criterion }}
+                  <span class="caret" style="cursor:pointer;color:black"></span>
+                </button>
+                <div class="dropdown-menu">
+                  <li><a (click)="dashboardService.setCriterion('stack_name')">Stack name</a></li>
+                  <li><a (click)="dashboardService.setCriterion('service_name')">Service name</a></li>
+                  <li><a (click)="dashboardService.setCriterion('container_id')">Container id</a></li>
+                  <li><a (click)="dashboardService.setCriterion('node_id')">Node id</a></li>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-12" style="padding:0px;margin-top:3px">
+              <input
+                type="text"
+                class="form-control text "
+                placeholder="filter value"
+                [value]="dashboardService.selected.criterionValue"
+                #criterionValue
+                (keyup.enter)="dashboardService.setCriterionValue(criterionValue.value)">
+            </div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('setting')" style="padding:0px;margin:0px;margin-top:7px">
+            <div style="color:blue">Graph setting</div>
+          </div>
+
+          <div class="form-inline" style="padding:0px">
+            <label *ngIf="isVisible('legend')" style="margin-top:5px;margin-left:20px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.transparentLegend"
+              #transparentLegend
+              id="transparentLegend"
+              (click)="dashboardService.setTransparentLegend(transparentLegend.checked)"> Transparent legend</label>
+          </div>
+
+          <div class="form-inline" style="padding:0px">
+            <label *ngIf="isVisible('removelegend')" style="margin-top:5px;margin-left:20px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.removeLocalLegend"
+              #removeLocalLegend
+              id="removeLocalLegend"
+              (click)="dashboardService.setRemoveLocalLegend(removeLocalLegend.checked)"> Remove local legend</label>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('top')" style="padding:0px;margin-top:3px">
+            <div class="btn dropup" style="padding:0px">
+              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="topNumber" data-toggle="dropdown">
+                Limited to: {{ dashboardService.getTopLabel() }}
+                <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setTop(1)">Top1</a></li>
+                <li><a (click)="dashboardService.setTop(3)">Top3</a></li>
+                <li><a (click)="dashboardService.setTop(5)">Top5</a></li>
+                <li><a (click)="dashboardService.setTop(10)">Top10</a></li>
+                <li><a (click)="dashboardService.setTop(0)">All</a></li>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('histoperiod')" style="padding:0px;margin-top:3px">
+            <div class="btn dropup" style="padding:0px">
+              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="topNumber" data-toggle="dropdown">
+                Range: {{ dashboardService.selected.histoPeriod }}
+              <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setHistoPeriod('now-5m')">5 min</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-10m')">10 min</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-30m')">30 min</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-1h')">1 hour</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-5h')">5 hour</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-10h')">10 hours</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-1j')">1 day</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-10j')">10 days</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-1M')">1 month</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-6M')">6 months</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-1y')">1 year</a></li>
+                <li><a (click)="dashboardService.setHistoPeriod('now-2y')">2 years</a></li>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin:0px;margin-top:7px">
+            <div style="color:blue">Bubble setting</div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin-top:3px">
+            <div class="btn dropup" style="padding:0px">
+              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
+                Axe X: {{ dashboardService.selected.bubbleXField }}
+                <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setBubbleXField('cpu-usage')">cpu-usage</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('mem-limit')">mem-limit</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('mem-maxusage')">mem-maxusage</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('mem-usage')">mem-usage</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('mem-usage-p')">mem-usage-p</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('net-total-bytes')">net-total-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('net-rx-bytes')">net-rx-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('net-rx-packets')">net-rx-packets</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('net-tx-bytes')">net-tx-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('net-tx-packets')">net-tx-packets</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('io-total')">io-total</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('io-write')">io-write</a></li>
+                <li><a (click)="dashboardService.setBubbleXField('io-read')">io-read</a></li>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin-top:3px">
+            <div class="btn dropup" style="padding:0px">
+              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
+                Axe Y: {{ dashboardService.selected.bubbleYField }}
+                <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setBubbleYField('cpu-usage')">cpu-usage</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('mem-limit')">mem-limit</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('mem-maxusage')">mem-maxusage</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('mem-usage')">mem-usage</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('mem-usage-p')">mem-usage-p</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('net-total-bytes')">net-total-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('net-rx-bytes')">net-rx-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('net-rx-packets')">net-rx-packets</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('net-tx-bytes')">net-tx-bytes</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('net-tx-packets')">net-tx-packets</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('io-total')">io-total</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('io-write')">io-write</a></li>
+                <li><a (click)="dashboardService.setBubbleYField('io-read')">io-read</a></li>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-12" *ngIf="isVisible('bubble')" style="padding:0px;margin-top:3px">
+            <div class="btn dropup" style="padding:0px">
+              <button class="dropup btn btn-default dropdown-toggle" style="width:218px;padding:2px" type="button" id="refreshperiod" data-toggle="dropdown">
+                Scale: {{ dashboardService.selected.bubbleScale }}
+                <span class="caret" style="cursor:pointer;color:black"></span>
+              </button>
+              <div class="dropdown-menu">
+                <li><a (click)="dashboardService.setBubbleScale('small')">Small</a></li>
+                <li><a (click)="dashboardService.setBubbleScale('medium')">Medium</a></li>
+                <li><a (click)="dashboardService.setBubbleScale('large')">Large</a></li>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-inline" *ngIf="isVisible('areas')" style="padding:0px">
+            <label style="margin-top:5px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.stackedAreas"
+              #stackedAreas
+              id="stackedArea"
+              (click)="dashboardService.setStackedAreas(stackedAreas.checked)"> Stacked</label>
+            <label style="margin-top:5px;margin-left:20px">
+            <input
+              style="height:12px"
+              type="checkbox"
+              class="form-control"
+              [checked]="dashboardService.selected.percentAreas"
+              #percentAreas
+              id="percentAreas"
+              (click)="dashboardService.setPercentAreas(percentAreas.checked)"> Percent</label>
+          </div>
+
+      </form>
+    </div>
+
+    <div *ngIf="isVisible('alert')">
+      <div class="panel-body" style="padding:10px">
+        <div style="color:blue">Color events</div>
+        <div class="form-inline" style="padding:0px">
+          <label style="margin-top:5px">
+          <input
+            style="height:12px"
+            type="checkbox"
+            class="form-control"
+            [checked]="dashboardService.selected.alert"
+            #alert
+            id="border"
+            (click)="dashboardService.setAlert(alert.checked)"> Enabled</label>
+        </div>
+          <div class="col-sm-12" style="padding:0px;margin-top:5px;margin-left:0px;">
+            <div class="col-sm-4 col-sm-offset-2" style="padding:0px">
+              <input
+                type="text"
+                class="form-control bound"
+                placeholder="warn"
+                [value]="dashboardService.selected.alertMin"
+                #minValue
+                (keyup.enter)="dashboardService.setMinAlert(minValue.value)">
+            </div>
+            <div class="col-sm-4 col-sm-offset-0" style="padding:0px">
+              <input
+                type="text"
+                class="form-control bound"
+                placeholder="alert"
+                [value]="dashboardService.selected.alertMax"
+                #maxValue
+                (keyup.enter)="dashboardService.setMaxAlert(maxValue.value)">
+            </div>
+            <div class="col-sm-12" style="padding:0px;margin:0px">
+              <div class="pull-left" style="background-color:green;width:70px;height:25px"></div>
+              <div class="pull-left" style="background-color:orange;width:70px;height:25px"></div>
+              <div class="pull-left" style="background-color:red;width:70px;height:25px"></div>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
