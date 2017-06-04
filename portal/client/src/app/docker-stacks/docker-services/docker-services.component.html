@@ -126,7 +126,7 @@
                 <tr (click)="selectService(service.name)" [style.color]=getColor(service) *ngFor="let service of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerServicesService.currentService.name===service.name"></td>
                   <td>{{ service.id }}</td>
-                  <td>{{ service.name }}</td>
+                  <td>{{ service.shortName }}</td>
                   <td>{{ service.mode }}</td>
                   <td>{{ service.status }}</td>
                   <td>{{ service.image }}</td>

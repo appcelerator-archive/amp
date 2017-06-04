@@ -1,6 +1,7 @@
 export class DockerService {
   public id: string
   public name: string
+  public shortName: string
   public image: string
   public mode: string
   public replicas: string
@@ -11,7 +12,8 @@ export class DockerService {
 
   constructor(id : string, name : string, mode : string, image : string, tag : string) {
     this.id = id
-    this.name = this.getServiceName(name)
+    this.name = name
+    this.shortName = this.extractShortName(name)
     this.mode = mode
     this.image = image
     this.tag = tag
@@ -24,7 +26,7 @@ export class DockerService {
     this.replicas = ""+this.readyTasks + "/" + this.totalTasks
   }
 
-  getServiceName(fullName : string) {
+  extractShortName(fullName : string) {
     if (!fullName) {
       return "unknow"
     }
