@@ -45,13 +45,14 @@ services:
              "-web.external-url=http://localhost:9093" ]
 
   prometheus:
-    image: prom/prometheus
+    image: appcelerator/amp-prometheus:${TAG:-latest}
     networks:
       default:
         aliases:
           - prometheus
     volumes:
       - prometheus-data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "9090:9090"
     deploy:
@@ -66,13 +67,7 @@ services:
       - source: prometheus_alerts_rules
         target: alerts.rules
         mode: 0400
-    command: [
-      "-config.file=/etc/prometheus/prometheus.yml",
-      "-storage.local.path=/prometheus",
-      "-web.console.libraries=/etc/prometheus/console_libraries",
-      "-web.console.templates=/etc/prometheus/consoles",
-      "-web.external-url=http://localhost:9090",
-      "-alertmanager.url=http://alertmanager:9093" ]
+    command: [ "--host=${MANAGER_HOST:-unix:///var/run/docker.sock}" ]
 
   node_exporter:
     image: prom/node-exporter:latest

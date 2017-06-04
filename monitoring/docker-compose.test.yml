@@ -1,0 +1,5 @@
+version: '2'
+services:
+  prometheus:
+    build: .
+    image: appcelerator/amp-prometheus
