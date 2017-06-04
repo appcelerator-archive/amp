@@ -268,6 +268,11 @@ export class HttpService {
     })
   }
 
+  serviceScale(serviceId : string, replicas : number) {
+    return this.httpPut("/services/"+serviceId+"/scale/"+replicas,
+    { service_id: serviceId, replicas: replicas})
+  }
+
   organizationRessources() {
     return this.httpGet("/resources")
     .map((res : Response) => {

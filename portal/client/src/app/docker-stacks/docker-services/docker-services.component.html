@@ -22,18 +22,33 @@
               </button>
               <button type="button"
                 class="btn btn-primary"
-                [disabled]="dockerServicesService.currentService.name==''"
+                [disabled]="dockerServicesService.currentService.id==''"
                 (click)="logs(dockerServicesService.currentService.name)">
                 <i class="glyphicon glyphicon-list-alt" aria-hidden="true"></i>
                 Logs
               </button>
               <button type="button"
                 class="btn btn-primary"
-                [disabled]="dockerServicesService.currentService.name==''"
+                [disabled]="dockerServicesService.currentService.id==''"
                 (click)="metrics(dockerServicesService.currentService.name)">
                 <i class="glyphicon glyphicon-stats" aria-hidden="true"></i>
                 Metrics
               </button>
+              <button type="button"
+                class="btn btn-primary"
+                [disabled]="dockerServicesService.currentService.id==''"
+                (click)="scaleModeToggle()">
+                <i class="glyphicon glyphicon-resize-vertical" aria-hidden="true"></i>
+                Scale
+              </button>
+              <div *ngIf="scaleMode" class="pull-left" style="margin-top:2px;padding:1px;width:100px">
+                <input
+                  type="text"
+                  class="form-control text"
+                  [placeholder]="dockerServicesService.currentService.totalTasks"
+                  #scaleNumber
+                  (keyup.enter)="scale(scaleNumber.value)">
+              </div>
             </div>
           </div>
           <div class="pull-right">
@@ -46,6 +61,8 @@
           </div>
         </div>
       </div>
+
+      <span class="help-block" style="color:red;margin-left:20px">{{ message }}</span>
 
       <div class="row">
         <div classes="no-padding">
