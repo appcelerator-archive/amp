@@ -4,6 +4,7 @@ import { OrganizationsService } from '../../organizations/services/organizations
 import { NgForm } from '@angular/forms';
 import { MenuService } from '../../services/menu.service'
 import { HttpService } from '../../services/http.service'
+import { UsersService } from '../../services/users.service'
 
 @Component({
   selector: 'app-organization-create',
@@ -15,6 +16,7 @@ export class OrganizationCreateComponent implements OnInit {
 
   constructor(
     private organizationsService : OrganizationsService,
+    private usersService : UsersService,
     public menuService : MenuService,
     private httpService : HttpService) {
     }
@@ -27,10 +29,10 @@ export class OrganizationCreateComponent implements OnInit {
     this.organization.name = form.value.name
     this.organization.email = form.value.email
     this.menuService.waitingCursor(true)
-    this.httpService.createOrganization(this.organization).subscribe(
+    this.httpService.createOrganization(this.organization.name, this.organization.email).subscribe(
       () => {
         this.menuService.waitingCursor(false)
-        this.organizationsService.organizations.push(this.organization)
+        this.organizationsService.loadOrganizations(this.usersService.currentUser.name, true)
         this.menuService.navigate(['/amp', 'organizations', this.organization.name])
       },
       (error) => {

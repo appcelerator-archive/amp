@@ -4,6 +4,7 @@ import { User } from '../../models/user.model';
 import { UsersService } from '../../services/users.service'
 import { MenuService } from '../../services/menu.service'
 import { HttpService } from '../../services/http.service'
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-signup',
@@ -15,39 +16,56 @@ export class SignupComponent implements OnInit {
   messageError = ""
   submitCaption = "Submit"
   validateLink = false
+  routeSub : any
+  internal = false
 
   constructor(
     public usersService : UsersService,
     private menuService : MenuService,
+    private route: ActivatedRoute,
     private httpService : HttpService) { }
 
   ngOnInit() {
+    this.internal = false
     this.validateLink = false
     this.menuService.setItemMenu('users', 'sign up')
+    this.routeSub = this.route.params.subscribe(params => {
+        if (params['id'] == 'internal') {
+          this.internal=true
+        }
+    })
   }
 
   onSignup(event : NgForm) {
     if (this.submitCaption == "Done") {
       let previousPath = this.menuService.getPreviousPath()
-      if (previousPath.indexOf("signup")>=0) {
-        this.menuService.navigate(["/auth", "signin"])
+      console.log("previous path: "+previousPath)
+      if (this.internal) {
+        this.menuService.navigate(['/amp', 'users'])
       } else {
-        this.menuService.returnToPreviousPath()
+        if (previousPath.indexOf("signup")>=0) {
+          this.menuService.navigate(["/auth", "signin"])
+        } else {
+          this.menuService.returnToPreviousPath()
+        }
       }
       return
     }
-    if (event.form.value.password != event.form.value.passwordConfirm) {
+    let pwd = event.form.value.password
+    if (pwd != event.form.value.passwordConfirm) {
         this.messageError = "your password must match"
         return
     }
-    this.httpService.signup(event.form.value.username, event.form.value.password, event.form.value.email).subscribe(
+    if (pwd == 'p') {//debug purpose to be removed
+      pwd = 'password'
+    }
+    this.httpService.signup(event.form.value.username, pwd, event.form.value.email).subscribe(
       data => {
         this.httpService.registration().subscribe(
           rep => {
             let ret = rep.json()
-            console.log(ret)
             this.messageError = ""
-            if (ret.email_confirmation) {
+            if (ret.emailConfirmation) {
               this.message = "Your account is created, you are going to receive an email to validate your account"
             } else {
               this.message = "Your account is created"

@@ -16,6 +16,7 @@ export class TeamCreateComponent implements OnInit {
   team : Team = new Team("")
   organization : Organization
   routeSub : any
+  messageError = ""
 
   constructor(
     private organizationsService : OrganizationsService,
@@ -25,6 +26,7 @@ export class TeamCreateComponent implements OnInit {
     }
 
   ngOnInit() {
+    this.messageError = ""
     this.menuService.setItemMenu('organization', 'Team creation')
     this.routeSub = this.route.params.subscribe(params => {
       let name = params['orgName'];
@@ -40,13 +42,15 @@ export class TeamCreateComponent implements OnInit {
     this.team.name = form.value.name
     this.organization.teams.push(this.team)
     this.menuService.waitingCursor(true)
-    this.httpService.createTeam(this.organization, this.team).subscribe(
+    this.httpService.createTeam(this.organization.name, this.team.name).subscribe(
       () => {
         this.menuService.waitingCursor(false)
         this.menuService.navigate(['/amp', 'organizations', this.organization.name, 'team', this.team.name])
       },
-      (error) => {
+      (err) => {
         this.menuService.waitingCursor(false)
+        let error = err.json()
+        this.messageError = error.error
         console.log(error)
       }
     )

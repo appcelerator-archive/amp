@@ -48,7 +48,7 @@ export class OrganizationsComponent implements OnInit {
   removeOrganization() {
     if(confirm("Are you sure to delete the organization: "+this.organization.name)) {
       this.menuService.waitingCursor(true)
-      this.httpService.deleteOrganization(this.organization).subscribe(
+      this.httpService.deleteOrganization(this.organization.name).subscribe(
         () => {
           this.menuService.waitingCursor(false)
           let list : Organization[] = []

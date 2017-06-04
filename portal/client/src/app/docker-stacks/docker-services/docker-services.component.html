@@ -77,9 +77,9 @@
                   </th>
                   <th>
                     <a>
-                      Replicas
-                      <span (click)="listService.order('replicas', 1)" class="glyphicon glyphicon-chevron-down"></span>
-                      <span (click)="listService.order('replicas', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                      Status
+                      <span (click)="listService.order('status', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('status', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
                   <th>
@@ -90,20 +90,32 @@
                     </a>
                   </th>
                   <th>
+                    <a>
+                      Tag
+                      <span (click)="listService.order('tag', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('tag', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
                   </th>
-                  <th></th>
+                  <th>
+                    <a>
+                      Containers
+                      <span (click)="listService.orderNum('readyTasks', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.orderNum('readyTasks', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr (click)="selectService(service.name)" *ngFor="let service of listService.getData()">
+                <tr (click)="selectService(service.name)" [style.color]=getColor(service) *ngFor="let service of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerServicesService.currentService.name===service.name"></td>
                   <td>{{ service.id }}</td>
                   <td>{{ service.name }}</td>
                   <td>{{ service.mode }}</td>
-                  <td>{{ service.replicas }}</td>
+                  <td>{{ service.status }}</td>
                   <td>{{ service.image }}</td>
+                  <td>{{ service.tag }}</td>
                   <td>
-                    <a (click)="containerList(service.id)">Containers</a>
+                    <a (click)="containerList(service.id)">{{service.replicas}}</a>
                   </td>
                 </tr>
               </tbody>

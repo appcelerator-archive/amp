@@ -3,7 +3,12 @@
   <div class="col-lg-12 col-md-12 col-xs-12" style="margin-bottom:0px">
     <div class="panel panel-default" style="border-style:none;margin-bottom:0px">
       <div class="panel-body" style="padding:05px 20px 5px 20px;margin-top:5px">
-        <div class="pull-left"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span> {{ currentDashboard.name }}</div>
+        <div class="pull-left">
+          <span class="glyphicon glyphicon-stats space-right" aria-hidden="true"></span>
+        </div>
+        <div class="pull-left" style="color:blue;margin-left:10px">
+          {{ currentDashboard.name }}
+        </div>
       </div>
       <div class="panel-body" style="padding:5px 20px 5px 20px">
         <div class="col-lg-12 col-md-12 col-xs-12">
@@ -191,7 +196,7 @@
                           <td>{{ dash.name }}</td>
                           <td>{{ dash.ownerType }}</td>
                           <td>{{ dash.ownerName }}</td>
-                          <td>{{ dash.formatedDate() }}</td>
+                          <td>{{ dash.date }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -214,7 +219,6 @@
                   </button>
                 </div>
               </div>
-
             </form>
           </div>
         </div>

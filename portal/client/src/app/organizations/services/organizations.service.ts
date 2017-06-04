@@ -43,7 +43,6 @@ export class OrganizationsService {
         this.organizations = data
         this.currentLoadedUser = userName
         this.onOrganizationsLoaded.next()
-        console.log(data)
       },
       error => {
         this.onOrganizationsError.next(error)
@@ -74,7 +73,6 @@ export class OrganizationsService {
                 }
               }
             }
-            this.currentOrganization = org
           },
           (err) => {
             console.log(err)
@@ -100,7 +98,7 @@ export class OrganizationsService {
         }
       }
       if (!found) {
-        list.push(new Member(user.userName, 0))
+        list.push(new Member(user.userName, undefined))
       }
     }
     return list
@@ -123,4 +121,5 @@ export class OrganizationsService {
     }
     return list
   }
+
 }

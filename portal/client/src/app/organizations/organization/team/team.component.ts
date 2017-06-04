@@ -98,13 +98,13 @@ export class TeamComponent implements OnInit, OnDestroy {
   }
 
   returnBack() {
-    this.menuService.returnToPreviousPath()
+    this.menuService.navigate(['/amp', 'organizations', this.organization.name])
   }
 
   removeTeam() {
     if(confirm("Are you sure to delete the team: "+this.team.name)) {
       this.menuService.waitingCursor(true)
-      this.httpService.deleteTeam(this.organization, this.team).subscribe(
+      this.httpService.deleteTeam(this.organization.name, this.team.name).subscribe(
         () => {
           this.menuService.waitingCursor(false)
           let list : Team[] = []
@@ -198,22 +198,19 @@ export class TeamComponent implements OnInit, OnDestroy {
   }
 
   applyUsers() {
-    console.log("apply users")
     this.nbSaveInProgress=0
     this.menuService.waitingCursor(true)
     for (let user of this.users) {
       user.saved=false
       user.saveError=""
       if (user.status == -1) {
-        console.log("removing user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.removeUserFromTeam(this.organization, this.team, user).subscribe(
+        this.httpService.removeUserFromTeam(this.organization.name, this.team.name, user.userName).subscribe(
           () => {
             user.saved=true
             user.status=0
             user.saveError=""
             this.decrSaveUsersInProgress()
-            console.log("done")
           },
           (error) => {
             console.log(error)
@@ -231,16 +228,13 @@ export class TeamComponent implements OnInit, OnDestroy {
         )
       }
     }
-    console.log("apply addedUsers")
     for (let user of this.addedUsers) {
       user.saved=false
       user.saveError=""
       if (user.status == 1) {
-        console.log("adding user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.addUserToTeam(this.organization, this.team, user).subscribe(
+        this.httpService.addUserToTeam(this.organization.name, this.team.name, user.userName).subscribe(
           () => {
-            console.log("done")
             user.saved=true
             user.saveError=""
             user.status=0

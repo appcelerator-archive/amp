@@ -8,6 +8,7 @@ import { Subject } from 'rxjs/Subject';
 @Injectable()
 export class MenuService {
   currentMenuItem : ItemMenu = new ItemMenu("","")
+  tooltipLabel = ""
   autoRefresh : boolean = false
   onRefreshClicked = new Subject()
   public onWindowResize = new Subject<AppWindow>();
@@ -26,6 +27,7 @@ export class MenuService {
   }
 
   setItemMenu(name : string, description : string) {
+    this.tooltipLabel = ""
     let item = new ItemMenu(name, description)
     this.currentMenuItem = item
   }
@@ -71,4 +73,5 @@ export class MenuService {
   public getCursorClass() : string {
     return this.cursorClass
   }
+
 }

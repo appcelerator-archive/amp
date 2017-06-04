@@ -145,6 +145,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   open() {
     this.httpService.listDashboard().subscribe(
       (data) => {
+        console.log(data)
         this.dashboards = data
         //console.log(this.dashboards)
         this.moveDialog()

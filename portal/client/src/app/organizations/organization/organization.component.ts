@@ -140,23 +140,19 @@ export class OrganizationComponent implements OnInit, OnDestroy {
   }
 
   applyUsers() {
-    console.log("apply users")
     this.nbSaveInProgress=0
     this.menuService.waitingCursor(true)
     for (let user of this.users) {
-      console.log(user)
       user.saved=false
       user.saveError=""
       if (user.status == -1) {
-        console.log("removing user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.removeUserFromOrganization(this.organization, user).subscribe(
+        this.httpService.removeUserFromOrganization(this.organization.name, user.userName).subscribe(
           () => {
             user.saved=true
             user.status=0
             user.saveError=""
             this.decrSaveInProgress()
-            console.log("done")
           },
           (error) => {
             console.log(error)
@@ -173,17 +169,13 @@ export class OrganizationComponent implements OnInit, OnDestroy {
         )
       }
     }
-    console.log("apply addedUsers")
     for (let user of this.addedUsers) {
-      console.log(user)
       user.saved=false
       user.saveError=""
       if (user.status == 1) {
-        console.log("adding user "+user.userName)
         this.nbSaveInProgress++
-        this.httpService.addUserToOrganization(this.organization, user).subscribe(
+        this.httpService.addUserToOrganization(this.organization.name, user.userName).subscribe(
           () => {
-            console.log("done")
             user.saved=true
             user.saveError=""
             user.status=0
@@ -216,6 +208,10 @@ export class OrganizationComponent implements OnInit, OnDestroy {
     if (this.nbSaveInProgress === 0) {
       this.menuService.waitingCursor(false)
     }
+  }
+
+  userList() {
+    this.menuService.navigate(['/amp', 'users', this.organization.name])
   }
 
 }

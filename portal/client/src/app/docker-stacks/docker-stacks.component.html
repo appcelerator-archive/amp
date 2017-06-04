@@ -81,6 +81,13 @@
                   </th>
                   <th>
                     <a>
+                      Status
+                      <span (click)="listService.order('status', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('status', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
                       Owner
                       <span (click)="listService.order('ownerName', 1)" class="glyphicon glyphicon-chevron-down"></span>
                       <span (click)="listService.order('ownerName', -1)" class="glyphicon glyphicon-chevron-up"></span>
@@ -93,18 +100,33 @@
                       <span (click)="listService.order('ownerType', -1)" class="glyphicon glyphicon-chevron-up"></span>
                     </a>
                   </th>
-                  <th></th>
+                  <th>
+                    <a>
+                      Created on
+                      <span (click)="listService.order('createDate', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.order('createDate', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
+                  <th>
+                    <a>
+                      Services
+                      <span (click)="listService.orderNum('runningServices', 1)" class="glyphicon glyphicon-chevron-down"></span>
+                      <span (click)="listService.orderNum('runningServices', -1)" class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr (click)="dockerStacksService.setCurrentStack(stack.name)" *ngFor="let stack of listService.getData()">
+                <tr (click)="dockerStacksService.setCurrentStack(stack.name)" [style.color]=getColor(stack) *ngFor="let stack of listService.getData()">
                   <td><input type="checkbox" [checked]="dockerStacksService.currentStack.name===stack.name" (click)=dockerStacksService.setCurrentStack(stack.name)></td>
                   <td>{{ stack.shortId }}</td>
                   <td>{{ stack.name }}</td>
+                  <td>{{ stack.status }}</td>
                   <td> {{ stack.ownerName }}</td>
                   <td> {{ stack.ownerType }}</td>
+                  <td> {{ stack.createDate }}</td>
                   <td>
-                    <a (click)="serviceList(stack.name)">Services ({{stack.services}})</a>
+                    <a (click)="serviceList(stack.name)">{{stack.services}}</a>
                   </td>
                 </tr>
               </tbody>
