@@ -104,9 +104,12 @@ export class GraphCounterSquare {
 
     let padding = 10;
     let titleBox : any
-    this.svg.selectAll("#title").each(function(d, i) {
+    this.svg.select("#title").each(function(d, i) {
       titleBox = this.getBBox();
     });
+    if (titleBox.width == 0 || titleBox.height == 0) {
+      return
+    }
 
     let fontSize = this.computeFontSize(titleBox, padding)
     let dty = this.computeDty(titleBox, fontSize)

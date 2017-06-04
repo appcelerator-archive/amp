@@ -30,7 +30,7 @@ export class UsersService {
     if (item.email && item.email.includes(value)) {
       return true
     }
-    if (item.role && item.role.includes(value)) {
+    if (item.member && item.member && item.member.role.includes(value)) {
       return true
     }
     return false
@@ -74,7 +74,7 @@ export class UsersService {
     this.httpService.userOrganization(this.currentUser.name).subscribe(
       data => {
         this.organizationsService.organizations = data
-        let currentOrganization : Organization
+        this.organizationsService.currentOrganization = this.organizationsService.noOrganization
         for (let org of data) {
           if (org.name == plainToken.ActiveOrganization) {
             this.organizationsService.currentOrganization = org
@@ -123,6 +123,7 @@ export class UsersService {
     let base64Url = token.split('.')[1];
     let base64 = base64Url.replace('-', '+').replace('_', '/');
     let ret = JSON.parse(window.atob(base64));
+    console.log("token organization: "+ret.ActiveOrganization)
     return ret
   }
 
@@ -160,7 +161,7 @@ export class UsersService {
         }
       }
       if (!found) {
-        list.push(new Member(user.name, 0))
+        list.push(new Member(user.name, undefined))
       }
     }
     return list
@@ -173,6 +174,7 @@ export class UsersService {
         for (let member of org.members) {
           for (let user of this.users) {
             if (member.userName == user.name) {
+              user.member = member
               userList.push(user)
             }
           }
@@ -181,5 +183,6 @@ export class UsersService {
     }
     return userList
   }
+
 
 }

@@ -62,6 +62,16 @@ export class DockerStacksComponent implements OnInit {
     this.menuService.navigate(["/amp", "stacks", stackName, "services"])
   }
 
+  getColor(stack : DockerStack) : string {
+    if (stack.status == 'running') {
+      return 'limegreen'
+    }
+    if (stack.status == 'starting') {
+      return 'orange'
+    }
+    return 'red';
+  }
+
   deploy() {
     this.menuService.navigate(["/amp", "stacks", "deploy"])
   }

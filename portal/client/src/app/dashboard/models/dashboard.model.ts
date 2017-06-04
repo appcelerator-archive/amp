@@ -6,7 +6,7 @@ export class Dashboard {
   public ownerName : string
   public ownerType : string
   public data : string
-  public date : Date
+  public date : string
 
   constructor(id: string, name: string, data: string) {
     this.id = id
@@ -24,18 +24,10 @@ export class Dashboard {
     }
   }
 
-  set(ownerName : string, ownerType : any, date : number) {
+  set(ownerName : string, ownerType : any, sdate : string) {
     this.ownerName = ownerName
     this.setOwnerType(ownerType)
-    this.date = new Date(date * 1000)
-  }
-
-  formatedDate() : string {
-    return  this.date.getDate()  + "-" +
-    (this.date.getMonth()+1) + "-" +
-    this.date.getFullYear() + " " +
-    this.date.getHours() + ":" +
-    this.date.getMinutes();
+    this.date = sdate
   }
 
 }

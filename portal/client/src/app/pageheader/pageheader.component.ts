@@ -14,6 +14,8 @@ import { Organization } from '../organizations/models/organization.model';
 export class PageheaderComponent implements OnInit {
   menuTitle = "title"
   menuItem = "item"
+  menuOver = ""
+
 
   constructor(
     public menuService : MenuService,

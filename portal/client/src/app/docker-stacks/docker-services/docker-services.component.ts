@@ -55,6 +55,16 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
     this.routeSub.unsubscribe();
   }
 
+  getColor(stack : DockerStack) : string {
+    if (stack.status == 'running') {
+      return 'limegreen'
+    }
+    if (stack.status == 'starting') {
+      return 'orange'
+    }
+    return 'red';
+  }
+
   containerList(serviceId : string) {
     this.dockerServicesService.setCurrentService(serviceId)
     this.menuService.navigate(["/amp", "stacks", this.dockerStacksService.currentStack.name, "services", serviceId, "containers"])

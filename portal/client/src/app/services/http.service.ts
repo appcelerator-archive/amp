@@ -55,6 +55,8 @@ export class HttpService {
           for (let item of data.users) {
             let user = new User(item.name, item.email, "User")
             user.verified = item.is_verified
+            user.tokenUsed = item.token_used
+            user.createDate = this.formatedDate(item.create_dt)
             list.push(user)
           }
         }
@@ -75,40 +77,40 @@ export class HttpService {
     return this.httpPost("/users/"+name+"/password/reset", {name : name});
   }
 
-  createOrganization(org : Organization) {
-    return this.httpPost("/organizations", {name: org.name, email: org.email});
+  createOrganization(orgName : string, orgEmail : string) {
+    return this.httpPost("/organizations", {name: orgName, email: orgEmail});
   }
 
   switchOrganization(orgName : string) {
     return this.httpPost("/switch", { account: orgName });
   }
 
-  deleteOrganization(org : Organization) {
-    return this.httpDelete("/organizations/"+org.name);
+  deleteOrganization(orgName : string) {
+    return this.httpDelete("/organizations/"+orgName);
   }
 
-  addUserToOrganization(org : Organization, member : Member) {
-    return this.httpPost("/organizations/"+org.name+"/members", {organization_name: org.name, user_name: member.userName});
+  addUserToOrganization(orgName : string, memberName : string) {
+    return this.httpPost("/organizations/"+orgName+"/members", {organization_name: orgName, user_name: memberName});
   }
 
-  removeUserFromOrganization(org : Organization, member : Member) {
-    return this.httpDelete("/organizations/"+org.name+"/members/"+member.userName);
+  removeUserFromOrganization(orgName : string, memberName : string) {
+    return this.httpDelete("/organizations/"+orgName+"/members/"+memberName);
   }
 
-  createTeam(org : Organization, team : Team) {
-    return this.httpPost("/organizations/"+org.name+"/teams", {organization_name: org.name, team_name: team.name});
+  createTeam(orgName : string, teamName : string) {
+    return this.httpPost("/organizations/"+orgName+"/teams", {organization_name: orgName, team_name: teamName});
   }
 
-  deleteTeam(org : Organization, team : Team) {
-    return this.httpDelete("/organizations/"+org.name+"/teams/"+team.name);
+  deleteTeam(orgName : string, teamName : string) {
+    return this.httpDelete("/organizations/"+orgName+"/teams/"+teamName);
   }
 
-  addUserToTeam(org : Organization, team : Team, member : Member) {
-    return this.httpPost("/organizations/"+org.name+"/teams/"+team.name+"/members", {organization_name: org.name, team_name: team.name, user_name: member.userName});
+  addUserToTeam(orgName : string, teamName : string, memberName : string) {
+    return this.httpPost("/organizations/"+orgName+"/teams/"+teamName+"/members", {organization_name: orgName, team_name: teamName, user_name: memberName});
   }
 
-  removeUserFromTeam(org : Organization, team : Team, member : Member) {
-    return this.httpDelete("/organizations/"+org.name+"/teams/"+team.name+"/members/"+member.userName);
+  removeUserFromTeam(orgName : string, teamName : string, memberName : string) {
+    return this.httpDelete("/organizations/"+orgName+"/teams/"+teamName+"/members/"+memberName);
   }
 
   userOrganization(userName : string) {
@@ -132,7 +134,7 @@ export class HttpService {
                 let newTeam = new Team(team.name)
                 if (team.members) {
                   for (let mname of team.members) {
-                    newTeam.members.push(new Member(mname, 0))
+                    newTeam.members.push(new Member(mname, undefined))
                   }
                 }
                 if (team.resources) {
@@ -152,16 +154,20 @@ export class HttpService {
     )
   }
 
+  //role=0 Member
+  //role=1 Owner
+  changeOrganizationMemberRole(orgName : string, userName : string, role : number) {
+    return this.httpPut("/organizations/"+orgName+"/members/"+userName, {
+      organization_name: orgName, user_name: userName, role: role
+    })
+  }
+
   login(username : string, pwd : string) {
     return this.httpPost("/login", {name: username, password: pwd});
   }
 
   signup(username : string, pwd : string, email : string) {
-    return this.httpPost("/signup", {name: username, password: pwd, email: email, url: window.location.protocol +"//"+window.location.host});
-  }
-
-  verify(token : string) {
-    return this.httpPost("/verify/"+token, { token: token});
+    return this.httpPost("/signup", {name: username, password: pwd, email: email});
   }
 
   registration() {
@@ -185,6 +191,12 @@ export class HttpService {
             item.services,
             item.stack.owner.name,
             item.stack.owner.type
+          )
+          stack.set(
+            this.convertStatus(item.status),
+            this.formatedDate(item.stack.create_dt),
+            item.total_services,
+            item.running_services
           )
           list.push(stack)
         }
@@ -210,17 +222,19 @@ export class HttpService {
     return this.httpGet("/stacks/"+stackName+"/services")
     .map((res : Response) => {
       const data = res.json()
+      console.log(data)
       let list : DockerService[] = []
-      if (data.services) {
-        for (let item of data.services) {
-          if (item.id) {
+      if (data.entries) {
+        for (let item of data.entries) {
+          if (item.service && item.service.id) {
             let serv = new DockerService(
               item.id,
               item.name,
               item.mode,
-              item.replicas,
-              item.imge
+              item.imge,
+              item.tag
             )
+            serv.set(item.status, item.total_task, item.ready_task)
             list.push(serv)
           }
         }
@@ -319,7 +333,6 @@ export class HttpService {
       }
     )
   }
-
 
   logs(req : LogsRequest) {
     return this.httpPost("/logs", req)
@@ -465,7 +478,8 @@ export class HttpService {
         let data = res.json()
         if (data.dashboard) {
           let dashboard = new Dashboard(data.dashboard.id, data.dashboard.name, data.dashboard.data)
-          dashboard.set(data.dashboard.owner.name, data.dashboard.owner.type, data.dashboard.create_dt)
+          let sdate = this.formatedDate(data.dashboard.create_dt)
+          dashboard.set(data.dashboard.owner.name, data.dashboard.owner.type, sdate)
           return dashboard
         }
         return undefined
@@ -481,7 +495,8 @@ export class HttpService {
         if (data.dashboards) {
             for (let dash of data.dashboards) {
               let dashboard = new Dashboard(dash.id, dash.name, dash.data)
-              dashboard.set(dash.owner.name, dash.owner.type, dash.create_dt)
+              let sdate = this.formatedDate(dash.create_dt)
+              dashboard.set(dash.owner.name, dash.owner.type, sdate)
               list.push(dashboard)
             }
         }
@@ -513,6 +528,30 @@ export class HttpService {
 //--------------------------------------------------------------------------------------
 // http core functions
 //--------------------------------------------------------------------------------------
+
+  private formatedDate(daten : number) : string {
+    let date = new Date(daten * 1000)
+    let num = ""+date.getDate()
+    if (date.getDate()<10) {
+      num='0'+num
+    }
+    let month = ""+(date.getMonth()+1)
+    if (date.getMonth()+1<10) {
+      month = '0'+month
+    }
+    return date.getFullYear()  + "-" +
+    month + "-" +
+    num + " " +
+    date.getHours() + ":" +
+    date.getMinutes();
+  }
+
+  convertStatus(status: string) : string {
+    if (status) {
+      return status.toLowerCase()
+    }
+    return "unknow"
+  }
 
   private setHeaders() {
     var headers = new Headers
@@ -554,7 +593,6 @@ export class HttpService {
     let headers = this.setHeaders()
     return this.http.post(this.addr+url, data, { headers: this.setHeaders() })
       .retryWhen(e => e.scan<number>((errorCount, err) => {
-        console.log(err)
         console.log("retry: "+(errorCount+1))
         if (errorCount >= httpRetryNumber-1) {
             throw err;
