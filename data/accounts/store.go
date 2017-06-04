@@ -54,6 +54,11 @@ func NewStore(s storage.Interface, registration string, SUPassword string) (*Sto
 }
 
 func (s *Store) createSuperAccounts(SUPassword string) error {
+	if SUPassword == "" {
+		log.Println("SUPassword is empty. Skipping creation of super accounts.")
+		return nil
+	}
+
 	// Add a policy giving full access to super organization members
 	s.warden.Manager.Create(&ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
