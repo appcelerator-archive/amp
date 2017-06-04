@@ -78,4 +78,8 @@ export class DockerServicesService {
     );
   }
 
+  scaleCurrentService() {
+
+  }
+
 }

@@ -7,6 +7,7 @@ import { DockerStack } from '../models/docker-stack.model';
 import { MenuService } from '../../services/menu.service';
 import { ActivatedRoute } from '@angular/router';
 import { MetricsService } from '../../metrics/services/metrics.service';
+import { HttpService } from '../../services/http.service';
 
 @Component({
   selector: 'app-services',
@@ -17,6 +18,8 @@ import { MetricsService } from '../../metrics/services/metrics.service';
 export class DockerServicesComponent implements OnInit, OnDestroy {
   routeSub : any
   timer : any
+  scaleMode = false
+  message = ""
 
   constructor(
     public listService : ListService,
@@ -24,11 +27,14 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
     public dockerStacksService : DockerStacksService,
     public menuService : MenuService,
     private route: ActivatedRoute,
-    private metricsService : MetricsService) {
+    private metricsService : MetricsService,
+    private httpService : HttpService) {
     listService.setFilterFunction(dockerServicesService.match)
   }
 
   ngOnInit() {
+    this.scaleMode = false
+    this.message = ""
     this.menuService.setItemMenu('services', 'List')
     this.routeSub = this.route.params.subscribe(params => {
       let stackName = params['stackName'];
@@ -71,6 +77,7 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
   }
 
   selectService(name : string) {
+    this.scaleMode = false
     if (this.dockerServicesService.currentService.name== name) {
       this.dockerServicesService.setCurrentService("")
       return
@@ -88,6 +95,28 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
 
   logs(serviceName : string) {
     this.menuService.navigate(['/amp', 'logs', 'service', serviceName])
+  }
+
+  scaleModeToggle() {
+    this.scaleMode = !this.scaleMode
+    if (this.dockerServicesService.currentService.name=='') {
+      this.scaleMode = false
+    }
+  }
+
+  scale(number : string) {
+    let num = +number
+    this.httpService.serviceScale(this.dockerServicesService.currentService.id, num).subscribe(
+      () => {
+        this.scaleMode = false
+        this.dockerServicesService.loadServices(true)
+      },
+      (err) => {
+        this.scaleMode = false
+        let error = err.json()
+        this.message = error.errror
+      }
+    )
   }
 
 }
