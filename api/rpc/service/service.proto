@@ -10,6 +10,16 @@ service Service {
       get: "/v1/tasks/{service_id}"
     };
   }
+  rpc ListService (ServiceListRequest) returns (ServiceListReply) {
+    option (google.api.http) = {
+      get: "/v1/services"
+    };
+  }
+  rpc InspectService (ServiceInspectRequest) returns (ServiceInspectReply) {
+    option (google.api.http) = {
+      get: "/v1/inspect/{service_id}"
+    };
+  }
 }
 
 message TasksRequest {
@@ -19,11 +29,41 @@ message TasksRequest {
 message Task {
   string id = 1;
   string image = 2;
-  string state = 3;
+  string current_state = 3;
   string desired_state = 4;
   string node_id = 5;
 }
 
 message TasksReply {
   repeated Task tasks = 1;
+}
+
+message ServiceListRequest {
+}
+
+message ServiceListReply {
+  repeated ServiceListEntry entries = 1;
+}
+
+message ServiceListEntry {
+  ServiceEntity service = 1;
+  int32 ready_tasks = 2;
+  int32 total_tasks = 3;
+  string status = 4;
+}
+
+message ServiceEntity {
+  string id = 1;
+  string name = 2;
+  string mode = 3;
+  string image = 4;
+  string tag = 5;
+}
+
+message ServiceInspectRequest {
+  string service_id = 1;
+}
+
+message ServiceInspectReply {
+  string service_entity = 1;
 }

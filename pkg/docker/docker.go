@@ -3,6 +3,7 @@ package docker
 import (
 	"fmt"
 	"io/ioutil"
+	//"log"
 	"os"
 	"strings"
 
@@ -48,6 +49,12 @@ type StackStatus struct {
 	RunningServices int32
 	TotalServices   int32
 	Status          string
+}
+
+type ServiceStatus struct {
+	RunningTasks int32
+	TotalTasks   int32
+	Status       string
 }
 
 // NewClient instantiates a new Docker wrapper
@@ -329,23 +336,15 @@ func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, er
 
 // ServiceStatus returns service status
 func (d *Docker) ServiceStatus(ctx context.Context, service string) (string, error) {
-	args := filters.NewArgs()
-	args.Add("service", service)
-	var readyTasks int = 0
-	serviceTasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
+	readyTasks, err := d.readyTasks(ctx, service)
 	if err != nil {
 		return "", err
-	}
-	for _, serviceTask := range serviceTasks {
-		if serviceTask.Status.State == swarm.TaskStateRunning {
-			readyTasks++
-		}
 	}
 	expectedTasks, err := d.ExpectedNumberOfTasks(ctx, service)
 	if err != nil {
 		return "", err
 	}
-	if readyTasks == 1001 {
+	if readyTasks == NoMatchingNodes {
 		return StackStateNoMatchingNode, nil
 	}
 	if readyTasks == expectedTasks {
@@ -482,4 +481,62 @@ func (d *Docker) nodeToNode(ctx context.Context, swarmNode swarm.Node) *api.Node
 		apiNode.Description.Engine.Plugins = append(apiNode.Description.Engine.Plugins, api.PluginDescription{Type: plugin.Type, Name: plugin.Name})
 	}
 	return apiNode
+}
+
+// ServiceList list the services
+func (d *Docker) ServicesList(ctx context.Context, options types.ServiceListOptions) ([]swarm.Service, error) {
+	if !d.connected {
+		if err := d.Connect(); err != nil {
+			return nil, err
+		}
+	}
+	return d.client.ServiceList(ctx, options)
+}
+
+// readyTasks returns the running tasks of a service
+func (d *Docker) readyTasks(ctx context.Context, service string) (int, error) {
+	args := filters.NewArgs()
+	args.Add("service", service)
+	var readyTasks int = 0
+	serviceTasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
+	if err != nil {
+		return 0, err
+	}
+	for _, serviceTask := range serviceTasks {
+		if serviceTask.Status.State == swarm.TaskStateRunning {
+			readyTasks++
+		}
+	}
+	return readyTasks, nil
+}
+
+// ServiceState returns service status
+func (d *Docker) ServiceState(ctx context.Context, service string) (*ServiceStatus, error) {
+	readyTasks, err := d.readyTasks(ctx, service)
+	if err != nil {
+		return &ServiceStatus{}, err
+	}
+	totalTasks, err := d.ExpectedNumberOfTasks(ctx, service)
+	if err != nil {
+		return &ServiceStatus{}, err
+	}
+	if readyTasks == NoMatchingNodes {
+		return &ServiceStatus{
+			RunningTasks: 0,
+			TotalTasks:   0,
+			Status:       StackStateNoMatchingNode,
+		}, nil
+	}
+	if readyTasks == totalTasks {
+		return &ServiceStatus{
+			RunningTasks: int32(readyTasks),
+			TotalTasks:   int32(totalTasks),
+			Status:       StackStateRunning,
+		}, nil
+	}
+	return &ServiceStatus{
+		RunningTasks: int32(readyTasks),
+		TotalTasks:   int32(totalTasks),
+		Status:       StackStateStarting,
+	}, nil
 }

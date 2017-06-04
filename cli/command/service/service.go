@@ -13,7 +13,9 @@ func NewServiceCommand(c cli.Interface) *cobra.Command {
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
+	cmd.AddCommand(NewServiceInspectCommand(c))
+	cmd.AddCommand(NewServiceListCommand(c))
 	cmd.AddCommand(NewServiceLogsCommand(c))
-	cmd.AddCommand(NewServiceTasksCommand(c))
+	cmd.AddCommand(NewServicePsCommand(c))
 	return cmd
 }

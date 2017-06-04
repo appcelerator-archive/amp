@@ -1,0 +1,22 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  pinger:
+    image: subfuzion/pinger
+    networks:
+      default:
+        aliases:
+          - pinger
+    environment:
+      SERVICE_PORTS: "3000"
+      VIRTUAL_HOST: "https://pinger.*"
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
