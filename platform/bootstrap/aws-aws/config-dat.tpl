@@ -1,21 +1,17 @@
-{{ source "default.ikt" }}
+{{ source "../default.ikt" }}
 {{ source "file:///infrakit/env.ikt" }}
-{{ $workerSize := var "/swarm/size/worker" }}
-[
   {
-    "Plugin": "group",
-    "Properties": {
-      "ID": "amp-worker-{{ var "/aws/stackname" }}",
+      "ID": "amp-worker-dat-{{ var "/aws/stackname" }}",
       "Properties": {
         "Allocation": {
-          "Size": {{ $workerSize }}
+          "Size": {{ var "/swarm/size/worker/dat" }}
         },
         "Instance": {
           "Plugin": "instance-aws/ec2-instance",
           "Properties": {
             "RunInstancesInput": {
               "ImageId": "{{ var "/aws/amiid" }}",
-              "InstanceType": "{{ var "/aws/instancetype" }}",
+              "InstanceType": "{{ var "/aws/instancetype/data" }}",
               "KeyName": "{{ var "/aws/keyname" }}",
               "SubnetId": "{{ var "/aws/subnetid1" }}",
               {{ if var "/aws/instanceprofile" }}"IamInstanceProfile": {
@@ -24,9 +20,10 @@
               "SecurityGroupIds": [ "{{ var "/aws/securitygroupid" }}" ]
             },
             "Tags": {
-              "Name": "{{ var "/aws/stackname" }}-worker",
+              "Name": "{{ var "/aws/stackname" }}-worker-dat",
               "{{ var "/docker/label/cluster/key" }}": "{{ var "/docker/label/cluster/value" }}",
               "SwarmRole" : "worker",
+              "WorkerType": "dat",
               "ManagedBy": "InfraKit"
             }
           }
@@ -52,13 +49,12 @@
                   "SwarmJoinIP": "{{ var "/docker/manager/host" }}",
                   "Docker" : {
                     "Host" : "unix:///var/run/docker.sock"
-                  }
+                  },
+                  "EngineLabels": {{ var "/swarm/labels/worker/dat" | jsonDecode | jsonEncode }}
                 }
               }
             ]
           }
         }
       }
-    }
   }
-]

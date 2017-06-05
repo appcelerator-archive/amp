@@ -51,3 +51,11 @@ fi
 # TODO: send kill -HUP to reload the labels, see appcelerator/amp#1123
 
 docker swarm join --token {{  SWARM_JOIN_TOKENS.Worker }} {{ SWARM_MANAGER_ADDR }}
+
+# InfraKit sets labels on the engine, we want them on the node
+nodeid=$(docker info 2>/dev/null| grep NodeID | awk '{print $2}')
+labels="$(echo {{ INFRAKIT_LABELS }} | tr -d '[]')"
+remote_api="$(echo {{ SWARM_MANAGER_ADDR }} | cut -d: -f1)"
+for label in $labels; do
+  docker -H $remote_api node update --label-add "$label" "$nodeid"
+done
