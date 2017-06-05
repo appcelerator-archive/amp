@@ -98,7 +98,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-portal clean-monit
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit
 cleanall: clean cleanall-deps
 
 # =============================================================================
