@@ -54,29 +54,6 @@ _get_dirname() {
     echo $(cd "$_d"; pwd -P)
 }
 
-# expose the Docker remote api
-# and set the registry mirrors
-# only applies to non local deployments
-_expose_remote_api() {
-  local _registry_opt
-  mkdir -p /etc/systemd/system/docker.service.d
-  if [[ $# -gt 0 ]]; then
-    _registry_opt="--registry-mirror=http://$1:5000"
-    if [[ "$1" != "127.0.0.1" ]]; then
-      _registry_opt="$_registry_opt --insecure-registry=http://$1:5000"
-    fi
-  fi
-  cat > /etc/systemd/system/docker.service.d/docker.conf <<EOF
-[Service]
-ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock --experimental $_registry_opt
-EOF
-  # Restart Docker to let port listening take effect.
-  systemctl daemon-reload
-  systemctl restart docker.service
-}
-
-
 # prepare a Docker volume for the infrakit configuration
 # works even when the Docker host is not local (running from inside a container on the host)
 # args:

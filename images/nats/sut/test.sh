@@ -62,8 +62,8 @@ if [[ $r -ne 0 ]]; then
   echo "failed ($i/$MAX msg sent)"
   exit 1
 fi
-echo " [OK]"
-
+echo "[OK]"
+sleep 10
 echo -n "receive messages... "
 n=$(egrep -c "Received on \[msg.test\].*:.*'test message .*'" $TMPFILE)
 if [[ $n -ne $MAX ]]; then

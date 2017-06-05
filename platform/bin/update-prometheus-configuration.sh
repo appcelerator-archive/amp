@@ -9,7 +9,7 @@ ALERTMANAGER_DIR=/etc/alertmanager
 ALERTMANAGER_FILE=config.yml
 D4MIP="192.168.65.1"
 DOCKER_METRICS_PORT=9323
-TELEGRAF_METRICS_PORT=9126
+NODE_EXPORTER_METRICS_PORT=9100
 DRY_RUN=0
 
 manager_list(){
@@ -28,19 +28,10 @@ manager_list(){
   echo $_managers
 }
 
-get_telegraf_remotes(){
-  local _telegraf_service=telegraf
-  local _remotes
-  _remotes=$(dig +short tasks.$_telegraf_service)
-  [[ -n "$_remotes" ]] && echo $_remotes
-
-}
-
 prepare_prometheus_conf(){
   local _remotes=$*
   local _remote
   local _docker_remotes
-  local _telegraf_remotes
 
   if [[ $# -eq 1 && "$_remotes" = "127.0.0.1" ]]; then
     # Docker for Mac/Windows: loopback address won't work, fix it
@@ -71,9 +62,31 @@ rule_files:
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
-#  - job_name: 'prometheus'
-#    static_configs:
-#      - targets: ['localhost:9090']
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+        - localhost:9090
+  - job_name: 'etcd'
+    dns_sd_configs:
+      - names:
+        - 'tasks.etcd'
+        type: 'A'
+        port: 2379
+  - job_name: 'haproxy'
+    static_configs:
+      - targets:
+        - haproxy_exporter:9101
+  - job_name: 'nats'
+    static_configs:
+      - targets:
+        - nats_exporter:7777
+  - job_name: 'elasticsearch'
+    metrics_path: "/_prometheus/metrics"
+    dns_sd_configs:
+      - names:
+        - 'tasks.elasticsearch'
+        type: 'A'
+        port: 9200
   - job_name: 'docker-engine'
     static_configs:
       - targets:
@@ -82,12 +95,12 @@ EOF
     echo "        - '${_remote}:$DOCKER_METRICS_PORT'" >> $prometheus_conf
   done
   cat >> $prometheus_conf << EOF
-  - job_name: 'system'
+  - job_name: 'nodes'
     static_configs:
       - targets:
 EOF
   for _remote in $_remotes; do
-    echo "        - '${_remote}:$TELEGRAF_METRICS_PORT'" >> $prometheus_conf
+    echo "        - '${_remote}:$NODE_EXPORTER_METRICS_PORT'" >> $prometheus_conf
   done
 }
 
@@ -168,7 +181,7 @@ for node in $nodes; do
       break
     elif [[ -n "$remote" && "$remote" = "0.0.0.0" ]]; then
       # try the manager address instead
-      remote=$(docker -H $manager node inspect $node -f '{{.ManagerStatus.Addr}}' | cut -d: -f1) 
+      remote=$(docker -H $manager node inspect $node -f '{{.ManagerStatus.Addr}}' | cut -d: -f1)
       if [[ ${PIPESTATUS[0]} -ne 0 || "x$remote" = "x0.0.0.0" ]]; then
         echo "Failed to get IP of node $node, abort" >&2
         exit 1
