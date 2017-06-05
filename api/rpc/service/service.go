@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
+	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -101,6 +102,7 @@ func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEnti
 	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, Status: statusReplicas.Status}, nil
 }
 
+// InspectService inspects a service
 func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) (*ServiceInspectReply, error) {
 	log.Println("[service] Inspect", in.ServiceId)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
@@ -109,4 +111,14 @@ func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) 
 	}
 	entity, _ := json.MarshalIndent(serviceEntity, "", "	")
 	return &ServiceInspectReply{ServiceEntity: string(entity)}, nil
+}
+
+// ScaleService scales a service
+func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*empty.Empty, error) {
+	log.Println("[service] Scale", in.ServiceId)
+	err := s.Docker.ServiceScale(ctx, in.ServiceId, in.ReplicasNumber)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	return &empty.Empty{}, nil
 }
