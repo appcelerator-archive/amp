@@ -12,7 +12,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.4.0
+    image: appcelerator/elasticsearch-amp:5.4.0-1
     networks:
       - default
     volumes:
