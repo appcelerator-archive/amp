@@ -306,9 +306,56 @@ prepare_amplifier_configuration(){
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" && echo "secret amplifier_yml successfully created" >&2
+  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret amplifier_yml successfully created" >&2
 }
 
+prepare_prometheus_configuration(){
+  local _conf
+  local cid
+  $amps secret ls | grep -q "prometheus_alerts_rules" && return 0
+  _conf="$SECRETSDIR/prometheus_alerts.rules"
+  if [[ ! -f "$_conf" ]]; then
+    mkdir -p "$SECRETSDIR"
+    echo > "$_conf"
+  else
+    echo "using existing configuration for the prometheus_alerts_rules secret" >&2
+  fi
+  # copy the configuration in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp "$_conf" $cid:/secrets/
+  docker kill "$cid" >/dev/null 2>&1
+  $amps secret create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret prometheus_alerts_rules successfully created" >&2
+}
+
+prepare_alertmanager_configuration(){
+  local _conf
+  local cid
+  $amps secret ls | grep -q "alertmanager_yml" && return 0
+  _conf="$SECRETSDIR/alertmanager.yml"
+  if [[ ! -f "$_conf" ]]; then
+    mkdir -p "$SECRETSDIR"
+    cat > "$_conf" << EOF
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alertmanager@example.org'
+route:
+  receiver: none
+receivers:
+- name: 'none'
+  email_configs:
+  - to: 'null@localhost'
+EOF
+  else
+    echo "using existing configuration for the alertmanager_yml secret" >&2
+  fi
+  # copy the configuration in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp "$_conf" $cid:/secrets/
+  docker kill "$cid" >/dev/null 2>&1
+  $amps secret create "alertmanager_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret alertmanager_yml successfully created" >&2
+}
 # pushes certificates in a Docker secret, ready to use by services in stack files
 # for local/dind bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
@@ -338,7 +385,7 @@ prepare_certificates() {
   docker cp "$certfile" $cid:/secrets/$name.pem
   docker kill "$cid" >/dev/null 2>&1
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" && echo "secret certificate_atomiq successfully created" >&2
+  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_atomiq successfully created" >&2
 }
 
 # process the command line options and arguments
@@ -430,7 +477,7 @@ bootstrap_cluster() {
 }
 
 deploy_stacks() {
-  local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
+  local maxwait=300 # should be less than 10 minutes (600s) so not to exceed travis deadline
   local _workercount
 
   if [[ "$(deployment_target)" = "local" ]]; then
@@ -452,6 +499,18 @@ deploy_stacks() {
   echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
   servicescheck $maxwait
   checkexit "amp monitoring stage 2 service replica checks timed out"
+  ok
+
+  prepare_prometheus_configuration
+  checkexit "secret creation for prometheus failed"
+  prepare_alertmanager_configuration
+  checkexit "secret creation for alertmanager failed"
+
+  echo "deploy amp monitoring stack to cluster - stage 3"
+  deploystack ampmon.3.stack.yml amp
+  echo "wait for all amp monitoring stage 3 service replicas to be running ($maxwait sec)"
+  servicescheck $maxwait
+  checkexit "amp monitoring stage 3 service replica checks timed out"
   ok
 
   echo "deploy portal stack to cluster"
