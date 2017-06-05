@@ -29,6 +29,8 @@ readonly localdomainname="local.atomiq.io"
 DEPLOYMENT_TARGET=local
 CID=
 amps=docker
+DESTROY=0
+STATUS=0
 
 # get and optionally set the target of the deployment: local | dind | aws
 deployment_target() {
@@ -75,12 +77,27 @@ cluster_create() {
 # destroy the cluster
 cluster_destroy() {
   local _target
+  local _code=1
+  local _vols
+  set_deployment_variables
   _target="$(deployment_target)"
   case $_target in
   dind|aws)
     bootstrap -t $_target -di $1 ;;
   local)
-    docker stack rm amp ;;
+    docker stack rm amp
+    # wait for containers to be removed
+    SECONDS=0
+    while [[ $_code -ne 0 ]]; do
+      sleep 2
+      docker volume ls -q | grep "^amp_" | xargs docker volume rm 2>/dev/null
+      _code=$?
+      [[ $SECONDS -gt 25 ]] && break
+    done
+    _vols=$(docker volume ls -q | grep "^amp_")
+    [[ -n "$_vols" ]] && echo "docker volumes $_vols has not been removed, you should do it manually"
+    return 0
+    ;;
   esac
 }
 
@@ -92,7 +109,7 @@ cluster_status() {
   local _target
   _target=$(deployment_target)
   case $_target in
-  local) docker node ls &>/dev/null ;;
+  local) docker node ls &>/dev/null >&2 ;;
   dind|aws)
     bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
   esac
@@ -250,6 +267,8 @@ checkexit() {
 }
 
 cleanup() {
+  [[ $DESTROY -eq 1 ]] && exit 0
+  [[ $STATUS -eq 1 ]] && exit 0
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
@@ -390,10 +409,28 @@ prepare_certificates() {
 
 # process the command line options and arguments
 parse_cmd() {
-  while getopts ":w:m:t:l:T:c:r:n:p:g:D:" opt; do
+  while getopts ":w:m:t:l:T:c:r:n:p:g:dsD:" opt; do
     case $opt in
     w|m|t|l) # just pass it to the bootstrap script
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+      ;;
+    s) STATUS=1
+       if [[ -z "$CID" ]]; then
+         CID="$(docker node inspect self -f '{{.ID}}')" 
+         if [[ $? -ne 0 ]]; then
+           echo "you should pass a cluster id as argument" >&2
+           exit 1
+         fi
+       fi
+      ;;
+    d) DESTROY=1
+       if [[ -z "$CID" ]]; then
+         CID="$(docker node inspect self -f '{{.ID}}')" 
+         if [[ $? -ne 0 ]]; then
+           echo "you should pass a cluster id as argument" >&2
+           exit 1
+         fi
+       fi
       ;;
     T) # tag for images to deploy
       export TAG=$OPTARG
@@ -589,6 +626,13 @@ smoke_tests() {
 
 main() {
   parse_cmd $@
+  if [[ $STATUS -eq 1 ]]; then
+    cluster_status $CID
+    return $?
+  fi
+  if [[ $DESTROY -eq 1 ]]; then
+    cluster_destroy $CID && return 0 || return 1
+  fi
   bootstrap_cluster
   deploy_stacks
   smoke_tests
