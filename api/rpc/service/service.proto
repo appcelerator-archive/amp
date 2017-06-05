@@ -13,7 +13,7 @@ service Service {
   }
   rpc ListService (ServiceListRequest) returns (ServiceListReply) {
     option (google.api.http) = {
-      get: "/v1/services"
+      get: "/v1/services/{stack_name}"
     };
   }
   rpc InspectService (ServiceInspectRequest) returns (ServiceInspectReply) {
@@ -23,7 +23,7 @@ service Service {
   }
   rpc ScaleService (ServiceScaleRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put: "/v1/scale/{service_id}"
+      put: "/v1/scale/{service_id}/{replicas_number}"
     };
   }
 }
@@ -45,6 +45,7 @@ message TasksReply {
 }
 
 message ServiceListRequest {
+  string stack_name = 1;
 }
 
 message ServiceListReply {
