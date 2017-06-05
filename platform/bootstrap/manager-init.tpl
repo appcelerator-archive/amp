@@ -70,3 +70,10 @@ fi
   docker swarm join --token {{ SWARM_JOIN_TOKENS.Manager }} {{ SWARM_MANAGER_ADDR }}
 
 {{ end }}
+
+# InfraKit sets labels on the engine, we want them on the node
+nodeid=$(docker info 2>/dev/null| grep NodeID | awk '{print $2}')
+labels="$(echo {{ INFRAKIT_LABELS }} | tr -d '[]')"
+for label in $labels; do
+  docker node update --label-add "$label" $nodeid
+done

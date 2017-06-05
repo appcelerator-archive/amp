@@ -20,7 +20,8 @@ services:
       labels:
         io.amp.role: "infrastructure"
       placement:
-        constraints: [node.role == manager]
+        constraints:
+        - node.labels.amp.type.route == true
     environment:
       CERT_FOLDER: "/run/secrets"
     volumes:

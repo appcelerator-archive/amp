@@ -19,7 +19,7 @@ services:
         io.amp.role: "infrastructure"
       placement:
         constraints:
-        - node.role == ${NODE_ROLE:-worker}
+        - node.labels.amp.type.core == true
     environment:
       SERVICE_PORTS: "3333"
       VIRTUAL_HOST: "http://cloud.*,http://local.*,https://cloud.*,https://local.*"
