@@ -41,10 +41,26 @@ cluster_create() {
   local _clusterid
   local _status
   local _target
+  local _label
+  local _label_prefix="amp.type."
+  local _labels="mq kv search api metrics route core user"
   _target="$(deployment_target)"
   case $_target in
-  local)
-    docker node inspect self -f '{{.ID}}' 2>/dev/null || echo "unset"
+  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
+    docker node ls &>/dev/null
+    if [[ $? -ne 0 ]]; then
+      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null || return 1
+    fi
+    _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
+    docker network ls | grep -q ampnet
+    if [[ $? -ne 0 ]]; then
+      docker network create --attachable -d overlay ampnet >/dev/null || return 1
+    fi
+    # add all service labels for orchestration
+    for _label in $_labels; do
+      docker node update --label-add "${_label_prefix}${_label}=true" "$_clusterid" >/dev/null
+    done
+    echo $_clusterid
     ;;
   dind|aws)
     # async
@@ -76,7 +92,7 @@ cluster_status() {
   local _target
   _target=$(deployment_target)
   case $_target in
-  local) ;;
+  local) docker node ls &>/dev/null ;;
   dind|aws)
     bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
   esac
@@ -94,6 +110,32 @@ cluster_nodecount() {
     ;;
   dind|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | wc -l)
+    if [[ $_count -gt 0 ]]; then
+      echo $_count
+      return 0
+    fi
+    echo "node count failed" >&2
+    bootstrap -t $_target -l $_clusterid >&2
+    return 1
+    ;;
+  *)
+    echo "unknown deployment target ($_target)" >&2
+    return 1 ;;
+  esac
+}
+
+# worker count in the cluster
+cluster_workercount() {
+  local _clusterid=$1
+  local _target
+  local _count
+  _target=$(deployment_target)
+  case $_target in
+  local) # single manager node
+    echo 0
+    ;;
+  dind|aws)
+    _count=$(bootstrap -t $_target -l $_clusterid | grep -c worker)
     if [[ $_count -gt 0 ]]; then
       echo $_count
       return 0
@@ -206,7 +248,7 @@ checkexit() {
 cleanup() {
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -d $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && docker stack rm amp
 }
 
@@ -353,56 +395,43 @@ bootstrap_cluster() {
 
   set_deployment_variables
 
-  echo "wait for cluster"
-  case $(deployment_target) in
-  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
-    docker node ls &>/dev/null
-    if [[ $? -ne 0 ]]; then
-      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null && CID=$(docker node inspect self -f '{{.ID}}')
-    fi
-    docker network ls | grep ampnet &>/dev/null
-    if [[ $? -ne 0 ]]; then
-      docker network create --attachable -d overlay ampnet
-    fi
-    ;;
-  *)
+  if [[ "$(deployment_target)" != "local" ]]; then
+    echo "wait for cluster"
     clustercheck -t 150 -p $(deployment_target) $CID
-    ;;
-  esac
-  checkexit "cluster timed out"
-  ok
+    checkexit "cluster timed out"
+    ok
+  fi
 
   typeset -i nodecount
   nodecount=$(cluster_nodecount $CID)
   checkexit "failed to count cluster nodes"
   echo "cluster size is $nodecount"
 
-  if [[ $(deployment_target) != "local" ]]; then
-    echo "wait for swarm mode"
-    swarmcheck -t 300 -c $nodecount
-    checkexit "swarm mode timed out"
+  echo "wait for swarm mode"
+  swarmcheck -t 300 -c $nodecount
+  checkexit "swarm mode timed out"
+  ok
+
+  if [[ -n "$registryurl" ]]; then
+    echo "wait for registry"
+    curlcheck "${registryurl}/v2/" 200 180
+    checkexit "registry timed out"
     ok
+  fi
 
-    if [[ -n "$registryurl" ]]; then
-      echo "wait for registry"
-      curlcheck "${registryurl}/v2/" 200 180
-      checkexit "registry timed out"
-      ok
-    fi
-
-    if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
-      echo "push images to cluster"
-      for image in amplifier amplifier-gateway ampbeat agent portal; do
-        pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
-      done
-    else
-      echo "image push to cluster is ignored (tag=${TAG:-latest})"
-    fi
+  if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
+    echo "push images to cluster"
+    for image in amplifier amplifier-gateway ampbeat agent portal; do
+      pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
+    done
+  else
+    echo "image push to cluster is ignored (tag=${TAG:-latest})"
   fi
 }
 
 deploy_stacks() {
   local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
+  local _workercount
 
   if [[ "$(deployment_target)" = "local" ]]; then
     # force all placement constraints to deploy to a single manager
@@ -410,7 +439,8 @@ deploy_stacks() {
   fi
 
   echo "deploy amp monitoring stack to cluster - stage 1"
-  deploystack ampmon.1.stack.yml amp
+  _workercount=$(cluster_workercount $CID) || return 1
+  [[ $_workercount -le 9 ]] && deploystack ampmon-single.1.stack.yml amp || deploystack ampmon-cluster.1.stack.yml amp
   echo "wait for all amp monitoring stage 1 stack service replicas to be running"
 
   servicescheck $maxwait
