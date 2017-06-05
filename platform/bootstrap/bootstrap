@@ -450,7 +450,7 @@ _destroy_groups() {
 _kill_ikt() {
   local _v
   # no point to do it on remote cluster, it's probably HA
-  [[ "x$target" != "xlocal" ]] && return 0
+  [[ "x$target" != "xlocal" ]] && echo "$target deployment, won't kill InfraKit" && return 0
   _v=$(docker inspect infrakit | grep ':/infrakit",' | sed 's/.*"\([^"]*\):.*/\1/')
   docker container rm -f infrakit >/dev/null 2>&1 && echo "infrakit has been destroyed" >&2
   [[ -n "$_v" ]] && docker ${REMOTE_HOST:+-H $REMOTE_HOST} volume rm "$_v" >&2 2>/dev/null
@@ -910,9 +910,11 @@ while getopts ":t:p:e:m:w:i:l:s:hfdb:D:" opt; do
           echo "valid providers are $VALID_PROVIDERS" >&2
           exit 1
       fi
-      default_provider=0
-      # set the target if it's not already set, default is the name of the provider
-      [[ "$target" = "local" ]] && target=$provider
+      if [[ "$provider" != "docker" ]]; then
+        default_provider=0
+        # set the target if it's not already set, default is the name of the provider
+        [[ "$target" = "local" ]] && target=$provider
+      fi
       ;;
   l)
       list_request=$OPTARG

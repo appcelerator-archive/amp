@@ -190,6 +190,7 @@ EOF
 # sets hosts for Docker remote API and for the Docker registry
 # depending on the deployment target
 set_deployment_variables(){
+  local _manager
   case $(deployment_target) in
   local)
     stacks_path="$STACKSDIR"
@@ -203,7 +204,8 @@ set_deployment_variables(){
     registryhost=127.0.0.1
     create_amp_stacks_volume
     create_amp_secrets_volume
-    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-secrets:/secrets -v amp-stacks:/stacks docker --host=$dockerhost"
+    _manager=$(docker exec m1 docker node inspect self -f '{{.Status.Addr}}')
+    amps="docker run -t --rm --network=hostnet -e MANAGER_HOST=$_manager -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-secrets:/secrets -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     secrets_path=/secrets
     domainname=$localdomainname
@@ -217,19 +219,21 @@ set_deployment_variables(){
     echo "$CID" | grep -q "/" && _clusterid="$(echo $CID | awk -F/ '{print $2}')"
     # todo: use a secured remote API
     dockerhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`PublicManagerHost`].OutputValue' --output text) || exit 1
+    _manager=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`PrivateManagerHost`].OutputValue' --output text) || exit 1
     # if the DNS name point to several engines, we need a single one to avoid strange CLI issues (run = 2 calls, create + start)
     _publicip=$(docker -H "$dockerhost" node inspect self -f '{{.Spec.Labels.PublicIP}}')
-    [[ -n "$_publicip" && "$_publicip" != "<no value>" ]] && dockerhost=$_publicip
+    [[ "$_publicip" = "<no value>" ]] && _publicip=""
     registryhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`MirrorRegistries`].OutputValue' --output text) || exit 1
     # if a single registry is defined on this cluster, we'll push images on it
     # else, we'll skip the image push
     echo "$registryhost" | grep -q " " && registryhost=""
-    amps="docker -H $dockerhost"
+    amps="docker -H ${_publicip:-$dockerhost}"
     stacks_path=$STACKSDIR
     secrets_path=$SECRETSDIR
     domainname=$DOMAIN
     # variable used in sub scripts
-    export DOCKERHOST=$dockerhost
+    export MANAGER_HOST=$_manager
+    export DOCKERHOST=${_publicip:-$dockerhost}
     ;;
   esac
 
