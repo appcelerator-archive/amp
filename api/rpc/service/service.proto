@@ -3,6 +3,7 @@ syntax = "proto3";
 package service;
 
 import "google/api/annotations.proto";
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 
 service Service {
   rpc Tasks (TasksRequest) returns (TasksReply) {
@@ -12,12 +13,17 @@ service Service {
   }
   rpc ListService (ServiceListRequest) returns (ServiceListReply) {
     option (google.api.http) = {
-      get: "/v1/services/{stack_name}"
+      get: "/v1/services"
     };
   }
   rpc InspectService (ServiceInspectRequest) returns (ServiceInspectReply) {
     option (google.api.http) = {
       get: "/v1/inspect/{service_id}"
+    };
+  }
+  rpc ScaleService (ServiceScaleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/scale/{service_id}"
     };
   }
 }
@@ -39,7 +45,6 @@ message TasksReply {
 }
 
 message ServiceListRequest {
-  string stack_name = 1;
 }
 
 message ServiceListReply {
@@ -67,4 +72,9 @@ message ServiceInspectRequest {
 
 message ServiceInspectReply {
   string service_entity = 1;
+}
+
+message ServiceScaleRequest {
+  string service_id = 1;
+  uint64 replicas_number = 2;
 }

@@ -3,6 +3,7 @@ package docker
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	//"log"
 	"os"
 	"strings"
@@ -391,6 +392,29 @@ func (d *Docker) ServiceInspect(ctx context.Context, service string) (swarm.Serv
 		return swarm.Service{}, err
 	}
 	return serviceEntity, nil
+}
+
+// ServiceScale scales a service
+func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64) error {
+	serviceEntity, _, err := d.client.ServiceInspectWithRaw(ctx, service, types.ServiceInspectOptions{InsertDefaults: true})
+	if err != nil {
+		return err
+	}
+	serviceMode := &serviceEntity.Spec.Mode
+	if serviceMode.Replicated == nil {
+		return fmt.Errorf("scale can only be used with replicated mode")
+	}
+	serviceMode.Replicated.Replicas = &scale
+
+	response, err := d.client.ServiceUpdate(ctx, serviceEntity.ID, serviceEntity.Version, serviceEntity.Spec, types.ServiceUpdateOptions{})
+	if err != nil {
+		return err
+	}
+	for _, warning := range response.Warnings {
+		log.Println(warning)
+	}
+	log.Printf("service %s scaled to %d\n", service, scale)
+	return nil
 }
 
 // NodeInspect inspects a node

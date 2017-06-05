@@ -39,7 +39,31 @@
         ]
       }
     },
-    "/v1/services/{stack_name}": {
+    "/v1/scale/{service_id}": {
+      "put": {
+        "operationId": "ScaleService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "service_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Service"
+        ]
+      }
+    },
+    "/v1/services": {
       "get": {
         "operationId": "ListService",
         "responses": {
@@ -50,14 +74,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "stack_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
         "tags": [
           "Service"
         ]
@@ -89,6 +105,11 @@
     }
   },
   "definitions": {
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    },
     "serviceServiceEntity": {
       "type": "object",
       "properties": {
@@ -156,10 +177,17 @@
       }
     },
     "serviceServiceListRequest": {
+      "type": "object"
+    },
+    "serviceServiceScaleRequest": {
       "type": "object",
       "properties": {
-        "stack_name": {
+        "service_id": {
           "type": "string"
+        },
+        "replicas_number": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
