@@ -5,7 +5,7 @@
   [style.left.px]='dashboardService.editorGraph.x'>
   <div class="panel panel-default" style="margin:0px">
     <div class="panel-body" style="padding:10px">
-      <div style="color:blue">Title</div>
+      <div style="color:blue">Title {{dashboardService.selected.id}}</div>
 
         <form class="form-horizontal">
           <div class="col-sm-12" style="padding:0px">
@@ -128,7 +128,7 @@
           </div>
 
           <div class="form-inline" style="padding:0px">
-            <label *ngIf="isVisible('legend')" style="margin-top:5px;margin-left:20px">
+            <label *ngIf="isVisible('legend')" style="margin-top:5px;margin-left:0px">
             <input
               style="height:12px"
               type="checkbox"
@@ -137,6 +137,21 @@
               #transparentLegend
               id="transparentLegend"
               (click)="dashboardService.setTransparentLegend(transparentLegend.checked)"> Transparent legend</label>
+          </div>
+
+          <div *ngIf="isVisible('legend')" class="form-group" style="margin-left:0px">
+            <div class="btn-group" role="group" aria-label="...">
+              <button type="button"
+                class="btn btn-default btn-sm"
+                (click)="dashboardService.linkLegendToGraph()">
+                Attach graph
+              </button>
+              <button type="button"
+                class="btn btn-default btn-sm"
+                (click)="dashboardService.unlinkLegend()">
+                Detach
+              </button>
+            </div>
           </div>
 
           <div class="form-inline" style="padding:0px">

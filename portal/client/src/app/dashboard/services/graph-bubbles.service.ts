@@ -132,7 +132,7 @@ export class GraphBubbles {
         .attr('class', 'circle')
         .attr('r', s)
         .attr("transform", "translate(" + [x, y] + ")")
-        .style('fill', ethis.dashboardService.getObjectColor(graph.object, dat.group))
+        .style('fill', ethis.dashboardService.getObjectColor(graph, dat.group))
         .style("stroke", 'black')
     }
 

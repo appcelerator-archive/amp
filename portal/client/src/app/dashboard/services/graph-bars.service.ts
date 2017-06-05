@@ -134,7 +134,7 @@ export class GraphBars {
       .attr("width", ethis.xScale.bandwidth())
       .attr("y", (d) => { return ethis.yScale(d.valueUnit)+dy; })
       .attr("height", (d) => { return ethis.height - ethis.yScale(d.valueUnit) })
-      .attr("fill", function(d,i){ return ethis.dashboardService.getObjectColor(graph.object, d.group) })
+      .attr("fill", function(d,i){ return ethis.dashboardService.getObjectColor(graph, d.group) })
 
     if (graph.title) {
       let xt = -5

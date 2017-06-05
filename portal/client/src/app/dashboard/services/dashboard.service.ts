@@ -12,6 +12,7 @@ import { GraphHistoricAnswer } from '../../models/graph-historic-answer.model'
 import { ColorsService } from './colors.service'
 import * as d3 from 'd3';
 
+
 @Injectable()
 export class DashboardService {
     graphs : Graph[] = []
@@ -26,7 +27,6 @@ export class DashboardService {
     h0 = 150
     refresh : number = 30
     period : string = 'now-2m'
-    timer : any
     requestMap = {}
     nbGraph = 1
     public innerStats : DashboardInnerStats = new DashboardInnerStats()
@@ -36,6 +36,11 @@ export class DashboardService {
     public editorGraph : Graph = new Graph('graph1', this.x0, this.y0, this.w0, this.h0, 'editor','')
     public notSelected : Graph = new Graph('', 0, 0, 0, 0, "", "")
     public selected : Graph = this.notSelected
+    public isVisible = false
+    public ModeSetting = "setting"
+    public ModeLinkLegendToGraph = "linkLegendToGraph"
+    public clickMode = this.ModeSetting
+
 
   constructor(
     private httpService : HttpService,
@@ -74,26 +79,21 @@ export class DashboardService {
       this.unit['io-write'] = 'bytes'
       this.unit['io-read'] = 'bytes'
       this.cancelRequests()
-      this.timer = setInterval(() => this.executeRequests(), this.refresh * 1000)
+      this.menuService.setCurrentTimer(setInterval(() => {
+          this.redisplay()
+        }, this.refresh * 1000)
+      )
       this.menuService.onRefreshClicked.subscribe(
         () => {
-          /*
-          for (let key in this.graphObjectColorMap) {
-            this.graphObjectColorMap[key].clear()
+          if (this.isVisible) {
+            this.redisplay()
           }
-          */
-          this.colorsService.refresh()
-          this.executeRequests()
-          //this.onNewData.next()
         }
       )
     }
 
   cancelRequests() {
-    if (this.timer) {
-      //console.log("clear interval")
-      clearInterval(this.timer);
-    }
+    this.menuService.clearCurrentTimer()
   }
 
   addGraph(type : string, offTop : number, offLeft : number) {
@@ -184,8 +184,8 @@ export class DashboardService {
     return 'top'+this.selected.topNumber
   }
 
-  getObjectColor(object : string, name : string) : string {
-    return this.colorsService.getColor(object, name, "")
+  getObjectColor(graph : Graph, name : string) : string {
+    return this.colorsService.getColor(graph, name)
   }
 
   computeUnit(field : string, val : number, refUnit: string) : {val: number, sval: string, unit: string} {
@@ -259,9 +259,14 @@ export class DashboardService {
   setRefreshPeriod(refresh : number) {
     this.refresh = refresh;
     this.cancelRequests()
-    this.timer = setInterval(() => {
-      this.menuService.onRefreshClicked.next()},
-      this.refresh * 1000)
+    this.menuService.setCurrentTimer(setInterval(() => {
+      this.redisplay()
+    },this.refresh * 1000))
+  }
+
+  redisplay() {
+    this.colorsService.refresh()
+    this.executeRequests()
   }
 
   setPeriod(period : string) {
@@ -292,8 +297,7 @@ export class DashboardService {
 
   setTop(top : number) {
       this.selected.topNumber = top
-      this.addRequest(this.selected)
-      this.onNewData.next()
+      this.redisplay()
   }
 
   setTitle(title : string) {
@@ -402,6 +406,17 @@ export class DashboardService {
     this.selected.removeLocalLegend = val
     this.onNewData.next()
   }
+
+  linkLegendToGraph() {
+    this.clickMode = this.ModeLinkLegendToGraph
+  }
+
+  unlinkLegend() {
+    this.selected.legendGraphId = undefined
+    this.clickMode = this.ModeSetting
+    this.onNewData.next()
+  }
+
 
   getTextWidth(text, fontSize, fontFace) : number {
     var a = document.createElement('canvas');
