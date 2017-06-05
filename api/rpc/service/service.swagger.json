@@ -39,7 +39,7 @@
         ]
       }
     },
-    "/v1/services": {
+    "/v1/services/{stack_name}": {
       "get": {
         "operationId": "ListService",
         "responses": {
@@ -50,6 +50,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "stack_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Service"
         ]
@@ -148,7 +156,12 @@
       }
     },
     "serviceServiceListRequest": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "stack_name": {
+          "type": "string"
+        }
+      }
     },
     "serviceTask": {
       "type": "object",

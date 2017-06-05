@@ -219,7 +219,7 @@ export class HttpService {
   }
 
   services(stackName : string) {
-    return this.httpGet("/services")//+stackName+"/services")
+    return this.httpGet("/services/"+stackName)
     .map((res : Response) => {
       const data = res.json()
       console.log(data)
@@ -228,7 +228,7 @@ export class HttpService {
         for (let item of data.entries) {
           if (item.service && item.service.id) {
             let serv = new DockerService(
-              item.service.id,
+              this.shortcutId(item.service.id),
               item.service.name,
               item.service.mode,
               item.service.image,

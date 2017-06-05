@@ -19,10 +19,11 @@ type Server struct {
 
 // Service constants
 const (
-	RoleLabel      = "io.amp.role"
-	LatestTag      = "latest"
-	GlobalMode     = "global"
-	ReplicatedMode = "replicated"
+	RoleLabel          = "io.amp.role"
+	LatestTag          = "latest"
+	GlobalMode         = "global"
+	ReplicatedMode     = "replicated"
+	StackNameLabelName = "com.docker.stack.namespace"
 )
 
 // Tasks implements service.Containers
@@ -58,34 +59,35 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 	reply := &ServiceListReply{}
 	for _, service := range serviceList {
 		if _, ok := service.Spec.Labels[RoleLabel]; !ok {
-			entity := &ServiceEntity{
-				Id:   service.ID,
-				Name: service.Spec.Name,
+			if in.StackName == "" || service.Spec.Labels[StackNameLabelName] == in.StackName {
+				entity := &ServiceEntity{
+					Id:   service.ID,
+					Name: service.Spec.Name,
+				}
+				if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, "@") {
+					imageTag := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, "@")[0]
+					it := strings.Split(imageTag, ":")
+					entity.Image = it[0]
+					entity.Tag = it[1]
+				} else if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, ":") {
+					it := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, ":")
+					entity.Image = it[0]
+					entity.Tag = it[1]
+				} else {
+					entity.Image = service.Spec.TaskTemplate.ContainerSpec.Image
+					entity.Tag = LatestTag
+				}
+				if service.Spec.Mode.Global != nil {
+					entity.Mode = GlobalMode
+				} else {
+					entity.Mode = ReplicatedMode
+				}
+				response, err := s.serviceStatusReplicas(ctx, entity)
+				if err != nil {
+					return nil, grpc.Errorf(codes.Internal, "%v", err)
+				}
+				reply.Entries = append(reply.Entries, response)
 			}
-			if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, "@") {
-				imageTag := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, "@")[0]
-				it := strings.Split(imageTag, ":")
-				entity.Image = it[0]
-				entity.Tag = it[1]
-			} else if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, ":") {
-				it := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, ":")
-				entity.Image = it[0]
-				entity.Tag = it[1]
-			} else {
-				entity.Image = service.Spec.TaskTemplate.ContainerSpec.Image
-				entity.Tag = LatestTag
-			}
-			if service.Spec.Mode.Global != nil {
-				entity.Mode = GlobalMode
-			} else {
-				entity.Mode = ReplicatedMode
-			}
-			response, err := s.serviceStatusReplicas(ctx, entity)
-			if err != nil {
-				return nil, grpc.Errorf(codes.Internal, "%v", err)
-			}
-			reply.Entries = append(reply.Entries, response)
-
 		}
 	}
 	return reply, nil

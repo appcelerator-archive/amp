@@ -53,12 +53,21 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
           this.dockerServicesService.loadServices(true)
         }
       )
-        this.dockerServicesService.loadServices(false)
+      this.dockerServicesService.loadServices(false)
     })
+    this.timer = setInterval(
+      () => {
+        this.dockerServicesService.loadServices(true)
+      },
+      3000
+    )
   }
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
   }
 
   getColor(stack : DockerStack) : string {
@@ -105,6 +114,8 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
   }
 
   scale(number : string) {
+    alert("Scale non implemented yet server side")
+    /*
     let num = +number
     this.httpService.serviceScale(this.dockerServicesService.currentService.id, num).subscribe(
       () => {
@@ -117,6 +128,7 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
         this.message = error.errror
       }
     )
+    */
   }
 
 }
