@@ -131,7 +131,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         let error = err.json()
-        this.message = error.error
+        this.setMessage(error.error)
       }
     )
   }
@@ -155,7 +155,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         let error = err.json()
-        this.message = error.error
+        this.setMessage(error.error)
       }
     )
   }
@@ -170,7 +170,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         let error = err.json()
-        this.message = error.error
+        this.setMessage(error.error)
       }
     )
   }
@@ -186,7 +186,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (err) => {
         console.log(err)
         let error = err.json()
-        this.message = error.error
+        this.setMessage(error.error)
         let dashboard = new Dashboard("", "default", this.dashboardService.defaultDefaultDashboard())
         this.currentDashboard = dashboard
         this.dialogHidden = true
@@ -203,8 +203,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         console.log(err)
+        let error = err.json()
+        this.setMessage(error.error)
       }
     )
+  }
+
+  setMessage(mes : string) {
+    this.message = mes
+    setTimeout(() => { this.message=""}, 3000)
   }
 
 }

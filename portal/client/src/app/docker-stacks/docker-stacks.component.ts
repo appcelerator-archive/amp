@@ -48,6 +48,12 @@ export class DockerStacksComponent implements OnInit {
       }
     )
     this.dockerStacksService.loadStacks(false)
+    this.timer = setInterval(
+      () => {
+        this.dockerStacksService.loadStacks(true)
+      },
+      3000
+    )
   }
 
   ngOnDestroy() {

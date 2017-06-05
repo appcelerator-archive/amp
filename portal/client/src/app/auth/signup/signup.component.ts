@@ -41,6 +41,7 @@ export class SignupComponent implements OnInit {
       let previousPath = this.menuService.getPreviousPath()
       console.log("previous path: "+previousPath)
       if (this.internal) {
+        this.usersService.loadUsers(true)
         this.menuService.navigate(['/amp', 'users'])
       } else {
         if (previousPath.indexOf("signup")>=0) {

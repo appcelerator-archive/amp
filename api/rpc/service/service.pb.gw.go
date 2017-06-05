@@ -58,6 +58,24 @@ func request_Service_ListService_0(ctx context.Context, marshaler runtime.Marsha
 	var protoReq ServiceListRequest
 	var metadata runtime.ServerMetadata
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["stack_name"]
+	if !ok {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "stack_name")
+	}
+
+	protoReq.StackName, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, err
+	}
+
 	msg, err := client.ListService(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -210,7 +228,7 @@ func RegisterServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *gr
 var (
 	pattern_Service_Tasks_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "tasks", "service_id"}, ""))
 
-	pattern_Service_ListService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "services"}, ""))
+	pattern_Service_ListService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "services", "stack_name"}, ""))
 
 	pattern_Service_InspectService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "inspect", "service_id"}, ""))
 )

@@ -52,10 +52,19 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
       )
       this.dockerContainersService.loadContainers(false)
     })
+    this.timer = setInterval(
+      () => {
+      this.dockerContainersService.loadContainers(true)
+      },
+      3000
+    )
   }
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
   }
 
   getColor(cont : DockerContainer) : string {
