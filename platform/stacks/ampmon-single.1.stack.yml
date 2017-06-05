@@ -1,16 +1,22 @@
-version: "3.2"
+version: "3.1"
 
 networks:
   default:
     external:
       name: ampnet
 
+volumes:
+  elasticsearch-data:
+  etcd-data:
+
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.3.2
+    image: appcelerator/elasticsearch-amp:5.4.0
     networks:
       - default
+    volumes:
+      - elasticsearch-data:/opt/elasticsearch-5.4.0/data
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -25,7 +31,7 @@ services:
         - node.labels.amp.type.search == true
 
   nats:
-    image: appcelerator/amp-nats-streaming:v0.3.8
+    image: appcelerator/amp-nats-streaming:v0.4.0
     networks:
       default:
         aliases:
@@ -42,11 +48,13 @@ services:
         - node.labels.amp.type.mq == true
 
   etcd:
-    image: appcelerator/etcd:3.1.6
+    image: appcelerator/etcd:3.1.8
     networks:
       default:
         aliases:
           - etcd
+    volumes:
+      - etcd-data:/data
     environment:
       SERVICE_NAME: "etcd"
       MIN_SEEDS_COUNT: 1
