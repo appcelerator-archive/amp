@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type AMPConfig struct {
@@ -44,7 +45,11 @@ func showConfig(c cli.Interface) error {
 	if err := tmpl.Execute(&doc, conf); err != nil {
 		return fmt.Errorf("template execution error: %v\n", err)
 	}
-
+	if viper.ConfigFileUsed() != "" {
+		c.Console().Println("Configuration file:", viper.ConfigFileUsed())
+	} else {
+		c.Console().Println("Configuration file: none")
+	}
 	c.Console().Println(doc.String())
 	return nil
 }
