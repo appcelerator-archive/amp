@@ -12,25 +12,27 @@ VERSION=$1
 # cd to the current directory so the script can be run from anywhere.
 cd `dirname $0`
 
+cleanup(){
+  [[ -n "$TEMP" && -d "$TEMP" ]] && rm -rf "$TEMP"
+  docker rm -f nats-streaming-builder
+  docker rmi nats-streaming-builder
+}
+
+trap cleanup EXIT
+
 echo "Fetching and building nats-streaming-server $VERSION..."
 
 # Create a tmp build directory.
-TEMP=/tmp/nats-streaming.build
-mkdir $TEMP
+TEMP=$(mktemp -d)
 
 git clone -b $VERSION https://github.com/nats-io/nats-streaming-server $TEMP
 
 docker build -t nats-streaming-builder $TEMP
 
 # Create a dummy nats streaming builder container so we can run a cp against it.
-ID=$(docker create nats-streaming-builder)
+docker create --name nats-streaming-builder nats-streaming-builder
 
 # Update the local binary.
-docker cp $ID:/go/bin/nats-streaming-server .
+docker cp nats-streaming-builder:/go/bin/nats-streaming-server .
 
-# Cleanup.
-rm -fr $TEMP
-docker rm -f $ID
-docker rmi nats-streaming-builder
-
-echo "Done."
+echo "Done"

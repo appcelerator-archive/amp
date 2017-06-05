@@ -1,0 +1,15 @@
+version: "2"
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+
+  grafana:
+    image: appcelerator/grafana-amp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+     - "30000:3000"
+    environment:
+      GRAFANA_PASS: AxwayPassword*
