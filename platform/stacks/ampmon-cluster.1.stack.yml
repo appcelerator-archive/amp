@@ -5,9 +5,6 @@ networks:
     external:
       name: ampnet
 
-volumes:
-  prometheus:
-
 services:
 
   elasticsearch:
@@ -68,23 +65,3 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.kv == true
-
-  prometheus:
-    image: prom/prometheus
-    networks:
-      default:
-        aliases:
-          - prometheus
-    volumes:
-      - prometheus:/etc/prometheus
-    ports:
-      - target: 9090
-        published: 9090
-    deploy:
-      mode: replicated
-      replicas: 1
-      labels:
-        io.amp.role: "infrastructure"
-      placement:
-        constraints:
-        - node.labels.amp.type.metrics == true
