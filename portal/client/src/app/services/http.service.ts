@@ -269,8 +269,8 @@ export class HttpService {
   }
 
   serviceScale(serviceId : string, replicas : number) {
-    return this.httpPut("/services/"+serviceId+"/scale/"+replicas,
-    { service_id: serviceId, replicas: replicas})
+    return this.httpPut("/scale/"+serviceId+"/"+replicas,
+    { service_id: serviceId, replicas_number: replicas})
   }
 
   organizationRessources() {
