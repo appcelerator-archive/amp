@@ -5,17 +5,22 @@ import (
 	"log"
 	"strings"
 
+	"github.com/appcelerator/amp/data/accounts"
+	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement ServiceServer
 type Server struct {
-	Docker *docker.Docker
+	Accounts accounts.Interface
+	Docker   *docker.Docker
+	Stacks   stacks.Interface
 }
 
 // Service constants
@@ -116,8 +121,26 @@ func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) 
 // ScaleService scales a service
 func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*empty.Empty, error) {
 	log.Println("[service] Scale", in.ServiceId)
-	err := s.Docker.ServiceScale(ctx, in.ServiceId, in.ReplicasNumber)
+	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
 	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	stackName := serviceEntity.Spec.Labels[StackNameLabelName]
+
+	stack, dockerErr := s.Stacks.GetStackByFragmentOrName(ctx, stackName)
+	if dockerErr != nil {
+		return nil, grpc.Errorf(codes.Internal, "%v", err)
+	}
+	if stack == nil {
+		return nil, stacks.NotFound
+	}
+
+	// Check authorization
+	if !s.Accounts.IsAuthorized(ctx, stack.Owner, accounts.UpdateAction, accounts.StackRN, stack.Id) {
+		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
+	}
+
+	if err := s.Docker.ServiceScale(ctx, in.ServiceId, in.ReplicasNumber); err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	return &empty.Empty{}, nil

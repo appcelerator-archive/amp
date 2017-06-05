@@ -174,7 +174,9 @@ func registerClusterServer(amp *Amplifier, s *grpc.Server) {
 
 func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 	service.RegisterServiceServer(s, &service.Server{
-		Docker: amp.docker,
+		Accounts: amp.accounts,
+		Docker:   amp.docker,
+		Stacks:   amp.stacks,
 	})
 }
 
