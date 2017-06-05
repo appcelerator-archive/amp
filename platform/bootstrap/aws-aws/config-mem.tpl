@@ -37,7 +37,7 @@
                 "Properties": {
                   "Init": [
                     "#!/bin/bash",
-                    "apt-get install -y awscli jq sysstat iotop",
+                    "apt-get update && apt-get install -y awscli jq sysstat iotop",
                     "sysctl -w vm.max_map_count=262144",
                     "echo 'vm.max_map_count = 262144' > /etc/sysctl.d/99-amp.conf"
                   ]
