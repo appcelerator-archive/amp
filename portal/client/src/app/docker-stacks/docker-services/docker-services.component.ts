@@ -114,8 +114,6 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
   }
 
   scale(number : string) {
-    alert("Scale non implemented yet server side")
-    /*
     let num = +number
     this.httpService.serviceScale(this.dockerServicesService.currentService.id, num).subscribe(
       () => {
@@ -128,7 +126,6 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
         this.message = error.errror
       }
     )
-    */
   }
 
 }
