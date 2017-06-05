@@ -53,6 +53,9 @@ services:
     volumes:
       - prometheus-data:/prometheus
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      SERVICE_PORTS: 9090
+      VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
     ports:
       - "9090:9090"
     deploy:
