@@ -5,7 +5,7 @@ import (
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/docker/docker/pkg/stringid"
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
 	"golang.org/x/net/context"
 )
 
