@@ -110,7 +110,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		}
 
 		// Send the verification email
-		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
+		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, in.Url); err != nil {
 			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
 				return nil, convertError(fmt.Errorf("Delete user error [%v] comming after SendAccountVerificationEmail error [%v]", errd, err))
 			}

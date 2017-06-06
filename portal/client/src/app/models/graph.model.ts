@@ -36,6 +36,7 @@ export class Graph {
   public percentAreas: boolean
   public legendNames: string[]
   public legendColors: string[]
+  public legendGraphId: string
   public transparentLegend: boolean
   public removeLocalLegend: boolean
   public roundedBox : boolean

@@ -25,7 +25,6 @@ export class MetricsService {
   type = ""
   ref = ""
   clickPossible : true
-  timer : any
 
   constructor(
     private httpService : HttpService,
@@ -38,14 +37,11 @@ export class MetricsService {
     }
     this.updateHistoricData()
     this.cancelRequests()
-    this.timer = setInterval(() => this.updateHistoricData(), period * 1000)
+    this.menuService.setCurrentTimer(setInterval(() => this.updateHistoricData(), period * 1000))
   }
 
   cancelRequests() {
-    if (this.timer) {
-      console.log("clear interval")
-      clearInterval(this.timer);
-    }
+    this.menuService.clearCurrentTimer()
   }
 
   getColor(index : number) {
@@ -158,8 +154,8 @@ export class MetricsService {
 
   setRefreshPeriod(period :string) {
     this.periodRefresh = parseInt(period)
-    clearInterval(this.timer)
-    this.timer = setInterval(() => this.updateHistoricData(), parseInt(period) * 1000)
+    this.menuService.clearCurrentTimer()
+    this.menuService.setCurrentTimer(setInterval(() => this.updateHistoricData(), parseInt(period) * 1000))
   }
 
   toggleLine(name: string) {

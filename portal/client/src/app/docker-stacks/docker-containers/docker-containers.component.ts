@@ -17,7 +17,6 @@ import { MetricsService } from '../../metrics/services/metrics.service';
 })
 export class DockerContainersComponent implements OnInit, OnDestroy {
   routeSub : any
-  timer : any
   currentContainer : DockerContainer = new DockerContainer("", "", "", "", "")
 
 
@@ -52,19 +51,17 @@ export class DockerContainersComponent implements OnInit, OnDestroy {
       )
       this.dockerContainersService.loadContainers(false)
     })
-    this.timer = setInterval(
+    this.menuService.setCurrentTimer(setInterval(
       () => {
       this.dockerContainersService.loadContainers(true)
       },
       3000
-    )
+    ))
   }
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
+    this.menuService.clearCurrentTimer()
   }
 
   getColor(cont : DockerContainer) : string {

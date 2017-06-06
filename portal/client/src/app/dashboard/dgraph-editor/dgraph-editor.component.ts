@@ -14,6 +14,7 @@ export class DGraphEditorComponent implements OnInit, OnDestroy {
   @Input() public graph : Graph;
   all="[centertitle][request][setting][top][histoperiod][bubble][areas][alert]"
   visibility : { [name:string]: string; } = {}
+  messageLegend = ""
 
   constructor(
     public dashboardService : DashboardService) {

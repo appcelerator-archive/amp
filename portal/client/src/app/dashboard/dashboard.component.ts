@@ -30,6 +30,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private noDashboard = new Dashboard("", "", "")
   public currentDashboard : Dashboard = this.noDashboard
   public selected : Dashboard = this.noDashboard
+  public messageError = ""
   public message = ""
   public dialogx = 0
   public dialogy = 0
@@ -47,6 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.dashboardService.isVisible = true
     this.menuService.setItemMenu('dashboard', 'View')
     this.offsetTop0 = this.container.nativeElement.getBoundingClientRect().top
     this.offsetLeft0 = this.container.nativeElement.getBoundingClientRect().left
@@ -67,6 +69,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.dashboardService.isVisible = false
     this.dashboardService.cancelRequests()
   }
 
@@ -155,7 +158,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         let error = err.json()
-        this.setMessage(error.error)
+        this.message=error.error
       }
     )
   }
@@ -170,7 +173,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       (err) => {
         let error = err.json()
-        this.setMessage(error.error)
+        this.message = error.error
       }
     )
   }
@@ -186,7 +189,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       (err) => {
         console.log(err)
         let error = err.json()
-        this.setMessage(error.error)
+        this.message = error.error
         let dashboard = new Dashboard("", "default", this.dashboardService.defaultDefaultDashboard())
         this.currentDashboard = dashboard
         this.dialogHidden = true
@@ -210,8 +213,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setMessage(mes : string) {
-    this.message = mes
-    setTimeout(() => { this.message=""}, 3000)
+    this.messageError = mes
+    setTimeout(() => { this.messageError=""}, 3000)
   }
 
 }

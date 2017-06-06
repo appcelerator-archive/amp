@@ -36,6 +36,7 @@ export class DGraphComponent implements OnInit, OnDestroy {
   resizer: Function;
   private serviceMap = {}
   private svg : any
+  private legendMode={}
 
   constructor(
     public dashboardService : DashboardService,
@@ -60,6 +61,12 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.serviceMap['counterCircle'] = graphCounterCircle;
     this.serviceMap['legend'] = graphLegend;
     this.serviceMap['innerStats'] = graphInnerStats
+    //possible graphs link to legend
+    this.legendMode['pie'] = true;
+    this.legendMode['lines'] = true;
+    this.legendMode['bars'] = true;
+    this.legendMode['areas'] = true;
+    this.legendMode['bubbles'] = true;
   }
 
   ngOnInit() {
@@ -99,7 +106,7 @@ export class DGraphComponent implements OnInit, OnDestroy {
     this.px = event.clientX;
     this.py = event.clientY;
     if (this.graph.id != 'graph00') {
-      this.dashboardService.selected = this.graph
+      this.executeClickMode()
     }
     //event.stopPropagation();
     return false
@@ -188,5 +195,19 @@ export class DGraphComponent implements OnInit, OnDestroy {
       //event.stopPropagation();
       return false
     }
+
+  executeClickMode() {
+    if (this.dashboardService.clickMode == this.dashboardService.ModeLinkLegendToGraph) {
+      if (this.dashboardService.selected.type == 'legend' && this.graph.object!='all' && this.legendMode[this.graph.type]) {
+        this.dashboardService.selected.legendGraphId = this.graph.id
+        this.dashboardService.selected.object = this.graph.object
+        this.dashboardService.selected.title = "Legend "+this.graph.object+'s'
+      }
+      this.dashboardService.clickMode = this.dashboardService.ModeSetting
+      this.dashboardService.redisplay()
+      return
+    }
+    this.dashboardService.selected = this.graph
+  }
 
 }

@@ -57,6 +57,7 @@ import { TeamCreateComponent } from './organizations/organization/team/team-crea
 import { LinesComponent } from './metrics/graph/lines/lines.component';
 import { SettingsComponent } from './settings/settings/settings.component';
 import { ForgotComponent } from './auth/forgot/forgot.component';
+import { VerifyComponent } from './auth/verify/verify.component';
 import { DGraphComponent } from './dashboard/dgraph/dgraph.component';
 import { DGraphEditorComponent } from './dashboard/dgraph-editor/dgraph-editor.component';
 import { DgraphAlertComponent } from './dashboard/dgraph-alert/dgraph-alert.component';
@@ -96,6 +97,7 @@ import { DgraphAlertComponent } from './dashboard/dgraph-alert/dgraph-alert.comp
     LinesComponent,
     SettingsComponent,
     ForgotComponent,
+    VerifyComponent,
     DGraphComponent,
     DGraphEditorComponent,
     DgraphAlertComponent
