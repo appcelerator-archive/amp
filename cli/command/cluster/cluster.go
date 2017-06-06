@@ -16,10 +16,6 @@ type clusterOpts struct {
 	notifications bool
 }
 
-const (
-	DefaultLocalClusterID = "f573e897-7aa0-4516-a195-42ee91039e97"
-)
-
 var (
 	opts = &clusterOpts{
 		managers:      3,
@@ -54,10 +50,6 @@ func queryCluster(c cli.Interface, args []string, env map[string]string) error {
 		return err
 	}
 	err := Run(c, args, env)
-	if err != nil {
-		// TODO: the local cluster is the only one that can be managed this release
-		c.Console().Println(DefaultLocalClusterID)
-	}
 	return err
 }
 

@@ -30,6 +30,6 @@ func update(c cli.Interface, cmd *cobra.Command) error {
 	}
 
 	// TODO: only supporting local cluster management for this release
-	args := []string{"bootstrap/bootstrap", DefaultLocalClusterID}
+	args := []string{"bootstrap/bootstrap"}
 	return queryCluster(c, reflag(cmd, m, args), nil)
 }

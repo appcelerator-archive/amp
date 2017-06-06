@@ -21,6 +21,5 @@ func NewListCommand(c cli.Interface) *cobra.Command {
 func list(c cli.Interface) error {
 	// TODO: only supporting local cluster management for this release
 	// TODO call api to list clusters
-	c.Console().Println(DefaultLocalClusterID)
 	return nil
 }
