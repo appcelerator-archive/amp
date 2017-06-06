@@ -56,7 +56,10 @@ cluster_create() {
     _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
     docker network ls | grep -q ampnet
     if [[ $? -ne 0 ]]; then
+      echo "create overlay network ampnet" >&2
       docker network create --attachable -d overlay ampnet >/dev/null || return 1
+    else
+      echo "overlay network ampnet found" >&2
     fi
     # add all service labels for orchestration
     for _label in $_labels; do
@@ -109,7 +112,13 @@ cluster_status() {
   local _target
   _target=$(deployment_target)
   case $_target in
-  local) docker node ls &>/dev/null >&2 ;;
+  local)
+    if [[ -n "$_clusterid" ]]; then
+      docker node ls -q | grep $_clusterid &>/dev/null
+    else
+      docker node ls -q &>/dev/null
+    fi
+    ;;
   dind|aws)
     bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
   esac
@@ -272,7 +281,7 @@ cleanup() {
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && docker stack rm amp
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && cluster_destroy $CID
 }
 
 ok() {
@@ -633,7 +642,8 @@ main() {
     return $?
   fi
   if [[ $DESTROY -eq 1 ]]; then
-    cluster_destroy $CID && return 0 || return 1
+    cluster_destroy $CID
+    return $?
   fi
   bootstrap_cluster
   deploy_stacks
