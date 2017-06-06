@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/appcelerator/amp/cli"
+	"github.com/mitchellh/go-homedir"
 )
 
 const (
@@ -31,6 +32,19 @@ func Run(c cli.Interface, args []string, env map[string]string) error {
 	if env != nil {
 		for k, v := range env {
 			dockerArgs = append(dockerArgs, "-e", fmt.Sprintf("%s=%s", k, v))
+			if k == "SECRETS" && v != "" {
+				dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:/opt/amp/platform/secrets", v))
+			}
+			if k == "PROVIDER" && v == "aws" {
+				// TODO: check that the local folder exists
+				hdir, err := homedir.Dir()
+				if err != nil {
+					return err
+				}
+				dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s/%s", hdir, ".aws:/root/.aws:ro"))
+				// the bootstrap container will create other containers using the host docker socket, it may need the original HOME variable
+				dockerArgs = append(dockerArgs, "-e", fmt.Sprintf("CLI_HOME=%s", hdir))
+			}
 		}
 	}
 

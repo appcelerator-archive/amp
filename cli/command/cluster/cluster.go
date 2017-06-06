@@ -14,6 +14,9 @@ type clusterOpts struct {
 	tag           string
 	registration  string
 	notifications bool
+	profile       string
+	secrets       string
+	domain        string
 }
 
 var (
@@ -25,6 +28,8 @@ var (
 		tag:           "latest",
 		registration:  configuration.RegistrationDefault,
 		notifications: true,
+		profile:       configuration.DefaultProfile,
+		domain:        "",
 	}
 )
 

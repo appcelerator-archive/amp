@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,7 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVarP(&opts.tag, "tag", "t", "0.10.1", "Specify tag for bootstrap images (default is '0.10.1', use 'local' for development)")
+	flags.StringVar(&opts.profile, "profile", configuration.DefaultProfile, "cloud provider profile")
 	return cmd
 }
 
@@ -30,7 +32,7 @@ func status(c cli.Interface, cmd *cobra.Command) error {
 	// TODO call api to get status
 	args := []string{"bin/deploy", "-s"}
 	args = reflag(cmd, m, args)
-	env := map[string]string{"TAG": opts.tag}
+	env := map[string]string{"TAG": opts.tag, "PROFILE": opts.profile, "PROVIDER": opts.provider}
 	status := queryCluster(c, args, env)
 	if status != nil {
 		c.Console().Println("cluster status: not running")

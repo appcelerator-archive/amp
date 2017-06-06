@@ -23,28 +23,46 @@ Commands:
 Run 'amp cluster COMMAND --help' for more information on a command.
 ```
 
-### Examples
+### Bring Your Own Swarm examples
 
-* To create a cluster:
+AMP can be deployed on an existing Swarm cluster. It can be a single node or a full cluster.
+If the host is not yet a swarm manager, the swarm will be initialized.
+
+* To deploy amp on a manager node:
 ```
-    $ amp cluster create
+    $ amp -s localhost cluster create
 ```
+
+* To remove amp from a local manager node:
+```
+    $ amp -s localhost cluster remove
+```
+
+### AWS example
+
+This feature is in preview mode, and may not work in your particular setup. It will be made available on next stable version of AMP.
+
+* To deploy amp on AWS:
+```
+    $ amp -s localhost cluster create -p aws
+```
+
 If no flags are passed to the command, a cluster with default number of worker and manager nodes is created. See `amp cluster create --help` for more options.
 
-* To update a cluster with specific number of worker and manager nodes:
+* To update a cluster with specific number of workers:
 ```
-    $ amp cluster update
+    $ amp -s localhost cluster update -p aws -i cluster_id -w 5
 ```
 See `amp cluster update --help` for options.
 
 * To retrieve details about a cluster:
 ```
-    $ amp cluster status
+    $ amp -s localhost cluster status -p aws -i cluster_id
 ```
 
 * To remove a cluster:
 ```
-    $ amp cluster destroy
+    $ amp -s localhost cluster destroy -p aws -i cluster_id
 ```
 
 ## Secrets

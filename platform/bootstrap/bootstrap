@@ -6,6 +6,7 @@ INFRAKIT_HOME=/infrakit
 INFRAKIT_INFRAKIT_IMAGE=appcelerator/infrakit:0.4.0
 AWS_FILES=(bootstrap.yml config-gp.tpl config-cpu.tpl config-mem.tpl config-dat.tpl config-monit.tpl)
 BOOTSTRAP_VOLUME="amp-bootstrap-$(date +%s)"
+AWS_VOLUME="amp-aws-$(date +%s)"
 ROLE_LABEL=tools
 INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
@@ -73,7 +74,7 @@ _prepare_configuration_volume() {
       fi
 
       cat >> $_dockerfile << EOF
-FROM alpine:3.5
+FROM alpine:3.6
 WORKDIR $INFRAKIT_HOME
 COPY . $INFRAKIT_HOME
 EOF
@@ -105,8 +106,28 @@ EOF
           exit 1
         fi
       fi
-      echo "creating Docker volume $BOOTSTRAP_VOLUME with the configuration data" >&2
+      echo "+ volume $BOOTSTRAP_VOLUME" >&2
       docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME "$_dockerimage" true >/dev/null
+}
+
+# creates a amp-aws volume by sending the local bootstrap folder content to the host in a build context
+create_amp_aws_volume() {
+  local dir=$1
+  local builddir=$(mktemp -d)
+  local dockerfile=$builddir/Dockerfile
+  local image=amp-aws-builder:local
+  cat > $dockerfile << EOF
+FROM alpine:3.6
+COPY bootstrap /bootstrap
+VOLUME /bootstrap
+CMD ["true"]
+EOF
+  cp -pr "$dir" "$builddir/bootstrap"
+  docker build -t $image $builddir >/dev/null
+  rm -rf "$builddir"
+  docker run --rm -v $AWS_VOLUME:/bootstrap $image
+  docker image rm $image > /dev/null
+  echo "+ volume $AWS_VOLUME" >&2
 }
 
 _system_check() {
@@ -238,7 +259,7 @@ _set_size() {
     [[ -z "$_l" ]] && _l="{}"
     _vars="$_vars {{ var \"/swarm/size/worker/$_w\" \"$_s\" }} {{ var \"/swarm/labels/worker/$_w\" \`${_l}\` }}"
   done
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" >/dev/null || exit 1
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '$_vars' >> $INFRAKIT_HOME/env.ikt" >/dev/null || exit 1
 }
 
 # return a cluster id
@@ -327,14 +348,14 @@ _instance_plugin_compute_subtype(){
 # add variables to env.ikt, needed to prepare the InfraKit configuration file
 _update_env_ikt(){
   # set a stackname if it's not already set. Useful when deploying on the cloud
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "grep -q /aws/stackname $INFRAKIT_HOME/env.ikt"
   if [[ $? -ne 0 ]]; then
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
   fi
   # set a docker engine label if it's not already set. Useful when deploying locally
-  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "grep -q /docker/label/cluster/value $INFRAKIT_HOME/env.ikt"
+  docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "grep -q /docker/label/cluster/value $INFRAKIT_HOME/env.ikt"
   if [[ $? -ne 0 ]]; then
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/docker/label/cluster/value\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '{{ var \"/docker/label/cluster/value\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
   fi
 }
 
@@ -346,7 +367,7 @@ _run_ikt_container() {
   local _infrakit_image
 
   if [[ "$manager_plugin" = "os" ]]; then
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo 'group' >> $INFRAKIT_HOME/leader" || exit 1
   fi
   local _extra_plugins=""
   # managed plugins should be started in the main infrakit container
@@ -357,7 +378,7 @@ _run_ikt_container() {
   docker container ls --format '{{.Names}}' | grep -qw infrakit
   if [[ $? -ne 0 ]]; then
     # cleanup
-    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "rm -f $INFRAKIT_HOME/plugins/flavor-* $INFRAKIT_HOME/plugins/group* $INFRAKIT_HOME/plugins/instance-*" || exit 1
+    docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "rm -f $INFRAKIT_HOME/plugins/flavor-* $INFRAKIT_HOME/plugins/group* $INFRAKIT_HOME/plugins/instance-*" || exit 1
     if [[ "x$provider" = "xdocker" ]]; then
         echo "making sure the network $BRIDGE_NETWORK is created" >&2
         docker network create -d bridge $BRIDGE_NETWORK  2>/dev/null
@@ -512,7 +533,7 @@ _prepare_config_container() {
       echo "config-${_group}.json"
    done
   else
-    docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -d --name infrakit-config-copy -v $_volume:/infrakit alpine:3.5 sleep 60 >/dev/null
+    docker ${LEADER_HOST:+-H $LEADER_HOST} run --rm -d --name infrakit-config-copy -v $_volume:/infrakit alpine:3.6 sleep 60 >/dev/null
     for _group in $WORKER_GROUP_LIST; do
       # if size is not 0, get the template
       _size=$(eval echo \$${_group}_count)
@@ -671,7 +692,7 @@ _list(){
 
 _create_seed_aws(){
     local _template="file://$(_get_dirname $0)/bootstrap.yml"
-    local _parameters="$(_get_dirname $0)/parameters.json"
+    local _parameters="$(_get_dirname $0)/../secrets/aws-parameters.json"
     local _stackname
     local _ip
     local _params
@@ -681,31 +702,31 @@ _create_seed_aws(){
     local _s
     _stackname=$1
 
-    echo "cluster create request on AWS." >&2
-    echo "  PROFILE=${PROFILE:-default}" >&2
-    echo "  REGION=${REGION:-us-west-2}" >&2
     if [[ -z "$DOMAIN" ]]; then
       echo "before creating a cluster on AWS, you should specify the domain name for that cluster (-D my.doma.in), prepare a certificate and place it in stacks/my.doma.in.pem" >&2
       return 1
     fi
     cp "$_parameters" "${_parameters}.mod"
     cleanup_file_list="$cleanup_file_list ${_parameters}.mod"
-    grep -q "TrustedCidr" $_parameters
+    grep -q TrustedCidr "$_parameters"
     if [[ $? -ne 0 ]]; then
       which jq >/dev/null 2>&1
       if [[ $? -ne 0 ]]; then
         echo "jq is not available, security group settings will have to be done manually to give access to the engine API" >&2
-        break
+      else
+        _ip=$(curl -sf ifconfig.co/ip)
+        [[ -z "$_ip" ]] && return 1
+        echo "opening the Docker engine API from ${_ip}/32" >&2
+        cat "$_parameters" | jq ". |= .+ [{\"ParameterKey\": \"TrustedCidr\", \"ParameterValue\": \"${_ip}/32\"}]" > ${_parameters}.mod || return 1
       fi
-      _ip=$(curl -sf ifconfig.co/ip)
-      [[ -z "$_ip" ]] && return 1
-      echo "opening the Docker engine API from ${_ip}/32" >&2
-      cat "$_parameters" | jq ". |= .+ [{\"ParameterKey\": \"TrustedCidr\", \"ParameterValue\": \"${_ip}/32\"}]" > ${_parameters}.mod || return 1
     else
       echo "parameters.json already contains a trusted origin, make sure this is the correct CIDR" >&2
     fi
+    docker run -d --name aws-copy-parameters --rm -v $AWS_VOLUME:/aws alpine:3.6 sleep 20
+    docker cp ${_parameters}.mod aws-copy-parameters:/aws/aws-parameters.json
+    docker kill aws-copy-parameters
     [[ -n "$USER" && "$USER" != "root" ]] && CREATE_STACK_TAGS="--tags Key=Deployer,Value=$USER"
-    _stackid=$($awscf create-stack --stack-name "$_stackname" --template-body "$_template" --parameters "file://${_parameters}.mod" $CREATE_STACK_TAGS --capabilities "CAPABILITY_IAM" --output text) || return 1
+    _stackid=$($awscf create-stack --stack-name "$_stackname" --template-body "$_template" --parameters "file://$(_get_dirname $0)/aws-parameters.json" $CREATE_STACK_TAGS --capabilities "CAPABILITY_IAM" --output text) || return 1
     echo "waiting for AWS stack outputs..." >&2
     _status="CREATE_IN_PROGRESS"
     SECONDS=0
@@ -729,19 +750,19 @@ _create_seed_aws(){
     # we need a few stack information to customize the InfraKit configuration file
     _set_remote_host "$_stackname" || return 1
     echo "Stack $_stackid: creation complete" >&2
-    #docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+    #docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '{{ var \"/aws/stackname\" \"$clusterid\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
     _params="PublicManagerHost:/docker/lb/public PrivateManagerHost:/docker/manager/host KeyName:/aws/keyname VpcId:/aws/vpcid SubnetIds:/aws/subnetids SecurityGroup:/aws/securitygroupid AMI:/aws/amiid InstanceProfile:/aws/instanceprofile BaseURL:/script/baseurl"
     for _tmp in $_params; do
       _k=$(echo $_tmp | cut -d: -f1)
       _v=$($awscf describe-stacks --stack-name "$_stackname" --query "Stacks[0].Outputs[?OutputKey=='${_k}'].OutputValue" --output text) || return 1
       echo "$_k = $_v" >&2
       _k=$(echo $_tmp | cut -d: -f2)
-      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"$_k\" \"$_v\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+      docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '{{ var \"$_k\" \"$_v\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
       if [[ "$_k" = "/aws/subnetids" ]]; then
         # split
         for i in $(seq 3); do
           _s=$(echo $_v | cut -d, -f$i)
-          docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.5 sh -c "echo '{{ var \"/aws/subnetid$i\" \"$_s\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
+          docker run --rm -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME alpine:3.6 sh -c "echo '{{ var \"/aws/subnetid$i\" \"$_s\" }}' >> $INFRAKIT_HOME/env.ikt" || return 1
         done
       fi
     done
@@ -872,7 +893,7 @@ block=0
 cleanup_file_list=""
 cleanup_image_list=""
 # commands for aws target
-awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $(_get_dirname $0):$(_get_dirname $0):ro cgswong/aws:latest aws"
+awscli="docker run --rm -v ${CLI_HOME:-HOME}/.aws:/root/.aws:ro -v $AWS_VOLUME:$(_get_dirname $0):ro cgswong/aws:latest aws"
 awscf="$awscli --profile ${PROFILE:-default} --region ${REGION:-us-west-2} cloudformation"
 
 while getopts ":t:p:e:m:w:i:l:s:hfdb:D:" opt; do
@@ -965,6 +986,9 @@ if [[ "x$target" != "xlocal" && $default_provider -eq 1 ]]; then
     provider="$target"
 fi
 
+if [[ "x$target" = "xaws" ]]; then
+  docker volume inspect $AWS_VOLUME >/dev/null 2>&1 || create_amp_aws_volume $(_get_dirname $0)
+fi
 if [[ -n "$status_request" ]]; then
   _status "$status_request"
   exit $?
