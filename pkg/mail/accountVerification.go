@@ -20,8 +20,7 @@ var accountVerificationBody = `
                     -moz-border-radius: 20px;
                     -webkit-border-radius: 20px;
                     border-radius: 20px;
-                    background: #EE303C;"
-            >
+                    background: #EE303C;">
                 &nbsp CONFIRM EMAIL ADDRESS &nbsp
             </a>
             <div style="height:20px"></div>

@@ -109,7 +109,7 @@ export class GraphLines {
 
       this.svg.append("path")
         .data([this.data])
-        .style("stroke", (d) => this.dashboardService.getObjectColor(graph.object, this.names[ll]))
+        .style("stroke", (d) => this.dashboardService.getObjectColor(graph, this.names[ll]))
         .attr("transform", "translate(" + [dx, dy] + ")")
         .style("fill", 'none')
         .style("stroke-width", 2)

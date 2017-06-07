@@ -24,6 +24,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/namespace"
+	"github.com/coreos/etcd/etcdserver/api/v3election/v3electionpb"
+	"github.com/coreos/etcd/etcdserver/api/v3lock/v3lockpb"
 	pb "github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/coreos/etcd/pkg/debugutil"
 	"github.com/coreos/etcd/pkg/transport"
@@ -106,8 +108,9 @@ func startGRPCProxy(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if eps := discoverEndpoints(grpcProxyDNSCluster, grpcProxyCA, grpcProxyInsecureDiscovery); len(eps) != 0 {
-		grpcProxyEndpoints = eps
+	srvs := discoverEndpoints(grpcProxyDNSCluster, grpcProxyCA, grpcProxyInsecureDiscovery)
+	if len(srvs.Endpoints) != 0 {
+		grpcProxyEndpoints = srvs.Endpoints
 	}
 
 	l, err := net.Listen("tcp", grpcProxyListenAddr)
@@ -153,6 +156,8 @@ func startGRPCProxy(cmd *cobra.Command, args []string) {
 	leasep, _ := grpcproxy.NewLeaseProxy(client)
 	mainp := grpcproxy.NewMaintenanceProxy(client)
 	authp := grpcproxy.NewAuthProxy(client)
+	electionp := grpcproxy.NewElectionProxy(client)
+	lockp := grpcproxy.NewLockProxy(client)
 
 	server := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
@@ -164,6 +169,8 @@ func startGRPCProxy(cmd *cobra.Command, args []string) {
 	pb.RegisterLeaseServer(server, leasep)
 	pb.RegisterMaintenanceServer(server, mainp)
 	pb.RegisterAuthServer(server, authp)
+	v3electionpb.RegisterElectionServer(server, electionp)
+	v3lockpb.RegisterLockServer(server, lockp)
 
 	errc := make(chan error)
 

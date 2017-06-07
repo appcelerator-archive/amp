@@ -17,7 +17,6 @@ import { HttpService } from '../../services/http.service';
 })
 export class DockerServicesComponent implements OnInit, OnDestroy {
   routeSub : any
-  timer : any
   scaleMode = false
   message = ""
 
@@ -55,19 +54,17 @@ export class DockerServicesComponent implements OnInit, OnDestroy {
       )
       this.dockerServicesService.loadServices(false)
     })
-    this.timer = setInterval(
+    this.menuService.setCurrentTimer(setInterval(
       () => {
         this.dockerServicesService.loadServices(true)
       },
       3000
-    )
+    ))
   }
 
   ngOnDestroy() {
     this.routeSub.unsubscribe();
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
+    this.menuService.clearCurrentTimer()
   }
 
   getColor(stack : DockerStack) : string {

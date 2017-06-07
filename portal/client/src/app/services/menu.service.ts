@@ -16,6 +16,7 @@ export class MenuService {
   private lastPath = ""
   private cursorClass = ""
   paddingLeftMenu = 250
+  currentTimer : any
   public appWindow : AppWindow = new AppWindow(document.documentElement.clientWidth, document.documentElement.clientHeight)
 
   constructor(private router : Router) {
@@ -72,6 +73,20 @@ export class MenuService {
 
   public getCursorClass() : string {
     return this.cursorClass
+  }
+
+  public setCurrentTimer(timer : any) {
+    if (this.currentTimer) {
+      clearInterval(this.currentTimer)
+    }
+    this.currentTimer = timer
+  }
+
+  public clearCurrentTimer() {
+    if (this.currentTimer) {
+      clearInterval(this.currentTimer)
+    }
+    this.currentTimer = undefined
   }
 
 }

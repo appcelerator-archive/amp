@@ -115,10 +115,10 @@ export class LogsComponent implements OnInit, AfterViewChecked, OnDestroy {
   autoRefresh() {
     this.autoRefreshToggle = !this.autoRefreshToggle;
     if (this.autoRefresh) {
-      this.timer = setInterval(() => this.executeRequest(), 3000)
+      this.menuService.setCurrentTimer(setInterval(() => this.executeRequest(), 3000))
     } else {
       if (this.timer) {
-        clearInterval(this.timer);
+        this.menuService.clearCurrentTimer()
       }
     }
   }

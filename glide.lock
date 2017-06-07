@@ -1,5 +1,5 @@
-hash: 72c41c23521584566879ab366c15c8a458e357013072463b3c5f3fc9ca51958d
-updated: 2017-05-01T11:58:18.757283295Z
+hash: 539c8566756c766db488a944402c56db6f60d869fe004bb20775b5ab179efb33
+updated: 2017-06-06T13:54:52.349991528-07:00
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -9,10 +9,8 @@ imports:
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
-- name: github.com/cenkalti/backoff
-  version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
 - name: github.com/coreos/etcd
-  version: 7e6d876385396bf3ea8f1b58ab24b697a3d9f5d8
+  version: 9d7ed0e63a4e9907c04396d0a9a7a01ba08d2852
   subpackages:
   - auth/authpb
   - clientv3
@@ -154,6 +152,7 @@ imports:
   - api
   - api/deepcopy
   - api/defaults
+  - manager/constraint
   - manager/raftselector
   - protobuf/plugin
 - name: github.com/eapache/go-resiliency
@@ -223,7 +222,7 @@ imports:
   - json
   - yaml
 - name: github.com/fatih/color
-  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
+  version: 570b54cabe6b8eb0bc2dfce68d964677d63b5260
 - name: github.com/flynn-archive/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/fsnotify/fsnotify
@@ -233,16 +232,6 @@ imports:
   subpackages:
   - internal
   - redis
-- name: github.com/go-errors/errors
-  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
-- name: github.com/go-redis/redis
-  version: 62ecc61210cb7dd8ca9aebb8bebbc849c358383b
-  subpackages:
-  - internal
-  - internal/consistenthash
-  - internal/hashtag
-  - internal/pool
-  - internal/proto
 - name: github.com/gogo/protobuf
   version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
@@ -254,13 +243,18 @@ imports:
 - name: github.com/golang/protobuf
   version: 18c9bb3261723cd5401db4d0c9fbc5c3b6c70fe8
   subpackages:
+  - jsonpb
   - proto
+  - protoc-gen-go/descriptor
   - ptypes/any
   - ptypes/empty
+  - ptypes/struct
 - name: github.com/golang/snappy
   version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
+- name: github.com/gorilla/handlers
+  version: a4043c62cc2329bacda331d33fc908ab11ef0ec3
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -268,8 +262,13 @@ imports:
   subpackages:
   - github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
   - github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-- name: github.com/hailocab/go-hostpool
-  version: e80d13ce29ede4452c43dea11e79b9bc8a15b478
+  - runtime
+  - runtime/internal
+  - utilities
+- name: github.com/hashicorp/golang-lru
+  version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
+  subpackages:
+  - simplelru
 - name: github.com/hashicorp/hcl
   version: 7fa7fff964d035e8a162cce3a164b3ad02ad651b
   subpackages:
@@ -289,10 +288,6 @@ imports:
   version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-- name: github.com/jmoiron/sqlx
-  version: d9bd385d68c068f1fabb5057e3dedcbcbb039d0f
-  subpackages:
-  - reflectx
 - name: github.com/joeshaw/multierror
   version: 69b34d4ec901851247ae7e77d33909caf9df99ed
 - name: github.com/julienschmidt/httprouter
@@ -343,8 +338,6 @@ imports:
   version: c78e8bd2dd3599feb21fd30886043979e82fe948
 - name: github.com/Nvveen/Gotty
   version: cd527374f1e5bff4938207604a14f2e38a9cf512
-- name: github.com/oleiade/reflections
-  version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/go-digest
   version: aa2ec055abd10d26d539eb630a92241b781ce4bc
 - name: github.com/opencontainers/runc
@@ -352,13 +345,12 @@ imports:
   subpackages:
   - libcontainer/system
   - libcontainer/user
-- name: github.com/ory-am/common
-  version: b6357395e30805e2ad1f6d8fb759fa2b7146d8da
+- name: github.com/ory-am/ladon
+  version: c8b0a3309bb2fc36f1dc24035279cc7530af0a0a
+- name: github.com/ory/ladon
+  version: c8b0a3309bb2fc36f1dc24035279cc7530af0a0a
   subpackages:
   - compiler
-  - pkg
-- name: github.com/ory-am/ladon
-  version: c7c7754c7b466db0a7d18c53254672c78aeea664
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
@@ -383,10 +375,6 @@ imports:
   version: ab2277b1c5d15c3cba104e9cbddbdfc622df5ad8
   subpackages:
   - exp
-- name: github.com/rubenv/sql-migrate
-  version: 38004e7a77f2b350ea8467038dca66073d907725
-  subpackages:
-  - sqlparse
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/sendgrid/rest
@@ -418,7 +406,6 @@ imports:
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
-  - require
 - name: github.com/urfave/negroni
   version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: github.com/xeipuuv/gojsonpointer
@@ -472,6 +459,7 @@ imports:
 - name: google.golang.org/genproto
   version: 411e09b969b1170a9f0c467558eb4c4c110d9c77
   subpackages:
+  - googleapis/api/annotations
   - googleapis/rpc/status
 - name: google.golang.org/grpc
   version: 0eb507a2ca07f13baf499f89d66cc566bf644643
@@ -489,16 +477,6 @@ imports:
   - status
   - tap
   - transport
-- name: gopkg.in/fatih/pool.v2
-  version: 6e328e67893eb46323ad06f0e92cb9536babbabc
-- name: gopkg.in/gorethink/gorethink.v3
-  version: 7ab832f7b65573104a555d84a27992ae9ea1f659
-  subpackages:
-  - encoding
-  - ql2
-  - types
-- name: gopkg.in/gorp.v1
-  version: c87af80f3cc5036b55b83d77171e156791085e2e
 - name: gopkg.in/hlandau/easymetric.v1
   version: 1c173222e345c2ba115e0f483821c6da2d3b0fa9
   subpackages:
@@ -516,16 +494,12 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v5
-  version: 6f76abde0f1f149b7d6fc47aee4c54366844f775
+  version: f1fd7305d0b6270192b27010fe1193568b18e4b6
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
   version: a83829b6f1293c91addabc89d0571c246397bbf4
 testImports:
-- name: github.com/kballard/go-shellquote
-  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
-- name: github.com/kr/pty
-  version: f7ee69f31298ecbe5d2b349c711e2547a617d398
 - name: github.com/mhale/smtpd
   version: 7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f
 - name: github.com/ThomasRooney/gexpect

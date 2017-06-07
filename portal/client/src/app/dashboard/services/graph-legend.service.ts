@@ -94,7 +94,7 @@ export class GraphLegend {
        .text(graph.title);
     }
     //let colorObject = this.dashboardService.graphObjectColorMap[graph.object]
-    let colorList : GraphColor[] = this.colorsService.getColors(graph.object)
+    let colorList : GraphColor[] = this.colorsService.getColors(graph.object, graph.legendGraphId)
     if (colorList.length ==0) {
       return
     }

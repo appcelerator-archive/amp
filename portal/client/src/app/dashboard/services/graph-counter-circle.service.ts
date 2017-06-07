@@ -138,7 +138,7 @@ export class GraphCounterCircle {
       .attr("d", arc)
       .attr("id", function(d, i) { return "arc-" + i })
       .attr("stroke", "gray")
-      .attr("fill", function(d,i){ return athis.dashboardService.getObjectColor(graph.object, d.data.group) })
+      .attr("fill", function(d,i){ return athis.dashboardService.getObjectColor(graph, d.data.group) })
 
     this.svg.append("text")
      .attr("class", "wtitle")

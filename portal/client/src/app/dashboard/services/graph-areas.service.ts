@@ -129,7 +129,7 @@ export class GraphAreas {
 
         this.svg.append("path")
           .data([this.data])
-          .style("fill", (d) => this.dashboardService.getObjectColor(graph.object, this.names[ll]))
+          .style("fill", (d) => this.dashboardService.getObjectColor(graph, this.names[ll]))
           .attr("transform", "translate(" + [dx, dy] + ")")
           .attr("d", area);
 

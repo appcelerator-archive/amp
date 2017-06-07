@@ -57,16 +57,13 @@ export class SignupComponent implements OnInit {
         this.messageError = "your password must match"
         return
     }
-    if (pwd == 'p') {//debug purpose to be removed
-      pwd = 'password'
-    }
     this.httpService.signup(event.form.value.username, pwd, event.form.value.email).subscribe(
       data => {
         this.httpService.registration().subscribe(
           rep => {
             let ret = rep.json()
             this.messageError = ""
-            if (ret.emailConfirmation) {
+            if (ret.email_confirmation) {
               this.message = "Your account is created, you are going to receive an email to validate your account"
             } else {
               this.message = "Your account is created"

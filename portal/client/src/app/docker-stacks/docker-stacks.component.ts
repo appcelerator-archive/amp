@@ -16,7 +16,6 @@ import { Observable } from 'rxjs/Observable';
 })
 export class DockerStacksComponent implements OnInit {
   deployTitle = "Deploy"
-  timer : any = null;
   message = ""
 
   constructor(
@@ -48,18 +47,16 @@ export class DockerStacksComponent implements OnInit {
       }
     )
     this.dockerStacksService.loadStacks(false)
-    this.timer = setInterval(
+    this.menuService.setCurrentTimer( setInterval(
       () => {
         this.dockerStacksService.loadStacks(true)
       },
       3000
-    )
+    ))
   }
 
   ngOnDestroy() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
+    this.menuService.clearCurrentTimer()
     //this.dockerStacksService.onStacksLoaded.unsubscribe();
   }
 

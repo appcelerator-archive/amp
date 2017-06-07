@@ -13,7 +13,8 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
+	"github.com/ory/ladon/manager/memory"
 	"golang.org/x/net/context"
 )
 
@@ -36,7 +37,7 @@ func NewStore(s storage.Interface, registration string, SUPassword string) (*Sto
 		storage:      s,
 		registration: registration,
 		warden: &ladon.Ladon{
-			Manager: ladon.NewMemoryManager(),
+			Manager: memory.NewMemoryManager(),
 		},
 	}
 
