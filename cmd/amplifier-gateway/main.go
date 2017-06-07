@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -17,12 +18,14 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
+	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 const (
+	listenAddress     = ":80"
 	amplifierEndpoint = "amplifier" + configuration.DefaultPort
 )
 
@@ -94,6 +97,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.ListenAndServe(":80", allowCORS(mux))
+	log.Println("gateway successfuly initialized. Start listening on:", listenAddress)
+	log.Fatalln(http.ListenAndServe(listenAddress, handlers.CombinedLoggingHandler(os.Stdout, allowCORS(mux))))
 	return
 }

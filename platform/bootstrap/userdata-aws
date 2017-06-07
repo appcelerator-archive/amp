@@ -11,29 +11,60 @@ OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
 #MIRROR_REGISTRIES=
 #DOCKER_DEVICE=/dev/sdn
 SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
+SYSV_DOCKER_DEFAULT=/etc/default/docker
+
+_init_system(){
+  systemctl --version >/dev/null 2>&1 && echo systemd && return
+  [[ `/sbin/init --version` =~ upstart ]] && echo upstart && return
+  echo sysv
+}
 
 _install_docker(){
+  local _release=$(lsb_release -is)
   wget -qO- https://get.docker.com/ | sh || return 1
-  usermod -G docker ubuntu
-  systemctl enable docker.service
-  systemctl start docker.service
+  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu
+  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin 
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl enable docker.service
+    systemctl start docker.service
+  else
+    chkconfig docker on
+    service docker start
+  fi
 }
 
 # expose the Docker remote api
 _expose_remote_api() {
-  mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
-  echo "exposing the engine API" >&2
-  cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
+  case $(_init_system) in
+  systemd)
+    mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
+    echo "exposing the engine API" >&2
+    cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
 [Service]
 ExecStart=
 ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
 EOF
-  systemctl daemon-reload
+    systemctl daemon-reload
+  ;;
+  sysv)
+    cat >> "$SYSV_DOCKER_DEFAULT" <<EOF
+DOCKER_OPTS='-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+EOF
+  ;;
+  *)
+    echo "not implemented" >&2
+    return 1
+  ;;
+  esac
 }
 
 _restart_docker(){
   echo "restarting Docker" >&2
-  systemctl restart docker.service
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl restart docker.service
+  else
+    service docker restart
+  fi
 }
 
 _sanity_check(){
@@ -220,7 +251,9 @@ _label_node(){
   local _publicip
   _self=$(docker node inspect self -f '{{.ID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
-  docker node update --label-add "PublicIP=$_publicip" "$_self"
+  docker node update --label-add "PublicIP=$_publicip" "$_self" || return 1
+  docker node update --label-add "amp.type.api=true" "$_self" || return 1
+  docker node update --label-add "amp.type.route=true" "$_self"
 }
 
 _drain_node(){
@@ -290,7 +323,7 @@ _install_docker || exit 1
 _expose_remote_api || exit 1
 _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
 _set_log_rotation "10m" "3" || exit 1
-_set_metrics_address "127.0.0.1" "9323" || exit 1
+_set_metrics_address "$nodeip" "9323" || exit 1
 _restart_docker || exit 1
 ips=$(_wait_for_quorum) || exit 1
 leader="$(_elect_leader $nodeip $ips)" || exit 1

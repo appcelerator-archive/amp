@@ -98,7 +98,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -107,7 +107,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-portal build-bootstrap
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-portal build-bootstrap build-monit
 build: build-base buildall-cli
 
 # =============================================================================
@@ -214,6 +214,35 @@ rebuild-gateway: clean-gateway build-gateway
 clean-gateway:
 	@rm -f $(GWTARGET)
 
+# =============================================================================
+# BUILD monitoring (`promctl`)
+# Saves binary to `cmd/monitoring/promctl.alpine`,
+# then builds `appcelerator/amp-prometheus` image
+# =============================================================================
+MONIT := monitoring
+MONITBINARY=promctl.alpine
+MONITTAG := local
+MONITIMG := appcelerator/amp-prometheus:$(MONITTAG)
+MONITTARGET := $(MONIT)/$(MONITBINARY)
+MONITDIRS := $(MONIT)/promctl $(COMMONDIRS)
+MONITSRC := $(shell find $(MONITDIRS) -type f -name '*.go')
+MONITPKG := $(REPO)/$(MONIT)/promctl
+
+$(MONITTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(MONITSRC)
+	@echo "Compiling $(MONIT) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(MONITTARGET) $(MONITPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(MONIT)"
+
+build-monit: $(MONITTARGET)
+	@echo "build $(MONITIMG)"
+	@$(DOCKER_CMD) build -t $(MONITIMG) $(MONIT) || (rm -f $(MONITTARGET); exit 1)
+
+rebuild-monit: clean-monit build-monit
+
+.PHONY: clean-monit
+clean-monit:
+	@rm -f $(MONITTARGET)
 
 # =============================================================================
 # BUILD BEAT (`ampbeat`)

@@ -20,12 +20,12 @@ services:
         io.amp.role: "infrastructure"
       placement:
         constraints:
-        - node.role == ${NODE_ROLE:-worker}
+        - node.labels.amp.type.core == true
     labels:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:5.3.2
+    image: appcelerator/kibana:5.4.0
     networks:
       default:
         aliases:
@@ -38,13 +38,11 @@ services:
         io.amp.mapping: "kibana:5601"
       placement:
         constraints:
-        - node.role == ${NODE_ROLE:-worker}
+        - node.labels.amp.type.core == true
     labels:
       io.amp.role: "infrastructure"
     environment:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
       SERVICE_PORTS: 5601
-      VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+      VIRTUAL_HOST: "http://kibana.*,https://kibana.*"
       FORCE_SSL: 1
-    ports:
-      - "50106:5601"

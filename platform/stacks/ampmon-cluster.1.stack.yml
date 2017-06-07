@@ -1,0 +1,75 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  elasticsearch-data:
+  etcd-data:
+
+services:
+
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:5.4.0-1
+    networks:
+      - default
+    volumes:
+      - elasticsearch-data:/opt/elasticsearch-5.4.0/data
+    labels:
+      io.amp.role: "infrastructure"
+    environment:
+      MIN_MASTER_NODES: 2
+      NETWORK_HOST: "_eth0_"
+      UNICAST_HOSTS: "tasks.elasticsearch"
+    deploy:
+      mode: replicated
+      replicas: 3
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.search == true
+
+  nats:
+    image: appcelerator/amp-nats-streaming:v0.4.0
+    networks:
+      default:
+        aliases:
+          - nats
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.mq == true
+
+  etcd:
+    image: appcelerator/etcd:3.1.8
+    networks:
+      default:
+        aliases:
+          - etcd
+    volumes:
+      - etcd-data:/data
+    environment:
+      SERVICE_NAME: "etcd"
+      MIN_SEEDS_COUNT: 3
+    command:
+      - "--advertise-client-urls"
+      - "http://etcd:2379"
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      mode: replicated
+      replicas: 3
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.kv == true

@@ -29,6 +29,8 @@ readonly localdomainname="local.atomiq.io"
 DEPLOYMENT_TARGET=local
 CID=
 amps=docker
+DESTROY=0
+STATUS=0
 
 # get and optionally set the target of the deployment: local | dind | aws
 deployment_target() {
@@ -41,10 +43,29 @@ cluster_create() {
   local _clusterid
   local _status
   local _target
+  local _label
+  local _label_prefix="amp.type."
+  local _labels="mq kv search api metrics route core user"
   _target="$(deployment_target)"
   case $_target in
-  local)
-    docker node inspect self -f '{{.ID}}' 2>/dev/null || echo "unset"
+  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
+    docker node ls &>/dev/null
+    if [[ $? -ne 0 ]]; then
+      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null || return 1
+    fi
+    _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
+    docker network ls | grep -q ampnet
+    if [[ $? -ne 0 ]]; then
+      echo "create overlay network ampnet" >&2
+      docker network create --attachable -d overlay ampnet >/dev/null || return 1
+    else
+      echo "overlay network ampnet found" >&2
+    fi
+    # add all service labels for orchestration
+    for _label in $_labels; do
+      docker node update --label-add "${_label_prefix}${_label}=true" "$_clusterid" >/dev/null
+    done
+    echo $_clusterid
     ;;
   dind|aws)
     # async
@@ -59,12 +80,27 @@ cluster_create() {
 # destroy the cluster
 cluster_destroy() {
   local _target
+  local _code=1
+  local _vols
+  set_deployment_variables
   _target="$(deployment_target)"
   case $_target in
   dind|aws)
     bootstrap -t $_target -di $1 ;;
   local)
-    docker stack rm amp ;;
+    docker stack rm amp
+    # wait for containers to be removed
+    SECONDS=0
+    while [[ $_code -ne 0 ]]; do
+      sleep 2
+      docker volume ls -q | grep "^amp_" | xargs docker volume rm 2>/dev/null
+      _code=$?
+      [[ $SECONDS -gt 25 ]] && break
+    done
+    _vols=$(docker volume ls -q | grep "^amp_")
+    [[ -n "$_vols" ]] && echo "docker volumes $_vols has not been removed, you should do it manually"
+    return 0
+    ;;
   esac
 }
 
@@ -76,7 +112,13 @@ cluster_status() {
   local _target
   _target=$(deployment_target)
   case $_target in
-  local) ;;
+  local)
+    if [[ -n "$_clusterid" ]]; then
+      docker node ls -q | grep $_clusterid &>/dev/null
+    else
+      docker node ls -q &>/dev/null
+    fi
+    ;;
   dind|aws)
     bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
   esac
@@ -94,6 +136,32 @@ cluster_nodecount() {
     ;;
   dind|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | wc -l)
+    if [[ $_count -gt 0 ]]; then
+      echo $_count
+      return 0
+    fi
+    echo "node count failed" >&2
+    bootstrap -t $_target -l $_clusterid >&2
+    return 1
+    ;;
+  *)
+    echo "unknown deployment target ($_target)" >&2
+    return 1 ;;
+  esac
+}
+
+# worker count in the cluster
+cluster_workercount() {
+  local _clusterid=$1
+  local _target
+  local _count
+  _target=$(deployment_target)
+  case $_target in
+  local) # single manager node
+    echo 0
+    ;;
+  dind|aws)
+    _count=$(bootstrap -t $_target -l $_clusterid | grep -c worker)
     if [[ $_count -gt 0 ]]; then
       echo $_count
       return 0
@@ -148,6 +216,7 @@ EOF
 # sets hosts for Docker remote API and for the Docker registry
 # depending on the deployment target
 set_deployment_variables(){
+  local _manager
   case $(deployment_target) in
   local)
     stacks_path="$STACKSDIR"
@@ -161,7 +230,8 @@ set_deployment_variables(){
     registryhost=127.0.0.1
     create_amp_stacks_volume
     create_amp_secrets_volume
-    amps="docker run -t --rm --network=hostnet -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-secrets:/secrets -v amp-stacks:/stacks docker --host=$dockerhost"
+    _manager=$(docker exec m1 docker node inspect self -f '{{.Status.Addr}}')
+    amps="docker run -t --rm --network=hostnet -e MANAGER_HOST=$_manager -e TAG=$TAG -e REGISTRATION=$REGISTRATION -e NOTIFICATIONS=$NOTIFICATIONS -v amp-secrets:/secrets -v amp-stacks:/stacks docker --host=$dockerhost"
     stacks_path=/stacks
     secrets_path=/secrets
     domainname=$localdomainname
@@ -175,19 +245,21 @@ set_deployment_variables(){
     echo "$CID" | grep -q "/" && _clusterid="$(echo $CID | awk -F/ '{print $2}')"
     # todo: use a secured remote API
     dockerhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`PublicManagerHost`].OutputValue' --output text) || exit 1
+    _manager=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`PrivateManagerHost`].OutputValue' --output text) || exit 1
     # if the DNS name point to several engines, we need a single one to avoid strange CLI issues (run = 2 calls, create + start)
     _publicip=$(docker -H "$dockerhost" node inspect self -f '{{.Spec.Labels.PublicIP}}')
-    [[ -n "$_publicip" && "$_publicip" != "<no value>" ]] && dockerhost=$_publicip
+    [[ "$_publicip" = "<no value>" ]] && _publicip=""
     registryhost=$($awscf describe-stacks --stack-name $_clusterid --query 'Stacks[0].Outputs[?OutputKey==`MirrorRegistries`].OutputValue' --output text) || exit 1
     # if a single registry is defined on this cluster, we'll push images on it
     # else, we'll skip the image push
     echo "$registryhost" | grep -q " " && registryhost=""
-    amps="docker -H $dockerhost"
+    amps="docker -H ${_publicip:-$dockerhost}"
     stacks_path=$STACKSDIR
     secrets_path=$SECRETSDIR
     domainname=$DOMAIN
     # variable used in sub scripts
-    export DOCKERHOST=$dockerhost
+    export MANAGER_HOST=$_manager
+    export DOCKERHOST=${_publicip:-$dockerhost}
     ;;
   esac
 
@@ -204,10 +276,12 @@ checkexit() {
 }
 
 cleanup() {
+  [[ $DESTROY -eq 1 ]] && exit 0
+  [[ $STATUS -eq 1 ]] && exit 0
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -d $CID
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && docker stack rm amp
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && cluster_destroy $CID
 }
 
 ok() {
@@ -264,9 +338,56 @@ prepare_amplifier_configuration(){
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" && echo "secret amplifier_yml successfully created" >&2
+  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret amplifier_yml successfully created" >&2
 }
 
+prepare_prometheus_configuration(){
+  local _conf
+  local cid
+  $amps secret ls | grep -q "prometheus_alerts_rules" && return 0
+  _conf="$SECRETSDIR/prometheus_alerts.rules"
+  if [[ ! -f "$_conf" ]]; then
+    mkdir -p "$SECRETSDIR"
+    echo > "$_conf"
+  else
+    echo "using existing configuration for the prometheus_alerts_rules secret" >&2
+  fi
+  # copy the configuration in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp "$_conf" $cid:/secrets/
+  docker kill "$cid" >/dev/null 2>&1
+  $amps secret create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret prometheus_alerts_rules successfully created" >&2
+}
+
+prepare_alertmanager_configuration(){
+  local _conf
+  local cid
+  $amps secret ls | grep -q "alertmanager_yml" && return 0
+  _conf="$SECRETSDIR/alertmanager.yml"
+  if [[ ! -f "$_conf" ]]; then
+    mkdir -p "$SECRETSDIR"
+    cat > "$_conf" << EOF
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alertmanager@example.org'
+route:
+  receiver: none
+receivers:
+- name: 'none'
+  email_configs:
+  - to: 'null@localhost'
+EOF
+  else
+    echo "using existing configuration for the alertmanager_yml secret" >&2
+  fi
+  # copy the configuration in the amp-secrets volume
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
+  docker cp "$_conf" $cid:/secrets/
+  docker kill "$cid" >/dev/null 2>&1
+  $amps secret create "alertmanager_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret alertmanager_yml successfully created" >&2
+}
 # pushes certificates in a Docker secret, ready to use by services in stack files
 # for local/dind bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
@@ -296,15 +417,33 @@ prepare_certificates() {
   docker cp "$certfile" $cid:/secrets/$name.pem
   docker kill "$cid" >/dev/null 2>&1
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" && echo "secret certificate_atomiq successfully created" >&2
+  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_atomiq successfully created" >&2
 }
 
 # process the command line options and arguments
 parse_cmd() {
-  while getopts ":w:m:t:l:T:c:r:n:p:g:D:" opt; do
+  while getopts ":w:m:t:l:T:c:r:n:p:g:dsD:" opt; do
     case $opt in
     w|m|t|l) # just pass it to the bootstrap script
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+      ;;
+    s) STATUS=1
+       if [[ -z "$CID" ]]; then
+         CID="$(docker node inspect self -f '{{.ID}}')" 
+         if [[ $? -ne 0 ]]; then
+           echo "you should pass a cluster id as argument" >&2
+           exit 1
+         fi
+       fi
+      ;;
+    d) DESTROY=1
+       if [[ -z "$CID" ]]; then
+         CID="$(docker node inspect self -f '{{.ID}}')" 
+         if [[ $? -ne 0 ]]; then
+           echo "you should pass a cluster id as argument" >&2
+           exit 1
+         fi
+       fi
       ;;
     T) # tag for images to deploy
       export TAG=$OPTARG
@@ -353,56 +492,43 @@ bootstrap_cluster() {
 
   set_deployment_variables
 
-  echo "wait for cluster"
-  case $(deployment_target) in
-  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
-    docker node ls &>/dev/null
-    if [[ $? -ne 0 ]]; then
-      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null && CID=$(docker node inspect self -f '{{.ID}}')
-    fi
-    docker network ls | grep ampnet &>/dev/null
-    if [[ $? -ne 0 ]]; then
-      docker network create --attachable -d overlay ampnet
-    fi
-    ;;
-  *)
+  if [[ "$(deployment_target)" != "local" ]]; then
+    echo "wait for cluster"
     clustercheck -t 150 -p $(deployment_target) $CID
-    ;;
-  esac
-  checkexit "cluster timed out"
-  ok
+    checkexit "cluster timed out"
+    ok
+  fi
 
   typeset -i nodecount
   nodecount=$(cluster_nodecount $CID)
   checkexit "failed to count cluster nodes"
   echo "cluster size is $nodecount"
 
-  if [[ $(deployment_target) != "local" ]]; then
-    echo "wait for swarm mode"
-    swarmcheck -t 300 -c $nodecount
-    checkexit "swarm mode timed out"
+  echo "wait for swarm mode"
+  swarmcheck -t 300 -c $nodecount
+  checkexit "swarm mode timed out"
+  ok
+
+  if [[ -n "$registryurl" ]]; then
+    echo "wait for registry"
+    curlcheck "${registryurl}/v2/" 200 180
+    checkexit "registry timed out"
     ok
+  fi
 
-    if [[ -n "$registryurl" ]]; then
-      echo "wait for registry"
-      curlcheck "${registryurl}/v2/" 200 180
-      checkexit "registry timed out"
-      ok
-    fi
-
-    if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
-      echo "push images to cluster"
-      for image in amplifier amplifier-gateway ampbeat agent portal; do
-        pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
-      done
-    else
-      echo "image push to cluster is ignored (tag=${TAG:-latest})"
-    fi
+  if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
+    echo "push images to cluster"
+    for image in amplifier amplifier-gateway ampbeat agent portal; do
+      pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
+    done
+  else
+    echo "image push to cluster is ignored (tag=${TAG:-latest})"
   fi
 }
 
 deploy_stacks() {
-  local maxwait=540 # 9 minutes so not to exceed travis 10 min deadline
+  local maxwait=300 # should be less than 10 minutes (600s) so not to exceed travis deadline
+  local _workercount
 
   if [[ "$(deployment_target)" = "local" ]]; then
     # force all placement constraints to deploy to a single manager
@@ -410,7 +536,8 @@ deploy_stacks() {
   fi
 
   echo "deploy amp monitoring stack to cluster - stage 1"
-  deploystack ampmon.1.stack.yml amp
+  _workercount=$(cluster_workercount $CID) || return 1
+  [[ $_workercount -le 9 ]] && deploystack ampmon-single.1.stack.yml amp || deploystack ampmon-cluster.1.stack.yml amp
   echo "wait for all amp monitoring stage 1 stack service replicas to be running"
 
   servicescheck $maxwait
@@ -422,6 +549,18 @@ deploy_stacks() {
   echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
   servicescheck $maxwait
   checkexit "amp monitoring stage 2 service replica checks timed out"
+  ok
+
+  prepare_prometheus_configuration
+  checkexit "secret creation for prometheus failed"
+  prepare_alertmanager_configuration
+  checkexit "secret creation for alertmanager failed"
+
+  echo "deploy amp monitoring stack to cluster - stage 3"
+  deploystack ampmon.3.stack.yml amp
+  echo "wait for all amp monitoring stage 3 service replicas to be running ($maxwait sec)"
+  servicescheck $maxwait
+  checkexit "amp monitoring stage 3 service replica checks timed out"
   ok
 
   echo "deploy portal stack to cluster"
@@ -498,6 +637,14 @@ smoke_tests() {
 
 main() {
   parse_cmd $@
+  if [[ $STATUS -eq 1 ]]; then
+    cluster_status $CID
+    return $?
+  fi
+  if [[ $DESTROY -eq 1 ]]; then
+    cluster_destroy $CID
+    return $?
+  fi
   bootstrap_cluster
   deploy_stacks
   smoke_tests

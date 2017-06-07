@@ -6,12 +6,16 @@ Mappings:
     # Ubuntu 16.04 HVM
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
+      Debian: ami-0dcac96e
     eu-west-1:
       Ubuntu: ami-b5a893d3
+      Debian: ami-3291be54
     us-east-2:
       Ubuntu: ami-33ab8f56
+      Debian: ami-c5ba9fa0
     us-west-2:
       Ubuntu: ami-17ba2a77
+      Debian: ami-fde96b9d
   VpcCidrs:
     subnet1:
       cidr: 192.168.0.0/24
@@ -30,6 +34,7 @@ Metadata:
       Parameters:
       - KeyName
       - TrustedCidr
+      - LinuxDistribution
     - Label:
         default: Swarm Manager Properties
       Parameters:
@@ -78,6 +83,12 @@ Parameters:
       - 5
     Default: 3
     Description: Number of Swarm manager nodes (1, 3, 5).
+  LinuxDistribution:
+    Type: String
+    AllowedValues:
+    - Ubuntu
+    - Debian
+    Default: Ubuntu
   ManagerInstanceType:
     Type: String
     AllowedValues:
@@ -128,6 +139,9 @@ Parameters:
   TrustedCidr:
     Type: String
     Description: CIDR of a trusted origin
+  LinuxDistribution:
+    Type: String
+    Description: Linux Distribution
 
 Conditions:
   WithTrustedCidr:
@@ -521,7 +535,7 @@ Resources:
         Fn::FindInMap:
         - AMI
         - Ref: AWS::Region
-        - Ubuntu
+        - Ref: LinuxDistribution
       InstanceType: !Ref ManagerInstanceType
       KeyName: !Ref KeyName
       SecurityGroups:
@@ -546,6 +560,7 @@ Resources:
                 - awscli
                 - sysstat
                 - iotop
+                - xfsprogs
               write_files:
                 - path: /etc/infrakit.conf
                   content: |
@@ -565,10 +580,10 @@ Resources:
                     {{ var "/docker/aufs/size" "${AufsVolumeSize}" }}
                     {{ var "/docker/mirrorregistries" "${MirrorRegistries}" }}
               runcmd:
-                - curl ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
+                - curl -sf ${InfraKitConfigurationBaseURL}/userdata-aws -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
                 - REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${InfraKitConfigurationBaseURL} MIRROR_REGISTRIES=${MirrorRegistries} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdn /usr/local/bin/asg-init.sh
-            - { ami: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+            - { ami: !FindInMap [ AMI, !Ref "AWS::Region", !Ref LinuxDistribution ], stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -632,6 +647,13 @@ Outputs:
   PublicManagerHost:
     Description: public facing endpoint for the swarm managers
     Value: !GetAtt ManagerExternalELB.DNSName
+  MetricsURL:
+    Description: URL for cluster health dashboard
+    Value:
+      Fn::Join:
+        - ':'
+        - - !GetAtt ManagerExternalELB.DNSName
+          - "9090"
   MirrorRegistries:
     Description: mirror registries used by the Docker engines
     Value: !Ref MirrorRegistries
@@ -657,7 +679,7 @@ Outputs:
     Value: !Ref SecurityGroup
   AMI:
     Description: AMI
-    Value: !FindInMap [ AMI, !Ref "AWS::Region", Ubuntu ]
+    Value: !FindInMap [ AMI, !Ref "AWS::Region", !Ref LinuxDistribution ]
   InstanceProfile:
     Description: IAM instance profile
     Value: !Ref ClusterInstanceProfile

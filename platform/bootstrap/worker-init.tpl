@@ -13,7 +13,7 @@ set -o xtrace
 # or it's a non DinD Docker container and we can't easily install Docker
 if [ "x$provider" != "xdocker" ]; then
   _install_docker
-  systemctl stop docker.service
+  systemctl stop docker.service || service docker stop
 fi
 # Use an EBS volume for the devicemapper
 if [ "x$provider" = "xaws" ]; then
@@ -32,7 +32,7 @@ cat << EOF > /etc/docker/daemon.json
 {
   "labels": {{ INFRAKIT_LABELS | jsonEncode }},
   "experimental": true,
-  "metrics-addr": "127.0.0.1:9323",
+  "metrics-addr": "0.0.0.0:9323",
   "log-opts": {
     "max-size": "10m",
     "max-file": "3"
@@ -42,7 +42,7 @@ cat << EOF > /etc/docker/daemon.json
 EOF
 
 if [ "x$provider" != "xdocker" ]; then
-  systemctl start docker.service
+  systemctl start docker.service || service docker start
   sleep 2
 else
   # TODO: send kill -HUP to reload the labels, see appcelerator/amp#1123
@@ -51,3 +51,11 @@ fi
 # TODO: send kill -HUP to reload the labels, see appcelerator/amp#1123
 
 docker swarm join --token {{  SWARM_JOIN_TOKENS.Worker }} {{ SWARM_MANAGER_ADDR }}
+
+# InfraKit sets labels on the engine, we want them on the node
+nodeid=$(docker info 2>/dev/null| grep NodeID | awk '{print $2}')
+labels="$(echo {{ INFRAKIT_LABELS }} | tr -d '[]')"
+remote_api="$(echo {{ SWARM_MANAGER_ADDR }} | cut -d: -f1)"
+for label in $labels; do
+  docker -H $remote_api node update --label-add "$label" "$nodeid"
+done

@@ -7,7 +7,7 @@ import (
 
 // NewStatusCommand returns a new instance of the status command for querying the state of amp cluster.
 func NewStatusCommand(c cli.Interface) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "status",
 		Short:   "Retrieve details about an amp cluster",
 		PreRunE: cli.NoArgs,
@@ -15,12 +15,23 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 			return status(c, cmd)
 		},
 	}
+	flags := cmd.Flags()
+	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	flags.StringVarP(&opts.tag, "tag", "t", "0.10.1", "Specify tag for bootstrap images (default is '0.10.1', use 'local' for development)")
+	return cmd
 }
 
 func status(c cli.Interface, cmd *cobra.Command) error {
+	// This is a map from cli cluster flag name to bootstrap script flag name
+	m := map[string]string{
+		"provider": "-t",
+		"tag":      "-T",
+	}
 	// TODO call api to get status
-	args := []string{"bootstrap/bootstrap", "-s", DefaultLocalClusterID}
-	status := queryCluster(c, args, nil)
+	args := []string{"bin/deploy", "-s"}
+	args = reflag(cmd, m, args)
+	env := map[string]string{"TAG": opts.tag}
+	status := queryCluster(c, args, env)
 	if status != nil {
 		c.Console().Println("cluster status: not running")
 	} else {

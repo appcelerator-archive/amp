@@ -48,7 +48,6 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	// TODO: refactor reflag to handle this
 	args := []string{"bin/deploy"}
 	args = reflag(cmd, m, args)
-	args = append(args, DefaultLocalClusterID)
 	env := map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications)}
 	return queryCluster(c, args, env)
 }

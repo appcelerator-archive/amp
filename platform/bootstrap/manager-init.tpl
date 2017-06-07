@@ -13,7 +13,7 @@ set -o xtrace
 # or it's a non DinD Docker container and we can't easily install Docker
 if [ "x$provider" != "xdocker" ]; then
   _install_docker
-  systemctl stop docker.service
+  systemctl stop docker.service || service docker stop
 fi
 
 # Use an EBS volume for the devicemapper
@@ -30,7 +30,7 @@ cat << EOF > /etc/docker/daemon.json
 EOF
 
 if [ "x$provider" != "xdocker" ]; then
-  systemctl start docker.service
+  systemctl start docker.service || service docker start
   sleep 2
 fi
 
@@ -70,3 +70,10 @@ fi
   docker swarm join --token {{ SWARM_JOIN_TOKENS.Manager }} {{ SWARM_MANAGER_ADDR }}
 
 {{ end }}
+
+# InfraKit sets labels on the engine, we want them on the node
+nodeid=$(docker info 2>/dev/null| grep NodeID | awk '{print $2}')
+labels="$(echo {{ INFRAKIT_LABELS }} | tr -d '[]')"
+for label in $labels; do
+  docker node update --label-add "$label" $nodeid
+done
