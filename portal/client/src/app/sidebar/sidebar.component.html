@@ -72,10 +72,16 @@
 
   </ul>
   <div class="sidebar-footer">
-    <div class="col-xs-12">
-      <a href="https://github.com/atomiqio/atomiq" target="_blank">
+    <div class="col-xs-12" style="height:20px;padding-top:5px;padding-bottom:5px">
+      <a>
         <i class="fa fa-github" aria-hidden="true"></i>
-        AMP 0.11.0
+        AMP {{ serverVersion }}
+      </a>
+    </div>
+    <div *ngIf="serverVersion!==portalVersion" class="col-xs-12" style="height:20px;padding-top:5px;padding-bottom:5px">
+      <a style="color:red">
+        <i class="fa fa-github" aria-hidden="true" style="color:red"></i>
+        PortalVersion: {{ portalVersion }}
       </a>
     </div>
   </div>
@@ -137,7 +143,6 @@
         <span class="menu-icon fa fa-user"></span>
       </a>
     </li>
-
 
   </ul>
 </div>
