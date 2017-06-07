@@ -43,3 +43,7 @@ a.sidebarm {
   font-family:'Verdana';
   color: white;
 }
+
+.sidebar-footer {
+  height:70px
+}

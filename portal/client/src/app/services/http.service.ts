@@ -65,6 +65,10 @@ export class HttpService {
     );
   }
 
+  getVersion() {
+    return this.httpGet("/version")
+  }
+
   changePassword(currentPwd : string, newPwd : string) {
     return this.httpPut("/users/password/change", { existingPassword: currentPwd, newPassword: newPwd});
   }
