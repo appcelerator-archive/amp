@@ -13,7 +13,7 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
           --container string   Filter by the given container
       -f, --follow             Follow log output
       -h, --help               Print usage
-      -i, --infra              Include infrastructure logs
+      -i, --include            Include AMP logs
       -m, --meta               Display entry metadata
           --msg string         Filter the message content by the given pattern
           --node string        Filter by the given node
@@ -44,12 +44,12 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
   $ amp logs foo
 ```
 
-* To fetch the all the logs, including the infrastructure ones:
+* To fetch infrastructure logs:
 ```
   $ amp logs -i
 ```
 
-* To fetch the all the logs and display metadata associated with each entry:
+* To fetch all the logs and display metadata associated with each entry:
 ```
   $ amp logs -m
 ```

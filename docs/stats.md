@@ -1,4 +1,3 @@
-
 ### Stats
 
 The `amp stats` command is used to query or stream statistics. It provides group, filtering and historic options to manage what is presented.
