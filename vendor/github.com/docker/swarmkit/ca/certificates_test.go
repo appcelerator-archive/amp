@@ -22,6 +22,7 @@ import (
 
 	cfcsr "github.com/cloudflare/cfssl/csr"
 	"github.com/cloudflare/cfssl/helpers"
+	"github.com/cloudflare/cfssl/initca"
 	"github.com/docker/go-events"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/ca"
@@ -48,6 +49,7 @@ func init() {
 		Factor: 250 * time.Millisecond,
 		Max:    1 * time.Hour,
 	}
+	ca.GetCertRetryInterval = 50 * time.Millisecond
 }
 
 func checkLeafCert(t *testing.T, certBytes []byte, issuerName, cn, ou, org string, additionalDNSNames ...string) []*x509.Certificate {
@@ -338,8 +340,6 @@ func TestGetRemoteCAInvalidHash(t *testing.T) {
 
 // returns the issuer as well as all the parsed certs returned from the request
 func testRequestAndSaveNewCertificates(t *testing.T, tc *cautils.TestCA) (*ca.IssuerInfo, []*x509.Certificate) {
-	defer tc.Stop()
-
 	// Copy the current RootCA without the signer
 	rca := ca.RootCA{Certs: tc.RootCA.Certs, Pool: tc.RootCA.Pool}
 	tlsCert, issuerInfo, err := rca.RequestAndSaveNewCertificates(tc.Context, tc.KeyReadWriter,
@@ -369,6 +369,7 @@ func TestRequestAndSaveNewCertificatesNoIntermediate(t *testing.T) {
 	t.Parallel()
 
 	tc := cautils.NewTestCA(t)
+	defer tc.Stop()
 	issuerInfo, parsedCerts := testRequestAndSaveNewCertificates(t, tc)
 	require.Len(t, parsedCerts, 1)
 
@@ -381,15 +382,21 @@ func TestRequestAndSaveNewCertificatesWithIntermediates(t *testing.T) {
 	t.Parallel()
 
 	// use a RootCA with an intermediate
-	rca, err := ca.NewRootCA(cautils.ECDSACertChain[2], cautils.ECDSACertChain[1], cautils.ECDSACertChainKeys[1],
-		ca.DefaultNodeCertExpiration, append([]byte("   "), cautils.ECDSACertChain[1]...))
-	require.NoError(t, err)
-
+	apiRootCA := api.RootCA{
+		CACert: cautils.ECDSACertChain[2],
+		CAKey:  cautils.ECDSACertChainKeys[2],
+		RootRotation: &api.RootRotation{
+			CACert:            cautils.ECDSACertChain[1],
+			CAKey:             cautils.ECDSACertChainKeys[1],
+			CrossSignedCACert: concat([]byte("   "), cautils.ECDSACertChain[1]),
+		},
+	}
 	tempdir, err := ioutil.TempDir("", "test-request-and-save-new-certificates")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempdir)
 
-	tc := cautils.NewTestCAFromRootCA(t, tempdir, rca, nil)
+	tc := cautils.NewTestCAFromAPIRootCA(t, tempdir, apiRootCA, nil)
+	defer tc.Stop()
 	issuerInfo, parsedCerts := testRequestAndSaveNewCertificates(t, tc)
 	require.Len(t, parsedCerts, 2)
 
@@ -534,7 +541,7 @@ func TestGetRemoteSignedCertificate(t *testing.T) {
 	csr, _, err := ca.GenerateNewCSR()
 	assert.NoError(t, err)
 
-	certs, err := ca.GetRemoteSignedCertificate(context.Background(), csr, tc.RootCA.Pool,
+	certs, err := ca.GetRemoteSignedCertificate(tc.Context, csr, tc.RootCA.Pool,
 		ca.CertificateRequestConfig{
 			Token:      tc.ManagerToken,
 			ConnBroker: tc.ConnBroker,
@@ -574,7 +581,7 @@ func TestGetRemoteSignedCertificateNodeInfo(t *testing.T) {
 	csr, _, err := ca.GenerateNewCSR()
 	assert.NoError(t, err)
 
-	cert, err := ca.GetRemoteSignedCertificate(context.Background(), csr, tc.RootCA.Pool,
+	cert, err := ca.GetRemoteSignedCertificate(tc.Context, csr, tc.RootCA.Pool,
 		ca.CertificateRequestConfig{
 			Token:      tc.WorkerToken,
 			ConnBroker: tc.ConnBroker,
@@ -698,11 +705,12 @@ func TestGetRemoteSignedCertificateWithPending(t *testing.T) {
 	defer cancel()
 
 	fakeCAServer := newNonSigningCAServer(t, tc)
+	defer fakeCAServer.stop(t)
 
 	completed := make(chan error)
 	defer close(completed)
 	go func() {
-		_, err := ca.GetRemoteSignedCertificate(context.Background(), csr, tc.RootCA.Pool,
+		_, err := ca.GetRemoteSignedCertificate(tc.Context, csr, tc.RootCA.Pool,
 			ca.CertificateRequestConfig{
 				Token:      tc.WorkerToken,
 				ConnBroker: fakeCAServer.getConnBroker(),
@@ -757,7 +765,7 @@ func TestGetRemoteSignedCertificateWithPending(t *testing.T) {
 	// make sure if we time out the GetRemoteSignedCertificate call, it cancels immediately and doesn't keep
 	// polling the status
 	go func() {
-		ctx, _ := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, _ := context.WithTimeout(tc.Context, 1*time.Second)
 		_, err := ca.GetRemoteSignedCertificate(ctx, csr, tc.RootCA.Pool,
 			ca.CertificateRequestConfig{
 				Token:      tc.WorkerToken,
@@ -853,7 +861,7 @@ func TestGetRemoteSignedCertificateConnectionErrors(t *testing.T) {
 	defer close(completed)
 	defer close(done)
 	go func() {
-		_, err := ca.GetRemoteSignedCertificate(context.Background(), csr, tc.RootCA.Pool,
+		_, err := ca.GetRemoteSignedCertificate(tc.Context, csr, tc.RootCA.Pool,
 			ca.CertificateRequestConfig{
 				Token:      tc.WorkerToken,
 				ConnBroker: multiBroker,
@@ -910,7 +918,7 @@ func TestGetRemoteSignedCertificateConnectionErrors(t *testing.T) {
 			{Addr: fakeSigningServers[1].addr},
 		},
 	})
-	_, err = ca.GetRemoteSignedCertificate(context.Background(), csr, tc.RootCA.Pool,
+	_, err = ca.GetRemoteSignedCertificate(tc.Context, csr, tc.RootCA.Pool,
 		ca.CertificateRequestConfig{
 			Token:      tc.WorkerToken,
 			ConnBroker: multiBroker,
@@ -1243,6 +1251,10 @@ func TestRootCAWithCrossSignedIntermediates(t *testing.T) {
 
 	newRoot, err := ca.NewRootCA(fauxRootCert, fauxRootCert, cautils.ECDSACertChainKeys[1], ca.DefaultNodeCertExpiration, nil)
 	require.NoError(t, err)
+	apiNewRoot := api.RootCA{
+		CACert: fauxRootCert,
+		CAKey:  cautils.ECDSACertChainKeys[1],
+	}
 
 	checkValidateAgainstAllRoots := func(cert []byte) {
 		for i, root := range []ca.RootCA{signWithIntermediate, oldRoot, newRoot} {
@@ -1270,7 +1282,7 @@ func TestRootCAWithCrossSignedIntermediates(t *testing.T) {
 	}
 
 	// create an external signing server that generates leaf certs with the new root (but does not append the intermediate)
-	tc := cautils.NewTestCAFromRootCA(t, tempdir, newRoot, nil)
+	tc := cautils.NewTestCAFromAPIRootCA(t, tempdir, apiNewRoot, nil)
 	defer tc.Stop()
 
 	// we need creds that trust both the old and new root in order to connect to the test CA, and we want this root CA to
@@ -1278,7 +1290,7 @@ func TestRootCAWithCrossSignedIntermediates(t *testing.T) {
 	connectToExternalRootCA, err := ca.NewRootCA(append(cautils.ECDSACertChain[2], fauxRootCert...), cautils.ECDSACertChain[1],
 		cautils.ECDSACertChainKeys[1], ca.DefaultNodeCertExpiration, cautils.ECDSACertChain[1])
 	require.NoError(t, err)
-	secConfig, err := connectToExternalRootCA.CreateSecurityConfig(context.Background(), krw, ca.CertificateRequestConfig{})
+	secConfig, err := connectToExternalRootCA.CreateSecurityConfig(tc.Context, krw, ca.CertificateRequestConfig{})
 	require.NoError(t, err)
 
 	externalCA := secConfig.ExternalCA()
@@ -1287,7 +1299,7 @@ func TestRootCAWithCrossSignedIntermediates(t *testing.T) {
 	newCSR, _, err := ca.GenerateNewCSR()
 	require.NoError(t, err)
 
-	tlsCert, err = externalCA.Sign(context.Background(), ca.PrepareCSR(newCSR, "cn", ca.ManagerRole, secConfig.ClientTLSCreds.Organization()))
+	tlsCert, err = externalCA.Sign(tc.Context, ca.PrepareCSR(newCSR, "cn", ca.ManagerRole, secConfig.ClientTLSCreds.Organization()))
 	require.NoError(t, err)
 
 	checkValidateAgainstAllRoots(tlsCert)
@@ -1494,21 +1506,55 @@ func TestValidateCertificateChain(t *testing.T) {
 	}
 }
 
-// Tests cross-signing using a certificate
+// Tests cross-signing an RSA cert with an ECDSA cert and vice versa, and an ECDSA
+// cert with another ECDSA cert and a RSA cert with another RSA cert
 func TestRootCACrossSignCACertificate(t *testing.T) {
 	t.Parallel()
+	if cautils.External {
+		return
+	}
 
-	cert1, key1, err := cautils.CreateRootCertAndKey("rootCN")
+	oldCAs := []struct {
+		cert, key []byte
+	}{
+		{
+			cert: cautils.ECDSA256SHA256Cert,
+			key:  cautils.ECDSA256Key,
+		},
+		{
+			cert: cautils.RSA2048SHA256Cert,
+			key:  cautils.RSA2048Key,
+		},
+	}
+
+	cert1, key1, err := cautils.CreateRootCertAndKey("rootCNECDSA")
 	require.NoError(t, err)
 
-	rootCA1, err := ca.NewRootCA(cert1, cert1, key1, ca.DefaultNodeCertExpiration, nil)
+	rsaReq := cfcsr.CertificateRequest{
+		CN: "rootCNRSA",
+		KeyRequest: &cfcsr.BasicKeyRequest{
+			A: "rsa",
+			S: 2048,
+		},
+		CA: &cfcsr.CAConfig{Expiry: ca.RootCAExpiration},
+	}
+
+	// Generate the CA and get the certificate and private key
+	cert2, _, key2, err := initca.New(&rsaReq)
 	require.NoError(t, err)
 
-	cert2, key2, err := cautils.CreateRootCertAndKey("rootCN2")
-	require.NoError(t, err)
-
-	rootCA2, err := ca.NewRootCA(cert2, cert2, key2, ca.DefaultNodeCertExpiration, nil)
-	require.NoError(t, err)
+	newCAs := []struct {
+		cert, key []byte
+	}{
+		{
+			cert: cert1,
+			key:  key1,
+		},
+		{
+			cert: cert2,
+			key:  key2,
+		},
+	}
 
 	tempdir, err := ioutil.TempDir("", "cross-sign-cert")
 	require.NoError(t, err)
@@ -1516,45 +1562,55 @@ func TestRootCACrossSignCACertificate(t *testing.T) {
 	paths := ca.NewConfigPaths(tempdir)
 	krw := ca.NewKeyReadWriter(paths.Node, nil, nil)
 
-	_, _, err = rootCA2.IssueAndSaveNewCertificates(krw, "cn", "ou", "org")
-	require.NoError(t, err)
-	certBytes, _, err := krw.Read()
-	require.NoError(t, err)
-	leafCert, err := helpers.ParseCertificatePEM(certBytes)
-	require.NoError(t, err)
+	for _, oldRoot := range oldCAs {
+		for _, newRoot := range newCAs {
+			rootCA1, err := ca.NewRootCA(oldRoot.cert, oldRoot.cert, oldRoot.key, ca.DefaultNodeCertExpiration, nil)
+			require.NoError(t, err)
 
-	// cross-signing a non-CA fails
-	_, err = rootCA1.CrossSignCACertificate(certBytes)
-	require.Error(t, err)
+			rootCA2, err := ca.NewRootCA(newRoot.cert, newRoot.cert, newRoot.key, ca.DefaultNodeCertExpiration, nil)
+			require.NoError(t, err)
 
-	// cross-signing some non-cert PEM bytes fail
-	_, err = rootCA1.CrossSignCACertificate(key1)
-	require.Error(t, err)
+			_, _, err = rootCA2.IssueAndSaveNewCertificates(krw, "cn", "ou", "org")
+			require.NoError(t, err)
+			certBytes, keyBytes, err := krw.Read()
+			require.NoError(t, err)
+			leafCert, err := helpers.ParseCertificatePEM(certBytes)
+			require.NoError(t, err)
 
-	intermediate, err := rootCA1.CrossSignCACertificate(cert2)
-	require.NoError(t, err)
-	parsedIntermediate, err := helpers.ParseCertificatePEM(intermediate)
-	require.NoError(t, err)
-	parsedRoot2, err := helpers.ParseCertificatePEM(cert2)
-	require.NoError(t, err)
-	require.Equal(t, parsedRoot2.RawSubject, parsedIntermediate.RawSubject)
-	require.Equal(t, parsedRoot2.RawSubjectPublicKeyInfo, parsedIntermediate.RawSubjectPublicKeyInfo)
-	require.True(t, parsedIntermediate.IsCA)
+			// cross-signing a non-CA fails
+			_, err = rootCA1.CrossSignCACertificate(certBytes)
+			require.Error(t, err)
 
-	intermediatePool := x509.NewCertPool()
-	intermediatePool.AddCert(parsedIntermediate)
+			// cross-signing some non-cert PEM bytes fail
+			_, err = rootCA1.CrossSignCACertificate(keyBytes)
+			require.Error(t, err)
 
-	// we can validate a chain from the leaf to the first root through the intermediate,
-	// or from the leaf cert to the second root with or without the intermediate
-	_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA1.Pool})
-	require.Error(t, err)
-	_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA1.Pool, Intermediates: intermediatePool})
-	require.NoError(t, err)
+			intermediate, err := rootCA1.CrossSignCACertificate(newRoot.cert)
+			require.NoError(t, err)
+			parsedIntermediate, err := helpers.ParseCertificatePEM(intermediate)
+			require.NoError(t, err)
+			parsedRoot2, err := helpers.ParseCertificatePEM(newRoot.cert)
+			require.NoError(t, err)
+			require.Equal(t, parsedRoot2.RawSubject, parsedIntermediate.RawSubject)
+			require.Equal(t, parsedRoot2.RawSubjectPublicKeyInfo, parsedIntermediate.RawSubjectPublicKeyInfo)
+			require.True(t, parsedIntermediate.IsCA)
 
-	_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA2.Pool})
-	require.NoError(t, err)
-	_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA2.Pool, Intermediates: intermediatePool})
-	require.NoError(t, err)
+			intermediatePool := x509.NewCertPool()
+			intermediatePool.AddCert(parsedIntermediate)
+
+			// we can validate a chain from the leaf to the first root through the intermediate,
+			// or from the leaf cert to the second root with or without the intermediate
+			_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA1.Pool})
+			require.Error(t, err)
+			_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA1.Pool, Intermediates: intermediatePool})
+			require.NoError(t, err)
+
+			_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA2.Pool})
+			require.NoError(t, err)
+			_, err = leafCert.Verify(x509.VerifyOptions{Roots: rootCA2.Pool, Intermediates: intermediatePool})
+			require.NoError(t, err)
+		}
+	}
 }
 
 func concat(byteSlices ...[]byte) []byte {

@@ -26,6 +26,9 @@ import (
 // On regular RSA/ECDSA TUF keys, this is just the key ID.  On X509 RSA/ECDSA
 // TUF keys, this is the key ID of the public key part of the key in the leaf cert
 func CanonicalKeyID(k data.PublicKey) (string, error) {
+	if k == nil {
+		return "", errors.New("public key is nil")
+	}
 	switch k.Algorithm() {
 	case data.ECDSAx509Key, data.RSAx509Key:
 		return X509PublicKeyID(k)
@@ -311,6 +314,20 @@ func ValidateCertificate(c *x509.Certificate, checkExpiry bool) error {
 		}
 	}
 	return nil
+}
+
+// GenerateKey returns a new private key using the provided algorithm or an
+// error detailing why the key could not be generated
+func GenerateKey(algorithm string) (data.PrivateKey, error) {
+	switch algorithm {
+	case data.RSAKey:
+		return GenerateRSAKey(rand.Reader, notary.MinRSABitSize)
+	case data.ECDSAKey:
+		return GenerateECDSAKey(rand.Reader)
+	case data.ED25519Key:
+		return GenerateED25519Key(rand.Reader)
+	}
+	return nil, fmt.Errorf("private key type not supported for key generation: %s", algorithm)
 }
 
 // GenerateRSAKey generates an RSA private key and returns a TUF PrivateKey
