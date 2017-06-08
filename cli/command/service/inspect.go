@@ -13,7 +13,7 @@ import (
 // NewServiceInspectCommand returns a new instance of the service inspect command.
 func NewServiceInspectCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:     "inspect",
+		Use:     "inspect SERVICE",
 		Short:   "Display detailed information of a service",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
