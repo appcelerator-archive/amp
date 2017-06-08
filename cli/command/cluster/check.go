@@ -9,7 +9,7 @@ import (
 func check(provider string) error {
 	cmd := "docker"
 	switch provider {
-	case "local":
+	case "local", "docker":
 		// check that the amp-boostrap container does not exist
 		args := []string{
 			"container", "inspect", "amp-bootstrap",

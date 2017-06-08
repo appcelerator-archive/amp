@@ -42,7 +42,7 @@ var (
 		Success: color.New(color.FgGreen),
 	}
 
-	successPrefix = "Succes: "
+	successPrefix = "Success: "
 	warningPrefix = "Warning: "
 	errorPrefix   = "Error: "
 	fatalPrefix   = "Fatal: "

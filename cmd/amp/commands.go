@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
@@ -44,15 +42,6 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 
 			//print current context
 			info(c)
-
-			if cmd.Parent() != nil && cmd.Parent().Use == "cluster" {
-				// TODO special case handling for cluster this release
-				local := strings.HasPrefix(c.Server(), "127.0.0.1") ||
-					strings.HasPrefix(c.Server(), "localhost")
-				if !local {
-					return errors.New("only cluster operations with '--server=localhost' supported in this release")
-				}
-			}
 
 			return nil
 		},
