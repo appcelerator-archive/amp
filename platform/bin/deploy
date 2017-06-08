@@ -470,6 +470,7 @@ parse_cmd() {
       ;;
     g) # region for cluster deployment
       REGION=$OPTARG
+      export REGION
       ;;
     esac
   done
