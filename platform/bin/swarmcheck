@@ -1,5 +1,6 @@
 #!/bin/bash
 
+docker pull docker &>/dev/null
 [[ "$DOCKERHOST" = "m1" ]] && amps="docker run -t --rm --network=hostnet docker --host=m1" || amps="docker --host=$DOCKERHOST"
 
 usage() {
@@ -32,7 +33,7 @@ while true; do
     #accepted=$(docker node ls --filter membership=accepted | awk '{ print $1 }' | wc -w)
     if [[ $nc -gt 1 && $nc -eq $((ready+1)) ]]; then
       if [[ -n "$COUNT" && $ready -eq $COUNT ]]; then
-        echo "the swarm has $ready active and ready nodes" >&2
+        echo "the swarm has $ready active and ready nodes"
         exit 0
       fi
     fi

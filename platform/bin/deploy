@@ -32,15 +32,33 @@ amps=docker
 DESTROY=0
 STATUS=0
 
-# get and optionally set the target of the deployment: local | dind | aws
+# log level vars
+# use 3 to 8 file descriptors for output.
+# log types := ( "[CRIT]:" = 3, "[ERR]:" = 4, "[WARN]:" = 5, "[NOTE]:" = 6, "[INFO]:" = 7, "[DEBUG]:" = 8)
+LOG_LEVEL=7
+MAX_LOG_LEVEL=8
+
+# set the file descriptor targets for the log level
+set_log_level() {
+  for v in $(seq 3 $LOG_LEVEL)
+  do
+    (( "$v" <= "$MAX_LOG_LEVEL" )) && eval exec "$v>&2"
+  done
+  for v in $(seq $(( LOG_LEVEL+1 )) $MAX_LOG_LEVEL )
+  do
+    (( "$v" > "$LOG_LEVEL" )) && eval exec "$v>/dev/null"
+  done
+}
+
+# get and optionally set the target of the deployment: local | docker | aws
 deployment_target() {
-  [[ ! -z $1 ]] && DEPLOYMENT_TARGET=$1
+  [[ -n $1 ]] && DEPLOYMENT_TARGET=$1
   echo $DEPLOYMENT_TARGET
 }
 
 # create the cluster and echo the cluster id
 cluster_create() {
-  local _clusterid
+  local _clusterid=$1
   local _status
   local _target
   local _label
@@ -49,30 +67,40 @@ cluster_create() {
   _target="$(deployment_target)"
   case $_target in
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
-    docker node ls &>/dev/null
+    docker node ls &>8
     if [[ $? -ne 0 ]]; then
-      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null || return 1
+      docker swarm init --advertise-addr 127.0.0.1 &>8 || return 1
     fi
-    _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
+    if [[ $_clusterid = "" ]]; then
+      _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
+    fi
     docker network ls | grep -q ampnet
     if [[ $? -ne 0 ]]; then
-      echo "create overlay network ampnet" >&2
-      docker network create --attachable -d overlay ampnet >/dev/null || return 1
+      echo "[DEBUG]: create overlay network ampnet" >&8
+      docker network create --attachable -d overlay ampnet &>8 || return 1
     else
-      echo "overlay network ampnet found" >&2
+      echo "[DEBUG]: overlay network ampnet found" >&8
     fi
     # add all service labels for orchestration
     for _label in $_labels; do
-      docker node update --label-add "${_label_prefix}${_label}=true" "$_clusterid" >/dev/null
+      docker node update --label-add "${_label_prefix}${_label}=true" "$_clusterid" &>8
     done
     echo $_clusterid
     ;;
-  dind|aws)
+  docker)
+    # async
+    # docker deployment uses default provider and target in bootstrap
+    if [[ $# -eq 0 ]]; then
+      bootstrap $BOOTSTRAP_OPTIONS -f
+    else
+      bootstrap $BOOTSTRAP_OPTIONS -f -i $1
+    fi ;;
+  aws)
     # async
     if [[ $# -eq 0 ]]; then
-      bootstrap $BOOTSTRAP_OPTIONS -t "$_target" -f
+      bootstrap $BOOTSTRAP_OPTIONS -p "$_target" -t "aws" -f
     else
-      bootstrap $BOOTSTRAP_OPTIONS -t "$_target" -fi $1
+      bootstrap $BOOTSTRAP_OPTIONS -p "$_target" -t "aws" -i $1 -f
     fi ;;
   esac
 }
@@ -85,22 +113,22 @@ cluster_destroy() {
   set_deployment_variables
   _target="$(deployment_target)"
   case $_target in
-  dind|aws)
-    bootstrap -t $_target -di $1 ;;
   local)
     docker stack rm amp
     # wait for containers to be removed
     SECONDS=0
     while [[ $_code -ne 0 ]]; do
       sleep 2
-      docker volume ls -q | grep "^amp_" | xargs docker volume rm 2>/dev/null
+      docker volume ls -q | grep "^amp_" | xargs docker volume rm &>8
       _code=$?
       [[ $SECONDS -gt 25 ]] && break
     done
     _vols=$(docker volume ls -q | grep "^amp_")
-    [[ -n "$_vols" ]] && echo "docker volumes $_vols has not been removed, you should do it manually"
+    [[ -n "$_vols" ]] && echo "[WARN]: docker volumes $_vols has not been removed, you should do it manually" >&5
     return 0
     ;;
+  docker|aws)
+    bootstrap -t $_target -d -i $1 ;;
   esac
 }
 
@@ -114,12 +142,12 @@ cluster_status() {
   case $_target in
   local)
     if [[ -n "$_clusterid" ]]; then
-      docker node ls -q | grep $_clusterid &>/dev/null
+      docker node ls -q 2>/dev/null | grep $_clusterid &>/dev/null
     else
       docker node ls -q &>/dev/null
     fi
     ;;
-  dind|aws)
+  docker|aws)
     bootstrap -t $_target -s $_clusterid >/dev/null 2>&1 ;;
   esac
 }
@@ -134,18 +162,18 @@ cluster_nodecount() {
   local) # single manager node
     echo 1
     ;;
-  dind|aws)
+  docker|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | wc -l)
     if [[ $_count -gt 0 ]]; then
       echo $_count
       return 0
     fi
-    echo "node count failed" >&2
+    echo "[ERR]: node count failed" >&4
     bootstrap -t $_target -l $_clusterid >&2
     return 1
     ;;
   *)
-    echo "unknown deployment target ($_target)" >&2
+    echo "[ERR]: unknown deployment target ($_target)" >&4
     return 1 ;;
   esac
 }
@@ -160,18 +188,18 @@ cluster_workercount() {
   local) # single manager node
     echo 0
     ;;
-  dind|aws)
+  docker|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | grep -c worker)
     if [[ $_count -gt 0 ]]; then
       echo $_count
       return 0
     fi
-    echo "node count failed" >&2
+    echo "[ERR]: node count failed" >&4
     bootstrap -t $_target -l $_clusterid >&2
     return 1
     ;;
   *)
-    echo "unknown deployment target ($_target)" >&2
+    echo "[ERR]: unknown deployment target ($_target)" >&4
     return 1 ;;
   esac
 }
@@ -225,7 +253,7 @@ set_deployment_variables(){
     domainname=$localdomainname
     return
     ;;
-  dind)
+  docker)
     dockerhost=m1
     registryhost=127.0.0.1
     create_amp_stacks_volume
@@ -266,8 +294,8 @@ set_deployment_variables(){
   registryurl=$(echo $registryhost | cut -d, -f1)
   # if no scheme, add the default port
   if echo $registryurl | grep -qv "://" && [[ -n "$registryurl" ]]; then registryurl=$registryurl:5000; fi
-  echo "Docker host = $dockerhost"
-  echo "Docker registry = $registryurl"
+  echo "[DEBUG]: Docker host = $dockerhost" >&8
+  echo "[DEBUG]: Docker registry = $registryurl" >&8
 }
 
 checkexit() {
@@ -280,39 +308,39 @@ cleanup() {
   [[ $STATUS -eq 1 ]] && exit 0
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
-  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && cluster_destroy $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "docker" ]] && echo "[INFO]: clean up" >&7 && cluster_destroy $CID
+  [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "[INFO]: clean up" >&7 && cluster_destroy $CID
 }
 
 ok() {
-  echo ok $1
+  echo "[DEBUG]: ok $1" >&8
 }
 
 pushimage() {
-  echo "push image: $1/$2"
-  docker tag $2 $1/$2
+  echo "[INFO]: Pushing image: $1/$2" >&7
+  docker tag $2 $1/$2 &>8
   checkexit "error tagging image"
-  docker push $1/$2
+  docker push $1/$2 &>8
   checkexit "error pushing image"
   ok
 }
 
 deploystack() {
-  echo "deploy $1 => $2"
-  $amps stack deploy -c $stacks_path/$1 $2
+  echo "[DEBUG]: deploying $1 => $2" >&8
+  $amps stack deploy -c $stacks_path/$1 $2 &>8
   checkexit "error deploying stack"
   ok
 }
 
 # can only use this once the swarm is ready
 lookup() {
-  [[ -z $amps ]] && echo "error to use lookup before swarm is created" && return 1
+  [[ -z $amps ]] && echo "[ERR]: error to use lookup before swarm is created" >&4 && return 1
   $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 nslookup $1
 }
 
 # can only use this once the swarm is ready
 kurl() {
-  [[ -z $amps ]] && echo "error to use kurl before swarm is created" && return 1
+  [[ -z $amps ]] && echo "[ERR]: error to use kurl before swarm is created" >&4 && return 1
   $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
 }
 
@@ -329,16 +357,17 @@ prepare_amplifier_configuration(){
     echo "JWTSecretKey: "$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-128}') > "$_conf"
     supasswd=$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-32}')
     echo "SUPassword: " "$supasswd" >> "$_conf"
-    echo "The super user password for this deployment is: $supasswd"
+    echo "[NOTE]: The super user password for this deployment is: $supasswd" >&6
   else
-    echo "using existing configuration for the amplifier_yml secret" >&2
+    echo "[DEBUG]: using existing configuration for the amplifier_yml secret" >&8
   fi
   # copy the configuration in the amp-secrets volume
+  docker pull alpine:3.5 &>8
   cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret amplifier_yml successfully created" >&2
+  $amps secret create "amplifier_yml" "$secrets_path/$(basename $_conf)" >&8 && echo "[DEBUG]: secret amplifier_yml successfully created" >&8
 }
 
 prepare_prometheus_configuration(){
@@ -353,11 +382,12 @@ prepare_prometheus_configuration(){
     echo "using existing configuration for the prometheus_alerts_rules secret" >&2
   fi
   # copy the configuration in the amp-secrets volume
+  docker pull alpine:3.5 &>8
   cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret prometheus_alerts_rules successfully created" >&2
+  $amps secret create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" &>8 && echo "[DEBUG]: secret prometheus_alerts_rules successfully created" >&8
 }
 
 prepare_alertmanager_configuration(){
@@ -382,14 +412,16 @@ EOF
     echo "using existing configuration for the alertmanager_yml secret" >&2
   fi
   # copy the configuration in the amp-secrets volume
+  docker pull alpine:3.5 &>8
   cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "alertmanager_yml" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret alertmanager_yml successfully created" >&2
+  $amps secret create "alertmanager_yml" "$secrets_path/$(basename $_conf)" &>8 && echo "[DEBUG]: secret alertmanager_yml successfully created" >&8
 }
+
 # pushes certificates in a Docker secret, ready to use by services in stack files
-# for local/dind bootstrap, a self signed certificate is created
+# for local/docker bootstrap, a self signed certificate is created
 # for cloud bootstrap, a valid certificate should be provided
 # it has to be in the stacks folder, to allow access to the Docker client
 prepare_certificates() {
@@ -403,29 +435,34 @@ prepare_certificates() {
 
   mkdir -p "$SECRETSDIR"
   case $(deployment_target) in
-  local|dind)
-    mv "$(mkcert)" "$certfile" ;;
+  local|docker)
+    mv $(mkcert) "$certfile" ;;
   esac
   if [[ ! -f "$certfile" ]]; then
     # TODO use certbot
-    echo "can't find certificate $certfile" >&2
+    echo "[ERR]: can't find certificate $certfile" >&4
     return 1
   fi
   # copy the certificate in the amp-secrets volume
+  docker pull alpine:3.5 &>8
   cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$certfile" $cid:/secrets/$name.pem
   docker kill "$cid" >/dev/null 2>&1
-  echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_atomiq successfully created" >&2
+  echo "[DEBUG]: creating the certificate secret" >&8
+  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" &>8 && echo "[DEBUG]: secret certificate_atomiq successfully created" >&8
 }
 
 # process the command line options and arguments
 parse_cmd() {
-  while getopts ":w:m:t:l:T:c:r:n:p:g:dsD:" opt; do
+  while getopts ":w:m:t:l:L:i:T:c:r:n:p:g:dsD:" opt; do
     case $opt in
-    w|m|t|l) # just pass it to the bootstrap script
+    w|m|l) # just pass it to the bootstrap script
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
+      ;;
+    L) # log level for filtering output, +3 to align with log types
+      LOG_LEVEL=$(( OPTARG+3 ))
+      set_log_level
       ;;
     s) STATUS=1
        if [[ -z "$CID" ]]; then
@@ -445,8 +482,14 @@ parse_cmd() {
          fi
        fi
       ;;
+    i) # id of the cluster
+      CID=$OPTARG
+      ;;
     T) # tag for images to deploy
       export TAG=$OPTARG
+      ;;
+    p) # provider
+      deployment_target $OPTARG >/dev/null
       ;;
     r) # registration policy
       export REGISTRATION=$OPTARG
@@ -454,76 +497,79 @@ parse_cmd() {
     n) # notifications
       export NOTIFICATIONS=$OPTARG
       ;;
+    g) # region for cluster deployment
+      REGION=$OPTARG
+      export REGION
+      ;;
     D) # domain for cluster deployment
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
       DOMAIN=$OPTARG
       if [[ ! -f $SECRETSDIR/${DOMAIN}.pem ]]; then
-        echo "can't find ${DOMAIN}.pem in $SECRETSDIR, abort" >&2
+        echo "[ERR]: can't find ${DOMAIN}.pem in $SECRETSDIR, abort" >&4
         exit 1
       fi
       ;;
     c)
       CHECK=1
       ;;
-    p) # provider
-      deployment_target $OPTARG >/dev/null
-      ;;
-    g) # region for cluster deployment
-      REGION=$OPTARG
-      export REGION
-      ;;
     esac
   done
   shift "$((OPTIND-1))"
-
-  CID=$1
 }
 
 bootstrap_cluster() {
   if [[ -z "$CID" ]]; then
-    echo "bootstrapping cluster on $DEPLOYMENT_TARGET"
+    echo "[INFO]: Deploying cluster on $DEPLOYMENT_TARGET" >&7
+    echo >&7
     CID=$(cluster_create)
-    checkexit "bootstrap failed"
-    [[ -n "$CID" ]] && echo $CID
-    checkexit "no clusterid"
+    checkexit "[ERR]: bootstrap failed"
+    echo "[INFO]: Cluster ID: $CID" >&7
   else
-    cluster_status $CID || cluster_create $CID
-    checkexit "bootstrap failed"
+    echo "[INFO]: Deploying cluster with cluster id: $CID on $DEPLOYMENT_TARGET." >&7
+    echo >&7
+    cluster_status $CID || CID=$(cluster_create $CID)
+    checkexit "[ERR]: bootstrap failed"
+    echo "[INFO]: Cluster ID: $CID" >&7
+  fi
+
+  if [[ "$(deployment_target)" != "local" ]]; then
+    echo "[DEBUG]: Wait for cluster" >&8
+    clustercheck -t 150 -p $(deployment_target) $CID 4>/dev/null
+    checkexit "[ERR]: cluster timed out"
+    ok
   fi
 
   set_deployment_variables
 
-  if [[ "$(deployment_target)" != "local" ]]; then
-    echo "wait for cluster"
-    clustercheck -t 150 -p $(deployment_target) $CID
-    checkexit "cluster timed out"
-    ok
-  fi
-
   typeset -i nodecount
   nodecount=$(cluster_nodecount $CID)
-  checkexit "failed to count cluster nodes"
-  echo "cluster size is $nodecount"
+  checkexit "[ERR]: failed to count cluster nodes"
+  echo "[DEBUG]: Cluster size is $nodecount" >&8
+  echo "[INFO]: Cluster has been sucessfully deployed." >&7
+  echo >&7
 
-  echo "wait for swarm mode"
-  swarmcheck -t 300 -c $nodecount
-  checkexit "swarm mode timed out"
+  echo -n "[INFO]: Deploying AMP to cluster:" >&7
+  echo >&7
+
+  echo "[DEBUG]: Wait for swarm mode" >&8
+  swarmcheck -t 300 -c $nodecount >&8
+  checkexit "[ERR]: swarm mode timed out"
   ok
 
   if [[ -n "$registryurl" ]]; then
-    echo "wait for registry"
+    echo "[DEBUG]: Wait for registry" >&8
     curlcheck "${registryurl}/v2/" 200 180
-    checkexit "registry timed out"
+    checkexit "[ERR]: registry timed out"
     ok
   fi
 
   if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
-    echo "push images to cluster"
+    echo "[INFO]: Pushing images to cluster" >&7
     for image in amplifier amplifier-gateway ampbeat agent; do
       pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
     done
   else
-    echo "image push to cluster is ignored (tag=${TAG:-latest})"
+    echo "[DEBUG]: Image push to cluster is ignored (tag=${TAG:-latest})" >&8
   fi
 }
 
@@ -536,61 +582,63 @@ deploy_stacks() {
     export NODE_ROLE=manager
   fi
 
-  echo "deploy amp monitoring stack to cluster - stage 1"
+  echo "[INFO]: Deploying amp monitoring stack to cluster - stage 1" >&7
   _workercount=$(cluster_workercount $CID) || return 1
   [[ $_workercount -le 9 ]] && deploystack ampmon-single.1.stack.yml amp || deploystack ampmon-cluster.1.stack.yml amp
-  echo "wait for all amp monitoring stage 1 stack service replicas to be running"
-
-  servicescheck $maxwait
-  checkexit "amp monitoring stage 1 service replica checks timed out"
+  echo "[DEBUG]: Wait for all amp monitoring stage 1 stack service replicas to be running ($maxwait sec)" >&8
+  servicescheck $maxwait >&8
+  checkexit "[ERR]: amp monitoring stage 1 service replica checks timed out"
   ok
 
-  echo "deploy amp monitoring stack to cluster - stage 2"
+  echo "[INFO]: Deploying amp monitoring stack to cluster - stage 2" >&7
   deploystack ampmon.2.stack.yml amp
-  echo "wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "amp monitoring stage 2 service replica checks timed out"
+  echo "[DEBUG]: Wait for all amp monitoring stage 2 service replicas to be running ($maxwait sec)" >&8
+  servicescheck $maxwait >&8
+  checkexit "[ERR]: amp monitoring stage 2 service replica checks timed out"
   ok
 
   prepare_prometheus_configuration
-  checkexit "secret creation for prometheus failed"
+  checkexit "[ERR]: secret creation for prometheus failed"
   prepare_alertmanager_configuration
-  checkexit "secret creation for alertmanager failed"
+  checkexit "[ERR]: secret creation for alertmanager failed"
 
-  echo "deploy amp monitoring stack to cluster - stage 3"
+  echo "[INFO]: Deploying amp monitoring stack to cluster - stage 3" >&7
   deploystack ampmon.3.stack.yml amp
-  echo "wait for all amp monitoring stage 3 service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "amp monitoring stage 3 service replica checks timed out"
+  echo "[DEBUG]: Wait for all amp monitoring stage 3 service replicas to be running ($maxwait sec)" >&8
+  servicescheck $maxwait >&8
+  checkexit "[ERR]: amp monitoring stage 3 service replica checks timed out"
   ok
 
-  echo "deploy portal stack to cluster"
+  echo "[INFO]: Deploying portal stack to cluster" >&7
   deploystack portal.stack.yml amp
-  echo "wait for all portal service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "portal service replica checks timed out"
+  echo "[DEBUG]: Wait for all portal service replicas to be running ($maxwait sec)" >&8
+  servicescheck $maxwait >&8
+  checkexit "[ERR]: portal service replica checks timed out"
   ok
 
   prepare_amplifier_configuration
   checkexit "secret creation for amplifier failed"
-  echo "deploy amp stack to cluster"
+  echo "[INFO]: Deploying amp stack to cluster" >&7
   deploystack amp.stack.yml amp
-  echo "wait for all amp service replicas to be running ($maxwait sec)"
-  servicescheck $maxwait
-  checkexit "amp service replica checks timed out"
+  echo "[DEBUG]: Wait for all amp service replicas to be running ($maxwait sec)" >&8
+  servicescheck $maxwait >&8
+  checkexit "[ERR]: amp service replica checks timed out"
   ok
 
   prepare_certificates $domainname
   if [[ $? -eq 0 ]]; then
-    echo "deploy amp proxy stack to cluster"
+    echo "[INFO]: Deploying amp proxy stack to cluster" >&7
     deploystack ampproxy.stack.yml amp
-    echo "wait for all amp proxy service replicas to be running ($maxwait sec)"
-    servicescheck $maxwait
-    checkexit "amp proxy service replica checks timed out"
+    echo "[DEBUG]: Wait for all amp proxy service replicas to be running ($maxwait sec)" >&8
+    servicescheck $maxwait >&8
+    checkexit "[ERR]: amp proxy service replica checks timed out"
     ok
   else
-    echo "won't deploy the proxy stack, there's no certificate"
+    echo "[NOTE]: won't deploy the proxy stack, there's no certificate" >&6
   fi
+
+  echo -n "[INFO]: AMP has been successfully deployed." >&7
+  echo >&7
 }
 
 smoke_tests() {
@@ -637,6 +685,7 @@ smoke_tests() {
 }
 
 main() {
+  set_log_level
   parse_cmd $@
   if [[ $STATUS -eq 1 ]]; then
     cluster_status $CID
@@ -652,7 +701,7 @@ main() {
 
   # set SUCCESS for EXIT trap
   SUCCESS=1
-  printf "\nCluster status: healthy\n$CID"
+  printf "\nCluster status: healthy\nCluster id: $CID"
 }
 
 trap cleanup EXIT

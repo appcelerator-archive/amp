@@ -51,4 +51,4 @@ readonly INTERVAL
 shift $((OPTIND-1))
 
 [[ -z "$1" ]] && usage
-main $BOOTSTRAPDIR/bootstrap -t ${PROVIDER:-local} -s $1
+main $BOOTSTRAPDIR/bootstrap -p ${PROVIDER:-local} -s $1

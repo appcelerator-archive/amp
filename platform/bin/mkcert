@@ -44,11 +44,11 @@ EXPIRE=356
 CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=ca-$(hostname)"
 SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=*.local.appcelerator.io"
 
-openssl genrsa -out $CAKEY $KEYLEN
-openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT"
-openssl genrsa -out $KEY $KEYLEN
-openssl req -subj "$SUBJECT" -sha256 -new -key $KEY -out $CSR
-openssl x509 -req -days $EXPIRE -sha256 -in $CSR -CA $CACERT -CAkey $CAKEY -CAcreateserial -out $CERT
+openssl genrsa -out $CAKEY $KEYLEN &>8
+openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT" &>8
+openssl genrsa -out $KEY $KEYLEN &>8
+openssl req -subj "$SUBJECT" -sha256 -new -key $KEY -out $CSR &>8
+openssl x509 -req -days $EXPIRE -sha256 -in $CSR -CA $CACERT -CAkey $CAKEY -CAcreateserial -out $CERT &>8
 
 cat $KEY $CERT $CACERT > $PEM
 echo $PEM
