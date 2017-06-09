@@ -429,7 +429,7 @@ parse_cmd() {
       ;;
     s) STATUS=1
        if [[ -z "$CID" ]]; then
-         CID="$(docker node inspect self -f '{{.ID}}')" 
+         CID="$(docker node inspect self -f '{{.ID}}')"
          if [[ $? -ne 0 ]]; then
            echo "you should pass a cluster id as argument" >&2
            exit 1
@@ -438,7 +438,7 @@ parse_cmd() {
       ;;
     d) DESTROY=1
        if [[ -z "$CID" ]]; then
-         CID="$(docker node inspect self -f '{{.ID}}')" 
+         CID="$(docker node inspect self -f '{{.ID}}')"
          if [[ $? -ne 0 ]]; then
            echo "you should pass a cluster id as argument" >&2
            exit 1
@@ -518,7 +518,7 @@ bootstrap_cluster() {
 
   if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
     echo "push images to cluster"
-    for image in amplifier amplifier-gateway ampbeat agent portal; do
+    for image in amplifier amplifier-gateway ampbeat agent; do
       pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
     done
   else

@@ -107,7 +107,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-portal build-bootstrap build-monit
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit
 build: build-base buildall-cli
 
 # =============================================================================
@@ -303,24 +303,6 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
-
-# =============================================================================
-# BUILD PORTAL (`amp-portal`)
-# Build portal server binary
-# then build `appcelerator/portal` image
-# =============================================================================
-PORTAL := portal
-PORTALDIR=portal
-PORTALSERVERDIR=$(PORTALDIR)/server
-PORTALTAG := local
-PORTALIMG := appcelerator/$(PORTAL):$(PORTALTAG)
-
-build-portal: $(PORTALSERVERTARGET)
-	@echo "build $(PORTALIMG)"
-	@$(DOCKER_CMD) build -t $(PORTALIMG) $(PORTALDIR)/server || (rm -f $(PORTALSERVERTARGET); exit 1)
-
-rebuild-portal: build-portal
-
 
 # =============================================================================
 # BUILD BOOTSTRAP (`amp-bootstrap`)
