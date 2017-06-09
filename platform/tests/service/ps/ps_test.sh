@@ -11,8 +11,8 @@ test_stack_deploy() {
 }
 
 test_service_ps() {
-  local id=$($amp service ls 2>/dev/null | grep -o -w -E '^[[:alnum:]]{25}')
-  $amp service ps $id 2>/dev/null | grep -o -w -E -q '^[[:alnum:]]{25}'
+  local id=$($amp service ls 2>/dev/null | grep -o -w -E '[[:alnum:]]{25}')
+  $amp service ps $id 2>/dev/null | grep -o -w -E -q '[[:alnum:]]{25}'
 }
 
 test_teardown() {
