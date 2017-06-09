@@ -28,6 +28,8 @@ services:
       - alertmanager-data:/alertmanager
     ports:
       - "9093:9093"
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: replicated
       replicas: 1
@@ -58,6 +60,8 @@ services:
       VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
     ports:
       - "9090:9090"
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: replicated
       replicas: 1
@@ -81,6 +85,8 @@ services:
     ports:
       - "9100:9100"
     command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: global
       labels:
@@ -92,6 +98,8 @@ services:
     #ports:
       #- target: 7777
       #- published: 7777
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: replicated
       replicas: 1
@@ -111,6 +119,8 @@ services:
     #ports:
       #- target: 9101
       #- published: 9101
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: replicated
       replicas: 1
@@ -131,6 +141,8 @@ services:
     environment:
       SERVICE_PORTS: 3000
       VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+    labels:
+      io.amp.role: "infrastructure"
     deploy:
       mode: replicated
       replicas: 1
