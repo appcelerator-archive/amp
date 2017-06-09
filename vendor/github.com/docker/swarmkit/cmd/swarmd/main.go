@@ -12,6 +12,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	engineapi "github.com/docker/docker/client"
 	"github.com/docker/swarmkit/agent/exec/dockerapi"
+	"github.com/docker/swarmkit/api"
+	"github.com/docker/swarmkit/api/genericresource"
 	"github.com/docker/swarmkit/cli"
 	"github.com/docker/swarmkit/cmd/swarmd/defaults"
 	"github.com/docker/swarmkit/log"
@@ -64,6 +66,12 @@ var (
 			if err != nil {
 				return err
 			}
+
+			advertiseAddr, err := cmd.Flags().GetString("advertise-remote-api")
+			if err != nil {
+				return err
+			}
+
 			addr, err := cmd.Flags().GetString("listen-remote-api")
 			if err != nil {
 				return err
@@ -143,6 +151,18 @@ var (
 				}
 			}
 
+			var resources []*api.GenericResource
+			if cmd.Flags().Changed("generic-node-resources") {
+				genericResources, err := cmd.Flags().GetString("generic-node-resources")
+				if err != nil {
+					return err
+				}
+				resources, err = genericresource.Parse(genericResources)
+				if err != nil {
+					return err
+				}
+			}
+
 			// Create a cancellable context for our GRPC call
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
@@ -152,7 +172,7 @@ var (
 				return err
 			}
 
-			executor := dockerapi.NewExecutor(client)
+			executor := dockerapi.NewExecutor(client, resources)
 
 			if debugAddr != "" {
 				go func() {
@@ -182,19 +202,20 @@ var (
 			}
 
 			n, err := node.New(&node.Config{
-				Hostname:         hostname,
-				ForceNewCluster:  forceNewCluster,
-				ListenControlAPI: unix,
-				ListenRemoteAPI:  addr,
-				JoinAddr:         managerAddr,
-				StateDir:         stateDir,
-				JoinToken:        joinToken,
-				ExternalCAs:      externalCAOpt.Value(),
-				Executor:         executor,
-				HeartbeatTick:    hb,
-				ElectionTick:     election,
-				AutoLockManagers: autolockManagers,
-				UnlockKey:        unlockKey,
+				Hostname:           hostname,
+				ForceNewCluster:    forceNewCluster,
+				ListenControlAPI:   unix,
+				ListenRemoteAPI:    addr,
+				AdvertiseRemoteAPI: advertiseAddr,
+				JoinAddr:           managerAddr,
+				StateDir:           stateDir,
+				JoinToken:          joinToken,
+				ExternalCAs:        externalCAOpt.Value(),
+				Executor:           executor,
+				HeartbeatTick:      hb,
+				ElectionTick:       election,
+				AutoLockManagers:   autolockManagers,
+				UnlockKey:          unlockKey,
 			})
 			if err != nil {
 				return err
@@ -233,11 +254,13 @@ func init() {
 	mainCmd.Flags().StringP("join-token", "", "", "Specifies the secret token required to join the cluster")
 	mainCmd.Flags().String("engine-addr", "unix:///var/run/docker.sock", "Address of engine instance of agent.")
 	mainCmd.Flags().String("hostname", "", "Override reported agent hostname")
+	mainCmd.Flags().String("advertise-remote-api", "", "Advertise address for remote API")
 	mainCmd.Flags().String("listen-remote-api", "0.0.0.0:4242", "Listen address for remote API")
 	mainCmd.Flags().String("listen-control-api", defaults.ControlAPISocket, "Listen socket for control API")
 	mainCmd.Flags().String("listen-debug", "", "Bind the Go debug server on the provided address")
 	mainCmd.Flags().String("listen-metrics", "", "Listen address for metrics")
 	mainCmd.Flags().String("join-addr", "", "Join cluster with a node at this address")
+	mainCmd.Flags().String("generic-node-resources", "", "user defined resources (e.g. fpga=2;gpu={UUID1,UUID2,UUID3})")
 	mainCmd.Flags().Bool("force-new-cluster", false, "Force the creation of a new cluster from data directory")
 	mainCmd.Flags().Uint32("heartbeat-tick", 1, "Defines the heartbeat interval (in seconds) for raft member health-check")
 	mainCmd.Flags().Uint32("election-tick", 3, "Defines the amount of ticks (in seconds) needed without a Leader to trigger a new election")

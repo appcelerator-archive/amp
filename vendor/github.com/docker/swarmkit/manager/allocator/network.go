@@ -7,6 +7,7 @@ import (
 	"github.com/docker/go-events"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/log"
+	"github.com/docker/swarmkit/manager/allocator/cnmallocator"
 	"github.com/docker/swarmkit/manager/allocator/networkallocator"
 	"github.com/docker/swarmkit/manager/state"
 	"github.com/docker/swarmkit/manager/state/store"
@@ -34,7 +35,7 @@ type networkContext struct {
 	ingressNetwork *api.Network
 	// Instance of the low-level network allocator which performs
 	// the actual network allocation.
-	nwkAllocator *networkallocator.NetworkAllocator
+	nwkAllocator networkallocator.NetworkAllocator
 
 	// A set of tasks which are ready to be allocated as a batch. This is
 	// distinct from "unallocatedTasks" which are tasks that failed to
@@ -61,7 +62,7 @@ type networkContext struct {
 }
 
 func (a *Allocator) doNetworkInit(ctx context.Context) (err error) {
-	na, err := networkallocator.New(a.pluginGetter)
+	na, err := cnmallocator.New(a.pluginGetter)
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,7 @@ func (a *Allocator) doNetworkInit(ctx context.Context) (err error) {
 
 	var allocatedServices []*api.Service
 	for _, s := range services {
-		if !nc.nwkAllocator.ServiceNeedsAllocation(s, networkallocator.OnInit) {
+		if nc.nwkAllocator.IsServiceAllocated(s, networkallocator.OnInit) {
 			continue
 		}
 
@@ -317,7 +318,7 @@ func (a *Allocator) doNetworkAlloc(ctx context.Context, ev events.Event) {
 			break
 		}
 
-		if !nc.nwkAllocator.ServiceNeedsAllocation(s) {
+		if nc.nwkAllocator.IsServiceAllocated(s) {
 			break
 		}
 
@@ -345,7 +346,7 @@ func (a *Allocator) doNetworkAlloc(ctx context.Context, ev events.Event) {
 			break
 		}
 
-		if !nc.nwkAllocator.ServiceNeedsAllocation(s) {
+		if nc.nwkAllocator.IsServiceAllocated(s) {
 			if !nc.nwkAllocator.HostPublishPortsNeedUpdate(s) {
 				break
 			}
@@ -368,7 +369,7 @@ func (a *Allocator) doNetworkAlloc(ctx context.Context, ev events.Event) {
 	case api.EventDeleteService:
 		s := v.Service.Copy()
 
-		if err := nc.nwkAllocator.ServiceDeallocate(s); err != nil {
+		if err := nc.nwkAllocator.DeallocateService(s); err != nil {
 			log.G(ctx).WithError(err).Errorf("Failed deallocation during delete of service %s", s.ID)
 		}
 
@@ -544,7 +545,7 @@ func taskReadyForNetworkVote(t *api.Task, s *api.Service, nc *networkContext) bo
 	// network configured or service endpoints have been
 	// allocated.
 	return (len(t.Networks) == 0 || nc.nwkAllocator.IsTaskAllocated(t)) &&
-		(s == nil || !nc.nwkAllocator.ServiceNeedsAllocation(s))
+		(s == nil || nc.nwkAllocator.IsServiceAllocated(s))
 }
 
 func taskUpdateNetworks(t *api.Task, networks []*api.NetworkAttachment) {
@@ -562,25 +563,7 @@ func taskUpdateEndpoint(t *api.Task, endpoint *api.Endpoint) {
 
 // IsIngressNetworkNeeded checks whether the service requires the routing-mesh
 func IsIngressNetworkNeeded(s *api.Service) bool {
-	if s == nil {
-		return false
-	}
-
-	if s.Spec.Endpoint == nil {
-		return false
-	}
-
-	for _, p := range s.Spec.Endpoint.Ports {
-		// The service to which this task belongs is trying to
-		// expose ports with PublishMode as Ingress to the
-		// external world. Automatically attach the task to
-		// the ingress network.
-		if p.PublishMode == api.PublishModeIngress {
-			return true
-		}
-	}
-
-	return false
+	return networkallocator.IsIngressNetworkNeeded(s)
 }
 
 func (a *Allocator) taskCreateNetworkAttachments(t *api.Task, s *api.Service) {
@@ -611,7 +594,7 @@ func (a *Allocator) taskCreateNetworkAttachments(t *api.Task, s *api.Service) {
 			attachment := api.NetworkAttachment{Network: n}
 			attachment.Aliases = append(attachment.Aliases, na.Aliases...)
 			attachment.Addresses = append(attachment.Addresses, na.Addresses...)
-
+			attachment.DriverAttachmentOpts = na.DriverAttachmentOpts
 			networks = append(networks, &attachment)
 		}
 	})
@@ -792,12 +775,12 @@ func (a *Allocator) allocateService(ctx context.Context, s *api.Service) error {
 	} else if s.Endpoint != nil {
 		// service has no user-defined endpoints while has already allocated network resources,
 		// need deallocated.
-		if err := nc.nwkAllocator.ServiceDeallocate(s); err != nil {
+		if err := nc.nwkAllocator.DeallocateService(s); err != nil {
 			return err
 		}
 	}
 
-	if err := nc.nwkAllocator.ServiceAllocate(s); err != nil {
+	if err := nc.nwkAllocator.AllocateService(s); err != nil {
 		nc.unallocatedServices[s.ID] = s
 		return err
 	}
@@ -832,7 +815,7 @@ func (a *Allocator) commitAllocatedService(ctx context.Context, batch *store.Bat
 
 		return errors.Wrapf(err, "failed updating state in store transaction for service %s", s.ID)
 	}); err != nil {
-		if err := a.netCtx.nwkAllocator.ServiceDeallocate(s); err != nil {
+		if err := a.netCtx.nwkAllocator.DeallocateService(s); err != nil {
 			log.G(ctx).WithError(err).Errorf("failed rolling back allocation of service %s", s.ID)
 		}
 
@@ -887,7 +870,7 @@ func (a *Allocator) allocateTask(ctx context.Context, t *api.Task) (err error) {
 					return
 				}
 
-				if nc.nwkAllocator.ServiceNeedsAllocation(s) {
+				if !nc.nwkAllocator.IsServiceAllocated(s) {
 					err = fmt.Errorf("service %s to which this task %s belongs has pending allocations", s.ID, t.ID)
 					return
 				}
@@ -1004,7 +987,7 @@ func (a *Allocator) procUnallocatedServices(ctx context.Context) {
 	nc := a.netCtx
 	var allocatedServices []*api.Service
 	for _, s := range nc.unallocatedServices {
-		if nc.nwkAllocator.ServiceNeedsAllocation(s) {
+		if !nc.nwkAllocator.IsServiceAllocated(s) {
 			if err := a.allocateService(ctx, s); err != nil {
 				log.G(ctx).WithError(err).Debugf("Failed allocation of unallocated service %s", s.ID)
 				continue
@@ -1087,6 +1070,16 @@ func (a *Allocator) procTasksNetwork(ctx context.Context, onRetry bool) {
 			toAllocate[t.ID] = t
 		}
 	}
+}
+
+// IsBuiltInNetworkDriver returns whether the passed driver is an internal network driver
+func (a *Allocator) IsBuiltInNetworkDriver(name string) bool {
+	return a.netCtx.nwkAllocator.IsBuiltInDriver(name)
+}
+
+// PredefinedNetworks returns the list of predefined network structures for a given network model
+func PredefinedNetworks() []networkallocator.PredefinedNetworkData {
+	return cnmallocator.PredefinedNetworks()
 }
 
 // updateTaskStatus sets TaskStatus and updates timestamp.

@@ -29,13 +29,13 @@ Run 'amp cluster COMMAND --help' for more information on a command.
 ```
     $ amp cluster create
 ```
-    If no flags are passed to the command, a cluster with default number of worker and manager nodes is created. See `amp cluster create --help` for more options.
+If no flags are passed to the command, a cluster with default number of worker and manager nodes is created. See `amp cluster create --help` for more options.
 
 * To update a cluster with specific number of worker and manager nodes:
 ```
     $ amp cluster update
 ```
-    See `amp cluster update --help` for options.
+See `amp cluster update --help` for options.
 
 * To retrieve details about a cluster:
 ```

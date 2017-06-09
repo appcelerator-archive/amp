@@ -1,7 +1,10 @@
 package testutils
 
 import (
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -11,6 +14,8 @@ import (
 	"github.com/docker/swarmkit/agent/exec"
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/ca"
+	"github.com/docker/swarmkit/identity"
+	"github.com/docker/swarmkit/log"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
@@ -114,12 +119,16 @@ func (t *TestController) Close() error {
 	return nil
 }
 
+// SessionHandler is an injectable function that can be used handle session requests
+type SessionHandler func(*api.SessionRequest, api.Dispatcher_SessionServer) error
+
 // MockDispatcher is a fake dispatcher that one agent at a time can connect to
 type MockDispatcher struct {
 	mu             sync.Mutex
 	sessionCh      chan *api.SessionMessage
 	openSession    *api.SessionRequest
 	closedSessions []*api.SessionRequest
+	sessionHandler SessionHandler
 
 	Addr string
 }
@@ -153,18 +162,28 @@ func (m *MockDispatcher) Heartbeat(context.Context, *api.HeartbeatRequest) (*api
 // Session allows a session to be established, and sends the node info
 func (m *MockDispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_SessionServer) error {
 	m.mu.Lock()
+	handler := m.sessionHandler
 	m.openSession = r
 	m.mu.Unlock()
+	sessionID := identity.NewID()
+
 	defer func() {
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		m.closedSessions = append(m.closedSessions, m.openSession)
-		m.openSession = nil
+		log.G(stream.Context()).Debugf("non-dispatcher side closed session: %s", sessionID)
+		m.closedSessions = append(m.closedSessions, r)
+		if m.openSession == r { // only overwrite session if it hasn't changed
+			m.openSession = nil
+		}
 	}()
+
+	if handler != nil {
+		return handler(r, stream)
+	}
 
 	// send the initial message first
 	if err := stream.Send(&api.SessionMessage{
-		SessionID: r.SessionID,
+		SessionID: sessionID,
 		Managers: []*api.WeightedPeer{
 			{
 				Peer: &api.Peer{Addr: m.Addr},
@@ -178,7 +197,7 @@ func (m *MockDispatcher) Session(r *api.SessionRequest, stream api.Dispatcher_Se
 	for {
 		select {
 		case msg := <-m.sessionCh:
-			msg.SessionID = r.SessionID
+			msg.SessionID = sessionID
 			if err := stream.Send(msg); err != nil {
 				return err
 			}
@@ -200,11 +219,35 @@ func (m *MockDispatcher) SessionMessageChannel() chan<- *api.SessionMessage {
 	return m.sessionCh
 }
 
+// SetSessionHandler lets you inject a custom function to handle session requests
+func (m *MockDispatcher) SetSessionHandler(s SessionHandler) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sessionHandler = s
+}
+
 // NewMockDispatcher starts and returns a mock dispatcher instance that can be connected to
-func NewMockDispatcher(t *testing.T, secConfig *ca.SecurityConfig) (*MockDispatcher, func()) {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	addr := l.Addr().String()
-	require.NoError(t, err)
+func NewMockDispatcher(t *testing.T, secConfig *ca.SecurityConfig, local bool) (*MockDispatcher, func()) {
+	var (
+		l       net.Listener
+		err     error
+		addr    string
+		cleanup func()
+	)
+	if local {
+		tempDir, err := ioutil.TempDir("", "local-dispatcher-socket")
+		require.NoError(t, err)
+		addr = filepath.Join(tempDir, "socket")
+		l, err = net.Listen("unix", addr)
+		require.NoError(t, err)
+		cleanup = func() {
+			os.RemoveAll(tempDir)
+		}
+	} else {
+		l, err = net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		addr = l.Addr().String()
+	}
 
 	serverOpts := []grpc.ServerOption{grpc.Creds(secConfig.ServerTLSCreds)}
 	s := grpc.NewServer(serverOpts...)
@@ -215,5 +258,11 @@ func NewMockDispatcher(t *testing.T, secConfig *ca.SecurityConfig) (*MockDispatc
 	}
 	api.RegisterDispatcherServer(s, m)
 	go s.Serve(l)
-	return m, s.Stop
+	return m, func() {
+		l.Close()
+		s.Stop()
+		if cleanup != nil {
+			cleanup()
+		}
+	}
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/go-events"
 	"github.com/docker/swarmkit/api"
+	"github.com/docker/swarmkit/api/genericresource"
 	"github.com/docker/swarmkit/identity"
 	"github.com/docker/swarmkit/manager/state"
 	"github.com/docker/swarmkit/manager/state/store"
@@ -824,6 +825,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e8,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 1),
+					},
 				},
 			},
 		},
@@ -844,6 +848,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 10),
+					},
 				},
 			},
 		},
@@ -864,6 +871,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 6),
+					},
 				},
 			},
 		},
@@ -884,6 +894,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 6),
+					},
 				},
 			},
 		},
@@ -904,6 +917,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 6),
+					},
 				},
 			},
 		},
@@ -924,6 +940,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 6),
+					},
 				},
 			},
 		},
@@ -944,6 +963,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 				Resources: &api.Resources{
 					NanoCPUs:    1e9,
 					MemoryBytes: 1e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 6),
+					},
 				},
 			},
 		},
@@ -979,6 +1001,9 @@ func testMultiplePreferences(t *testing.T, useSpecVersion bool) {
 			Resources: &api.ResourceRequirements{
 				Reservations: &api.Resources{
 					MemoryBytes: 2e8,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 2),
+					},
 				},
 			},
 		},
@@ -1263,6 +1288,10 @@ func TestSchedulerResourceConstraint(t *testing.T) {
 			Resources: &api.Resources{
 				NanoCPUs:    1e9,
 				MemoryBytes: 1e9,
+				Generic: append(
+					genericresource.NewSet("orange", "blue"),
+					genericresource.NewDiscrete("apple", 1),
+				),
 			},
 		},
 	}
@@ -1282,6 +1311,10 @@ func TestSchedulerResourceConstraint(t *testing.T) {
 			Resources: &api.Resources{
 				NanoCPUs:    2e9,
 				MemoryBytes: 2e9,
+				Generic: append(
+					genericresource.NewSet("orange", "blue", "red"),
+					genericresource.NewDiscrete("apple", 2),
+				),
 			},
 		},
 	}
@@ -1299,6 +1332,10 @@ func TestSchedulerResourceConstraint(t *testing.T) {
 			Resources: &api.Resources{
 				NanoCPUs:    2e9,
 				MemoryBytes: 2e9,
+				Generic: append(
+					genericresource.NewSet("orange", "blue", "red"),
+					genericresource.NewDiscrete("apple", 2),
+				),
 			},
 		},
 	}
@@ -1313,6 +1350,10 @@ func TestSchedulerResourceConstraint(t *testing.T) {
 			Resources: &api.ResourceRequirements{
 				Reservations: &api.Resources{
 					MemoryBytes: 2e9,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("orange", 2),
+						genericresource.NewDiscrete("apple", 2),
+					},
 				},
 			},
 		},
@@ -1365,6 +1406,10 @@ func TestSchedulerResourceConstraint(t *testing.T) {
 				Resources: &api.Resources{
 					NanoCPUs:    4e9,
 					MemoryBytes: 8e9,
+					Generic: append(
+						genericresource.NewSet("orange", "blue", "red", "green"),
+						genericresource.NewDiscrete("apple", 4),
+					),
 				},
 			},
 			Status: api.NodeStatus{
@@ -1398,6 +1443,9 @@ func TestSchedulerResourceConstraintHA(t *testing.T) {
 		Description: &api.NodeDescription{
 			Resources: &api.Resources{
 				MemoryBytes: 1e9,
+				Generic: []*api.GenericResource{
+					genericresource.NewDiscrete("apple", 2),
+				},
 			},
 		},
 	}
@@ -1414,6 +1462,9 @@ func TestSchedulerResourceConstraintHA(t *testing.T) {
 		Description: &api.NodeDescription{
 			Resources: &api.Resources{
 				MemoryBytes: 1e11,
+				Generic: []*api.GenericResource{
+					genericresource.NewDiscrete("apple", 5),
+				},
 			},
 		},
 	}
@@ -1427,6 +1478,9 @@ func TestSchedulerResourceConstraintHA(t *testing.T) {
 			Resources: &api.ResourceRequirements{
 				Reservations: &api.Resources{
 					MemoryBytes: 5e8,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 1),
+					},
 				},
 			},
 		},
@@ -1530,6 +1584,9 @@ func TestSchedulerResourceConstraintDeadTask(t *testing.T) {
 			Resources: &api.Resources{
 				NanoCPUs:    1e9,
 				MemoryBytes: 1e9,
+				Generic: []*api.GenericResource{
+					genericresource.NewDiscrete("apple", 4),
+				},
 			},
 		},
 	}
@@ -1541,6 +1598,9 @@ func TestSchedulerResourceConstraintDeadTask(t *testing.T) {
 			Resources: &api.ResourceRequirements{
 				Reservations: &api.Resources{
 					MemoryBytes: 8e8,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 3),
+					},
 				},
 			},
 		},
@@ -1589,12 +1649,8 @@ func TestSchedulerResourceConstraintDeadTask(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
-	s.View(func(tx store.ReadTx) {
-		tasks, err := store.FindTasks(tx, store.ByNodeID(node.ID))
-		assert.NoError(t, err)
-		assert.Len(t, tasks, 1)
-	})
+	failure := watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (insufficient resources on 1 node)", failure.Status.Message)
 
 	err = s.Update(func(tx store.Tx) error {
 		// The task becomes dead
@@ -1628,6 +1684,9 @@ func TestSchedulerPreexistingDeadTask(t *testing.T) {
 			Resources: &api.Resources{
 				NanoCPUs:    1e9,
 				MemoryBytes: 1e9,
+				Generic: []*api.GenericResource{
+					genericresource.NewDiscrete("apple", 1),
+				},
 			},
 		},
 	}
@@ -1640,6 +1699,9 @@ func TestSchedulerPreexistingDeadTask(t *testing.T) {
 			Resources: &api.ResourceRequirements{
 				Reservations: &api.Resources{
 					MemoryBytes: 8e8,
+					Generic: []*api.GenericResource{
+						genericresource.NewDiscrete("apple", 1),
+					},
 				},
 			},
 		},
@@ -1687,6 +1749,229 @@ func TestSchedulerPreexistingDeadTask(t *testing.T) {
 	assignment := watchAssignment(t, watch)
 	assert.Equal(t, "id2", assignment.ID)
 	assert.Equal(t, "id1", assignment.NodeID)
+}
+
+func TestSchedulerCompatiblePlatform(t *testing.T) {
+	ctx := context.Background()
+	// create tasks
+	// task1 - has a node it can run on
+	task1 := &api.Task{
+		ID:           "id1",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name1",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Spec: api.TaskSpec{
+			Placement: &api.Placement{
+				Platforms: []*api.Platform{
+					{
+						Architecture: "amd64",
+						OS:           "linux",
+					},
+				},
+			},
+		},
+	}
+
+	// task2 - has no node it can run on
+	task2 := &api.Task{
+		ID:           "id2",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name2",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Spec: api.TaskSpec{
+			Placement: &api.Placement{
+				Platforms: []*api.Platform{
+					{
+						Architecture: "arm",
+						OS:           "linux",
+					},
+				},
+			},
+		},
+	}
+
+	// task3 - no platform constraints, should run on any node
+	task3 := &api.Task{
+		ID:           "id3",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name3",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+	}
+
+	// task4 - only OS constraint, is runnable on any linux node
+	task4 := &api.Task{
+		ID:           "id4",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name4",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Spec: api.TaskSpec{
+			Placement: &api.Placement{
+				Platforms: []*api.Platform{
+					{
+						Architecture: "",
+						OS:           "linux",
+					},
+				},
+			},
+		},
+	}
+
+	// task5 - supported on multiple platforms
+	task5 := &api.Task{
+		ID:           "id5",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name5",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Spec: api.TaskSpec{
+			Placement: &api.Placement{
+				Platforms: []*api.Platform{
+					{
+						Architecture: "amd64",
+						OS:           "linux",
+					},
+					{
+						Architecture: "x86_64",
+						OS:           "windows",
+					},
+				},
+			},
+		},
+	}
+
+	node1 := &api.Node{
+		ID: "node1",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node1",
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+		Description: &api.NodeDescription{
+			Platform: &api.Platform{
+				Architecture: "x86_64",
+				OS:           "linux",
+			},
+		},
+	}
+
+	node2 := &api.Node{
+		ID: "node2",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node2",
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+		Description: &api.NodeDescription{
+			Platform: &api.Platform{
+				Architecture: "amd64",
+				OS:           "windows",
+			},
+		},
+	}
+
+	// node with nil platform description, cannot schedule anything
+	// with a platform constraint
+	node3 := &api.Node{
+		ID: "node3",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node3",
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+		Description: &api.NodeDescription{},
+	}
+
+	s := store.NewMemoryStore(nil)
+	assert.NotNil(t, s)
+	defer s.Close()
+
+	err := s.Update(func(tx store.Tx) error {
+		// Add initial task and nodes to the store
+		assert.NoError(t, store.CreateTask(tx, task1))
+		assert.NoError(t, store.CreateNode(tx, node1))
+		assert.NoError(t, store.CreateNode(tx, node2))
+		assert.NoError(t, store.CreateNode(tx, node3))
+		return nil
+	})
+	assert.NoError(t, err)
+
+	scheduler := New(s)
+
+	watch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateTask{})
+	defer cancel()
+
+	go func() {
+		assert.NoError(t, scheduler.Run(ctx))
+	}()
+	defer scheduler.Stop()
+
+	// task1 should get assigned
+	assignment1 := watchAssignment(t, watch)
+	assert.Equal(t, "node1", assignment1.NodeID)
+
+	// add task2
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, task2))
+		return nil
+	})
+	assert.NoError(t, err)
+	failure := watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (unsupported platform on 3 nodes)", failure.Status.Message)
+
+	// add task3
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, task3))
+		return nil
+	})
+	assert.NoError(t, err)
+	assignment2 := watchAssignment(t, watch)
+	assert.Regexp(t, assignment2.NodeID, "(node2|node3)")
+
+	// add task4
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, task4))
+		return nil
+	})
+	assert.NoError(t, err)
+	assignment3 := watchAssignment(t, watch)
+	assert.Equal(t, "node1", assignment3.NodeID)
+
+	// add task5
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, task5))
+		return nil
+	})
+	assert.NoError(t, err)
+	assignment4 := watchAssignment(t, watch)
+	assert.Regexp(t, assignment4.NodeID, "(node1|node2)")
 }
 
 func TestPreassignedTasks(t *testing.T) {
@@ -2051,13 +2336,8 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
-	s.View(func(tx store.ReadTx) {
-		task := store.GetTask(tx, "task2_ID")
-		if task.Status.State >= api.TaskStateAssigned {
-			t.Fatalf("task 'task2_ID' should not have been assigned to node %v", task.NodeID)
-		}
-	})
+	failure := watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (missing plugin on 1 node)", failure.Status.Message)
 
 	// Now add the second node
 	err = s.Update(func(tx store.Tx) error {
@@ -2079,13 +2359,8 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
-	s.View(func(tx store.ReadTx) {
-		task := store.GetTask(tx, "task3_ID")
-		if task.Status.State >= api.TaskStateAssigned {
-			t.Fatal("task 'task3_ID' should not have been assigned")
-		}
-	})
+	failure = watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (missing plugin on 2 nodes)", failure.Status.Message)
 
 	// Now add the node3
 	err = s.Update(func(tx store.Tx) error {
@@ -2230,4 +2505,147 @@ func benchScheduler(b *testing.B, nodes, tasks int, networkConstraints bool) {
 		cancel()
 		s.Close()
 	}
+}
+
+func TestSchedulerHostPort(t *testing.T) {
+	ctx := context.Background()
+	node1 := &api.Node{
+		ID: "nodeid1",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node1",
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+	}
+	node2 := &api.Node{
+		ID: "nodeid2",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node2",
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+	}
+
+	task1 := &api.Task{
+		ID:           "id1",
+		DesiredState: api.TaskStateRunning,
+		Spec: api.TaskSpec{
+			Runtime: &api.TaskSpec_Container{
+				Container: &api.ContainerSpec{},
+			},
+		},
+		ServiceAnnotations: api.Annotations{
+			Name: "name1",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Endpoint: &api.Endpoint{
+			Ports: []*api.PortConfig{
+				{
+					PublishMode:   api.PublishModeHost,
+					PublishedPort: 58,
+					Protocol:      api.ProtocolTCP,
+				},
+			},
+		},
+	}
+	task2 := &api.Task{
+		ID:           "id2",
+		DesiredState: api.TaskStateRunning,
+		Spec: api.TaskSpec{
+			Runtime: &api.TaskSpec_Container{
+				Container: &api.ContainerSpec{},
+			},
+		},
+		ServiceAnnotations: api.Annotations{
+			Name: "name2",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Endpoint: &api.Endpoint{
+			Ports: []*api.PortConfig{
+				{
+					PublishMode:   api.PublishModeHost,
+					PublishedPort: 58,
+					Protocol:      api.ProtocolUDP,
+				},
+			},
+		},
+	}
+	task3 := &api.Task{
+		ID:           "id3",
+		DesiredState: api.TaskStateRunning,
+		Spec: api.TaskSpec{
+			Runtime: &api.TaskSpec_Container{
+				Container: &api.ContainerSpec{},
+			},
+		},
+		ServiceAnnotations: api.Annotations{
+			Name: "name3",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+		Endpoint: &api.Endpoint{
+			Ports: []*api.PortConfig{
+				{
+					PublishMode:   api.PublishModeHost,
+					PublishedPort: 58,
+					Protocol:      api.ProtocolUDP,
+				},
+				{
+					PublishMode:   api.PublishModeHost,
+					PublishedPort: 58,
+					Protocol:      api.ProtocolTCP,
+				},
+			},
+		},
+	}
+
+	s := store.NewMemoryStore(nil)
+	assert.NotNil(t, s)
+	defer s.Close()
+
+	err := s.Update(func(tx store.Tx) error {
+		// Add initial node and task
+		assert.NoError(t, store.CreateTask(tx, task1))
+		assert.NoError(t, store.CreateTask(tx, task2))
+		assert.NoError(t, store.CreateNode(tx, node1))
+		assert.NoError(t, store.CreateNode(tx, node2))
+		return nil
+	})
+	assert.NoError(t, err)
+
+	scheduler := New(s)
+
+	watch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateTask{})
+	defer cancel()
+
+	go func() {
+		assert.NoError(t, scheduler.Run(ctx))
+	}()
+	defer scheduler.Stop()
+
+	// Tasks 1 and 2 should be assigned to different nodes.
+	assignment1 := watchAssignment(t, watch)
+	assignment2 := watchAssignment(t, watch)
+	assert.True(t, assignment1 != assignment2)
+
+	// Task 3 should not be schedulable.
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, task3))
+		return nil
+	})
+	assert.NoError(t, err)
+
+	failure := watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (host-mode port already in use on 2 nodes)", failure.Status.Message)
 }
