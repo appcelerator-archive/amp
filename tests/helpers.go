@@ -38,7 +38,7 @@ func AmplifierConnection() (*grpc.ClientConn, error) {
 		grpc.WithBlock(),
 		grpc.WithTimeout(60*time.Second))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to connect to amplifier on: %store\n%v", amplifierEndpoint, err)
+		return nil, fmt.Errorf("Unable to connect to amplifier on %s: %v\n", amplifierEndpoint, err)
 	}
 	log.Println("Connected to amplifier")
 	return conn, nil
