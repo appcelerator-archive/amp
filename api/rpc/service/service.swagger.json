@@ -39,7 +39,7 @@
         ]
       }
     },
-    "/v1/scale/{service_id}": {
+    "/v1/scale/{service_id}/{replicas_number}": {
       "put": {
         "operationId": "ScaleService",
         "responses": {
@@ -56,6 +56,13 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "replicas_number",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [

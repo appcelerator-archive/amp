@@ -11,12 +11,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"syscall"
+	"syscall" // only for Signal
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/system"
 	"github.com/opencontainers/runc/libcontainer/utils"
+
+	"golang.org/x/sys/unix"
 )
 
 type parentProcess interface {
@@ -62,7 +64,7 @@ func (p *setnsProcess) signal(sig os.Signal) error {
 	if !ok {
 		return errors.New("os: unsupported signal type")
 	}
-	return syscall.Kill(p.pid(), s)
+	return unix.Kill(p.pid(), s)
 }
 
 func (p *setnsProcess) start() (err error) {
@@ -108,7 +110,7 @@ func (p *setnsProcess) start() (err error) {
 		}
 	})
 
-	if err := syscall.Shutdown(int(p.parentPipe.Fd()), syscall.SHUT_WR); err != nil {
+	if err := unix.Shutdown(int(p.parentPipe.Fd()), unix.SHUT_WR); err != nil {
 		return newSystemErrorWithCause(err, "calling shutdown on init pipe")
 	}
 	// Must be done after Shutdown so the child will exit and we can wait for it.
@@ -280,9 +282,6 @@ func (p *initProcess) start() error {
 	ierr := parseSync(p.parentPipe, func(sync *syncT) error {
 		switch sync.Type {
 		case procReady:
-			if err := p.manager.Set(p.config.Config); err != nil {
-				return newSystemErrorWithCause(err, "setting cgroup config for ready process")
-			}
 			// set rlimits, this has to be done here because we lose permissions
 			// to raise the limits once we enter a user-namespace
 			if err := setupRlimits(p.config.Rlimits, p.pid()); err != nil {
@@ -290,6 +289,11 @@ func (p *initProcess) start() error {
 			}
 			// call prestart hooks
 			if !p.config.Config.Namespaces.Contains(configs.NEWNS) {
+				// Setup cgroup before prestart hook, so that the prestart hook could apply cgroup permissions.
+				if err := p.manager.Set(p.config.Config); err != nil {
+					return newSystemErrorWithCause(err, "setting cgroup config for ready process")
+				}
+
 				if p.config.Config.Hooks != nil {
 					s := configs.HookState{
 						Version: p.container.config.Version,
@@ -310,6 +314,10 @@ func (p *initProcess) start() error {
 			}
 			sentRun = true
 		case procHooks:
+			// Setup cgroup before prestart hook, so that the prestart hook could apply cgroup permissions.
+			if err := p.manager.Set(p.config.Config); err != nil {
+				return newSystemErrorWithCause(err, "setting cgroup config for procHooks process")
+			}
 			if p.config.Config.Hooks != nil {
 				s := configs.HookState{
 					Version: p.container.config.Version,
@@ -341,7 +349,7 @@ func (p *initProcess) start() error {
 	if p.config.Config.Namespaces.Contains(configs.NEWNS) && !sentResume {
 		return newSystemError(fmt.Errorf("could not synchronise after executing prestart hooks with container process"))
 	}
-	if err := syscall.Shutdown(int(p.parentPipe.Fd()), syscall.SHUT_WR); err != nil {
+	if err := unix.Shutdown(int(p.parentPipe.Fd()), unix.SHUT_WR); err != nil {
 		return newSystemErrorWithCause(err, "shutting down init pipe")
 	}
 
@@ -360,7 +368,7 @@ func (p *initProcess) wait() (*os.ProcessState, error) {
 	}
 	// we should kill all processes in cgroup when init is died if we use host PID namespace
 	if p.sharePidns {
-		signalAllProcesses(p.manager, syscall.SIGKILL)
+		signalAllProcesses(p.manager, unix.SIGKILL)
 	}
 	return p.cmd.ProcessState, nil
 }
@@ -409,7 +417,7 @@ func (p *initProcess) signal(sig os.Signal) error {
 	if !ok {
 		return errors.New("os: unsupported signal type")
 	}
-	return syscall.Kill(p.pid(), s)
+	return unix.Kill(p.pid(), s)
 }
 
 func (p *initProcess) setExternalDescriptors(newFds []string) {
@@ -450,7 +458,7 @@ func (p *Process) InitializeIO(rootuid, rootgid int) (i *IO, err error) {
 	defer func() {
 		if err != nil {
 			for _, fd := range fds {
-				syscall.Close(int(fd))
+				unix.Close(int(fd))
 			}
 		}
 	}()
@@ -475,7 +483,7 @@ func (p *Process) InitializeIO(rootuid, rootgid int) (i *IO, err error) {
 	p.Stderr, i.Stderr = w, r
 	// change ownership of the pipes incase we are in a user namespace
 	for _, fd := range fds {
-		if err := syscall.Fchown(int(fd), rootuid, rootgid); err != nil {
+		if err := unix.Fchown(int(fd), rootuid, rootgid); err != nil {
 			return nil, err
 		}
 	}

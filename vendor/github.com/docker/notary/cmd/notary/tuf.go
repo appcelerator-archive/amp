@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,13 +16,12 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/distribution/registry/client/auth/challenge"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/docker/go-connections/tlsconfig"
+	canonicaljson "github.com/docker/go/canonical/json"
 	"github.com/docker/notary"
 	notaryclient "github.com/docker/notary/client"
 	"github.com/docker/notary/cryptoservice"
@@ -112,10 +113,12 @@ type tufCommander struct {
 	retriever    notary.PassRetriever
 
 	// these are for command line parsing - no need to set
-	roles   []string
-	sha256  string
-	sha512  string
-	rootKey string
+	roles    []string
+	sha256   string
+	sha512   string
+	rootKey  string
+	rootCert string
+	custom   string
 
 	input  string
 	output string
@@ -131,8 +134,10 @@ type tufCommander struct {
 }
 
 func (t *tufCommander) AddToCommand(cmd *cobra.Command) {
+	//
 	cmdTUFInit := cmdTUFInitTemplate.ToCommand(t.tufInit)
 	cmdTUFInit.Flags().StringVar(&t.rootKey, "rootkey", "", "Root key to initialize the repository with")
+	cmdTUFInit.Flags().StringVar(&t.rootCert, "rootcert", "", "Root certificate must match root key if a root key is supplied, otherwise it must match a key present in keystore")
 	cmdTUFInit.Flags().BoolVarP(&t.autoPublish, "publish", "p", false, htAutoPublish)
 	cmd.AddCommand(cmdTUFInit)
 
@@ -155,6 +160,7 @@ func (t *tufCommander) AddToCommand(cmd *cobra.Command) {
 	cmdTUFAdd := cmdTUFAddTemplate.ToCommand(t.tufAdd)
 	cmdTUFAdd.Flags().StringSliceVarP(&t.roles, "roles", "r", nil, "Delegation roles to add this target to")
 	cmdTUFAdd.Flags().BoolVarP(&t.autoPublish, "publish", "p", false, htAutoPublish)
+	cmdTUFAdd.Flags().StringVar(&t.custom, "custom", "", "Path to the file containing custom data for this target")
 	cmd.AddCommand(cmdTUFAdd)
 
 	cmdTUFRemove := cmdTUFRemoveTemplate.ToCommand(t.tufRemove)
@@ -167,6 +173,7 @@ func (t *tufCommander) AddToCommand(cmd *cobra.Command) {
 	cmdTUFAddHash.Flags().StringVar(&t.sha256, notary.SHA256, "", "hex encoded sha256 of the target to add")
 	cmdTUFAddHash.Flags().StringVar(&t.sha512, notary.SHA512, "", "hex encoded sha512 of the target to add")
 	cmdTUFAddHash.Flags().BoolVarP(&t.autoPublish, "publish", "p", false, htAutoPublish)
+	cmdTUFAddHash.Flags().StringVar(&t.custom, "custom", "", "Path to the file containing custom data for this target")
 	cmd.AddCommand(cmdTUFAddHash)
 
 	cmdTUFVerify := cmdTUFVerifyTemplate.ToCommand(t.tufVerify)
@@ -249,6 +256,20 @@ func getTargetHashes(t *tufCommander) (data.Hashes, error) {
 	return targetHash, nil
 }
 
+// Open and read a file containing the targetCustom data
+func getTargetCustom(targetCustomFilename string) (*canonicaljson.RawMessage, error) {
+	targetCustom := new(canonicaljson.RawMessage)
+	rawTargetCustom, err := ioutil.ReadFile(targetCustomFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := targetCustom.UnmarshalJSON(rawTargetCustom); err != nil {
+		return nil, err
+	}
+	return targetCustom, nil
+}
+
 func (t *tufCommander) tufAddByHash(cmd *cobra.Command, args []string) error {
 	if len(args) < 3 || t.sha256 == "" && t.sha512 == "" {
 		cmd.Usage()
@@ -262,6 +283,13 @@ func (t *tufCommander) tufAddByHash(cmd *cobra.Command, args []string) error {
 	gun := data.GUN(args[0])
 	targetName := args[1]
 	targetSize := args[2]
+	var targetCustom *canonicaljson.RawMessage
+	if t.custom != "" {
+		targetCustom, err = getTargetCustom(t.custom)
+		if err != nil {
+			return err
+		}
+	}
 
 	targetInt64Len, err := strconv.ParseInt(targetSize, 0, 64)
 	if err != nil {
@@ -287,7 +315,7 @@ func (t *tufCommander) tufAddByHash(cmd *cobra.Command, args []string) error {
 	}
 
 	// Manually construct the target with the given byte size and hashes
-	target := &notaryclient.Target{Name: targetName, Hashes: targetHashes, Length: targetInt64Len}
+	target := &notaryclient.Target{Name: targetName, Hashes: targetHashes, Length: targetInt64Len, Custom: targetCustom}
 
 	roleNames := data.NewRoleList(t.roles)
 
@@ -321,6 +349,13 @@ func (t *tufCommander) tufAdd(cmd *cobra.Command, args []string) error {
 	gun := data.GUN(args[0])
 	targetName := args[1]
 	targetPath := args[2]
+	var targetCustom *canonicaljson.RawMessage
+	if t.custom != "" {
+		targetCustom, err = getTargetCustom(t.custom)
+		if err != nil {
+			return err
+		}
+	}
 
 	trustPin, err := getTrustPinning(config)
 	if err != nil {
@@ -335,7 +370,7 @@ func (t *tufCommander) tufAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	target, err := notaryclient.NewTarget(targetName, targetPath)
+	target, err := notaryclient.NewTarget(targetName, targetPath, targetCustom)
 	if err != nil {
 		return err
 	}
@@ -387,6 +422,8 @@ func (t *tufCommander) tufDeleteGUN(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// importRootKey imports the root key from path then adds the key to repo
+// returns key ids
 func importRootKey(cmd *cobra.Command, rootKey string, nRepo *notaryclient.NotaryRepository, retriever notary.PassRetriever) ([]string, error) {
 	var rootKeyList []string
 
@@ -395,6 +432,7 @@ func importRootKey(cmd *cobra.Command, rootKey string, nRepo *notaryclient.Notar
 		if err != nil {
 			return nil, err
 		}
+		// add root key to repo
 		err = nRepo.CryptoService.AddKey(data.CanonicalRootRole, "", privKey)
 		if err != nil {
 			return nil, fmt.Errorf("Error importing key: %v", err)
@@ -414,6 +452,35 @@ func importRootKey(cmd *cobra.Command, rootKey string, nRepo *notaryclient.Notar
 	}
 
 	return []string{}, nil
+}
+
+// importRootCert imports the base64 encoded public certificate corresponding to the root key
+// returns empty slice if path is empty
+func importRootCert(certFilePath string) ([]data.PublicKey, error) {
+	publicKeys := make([]data.PublicKey, 0, 1)
+
+	if certFilePath == "" {
+		return publicKeys, nil
+	}
+
+	// read certificate from file
+	certPEM, err := ioutil.ReadFile(certFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading certificate file: %v", err)
+	}
+	block, _ := pem.Decode([]byte(certPEM))
+	if block == nil {
+		return nil, fmt.Errorf("the provided file does not contain a valid PEM certificate %v", err)
+	}
+
+	// convert the file to data.PublicKey
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("Parsing certificate PEM bytes to x509 certificate: %v", err)
+	}
+	publicKeys = append(publicKeys, tufutils.CertToKey(cert))
+
+	return publicKeys, nil
 }
 
 func (t *tufCommander) tufInit(cmd *cobra.Command, args []string) error {
@@ -449,7 +516,17 @@ func (t *tufCommander) tufInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = nRepo.Initialize(rootKeyIDs); err != nil {
+	rootCerts, err := importRootCert(t.rootCert)
+	if err != nil {
+		return err
+	}
+
+	// if key is not defined but cert is, then clear the key to to allow key to be searched in keystore
+	if t.rootKey == "" && t.rootCert != "" {
+		rootKeyIDs = []string{}
+	}
+
+	if err = nRepo.InitializeWithCertificate(rootKeyIDs, rootCerts, nRepo); err != nil {
 		return err
 	}
 
@@ -459,13 +536,7 @@ func (t *tufCommander) tufInit(cmd *cobra.Command, args []string) error {
 // Attempt to read a role key from a file, and return it as a data.PrivateKey
 // If key is for the Root role, it must be encrypted
 func readKey(role data.RoleName, keyFilename string, retriever notary.PassRetriever) (data.PrivateKey, error) {
-	keyFile, err := os.Open(keyFilename)
-	if err != nil {
-		return nil, fmt.Errorf("Opening file to import as a root key: %v", err)
-	}
-	defer keyFile.Close()
-
-	pemBytes, err := ioutil.ReadAll(keyFile)
+	pemBytes, err := ioutil.ReadFile(keyFilename)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading input root key file: %v", err)
 	}
@@ -782,7 +853,7 @@ type passwordStore struct {
 
 func (ps passwordStore) Basic(u *url.URL) (string, string) {
 	// if it's not a terminal, don't wait on input
-	if ps.anonymous || !terminal.IsTerminal(int(os.Stdin.Fd())) {
+	if ps.anonymous {
 		return "", ""
 	}
 
