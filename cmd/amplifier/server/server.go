@@ -15,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
+	"github.com/appcelerator/amp/api/rpc/pstats"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -61,6 +62,7 @@ var serviceInitializers = []serviceInitializer{
 	registerNodeServer,
 	registerResourceServer,
 	registerDashboardServer,
+	registerPrometheusStatsServer,
 }
 
 func New(config *configuration.Configuration) (*Amplifier, error) {
@@ -198,4 +200,9 @@ func registerDashboardServer(amp *Amplifier, s *grpc.Server) {
 	dashboard.RegisterDashboardServer(s, &dashboard.Server{
 		Dashboards: amp.dashboards,
 	})
+}
+
+func registerPrometheusStatsServer(amp *Amplifier, s *grpc.Server) {
+	//pstats.RegisterPrometheusStatsServer(s, &pstats.PrometheusStats{})
+	pstats.LoadSources()
 }

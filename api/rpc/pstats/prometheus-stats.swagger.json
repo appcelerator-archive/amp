@@ -1,0 +1,75 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/pstats/prometheus-stats.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/prometheus-stats": {
+      "post": {
+        "operationId": "Stats",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pstatsPrometheusStatsReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pstatsPrometheusStatsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PrometheusStats"
+        ]
+      }
+    },
+    "/v1/stats/loadSources": {
+      "get": {
+        "operationId": "ReloadSources",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/pstatsLoadSourcesReply"
+            }
+          }
+        },
+        "tags": [
+          "PrometheusStats"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "pstatsLoadSourcesReply": {
+      "type": "object"
+    },
+    "pstatsLoadSourcesRequest": {
+      "type": "object"
+    },
+    "pstatsPrometheusStatsReply": {
+      "type": "object"
+    },
+    "pstatsPrometheusStatsRequest": {
+      "type": "object"
+    }
+  }
+}

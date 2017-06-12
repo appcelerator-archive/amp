@@ -1,5 +1,5 @@
 hash: 5429d1787534575816975c696e9f2c63c49676c0e37aa92e15373518fb547128
-updated: 2017-06-08T22:37:20.695936455Z
+updated: 2017-06-09T22:21:26.580461029Z
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -10,7 +10,7 @@ imports:
   subpackages:
   - winterm
 - name: github.com/coreos/etcd
-  version: 9d7ed0e63a4e9907c04396d0a9a7a01ba08d2852
+  version: 66722b1ada68fcd5227db853ee92003169a975c8
   subpackages:
   - auth/authpb
   - clientv3
@@ -147,7 +147,7 @@ imports:
   - tuf/utils
   - tuf/validation
 - name: github.com/docker/swarmkit
-  version: c3423883a7c2c583c32fe0b60c5b3f0ae5693e73
+  version: 42cab911a410c711abe9616fa0adcabeafaec454
   subpackages:
   - api
   - api/deepcopy
@@ -342,7 +342,7 @@ imports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/ladon
-  version: c8b0a3309bb2fc36f1dc24035279cc7530af0a0a
+  version: 018f499969fb63fcae5a3020944fcc39da1e6a61
 - name: github.com/ory/ladon
   version: 018f499969fb63fcae5a3020944fcc39da1e6a61
   subpackages:
