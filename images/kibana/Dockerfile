@@ -1,10 +1,10 @@
-FROM appcelerator/alpine:3.5.2
+FROM appcelerator/alpine:3.6.0
 
 RUN apk --no-cache add nodejs
 
 # Kibana installation
 ENV KIBANA_MAJOR 5.4
-ENV KIBANA_VERSION 5.4.0
+ENV KIBANA_VERSION 5.4.1
 RUN curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz \
     && mkdir /opt \
     && tar xzf /kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz -C /opt \

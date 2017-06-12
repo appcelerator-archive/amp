@@ -17,5 +17,6 @@ func NewServiceCommand(c cli.Interface) *cobra.Command {
 	cmd.AddCommand(NewServiceListCommand(c))
 	cmd.AddCommand(NewServiceLogsCommand(c))
 	cmd.AddCommand(NewServicePsCommand(c))
+	cmd.AddCommand(NewServiceScaleCommand(c))
 	return cmd
 }
