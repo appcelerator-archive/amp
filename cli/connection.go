@@ -13,5 +13,7 @@ func NewClientConn(addr string, token string) (*grpc.ClientConn, error) {
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Second),
 		grpc.WithPerRPCCredentials(&LoginCredentials{Token: token}),
+		grpc.WithCompressor(grpc.NewGZIPCompressor()),
+		grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
 	)
 }
