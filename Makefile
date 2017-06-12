@@ -108,7 +108,7 @@ cleanall: clean cleanall-deps
 DOCKER_CMD ?= "docker"
 
 build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit
-build: build-base build-cli
+build: build-base buildall-cli
 
 # =============================================================================
 # BUILD CLI (`amp`)
