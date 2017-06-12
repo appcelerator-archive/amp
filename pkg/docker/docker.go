@@ -318,25 +318,6 @@ func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, er
 	return serviceIDs, nil
 }
 
-// ServiceStatus returns service status
-func (d *Docker) ServiceStatus(ctx context.Context, service string) (string, error) {
-	readyTasks, err := d.readyTasks(ctx, service)
-	if err != nil {
-		return "", err
-	}
-	expectedTasks, err := d.ExpectedNumberOfTasks(ctx, service)
-	if err != nil {
-		return "", err
-	}
-	if readyTasks == NoMatchingNodes {
-		return StackStateNoMatchingNode, nil
-	}
-	if readyTasks == expectedTasks {
-		return StackStateRunning, nil
-	}
-	return StackStateStarting, nil
-}
-
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
 	var readyServices int32 = 0
@@ -350,7 +331,7 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		if err != nil {
 			return nil, err
 		}
-		if status == StackStateRunning {
+		if status.Status == StackStateRunning {
 			readyServices++
 		}
 	}
@@ -517,8 +498,8 @@ func (d *Docker) readyTasks(ctx context.Context, service string) (int, error) {
 	return readyTasks, nil
 }
 
-// ServiceState returns service status
-func (d *Docker) ServiceState(ctx context.Context, service string) (*ServiceStatus, error) {
+// ServiceStatus returns service status
+func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceStatus, error) {
 	readyTasks, err := d.readyTasks(ctx, service)
 	if err != nil {
 		return &ServiceStatus{}, err
