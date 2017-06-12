@@ -10,6 +10,9 @@ Mappings:
     eu-west-1:
       Ubuntu: ami-b5a893d3
       Debian: ami-3291be54
+    us-east-1:
+      Ubuntu: ami-e4139df2
+      Debian: ami-cb4b94dd
     us-east-2:
       Ubuntu: ami-33ab8f56
       Debian: ami-c5ba9fa0

@@ -25,7 +25,7 @@ services:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:5.4.0
+    image: appcelerator/kibana:5.4.1
     networks:
       default:
         aliases:
