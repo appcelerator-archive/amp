@@ -64,6 +64,8 @@ func main() {
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(time.Minute),
+		grpc.WithCompressor(grpc.NewGZIPCompressor()),
+		grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
 	}
 
 	if err := account.RegisterAccountHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
@@ -98,6 +100,6 @@ func main() {
 	}
 
 	log.Println("gateway successfuly initialized. Start listening on:", listenAddress)
-	log.Fatalln(http.ListenAndServe(listenAddress, handlers.CombinedLoggingHandler(os.Stdout, allowCORS(mux))))
+	log.Fatalln(http.ListenAndServe(listenAddress, handlers.CompressHandler(handlers.CombinedLoggingHandler(os.Stdout, allowCORS(mux)))))
 	return
 }

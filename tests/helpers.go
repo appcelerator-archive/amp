@@ -36,7 +36,10 @@ func AmplifierConnection() (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(amplifierEndpoint,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
-		grpc.WithTimeout(60*time.Second))
+		grpc.WithTimeout(60*time.Second),
+		grpc.WithCompressor(grpc.NewGZIPCompressor()),
+		grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to connect to amplifier on: %store\n%v", amplifierEndpoint, err)
 	}

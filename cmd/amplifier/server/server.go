@@ -98,6 +98,8 @@ func (a *Amplifier) Start() {
 	s := grpc.NewServer(
 		grpc.StreamInterceptor(interceptors.StreamInterceptor),
 		grpc.UnaryInterceptor(interceptors.Interceptor),
+		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
+		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
 	)
 	registerServices(a, s)
 
