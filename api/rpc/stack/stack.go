@@ -35,11 +35,6 @@ func convertError(err error) error {
 
 // Deploy implements stack.Server
 func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
-	// Check if stack already exists
-	stack, err := s.Stacks.GetStackByName(ctx, in.Name)
-	if err != nil {
-		return nil, convertError(err)
-	}
 	// Check if stack is using restricted resources
 	compose, err := s.Docker.ComposeParse(ctx, in.Compose)
 	if err != nil {
@@ -48,9 +43,20 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if !s.Docker.ComposeIsAuthorized(compose) {
 		return nil, accounts.NotAuthorized
 	}
+
+	// Check if stack already exists
+	stack, err := s.Stacks.GetStackByName(ctx, in.Name)
+	if err != nil {
+		return nil, convertError(err)
+	}
 	if stack == nil {
 		if stack, err = s.Stacks.CreateStack(ctx, in.Name); err != nil {
 			return nil, convertError(err)
+		}
+	} else {
+		// if it does, make sure we have the right to update it
+		if !s.Accounts.IsAuthorized(ctx, stack.Owner, accounts.UpdateAction, accounts.StackRN, stack.Id) {
+			return nil, stacks.AlreadyExists
 		}
 	}
 
