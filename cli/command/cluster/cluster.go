@@ -7,24 +7,30 @@ import (
 )
 
 type clusterOpts struct {
-	managers      int
-	workers       int
-	provider      string
+	log           int
 	name          string
 	tag           string
+	provider      string
+	managers      int
+	workers       int
 	registration  string
 	notifications bool
+	region        string
+	domain        string
 }
 
 var (
 	opts = &clusterOpts{
-		managers:      3,
-		workers:       2,
-		provider:      "local",
+		log:           4,
 		name:          "",
 		tag:           "latest",
+		provider:      "local",
+		managers:      3,
+		workers:       2,
 		registration:  configuration.RegistrationDefault,
 		notifications: true,
+		region:        "",
+		domain:        "",
 	}
 )
 
@@ -58,7 +64,8 @@ func queryCluster(c cli.Interface, args []string, env map[string]string) error {
 func reflag(cmd *cobra.Command, flags map[string]string, args []string) []string {
 	// transform src flags to target flags and add flag and value to cargs
 	for s, t := range flags {
-		if cmd.Flag(s).Changed {
+		// Allow default values to be passed from cli
+		if cmd.Flag(s).Value.String() != "" {
 			args = append(args, t, cmd.Flag(s).Value.String())
 		}
 	}
