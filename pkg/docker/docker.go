@@ -29,12 +29,13 @@ import (
 
 // Docker constants
 const (
-	DefaultURL               = "unix:///var/run/docker.sock"
-	DefaultVersion           = "1.27"
-	StackStateStarting       = "STARTING"
-	StackStateRunning        = "RUNNING"
-	StackStateNoMatchingNode = "NO MATCHING NODE"
-	NoMatchingNodes          = -1
+	DefaultURL          = "unix:///var/run/docker.sock"
+	DefaultVersion      = "1.27"
+	StateStarting       = "STARTING"
+	StateRunning        = "RUNNING"
+	StateError          = "ERROR"
+	StateNoMatchingNode = "NO MATCHING NODE"
+	NoMatchingNodes     = -1
 )
 
 // Docker wrapper
@@ -53,6 +54,7 @@ type StackStatus struct {
 
 type ServiceStatus struct {
 	RunningTasks int32
+	FailedTasks  int32
 	TotalTasks   int32
 	Status       string
 }
@@ -331,7 +333,7 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		if err != nil {
 			return nil, err
 		}
-		if status.Status == StackStateRunning {
+		if status.Status == StateRunning {
 			readyServices++
 		}
 	}
@@ -339,13 +341,13 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		return &StackStatus{
 			RunningServices: readyServices,
 			TotalServices:   totalServices,
-			Status:          StackStateRunning,
+			Status:          StateRunning,
 		}, nil
 	}
 	return &StackStatus{
 		RunningServices: readyServices,
 		TotalServices:   totalServices,
-		Status:          StackStateStarting,
+		Status:          StateStarting,
 	}, nil
 }
 
@@ -481,50 +483,65 @@ func (d *Docker) ServicesList(ctx context.Context, options types.ServiceListOpti
 	return d.client.ServiceList(ctx, options)
 }
 
-// readyTasks returns the running tasks of a service
-func (d *Docker) readyTasks(ctx context.Context, service string) (int, error) {
+// checkTasks returns the running and failing tasks of a service
+func (d *Docker) checkTasks(ctx context.Context, service string) (map[string]int, error) {
 	args := filters.NewArgs()
 	args.Add("service", service)
-	var readyTasks int = 0
+	taskMap := map[string]int{}
 	serviceTasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	for _, serviceTask := range serviceTasks {
+		if serviceTask.Status.State == swarm.TaskStateRejected || serviceTask.Status.State == swarm.TaskStateFailed {
+			taskMap[StateError]++
+		}
 		if serviceTask.Status.State == swarm.TaskStateRunning {
-			readyTasks++
+			taskMap[StateRunning]++
 		}
 	}
-	return readyTasks, nil
+	return taskMap, nil
 }
 
 // ServiceStatus returns service status
 func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceStatus, error) {
-	readyTasks, err := d.readyTasks(ctx, service)
+	taskMap, err := d.checkTasks(ctx, service)
 	if err != nil {
 		return &ServiceStatus{}, err
 	}
+	log.Println(taskMap)
 	totalTasks, err := d.ExpectedNumberOfTasks(ctx, service)
 	if err != nil {
 		return &ServiceStatus{}, err
 	}
-	if readyTasks == NoMatchingNodes {
+	if totalTasks == NoMatchingNodes {
 		return &ServiceStatus{
 			RunningTasks: 0,
 			TotalTasks:   0,
-			Status:       StackStateNoMatchingNode,
+			FailedTasks:  0,
+			Status:       StateNoMatchingNode,
 		}, nil
 	}
-	if readyTasks == totalTasks {
+	if taskMap[StateError] != 0 && taskMap[StateRunning] != totalTasks {
 		return &ServiceStatus{
-			RunningTasks: int32(readyTasks),
+			RunningTasks: int32(taskMap[StateRunning]),
 			TotalTasks:   int32(totalTasks),
-			Status:       StackStateRunning,
+			FailedTasks:  int32(taskMap[StateError]),
+			Status:       StateError,
+		}, nil
+	}
+	if taskMap[StateRunning] == totalTasks {
+		return &ServiceStatus{
+			RunningTasks: int32(taskMap[StateRunning]),
+			TotalTasks:   int32(totalTasks),
+			FailedTasks:  int32(taskMap[StateError]),
+			Status:       StateRunning,
 		}, nil
 	}
 	return &ServiceStatus{
-		RunningTasks: int32(readyTasks),
+		RunningTasks: int32(taskMap[StateRunning]),
 		TotalTasks:   int32(totalTasks),
-		Status:       StackStateStarting,
+		FailedTasks:  int32(taskMap[StateError]),
+		Status:       StateStarting,
 	}, nil
 }

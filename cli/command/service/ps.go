@@ -48,9 +48,9 @@ func tasks(c cli.Interface, args []string, opts taskOptions) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tIMAGE\tDESIRED STATE\tCURRENT STATE\tNODE ID")
+	fmt.Fprintln(w, "ID\tIMAGE\tDESIRED STATE\tCURRENT STATE\tNODE ID\tERROR")
 	for _, task := range reply.Tasks {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", task.Id, task.Image, task.DesiredState, task.CurrentState, task.NodeId)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", task.Id, task.Image, task.DesiredState, task.CurrentState, task.NodeId, task.Error)
 	}
 	w.Flush()
 	return nil

@@ -38,6 +38,7 @@ message Task {
   string current_state = 3;
   string desired_state = 4;
   string node_id = 5;
+  string error = 6;
 }
 
 message TasksReply {
@@ -54,9 +55,10 @@ message ServiceListReply {
 
 message ServiceListEntry {
   ServiceEntity service = 1;
-  int32 ready_tasks = 2;
-  int32 total_tasks = 3;
-  string status = 4;
+  int32 failed_tasks = 2;
+  int32 ready_tasks = 3;
+  int32 total_tasks = 4;
+  string status = 5;
 }
 
 message ServiceEntity {
