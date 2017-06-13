@@ -129,11 +129,13 @@ func registerServices(amp *Amplifier, s *grpc.Server) {
 func registerVersionServer(amp *Amplifier, s *grpc.Server) {
 	version.RegisterVersionServer(s, &version.Server{
 		Info: &version.Info{
-			Version:   amp.config.Version,
-			Build:     amp.config.Build,
-			GoVersion: runtime.Version(),
-			Os:        runtime.GOOS,
-			Arch:      runtime.GOARCH,
+			Version:       amp.config.Version,
+			Build:         amp.config.Build,
+			GoVersion:     runtime.Version(),
+			Os:            runtime.GOOS,
+			Arch:          runtime.GOARCH,
+			Registration:  amp.config.Registration,
+			Notifications: amp.config.Notifications,
 		},
 	})
 }
