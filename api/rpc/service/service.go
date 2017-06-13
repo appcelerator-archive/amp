@@ -50,6 +50,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 			CurrentState: strings.ToUpper(string(item.Status.State)),
 			DesiredState: strings.ToUpper(string(item.DesiredState)),
 			NodeId:       item.NodeID,
+			Error:        item.Status.Err,
 		}
 		taskList.Tasks = append(taskList.Tasks, task)
 	}
@@ -105,7 +106,7 @@ func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEnti
 	if err != nil {
 		return nil, err
 	}
-	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, Status: statusReplicas.Status}, nil
+	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, FailedTasks: statusReplicas.FailedTasks, Status: statusReplicas.Status}, nil
 }
 
 // InspectService inspects a service

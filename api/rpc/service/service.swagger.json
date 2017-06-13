@@ -167,6 +167,10 @@
         "service": {
           "$ref": "#/definitions/serviceServiceEntity"
         },
+        "failed_tasks": {
+          "type": "integer",
+          "format": "int32"
+        },
         "ready_tasks": {
           "type": "integer",
           "format": "int32"
@@ -227,6 +231,9 @@
           "type": "string"
         },
         "node_id": {
+          "type": "string"
+        },
+        "error": {
           "type": "string"
         }
       }

@@ -51,9 +51,9 @@ func listServices(c cli.Interface, opts listServiceOptions) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tMODE\tREPLICAS\tSTATUS\tIMAGE\tTAG")
+	fmt.Fprintln(w, "ID\tNAME\tMODE\tREPLICAS\tFAILED TASKS\tSTATUS\tIMAGE\tTAG")
 	for _, entry := range reply.Entries {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d/%d\t%s\t%s\t%s\n", entry.Service.Id, entry.Service.Name, entry.Service.Mode, entry.ReadyTasks, entry.TotalTasks, entry.Status, entry.Service.Image, entry.Service.Tag)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d/%d\t%d\t%s\t%s\t%s\n", entry.Service.Id, entry.Service.Name, entry.Service.Mode, entry.ReadyTasks, entry.TotalTasks, entry.FailedTasks, entry.Status, entry.Service.Image, entry.Service.Tag)
 	}
 	w.Flush()
 	return nil

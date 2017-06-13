@@ -14,14 +14,14 @@ test_stack_deploy() {
 }
 
 test_service_starting() {
-  $amp service ls 2>/dev/null | pcregrep -q "\s*global\s*0/1\s*STARTING\s*subfuzion/pinger\s*latest\s*"
-  $amp service ls 2>/dev/null | pcregrep -q "\s*replicated\s*0/2\s*STARTING\s*subfuzion/pinger\s*latest\s*"
+  $amp service ls 2>/dev/null | pcregrep -q "\s*global\s*0/1\s*[0-9]\s*STARTING\s*subfuzion/pinger\s*latest\s*"
+  $amp service ls 2>/dev/null | pcregrep -q "\s*replicated\s*0/2\s*[0-9]\s*STARTING\s*subfuzion/pinger\s*latest\s*"
 }
 
 test_service_global_running() {
   while true
   do
-     if $amp service ls 2>/dev/null | pcregrep -q "\s*global\s*1/1\s*RUNNING\s*" || [ $SECONDS -eq 5 ]
+     if $amp service ls 2>/dev/null | pcregrep -q "\s*global\s*1/1\s*[0-9]\s*RUNNING\s*" || [ $SECONDS -eq 5 ]
      then
              break
      fi
@@ -33,7 +33,7 @@ test_service_global_running() {
 test_service_replicated_running() {
   while true
   do
-     if $amp service ls 2>/dev/null | pcregrep -q "\s*replicated\s*2/2\s*RUNNING\s*" || [ $SECONDS -eq 5 ]
+     if $amp service ls 2>/dev/null | pcregrep -q "\s*replicated\s*2/2\s*[0-9]\s*RUNNING\s*" || [ $SECONDS -eq 5 ]
      then
              break
      fi
