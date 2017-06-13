@@ -4,7 +4,6 @@ amp="amp -s localhost"
 
 test_setup() {
   $amp user signup --name user2 --password password --email user2@xmail
-  $amp login --name user2 --password password
 }
 
 test_name() {

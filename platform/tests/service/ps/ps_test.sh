@@ -3,7 +3,6 @@
 test_setup() {
   amp="amp -s localhost"
   $amp user signup --name user103 --password password --email email@user103.amp
-  $amp login --name user103 --password password
 }
 
 test_stack_deploy() {

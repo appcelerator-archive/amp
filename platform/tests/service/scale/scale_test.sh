@@ -5,7 +5,6 @@ SECONDS=0
 test_setup() {
   amp="amp -s localhost"
   $amp user signup --name user105 --password password --email email@user105.amp
-  $amp login --name user105 --password password
 }
 
 test_stack_deploy() {
