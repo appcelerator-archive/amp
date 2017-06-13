@@ -200,22 +200,6 @@ func (d *Docker) ComposeIsAuthorized(compose *types2.Config) bool {
 				return false
 			}
 		}
-		for _, secret := range service.Secrets {
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-		}
-		for _, secret := range service.Secrets {
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-		}
 	}
 	return true
 }
@@ -334,25 +318,6 @@ func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, er
 	return serviceIDs, nil
 }
 
-// ServiceStatus returns service status
-func (d *Docker) ServiceStatus(ctx context.Context, service string) (string, error) {
-	readyTasks, err := d.readyTasks(ctx, service)
-	if err != nil {
-		return "", err
-	}
-	expectedTasks, err := d.ExpectedNumberOfTasks(ctx, service)
-	if err != nil {
-		return "", err
-	}
-	if readyTasks == NoMatchingNodes {
-		return StackStateNoMatchingNode, nil
-	}
-	if readyTasks == expectedTasks {
-		return StackStateRunning, nil
-	}
-	return StackStateStarting, nil
-}
-
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
 	var readyServices int32 = 0
@@ -366,7 +331,7 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		if err != nil {
 			return nil, err
 		}
-		if status == StackStateRunning {
+		if status.Status == StackStateRunning {
 			readyServices++
 		}
 	}
@@ -395,7 +360,7 @@ func (d *Docker) ServiceInspect(ctx context.Context, service string) (swarm.Serv
 
 // ServiceScale scales a service
 func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64) error {
-	serviceEntity, _, err := d.client.ServiceInspectWithRaw(ctx, service, types.ServiceInspectOptions{InsertDefaults: true})
+	serviceEntity, err := d.ServiceInspect(ctx, service)
 	if err != nil {
 		return err
 	}
@@ -533,8 +498,8 @@ func (d *Docker) readyTasks(ctx context.Context, service string) (int, error) {
 	return readyTasks, nil
 }
 
-// ServiceState returns service status
-func (d *Docker) ServiceState(ctx context.Context, service string) (*ServiceStatus, error) {
+// ServiceStatus returns service status
+func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceStatus, error) {
 	readyTasks, err := d.readyTasks(ctx, service)
 	if err != nil {
 		return &ServiceStatus{}, err
