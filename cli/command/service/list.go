@@ -13,6 +13,7 @@ import (
 
 type listServiceOptions struct {
 	quiet bool
+	stack string
 }
 
 // NewServiceListCommand returns a new instance of the service list command.
@@ -27,14 +28,18 @@ func NewServiceListCommand(c cli.Interface) *cobra.Command {
 			return listServices(c, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
+	flags := cmd.Flags()
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
+	flags.StringVar(&opts.stack, "stack", "", "Filter services based on stack name")
 	return cmd
 }
 
 func listServices(c cli.Interface, opts listServiceOptions) error {
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
-	request := &service.ServiceListRequest{}
+	request := &service.ServiceListRequest{
+		StackName: opts.stack,
+	}
 	reply, err := client.ListService(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))

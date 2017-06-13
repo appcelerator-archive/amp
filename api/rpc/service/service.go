@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -35,29 +36,29 @@ const (
 // Tasks implements service.Containers
 func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
 	log.Println("[service] Tasks", in.ServiceId)
-	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{})
+	args := filters.NewArgs()
+	args.Add("service", in.ServiceId)
+	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: args})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}
 	taskList := &TasksReply{}
 	for _, item := range list {
-		if strings.HasPrefix(item.ServiceID, in.ServiceId) {
-			task := &Task{
-				Id:           item.ID,
-				Image:        strings.Split(item.Spec.ContainerSpec.Image, "@")[0],
-				CurrentState: strings.ToUpper(string(item.Status.State)),
-				DesiredState: strings.ToUpper(string(item.DesiredState)),
-				NodeId:       item.NodeID,
-			}
-			taskList.Tasks = append(taskList.Tasks, task)
+		task := &Task{
+			Id:           item.ID,
+			Image:        strings.Split(item.Spec.ContainerSpec.Image, "@")[0],
+			CurrentState: strings.ToUpper(string(item.Status.State)),
+			DesiredState: strings.ToUpper(string(item.DesiredState)),
+			NodeId:       item.NodeID,
 		}
+		taskList.Tasks = append(taskList.Tasks, task)
 	}
 	return taskList, nil
 }
 
 // ListService implements service.ListService
 func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*ServiceListReply, error) {
-	log.Println("[service] List")
+	log.Println("[service] List ", in.StackName)
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
@@ -100,7 +101,7 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 }
 
 func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEntity) (*ServiceListEntry, error) {
-	statusReplicas, err := s.Docker.ServiceState(ctx, service.Id)
+	statusReplicas, err := s.Docker.ServiceStatus(ctx, service.Id)
 	if err != nil {
 		return nil, err
 	}

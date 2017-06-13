@@ -16,7 +16,7 @@ type logsServiceOptions struct {
 	follow bool
 }
 
-// NewServiceLogsCommand returns a new instance of the stack command.
+// NewServiceLogsCommand returns a new instance of the service logs command.
 func NewServiceLogsCommand(c cli.Interface) *cobra.Command {
 	opts := logsServiceOptions{}
 	cmd := &cobra.Command{
