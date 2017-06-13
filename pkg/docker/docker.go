@@ -48,6 +48,7 @@ type Docker struct {
 
 type StackStatus struct {
 	RunningServices int32
+	FailedServices  int32
 	TotalServices   int32
 	Status          string
 }
@@ -322,7 +323,7 @@ func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, er
 
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
-	var readyServices int32 = 0
+	var readyServices, failedServices int32
 	services, err := d.serviceIDs(ctx, stackName)
 	if err != nil {
 		return nil, err
@@ -333,20 +334,33 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		if err != nil {
 			return nil, err
 		}
+		if status.Status == StateError {
+			failedServices++
+		}
 		if status.Status == StateRunning {
 			readyServices++
 		}
+	}
+	if failedServices != 0 && readyServices != totalServices {
+		return &StackStatus{
+			RunningServices: readyServices,
+			TotalServices:   totalServices,
+			FailedServices:  failedServices,
+			Status:          StateError,
+		}, nil
 	}
 	if readyServices == totalServices {
 		return &StackStatus{
 			RunningServices: readyServices,
 			TotalServices:   totalServices,
+			FailedServices:  failedServices,
 			Status:          StateRunning,
 		}, nil
 	}
 	return &StackStatus{
 		RunningServices: readyServices,
 		TotalServices:   totalServices,
+		FailedServices:  failedServices,
 		Status:          StateStarting,
 	}, nil
 }

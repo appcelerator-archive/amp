@@ -95,8 +95,8 @@ func (s *Server) toStackListEntry(ctx context.Context, stack *stacks.Stack) (*St
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services")
-	return &StackListEntry{Stack: stack, RunningServices: status.RunningServices, TotalServices: status.TotalServices, Status: status.Status}, nil
+	log.Println("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services and", status.FailedServices, "failed services")
+	return &StackListEntry{Stack: stack, RunningServices: status.RunningServices, FailedServices: status.FailedServices, TotalServices: status.TotalServices, Status: status.Status}, nil
 }
 
 // Remove implements stack.Server

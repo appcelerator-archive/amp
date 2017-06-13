@@ -29,7 +29,7 @@ func NewServiceListCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
+	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display service ids")
 	flags.StringVar(&opts.stack, "stack", "", "Filter services based on stack name")
 	return cmd
 }
