@@ -28,7 +28,7 @@ func NewOrgListCommand(c cli.Interface) *cobra.Command {
 			return listOrg(c, opts)
 		},
 	}
-	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display organization name")
+	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display organization names")
 	return cmd
 }
 

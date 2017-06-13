@@ -202,6 +202,10 @@
         "stack": {
           "$ref": "#/definitions/stacksStack"
         },
+        "failed_services": {
+          "type": "integer",
+          "format": "int32"
+        },
         "running_services": {
           "type": "integer",
           "format": "int32"
