@@ -200,22 +200,6 @@ func (d *Docker) ComposeIsAuthorized(compose *types2.Config) bool {
 				return false
 			}
 		}
-		for _, secret := range service.Secrets {
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-		}
-		for _, secret := range service.Secrets {
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-			if strings.EqualFold(secret.Source, constants.SecretCertificate) {
-				return false
-			}
-		}
 	}
 	return true
 }
@@ -376,7 +360,7 @@ func (d *Docker) ServiceInspect(ctx context.Context, service string) (swarm.Serv
 
 // ServiceScale scales a service
 func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64) error {
-	serviceEntity, _, err := d.client.ServiceInspectWithRaw(ctx, service, types.ServiceInspectOptions{InsertDefaults: true})
+	serviceEntity, err := d.ServiceInspect(ctx, service)
 	if err != nil {
 		return err
 	}
