@@ -283,6 +283,10 @@
         "avg": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "allows_infra": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     }
