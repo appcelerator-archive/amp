@@ -86,11 +86,13 @@ func showVersion(c cli.Interface) error {
 			return fmt.Errorf("%s", grpc.ErrorDesc(err))
 		}
 		v.Server = &version.Info{
-			Version:   reply.Info.Version,
-			Build:     reply.Info.Build,
-			GoVersion: reply.Info.GoVersion,
-			Os:        reply.Info.Os,
-			Arch:      reply.Info.Arch,
+			Version:       reply.Info.Version,
+			Build:         reply.Info.Build,
+			GoVersion:     reply.Info.GoVersion,
+			Os:            reply.Info.Os,
+			Arch:          reply.Info.Arch,
+			Registration:  reply.Info.Registration,
+			Notifications: reply.Info.Notifications,
 		}
 	}
 

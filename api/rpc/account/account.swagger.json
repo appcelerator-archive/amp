@@ -46,7 +46,7 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/accountLogInAnswer"
+              "$ref": "#/definitions/accountLogInReply"
             }
           }
         },
@@ -1117,7 +1117,7 @@
     "accountListUsersRequest": {
       "type": "object"
     },
-    "accountLogInAnswer": {
+    "accountLogInReply": {
       "type": "object",
       "properties": {
         "auth": {

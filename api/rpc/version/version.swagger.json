@@ -77,6 +77,13 @@
         },
         "arch": {
           "type": "string"
+        },
+        "registration": {
+          "type": "string"
+        },
+        "notifications": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
