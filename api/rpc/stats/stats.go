@@ -186,10 +186,14 @@ func (s *Stats) createBoolQuery(req *StatsRequest, period string) *elastic.BoolQ
 	if req.FilterNodeId != "" {
 		filters = append(filters, elastic.NewWildcardQuery("node_id", getWildcardValue(req.FilterNodeId)))
 	}
+
 	boolQuery := elastic.NewBoolQuery()
 	boolQuery.Must(elastic.NewRangeQuery("@timestamp").Gte(period), elastic.NewTermsQuery("type", esType))
 	for _, query := range filters {
 		boolQuery.Must(query)
+	}
+	if !req.AllowsInfra {
+		boolQuery.MustNot(elastic.NewTermQuery("labels.io-amp-role", "infrastructure"))
 	}
 	return boolQuery
 }
