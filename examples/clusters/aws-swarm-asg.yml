@@ -1,0 +1,1170 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Swarm cluster with autoscaling groups
+
+Mappings:
+  AMI:
+    # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170330
+    # debian-jessie-amd64-hvm-2017-01-15
+    ap-southeast-2:
+      Ubuntu: ami-92e8e6f1
+      Debian: ami-0dcac96e
+    eu-west-1:
+      Ubuntu: ami-b5a893d3
+      Debian: ami-3291be54
+    us-east-1:
+      Ubuntu: ami-e4139df2
+      Debian: ami-cb4b94dd
+    us-east-2:
+      Ubuntu: ami-33ab8f56
+      Debian: ami-c5ba9fa0
+    us-west-2:
+      Ubuntu: ami-17ba2a77
+      Debian: ami-fde96b9d
+  VpcCidrs:
+    subnet1:
+      cidr: 192.168.0.0/24
+    subnet2:
+      cidr: 192.168.16.0/24
+    subnet3:
+      cidr: 192.168.32.0/24
+    vpc:
+      cidr: 192.168.0.0/16
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    MinLength: '1'
+  ManagerSize:
+    Type: Number
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+    Default: 3
+    Description: depending on your HA requirements, should be 1, 3 or 5
+  CoreWorkerSize:
+    Type: Number
+    Default: 3
+    MinValue: 1
+    MaxValue: 9
+    Description: "3 nodes for HA is a safe choice"
+  UserWorkerSize:
+    Type: Number
+    Default: 3
+    MinValue: 1
+    MaxValue: 1000
+    Description: "A good starting point is 3 nodes"
+  MetricsWorkerSize:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 1
+    Description: "single node only for now"
+  LinuxDistribution:
+    Type: String
+    AllowedValues:
+    - Ubuntu
+    - Debian
+    Default: Ubuntu
+  ManagerInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.small
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
+  CoreWorkerInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: m4.large
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
+  UserWorkerInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.medium
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
+  MetricsWorkerInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.large
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
+  DrainManager:
+    Type: String
+    Description: If true, disables the services on the manager nodes
+    AllowedValues:
+    - false
+    - true
+    Default: false
+  ConfigurationURL:
+    Type: String
+    ConstraintDescription: must be an URL.
+    Description: URL for manager and worker userdata configuration
+    Default: https://raw.githubusercontent.com/appcelerator/amp/master/examples/clusters
+    AllowedPattern: "https?://[0-9a-z\\.-]+\\.[a-z\\.]{2,6}[/\\w\\.-]*/?"
+  AufsVolumeSize:
+    Type: Number
+    Description: Size in GB of the EBS volume for the Docker AUFS storage on each node (mounted on /dev/xvdl)
+    Default: 26
+    MinValue: 1
+    MaxValue: 16384
+  OverlayNetworks:
+    Type: String
+    Description: Docker overlay networks to create on the swarm, separated by space
+    Default: ampnet
+  DockerChannel:
+    Type: String
+    Default: stable
+    AllowedValues:
+    - stable
+    - edge
+  DockerPlugins:
+    Type: String
+    Description: "space separated list of plugins to install. Example: rexray/ebs"
+    Default: ""
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - vpc
+        - cidr
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - VPC
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: Vpc
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - IGW
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+    - Vpc
+    - InternetGateway
+    Properties:
+      InternetGatewayId:
+        Ref: InternetGateway
+      VpcId:
+        Ref: Vpc
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: Vpc
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - RT
+      VpcId:
+        Ref: Vpc
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - AttachGateway
+    - RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+      RouteTableId:
+        Ref: RouteTable
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - subnet1
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - PublicSubnet1
+      VpcId:
+        Ref: Vpc
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '1'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - subnet2
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - PublicSubnet2
+      VpcId:
+        Ref: Vpc
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    DependsOn: Vpc
+    Properties:
+      AvailabilityZone:
+        Fn::Select:
+        - '2'
+        - Fn::GetAZs:
+            Ref: AWS::Region
+      CidrBlock:
+        Fn::FindInMap:
+        - VpcCidrs
+        - subnet3
+        - cidr
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - PublicSubnet3
+      VpcId:
+        Ref: Vpc
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicSubnet1
+    - RouteTable
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: PublicSubnet1
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicSubnet2
+    - RouteTable
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: PublicSubnet2
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicSubnet3
+    - RouteTable
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: PublicSubnet3
+  ManagerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Manager nodes security group
+      SecurityGroupIngress:
+      # engine API open from all VPC
+      - SourceSecurityGroupId:
+          !Ref CoreSecurityGroup
+        IpProtocol: tcp
+        FromPort: '2375'
+        ToPort: '2375'
+      - SourceSecurityGroupId:
+          !Ref UserSecurityGroup
+        IpProtocol: tcp
+        FromPort: '2375'
+        ToPort: '2375'
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '2375'
+        ToPort: '2375'
+      # docker swarm join
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '2377'
+        ToPort: '2377'
+      # node communication
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '7946'
+        ToPort: '7946'
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '7946'
+        ToPort: '7946'
+      # overlay network traffic
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '4789'
+        ToPort: '4789'
+      # node exporter
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9100'
+        ToPort: '9100'
+      # docker metrics
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9323'
+        ToPort: '9323'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '50101'
+        ToPort: '50101'
+      VpcId:
+        Ref: Vpc
+  ManagerSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: ManagerSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: ManagerSecurityGroup
+
+  CoreSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Core services security group
+      SecurityGroupIngress:
+      # node communication
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '7946'
+        ToPort: '7946'
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '7946'
+        ToPort: '7946'
+      # overlay network traffic
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '4789'
+        ToPort: '4789'
+      # node exporter
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9100'
+        ToPort: '9100'
+      # docker metrics
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9323'
+        ToPort: '9323'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '50101'
+        ToPort: '50101'
+      VpcId:
+        Ref: Vpc
+  CoreSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: CoreSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: CoreSecurityGroup
+
+  UserSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: User services security group
+      SecurityGroupIngress:
+      # node communication
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '7946'
+        ToPort: '7946'
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '7946'
+        ToPort: '7946'
+      # overlay network traffic
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '4789'
+        ToPort: '4789'
+      # node exporter
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9100'
+        ToPort: '9100'
+      # docker metrics
+      - SourceSecurityGroupId:
+          !Ref MetricsSecurityGroup
+        IpProtocol: tcp
+        FromPort: '9323'
+        ToPort: '9323'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '50101'
+        ToPort: '50101'
+      VpcId:
+        Ref: Vpc
+  UserSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: UserSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: UserSecurityGroup
+
+  MetricsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Monitoring services security group
+      SecurityGroupIngress:
+      # node communication
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '7946'
+        ToPort: '7946'
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '7946'
+        ToPort: '7946'
+      # overlay network traffic
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: udp
+        FromPort: '4789'
+        ToPort: '4789'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '3000'
+        ToPort: '3000'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '9090'
+        ToPort: '9090'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '50101'
+        ToPort: '50101'
+      VpcId:
+        Ref: Vpc
+  MetricsSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: MetricsSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: MetricsSecurityGroup
+
+  ClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+  ClusterPolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - 'ec2:DescribeInstances'
+          - 'ec2:DescribeVolume*'
+          - 'ec2:AttachVolume'
+          - 'ec2:DetachVolume'
+          - 'ec2:CreateVolume'
+          - 'ec2:CreateTags'
+          - 'ec2:ModifyInstanceAttribute'
+          - 'ec2:DescribeAvailabilityZones'
+          Resource: '*'
+          Effect: Allow
+        Version: '2012-10-17'
+      PolicyName: cluster-policy
+      Roles:
+      - Ref: ClusterRole
+  ClusterInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - Ref: ClusterRole
+  MetricsWorkerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT30S
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: !Ref MetricsWorkerSize
+      HealthCheckGracePeriod: 200
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref MetricsWorkerAsgLaunchConfig
+      MaxSize: 5
+      MinSize: 0
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - worker
+            - metrics
+      - Key: atomiq.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      - Key: SwarmRole
+        PropagateAtLaunch: true
+        Value: worker
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  MetricsWorkerAsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:
+      - CoreWorkerAutoScalingGroup
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref MetricsWorkerInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: MetricsSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdl
+          Ebs:
+            VolumeSize: !Ref AufsVolumeSize
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #cloud-config
+              repo_update: true
+              repo_upgrade: security
+              packages:
+                - ca-certificates
+                - jq
+                - curl
+                - unzip
+                - awscli
+                - sysstat
+                - iotop
+                - xfsprogs
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+  CoreWorkerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT30S
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: !Ref CoreWorkerSize
+      HealthCheckGracePeriod: 200
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref CoreWorkerAsgLaunchConfig
+      MaxSize: 5
+      MinSize: 0
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - worker
+            - core
+      - Key: atomiq.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      - Key: SwarmRole
+        PropagateAtLaunch: true
+        Value: worker
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  CoreWorkerAsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:
+      - ManagerAutoScalingGroup
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref CoreWorkerInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: CoreSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdl
+          Ebs:
+            VolumeSize: !Ref AufsVolumeSize
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #cloud-config
+              repo_update: true
+              repo_upgrade: security
+              packages:
+                - ca-certificates
+                - jq
+                - curl
+                - unzip
+                - awscli
+                - sysstat
+                - iotop
+                - xfsprogs
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+  UserWorkerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT30S
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: !Ref UserWorkerSize
+      HealthCheckGracePeriod: 200
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref UserWorkerAsgLaunchConfig
+      MaxSize: 5
+      MinSize: 0
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - worker
+            - user
+      - Key: atomiq.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      - Key: SwarmRole
+        PropagateAtLaunch: true
+        Value: worker
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  UserWorkerAsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:
+      - CoreWorkerAutoScalingGroup
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref UserWorkerInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: UserSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdl
+          Ebs:
+            VolumeSize: !Ref AufsVolumeSize
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #cloud-config
+              repo_update: true
+              repo_upgrade: security
+              packages:
+                - ca-certificates
+                - jq
+                - curl
+                - unzip
+                - awscli
+                - sysstat
+                - iotop
+                - xfsprogs
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+  ManagerAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT3M
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: !Ref ManagerSize
+      HealthCheckGracePeriod: 200
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref ManagerAsgLaunchConfig
+      MaxSize: 5
+      MinSize: 0
+      LoadBalancerNames:
+      - !Ref ManagerInternalELB
+      - !Ref ManagerExternalELB
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - manager
+      - Key: atomiq.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      - Key: SwarmRole
+        PropagateAtLaunch: true
+        Value: manager
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  ManagerAsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref ManagerInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: ManagerSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdl
+          Ebs:
+            VolumeSize: !Ref AufsVolumeSize
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #cloud-config
+              repo_update: true
+              repo_upgrade: security
+              packages:
+                - ca-certificates
+                - jq
+                - curl
+                - unzip
+                - awscli
+                - sysstat
+                - iotop
+                - xfsprogs
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/asg-init.sh
+                - chmod +x /usr/local/bin/asg-init.sh
+                - CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh
+            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+  ManagerInternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: internal
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: ManagerSecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '2375'
+        InstancePort: '2375'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '2377'
+        InstancePort: '2377'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      HealthCheck:
+        Target: TCP:2375
+        HealthyThreshold: 3
+        UnhealthyThreshold: 5
+        Interval: 30
+        Timeout: 5
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+  ManagerExternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: ManagerSecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '22'
+        InstancePort: '22'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '80'
+        InstancePort: '80'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '443'
+        InstancePort: '443'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '50101'
+        InstancePort: '50101'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Cluster Properties
+      Parameters:
+      - KeyName
+      - LinuxDistribution
+      - ConfigurationURL
+    - Label:
+        default: Swarm Properties
+      Parameters:
+      - ManagerSize
+      - ManagerInstanceType
+      - CoreWorkerSize
+      - CoreWorkerInstanceType
+      - UserWorkerSize
+      - UserWorkerInstanceType
+      - MetricsWorkerSize
+      - MetricsWorkerInstanceType
+      - DrainManager
+    - Label:
+        default: Docker Configuration
+      Parameters:
+      - DockerChannel
+      - DockerPlugins
+      - AufsVolumeSize
+      - OverlayNetworks
+    ParameterLabels:
+      KeyName:
+        default: Which SSH key to use?
+      ManagerSize:
+        default: Number of Swarm managers?
+      CoreWorkerSize:
+        default: Number of Swarm workers for AMP core services?
+      UserWorkerSize:
+        default: Number of Swarm workers for AMP user services?
+      MetricsWorkerSize:
+        default: Number of Swarm workers for AMP monitoring services?
+      ManagerInstanceType:
+        default: Swarm manager instance type?
+      CoreWorkerInstanceType:
+        default: Swarm worker instance type for core services?
+      UserWorkerInstanceType:
+        default: Swarm worker instance type for user services?
+      MetricsWorkerInstanceType:
+        default: Swarm worker instance type for monitoring services?
+      DrainManager:
+        default: Drain manager nodes?
+      OverlayNetworks:
+        default: Docker overlay networks
+      DockerChannel:
+        default: Docker channel
+      DockerPlugins:
+        default: Docker plugins
+      ConfigurationURL:
+        default: InfraKit configuration base URL
+      AufsVolumeSize:
+        default: EBS Volume Size for Docker local storage
+      LinuxDistribution:
+        default: Linux Distribution
+
+Outputs:
+  DNSTarget:
+    Description: public facing endpoint for the cluster
+    Value: !GetAtt ManagerExternalELB.DNSName
+  MetricsURL:
+    Description: URL for cluster health dashboard
+    Value:
+      Fn::Join:
+        - ':'
+        - - !GetAtt ManagerExternalELB.DNSName
+          - "9090"
+  VpcId:
+    Description: VPC ID
+    Value: !Ref Vpc

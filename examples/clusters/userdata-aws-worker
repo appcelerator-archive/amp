@@ -1,0 +1,196 @@
+#!/bin/bash
+LABELS=${LABELS:-amp.type.user=true amp.type.core=true amp.type.search=true amp.type.mq=true amp.type.kv=true amp.type.metrics=true}
+CHANNEL=${CHANNEL:-stable}
+#PLUGINS=
+REGION=${REGION:-us-west-2}
+STACK_NAME=${STACK_NAME:-unset}
+VPC_ID=${VPC_ID:-unset}
+#DOCKER_DEVICE=/dev/sdl
+SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
+SYSV_DOCKER_DEFAULT=/etc/default/docker
+#LEADER=
+
+_init_system(){
+  systemctl --version >/dev/null 2>&1 && echo systemd && return
+  [[ `/sbin/init --version` =~ upstart ]] && echo upstart && return
+  echo sysv
+}
+
+_install_docker(){
+  local _release=$(lsb_release -is)
+  local _host
+  case $CHANNEL in
+  stable) _host="get.docker.com" ;;
+  edge|beta|test) _host="test.docker.com" ;;
+  experimental) _host="experimental.docker.com" ;;
+  *) return 1 ;;
+  esac
+  echo "installing Docker from $_host" >&2
+  wget -qO- "https://$_host/" | sh || return 1
+  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu
+  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin 
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl enable docker.service
+    systemctl start docker.service
+  else
+    chkconfig docker on
+    service docker start
+  fi
+  docker version >&2
+}
+
+_install_plugins(){
+  local plugin
+  local alias
+  for plugin in $PLUGINS; do
+    alias=${plugin#store/}
+    alias=${alias%:*}
+    docker plugin install "$plugin" --alias "$alias" --grant-all-permissions # || return 1
+  done
+  return 0
+}
+
+_restart_docker(){
+  echo "restarting Docker" >&2
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl restart docker.service
+  else
+    service docker restart
+  fi
+}
+
+_sanity_check(){
+  which aws >/dev/null || return 1
+  which jq >/dev/null || return 1
+}
+
+_mount_docker_volume(){
+  local _mount_point="/var/lib/docker"
+  local _device
+  local _fstype=xfs
+  [[ -z "$1" ]] && return 0
+  _device=$(echo $1 | sed 's/\/sd/\/xvd/')
+  mkfs.$_fstype $_device || return 1
+  echo "$_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
+  rm -rf "$_mount_point"
+  mkdir -p "$_mount_point"
+  mount "$_mount_point"
+}
+
+_system_prerequisites(){
+  typeset -i mmc
+  local mmcmin=262144
+  if mmc=$(sysctl -n vm.max_map_count 2>/dev/null); then
+    if [[ $mmc -lt $mmcmin ]]; then
+      echo "setting vm.max_map_count to a safe value for elasticsearch"
+      sysctl -w vm.max_map_count=262144 || return 1
+      echo "vm.max_map_count = 262144" > /etc/sysctl.d/99-amp.conf
+    fi
+  else
+    return 1
+  fi
+}
+
+# update the docker daemon configuration with the mirror registries
+_set_mirror_registries(){
+  local _registries="$*"
+  local _registry
+  local _tmp
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  for _registry in $_registries; do
+    if ! echo "$_registry" | grep -q "://" ; then
+      echo "$_registry should contain a scheme, ignore" >&2
+      continue
+    fi
+    echo "adding registry $_registry" >&2
+    cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp" || return 1
+    mv "$_tmp" /etc/docker/daemon.json
+  done
+}
+
+_set_log_rotation(){
+  local _max_size=${1:-10m}
+  local _max_file=${2:-3}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting log rotation" >&2
+  cat /etc/docker/daemon.json | jq ".\"log-opts\".\"max-size\" = \"$_max_size\" | .\"log-opts\".\"max-file\" = \"$_max_file\"" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_set_metrics_address(){
+  local _host=${1:-127.0.0.1}
+  local _port=${2:-9323}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting the metrics address ($_host:$_port)" >&2
+  cat /etc/docker/daemon.json | jq ".\"metrics-addr\" = \"${_host}:${_port}\" | .experimental = true" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_get_worker_join_token(){
+  local _manager=$1
+  local _loop=0
+  local _timeout=600
+  local _token
+  echo "retrieving the swarm worker token (will timeout after $_timeout s)" >&2
+  SECONDS=0
+  while [[ $SECONDS -lt $_timeout ]]; do
+    _token=$(docker -H "$_manager:2375" swarm join-token -q worker)
+    if [[ $? -eq 0 && -n "$_token" ]]; then
+      echo "worker token obtained ($SECONDS s)" >&2
+      echo $_token
+      return 0
+    fi
+    sleep 2
+  done
+  echo "timeout" >&2
+  return 1
+}
+
+_swarm_join(){
+  local _manager=$1
+  local _token
+  _token=$(_get_worker_join_token "$_manager") || return 1
+  echo "joining the Swarm" >&2
+  docker swarm join --token "$_token" "$_manager:2377"
+}
+
+# add labels on the Swarm node
+_label_node(){
+  local _manager=$1
+  local _self
+  local _publicip
+  _self=$(docker info -f '{{.Swarm.NodeID}}') || return 1
+  _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
+  docker -H "$_manager" node update --label-add "PublicIP=$_publicip" "$_self" || return 1
+  for _label in $LABELS; do
+    docker -H "$_manager" node update --label-add "${_label}" "$_self" || return 1
+  done
+}
+
+_get_node_ip(){
+  local _myip
+  _myip=$(curl 169.254.169.254/latest/meta-data/local-ipv4)
+  echo $_myip
+}
+
+_sanity_check || exit 1
+_mount_docker_volume $DOCKER_DEVICE || exit 1
+_system_prerequisites || exit 1
+nodeip=$(_get_node_ip)
+_install_docker || exit 1
+_install_plugins || exit 1
+_set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
+_set_log_rotation "10m" "3" || exit 1
+_set_metrics_address "$nodeip" "9323" || exit 1
+_restart_docker || exit 1
+_swarm_join "$LEADER" || exit 1
+_label_node "$LEADER" || exit 1
