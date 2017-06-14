@@ -20,7 +20,7 @@ service Account {
     };
   };
 
-  rpc Login (LogInRequest) returns (LogInAnswer) {
+  rpc Login (LogInRequest) returns (LogInReply) {
     option (google.api.http) = {
       post: "/v1/login",
       body: "*"
@@ -194,6 +194,10 @@ message LogInRequest {
   string password = 2;
 }
 
+message LogInReply {
+  string auth = 1;
+}
+
 message SwitchRequest {
   string account = 1;
 }
@@ -351,8 +355,4 @@ message ListTeamsReply {
 message DeleteTeamRequest {
   string organization_name = 1;
   string team_name = 2;
-}
-
-message LogInAnswer {
-  string auth = 1;
 }
