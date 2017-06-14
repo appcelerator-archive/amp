@@ -41,7 +41,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		return nil, convertError(err)
 	}
 	if !s.Docker.ComposeIsAuthorized(compose) {
-		return nil, accounts.NotAuthorized
+		return nil, status.Errorf(codes.FailedPrecondition, "This compose file requires access to reserved AMP resources.")
 	}
 
 	// Check if stack already exists
