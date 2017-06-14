@@ -1,0 +1,6 @@
+FROM golang:1.8-alpine
+RUN apk add --no-cache git
+RUN go get -u github.com/aws/aws-sdk-go/...
+RUN go get -u github.com/spf13/cobra/cobra
+
+
