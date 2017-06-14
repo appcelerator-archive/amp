@@ -189,7 +189,7 @@ func (h *Helper) RandomUser() account.SignUpRequest {
 	id := stringid.GenerateNonCryptoID()
 	return account.SignUpRequest{
 		Name:     id,
-		Password: "userPassword",
+		Password: "password",
 		Email:    id + "@user.email",
 	}
 }
