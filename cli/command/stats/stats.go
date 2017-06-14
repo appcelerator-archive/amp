@@ -203,7 +203,7 @@ func getOneStatLine(query *stats.StatsRequest, entry *stats.MetricsEntry) string
 		line = fmt.Sprintf("%s\t%.2f%%", line, entry.Cpu.TotalUsage)
 	}
 	if query.StatsMem {
-		line = fmt.Sprintf("%s\t%s\t%s\t%.1f%%", line, formatBytes(entry.Mem.Usage), formatBytes(entry.Mem.Limit), entry.Mem.UsageP)
+		line = fmt.Sprintf("%s\t%s\t%s\t%.1f%%", line, formatBytes(entry.Mem.Usage), formatBytes(entry.Mem.Limit), entry.Mem.UsageP*100)
 	}
 	if query.StatsIo {
 		line = fmt.Sprintf("%s\t%s/s\t%s/s", line, formatBytes(entry.Io.Read), formatBytes(entry.Io.Write))
