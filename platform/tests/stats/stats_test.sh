@@ -7,7 +7,6 @@ user=test1705191557
 
 test_setup() {
   $amp user signup --name $user --password pwd$user --email $user@email.amp
-  $amp login --name $user --password pwd$user
 }
 
 test_main() {

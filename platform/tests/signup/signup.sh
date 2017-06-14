@@ -8,5 +8,4 @@ function cleanup {
 trap cleanup EXIT
 
 $amp user signup --name user --password password --email email@user.amp
-$amp login --name user --password password
 $amp user ls -q | wc -l | grep 1

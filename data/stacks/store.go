@@ -30,14 +30,27 @@ func NewStore(storage storage.Interface, accounts accounts.Interface) *Store {
 
 // Stacks
 
+func (s *Store) isNameAvailable(ctx context.Context, name string) (bool, error) {
+	protos := []proto.Message{}
+	if err := s.storage.List(ctx, rootKey, storage.Everything, &Stack{}, &protos); err != nil {
+		return false, err
+	}
+	for _, proto := range protos {
+		if strings.EqualFold(proto.(*Stack).Name, name) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // CreateStack creates a new stack
 func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err error) {
 	// Check if stack already exists
-	stackAlreadyExists, err := s.GetStackByName(ctx, name)
+	nameAvailable, err := s.isNameAvailable(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	if stackAlreadyExists != nil {
+	if !nameAvailable {
 		return nil, AlreadyExists
 	}
 
@@ -110,7 +123,10 @@ func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
 	}
 	stacks := []*Stack{}
 	for _, proto := range protos {
-		stacks = append(stacks, proto.(*Stack))
+		stack := proto.(*Stack)
+		if s.accounts.IsAuthorized(ctx, stack.Owner, accounts.ReadAction, accounts.StackRN, stack.Id) {
+			stacks = append(stacks, stack)
+		}
 	}
 	return stacks, nil
 }
