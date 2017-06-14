@@ -16,23 +16,24 @@ import (
 )
 
 type statsOpts struct {
-	container      bool
-	service        bool
-	node           bool
-	stack          bool
-	cpu            bool
-	mem            bool
-	io             bool
-	net            bool
-	period         string
-	timeGroup      string
-	containerID    string
-	containerName  string
-	containerState string
-	serviceID      string
-	stackName      string
-	nodeID         string
-	follow         bool
+	container       bool
+	service         bool
+	node            bool
+	stack           bool
+	cpu             bool
+	mem             bool
+	io              bool
+	net             bool
+	period          string
+	timeGroup       string
+	containerID     string
+	containerName   string
+	containerState  string
+	serviceID       string
+	stackName       string
+	nodeID          string
+	follow          bool
+	includeAmpStats bool
 }
 
 var (
@@ -75,6 +76,7 @@ func NewStatsCommand(c cli.Interface) *cobra.Command {
 	flags.StringVar(&opts.serviceID, "service-id", "", "Filter on service id")
 	flags.StringVar(&opts.stackName, "stack-name", "", "Filter on stack name")
 	flags.StringVar(&opts.nodeID, "node-id", "", "Filter on node id")
+	flags.BoolVarP(&opts.includeAmpStats, "include", "i", false, "Include AMP stats")
 	//Stream flag
 	flags.BoolVarP(&opts.follow, "follow", "f", false, "Follow stats output")
 	return cmd
@@ -91,6 +93,7 @@ func getStats(c cli.Interface, args []string) error {
 	query.FilterServiceId = opts.serviceID
 	query.FilterStackName = opts.stackName
 	query.FilterNodeId = opts.nodeID
+	query.AllowsInfra = opts.includeAmpStats
 
 	//set main Group
 	if opts.timeGroup == "" {

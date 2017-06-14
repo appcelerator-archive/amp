@@ -87,6 +87,7 @@ message StatsRequest {
   string time_group = 18;
   string time_zone = 19;
   bool avg = 20;
+  bool allows_infra = 21;
 }
 
 message StatsReply {
