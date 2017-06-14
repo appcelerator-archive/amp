@@ -3,6 +3,8 @@ package core
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -10,12 +12,19 @@ import (
 	"strings"
 	"time"
 
-	"fmt"
-
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gogo/protobuf/proto"
+)
+
+const (
+	stdWriterPrefixLen = 8
+	stdWriterFdIndex   = 0
+	stdWriterSizeIndex = 4
+
+	startingBufLen = 32*1024 + stdWriterPrefixLen + 1
 )
 
 // verify all containers to open logs stream if not already done
@@ -33,7 +42,32 @@ func (a *Agent) updateLogsStream() {
 				log.Printf("Error opening logs stream on container: %s\n", data.name)
 			} else {
 				data.logsStream = stream
-				go a.startReadingLogs(ID, data)
+
+				// Inspect the container to check if it's a TTY
+				c, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
+				if err != nil {
+					log.Printf("Error inspecting container for TTY: %s\n", data.name)
+					continue
+				}
+
+				// Read logs in the background
+				go func(ID string, data *ContainerData, tty bool) {
+					// Pick the adequate log reader function
+					logReader := a.readLogs
+					if tty {
+						logReader = a.readLogsTTY
+					}
+
+					// Read logs
+					log.Printf("start reading logs on container: %s\n", data.name)
+					if err := logReader(ID, data); err != nil {
+						log.Printf("Error while reading logs for container %s: %v", data.name, err)
+					}
+					log.Printf("stop reading logs on container: %s\n", data.name)
+
+					// Close log stream
+					data.logsStream.Close()
+				}(ID, data, c.Config.Tty)
 			}
 		}
 	}
@@ -62,57 +96,154 @@ func (a *Agent) getLastTimeID(ID string) string {
 	return string(data)
 }
 
-// stream reading loop
-func (a *Agent) startReadingLogs(ID string, data *ContainerData) {
-	stream := data.logsStream
-	reader := bufio.NewReader(stream)
-	data.lastDateSaveTime = time.Now()
-	log.Printf("start reading logs on container: %s\n", data.name)
-	var previous, now int64
+func (a *Agent) buildLogEntry(ID string, data *ContainerData, line string, timeId int64) *logs.LogEntry {
+	// Log entry is formatted with 1/ a 30 characters timestamp, 2/ the message content, for instance:
+	// 2017-06-14T20:07:57.425972267Z building a seeds list for cluster etcd
+	date := line[:30]
+	msg := strings.TrimSuffix(line[31:], "\n")
+
+	// Convert date to timestamp
+	timestamp, err := time.Parse("2006-01-02T15:04:05.999999999Z", date)
+	if err != nil {
+		timestamp = time.Now()
+	}
+
+	// Build log entry
+	return &logs.LogEntry{
+		Timestamp:          timestamp.Format(time.RFC3339Nano),
+		ContainerId:        ID,
+		ContainerName:      data.name,
+		ContainerShortName: data.shortName,
+		ContainerState:     data.state,
+		ServiceName:        data.serviceName,
+		ServiceId:          data.serviceID,
+		TaskId:             data.taskID,
+		StackName:          data.stackName,
+		NodeId:             data.nodeID,
+		TimeId:             fmt.Sprintf("%016X", timeId),
+		Labels:             data.labels,
+		Msg:                msg,
+	}
+}
+
+// readLogsTTY read logs from a TTY container.
+func (a *Agent) readLogsTTY(ID string, data *ContainerData) error {
+	var (
+		previous, now int64
+		br            = bufio.NewReader(data.logsStream)
+	)
+
 	for {
-		line, err := reader.ReadString('\n')
+		line, err := br.ReadString('\n')
+		if err == io.EOF {
+			return nil
+		}
 		if err != nil {
-			if err.Error() == "EOF" {
-				log.Printf("Stream log EOF container terminated: %s\n", data.name)
-			} else {
-				log.Printf("error reading logs, closing logs stream on container %s (%v)\n", data.name, err)
-			}
-			data.logsReadError = true
-			_ = stream.Close()
-			a.removeContainer(ID)
-			return
+			return err
 		}
-		if len(line) <= 39 {
-			// mt.Printf("invalid log: [%s]\n", line)
-			continue
-		}
-		date := line[8:38]
-		slog := strings.TrimSuffix(line[39:], "\n")
-		timestamp, err := time.Parse("2006-01-02T15:04:05.000000000Z", date)
-		if err != nil {
-			timestamp = time.Now()
-		}
+
+		// Compute TimeId
 		now = time.Now().UnixNano()
 		if now <= previous {
 			now = previous + 1
 		}
 		previous = now
-		logEntry := logs.LogEntry{
-			Timestamp:          timestamp.Format(time.RFC3339Nano),
-			ContainerId:        ID,
-			ContainerName:      data.name,
-			ContainerShortName: data.shortName,
-			ContainerState:     data.state,
-			ServiceName:        data.serviceName,
-			ServiceId:          data.serviceID,
-			TaskId:             data.taskID,
-			StackName:          data.stackName,
-			NodeId:             data.nodeID,
-			TimeId:             fmt.Sprintf("%016X", now),
-			Labels:             data.labels,
-			Msg:                slog,
+
+		logEntry := a.buildLogEntry(ID, data, line, now)
+		a.addLogEntry(logEntry, data, logEntry.Timestamp)
+	}
+}
+
+// readLogs is a modified version of docker stdcopy.StdCopy.
+func (a *Agent) readLogs(ID string, data *ContainerData) error {
+	var (
+		buf           = make([]byte, startingBufLen)
+		bufLen        = len(buf)
+		src           = data.logsStream
+		nr            int
+		er            error
+		frameSize     int
+		previous, now int64
+	)
+
+	for {
+		// Make sure we have at least a full header
+		for nr < stdWriterPrefixLen {
+			var nr2 int
+			nr2, er = src.Read(buf[nr:])
+			nr += nr2
+			if er == io.EOF {
+				if nr < stdWriterPrefixLen {
+					return nil
+				}
+				break
+			}
+			if er != nil {
+				return er
+			}
 		}
-		a.addLogEntry(&logEntry, data, date)
+
+		stream := stdcopy.StdType(buf[stdWriterFdIndex])
+		// Check the first byte to know where to write
+		switch stream {
+		case stdcopy.Stdin:
+		case stdcopy.Stdout:
+		case stdcopy.Stderr:
+		case stdcopy.Systemerr:
+		default:
+			return fmt.Errorf("Unrecognized input header: %d", buf[stdWriterFdIndex])
+		}
+
+		// Retrieve the size of the frame
+		frameSize = int(binary.BigEndian.Uint32(buf[stdWriterSizeIndex : stdWriterSizeIndex+4]))
+
+		// Check if the buffer is big enough to read the frame.
+		// Extend it if necessary.
+		if frameSize+stdWriterPrefixLen > bufLen {
+			buf = append(buf, make([]byte, frameSize+stdWriterPrefixLen-bufLen+1)...)
+			bufLen = len(buf)
+		}
+
+		// While the amount of bytes read is less than the size of the frame + header, we keep reading
+		for nr < frameSize+stdWriterPrefixLen {
+			var nr2 int
+			nr2, er = src.Read(buf[nr:])
+			nr += nr2
+			if er == io.EOF {
+				if nr < frameSize+stdWriterPrefixLen {
+					return nil
+				}
+				break
+			}
+			if er != nil {
+				return er
+			}
+		}
+
+		// we might have an error from the source mixed up in our multiplexed
+		// stream. if we do, return it.
+		if stream == stdcopy.Systemerr {
+			fmt.Errorf("error from daemon in stream: %s", string(buf[stdWriterPrefixLen:frameSize+stdWriterPrefixLen]))
+		}
+
+		// Compute TimeId
+		now = time.Now().UnixNano()
+		if now <= previous {
+			now = previous + 1
+		}
+		previous = now
+
+		// line contains a full log entry
+		line := string(buf[stdWriterPrefixLen : frameSize+stdWriterPrefixLen])
+
+		logEntry := a.buildLogEntry(ID, data, line, now)
+		a.addLogEntry(logEntry, data, logEntry.Timestamp)
+
+		// Move the rest of the buffer to the beginning
+		copy(buf, buf[frameSize+stdWriterPrefixLen:])
+
+		// Move the index
+		nr -= frameSize + stdWriterPrefixLen
 	}
 }
 

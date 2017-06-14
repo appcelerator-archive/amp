@@ -284,7 +284,7 @@ AGENTBINARY=$(AGENT).alpine
 AGENTTAG := local
 AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
 AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
-AGENTDIRS := $(CMDDIR)/$(AGENT) api data $(COMMONDIRS)
+AGENTDIRS := $(CMDDIR)/$(AGENT) agent api $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
