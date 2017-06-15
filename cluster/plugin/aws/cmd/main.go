@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/spf13/cobra"
@@ -14,46 +14,11 @@ const (
 	templateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
 )
 
-// StackSpec stores raw configuration options before transformation into a CreateStackInput struct
-// used by the cloudformation api.
-type StackSpec struct {
-	KeyPair   string
-
-	// OnFailure determines what happens if stack creations fails.
-	// Valid values are: "DO_NOTHING", "ROLLBACK", "DELETE"
-	// Default: "ROLLBACK"
-	OnFailure string
-
-	Region    string
-
-	StackName string
-}
-
 var (
-	stackSpec = &StackSpec{
+	stackSpec = &plugin.StackSpec{
 		OnFailure: "ROLLBACK",
 	}
 )
-
-func createStack(svc *cf.CloudFormation, params []*cf.Parameter, stackName string, timeout int64) {
-	input := &cf.CreateStackInput{
-		StackName: aws.String(stackName),
-		Capabilities: []*string{
-			aws.String("CAPABILITY_IAM"),
-		},
-		OnFailure:        aws.String(stackSpec.OnFailure),
-		Parameters:       params,
-		TemplateURL:      aws.String(templateURL),
-		TimeoutInMinutes: aws.Int64(timeout),
-	}
-
-	resp, err := svc.CreateStack(input)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(awsutil.StringValue(resp))
-}
 
 func provision(cmd *cobra.Command, args []string) {
 	sess := session.Must(session.NewSession())
@@ -62,11 +27,11 @@ func provision(cmd *cobra.Command, args []string) {
 	svc := cf.New(sess,
 		aws.NewConfig().WithRegion(stackSpec.Region).WithLogLevel(aws.LogOff))
 
-	params := []*cf.Parameter{
+	stackSpec.Params = []*cf.Parameter{
 		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String(stackSpec.KeyPair)},
 	}
 
-	createStack(svc, params, stackSpec.StackName, 20)
+	plugin.CreateStack(svc, stackSpec, 20)
 
 	log.Println(svc.APIVersion)
 }
@@ -93,7 +58,7 @@ func main() {
 		Short: "init cluster in swarm mode",
 		Run:   provision,
 	}
-	initCmd.PersistentFlags().StringVar(&stackSpec.OnFailure, "onfailure", "", "")
+	initCmd.Flags().StringVar(&stackSpec.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
 
 	updateCmd := &cobra.Command{
 		Use:   "update",

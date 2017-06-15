@@ -1,11 +1,12 @@
+SRC := $(shell find . -type f -name '*.go')
 
 build: aws.alpine
 	docker build -t appcelerator/amp-aws-plugin .
 
-aws.alpine: main.go
+aws.alpine: $(SRC)
 	docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		awssdk go build -o aws.alpine .
+		awssdk go build -o aws.alpine cmd/main.go
 
 .PHONY: compiler
 compiler:
