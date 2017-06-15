@@ -1,10 +1,13 @@
 package password
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -34,6 +37,17 @@ func NewSetCommand(c cli.Interface) *cobra.Command {
 }
 
 func set(c cli.Interface, cmd *cobra.Command, opts setPasswordOptions) error {
+	conn := c.ClientConn()
+	clientVer := version.NewVersionClient(conn)
+	requestVer := &version.GetRequest{}
+	reply, err := clientVer.Get(context.Background(), requestVer)
+	if err != nil {
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if reply.Info.Registration == configuration.RegistrationNone {
+		return errors.New("`amp password set` disabled. This cluster has no registration policy")
+	}
+
 	if !cmd.Flag("token").Changed {
 		opts.token = c.Console().GetInput("token")
 	}
@@ -41,7 +55,6 @@ func set(c cli.Interface, cmd *cobra.Command, opts setPasswordOptions) error {
 		opts.password = c.Console().GetSilentInput("password")
 	}
 
-	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.PasswordSetRequest{
 		Token:    opts.token,
