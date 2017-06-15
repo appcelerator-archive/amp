@@ -5,6 +5,7 @@ import (
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/spf13/cobra"
@@ -31,9 +32,12 @@ func provision(cmd *cobra.Command, args []string) {
 		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String(stackSpec.KeyPair)},
 	}
 
-	plugin.CreateStack(svc, stackSpec, 20)
+	resp, err := plugin.CreateStack(svc, stackSpec, 20)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	log.Println(svc.APIVersion)
+	log.Println(awsutil.StringValue(resp))
 }
 
 func update(cmd *cobra.Command, args []string) {

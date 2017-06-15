@@ -1,10 +1,7 @@
 package aws
 
 import (
-	"log"
-
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -29,7 +26,7 @@ type StackSpec struct {
 	StackName string
 }
 
-func CreateStack(svc *cf.CloudFormation, stackSpec *StackSpec, timeout int64) {
+func CreateStack(svc *cf.CloudFormation, stackSpec *StackSpec, timeout int64) (*cf.CreateStackOutput, error){
 	input := &cf.CreateStackInput{
 		StackName: aws.String(stackSpec.StackName),
 		Capabilities: []*string{
@@ -41,11 +38,6 @@ func CreateStack(svc *cf.CloudFormation, stackSpec *StackSpec, timeout int64) {
 		TimeoutInMinutes: aws.Int64(timeout),
 	}
 
-	resp, err := svc.CreateStack(input)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println(awsutil.StringValue(resp))
+	return svc.CreateStack(input)
 }
 
