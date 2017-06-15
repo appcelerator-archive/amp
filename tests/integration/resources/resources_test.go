@@ -51,12 +51,11 @@ func TestListOrganizationShouldOnlyGetItsOwnResources(t *testing.T) {
 	orgCtx := h.Switch(userCtx, t, testOrg.Name)
 
 	// Deploy stack as organization
-	orgID := stringid.GenerateNonCryptoID()[:32]
-	err := h.DeployStack(orgCtx, orgID, "pinger.yml")
+	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
 	// Create a dashboard as organization
-	_, err = h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{Name: orgID, Data: "data"})
+	_, err = h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "data"})
 	assert.NoError(t, err)
 
 	// Create another user and another org
@@ -66,12 +65,11 @@ func TestListOrganizationShouldOnlyGetItsOwnResources(t *testing.T) {
 	anotherOrgCtx := h.Switch(anotherUserCtx, t, anotherOrg.Name)
 
 	// Deploy stack as another organization
-	anotherOrgID := stringid.GenerateNonCryptoID()[:32]
-	err = h.DeployStack(anotherOrgCtx, anotherOrgID, "pinger.yml")
+	anotherStackID, err := h.DeployStack(anotherOrgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
 	// Create a dashboard as another organization
-	_, err = h.Dashboards().Create(anotherOrgCtx, &dashboard.CreateRequest{Name: anotherOrgID, Data: "another data"})
+	_, err = h.Dashboards().Create(anotherOrgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "another data"})
 	assert.NoError(t, err)
 
 	// Make sure we only get only our organization resources
@@ -84,9 +82,71 @@ func TestListOrganizationShouldOnlyGetItsOwnResources(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 2)
 
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: orgID})
+	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
-	_, err = h.Stacks().Remove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherOrgID})
+	_, err = h.Stacks().Remove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherStackID})
+	assert.NoError(t, err)
+}
+
+func TestAddSameResourceTwiceShouldFail(t *testing.T) {
+	testUser := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
+
+	// Create user, org and team
+	userCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Switch to organization account
+	orgCtx := h.Switch(userCtx, t, testOrg.Name)
+
+	// Deploy stack as organization
+	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
+	assert.NoError(t, err)
+
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
+	})
+	assert.NoError(t, err)
+
+	// AddToTeam again
+	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
+	})
+	assert.Error(t, err)
+
+	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
+	assert.NoError(t, err)
+}
+
+func TestRemoveNonExistingResourceShouldFail(t *testing.T) {
+	testUser := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
+
+	// Create user, org and team
+	userCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Switch to organization account
+	orgCtx := h.Switch(userCtx, t, testOrg.Name)
+
+	// Deploy stack as organization
+	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
+	assert.NoError(t, err)
+
+	// RemoveFromTeam
+	_, err = h.Resources().RemoveFromTeam(orgCtx, &resource.RemoveFromTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
+	})
+	assert.Error(t, err)
+
+	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 }
 
@@ -402,8 +462,7 @@ func TestAuthorizations(t *testing.T) {
 	// Stacks
 
 	// Deploy stack as user
-	userStackID := stringid.GenerateNonCryptoID()[:32]
-	err = h.DeployStack(ownerCtx, userStackID, "pinger.yml")
+	userStackID, err := h.DeployStack(ownerCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
 	// Owners
@@ -662,8 +721,7 @@ func TestAuthorizations(t *testing.T) {
 
 	// Deploy stack as organization owner
 	orgOwnerCtx := h.Switch(ownerCtx, t, testOrg.Name)
-	orgOwnerStackID := stringid.GenerateNonCryptoID()[:32]
-	err = h.DeployStack(orgOwnerCtx, orgOwnerStackID, "pinger.yml")
+	orgOwnerStackID, err := h.DeployStack(orgOwnerCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
 	// Owners
@@ -794,8 +852,7 @@ func TestAuthorizations(t *testing.T) {
 
 	// Deploy stack as organization owner
 	orgMemberCtx := h.Switch(memberCtx, t, testOrg.Name)
-	orgMemberStackID := stringid.GenerateNonCryptoID()[:32]
-	err = h.DeployStack(orgMemberCtx, orgMemberStackID, "pinger.yml")
+	orgMemberStackID, err := h.DeployStack(orgMemberCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
 	// Owners

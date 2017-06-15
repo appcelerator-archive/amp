@@ -67,7 +67,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		return nil, convertError(err)
 	}
 	log.Println("Successfully deployed stack:", stack)
-	return &DeployReply{FullName: stack.Name, Answer: output}, nil
+	return &DeployReply{Id: stack.Id, FullName: stack.Name, Answer: output}, nil
 }
 
 // List implements stack.Server

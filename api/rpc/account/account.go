@@ -40,11 +40,13 @@ func convertError(err error) error {
 	case accounts.UserAlreadyExists,
 		accounts.EmailAlreadyUsed,
 		accounts.OrganizationAlreadyExists,
-		accounts.TeamAlreadyExists:
+		accounts.TeamAlreadyExists,
+		accounts.ResourceAlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
 	case accounts.UserNotFound,
 		accounts.OrganizationNotFound,
-		accounts.TeamNotFound:
+		accounts.TeamNotFound,
+		accounts.ResourceNotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())

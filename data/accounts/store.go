@@ -484,7 +484,7 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 
 		// Check if user is already a member
 		if organization.HasMember(user.Name) {
-			return nil, nil // User is already a member of the organization, return
+			return nil, UserAlreadyExists
 		}
 
 		// Add the user as a team member
@@ -559,7 +559,7 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 		// Check if user is part of the organization
 		memberIndex := organization.getMemberIndex(user.Name)
 		if memberIndex == -1 {
-			return nil, nil // User is not a member of the organization, return
+			return nil, UserNotFound
 		}
 
 		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
@@ -743,7 +743,7 @@ func (s *Store) AddUserToTeam(ctx context.Context, organizationName string, team
 
 		// Check if user is part of the team
 		if team.hasMember(user.Name) {
-			return nil, nil // User is already a member of the team, return
+			return nil, UserAlreadyExists
 		}
 
 		// Add the user as a team member
@@ -793,7 +793,7 @@ func (s *Store) RemoveUserFromTeam(ctx context.Context, organizationName string,
 		// Check if user is actually a member
 		memberIndex := team.getMemberIndex(user.Name)
 		if memberIndex == -1 {
-			return nil, nil // User is not a member of the team, return
+			return nil, UserNotFound
 		}
 
 		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice
@@ -836,7 +836,7 @@ func (s *Store) AddResourceToTeam(ctx context.Context, organizationName string, 
 
 		// Check if resource is already added to the team
 		if team.hasResource(resourceID) {
-			return nil, nil // Resource is already added to the team, return
+			return nil, ResourceAlreadyExists
 		}
 
 		// Add the resource
@@ -883,7 +883,7 @@ func (s *Store) RemoveResourceFromTeam(ctx context.Context, organizationName str
 		// Check if resource is already present
 		resourceIndex := team.getResourceIndex(resourceID)
 		if resourceIndex == -1 {
-			return nil, nil // Resource is not present, return
+			return nil, ResourceNotFound
 		}
 
 		// Remove the resource from team resources. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice

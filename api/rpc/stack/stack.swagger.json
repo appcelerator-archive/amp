@@ -127,6 +127,9 @@
     "stackDeployReply": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string"
+        },
         "full_name": {
           "type": "string"
         },
