@@ -1,13 +1,14 @@
 package aws
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/satori/go.uuid"
 )
 
 var (
@@ -50,13 +51,16 @@ func setup() {
 }
 
 func teardown() {
+	// TODO destroy test stacks
 }
 
 func TestCreate(t *testing.T) {
+	stackName := fmt.Sprintf("amp-aws-plugin-test-%s", uuid.NewV4())
+
 	stackSpec := &StackSpec{
 		KeyPair: keyPair,
 		Region: region,
-		StackName: "test-stack", // TODO: create unique test stackname
+		StackName: stackName,
 		OnFailure: "DELETE",
 	}
 
