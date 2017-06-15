@@ -13,7 +13,9 @@ const (
 	DefaultURL     = "nats://nats:4222"
 	ClusterID      = "test-cluster"
 	LogsSubject    = "amp-logs"
+	LogsQGroup     = "amp-logs-queue"
 	MetricsSubject = "amp-metrics"
+	MetricsQGroup  = "amp-metrics-queue"
 )
 
 // NatsStreaming NATS-Streaming wrapper

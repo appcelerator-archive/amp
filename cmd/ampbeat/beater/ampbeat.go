@@ -56,16 +56,16 @@ func (bt *Ampbeat) Run(b *beat.Beat) error {
 	bt.client = b.Publisher.Connect()
 
 	// logs subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(ns.LogsSubject, logMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().QueueSubscribe(ns.LogsSubject, ns.LogsQGroup, logMessageHandler, stan.DurableName("logs")); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
-	logp.Info("Succesfully subscribed to logs subject")
+	logp.Info("Successfully subscribed to logs subject")
 
 	// metrics subscription
-	if _, err := bt.natsStreaming.GetClient().Subscribe(ns.MetricsSubject, metricsMessageHandler, stan.DeliverAllAvailable()); err != nil {
+	if _, err := bt.natsStreaming.GetClient().QueueSubscribe(ns.MetricsSubject, ns.MetricsQGroup, metricsMessageHandler, stan.DurableName("metrics")); err != nil {
 		return fmt.Errorf("Unable to subscribe to subject: %v", err)
 	}
-	logp.Info("Succesfully subscribed to metrics subject")
+	logp.Info("Successfully subscribed to metrics subject")
 
 	select {
 	case <-bt.done:
