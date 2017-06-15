@@ -26,25 +26,25 @@ type Server struct {
 
 func convertError(err error) error {
 	switch err {
-	case accounts.InvalidName:
-	case accounts.InvalidEmail:
-	case accounts.InvalidToken:
-	case accounts.PasswordTooWeak:
+	case accounts.InvalidName,
+		accounts.InvalidEmail,
+		accounts.InvalidToken,
+		accounts.PasswordTooWeak:
 		return status.Errorf(codes.InvalidArgument, err.Error())
 	case accounts.WrongPassword:
 		return status.Errorf(codes.Unauthenticated, err.Error())
-	case accounts.UserNotVerified:
-	case accounts.AtLeastOneOwner:
-	case accounts.TokenAlreadyUsed:
+	case accounts.UserNotVerified,
+		accounts.AtLeastOneOwner,
+		accounts.TokenAlreadyUsed:
 		return status.Errorf(codes.FailedPrecondition, err.Error())
-	case accounts.UserAlreadyExists:
-	case accounts.EmailAlreadyUsed:
-	case accounts.OrganizationAlreadyExists:
-	case accounts.TeamAlreadyExists:
+	case accounts.UserAlreadyExists,
+		accounts.EmailAlreadyUsed,
+		accounts.OrganizationAlreadyExists,
+		accounts.TeamAlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
-	case accounts.UserNotFound:
-	case accounts.OrganizationNotFound:
-	case accounts.TeamNotFound:
+	case accounts.UserNotFound,
+		accounts.OrganizationNotFound,
+		accounts.TeamNotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())
@@ -469,24 +469,6 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 		}
 	}
 	log.Printf("Successfully removed user %s from teams %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
-	return &empty.Empty{}, nil
-}
-
-// AddResourceToTeam implements account.AddResourceToTeam
-func (s *Server) AddResourceToTeam(ctx context.Context, in *AddResourceToTeamRequest) (*empty.Empty, error) {
-	if err := s.Accounts.AddResourceToTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
-		return &empty.Empty{}, convertError(err)
-	}
-	log.Printf("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
-	return &empty.Empty{}, nil
-}
-
-// RemoveResourceFromTeam implements account.RemoveResourceFromTeam
-func (s *Server) RemoveResourceFromTeam(ctx context.Context, in *RemoveResourceFromTeamRequest) (*empty.Empty, error) {
-	if err := s.Accounts.RemoveResourceFromTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
-		return &empty.Empty{}, convertError(err)
-	}
-	log.Printf("Successfully removed resource %s from teams %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 

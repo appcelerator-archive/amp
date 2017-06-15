@@ -56,9 +56,92 @@
           "Resource"
         ]
       }
+    },
+    "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}": {
+      "delete": {
+        "operationId": "RemoveFromTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Resource"
+        ]
+      },
+      "post": {
+        "operationId": "AddToTeam",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/resourceAddToTeamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Resource"
+        ]
+      }
     }
   },
   "definitions": {
+    "protobufEmpty": {
+      "type": "object",
+      "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
+    },
     "resourceAction": {
       "type": "string",
       "enum": [
@@ -68,6 +151,20 @@
         "ACTION_DELETE"
       ],
       "default": "ACTION_CREATE"
+    },
+    "resourceAddToTeamRequest": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "type": "string"
+        },
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      }
     },
     "resourceAuthorizationsReply": {
       "type": "object",
@@ -136,6 +233,20 @@
     },
     "resourceListRequest": {
       "type": "object"
+    },
+    "resourceRemoveFromTeamRequest": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "type": "string"
+        },
+        "organization_name": {
+          "type": "string"
+        },
+        "team_name": {
+          "type": "string"
+        }
+      }
     },
     "resourceResourceEntry": {
       "type": "object",

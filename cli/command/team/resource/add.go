@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 
-	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -46,13 +46,13 @@ func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) err
 	}
 
 	conn := c.ClientConn()
-	client := account.NewAccountClient(conn)
-	request := &account.AddResourceToTeamRequest{
+	client := resource.NewResourceClient(conn)
+	request := &resource.AddToTeamRequest{
+		ResourceId:       opts.resource,
 		OrganizationName: opts.org,
 		TeamName:         opts.team,
-		ResourceId:       opts.resource,
 	}
-	if _, err := client.AddResourceToTeam(context.Background(), request); err != nil {
+	if _, err := client.AddToTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Resource has been added to team.")
