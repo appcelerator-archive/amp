@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -24,10 +26,20 @@ func NewForgotLoginCommand(c cli.Interface) *cobra.Command {
 }
 
 func forgotLogin(c cli.Interface, args []string) error {
+	conn := c.ClientConn()
+	clientVer := version.NewVersionClient(conn)
+	requestVer := &version.GetRequest{}
+	reply, err := clientVer.Get(context.Background(), requestVer)
+	if err != nil {
+		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if reply.Info.Registration == configuration.RegistrationNone {
+		return errors.New("`amp user forgot-login` disabled. This cluster has no registration policy")
+	}
+
 	if token := cli.GetToken(c.Server()); token != "" {
 		return errors.New("you are already logged into an account. Use 'amp whoami' to view your username")
 	}
-	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ForgotLoginRequest{
 		Email: args[0],
