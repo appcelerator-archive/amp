@@ -283,7 +283,7 @@ _get_ip() {
   local _ip
   _ip=$(curl -m 3 -f 169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null) || _ip=$(ip a show dev eth0 2>/dev/null | grep inet | grep eth0 | tail -1 | sed -e 's/^.*inet.//g' -e 's/\/.*$//g')
   if [[ -z "$_ip" ]];then
-    _ip=$(ifconfig $(netstat -nr | awk 'NF==6 && $1 ~/default/ {print $6}' | tail -1) | awk '$1 == "inet" {print $2}' | grep -v "127.0.0.1" | sed -e 's/addr://')
+    _ip=$(ifconfig $(netstat -nr | awk 'NF>4 && $1 ~/(default)|(0.0.0.0)/ {print $NF}' | tail -1) | awk '$1 == "inet" {print $2}' | grep -v "127.0.0.1" | sed -e 's/addr://')
   fi
   if [[ -z "$_ip" ]];then
     echo "unable to guess the private IP" >&2
