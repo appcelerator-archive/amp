@@ -32,7 +32,7 @@ func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesRe
 			Addr:         item.Status.Addr,
 			Status:       string(item.Status.State),
 			Availability: string(item.Spec.Availability),
-			Labels:       item.Description.Engine.Labels,
+			Labels:       item.Spec.Annotations.Labels,
 		}
 		if item.ManagerStatus != nil {
 			node.Leader = item.ManagerStatus.Leader
