@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -58,7 +59,7 @@ func teardown() {
 func TestCreate(t *testing.T) {
 	stackName := fmt.Sprintf("%s-plugin-test-%s", keyName, uuid.NewV4())
 
-	stackSpec := &StackSpec{
+	opts := &RequestOptions{
 		Region:    region,
 		StackName: stackName,
 		OnFailure: "DELETE",
@@ -67,7 +68,13 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	_, err := CreateStack(svc, stackSpec, 20)
+	ctx := context.Background()
+	_, err := CreateStack(ctx, svc, opts, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = DeleteStack(ctx, svc, opts)
 	if err != nil {
 		t.Fatal(err)
 	}

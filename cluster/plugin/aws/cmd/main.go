@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
@@ -15,21 +16,30 @@ const (
 	templateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
 )
 
+func initSession() {
+
+}
+
 var (
-	stackSpec = &plugin.StackSpec{
+	opts = &plugin.RequestOptions{
 		OnFailure: "ROLLBACK",
-		Params: []string{},
+		Params:    []string{},
 	}
+
+	sess *session.Session
+	svc *cf.CloudFormation
 )
 
-func provision(cmd *cobra.Command, args []string) {
-	sess := session.Must(session.NewSession())
+func initClient(cmd *cobra.Command, args []string) {
+	sess = session.Must(session.NewSession())
 
 	// Create the service's client with the session.
-	svc := cf.New(sess,
-		aws.NewConfig().WithRegion(stackSpec.Region).WithLogLevel(aws.LogOff))
+	svc = cf.New(sess, aws.NewConfig().WithRegion(opts.Region).WithLogLevel(aws.LogOff))
+}
 
-	resp, err := plugin.CreateStack(svc, stackSpec, 20)
+func provision(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	resp, err := plugin.CreateStack(ctx, svc, opts, 20)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,24 +52,31 @@ func update(cmd *cobra.Command, args []string) {
 }
 
 func destroy(cmd *cobra.Command, args []string) {
-	log.Println("destroy command not implemented yet")
+	ctx := context.Background()
+	resp, err := plugin.DeleteStack(ctx, svc, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(awsutil.StringValue(resp))
 }
 
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "awsplugin",
 		Short: "init/update/destroy an AWS cluster in Docker swarm mode",
+		PersistentPreRun: initClient,
 	}
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.Region, "region", "r", "", "aws region")
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.StackName, "stackname", "n", "", "aws stack name")
-	rootCmd.PersistentFlags().StringSliceVarP(&stackSpec.Params, "parameter", "p", []string{}, "parameter")
+	rootCmd.PersistentFlags().StringVarP(&opts.Region, "region", "r", "", "aws region")
+	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
+	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "init cluster in swarm mode",
 		Run:   provision,
 	}
-	initCmd.Flags().StringVar(&stackSpec.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
+	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
 
 	updateCmd := &cobra.Command{
 		Use:   "update",
@@ -75,8 +92,5 @@ func main() {
 
 	rootCmd.AddCommand(initCmd, updateCmd, destroyCmd)
 
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
-	}
-
+	_ = rootCmd.Execute()
 }
