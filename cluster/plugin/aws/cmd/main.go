@@ -18,6 +18,7 @@ const (
 var (
 	stackSpec = &plugin.StackSpec{
 		OnFailure: "ROLLBACK",
+		Params: []string{},
 	}
 )
 
@@ -27,10 +28,6 @@ func provision(cmd *cobra.Command, args []string) {
 	// Create the service's client with the session.
 	svc := cf.New(sess,
 		aws.NewConfig().WithRegion(stackSpec.Region).WithLogLevel(aws.LogOff))
-
-	stackSpec.Params = []*cf.Parameter{
-		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String(stackSpec.KeyPair)},
-	}
 
 	resp, err := plugin.CreateStack(svc, stackSpec, 20)
 	if err != nil {
@@ -53,9 +50,9 @@ func main() {
 		Use:   "awsplugin",
 		Short: "init/update/destroy an AWS cluster in Docker swarm mode",
 	}
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.KeyPair, "keypair", "k", "", "aws keypair name")
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringVarP(&stackSpec.Region, "region", "r", "", "aws region")
+	rootCmd.PersistentFlags().StringVarP(&stackSpec.StackName, "stackname", "n", "", "aws stack name")
+	rootCmd.PersistentFlags().StringSliceVarP(&stackSpec.Params, "parameter", "p", []string{}, "parameter")
 
 	initCmd := &cobra.Command{
 		Use:   "init",

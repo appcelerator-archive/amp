@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
@@ -12,8 +13,8 @@ import (
 )
 
 var (
-	keyPair string
-	region string
+	keyName string
+	region  string
 
 	sess *session.Session
 	svc *cf.CloudFormation
@@ -25,9 +26,9 @@ var (
 //   KEYPAIR=<your-aws-key-pair>
 //   REGION=<aws-region>
 func init() {
-	keyPair = os.Getenv("KEYPAIR")
-	if keyPair == "" {
-		log.Fatal("KEYPAIR environment variable not set")
+	keyName = os.Getenv("KEYNAME")
+	if keyName == "" {
+		log.Fatal("KEYNAME environment variable not set")
 	}
 	region = os.Getenv("REGION")
 	if region == "" {
@@ -55,17 +56,15 @@ func teardown() {
 }
 
 func TestCreate(t *testing.T) {
-	stackName := fmt.Sprintf("%s-plugin-test-%s", keyPair, uuid.NewV4())
+	stackName := fmt.Sprintf("%s-plugin-test-%s", keyName, uuid.NewV4())
 
 	stackSpec := &StackSpec{
-		KeyPair: keyPair,
-		Region: region,
+		Region:    region,
 		StackName: stackName,
 		OnFailure: "DELETE",
-	}
-
-	stackSpec.Params = []*cf.Parameter{
-		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String(keyPair)},
+		Params: []string{
+			fmt.Sprintf("KeyName=%s", keyName),
+		},
 	}
 
 	_, err := CreateStack(svc, stackSpec, 20)

@@ -18,11 +18,9 @@ clean:
 
 .PHONY: test
 test:
-	@echo $(KEYPAIR)
-	@echo $(REGION)
 	docker run -it --rm -v $(HOME)/.aws:/root/.aws -v $(PWD):/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		-e KEYPAIR=$(KEYPAIR) \
+		-e KEYNAME=$(KEYNAME) \
 		-e REGION=$(REGION) \
 		go:aws test
 
