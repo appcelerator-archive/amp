@@ -14,13 +14,25 @@ const (
 	templateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
 )
 
+// StackSpec stores raw configuration options before transformation into a CreateStackInput struct
+// used by the cloudformation api.
 type StackSpec struct {
-	stackName string
-	region string
+	KeyPair   string
+
+	// OnFailure determines what happens if stack creations fails.
+	// Valid values are: "DO_NOTHING", "ROLLBACK", "DELETE"
+	// Default: "ROLLBACK"
+	OnFailure string
+
+	Region    string
+
+	StackName string
 }
 
 var (
-	stackSpec = &StackSpec{}
+	stackSpec = &StackSpec{
+		OnFailure: "ROLLBACK",
+	}
 )
 
 func createStack(svc *cf.CloudFormation, params []*cf.Parameter, stackName string, timeout int64) {
@@ -29,7 +41,7 @@ func createStack(svc *cf.CloudFormation, params []*cf.Parameter, stackName strin
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
-		OnFailure:        aws.String("DELETE"),
+		OnFailure:        aws.String(stackSpec.OnFailure),
 		Parameters:       params,
 		TemplateURL:      aws.String(templateURL),
 		TimeoutInMinutes: aws.Int64(timeout),
@@ -48,13 +60,13 @@ func provision(cmd *cobra.Command, args []string) {
 
 	// Create the service's client with the session.
 	svc := cf.New(sess,
-		aws.NewConfig().WithRegion(stackSpec.region).WithLogLevel(aws.LogOff))
+		aws.NewConfig().WithRegion(stackSpec.Region).WithLogLevel(aws.LogOff))
 
 	params := []*cf.Parameter{
-		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String("tony-amp-dev") },
+		{ParameterKey: aws.String("KeyName"), ParameterValue: aws.String(stackSpec.KeyPair)},
 	}
 
-	createStack(svc, params, stackSpec.stackName, 20)
+	createStack(svc, params, stackSpec.StackName, 20)
 
 	log.Println(svc.APIVersion)
 }
@@ -69,28 +81,30 @@ func destroy(cmd *cobra.Command, args []string) {
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use: "awsplugin",
+		Use:   "awsplugin",
 		Short: "init/update/destroy an AWS cluster in Docker swarm mode",
 	}
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.stackName, "name", "n", "", "stack name")
-	rootCmd.PersistentFlags().StringVarP(&stackSpec.region, "region", "r", "", "aws region")
+	rootCmd.PersistentFlags().StringVarP(&stackSpec.KeyPair, "keypair", "k", "", "aws keypair name")
+	rootCmd.PersistentFlags().StringVarP(&stackSpec.StackName, "stackname", "n", "", "aws stack name")
+	rootCmd.PersistentFlags().StringVarP(&stackSpec.Region, "region", "r", "", "aws region")
 
 	initCmd := &cobra.Command{
-		Use: "init",
+		Use:   "init",
 		Short: "init cluster in swarm mode",
-		Run: provision,
+		Run:   provision,
 	}
+	initCmd.PersistentFlags().StringVar(&stackSpec.OnFailure, "onfailure", "", "")
 
 	updateCmd := &cobra.Command{
-		Use: "update",
+		Use:   "update",
 		Short: "update the cluster",
-		Run: update,
+		Run:   update,
 	}
 
 	destroyCmd := &cobra.Command{
-		Use: "destroy",
+		Use:   "destroy",
 		Short: "destroy the cluster",
-		Run: destroy,
+		Run:   destroy,
 	}
 
 	rootCmd.AddCommand(initCmd, updateCmd, destroyCmd)
