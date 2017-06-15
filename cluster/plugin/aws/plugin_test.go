@@ -55,7 +55,7 @@ func teardown() {
 }
 
 func TestCreate(t *testing.T) {
-	stackName := fmt.Sprintf("amp-aws-plugin-test-%s", uuid.NewV4())
+	stackName := fmt.Sprintf("%s-plugin-test-%s", keyPair, uuid.NewV4())
 
 	stackSpec := &StackSpec{
 		KeyPair: keyPair,
