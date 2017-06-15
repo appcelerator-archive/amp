@@ -19,7 +19,7 @@ secrets:
 services:
 
   alertmanager:
-    image: prom/alertmanager
+    image: prom/alertmanager:v0.7.1
     networks:
       default:
         aliases:
@@ -77,7 +77,7 @@ services:
     command: [ "--host=${MANAGER_HOST:-unix:///var/run/docker.sock}" ]
 
   node_exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v0.14.0
     volumes:
       - /proc:/host/proc
       - /sys:/host/sys
@@ -110,7 +110,7 @@ services:
         - node.labels.amp.type.metrics == true
 
   haproxy_exporter:
-    image: prom/haproxy-exporter:latest
+    image: prom/haproxy-exporter:v0.7.1
     command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
       default:
