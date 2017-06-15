@@ -131,7 +131,7 @@ services:
         - node.labels.amp.type.metrics == true
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.0
+    image: appcelerator/grafana-amp:1.2.1
     networks:
       default:
         aliases:

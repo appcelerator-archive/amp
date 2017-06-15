@@ -13,7 +13,7 @@
     "rows": [
       {
         "collapse": false,
-        "height": 93,
+        "height": 174,
         "panels": [
           {
             "cacheTimeout": null,
@@ -71,7 +71,7 @@
                 "to": "999"
               }
             ],
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -159,7 +159,7 @@
                 "to": "999"
               }
             ],
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -248,7 +248,7 @@
                 "to": "999"
               }
             ],
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -336,7 +336,7 @@
                 "to": "999"
               }
             ],
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -415,7 +415,7 @@
               }
             ],
             "repeat": null,
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -504,7 +504,7 @@
                 "to": "null"
               }
             ],
-            "span": 1,
+            "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
               "full": false,
@@ -543,6 +543,343 @@
         "repeatRowId": null,
         "showTitle": true,
         "title": "OVERALL STATUS",
+        "titleSize": "h6"
+      },
+      {
+        "collapse": false,
+        "height": 250,
+        "panels": [
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "id": 65,
+            "links": [],
+            "pageSize": null,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 6,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 2,
+                "pattern": "graph_driver",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "instance",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "os",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "version",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Current",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "_name_",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "architecture",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "commit",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Value",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "engine_daemon_engine_info",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "OS={{os}} driver={{graph_driver}} version={{version}} instance={{instance}}",
+                "metric": "engine_daemon_engine_info",
+                "refId": "A",
+                "step": 10
+              }
+            ],
+            "title": "Docker Engine Information",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          },
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "hideTimeOverride": false,
+            "id": 62,
+            "links": [],
+            "pageSize": 12,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 3,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "Status",
+                "colorMode": "value",
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 0,
+                "pattern": "Current",
+                "thresholds": [
+                  "0.1",
+                  "0.9"
+                ],
+                "type": "number",
+                "unit": "short"
+              },
+              {
+                "alias": "Instance",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Metric",
+                "thresholds": [],
+                "type": "number",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "up{job=\"docker-engine\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}",
+                "metric": "up",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "title": "Docker Engine List",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          },
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "id": 63,
+            "links": [],
+            "pageSize": null,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 3,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "Status",
+                "colorMode": "value",
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 0,
+                "pattern": "Current",
+                "thresholds": [
+                  "0.1",
+                  "0.9"
+                ],
+                "type": "number",
+                "unit": "short"
+              },
+              {
+                "alias": "Instance",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Metric",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "up{job=\"nodes\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}",
+                "metric": "up",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "title": "Node List",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          }
+        ],
+        "repeat": null,
+        "repeatIteration": null,
+        "repeatRowId": null,
+        "showTitle": false,
+        "title": "Dashboard Row",
         "titleSize": "h6"
       },
       {
@@ -591,7 +928,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load1",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -672,7 +1009,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load5",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -753,7 +1090,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load15",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -831,7 +1168,7 @@
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -908,7 +1245,7 @@
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -986,7 +1323,7 @@
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1076,7 +1413,7 @@
                 "legendFormat": "{{backend}}",
                 "metric": "haproxy_server_current_queue",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1155,7 +1492,7 @@
                 "legendFormat": "{{frontend}}",
                 "metric": "haproxy_frontend_current_sessions",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1234,7 +1571,7 @@
                 "legendFormat": "{{frontend}}-{{code}}",
                 "metric": "haproxy_frontend_http_responses_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1294,7 +1631,7 @@
               "rgba(237, 129, 40, 0.89)",
               "rgba(245, 54, 54, 0.9)"
             ],
-            "datasource": "prometheus",
+            "datasource": null,
             "format": "none",
             "gauge": {
               "maxValue": 100,
@@ -2038,7 +2375,7 @@
                 "legendFormat": "{{instance}} WAL fsync",
                 "metric": "etcd_disk_wal_fsync_duration_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               },
               {
                 "expr": "histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket [5m])) by (instance, le))",
@@ -2047,7 +2384,7 @@
                 "legendFormat": "{{instance}} DB fsync",
                 "metric": "etcd_disk_backend_commit_duration_seconds_bucket",
                 "refId": "B",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2124,7 +2461,7 @@
                 "legendFormat": "{{instance}} Client Traffic In",
                 "metric": "etcd_network_client_grpc_received_bytes_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2201,7 +2538,7 @@
                 "legendFormat": "{{instance}} Client Traffic Out",
                 "metric": "etcd_network_client_grpc_sent_bytes_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2609,7 +2946,7 @@
                 "legendFormat": "{{cluster}}",
                 "metric": "es_cluster_task_max_waiting_time_seconds",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2699,7 +3036,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_connections",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2777,7 +3114,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_subscriptions",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2856,7 +3193,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_slow_consumers",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -3320,7 +3657,7 @@
             "id": 40,
             "links": [],
             "minSpan": 4,
-            "span": 6,
+            "span": 4,
             "targets": [
               {
                 "expr": "engine_daemon_container_actions_seconds_bucket",
@@ -3330,7 +3667,7 @@
                 "legendFormat": "{{job}}",
                 "metric": "engine_daemon_container_actions_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "title": "Container Actions Seconds",
@@ -3374,7 +3711,7 @@
             "id": 41,
             "links": [],
             "minSpan": 4,
-            "span": 6,
+            "span": 4,
             "targets": [
               {
                 "expr": "engine_daemon_network_actions_seconds_bucket",
@@ -3384,7 +3721,7 @@
                 "legendFormat": "{{job}}",
                 "metric": "engine_daemon_network_actions_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "title": "Network Actions Seconds",
@@ -3409,6 +3746,98 @@
             },
             "yBucketNumber": null,
             "yBucketSize": null
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 0,
+            "id": 64,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": true,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 4,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "grpc_server_handled_total{grpc_service=\"docker.swarmkit.v1.RaftMembership\"}!=0",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}} {{grpc_method}}={{grpc_code}}",
+                "metric": "grpc_server_handled_total",
+                "refId": "A",
+                "step": 20
+              },
+              {
+                "expr": "sum(grpc_server_handled_total{grpc_method=\"Join\",grpc_code=\"OK\",grpc_service=\"docker.swarmkit.v1.RaftMembership\"})-sum(grpc_server_handled_total{grpc_method=\"Leave\",grpc_code=\"OK\",grpc_service=\"docker.swarmkit.v1.RaftMembership\"})",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "Join - Leave",
+                "metric": "grpc_server_handled_total",
+                "refId": "B",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Swarm Membership Operations",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": "0",
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
           }
         ],
         "repeat": null,
@@ -3426,11 +3855,8 @@
       "list": [
         {
           "allValue": null,
-          "current": {
-            "text": "All",
-            "value": "$__all"
-          },
-          "datasource": "prometheus",
+          "current": {},
+          "datasource": null,
           "hide": 2,
           "includeAll": true,
           "label": "Node",
@@ -3438,7 +3864,7 @@
           "name": "node",
           "options": [],
           "query": "label_values(node_load1, instance)",
-          "refresh": 2,
+          "refresh": 1,
           "regex": "",
           "sort": 0,
           "tagValuesQuery": "",
@@ -3449,11 +3875,8 @@
         },
         {
           "allValue": null,
-          "current": {
-            "text": "All",
-            "value": "$__all"
-          },
-          "datasource": "prometheus",
+          "current": {},
+          "datasource": null,
           "hide": 2,
           "includeAll": true,
           "label": "Docker Engine",
@@ -3461,7 +3884,7 @@
           "name": "engine",
           "options": [],
           "query": "label_values(engine_daemon_engine_info, instance)",
-          "refresh": 2,
+          "refresh": 1,
           "regex": "",
           "sort": 0,
           "tagValuesQuery": "",
