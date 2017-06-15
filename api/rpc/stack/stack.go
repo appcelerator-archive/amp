@@ -2,6 +2,7 @@ package stack
 
 import (
 	"log"
+	"os"
 	"strings"
 
 	"github.com/appcelerator/amp/data/accounts"
@@ -49,6 +50,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	if err != nil {
 		return nil, convertError(err)
 	}
+
 	if stack == nil {
 		if stack, err = s.Stacks.CreateStack(ctx, in.Name); err != nil {
 			return nil, convertError(err)
@@ -60,11 +62,21 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		}
 	}
 
+	for envName, envValue := range in.EnvVar {
+		os.Setenv(envName, envValue)
+	}
+
 	// Deploy stack
 	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose)
 	if err != nil {
 		s.Stacks.DeleteStack(ctx, stack.Id)
+		for envName := range in.EnvVar {
+			os.Setenv(envName, "")
+		}
 		return nil, convertError(err)
+	}
+	for envName := range in.EnvVar {
+		os.Setenv(envName, "")
 	}
 	log.Println("Successfully deployed stack:", stack)
 	return &DeployReply{Id: stack.Id, FullName: stack.Name, Answer: output}, nil
