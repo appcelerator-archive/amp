@@ -25,7 +25,7 @@ const (
 	defaultPeriod           = 1
 	dockerForMacIP          = "192.168.65.1"
 	dockerEngineMetricsPort = 9323
-	systemMetricsPort       = 9100
+	systemMetricsPort       = 9100 // node-exporter
 	prometheusCmd           = "/bin/prometheus"
 )
 
@@ -58,7 +58,8 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 		if node.Description.Hostname == "moby" && node.Status.Addr == "127.0.0.1" {
 			// Docker for Mac/Windows
 			hostnames = append(hostnames, dockerForMacIP)
-		} else if node.Status.Addr == "127.0.0.1" {
+		} else if node.Status.Addr == "127.0.0.1" || node.Status.Addr == "0.0.0.0" {
+			// non addressable, let's hope the hostname is a better option
 			hostnames = append(hostnames, node.Description.Hostname)
 		} else {
 			hostnames = append(hostnames, node.Status.Addr)
