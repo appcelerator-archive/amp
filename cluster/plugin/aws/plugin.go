@@ -42,20 +42,22 @@ func parseParam(s string) *cf.Parameter {
 	return p
 }
 
-func CreateStack(svc *cf.CloudFormation, stackSpec *StackSpec, timeout int64) (*cf.CreateStackOutput, error) {
-	sp := stackSpec.Params
-	params := make([]*cf.Parameter, len(sp))
-	for i := range sp {
-		params[i] = parseParam(sp[i])
+func toParameters(sa []string) []*cf.Parameter {
+	params := make([]*cf.Parameter, len(sa))
+	for i := range sa {
+		params[i] = parseParam(sa[i])
 	}
+	return params
+}
 
+func CreateStack(svc *cf.CloudFormation, stackSpec *StackSpec, timeout int64) (*cf.CreateStackOutput, error) {
 	input := &cf.CreateStackInput{
 		StackName: aws.String(stackSpec.StackName),
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
 		OnFailure:        aws.String(stackSpec.OnFailure),
-		Parameters:       params,
+		Parameters:       toParameters(stackSpec.Params),
 		TemplateURL:      aws.String(templateURL),
 		TimeoutInMinutes: aws.Int64(timeout),
 	}
