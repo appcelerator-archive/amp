@@ -68,7 +68,7 @@ func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.CreateStackWithContext(ctx, input)
 }
 
-func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions, timeout int64) (*cf.UpdateStackOutput, error) {
+func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.UpdateStackOutput, error) {
 	input := &cf.UpdateStackInput{
 		StackName: aws.String(opts.StackName),
 		Capabilities: []*string{
