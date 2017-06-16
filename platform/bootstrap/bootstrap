@@ -207,29 +207,43 @@ _set_size() {
   manager_labels='{"amp.type.api": "true", "amp.type.route": "true"}'
   _vars="{{ var \"/swarm/size/manager\" \"$manager_count\" }} {{ var \"/swarm/labels/manager\" \`${manager_labels}\` }} {{ var \"/swarm/size/worker\" \"$worker_count\" }}"
   if [[ $worker_count -le 3 ]]; then
+    # fits the ampmon-single.1.stack.yml
+    # can be ampmon-cluster for 3 nodes
+    # all gp nodes
     cpu_count=0
     mem_count=0
     dat_count=0
     gp_count=$worker_count
     gp_labels='{"amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.core": "true", "amp.type.user": "true"}'
-  elif [[ $worker_count -le 9 ]]; then
+  elif [[ $worker_count -le 6 ]]; then
+    # fits the ampmon-cluster.1.stack.yml
+    # one cpu node for nats, and gp node for other services
     cpu_count=1
-    mem_count=1
-    dat_count=1
-    gp_count=$((worker_count - 3 ))
+    gp_count=$((worker_count - 1 ))
     cpu_labels='{"amp.type.mq": "true"}'
-    dat_labels='{"amp.type.kv": "true"}'
-    mem_labels='{"amp.type.search": "true"}'
+    gp_labels='{"amp.type.search": "true", "amp.type.kv": "true", "amp.type.core": "true", "amp.type.user": "true"}'
+  elif [[ $worker_count -le 12 ]]; then
+    # fits the ampmon-cluster.1.stack.yml
+    # 1 cpu node for nats
+    # 3 mem nodes for etcd and elasticsearch
+    cpu_count=1
+    mem_count=3
+    gp_count=$((worker_count - 4))
+    cpu_labels='{"amp.type.mq": "true"}'
+    mem_labels='{"amp.type.search": "true", "amp.type.kv": "true"}'
     gp_labels='{"amp.type.core": "true", "amp.type.user": "true"}'
   else
     # fits the ampmon-cluster.1.stack.yml
+    # 1 cpu node for nats
+    # 3 mem nodes for etcd
+    # 3 dat nodes for etcd
     cpu_count=1
     mem_count=3
     dat_count=3
     gp_count=$((worker_count - 7))
     cpu_labels='{"amp.type.mq": "true"}'
-    dat_labels='{"amp.type.kv": "true"}'
     mem_labels='{"amp.type.search": "true"}'
+    dat_labels='{"amp.type.kv": "true"}'
     gp_labels='{"amp.type.core": "true", "amp.type.user": "true"}'
   fi
   for _w in $WORKER_GROUP_LIST; do

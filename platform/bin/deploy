@@ -172,8 +172,8 @@ cluster_workercount() {
   _target=$(deployment_target)
   case $_target in
   local) # single manager node
-    echo 0
-    return 0
+    docker node ls -q --filter "role=worker" | wc -w
+    return ${PIPESTATUS[0]}
     ;;
   dind|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | grep -c worker)
@@ -567,7 +567,7 @@ deploy_stacks() {
 
   echo "deploy amp monitoring stack to cluster - stage 1"
   _workercount=$(cluster_workercount $CID) || return 1
-  [[ $_workercount -le 9 ]] && deploystack ampmon-single.1.stack.yml amp || deploystack ampmon-cluster.1.stack.yml amp
+  [[ $_workercount -le 2 ]] && deploystack ampmon-single.1.stack.yml amp || deploystack ampmon-cluster.1.stack.yml amp
   echo "wait for all amp monitoring stage 1 stack service replicas to be running"
 
   servicescheck $maxwait
