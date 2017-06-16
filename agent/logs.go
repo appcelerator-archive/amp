@@ -59,14 +59,16 @@ func (a *Agent) updateLogsStream() {
 					}
 
 					// Read logs
-					log.Printf("start reading logs on container: %s\n", data.name)
+					log.Printf("start reading log stream of container: %s\n", data.name)
 					if err := logReader(ID, data); err != nil {
-						log.Printf("Error while reading logs for container %s: %v", data.name, err)
+						log.Printf("Error reading log stream of container %s: %v", data.name, err)
 					}
-					log.Printf("stop reading logs on container: %s\n", data.name)
+					log.Printf("stop reading log stream of container: %s\n", data.name)
 
 					// Close log stream
-					data.logsStream.Close()
+					if err := data.logsStream.Close(); err != nil {
+						log.Printf("Error closing log stream of container %s: %v", data.name, err)
+					}
 				}(ID, data, c.Config.Tty)
 			}
 		}
@@ -96,7 +98,7 @@ func (a *Agent) getLastTimeID(ID string) string {
 	return string(data)
 }
 
-func (a *Agent) buildLogEntry(ID string, data *ContainerData, line string, timeId int64) *logs.LogEntry {
+func (a *Agent) buildLogEntry(ID string, data *ContainerData, line string, timeID int64) *logs.LogEntry {
 	// Log entry is formatted with 1/ a 30 characters timestamp, 2/ the message content, for instance:
 	// 2017-06-14T20:07:57.425972267Z building a seeds list for cluster etcd
 	date := line[:30]
@@ -120,7 +122,7 @@ func (a *Agent) buildLogEntry(ID string, data *ContainerData, line string, timeI
 		TaskId:             data.taskID,
 		StackName:          data.stackName,
 		NodeId:             data.nodeID,
-		TimeId:             fmt.Sprintf("%016X", timeId),
+		TimeId:             fmt.Sprintf("%016X", timeID),
 		Labels:             data.labels,
 		Msg:                msg,
 	}
@@ -161,7 +163,6 @@ func (a *Agent) readLogs(ID string, data *ContainerData) error {
 		bufLen        = len(buf)
 		src           = data.logsStream
 		nr            int
-		er            error
 		frameSize     int
 		previous, now int64
 	)
@@ -169,17 +170,16 @@ func (a *Agent) readLogs(ID string, data *ContainerData) error {
 	for {
 		// Make sure we have at least a full header
 		for nr < stdWriterPrefixLen {
-			var nr2 int
-			nr2, er = src.Read(buf[nr:])
+			nr2, err := src.Read(buf[nr:])
 			nr += nr2
-			if er == io.EOF {
+			if err == io.EOF {
 				if nr < stdWriterPrefixLen {
 					return nil
 				}
 				break
 			}
-			if er != nil {
-				return er
+			if err != nil {
+				return err
 			}
 		}
 
@@ -206,24 +206,23 @@ func (a *Agent) readLogs(ID string, data *ContainerData) error {
 
 		// While the amount of bytes read is less than the size of the frame + header, we keep reading
 		for nr < frameSize+stdWriterPrefixLen {
-			var nr2 int
-			nr2, er = src.Read(buf[nr:])
+			nr2, err := src.Read(buf[nr:])
 			nr += nr2
-			if er == io.EOF {
+			if err == io.EOF {
 				if nr < frameSize+stdWriterPrefixLen {
 					return nil
 				}
 				break
 			}
-			if er != nil {
-				return er
+			if err != nil {
+				return err
 			}
 		}
 
 		// we might have an error from the source mixed up in our multiplexed
 		// stream. if we do, return it.
 		if stream == stdcopy.Systemerr {
-			fmt.Errorf("error from daemon in stream: %s", string(buf[stdWriterPrefixLen:frameSize+stdWriterPrefixLen]))
+			return fmt.Errorf("error from daemon in stream: %s", string(buf[stdWriterPrefixLen:frameSize+stdWriterPrefixLen]))
 		}
 
 		// Compute TimeId

@@ -74,7 +74,7 @@ func (a *Agent) newNetStats(stats *types.StatsJSON) *NetStats {
 
 // create a new net diff computing difference between two net stats
 func (a *Agent) newNetDiff(newNet *NetStats, previousNet *NetStats) *NetStatsDiff {
-	diff := &NetStatsDiff{Duration: float64(newNet.Time.Sub(previousNet.Time).Minutes())}
+	diff := &NetStatsDiff{Duration: newNet.Time.Sub(previousNet.Time).Minutes()}
 	if diff.Duration <= 0 {
 		return nil
 	}
