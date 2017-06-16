@@ -58,7 +58,23 @@ func provision(cmd *cobra.Command, args []string) {
 }
 
 func update(cmd *cobra.Command, args []string) {
-	log.Println("update command not implemented yet")
+	ctx := context.Background()
+	resp, err := plugin.UpdateStack(ctx, svc, opts, 20)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(awsutil.StringValue(resp))
+
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(opts.StackName),
+	}
+	if opts.Sync {
+		if err := svc.WaitUntilStackUpdateCompleteWithContext(ctx, input); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("stack created: %s\n", opts.StackName)
+	}
 }
 
 func destroy(cmd *cobra.Command, args []string) {

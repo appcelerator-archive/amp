@@ -68,6 +68,19 @@ func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.CreateStackWithContext(ctx, input)
 }
 
+func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions, timeout int64) (*cf.UpdateStackOutput, error) {
+	input := &cf.UpdateStackInput{
+		StackName: aws.String(opts.StackName),
+		Capabilities: []*string{
+			aws.String("CAPABILITY_IAM"),
+		},
+		Parameters:       toParameters(opts.Params),
+		TemplateURL:      aws.String(templateURL),
+	}
+
+	return svc.UpdateStackWithContext(ctx, input)
+}
+
 func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.DeleteStackOutput, error) {
 	input := &cf.DeleteStackInput{
 		StackName: aws.String(opts.StackName),
