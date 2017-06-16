@@ -12,7 +12,7 @@ An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-ca
 While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.12 in mid-June).
 In the meantime, you can use the current playground hosted at `cloud.appcelerator.io`,
 and you can also host your own cluster. You can even create a full cluster on your own laptop
-with `amp cluster create` using the CLI.
+with `amp -s localhost cluster create` using the CLI.
 
 ## Getting started
 
