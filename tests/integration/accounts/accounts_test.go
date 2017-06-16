@@ -716,7 +716,7 @@ func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
+func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember := h.RandomUser()
 	testOrg := h.RandomOrg()
@@ -739,7 +739,7 @@ func TestOrganizationAddSameUserTwiceShouldSucceed(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveUser(t *testing.T) {
@@ -881,7 +881,7 @@ func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
+func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember := h.RandomUser()
 	testOrg := h.RandomOrg()
@@ -911,7 +911,7 @@ func TestOrganizationRemoveSameUserTwiceShouldSucceed(t *testing.T) {
 		OrganizationName: testOrg.Name,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
@@ -1327,7 +1327,7 @@ func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
+func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember := h.RandomUser()
 	testOrg := h.RandomOrg()
@@ -1351,7 +1351,7 @@ func TestTeamAddSameUserTwiceShouldSucceed(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestTeamChangeName(t *testing.T) {
@@ -1598,7 +1598,7 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
+func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember := h.RandomUser()
 	testOrg := h.RandomOrg()
@@ -1616,7 +1616,7 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldSucceed(t *testing.T) {
 		TeamName:         testTeam.TeamName,
 		UserName:         testMember.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestTeamGet(t *testing.T) {

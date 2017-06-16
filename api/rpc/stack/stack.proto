@@ -35,8 +35,9 @@ message DeployRequest {
 }
 
 message DeployReply {
-  string full_name = 1;
-  string answer = 2;
+  string id = 1;
+  string full_name = 2;
+  string answer = 3;
 }
 
 message ListRequest {

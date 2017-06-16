@@ -25,9 +25,9 @@ func convertError(err error) error {
 	switch err {
 	case stacks.InvalidName, dashboards.InvalidName:
 		return status.Errorf(codes.InvalidArgument, err.Error())
-	case stacks.AlreadyExists, dashboards.AlreadyExists:
+	case stacks.AlreadyExists, dashboards.AlreadyExists, accounts.ResourceAlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
-	case stacks.NotFound, dashboards.NotFound:
+	case stacks.NotFound, dashboards.NotFound, accounts.ResourceNotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())
@@ -117,7 +117,7 @@ func (s *Server) isAuthorized(ctx context.Context, request *IsAuthorizedRequest)
 		owner = dashboard.Owner
 	case ResourceType_RESOURCE_STACK:
 		resourceType = accounts.StackRN
-		stack, err := s.Stacks.GetStackByName(ctx, request.Id)
+		stack, err := s.Stacks.GetStack(ctx, request.Id)
 		if err != nil {
 			return false
 		}
