@@ -40,10 +40,9 @@ const (
 
 // Docker wrapper
 type Docker struct {
-	client    *client.Client
-	connected bool
-	url       string
-	version   string
+	client  *client.Client
+	url     string
+	version string
 }
 
 type StackStatus struct {
@@ -83,12 +82,6 @@ func (d *Docker) GetClient() *client.Client {
 
 // ContainerCreate creates a container and pulls the image if needed
 func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, name string) (*container.ContainerCreateCreatedBody, error) {
-	if !d.connected {
-		if err := d.Connect(); err != nil {
-			return nil, err
-		}
-	}
-
 	var (
 		namedRef reference.Named
 	)
@@ -125,11 +118,6 @@ func (d *Docker) ContainerCreate(ctx context.Context, config *container.Config, 
 
 // ImagePull pulls a docker image
 func (d *Docker) ImagePull(ctx context.Context, image string) error {
-	if !d.connected {
-		if err := d.Connect(); err != nil {
-			return err
-		}
-	}
 	responseBody, err := d.client.ImageCreate(ctx, image, types.ImageCreateOptions{})
 	if err != nil {
 		return err
@@ -263,21 +251,11 @@ func (d *Docker) StackRemove(ctx context.Context, stackName string) (output stri
 
 // TaskList list the tasks
 func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
-	if !d.connected {
-		if err := d.Connect(); err != nil {
-			return nil, err
-		}
-	}
 	return d.client.TaskList(ctx, options)
 }
 
 // NodeList list the nodes
 func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([]swarm.Node, error) {
-	if !d.connected {
-		if err := d.Connect(); err != nil {
-			return nil, err
-		}
-	}
 	return d.client.NodeList(ctx, options)
 }
 
@@ -489,11 +467,6 @@ func (d *Docker) nodeToNode(ctx context.Context, swarmNode swarm.Node) *api.Node
 
 // ServiceList list the services
 func (d *Docker) ServicesList(ctx context.Context, options types.ServiceListOptions) ([]swarm.Service, error) {
-	if !d.connected {
-		if err := d.Connect(); err != nil {
-			return nil, err
-		}
-	}
 	return d.client.ServiceList(ctx, options)
 }
 
