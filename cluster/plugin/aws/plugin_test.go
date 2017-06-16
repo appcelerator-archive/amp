@@ -72,6 +72,8 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
+	log.Println("starting test...")
+
 	// create stack
 	// ============
 	ctxCreate := context.Background()
@@ -80,11 +82,11 @@ func TestCreate(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respCreate))
-	log.Println("waiting...")
+	log.Println("creating stack...")
 	input := &cf.DescribeStacksInput{
 		StackName: aws.String(opts.StackName),
 	}
-	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxCreate, input); err != nil {
+	if err := svc.WaitUntilStackCreateCompleteWithContext(ctxCreate, input); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("stack created: %s\n", opts.StackName)
@@ -98,11 +100,11 @@ func TestCreate(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respUpdate))
-	log.Println("waiting...")
+	log.Println("updating stack...")
 	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxUpdate, input); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("stack update: %s\n", opts.StackName)
+	log.Printf("stack updated: %s\n", opts.StackName)
 
 	// delete stack
 	// ============
@@ -112,7 +114,7 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respDelete))
-	log.Println("waiting...")
+	log.Println("deleting stack...")
 	if err := svc.WaitUntilStackDeleteCompleteWithContext(ctxDelete, input); err != nil {
 		log.Fatal(err)
 	}
