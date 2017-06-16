@@ -15,8 +15,10 @@ services:
           - pinger
     environment:
       SERVICE_PORTS: "3000"
-      VIRTUAL_HOST: "https://pinger.*"
+      VIRTUAL_HOST: "pinger.examples.*,https://pinger.examples.*"
     deploy:
       replicas: 3
       restart_policy:
         condition: on-failure
+      placement:
+        constraints: [node.labels.amp.type.user == true]

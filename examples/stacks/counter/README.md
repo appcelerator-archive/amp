@@ -7,10 +7,10 @@ Run in this directory:
 
     $ amp -s localhost stack deploy -c counter.yml
 
-The app will be running at [http://go.counter.local.appcelerator.io](http://go.counter.local.appcelerator.io)
+The app will be running at [http://go.counter.examples.local.appcelerator.io](http://go.counter.examples.local.appcelerator.io)
 
 Test with
 
-    $ curl http://go.counter.local.appcelerator.io
+    $ curl http://go.counter.examples.local.appcelerator.io
 
 Or open url in browser.
