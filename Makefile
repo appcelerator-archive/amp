@@ -116,7 +116,7 @@ build: build-base buildall-cli
 # =============================================================================
 AMP := amp
 AMPTARGET := bin/$(GOOS)/$(GOARCH)/$(AMP)
-AMPDIRS := $(CMDDIR)/$(AMP) cli tests $(COMMONDIRS)
+AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 

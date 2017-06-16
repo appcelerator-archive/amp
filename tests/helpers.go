@@ -213,17 +213,17 @@ func (h *Helper) RandomTeam(org string) account.CreateTeamRequest {
 }
 
 // DeployStack deploys a stack with given name and file location
-func (h *Helper) DeployStack(ctx context.Context, name string, composeFile string) error {
+func (h *Helper) DeployStack(ctx context.Context, name string, composeFile string) (string, error) {
 	contents, err := ioutil.ReadFile(composeFile)
 	if err != nil {
-		return err
+		return "", err
 	}
 	request := &stack.DeployRequest{
 		Name:    name,
 		Compose: contents,
 	}
-	_, err = h.stacks.Deploy(ctx, request)
-	return err
+	reply, err := h.stacks.Deploy(ctx, request)
+	return reply.Id, err
 }
 
 // CreateUser signs up and logs in the given user
