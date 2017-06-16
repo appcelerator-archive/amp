@@ -14,7 +14,6 @@ services:
     environment:
       SERVICE_PORTS: "8080"
       VIRTUAL_HOST: "http://visualizer,https://visualizer.*"
-      FORCE_SSL: 1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     deploy:
@@ -28,7 +27,6 @@ services:
     environment:
       SERVICE_PORTS: "9000"
       VIRTUAL_HOST: "http://portainer.*,https://portainer.*"
-      FORCE_SSL: 1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
