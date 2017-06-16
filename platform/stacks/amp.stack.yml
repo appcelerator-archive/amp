@@ -52,8 +52,8 @@ services:
     labels:
       io.amp.role: "infrastructure"
     environment:
-      - "SERVICE_PORTS=80"
-      - "VIRTUAL_HOST=https://gw.*,http://gw.*"
+      SERVICE_PORTS: 80
+      VIRTUAL_HOST: "https://gw.*,http://gw.*"
     deploy:
       mode: global
       labels:

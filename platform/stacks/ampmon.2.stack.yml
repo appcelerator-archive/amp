@@ -45,4 +45,3 @@ services:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
       SERVICE_PORTS: 5601
       VIRTUAL_HOST: "http://kibana.*,https://kibana.*"
-      FORCE_SSL: 1
