@@ -45,6 +45,16 @@ func provision(cmd *cobra.Command, args []string) {
 	}
 
 	log.Println(awsutil.StringValue(resp))
+
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(opts.StackName),
+	}
+	if opts.Sync {
+		if err := svc.WaitUntilStackCreateCompleteWithContext(ctx, input); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("stack created: %s\n", opts.StackName)
+	}
 }
 
 func update(cmd *cobra.Command, args []string) {
@@ -59,6 +69,16 @@ func destroy(cmd *cobra.Command, args []string) {
 	}
 
 	log.Println(awsutil.StringValue(resp))
+
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(opts.StackName),
+	}
+	if opts.Sync {
+		if err := svc.WaitUntilStackDeleteCompleteWithContext(ctx, input); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("stack deleted: %s\n", opts.StackName)
+	}
 }
 
 func main() {
@@ -70,6 +90,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&opts.Region, "region", "r", "", "aws region")
 	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
+	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
 
 	initCmd := &cobra.Command{
 		Use:   "init",

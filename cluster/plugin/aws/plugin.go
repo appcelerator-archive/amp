@@ -25,6 +25,8 @@ type RequestOptions struct {
 	Region string
 
 	StackName string
+
+	Sync bool
 }
 
 func parseParam(s string) *cf.Parameter {
