@@ -22,5 +22,5 @@ test:
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-e KEYNAME=$(KEYNAME) \
 		-e REGION=$(REGION) \
-		go:aws test -timeout 30m
+		go:aws test -v -timeout 30m
 
