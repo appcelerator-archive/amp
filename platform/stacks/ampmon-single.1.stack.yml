@@ -21,6 +21,7 @@ services:
       io.amp.role: "infrastructure"
     environment:
       NETWORK_HOST: "_eth0_"
+      JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
     deploy:
       mode: replicated
       replicas: 1
