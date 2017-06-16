@@ -58,6 +58,7 @@ func teardown() {
 }
 
 func TestCreate(t *testing.T) {
+
 	stackName := fmt.Sprintf("%s-plugin-test-%s", keyName, uuid.NewV4())
 
 	opts := &RequestOptions{
@@ -66,6 +67,8 @@ func TestCreate(t *testing.T) {
 		OnFailure: "DELETE",
 		Params: []string{
 			fmt.Sprintf("KeyName=%s", keyName),
+			fmt.Sprintf("ClusterSize=%s", "2"),
+			fmt.Sprintf("ManagerSize=%s", "1"),
 		},
 	}
 
@@ -74,17 +77,17 @@ func TestCreate(t *testing.T) {
 	ctxCreate := context.Background()
 	respCreate, err := CreateStack(ctxCreate, svc, opts, 20)
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	t.Log(awsutil.StringValue(respCreate))
-	t.Log("waiting...")
+	log.Println(awsutil.StringValue(respCreate))
+	log.Println("waiting...")
 	input := &cf.DescribeStacksInput{
 		StackName: aws.String(opts.StackName),
 	}
 	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxCreate, input); err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	t.Logf("stack created: %s\n", opts.StackName)
+	log.Printf("stack created: %s\n", opts.StackName)
 
 	// update stack
 	// ============
@@ -92,14 +95,14 @@ func TestCreate(t *testing.T) {
 	ctxUpdate := context.Background()
 	respUpdate, err := UpdateStack(ctxUpdate, svc, opts)
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respUpdate))
-	t.Log("waiting...")
+	log.Println("waiting...")
 	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxUpdate, input); err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	t.Logf("stack update: %s\n", opts.StackName)
+	log.Printf("stack update: %s\n", opts.StackName)
 
 	// delete stack
 	// ============
@@ -109,9 +112,9 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respDelete))
-	t.Log("waiting...")
+	log.Println("waiting...")
 	if err := svc.WaitUntilStackDeleteCompleteWithContext(ctxDelete, input); err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	t.Logf("stack deleted: %s\n", opts.StackName)
+	log.Printf("stack deleted: %s\n", opts.StackName)
 }
