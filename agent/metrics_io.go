@@ -57,7 +57,7 @@ func (a *Agent) newIOStats(stats *types.StatsJSON) *IOStats {
 
 // create a new io diff computing difference between two io stats
 func (a *Agent) newIODiff(newIO *IOStats, previousIO *IOStats) *IOStatsDiff {
-	diff := &IOStatsDiff{Duration: float64(newIO.Time.Sub(previousIO.Time).Minutes())}
+	diff := &IOStatsDiff{Duration: newIO.Time.Sub(previousIO.Time).Minutes()}
 	if diff.Duration <= 0 {
 		return nil
 	}

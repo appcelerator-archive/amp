@@ -347,7 +347,6 @@ lint:
 		--enable=errcheck \
 		--enable=gas \
 		--enable=goconst \
-		--enable=gocyclo \
 		--enable=gofmt \
 		--enable=goimports \
 		--enable=golint \
