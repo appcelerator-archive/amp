@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package resource;
 
+import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 import "google/api/annotations.proto";
 
 service Resource {
@@ -16,6 +17,18 @@ service Resource {
       body: "*"
     };
   };
+  rpc AddToTeam (AddToTeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}",
+      body: "*"
+    };
+  };
+  rpc RemoveFromTeam (RemoveFromTeamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}"
+    };
+  };
+
 }
 
 enum ResourceType {
@@ -67,3 +80,14 @@ message AuthorizationsReply {
   repeated IsAuthorizedReply replies = 1;
 }
 
+message AddToTeamRequest {
+  string resource_id = 1;
+  string organization_name = 2;
+  string team_name = 3;
+}
+
+message RemoveFromTeamRequest {
+  string resource_id = 1;
+  string organization_name = 2;
+  string team_name = 3;
+}

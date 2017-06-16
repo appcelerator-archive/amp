@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/data/dashboards"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/elastic/go-lumber/log"
+	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,11 +23,11 @@ type Server struct {
 
 func convertError(err error) error {
 	switch err {
-	case stacks.InvalidName:
+	case stacks.InvalidName, dashboards.InvalidName:
 		return status.Errorf(codes.InvalidArgument, err.Error())
-	case stacks.AlreadyExists:
+	case stacks.AlreadyExists, dashboards.AlreadyExists, accounts.ResourceAlreadyExists:
 		return status.Errorf(codes.AlreadyExists, err.Error())
-	case stacks.NotFound:
+	case stacks.NotFound, dashboards.NotFound, accounts.ResourceNotFound:
 		return status.Errorf(codes.NotFound, err.Error())
 	case accounts.NotAuthorized:
 		return status.Errorf(codes.PermissionDenied, err.Error())
@@ -38,9 +39,9 @@ func convertError(err error) error {
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	reply := &ListReply{}
 
-	account := auth.GetActiveOrganization(ctx)
-	if account == "" {
-		account = auth.GetUser(ctx)
+	activeOrganization := auth.GetActiveOrganization(ctx)
+	if activeOrganization == "" {
+		return reply, nil
 	}
 
 	// Stacks
@@ -49,7 +50,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 		return nil, convertError(err)
 	}
 	for _, stack := range stacks {
-		if stack.Owner.Name == account {
+		if stack.Owner.Name == activeOrganization {
 			reply.Resources = append(reply.Resources, &ResourceEntry{Id: stack.Id, Type: ResourceType_RESOURCE_STACK, Name: stack.Name})
 		}
 	}
@@ -60,11 +61,11 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 		return nil, convertError(err)
 	}
 	for _, dashboard := range dashboards {
-		if dashboard.Owner.Name == account {
+		if dashboard.Owner.Name == activeOrganization {
 			reply.Resources = append(reply.Resources, &ResourceEntry{Id: dashboard.Id, Type: ResourceType_RESOURCE_DASHBOARD, Name: dashboard.Name})
 		}
 	}
-	log.Println("Successfully listed resources for account", account)
+	log.Println("Successfully listed resources for organization", activeOrganization)
 	return reply, nil
 }
 
@@ -116,7 +117,7 @@ func (s *Server) isAuthorized(ctx context.Context, request *IsAuthorizedRequest)
 		owner = dashboard.Owner
 	case ResourceType_RESOURCE_STACK:
 		resourceType = accounts.StackRN
-		stack, err := s.Stacks.GetStackByName(ctx, request.Id)
+		stack, err := s.Stacks.GetStack(ctx, request.Id)
 		if err != nil {
 			return false
 		}
@@ -153,4 +154,36 @@ func (s *Server) Authorizations(ctx context.Context, in *AuthorizationsRequest) 
 	}
 	log.Println("Successfully retrieved authorizations")
 	return reply, nil
+}
+
+// AddToTeam implements resource.AddToTeam
+func (s *Server) AddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Empty, error) {
+	reply, err := s.List(ctx, &ListRequest{})
+	if err != nil {
+		return &empty.Empty{}, err
+	}
+	found := false
+	for _, res := range reply.Resources {
+		if res.Id == in.ResourceId {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return &empty.Empty{}, status.Errorf(codes.NotFound, "Resource not found in the given organization")
+	}
+	if err := s.Accounts.AddResourceToTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
+// RemoveFromTeam implements resource.RemoveFromTeam
+func (s *Server) RemoveFromTeam(ctx context.Context, in *RemoveFromTeamRequest) (*empty.Empty, error) {
+	if err := s.Accounts.RemoveResourceFromTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully removed resource %s from teams %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
 }

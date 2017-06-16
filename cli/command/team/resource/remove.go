@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -44,14 +44,14 @@ func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeam
 		opts.team = c.Console().GetInput("team name")
 	}
 	conn := c.ClientConn()
-	client := account.NewAccountClient(conn)
+	client := resource.NewResourceClient(conn)
 	for _, res := range args {
-		request := &account.RemoveResourceFromTeamRequest{
+		request := &resource.RemoveFromTeamRequest{
+			ResourceId:       res,
 			OrganizationName: opts.org,
 			TeamName:         opts.team,
-			ResourceId:       res,
 		}
-		if _, err := client.RemoveResourceFromTeam(context.Background(), request); err != nil {
+		if _, err := client.RemoveFromTeam(context.Background(), request); err != nil {
 			errs = append(errs, grpc.ErrorDesc(err))
 			continue
 		}

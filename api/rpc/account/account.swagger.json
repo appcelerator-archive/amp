@@ -459,79 +459,7 @@
         ]
       }
     },
-    "/v1/organizations/{organization_name}/teams/{team_name}/resources": {
-      "post": {
-        "operationId": "AddResourceToTeam",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "team_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountAddResourceToTeamRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
     "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}": {
-      "delete": {
-        "operationId": "RemoveResourceFromTeam",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "team_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "resource_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      },
       "put": {
         "operationId": "ChangeTeamResourcePermissionLevel",
         "responses": {
@@ -857,20 +785,6 @@
     }
   },
   "definitions": {
-    "accountAddResourceToTeamRequest": {
-      "type": "object",
-      "properties": {
-        "organization_name": {
-          "type": "string"
-        },
-        "team_name": {
-          "type": "string"
-        },
-        "resource_id": {
-          "type": "string"
-        }
-      }
-    },
     "accountAddUserToOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -1162,20 +1076,6 @@
           "type": "string"
         },
         "password": {
-          "type": "string"
-        }
-      }
-    },
-    "accountRemoveResourceFromTeamRequest": {
-      "type": "object",
-      "properties": {
-        "organization_name": {
-          "type": "string"
-        },
-        "team_name": {
-          "type": "string"
-        },
-        "resource_id": {
           "type": "string"
         }
       }

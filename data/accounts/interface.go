@@ -29,6 +29,7 @@ const (
 	NotPartOfOrganization     = Error("user is not part of the organization")
 	InvalidResourceID         = Error("invalid resource ID")
 	ResourceNotFound          = Error("resource not found")
+	ResourceAlreadyExists     = Error("resource already exists")
 	TokenAlreadyUsed          = Error("token has already been used")
 )
 
