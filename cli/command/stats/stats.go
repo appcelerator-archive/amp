@@ -206,10 +206,10 @@ func getOneStatLine(query *stats.StatsRequest, entry *stats.MetricsEntry) string
 		line = fmt.Sprintf("%s\t%s\t%s\t%.1f%%", line, formatBytes(entry.Mem.Usage), formatBytes(entry.Mem.Limit), entry.Mem.UsageP*100)
 	}
 	if query.StatsIo {
-		line = fmt.Sprintf("%s\t%s/s\t%s/s", line, formatBytes(entry.Io.Read), formatBytes(entry.Io.Write))
+		line = fmt.Sprintf("%s\t%s/s\t%s/s", line, formatBytes(entry.Io.Read/60), formatBytes(entry.Io.Write/60))
 	}
 	if query.StatsNet {
-		line = fmt.Sprintf("%s\t%s/s\t%s/s", line, formatBytes(entry.Net.RxBytes), formatBytes(entry.Net.TxBytes))
+		line = fmt.Sprintf("%s\t%s/s\t%s/s", line, formatBytes(entry.Net.RxBytes/60), formatBytes(entry.Net.TxBytes/60))
 	}
 	return line
 }
