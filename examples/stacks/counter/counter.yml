@@ -12,11 +12,11 @@ services:
       - default
     environment:
       SERVICE_PORTS: "80"
-      VIRTUAL_HOST: "http://go.*,https://go.*"
+      VIRTUAL_HOST: "http://go.counter.examples*,https://go.counter.examples.*"
     deploy:
       replicas: 3
       placement:
-        constraints: [node.role == worker]
+        constraints: [node.labels.amp.type.user == true]
 
   redis:
     image: redis
@@ -25,4 +25,4 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role == worker]
+        constraints: [node.labels.amp.type.user == true]
