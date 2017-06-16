@@ -34,7 +34,7 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&opts.file, "compose-file", "c", "", "Path to a Compose v3 file")
-	cmd.Flags().StringVarP(&opts.envVar, "env", "e", "", "Environment variable to set during deploment format: var=value")
+	cmd.Flags().StringVarP(&opts.envVar, "env", "e", "", "Environment variable to set during deployment format: var=value")
 	return cmd
 }
 

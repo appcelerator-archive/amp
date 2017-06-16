@@ -68,15 +68,14 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 
 	// Deploy stack
 	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose)
-	if err != nil {
-		s.Stacks.DeleteStack(ctx, stack.Id)
-		for envName := range in.EnvVar {
-			os.Setenv(envName, "")
-		}
-		return nil, convertError(err)
-	}
+
 	for envName := range in.EnvVar {
 		os.Setenv(envName, "")
+	}
+
+	if err != nil {
+		s.Stacks.DeleteStack(ctx, stack.Id)
+		return nil, convertError(err)
 	}
 	log.Println("Successfully deployed stack:", stack)
 	return &DeployReply{Id: stack.Id, FullName: stack.Name, Answer: output}, nil
