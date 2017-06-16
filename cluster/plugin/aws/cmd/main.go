@@ -59,7 +59,7 @@ func provision(cmd *cobra.Command, args []string) {
 
 func update(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
-	resp, err := plugin.UpdateStack(ctx, svc, opts, 20)
+	resp, err := plugin.UpdateStack(ctx, svc, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func update(cmd *cobra.Command, args []string) {
 		if err := svc.WaitUntilStackUpdateCompleteWithContext(ctx, input); err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("stack created: %s\n", opts.StackName)
+		log.Printf("stack updated: %s\n", opts.StackName)
 	}
 }
 

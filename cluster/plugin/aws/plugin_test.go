@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/satori/go.uuid"
@@ -18,7 +19,7 @@ var (
 	region  string
 
 	sess *session.Session
-	svc *cf.CloudFormation
+	svc  *cf.CloudFormation
 )
 
 // REQUIREMENTS:
@@ -68,14 +69,49 @@ func TestCreate(t *testing.T) {
 		},
 	}
 
-	ctx := context.Background()
-	_, err := CreateStack(ctx, svc, opts, 20)
+	// create stack
+	// ============
+	ctxCreate := context.Background()
+	respCreate, err := CreateStack(ctxCreate, svc, opts, 20)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(awsutil.StringValue(respCreate))
+	t.Log("waiting...")
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(opts.StackName),
+	}
+	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxCreate, input); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("stack created: %s\n", opts.StackName)
 
-	_, err = DeleteStack(ctx, svc, opts)
+	// update stack
+	// ============
+	opts.Params = append(opts.Params, fmt.Sprintf("ClusterSize=%s", "1"))
+	ctxUpdate := context.Background()
+	respUpdate, err := UpdateStack(ctxUpdate, svc, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
+	log.Println(awsutil.StringValue(respUpdate))
+	t.Log("waiting...")
+	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxUpdate, input); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("stack update: %s\n", opts.StackName)
+
+	// delete stack
+	// ============
+	ctxDelete := context.Background()
+	respDelete, err := DeleteStack(ctxDelete, svc, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println(awsutil.StringValue(respDelete))
+	t.Log("waiting...")
+	if err := svc.WaitUntilStackDeleteCompleteWithContext(ctxDelete, input); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("stack deleted: %s\n", opts.StackName)
 }
