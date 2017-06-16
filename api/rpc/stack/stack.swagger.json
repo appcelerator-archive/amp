@@ -147,6 +147,12 @@
         "compose": {
           "type": "string",
           "format": "byte"
+        },
+        "env_var": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },

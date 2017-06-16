@@ -14,7 +14,8 @@ import (
 )
 
 type deployStackOptions struct {
-	file string
+	file   string
+	envVar string
 }
 
 var (
@@ -29,14 +30,23 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 		Short:   "Deploy a stack with a docker compose v3 file",
 		PreRunE: cli.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return deploy(c, args)
+			return deploy(c, cmd, args)
 		},
 	}
 	cmd.Flags().StringVarP(&opts.file, "compose-file", "c", "", "Path to a Compose v3 file")
+	cmd.Flags().StringVarP(&opts.envVar, "env", "e", "", "Environment variable to set during deployment format: var=value")
 	return cmd
 }
 
-func deploy(c cli.Interface, args []string) error {
+func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
+	envArgs := make(map[string]string)
+	if opts.envVar != "" {
+		envs := strings.Split(opts.envVar, "=")
+		if len(envs) != 2 {
+			return fmt.Errorf("--env parameter format error, should be: var=value found:: %s", opts.envVar)
+		}
+		envArgs[envs[0]] = envs[1]
+	}
 	var name string
 	if len(args) == 0 {
 		basename := filepath.Base(opts.file)
@@ -54,6 +64,7 @@ func deploy(c cli.Interface, args []string) error {
 	req := &stack.DeployRequest{
 		Name:    name,
 		Compose: contents,
+		EnvVar:  envArgs,
 	}
 
 	client := stack.NewStackClient(c.ClientConn())
