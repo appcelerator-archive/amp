@@ -23,6 +23,7 @@ services:
       MIN_MASTER_NODES: 2
       NETWORK_HOST: "_eth0_"
       UNICAST_HOSTS: "tasks.elasticsearch"
+      JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
     deploy:
       mode: replicated
       replicas: 3
