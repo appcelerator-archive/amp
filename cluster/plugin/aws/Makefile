@@ -1,7 +1,7 @@
 SRC := $(shell find . -type f -name '*.go')
 
 build: aws.alpine
-	docker build -t appcelerator/amp-aws-plugin .
+	docker build -t appcelerator/amp-aws .
 
 aws.alpine: $(SRC)
 	docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
