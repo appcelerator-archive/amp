@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/appcelerator/amp.svg?branch=master)](https://travis-ci.org/appcelerator/amp)
+
 # AMP
 
 An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-caas/) for Docker, batteries included.
