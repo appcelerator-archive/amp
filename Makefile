@@ -326,6 +326,40 @@ push-bootstrap:
 	@$(AMPBOOTDIR)/build
 
 # =============================================================================
+# BUILD CLUSTER PLUGINS (`amp-aws`)
+# Needed for `amp cluster init` CLI command support.
+# Plugins are located under `cluster/plugin`
+# =============================================================================
+CPDIR := cluster/plugin
+CPAWSDIR := $(CPDIR)/aws
+
+.PHONY: build-amp-aws-compiler
+build-amp-aws-compiler:
+	@cd $(CPAWSDIR) && $(MAKE) compiler
+
+.PHONY: build-amp-aws
+build-amp-aws: build-amp-aws-compiler
+	@cd $(CPAWSDIR) && $(MAKE) build
+
+# WARNING:
+# If the environment variables for $KEYNAME and $REGION are not set, the
+# test will fail with misleading error output:
+# docker run -it --rm -v /root/.aws:/root/.aws -v /go/src/github.com/appcelerator/amp/cluster/plugin/aws:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
+#          -w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
+#          -e KEYNAME= \
+#          -e REGION= \
+#          appcelerator/amp-aws-compiler test -v -timeout 30m
+#  can't load package: package github.com/appcelerator/amp/cluster/plugin/aws: no buildable Go source files in /go/src/github.com/appcelerator/amp/cluster/plugin/aws
+#  Makefile:21: recipe for target 'test' failed
+#
+# To succeed, ensure that these environment variables have values, like this:
+# $ KEYNAME=tony-amp-dev REGION=us-west-2 make test-amp-aws
+#
+.PHONY: test-amp-aws
+test-amp-aws: build-amp-aws
+	@cd $(CPAWSDIR) && $(MAKE) test
+
+# =============================================================================
 # Quality checks
 # =============================================================================
 CHECKDIRS := agent api cli cmd data tests $(COMMONDIRS)
@@ -392,3 +426,4 @@ env:
 # =============================================================================
 
 check: fmt buildall lint-fast
+

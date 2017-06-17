@@ -6,21 +6,23 @@ build: aws.alpine
 aws.alpine: $(SRC)
 	docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		go:aws build -o aws.alpine cmd/main.go
+		appcelerator/amp-aws-compiler build -o aws.alpine cmd/main.go
 
 .PHONY: compiler
 compiler:
-	docker build -f Dockerfile.compiler -t go:aws .
+	docker build -f Dockerfile.compiler -t appcelerator/amp-aws-compiler .
 
 .PHONY: clean
 clean:
 	rm -f aws.alpine
 
 .PHONY: test
-test:
+test: build
 	docker run -it --rm -v $(HOME)/.aws:/root/.aws -v $(PWD):/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-e KEYNAME=$(KEYNAME) \
 		-e REGION=$(REGION) \
-		go:aws test -v -timeout 30m
+		appcelerator/amp-aws-compiler test -v -timeout 30m
 
+pwd:
+	echo $(PWD)

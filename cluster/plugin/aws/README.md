@@ -11,6 +11,22 @@ AMP cli.
 For more details about the design and use, see the
 [wiki](https://github.com/appcelerator/amp/wiki/AWS-Clusters).
 
+# Build
+
+`make compiler` builds an Alpine image (`appcelerator/amp-aws-compiler`) with
+a Go compiler, the AWS SDK package, and other necessary packages to to build 
+the `appcelerator/amp-aws` image to be used as a cluster plugin by AMP.
+
+An automated build for the repo also creates the `appcelerator/amp-aws-compiler`
+image on [Docker Hub](https://hub.docker.com/r/appcelerator/amp-aws-compiler/).
+
+`make` (or `make build`) builds `appcelerator/amp-aws`.
+
+`make clean` removes the target binary (`aws.alpine`) that is created by the
+compiler to be copied into the `appcelerator/amp-aws` image when building it.
+
+`make test` uses `appcelerator/amp-aws` to create, update, and remove test stacks.
+
 ### Options
 
 The plugin allows you to provide all the parameters that are supported by the [Docker for AWS CloudFormation template](https://docs.docker.com/docker-for-aws/#configuration-options), including:
