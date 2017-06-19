@@ -14,6 +14,7 @@ type clusterOpts struct {
 	tag           string
 	registration  string
 	notifications bool
+	options       map[string]string
 }
 
 var (
@@ -25,6 +26,7 @@ var (
 		tag:           "latest",
 		registration:  configuration.RegistrationDefault,
 		notifications: true,
+		options: map[string]string{},
 	}
 )
 
