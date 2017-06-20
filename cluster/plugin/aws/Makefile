@@ -18,11 +18,11 @@ clean:
 
 .PHONY: test
 test: build
+	@: "$${KEYNAME:?KEYNAME environment variable null, empty, or not set}"
+	@: "$${REGION:?REGION environment variable null, empty, or not set}"
 	docker run -it --rm -v $(HOME)/.aws:/root/.aws -v $(PWD):/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
 		-e KEYNAME=$(KEYNAME) \
 		-e REGION=$(REGION) \
 		appcelerator/amp-aws-compiler test -v -timeout 30m
 
-pwd:
-	echo $(PWD)

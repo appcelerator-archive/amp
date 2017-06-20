@@ -12,14 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	templateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
-)
-
-func initSession() {
-
-}
-
 var (
 	opts = &plugin.RequestOptions{
 		OnFailure: "ROLLBACK",
