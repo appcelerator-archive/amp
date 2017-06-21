@@ -51,7 +51,15 @@ cluster_create() {
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
-      docker swarm init --advertise-addr 127.0.0.1 &>/dev/null || return 1
+      # works most of the time without the advertise-addr
+      docker swarm init &>/dev/null
+      if [[ $? -ne 0 ]]; then
+        # try standard interface names, and fall back to the loopback (may break instrumentation)
+        for iface in eth0 en0 127.0.0.1; do
+          docker swarm init --advertise-addr $iface &>/dev/null && break
+        done
+        if [[ $? -ne 0 ]]; then return 1; fi
+      fi
     fi
     _clusterid=$(docker node inspect self -f '{{.ID}}') || return 1
     docker network ls | grep -q ampnet
