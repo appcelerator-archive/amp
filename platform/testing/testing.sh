@@ -250,5 +250,5 @@ trim#() {
 # get immediate child directories for specified path(s)
 # $1: one or more paths (optional; default=$PWD)
 dir_children() {
-  echo $(find "${1:-$PWD}" -mindepth 1 -maxdepth 1 -type d)
+  echo $(find "${1:-$PWD}" -mindepth 1 -maxdepth 1 -type d | sort)
 }
