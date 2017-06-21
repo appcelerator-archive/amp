@@ -8,6 +8,7 @@ language: bash
 install:
   - sudo sysctl -w vm.max_map_count=262144
   - sudo apt-get update
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) edge"
   - sudo apt-get install docker-ce
   - sudo apt-get install pcregrep
   - sudo modprobe ip_vs ip_vs_rr
