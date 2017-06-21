@@ -13,7 +13,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
-	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -51,7 +50,6 @@ func AmplifierConnection() (*grpc.ClientConn, error) {
 type Helper struct {
 	accounts   account.AccountClient
 	logs       logs.LogsClient
-	resources  resource.ResourceClient
 	stacks     stack.StackClient
 	dashboards dashboard.DashboardClient
 	tokens     *auth.Tokens
@@ -79,7 +77,6 @@ func New() (*Helper, error) {
 		accounts:   account.NewAccountClient(conn),
 		logs:       logs.NewLogsClient(conn),
 		stacks:     stack.NewStackClient(conn),
-		resources:  resource.NewResourceClient(conn),
 		dashboards: dashboard.NewDashboardClient(conn),
 		tokens:     auth.New(cfg.JWTSecretKey),
 		suPassword: cfg.SUPassword,
@@ -100,11 +97,6 @@ func (h *Helper) Logs() logs.LogsClient {
 // Stacks returns a stack client
 func (h *Helper) Stacks() stack.StackClient {
 	return h.stacks
-}
-
-// Resources returns a resource client
-func (h *Helper) Resources() resource.ResourceClient {
-	return h.resources
 }
 
 // Dashboards returns a dashbord client
@@ -194,24 +186,6 @@ func (h *Helper) RandomUser() account.SignUpRequest {
 	}
 }
 
-// RandomOrg returns a random organization CreateOrganizationRequest
-func (h *Helper) RandomOrg() account.CreateOrganizationRequest {
-	id := stringid.GenerateNonCryptoID()
-	return account.CreateOrganizationRequest{
-		Name:  id,
-		Email: id + "@org.email",
-	}
-}
-
-// RandomTeam returns a random team CreateTeamRequest
-func (h *Helper) RandomTeam(org string) account.CreateTeamRequest {
-	id := stringid.GenerateNonCryptoID()
-	return account.CreateTeamRequest{
-		OrganizationName: org,
-		TeamName:         id,
-	}
-}
-
 // DeployStack deploys a stack with given name and file location
 func (h *Helper) DeployStack(ctx context.Context, name string, composeFile string) (string, error) {
 	contents, err := ioutil.ReadFile(composeFile)
@@ -246,59 +220,6 @@ func (h *Helper) CreateUser(t *testing.T, user *account.SignUpRequest) context.C
 	assert.NotEmpty(t, token)
 
 	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
-}
-
-// CreateOrganization signs up and logs in the given user and creates an organization
-func (h *Helper) CreateOrganization(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest) context.Context {
-	// Create a user
-	ownerCtx := h.CreateUser(t, owner)
-
-	// CreateOrganization
-	_, err := h.accounts.CreateOrganization(ownerCtx, org)
-	assert.NoError(t, err)
-
-	return ownerCtx
-}
-
-// CreateAndAddUserToOrganization signs up and logs in the given user and adds them to the given organization
-func (h *Helper) CreateAndAddUserToOrganization(ownerCtx context.Context, t *testing.T, org *account.CreateOrganizationRequest, user *account.SignUpRequest) context.Context {
-	// Create a user
-	userCtx := h.CreateUser(t, user)
-
-	// AddUserToOrganization
-	_, err := h.accounts.AddUserToOrganization(ownerCtx, &account.AddUserToOrganizationRequest{
-		OrganizationName: org.Name,
-		UserName:         user.Name,
-	})
-	assert.NoError(t, err)
-	return userCtx
-}
-
-// CreateTeam creates the given owner, creates the given organization and creates a team in this organization
-func (h *Helper) CreateTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest, team *account.CreateTeamRequest) context.Context {
-	// Create a user
-	ownerCtx := h.CreateOrganization(t, org, owner)
-
-	// CreateTeam
-	_, err := h.accounts.CreateTeam(ownerCtx, team)
-	assert.NoError(t, err)
-
-	return ownerCtx
-}
-
-// Switch switches from the given user context to the given account name
-func (h *Helper) Switch(userCtx context.Context, t *testing.T, accountName string) context.Context {
-	header := metadata.MD{}
-	_, err := h.accounts.Switch(userCtx, &account.SwitchRequest{Account: accountName}, grpc.Header(&header))
-	assert.NoError(t, err)
-
-	// Extract token from header
-	tokens := header[auth.TokenKey]
-	assert.NotEmpty(t, tokens)
-	token := tokens[0]
-	assert.NotEmpty(t, token)
-
-	return metadata.NewContext(context.Background(), metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
 }
 
 // Log Producer constants

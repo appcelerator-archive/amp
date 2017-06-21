@@ -11,45 +11,8 @@ message User {
   bool token_used = 6;
 }
 
-enum TeamPermissionLevel {
-  TEAM_READ = 0;
-  TEAM_WRITE = 1;
-  TEAM_ADMIN = 2;
-}
-
-message TeamResource {
-  string id = 1;
-  TeamPermissionLevel permission_level = 2;
-}
-
-message Team {
-  string name = 1;
-  int64 create_dt = 2;
-  repeated string members = 3;
-  repeated TeamResource resources = 4;
-}
-
-enum OrganizationRole {
-  ORGANIZATION_MEMBER = 0;
-  ORGANIZATION_OWNER = 1;
-}
-
-message OrganizationMember {
-  string name = 1;
-  OrganizationRole role = 2;
-}
-
-message Organization {
-  string name = 1;
-  string email = 2;
-  int64 create_dt = 3;
-  repeated OrganizationMember members = 4;
-  repeated Team teams = 5;
-}
-
 enum AccountType {
   USER = 0;
-  ORGANIZATION = 1;
 }
 
 message Account {

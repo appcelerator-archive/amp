@@ -26,12 +26,6 @@ service Account {
       body: "*"
     };
   };
-  rpc Switch (SwitchRequest) returns (SwitchAnswer) {
-    option (google.api.http) = {
-      post: "/v1/switch",
-      body: "*"
-    };
-  };
 
   // Users
   rpc PasswordReset (PasswordResetRequest) returns (google.protobuf.Empty) {
@@ -63,11 +57,6 @@ service Account {
       get: "/v1/users/{name}"
     };
   };
-  rpc GetUserOrganizations (GetUserOrganizationsRequest) returns (GetUserOrganizationsReply) {
-    option (google.api.http) = {
-      get: "/v1/users/{name}/organizations"
-    };
-  };
   rpc ListUsers (ListUsersRequest) returns (ListUsersReply) {
     option (google.api.http) = {
       get: "/v1/users"
@@ -76,92 +65,6 @@ service Account {
   rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/users/{name}"
-    };
-  };
-
-  // Organizations
-  rpc CreateOrganization (CreateOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations",
-      body: "*"
-    };
-  };
-  rpc AddUserToOrganization (AddUserToOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/members",
-      body: "*"
-    };
-  };
-  rpc RemoveUserFromOrganization (RemoveUserFromOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/members/{user_name}"
-    };
-  };
-  rpc ChangeOrganizationMemberRole (ChangeOrganizationMemberRoleRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/organizations/{organization_name}/members/{user_name}",
-      body: "*"
-    };
-  };
-  rpc GetOrganization (GetOrganizationRequest) returns (GetOrganizationReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations/{name}"
-    };
-  };
-  rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations"
-    };
-  };
-  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{name}"
-    };
-  };
-
-  // Teams
-  rpc CreateTeam (CreateTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/teams",
-      body: "*"
-    };
-  };
-  rpc AddUserToTeam (AddUserToTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post: "/v1/organizations/{organization_name}/teams/{team_name}/members",
-      body: "*"
-    };
-  };
-  rpc RemoveUserFromTeam (RemoveUserFromTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}/members/{user_name}"
-    };
-  };
-  rpc ChangeTeamResourcePermissionLevel (ChangeTeamResourcePermissionLevelRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}",
-      body: "*"
-    };
-  };
-  rpc ChangeTeamName (ChangeTeamNameRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/organizations/{organization_name}/teams/{team_name}/name/{new_name}",
-      body: "*"
-    };
-  };
-  rpc GetTeam (GetTeamRequest) returns (GetTeamReply) {
-    option (google.api.http) = {
-      get: "/v1/organizations/{organization_name}/teams/{team_name}"
-    };
-  };
-  rpc ListTeams (ListTeamsRequest) returns (ListTeamsReply) {
-    option (google.api.http) = {
-      get: "/organizations/{organization_name}/teams"
-    };
-  };
-  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete: "/v1/organizations/{organization_name}/teams/{team_name}"
     };
   };
 }
@@ -184,14 +87,6 @@ message LogInRequest {
 }
 
 message LogInReply {
-  string auth = 1;
-}
-
-message SwitchRequest {
-  string account = 1;
-}
-
-message SwitchAnswer {
   string auth = 1;
 }
 
@@ -221,14 +116,6 @@ message GetUserReply {
   accounts.User user = 1;
 }
 
-message GetUserOrganizationsRequest {
-  string name = 1;
-}
-
-message GetUserOrganizationsReply {
-  repeated accounts.Organization organizations = 1;
-}
-
 message ListUsersRequest {
 }
 
@@ -238,98 +125,4 @@ message ListUsersReply {
 
 message DeleteUserRequest {
   string name = 1;
-}
-
-// Organizations
-message CreateOrganizationRequest {
-  string name = 1;
-  string email = 2;
-}
-
-message AddUserToOrganizationRequest {
-  string organization_name = 1;
-  string user_name = 2;
-}
-
-message RemoveUserFromOrganizationRequest {
-  string organization_name = 1;
-  string user_name = 2;
-}
-
-message ChangeOrganizationMemberRoleRequest {
-  string organization_name = 1;
-  string user_name = 2;
-  accounts.OrganizationRole role = 3;
-}
-
-message GetOrganizationRequest {
-  string name = 1;
-}
-
-message GetOrganizationReply {
-  accounts.Organization organization = 1;
-}
-
-message ListOrganizationsRequest {
-}
-
-message ListOrganizationsReply {
-  repeated accounts.Organization organizations = 1;
-}
-
-message DeleteOrganizationRequest {
-  string name = 1;
-}
-
-// Teams
-message CreateTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
-}
-
-message AddUserToTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
-  string user_name = 3;
-}
-
-message RemoveUserFromTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
-  string user_name = 3;
-}
-
-message ChangeTeamResourcePermissionLevelRequest {
-  string organization_name = 1;
-  string team_name = 2;
-  string resource_id = 3;
-  accounts.TeamPermissionLevel permission_level = 4;
-}
-
-message ChangeTeamNameRequest {
-  string organization_name = 1;
-  string team_name = 2;
-  string new_name = 3;
-}
-
-message GetTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
-}
-
-message GetTeamReply {
-  accounts.Team team = 1;
-}
-
-message ListTeamsRequest {
-  string organization_name = 1;
-}
-
-message ListTeamsReply {
-  repeated accounts.Team teams = 1;
-}
-
-message DeleteTeamRequest {
-  string organization_name = 1;
-  string team_name = 2;
 }

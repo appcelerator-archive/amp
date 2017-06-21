@@ -12,12 +12,10 @@ import (
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
-	"github.com/appcelerator/amp/cli/command/org"
 	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/service"
 	"github.com/appcelerator/amp/cli/command/stack"
 	"github.com/appcelerator/amp/cli/command/stats"
-	"github.com/appcelerator/amp/cli/command/team"
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
 	"github.com/appcelerator/amp/cli/command/whoami"
@@ -96,9 +94,6 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 		// logs
 		logs.NewLogsCommand(c),
 
-		// org
-		org.NewOrgCommand(c),
-
 		// password
 		password.NewPasswordCommand(c),
 
@@ -110,9 +105,6 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// stats
 		stats.NewStatsCommand(c),
-
-		// team
-		team.NewTeamCommand(c),
 
 		// user
 		user.NewUserCommand(c),

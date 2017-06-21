@@ -13,8 +13,6 @@ import (
 const (
 	AmpResourceName = "amprn"
 	UserRN          = AmpResourceName + ":user"
-	OrganizationRN  = AmpResourceName + ":organization"
-	TeamRN          = AmpResourceName + ":team"
 	StackRN         = AmpResourceName + ":stack"
 	DashboardRN     = AmpResourceName + ":dashboard"
 
@@ -22,8 +20,7 @@ const (
 	ReadAction   = "read"
 	UpdateAction = "update"
 	DeleteAction = "delete"
-	LeaveAction  = "leave"
-	AdminAction  = CreateAction + "|" + ReadAction + "|" + UpdateAction + "|" + LeaveAction + "|" + DeleteAction
+	AdminAction  = CreateAction + "|" + ReadAction + "|" + UpdateAction + "|" + DeleteAction
 )
 
 var (
@@ -35,59 +32,6 @@ var (
 		Effect:    ladon.AllowAccess,
 		Conditions: ladon.Conditions{
 			"user": &ladon.EqualsSubjectCondition{},
-		},
-	}
-
-	usersCanLeaveOrganizations = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{OrganizationRN},
-		Actions:   []string{"<" + LeaveAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"user": &ladon.EqualsSubjectCondition{},
-		},
-	}
-
-	organizationsAdminByOrgOwners = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{OrganizationRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"organization": &OrganizationAccessCondition{
-				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
-				[]TeamPermissionLevel{},
-			},
-		},
-	}
-
-	teamsAdminByOrgOwners = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{TeamRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"organization": &OrganizationAccessCondition{
-				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
-				[]TeamPermissionLevel{},
-			},
-		},
-	}
-
-	stacksAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{StackRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"organization": &OrganizationAccessCondition{
-				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
-				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
-			},
 		},
 	}
 
@@ -113,20 +57,6 @@ var (
 		},
 	}
 
-	dashboardsAdminByOrgOwnersAndTeamAdmins = &ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{DashboardRN},
-		Actions:   []string{"<" + AdminAction + ">"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"organization": &OrganizationAccessCondition{
-				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
-				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
-			},
-		},
-	}
-
 	dashboardsAdminByUserOwner = &ladon.DefaultPolicy{
 		ID:        stringid.GenerateNonCryptoID(),
 		Subjects:  []string{"<.*>"},
@@ -141,13 +71,8 @@ var (
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		usersCanDeleteThemselves,
-		usersCanLeaveOrganizations,
-		organizationsAdminByOrgOwners,
-		stacksAdminByOrgOwnersAndTeamAdmins,
 		stacksAdminByUserOwner,
-		dashboardsAdminByOrgOwnersAndTeamAdmins,
 		dashboardsAdminByUserOwner,
-		teamsAdminByOrgOwners,
 		usersAdminByThemselves,
 	}
 )
@@ -156,13 +81,6 @@ var (
 
 // GetRequesterAccount gets the requester account from the given context, i.e. the user or organization performing the request
 func GetRequesterAccount(ctx context.Context) *Account {
-	activeOrganization := auth.GetActiveOrganization(ctx)
-	if activeOrganization != "" {
-		return &Account{
-			Type: AccountType_ORGANIZATION,
-			Name: activeOrganization,
-		}
-	}
 	return &Account{
 		Type: AccountType_USER,
 		Name: auth.GetUser(ctx),
@@ -176,108 +94,27 @@ func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string,
 	if owner == nil {
 		return false
 	}
-	switch owner.Type {
-	case AccountType_ORGANIZATION:
-		organization, err := s.getOrganization(ctx, owner.Name)
-		if err != nil {
-			return false
-		}
-		err = s.warden.IsAllowed(&ladon.Request{
-			Subject:  subject,
-			Action:   action,
-			Resource: resource,
-			Context: ladon.Context{
-				"organization": organization,
-				"resourceID":   resourceID,
-			},
-		})
-		return err == nil
-	case AccountType_USER:
-		err := s.warden.IsAllowed(&ladon.Request{
-			Subject:  subject,
-			Action:   action,
-			Resource: resource,
-			Context: ladon.Context{
-				"user": owner.Name,
-			},
-		})
-		return err == nil
-	}
-	return false
+	err := s.warden.IsAllowed(&ladon.Request{
+		Subject:  subject,
+		Action:   action,
+		Resource: resource,
+		Context: ladon.Context{
+			"user": owner.Name,
+		},
+	})
+	return err == nil
 }
 
-// SuperOrganizationAccessCondition is a condition which is fulfilled if the request's subject is a member of the super organization
-type SuperOrganizationAccessCondition struct {
-	accounts *Store
+// SuperUserCondition is a condition which is fulfilled if the request's subject is the super user
+type SuperUserCondition struct {
 }
 
 // Fulfills returns true if subject is granted resource access
-func (c *SuperOrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Request) bool {
-	so, err := c.accounts.GetOrganization(context.Background(), superOrganization)
-	if err != nil {
-		return false
-	}
-	return so.getMember(r.Subject) != nil
+func (c *SuperUserCondition) Fulfills(value interface{}, r *ladon.Request) bool {
+	return r.Subject == superUser
 }
 
 // GetName returns the condition's name.
-func (c *SuperOrganizationAccessCondition) GetName() string {
-	return "SuperOrganizationAccessCondition"
-}
-
-// OrganizationAccessCondition is a condition which is fulfilled if the request's subject has the expected access in the organization (either by organization role or team access)
-type OrganizationAccessCondition struct {
-	ExpectedRoles            []OrganizationRole
-	ExpectedPermissionLevels []TeamPermissionLevel
-}
-
-// Fulfills returns true if subject is granted resource access
-func (c *OrganizationAccessCondition) Fulfills(value interface{}, r *ladon.Request) bool {
-	organization, ok := value.(*Organization)
-	log.Println("organization", organization)
-	if !ok {
-		return false
-	}
-	if organization == nil {
-		return false
-	}
-	member := organization.getMember(r.Subject)
-	log.Println("member", member)
-	if member == nil {
-		return false
-	}
-	for _, role := range c.ExpectedRoles {
-		if role == member.GetRole() {
-			return true
-		}
-	}
-	log.Println("organization.getMemberTeams(r.Subject)", organization.getMemberTeams(r.Subject))
-	for _, team := range organization.getMemberTeams(r.Subject) {
-		resourceID, ok := r.Context["resourceID"].(string)
-		if !ok {
-			log.Println("resourceID ok", ok)
-			return false
-		}
-		log.Println("resourceID", resourceID)
-		resource := team.getResourceById(resourceID)
-		log.Println("resource", resource)
-		if resource == nil {
-			continue
-		}
-		log.Println("c.ExpectedPermissionLevels", c.ExpectedPermissionLevels)
-		for _, pl := range c.ExpectedPermissionLevels {
-			log.Println("pl", pl)
-			log.Println("resource.GetPermissionLevel()", resource.GetPermissionLevel())
-			log.Println("pl == resource.GetPermissionLevel()", pl == resource.GetPermissionLevel())
-			if pl == resource.GetPermissionLevel() {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// GetName returns the condition's name.
-func (c *OrganizationAccessCondition) GetName() string {
-	return "OrganizationRoleCondition"
+func (c *SuperUserCondition) GetName() string {
+	return "SuperUserCondition"
 }
