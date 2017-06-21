@@ -1,5 +1,5 @@
-hash: 5429d1787534575816975c696e9f2c63c49676c0e37aa92e15373518fb547128
-updated: 2017-06-08T22:37:20.695936455Z
+hash: c3e1363350c61606593c48fb8ffe0421089d087f97bb7f5704431efaba5bd5bf
+updated: 2017-06-20T17:05:31.160734494-07:00
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -10,7 +10,7 @@ imports:
   subpackages:
   - winterm
 - name: github.com/coreos/etcd
-  version: 9d7ed0e63a4e9907c04396d0a9a7a01ba08d2852
+  version: 66722b1ada68fcd5227db853ee92003169a975c8
   subpackages:
   - auth/authpb
   - clientv3
@@ -19,7 +19,7 @@ imports:
   - mvcc/mvccpb
   - raft/raftpb
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
   - spew
 - name: github.com/dgrijalva/jwt-go
@@ -110,7 +110,7 @@ imports:
   - registry
   - runconfig/opts
 - name: github.com/docker/docker-credential-helpers
-  version: d8f57a18c61ade10ddf767fa080b4778359f5c66
+  version: a8de4f6e8ada3d96e27946620e6b65a109086164
   subpackages:
   - client
   - credentials
@@ -147,7 +147,7 @@ imports:
   - tuf/utils
   - tuf/validation
 - name: github.com/docker/swarmkit
-  version: c3423883a7c2c583c32fe0b60c5b3f0ae5693e73
+  version: 6e809fcf6100a356e13b7662e2947c3e338c4755
   subpackages:
   - api
   - api/deepcopy
@@ -208,8 +208,11 @@ imports:
   version: 616041e345fc33c97bc0eb0fa6b388aa07bca3e1
   subpackages:
   - client/v2
+  - lj
   - log
   - protocol/v2
+  - server/internal
+  - server/v2
 - name: github.com/elastic/go-ucfg
   version: ec8488a52542c0c51e42e8ea204dcaff400bc644
   subpackages:
@@ -242,6 +245,7 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
   - ptypes/any
   - ptypes/empty
   - ptypes/struct
@@ -324,7 +328,7 @@ imports:
   subpackages:
   - pb
 - name: github.com/nats-io/nats
-  version: 78145d4f747094ee85af39b3e169ee98e4be5b03
+  version: 0f25ebdb0f66fac3de939396a6eeb64d3cee23cd
   subpackages:
   - encoders/builtin
   - util
@@ -337,17 +341,19 @@ imports:
 - name: github.com/opencontainers/go-digest
   version: 279bed98673dd5bef374d3b6e4b09e2af76183bf
 - name: github.com/opencontainers/runc
-  version: ea35825a6350511ab93fe24e69c0723d6728616d
+  version: 6e57120d9f2b0c230f20f87c713d85c4f0e982fd
   subpackages:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/ladon
-  version: c8b0a3309bb2fc36f1dc24035279cc7530af0a0a
+  version: ee1899d4639f9b8629c08ac4a6cc0c987cfd2d28
 - name: github.com/ory/ladon
-  version: 018f499969fb63fcae5a3020944fcc39da1e6a61
+  version: ee1899d4639f9b8629c08ac4a6cc0c987cfd2d28
   subpackages:
   - compiler
   - manager/memory
+- name: github.com/pborman/uuid
+  version: e790cca94e6cc75c7064b1332e63811d4aae1a53
 - name: github.com/pelletier/go-buffruneio
   version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
@@ -373,14 +379,14 @@ imports:
 - name: github.com/sendgrid/rest
   version: 14de1ac72d9ae5c3c0d7c02164c52ebd3b951a4e
 - name: github.com/sendgrid/sendgrid-go
-  version: aae62ebbdabd46754b041a12b9f74d2ffdfc49d7
+  version: 818273b257d08e5a9401d64f52556cd7bb4e22ad
   subpackages:
   - helpers/mail
 - name: github.com/Shopify/sarama
   version: f0996189c86dc27338468f2a9b10077c6d572b34
   repo: https://github.com/urso/sarama
 - name: github.com/Sirupsen/logrus
-  version: 85b1699d505667d13f8ac4478c1debbf85d6c5de
+  version: 3d4380f53a34dcdc95f0c1db702615992b38d9a4
 - name: github.com/spf13/afero
   version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
@@ -394,11 +400,14 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
-  version: 0967fc9aceab2ce9da34061253ac10fb99bba5b2
+  version: c1de95864d73a5465492829d7cb2dd422b19ac96
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
+  - require
+- name: github.com/uber-go/zap
+  version: 9cabc84638b70e564c3dab2766efcb1ded2aac9f
 - name: github.com/xeipuuv/gojsonpointer
   version: 6fe8760cad3569743d51ddbb243b26f8456742dc
 - name: github.com/xeipuuv/gojsonreference
@@ -450,6 +459,7 @@ imports:
 - name: google.golang.org/genproto
   version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
   subpackages:
+  - googleapis/api/annotations
   - googleapis/rpc/status
 - name: google.golang.org/grpc
   version: 0eb507a2ca07f13baf499f89d66cc566bf644643
@@ -484,11 +494,11 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v5
-  version: f1fd7305d0b6270192b27010fe1193568b18e4b6
+  version: 3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports:
 - name: github.com/mhale/smtpd
   version: 3d3140b2c002fb76f88ff731a7579029ed2a2888
