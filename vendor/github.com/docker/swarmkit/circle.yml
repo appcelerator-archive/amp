@@ -5,7 +5,7 @@ machine:
 
         PROTOC: "https://github.com/google/protobuf/releases/download/v3.2.0/protoc-3.2.0-linux-x86_64.zip"
 
-        GOVERSION: "1.8.1"
+        GOVERSION: "1.8.3"
         GOPATH: "$HOME/.go_workspace"
 
         WORKDIR:  "$GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
@@ -59,7 +59,10 @@ test:
         # - `checkprotos`: Build and check the proto files *only* once all
         #                  tests pass with checked-in generated code.
         # - `coverage`: Generate coverage reports.
-        - cd "$WORKDIR" && make ci
+        - sudo mkdir /tmpfs
+        - sudo mount -t tmpfs tmpfs /tmpfs
+        - sudo chown 1000:1000 /tmpfs
+        - cd "$WORKDIR" && TMPDIR=/tmpfs make ci
 
     post:
         # Report to codecov.io

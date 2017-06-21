@@ -19,14 +19,14 @@ func TestForceRenewTLSConfig(t *testing.T) {
 	tc := testutils.NewTestCA(t)
 	defer tc.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tc.Context)
 	defer cancel()
 
 	// Get a new managerConfig with a TLS cert that has 15 minutes to live
 	nodeConfig, err := tc.WriteNewNodeConfig(ca.ManagerRole)
 	assert.NoError(t, err)
 
-	renewer := ca.NewTLSRenewer(nodeConfig, tc.ConnBroker)
+	renewer := ca.NewTLSRenewer(nodeConfig, tc.ConnBroker, tc.Paths.RootCA)
 	updates := renewer.Start(ctx)
 	renewer.Renew()
 	select {
@@ -45,7 +45,7 @@ func TestForceRenewExpectedRole(t *testing.T) {
 	tc := testutils.NewTestCA(t)
 	defer tc.Stop()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tc.Context)
 	defer cancel()
 
 	// Get a new managerConfig with a TLS cert that has 15 minutes to live
@@ -67,7 +67,7 @@ func TestForceRenewExpectedRole(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	renewer := ca.NewTLSRenewer(nodeConfig, tc.ConnBroker)
+	renewer := ca.NewTLSRenewer(nodeConfig, tc.ConnBroker, tc.Paths.RootCA)
 	updates := renewer.Start(ctx)
 	renewer.SetExpectedRole(ca.WorkerRole)
 	renewer.Renew()

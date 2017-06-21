@@ -8,14 +8,14 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory/ladon/compiler"
 	. "github.com/ory/ladon"
+	"github.com/ory/ladon/compiler"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
 )
 
 var sqlDown = map[string][]string{
-	"1": []string{
+	"1": {
 		"DROP TABLE ladon_policy",
 		"DROP TABLE ladon_policy_subject",
 		"DROP TABLE ladon_policy_permission",
@@ -24,7 +24,7 @@ var sqlDown = map[string][]string{
 }
 
 var sqlUp = map[string][]string{
-	"1": []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
+	"1": {`CREATE TABLE IF NOT EXISTS ladon_policy (
 	id           varchar(255) NOT NULL PRIMARY KEY,
 	description  text NOT NULL,
 	effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
@@ -48,7 +48,7 @@ template varchar(1023) NOT NULL,
 policy   varchar(255) NOT NULL,
 FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`},
-	"2": []string{`CREATE TABLE IF NOT EXISTS ladon_subject (
+	"2": {`CREATE TABLE IF NOT EXISTS ladon_subject (
 id          varchar(64) NOT NULL PRIMARY KEY,
 has_regex   bool NOT NULL,
 compiled 	varchar(511) NOT NULL UNIQUE,
@@ -91,7 +91,7 @@ FOREIGN KEY (resource) REFERENCES ladon_resource(id) ON DELETE CASCADE
 }
 
 var migrations = map[string]*migrate.MemoryMigrationSource{
-	"postgres": &migrate.MemoryMigrationSource{
+	"postgres": {
 		Migrations: []*migrate.Migration{
 			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
 			{
@@ -112,7 +112,7 @@ var migrations = map[string]*migrate.MemoryMigrationSource{
 			},
 		},
 	},
-	"mysql": &migrate.MemoryMigrationSource{
+	"mysql": {
 		Migrations: []*migrate.Migration{
 			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
 			{
@@ -172,8 +172,59 @@ func (s *SQLManager) CreateSchemas(schema, table string) (int, error) {
 	return n, nil
 }
 
+// Update updates an existing policy.
+func (s *SQLManager) Update(policy Policy) error {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := s.delete(policy.GetID(), tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	if err := s.create(policy, tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
 // Create inserts a new policy
 func (s *SQLManager) Create(policy Policy) (err error) {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := s.create(policy, tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 	conditions := []byte("{}")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -183,15 +234,16 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		}
 	}
 
-	//fmt.Printf("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (\"%s\", \"%s\", \"%s\", '%s');\n", policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions)
-	tx, err := s.db.Begin()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	switch s.db.DriverName() {
-	case "postgres", "pgx", "mysql":
+	case "postgres", "pgx":
 		if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions, policy.GetID()); err != nil {
+			if err := tx.Rollback(); err != nil {
+				return errors.WithStack(err)
+			}
+			return errors.WithStack(err)
+		}
+	case "mysql":
+		if _, err = tx.Exec(s.db.Rebind("INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 			if err := tx.Rollback(); err != nil {
 				return errors.WithStack(err)
 			}
@@ -225,7 +277,7 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 			}
 
 			switch s.db.DriverName() {
-			case "postgres", "pgx", "mysql":
+			case "postgres", "pgx":
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_%[1]s WHERE id = ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1, id); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
@@ -240,6 +292,22 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 					return errors.WithStack(err)
 				}
 				break
+
+			case "mysql":
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?)", v.t, v.t)), policy.GetID(), id); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+				break
 			default:
 				if err := tx.Rollback(); err != nil {
 					return errors.WithStack(err)
@@ -247,13 +315,6 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 				return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 			}
 		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
-		}
-		return errors.WithStack(err)
 	}
 
 	return nil
@@ -420,7 +481,30 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
-	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := s.delete(id, tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Delete removes a policy.
+func (s *SQLManager) delete(id string, tx *sqlx.Tx) error {
+	_, err := tx.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
 	return errors.WithStack(err)
 }
 

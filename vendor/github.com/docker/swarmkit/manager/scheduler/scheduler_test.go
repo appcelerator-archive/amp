@@ -1173,11 +1173,23 @@ func TestSchedulerNoReadyNodes(t *testing.T) {
 func TestSchedulerFaultyNode(t *testing.T) {
 	ctx := context.Background()
 
-	taskTemplate := &api.Task{
+	replicatedTaskTemplate := &api.Task{
 		ServiceID:    "service1",
 		DesiredState: api.TaskStateRunning,
 		ServiceAnnotations: api.Annotations{
 			Name: "name1",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+	}
+
+	preassignedTaskTemplate := &api.Task{
+		ServiceID:    "service2",
+		NodeID:       "id1",
+		DesiredState: api.TaskStateRunning,
+		ServiceAnnotations: api.Annotations{
+			Name: "name2",
 		},
 		Status: api.TaskStatus{
 			State: api.TaskStatePending,
@@ -1213,15 +1225,21 @@ func TestSchedulerFaultyNode(t *testing.T) {
 	defer s.Close()
 
 	err := s.Update(func(tx store.Tx) error {
-		// Add initial nodes, and one task assigned to node id1
+		// Add initial nodes, and one task of each type assigned to node id1
 		assert.NoError(t, store.CreateNode(tx, node1))
 		assert.NoError(t, store.CreateNode(tx, node2))
 
-		task1 := taskTemplate.Copy()
+		task1 := replicatedTaskTemplate.Copy()
 		task1.ID = "id1"
 		task1.NodeID = "id1"
 		task1.Status.State = api.TaskStateRunning
 		assert.NoError(t, store.CreateTask(tx, task1))
+
+		task2 := preassignedTaskTemplate.Copy()
+		task2.ID = "id2"
+		task2.NodeID = "id1"
+		task2.Status.State = api.TaskStateRunning
+		assert.NoError(t, store.CreateTask(tx, task2))
 		return nil
 	})
 	assert.NoError(t, err)
@@ -1238,17 +1256,17 @@ func TestSchedulerFaultyNode(t *testing.T) {
 
 	for i := 0; i != 8; i++ {
 		// Simulate a task failure cycle
-		newTask := taskTemplate.Copy()
-		newTask.ID = identity.NewID()
+		newReplicatedTask := replicatedTaskTemplate.Copy()
+		newReplicatedTask.ID = identity.NewID()
 
 		err = s.Update(func(tx store.Tx) error {
-			assert.NoError(t, store.CreateTask(tx, newTask))
+			assert.NoError(t, store.CreateTask(tx, newReplicatedTask))
 			return nil
 		})
 		assert.NoError(t, err)
 
 		assignment := watchAssignment(t, watch)
-		assert.Equal(t, newTask.ID, assignment.ID)
+		assert.Equal(t, newReplicatedTask.ID, assignment.ID)
 
 		if i < 5 {
 			// The first 5 attempts should be assigned to node id2 because
@@ -1260,11 +1278,38 @@ func TestSchedulerFaultyNode(t *testing.T) {
 			assert.Equal(t, "id1", assignment.NodeID)
 		}
 
+		newPreassignedTask := preassignedTaskTemplate.Copy()
+		newPreassignedTask.ID = identity.NewID()
+
 		err = s.Update(func(tx store.Tx) error {
-			newTask := store.GetTask(tx, newTask.ID)
-			require.NotNil(t, newTask)
-			newTask.Status.State = api.TaskStateFailed
-			assert.NoError(t, store.UpdateTask(tx, newTask))
+			assert.NoError(t, store.CreateTask(tx, newPreassignedTask))
+			return nil
+		})
+		assert.NoError(t, err)
+
+		assignment = watchAssignment(t, watch)
+		assert.Equal(t, newPreassignedTask.ID, assignment.ID)
+
+		// The preassigned task is always assigned to node id1
+		assert.Equal(t, "id1", assignment.NodeID)
+
+		// The service associated with the preassigned task will not be
+		// marked as
+		nodeInfo, err := scheduler.nodeSet.nodeInfo("id1")
+		assert.NoError(t, err)
+		assert.Len(t, nodeInfo.recentFailures["service2"], 0)
+
+		err = s.Update(func(tx store.Tx) error {
+			newReplicatedTask := store.GetTask(tx, newReplicatedTask.ID)
+			require.NotNil(t, newReplicatedTask)
+			newReplicatedTask.Status.State = api.TaskStateFailed
+			assert.NoError(t, store.UpdateTask(tx, newReplicatedTask))
+
+			newPreassignedTask := store.GetTask(tx, newPreassignedTask.ID)
+			require.NotNil(t, newPreassignedTask)
+			newPreassignedTask.Status.State = api.TaskStateFailed
+			assert.NoError(t, store.UpdateTask(tx, newPreassignedTask))
+
 			return nil
 		})
 		assert.NoError(t, err)
@@ -2133,6 +2178,10 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 						Type: "Volume",
 						Name: "plugin1",
 					},
+					{
+						Type: "Log",
+						Name: "default",
+					},
 				},
 			},
 		},
@@ -2160,6 +2209,10 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 						Type: "Volume",
 						Name: "plugin2",
 					},
+					{
+						Type: "Log",
+						Name: "default",
+					},
 				},
 			},
 		},
@@ -2185,6 +2238,33 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 					},
 					{
 						Type: "Network",
+						Name: "plugin1",
+					},
+					{
+						Type: "Log",
+						Name: "default",
+					},
+				},
+			},
+		},
+		Status: api.NodeStatus{
+			State: api.NodeStatus_READY,
+		},
+	}
+
+	// Node4: log plugin1
+	n4 := &api.Node{
+		ID: "node4_ID",
+		Spec: api.NodeSpec{
+			Annotations: api.Annotations{
+				Name: "node4",
+			},
+		},
+		Description: &api.NodeDescription{
+			Engine: &api.EngineDescription{
+				Plugins: []api.PluginDescription{
+					{
+						Type: "Log",
 						Name: "plugin1",
 					},
 				},
@@ -2301,6 +2381,40 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 			State: api.TaskStatePending,
 		},
 	}
+	// Task4: log plugin1
+	t4 := &api.Task{
+		ID:           "task4_ID",
+		DesiredState: api.TaskStateRunning,
+		Spec: api.TaskSpec{
+			Runtime: &api.TaskSpec_Container{
+				Container: &api.ContainerSpec{},
+			},
+			LogDriver: &api.Driver{Name: "plugin1"},
+		},
+		ServiceAnnotations: api.Annotations{
+			Name: "task4",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+	}
+	// Task5: log plugin1
+	t5 := &api.Task{
+		ID:           "task5_ID",
+		DesiredState: api.TaskStateRunning,
+		Spec: api.TaskSpec{
+			Runtime: &api.TaskSpec_Container{
+				Container: &api.ContainerSpec{},
+			},
+			LogDriver: &api.Driver{Name: "plugin1"},
+		},
+		ServiceAnnotations: api.Annotations{
+			Name: "task5",
+		},
+		Status: api.TaskStatus{
+			State: api.TaskStatePending,
+		},
+	}
 
 	s := store.NewMemoryStore(nil)
 	assert.NotNil(t, s)
@@ -2373,6 +2487,38 @@ func TestSchedulerPluginConstraint(t *testing.T) {
 	assignment2 := watchAssignment(t, watch)
 	assert.Equal(t, assignment2.ID, "task3_ID")
 	assert.Equal(t, assignment2.NodeID, "node3_ID")
+
+	// Create t4; it should stay in the pending state because there is
+	// no node that with log plugin `plugin1`
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, t4))
+		return nil
+	})
+	assert.NoError(t, err)
+
+	// check that t4 has been assigned
+	failure2 := watchAssignmentFailure(t, watch)
+	assert.Equal(t, "no suitable node (missing plugin on 3 nodes)", failure2.Status.Message)
+
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateNode(tx, n4))
+		return nil
+	})
+	assert.NoError(t, err)
+
+	// Check that t4 has been assigned
+	assignment3 := watchAssignment(t, watch)
+	assert.Equal(t, assignment3.ID, "task4_ID")
+	assert.Equal(t, assignment3.NodeID, "node4_ID")
+
+	err = s.Update(func(tx store.Tx) error {
+		assert.NoError(t, store.CreateTask(tx, t5))
+		return nil
+	})
+	assert.NoError(t, err)
+	assignment4 := watchAssignment(t, watch)
+	assert.Equal(t, assignment4.ID, "task5_ID")
+	assert.Equal(t, assignment4.NodeID, "node4_ID")
 }
 
 func BenchmarkScheduler1kNodes1kTasks(b *testing.B) {
@@ -2618,8 +2764,6 @@ func TestSchedulerHostPort(t *testing.T) {
 		// Add initial node and task
 		assert.NoError(t, store.CreateTask(tx, task1))
 		assert.NoError(t, store.CreateTask(tx, task2))
-		assert.NoError(t, store.CreateNode(tx, node1))
-		assert.NoError(t, store.CreateNode(tx, node2))
 		return nil
 	})
 	assert.NoError(t, err)
@@ -2633,6 +2777,18 @@ func TestSchedulerHostPort(t *testing.T) {
 		assert.NoError(t, scheduler.Run(ctx))
 	}()
 	defer scheduler.Stop()
+
+	// Tasks shouldn't be scheduled because there are no nodes.
+	watchAssignmentFailure(t, watch)
+	watchAssignmentFailure(t, watch)
+
+	err = s.Update(func(tx store.Tx) error {
+		// Add initial node and task
+		assert.NoError(t, store.CreateNode(tx, node1))
+		assert.NoError(t, store.CreateNode(tx, node2))
+		return nil
+	})
+	assert.NoError(t, err)
 
 	// Tasks 1 and 2 should be assigned to different nodes.
 	assignment1 := watchAssignment(t, watch)

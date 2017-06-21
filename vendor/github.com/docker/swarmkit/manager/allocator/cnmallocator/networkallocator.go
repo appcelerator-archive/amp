@@ -142,6 +142,10 @@ func (na *cnmNetworkAllocator) Allocate(n *api.Network) error {
 		n.DriverState = &api.Driver{
 			Name: d.name,
 		}
+		// In order to support backward compatibility with older daemon
+		// versions which assumes the network attachment to contains
+		// non nil IPAM attribute, passing an empty object
+		n.IPAM = &api.IPAMOptions{Driver: &api.Driver{}}
 	} else {
 		nw.pools, err = na.allocatePools(n)
 		if err != nil {
@@ -946,7 +950,7 @@ func (na *cnmNetworkAllocator) IsVIPOnIngressNetwork(vip *api.Endpoint_VirtualIP
 }
 
 // IsBuiltInDriver returns whether the passed driver is an internal network driver
-func (na *cnmNetworkAllocator) IsBuiltInDriver(name string) bool {
+func IsBuiltInDriver(name string) bool {
 	n := strings.ToLower(name)
 	for _, d := range initializers {
 		if n == d.ntype {
