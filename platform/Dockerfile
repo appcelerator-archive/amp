@@ -1,6 +1,6 @@
-FROM docker:17.05.0-ce-rc1
+FROM docker:17.05.0-ce
 
-RUN apk --update --no-cache add bash openssl
+RUN apk --update --no-cache add bash openssl curl jq
 
 COPY . /opt/amp/platform
 WORKDIR /opt/amp/platform

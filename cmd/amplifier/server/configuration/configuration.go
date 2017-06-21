@@ -15,6 +15,7 @@ const (
 	RegistrationNone    = "none"
 	RegistrationEmail   = "email"
 	RegistrationDefault = RegistrationEmail
+	DefaultProfile      = "default"
 )
 
 // Configuration is used for amplifier configuration settings

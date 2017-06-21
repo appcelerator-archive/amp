@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,7 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	flags.StringVarP(&opts.tag, "tag", "t", "0.10.1", "Specify tag for bootstrap images (default is '0.10.1', use 'local' for development)")
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
+	flags.StringVar(&opts.profile, "profile", configuration.DefaultProfile, "cloud provider profile")
 	return cmd
 }
 
@@ -32,6 +34,6 @@ func remove(c cli.Interface, cmd *cobra.Command) error {
 	// TODO: only supporting local cluster management for this release
 	args := []string{"bin/deploy", "-d"}
 	args = reflag(cmd, m, args)
-	env := map[string]string{"TAG": opts.tag}
+	env := map[string]string{"TAG": opts.tag, "PROFILE": opts.profile, "PROVIDER": opts.provider}
 	return queryCluster(c, args, env)
 }

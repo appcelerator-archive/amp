@@ -19,7 +19,7 @@ readonly TESTSDIR="$PLATFORMDIR/tests"
 export PATH="$SP:$BOOTSTRAPDIR:$PATH"
 
 # commands
-readonly awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $BOOTSTRAPDIR:$BOOTSTRAPDIR:ro cgswong/aws:latest aws"
+readonly awscli="docker run --rm -v ${CLI_HOME:-$HOME}/.aws:/root/.aws:ro -v $BOOTSTRAPDIR:$BOOTSTRAPDIR:ro cgswong/aws:latest aws"
 
 # IP range that should have access to the docker remote API
 readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
@@ -38,6 +38,31 @@ deployment_target() {
   echo $DEPLOYMENT_TARGET
 }
 
+check_profile(){
+  local profiles
+  case $(deployment_target) in
+  aws)
+    profiles=$(grep "^\[" ~/.aws/credentials)
+    case $(echo $profiles | wc -w) in
+    0) echo "no aws profile found, abort" >&2 ; exit 1 ;;
+    1) if [[ -z "$PROFILE" ]]; then
+         echo "using AWS profile $profiles" >&2
+       elif echo $profiles | grep -q $PROFILE; then
+         echo "using profile \"$PROFILE\"" >&2
+       fi
+       ;;
+    *) if [[ -z "$PROFILE" ]]; then echo "an AWS profile should be specified, choose it from $profiles." >&2; exit 1; fi
+       if echo $profiles | grep -q $PROFILE; then echo "using profile \"$PROFILE\""; else "the AWS profile is not correct, choose it from $profiles." >&2; exit 1; fi
+       ;;
+    esac
+    ;;
+  *) true
+    ;;
+  esac
+  export PROFILE
+  [[ -n "$CLI_HOME" ]] && export CLI_HOME
+}
+
 # create the cluster and echo the cluster id
 cluster_create() {
   local _clusterid
@@ -46,6 +71,7 @@ cluster_create() {
   local _label
   local _label_prefix="amp.type."
   local _labels="mq kv search api metrics route core user"
+  local _current_labels
   _target="$(deployment_target)"
   case $_target in
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
@@ -62,7 +88,11 @@ cluster_create() {
       echo "overlay network ampnet found" >&2
     fi
     # add all service labels for orchestration
+    _current_labels=$(for n in $(docker node ls -q); do docker node inspect $n --pretty | grep amp.type | sed -e 's/.*\(amp.type.*\) *=.*$/\1/'; done | sort | uniq)
     for _label in $_labels; do
+      echo $_current_labels | grep -q "${_label_prefix}${_label}" && continue
+      echo "adding missing label $_label_prefix$_label" >&2
+      echo "you may want to redistribute the labels to match your service scheduling expectations" >&2
       docker node update --label-add "${_label_prefix}${_label}=true" "$_clusterid" >/dev/null
     done
     echo $_clusterid
@@ -132,7 +162,8 @@ cluster_nodecount() {
   _target=$(deployment_target)
   case $_target in
   local) # single manager node
-    echo 1
+    docker node ls -q | wc -w
+    return 0
     ;;
   dind|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | wc -l)
@@ -159,6 +190,7 @@ cluster_workercount() {
   case $_target in
   local) # single manager node
     echo 0
+    return 0
     ;;
   dind|aws)
     _count=$(bootstrap -t $_target -l $_clusterid | grep -c worker)
@@ -182,7 +214,7 @@ create_amp_stacks_volume() {
   local dockerfile=$builddir/Dockerfile
   local image=amp-stacks-builder:local
   cat > $dockerfile << EOF
-FROM alpine:3.5
+FROM alpine:3.6
 COPY stacks /stacks
 VOLUME /stacks
 CMD ["true"]
@@ -192,6 +224,7 @@ EOF
   rm -rf $builddir
   docker run --rm -v amp-stacks:/stacks $image
   docker image rm $image > /dev/null
+  echo "+ volume amp-stacks" >&2
 }
 
 # creates a amp-secrets volume by sending the local secrets to the host in a build context
@@ -200,7 +233,7 @@ create_amp_secrets_volume() {
   local dockerfile=$builddir/Dockerfile
   local image=amp-secrets-builder:local
   cat > $dockerfile << EOF
-FROM alpine:3.5
+FROM alpine:3.6
 COPY secrets /secrets
 VOLUME /secrets
 CMD ["true"]
@@ -211,6 +244,7 @@ EOF
   rm -rf $builddir
   docker run --rm -v amp-secrets:/secrets $image
   docker image rm $image > /dev/null
+  echo "+ volume amp-secrets" >&2
 }
 
 # sets hosts for Docker remote API and for the Docker registry
@@ -223,6 +257,16 @@ set_deployment_variables(){
     secrets_path="$SECRETSDIR"
     amps="docker"
     domainname=$localdomainname
+    if [[ -z "$MANAGER_HOST" && $(docker node ls -q | wc -w) -gt 1 ]]; then
+      # not a single node, so we're setting the env variable for prometheus access
+      # to a manager engine API, assumption is that the CLI is run on a manager 
+      # first try the AWS metadata service
+      MANAGER_HOST=$(curl -m 3 -f 169.254.169.254/latest/meta-data/local-ipv4 2>/dev/null) || MANAGER_HOST=$(ip a show dev eth0 2>/dev/null | grep inet | grep eth0 | tail -1 | sed -e 's/^.*inet.//g' -e 's/\/.*$//g')
+      # else get the IP from the host. Won't work from inside a container
+      [[ -z "$MANAGER_HOST" ]] && MANAGER_HOST=$(ifconfig $(netstat -nr | awk 'NF>4 && $1 ~/(default)|(0.0.0.0)/ {print $NF}' | tail -1) | awk '$1 == "inet" {print $2}' | grep -v "127.0.0.1" | sed -e 's/addr://')
+      echo "setting MANAGER_HOST prometheus variable to $MANAGER_HOST" >&2
+      export MANAGER_HOST
+    fi
     return
     ;;
   dind)
@@ -238,6 +282,7 @@ set_deployment_variables(){
     export DOCKERHOST=$dockerhost
     ;;
   aws)
+    create_amp_aws_volume
     local awscf="$awscli --profile ${PROFILE:-default} --region ${REGION:-us-west-2} cloudformation"
     local _clusterid
     local _publicip
@@ -280,6 +325,7 @@ cleanup() {
   [[ $STATUS -eq 1 ]] && exit 0
   docker volume rm amp-stacks &>/dev/null
   docker volume rm amp-secrets &>/dev/null
+  docker volume rm amp-aws &>/dev/null
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "dind" ]] && echo "clean up" && bootstrap -p local -d -i $CID
   [[ SUCCESS -ne 1 && ! -z $CID && $(deployment_target) = "local" ]] && echo "clean up" && cluster_destroy $CID
 }
@@ -307,17 +353,16 @@ deploystack() {
 # can only use this once the swarm is ready
 lookup() {
   [[ -z $amps ]] && echo "error to use lookup before swarm is created" && return 1
-  $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 nslookup $1
+  $amps run --rm --network=ampnet appcelerator/alpine:3.6.0 nslookup $1
 }
 
 # can only use this once the swarm is ready
 kurl() {
   [[ -z $amps ]] && echo "error to use kurl before swarm is created" && return 1
-  $amps run --rm --network=ampnet appcelerator/alpine:3.5.2 curl -L -s -o /dev/null -w '%{http_code}\n' $1
+  $amps run --rm --network=ampnet appcelerator/alpine:3.6.0 curl -L -s -o /dev/null -w '%{http_code}\n' $1
 }
 
 # pushes the amplifier configuration in a secret
-# TODO: empty for now
 prepare_amplifier_configuration(){
   local _conf
   local cid
@@ -325,16 +370,17 @@ prepare_amplifier_configuration(){
   _conf="$SECRETSDIR/amplifier.yml"
   if [[ ! -f "$_conf" ]]; then
     local supasswd
+    echo "creating a default configuration for amplifier_yml" >&2
     mkdir -p "$SECRETSDIR"
     echo "JWTSecretKey: "$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-128}') > "$_conf"
     supasswd=$(docker run --rm alpine sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-32}')
     echo "SUPassword: " "$supasswd" >> "$_conf"
-    echo "The super user password for this deployment is: $supasswd"
+    echo "The super user password for this deployment is: $supasswd" >&2
   else
-    echo "using existing configuration for the amplifier_yml secret" >&2
+    echo "using provided configuration for the amplifier_yml secret" >&2
   fi
   # copy the configuration in the amp-secrets volume
-  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.6 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
@@ -349,11 +395,12 @@ prepare_prometheus_configuration(){
   if [[ ! -f "$_conf" ]]; then
     mkdir -p "$SECRETSDIR"
     echo > "$_conf"
+    echo "creating an empty configuration for prometheus_alerts_rules" >&2
   else
-    echo "using existing configuration for the prometheus_alerts_rules secret" >&2
+    echo "using provided configuration for the prometheus_alerts_rules secret" >&2
   fi
   # copy the configuration in the amp-secrets volume
-  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.6 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
@@ -367,6 +414,7 @@ prepare_alertmanager_configuration(){
   _conf="$SECRETSDIR/alertmanager.yml"
   if [[ ! -f "$_conf" ]]; then
     mkdir -p "$SECRETSDIR"
+    echo "creating a default configuration for alertmanager_yml" >&2
     cat > "$_conf" << EOF
 global:
   smtp_smarthost: 'localhost:25'
@@ -379,10 +427,10 @@ receivers:
   - to: 'null@localhost'
 EOF
   else
-    echo "using existing configuration for the alertmanager_yml secret" >&2
+    echo "using provided configuration for the alertmanager_yml secret" >&2
   fi
   # copy the configuration in the amp-secrets volume
-  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.6 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
@@ -393,38 +441,51 @@ EOF
 # for cloud bootstrap, a valid certificate should be provided
 # it has to be in the stacks folder, to allow access to the Docker client
 prepare_certificates() {
-  if [[ $# -ne 1 ]]; then
-    return 1
-  fi
   $amps secret ls | grep -q "certificate_atomiq" && return 0
 
-  local name=$1
+  local name=${1:-empty}
   local certfile="$SECRETSDIR/$name.pem"
+  local rm_certfile=0
+  local code
+  if [[ $# -eq 0 ]]; then
+    echo "no domain provided, create an empty certificate" >&2
+    echo "--" > $certfile
+    rm_certfile=1
+  fi
 
   mkdir -p "$SECRETSDIR"
-  case $(deployment_target) in
-  local|dind)
-    mv "$(mkcert)" "$certfile" ;;
-  esac
   if [[ ! -f "$certfile" ]]; then
-    # TODO use certbot
-    echo "can't find certificate $certfile" >&2
-    return 1
+    case $(deployment_target) in
+    local|dind)
+      echo "creating a new certificate" >&2
+      mv "$(mkcert)" "$certfile"
+      rm_certfile=1
+      ;;
+    *)
+      # TODO use certbot
+      echo "can't find certificate $certfile" >&2
+      return 1
+      ;;
+    esac
+  else
+    [[ $# -ne 0 ]] && echo "using provided certificate" >&2
   fi
   # copy the certificate in the amp-secrets volume
-  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
+  cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.6 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$certfile" $cid:/secrets/$name.pem
   docker kill "$cid" >/dev/null 2>&1
-  echo "creating the certificate secret"
   $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_atomiq successfully created" >&2
+  code=$?
+  [[ $rm_certfile -eq 1 ]] && rm -f "$certfile"
+  return $code
 }
 
 # process the command line options and arguments
 parse_cmd() {
   while getopts ":w:m:t:l:T:c:r:n:p:g:dsD:" opt; do
     case $opt in
-    w|m|t|l) # just pass it to the bootstrap script
+    w|m|l) # just pass it to the bootstrap script
       BOOTSTRAP_OPTIONS="$BOOTSTRAP_OPTIONS -${opt} $OPTARG"
       ;;
     s) STATUS=1
@@ -464,6 +525,9 @@ parse_cmd() {
       ;;
     c)
       CHECK=1
+      ;;
+    t) # target
+      deployment_target $OPTARG >/dev/null
       ;;
     p) # provider
       deployment_target $OPTARG >/dev/null
@@ -530,11 +594,6 @@ bootstrap_cluster() {
 deploy_stacks() {
   local maxwait=300 # should be less than 10 minutes (600s) so not to exceed travis deadline
   local _workercount
-
-  if [[ "$(deployment_target)" = "local" ]]; then
-    # force all placement constraints to deploy to a single manager
-    export NODE_ROLE=manager
-  fi
 
   echo "deploy amp monitoring stack to cluster - stage 1"
   _workercount=$(cluster_workercount $CID) || return 1
@@ -638,6 +697,7 @@ smoke_tests() {
 
 main() {
   parse_cmd $@
+  check_profile
   if [[ $STATUS -eq 1 ]]; then
     cluster_status $CID
     return $?

@@ -4,52 +4,58 @@
 
 First, the cluster should be bootstrapped to get InfraKit running and ready to deploy the Swarm cluster.
 
-Available bootstraps:
+It can be either:
+
+#### Local swarm manager node
+
+You only need Docker 17.03+ installed on your machine, and run the CLI to deploy AMP on it. It will initialize the swarm if it's not already done.
+
+```amp -s localhost cluster create --registration=none --notifications=false```
 
 #### AWS
 
-##### cloudformation bootstrap / AWS instance plugin
+##### Externally managed
 
-The Cloudformation template ```bootstrap.yml``` creates a VPC, subnet, internet gateway and the minimum required to build EC2 instances.
-Select the instance type and the name of the EC2 Key pair name.
-One EC2 instance will be created and will run InfraKit, it's public IP is revealed in the Cloudformation outputs.
+Once you have a Swarm cluster with a domain name, ssh to one manager, download the amp CLI, and execute:
 
-The EC2 boostrap instance will run ```bootstrap -p aws```.
+```amp -s localhost cluster create --domain cloud.domain.na.me --secrets-dir /absolute/path/to/secrets```
 
-##### terraform bootstrap / Terraform instance plugin
+the secrets dir should contain:
+- a domain.na.me.pem file with the certificate for the domain. It can be a wildcard certificate (*.cloud.domain.na.me) or contain a few vhosts (cloud.domain.na.me, gw.cloud.domain.na.me, alerts.cloud.domain.na.me, dashboard.cloud.domain.na.me, kibana.cloud.domain.na.me) 
+- a amplifier.yml file with a SendGrid `EmailKey`, a `SuPassword` and a `JWTSecretKey`
 
-The terraform-aws/bootstrap.tf creates the VPC, subnet, internet gateway and the minimum required to build EC2 instances.
-3 managers are created, and infrakit then creates and monitor the worker nodes.
+##### Managed by InfraKit
 
-create a terraform-aws/terraform.tfvars file with the following content:
+The CLI will create a VPC, subnet, internet gateway and the minimum required to build EC2 instances.
+Make sure you have AWS credentials ready ($HOME/.aws/credentials).
+
+```amp -s localhost cluster create --provider aws --domain cloud.domain.na.me --secrets-dir /absolute/path/to/secrets```
+
+the secrets dir should contain:
+- a domain.na.me.pem file with the certificate for the domain. It can be a wildcard certificate (*.cloud.domain.na.me) or contain a few vhosts (cloud.domain.na.me, gw.cloud.domain.na.me, alerts.cloud.domain.na.me, dashboard.cloud.domain.na.me, kibana.cloud.domain.na.me) 
+- a amplifier.yml file with a SendGrid `EmailKey`, a `SuPassword` and a `JWTSecretKey`
+- a aws-parameter.json for the customization of your deployment, it should contain a content similar to:
 ```
-aws_name = "TAG"
-aws_region = "us-west-2"
-bootstrap_key_name = "YOUR-AWS-KEY-us-west-2"
-aws_profile = "default"
-infrakit_config_base_url = "https://raw.githubusercontent.com/appcelerator/amp/master/bootstrap"
+[
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "KEYPAIR_NAME"
+  },
+  {
+    "ParameterKey": "ManagerSize",
+    "ParameterValue": "3"
+  },
+  {
+    "ParameterKey": "ManagerInstanceType",
+    "ParameterValue": "t2.medium"
+  },
+  {
+    "ParameterKey": "InfraKitConfigurationBaseURL",
+    "ParameterValue": "https://raw.githubusercontent.com/appcelerator/amp/master/platform/bootstrap"
+  }
+]
 ```
 
-and run
-```
-terraform apply $PWD/bootstrap/terraform-aws/
-```
+#### DigitalOcean, GCP, Azure
 
-#### DigitalOcean
-
-Coming soon
-
-#### Docker in Docker
-
-You can use the ```bootstrap``` script on you development machine to build a Swarm cluster composed of Docker containers.
-
-## Deploy
-
-The InfraKit instance renders the ```config.tpl``` template, and watches the groups defined in the transformed file (config.json).
-This results in a full Swarm cluster.
-
-## Security
-
-The Swarm cluster is by default secured with self managed certificates.
-The manager node remote API is enabled to allow nodes to get the join token, certificates are signed by a CA hosted on the bootstrap instance to enable mutual authentication.
-The certificate management is only for demonstration purpose, not for production.
+See above the `Externally managed` section for AWS.

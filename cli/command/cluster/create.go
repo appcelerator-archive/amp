@@ -27,6 +27,9 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster images (use 'local' for development)")
 	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
 	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
+	flags.StringVar(&opts.profile, "profile", configuration.DefaultProfile, "cloud provider profile")
+	flags.StringVar(&opts.domain, "domain", "", "cluster domain name")
+	flags.StringVar(&opts.secrets, "secrets-dir", "", "path to the folder containing the secrets")
 	return cmd
 }
 
@@ -37,6 +40,7 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 		"workers":       "-w",
 		"managers":      "-m",
 		"provider":      "-t",
+		"domain":        "-D",
 		"name":          "-l",
 		"tag":           "-T",
 		"registration":  "-r",
@@ -48,6 +52,6 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	// TODO: refactor reflag to handle this
 	args := []string{"bin/deploy"}
 	args = reflag(cmd, m, args)
-	env := map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications)}
+	env := map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications), "PROFILE": opts.profile, "SECRETS": opts.secrets, "PROVIDER": opts.provider}
 	return queryCluster(c, args, env)
 }
