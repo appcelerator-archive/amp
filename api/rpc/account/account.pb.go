@@ -13,38 +13,15 @@ It has these top-level messages:
 	VerificationRequest
 	LogInRequest
 	LogInReply
-	SwitchRequest
-	SwitchAnswer
 	PasswordResetRequest
 	PasswordSetRequest
 	PasswordChangeRequest
 	ForgotLoginRequest
 	GetUserRequest
 	GetUserReply
-	GetUserOrganizationsRequest
-	GetUserOrganizationsReply
 	ListUsersRequest
 	ListUsersReply
 	DeleteUserRequest
-	CreateOrganizationRequest
-	AddUserToOrganizationRequest
-	RemoveUserFromOrganizationRequest
-	ChangeOrganizationMemberRoleRequest
-	GetOrganizationRequest
-	GetOrganizationReply
-	ListOrganizationsRequest
-	ListOrganizationsReply
-	DeleteOrganizationRequest
-	CreateTeamRequest
-	AddUserToTeamRequest
-	RemoveUserFromTeamRequest
-	ChangeTeamResourcePermissionLevelRequest
-	ChangeTeamNameRequest
-	GetTeamRequest
-	GetTeamReply
-	ListTeamsRequest
-	ListTeamsReply
-	DeleteTeamRequest
 */
 package account
 
@@ -168,38 +145,6 @@ func (m *LogInReply) GetAuth() string {
 	return ""
 }
 
-type SwitchRequest struct {
-	Account string `protobuf:"bytes,1,opt,name=account" json:"account,omitempty"`
-}
-
-func (m *SwitchRequest) Reset()                    { *m = SwitchRequest{} }
-func (m *SwitchRequest) String() string            { return proto.CompactTextString(m) }
-func (*SwitchRequest) ProtoMessage()               {}
-func (*SwitchRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *SwitchRequest) GetAccount() string {
-	if m != nil {
-		return m.Account
-	}
-	return ""
-}
-
-type SwitchAnswer struct {
-	Auth string `protobuf:"bytes,1,opt,name=auth" json:"auth,omitempty"`
-}
-
-func (m *SwitchAnswer) Reset()                    { *m = SwitchAnswer{} }
-func (m *SwitchAnswer) String() string            { return proto.CompactTextString(m) }
-func (*SwitchAnswer) ProtoMessage()               {}
-func (*SwitchAnswer) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *SwitchAnswer) GetAuth() string {
-	if m != nil {
-		return m.Auth
-	}
-	return ""
-}
-
 type PasswordResetRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 }
@@ -207,7 +152,7 @@ type PasswordResetRequest struct {
 func (m *PasswordResetRequest) Reset()                    { *m = PasswordResetRequest{} }
 func (m *PasswordResetRequest) String() string            { return proto.CompactTextString(m) }
 func (*PasswordResetRequest) ProtoMessage()               {}
-func (*PasswordResetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*PasswordResetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *PasswordResetRequest) GetName() string {
 	if m != nil {
@@ -224,7 +169,7 @@ type PasswordSetRequest struct {
 func (m *PasswordSetRequest) Reset()                    { *m = PasswordSetRequest{} }
 func (m *PasswordSetRequest) String() string            { return proto.CompactTextString(m) }
 func (*PasswordSetRequest) ProtoMessage()               {}
-func (*PasswordSetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*PasswordSetRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *PasswordSetRequest) GetToken() string {
 	if m != nil {
@@ -248,7 +193,7 @@ type PasswordChangeRequest struct {
 func (m *PasswordChangeRequest) Reset()                    { *m = PasswordChangeRequest{} }
 func (m *PasswordChangeRequest) String() string            { return proto.CompactTextString(m) }
 func (*PasswordChangeRequest) ProtoMessage()               {}
-func (*PasswordChangeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*PasswordChangeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *PasswordChangeRequest) GetExistingPassword() string {
 	if m != nil {
@@ -271,7 +216,7 @@ type ForgotLoginRequest struct {
 func (m *ForgotLoginRequest) Reset()                    { *m = ForgotLoginRequest{} }
 func (m *ForgotLoginRequest) String() string            { return proto.CompactTextString(m) }
 func (*ForgotLoginRequest) ProtoMessage()               {}
-func (*ForgotLoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (*ForgotLoginRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *ForgotLoginRequest) GetEmail() string {
 	if m != nil {
@@ -287,7 +232,7 @@ type GetUserRequest struct {
 func (m *GetUserRequest) Reset()                    { *m = GetUserRequest{} }
 func (m *GetUserRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetUserRequest) ProtoMessage()               {}
-func (*GetUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+func (*GetUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
 func (m *GetUserRequest) GetName() string {
 	if m != nil {
@@ -303,43 +248,11 @@ type GetUserReply struct {
 func (m *GetUserReply) Reset()                    { *m = GetUserReply{} }
 func (m *GetUserReply) String() string            { return proto.CompactTextString(m) }
 func (*GetUserReply) ProtoMessage()               {}
-func (*GetUserReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+func (*GetUserReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *GetUserReply) GetUser() *accounts.User {
 	if m != nil {
 		return m.User
-	}
-	return nil
-}
-
-type GetUserOrganizationsRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *GetUserOrganizationsRequest) Reset()                    { *m = GetUserOrganizationsRequest{} }
-func (m *GetUserOrganizationsRequest) String() string            { return proto.CompactTextString(m) }
-func (*GetUserOrganizationsRequest) ProtoMessage()               {}
-func (*GetUserOrganizationsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
-
-func (m *GetUserOrganizationsRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-type GetUserOrganizationsReply struct {
-	Organizations []*accounts.Organization `protobuf:"bytes,1,rep,name=organizations" json:"organizations,omitempty"`
-}
-
-func (m *GetUserOrganizationsReply) Reset()                    { *m = GetUserOrganizationsReply{} }
-func (m *GetUserOrganizationsReply) String() string            { return proto.CompactTextString(m) }
-func (*GetUserOrganizationsReply) ProtoMessage()               {}
-func (*GetUserOrganizationsReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
-
-func (m *GetUserOrganizationsReply) GetOrganizations() []*accounts.Organization {
-	if m != nil {
-		return m.Organizations
 	}
 	return nil
 }
@@ -350,7 +263,7 @@ type ListUsersRequest struct {
 func (m *ListUsersRequest) Reset()                    { *m = ListUsersRequest{} }
 func (m *ListUsersRequest) String() string            { return proto.CompactTextString(m) }
 func (*ListUsersRequest) ProtoMessage()               {}
-func (*ListUsersRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+func (*ListUsersRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 type ListUsersReply struct {
 	Users []*accounts.User `protobuf:"bytes,1,rep,name=users" json:"users,omitempty"`
@@ -359,7 +272,7 @@ type ListUsersReply struct {
 func (m *ListUsersReply) Reset()                    { *m = ListUsersReply{} }
 func (m *ListUsersReply) String() string            { return proto.CompactTextString(m) }
 func (*ListUsersReply) ProtoMessage()               {}
-func (*ListUsersReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+func (*ListUsersReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *ListUsersReply) GetUsers() []*accounts.User {
 	if m != nil {
@@ -375,453 +288,11 @@ type DeleteUserRequest struct {
 func (m *DeleteUserRequest) Reset()                    { *m = DeleteUserRequest{} }
 func (m *DeleteUserRequest) String() string            { return proto.CompactTextString(m) }
 func (*DeleteUserRequest) ProtoMessage()               {}
-func (*DeleteUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+func (*DeleteUserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
 func (m *DeleteUserRequest) GetName() string {
 	if m != nil {
 		return m.Name
-	}
-	return ""
-}
-
-// Organizations
-type CreateOrganizationRequest struct {
-	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Email string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
-}
-
-func (m *CreateOrganizationRequest) Reset()                    { *m = CreateOrganizationRequest{} }
-func (m *CreateOrganizationRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateOrganizationRequest) ProtoMessage()               {}
-func (*CreateOrganizationRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
-
-func (m *CreateOrganizationRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *CreateOrganizationRequest) GetEmail() string {
-	if m != nil {
-		return m.Email
-	}
-	return ""
-}
-
-type AddUserToOrganizationRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	UserName         string `protobuf:"bytes,2,opt,name=user_name,json=userName" json:"user_name,omitempty"`
-}
-
-func (m *AddUserToOrganizationRequest) Reset()                    { *m = AddUserToOrganizationRequest{} }
-func (m *AddUserToOrganizationRequest) String() string            { return proto.CompactTextString(m) }
-func (*AddUserToOrganizationRequest) ProtoMessage()               {}
-func (*AddUserToOrganizationRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
-
-func (m *AddUserToOrganizationRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *AddUserToOrganizationRequest) GetUserName() string {
-	if m != nil {
-		return m.UserName
-	}
-	return ""
-}
-
-type RemoveUserFromOrganizationRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	UserName         string `protobuf:"bytes,2,opt,name=user_name,json=userName" json:"user_name,omitempty"`
-}
-
-func (m *RemoveUserFromOrganizationRequest) Reset()         { *m = RemoveUserFromOrganizationRequest{} }
-func (m *RemoveUserFromOrganizationRequest) String() string { return proto.CompactTextString(m) }
-func (*RemoveUserFromOrganizationRequest) ProtoMessage()    {}
-func (*RemoveUserFromOrganizationRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{19}
-}
-
-func (m *RemoveUserFromOrganizationRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *RemoveUserFromOrganizationRequest) GetUserName() string {
-	if m != nil {
-		return m.UserName
-	}
-	return ""
-}
-
-type ChangeOrganizationMemberRoleRequest struct {
-	OrganizationName string                    `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	UserName         string                    `protobuf:"bytes,2,opt,name=user_name,json=userName" json:"user_name,omitempty"`
-	Role             accounts.OrganizationRole `protobuf:"varint,3,opt,name=role,enum=accounts.OrganizationRole" json:"role,omitempty"`
-}
-
-func (m *ChangeOrganizationMemberRoleRequest) Reset()         { *m = ChangeOrganizationMemberRoleRequest{} }
-func (m *ChangeOrganizationMemberRoleRequest) String() string { return proto.CompactTextString(m) }
-func (*ChangeOrganizationMemberRoleRequest) ProtoMessage()    {}
-func (*ChangeOrganizationMemberRoleRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{20}
-}
-
-func (m *ChangeOrganizationMemberRoleRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *ChangeOrganizationMemberRoleRequest) GetUserName() string {
-	if m != nil {
-		return m.UserName
-	}
-	return ""
-}
-
-func (m *ChangeOrganizationMemberRoleRequest) GetRole() accounts.OrganizationRole {
-	if m != nil {
-		return m.Role
-	}
-	return accounts.OrganizationRole_ORGANIZATION_MEMBER
-}
-
-type GetOrganizationRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *GetOrganizationRequest) Reset()                    { *m = GetOrganizationRequest{} }
-func (m *GetOrganizationRequest) String() string            { return proto.CompactTextString(m) }
-func (*GetOrganizationRequest) ProtoMessage()               {}
-func (*GetOrganizationRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
-
-func (m *GetOrganizationRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-type GetOrganizationReply struct {
-	Organization *accounts.Organization `protobuf:"bytes,1,opt,name=organization" json:"organization,omitempty"`
-}
-
-func (m *GetOrganizationReply) Reset()                    { *m = GetOrganizationReply{} }
-func (m *GetOrganizationReply) String() string            { return proto.CompactTextString(m) }
-func (*GetOrganizationReply) ProtoMessage()               {}
-func (*GetOrganizationReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
-
-func (m *GetOrganizationReply) GetOrganization() *accounts.Organization {
-	if m != nil {
-		return m.Organization
-	}
-	return nil
-}
-
-type ListOrganizationsRequest struct {
-}
-
-func (m *ListOrganizationsRequest) Reset()                    { *m = ListOrganizationsRequest{} }
-func (m *ListOrganizationsRequest) String() string            { return proto.CompactTextString(m) }
-func (*ListOrganizationsRequest) ProtoMessage()               {}
-func (*ListOrganizationsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{23} }
-
-type ListOrganizationsReply struct {
-	Organizations []*accounts.Organization `protobuf:"bytes,1,rep,name=organizations" json:"organizations,omitempty"`
-}
-
-func (m *ListOrganizationsReply) Reset()                    { *m = ListOrganizationsReply{} }
-func (m *ListOrganizationsReply) String() string            { return proto.CompactTextString(m) }
-func (*ListOrganizationsReply) ProtoMessage()               {}
-func (*ListOrganizationsReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{24} }
-
-func (m *ListOrganizationsReply) GetOrganizations() []*accounts.Organization {
-	if m != nil {
-		return m.Organizations
-	}
-	return nil
-}
-
-type DeleteOrganizationRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *DeleteOrganizationRequest) Reset()                    { *m = DeleteOrganizationRequest{} }
-func (m *DeleteOrganizationRequest) String() string            { return proto.CompactTextString(m) }
-func (*DeleteOrganizationRequest) ProtoMessage()               {}
-func (*DeleteOrganizationRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{25} }
-
-func (m *DeleteOrganizationRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-// Teams
-type CreateTeamRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-}
-
-func (m *CreateTeamRequest) Reset()                    { *m = CreateTeamRequest{} }
-func (m *CreateTeamRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateTeamRequest) ProtoMessage()               {}
-func (*CreateTeamRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{26} }
-
-func (m *CreateTeamRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *CreateTeamRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-type AddUserToTeamRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-	UserName         string `protobuf:"bytes,3,opt,name=user_name,json=userName" json:"user_name,omitempty"`
-}
-
-func (m *AddUserToTeamRequest) Reset()                    { *m = AddUserToTeamRequest{} }
-func (m *AddUserToTeamRequest) String() string            { return proto.CompactTextString(m) }
-func (*AddUserToTeamRequest) ProtoMessage()               {}
-func (*AddUserToTeamRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{27} }
-
-func (m *AddUserToTeamRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *AddUserToTeamRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-func (m *AddUserToTeamRequest) GetUserName() string {
-	if m != nil {
-		return m.UserName
-	}
-	return ""
-}
-
-type RemoveUserFromTeamRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-	UserName         string `protobuf:"bytes,3,opt,name=user_name,json=userName" json:"user_name,omitempty"`
-}
-
-func (m *RemoveUserFromTeamRequest) Reset()                    { *m = RemoveUserFromTeamRequest{} }
-func (m *RemoveUserFromTeamRequest) String() string            { return proto.CompactTextString(m) }
-func (*RemoveUserFromTeamRequest) ProtoMessage()               {}
-func (*RemoveUserFromTeamRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{28} }
-
-func (m *RemoveUserFromTeamRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *RemoveUserFromTeamRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-func (m *RemoveUserFromTeamRequest) GetUserName() string {
-	if m != nil {
-		return m.UserName
-	}
-	return ""
-}
-
-type ChangeTeamResourcePermissionLevelRequest struct {
-	OrganizationName string                       `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string                       `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-	ResourceId       string                       `protobuf:"bytes,3,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
-	PermissionLevel  accounts.TeamPermissionLevel `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=accounts.TeamPermissionLevel" json:"permission_level,omitempty"`
-}
-
-func (m *ChangeTeamResourcePermissionLevelRequest) Reset() {
-	*m = ChangeTeamResourcePermissionLevelRequest{}
-}
-func (m *ChangeTeamResourcePermissionLevelRequest) String() string { return proto.CompactTextString(m) }
-func (*ChangeTeamResourcePermissionLevelRequest) ProtoMessage()    {}
-func (*ChangeTeamResourcePermissionLevelRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{29}
-}
-
-func (m *ChangeTeamResourcePermissionLevelRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *ChangeTeamResourcePermissionLevelRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-func (m *ChangeTeamResourcePermissionLevelRequest) GetResourceId() string {
-	if m != nil {
-		return m.ResourceId
-	}
-	return ""
-}
-
-func (m *ChangeTeamResourcePermissionLevelRequest) GetPermissionLevel() accounts.TeamPermissionLevel {
-	if m != nil {
-		return m.PermissionLevel
-	}
-	return accounts.TeamPermissionLevel_TEAM_READ
-}
-
-type ChangeTeamNameRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-	NewName          string `protobuf:"bytes,3,opt,name=new_name,json=newName" json:"new_name,omitempty"`
-}
-
-func (m *ChangeTeamNameRequest) Reset()                    { *m = ChangeTeamNameRequest{} }
-func (m *ChangeTeamNameRequest) String() string            { return proto.CompactTextString(m) }
-func (*ChangeTeamNameRequest) ProtoMessage()               {}
-func (*ChangeTeamNameRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{30} }
-
-func (m *ChangeTeamNameRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *ChangeTeamNameRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-func (m *ChangeTeamNameRequest) GetNewName() string {
-	if m != nil {
-		return m.NewName
-	}
-	return ""
-}
-
-type GetTeamRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-}
-
-func (m *GetTeamRequest) Reset()                    { *m = GetTeamRequest{} }
-func (m *GetTeamRequest) String() string            { return proto.CompactTextString(m) }
-func (*GetTeamRequest) ProtoMessage()               {}
-func (*GetTeamRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{31} }
-
-func (m *GetTeamRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *GetTeamRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
-	}
-	return ""
-}
-
-type GetTeamReply struct {
-	Team *accounts.Team `protobuf:"bytes,1,opt,name=team" json:"team,omitempty"`
-}
-
-func (m *GetTeamReply) Reset()                    { *m = GetTeamReply{} }
-func (m *GetTeamReply) String() string            { return proto.CompactTextString(m) }
-func (*GetTeamReply) ProtoMessage()               {}
-func (*GetTeamReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{32} }
-
-func (m *GetTeamReply) GetTeam() *accounts.Team {
-	if m != nil {
-		return m.Team
-	}
-	return nil
-}
-
-type ListTeamsRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-}
-
-func (m *ListTeamsRequest) Reset()                    { *m = ListTeamsRequest{} }
-func (m *ListTeamsRequest) String() string            { return proto.CompactTextString(m) }
-func (*ListTeamsRequest) ProtoMessage()               {}
-func (*ListTeamsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{33} }
-
-func (m *ListTeamsRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-type ListTeamsReply struct {
-	Teams []*accounts.Team `protobuf:"bytes,1,rep,name=teams" json:"teams,omitempty"`
-}
-
-func (m *ListTeamsReply) Reset()                    { *m = ListTeamsReply{} }
-func (m *ListTeamsReply) String() string            { return proto.CompactTextString(m) }
-func (*ListTeamsReply) ProtoMessage()               {}
-func (*ListTeamsReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{34} }
-
-func (m *ListTeamsReply) GetTeams() []*accounts.Team {
-	if m != nil {
-		return m.Teams
-	}
-	return nil
-}
-
-type DeleteTeamRequest struct {
-	OrganizationName string `protobuf:"bytes,1,opt,name=organization_name,json=organizationName" json:"organization_name,omitempty"`
-	TeamName         string `protobuf:"bytes,2,opt,name=team_name,json=teamName" json:"team_name,omitempty"`
-}
-
-func (m *DeleteTeamRequest) Reset()                    { *m = DeleteTeamRequest{} }
-func (m *DeleteTeamRequest) String() string            { return proto.CompactTextString(m) }
-func (*DeleteTeamRequest) ProtoMessage()               {}
-func (*DeleteTeamRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{35} }
-
-func (m *DeleteTeamRequest) GetOrganizationName() string {
-	if m != nil {
-		return m.OrganizationName
-	}
-	return ""
-}
-
-func (m *DeleteTeamRequest) GetTeamName() string {
-	if m != nil {
-		return m.TeamName
 	}
 	return ""
 }
@@ -831,38 +302,15 @@ func init() {
 	proto.RegisterType((*VerificationRequest)(nil), "account.VerificationRequest")
 	proto.RegisterType((*LogInRequest)(nil), "account.LogInRequest")
 	proto.RegisterType((*LogInReply)(nil), "account.LogInReply")
-	proto.RegisterType((*SwitchRequest)(nil), "account.SwitchRequest")
-	proto.RegisterType((*SwitchAnswer)(nil), "account.SwitchAnswer")
 	proto.RegisterType((*PasswordResetRequest)(nil), "account.PasswordResetRequest")
 	proto.RegisterType((*PasswordSetRequest)(nil), "account.PasswordSetRequest")
 	proto.RegisterType((*PasswordChangeRequest)(nil), "account.PasswordChangeRequest")
 	proto.RegisterType((*ForgotLoginRequest)(nil), "account.ForgotLoginRequest")
 	proto.RegisterType((*GetUserRequest)(nil), "account.GetUserRequest")
 	proto.RegisterType((*GetUserReply)(nil), "account.GetUserReply")
-	proto.RegisterType((*GetUserOrganizationsRequest)(nil), "account.GetUserOrganizationsRequest")
-	proto.RegisterType((*GetUserOrganizationsReply)(nil), "account.GetUserOrganizationsReply")
 	proto.RegisterType((*ListUsersRequest)(nil), "account.ListUsersRequest")
 	proto.RegisterType((*ListUsersReply)(nil), "account.ListUsersReply")
 	proto.RegisterType((*DeleteUserRequest)(nil), "account.DeleteUserRequest")
-	proto.RegisterType((*CreateOrganizationRequest)(nil), "account.CreateOrganizationRequest")
-	proto.RegisterType((*AddUserToOrganizationRequest)(nil), "account.AddUserToOrganizationRequest")
-	proto.RegisterType((*RemoveUserFromOrganizationRequest)(nil), "account.RemoveUserFromOrganizationRequest")
-	proto.RegisterType((*ChangeOrganizationMemberRoleRequest)(nil), "account.ChangeOrganizationMemberRoleRequest")
-	proto.RegisterType((*GetOrganizationRequest)(nil), "account.GetOrganizationRequest")
-	proto.RegisterType((*GetOrganizationReply)(nil), "account.GetOrganizationReply")
-	proto.RegisterType((*ListOrganizationsRequest)(nil), "account.ListOrganizationsRequest")
-	proto.RegisterType((*ListOrganizationsReply)(nil), "account.ListOrganizationsReply")
-	proto.RegisterType((*DeleteOrganizationRequest)(nil), "account.DeleteOrganizationRequest")
-	proto.RegisterType((*CreateTeamRequest)(nil), "account.CreateTeamRequest")
-	proto.RegisterType((*AddUserToTeamRequest)(nil), "account.AddUserToTeamRequest")
-	proto.RegisterType((*RemoveUserFromTeamRequest)(nil), "account.RemoveUserFromTeamRequest")
-	proto.RegisterType((*ChangeTeamResourcePermissionLevelRequest)(nil), "account.ChangeTeamResourcePermissionLevelRequest")
-	proto.RegisterType((*ChangeTeamNameRequest)(nil), "account.ChangeTeamNameRequest")
-	proto.RegisterType((*GetTeamRequest)(nil), "account.GetTeamRequest")
-	proto.RegisterType((*GetTeamReply)(nil), "account.GetTeamReply")
-	proto.RegisterType((*ListTeamsRequest)(nil), "account.ListTeamsRequest")
-	proto.RegisterType((*ListTeamsReply)(nil), "account.ListTeamsReply")
-	proto.RegisterType((*DeleteTeamRequest)(nil), "account.DeleteTeamRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -880,33 +328,14 @@ type AccountClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	Verify(ctx context.Context, in *VerificationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	Login(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInReply, error)
-	Switch(ctx context.Context, in *SwitchRequest, opts ...grpc.CallOption) (*SwitchAnswer, error)
 	// Users
 	PasswordReset(ctx context.Context, in *PasswordResetRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	PasswordSet(ctx context.Context, in *PasswordSetRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	PasswordChange(ctx context.Context, in *PasswordChangeRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	ForgotLogin(ctx context.Context, in *ForgotLoginRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserReply, error)
-	GetUserOrganizations(ctx context.Context, in *GetUserOrganizationsRequest, opts ...grpc.CallOption) (*GetUserOrganizationsReply, error)
 	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersReply, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	// Organizations
-	CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrganizationMemberRoleRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*GetOrganizationReply, error)
-	ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*ListOrganizationsReply, error)
-	DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	// Teams
-	CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	ChangeTeamResourcePermissionLevel(ctx context.Context, in *ChangeTeamResourcePermissionLevelRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	ChangeTeamName(ctx context.Context, in *ChangeTeamNameRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
-	GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamReply, error)
-	ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsReply, error)
-	DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error)
 }
 
 type accountClient struct {
@@ -938,15 +367,6 @@ func (c *accountClient) Verify(ctx context.Context, in *VerificationRequest, opt
 func (c *accountClient) Login(ctx context.Context, in *LogInRequest, opts ...grpc.CallOption) (*LogInReply, error) {
 	out := new(LogInReply)
 	err := grpc.Invoke(ctx, "/account.Account/Login", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) Switch(ctx context.Context, in *SwitchRequest, opts ...grpc.CallOption) (*SwitchAnswer, error) {
-	out := new(SwitchAnswer)
-	err := grpc.Invoke(ctx, "/account.Account/Switch", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -998,15 +418,6 @@ func (c *accountClient) GetUser(ctx context.Context, in *GetUserRequest, opts ..
 	return out, nil
 }
 
-func (c *accountClient) GetUserOrganizations(ctx context.Context, in *GetUserOrganizationsRequest, opts ...grpc.CallOption) (*GetUserOrganizationsReply, error) {
-	out := new(GetUserOrganizationsReply)
-	err := grpc.Invoke(ctx, "/account.Account/GetUserOrganizations", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *accountClient) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersReply, error) {
 	out := new(ListUsersReply)
 	err := grpc.Invoke(ctx, "/account.Account/ListUsers", in, out, c.cc, opts...)
@@ -1025,141 +436,6 @@ func (c *accountClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, o
 	return out, nil
 }
 
-func (c *accountClient) CreateOrganization(ctx context.Context, in *CreateOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/CreateOrganization", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) AddUserToOrganization(ctx context.Context, in *AddUserToOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/AddUserToOrganization", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserFromOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/RemoveUserFromOrganization", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrganizationMemberRoleRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/ChangeOrganizationMemberRole", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) GetOrganization(ctx context.Context, in *GetOrganizationRequest, opts ...grpc.CallOption) (*GetOrganizationReply, error) {
-	out := new(GetOrganizationReply)
-	err := grpc.Invoke(ctx, "/account.Account/GetOrganization", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) ListOrganizations(ctx context.Context, in *ListOrganizationsRequest, opts ...grpc.CallOption) (*ListOrganizationsReply, error) {
-	out := new(ListOrganizationsReply)
-	err := grpc.Invoke(ctx, "/account.Account/ListOrganizations", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/DeleteOrganization", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) CreateTeam(ctx context.Context, in *CreateTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/CreateTeam", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/AddUserToTeam", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/RemoveUserFromTeam", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) ChangeTeamResourcePermissionLevel(ctx context.Context, in *ChangeTeamResourcePermissionLevelRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/ChangeTeamResourcePermissionLevel", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) ChangeTeamName(ctx context.Context, in *ChangeTeamNameRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/ChangeTeamName", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) GetTeam(ctx context.Context, in *GetTeamRequest, opts ...grpc.CallOption) (*GetTeamReply, error) {
-	out := new(GetTeamReply)
-	err := grpc.Invoke(ctx, "/account.Account/GetTeam", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) ListTeams(ctx context.Context, in *ListTeamsRequest, opts ...grpc.CallOption) (*ListTeamsReply, error) {
-	out := new(ListTeamsReply)
-	err := grpc.Invoke(ctx, "/account.Account/ListTeams", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountClient) DeleteTeam(ctx context.Context, in *DeleteTeamRequest, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
-	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/account.Account/DeleteTeam", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Server API for Account service
 
 type AccountServer interface {
@@ -1167,33 +443,14 @@ type AccountServer interface {
 	SignUp(context.Context, *SignUpRequest) (*google_protobuf.Empty, error)
 	Verify(context.Context, *VerificationRequest) (*google_protobuf.Empty, error)
 	Login(context.Context, *LogInRequest) (*LogInReply, error)
-	Switch(context.Context, *SwitchRequest) (*SwitchAnswer, error)
 	// Users
 	PasswordReset(context.Context, *PasswordResetRequest) (*google_protobuf.Empty, error)
 	PasswordSet(context.Context, *PasswordSetRequest) (*google_protobuf.Empty, error)
 	PasswordChange(context.Context, *PasswordChangeRequest) (*google_protobuf.Empty, error)
 	ForgotLogin(context.Context, *ForgotLoginRequest) (*google_protobuf.Empty, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserReply, error)
-	GetUserOrganizations(context.Context, *GetUserOrganizationsRequest) (*GetUserOrganizationsReply, error)
 	ListUsers(context.Context, *ListUsersRequest) (*ListUsersReply, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*google_protobuf.Empty, error)
-	// Organizations
-	CreateOrganization(context.Context, *CreateOrganizationRequest) (*google_protobuf.Empty, error)
-	AddUserToOrganization(context.Context, *AddUserToOrganizationRequest) (*google_protobuf.Empty, error)
-	RemoveUserFromOrganization(context.Context, *RemoveUserFromOrganizationRequest) (*google_protobuf.Empty, error)
-	ChangeOrganizationMemberRole(context.Context, *ChangeOrganizationMemberRoleRequest) (*google_protobuf.Empty, error)
-	GetOrganization(context.Context, *GetOrganizationRequest) (*GetOrganizationReply, error)
-	ListOrganizations(context.Context, *ListOrganizationsRequest) (*ListOrganizationsReply, error)
-	DeleteOrganization(context.Context, *DeleteOrganizationRequest) (*google_protobuf.Empty, error)
-	// Teams
-	CreateTeam(context.Context, *CreateTeamRequest) (*google_protobuf.Empty, error)
-	AddUserToTeam(context.Context, *AddUserToTeamRequest) (*google_protobuf.Empty, error)
-	RemoveUserFromTeam(context.Context, *RemoveUserFromTeamRequest) (*google_protobuf.Empty, error)
-	ChangeTeamResourcePermissionLevel(context.Context, *ChangeTeamResourcePermissionLevelRequest) (*google_protobuf.Empty, error)
-	ChangeTeamName(context.Context, *ChangeTeamNameRequest) (*google_protobuf.Empty, error)
-	GetTeam(context.Context, *GetTeamRequest) (*GetTeamReply, error)
-	ListTeams(context.Context, *ListTeamsRequest) (*ListTeamsReply, error)
-	DeleteTeam(context.Context, *DeleteTeamRequest) (*google_protobuf.Empty, error)
 }
 
 func RegisterAccountServer(s *grpc.Server, srv AccountServer) {
@@ -1250,24 +507,6 @@ func _Account_Login_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServer).Login(ctx, req.(*LogInRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_Switch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SwitchRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).Switch(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/Switch",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).Switch(ctx, req.(*SwitchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1362,24 +601,6 @@ func _Account_GetUser_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_GetUserOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserOrganizationsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).GetUserOrganizations(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/GetUserOrganizations",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetUserOrganizations(ctx, req.(*GetUserOrganizationsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Account_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListUsersRequest)
 	if err := dec(in); err != nil {
@@ -1416,276 +637,6 @@ func _Account_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Account_CreateOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateOrganizationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).CreateOrganization(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/CreateOrganization",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).CreateOrganization(ctx, req.(*CreateOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_AddUserToOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddUserToOrganizationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).AddUserToOrganization(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/AddUserToOrganization",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).AddUserToOrganization(ctx, req.(*AddUserToOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_RemoveUserFromOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveUserFromOrganizationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).RemoveUserFromOrganization(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/RemoveUserFromOrganization",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).RemoveUserFromOrganization(ctx, req.(*RemoveUserFromOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_ChangeOrganizationMemberRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeOrganizationMemberRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).ChangeOrganizationMemberRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/ChangeOrganizationMemberRole",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ChangeOrganizationMemberRole(ctx, req.(*ChangeOrganizationMemberRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_GetOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrganizationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).GetOrganization(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/GetOrganization",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetOrganization(ctx, req.(*GetOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_ListOrganizations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListOrganizationsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).ListOrganizations(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/ListOrganizations",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ListOrganizations(ctx, req.(*ListOrganizationsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_DeleteOrganization_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteOrganizationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).DeleteOrganization(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/DeleteOrganization",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).DeleteOrganization(ctx, req.(*DeleteOrganizationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_CreateTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).CreateTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/CreateTeam",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).CreateTeam(ctx, req.(*CreateTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_AddUserToTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddUserToTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).AddUserToTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/AddUserToTeam",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).AddUserToTeam(ctx, req.(*AddUserToTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_RemoveUserFromTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveUserFromTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).RemoveUserFromTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/RemoveUserFromTeam",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).RemoveUserFromTeam(ctx, req.(*RemoveUserFromTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_ChangeTeamResourcePermissionLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeTeamResourcePermissionLevelRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).ChangeTeamResourcePermissionLevel(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/ChangeTeamResourcePermissionLevel",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ChangeTeamResourcePermissionLevel(ctx, req.(*ChangeTeamResourcePermissionLevelRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_ChangeTeamName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeTeamNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).ChangeTeamName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/ChangeTeamName",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ChangeTeamName(ctx, req.(*ChangeTeamNameRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_GetTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).GetTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/GetTeam",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).GetTeam(ctx, req.(*GetTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_ListTeams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListTeamsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).ListTeams(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/ListTeams",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).ListTeams(ctx, req.(*ListTeamsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Account_DeleteTeam_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteTeamRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServer).DeleteTeam(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/account.Account/DeleteTeam",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServer).DeleteTeam(ctx, req.(*DeleteTeamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Account_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "account.Account",
 	HandlerType: (*AccountServer)(nil),
@@ -1701,10 +652,6 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _Account_Login_Handler,
-		},
-		{
-			MethodName: "Switch",
-			Handler:    _Account_Switch_Handler,
 		},
 		{
 			MethodName: "PasswordReset",
@@ -1727,76 +674,12 @@ var _Account_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Account_GetUser_Handler,
 		},
 		{
-			MethodName: "GetUserOrganizations",
-			Handler:    _Account_GetUserOrganizations_Handler,
-		},
-		{
 			MethodName: "ListUsers",
 			Handler:    _Account_ListUsers_Handler,
 		},
 		{
 			MethodName: "DeleteUser",
 			Handler:    _Account_DeleteUser_Handler,
-		},
-		{
-			MethodName: "CreateOrganization",
-			Handler:    _Account_CreateOrganization_Handler,
-		},
-		{
-			MethodName: "AddUserToOrganization",
-			Handler:    _Account_AddUserToOrganization_Handler,
-		},
-		{
-			MethodName: "RemoveUserFromOrganization",
-			Handler:    _Account_RemoveUserFromOrganization_Handler,
-		},
-		{
-			MethodName: "ChangeOrganizationMemberRole",
-			Handler:    _Account_ChangeOrganizationMemberRole_Handler,
-		},
-		{
-			MethodName: "GetOrganization",
-			Handler:    _Account_GetOrganization_Handler,
-		},
-		{
-			MethodName: "ListOrganizations",
-			Handler:    _Account_ListOrganizations_Handler,
-		},
-		{
-			MethodName: "DeleteOrganization",
-			Handler:    _Account_DeleteOrganization_Handler,
-		},
-		{
-			MethodName: "CreateTeam",
-			Handler:    _Account_CreateTeam_Handler,
-		},
-		{
-			MethodName: "AddUserToTeam",
-			Handler:    _Account_AddUserToTeam_Handler,
-		},
-		{
-			MethodName: "RemoveUserFromTeam",
-			Handler:    _Account_RemoveUserFromTeam_Handler,
-		},
-		{
-			MethodName: "ChangeTeamResourcePermissionLevel",
-			Handler:    _Account_ChangeTeamResourcePermissionLevel_Handler,
-		},
-		{
-			MethodName: "ChangeTeamName",
-			Handler:    _Account_ChangeTeamName_Handler,
-		},
-		{
-			MethodName: "GetTeam",
-			Handler:    _Account_GetTeam_Handler,
-		},
-		{
-			MethodName: "ListTeams",
-			Handler:    _Account_ListTeams_Handler,
-		},
-		{
-			MethodName: "DeleteTeam",
-			Handler:    _Account_DeleteTeam_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1808,106 +691,51 @@ func init() {
 }
 
 var fileDescriptor0 = []byte{
-	// 1601 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x57, 0x5b, 0x6f, 0x13, 0xd7,
-	0x16, 0xd6, 0x90, 0x1b, 0x59, 0x4e, 0x4c, 0xb2, 0xb1, 0x83, 0x3d, 0x09, 0x24, 0xd9, 0x27, 0x9c,
-	0x93, 0x63, 0xa8, 0x07, 0x8c, 0x44, 0x81, 0x56, 0xa0, 0x88, 0x5b, 0x69, 0xc3, 0x45, 0x0e, 0x20,
-	0x35, 0x52, 0x85, 0x26, 0xf6, 0x66, 0x32, 0xaa, 0xe7, 0xc2, 0xcc, 0x38, 0x21, 0xb8, 0x79, 0x28,
-	0x4f, 0x7d, 0xac, 0xda, 0xd7, 0x4a, 0x7d, 0xa8, 0xfa, 0xd2, 0x9f, 0xd2, 0xd7, 0xfe, 0x80, 0xf6,
-	0xa1, 0x3f, 0xa4, 0xda, 0x6b, 0x2e, 0xde, 0x73, 0xb3, 0x83, 0x21, 0xea, 0x4b, 0xe2, 0xd9, 0x7b,
-	0xcd, 0xfa, 0xbe, 0xb5, 0xd7, 0x5a, 0xb3, 0xbf, 0x05, 0xd7, 0x35, 0xdd, 0xdb, 0xed, 0xee, 0xd4,
-	0x5b, 0x96, 0xa1, 0xa8, 0xb6, 0xdd, 0x62, 0x1d, 0xe6, 0xa8, 0x9e, 0xe5, 0x28, 0xaa, 0x61, 0x2b,
-	0xaa, 0xad, 0x2b, 0x8e, 0xdd, 0x52, 0xd4, 0x56, 0xcb, 0xea, 0x9a, 0x5e, 0xf8, 0xbf, 0x6e, 0x3b,
-	0x96, 0x67, 0x91, 0xa9, 0xe0, 0x51, 0xbe, 0x22, 0xf8, 0xd0, 0xac, 0x8e, 0x6a, 0x6a, 0x0a, 0x5a,
-	0xec, 0x74, 0x5f, 0x2a, 0xb6, 0x77, 0x60, 0x33, 0x57, 0x61, 0x86, 0xed, 0x1d, 0xf8, 0x7f, 0xfd,
-	0xb7, 0xe5, 0x6b, 0x83, 0x80, 0xdb, 0xaa, 0xa7, 0x86, 0x68, 0x6e, 0xf4, 0x23, 0x78, 0x73, 0x49,
-	0xb3, 0x2c, 0xad, 0xc3, 0x90, 0x9d, 0x6a, 0x9a, 0x96, 0xa7, 0x7a, 0xba, 0x65, 0x06, 0xbb, 0x54,
-	0x83, 0xd9, 0x2d, 0x5d, 0x33, 0x9f, 0xd9, 0x4d, 0xf6, 0xaa, 0xcb, 0x5c, 0x8f, 0x10, 0x18, 0x37,
-	0x55, 0x83, 0x55, 0xa4, 0x15, 0x69, 0x7d, 0xba, 0x89, 0xbf, 0x89, 0x0c, 0x27, 0x6d, 0xd5, 0x75,
-	0xf7, 0x2d, 0xa7, 0x5d, 0x39, 0x81, 0xeb, 0xd1, 0x33, 0x29, 0xc1, 0x04, 0x33, 0x54, 0xbd, 0x53,
-	0x19, 0xc3, 0x0d, 0xff, 0x81, 0xcc, 0xc1, 0x58, 0xd7, 0xe9, 0x54, 0xc6, 0x71, 0x8d, 0xff, 0xa4,
-	0x17, 0xe0, 0xf4, 0x73, 0xe6, 0xe8, 0x2f, 0xf5, 0x16, 0xe2, 0x87, 0x70, 0x25, 0x98, 0xf0, 0xac,
-	0xaf, 0x99, 0x19, 0xe0, 0xf9, 0x0f, 0xf4, 0x26, 0xcc, 0x6c, 0x5a, 0xda, 0x03, 0x73, 0x44, 0x52,
-	0x74, 0x05, 0x20, 0x78, 0xdf, 0xee, 0x1c, 0xf0, 0xb7, 0xd5, 0xae, 0xb7, 0x1b, 0xbe, 0xcd, 0x7f,
-	0xd3, 0xff, 0xc3, 0xec, 0xd6, 0xbe, 0xee, 0xb5, 0x76, 0x43, 0x88, 0x0a, 0x84, 0x09, 0x0a, 0xec,
-	0xc2, 0x47, 0x4a, 0x61, 0xc6, 0x37, 0xdd, 0x30, 0xdd, 0x7d, 0xe6, 0x64, 0xba, 0xab, 0x41, 0xe9,
-	0x49, 0x00, 0xde, 0x64, 0x2e, 0xf3, 0x06, 0x10, 0xa7, 0xf7, 0x80, 0x84, 0xb6, 0x5b, 0x7d, 0xcb,
-	0xcc, 0x83, 0x18, 0x18, 0x24, 0x83, 0x72, 0xe8, 0xe7, 0xf6, 0xae, 0x6a, 0x6a, 0x2c, 0x74, 0x55,
-	0x83, 0x39, 0xf6, 0x5a, 0x77, 0x3d, 0xdd, 0xd4, 0x42, 0x83, 0xc0, 0x6b, 0x6a, 0x9d, 0xac, 0x40,
-	0xc1, 0x64, 0xfb, 0x4f, 0xe2, 0x18, 0xe2, 0x12, 0xad, 0x01, 0xb9, 0x67, 0x39, 0x9a, 0xe5, 0x6d,
-	0x5a, 0x9a, 0x2e, 0xe6, 0xcd, 0x4f, 0xbb, 0x24, 0xa4, 0x9d, 0xae, 0x41, 0xf1, 0x3e, 0xf3, 0x9e,
-	0xb9, 0xcc, 0x19, 0x74, 0x00, 0x0d, 0x98, 0x89, 0xac, 0x78, 0x7e, 0x28, 0x8c, 0x77, 0x5d, 0xe6,
-	0xa0, 0x4d, 0xa1, 0x51, 0xac, 0x47, 0x05, 0x8c, 0x26, 0xb8, 0x47, 0x2f, 0xc3, 0x62, 0xf0, 0xce,
-	0x63, 0x47, 0x53, 0x4d, 0xfd, 0x8d, 0x5f, 0xc5, 0x83, 0x60, 0xbe, 0x84, 0x6a, 0xf6, 0x2b, 0x1c,
-	0xf3, 0x53, 0x98, 0xb5, 0xc4, 0xd5, 0x8a, 0xb4, 0x32, 0xb6, 0x5e, 0x68, 0x2c, 0xf4, 0xc1, 0xc5,
-	0x97, 0x9a, 0x71, 0x63, 0x4a, 0x60, 0x6e, 0x53, 0x77, 0xd1, 0x77, 0x48, 0x81, 0x5e, 0x85, 0xa2,
-	0xb0, 0xc6, 0x31, 0xd6, 0x60, 0x82, 0x73, 0x0f, 0x7d, 0x27, 0x03, 0xf3, 0x37, 0xe9, 0xff, 0x60,
-	0xfe, 0x0e, 0xeb, 0x30, 0x8f, 0x0d, 0x3b, 0xb6, 0xbb, 0x50, 0xbd, 0xed, 0x30, 0xd5, 0x63, 0x31,
-	0x66, 0x03, 0x3a, 0x24, 0xca, 0xd1, 0x09, 0x31, 0x47, 0xbb, 0xb0, 0xb4, 0xd1, 0x6e, 0x73, 0xb0,
-	0xa7, 0x56, 0x96, 0xa7, 0x0b, 0x30, 0x2f, 0x06, 0xfb, 0x42, 0x70, 0x3b, 0x27, 0x6e, 0x3c, 0xe2,
-	0x10, 0x8b, 0x30, 0xcd, 0xa3, 0xf0, 0x8d, 0x82, 0x02, 0xe5, 0x0b, 0x7c, 0x93, 0x1a, 0xb0, 0xda,
-	0x64, 0x86, 0xb5, 0x87, 0x91, 0xdd, 0x73, 0x2c, 0xe3, 0x78, 0xe1, 0x7e, 0x96, 0xe0, 0x3f, 0x7e,
-	0x23, 0x88, 0x38, 0x0f, 0x99, 0xb1, 0xc3, 0x9c, 0xa6, 0xd5, 0x61, 0x1f, 0x1c, 0x91, 0xd4, 0x61,
-	0xdc, 0xb1, 0x3a, 0x0c, 0x3f, 0x7d, 0xc5, 0x86, 0x9c, 0x53, 0x3b, 0x1c, 0x1a, 0xed, 0xe8, 0x45,
-	0x58, 0xb8, 0xcf, 0xbc, 0x23, 0xa6, 0x8f, 0x36, 0xa1, 0x94, 0xb2, 0xe6, 0x65, 0x75, 0x03, 0x66,
-	0x44, 0x9a, 0x41, 0xdb, 0xe4, 0x55, 0x6e, 0xcc, 0x96, 0xca, 0x50, 0xe1, 0x45, 0x9a, 0xd5, 0x43,
-	0xf4, 0x39, 0x2c, 0x64, 0xec, 0xbd, 0x7f, 0xb3, 0x28, 0x50, 0xf5, 0x0b, 0xfc, 0xa8, 0x81, 0x7f,
-	0x05, 0xf3, 0x7e, 0xa1, 0x3f, 0x65, 0xaa, 0x31, 0x6a, 0xd6, 0x3c, 0xa6, 0x1a, 0xb1, 0xac, 0xf1,
-	0x05, 0xac, 0x93, 0x43, 0x28, 0x45, 0x0d, 0x70, 0x2c, 0x08, 0xf1, 0xa2, 0x19, 0x4b, 0x94, 0xe9,
-	0x5b, 0x09, 0xaa, 0xf1, 0xb6, 0xf8, 0x17, 0x48, 0xfc, 0x29, 0xc1, 0xba, 0xdf, 0x2b, 0x3e, 0xb8,
-	0x6b, 0x75, 0x9d, 0x16, 0x7b, 0xc2, 0x1c, 0x43, 0x77, 0x5d, 0xdd, 0x32, 0x37, 0xd9, 0x1e, 0xeb,
-	0x7c, 0x78, 0x4e, 0xcb, 0x50, 0x70, 0x02, 0xac, 0x17, 0x7a, 0x3b, 0x60, 0x05, 0xe1, 0xd2, 0x83,
-	0x36, 0xf9, 0x0c, 0xe6, 0xec, 0x88, 0xc4, 0x8b, 0x0e, 0x67, 0x81, 0x22, 0xa2, 0xd8, 0x38, 0xdb,
-	0x2f, 0x36, 0x4e, 0x39, 0x49, 0xf5, 0x94, 0x1d, 0x5f, 0xa0, 0xdf, 0x40, 0xb9, 0x1f, 0x20, 0x07,
-	0xff, 0xf0, 0xd1, 0x54, 0xe1, 0xa4, 0xc9, 0xf6, 0xc5, 0x03, 0x9e, 0x32, 0xd9, 0x3e, 0x9e, 0xef,
-	0x36, 0x5e, 0x84, 0xc7, 0x53, 0xbf, 0xfe, 0xf5, 0xe9, 0xfb, 0x0e, 0xae, 0x4f, 0xbe, 0x97, 0xbe,
-	0x3e, 0xd1, 0x04, 0xf7, 0xe8, 0x2d, 0xff, 0xc2, 0xe2, 0x2b, 0xee, 0x28, 0x8c, 0xc2, 0xdb, 0x2d,
-	0x70, 0x10, 0xdc, 0x6e, 0xdc, 0x75, 0xc6, 0xed, 0x86, 0xb8, 0xfe, 0x26, 0xef, 0x65, 0xbf, 0xf9,
-	0x8f, 0xe5, 0x2c, 0x1a, 0x7f, 0x55, 0x61, 0x6a, 0xc3, 0xc7, 0x25, 0x8f, 0x61, 0xd2, 0x97, 0xb2,
-	0x24, 0xfa, 0x30, 0xd5, 0x63, 0xda, 0x56, 0x5e, 0xa8, 0xfb, 0x5a, 0xb8, 0x1e, 0xea, 0xed, 0xfa,
-	0x5d, 0x2e, 0xb1, 0x69, 0xf9, 0xed, 0x1f, 0x7f, 0xff, 0x78, 0xe2, 0x14, 0x05, 0x65, 0xef, 0xb2,
-	0xe2, 0xea, 0x9a, 0xd9, 0xb5, 0x6f, 0x48, 0x35, 0xb2, 0x0d, 0x93, 0x28, 0x59, 0x0f, 0xc8, 0x52,
-	0xe4, 0x30, 0x43, 0xc3, 0xe6, 0xba, 0x95, 0xd1, 0x6d, 0x89, 0x12, 0xee, 0x76, 0x0f, 0x3d, 0x29,
-	0x3d, 0xd4, 0x75, 0x87, 0xe4, 0x01, 0x4c, 0xa0, 0x9e, 0x22, 0xe5, 0xc8, 0xb5, 0xa8, 0x78, 0xe5,
-	0xd3, 0xc9, 0x65, 0xbb, 0x73, 0x40, 0x4b, 0xe8, 0xb0, 0x48, 0xa7, 0xb9, 0xc3, 0x0e, 0x7f, 0x9d,
-	0xd3, 0x7c, 0x04, 0x93, 0xbe, 0x3e, 0x15, 0xe3, 0x16, 0xb5, 0xad, 0x5c, 0x4e, 0xac, 0xfb, 0x42,
-	0x36, 0x11, 0x36, 0xee, 0x70, 0x7f, 0x0e, 0xcc, 0xc6, 0xb4, 0x2c, 0x89, 0x5a, 0xaf, 0x9e, 0xa5,
-	0x71, 0x73, 0xc3, 0xaf, 0xa1, 0xfb, 0x35, 0xba, 0xcc, 0xdd, 0xa3, 0xd6, 0x51, 0x7a, 0x3c, 0x89,
-	0x87, 0x4a, 0x28, 0x61, 0x15, 0x87, 0xfb, 0xe1, 0x98, 0x0c, 0x0a, 0x82, 0x26, 0x26, 0x8b, 0x29,
-	0xc4, 0xad, 0xe1, 0x78, 0xab, 0x88, 0xb7, 0x48, 0x17, 0xfa, 0x78, 0x11, 0x50, 0x00, 0x63, 0x42,
-	0x31, 0x2e, 0x99, 0xc9, 0xb9, 0x14, 0x52, 0x4c, 0x4b, 0xe7, 0x82, 0xad, 0x21, 0xd8, 0x39, 0xb9,
-	0x9a, 0x01, 0xd6, 0x42, 0x0f, 0x1c, 0x4f, 0x87, 0x82, 0xa0, 0x9d, 0x85, 0xb0, 0xd2, 0x8a, 0x3a,
-	0x17, 0xe9, 0x3c, 0x22, 0x2d, 0x53, 0x59, 0x38, 0x46, 0x54, 0x72, 0x87, 0x8a, 0xc3, 0x0c, 0xdd,
-	0x6c, 0x33, 0x87, 0x43, 0x6d, 0xc1, 0x54, 0xa0, 0x76, 0xc9, 0x99, 0x08, 0x26, 0x2e, 0xc6, 0x85,
-	0x3a, 0x10, 0xf5, 0x37, 0xad, 0x20, 0x02, 0x21, 0x73, 0xc9, 0x44, 0x91, 0xef, 0x24, 0xd4, 0x20,
-	0x29, 0x0d, 0x4d, 0xd6, 0x92, 0x9e, 0xb2, 0x14, 0x85, 0x4c, 0x87, 0x58, 0x71, 0xf0, 0xff, 0x22,
-	0xf8, 0x0a, 0x39, 0x97, 0xaa, 0x92, 0x98, 0x8a, 0x20, 0x4d, 0x98, 0x8e, 0xe4, 0x35, 0xa9, 0xf6,
-	0xbb, 0x23, 0x21, 0xc3, 0xe5, 0x33, 0x59, 0x5b, 0x1c, 0x68, 0x1e, 0x81, 0x0a, 0x64, 0x3a, 0x02,
-	0x22, 0xdb, 0x00, 0x7d, 0xe9, 0x4d, 0x22, 0xfd, 0x56, 0x4f, 0xe9, 0xf1, 0xdc, 0xe4, 0x04, 0x47,
-	0x57, 0x4b, 0x1f, 0x9d, 0x09, 0x24, 0xad, 0xd6, 0x49, 0xff, 0x44, 0x72, 0xa5, 0x7c, 0x2e, 0xd6,
-	0x12, 0x62, 0x2d, 0xd0, 0x79, 0x8e, 0x15, 0x3b, 0x1c, 0x9e, 0xff, 0xef, 0x25, 0x28, 0x67, 0xea,
-	0x7a, 0x72, 0x3e, 0xc2, 0x1c, 0xa4, 0xfb, 0x73, 0x61, 0xaf, 0x21, 0x6c, 0x83, 0x7e, 0x94, 0x82,
-	0x55, 0x7a, 0xa9, 0xaf, 0xf8, 0xa1, 0x62, 0xa0, 0xde, 0x46, 0x4a, 0xbf, 0x48, 0x20, 0xe7, 0x0f,
-	0x00, 0xa4, 0x16, 0xf1, 0x1a, 0x3a, 0x25, 0xe4, 0x92, 0xdb, 0x40, 0x72, 0x9f, 0xd4, 0xae, 0xbf,
-	0x13, 0x39, 0xa5, 0x17, 0x29, 0xa3, 0x43, 0xf2, 0x9b, 0x04, 0x4b, 0x83, 0xc6, 0x06, 0x72, 0xb1,
-	0x9f, 0xb3, 0xe1, 0xd3, 0x45, 0x2e, 0xd3, 0x3b, 0xc8, 0xf4, 0xa6, 0x3c, 0x3a, 0x53, 0x7e, 0xa4,
-	0x2e, 0x9c, 0x4a, 0xcc, 0x04, 0x64, 0x59, 0x6c, 0xb2, 0xac, 0xb3, 0x3b, 0x9b, 0x6f, 0xc0, 0xfb,
-	0x62, 0x05, 0x89, 0xc9, 0xa4, 0x92, 0x41, 0xcc, 0x3f, 0x21, 0x07, 0xe6, 0x53, 0x83, 0x01, 0x59,
-	0x8d, 0xf5, 0x59, 0x66, 0xfb, 0x2f, 0x0f, 0x32, 0xe1, 0xd0, 0x55, 0x84, 0x3e, 0x4d, 0xd2, 0x15,
-	0x4d, 0x1c, 0x20, 0xe9, 0xa1, 0x41, 0x68, 0x9f, 0xdc, 0x89, 0x22, 0x37, 0x01, 0x41, 0x9c, 0xb5,
-	0xfc, 0x38, 0x5f, 0x03, 0xf4, 0xe7, 0x0e, 0xe1, 0x73, 0x90, 0x1a, 0x46, 0x72, 0x31, 0xae, 0x22,
-	0xc6, 0x25, 0x7a, 0xe1, 0x68, 0x49, 0x46, 0x89, 0xc4, 0xd3, 0xfa, 0x83, 0x04, 0xb3, 0xb1, 0x99,
-	0x44, 0xb8, 0x73, 0xb3, 0x66, 0x95, 0x5c, 0x02, 0x9f, 0x23, 0x81, 0x3b, 0xf4, 0xd6, 0x3b, 0x10,
-	0x50, 0x7a, 0x91, 0xbe, 0x8a, 0xb5, 0xef, 0xaf, 0x12, 0x90, 0xf4, 0xa0, 0x22, 0xe4, 0x20, 0x77,
-	0x8a, 0xc9, 0xa5, 0xb7, 0x85, 0xf4, 0x1e, 0xd6, 0xbe, 0x78, 0x4f, 0x7a, 0xb1, 0x06, 0xfe, 0x5d,
-	0x82, 0xd5, 0xa1, 0xb3, 0x0c, 0xb9, 0x9c, 0xe8, 0xe2, 0xe1, 0x73, 0x4f, 0x6e, 0x14, 0xdb, 0x18,
-	0xc5, 0x53, 0xf9, 0xf1, 0xa8, 0x51, 0x84, 0x03, 0x8f, 0xab, 0xf4, 0x84, 0x71, 0x08, 0x1b, 0xfc,
-	0x27, 0x09, 0x8a, 0xf1, 0xb9, 0x45, 0x90, 0x28, 0x99, 0x03, 0x4d, 0x2e, 0xcd, 0x26, 0xd2, 0xdc,
-	0x94, 0xef, 0x8f, 0x4a, 0x93, 0xff, 0x55, 0x7a, 0xe1, 0x88, 0x83, 0xf4, 0xde, 0xa0, 0xca, 0xc0,
-	0x3a, 0x88, 0xa9, 0x0c, 0x31, 0xf9, 0xe5, 0xf4, 0x06, 0x6f, 0xf6, 0x5b, 0x48, 0xe7, 0x3a, 0xf9,
-	0x78, 0x44, 0x3a, 0xe4, 0x95, 0xaf, 0x00, 0x70, 0x04, 0x49, 0x28, 0x00, 0x71, 0xae, 0x49, 0x28,
-	0x80, 0xfe, 0xc4, 0x42, 0x2f, 0x21, 0x83, 0x1a, 0x59, 0x3f, 0x2a, 0x3c, 0xf9, 0x56, 0x0a, 0x15,
-	0x42, 0xe2, 0x93, 0x90, 0x9a, 0x69, 0x72, 0xb3, 0x10, 0x84, 0x5d, 0x1b, 0x35, 0xec, 0x9d, 0x49,
-	0x74, 0x78, 0xe5, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x65, 0x28, 0xaa, 0xf0, 0x7b, 0x18, 0x00,
-	0x00,
+	// 732 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xdf, 0x4e, 0x13, 0x4f,
+	0x14, 0xc7, 0x53, 0xa0, 0xf4, 0xd7, 0x53, 0xe8, 0xaf, 0x1c, 0x5a, 0x28, 0x0b, 0x42, 0x9d, 0xd4,
+	0x68, 0x6a, 0xd2, 0x89, 0x90, 0x18, 0xf5, 0xc2, 0xc4, 0xa8, 0x18, 0x12, 0x12, 0x49, 0x1b, 0xbc,
+	0xe0, 0x6e, 0x28, 0xc3, 0xb2, 0x71, 0x3b, 0xb3, 0xee, 0xce, 0x82, 0x0d, 0xe1, 0xc6, 0x57, 0xf0,
+	0x75, 0x7c, 0x0b, 0x5f, 0xc1, 0x07, 0x31, 0x33, 0xfb, 0xa7, 0x5b, 0xb6, 0x2d, 0x89, 0x37, 0xed,
+	0xfc, 0x39, 0xe7, 0xfb, 0x39, 0x7b, 0xe6, 0x7c, 0xe1, 0xb5, 0xed, 0xa8, 0xab, 0xf0, 0xbc, 0x3b,
+	0x90, 0x43, 0xca, 0x3c, 0x6f, 0xc0, 0x5d, 0xee, 0x33, 0x25, 0x7d, 0xca, 0x86, 0x1e, 0x65, 0x9e,
+	0x43, 0x7d, 0x6f, 0x40, 0xd9, 0x60, 0x20, 0x43, 0xa1, 0x92, 0xff, 0xae, 0xe7, 0x4b, 0x25, 0xb1,
+	0x14, 0x6f, 0xad, 0x83, 0x8c, 0x86, 0x2d, 0x5d, 0x26, 0x6c, 0x6a, 0x22, 0xce, 0xc3, 0x4b, 0xea,
+	0xa9, 0x91, 0xc7, 0x03, 0xca, 0x87, 0x9e, 0x1a, 0x45, 0xbf, 0x51, 0xb6, 0xf5, 0x6a, 0x1e, 0xf8,
+	0x82, 0x29, 0x96, 0xd0, 0x82, 0x74, 0x11, 0x67, 0xee, 0xd8, 0x52, 0xda, 0x2e, 0x37, 0xd5, 0x31,
+	0x21, 0xa4, 0x62, 0xca, 0x91, 0x22, 0xbe, 0x25, 0x36, 0xac, 0xf6, 0x1d, 0x5b, 0x9c, 0x7a, 0x3d,
+	0xfe, 0x2d, 0xe4, 0x81, 0x42, 0x84, 0x25, 0xc1, 0x86, 0xbc, 0x59, 0x68, 0x15, 0x9e, 0x95, 0x7b,
+	0x66, 0x8d, 0x16, 0xfc, 0xe7, 0xb1, 0x20, 0xb8, 0x91, 0xfe, 0x45, 0x73, 0xc1, 0x9c, 0xa7, 0x7b,
+	0xac, 0x43, 0x91, 0x0f, 0x99, 0xe3, 0x36, 0x17, 0xcd, 0x45, 0xb4, 0xc1, 0x1a, 0x2c, 0x86, 0xbe,
+	0xdb, 0x5c, 0x32, 0x67, 0x7a, 0x49, 0x9e, 0xc3, 0xfa, 0x17, 0xee, 0x3b, 0x97, 0xce, 0xc0, 0xf0,
+	0x13, 0x5c, 0x1d, 0x8a, 0x4a, 0x7e, 0xe5, 0x22, 0xe6, 0x45, 0x1b, 0xf2, 0x16, 0x56, 0x8e, 0xa5,
+	0x7d, 0x24, 0xfe, 0xb1, 0x28, 0xd2, 0x02, 0x88, 0xf3, 0x3d, 0x77, 0xa4, 0xb3, 0x59, 0xa8, 0xae,
+	0x92, 0x6c, 0xbd, 0x26, 0x1d, 0xa8, 0x9f, 0xc4, 0xd1, 0x3d, 0x1e, 0x70, 0x35, 0x87, 0x44, 0x0e,
+	0x01, 0x93, 0xd8, 0xfe, 0x38, 0x72, 0x6a, 0xe5, 0x73, 0xab, 0xe2, 0xd0, 0x48, 0x74, 0xde, 0x5f,
+	0x31, 0x61, 0xf3, 0x44, 0xaa, 0x03, 0x35, 0xfe, 0xdd, 0x09, 0x94, 0x23, 0xec, 0x24, 0x20, 0x56,
+	0xcd, 0x9d, 0x63, 0x0b, 0x2a, 0x82, 0xdf, 0x9c, 0x4c, 0x32, 0xb2, 0x47, 0xa4, 0x03, 0x78, 0x28,
+	0x7d, 0x5b, 0xaa, 0x63, 0x69, 0x3b, 0xd9, 0x46, 0x47, 0xef, 0x54, 0xc8, 0xbc, 0x13, 0x69, 0x43,
+	0xf5, 0x13, 0x57, 0xa7, 0x01, 0xf7, 0xe7, 0x35, 0x60, 0x1f, 0x56, 0xd2, 0x28, 0xdd, 0x50, 0x02,
+	0x4b, 0x61, 0xc0, 0x7d, 0x13, 0x53, 0xd9, 0xaf, 0x76, 0xd3, 0x89, 0x33, 0x21, 0xe6, 0x8e, 0x20,
+	0xd4, 0x8e, 0x9d, 0xc0, 0x24, 0x05, 0xb1, 0x36, 0x79, 0x09, 0xd5, 0xcc, 0x99, 0x56, 0x6a, 0x43,
+	0x51, 0x47, 0x07, 0xcd, 0x42, 0x6b, 0x71, 0x8a, 0x54, 0x74, 0x49, 0x9e, 0xc2, 0xda, 0x07, 0xee,
+	0x72, 0xc5, 0x1f, 0x28, 0x74, 0xff, 0x57, 0x09, 0x4a, 0xef, 0x22, 0x05, 0xfc, 0x0c, 0xcb, 0xd1,
+	0x64, 0xe3, 0x46, 0xa2, 0xda, 0x9d, 0x18, 0x75, 0x6b, 0xa3, 0x1b, 0x59, 0xa3, 0x9b, 0xd8, 0xaf,
+	0xfb, 0x51, 0x3b, 0x8e, 0x34, 0x7e, 0xfc, 0xfe, 0xf3, 0x73, 0xe1, 0x7f, 0x02, 0xf4, 0xfa, 0x05,
+	0x0d, 0x1c, 0x5b, 0x84, 0xde, 0x9b, 0x42, 0x07, 0xcf, 0x60, 0xd9, 0x4c, 0xf0, 0x08, 0x77, 0x52,
+	0xc1, 0x29, 0x23, 0x3d, 0x53, 0xd6, 0x32, 0xb2, 0x75, 0x82, 0x5a, 0xf6, 0xda, 0x28, 0xd1, 0x5b,
+	0x33, 0x35, 0x77, 0x78, 0x04, 0x45, 0xf3, 0x5a, 0xd8, 0x48, 0xa5, 0xb3, 0x06, 0xb0, 0xd6, 0xef,
+	0x1f, 0x7b, 0xee, 0x88, 0xd4, 0x8d, 0x60, 0x95, 0x94, 0xb5, 0xa0, 0xab, 0xd3, 0x75, 0x99, 0x3e,
+	0xac, 0x4e, 0x4c, 0x36, 0x3e, 0x4a, 0x73, 0xa7, 0x4d, 0xfc, 0xcc, 0x72, 0x3b, 0x46, 0xbd, 0x4d,
+	0xf6, 0xb4, 0xba, 0x79, 0x07, 0x7a, 0xab, 0x9b, 0x7c, 0x47, 0x93, 0x81, 0xa6, 0xbe, 0xd6, 0xd1,
+	0x4c, 0x0e, 0x95, 0x8c, 0x43, 0x70, 0x3b, 0x47, 0xec, 0x3f, 0xcc, 0x7b, 0x6c, 0x78, 0xdb, 0x64,
+	0x63, 0xcc, 0x4b, 0x41, 0x31, 0x46, 0x40, 0x75, 0xd2, 0x40, 0xb8, 0x9b, 0x23, 0x4d, 0x38, 0x6b,
+	0x26, 0xac, 0x6d, 0x60, 0xbb, 0xd6, 0xd6, 0x14, 0xd8, 0xc0, 0x28, 0x68, 0x9e, 0x03, 0x95, 0x8c,
+	0x93, 0x32, 0x9f, 0x95, 0xf7, 0xd7, 0x4c, 0xd2, 0x13, 0x43, 0xda, 0x23, 0x56, 0xa6, 0x8d, 0xc6,
+	0x7b, 0x77, 0xd4, 0xe7, 0x43, 0x47, 0x5c, 0x70, 0x5f, 0xa3, 0xfa, 0x50, 0x8a, 0x2d, 0x86, 0x9b,
+	0x29, 0x66, 0xd2, 0x9a, 0x56, 0x23, 0x7f, 0xa1, 0xc7, 0xa0, 0x69, 0x08, 0x88, 0xb5, 0xfb, 0x0f,
+	0x85, 0x3d, 0x28, 0xa7, 0x7e, 0xc3, 0xad, 0xf1, 0x08, 0xdd, 0xf3, 0xa5, 0xb5, 0x39, 0xed, 0x4a,
+	0x4b, 0xaf, 0x19, 0xe9, 0x0a, 0x96, 0x53, 0x69, 0x3c, 0x03, 0x18, 0x7b, 0x11, 0xad, 0x34, 0x33,
+	0x67, 0xd0, 0x99, 0x1d, 0x89, 0xeb, 0xed, 0xe4, 0xea, 0x3d, 0x5f, 0x36, 0x91, 0x07, 0x7f, 0x03,
+	0x00, 0x00, 0xff, 0xff, 0x67, 0x77, 0xf5, 0x59, 0x66, 0x07, 0x00, 0x00,
 }

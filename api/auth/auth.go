@@ -12,12 +12,11 @@ import (
 
 // Keys used in context metadata
 const (
-	AuthorizationHeader   = "authorization" // HTTP2 authorization header name, cf. https://http2.github.io/http2-spec/compression.html#static.table.definition
-	AuthorizationScheme   = "amp"
-	TokenKey              = "amp.token"
-	UserKey               = "amp.user"
-	ActiveOrganizationKey = "amp.organization"
-	CredentialsRequired   = "credentials required"
+	AuthorizationHeader = "authorization" // HTTP2 authorization header name, cf. https://http2.github.io/http2-spec/compression.html#static.table.definition
+	AuthorizationScheme = "amp"
+	TokenKey            = "amp.token"
+	UserKey             = "amp.user"
+	CredentialsRequired = "credentials required"
 )
 
 var (
@@ -108,7 +107,7 @@ func (i *Interceptors) authorize(ctx context.Context) (context.Context, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}
 	// Enrich the context
-	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(UserKey, claims.AccountName))
 	return ctx, nil
 }
 
@@ -124,18 +123,4 @@ func GetUser(ctx context.Context) string {
 	}
 	user := users[0]
 	return user
-}
-
-// GetActiveOrganization gets the active organization from context metadata
-func GetActiveOrganization(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ""
-	}
-	activeOrganizations := md[ActiveOrganizationKey]
-	if len(activeOrganizations) == 0 {
-		return ""
-	}
-	activeOrganization := activeOrganizations[0]
-	return activeOrganization
 }

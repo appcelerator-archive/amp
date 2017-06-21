@@ -179,8 +179,7 @@
     "accountsAccountType": {
       "type": "string",
       "enum": [
-        "USER",
-        "ORGANIZATION"
+        "USER"
       ],
       "default": "USER"
     },
