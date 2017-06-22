@@ -49,7 +49,7 @@ cluster_create() {
   local _current_labels
   _target="$(deployment_target)"
   case $_target in
-  local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
+  local) # for local, enable swarm mode if not already enabled and create the attachable overlay network
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
       # works most of the time without the advertise-addr

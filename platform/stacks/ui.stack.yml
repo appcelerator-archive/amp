@@ -4,14 +4,13 @@ networks:
   default:
     external:
       name: ampnet
-  infrastructure:
 
 services:
 
   visualizer:
     image: manomarks/visualizer
     networks:
-      - default
+    - default
     ports:
       - "50180:8080/tcp"
     volumes:
@@ -23,7 +22,7 @@ services:
   portainer:
     image: portainer/portainer
     networks:
-      - default
+    - default
     ports:
       - "50190:9000"
     volumes:

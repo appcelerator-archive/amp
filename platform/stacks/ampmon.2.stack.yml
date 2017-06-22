@@ -1,18 +1,17 @@
 version: "3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  logs:
+  queue:
+  logs-public:
 
 services:
 
   ampbeat:
     image: appcelerator/ampbeat:${TAG:-0.11.0}
     networks:
-      default:
-        aliases:
-          - ampbeat
+    - logs
+    - queue
     deploy:
       mode: replicated
       replicas: 1
@@ -27,9 +26,8 @@ services:
   kibana:
     image: appcelerator/kibana:5.4.1
     networks:
-      default:
-        aliases:
-          - kibana
+    - logs
+    - logs-public
     deploy:
       mode: replicated
       replicas: 1

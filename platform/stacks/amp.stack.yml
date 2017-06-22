@@ -1,6 +1,12 @@
 version: "3.1"
 
 networks:
+  core:
+  storage:
+  core-public:
+  queue:
+  logs:
+  portal:
   default:
     external:
       name: ampnet
@@ -17,9 +23,11 @@ services:
   amplifier:
     image: appcelerator/amplifier:${TAG:-0.11.0}
     networks:
-      default:
-        aliases:
-          - amplifier
+    - core
+    - storage
+    - logs
+    - queue
+    - default
     environment:
       REGISTRATION: ${REGISTRATION:-email}
       NOTIFICATIONS: ${NOTIFICATIONS:-true}
@@ -46,9 +54,9 @@ services:
   gateway:
     image: appcelerator/gateway:${TAG:-0.11.0}
     networks:
-      default:
-        aliases:
-          - gateway
+    - core
+    - core-public
+    - portal
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -67,9 +75,7 @@ services:
   agent:
     image: appcelerator/agent:${TAG:-0.11.0}
     networks:
-      default:
-        aliases:
-          - agent
+    - queue
     deploy:
       mode: global
       labels:

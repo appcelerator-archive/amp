@@ -1,17 +1,16 @@
 version: "3"
 
 networks:
-  default:
-    external:
-      name: ampnet
-  infrastructure:
+  portal-public:
+  portal:
 
 services:
 
   portal:
     image: appcelerator/portal:latest
     networks:
-      - default
+      - portal-public
+      - portal
     deploy:
       mode: replicated
       replicas: 1
