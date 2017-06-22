@@ -76,12 +76,16 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	if err != nil {
 		return nil, err
 	}
+	docker := docker.NewClient(config.DockerURL, config.DockerVersion)
+	if err := docker.Connect(); err != nil {
+		return nil, err
+	}
 	amp := &Amplifier{
 		config:     config,
 		storage:    etcd,
 		es:         elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
 		ns:         ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
-		docker:     docker.NewClient(config.DockerURL, config.DockerVersion),
+		docker:     docker,
 		mailer:     mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
 		tokens:     auth.New(config.JWTSecretKey),
 		accounts:   accounts,

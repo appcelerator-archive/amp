@@ -41,10 +41,10 @@ type cli struct {
 }
 
 const (
-	//DefaultAddress is the default server address
-	DefaultAddress = "cloud.appcelerator.io"
+	// DefaultAddress for amp connection
+	DefaultAddress = "localhost"
 
-	//DefaultPort for server address
+	// DefaultPort for amp connection
 	DefaultPort = ":50101"
 )
 
