@@ -81,7 +81,6 @@ From the `cluster/plugin/aws` directory, run the following:
     $ export STACKNAME=tony-amp-1
     $ export ONFAILURE=DO_NOTHING
     $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin init \
-        --keypair $KEYPAIR \ <- {FR}: seems that this line has to be deleted to make this cmd run
         --region $REGION \
         --stackname $STACKNAME \
         --onfailure $ONFAILURE \
