@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -62,7 +63,12 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 			// non addressable, let's hope the hostname is a better option
 			hostnames = append(hostnames, node.Description.Hostname)
 		} else {
-			hostnames = append(hostnames, node.Status.Addr)
+			if _, err = net.LookupHost(node.Description.Hostname); err != nil {
+				// can't resolve host, will use IP
+				hostnames = append(hostnames, node.Status.Addr)
+			} else {
+				hostnames = append(hostnames, node.Description.Hostname)
+			}
 		}
 	}
 	inventory := &Inventory{Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
