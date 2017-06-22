@@ -74,7 +74,6 @@ services:
       - source: prometheus_alerts_rules
         target: alerts.rules
         mode: 0400
-    command: [ "--host=${MANAGER_HOST:-unix:///var/run/docker.sock}" ]
 
   node_exporter:
     image: prom/node-exporter:v0.14.0
