@@ -13,39 +13,34 @@ import (
 
 type getTeamOptions struct {
 	org  string
-	team string
 }
 
 // NewTeamGetCommand returns a new instance of the get team command.
 func NewTeamGetCommand(c cli.Interface) *cobra.Command {
 	opts := getTeamOptions{}
 	cmd := &cobra.Command{
-		Use:     "get [OPTIONS]",
+		Use:     "get [OPTIONS] TEAM",
 		Short:   "Get team",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return getTeam(c, cmd, opts)
+			return getTeam(c, cmd, args, opts)
 		},
 	}
 	flags := cmd.Flags()
 	flags.StringVar(&opts.org, "org", "", "Organization name")
-	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
-func getTeam(c cli.Interface, cmd *cobra.Command, opts getTeamOptions) error {
+func getTeam(c cli.Interface, cmd *cobra.Command, args []string, opts getTeamOptions) error {
 	if !cmd.Flag("org").Changed {
 		opts.org = c.Console().GetInput("organization name")
-	}
-	if !cmd.Flag("team").Changed {
-		opts.team = c.Console().GetInput("team name")
 	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.GetTeamRequest{
 		OrganizationName: opts.org,
-		TeamName:         opts.team,
+		TeamName:         args[0],
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
