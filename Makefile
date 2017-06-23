@@ -185,11 +185,11 @@ clean-server:
 
 
 # =============================================================================
-# BUILD GATEWAY (`amplifier-gateway`)
-# Saves binary to `cmd/amplifier-gateway/amplifier-gateway.alpine`,
-# then builds `appcelerator/amplifier-gateway` image
+# BUILD GATEWAY (`gateway`)
+# Saves binary to `cmd/gateway/gateway.alpine`,
+# then builds `appcelerator/gateway` image
 # =============================================================================
-GW := amplifier-gateway
+GW := gateway
 GWBINARY=$(GW).alpine
 GWTAG := local
 GWIMG := appcelerator/$(GW):$(GWTAG)

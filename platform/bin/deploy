@@ -519,7 +519,7 @@ bootstrap_cluster() {
 
   if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
     echo "push images to cluster"
-    for image in amplifier amplifier-gateway ampbeat agent; do
+    for image in amplifier gateway ampbeat agent; do
       pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
     done
   else
