@@ -2,6 +2,13 @@
 
 ES_ALIVE=/tmp/elastic_search_is_alive
 
+# Add kibana as command if needed
+if [ "${1:0:1}" = '-' ]; then
+    echo "INFO - adding arguments $@ to kibana"
+    set -- kibana "$@"
+fi
+program="$1"
+
 # check if a certificate is present
 if [[ -n "$SERVER_SSL_CERTIFICATE" && -n "$SERVER_SSL_KEY" && -f "$SERVER_SSL_CERTIFICATE" && -f "$SERVER_SSL_KEY" ]]; then
   echo "found $SERVER_SSL_CERTIFICATE and $SERVER_SSL_KEY"
@@ -25,6 +32,7 @@ else
         exit 1
     fi
 fi
+chown elastico /opt/kibana/config/kibana.yml
 
 rm -f "$ES_ALIVE"
 # Start pre-configuration in case ES is already available
@@ -39,7 +47,9 @@ for w in $(seq 16); do
   sleep 1
 done
 
+# Drop root privileges if we are running kibana
+# allow the container to be started with `--user`
+[[ "x$program" = "xkibana" && "$(id -u)" = '0' ]] && set -- gosu elastico "$@"
+
 # Start kibana
-CMD="kibana"
-CMDARGS="$@"
-exec "$CMD" $CMDARGS
+exec "$@"
