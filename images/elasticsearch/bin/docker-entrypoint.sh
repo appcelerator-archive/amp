@@ -16,14 +16,14 @@ if [[ -z "$ES_JAVA_OPTS" && -z "$JAVA_HEAP_SIZE" ]]; then
     echo "INFO - system memory is ${tmem}M"
     if [[ $tmem -lt 1024 ]]; then
         echo "INFO - set java heap size to floor value"
-        JAVA_HEAP_SIZE=256
-    elif [[ $tmem -lt 4092 ]]; then
+        JAVA_HEAP_SIZE=512
+    elif [[ $tmem -lt 4096 ]]; then
         echo "INFO - set java heap size to ramping value"
-        # 256 to 410
-        JAVA_HEAP_SIZE=$((256 + (tmem - 1024) / 19))
+        # 512 to 2048
+        JAVA_HEAP_SIZE=$((512 + (tmem - 1024) / 2))
     else
-        echo "INFO - set java heap size to 10%"
-        JAVA_HEAP_SIZE=$((tmem / 10))
+        echo "INFO - set java heap size to 50%"
+        JAVA_HEAP_SIZE=$((tmem / 2))
     fi
     export JAVA_HEAP_SIZE
     echo "Java Heap Size: $JAVA_HEAP_SIZE MB"

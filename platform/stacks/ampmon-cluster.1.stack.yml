@@ -14,12 +14,12 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.4.1
+    image: appcelerator/elasticsearch-amp:5.4.2
     networks:
     - logs
     - ampnet
     volumes:
-      - elasticsearch-data:/opt/elasticsearch-5.4.1/data
+      - elasticsearch-data:/opt/elasticsearch-5.4.2/data
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -30,6 +30,13 @@ services:
     deploy:
       mode: replicated
       replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 45s
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 25s
       labels:
         io.amp.role: "infrastructure"
       placement:
@@ -53,7 +60,7 @@ services:
         - node.labels.amp.type.mq == true
 
   etcd:
-    image: appcelerator/etcd:3.1.8
+    image: appcelerator/etcd:3.1.9
     networks:
     - storage
     volumes:
@@ -69,6 +76,13 @@ services:
     deploy:
       mode: replicated
       replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 25s
       labels:
         io.amp.role: "infrastructure"
       placement:

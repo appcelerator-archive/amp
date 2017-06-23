@@ -3,7 +3,7 @@ FROM appcelerator/alpine:3.6.0
 RUN apk update && apk upgrade && apk --no-cache add openjdk8-jre bind-tools
 
 ENV PATH /bin:/opt/elasticsearch/bin:$PATH
-ENV ELASTIC_VERSION 5.4.1
+ENV ELASTIC_VERSION 5.4.2
 
 RUN curl -L https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ELASTIC_VERSION.tar.gz -o /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz && \
     mkdir /opt && \
@@ -19,7 +19,7 @@ COPY config/elasticsearch.yml /opt/elasticsearch/config/elasticsearch.yml.tpl
 COPY config/log4j2.properties /opt/elasticsearch/config/
 COPY /bin/docker-entrypoint.sh /bin/
 
-RUN /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.4.1.0.zip
+RUN /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.4.2.0.zip
 
 RUN mkdir -p /opt/elasticsearch/config/scripts
 RUN adduser -D -h /opt/elasticsearch -s /sbin/nologin elastico
