@@ -68,7 +68,7 @@ just use this instead:
 
 You can block until a command completes using the `-s | --sync` option. For example:
 
-    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin update --region us-west-2 --stackname tony-amp-10 -p KeyName=tony-amp-dev -p ClusterSize=4 --sync
+    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws update --region us-west-2 --stackname tony-amp-10 -p KeyName=tony-amp-dev -p ClusterSize=4 --sync
 
 ## Trying it out
 
@@ -80,8 +80,7 @@ From the `cluster/plugin/aws` directory, run the following:
     $ export KEYNAME=tony-amp-dev
     $ export STACKNAME=tony-amp-1
     $ export ONFAILURE=DO_NOTHING
-    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin init \
-        --keypair $KEYPAIR \ <- {FR}: seems that this line has to be deleted to make this cmd run
+    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws init \
         --region $REGION \
         --stackname $STACKNAME \
         --onfailure $ONFAILURE \
@@ -91,7 +90,7 @@ From the `cluster/plugin/aws` directory, run the following:
 Verify output similar to the following:
 
 ```
-$ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin init --region us-west-2 --name tony-amp-7
+$ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws init --region us-west-2 --name tony-amp-7
 2017/06/14 20:31:23 {
   StackId: "arn:aws:cloudformation:us-west-2:654814900965:stack/tony-amp-7/6d88d410-5140-11e7-8af9-503acbd4dc29"
 }
@@ -140,7 +139,7 @@ Finally, you can set `DOCKER_HOST` so you don't have to use the `-H` option each
 
 Update an existing stack with the `update` command:
 
-    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin update \
+    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws update \
         --region $REGION \
         --stackname $STACKNAME \
         -p KeyName=$KEYNAME \
@@ -151,7 +150,7 @@ Update an existing stack with the `update` command:
 
 Execute the `destroy` command with the stackname and region used for the `init` command:
 
-    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws-plugin destroy \
+    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws destroy \
         --region $REGION \
         --stackname $STACKNAME
 

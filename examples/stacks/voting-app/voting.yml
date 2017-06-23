@@ -1,11 +1,9 @@
-version: "3"
+version: "3.1"
 
 services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379"
     networks:
       - frontend
     deploy:
@@ -15,6 +13,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+      placement:
+        constraints: [node.labels.amp.type.user == true]
   db:
     image: postgres:9.4
     volumes:
@@ -23,12 +23,12 @@ services:
       - backend
     deploy:
       placement:
-        constraints: [node.role == manager]
+        constraints: [node.labels.amp.type.user == true]
   vote:
     image: dockersamples/examplevotingapp_vote:before
     environment:
-      - "SERVICE_PORTS=80"
-      - "VIRTUAL_HOST=https://vote.*"
+      SERVICE_PORTS: 80
+      VIRTUAL_HOST: "https://vote.examples.*,vote.examples.*"
     networks:
       - frontend
       - default
@@ -40,12 +40,14 @@ services:
         parallelism: 2
       restart_policy:
         condition: on-failure
+      placement:
+        constraints: [node.labels.amp.type.user == true]
 
   result:
     image: dockersamples/examplevotingapp_result:before
     environment:
-      - "SERVICE_PORTS=80"
-      - "VIRTUAL_HOST=https://result.*"
+      SERVICE_PORTS: 80
+      VIRTUAL_HOST: "https://result.examples.*,result.examples.*"
     networks:
       - backend
       - default
@@ -58,6 +60,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+      placement:
+        constraints: [node.labels.amp.type.user == true]
 
   worker:
     image: dockersamples/examplevotingapp_worker
@@ -74,18 +78,7 @@ services:
         max_attempts: 3
         window: 120s
       placement:
-        constraints: [node.role == manager]
-
-  visualizer:
-    image: dockersamples/visualizer:stable
-    ports:
-      - "8080:8080"
-    stop_grace_period: 1m30s
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    deploy:
-      placement:
-        constraints: [node.role == manager]
+        constraints: [node.labels.amp.type.user == true]
 
 networks:
   frontend:

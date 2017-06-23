@@ -22,7 +22,6 @@ services:
         - node.labels.amp.type.core == true
     environment:
       SERVICE_PORTS: "80"
-      VIRTUAL_HOST: "http://cloud.*,http://local.*,https://cloud.*,https://local.*"
-      FORCE_SSL: 1
+      VIRTUAL_HOST: "http://portal.*,https://portal.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
     labels:
       io.amp.role: "infrastructure"
