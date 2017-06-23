@@ -24,13 +24,13 @@ script:
   - set -e
   - ampmake clean build-base build-cli
   - ls -la bin/linux/amd64
-  - amp --server=localhost cluster create --tag=local
+  - amp cluster create --tag=local
   - TESTINCLUDE=platform/testing testrunner platform/tests
   - docker build -t appcelerator/amp-integration .
   - docker service create --detach=false --restart-condition=none --network ampnet --name integration appcelerator/amp-integration
   - docker logs -f $(docker ps -a --filter ancestor=appcelerator/amp-integration:latest --format "{{.ID}}")
   - $(exit $(docker inspect $(docker ps -a --filter ancestor=appcelerator/amp-integration:latest --format "{{.ID}}") --format "{{.State.ExitCode}}"))
-  - amp --server=localhost cluster rm --tag=local
+  - amp cluster rm --tag=local
   #- ampmake lint
 
 after_success:
