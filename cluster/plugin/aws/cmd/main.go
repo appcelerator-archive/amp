@@ -99,6 +99,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
+	rootCmd.PersistentFlags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
