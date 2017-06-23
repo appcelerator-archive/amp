@@ -63,7 +63,7 @@ func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 		},
 		OnFailure:        aws.String(opts.OnFailure),
 		Parameters:       toParameters(opts.Params),
-		TemplateURL:      aws.String(DefaultTemplateURL),
+		TemplateURL:      aws.String(opts.TemplateURL),
 		TimeoutInMinutes: aws.Int64(timeout),
 	}
 
@@ -76,8 +76,8 @@ func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
-		Parameters:       toParameters(opts.Params),
-		TemplateURL:      aws.String(DefaultTemplateURL),
+		Parameters:  toParameters(opts.Params),
+		TemplateURL: aws.String(opts.TemplateURL),
 	}
 
 	return svc.UpdateStackWithContext(ctx, input)
