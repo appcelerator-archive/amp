@@ -87,6 +87,7 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 	config := PluginConfig{
 		Provider: opts.provider,
 		Options: opts.options,
+		DockerOpts: opts.docker,
 	}
 	p, err := NewPlugin(config)
 	if err != nil {

@@ -32,6 +32,7 @@ type PluginConfig struct {
 	// Provider is the name of the cluster provider, such as "local" or "aws"
 	Provider string
 	Options  map[string]string
+	DockerOpts docker
 }
 
 // Plugin declares the methods that all plugin providers,
@@ -80,7 +81,8 @@ type awsPlugin struct {
 
 func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
 	img := "appcelerator/amp-aws"
-	return RunContainer(c, img, args, env)
+	dockerOpts := p.plugin.config.DockerOpts
+	return RunContainer(c, img, dockerOpts, args, env)
 }
 
 // ========================================================
@@ -104,14 +106,16 @@ func NewPlugin(config PluginConfig) (Plugin, error) {
 // RunContainer starts a container using the specified image for the cluster plugin.
 // Cluster plugin commands are `init`, `update`, and `destroy` (provided as the single
 // `args` value). Additional arguments are supplied as environment variables in `env`, not `args`.
-func RunContainer(c cli.Interface, img string, args []string, env map[string]string) error {
+func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string) error {
 	dockerArgs := []string{
 		"run", "-t", "--rm", "--name", "amp-cluster-plugin",
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-		// TODO: remove hardcoded path
-		"-v", "/Users/tony/.aws:/root/.aws",
 		"-e", "GOPATH=/go",
+	}
+
+	for _, v := range dockerOpts.volumes {
+		dockerArgs = append(dockerArgs, "-v", v)
 	}
 
 	// make environment variables available to container
