@@ -129,7 +129,7 @@ func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*em
 	}
 	stackName := serviceEntity.Spec.Labels[StackNameLabelName]
 
-	stack, dockerErr := s.Stacks.GetStackByFragmentOrName(ctx, stackName)
+	stack, dockerErr := s.Stacks.GetByFragmentOrName(ctx, stackName)
 	if dockerErr != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
 	}

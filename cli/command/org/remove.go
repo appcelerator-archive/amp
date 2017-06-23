@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"

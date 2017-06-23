@@ -108,21 +108,13 @@
     "accountsAccount": {
       "type": "object",
       "properties": {
-        "type": {
-          "$ref": "#/definitions/accountsAccountType"
+        "user": {
+          "type": "string"
         },
-        "name": {
+        "organization": {
           "type": "string"
         }
       }
-    },
-    "accountsAccountType": {
-      "type": "string",
-      "enum": [
-        "USER",
-        "ORGANIZATION"
-      ],
-      "default": "USER"
     },
     "stackDeployReply": {
       "type": "object",

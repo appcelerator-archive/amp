@@ -474,15 +474,6 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 	return &empty.Empty{}, nil
 }
 
-// ChangeTeamResourcePermissionLevel implements account.ChangeOrganizationMemberRole
-func (s *Server) ChangeTeamResourcePermissionLevel(ctx context.Context, in *ChangeTeamResourcePermissionLevelRequest) (*empty.Empty, error) {
-	if err := s.Accounts.ChangeTeamResourcePermissionLevel(ctx, in.OrganizationName, in.TeamName, in.ResourceId, in.PermissionLevel); err != nil {
-		return &empty.Empty{}, convertError(err)
-	}
-	log.Printf("Successfully changed permission level over resource %s in team %s to %s\n", in.ResourceId, in.TeamName, in.PermissionLevel.String())
-	return &empty.Empty{}, nil
-}
-
 // ChangeTeamName implements account.ChangeTeamName
 func (s *Server) ChangeTeamName(ctx context.Context, in *ChangeTeamNameRequest) (*empty.Empty, error) {
 	if err := s.Accounts.ChangeTeamName(ctx, in.OrganizationName, in.TeamName, in.NewName); err != nil {

@@ -12,7 +12,7 @@ import (
 )
 
 type getTeamOptions struct {
-	org  string
+	org string
 }
 
 // NewTeamGetCommand returns a new instance of the get team command.

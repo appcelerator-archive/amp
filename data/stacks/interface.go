@@ -16,24 +16,21 @@ const (
 
 // Interface defines the stack data access layer
 type Interface interface {
-	// CreateStack creates a new stack
-	CreateStack(ctx context.Context, name string) (stack *Stack, err error)
+	// Create creates a new stack
+	Create(ctx context.Context, name string) (stack *Stack, err error)
 
-	// GetStack fetches a stack by id
-	GetStack(ctx context.Context, id string) (stack *Stack, err error)
+	// Get fetches a stack by id
+	Get(ctx context.Context, id string) (stack *Stack, err error)
 
-	// GetStackByName fetches a stack by name
-	GetStackByName(ctx context.Context, name string) (stack *Stack, err error)
+	// GetByName fetches a stack by name
+	GetByName(ctx context.Context, name string) (stack *Stack, err error)
 
-	// GetStackByFragmentOrName fetches a stack by fragment ID or name
-	GetStackByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error)
+	// GetByFragmentOrName fetches a stack by fragment ID or name
+	GetByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error)
 
-	// ListStacks lists stacks
-	ListStacks(ctx context.Context) (stacks []*Stack, err error)
+	// List lists stacks
+	List(ctx context.Context) (stacks []*Stack, err error)
 
-	// DeleteStack deletes a stack by id
-	DeleteStack(ctx context.Context, id string) (err error)
-
-	// Reset resets the stack storage
-	Reset(ctx context.Context)
+	// Delete deletes a stack by id
+	Delete(ctx context.Context, id string) (err error)
 }

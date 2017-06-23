@@ -45,9 +45,9 @@ func list(c cli.Interface, opts listStackOptions) error {
 		}
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tSERVICES\tFAILED SERVICES\tSTATUS\tOWNER\tOWNER TYPE")
+	fmt.Fprintln(w, "ID\tNAME\tSERVICES\tFAILED SERVICES\tSTATUS\tOWNER\tORGANIZATION")
 	for _, entry := range reply.Entries {
-		fmt.Fprintf(w, "%s\t%s\t%d/%d\t%d\t%s\t%s\t%s\n", entry.Stack.Id, entry.Stack.Name, entry.RunningServices, entry.TotalServices, entry.FailedServices, entry.Status, entry.Stack.Owner.Name, entry.Stack.Owner.Type)
+		fmt.Fprintf(w, "%s\t%s\t%d/%d\t%d\t%s\t%s\t%s\n", entry.Stack.Id, entry.Stack.Name, entry.RunningServices, entry.TotalServices, entry.FailedServices, entry.Status, entry.Stack.Owner.User, entry.Stack.Owner.Organization)
 	}
 	w.Flush()
 	return nil

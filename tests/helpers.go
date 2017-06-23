@@ -223,6 +223,9 @@ func (h *Helper) DeployStack(ctx context.Context, name string, composeFile strin
 		Compose: contents,
 	}
 	reply, err := h.stacks.Deploy(ctx, request)
+	if err != nil {
+		return "", err
+	}
 	return reply.Id, err
 }
 
@@ -284,6 +287,24 @@ func (h *Helper) CreateTeam(t *testing.T, org *account.CreateOrganizationRequest
 	assert.NoError(t, err)
 
 	return ownerCtx
+}
+
+func (h *Helper) AddUserToTeam(ownerCtx context.Context, t *testing.T, team *account.CreateTeamRequest, user *account.SignUpRequest) {
+	_, err := h.Accounts().AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+		OrganizationName: team.OrganizationName,
+		TeamName:         team.TeamName,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
+}
+
+func (h *Helper) RemoveUserFromTeam(ownerCtx context.Context, t *testing.T, team *account.CreateTeamRequest, user *account.SignUpRequest) {
+	_, err := h.Accounts().RemoveUserFromTeam(ownerCtx, &account.RemoveUserFromTeamRequest{
+		OrganizationName: team.OrganizationName,
+		TeamName:         team.TeamName,
+		UserName:         user.Name,
+	})
+	assert.NoError(t, err)
 }
 
 // Switch switches from the given user context to the given account name

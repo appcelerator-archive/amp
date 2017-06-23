@@ -102,10 +102,10 @@ type Interface interface {
 	RemoveUserFromTeam(ctx context.Context, organizationName string, teamName string, userName string) (err error)
 
 	// AddResourceToTeam adds a resource to the given team
-	AddResourceToTeam(ctx context.Context, organizationName string, teamName string, resourceName string) (err error)
+	AddResourceToTeam(ctx context.Context, organizationName string, teamName string, resourceID string) (err error)
 
 	// RemoveResourceFromTeam removes a resource from the given team
-	RemoveResourceFromTeam(ctx context.Context, organizationName string, teamName string, resourceName string) (err error)
+	RemoveResourceFromTeam(ctx context.Context, organizationName string, teamName string, resourceID string) (err error)
 
 	// ChangeTeamResourcePermissionLevel changes the permission level over the given resource in the given team
 	ChangeTeamResourcePermissionLevel(ctx context.Context, organizationName string, teamName string, resource string, permissionLevel TeamPermissionLevel) (err error)
