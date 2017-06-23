@@ -58,10 +58,13 @@ func (s *etcd) Connect() error {
 		Endpoints:   s.endpoints,
 		DialTimeout: s.timeout,
 	})
+	if err != nil {
+		return err
+	}
 	s.client = cli
 	s.connected = true
 	log.Println("Connected to etcd at", strings.Join(s.endpoints, ","))
-	return err
+	return nil
 }
 
 // Close connection to etcd
