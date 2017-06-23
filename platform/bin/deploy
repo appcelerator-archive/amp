@@ -22,8 +22,7 @@ export PATH="$SP:$BOOTSTRAPDIR:$PATH"
 readonly awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $BOOTSTRAPDIR:$BOOTSTRAPDIR:ro cgswong/aws:latest aws"
 
 # IP range that should have access to the docker remote API
-readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
-readonly localdomainname="local.atomiq.io"
+readonly localdomainname="local.appcelerator.io"
 
 # global vars
 DEPLOYMENT_TARGET=local
@@ -32,7 +31,7 @@ amps=docker
 DESTROY=0
 STATUS=0
 
-# get and optionally set the target of the deployment: local | dind | aws
+# get and optionally set the target of the deployment: local | swarm | dind | aws
 deployment_target() {
   [[ ! -z $1 ]] && DEPLOYMENT_TARGET=$1
   echo $DEPLOYMENT_TARGET
@@ -49,7 +48,7 @@ cluster_create() {
   local _current_labels
   _target="$(deployment_target)"
   case $_target in
-  local) # for local, enable swarm mode if not already enabled and create the attachable overlay network
+  local|swarm) # for local, enable swarm mode if not already enabled and create the attachable overlay network
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
       # works most of the time without the advertise-addr
@@ -100,7 +99,7 @@ cluster_destroy() {
   case $_target in
   dind|aws)
     bootstrap -t $_target -di $1 ;;
-  local)
+  local|swarm)
     docker stack rm amp
     # wait for containers to be removed
     SECONDS=0
@@ -125,7 +124,7 @@ cluster_status() {
   local _target
   _target=$(deployment_target)
   case $_target in
-  local)
+  local|swarm)
     if [[ -n "$_clusterid" ]]; then
       docker node ls -q | grep $_clusterid &>/dev/null
     else
@@ -144,7 +143,7 @@ cluster_nodecount() {
   local _count
   _target=$(deployment_target)
   case $_target in
-  local) # single manager node
+  local|swarm)
     docker node ls -q | wc -w
     return 0
     ;;
@@ -171,7 +170,7 @@ cluster_workercount() {
   local _count
   _target=$(deployment_target)
   case $_target in
-  local) # single manager node
+  local|swarm)
     docker node ls -q --filter "role=worker" | wc -w
     return ${PIPESTATUS[0]}
     ;;
@@ -235,7 +234,7 @@ EOF
 set_deployment_variables(){
   local _manager
   case $(deployment_target) in
-  local)
+  local|swarm)
     stacks_path="$STACKSDIR"
     secrets_path="$SECRETSDIR"
     amps="docker"
@@ -347,10 +346,10 @@ kurl() {
 prepare_amplifier_configuration(){
   local _conf
   local cid
+  local supasswd
   $amps secret ls | grep -q "amplifier_yml" && return 0
   _conf="$SECRETSDIR/amplifier.yml"
   if [[ ! -f "$_conf" ]]; then
-    local supasswd
     echo "creating a default configuration for amplifier_yml" >&2
     mkdir -p "$SECRETSDIR"
     echo "JWTSecretKey: "$(docker run --rm alpine:3.5 sh -c '< /dev/urandom tr -dc [:alnum:] | head -c${1:-128}') > "$_conf"
@@ -432,7 +431,7 @@ prepare_certificates() {
 
   mkdir -p "$SECRETSDIR"
   case $(deployment_target) in
-  local|dind)
+  local|swarm|dind)
     mv "$(mkcert)" "$certfile" ;;
   esac
   if [[ ! -f "$certfile" ]]; then

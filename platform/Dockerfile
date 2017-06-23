@@ -1,4 +1,4 @@
-FROM docker:17.05.0-ce-rc1
+FROM docker:17.06.0-ce-rc5
 
 RUN apk --update --no-cache add bash openssl
 
