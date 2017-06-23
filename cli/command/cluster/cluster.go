@@ -6,7 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type docker struct {
+	volumes       []string
+}
+
 type clusterOpts struct {
+	docker
 	managers      int
 	workers       int
 	provider      string
@@ -19,6 +24,9 @@ type clusterOpts struct {
 
 var (
 	opts = &clusterOpts{
+		docker: docker{
+			volumes: []string{},
+		},
 		managers:      3,
 		workers:       2,
 		provider:      "local",
@@ -38,6 +46,9 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
+
+	cmd.PersistentFlags().StringSliceVarP(&opts.docker.volumes, "volume", "v", []string{}, "Bind mount a volume")
+
 	cmd.AddCommand(NewCreateCommand(c))
 	cmd.AddCommand(NewListCommand(c))
 	cmd.AddCommand(NewRemoveCommand(c))
