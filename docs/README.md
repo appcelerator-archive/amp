@@ -35,7 +35,7 @@ To make these changes permanent, you can run the following and reboot:
 
 ### Get the AMP CLI
 
-Download the latest release of the CLI for your platorm:
+Download the latest release of the CLI for your platform:
 
 https://github.com/appcelerator/amp/releases
 
@@ -63,7 +63,7 @@ with the amp command and specify `localhost`.
 
     $ amp -s localhost cluster create
     $ amp -s localhost user signup # Ignore the verification email
-    $ amp -s login
+    $ amp -s localhost login
 
 
 ##### Tip:
@@ -92,13 +92,13 @@ Here is a simple example:
 
 ```sh
     $ curl -O https://raw.githubusercontent.com/appcelerator/amp/master/examples/stacks/pinger/pinger.yml
-    $ amp -s localhost stack deploy -c pinger.yml pinger
+    $ amp -s localhost stack deploy -c pinger.yml
     $ amp -s localhost stack ls
     $ amp -s localhost service logs pinger
-    $ curl -k https://pinger.local.appcelerator.io/ping
+    $ curl http://pinger.examples.local.appcelerator.io/ping
 ```
 
-Or browse to: https://pinger.local.appcelerator.io/ping
+Or browse to: https://pinger.examples.local.appcelerator.io/ping
 
 ## Monitoring
 
@@ -113,5 +113,3 @@ http://localhost:50106.
 To test the organization and teams features,
 use the CLI to create your ATOMIQ ID (`amp user signup`), then
 log in (`amp login`).
-
-

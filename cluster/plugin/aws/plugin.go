@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	templateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
+	DefaultTemplateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
 )
 
 // RequestOptions stores raw request input options before transformation into a AWS SDK specific
@@ -27,6 +27,8 @@ type RequestOptions struct {
 	StackName string
 
 	Sync bool
+
+	TemplateURL string
 }
 
 func parseParam(s string) *cf.Parameter {
@@ -61,7 +63,7 @@ func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 		},
 		OnFailure:        aws.String(opts.OnFailure),
 		Parameters:       toParameters(opts.Params),
-		TemplateURL:      aws.String(templateURL),
+		TemplateURL:      aws.String(opts.TemplateURL),
 		TimeoutInMinutes: aws.Int64(timeout),
 	}
 
@@ -74,8 +76,8 @@ func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
-		Parameters:       toParameters(opts.Params),
-		TemplateURL:      aws.String(templateURL),
+		Parameters:  toParameters(opts.Params),
+		TemplateURL: aws.String(opts.TemplateURL),
 	}
 
 	return svc.UpdateStackWithContext(ctx, input)
