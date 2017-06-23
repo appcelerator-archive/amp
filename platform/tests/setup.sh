@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp -s localhost login --name su --password password
+amp login --name su --password password

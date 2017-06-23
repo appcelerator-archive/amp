@@ -1,9 +1,7 @@
 #!/bin/bash
 
-amp="amp -s localhost"
-
 test_setup() {
-  $amp user signup --name user1 --password password --email email@user1.amp
+  amp user signup --name user1 --password password --email email@user1.amp
 }
 
 test_name() {
@@ -11,5 +9,5 @@ test_name() {
 }
 
 test_teardown() {
-  $amp user rm user1
+  amp user rm user1
 }
