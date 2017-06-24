@@ -32,7 +32,7 @@ services:
       REGISTRATION: ${REGISTRATION:-email}
       NOTIFICATIONS: ${NOTIFICATIONS:-true}
     ports:
-      - "50101:50101"
+      - "50101:5101"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:

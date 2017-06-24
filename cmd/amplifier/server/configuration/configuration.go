@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultPort         = ":50101"
+	DefaultPort         = ":5101"
 	DefaultTimeout      = time.Minute
 	RegistrationNone    = "none"
 	RegistrationEmail   = "email"
