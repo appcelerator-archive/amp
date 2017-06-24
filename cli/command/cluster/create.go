@@ -23,20 +23,21 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVarP(&opts.workers, "workers", "w", 2, "Initial number of worker nodes")
 	flags.IntVarP(&opts.managers, "managers", "m", 3, "Initial number of manager nodes")
-	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
-	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster images (use 'local' for development)")
-	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
 	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
+	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
+	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster images (use 'local' for development)")
+	flags.IntVarP(&opts.workers, "workers", "w", 2, "Initial number of worker nodes")
 
 	// aws options
-	flags.String("aws-region", "", "The region to use when launching the instance")
-	flags.String("aws-stackname", "", "The name of the AWS stack that will be created")
 	flags.String("aws-onfailure", "", "'DO_NOTHING', 'ROLLBACK' (default), or 'DELETE")
 	flags.String("aws-parameter", "", "A key-value pair to supply to the AWS template")
+	flags.String("aws-region", "", "The region to use when launching the instance")
+	flags.String("aws-stackname", "", "The name of the AWS stack that will be created")
 	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
+	flags.String("aws-template", "", "UNSUPPORTED: cloud formation template url")
 
 	return cmd
 }
