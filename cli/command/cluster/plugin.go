@@ -7,21 +7,10 @@ import (
 	"os/exec"
 
 	"github.com/appcelerator/amp/cli"
+	"github.com/docker/docker/pkg/stringid"
 )
 
-// Notes
-//
-// This is a work in progress to flesh out how the CLI should use cluster plugins.
-// This first iteration isn't going to be terribly elegant; the goal is to first
-// get something quickly that works, then refactor.
-//
-//
-
-// ========================================================
-// Public types
-// ========================================================
-
-// supported plugin providers used by the factory function `NewClusterPlugin`
+// Supported plugin providers used by the factory function `NewPlugin`
 const (
 	Local = "local"
 	AWS   = "aws"
@@ -45,49 +34,10 @@ type Plugin interface {
 	Run(c cli.Interface, args []string, env map[string]string) error
 }
 
-// ========================================================
-// base plugin implementation - should never be instantiated
-// ========================================================
-
-type plugin struct {
-	config PluginConfig
-}
-
-func (p *plugin) Provider() string {
-	return p.config.Provider
-}
-
-func (p *plugin) Run(c cli.Interface, args []string, env map[string]string) error {
-	return errors.New("Run method invoked on base plugin type")
-}
-
-// ========================================================
-// local plugin implementation
-// ========================================================
-type localPlugin struct {
-	plugin
-}
-
-func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
-	return queryCluster(c, args, env)
-}
-
-// ========================================================
-// aws plugin implementation
-// ========================================================
-type awsPlugin struct {
-	plugin
-}
-
-func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
-	img := "appcelerator/amp-aws"
-	dockerOpts := p.plugin.config.DockerOpts
-	return RunContainer(c, img, dockerOpts, args, env)
-}
-
-// ========================================================
-// plugin factory
-// ========================================================
+// NewPlugin is a simple factory function to return a new instance of
+// a specific cluster plugin based on the supplied config
+// (config.Provider must be set to a valid provider or this
+// function will return an error).
 func NewPlugin(config PluginConfig) (Plugin, error) {
 	var p Plugin
 
@@ -108,7 +58,7 @@ func NewPlugin(config PluginConfig) (Plugin, error) {
 // `args` value). Additional arguments are supplied as environment variables in `env`, not `args`.
 func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string) error {
 	dockerArgs := []string{
-		"run", "-t", "--rm", "--name", "amp-cluster-plugin",
+		"run", "-t", "--rm", "--name", fmt.Sprintf("amp-cluster-plugin-%s", stringid.GenerateNonCryptoID()),
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
@@ -167,3 +117,44 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 
 	return nil
 }
+
+// ========================================================
+// base plugin implementation - should never be instantiated
+// ========================================================
+
+type plugin struct {
+	config PluginConfig
+}
+
+func (p *plugin) Provider() string {
+	return p.config.Provider
+}
+
+func (p *plugin) Run(c cli.Interface, args []string, env map[string]string) error {
+	return errors.New("Run method invoked on base plugin type")
+}
+
+// ========================================================
+// local plugin implementation
+// ========================================================
+type localPlugin struct {
+	plugin
+}
+
+func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
+	return queryCluster(c, args, env)
+}
+
+// ========================================================
+// aws plugin implementation
+// ========================================================
+type awsPlugin struct {
+	plugin
+}
+
+func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
+	img := "appcelerator/amp-aws"
+	dockerOpts := p.plugin.config.DockerOpts
+	return RunContainer(c, img, dockerOpts, args, env)
+}
+
