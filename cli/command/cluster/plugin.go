@@ -39,6 +39,10 @@ type Plugin interface {
 // (config.Provider must be set to a valid provider or this
 // function will return an error).
 func NewPlugin(config PluginConfig) (Plugin, error) {
+	if config.Provider == "" {
+		return nil, errors.New(fmt.Sprintf("Must specify a plugin provider: %s", config.Provider))
+	}
+
 	var p Plugin
 
 	switch config.Provider {
