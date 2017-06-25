@@ -23,17 +23,21 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVarP(&opts.managers, "managers", "m", 3, "Initial number of manager nodes")
+	// NOTE: the top level options are in a state of transition right now. The focus is on the aws plugin
+	// during this refactoring.
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
 	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
-	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider (\"local\" (default) or \"aws\")")
 	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
 	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster images (use 'local' for development)")
-	flags.IntVarP(&opts.workers, "workers", "w", 2, "Initial number of worker nodes")
+
+	// local options
+	flags.String("local-managers", "1", "Initial number of local manager nodes")
+	flags.String("local-workers", "2", "Initial number of local worker nodes")
 
 	// aws options
 	flags.String("aws-onfailure", "", "'DO_NOTHING', 'ROLLBACK' (default), or 'DELETE")
-	flags.String("aws-parameter", "", "A key-value pair to supply to the AWS template")
+	flags.StringSlice("aws-parameter", []string{}, "Key-value pairs to pass through to the AWS CloudFormation template")
 	flags.String("aws-region", "", "The region to use when launching the instance")
 	flags.String("aws-stackname", "", "The name of the AWS stack that will be created")
 	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
@@ -44,24 +48,27 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 
 // Map cli cluster flags to target bootstrap cluster command flags and update the cluster
 func create(c cli.Interface, cmd *cobra.Command) error {
+	// args and env will be supplied to the cluster plugin container
 	var args []string
 	var env map[string]string
 
+	// NOTE: all the local implementation is in transition right now -- I'll try to keep it working
+	// through the refactoring to support aws, but right now aws is the priority and I'll have to
+	// circle back to local after.
 	// until we finish refactoring, the local provider uses a deploy script that requires
 	// remapping cli options to script args and env vars
 	if opts.provider == "local" {
 		// This is a map from cli cluster flag name to bootstrap script flag name
 		m := map[string]string{
-			"workers":       "-w",
-			"managers":      "-m",
-			"provider":      "-t",
-			"name":          "-l",
-			"tag":           "-T",
-			"registration":  "-r",
-			"notifications": "-n",
+			"local-workers":  "-w",
+			"local-managers": "-m",
+			"provider":       "-t",
+			"name":           "-l",
+			"tag":            "-T",
+			"registration":   "-r",
+			"notifications":  "-n",
 		}
 
-		// TODO: only supporting local cluster management for this release
 		// the following ensures that flags are added before the final command arg
 		// TODO: refactor reflag to handle this
 		args = []string{"bin/deploy"}
@@ -71,25 +78,41 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 		args = append(args, "init")
 	}
 
-	// plugin options should be prefixed by the name of the provider
-	// for example: provider "aws" => --aws-region "us-west-2"
-	cmd.Flags().Visit(func (f *flag.Flag) {
+	// Strip provider prefix from CLI options to provider-specific options that will be supplied to the plugin.
+	// For example, `--aws-region us-west-2` becomes `--region us-west-2` (as expected by the aws plugin)
+	cmd.Flags().Visit(func(f *flag.Flag) {
 		if strings.HasPrefix(f.Name, opts.provider) {
-			 // TODO: wip, don't think we will need to keep this next line
-			opts.options[f.Name] = f.Value.String()
+			name := strings.TrimPrefix(f.Name, opts.provider+"-")
 
-			name := strings.TrimPrefix(f.Name, opts.provider + "-")
-			opt := fmt.Sprintf("--%s=%s", name, f.Value.String())
-			args = append(args, opt)
-			fmt.Println(opt)
+			if strings.HasSuffix(f.Value.Type(), "Slice") {
+				// error shouldn't happen here since we're asking for the slice it says it has
+				slice, _ := cmd.Flags().GetStringSlice(f.Name)
+				for _, val := range slice {
+					opt := fmt.Sprintf("--%s", name)
+					args = append(args, opt, val)
+
+					// TODO: just for testing, remove when finished
+					fmt.Println(opt, val)
+				}
+
+			} else {
+				opt := fmt.Sprintf("--%s", name)
+				args = append(args, opt, f.Value.String())
+
+				// TODO: just for testing, remove when finished
+				fmt.Println(opt, f.Value.String())
+			}
+
 		}
 	})
 
 	config := PluginConfig{
-		Provider: opts.provider,
-		Options: opts.options,
+		Provider:   opts.provider,
 		DockerOpts: opts.docker,
+		// TODO: not clear yet if we'll need this
+		Options: opts.options,
 	}
+
 	p, err := NewPlugin(config)
 	if err != nil {
 		return err
@@ -97,4 +120,3 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 
 	return p.Run(c, args, env)
 }
-
