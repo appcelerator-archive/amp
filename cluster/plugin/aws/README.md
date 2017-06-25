@@ -9,7 +9,7 @@ the plugin.
 AMP cli.
 
 For more details about the design and use, see the
-[wiki](https://github.com/appcelerator/amp/wiki/AWS-Clusters).
+[wiki](https://github.com/appcelerator/amp/wiki/AMP-Clusters).
 
 # Build
 
