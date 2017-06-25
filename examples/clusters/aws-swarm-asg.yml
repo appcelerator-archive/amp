@@ -783,7 +783,7 @@ Resources:
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
             - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   CoreWorkerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -865,7 +865,7 @@ Resources:
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
             - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   UserWorkerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -947,7 +947,7 @@ Resources:
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh
+                - LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
             - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   ManagerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -1029,7 +1029,7 @@ Resources:
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/asg-init.sh
                 - chmod +x /usr/local/bin/asg-init.sh
-                - CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh
+                - CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh || shutdown -h +2
             - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer

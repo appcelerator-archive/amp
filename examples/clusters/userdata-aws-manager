@@ -190,7 +190,7 @@ _elect_leader(){
   local _docker_version
   local _swarm_status
   local _not_ready=1
-  local _timeout=520
+  local _timeout=900
   local _leader
   SECONDS=0
   echo "leader election (will timeout after $_timeout s)" >&2
@@ -291,6 +291,17 @@ _get_node_ip(){
   echo $_myip
 }
 
+_smoke_test(){
+  local reachability
+  SECONDS=0
+  while [[ $SECONDS -lt 10 ]]; do
+    docker node ls &>/dev/null || return 1
+    reachability=$(docker node inspect self -f '{{.ManagerStatus.Reachability}}')
+    [[ "x$reachability" = "xreachable" ]] && return 0
+    sleep 1
+  done
+  return 1
+}
 
 _sanity_check || exit 1
 _mount_docker_volume $DOCKER_DEVICE || exit 1
@@ -313,3 +324,4 @@ else
 fi
 _label_node || exit 1
 _drain_node || exit 1
+_smoke_test

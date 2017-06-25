@@ -138,7 +138,7 @@ _set_metrics_address(){
 _get_worker_join_token(){
   local _manager=$1
   local _loop=0
-  local _timeout=600
+  local _timeout=900
   local _token
   echo "retrieving the swarm worker token (will timeout after $_timeout s)" >&2
   SECONDS=0
@@ -182,6 +182,17 @@ _get_node_ip(){
   echo $_myip
 }
 
+_smoke_test(){
+  local _state
+  SECONDS=0
+  while [[ $SECONDS -lt 10 ]]; do
+    _state=$(docker info -f '{{.Swarm.LocalNodeState}}')
+    [[ "x$_state" = "xactive" ]] && return 0
+    sleep 1
+  done
+  return 1
+}
+
 _sanity_check || exit 1
 _mount_docker_volume $DOCKER_DEVICE || exit 1
 _system_prerequisites || exit 1
@@ -194,3 +205,4 @@ _set_metrics_address "$nodeip" "9323" || exit 1
 _restart_docker || exit 1
 _swarm_join "$LEADER" || exit 1
 _label_node "$LEADER" || exit 1
+_smoke_test
