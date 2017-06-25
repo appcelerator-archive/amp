@@ -7,7 +7,7 @@ import (
 )
 
 type docker struct {
-	volumes       []string
+	Volumes []string
 }
 
 type clusterOpts struct {
@@ -26,7 +26,7 @@ type clusterOpts struct {
 var (
 	opts = &clusterOpts{
 		docker: docker{
-			volumes: []string{},
+			Volumes: []string{},
 		},
 		managers:      3,
 		workers:       2,
@@ -49,7 +49,7 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 		RunE:    c.ShowHelp,
 	}
 
-	cmd.PersistentFlags().StringSliceVarP(&opts.docker.volumes, "volume", "v", []string{}, "Bind mount a volume")
+	cmd.PersistentFlags().StringSliceVarP(&opts.Volumes, "volume", "v", []string{}, "Bind mount a volume")
 
 	cmd.AddCommand(NewCreateCommand(c))
 	cmd.AddCommand(NewListCommand(c))

@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"path"
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/mitchellh/go-homedir"
 )
 
 // Supported plugin providers used by the factory function `NewPlugin`
@@ -68,7 +71,8 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 		"-e", "GOPATH=/go",
 	}
 
-	for _, v := range dockerOpts.volumes {
+	// mount configured volumes
+	for _, v := range dockerOpts.Volumes {
 		dockerArgs = append(dockerArgs, "-v", v)
 	}
 
@@ -157,8 +161,24 @@ type awsPlugin struct {
 }
 
 func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
+	home, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+
+	dockerOpts := p.config.DockerOpts
+
+	if dockerOpts.Volumes == nil {
+		p.config.DockerOpts.Volumes = []string{}
+	}
+
+	// automatically attempt to mount aws credentials if present
+	awshome := path.Join(home, ".aws")
+	if _, err := os.Stat(awshome); err == nil {
+		dockerOpts.Volumes = append(dockerOpts.Volumes, fmt.Sprintf("%s:/root/.aws", awshome))
+	}
+
 	img := "appcelerator/amp-aws"
-	dockerOpts := p.plugin.config.DockerOpts
 	return RunContainer(c, img, dockerOpts, args, env)
 }
 
