@@ -43,6 +43,7 @@ func list(c cli.Interface, opts listStackOptions) error {
 		for _, line := range reply.Entries {
 			c.Console().Println(line.Stack.Id)
 		}
+		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
 	fmt.Fprintln(w, "ID\tNAME\tSERVICES\tFAILED SERVICES\tSTATUS\tOWNER\tORGANIZATION")
