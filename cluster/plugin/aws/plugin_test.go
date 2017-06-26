@@ -62,6 +62,7 @@ func TestCreate(t *testing.T) {
 	stackName := fmt.Sprintf("%s-plugin-test-%s", keyName, uuid.NewV4())
 
 	opts := &RequestOptions{
+		TemplateURL: DefaultTemplateURL,
 		Region:    region,
 		StackName: stackName,
 		OnFailure: "DELETE",
@@ -70,6 +71,7 @@ func TestCreate(t *testing.T) {
 			fmt.Sprintf("ClusterSize=%s", "2"),
 			fmt.Sprintf("ManagerSize=%s", "1"),
 		},
+		Sync: true,
 	}
 
 	log.Println("starting test...")
@@ -90,6 +92,12 @@ func TestCreate(t *testing.T) {
 		log.Fatal(err)
 	}
 	log.Printf("stack created: %s\n", opts.StackName)
+
+	// describe stack
+	// ============
+	ctxDescribe := context.Background()
+	output, err := describeStack(ctxDescribe, svc, stackName, 1)
+	log.Println(output)
 
 	// update stack
 	// ============

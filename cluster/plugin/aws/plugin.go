@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"strings"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
@@ -89,4 +90,18 @@ func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	}
 
 	return svc.DeleteStackWithContext(ctx, input)
+}
+
+func describeStack(ctx context.Context, svc *cf.CloudFormation, id string, page int) (string, error) {
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(id),
+		NextToken: aws.String(strconv.Itoa(page)),
+	}
+	output, err := svc.DescribeStacksWithContext(ctx, input)
+	if err != nil {
+		return "", err
+	}
+
+	s := output.GoString()
+	return s, nil
 }
