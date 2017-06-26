@@ -2,8 +2,10 @@ package aws
 
 import (
 	"context"
-	"strings"
+	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
@@ -30,6 +32,18 @@ type RequestOptions struct {
 	Sync bool
 
 	TemplateURL string
+}
+
+// StackOutput contains the converted output from the create stack operation
+type StackOutput struct {
+	// Description is the user defined description associated with the output
+	Description string
+
+	// OutputKey is the key associated with the output
+	OutputKey string
+
+	// OutputValue is the value associated with the output
+	OutputValue string
 }
 
 func parseParam(s string) *cf.Parameter {
@@ -92,16 +106,38 @@ func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.DeleteStackWithContext(ctx, input)
 }
 
-func describeStack(ctx context.Context, svc *cf.CloudFormation, id string, page int) (string, error) {
+func describeStack(ctx context.Context, svc *cf.CloudFormation, id string, page int) ([]StackOutput, error) {
 	input := &cf.DescribeStacksInput{
 		StackName: aws.String(id),
 		NextToken: aws.String(strconv.Itoa(page)),
 	}
 	output, err := svc.DescribeStacksWithContext(ctx, input)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	s := output.GoString()
-	return s, nil
+	var stack *cf.Stack
+	for _, stack = range output.Stacks {
+		n := stack.StackName
+		fmt.Println(n)
+		if aws.StringValue(stack.StackName) == id {
+			break
+		}
+		stack = nil
+	}
+
+	if stack == nil {
+		return nil, errors.New("stack not found: " + id)
+	}
+
+	stackOutput := []StackOutput{}
+	for _, o := range stack.Outputs {
+		stackOutput = append(stackOutput, StackOutput{
+			Description: aws.StringValue(o.Description),
+			OutputKey: aws.StringValue(o.OutputKey),
+			OutputValue: aws.StringValue(o.OutputValue),
+		})
+	}
+
+	return stackOutput, nil
 }
