@@ -21,8 +21,7 @@ func init() {
 	// Creates an instance of Logger for grpc logging
 	// WARNING: the grpc logger can only be set during init()
 	// https://godoc.org/google.golang.org/grpc/grpclog#SetLogger
-	// TODO: set verbose to false after testing
-	grpclog.SetLogger(Logger{out: NewOutStream(os.Stdout), verbose: true})
+	grpclog.SetLogger(Logger{out: NewOutStream(os.Stdout), verbose: false})
 }
 
 // NewLogger creates a CLI Logger instance that writes to the provided stream.
