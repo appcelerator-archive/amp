@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -23,27 +24,41 @@ type RequestOptions struct {
 	// Default: "ROLLBACK"
 	OnFailure string
 
+	// Params are for parameters supported by the CloudFormation template that will be used
 	Params []string
 
+	// Page is for aws requests that return paged information (pages start at 1)
+	Page int
+
+	// Region is the AWS region, ex: us-west-2
 	Region string
 
+	// StackName is the user-supplied name for identifying the stack
 	StackName string
 
+	// Sync, if true, causes the create operation to block until finished
 	Sync bool
 
+	// TemplateURL is the URL for the AWS CloudFormation to use
 	TemplateURL string
 }
 
 // StackOutput contains the converted output from the create stack operation
 type StackOutput struct {
 	// Description is the user defined description associated with the output
-	Description string
+	Description string `json:"description""`
 
 	// OutputKey is the key associated with the output
-	OutputKey string
+	OutputKey string `json:"key"`
 
 	// OutputValue is the value associated with the output
-	OutputValue string
+	OutputValue string `json:"value"`
+}
+
+// StackOutputList is used as a container for output by the StackOutputToJSON helper function
+type StackOutputList struct {
+	// Output is a slice of StackOutput
+	Output []StackOutput `json:"output""`
 }
 
 func parseParam(s string) *cf.Parameter {
@@ -70,6 +85,8 @@ func toParameters(sa []string) []*cf.Parameter {
 	return params
 }
 
+// CreateStack starts the AWS stack creation operation
+// The operation will return immediately unless opts.Sync is true
 func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions, timeout int64) (*cf.CreateStackOutput, error) {
 	input := &cf.CreateStackInput{
 		StackName: aws.String(opts.StackName),
@@ -85,6 +102,46 @@ func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.CreateStackWithContext(ctx, input)
 }
 
+// InfoStack returns the output information that was produced when the stack was created or updated
+func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) ([]StackOutput, error) {
+	input := &cf.DescribeStacksInput{
+		StackName: aws.String(opts.StackName),
+		NextToken: aws.String(strconv.Itoa(opts.Page)),
+	}
+	output, err := svc.DescribeStacksWithContext(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	var stack *cf.Stack
+	for _, stack = range output.Stacks {
+		n := stack.StackName
+		fmt.Println(n)
+		//if stack.StackName == input.StackName {
+		if aws.StringValue(stack.StackName) == opts.StackName {
+			break
+		}
+		stack = nil
+	}
+
+	if stack == nil {
+		return nil, errors.New("stack not found: " + opts.StackName)
+	}
+
+	stackOutputs := []StackOutput{}
+	for _, o := range stack.Outputs {
+		stackOutputs = append(stackOutputs, StackOutput{
+			Description: aws.StringValue(o.Description),
+			OutputKey:   aws.StringValue(o.OutputKey),
+			OutputValue: aws.StringValue(o.OutputValue),
+		})
+	}
+
+	return stackOutputs, nil
+}
+
+// UpdateStack starts the update operation
+// The operation will return immediately unless opts.Sync is true
 func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.UpdateStackOutput, error) {
 	input := &cf.UpdateStackInput{
 		StackName: aws.String(opts.StackName),
@@ -98,6 +155,8 @@ func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.UpdateStackWithContext(ctx, input)
 }
 
+// DeleteStack starts the delete operation
+// The operation will return immediately unless opts.Sync is true
 func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.DeleteStackOutput, error) {
 	input := &cf.DeleteStackInput{
 		StackName: aws.String(opts.StackName),
@@ -106,38 +165,16 @@ func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.DeleteStackWithContext(ctx, input)
 }
 
-func describeStack(ctx context.Context, svc *cf.CloudFormation, id string, page int) ([]StackOutput, error) {
-	input := &cf.DescribeStacksInput{
-		StackName: aws.String(id),
-		NextToken: aws.String(strconv.Itoa(page)),
+// StackOutputToJSON is a helper function that converts a slice of StackOutput to a JSON string representation
+// of StackOutputList
+func StackOutputToJSON(so []StackOutput) (string, error) {
+	list := StackOutputList{
+		Output: so,
 	}
-	output, err := svc.DescribeStacksWithContext(ctx, input)
+	j, err := json.Marshal(list)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	var stack *cf.Stack
-	for _, stack = range output.Stacks {
-		n := stack.StackName
-		fmt.Println(n)
-		if aws.StringValue(stack.StackName) == id {
-			break
-		}
-		stack = nil
-	}
-
-	if stack == nil {
-		return nil, errors.New("stack not found: " + id)
-	}
-
-	stackOutput := []StackOutput{}
-	for _, o := range stack.Outputs {
-		stackOutput = append(stackOutput, StackOutput{
-			Description: aws.StringValue(o.Description),
-			OutputKey: aws.StringValue(o.OutputKey),
-			OutputValue: aws.StringValue(o.OutputValue),
-		})
-	}
-
-	return stackOutput, nil
+	return string(j), nil
 }
+

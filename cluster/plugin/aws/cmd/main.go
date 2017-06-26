@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
@@ -14,7 +15,7 @@ import (
 
 var (
 	opts = &plugin.RequestOptions{
-		OnFailure: "ROLLBACK",
+		OnFailure: "DO_NOTHING",
 		Params:    []string{},
 		TemplateURL: plugin.DefaultTemplateURL,
 	}
@@ -32,21 +33,25 @@ func initClient(cmd *cobra.Command, args []string) {
 
 func provision(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
+
 	resp, err := plugin.CreateStack(ctx, svc, opts, 20)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(awsutil.StringValue(resp))
-
-	input := &cf.DescribeStacksInput{
-		StackName: aws.String(opts.StackName),
-	}
 	if opts.Sync {
+		input := &cf.DescribeStacksInput{
+			StackName: aws.String(opts.StackName),
+		}
 		if err := svc.WaitUntilStackCreateCompleteWithContext(ctx, input); err != nil {
 			log.Fatal(err)
 		}
+		// use the info command to print json cluster info to stdout
+		info(cmd, args)
+	} else {
+		// only print to stdout if not sync; otherwise stdout is used to display json stack output information now
 		log.Printf("stack created: %s\n", opts.StackName)
+		log.Println(awsutil.StringValue(resp.StackId))
 	}
 }
 
@@ -90,6 +95,22 @@ func destroy(cmd *cobra.Command, args []string) {
 	}
 }
 
+func info(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	resp, err := plugin.InfoStack(ctx, svc, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	j, err := plugin.StackOutputToJSON(resp)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// print json result to stdout
+	fmt.Print(j)
+}
+
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "awsplugin",
@@ -109,6 +130,12 @@ func main() {
 	}
 	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
 
+	infoCmd := &cobra.Command{
+		Use: "info",
+		Short: "get information about the cluster",
+		Run: info,
+	}
+
 	updateCmd := &cobra.Command{
 		Use:   "update",
 		Short: "update the cluster",
@@ -121,7 +148,7 @@ func main() {
 		Run:   destroy,
 	}
 
-	rootCmd.AddCommand(initCmd, updateCmd, destroyCmd)
+	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
 
 	_ = rootCmd.Execute()
 }
