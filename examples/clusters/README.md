@@ -32,7 +32,7 @@ or the development version:
 | CoreWorkerSize | Number of worker nodes for core services | 3 | |
 | UserWorkerSize | Number of worker nodes for user services | 3 | |
 | MetricsWorkerSize | Number of worker nodes for metrics services | 1 | |
-| LinuxDistribution | AMI OS, Debian or Ubuntu | Ubuntu | Debian |
+| LinuxDistribution | AMI OS, Debian, Ubuntu or UbuntuLatest | Ubuntu | Debian |
 | ManagerInstanceType | Instance type for the manager nodes. Must be a valid EC2 HVM instance type | t2.small | m4.large |
 | CoreInstanceType | Instance type for the core worker nodes. Must be a valid EC2 HVM instance type | m4.large | c4.large |
 | UserInstanceType | Instance type for the user worker nodes. Must be a valid EC2 HVM instance type | t2.medium | m4.large |
@@ -43,6 +43,7 @@ or the development version:
 | OverlayNetworks | name of overlay networks that should be created once swarm is initialized | ampnet | public storage search mq |
 | DockerChannel | channel for Docker installation | stable | edge |
 | DockerPlugins | space separated list of plugins to install | | rexray/ebs |
+| Sync | the stack will wait for all nodes to be up | true | false |
 
 ## Output
 
@@ -50,5 +51,6 @@ The output of the stack lists the DNS name of the ELB in front of the manager no
 
 | Output | Description | 
 | --------- | ----------- |
+| VpcId | VPC ID |
 | DNSTarget | public facing endpoint for the cluster, It can be used for ssh access, https access to swarm services and configuration of the remote server in the CLI |
 | MetricsURL | URL for cluster health dashboard |
