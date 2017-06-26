@@ -46,13 +46,13 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	}
 
 	// Check if stack already exists
-	stack, err := s.Stacks.GetStackByName(ctx, in.Name)
+	stack, err := s.Stacks.GetByName(ctx, in.Name)
 	if err != nil {
 		return nil, convertError(err)
 	}
 
 	if stack == nil {
-		if stack, err = s.Stacks.CreateStack(ctx, in.Name); err != nil {
+		if stack, err = s.Stacks.Create(ctx, in.Name); err != nil {
 			return nil, convertError(err)
 		}
 	} else {
@@ -74,7 +74,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	}
 
 	if err != nil {
-		s.Stacks.DeleteStack(ctx, stack.Id)
+		s.Stacks.Delete(ctx, stack.Id)
 		return nil, convertError(err)
 	}
 	log.Println("Successfully deployed stack:", stack)
@@ -87,7 +87,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 
 	// List stacks
 	reply := &ListReply{}
-	stacks, err := s.Stacks.ListStacks(ctx)
+	stacks, err := s.Stacks.List(ctx)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -115,7 +115,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 	log.Println("[stack] Remove", in.String())
 
 	// Retrieve the stack
-	stack, dockerErr := s.Stacks.GetStackByFragmentOrName(ctx, in.Stack)
+	stack, dockerErr := s.Stacks.GetByFragmentOrName(ctx, in.Stack)
 	if dockerErr != nil {
 		return nil, convertError(dockerErr)
 	}
@@ -130,7 +130,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 
 	// Remove stack
 	output, dockerErr := s.Docker.StackRemove(ctx, stack.Name)
-	storageErr := s.Stacks.DeleteStack(ctx, stack.Id)
+	storageErr := s.Stacks.Delete(ctx, stack.Id)
 	if dockerErr != nil {
 		return nil, convertError(dockerErr)
 	}
@@ -146,7 +146,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
 	log.Println("[stack] Services", in.String())
 
-	stack, err := s.Stacks.GetStackByFragmentOrName(ctx, in.StackName)
+	stack, err := s.Stacks.GetByFragmentOrName(ctx, in.StackName)
 	if err != nil {
 		return nil, convertError(err)
 	}

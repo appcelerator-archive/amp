@@ -25,8 +25,9 @@ message TeamResource {
 message Team {
   string name = 1;
   int64 create_dt = 2;
-  repeated string members = 3;
-  repeated TeamResource resources = 4;
+  Account owner = 3;
+  repeated string members = 4;
+  repeated TeamResource resources = 5;
 }
 
 enum OrganizationRole {
@@ -47,12 +48,7 @@ message Organization {
   repeated Team teams = 5;
 }
 
-enum AccountType {
-  USER = 0;
-  ORGANIZATION = 1;
-}
-
 message Account {
-  AccountType type = 1;
-  string name = 2;
+  string user = 1;
+  string organization = 2;
 }

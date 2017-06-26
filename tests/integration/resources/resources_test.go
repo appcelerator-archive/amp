@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/tests"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestListOrganizationShouldOnlyGetItsOwnResources(t *testing.T) {
+func TestListResourcesShouldReturnOnlyActiveOrganizationResources(t *testing.T) {
 	testUser := h.RandomUser()
 	testOrg := h.RandomOrg()
 	anotherUser := h.RandomUser()
@@ -150,1090 +151,365 @@ func TestRemoveNonExistingResourceShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestAuthorizations(t *testing.T) {
+func TestDeletedStackShouldNotBelongToTheTeamAnymore(t *testing.T) {
 	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOtherMember := h.RandomUser()
 	testOrg := h.RandomOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
-	su, err := h.SuperLogin()
+
+	// Create user, org and team
+	userCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Switch to organization account
+	orgCtx := h.Switch(userCtx, t, testOrg.Name)
+
+	// Deploy stack as organization
+	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
 	assert.NoError(t, err)
 
-	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-
-	// Create member in org
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
-	otherMemberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testOtherMember)
-
-	// AddUserToTeam
-	_, err = h.Accounts().AddUserToTeam(ownerCtx, &account.AddUserToTeamRequest{
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
-		UserName:         testMember.Name,
+		ResourceId:       stackID,
 	})
 	assert.NoError(t, err)
 
-	// User vs themselves
-
-	// user can read themselves
-	reply, err := h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// user can update themselves
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// user can delete themselves
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// User vs others
-
-	// user cannot read others
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// user cannot update others
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// user cannot delete others
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read others
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update others
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete others
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testUser.Name,
-			Type:   resource.ResourceType_RESOURCE_USER,
-			Action: resource.Action_ACTION_DELETE,
-		}},
+	// GetTeam
+	reply, err := h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Organizations owners
-
-	// owner can read organization
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update organization
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete organization
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can create team
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_TEAM,
-			Action: resource.Action_ACTION_CREATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Organizations members
-
-	// member cannot read organization
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// member cannot update organization
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	assert.NotEmpty(t, reply.Team.Resources)
+
+	// Delete the stack
+	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// member cannot delete organization
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_DELETE,
-		}},
+
+	// GetTeam
+	reply, err = h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// member cannot create team
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_TEAM,
-			Action: resource.Action_ACTION_CREATE,
-		}},
+	assert.Empty(t, reply.Team.Resources)
+}
+
+func TestDeletedDashboardShouldNotBelongToTheTeamAnymore(t *testing.T) {
+	testUser := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
+
+	// Create user, org and team
+	userCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+
+	// Switch to organization account
+	orgCtx := h.Switch(userCtx, t, testOrg.Name)
+
+	// Create dashboard as organization
+	r, err := h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{
+		Name: "my awesome dashboard" + stringid.GenerateNonCryptoID(),
+		Data: "my awesome data",
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read organization
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_READ,
-		}},
+
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       r.Dashboard.Id,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update organization
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
+
+	// GetTeam
+	reply, err := h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete organization
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_ORGANIZATION,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.NotEmpty(t, reply.Team.Resources)
+
+	// Remove dashboard
+	_, err = h.Dashboards().Remove(orgCtx, &dashboard.RemoveRequest{Id: r.Dashboard.Id})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can create team
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     testOrg.Name,
-			Type:   resource.ResourceType_RESOURCE_TEAM,
-			Action: resource.Action_ACTION_CREATE,
-		}},
+
+	// GetTeam
+	reply, err = h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+	assert.Empty(t, reply.Team.Resources)
+}
 
-	// Stacks
+func TestShareResourceReadPermission(t *testing.T) {
+	testUser := h.RandomUser()
+	testMember1 := h.RandomUser()
+	testMember2 := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
 
-	// Deploy stack as user
-	userStackID, err := h.DeployStack(ownerCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
-	assert.NoError(t, err)
+	// Create user and org
+	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
 
-	// Owners
+	// Add members
+	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
+	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
 
-	// owner can read stack
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+	// Switch to organization account
+	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
+	member2Ctx = h.Switch(member2Ctx, t, testOrg.Name)
+
+	// Member 1 create a team
+	_, err := h.Accounts().CreateTeam(member1Ctx, &testTeam)
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update stack
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete stack
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+
+	// Deploy stack as organization
+	stackName := stringid.GenerateNonCryptoID()[:32]
+	stackID, err := h.DeployStack(member1Ctx, stackName, "pinger.yml")
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
+	assert.Empty(t, reply.Resources)
+
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+
+	// Add member 2 to the team
+	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+	assert.Len(t, reply.Resources, 1)
 
-	// Create a dashboard as user
-	r, err := h.Dashboards().Create(ownerCtx, &dashboard.CreateRequest{Name: userStackID, Data: "data"})
-	assert.NoError(t, err)
-	userDashboardId := r.Dashboard.Id
+	// Member 2 should not be able to update the stack
+	_, err = h.DeployStack(member2Ctx, stackName, "pinger.yml")
+	assert.Error(t, err)
 
-	// Owners
+	// Member 2 should not be able to remove the stack
+	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
+	assert.Error(t, err)
 
-	// owner can read dashboard
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update dashboard
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete dashboard
-	reply, err = h.Resources().Authorizations(ownerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	// Remove member 2 from the team
+	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     userDashboardId,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+	assert.Empty(t, reply.Resources)
 
-	_, err = h.Stacks().Remove(ownerCtx, &stack.RemoveRequest{Stack: userStackID})
+	// Remove stack
+	_, err = h.Stacks().Remove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
+}
 
-	// Deploy stack as organization owner
-	orgOwnerCtx := h.Switch(ownerCtx, t, testOrg.Name)
-	orgOwnerStackID, err := h.DeployStack(orgOwnerCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
-	assert.NoError(t, err)
+func TestShareResourceWritePermission(t *testing.T) {
+	testUser := h.RandomUser()
+	testMember1 := h.RandomUser()
+	testMember2 := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
 
-	// Owners
+	// Create user and org
+	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
 
-	// owner can read stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	// Add members
+	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
+	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
+
+	// Switch to organization account
+	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
+	member2Ctx = h.Switch(member2Ctx, t, testOrg.Name)
+
+	// Member 1 create a team
+	_, err := h.Accounts().CreateTeam(member1Ctx, &testTeam)
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+
+	// Deploy stack as organization
+	stackName := stringid.GenerateNonCryptoID()[:32]
+	stackID, err := h.DeployStack(member1Ctx, stackName, "pinger.yml")
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete stack
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
+	assert.Empty(t, reply.Resources)
+
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
+
+	// ChangePermissionLevel
+	_, err = h.Resources().ChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
+		PermissionLevel:  accounts.TeamPermissionLevel_TEAM_WRITE,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+
+	// Add member 2 to the team
+	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
 
-	_, err = h.Stacks().Remove(orgOwnerCtx, &stack.RemoveRequest{Stack: orgOwnerStackID})
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	assert.NoError(t, err)
+	assert.Len(t, reply.Resources, 1)
 
-	// Deploy stack as organization owner
-	orgMemberCtx := h.Switch(memberCtx, t, testOrg.Name)
-	orgMemberStackID, err := h.DeployStack(orgMemberCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
+	// Member 2 should be able to update the stack
+	_, err = h.DeployStack(member2Ctx, stackName, "pinger.yml")
 	assert.NoError(t, err)
 
-	// Owners
+	// Member 2 should not be able to remove the stack
+	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
+	assert.Error(t, err)
 
-	// owner can read stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete stack
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read stack
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update stack
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete stack
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	// Remove member 2 from the team
+	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete stack
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberStackID,
-			Type:   resource.ResourceType_RESOURCE_STACK,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+	assert.Empty(t, reply.Resources)
 
-	_, err = h.Stacks().Remove(su, &stack.RemoveRequest{Stack: orgMemberStackID})
+	// Remove stack
+	_, err = h.Stacks().Remove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
+}
 
-	// Deploy dashboard as organization owner
-	r, err = h.Dashboards().Create(orgOwnerCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "data"})
-	assert.NoError(t, err)
-	orgOwnerDashboardID := r.Dashboard.Id
+func TestShareResourceAdminPermission(t *testing.T) {
+	testUser := h.RandomUser()
+	testMember1 := h.RandomUser()
+	testMember2 := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
 
-	// Owners
+	// Create user and org
+	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
 
-	// owner can read dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	// Add members
+	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
+	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
+
+	// Switch to organization account
+	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
+	member2Ctx = h.Switch(member2Ctx, t, testOrg.Name)
+
+	// Member 1 create a team
+	_, err := h.Accounts().CreateTeam(member1Ctx, &testTeam)
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete dashboard
-	reply, err = h.Resources().Authorizations(memberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+
+	// Deploy stack as organization
+	stackName := stringid.GenerateNonCryptoID()[:32]
+	stackID, err := h.DeployStack(member1Ctx, stackName, "pinger.yml")
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgOwnerDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
+	assert.Empty(t, reply.Resources)
+
+	// AddToTeam
+	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
 
-	// Deploy dashboard as organization owner
-	r, err = h.Dashboards().Create(orgMemberCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "data"})
+	// ChangePermissionLevel
+	_, err = h.Resources().ChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
+		OrganizationName: testTeam.OrganizationName,
+		TeamName:         testTeam.TeamName,
+		ResourceId:       stackID,
+		PermissionLevel:  accounts.TeamPermissionLevel_TEAM_ADMIN,
+	})
 	assert.NoError(t, err)
-	orgMemberDashboardID := r.Dashboard.Id
 
-	// Owners
+	// Add member 2 to the team
+	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
 
-	// owner can read dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can update dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// owner can delete dashboard
-	reply, err = h.Resources().Authorizations(orgOwnerCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// Others
-
-	// others cannot read dashboard
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot update dashboard
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// others cannot delete dashboard
-	reply, err = h.Resources().Authorizations(otherMemberCtx, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Len(t, reply.Resources, 1)
+
+	// Member 2 should be able to update the stack
+	_, err = h.DeployStack(member2Ctx, stackName, "pinger.yml")
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.False(t, reply.Replies[0].Authorized)
-
-	// SuperUser
-
-	// su can read dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_READ,
-		}},
-	})
+
+	// Member 2 should be able to remove the stack
+	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can update dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_UPDATE,
-		}},
-	})
+
+	// Remove member 2 from the team
+	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
+
+	// Make sure we can list only our resources
+	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
-
-	// su can delete dashboard
-	reply, err = h.Resources().Authorizations(su, &resource.AuthorizationsRequest{
-		Requests: []*resource.IsAuthorizedRequest{{
-			Id:     orgMemberDashboardID,
-			Type:   resource.ResourceType_RESOURCE_DASHBOARD,
-			Action: resource.Action_ACTION_DELETE,
-		}},
-	})
+	assert.Empty(t, reply.Resources)
+	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
-	assert.NotNil(t, reply)
-	assert.Len(t, reply.Replies, 1)
-	assert.True(t, reply.Replies[0].Authorized)
+	assert.Empty(t, reply.Resources)
 }

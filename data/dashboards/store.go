@@ -94,7 +94,19 @@ func (s *Store) List(ctx context.Context) ([]*Dashboard, error) {
 	}
 	dashboards := []*Dashboard{}
 	for _, proto := range protos {
-		dashboards = append(dashboards, proto.(*Dashboard))
+		dashboard := proto.(*Dashboard)
+		if !s.accounts.IsAuthorized(ctx, dashboard.Owner, accounts.ReadAction, accounts.DashboardRN, dashboard.Id) {
+			continue
+		}
+
+		// Check if we have an active organization
+		switch accounts.GetRequesterAccount(ctx).Organization {
+		case "": // If there's no active organization, add the dashboard to the results
+			dashboards = append(dashboards, dashboard)
+		case dashboard.Owner.Organization: // If the dashboard belongs to the active organization, add the dashboard to the results
+			dashboards = append(dashboards, dashboard)
+		default:
+		}
 	}
 	return dashboards, nil
 }
@@ -150,6 +162,20 @@ func (s *Store) Delete(ctx context.Context, id string) error {
 	// Check authorization
 	if !s.accounts.IsAuthorized(ctx, dashboard.Owner, accounts.DeleteAction, accounts.DashboardRN, dashboard.Id) {
 		return accounts.NotAuthorized
+	}
+
+	// Delete the dashboard in all teams of the owning organization
+	if dashboard.Owner.Organization != "" {
+		org, err := s.accounts.GetOrganization(ctx, dashboard.Owner.Organization)
+		if err != nil {
+			return err
+		}
+		if org == nil {
+			return accounts.OrganizationNotFound
+		}
+		for _, team := range org.Teams {
+			s.accounts.RemoveResourceFromTeam(ctx, dashboard.Owner.Organization, team.Name, dashboard.Id)
+		}
 	}
 
 	// Delete the dashboard

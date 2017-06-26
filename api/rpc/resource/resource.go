@@ -1,8 +1,6 @@
 package resource
 
 import (
-	"strings"
-
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/dashboards"
@@ -45,13 +43,13 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	}
 
 	// Stacks
-	stacks, err := s.Stacks.ListStacks(ctx)
+	stacks, err := s.Stacks.List(ctx)
 	if err != nil {
 		return nil, convertError(err)
 	}
 	for _, stack := range stacks {
-		if stack.Owner.Name == activeOrganization {
-			reply.Resources = append(reply.Resources, &ResourceEntry{Id: stack.Id, Type: ResourceType_RESOURCE_STACK, Name: stack.Name})
+		if stack.Owner.Organization == activeOrganization {
+			reply.Resources = append(reply.Resources, &ResourceEntry{Id: stack.Id, Type: ResourceType_RESOURCE_STACK, Name: stack.Name, Owner: stack.Owner})
 		}
 	}
 
@@ -61,98 +59,11 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 		return nil, convertError(err)
 	}
 	for _, dashboard := range dashboards {
-		if dashboard.Owner.Name == activeOrganization {
-			reply.Resources = append(reply.Resources, &ResourceEntry{Id: dashboard.Id, Type: ResourceType_RESOURCE_DASHBOARD, Name: dashboard.Name})
+		if dashboard.Owner.Organization == activeOrganization {
+			reply.Resources = append(reply.Resources, &ResourceEntry{Id: dashboard.Id, Type: ResourceType_RESOURCE_DASHBOARD, Name: dashboard.Name, Owner: dashboard.Owner})
 		}
 	}
 	log.Println("Successfully listed resources for organization", activeOrganization)
-	return reply, nil
-}
-
-func (s *Server) isAuthorized(ctx context.Context, request *IsAuthorizedRequest) bool {
-	var owner *accounts.Account
-	var action, resourceType string
-	resourceID := request.Id
-	switch request.Type {
-	case ResourceType_RESOURCE_USER:
-		resourceType = accounts.UserRN
-		owner = &accounts.Account{
-			Type: accounts.AccountType_USER,
-			Name: request.Id,
-		}
-	case ResourceType_RESOURCE_ORGANIZATION:
-		resourceType = accounts.OrganizationRN
-		owner = &accounts.Account{
-			Type: accounts.AccountType_ORGANIZATION,
-			Name: request.Id,
-		}
-	case ResourceType_RESOURCE_TEAM:
-		resourceType = accounts.TeamRN
-		IDs := strings.Split(request.Id, "/") // the team ID is the concatenation of orgName/teamName
-		switch len(IDs) {
-		case 1:
-			owner = &accounts.Account{
-				Type: accounts.AccountType_ORGANIZATION,
-				Name: IDs[0],
-			}
-			resourceID = IDs[0]
-		case 2:
-			owner = &accounts.Account{
-				Type: accounts.AccountType_ORGANIZATION,
-				Name: IDs[0],
-			}
-			resourceID = IDs[1]
-		default:
-			return false
-		}
-	case ResourceType_RESOURCE_DASHBOARD:
-		resourceType = accounts.DashboardRN
-		dashboard, err := s.Dashboards.Get(ctx, request.Id)
-		if err != nil {
-			return false
-		}
-		if dashboard == nil {
-			return false
-		}
-		owner = dashboard.Owner
-	case ResourceType_RESOURCE_STACK:
-		resourceType = accounts.StackRN
-		stack, err := s.Stacks.GetStack(ctx, request.Id)
-		if err != nil {
-			return false
-		}
-		if stack == nil {
-			return false
-		}
-		owner = stack.Owner
-	}
-
-	switch request.Action {
-	case Action_ACTION_CREATE:
-		action = accounts.CreateAction
-	case Action_ACTION_READ:
-		action = accounts.ReadAction
-	case Action_ACTION_UPDATE:
-		action = accounts.UpdateAction
-	case Action_ACTION_DELETE:
-		action = accounts.DeleteAction
-	}
-
-	return s.Accounts.IsAuthorized(ctx, owner, action, resourceType, resourceID)
-}
-
-// Authorizations implements resource.Authorizations
-func (s *Server) Authorizations(ctx context.Context, in *AuthorizationsRequest) (*AuthorizationsReply, error) {
-	reply := &AuthorizationsReply{}
-	for _, request := range in.Requests {
-		reply.Replies = append(reply.Replies, &IsAuthorizedReply{
-			Id:         request.Id,
-			Type:       request.Type,
-			Action:     request.Action,
-			Authorized: s.isAuthorized(ctx, request),
-		})
-	}
-	log.Println("Successfully retrieved authorizations")
 	return reply, nil
 }
 
@@ -160,22 +71,82 @@ func (s *Server) Authorizations(ctx context.Context, in *AuthorizationsRequest) 
 func (s *Server) AddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Empty, error) {
 	reply, err := s.List(ctx, &ListRequest{})
 	if err != nil {
-		return &empty.Empty{}, err
+		return &empty.Empty{}, convertError(err)
 	}
-	found := false
+
+	// Make sure the resource belongs to the given organization
+	var resource *ResourceEntry
 	for _, res := range reply.Resources {
 		if res.Id == in.ResourceId {
-			found = true
+			resource = res
 			break
 		}
 	}
-	if !found {
-		return &empty.Empty{}, status.Errorf(codes.NotFound, "Resource not found in the given organization")
+	if resource == nil {
+		return &empty.Empty{}, status.Errorf(codes.NotFound, "Resource doesn't belong to the given organization")
 	}
+
+	RN := ""
+	switch resource.Type {
+	case ResourceType_RESOURCE_DASHBOARD:
+		RN = accounts.DashboardRN
+	case ResourceType_RESOURCE_STACK:
+		RN = accounts.StackRN
+	default:
+		return &empty.Empty{}, status.Errorf(codes.FailedPrecondition, "Resource type is not supported")
+	}
+
+	// Check authorization over resource
+	if !s.Accounts.IsAuthorized(ctx, resource.Owner, accounts.AdminAction, RN, in.ResourceId) {
+		return &empty.Empty{}, convertError(accounts.NotAuthorized)
+	}
+
+	// Add resource to the team
 	if err := s.Accounts.AddResourceToTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
 	log.Printf("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	return &empty.Empty{}, nil
+}
+
+// ChangePermissionLevel implements resource.ChangePermissionLevel
+func (s *Server) ChangePermissionLevel(ctx context.Context, in *ChangePermissionLevelRequest) (*empty.Empty, error) {
+	reply, err := s.List(ctx, &ListRequest{})
+	if err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+
+	// Make sure the resource belongs to the given organization
+	var resource *ResourceEntry
+	for _, res := range reply.Resources {
+		if res.Id == in.ResourceId {
+			resource = res
+			break
+		}
+	}
+	if resource == nil {
+		return &empty.Empty{}, status.Errorf(codes.NotFound, "Resource doesn't belong to the given organization")
+	}
+
+	RN := ""
+	switch resource.Type {
+	case ResourceType_RESOURCE_DASHBOARD:
+		RN = accounts.DashboardRN
+	case ResourceType_RESOURCE_STACK:
+		RN = accounts.StackRN
+	default:
+		return &empty.Empty{}, status.Errorf(codes.FailedPrecondition, "Resource type is not supported")
+	}
+
+	// Check authorization over resource
+	if !s.Accounts.IsAuthorized(ctx, resource.Owner, accounts.AdminAction, RN, in.ResourceId) {
+		return &empty.Empty{}, convertError(accounts.NotAuthorized)
+	}
+
+	if err := s.Accounts.ChangeTeamResourcePermissionLevel(ctx, in.OrganizationName, in.TeamName, in.ResourceId, in.PermissionLevel); err != nil {
+		return &empty.Empty{}, convertError(err)
+	}
+	log.Printf("Successfully changed permission level over resource %s in team %s to %s\n", in.ResourceId, in.TeamName, in.PermissionLevel.String())
 	return &empty.Empty{}, nil
 }
 

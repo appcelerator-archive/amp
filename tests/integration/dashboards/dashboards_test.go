@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/appcelerator/amp/api/rpc/dashboard"
-	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/tests"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
@@ -54,11 +53,10 @@ func TestDashboardCreate(t *testing.T) {
 	assert.NotEmpty(t, r.Dashboard.Id)
 	assert.NotEmpty(t, r.Dashboard.CreateDt)
 	assert.NotEmpty(t, r.Dashboard.Owner)
-	assert.Equal(t, accounts.AccountType_USER, r.Dashboard.Owner.Type)
-	assert.Equal(t, testUser.Name, r.Dashboard.Owner.Name)
+	assert.Equal(t, testUser.Name, r.Dashboard.Owner.User)
+	assert.Empty(t, r.Dashboard.Owner.Organization)
 	assert.Equal(t, rq.Name, r.Dashboard.Name)
 	assert.Equal(t, rq.Data, r.Dashboard.Data)
-
 }
 
 func TestDashboardCreateNameAlreadyExistsshouldFail(t *testing.T) {

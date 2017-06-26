@@ -459,50 +459,6 @@
         ]
       }
     },
-    "/v1/organizations/{organization_name}/teams/{team_name}/resources/{resource_id}": {
-      "put": {
-        "operationId": "ChangeTeamResourcePermissionLevel",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/protobufEmpty"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "organization_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "team_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "resource_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/accountChangeTeamResourcePermissionLevelRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Account"
-        ]
-      }
-    },
     "/v1/signup": {
       "post": {
         "summary": "Global",
@@ -838,23 +794,6 @@
         }
       }
     },
-    "accountChangeTeamResourcePermissionLevelRequest": {
-      "type": "object",
-      "properties": {
-        "organization_name": {
-          "type": "string"
-        },
-        "team_name": {
-          "type": "string"
-        },
-        "resource_id": {
-          "type": "string"
-        },
-        "permission_level": {
-          "$ref": "#/definitions/accountsTeamPermissionLevel"
-        }
-      }
-    },
     "accountCreateOrganizationRequest": {
       "type": "object",
       "properties": {
@@ -1147,6 +1086,17 @@
         }
       }
     },
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        }
+      }
+    },
     "accountsOrganization": {
       "type": "object",
       "properties": {
@@ -1202,6 +1152,9 @@
         "create_dt": {
           "type": "string",
           "format": "int64"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
         },
         "members": {
           "type": "array",

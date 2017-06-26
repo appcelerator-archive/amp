@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package resource;
 
+import "github.com/appcelerator/amp/data/accounts/accounts.proto";
 import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 import "google/api/annotations.proto";
 
@@ -11,15 +12,15 @@ service Resource {
       get: "/v1/resources"
     };
   };
-  rpc Authorizations (AuthorizationsRequest) returns (AuthorizationsReply) {
-    option (google.api.http) = {
-      post: "/v1/resources/authorizations",
-      body: "*"
-    };
-  };
   rpc AddToTeam (AddToTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}",
+      body: "*"
+    };
+  };
+  rpc ChangePermissionLevel (ChangePermissionLevelRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}",
       body: "*"
     };
   };
@@ -50,6 +51,7 @@ message ResourceEntry {
   string id = 1;
   ResourceType type = 2;
   string name = 3;
+  accounts.Account owner = 4;
 }
 
 message ListRequest {
@@ -57,27 +59,6 @@ message ListRequest {
 
 message ListReply {
   repeated ResourceEntry resources = 1;
-}
-
-message IsAuthorizedRequest {
-  string id = 1;
-  ResourceType type = 2;
-  Action action = 3;
-}
-
-message IsAuthorizedReply {
-  string id = 1;
-  ResourceType type = 2;
-  Action action = 3;
-  bool authorized = 4;
-}
-
-message AuthorizationsRequest {
-  repeated IsAuthorizedRequest requests = 1;
-}
-
-message AuthorizationsReply {
-  repeated IsAuthorizedReply replies = 1;
 }
 
 message AddToTeamRequest {
@@ -90,4 +71,11 @@ message RemoveFromTeamRequest {
   string resource_id = 1;
   string organization_name = 2;
   string team_name = 3;
+}
+
+message ChangePermissionLevelRequest {
+  string organization_name = 1;
+  string team_name = 2;
+  string resource_id = 3;
+  accounts.TeamPermissionLevel permission_level = 4;
 }

@@ -43,8 +43,8 @@ func (s *Store) isNameAvailable(ctx context.Context, name string) (bool, error) 
 	return true, nil
 }
 
-// CreateStack creates a new stack
-func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err error) {
+// Create creates a new stack
+func (s *Store) Create(ctx context.Context, name string) (stack *Stack, err error) {
 	// Check if stack already exists
 	nameAvailable, err := s.isNameAvailable(ctx, name)
 	if err != nil {
@@ -70,8 +70,8 @@ func (s *Store) CreateStack(ctx context.Context, name string) (stack *Stack, err
 	return stack, nil
 }
 
-// GetStack fetches a stack by id
-func (s *Store) GetStack(ctx context.Context, id string) (*Stack, error) {
+// Get fetches a stack by id
+func (s *Store) Get(ctx context.Context, id string) (*Stack, error) {
 	stack := &Stack{}
 	if err := s.storage.Get(ctx, path.Join(rootKey, id), stack, true); err != nil {
 		return nil, err
@@ -83,12 +83,12 @@ func (s *Store) GetStack(ctx context.Context, id string) (*Stack, error) {
 	return stack, nil
 }
 
-// GetStackByName fetches a stack by name
-func (s *Store) GetStackByName(ctx context.Context, name string) (stack *Stack, err error) {
+// GetByName fetches a stack by name
+func (s *Store) GetByName(ctx context.Context, name string) (stack *Stack, err error) {
 	if name, err = CheckName(name); err != nil {
 		return nil, err
 	}
-	stacks, err := s.ListStacks(ctx)
+	stacks, err := s.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +100,9 @@ func (s *Store) GetStackByName(ctx context.Context, name string) (stack *Stack, 
 	return nil, nil
 }
 
-// GetStackByFragmentOrName fetches a stack by fragment ID or name
-func (s *Store) GetStackByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error) {
-	stks, err := s.ListStacks(ctx)
+// GetByFragmentOrName fetches a stack by fragment ID or name
+func (s *Store) GetByFragmentOrName(ctx context.Context, fragmentOrName string) (stack *Stack, err error) {
+	stks, err := s.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +115,8 @@ func (s *Store) GetStackByFragmentOrName(ctx context.Context, fragmentOrName str
 	return stack, nil
 }
 
-// ListStacks lists stacks
-func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
+// List lists stacks
+func (s *Store) List(ctx context.Context) ([]*Stack, error) {
 	protos := []proto.Message{}
 	if err := s.storage.List(ctx, rootKey, storage.Everything, &Stack{}, &protos); err != nil {
 		return nil, err
@@ -124,16 +124,25 @@ func (s *Store) ListStacks(ctx context.Context) ([]*Stack, error) {
 	stacks := []*Stack{}
 	for _, proto := range protos {
 		stack := proto.(*Stack)
-		if s.accounts.IsAuthorized(ctx, stack.Owner, accounts.ReadAction, accounts.StackRN, stack.Id) {
+		if !s.accounts.IsAuthorized(ctx, stack.Owner, accounts.ReadAction, accounts.StackRN, stack.Id) {
+			continue
+		}
+
+		// Check if we have an active organization
+		switch accounts.GetRequesterAccount(ctx).Organization {
+		case "": // If there's no active organization, add the stack to the results
 			stacks = append(stacks, stack)
+		case stack.Owner.Organization: // If the stack belongs to the active organization, add the stack to the results
+			stacks = append(stacks, stack)
+		default:
 		}
 	}
 	return stacks, nil
 }
 
-// DeleteStack deletes a stack by id
-func (s *Store) DeleteStack(ctx context.Context, id string) error {
-	stack, err := s.GetStack(ctx, id)
+// Delete deletes a stack by id
+func (s *Store) Delete(ctx context.Context, id string) error {
+	stack, err := s.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -146,14 +155,23 @@ func (s *Store) DeleteStack(ctx context.Context, id string) error {
 		return accounts.NotAuthorized
 	}
 
+	// Delete the stack in all teams of the owning organization
+	if stack.Owner.Organization != "" {
+		org, err := s.accounts.GetOrganization(ctx, stack.Owner.Organization)
+		if err != nil {
+			return err
+		}
+		if org == nil {
+			return accounts.OrganizationNotFound
+		}
+		for _, team := range org.Teams {
+			s.accounts.RemoveResourceFromTeam(ctx, stack.Owner.Organization, team.Name, stack.Id)
+		}
+	}
+
 	// Delete the stack
 	if err := s.storage.Delete(ctx, path.Join(rootKey, stack.Id), false, nil); err != nil {
 		return err
 	}
 	return nil
-}
-
-// Reset resets the account storage
-func (s *Store) Reset(ctx context.Context) {
-	s.storage.Delete(ctx, rootKey, true, nil)
 }

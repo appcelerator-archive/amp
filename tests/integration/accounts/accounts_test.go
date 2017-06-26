@@ -1180,6 +1180,21 @@ func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestTeamCreateByOrgMemberShouldSucceed(t *testing.T) {
+	testUser := h.RandomUser()
+	testMember := h.RandomUser()
+	testOrg := h.RandomOrg()
+	testTeam := h.RandomTeam(testOrg.Name)
+
+	// Create organization and add a member
+	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+
+	// CreateTeam
+	_, err := h.Accounts().CreateTeam(memberCtx, &testTeam)
+	assert.NoError(t, err)
+}
+
 func TestTeamAddUser(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember := h.RandomUser()

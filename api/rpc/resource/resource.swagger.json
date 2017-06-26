@@ -31,32 +31,6 @@
         ]
       }
     },
-    "/v1/resources/authorizations": {
-      "post": {
-        "operationId": "Authorizations",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/resourceAuthorizationsReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/resourceAuthorizationsRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Resource"
-        ]
-      }
-    },
     "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}": {
       "delete": {
         "operationId": "RemoveFromTeam",
@@ -133,24 +107,76 @@
         "tags": [
           "Resource"
         ]
+      },
+      "put": {
+        "operationId": "ChangePermissionLevel",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "organization_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "team_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/resourceChangePermissionLevelRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Resource"
+        ]
       }
     }
   },
   "definitions": {
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        }
+      }
+    },
+    "accountsTeamPermissionLevel": {
+      "type": "string",
+      "enum": [
+        "TEAM_READ",
+        "TEAM_WRITE",
+        "TEAM_ADMIN"
+      ],
+      "default": "TEAM_READ"
+    },
     "protobufEmpty": {
       "type": "object",
       "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
       "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
-    },
-    "resourceAction": {
-      "type": "string",
-      "enum": [
-        "ACTION_CREATE",
-        "ACTION_READ",
-        "ACTION_UPDATE",
-        "ACTION_DELETE"
-      ],
-      "default": "ACTION_CREATE"
     },
     "resourceAddToTeamRequest": {
       "type": "object",
@@ -166,57 +192,20 @@
         }
       }
     },
-    "resourceAuthorizationsReply": {
+    "resourceChangePermissionLevelRequest": {
       "type": "object",
       "properties": {
-        "replies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/resourceIsAuthorizedReply"
-          }
-        }
-      }
-    },
-    "resourceAuthorizationsRequest": {
-      "type": "object",
-      "properties": {
-        "requests": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/resourceIsAuthorizedRequest"
-          }
-        }
-      }
-    },
-    "resourceIsAuthorizedReply": {
-      "type": "object",
-      "properties": {
-        "id": {
+        "organization_name": {
           "type": "string"
         },
-        "type": {
-          "$ref": "#/definitions/resourceResourceType"
-        },
-        "action": {
-          "$ref": "#/definitions/resourceAction"
-        },
-        "authorized": {
-          "type": "boolean",
-          "format": "boolean"
-        }
-      }
-    },
-    "resourceIsAuthorizedRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
+        "team_name": {
           "type": "string"
         },
-        "type": {
-          "$ref": "#/definitions/resourceResourceType"
+        "resource_id": {
+          "type": "string"
         },
-        "action": {
-          "$ref": "#/definitions/resourceAction"
+        "permission_level": {
+          "$ref": "#/definitions/accountsTeamPermissionLevel"
         }
       }
     },
@@ -259,6 +248,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
         }
       }
     },

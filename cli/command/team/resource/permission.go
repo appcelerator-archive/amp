@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 
-	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
@@ -56,14 +56,14 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 		return fmt.Errorf("invalid permission level: %s. Please specify 'read', 'write' or 'admin' as permission value.", opts.permissionLevel)
 	}
 	conn := c.ClientConn()
-	client := account.NewAccountClient(conn)
-	request := &account.ChangeTeamResourcePermissionLevelRequest{
+	client := resource.NewResourceClient(conn)
+	request := &resource.ChangePermissionLevelRequest{
 		OrganizationName: opts.org,
 		TeamName:         opts.team,
 		ResourceId:       opts.resource,
 		PermissionLevel:  permissionLevel,
 	}
-	if _, err := client.ChangeTeamResourcePermissionLevel(context.Background(), request); err != nil {
+	if _, err := client.ChangePermissionLevel(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	c.Console().Println("Permission level has been changed.")
