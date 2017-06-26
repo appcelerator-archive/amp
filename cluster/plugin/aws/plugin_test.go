@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -68,7 +69,7 @@ func TestCreate(t *testing.T) {
 		OnFailure: "DELETE",
 		Params: []string{
 			fmt.Sprintf("KeyName=%s", keyName),
-			fmt.Sprintf("ClusterSize=%s", "2"),
+			fmt.Sprintf("ClusterSize=%s", "1"),
 			fmt.Sprintf("ManagerSize=%s", "1"),
 		},
 		Sync: true,
@@ -81,7 +82,7 @@ func TestCreate(t *testing.T) {
 	ctxCreate := context.Background()
 	respCreate, err := CreateStack(ctxCreate, svc, opts, 20)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respCreate))
 	log.Println("creating stack...")
@@ -89,30 +90,45 @@ func TestCreate(t *testing.T) {
 		StackName: aws.String(opts.StackName),
 	}
 	if err := svc.WaitUntilStackCreateCompleteWithContext(ctxCreate, input); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	log.Printf("stack created: %s\n", opts.StackName)
 
 	// describe stack
 	// ============
 	ctxDescribe := context.Background()
-	stackOutput, err := describeStack(ctxDescribe, svc, stackName, 1)
+	opts.Page = 1
+	stackOutput, err := InfoStack(ctxDescribe, svc, opts)
+	log.Println("printing stack output...")
 	for _, so := range stackOutput {
 		log.Printf("[%s] %s: %s\n", so.OutputKey, so.Description, so.OutputValue)
+	}
+	j, err := StackOutputToJSON(stackOutput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println("printing stack output as json...")
+	log.Println("-------------------------------------------------------")
+	log.Println(j)
+	log.Println("-------------------------------------------------------")
+	// verify the json string at least starts with this:
+	if !strings.HasPrefix(j, `{"output":[{"description":`) {
+		t.Error("JSON response doesn't appear valid")
 	}
 
 	// update stack
 	// ============
-	opts.Params = append(opts.Params, fmt.Sprintf("ClusterSize=%s", "1"))
+	// increase cluster from 1 to 2 workers
+	opts.Params = append(opts.Params, fmt.Sprintf("ClusterSize=%s", "2"))
 	ctxUpdate := context.Background()
 	respUpdate, err := UpdateStack(ctxUpdate, svc, opts)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	log.Println(awsutil.StringValue(respUpdate))
 	log.Println("updating stack...")
 	if err := svc.WaitUntilStackUpdateCompleteWithContext(ctxUpdate, input); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	log.Printf("stack updated: %s\n", opts.StackName)
 
@@ -126,7 +142,7 @@ func TestCreate(t *testing.T) {
 	log.Println(awsutil.StringValue(respDelete))
 	log.Println("deleting stack...")
 	if err := svc.WaitUntilStackDeleteCompleteWithContext(ctxDelete, input); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	log.Printf("stack deleted: %s\n", opts.StackName)
 }
