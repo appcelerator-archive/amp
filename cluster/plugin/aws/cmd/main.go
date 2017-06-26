@@ -16,6 +16,7 @@ var (
 	opts = &plugin.RequestOptions{
 		OnFailure: "ROLLBACK",
 		Params:    []string{},
+		TemplateURL: plugin.DefaultTemplateURL,
 	}
 
 	sess *session.Session
