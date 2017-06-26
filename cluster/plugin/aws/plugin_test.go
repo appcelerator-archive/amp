@@ -96,8 +96,10 @@ func TestCreate(t *testing.T) {
 	// describe stack
 	// ============
 	ctxDescribe := context.Background()
-	output, err := describeStack(ctxDescribe, svc, stackName, 1)
-	log.Println(output)
+	stackOutput, err := describeStack(ctxDescribe, svc, stackName, 1)
+	for _, so := range stackOutput {
+		log.Printf("[%s] %s: %s\n", so.OutputKey, so.Description, so.OutputValue)
+	}
 
 	// update stack
 	// ============
