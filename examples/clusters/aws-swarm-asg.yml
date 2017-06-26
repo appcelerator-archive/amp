@@ -5,20 +5,30 @@ Mappings:
   AMI:
     # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170330
     # debian-jessie-amd64-hvm-2017-01-15
+    # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
+      UbuntuLatest: ami-e94e5e8a
       Debian: ami-0dcac96e
+    # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
+      UbuntuLatest: ami-6d48500b
       Debian: ami-3291be54
+    # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
+      UbuntuLatest: ami-d15a75c7
       Debian: ami-cb4b94dd
+    # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
+      UbuntuLatest: ami-8b92b4ee
       Debian: ami-c5ba9fa0
+    # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
+      UbuntuLatest: ami-835b4efa
       Debian: ami-fde96b9d
   VpcCidrs:
     subnet1:
@@ -66,6 +76,7 @@ Parameters:
     Type: String
     AllowedValues:
     - Ubuntu
+    - UbuntuLatest
     - Debian
     Default: Ubuntu
   ManagerInstanceType:
@@ -193,6 +204,16 @@ Parameters:
     Type: String
     Description: "space separated list of plugins to install. Example: rexray/ebs"
     Default: ""
+  Sync:
+    Type: String
+    Description: If true, the stack will wait for all nodes to be up
+    AllowedValues:
+    - true
+    - false
+    Default: true
+
+Conditions:
+  Sync: !Equals [ !Ref Sync, "true" ]
 
 Resources:
   Vpc:
@@ -703,12 +724,26 @@ Resources:
       Path: /
       Roles:
       - Ref: ClusterRole
+
+  MetricsWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+
+  MetricsWaitCondition:
+    Condition: Sync
+    Type: "AWS::CloudFormation::WaitCondition"
+    DependsOn: MetricsWorkerAutoScalingGroup
+    Properties:
+      Handle: !Ref MetricsWaitHandle
+      Timeout: 600
+      Count: !Ref MetricsWorkerSize
+
   MetricsWorkerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
+      - ManagerAutoScalingGroup
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -717,7 +752,7 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref MetricsWorkerSize
-      HealthCheckGracePeriod: 200
+      HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref MetricsWorkerAsgLaunchConfig
       MaxSize: 5
@@ -746,7 +781,7 @@ Resources:
   MetricsWorkerAsgLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     DependsOn:
-      - CoreWorkerAutoScalingGroup
+      - MetricsWaitHandle
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -766,31 +801,44 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub
-            - |
-              #cloud-config
-              repo_update: true
-              repo_upgrade: security
-              packages:
-                - ca-certificates
-                - jq
-                - curl
-                - unzip
-                - awscli
-                - sysstat
-                - iotop
-                - xfsprogs
-              runcmd:
-                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-                - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
-            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+          !Sub |
+            #cloud-config
+            repo_update: true
+            repo_upgrade: security
+            packages:
+              - ca-certificates
+              - jq
+              - curl
+              - unzip
+              - awscli
+              - sysstat
+              - iotop
+              - xfsprogs
+              - python-setuptools
+            runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+              - chmod +x /usr/local/bin/asg-init.sh
+              - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+
+  CoreWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+
+  CoreWaitCondition:
+    Condition: Sync
+    Type: "AWS::CloudFormation::WaitCondition"
+    DependsOn: CoreWorkerAutoScalingGroup
+    Properties:
+      Handle: !Ref CoreWaitHandle
+      Timeout: 600
+      Count: !Ref CoreWorkerSize
+
   CoreWorkerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
+      - ManagerAutoScalingGroup
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -799,7 +847,7 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref CoreWorkerSize
-      HealthCheckGracePeriod: 200
+      HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref CoreWorkerAsgLaunchConfig
       MaxSize: 5
@@ -825,10 +873,11 @@ Resources:
         -  - !Ref PublicSubnet1
            - !Ref PublicSubnet2
            - !Ref PublicSubnet3
+
   CoreWorkerAsgLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     DependsOn:
-      - ManagerAutoScalingGroup
+      - CoreWaitHandle
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -848,31 +897,44 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub
-            - |
-              #cloud-config
-              repo_update: true
-              repo_upgrade: security
-              packages:
-                - ca-certificates
-                - jq
-                - curl
-                - unzip
-                - awscli
-                - sysstat
-                - iotop
-                - xfsprogs
-              runcmd:
-                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-                - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
-            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+          !Sub |
+            #cloud-config
+            repo_update: true
+            repo_upgrade: security
+            packages:
+              - ca-certificates
+              - jq
+              - curl
+              - unzip
+              - awscli
+              - sysstat
+              - iotop
+              - xfsprogs
+              - python-setuptools
+            runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+              - chmod +x /usr/local/bin/asg-init.sh
+              - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+
+  UserWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+
+  UserWaitCondition:
+    Condition: Sync
+    Type: "AWS::CloudFormation::WaitCondition"
+    DependsOn: UserWorkerAutoScalingGroup
+    Properties:
+      Handle: !Ref UserWaitHandle
+      Timeout: 600
+      Count: !Ref UserWorkerSize
+
   UserWorkerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
+      - ManagerAutoScalingGroup
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -881,7 +943,7 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref UserWorkerSize
-      HealthCheckGracePeriod: 200
+      HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref UserWorkerAsgLaunchConfig
       MaxSize: 5
@@ -907,10 +969,11 @@ Resources:
         -  - !Ref PublicSubnet1
            - !Ref PublicSubnet2
            - !Ref PublicSubnet3
+
   UserWorkerAsgLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     DependsOn:
-      - CoreWorkerAutoScalingGroup
+      - UserWaitHandle
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -930,25 +993,37 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub
-            - |
-              #cloud-config
-              repo_update: true
-              repo_upgrade: security
-              packages:
-                - ca-certificates
-                - jq
-                - curl
-                - unzip
-                - awscli
-                - sysstat
-                - iotop
-                - xfsprogs
-              runcmd:
-                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-                - chmod +x /usr/local/bin/asg-init.sh
-                - LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
-            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+          !Sub |
+            #cloud-config
+            repo_update: true
+            repo_upgrade: security
+            packages:
+              - ca-certificates
+              - jq
+              - curl
+              - unzip
+              - awscli
+              - sysstat
+              - iotop
+              - xfsprogs
+              - python-setuptools
+            runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
+              - chmod +x /usr/local/bin/asg-init.sh
+              - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+
+  ManagerWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+
+  ManagerWaitCondition:
+    Condition: Sync
+    Type: "AWS::CloudFormation::WaitCondition"
+    DependsOn: ManagerAutoScalingGroup
+    Properties:
+      Handle: !Ref ManagerWaitHandle
+      Timeout: 600
+      Count: !Ref ManagerSize
+
   ManagerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
@@ -963,7 +1038,7 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref ManagerSize
-      HealthCheckGracePeriod: 200
+      HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref ManagerAsgLaunchConfig
       MaxSize: 5
@@ -993,6 +1068,7 @@ Resources:
            - !Ref PublicSubnet3
   ManagerAsgLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn: ManagerWaitHandle
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -1012,25 +1088,24 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub
-            - |
-              #cloud-config
-              repo_update: true
-              repo_upgrade: security
-              packages:
-                - ca-certificates
-                - jq
-                - curl
-                - unzip
-                - awscli
-                - sysstat
-                - iotop
-                - xfsprogs
-              runcmd:
-                - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/asg-init.sh
-                - chmod +x /usr/local/bin/asg-init.sh
-                - CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${region} STACK_NAME=${stackname} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh || shutdown -h +2
-            - { stackname: !Ref "AWS::StackName", region: !Ref "AWS::Region" }
+          !Sub |
+            #cloud-config
+            repo_update: true
+            repo_upgrade: security
+            packages:
+              - ca-certificates
+              - jq
+              - curl
+              - unzip
+              - awscli
+              - sysstat
+              - iotop
+              - xfsprogs
+              - python-setuptools
+            runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/asg-init.sh
+              - chmod +x /usr/local/bin/asg-init.sh
+              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh || shutdown -h
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -1153,6 +1228,8 @@ Metadata:
         default: EBS Volume Size for Docker local storage
       LinuxDistribution:
         default: Linux Distribution
+      Sync:
+        default: Synchronous Deployment
 
 Outputs:
   DNSTarget:
