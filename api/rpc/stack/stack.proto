@@ -33,6 +33,7 @@ message DeployRequest {
   string name = 1;
   bytes compose = 2;
   map<string, string> env_var = 3;
+  bytes config = 4;
 }
 
 message DeployReply {

@@ -145,6 +145,10 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "config": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },

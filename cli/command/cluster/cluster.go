@@ -20,7 +20,7 @@ type clusterOpts struct {
 	registration  string
 	notifications bool
 	// TODO: not clear yet if we'll need this
-	options       map[string]string
+	options map[string]string
 }
 
 var (

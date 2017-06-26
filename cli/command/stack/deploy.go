@@ -6,16 +6,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"encoding/json"
+	"errors"
+
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
+	"github.com/docker/docker/cli/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 type deployStackOptions struct {
-	file   string
-	envVar string
+	file         string
+	envVar       string
+	registryAuth bool
 }
 
 var (
@@ -35,6 +40,7 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&opts.file, "compose-file", "c", "", "Path to a Compose v3 file")
 	cmd.Flags().StringVarP(&opts.envVar, "env", "e", "", "Environment variable to set during deployment format: var=value")
+	cmd.Flags().BoolVar(&opts.registryAuth, "with-registry-auth", false, "Send registry authentication details to swarm agents")
 	return cmd
 }
 
@@ -65,6 +71,18 @@ func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
 		Name:    name,
 		Compose: contents,
 		EnvVar:  envArgs,
+	}
+
+	// If registryAuth was set, send the docker CLI configuration file to amplifier
+	if opts.registryAuth {
+		cf, err := config.Load(config.Dir())
+		if err != nil {
+			return errors.New("Unable to read docker CLI configuration file.")
+		}
+		req.Config, err = json.Marshal(cf)
+		if err != nil {
+			return errors.New("Unable to marshal docker CLI configuration file.")
+		}
 	}
 
 	client := stack.NewStackClient(c.ClientConn())
