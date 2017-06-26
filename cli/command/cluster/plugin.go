@@ -22,8 +22,8 @@ const (
 // PluginConfig is used by the factory function `NewClusterPlugin` to create a new plugin instance.
 type PluginConfig struct {
 	// Provider is the name of the cluster provider, such as "local" or "aws"
-	Provider string
-	Options  map[string]string
+	Provider   string
+	Options    map[string]string
 	DockerOpts docker
 }
 
@@ -181,4 +181,3 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	img := "appcelerator/amp-aws"
 	return RunContainer(c, img, dockerOpts, args, env)
 }
-

@@ -1,9 +1,9 @@
 package stack
 
 import (
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/command"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/compose/convert"
 	"golang.org/x/net/context"
 )

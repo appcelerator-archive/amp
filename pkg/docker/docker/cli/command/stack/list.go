@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"text/tabwriter"
 
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/command"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/compose/convert" //{AMP} make it local
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"

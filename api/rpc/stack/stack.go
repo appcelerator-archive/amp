@@ -67,7 +67,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 	}
 
 	// Deploy stack
-	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose)
+	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose, in.Config)
 
 	for envName := range in.EnvVar {
 		os.Setenv(envName, "")

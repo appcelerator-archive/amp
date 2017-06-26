@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,17 +10,18 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
-	"github.com/appcelerator/amp/pkg/docker/docker/stack"
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/command"
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/command/stack"
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/flags"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/compose/loader"
 	types2 "github.com/docker/docker/cli/compose/types"
-	"github.com/docker/docker/cli/flags"
+	"github.com/docker/docker/cli/config/configfile"
 	"github.com/docker/docker/client"
 	dopts "github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -196,18 +199,34 @@ func (d *Docker) ComposeIsAuthorized(compose *types2.Config) bool {
 }
 
 // StackDeploy deploy a stack
-func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte) (output string, err error) {
+func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte, configFile []byte) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		// Write the compose file to a temporary file
-		tmp, err := ioutil.TempFile("", stackName)
+		compose, err := ioutil.TempFile("", stackName)
 		if err != nil {
 			return err
 		}
-		defer os.Remove(tmp.Name()) // clean up
-		if _, err := tmp.Write(composeFile); err != nil {
+		defer os.Remove(compose.Name()) // clean up
+		if _, err := compose.Write(composeFile); err != nil {
 			return err
 		}
-		deployOpt := stack.NewDeployOptions(stackName, tmp.Name(), true)
+
+		if configFile != nil {
+			log.Println("Using client configuration file")
+
+			// Read client configuration file from reader
+			cf := configfile.ConfigFile{
+				AuthConfigs: make(map[string]types.AuthConfig),
+			}
+			if err := json.NewDecoder(bytes.NewReader(configFile)).Decode(&cf); err != nil {
+				return err
+			}
+
+			// This method is specific to AMP. It updates the cli with the provided configuration.
+			cli.SetConfigFile(&cf)
+		}
+
+		deployOpt := stack.NewDeployOptions(stackName, compose.Name(), true)
 		if err := stack.RunDeploy(cli, deployOpt); err != nil {
 			return err
 		}

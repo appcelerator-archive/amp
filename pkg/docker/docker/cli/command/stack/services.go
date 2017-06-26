@@ -3,9 +3,9 @@ package stack
 import (
 	"fmt"
 
+	"github.com/appcelerator/amp/pkg/docker/docker/cli/command"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/cli/command"
 	"github.com/docker/docker/cli/command/formatter"
 	"github.com/docker/docker/cli/command/service"
 	"github.com/docker/docker/opts"
