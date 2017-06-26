@@ -1,0 +1,327 @@
+#!/bin/bash
+
+CHANNEL=${CHANNEL:-stable}
+#PLUGINS=
+REGION=${REGION:-us-west-2}
+STACK_NAME=${STACK_NAME:-unset}
+VPC_ID=${VPC_ID:-unset}
+MANAGER_SIZE=${MANAGER_SIZE:-3}
+DRAIN_MANAGER=${DRAIN_MANAGER:-false}
+OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
+#MIRROR_REGISTRIES=
+#DOCKER_DEVICE=/dev/sdl
+SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
+SYSV_DOCKER_DEFAULT=/etc/default/docker
+
+_init_system(){
+  systemctl --version >/dev/null 2>&1 && echo systemd && return
+  [[ `/sbin/init --version` =~ upstart ]] && echo upstart && return
+  echo sysv
+}
+
+_install_docker(){
+  local _release=$(lsb_release -is)
+  local _host
+  case $CHANNEL in
+  stable) _host="get.docker.com" ;;
+  edge|beta|test) _host="test.docker.com" ;;
+  experimental) _host="experimental.docker.com" ;;
+  *) return 1 ;;
+  esac
+  echo "installing Docker from $_host" >&2
+  wget -qO- "https://$_host/" | sh || return 1
+  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu
+  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin 
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl enable docker.service
+    systemctl start docker.service
+  else
+    chkconfig docker on
+    service docker start
+  fi
+  docker version >&2
+}
+
+_install_plugins(){
+  local plugin
+  local alias
+  for plugin in $PLUGINS; do
+    alias=${plugin#store/}
+    alias=${alias%:*}
+    docker plugin install "$plugin" --alias "$alias" --grant-all-permissions # || return 1
+  done
+  return 0
+}
+
+# expose the Docker remote api
+_expose_remote_api() {
+  case $(_init_system) in
+  systemd)
+    mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
+    echo "exposing the engine API" >&2
+    cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
+EOF
+    systemctl daemon-reload
+  ;;
+  sysv)
+    cat >> "$SYSV_DOCKER_DEFAULT" <<EOF
+DOCKER_OPTS='-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+EOF
+  ;;
+  *)
+    echo "not implemented" >&2
+    return 1
+  ;;
+  esac
+}
+
+_restart_docker(){
+  echo "restarting Docker" >&2
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl restart docker.service
+  else
+    service docker restart
+  fi
+}
+
+_sanity_check(){
+  which aws >/dev/null || return 1
+  which jq >/dev/null || return 1
+  which base64 >/dev/null || return 1
+}
+
+_mount_docker_volume(){
+  local _mount_point="/var/lib/docker"
+  local _device
+  local _fstype=xfs
+  [[ -z "$1" ]] && return 0
+  _device=$(echo $1 | sed 's/\/sd/\/xvd/')
+  mkfs.$_fstype $_device || return 1
+  echo "$_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
+  rm -rf "$_mount_point"
+  mkdir -p "$_mount_point"
+  mount "$_mount_point"
+}
+
+_system_prerequisites(){
+  typeset -i mmc
+  local mmcmin=262144
+  if mmc=$(sysctl -n vm.max_map_count 2>/dev/null); then
+    if [[ $mmc -lt $mmcmin ]]; then
+      echo "setting vm.max_map_count to a safe value for elasticsearch"
+      sysctl -w vm.max_map_count=262144 || return 1
+      echo "vm.max_map_count = 262144" > /etc/sysctl.d/99-amp.conf
+    fi
+  else
+    return 1
+  fi
+}
+
+# update the docker daemon configuration with the mirror registries
+_set_mirror_registries(){
+  local _registries="$*"
+  local _registry
+  local _tmp
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  for _registry in $_registries; do
+    if ! echo "$_registry" | grep -q "://" ; then
+      echo "$_registry should contain a scheme, ignore" >&2
+      continue
+    fi
+    echo "adding registry $_registry" >&2
+    cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp" || return 1
+    mv "$_tmp" /etc/docker/daemon.json
+  done
+}
+
+_set_log_rotation(){
+  local _max_size=${1:-10m}
+  local _max_file=${2:-3}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting log rotation" >&2
+  cat /etc/docker/daemon.json | jq ".\"log-opts\".\"max-size\" = \"$_max_size\" | .\"log-opts\".\"max-file\" = \"$_max_file\"" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_set_metrics_address(){
+  local _host=${1:-127.0.0.1}
+  local _port=${2:-9323}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting the metrics address ($_host:$_port)" >&2
+  cat /etc/docker/daemon.json | jq ".\"metrics-addr\" = \"${_host}:${_port}\" | .experimental = true" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_wait_for_quorum(){
+  local _quorum
+  typeset -i _quorum_size=0
+  TIMEOUT=300
+  SECONDS=0
+  echo "waiting for quorum ($MANAGER_SIZE) (will timeout after $TIMEOUT s)" >&2
+  while [[ $_quorum_size -lt $MANAGER_SIZE ]]; do
+    _quorum=$(aws ec2 describe-instances --region="${REGION}" --filters "Name=tag:Name,Values=${STACK_NAME}-manager" "Name=instance-state-name,Values=pending,running" "Name=vpc-id,Values=${VPC_ID}" | jq -r '.Reservations[].Instances[].PrivateIpAddress')
+    _quorum_size=$(echo $_quorum | wc -w)
+    [[ $SECONDS -gt $TIMEOUT ]] && return 1
+    sleep 2
+  done
+  echo "quorum reached in $SECONDS s" >&2
+  echo $_quorum
+}
+
+# leader election means looking for other members of the group
+# and checking if there's already a leader there
+# if not, the leader should be elected based on an deterministic algorithm 
+_elect_leader(){
+  local _local_node=$1
+  shift
+  local _ips="$*"
+  local _docker_version
+  local _swarm_status
+  local _not_ready=1
+  local _timeout=900
+  local _leader
+  SECONDS=0
+  echo "leader election (will timeout after $_timeout s)" >&2
+  # wait for all nodes to have a running Docker engine
+  while [[ $_not_ready -gt 0 ]]; do
+    _not_ready=0
+    for _node in $_ips; do
+      sleep 1
+      [[ "x$_node" = "x$_local_node" ]] && continue
+      _docker_version=$(docker -H "$_node:2375" version 2>/dev/null)
+      _not_ready=$((_not_ready+$?))
+      [[ -z "$_docker_version" ]] && ((_not_ready++))
+    done
+    [[ $SECONDS -gt $_timeout ]] && return 1
+  done
+  echo "all manager nodes have an available Docker engine API ($SECONDS s)" >&2
+  # look for an existing leader
+  for _node in $_ips; do
+    _swarm_status=$(docker -H "$_node:2375" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)
+    if [[ "x$_swarm_status" = "xtrue" ]]; then
+      # we found a leader
+      echo "found an established leader manager: $_node" >&2
+      echo $_node
+      return 0
+    fi
+  done
+  echo "no established leader" >&2
+  # arbitrary convention to elect a leader based on the IP
+  _leader=$(echo $_ips | tr ' ' '\n' | sort -n | head -1)
+  echo "found a new leader: $_leader" >&2
+  echo $_leader
+}
+
+_swarm_init(){
+  local _ip=$1
+  echo "initialize the swarm" >&2
+  docker swarm init --advertise-addr="$_ip"
+}
+
+_get_manager_join_token(){
+  local _manager=$1
+  local _loop=0
+  local _timeout=300
+  local _token
+  echo "retrieving the swarm manager token (will timeout after $_timeout s)" >&2
+  SECONDS=0
+  while [[ $SECONDS -lt $_timeout ]]; do
+    _token=$(docker -H "$_manager:2375" swarm join-token -q manager)
+    if [[ $? -eq 0 && -n "$_token" ]]; then
+      echo "manager token obtained ($SECONDS s)" >&2
+      echo $_token
+      return 0
+    fi
+    sleep 2
+  done
+  echo "timeout" >&2
+  return 1
+}
+
+_create_networks(){
+  local _network
+  for _network in $*; do
+    echo "creating network $_network" >&2
+    docker network create -d overlay --attachable $_network || return 1
+  done
+}
+
+_swarm_join(){
+  local _manager=$1
+  local _token
+  _token=$(_get_manager_join_token "$_manager") || return 1
+  echo "joining the Swarm" >&2
+  docker swarm join --token "$_token" "$_manager:2377"
+}
+
+# add labels on the Swarm node
+_label_node(){
+  local _self
+  local _publicip
+  _self=$(docker node inspect self -f '{{.ID}}') || return 1
+  _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
+  docker node update --label-add "PublicIP=$_publicip" "$_self" || return 1
+  docker node update --label-add "amp.type.api=true" "$_self" || return 1
+  docker node update --label-add "amp.type.route=true" "$_self"
+}
+
+_drain_node(){
+  local _nodeid
+  [[ "x$DRAIN_MANAGER" != "xtrue" ]] && return 0
+  echo "drain the node" >&2
+  _nodeid=$(docker node inspect self --format '{{.ID}}') || return 1
+  docker node update --availability=drain "$_nodeid"
+}
+
+_get_node_ip(){
+  local _myip
+  _myip=$(curl 169.254.169.254/latest/meta-data/local-ipv4)
+  echo $_myip
+}
+
+_smoke_test(){
+  local reachability
+  SECONDS=0
+  while [[ $SECONDS -lt 10 ]]; do
+    docker node ls &>/dev/null || return 1
+    reachability=$(docker node inspect self -f '{{.ManagerStatus.Reachability}}')
+    [[ "x$reachability" = "xreachable" ]] && return 0
+    sleep 1
+  done
+  return 1
+}
+
+_sanity_check || exit 1
+_mount_docker_volume $DOCKER_DEVICE || exit 1
+_system_prerequisites || exit 1
+nodeip=$(_get_node_ip)
+_install_docker || exit 1
+_install_plugins || exit 1
+_expose_remote_api || exit 1
+_set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
+_set_log_rotation "10m" "3" || exit 1
+_set_metrics_address "$nodeip" "9323" || exit 1
+_restart_docker || exit 1
+ips=$(_wait_for_quorum) || exit 1
+leader="$(_elect_leader $nodeip $ips)" || exit 1
+if [[ "x$nodeip" = "x$leader" ]]; then
+  _swarm_init "$nodeip" || exit 1
+  _create_networks $OVERLAY_NETWORKS || exit 1
+else
+  _swarm_join "$leader" || exit 1
+fi
+_label_node || exit 1
+_drain_node || exit 1
+_smoke_test
