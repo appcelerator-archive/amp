@@ -32,8 +32,15 @@ func NewTeamGetCommand(c cli.Interface) *cobra.Command {
 }
 
 func getTeam(c cli.Interface, cmd *cobra.Command, args []string, opts getTeamOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
 
 	conn := c.ClientConn()

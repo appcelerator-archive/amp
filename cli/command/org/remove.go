@@ -72,5 +72,8 @@ func removeOrg(c cli.Interface, args []string) error {
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
+	if err := cli.RemoveFile(c.Server()); err != nil {
+		return err
+	}
 	return nil
 }

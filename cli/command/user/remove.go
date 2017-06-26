@@ -56,9 +56,11 @@ func removeUser(c cli.Interface, args []string) error {
 		}
 		c.Console().Println(name)
 	}
-
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
+	}
+	if err := cli.RemoveFile(c.Server()); err != nil {
+		return err
 	}
 	return nil
 }

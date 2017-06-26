@@ -33,8 +33,15 @@ func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
 }
 
 func addOrgMem(c cli.Interface, cmd *cobra.Command, opts addMemOrgOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.name = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.name = org
+			c.Console().Println("organization name:", opts.name)
+		default:
+			opts.name = c.Console().GetInput("organization name")
+		}
 	}
 	if !cmd.Flag("member").Changed {
 		opts.member = c.Console().GetInput("member name")
@@ -47,6 +54,9 @@ func addOrgMem(c cli.Interface, cmd *cobra.Command, opts addMemOrgOptions) error
 	}
 	if _, err := client.AddUserToOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
+		return err
 	}
 	c.Console().Println("Member has been added to organization.")
 	return nil

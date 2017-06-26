@@ -35,8 +35,15 @@ func NewOrgListMemCommand(c cli.Interface) *cobra.Command {
 }
 
 func listOrgMem(c cli.Interface, cmd *cobra.Command, opts listMemOrgOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.name = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.name = org
+			c.Console().Println("organization name:", opts.name)
+		default:
+			opts.name = c.Console().GetInput("organization name")
+		}
 	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
@@ -46,6 +53,9 @@ func listOrgMem(c cli.Interface, cmd *cobra.Command, opts listMemOrgOptions) err
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
+		return err
 	}
 	if opts.quiet {
 		for _, member := range reply.Organization.Members {

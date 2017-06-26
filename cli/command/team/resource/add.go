@@ -35,11 +35,25 @@ func NewAddTeamResCommand(c cli.Interface) *cobra.Command {
 }
 
 func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
+	team, err := cli.ReadTeam(c.Server())
 	if !cmd.Flag("team").Changed {
-		opts.team = c.Console().GetInput("team name")
+		switch {
+		case err == nil:
+			opts.team = team
+			c.Console().Println("team name:", opts.team)
+		default:
+			opts.team = c.Console().GetInput("team name")
+		}
 	}
 	if !cmd.Flag("res").Changed {
 		opts.resource = c.Console().GetInput("resource id")
@@ -54,6 +68,12 @@ func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) err
 	}
 	if _, err := client.AddToTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+		return err
+	}
+	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
+		return err
 	}
 	c.Console().Println("Resource has been added to team.")
 	return nil
