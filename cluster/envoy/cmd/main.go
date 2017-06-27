@@ -3,12 +3,33 @@ package main
 import (
 	"log"
 
-	"github.com/spf13/cobra"
 	"github.com/appcelerator/amp/cluster/envoy"
+	"github.com/spf13/cobra"
 )
 
-func foo(cmd *cobra.Command, args []string) {
-	log.Println(envoy.Foo())
+type CheckOptions struct {
+	version    bool
+	scheduling bool
+	all        bool
+}
+
+var checksOpts = &CheckOptions{}
+
+func checks(cmd *cobra.Command, args []string) {
+	if checksOpts.version || checksOpts.all {
+		out, err := envoy.VerifyDockerVersion()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(out)
+	}
+	if checksOpts.scheduling || checksOpts.all {
+		out, err := envoy.VerifyServiceScheduling()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(out)
+	}
 }
 
 func main() {
@@ -19,13 +40,16 @@ func main() {
 		// PersistentPreRun: initEnvoy,
 	}
 
-	fooCmd := &cobra.Command{
-		Use:   "foo",
-		Short: "foo bar",
-		Run:   foo,
+	checkCmd := &cobra.Command{
+		Use:   "check",
+		Short: "run validation tests on the cluster",
+		Run:   checks,
 	}
+	checkCmd.Flags().BoolVar(&checksOpts.version, "version", false, "check Docker version")
+	checkCmd.Flags().BoolVar(&checksOpts.scheduling, "scheduling", false, "check Docker service scheduling")
+	checkCmd.Flags().BoolVarP(&checksOpts.all, "all", "a", false, "all tests")
 
-	rootCmd.AddCommand(fooCmd)
+	rootCmd.AddCommand(checkCmd)
 
 	_ = rootCmd.Execute()
 }

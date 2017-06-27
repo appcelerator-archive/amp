@@ -379,7 +379,7 @@ test-amp-envoy: build-amp-envoy
 # =============================================================================
 # Quality checks
 # =============================================================================
-CHECKDIRS := agent api cli cmd data tests $(COMMONDIRS)
+CHECKDIRS := agent api cli cmd data tests cluster $(COMMONDIRS)
 CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' -and -not -name '*.pb.gw.go'  \))
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)
