@@ -104,6 +104,14 @@ import:
   version: ^1.1.4
   subpackages:
   - assert
+- package: github.com/grpc-ecosystem/go-grpc-middleware
+- package: github.com/grpc-ecosystem/go-grpc-prometheus
+  version: ^1.1.0
+- package: github.com/prometheus/client_golang
+  version: ^0.8.0
+- package: github.com/beorn7/perks
+  subpackages:
+  - quantile
 testImport:
 - package: github.com/ThomasRooney/gexpect
 - package: github.com/mhale/smtpd
