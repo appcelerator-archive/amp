@@ -1,7 +1,7 @@
 # =============================
 FROM golang:1.8-alpine as build
 # =============================
-RUN apk --no-cache add git
+RUN apk --no-cache add git gcc musl-dev
 
 # go
 RUN go get github.com/LK4D4/vndr
