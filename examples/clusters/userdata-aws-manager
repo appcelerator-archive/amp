@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SYNC=${SYNC:-false}
+#SIGNAL_URL=
 CHANNEL=${CHANNEL:-stable}
 #PLUGINS=
 REGION=${REGION:-us-west-2}
@@ -91,6 +93,16 @@ _sanity_check(){
   which aws >/dev/null || return 1
   which jq >/dev/null || return 1
   which base64 >/dev/null || return 1
+}
+
+# installs the cfn tools, to be able to signal AWS that the application part of the deployment is done
+_install_helpers(){
+  [[ "x$SYNC" != "xtrue" ]] && return 0
+  python -c "import pkg_resources" || curl https://bootstrap.pypa.io/ez_setup.py | python
+  curl -sSf https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz | tar xzf -
+  (cd aws-cfn-bootstrap-[0-9.]* && python setup.py install) || return 1
+  rm -rf aws-cfn-bootstrap-[0-9.]*
+  [[ -x /usr/local/bin/cfn-signal ]]
 }
 
 _mount_docker_volume(){
@@ -303,7 +315,13 @@ _smoke_test(){
   return 1
 }
 
+_signal_aws() {
+  [[ "x$SYNC" != "xtrue" ]] && return 0
+  /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "${SIGNAL_URL}"
+}
+
 _sanity_check || exit 1
+_install_helpers || exit 1
 _mount_docker_volume $DOCKER_DEVICE || exit 1
 _system_prerequisites || exit 1
 nodeip=$(_get_node_ip)
@@ -324,4 +342,5 @@ else
 fi
 _label_node || exit 1
 _drain_node || exit 1
-_smoke_test
+_smoke_test || exit 1
+_signal_aws
