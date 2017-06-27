@@ -1,9 +1,10 @@
 package stack
 
 import (
-	"log"
 	"os"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
@@ -77,13 +78,13 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		s.Stacks.Delete(ctx, stack.Id)
 		return nil, convertError(err)
 	}
-	log.Println("Successfully deployed stack:", stack)
+	log.Infoln("Successfully deployed stack:", stack)
 	return &DeployReply{Id: stack.Id, FullName: stack.Name, Answer: output}, nil
 }
 
 // List implements stack.Server
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
-	log.Println("[stack] List", in.String())
+	log.Infoln("[stack] List", in.String())
 
 	// List stacks
 	reply := &ListReply{}
@@ -106,13 +107,13 @@ func (s *Server) toStackListEntry(ctx context.Context, stack *stacks.Stack) (*St
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services and", status.FailedServices, "failed services")
+	log.Infoln("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services and", status.FailedServices, "failed services")
 	return &StackListEntry{Stack: stack, RunningServices: status.RunningServices, FailedServices: status.FailedServices, TotalServices: status.TotalServices, Status: status.Status}, nil
 }
 
 // Remove implements stack.Server
 func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
-	log.Println("[stack] Remove", in.String())
+	log.Infoln("[stack] Remove", in.String())
 
 	// Retrieve the stack
 	stack, dockerErr := s.Stacks.GetByFragmentOrName(ctx, in.Stack)
@@ -138,13 +139,13 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 		return nil, convertError(dockerErr)
 	}
 
-	log.Printf("Stack %s removed", in.Stack)
+	log.Infof("Stack %s removed", in.Stack)
 	return &RemoveReply{Answer: output}, nil
 }
 
 // Services Ctx implements stack.Server
 func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
-	log.Println("[stack] Services", in.String())
+	log.Infoln("[stack] Services", in.String())
 
 	stack, err := s.Stacks.GetByFragmentOrName(ctx, in.StackName)
 	if err != nil {
@@ -156,7 +157,7 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 
 	output, dockerErr := s.Docker.StackServices(ctx, stack.Name, false)
 	if dockerErr != nil {
-		log.Printf("error : %v\n", dockerErr)
+		log.Infof("error : %v\n", dockerErr)
 		return nil, convertError(dockerErr)
 	}
 

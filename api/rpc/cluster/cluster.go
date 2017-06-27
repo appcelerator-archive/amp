@@ -2,8 +2,9 @@ package cluster
 
 import (
 	"fmt"
-	"log"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
@@ -19,50 +20,50 @@ type Server struct {
 
 // Create implements cluster.Server
 func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
-	log.Println("[cluster] Create", in.String())
+	log.Infoln("[cluster] Create", in.String())
 
-	log.Println(in.Name)
-	log.Println(string(in.Compose))
+	log.Infoln(in.Name)
+	log.Infoln(string(in.Compose))
 
-	log.Println("[cluster] Success: created cluster")
+	log.Infoln("[cluster] Success: created cluster")
 	return &CreateReply{}, nil
 }
 
 // List implements cluster.Server
 func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
-	log.Println("[cluster] List", in.String())
+	log.Infoln("[cluster] List", in.String())
 
-	log.Println("[cluster] Success: list")
+	log.Infoln("[cluster] Success: list")
 	return &ListReply{}, nil
 }
 
 // Status implements cluster.Server
 func (s *Server) Status(ctx context.Context, in *StatusRequest) (*StatusReply, error) {
-	log.Println("[cluster] Status", in.String())
+	log.Infoln("[cluster] Status", in.String())
 
-	log.Println("[cluster] Success: list")
+	log.Infoln("[cluster] Success: list")
 	return &StatusReply{}, nil
 }
 
 // Update implements cluster.Server
 func (s *Server) Update(ctx context.Context, in *UpdateRequest) (*UpdateReply, error) {
-	log.Println("[cluster] Update", in.String())
+	log.Infoln("[cluster] Update", in.String())
 
-	log.Println("[cluster] Success: list")
+	log.Infoln("[cluster] Success: list")
 	return &UpdateReply{}, nil
 }
 
 // Remove implements cluster.Server
 func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
-	log.Println("[cluster] Remove", in.String())
+	log.Infoln("[cluster] Remove", in.String())
 
-	log.Println("[cluster] Success: removed", in.Id)
+	log.Infoln("[cluster] Success: removed", in.Id)
 	return &RemoveReply{}, nil
 }
 
 // NodeList get cluster node list
 func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListReply, error) {
-	log.Println("[cluster] NodeList", in.String())
+	log.Infoln("[cluster] NodeList", in.String())
 
 	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
 	if err != nil {

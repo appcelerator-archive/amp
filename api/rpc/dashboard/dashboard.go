@@ -1,7 +1,7 @@
 package dashboard
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/dashboards"
@@ -36,7 +36,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully created dashboard:", dashboard)
+	log.Infoln("Successfully created dashboard:", dashboard)
 	return &CreateReply{Dashboard: dashboard}, nil
 }
 
@@ -50,7 +50,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if dashboard == nil {
 		return nil, status.Errorf(codes.NotFound, "dashboard not found: %s", in.Id)
 	}
-	log.Println("Successfully retrieved dashboard", dashboard.Name)
+	log.Infoln("Successfully retrieved dashboard", dashboard.Name)
 	return &GetReply{Dashboard: dashboard}, nil
 }
 
@@ -63,7 +63,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	for _, dashboard := range dashboards {
 		dashboard.Data = "" //remove data, data are loaded one by one using get
 	}
-	log.Println("Successfully listed dashboards")
+	log.Infoln("Successfully listed dashboards")
 	return &ListReply{Dashboards: dashboards}, nil
 }
 
@@ -72,7 +72,7 @@ func (s *Server) UpdateName(ctx context.Context, in *UpdateNameRequest) (*empty.
 	if err := s.Dashboards.UpdateName(ctx, in.Id, in.Name); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully renamed dashboard %s to %s\n", in.Id, in.Name)
+	log.Infof("Successfully renamed dashboard %s to %s\n", in.Id, in.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -81,7 +81,7 @@ func (s *Server) UpdateData(ctx context.Context, in *UpdateDataRequest) (*empty.
 	if err := s.Dashboards.UpdateData(ctx, in.Id, in.Data); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully updated dashboard %s data\n", in.Id)
+	log.Infof("Successfully updated dashboard %s data\n", in.Id)
 	return &empty.Empty{}, nil
 }
 
@@ -90,6 +90,6 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*empty.Empty, e
 	if err := s.Dashboards.Delete(ctx, in.Id); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully deleted dashboard", in.Id)
+	log.Infoln("Successfully deleted dashboard", in.Id)
 	return &empty.Empty{}, nil
 }

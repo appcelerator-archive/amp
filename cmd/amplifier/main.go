@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -25,8 +26,20 @@ var (
 	cfg *configuration.Configuration
 )
 
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	log.SetOutput(os.Stdout)
+
+	// Only log the info level or above.
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
-	log.Printf("amplifier (server version: %s, build: %s)\n", Version, Build)
+	log.Infof("amplifier (server version: %s, build: %s)\n", Version, Build)
 
 	// Default Configuration
 	cfg = &configuration.Configuration{
@@ -49,7 +62,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	log.Println(cfg)
+	log.Infoln(cfg)
 	amplifier, err := server.New(cfg)
 	if err != nil {
 		log.Fatalln(err)

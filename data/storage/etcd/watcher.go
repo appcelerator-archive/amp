@@ -1,9 +1,10 @@
 package etcd
 
 import (
-	"log"
 	"strings"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
@@ -196,7 +197,7 @@ func (wc *watchChan) sendError(err error) {
 
 func (wc *watchChan) sendEvent(e *event) {
 	if len(wc.incomingEventChan) == incomingBufSize {
-		log.Printf("Fast watcher, slow processing. Number of buffered events: %d."+
+		log.Infof("Fast watcher, slow processing. Number of buffered events: %d."+
 			"Probably caused by slow decoding, user not receiving fast, or other processing logic",
 			incomingBufSize)
 	}

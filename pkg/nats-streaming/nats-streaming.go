@@ -2,8 +2,9 @@ package ns
 
 import (
 	"fmt"
-	"log"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/nats-io/go-nats"
 	"github.com/nats-io/go-nats-streaming"
@@ -43,7 +44,7 @@ func (ns *NatsStreaming) Connect() error {
 	if ns.connected {
 		return nil
 	}
-	log.Printf("Connecting to nats streaming, url: %s, clusterId: %s, clientId: %s, timeout: %s\n", ns.url, ns.clusterID, ns.clientID, ns.timeout)
+	log.Infof("Connecting to nats streaming, url: %s, clusterId: %s, clientId: %s, timeout: %s\n", ns.url, ns.clusterID, ns.clientID, ns.timeout)
 	nc, err := nats.Connect(ns.url, nats.Timeout(ns.timeout))
 	if err != nil {
 		ns.connected = false
@@ -55,7 +56,7 @@ func (ns *NatsStreaming) Connect() error {
 		return fmt.Errorf("unable to connect to nats streaming: %v", err)
 	}
 	ns.connected = true
-	log.Println("Connected to nats streaming successfuly")
+	log.Infoln("Connected to nats streaming successfuly")
 	return nil
 }
 

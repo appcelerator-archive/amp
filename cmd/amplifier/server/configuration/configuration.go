@@ -2,10 +2,10 @@ package configuration
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -70,10 +70,10 @@ func ReadConfig(config *Configuration) error {
 	if match {
 		config.Registration = strings.ToLower(registration)
 	} else {
-		log.Printf("Invalid registration policy specified: %s, defaulting to: %s\n", registration, RegistrationDefault)
+		log.Warnf("Invalid registration policy specified: %s, defaulting to: %s\n", registration, RegistrationDefault)
 	}
 	config.Notifications = viper.GetBool("notifications")
 
-	log.Println("Configuration file successfully loaded")
+	log.Infoln("Configuration file successfully loaded")
 	return nil
 }

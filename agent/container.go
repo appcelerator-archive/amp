@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/docker/docker/api/types"
@@ -44,7 +45,7 @@ type ContainerData struct {
 // Verify if the event stream is working, if not start it
 func (a *Agent) updateEventsStream() {
 	if !a.eventStreamReading {
-		log.Println("Opening docker events stream...")
+		log.Infoln("Opening docker events stream...")
 		args := filters.NewArgs()
 		args.Add("type", "container")
 		args.Add("event", "die")
@@ -62,18 +63,18 @@ func (a *Agent) updateEventsStream() {
 // Start and read the docker event stream and update container list accordingly
 func (a *Agent) startEventStream(stream <-chan events.Message, errs <-chan error) {
 	a.eventStreamReading = true
-	log.Println("start events stream reader")
+	log.Infoln("start events stream reader")
 	go func() {
 		for {
 			select {
 			case err := <-errs:
 				if err != nil {
-					log.Printf("Error reading event: %v\n", err)
+					log.Errorf("Error reading event: %v\n", err)
 					a.eventStreamReading = false
 					return
 				}
 			case event := <-stream:
-				log.Printf("Docker event: action=%s containerId=%s\n", event.Action, event.Actor.ID)
+				log.Debugf("Docker event: action=%s containerId=%s\n", event.Action, event.Actor.ID)
 				a.updateContainerMap(event.Action, event.Actor.ID)
 			}
 		}
@@ -132,14 +133,14 @@ func (a *Agent) addContainer(ID string) {
 				data.health = inspect.State.Health.Status
 			}
 			if data.role == "infrastructure" {
-				log.Printf("add infrastructure container  %s\n", data.name)
+				log.Infof("add infrastructure container %s\n", data.name)
 			} else {
-				log.Printf("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
+				log.Infof("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
 			}
 			data.labels = labels
 			a.containers[ID] = &data
 		} else {
-			log.Printf("Container inspect error: %v\n", err)
+			log.Errorf("Container inspect error: %v\n", err)
 		}
 	}
 }
@@ -156,12 +157,12 @@ func (a *Agent) cleanName(name string) string {
 func (a *Agent) removeContainer(ID string) {
 	data, ok := a.containers[ID]
 	if ok {
-		log.Println("remove container", data.name)
+		log.Infoln("Removing container", data.name)
 		delete(a.containers, ID)
 	}
 	err := os.Remove(path.Join(containersDataDir, ID))
 	if err != nil {
-		log.Println("")
+		log.Errorln("Error removing container", err)
 	}
 }
 
@@ -179,9 +180,9 @@ func (a *Agent) updateContainer(id string) {
 			if inspect.State.Health != nil {
 				data.health = inspect.State.Health.Status
 			}
-			log.Println("update container", data.name)
+			log.Infoln("Updating container", data.name)
 		} else {
-			log.Printf("Container %s inspect error: %v\n", data.name, err)
+			log.Errorf("Container %s inspect error: %v\n", data.name, err)
 		}
 	}
 }
