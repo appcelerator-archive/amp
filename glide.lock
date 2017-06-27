@@ -1,5 +1,5 @@
-hash: 5429d1787534575816975c696e9f2c63c49676c0e37aa92e15373518fb547128
-updated: 2017-06-08T22:37:20.695936455Z
+hash: fe3757fd39b07e58a3d69dc3c835011ea2202e72faf77356c2c90ff2ad25ecc6
+updated: 2017-06-27T16:39:00.669993846-07:00
 imports:
 - name: github.com/agl/ed25519
   version: 5312a61534124124185d41f09206b9fef1d88403
@@ -9,8 +9,12 @@ imports:
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
+- name: github.com/beorn7/perks
+  version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
+  subpackages:
+  - quantile
 - name: github.com/coreos/etcd
-  version: 9d7ed0e63a4e9907c04396d0a9a7a01ba08d2852
+  version: 61fc123e7a8b14a0a258aa3f5c4159861b1ec2e7
   subpackages:
   - auth/authpb
   - clientv3
@@ -208,8 +212,11 @@ imports:
   version: 616041e345fc33c97bc0eb0fa6b388aa07bca3e1
   subpackages:
   - client/v2
+  - lj
   - log
   - protocol/v2
+  - server/internal
+  - server/v2
 - name: github.com/elastic/go-ucfg
   version: ec8488a52542c0c51e42e8ea204dcaff400bc644
   subpackages:
@@ -242,6 +249,7 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
   - ptypes/any
   - ptypes/empty
   - ptypes/struct
@@ -253,6 +261,10 @@ imports:
   version: a4d79d4487c2430a17d9dc8a1f74d1a6ed6908ca
 - name: github.com/gorilla/mux
   version: 18fca31550181693b3a834a15b74b564b3605876
+- name: github.com/grpc-ecosystem/go-grpc-middleware
+  version: f63a7dfb64c138bd93d5c5b896d8b33c4b08e000
+- name: github.com/grpc-ecosystem/go-grpc-prometheus
+  version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
   version: 4539fc575ec06dbbddc6975e7e8b503260270c3c
   subpackages:
@@ -307,6 +319,10 @@ imports:
   repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-shellwords
   version: 02e3cf038dcea8290e44424da473dd12be796a8a
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
 - name: github.com/Microsoft/go-winio
   version: f533f7a102197536779ea3a8cb881d639e21ec5a
 - name: github.com/miekg/pkcs11
@@ -342,7 +358,7 @@ imports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/ladon
-  version: c8b0a3309bb2fc36f1dc24035279cc7530af0a0a
+  version: ee1899d4639f9b8629c08ac4a6cc0c987cfd2d28
 - name: github.com/ory/ladon
   version: 018f499969fb63fcae5a3020944fcc39da1e6a61
   subpackages:
@@ -364,6 +380,24 @@ imports:
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
+- name: github.com/prometheus/client_golang
+  version: c5b7fccd204277076155f10851dad72b76a49317
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: 49fee292b27bfff7f354ee0f64e1bc4850462edf
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: a1dba9ce8baed984a2495b658c82687f8157b98f
+  subpackages:
+  - xfs
 - name: github.com/rcrowley/go-metrics
   version: ab2277b1c5d15c3cba104e9cbddbdfc622df5ad8
   subpackages:
@@ -373,7 +407,7 @@ imports:
 - name: github.com/sendgrid/rest
   version: 14de1ac72d9ae5c3c0d7c02164c52ebd3b951a4e
 - name: github.com/sendgrid/sendgrid-go
-  version: aae62ebbdabd46754b041a12b9f74d2ffdfc49d7
+  version: 818273b257d08e5a9401d64f52556cd7bb4e22ad
   subpackages:
   - helpers/mail
 - name: github.com/Shopify/sarama
@@ -450,6 +484,7 @@ imports:
 - name: google.golang.org/genproto
   version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
   subpackages:
+  - googleapis/api/annotations
   - googleapis/rpc/status
 - name: google.golang.org/grpc
   version: 0eb507a2ca07f13baf499f89d66cc566bf644643
@@ -484,7 +519,7 @@ imports:
   - hash/sha2crypt
   - hash/sha2crypt/raw
 - name: gopkg.in/olivere/elastic.v5
-  version: f1fd7305d0b6270192b27010fe1193568b18e4b6
+  version: 3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26
   subpackages:
   - uritemplates
 - name: gopkg.in/yaml.v2
