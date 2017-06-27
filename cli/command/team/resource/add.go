@@ -11,30 +11,28 @@ import (
 )
 
 type addTeamResOptions struct {
-	org      string
-	team     string
-	resource string
+	org  string
+	team string
 }
 
 // NewAddTeamResCommand returns a new instance of the add team resource command.
 func NewAddTeamResCommand(c cli.Interface) *cobra.Command {
 	opts := addTeamResOptions{}
 	cmd := &cobra.Command{
-		Use:     "add [OPTIONS]",
+		Use:     "add [OPTIONS] RESOURCE-ID",
 		Short:   "Add resource to team",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addTeamRes(c, cmd, opts)
+			return addTeamRes(c, cmd, args, opts)
 		},
 	}
 	flags := cmd.Flags()
 	flags.StringVar(&opts.org, "org", "", "Organization name")
 	flags.StringVar(&opts.team, "team", "", "Team name")
-	flags.StringVar(&opts.resource, "res", "", "Resource id")
 	return cmd
 }
 
-func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) error {
+func addTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts addTeamResOptions) error {
 	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
 		switch {
@@ -55,14 +53,11 @@ func addTeamRes(c cli.Interface, cmd *cobra.Command, opts addTeamResOptions) err
 			opts.team = c.Console().GetInput("team name")
 		}
 	}
-	if !cmd.Flag("res").Changed {
-		opts.resource = c.Console().GetInput("resource id")
-	}
 
 	conn := c.ClientConn()
 	client := resource.NewResourceClient(conn)
 	request := &resource.AddToTeamRequest{
-		ResourceId:       opts.resource,
+		ResourceId:       args[0],
 		OrganizationName: opts.org,
 		TeamName:         opts.team,
 	}

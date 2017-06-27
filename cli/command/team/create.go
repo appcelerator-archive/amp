@@ -11,28 +11,25 @@ import (
 )
 
 type createTeamOptions struct {
-	org  string
-	team string
+	org string
 }
 
 // NewTeamCreateCommand returns a new instance of the team create command.
 func NewTeamCreateCommand(c cli.Interface) *cobra.Command {
 	opts := createTeamOptions{}
 	cmd := &cobra.Command{
-		Use:     "create [OPTIONS]",
+		Use:     "create [OPTIONS] TEAM",
 		Short:   "Create team",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createTeam(c, cmd, opts)
+			return createTeam(c, cmd, args, opts)
 		},
 	}
-	flags := cmd.Flags()
-	flags.StringVar(&opts.org, "org", "", "Organization name")
-	flags.StringVar(&opts.team, "team", "", "Team name")
+	cmd.Flags().StringVar(&opts.org, "org", "", "Organization name")
 	return cmd
 }
 
-func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) error {
+func createTeam(c cli.Interface, cmd *cobra.Command, args []string, opts createTeamOptions) error {
 	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
 		switch {
@@ -43,15 +40,13 @@ func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) err
 			opts.org = c.Console().GetInput("organization name")
 		}
 	}
-	if !cmd.Flag("team").Changed {
-		opts.team = c.Console().GetInput("team name")
-	}
 
+	team := args[0]
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.CreateTeamRequest{
 		OrganizationName: opts.org,
-		TeamName:         opts.team,
+		TeamName:         team,
 	}
 	if _, err := client.CreateTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
@@ -59,7 +54,7 @@ func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) err
 	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
 		return err
 	}
-	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
+	if err := cli.SaveTeam(team, c.Server()); err != nil {
 		return err
 	}
 	c.Console().Println("Team has been created in the organization.")
