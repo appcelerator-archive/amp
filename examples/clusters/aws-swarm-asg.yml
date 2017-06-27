@@ -743,7 +743,7 @@ Resources:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
-      - ManagerAutoScalingGroup
+      - ManagerWaitCondition
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -838,7 +838,7 @@ Resources:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
-      - ManagerAutoScalingGroup
+      - ManagerWaitCondition
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -934,7 +934,7 @@ Resources:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
-      - ManagerAutoScalingGroup
+      - ManagerWaitCondition
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
