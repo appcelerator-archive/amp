@@ -360,6 +360,23 @@ test-amp-aws: build-amp-aws
 	@cd $(CPAWSDIR) && $(MAKE) test
 
 # =============================================================================
+# BUILD ENVOY (`amp-envoy`)
+# =============================================================================
+ENVOYDIR := cluster/envoy
+
+.PHONY: build-amp-envoy-compiler
+build-amp-envoy-compiler:
+	@cd $(ENVOYDIR) && $(MAKE) compiler
+
+.PHONY: build-amp-envoy
+build-amp-envoy: build-amp-envoy-compiler
+	@cd $(ENVOYDIR) && $(MAKE) build
+
+.PHONY: test-amp-envoy
+test-amp-envoy: build-amp-envoy
+	@cd $(ENVOYDIR) && $(MAKE) test
+
+# =============================================================================
 # Quality checks
 # =============================================================================
 CHECKDIRS := agent api cli cmd data tests $(COMMONDIRS)
