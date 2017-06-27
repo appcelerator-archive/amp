@@ -80,10 +80,6 @@ set an alias to make this your default:
 
 ### Deploy a stack
 
-> NOTE: by default, the CLI will connect to `cloud.appcelerator.io:50101`.
-This is currently for testing and evaluation only and anything you
-create will be deleted periodically over the next few weeks.
-
 To deploy a standard Docker Compose version 3 stackfile, use
 `amp stack deploy`. There are sample stackfiles under `examples`.
 

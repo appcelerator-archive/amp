@@ -1,6 +1,11 @@
 version: "3.1"
 
 networks:
+  proxy:
+  monitoring-public:
+  logs-public:
+  core-public:
+  portal-public:
   default:
     external:
       name: ampnet
@@ -14,9 +19,17 @@ services:
   proxy:
     image: dockercloud/haproxy
     networks:
-      - default
+    - proxy
+    - monitoring-public
+    - logs-public
+    - core-public
+    - portal-public
+    - default
     deploy:
       mode: global
+      update_config:
+        parallelism: 1
+        delay: 2s
       labels:
         io.amp.role: "infrastructure"
       placement:

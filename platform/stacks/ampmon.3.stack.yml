@@ -1,9 +1,13 @@
 version: "3.1"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  monitoring:
+  monitoring-public:
+  queue:
+  storage:
+  logs:
+  core:
+  proxy:
 
 volumes:
   prometheus-data:
@@ -19,11 +23,9 @@ secrets:
 services:
 
   alertmanager:
-    image: prom/alertmanager
+    image: prom/alertmanager:v0.7.1
     networks:
-      default:
-        aliases:
-          - alertmanager
+    - monitoring
     volumes:
       - alertmanager-data:/alertmanager
     ports:
@@ -49,9 +51,11 @@ services:
   prometheus:
     image: appcelerator/amp-prometheus:${TAG:-latest}
     networks:
-      default:
-        aliases:
-          - prometheus
+    - monitoring
+    - monitoring-public
+    - core
+    - logs
+    - storage
     volumes:
       - prometheus-data:/prometheus
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -74,14 +78,16 @@ services:
       - source: prometheus_alerts_rules
         target: alerts.rules
         mode: 0400
-    command: [ "--host=${MANAGER_HOST:-unix:///var/run/docker.sock}" ]
 
   node_exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v0.14.0
+    networks:
+    - monitoring
     volumes:
-      - /proc:/host/proc
-      - /sys:/host/sys
-      - /:/rootfs
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "9100:9100"
     command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
@@ -94,6 +100,9 @@ services:
 
   nats_exporter:
     image: appcelerator/prometheus-nats-exporter:latest
+    networks:
+    - monitoring
+    - queue
     command: ["-varz", "-routez", "-connz", "-subz", "nats,http://nats:8222"]
     #ports:
       #- target: 7777
@@ -110,12 +119,11 @@ services:
         - node.labels.amp.type.metrics == true
 
   haproxy_exporter:
-    image: prom/haproxy-exporter:latest
+    image: prom/haproxy-exporter:v0.7.1
     command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
-      default:
-        aliases:
-          - haproxy_exporter
+    - monitoring
+    - proxy
     #ports:
       #- target: 9101
       #- published: 9101
@@ -131,11 +139,10 @@ services:
         - node.labels.amp.type.metrics == true
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.0
+    image: appcelerator/grafana-amp:1.2.2
     networks:
-      default:
-        aliases:
-          - grafana
+    - monitoring
+    - monitoring-public
     volumes:
       - grafana-data:/var/lib/grafana
     environment:

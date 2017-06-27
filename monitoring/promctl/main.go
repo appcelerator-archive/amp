@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -25,7 +28,7 @@ const (
 	defaultPeriod           = 1
 	dockerForMacIP          = "192.168.65.1"
 	dockerEngineMetricsPort = 9323
-	systemMetricsPort       = 9100
+	systemMetricsPort       = 9100 // node-exporter
 	prometheusCmd           = "/bin/prometheus"
 )
 
@@ -45,24 +48,41 @@ type Inventory struct {
 func update(pid int, client *docker.Docker, configurationTemplate string, configuration string) error {
 	var configurationFile *os.File
 	var hostnames []string
-	// connect to the swarm manager engine API
+	// connect to the engine API
 	if err := client.Connect(); err != nil {
 		return err
 	}
-	// get the list of nodes
-	nodeList, err := client.NodeList(context.Background(), types.NodeListOptions{})
+	filter := filters.NewArgs()
+	filter.Add("name", "ingress")
+	networkResources, err := client.GetClient().NetworkList(context.Background(), types.NetworkListOptions{Filters: filter})
 	if err != nil {
 		return err
 	}
-	for _, node := range nodeList {
-		if node.Description.Hostname == "moby" && node.Status.Addr == "127.0.0.1" {
-			// Docker for Mac/Windows
+	if len(networkResources) != 1 {
+		return errors.New("ingress network lookup failed")
+	}
+	networkId := networkResources[0].ID
+	// when the vendors are updated to docker 17.06:
+	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
+	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, false)
+	for _, peer := range networkResource.Peers {
+		if peer.Name == "moby" && peer.IP == "127.0.0.1" {
+			// DockerForMac
 			hostnames = append(hostnames, dockerForMacIP)
-		} else if node.Status.Addr == "127.0.0.1" {
-			hostnames = append(hostnames, node.Description.Hostname)
+		} else if peer.IP == "127.0.0.1" || peer.IP == "0.0.0.0" {
+			// non addressable, let's hope the hostname is a better option
+			hostnames = append(hostnames, peer.Name)
 		} else {
-			hostnames = append(hostnames, node.Status.Addr)
+			if _, err = net.LookupHost(peer.Name); err != nil {
+				// can't resolve host, will use IP
+				hostnames = append(hostnames, peer.IP)
+			} else {
+				hostnames = append(hostnames, peer.Name)
+			}
 		}
+	}
+	if len(hostnames) == 0 {
+		return errors.New("host list is empty")
 	}
 	inventory := &Inventory{Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
 	// prepare the configuration

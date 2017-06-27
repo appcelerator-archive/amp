@@ -1,9 +1,11 @@
 version: "3.1"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  storage:
+  queue:
+  logs:
+  ampnet:
+    external: true
 
 volumes:
   elasticsearch-data:
@@ -12,15 +14,17 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.4.1
+    image: appcelerator/elasticsearch-amp:5.4.2
     networks:
-      - default
+    - logs
+    - ampnet
     volumes:
-      - elasticsearch-data:/opt/elasticsearch-5.4.1/data
+      - elasticsearch-data:/opt/elasticsearch-5.4.2/data
     labels:
       io.amp.role: "infrastructure"
     environment:
       NETWORK_HOST: "_eth0_"
+      JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
     deploy:
       mode: replicated
       replicas: 1
@@ -33,9 +37,8 @@ services:
   nats:
     image: appcelerator/amp-nats-streaming:v0.4.0
     networks:
-      default:
-        aliases:
-          - nats
+    - queue
+    - ampnet
     labels:
       io.amp.role: "infrastructure"
     deploy:
@@ -48,11 +51,9 @@ services:
         - node.labels.amp.type.mq == true
 
   etcd:
-    image: appcelerator/etcd:3.1.8
+    image: appcelerator/etcd:3.1.9
     networks:
-      default:
-        aliases:
-          - etcd
+    - storage
     volumes:
       - etcd-data:/data
     environment:

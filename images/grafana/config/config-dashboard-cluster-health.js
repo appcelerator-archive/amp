@@ -13,7 +13,7 @@
     "rows": [
       {
         "collapse": false,
-        "height": 93,
+        "height": 174,
         "panels": [
           {
             "cacheTimeout": null,
@@ -25,6 +25,7 @@
               "rgba(50, 172, 45, 0.97)"
             ],
             "datasource": null,
+            "decimals": 0,
             "format": "none",
             "gauge": {
               "maxValue": 1,
@@ -36,7 +37,7 @@
             "id": 15,
             "interval": null,
             "links": [],
-            "mappingType": 2,
+            "mappingType": 1,
             "mappingTypes": [
               {
                 "name": "value to text",
@@ -57,18 +58,8 @@
             "rangeMaps": [
               {
                 "from": "null",
-                "text": "N/A",
+                "text": "",
                 "to": "null"
-              },
-              {
-                "from": "0",
-                "text": "DOWN",
-                "to": "0"
-              },
-              {
-                "from": "1",
-                "text": "Up",
-                "to": "999"
               }
             ],
             "span": 1,
@@ -90,18 +81,28 @@
                 "step": 60
               }
             ],
-            "thresholds": "1,1",
+            "thresholds": "0.1,0.9",
             "title": "HAPROXY",
             "type": "singlestat",
             "valueFontSize": "80%",
             "valueMaps": [
               {
                 "op": "=",
-                "text": "N/A",
+                "text": "DOWN",
                 "value": "null"
+              },
+              {
+                "op": "=",
+                "text": "DOWN",
+                "value": "0"
+              },
+              {
+                "op": "=",
+                "text": "UP",
+                "value": "1"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -190,7 +191,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -366,7 +367,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -418,15 +419,15 @@
             "span": 1,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
-              "full": false,
+              "full": true,
               "lineColor": "rgb(31, 120, 193)",
               "show": true
             },
             "tableColumn": "Value",
             "targets": [
               {
-                "expr": "count(up{job=\"docker-engine\"}==1)",
-                "format": "table",
+                "expr": "sum(up{job=\"docker-engine\"})",
+                "format": "time_series",
                 "interval": "",
                 "intervalFactor": 2,
                 "legendFormat": "",
@@ -436,7 +437,7 @@
               }
             ],
             "thresholds": "1,1",
-            "title": "DOCKER",
+            "title": "Docker Engines",
             "type": "singlestat",
             "valueFontSize": "80%",
             "valueMaps": [
@@ -456,16 +457,95 @@
                 "value": "1"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
             "colorBackground": false,
             "colorValue": true,
             "colors": [
-              "rgba(50, 172, 45, 0.97)",
+              "rgba(245, 54, 54, 0.9)",
               "rgba(237, 129, 40, 0.89)",
-              "rgba(245, 54, 54, 0.9)"
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "datasource": null,
+            "format": "none",
+            "gauge": {
+              "maxValue": 100,
+              "minValue": 0,
+              "show": false,
+              "thresholdLabels": false,
+              "thresholdMarkers": true
+            },
+            "id": 67,
+            "interval": null,
+            "links": [],
+            "mappingType": 1,
+            "mappingTypes": [
+              {
+                "name": "value to text",
+                "value": 1
+              },
+              {
+                "name": "range to text",
+                "value": 2
+              }
+            ],
+            "maxDataPoints": 100,
+            "nullPointMode": "connected",
+            "nullText": null,
+            "postfix": " node(s)",
+            "postfixFontSize": "50%",
+            "prefix": "",
+            "prefixFontSize": "50%",
+            "rangeMaps": [
+              {
+                "from": "null",
+                "text": "0",
+                "to": "null"
+              }
+            ],
+            "span": 1,
+            "sparkline": {
+              "fillColor": "rgba(31, 118, 189, 0.18)",
+              "full": true,
+              "lineColor": "rgb(31, 120, 193)",
+              "show": true
+            },
+            "tableColumn": "Value",
+            "targets": [
+              {
+                "expr": "count(swarm_node_manager)",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "",
+                "metric": "swarm_node_manager",
+                "refId": "A",
+                "step": 60
+              }
+            ],
+            "thresholds": "0.1,0.9",
+            "title": "Swarm",
+            "type": "singlestat",
+            "valueFontSize": "80%",
+            "valueMaps": [
+              {
+                "op": "=",
+                "text": "0",
+                "value": "null"
+              }
+            ],
+            "valueName": "current"
+          },
+          {
+            "cacheTimeout": null,
+            "colorBackground": false,
+            "colorValue": true,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
             ],
             "datasource": null,
             "format": "none",
@@ -493,7 +573,7 @@
             "maxDataPoints": 100,
             "nullPointMode": "connected",
             "nullText": null,
-            "postfix": " KO",
+            "postfix": " mngr(s)",
             "postfixFontSize": "50%",
             "prefix": "",
             "prefixFontSize": "50%",
@@ -507,25 +587,25 @@
             "span": 1,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
-              "full": false,
+              "full": true,
               "lineColor": "rgb(31, 120, 193)",
               "show": true
             },
             "tableColumn": "Value",
             "targets": [
               {
-                "expr": "count(up{job=\"docker-engine\"}) - count(up{job=\"docker-engine\"}==1)",
+                "expr": "sum(swarm_node_manager)",
                 "format": "time_series",
                 "interval": "",
                 "intervalFactor": 2,
                 "legendFormat": "",
-                "metric": "up",
+                "metric": "swarm_node_manager",
                 "refId": "A",
                 "step": 60
               }
             ],
-            "thresholds": "1,1",
-            "title": "DOCKER",
+            "thresholds": "0.1,0.9",
+            "title": "Swarm",
             "type": "singlestat",
             "valueFontSize": "80%",
             "valueMaps": [
@@ -536,6 +616,46 @@
               }
             ],
             "valueName": "avg"
+          },
+          {
+            "aliasColors": {},
+            "cacheTimeout": null,
+            "combine": {
+              "label": "Others",
+              "threshold": "0.1"
+            },
+            "datasource": null,
+            "fontSize": "80%",
+            "format": "short",
+            "id": 66,
+            "interval": null,
+            "legend": {
+              "percentage": false,
+              "show": true,
+              "values": true
+            },
+            "legendType": "Right side",
+            "links": [],
+            "maxDataPoints": 3,
+            "nullPointMode": "connected",
+            "pieType": "pie",
+            "span": 4,
+            "strokeWidth": 1,
+            "targets": [
+              {
+                "expr": "avg(swarm_manager_nodes{job=\"docker-engine\"}) by (state)",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{state}}",
+                "metric": "swarm_manager_nodes",
+                "refId": "A",
+                "step": 2400
+              }
+            ],
+            "title": "Swarm Manager State",
+            "type": "grafana-piechart-panel",
+            "valueName": "current"
           }
         ],
         "repeat": null,
@@ -591,7 +711,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load1",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -672,7 +792,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load5",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -753,7 +873,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load15",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -831,7 +951,7 @@
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -903,12 +1023,13 @@
             "steppedLine": false,
             "targets": [
               {
-                "expr": "100 - 100 * node_filesystem_free / node_filesystem_size{fstype=~\"xfs|ext4\",mountpoint=\"/rootfs\"}",
+                "expr": "100 - 100 * node_filesystem_free / node_filesystem_size{mountpoint=\"/rootfs\"}",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
+                "metric": "node_filesystem_free",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -985,8 +1106,9 @@
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
+                "metric": "node_filesystem_free",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1076,7 +1198,7 @@
                 "legendFormat": "{{backend}}",
                 "metric": "haproxy_server_current_queue",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1155,7 +1277,7 @@
                 "legendFormat": "{{frontend}}",
                 "metric": "haproxy_frontend_current_sessions",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1234,7 +1356,7 @@
                 "legendFormat": "{{frontend}}-{{code}}",
                 "metric": "haproxy_frontend_http_responses_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -1294,7 +1416,7 @@
               "rgba(237, 129, 40, 0.89)",
               "rgba(245, 54, 54, 0.9)"
             ],
-            "datasource": "prometheus",
+            "datasource": null,
             "format": "none",
             "gauge": {
               "maxValue": 100,
@@ -1341,7 +1463,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(etcd_server_leader_changes_seen_total)",
+                "expr": "max(etcd_server_leader_changes_seen_total)",
                 "format": "time_series",
                 "hide": false,
                 "intervalFactor": 2,
@@ -1362,7 +1484,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -1420,7 +1542,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(etcd_server_proposals_committed_total)",
+                "expr": "max(etcd_server_proposals_committed_total)",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "metric": "etcd_server_proposals_committed_total",
@@ -1439,7 +1561,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -1497,7 +1619,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(etcd_server_proposals_applied_total)",
+                "expr": "max(etcd_server_proposals_applied_total)",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "metric": "etcd_server_proposals_applied_total",
@@ -1516,7 +1638,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -1574,7 +1696,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(etcd_server_proposals_failed_total)",
+                "expr": "max(etcd_server_proposals_failed_total)",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "metric": "etcd_server_proposals_failed_total",
@@ -1593,7 +1715,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -1651,7 +1773,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(etcd_server_proposals_pending)",
+                "expr": "max(etcd_server_proposals_pending)",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "metric": "etcd_server_proposals_pending",
@@ -1670,7 +1792,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "aliasColors": {},
@@ -2038,7 +2160,7 @@
                 "legendFormat": "{{instance}} WAL fsync",
                 "metric": "etcd_disk_wal_fsync_duration_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               },
               {
                 "expr": "histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket [5m])) by (instance, le))",
@@ -2047,7 +2169,7 @@
                 "legendFormat": "{{instance}} DB fsync",
                 "metric": "etcd_disk_backend_commit_duration_seconds_bucket",
                 "refId": "B",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2124,7 +2246,7 @@
                 "legendFormat": "{{instance}} Client Traffic In",
                 "metric": "etcd_network_client_grpc_received_bytes_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2201,7 +2323,7 @@
                 "legendFormat": "{{instance}} Client Traffic Out",
                 "metric": "etcd_network_client_grpc_sent_bytes_total",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2255,11 +2377,11 @@
           {
             "cacheTimeout": null,
             "colorBackground": false,
-            "colorValue": false,
+            "colorValue": true,
             "colors": [
-              "rgba(245, 54, 54, 0.9)",
+              "rgba(50, 172, 45, 0.97)",
               "rgba(237, 129, 40, 0.89)",
-              "rgba(50, 172, 45, 0.97)"
+              "rgba(245, 54, 54, 0.9)"
             ],
             "datasource": null,
             "format": "none",
@@ -2273,7 +2395,7 @@
             "id": 9,
             "interval": null,
             "links": [],
-            "mappingType": 1,
+            "mappingType": 2,
             "mappingTypes": [
               {
                 "name": "value to text",
@@ -2296,6 +2418,16 @@
                 "from": "null",
                 "text": "N/A",
                 "to": "null"
+              },
+              {
+                "from": "0",
+                "text": "GREEN",
+                "to": "0"
+              },
+              {
+                "from": "1",
+                "text": "UNSTABLE",
+                "to": "9999"
               }
             ],
             "span": 2,
@@ -2308,7 +2440,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "min(es_cluster_status)",
+                "expr": "sum(es_cluster_status)",
                 "format": "time_series",
                 "interval": "",
                 "intervalFactor": 2,
@@ -2318,7 +2450,7 @@
                 "step": 60
               }
             ],
-            "thresholds": "",
+            "thresholds": "0.1,1.1",
             "title": "Cluster Status",
             "type": "singlestat",
             "valueFontSize": "80%",
@@ -2327,14 +2459,9 @@
                 "op": "=",
                 "text": "N/A",
                 "value": "null"
-              },
-              {
-                "op": "=",
-                "text": "UP",
-                "value": "1"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -2412,7 +2539,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -2609,7 +2736,7 @@
                 "legendFormat": "{{cluster}}",
                 "metric": "es_cluster_task_max_waiting_time_seconds",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2699,7 +2826,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_connections",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2777,7 +2904,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_subscriptions",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2856,7 +2983,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_slow_consumers",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "thresholds": [],
@@ -2957,7 +3084,7 @@
             },
             "yaxes": [
               {
-                "format": "wpm",
+                "format": "wps",
                 "label": null,
                 "logBase": 1,
                 "max": null,
@@ -3036,7 +3163,7 @@
             },
             "yaxes": [
               {
-                "format": "wpm",
+                "format": "rps",
                 "label": null,
                 "logBase": 1,
                 "max": null,
@@ -3320,7 +3447,7 @@
             "id": 40,
             "links": [],
             "minSpan": 4,
-            "span": 6,
+            "span": 3,
             "targets": [
               {
                 "expr": "engine_daemon_container_actions_seconds_bucket",
@@ -3330,7 +3457,7 @@
                 "legendFormat": "{{job}}",
                 "metric": "engine_daemon_container_actions_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "title": "Container Actions Seconds",
@@ -3374,7 +3501,7 @@
             "id": 41,
             "links": [],
             "minSpan": 4,
-            "span": 6,
+            "span": 3,
             "targets": [
               {
                 "expr": "engine_daemon_network_actions_seconds_bucket",
@@ -3384,7 +3511,7 @@
                 "legendFormat": "{{job}}",
                 "metric": "engine_daemon_network_actions_seconds_bucket",
                 "refId": "A",
-                "step": 10
+                "step": 20
               }
             ],
             "title": "Network Actions Seconds",
@@ -3409,13 +3536,620 @@
             },
             "yBucketNumber": null,
             "yBucketSize": null
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 0,
+            "id": 64,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": true,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 3,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "grpc_server_handled_total{grpc_service=\"docker.swarmkit.v1.RaftMembership\"}!=0",
+                "format": "time_series",
+                "hide": false,
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}} {{grpc_method}}={{grpc_code}}",
+                "metric": "grpc_server_handled_total",
+                "refId": "A",
+                "step": 20
+              },
+              {
+                "expr": "sum(grpc_server_handled_total{grpc_method=\"Join\",grpc_code=\"OK\",grpc_service=\"docker.swarmkit.v1.RaftMembership\"})-sum(grpc_server_handled_total{grpc_method=\"Leave\",grpc_code=\"OK\",grpc_service=\"docker.swarmkit.v1.RaftMembership\"})",
+                "format": "time_series",
+                "hide": false,
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "Join - Leave",
+                "metric": "grpc_server_handled_total",
+                "refId": "B",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Swarm Membership Operations",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": "0",
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 1,
+            "id": 68,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": true,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 3,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "rate(grpc_client_handled_total{grpc_code=\"OK\",grpc_method=\"Heartbeat\",grpc_service=\"docker.swarmkit.v1.Dispatcher\"}[1m])*60",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}::{{grpc_code}}",
+                "metric": "grpc_client_handled_total",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Swarm Hearbeats per min",
+            "tooltip": {
+              "shared": true,
+              "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
           }
         ],
         "repeat": null,
         "repeatIteration": null,
         "repeatRowId": null,
         "showTitle": true,
-        "title": "Docker Engine",
+        "title": "DOCKER",
+        "titleSize": "h6"
+      },
+      {
+        "collapse": false,
+        "height": 250,
+        "panels": [
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "fill": 1,
+            "id": 69,
+            "legend": {
+              "alignAsTable": true,
+              "avg": true,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": true,
+              "min": false,
+              "rightSide": true,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 12,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "max(scrape_duration_seconds) by (job)",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{job}}",
+                "metric": "scrape_duration_seconds",
+                "refId": "A",
+                "step": 4
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Scrape duration",
+            "tooltip": {
+              "shared": true,
+              "sort": 2,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          }
+        ],
+        "repeat": null,
+        "repeatIteration": null,
+        "repeatRowId": null,
+        "showTitle": true,
+        "title": "PROMETHEUS",
+        "titleSize": "h6"
+      },
+      {
+        "collapse": false,
+        "height": 250,
+        "panels": [
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "id": 65,
+            "links": [],
+            "pageSize": null,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 6,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 2,
+                "pattern": "graph_driver",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "instance",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "os",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "version",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Current",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "_name_",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "architecture",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "commit",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              },
+              {
+                "alias": "",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Value",
+                "thresholds": [],
+                "type": "hidden",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "engine_daemon_engine_info",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "OS={{os}} version={{version}} instance={{instance}}",
+                "metric": "engine_daemon_engine_info",
+                "refId": "A",
+                "step": 10
+              }
+            ],
+            "title": "Docker Engine Information",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          },
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "hideTimeOverride": false,
+            "id": 62,
+            "links": [],
+            "pageSize": 12,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 3,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "Status",
+                "colorMode": "value",
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 0,
+                "pattern": "Current",
+                "thresholds": [
+                  "0.1",
+                  "0.9"
+                ],
+                "type": "number",
+                "unit": "short"
+              },
+              {
+                "alias": "Instance",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Metric",
+                "thresholds": [],
+                "type": "number",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "up{job=\"docker-engine\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}",
+                "metric": "up",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "title": "Docker Engine List",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          },
+          {
+            "columns": [
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "fontSize": "100%",
+            "id": 63,
+            "links": [],
+            "pageSize": null,
+            "scroll": true,
+            "showHeader": true,
+            "sort": {
+              "col": 0,
+              "desc": true
+            },
+            "span": 3,
+            "styles": [
+              {
+                "alias": "Time",
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "alias": "Status",
+                "colorMode": "value",
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "decimals": 0,
+                "pattern": "Current",
+                "thresholds": [
+                  "0.1",
+                  "0.9"
+                ],
+                "type": "number",
+                "unit": "short"
+              },
+              {
+                "alias": "Instance",
+                "colorMode": null,
+                "colors": [
+                  "rgba(245, 54, 54, 0.9)",
+                  "rgba(237, 129, 40, 0.89)",
+                  "rgba(50, 172, 45, 0.97)"
+                ],
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "decimals": 2,
+                "pattern": "Metric",
+                "thresholds": [],
+                "type": "string",
+                "unit": "short"
+              }
+            ],
+            "targets": [
+              {
+                "expr": "up{job=\"nodes\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}",
+                "metric": "up",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "title": "Node List",
+            "transform": "timeseries_aggregations",
+            "type": "table"
+          }
+        ],
+        "repeat": null,
+        "repeatIteration": null,
+        "repeatRowId": null,
+        "showTitle": true,
+        "title": "NODE LIST",
         "titleSize": "h6"
       }
     ],
@@ -3430,7 +4164,7 @@
             "text": "All",
             "value": "$__all"
           },
-          "datasource": "prometheus",
+          "datasource": null,
           "hide": 2,
           "includeAll": true,
           "label": "Node",
@@ -3438,7 +4172,7 @@
           "name": "node",
           "options": [],
           "query": "label_values(node_load1, instance)",
-          "refresh": 2,
+          "refresh": 1,
           "regex": "",
           "sort": 0,
           "tagValuesQuery": "",
@@ -3453,7 +4187,7 @@
             "text": "All",
             "value": "$__all"
           },
-          "datasource": "prometheus",
+          "datasource": null,
           "hide": 2,
           "includeAll": true,
           "label": "Docker Engine",
@@ -3461,7 +4195,7 @@
           "name": "engine",
           "options": [],
           "query": "label_values(engine_daemon_engine_info, instance)",
-          "refresh": 2,
+          "refresh": 1,
           "regex": "",
           "sort": 0,
           "tagValuesQuery": "",
