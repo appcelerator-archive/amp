@@ -33,8 +33,15 @@ func NewOrgRemoveMemCommand(c cli.Interface) *cobra.Command {
 
 func removeOrgMem(c cli.Interface, cmd *cobra.Command, args []string, opts remMemOrgOptions) error {
 	var errs []string
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.name = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.name = org
+			c.Console().Println("organization name:", opts.name)
+		default:
+			opts.name = c.Console().GetInput("organization name")
+		}
 	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)

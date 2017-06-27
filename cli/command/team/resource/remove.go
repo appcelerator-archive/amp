@@ -37,11 +37,25 @@ func NewRemoveTeamResCommand(c cli.Interface) *cobra.Command {
 
 func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeamResOptions) error {
 	var errs []string
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
+	team, err := cli.ReadTeam(c.Server())
 	if !cmd.Flag("team").Changed {
-		opts.team = c.Console().GetInput("team name")
+		switch {
+		case err == nil:
+			opts.team = team
+			c.Console().Println("team name:", opts.team)
+		default:
+			opts.team = c.Console().GetInput("team name")
+		}
 	}
 	conn := c.ClientConn()
 	client := resource.NewResourceClient(conn)
@@ -59,6 +73,12 @@ func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeam
 	}
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
+	}
+	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+		return err
+	}
+	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
+		return err
 	}
 	return nil
 }

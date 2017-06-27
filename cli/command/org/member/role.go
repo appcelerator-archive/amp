@@ -36,8 +36,15 @@ func NewOrgChangeMemRoleCommand(c cli.Interface) *cobra.Command {
 }
 
 func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeMemOrgOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.name = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.name = org
+			c.Console().Println("organization name:", opts.name)
+		default:
+			opts.name = c.Console().GetInput("organization name")
+		}
 	}
 	if !cmd.Flag("member").Changed {
 		opts.member = c.Console().GetInput("member name")
@@ -63,6 +70,9 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeMemOrgOpti
 	}
 	if _, err := client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
+		return err
 	}
 	c.Console().Println("Member role has been changed.")
 	return nil

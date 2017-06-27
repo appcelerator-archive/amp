@@ -33,8 +33,15 @@ func NewTeamCreateCommand(c cli.Interface) *cobra.Command {
 }
 
 func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
 	if !cmd.Flag("team").Changed {
 		opts.team = c.Console().GetInput("team name")
@@ -48,6 +55,12 @@ func createTeam(c cli.Interface, cmd *cobra.Command, opts createTeamOptions) err
 	}
 	if _, err := client.CreateTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+		return err
+	}
+	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
+		return err
 	}
 	c.Console().Println("Team has been created in the organization.")
 	return nil

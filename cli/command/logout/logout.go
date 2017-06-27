@@ -21,6 +21,12 @@ func logout(c cli.Interface) error {
 	if err := cli.RemoveToken(c.Server()); err != nil {
 		return err
 	}
+	if err := cli.SaveOrg("", c.Server()); err != nil {
+		return err
+	}
+	if err := cli.SaveTeam("", c.Server()); err != nil {
+		return err
+	}
 	c.Console().Println("You have been logged out!")
 	return nil
 }
