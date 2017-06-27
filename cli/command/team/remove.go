@@ -34,8 +34,15 @@ func NewTeamRemoveCommand(c cli.Interface) *cobra.Command {
 
 func removeTeam(c cli.Interface, cmd *cobra.Command, args []string, opts removeTeamOptions) error {
 	var errs []string
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
@@ -52,6 +59,9 @@ func removeTeam(c cli.Interface, cmd *cobra.Command, args []string, opts removeT
 	}
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
+	}
+	if err := cli.SaveTeam("", c.Server()); err != nil {
+		return err
 	}
 	return nil
 }

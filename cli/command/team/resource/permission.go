@@ -38,11 +38,25 @@ func NewChangeTeamResPermissionLevelCommand(c cli.Interface) *cobra.Command {
 }
 
 func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPermLevelOptions) error {
+	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
-		opts.org = c.Console().GetInput("organization name")
+		switch {
+		case err == nil:
+			opts.org = org
+			c.Console().Println("organization name:", opts.org)
+		default:
+			opts.org = c.Console().GetInput("organization name")
+		}
 	}
+	team, err := cli.ReadTeam(c.Server())
 	if !cmd.Flag("team").Changed {
-		opts.team = c.Console().GetInput("team name")
+		switch {
+		case err == nil:
+			opts.team = team
+			c.Console().Println("team name:", opts.team)
+		default:
+			opts.team = c.Console().GetInput("team name")
+		}
 	}
 	permissionLevel := accounts.TeamPermissionLevel_TEAM_READ
 	switch opts.permissionLevel {
@@ -65,6 +79,12 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 	}
 	if _, err := client.ChangePermissionLevel(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	}
+	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+		return err
+	}
+	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
+		return err
 	}
 	c.Console().Println("Permission level has been changed.")
 	return nil

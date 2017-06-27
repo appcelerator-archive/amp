@@ -48,6 +48,9 @@ func createOrg(c cli.Interface, cmd *cobra.Command, opts createOrgOptions) error
 	if _, err := client.CreateOrganization(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
+	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
+		return err
+	}
 	c.Console().Println("Organization has been created.")
 	return nil
 }
