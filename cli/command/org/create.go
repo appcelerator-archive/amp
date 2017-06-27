@@ -1,13 +1,13 @@
 package org
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type createOrgOptions struct {
@@ -46,7 +46,9 @@ func createOrg(c cli.Interface, cmd *cobra.Command, opts createOrgOptions) error
 		Email: opts.email,
 	}
 	if _, err := client.CreateOrganization(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
 		return err

@@ -1,13 +1,13 @@
 package password
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type changePasswordOptions struct {
@@ -48,7 +48,9 @@ func change(c cli.Interface, cmd *cobra.Command, opts changePasswordOptions) err
 		NewPassword:      opts.new_password,
 	}
 	if _, err := client.PasswordChange(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Println("Your password change has been successful.")
 	return nil

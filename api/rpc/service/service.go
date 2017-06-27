@@ -13,7 +13,6 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -41,7 +40,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 	args.Add("service", in.ServiceId)
 	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: args})
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	taskList := &TasksReply{}
 	for _, item := range list {
@@ -63,7 +62,7 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 	log.Infoln("[service] List ", in.StackName)
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	reply := &ServiceListReply{}
 	for _, service := range serviceList {
@@ -93,7 +92,7 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 				}
 				response, err := s.serviceStatusReplicas(ctx, entity)
 				if err != nil {
-					return nil, grpc.Errorf(codes.Internal, "%v", err)
+					return nil, status.Errorf(codes.Internal, "%v", err)
 				}
 				reply.Entries = append(reply.Entries, response)
 			}
@@ -115,7 +114,7 @@ func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) 
 	log.Infoln("[service] Inspect", in.ServiceId)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	entity, _ := json.MarshalIndent(serviceEntity, "", "	")
 	return &ServiceInspectReply{ServiceEntity: string(entity)}, nil
@@ -126,13 +125,13 @@ func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*em
 	log.Infoln("[service] Scale", in.ServiceId)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	stackName := serviceEntity.Spec.Labels[StackNameLabelName]
 
 	stack, dockerErr := s.Stacks.GetByFragmentOrName(ctx, stackName)
 	if dockerErr != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	if stack == nil {
 		return nil, stacks.NotFound
@@ -144,7 +143,7 @@ func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*em
 	}
 
 	if err := s.Docker.ServiceScale(ctx, in.ServiceId, in.ReplicasNumber); err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	return &empty.Empty{}, nil
 }

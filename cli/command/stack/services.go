@@ -10,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type servicesOpts struct {
@@ -41,7 +41,9 @@ func services(c cli.Interface, stackName string) error {
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.Services(context.Background(), req)
 	if err != nil {
-		return errors.New(grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if !sopts.quiet {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)

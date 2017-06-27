@@ -8,7 +8,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type remTeamResOptions struct {
@@ -66,8 +66,10 @@ func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeam
 			TeamName:         opts.team,
 		}
 		if _, err := client.RemoveFromTeam(context.Background(), request); err != nil {
-			errs = append(errs, grpc.ErrorDesc(err))
-			continue
+			if s, ok := status.FromError(err); ok {
+				errs = append(errs, s.Message())
+				continue
+			}
 		}
 		c.Console().Println(res)
 	}

@@ -4,8 +4,8 @@ import (
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Server is used to implement log.LogServer
@@ -17,7 +17,7 @@ type Server struct {
 func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesReply, error) {
 	list, err := s.Docker.NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "%v", err)
+		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	nodeList := &GetNodesReply{}
 	for _, item := range list {

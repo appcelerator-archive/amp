@@ -2,6 +2,7 @@ package version
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"runtime"
 	"text/template"
@@ -10,7 +11,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type Version struct {
@@ -83,7 +84,9 @@ func showVersion(c cli.Interface) error {
 		client := version.NewVersionClient(conn)
 		reply, err := client.Get(context.Background(), &version.GetRequest{})
 		if err != nil {
-			return fmt.Errorf("%s", grpc.ErrorDesc(err))
+			if s, ok := status.FromError(err); ok {
+				return errors.New(s.Message())
+			}
 		}
 		v.Server = &version.Info{
 			Version:       reply.Info.Version,
