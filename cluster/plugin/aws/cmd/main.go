@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
@@ -107,8 +106,10 @@ func info(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	// print json result to stdout
-	fmt.Print(j)
+	// pretty print json result
+	if err = plugin.PrettyPrintOutput(j); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
