@@ -11,8 +11,8 @@ import (
 )
 
 type addTeamMemOptions struct {
-	org    string
-	team   string
+	org  string
+	team string
 }
 
 // NewAddTeamMemCommand returns a new instance of the add team member command.

@@ -11,7 +11,7 @@ import (
 )
 
 type addMemOrgOptions struct {
-	name   string
+	name string
 }
 
 // NewOrgAddMemCommand returns a new instance of the add organization member command.
