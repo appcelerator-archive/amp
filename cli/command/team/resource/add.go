@@ -58,9 +58,9 @@ func addTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts addTeam
 
 	conn := c.ClientConn()
 	client := resource.NewResourceClient(conn)
-	for _, resource := range args {
+	for _, res := range args {
 		request := &resource.AddToTeamRequest{
-			ResourceId:       resource,
+			ResourceId:       res,
 			OrganizationName: opts.org,
 			TeamName:         opts.team,
 		}
