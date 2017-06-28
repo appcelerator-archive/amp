@@ -87,6 +87,10 @@
         "task_id": {
           "type": "string"
         },
+        "task_slot": {
+          "type": "integer",
+          "format": "int32"
+        },
         "stack_name": {
           "type": "string"
         },

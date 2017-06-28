@@ -190,6 +190,14 @@ The task id
 
 
 [float]
+=== task_slot
+
+type: integer
+
+The task slot
+
+
+[float]
 === stack_name
 
 type: keyword

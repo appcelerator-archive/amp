@@ -102,6 +102,7 @@ func logMessageHandler(msg *stan.Msg) {
 			"service_name":         e.ServiceName,
 			"service_id":           e.ServiceId,
 			"task_id":              e.TaskId,
+			"task_slot":            e.TaskSlot,
 			"stack_name":           e.StackName,
 			"node_id":              e.NodeId,
 			"time_id":              e.TimeId,
@@ -135,6 +136,7 @@ func metricsMessageHandler(msg *stan.Msg) {
 		"service_name":         e.ServiceName,
 		"service_id":           e.ServiceId,
 		"task_id":              e.TaskId,
+		"task_slot":            e.TaskSlot,
 		"stack_name":           e.StackName,
 		"node_id":              e.NodeId,
 	}

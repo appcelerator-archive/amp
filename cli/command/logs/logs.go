@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"strconv"
+
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
@@ -15,6 +17,7 @@ type logsOptions struct {
 	follow         bool
 	includeAmpLogs bool
 	meta           bool
+	raw            bool
 	number         int64
 	msg            string
 	container      string
@@ -41,6 +44,7 @@ func NewLogsCommand(c cli.Interface) *cobra.Command {
 	flags.StringVar(&opts.container, "container", "", "Filter by the given container")
 	flags.StringVar(&opts.stack, "stack", "", "Filter by the given stack")
 	flags.StringVar(&opts.node, "node", "", "Filter by the given node")
+	flags.BoolVarP(&opts.raw, "raw", "r", false, "Display raw logs (no prefix)")
 	return cmd
 }
 
@@ -65,7 +69,7 @@ func getLogs(c cli.Interface, args []string, opts logsOptions) error {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
 	}
 	for _, entry := range r.Entries {
-		displayLogEntry(c, entry, opts.meta)
+		displayLogEntry(c, entry, opts.meta, opts.raw)
 	}
 	if !opts.follow {
 		return nil
@@ -84,15 +88,17 @@ func getLogs(c cli.Interface, args []string, opts logsOptions) error {
 		if err != nil {
 			return fmt.Errorf("%s", grpc.ErrorDesc(err))
 		}
-		displayLogEntry(c, entry, opts.meta)
+		displayLogEntry(c, entry, opts.meta, opts.raw)
 	}
 	return nil
 }
 
-func displayLogEntry(c cli.Interface, entry *logs.LogEntry, meta bool) {
+func displayLogEntry(c cli.Interface, entry *logs.LogEntry, meta bool, raw bool) {
 	if meta {
 		c.Console().Printf("%+v\n", entry)
-	} else {
+	} else if raw {
 		c.Console().Printf("%s\n", entry.Msg)
+	} else {
+		c.Console().Printf("%24s | %s\n", entry.ServiceName+"."+strconv.Itoa(int(entry.TaskSlot)), entry.Msg)
 	}
 }

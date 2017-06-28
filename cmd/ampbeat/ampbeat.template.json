@@ -146,6 +146,9 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
+        "task_slot": {
+          "type": "long"
+        },
         "time_id": {
           "ignore_above": 1024,
           "type": "keyword"
