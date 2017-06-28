@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/pkg/docker/docker/cli/command"
@@ -212,7 +213,7 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 		}
 
 		if configFile != nil {
-			log.Println("Using client configuration file")
+			log.Infoln("Using client configuration file")
 
 			// Read client configuration file from reader
 			cf := configfile.ConfigFile{
@@ -388,9 +389,9 @@ func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64)
 		return err
 	}
 	for _, warning := range response.Warnings {
-		log.Println(warning)
+		log.Warnln(warning)
 	}
-	log.Printf("service %s scaled to %d\n", service, scale)
+	log.Infof("service %s scaled to %d\n", service, scale)
 	return nil
 }
 
@@ -515,7 +516,6 @@ func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceSta
 	if err != nil {
 		return &ServiceStatus{}, err
 	}
-	log.Println(taskMap)
 	totalTasks, err := d.ExpectedNumberOfTasks(ctx, service)
 	if err != nil {
 		return &ServiceStatus{}, err

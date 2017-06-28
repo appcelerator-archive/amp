@@ -1,9 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/agent"
 )
@@ -16,6 +17,18 @@ var (
 	// Build is set with a linker flag (see Makefile)
 	Build string
 )
+
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	log.SetOutput(os.Stdout)
+
+	// Only log the info level or above.
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
 	args := os.Args[1:]

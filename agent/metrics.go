@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"fmt"
 
@@ -20,9 +21,9 @@ func (a *Agent) updateMetricsStreams() {
 		if data.metricsStream == nil || data.metricsReadError {
 			streamb, err := a.dock.GetClient().ContainerStats(context.Background(), ID, true)
 			if err != nil {
-				log.Printf("Error opening metrics stream on container: %s\n", data.name)
+				log.Errorf("Error opening metrics stream on container: %s\n", data.name)
 			} else {
-				log.Printf("open metrics stream on container: %s\n", data.name)
+				log.Infof("open metrics stream on container: %s\n", data.name)
 				data.metricsStream = streamb.Body
 				go a.startReadingMetrics(ID, data)
 			}
@@ -33,7 +34,7 @@ func (a *Agent) updateMetricsStreams() {
 // open a metrics container stream
 func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 	stream := data.metricsStream
-	log.Printf("start reading metrics on container: %s\n", data.name)
+	log.Infof("start reading metrics on container: %s\n", data.name)
 	decoder := json.NewDecoder(stream)
 	statsData := new(types.StatsJSON)
 	var previous, now int64
@@ -51,9 +52,9 @@ func (a *Agent) startReadingMetrics(ID string, data *ContainerData) {
 	for err := decoder.Decode(statsData); err != io.EOF; err = decoder.Decode(statsData) {
 		if err != nil {
 			if err.Error() == "EOF" {
-				log.Printf("Stream metrics EOF container terminated: %s\n", data.name)
+				log.Infof("Stream metrics EOF container terminated: %s\n", data.name)
 			} else {
-				log.Printf("error reading metrics, closing metrics stream on container %s (%v)\n", data.name, err)
+				log.Errorf("error reading metrics, closing metrics stream on container %s (%v)\n", data.name, err)
 			}
 			data.metricsReadError = true
 			_ = stream.Close()
@@ -116,12 +117,12 @@ func (a *Agent) computeMetricsMessageAvg(data *ContainerData) {
 func (a *Agent) sendMetricsMessage(data *ContainerData) {
 	encoded, err := proto.Marshal(&data.squashedMetricsMessage)
 	if err != nil {
-		log.Printf("error marshalling metrics entries: %v\n", err)
+		log.Errorf("error marshalling metrics entries: %v\n", err)
 		return
 	}
 	_, err = a.natsStreaming.GetClient().PublishAsync(ns.MetricsSubject, encoded, nil)
 	if err != nil {
-		log.Printf("error sending metrics entries: %v\n", err)
+		log.Errorf("error sending metrics entries: %v\n", err)
 		return
 	}
 	a.nbMetrics++
@@ -161,7 +162,7 @@ func (a *Agent) closeMetricsStreams() {
 		if data.metricsStream != nil {
 			err := data.metricsStream.Close()
 			if err != nil {
-				log.Println("Error closing a metrics stream: ", err)
+				log.Errorf("Error closing a metrics stream: ", err)
 			}
 		}
 	}

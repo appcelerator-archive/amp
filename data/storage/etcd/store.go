@@ -17,10 +17,11 @@ package etcd
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"
@@ -53,7 +54,7 @@ func (s *etcd) Endpoints() []string {
 
 // Connect to etcd using client v3 api
 func (s *etcd) Connect() error {
-	log.Println("Connecting to etcd at", strings.Join(s.endpoints, ","))
+	log.Infoln("Connecting to etcd at", strings.Join(s.endpoints, ","))
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   s.endpoints,
 		DialTimeout: s.timeout,
@@ -63,7 +64,7 @@ func (s *etcd) Connect() error {
 	}
 	s.client = cli
 	s.connected = true
-	log.Println("Connected to etcd at", strings.Join(s.endpoints, ","))
+	log.Infoln("Connected to etcd at", strings.Join(s.endpoints, ","))
 	return nil
 }
 

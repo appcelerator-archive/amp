@@ -1,7 +1,7 @@
 package accounts
 
 import (
-	"log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/docker/docker/pkg/stringid"
@@ -205,7 +205,7 @@ func GetRequesterAccount(ctx context.Context) *Account {
 // IsAuthorized returns whether the requesting user is authorized to perform the given action on given resource
 func (s *Store) IsAuthorized(ctx context.Context, owner *Account, action string, resource string, resourceID string) bool {
 	subject := auth.GetUser(ctx)
-	log.Printf("IsAuthorized: ctx(subject): %s, owner: %v, action: %s, resource: %s, resourceID: %s\n", subject, owner, action, resource, resourceID)
+	log.Debugf("IsAuthorized: ctx(subject): %s, owner: %v, action: %s, resource: %s, resourceID: %s\n", subject, owner, action, resource, resourceID)
 	if owner == nil {
 		return false
 	}

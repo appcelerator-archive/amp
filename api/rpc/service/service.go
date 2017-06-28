@@ -2,8 +2,9 @@ package service
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
@@ -35,7 +36,7 @@ const (
 
 // Tasks implements service.Containers
 func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
-	log.Println("[service] Tasks", in.ServiceId)
+	log.Infoln("[service] Tasks", in.ServiceId)
 	args := filters.NewArgs()
 	args.Add("service", in.ServiceId)
 	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: args})
@@ -59,7 +60,7 @@ func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, erro
 
 // ListService implements service.ListService
 func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*ServiceListReply, error) {
-	log.Println("[service] List ", in.StackName)
+	log.Infoln("[service] List ", in.StackName)
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
@@ -111,7 +112,7 @@ func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEnti
 
 // InspectService inspects a service
 func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) (*ServiceInspectReply, error) {
-	log.Println("[service] Inspect", in.ServiceId)
+	log.Infoln("[service] Inspect", in.ServiceId)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)
@@ -122,7 +123,7 @@ func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) 
 
 // ScaleService scales a service
 func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*empty.Empty, error) {
-	log.Println("[service] Scale", in.ServiceId)
+	log.Infoln("[service] Scale", in.ServiceId)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "%v", err)

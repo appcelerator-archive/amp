@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"path"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -33,20 +34,20 @@ func (a *Agent) updateLogsStream() {
 		if data.logsStream == nil || data.logsReadError {
 			lastTimeID := a.getLastTimeID(ID)
 			if lastTimeID == "" {
-				log.Printf("open logs stream from the begining on container %s\n", data.name)
+				log.Infof("open logs stream from the beginning container %s\n", data.name)
 			} else {
-				log.Printf("open logs stream from time_id=%s on container %s\n", lastTimeID, data.name)
+				log.Infof("open logs stream from time_id=%s on container %s\n", lastTimeID, data.name)
 			}
 			stream, err := a.openLogsStream(ID, lastTimeID)
 			if err != nil {
-				log.Printf("Error opening logs stream on container: %s\n", data.name)
+				log.Errorf("Error opening logs stream on container: %s\n", data.name)
 			} else {
 				data.logsStream = stream
 
 				// Inspect the container to check if it's a TTY
 				c, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
 				if err != nil {
-					log.Printf("Error inspecting container for TTY: %s\n", data.name)
+					log.Errorf("Error inspecting container for TTY: %s\n", data.name)
 					continue
 				}
 
@@ -59,15 +60,15 @@ func (a *Agent) updateLogsStream() {
 					}
 
 					// Read logs
-					log.Printf("start reading log stream of container: %s\n", data.name)
+					log.Infof("start reading log stream of container: %s\n", data.name)
 					if err := logReader(ID, data); err != nil {
-						log.Printf("Error reading log stream of container %s: %v", data.name, err)
+						log.Errorf("Error reading log stream of container %s: %v", data.name, err)
 					}
-					log.Printf("stop reading log stream of container: %s\n", data.name)
+					log.Infof("stop reading log stream of container: %s\n", data.name)
 
 					// Close log stream
 					if err := data.logsStream.Close(); err != nil {
-						log.Printf("Error closing log stream of container %s: %v", data.name, err)
+						log.Errorf("Error closing log stream of container %s: %v", data.name, err)
 					}
 				}(ID, data, c.Config.Tty)
 			}
@@ -269,12 +270,12 @@ func (a *Agent) addLogEntry(entry *logs.LogEntry, data *ContainerData, date stri
 func (a *Agent) sendLogsBuffer() {
 	encoded, err := proto.Marshal(a.logsBuffer)
 	if err != nil {
-		log.Printf("error marshalling log entries: %v\n", err)
+		log.Errorf("error marshalling log entries: %v\n", err)
 		return
 	}
 	_, err = a.natsStreaming.GetClient().PublishAsync(ns.LogsSubject, encoded, nil)
 	if err != nil {
-		log.Printf("error sending log entry: %v\n", err)
+		log.Errorf("error sending log entry: %v\n", err)
 		return
 	}
 	a.nbLogs += len(a.logsBuffer.Entries)
@@ -285,7 +286,7 @@ func (a *Agent) periodicDataSave(data *ContainerData, date string) {
 	if now.Sub(data.lastDateSaveTime).Seconds() >= float64(a.logsSavedDatePeriod) {
 		err := ioutil.WriteFile(path.Join(containersDataDir, data.ID), []byte(date), 0666)
 		if err != nil {
-			log.Println("error writing to container data directory: ", err)
+			log.Errorf("error writing to container data directory: ", err)
 		}
 		data.lastDateSaveTime = now
 	}
@@ -297,7 +298,7 @@ func (a *Agent) closeLogsStreams() {
 		if data.logsStream != nil {
 			err := data.logsStream.Close()
 			if err != nil {
-				log.Println("Error closing a log stream: ", err)
+				log.Errorf("Error closing a log stream: ", err)
 			}
 		}
 	}
