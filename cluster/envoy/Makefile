@@ -16,5 +16,4 @@ test:
 	go test -v -timeout 30m
 
 build-image:
-	@: "$${PACKAGE:?PACKAGE environment variable null, empty, or not set}"
-	docker build -t appcelerator/amp-envoy --build-arg package=$${PACKAGE} .
+	docker build -t appcelerator/amp-envoy .
