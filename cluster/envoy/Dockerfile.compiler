@@ -1,7 +1,0 @@
-FROM golang:1.8-alpine
-
-RUN apk add --no-cache git
-RUN go get -u github.com/spf13/cobra/cobra
-RUN go get -u github.com/satori/go.uuid
-
-ENTRYPOINT [ "go" ]
