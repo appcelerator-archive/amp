@@ -1,0 +1,8 @@
+---
+- name: run ec2 instance from source ami
+  hosts: localhost
+  connection: local
+  vars_files:
+    - variables.yml
+  roles:
+    - {role: ami, tags: build}

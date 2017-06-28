@@ -1,0 +1,8 @@
+---
+- include: new-instance.yml
+- include: wait-for-instance.yml
+- include: snapshot.yml
+#- include: set-volumes.yml
+- include: ami.yml
+- include: copy-ami.yml
+- include: terminate.yml

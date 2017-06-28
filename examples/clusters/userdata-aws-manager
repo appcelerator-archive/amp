@@ -24,22 +24,26 @@ _init_system(){
 _install_docker(){
   local _release=$(lsb_release -is)
   local _host
-  case $CHANNEL in
-  stable) _host="get.docker.com" ;;
-  edge|beta|test) _host="test.docker.com" ;;
-  experimental) _host="experimental.docker.com" ;;
-  *) return 1 ;;
-  esac
-  echo "installing Docker from $_host" >&2
-  wget -qO- "https://$_host/" | sh || return 1
-  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu
-  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin 
+  # on Debian style systems, this checks that docker-ce is installed
+  grep -A1 docker-ce /var/lib/dpkg/status | grep -q "installed$"
+  if [[ $? -ne 0 ]]; then
+    case $CHANNEL in
+    stable) _host="get.docker.com" ;;
+    edge|beta|test) _host="test.docker.com" ;;
+    experimental) _host="experimental.docker.com" ;;
+    *) return 1 ;;
+    esac
+    echo "installing Docker from $_host" >&2
+    wget -qO- "https://$_host/" | sh || return 1
+  fi
+  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu 2>/dev/null
+  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin  2>/dev/null
   if [[ $(_init_system) = "systemd" ]]; then
     systemctl enable docker.service
-    systemctl start docker.service
+    docker version -f {{.Server.Version}} &>/dev/null || systemctl start docker.service
   else
     chkconfig docker on
-    service docker start
+    docker version -f {{.Server.Version}} &>/dev/null || service docker start
   fi
   docker version >&2
 }
@@ -61,6 +65,7 @@ _expose_remote_api() {
   systemd)
     mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
     echo "exposing the engine API" >&2
+    [[ -f "$SYSTEMD_DOCKER_OVERRIDE" ]] && cp -p "$SYSTEMD_DOCKER_OVERRIDE" "$SYSTEMD_DOCKER_OVERRIDE.bak" && echo "Warning: an existing $SYSTEMD_DOCKER_OVERRIDE was found, it has been backed up" >&2
     cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
 [Service]
 ExecStart=
@@ -98,11 +103,20 @@ _sanity_check(){
 # installs the cfn tools, to be able to signal AWS that the application part of the deployment is done
 _install_helpers(){
   [[ "x$SYNC" != "xtrue" ]] && return 0
+  [[ -x /usr/local/bin/cfn-signal ]] && return 0
   python -c "import pkg_resources" || curl https://bootstrap.pypa.io/ez_setup.py | python
   curl -sSf https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz | tar xzf -
   (cd aws-cfn-bootstrap-[0-9.]* && python setup.py install) || return 1
   rm -rf aws-cfn-bootstrap-[0-9.]*
   [[ -x /usr/local/bin/cfn-signal ]]
+}
+
+_stop_docker(){
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl stop docker.service &>/dev/null
+  else
+    service docker stop &>/dev/null
+  fi
 }
 
 _mount_docker_volume(){
@@ -284,6 +298,7 @@ _label_node(){
   local _publicip
   _self=$(docker node inspect self -f '{{.ID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
+  echo "applying labels amp.type.api and anp.type.route" >&2
   docker node update --label-add "PublicIP=$_publicip" "$_self" || return 1
   docker node update --label-add "amp.type.api=true" "$_self" || return 1
   docker node update --label-add "amp.type.route=true" "$_self"
@@ -305,23 +320,29 @@ _get_node_ip(){
 
 _smoke_test(){
   local reachability
+  echo "smoke tests...">&2
   SECONDS=0
   while [[ $SECONDS -lt 10 ]]; do
-    docker node ls &>/dev/null || return 1
+    sleep 1
+    docker node ls &>/dev/null || continue
     reachability=$(docker node inspect self -f '{{.ManagerStatus.Reachability}}')
     [[ "x$reachability" = "xreachable" ]] && return 0
-    sleep 1
   done
+  echo "smoke tests fail:" >&2
+  docker node ls >&2
+  docker node inspect self -f '{{.ManagerStatus.Reachability}}' >&2
   return 1
 }
 
 _signal_aws() {
   [[ "x$SYNC" != "xtrue" ]] && return 0
+  [[ -x /usr/local/bin/cfn-signal ]] || return 1
   /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "${SIGNAL_URL}"
 }
 
 _sanity_check || exit 1
 _install_helpers || exit 1
+_stop_docker
 _mount_docker_volume $DOCKER_DEVICE || exit 1
 _system_prerequisites || exit 1
 nodeip=$(_get_node_ip)

@@ -1,0 +1,34 @@
+---
+- name: Wait for status signal (up to 600 sec)
+  wait_for:
+    delay: 120
+    timeout: 600
+    host: "{{ public_ip }}"
+    port: 80
+    state: started
+  changed_when: false
+
+- name: Get the build status
+  uri:
+    url: "http://{{ public_ip }}"
+    follow_redirects: safe
+    return_content: yes
+  register: status
+  changed_when: false
+  ignore_errors: true
+
+- debug: msg="status URL returned {{ status.content }}"
+  changed_when: false
+
+- name: Check UserData status
+  fail:
+  when: "'SUCCESS' not in status.content"
+  changed_when: false
+
+- name: Stop the instance
+  ec2:
+    region: "{{ ec2_region }}"
+    instance_id: "{{ instance_id }}"
+    state: stopped
+    wait: True
+  changed_when: false

@@ -30,3 +30,5 @@ platform/secrets/*
 # ampbeat
 cmd/ampbeat/build/
 cmd/ampbeat/ampbeat.full.yml
+
+examples/clusters/variables.yml

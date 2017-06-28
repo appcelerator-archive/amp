@@ -5,31 +5,31 @@ Mappings:
   AMI:
     # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170330
     # debian-jessie-amd64-hvm-2017-01-15
-    # Sydney
-    ap-southeast-2:
-      Ubuntu: ami-92e8e6f1
-      UbuntuLatest: ami-e94e5e8a
-      Debian: ami-0dcac96e
-    # Ireland
-    eu-west-1:
-      Ubuntu: ami-b5a893d3
-      UbuntuLatest: ami-6d48500b
-      Debian: ami-3291be54
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      UbuntuLatest: ami-d15a75c7
+      Default: ami-f14874e7
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      UbuntuLatest: ami-8b92b4ee
+      Default: ami-noneyet
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      UbuntuLatest: ami-835b4efa
+      Default: ami-e60c1d9f
       Debian: ami-fde96b9d
+    # Ireland
+    eu-west-1:
+      Ubuntu: ami-b5a893d3
+      Default: ami-8e5abef7
+      Debian: ami-3291be54
+    # Sydney
+    ap-southeast-2:
+      Ubuntu: ami-92e8e6f1
+      Default: ami-nonyet
+      Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
       cidr: 192.168.0.0/24
@@ -75,10 +75,11 @@ Parameters:
   LinuxDistribution:
     Type: String
     AllowedValues:
+    - Default
     - Ubuntu
-    - UbuntuLatest
     - Debian
-    Default: Ubuntu
+    Default: Default
+    Description: "the default is a pre packaged Ubuntu image, this is the recommended choice"
   ManagerInstanceType:
     Type: String
     AllowedValues:
@@ -180,10 +181,8 @@ Parameters:
     Default: false
   ConfigurationURL:
     Type: String
-    ConstraintDescription: must be an URL.
-    Description: URL for manager and worker userdata configuration
+    Description: Deprecated, don't use
     Default: https://raw.githubusercontent.com/appcelerator/amp/master/examples/clusters
-    AllowedPattern: "https?://[0-9a-z\\.-]+\\.[a-z\\.]{2,6}[/\\w\\.-]*/?"
   AufsVolumeSize:
     Type: Number
     Description: Size in GB of the EBS volume for the Docker AUFS storage on each node (mounted on /dev/xvdl)
@@ -803,22 +802,10 @@ Resources:
         Fn::Base64:
           !Sub |
             #cloud-config
-            repo_update: true
-            repo_upgrade: security
-            packages:
-              - ca-certificates
-              - jq
-              - curl
-              - unzip
-              - awscli
-              - sysstat
-              - iotop
-              - xfsprogs
-              - python-setuptools
+            repo_update: false
+            repo_upgrade: none
             runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-              - chmod +x /usr/local/bin/asg-init.sh
-              - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+              - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
 
   CoreWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -899,22 +886,10 @@ Resources:
         Fn::Base64:
           !Sub |
             #cloud-config
-            repo_update: true
-            repo_upgrade: security
-            packages:
-              - ca-certificates
-              - jq
-              - curl
-              - unzip
-              - awscli
-              - sysstat
-              - iotop
-              - xfsprogs
-              - python-setuptools
+            repo_update: false
+            repo_upgrade: none
             runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-              - chmod +x /usr/local/bin/asg-init.sh
-              - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+              - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
 
   UserWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -995,22 +970,10 @@ Resources:
         Fn::Base64:
           !Sub |
             #cloud-config
-            repo_update: true
-            repo_upgrade: security
-            packages:
-              - ca-certificates
-              - jq
-              - curl
-              - unzip
-              - awscli
-              - sysstat
-              - iotop
-              - xfsprogs
-              - python-setuptools
+            repo_update: false
+            repo_upgrade: none
             runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/asg-init.sh
-              - chmod +x /usr/local/bin/asg-init.sh
-              - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} BASE_URL=${ConfigurationURL} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/asg-init.sh || shutdown -h
+              - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
 
   ManagerWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1090,22 +1053,10 @@ Resources:
         Fn::Base64:
           !Sub |
             #cloud-config
-            repo_update: true
-            repo_upgrade: security
-            packages:
-              - ca-certificates
-              - jq
-              - curl
-              - unzip
-              - awscli
-              - sysstat
-              - iotop
-              - xfsprogs
-              - python-setuptools
+            repo_update: false
+            repo_upgrade: none
             runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/asg-init.sh
-              - chmod +x /usr/local/bin/asg-init.sh
-              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} BASE_URL=${ConfigurationURL} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/asg-init.sh || shutdown -h
+              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/userdata-aws-manager || shutdown -h
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
