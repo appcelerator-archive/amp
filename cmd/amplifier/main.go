@@ -46,6 +46,7 @@ func main() {
 		Version:          Version,
 		Build:            Build,
 		Port:             configuration.DefaultPort,
+		H1Port:           configuration.DefaultH1Port,
 		EmailSender:      mail.DefaultSender,
 		SmsSender:        sms.DefaultSender,
 		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
