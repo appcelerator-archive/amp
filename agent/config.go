@@ -1,9 +1,10 @@
 package core
 
 import (
-	"log"
 	"os"
 	"strconv"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -72,17 +73,17 @@ func (cfg *AgentConfig) controlConfig() {
 
 // Display agent version and configuration information
 func (cfg *AgentConfig) displayConfig(version, build string) {
-	log.Printf("agent version: %s, build: %s", version, build)
-	log.Println("----------------------------------------------------------------------------")
-	log.Println("Configuration:")
-	log.Printf("Docker-engine: %s\n", conf.dockerEngine)
-	log.Printf("Nats URL: %s\n", conf.natsURL)
-	log.Printf("ClientId: %s\n", conf.clientID)
-	log.Printf("ClusterId: %s\n", conf.clusterID)
-	log.Printf("MetricsPeriod: %d second(s)\n", conf.metricsPeriod)
-	log.Printf("LogsBufferSize: %d\n", conf.logsBufferSize)
-	log.Printf("LogsBufferPeriod: %d second(s)\n", conf.logsBufferPeriod)
-	log.Println("----------------------------------------------------------------------------")
+	log.Infof("agent version: %s, build: %s", version, build)
+	log.Infoln("----------------------------------------------------------------------------")
+	log.Infoln("Configuration:")
+	log.Infof("Docker-engine: %s\n", conf.dockerEngine)
+	log.Infof("Nats URL: %s\n", conf.natsURL)
+	log.Infof("ClientId: %s\n", conf.clientID)
+	log.Infof("ClusterId: %s\n", conf.clusterID)
+	log.Infof("MetricsPeriod: %d second(s)\n", conf.metricsPeriod)
+	log.Infof("LogsBufferSize: %d\n", conf.logsBufferSize)
+	log.Infof("LogsBufferPeriod: %d second(s)\n", conf.logsBufferPeriod)
+	log.Infoln("----------------------------------------------------------------------------")
 }
 
 // Getenv retrieves the value of the environment variable named by the key.

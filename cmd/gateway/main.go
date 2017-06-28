@@ -1,11 +1,12 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
@@ -29,6 +30,18 @@ const (
 	listenAddress     = ":80"
 	amplifierEndpoint = "amplifier" + configuration.DefaultPort
 )
+
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	log.SetOutput(os.Stdout)
+
+	// Only log the info level or above.
+	log.SetLevel(log.InfoLevel)
+}
 
 // allowCORS allows Cross Origin Resource Sharing from any origin.
 func allowCORS(h http.Handler) http.Handler {
@@ -105,7 +118,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("gateway successfuly initialized. Start listening on:", listenAddress)
+	log.Infoln("gateway successfuly initialized. Start listening on:", listenAddress)
 	log.Fatalln(http.ListenAndServe(listenAddress, handlers.CompressHandler(handlers.CombinedLoggingHandler(os.Stdout, allowCORS(mux)))))
 	return
 }

@@ -3,9 +3,10 @@ package logs
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
@@ -33,7 +34,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if err := s.ES.Connect(); err != nil {
 		return nil, errors.New("unable to connect to elasticsearch service")
 	}
-	log.Println("rpc-logs: Get", in.String())
+	log.Infoln("rpc-logs: Get", in.String())
 
 	// Prepares indices
 	indices := []string{}
@@ -114,7 +115,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	for i, j := 0, len(reply.Entries)-1; i < j; i, j = i+1, j-1 {
 		reply.Entries[i], reply.Entries[j] = reply.Entries[j], reply.Entries[i]
 	}
-	log.Printf("rpc-logs: Get successful, returned %d entries\n", len(reply.Entries))
+	log.Infof("rpc-logs: Get successful, returned %d entries\n", len(reply.Entries))
 	return &reply, nil
 }
 
@@ -139,12 +140,12 @@ func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
 	if err := s.NS.Connect(); err != nil {
 		return errors.New("unable to connect to nats service")
 	}
-	log.Println("rpc-logs: GetStream", in.String())
+	log.Infoln("rpc-logs: GetStream", in.String())
 
 	sub, err := s.NS.GetClient().Subscribe(ns.LogsSubject, func(msg *stan.Msg) {
 		entries := &GetReply{}
 		if err := proto.Unmarshal(msg.Data, entries); err != nil {
-			log.Println("error while unmarshalling message", err)
+			log.Errorln("error unmarshalling message", err)
 			return
 		}
 		for _, entry := range entries.Entries {

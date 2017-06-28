@@ -1,14 +1,13 @@
 package server
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"os"
 	"runtime"
 	"sync"
 
-	"fmt"
-
+	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
@@ -112,7 +111,7 @@ func (a *Amplifier) Start() {
 	if err != nil {
 		log.Fatalf("Unable to listen on %s: %v\n", a.config.Port[1:], err)
 	}
-	log.Println("Listening on port:", a.config.Port[1:])
+	log.Infoln("Listening on port:", a.config.Port[1:])
 	log.Fatalln(s.Serve(lis))
 }
 

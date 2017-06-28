@@ -2,8 +2,8 @@ package account
 
 import (
 	"fmt"
-	"log"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
@@ -119,14 +119,13 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 			return nil, err
 		}
 	}
-	log.Println("Successfully created user", user.Name)
+	log.Infoln("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
 }
 
 // Verify implements account.Verify
 func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Empty, error) {
 	// Validate the token
-	log.Printf("verify token=%s\n", in.Token)
 	claims, err := s.Tokens.ValidateToken(in.Token, auth.TokenTypeVerification)
 	if err != nil {
 		return nil, accounts.InvalidToken
@@ -144,7 +143,7 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Em
 	if err := s.Mailer.SendAccountVerifiedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully verified user", user.Name)
+	log.Infoln("Successfully verified user", user.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -164,7 +163,7 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully logged user in", in.Name)
+	log.Infoln("Successfully logged user in", in.Name)
 	return &LogInReply{Auth: token}, nil //Angular issue with custom header
 }
 
@@ -187,7 +186,7 @@ func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*
 	if err := s.Mailer.SendAccountResetPasswordEmail(user.Email, user.Name, token, getServerAddress(ctx)); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully reset password for user", user.Name)
+	log.Infoln("Successfully reset password for user", user.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -202,7 +201,7 @@ func (s *Server) PasswordSet(ctx context.Context, in *PasswordSetRequest) (*empt
 	if err := s.Accounts.SetUserPassword(ctx, claims.AccountName, in.Password); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Println("Successfully set new password for user", claims.AccountName)
+	log.Infoln("Successfully set new password for user", claims.AccountName)
 	return &empty.Empty{}, nil
 }
 
@@ -219,7 +218,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	if err := s.Accounts.SetUserPassword(ctx, requester, in.NewPassword); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Println("Successfully updated the password for user", requester)
+	log.Infoln("Successfully updated the password for user", requester)
 	return &empty.Empty{}, nil
 }
 
@@ -237,7 +236,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empt
 	if err := s.Mailer.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully processed forgot login request for user", user.Name)
+	log.Infoln("Successfully processed forgot login request for user", user.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -251,7 +250,7 @@ func (s *Server) GetUser(ctx context.Context, in *GetUserRequest) (*GetUserReply
 	if user == nil {
 		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
 	}
-	log.Println("Successfully retrieved user", user.Name)
+	log.Infoln("Successfully retrieved user", user.Name)
 	return &GetUserReply{User: user}, nil
 }
 
@@ -262,7 +261,7 @@ func (s *Server) GetUserOrganizations(ctx context.Context, in *GetUserOrganizati
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Printf("Successfully retrieved organizations for user %s \n", in.Name)
+	log.Infof("Successfully retrieved organizations for user %s \n", in.Name)
 	return &GetUserOrganizationsReply{Organizations: organizations}, nil
 }
 
@@ -272,7 +271,7 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully list users")
+	log.Infoln("Successfully list users")
 	return &ListUsersReply{Users: users}, nil
 }
 
@@ -293,7 +292,7 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 	if err := s.Mailer.SendAccountRemovedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully deleted user", in.Name)
+	log.Infoln("Successfully deleted user", in.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -329,7 +328,7 @@ func (s *Server) Switch(ctx context.Context, in *SwitchRequest) (*SwitchAnswer, 
 	if err := grpc.SendHeader(ctx, md); err != nil {
 		return nil, convertError(err)
 	}
-	log.Printf("Successfully switched from account: %s (activeOrg: %s), to %s (activeOrg: %s)", userName, orgName, userName, activeOrganization)
+	log.Infof("Successfully switched from account: %s (activeOrg: %s), to %s (activeOrg: %s)", userName, orgName, userName, activeOrganization)
 	return &SwitchAnswer{Auth: token}, nil
 }
 
@@ -346,7 +345,7 @@ func (s *Server) CreateOrganization(ctx context.Context, in *CreateOrganizationR
 			return nil, convertError(err)
 		}
 	}
-	log.Println("Successfully created organization", in.Name)
+	log.Infoln("Successfully created organization", in.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -361,7 +360,7 @@ func (s *Server) AddUserToOrganization(ctx context.Context, in *AddUserToOrganiz
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully added member %s to organization %s\n", in.UserName, in.OrganizationName)
+	log.Infof("Successfully added member %s to organization %s\n", in.UserName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -376,7 +375,7 @@ func (s *Server) RemoveUserFromOrganization(ctx context.Context, in *RemoveUserF
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully removed user %s from organization %s\n", in.UserName, in.OrganizationName)
+	log.Infof("Successfully removed user %s from organization %s\n", in.UserName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -385,7 +384,7 @@ func (s *Server) ChangeOrganizationMemberRole(ctx context.Context, in *ChangeOrg
 	if err := s.Accounts.ChangeOrganizationMemberRole(ctx, in.OrganizationName, in.UserName, in.Role); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully changed role of user %s from organization %s to %s\n", in.UserName, in.OrganizationName, in.Role.String())
+	log.Infof("Successfully changed role of user %s from organization %s to %s\n", in.UserName, in.OrganizationName, in.Role.String())
 	return &empty.Empty{}, nil
 }
 
@@ -398,7 +397,7 @@ func (s *Server) GetOrganization(ctx context.Context, in *GetOrganizationRequest
 	if organization == nil {
 		return nil, status.Errorf(codes.NotFound, "organization not found: %s", in.Name)
 	}
-	log.Println("Successfully retrieved organization", organization.Name)
+	log.Infoln("Successfully retrieved organization", organization.Name)
 	return &GetOrganizationReply{Organization: organization}, nil
 }
 
@@ -408,7 +407,7 @@ func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsReq
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("Successfully list organizations")
+	log.Infoln("Successfully list organizations")
 	return &ListOrganizationsReply{Organizations: organizations}, nil
 }
 
@@ -423,7 +422,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 			return nil, convertError(err)
 		}
 	}
-	log.Println("Successfully deleted organization", in.Name)
+	log.Infoln("Successfully deleted organization", in.Name)
 	return &empty.Empty{}, nil
 }
 
@@ -440,7 +439,7 @@ func (s *Server) CreateTeam(ctx context.Context, in *CreateTeamRequest) (*empty.
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully created team %s in organization %s\n", in.TeamName, in.OrganizationName)
+	log.Infof("Successfully created team %s in organization %s\n", in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -455,7 +454,7 @@ func (s *Server) AddUserToTeam(ctx context.Context, in *AddUserToTeamRequest) (*
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully added user %s to team %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
+	log.Infof("Successfully added user %s to team %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -470,7 +469,7 @@ func (s *Server) RemoveUserFromTeam(ctx context.Context, in *RemoveUserFromTeamR
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully removed user %s from teams %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
+	log.Infof("Successfully removed user %s from teams %s in organization %s\n", in.UserName, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -479,7 +478,7 @@ func (s *Server) ChangeTeamName(ctx context.Context, in *ChangeTeamNameRequest) 
 	if err := s.Accounts.ChangeTeamName(ctx, in.OrganizationName, in.TeamName, in.NewName); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully changed name of team %s to %s in organization %s\n", in.TeamName, in.NewName, in.OrganizationName)
+	log.Infof("Successfully changed name of team %s to %s in organization %s\n", in.TeamName, in.NewName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -492,7 +491,7 @@ func (s *Server) GetTeam(ctx context.Context, in *GetTeamRequest) (*GetTeamReply
 	if team == nil {
 		return nil, status.Errorf(codes.NotFound, "team not found: %s", in.TeamName)
 	}
-	log.Println("Successfully retrieved team", team.Name)
+	log.Infoln("Successfully retrieved team", team.Name)
 	return &GetTeamReply{Team: team}, nil
 }
 
@@ -516,6 +515,6 @@ func (s *Server) DeleteTeam(ctx context.Context, in *DeleteTeamRequest) (*empty.
 			return nil, convertError(err)
 		}
 	}
-	log.Printf("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
+	log.Infof("Successfully deleted team %s from organization %s\n", in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }

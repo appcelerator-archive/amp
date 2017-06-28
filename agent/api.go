@@ -1,15 +1,16 @@
 package core
 
 import (
-	"log"
 	"net/http"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const baseURL = "/api/v1"
 
 // Start API server
 func (a *Agent) initAPI() {
-	log.Println("Start API server on port " + conf.apiPort)
+	log.Infoln("Start API server on port " + conf.apiPort)
 	go func() {
 		http.HandleFunc(baseURL+"/health", a.agentHealth)
 		err := http.ListenAndServe(":"+conf.apiPort, nil)
@@ -24,7 +25,7 @@ func (a *Agent) agentHealth(resp http.ResponseWriter, req *http.Request) {
 	if a.eventStreamReading {
 		resp.WriteHeader(200)
 	} else {
-		log.Println("Error: health check failed")
+		log.Errorln("Error: health check failed")
 		resp.WriteHeader(400)
 	}
 }

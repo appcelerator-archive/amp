@@ -2,10 +2,11 @@ package accounts
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
@@ -56,21 +57,9 @@ func NewStore(s storage.Interface, registration string, SUPassword string) (*Sto
 
 func (s *Store) createSuperAccounts(SUPassword string) error {
 	if SUPassword == "" {
-		log.Println("SUPassword is empty. Skipping creation of super accounts.")
+		log.Warnf("SUPassword is empty. Skipping creation of super accounts.")
 		return nil
 	}
-
-	// Add a policy giving full access to super organization members
-	s.warden.Manager.Create(&ladon.DefaultPolicy{
-		ID:        stringid.GenerateNonCryptoID(),
-		Subjects:  []string{"<.*>"},
-		Resources: []string{"<.*>"},
-		Actions:   []string{"<.*>"},
-		Effect:    ladon.AllowAccess,
-		Conditions: ladon.Conditions{
-			"owner": &OwnerCondition{},
-		},
-	})
 
 	// Check if super accounts haven been created already
 	ctx := context.Background()
@@ -78,7 +67,6 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 	switch err {
 	case nil: // No error, do nothing
 	case storage.AlreadyExists: // Super accounts have already been created, just return
-		log.Println("Super accounts already created")
 		return nil
 	default:
 		return err
@@ -104,7 +92,7 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 	if err := s.storage.Create(ctx, path.Join(usersRootKey, su.Name), su, nil, 0); err != nil {
 		return err
 	}
-	log.Println("Successfully created initial super user")
+	log.Infoln("Successfully created initial super user")
 
 	// Create the super organization
 	org, err := s.GetOrganization(ctx, superOrganization)
@@ -128,7 +116,19 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 	if err := s.storage.Create(ctx, path.Join(organizationsRootKey, so.Name), so, nil, 0); err != nil {
 		return err
 	}
-	log.Println("Successfully created super organization")
+	log.Infoln("Successfully created super organization")
+
+	// Add a policy giving full access to super organization members
+	s.warden.Manager.Create(&ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{"<.*>"},
+		Actions:   []string{"<.*>"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"owner": &OwnerCondition{},
+		},
+	})
 	return nil
 }
 

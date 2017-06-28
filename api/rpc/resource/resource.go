@@ -1,11 +1,11 @@
 package resource
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/dashboards"
 	"github.com/appcelerator/amp/data/stacks"
-	"github.com/elastic/go-lumber/log"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -63,7 +63,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 			reply.Resources = append(reply.Resources, &ResourceEntry{Id: dashboard.Id, Type: ResourceType_RESOURCE_DASHBOARD, Name: dashboard.Name, Owner: dashboard.Owner})
 		}
 	}
-	log.Println("Successfully listed resources for organization", activeOrganization)
+	log.Infoln("Successfully listed resources for organization", activeOrganization)
 	return reply, nil
 }
 
@@ -105,7 +105,7 @@ func (s *Server) AddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Em
 	if err := s.Accounts.AddResourceToTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	log.Infof("Successfully added resource %s to team %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }
 
@@ -146,7 +146,7 @@ func (s *Server) ChangePermissionLevel(ctx context.Context, in *ChangePermission
 	if err := s.Accounts.ChangeTeamResourcePermissionLevel(ctx, in.OrganizationName, in.TeamName, in.ResourceId, in.PermissionLevel); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully changed permission level over resource %s in team %s to %s\n", in.ResourceId, in.TeamName, in.PermissionLevel.String())
+	log.Infof("Successfully changed permission level over resource %s in team %s to %s\n", in.ResourceId, in.TeamName, in.PermissionLevel.String())
 	return &empty.Empty{}, nil
 }
 
@@ -155,6 +155,6 @@ func (s *Server) RemoveFromTeam(ctx context.Context, in *RemoveFromTeamRequest) 
 	if err := s.Accounts.RemoveResourceFromTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
-	log.Printf("Successfully removed resource %s from teams %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
+	log.Infof("Successfully removed resource %s from teams %s in organization %s\n", in.ResourceId, in.TeamName, in.OrganizationName)
 	return &empty.Empty{}, nil
 }

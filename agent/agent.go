@@ -2,12 +2,13 @@ package core
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/docker"
@@ -66,9 +67,8 @@ func AgentInit(version, build string) error {
 		_ = agent.natsStreaming.Close()
 		return err
 	}
-	log.Println("Connected to Docker-engine")
+	log.Infoln("Connected to Docker-engine")
 
-	log.Println("Extracting containers list...")
 	agent.containers = make(map[string]*ContainerData)
 	ContainerListOptions := types.ContainerListOptions{All: true}
 	containers, err := agent.dock.GetClient().ContainerList(context.Background(), ContainerListOptions)
@@ -79,7 +79,7 @@ func AgentInit(version, build string) error {
 	for _, cont := range containers {
 		agent.addContainer(cont.ID)
 	}
-	log.Println("done")
+	log.Infoln("Successfully retrieved containers.")
 	agent.start()
 	return nil
 }
@@ -97,7 +97,7 @@ func (a *Agent) start() {
 		a.updateStreams()
 		nb++
 		if nb == 10 {
-			log.Printf("Sent %d logs and %d metrics (%d computed) on the last %d seconds\n", a.nbLogs, a.nbMetrics, a.nbMetricsComputed, nb*conf.period)
+			log.Infof("Sent %d logs and %d metrics (%d computed) on the last %d seconds\n", a.nbLogs, a.nbMetrics, a.nbMetricsComputed, nb*conf.period)
 			nb = 0
 			a.nbLogs = 0
 			a.nbMetrics = 0
@@ -151,11 +151,11 @@ func (a *Agent) stop(status int) {
 	a.closeLogsStreams()
 	a.closeMetricsStreams()
 	if err := a.dock.GetClient().Close(); err != nil {
-		log.Printf("Docker api close error: %v\n", err)
+		log.Errorf("Docker api close error: %v\n", err)
 	}
 
 	if err := a.natsStreaming.Close(); err != nil {
-		log.Printf("Nats close error: %v\n", err)
+		log.Errorf("Nats close error: %v\n", err)
 	}
 	os.Exit(status)
 }
@@ -167,7 +167,7 @@ func (a *Agent) trapSignal() {
 	signal.Notify(ch, syscall.SIGTERM)
 	go func() {
 		<-ch
-		log.Println("\nagent received SIGTERM signal")
+		log.Infoln("\nagent received SIGTERM signal")
 		a.stop(1)
 	}()
 }

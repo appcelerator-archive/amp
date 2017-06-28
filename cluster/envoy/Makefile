@@ -1,25 +1,19 @@
+.PHONY: clean test build-image
+
 SRC := $(shell find . -type f -name '*.go')
+MAIN := cmd/main.go
+TARGET := bin/envoy
 
-build: envoy.alpine
-	docker build -t appcelerator/amp-envoy .
+build: $(TARGET)
 
-envoy.alpine: $(SRC)
-	docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp/cluster/envoy \
-		-w /go/src/github.com/appcelerator/amp/cluster/envoy \
-		appcelerator/amp-envoy-compiler build -o envoy.alpine cmd/main.go
+$(TARGET): $(SRC)
+	go build -o $(TARGET) $(MAIN)
 
-.PHONY: compiler
-compiler:
-	docker build -f Dockerfile.compiler -t appcelerator/amp-envoy-compiler .
-
-.PHONY: clean
 clean:
-	rm -f envoy.alpine
+	rm -f bin/envoy
 
-.PHONY: test
-test: build
-# TODO wip
-	docker run -it --rm -v $(PWD):/go/src/github.com/appcelerator/amp/cluster/envoy \
-		-w /go/src/github.com/appcelerator/amp/cluster/envoy \
-		appcelerator/amp-envoy-compiler test -v -timeout 30m
+test:
+	go test -v -timeout 30m
 
+build-image:
+	docker build -t appcelerator/amp-envoy .
