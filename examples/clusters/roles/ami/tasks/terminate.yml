@@ -1,0 +1,17 @@
+---
+- name: Terminate instance
+  ec2:
+    state: 'absent'
+    region: "{{ ec2_region }}"
+    instance_ids: "{{ ec2_instance.instance_ids }}"
+
+- name: Cleanup managers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-manager"
+    mode: delobj
+- name: Cleanup workers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-worker"
+    mode: delobj

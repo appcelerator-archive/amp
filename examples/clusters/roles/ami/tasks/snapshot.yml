@@ -1,0 +1,14 @@
+---
+- name: "Snapshot root volume"
+  ec2_snapshot:
+    region: "{{ ec2_region }}"
+    instance_id: "{{ instance_id }}"
+    device_name: /dev/sda1
+    wait: yes
+  register: root_snapshot
+
+- debug: msg="{{ root_snapshot }}"
+
+- name: Set snapshot ID
+  set_fact:
+    root_snapshot_id: "{{ root_snapshot.snapshot_id }}"

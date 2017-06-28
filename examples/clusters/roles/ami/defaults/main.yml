@@ -1,0 +1,43 @@
+---
+## Docker Channel
+# stable: use "https://get.docker.com"
+# edge: use "https://test.docker.com"
+docker_url: "https://get.docker.com"
+
+## AWS Region where the build should be done
+ec2_region: "us-west-2"
+
+## AWS Region where the AMI should be copied
+copy_regions: [ "us-east-1", "us-east-2", "eu-west-1", "ap-southeast-2" ]
+
+## ID of an existing VPC where the build should be done
+ec2_vpc_id: "vpc-40e21d26"
+
+## Key Name
+ec2_key_name: ""
+
+## Instance Type
+ec2_instance_type: "t2.small"
+
+## IAM Profile
+iam_instance_profile: "amp-image-builder-role"
+
+## Source AMI
+ec2_ami: "ami-17ba2a77"
+
+## Security Group
+# should open port 80 (and optionally port 22 for debugging)
+ec2_security_group: "amp-ami-builder-sg"
+
+## Subnet ID
+# should have a route table with an internet gateway
+ec2_vpc_subnet_id: "subnet-b267c8e9"
+
+## S3 bucket for file uploads
+s3_bucket: "amp-ami-builder"
+
+## AMI name
+image_name_prefix: ubuntu-xenial-docker
+
+## AMI description
+image_description: "Ubuntu Xenial image for AMP (github.com/appcelerator/amp)"

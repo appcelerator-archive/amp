@@ -1,0 +1,43 @@
+---
+- name: Build AMI name
+  set_fact:
+    image_name: "{{ image_name_prefix }}-{{ timestamp }}"
+  changed_when: false
+
+- name: "Register AMI from snapshot {{ root_snapshot_id }}"
+  ec2_ami:
+    architecture: x86_64
+    virtualization_type: hvm
+    root_device_name: /dev/sda1
+    device_mapping:
+      - device_name: /dev/sda1
+        size: 8
+        snapshot_id: "{{ root_snapshot_id }}"
+        delete_on_termination: true
+        volume_type: gp2
+    region: "{{ ec2_region }}"
+    wait: yes
+    name: "{{ image_name }}"
+    description: "{{ image_description }}"
+    tags:
+      Name: "{{ image_name }}"
+  register: image
+
+- debug: msg="{{ image }}"
+  changed_when: false
+
+- name: Get AMI ID
+  set_fact:
+    image_id: "{{ image.image_id }}"
+  changed_when: false
+
+- debug: msg="New AMI {{ image_id }} in {{ ec2_region }}"
+  changed_when: false
+
+#- name: Make AMI Public
+  #ec2_ami:
+    #image_id: "{{ image.image_id }}"
+    #state: present
+    #region: "{{ ec2_region }}"
+    #launch_permissions:
+      #group_names: ['all']

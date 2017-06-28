@@ -1,0 +1,32 @@
+---
+- name: Copy AMI to other regions
+  ec2_ami_copy:
+    source_region: "{{ ec2_region }}"
+    region: "{{ item }}"
+    source_image_id: "{{ image_id }}"
+    encrypted: no
+    name: "{{ image_name_prefix }}"
+    description: "{{ image_description }}"
+    wait: yes
+    tags:
+      Name: "{{ image_name }}"
+      System: "Ubuntu"
+      CreationDate: "{{ timestamp }}"
+      CopyOf: "{{ image_id }}"
+  with_items:
+   - "{{ copy_regions }}"
+  register: copies
+
+- debug: msg="AMI {{ item.image_id }} copied in {{ item.item }}"
+  with_items:
+   - "{{ copies.results }}"
+  changed_when: false
+
+#- name: Make Copies Public
+  #ec2_ami:
+    #image_id: "{{ item.image_id }}"
+    #region: "{{ item.item }}"
+    #state: present
+    #launch_permissions:
+      #group_names: ['all']
+  #with_items: "{{ copies.results }}"

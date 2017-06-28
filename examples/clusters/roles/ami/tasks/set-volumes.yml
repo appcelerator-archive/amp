@@ -1,0 +1,41 @@
+---
+- name: Get original root volume
+  ec2_vol_facts:
+    region: "{{ ec2_region }}"
+    filters:
+      attachment.instance-id: "{{ instance_id }}"
+      attachment.status: "attached"
+      attachment.device: "/dev/sda1"
+  register: original_volume
+
+- name: Get new root volume
+  ec2_vol_facts:
+    region: "{{ ec2_region }}"
+    filters:
+      attachment.instance-id: "{{ instance_id }}"
+      attachment.status: "attached"
+      attachment.device: "/dev/xvdf"
+  register: new_volume
+
+- name: Volume ID
+  set_fact:
+    original_volume_id: "{{ original_volume.volumes.0.id }}"
+    new_volume_id: "{{ new_volume.volumes.0.id }}"
+
+- name: Detach volumes
+  ec2_vol:
+    region: "{{ ec2_region }}"
+    id: "{{ item }}"
+    instance: ""
+  with_items:
+    - "{{ original_volume_id }}"
+    - "{{ new_volume_id }}"
+
+- name: Attach new volume
+  ec2_vol:
+    region: "{{ ec2_region }}"
+    id: "{{ new_volume_id }}"
+    state: "present"
+    instance: "{{ instance_id }}"
+    device_name: "/dev/sda1"
+    delete_on_termination: yes

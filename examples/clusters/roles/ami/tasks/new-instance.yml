@@ -1,0 +1,47 @@
+---
+- debug: msg="New instance on VPC {{ ec2_vpc_id }} and region {{ ec2_region }}"
+  changed_when: false
+
+- name: Set timestamp
+  set_fact:
+    timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+  changed_when: false
+
+- name: Upload managers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-manager"
+    src: userdata-aws-manager
+    mode: put
+- name: Upload workers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-worker"
+    src: userdata-aws-worker
+    mode: put
+
+- name: Run instance
+  ec2:
+    region: "{{ ec2_region }}"
+    key_name: "{{ ec2_key_name }}"
+    instance_type: "{{ ec2_instance_type }}"
+    instance_profile_name: "{{ iam_instance_profile }}"
+    image: "{{ ec2_ami }}"
+    wait: yes
+    group: "{{ ec2_security_group }}"
+    vpc_subnet_id: "{{ ec2_vpc_subnet_id }}"
+    user_data: "{{ lookup('template', 'userdata.j2') }}"
+    assign_public_ip: yes
+    instance_tags:
+        Name: amp-ubuntu-ami-build
+        Project: amp-ami-builder
+  register: ec2_instance
+
+- name: Instance ID
+  set_fact:
+    instance_id: "{{ ec2_instance.instance_ids[0] }}"
+    public_ip: "{{ ec2_instance.instances[0].public_ip }}"
+  changed_when: false
+
+- debug: msg="instance {{ instance_id }} listening on {{ public_ip }}"
+  changed_when: false
