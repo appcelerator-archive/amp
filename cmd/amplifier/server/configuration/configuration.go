@@ -11,6 +11,7 @@ import (
 
 const (
 	DefaultPort         = ":50101"
+	DefaultH1Port       = ":5100"
 	DefaultTimeout      = time.Minute
 	RegistrationNone    = "none"
 	RegistrationEmail   = "email"
@@ -22,6 +23,7 @@ type Configuration struct {
 	Version          string
 	Build            string
 	Port             string
+	H1Port           string
 	EtcdEndpoints    []string
 	ElasticsearchURL string
 	NatsURL          string
@@ -39,7 +41,7 @@ type Configuration struct {
 }
 
 func (c *Configuration) String() string {
-	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
+	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nH1Port: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.H1Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
 }
 
 // ReadConfig reads the configuration file

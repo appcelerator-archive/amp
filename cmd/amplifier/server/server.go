@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"runtime"
 	"sync"
@@ -29,6 +30,9 @@ import (
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
 
@@ -97,14 +101,36 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 // Start starts the amplifier server
 func (a *Amplifier) Start() {
 	interceptors := &auth.Interceptors{Tokens: a.tokens}
+
+	// Enable prometheus time histograms
+	grpc_prometheus.EnableHandlingTimeHistogram()
+
 	// register services
 	s := grpc.NewServer(
-		grpc.StreamInterceptor(interceptors.StreamInterceptor),
-		grpc.UnaryInterceptor(interceptors.Interceptor),
+		grpc_middleware.WithUnaryServerChain(
+			grpc_prometheus.UnaryServerInterceptor,                // Prometheus interceptor
+			grpc.UnaryServerInterceptor(interceptors.Interceptor), // AMP authentication interceptor
+		),
+		grpc_middleware.WithStreamServerChain(
+			grpc_prometheus.StreamServerInterceptor,                      // Prometheus interceptor
+			grpc.StreamServerInterceptor(interceptors.StreamInterceptor), // AMP authentication interceptor
+		),
 		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
 		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
 	)
 	registerServices(a, s)
+
+	// Make sure all of the Prometheus metrics are initialized after all service registrations
+	grpc_prometheus.Register(s)
+
+	// Start a parallel HTTP/1 server
+	// TODO: Is it discouraged?
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		log.Println("Listening HTTP/1 on port:", a.config.H1Port[1:])
+		log.Fatalln(http.ListenAndServe(a.config.H1Port, mux))
+	}()
 
 	// start listening
 	lis, err := net.Listen("tcp", a.config.Port)
