@@ -11,30 +11,28 @@ import (
 )
 
 type addTeamMemOptions struct {
-	org    string
-	team   string
-	member string
+	org  string
+	team string
 }
 
 // NewAddTeamMemCommand returns a new instance of the add team member command.
 func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 	opts := addTeamMemOptions{}
 	cmd := &cobra.Command{
-		Use:     "add [OPTIONS]",
+		Use:     "add [OPTIONS] MEMBER",
 		Short:   "Add member to team",
-		PreRunE: cli.NoArgs,
+		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addTeamMem(c, cmd, opts)
+			return addTeamMem(c, cmd, args, opts)
 		},
 	}
 	flags := cmd.Flags()
 	flags.StringVar(&opts.org, "org", "", "Organization name")
 	flags.StringVar(&opts.team, "team", "", "Team name")
-	flags.StringVar(&opts.member, "member", "", "Member name")
 	return cmd
 }
 
-func addTeamMem(c cli.Interface, cmd *cobra.Command, opts addTeamMemOptions) error {
+func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeamMemOptions) error {
 	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
 		switch {
@@ -55,16 +53,13 @@ func addTeamMem(c cli.Interface, cmd *cobra.Command, opts addTeamMemOptions) err
 			opts.team = c.Console().GetInput("team name")
 		}
 	}
-	if !cmd.Flag("member").Changed {
-		opts.member = c.Console().GetInput("member name")
-	}
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.AddUserToTeamRequest{
 		OrganizationName: opts.org,
 		TeamName:         opts.team,
-		UserName:         opts.member,
+		UserName:         args[0],
 	}
 	if _, err := client.AddUserToTeam(context.Background(), request); err != nil {
 		return fmt.Errorf("%s", grpc.ErrorDesc(err))
