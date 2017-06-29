@@ -121,6 +121,7 @@ func (a *Agent) buildLogEntry(ID string, data *ContainerData, line string, timeI
 		ServiceName:        data.serviceName,
 		ServiceId:          data.serviceID,
 		TaskId:             data.taskID,
+		TaskSlot:           int32(data.taskSlot),
 		StackName:          data.stackName,
 		NodeId:             data.nodeID,
 		TimeId:             fmt.Sprintf("%016X", timeID),
