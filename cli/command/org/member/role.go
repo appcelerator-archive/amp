@@ -1,6 +1,8 @@
 package member
 
 import (
+	"errors"
+
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
@@ -8,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type changeMemOrgOptions struct {
@@ -69,7 +71,9 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeMemOrgOpti
 		Role:             orgRole,
 	}
 	if _, err := client.ChangeOrganizationMemberRole(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
 		return err

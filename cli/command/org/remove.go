@@ -2,7 +2,6 @@ package org
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/appcelerator/amp/api/auth"
@@ -13,6 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // NewOrgRemoveCommand returns a new instance of the remove organization command.
@@ -38,8 +38,10 @@ func removeOrg(c cli.Interface, args []string) error {
 			Name: org,
 		}
 		if _, err := client.DeleteOrganization(context.Background(), requestDelete); err != nil {
-			errs = append(errs, grpc.ErrorDesc(err))
-			continue
+			if s, ok := status.FromError(err); ok {
+				errs = append(errs, s.Message())
+				continue
+			}
 		}
 		c.Console().Println(org)
 		// Check if user is logged in on behalf of an org
@@ -60,10 +62,14 @@ func removeOrg(c cli.Interface, args []string) error {
 				headers := metadata.MD{}
 				_, err := client.Switch(context.Background(), requestSwitch, grpc.Header(&headers))
 				if err != nil {
-					return fmt.Errorf("%s", grpc.ErrorDesc(err))
+					if s, ok := status.FromError(err); ok {
+						return errors.New(s.Message())
+					}
 				}
 				if err := cli.SaveToken(headers, c.Server()); err != nil {
-					return fmt.Errorf("%s", grpc.ErrorDesc(err))
+					if s, ok := status.FromError(err); ok {
+						return errors.New(s.Message())
+					}
 				}
 				c.Console().Printf("Switched back to account: %s\n", claims.AccountName)
 			}

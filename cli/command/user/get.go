@@ -1,14 +1,14 @@
 package user
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // NewGetUserCommand returns a new instance of the get user command.
@@ -31,7 +31,9 @@ func getUser(c cli.Interface, args []string) error {
 	}
 	reply, err := client.GetUser(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Username: %s\n", reply.User.Name)
 	c.Console().Printf("Email: %s\n", reply.User.Email)

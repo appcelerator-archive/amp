@@ -1,6 +1,7 @@
 package team
 
 import (
+	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type listTeamOptions struct {
@@ -53,7 +54,9 @@ func listTeam(c cli.Interface, cmd *cobra.Command, opts listTeamOptions) error {
 	}
 	reply, err := client.ListTeams(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if opts.quiet {
 		for _, team := range reply.Teams {

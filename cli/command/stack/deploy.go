@@ -1,20 +1,19 @@
 package stack
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-
-	"encoding/json"
-	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
 	"github.com/docker/docker/cli/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type deployStackOptions struct {
@@ -88,7 +87,9 @@ func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.Deploy(context.Background(), req)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Println(reply.Answer)
 	return nil

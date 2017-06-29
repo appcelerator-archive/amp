@@ -12,7 +12,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type statsOpts struct {
@@ -140,7 +140,9 @@ func getStats(c cli.Interface, args []string) error {
 	client := stats.NewStatsClient(conn)
 	r, err := client.StatsQuery(ctx, query)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if r.Entries == nil {
 		fmt.Println("No result found")

@@ -2,13 +2,13 @@ package stack
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type logsStackOptions struct {
@@ -43,7 +43,9 @@ func getLogs(c cli.Interface, args []string, opts logsStackOptions) error {
 	lc := logs.NewLogsClient(conn)
 	r, err := lc.Get(ctx, &request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	for _, entry := range r.Entries {
 		displayLogEntry(c, entry, opts.meta)
@@ -55,7 +57,9 @@ func getLogs(c cli.Interface, args []string, opts logsStackOptions) error {
 	// If follow is requested, get subsequent logs and stream it
 	stream, err := lc.GetStream(ctx, &request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	for {
 		entry, err := stream.Recv()
@@ -63,7 +67,9 @@ func getLogs(c cli.Interface, args []string, opts logsStackOptions) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("%s", grpc.ErrorDesc(err))
+			if s, ok := status.FromError(err); ok {
+				return errors.New(s.Message())
+			}
 		}
 		displayLogEntry(c, entry, opts.meta)
 	}

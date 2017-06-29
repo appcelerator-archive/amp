@@ -1,14 +1,14 @@
 package team
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type getTeamOptions struct {
@@ -51,7 +51,9 @@ func getTeam(c cli.Interface, cmd *cobra.Command, args []string, opts getTeamOpt
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Team: %s\n", reply.Team.Name)
 	c.Console().Printf("Organization: %s\n", opts.org)

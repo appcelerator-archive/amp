@@ -2,7 +2,6 @@ package password
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/version"
@@ -10,7 +9,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // NewResetCommand returns a new instance of the reset command.
@@ -31,7 +30,9 @@ func reset(c cli.Interface, args []string) error {
 	requestVer := &version.GetRequest{}
 	reply, err := clientVer.Get(context.Background(), requestVer)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if reply.Info.Registration == configuration.RegistrationNone {
 		return errors.New("`amp password reset` disabled. This cluster has no registration policy")
@@ -42,7 +43,9 @@ func reset(c cli.Interface, args []string) error {
 		Name: args[0],
 	}
 	if _, err := client.PasswordReset(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Hi %s! Please check your email to complete the password reset process.\n", args[0])
 	return nil

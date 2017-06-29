@@ -2,6 +2,7 @@ package stack
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -9,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type listStackOptions struct {
@@ -37,7 +38,9 @@ func list(c cli.Interface, opts listStackOptions) error {
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.List(context.Background(), req)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if opts.quiet {
 		for _, line := range reply.Entries {
