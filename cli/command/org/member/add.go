@@ -1,7 +1,8 @@
 package member
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -20,7 +21,7 @@ func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "add [OPTIONS] MEMBER",
 		Short:   "Add member to organization",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addOrgMem(c, cmd, args, opts)
 		},
@@ -30,6 +31,7 @@ func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
 }
 
 func addOrgMem(c cli.Interface, cmd *cobra.Command, args []string, opts addMemOrgOptions) error {
+	var errs []string
 	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
 		switch {
@@ -43,16 +45,22 @@ func addOrgMem(c cli.Interface, cmd *cobra.Command, args []string, opts addMemOr
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	request := &account.AddUserToOrganizationRequest{
-		OrganizationName: opts.name,
-		UserName:         args[0],
+	for _, member := range args {
+		request := &account.AddUserToOrganizationRequest{
+			OrganizationName: opts.name,
+			UserName:         member,
+		}
+		if _, err := client.AddUserToOrganization(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
 	}
-	if _, err := client.AddUserToOrganization(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 	if err := cli.SaveOrg(opts.name, c.Server()); err != nil {
 		return err
 	}
-	c.Console().Println("Member has been added to organization.")
+	c.Console().Println("Member(s) have been added to organization.")
 	return nil
 }

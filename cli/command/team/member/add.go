@@ -1,7 +1,8 @@
 package member
 
 import (
-	"fmt"
+	"errors"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -21,7 +22,7 @@ func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "add [OPTIONS] MEMBER",
 		Short:   "Add member to team",
-		PreRunE: cli.ExactArgs(1),
+		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addTeamMem(c, cmd, args, opts)
 		},
@@ -33,6 +34,7 @@ func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 }
 
 func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeamMemOptions) error {
+	var errs []string
 	org, err := cli.ReadOrg(c.Server())
 	if !cmd.Flag("org").Changed {
 		switch {
@@ -56,13 +58,19 @@ func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeam
 
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
-	request := &account.AddUserToTeamRequest{
-		OrganizationName: opts.org,
-		TeamName:         opts.team,
-		UserName:         args[0],
+	for _, member := range args {
+		request := &account.AddUserToTeamRequest{
+			OrganizationName: opts.org,
+			TeamName:         opts.team,
+			UserName:         member,
+		}
+		if _, err := client.AddUserToTeam(context.Background(), request); err != nil {
+			errs = append(errs, grpc.ErrorDesc(err))
+			continue
+		}
 	}
-	if _, err := client.AddUserToTeam(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
 	}
 	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
 		return err
@@ -70,6 +78,6 @@ func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeam
 	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
 		return err
 	}
-	c.Console().Println("Member has been added to team.")
+	c.Console().Println("Member(s) have been added to team.")
 	return nil
 }
