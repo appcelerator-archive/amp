@@ -7,6 +7,8 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
+	"github.com/appcelerator/amp/data/dashboards"
+	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
@@ -18,10 +20,12 @@ import (
 
 // Server is used to implement account.AccountServer
 type Server struct {
-	Accounts accounts.Interface
-	Mailer   *mail.Mailer
-	Config   *configuration.Configuration
-	Tokens   *auth.Tokens
+	Accounts   accounts.Interface
+	Mailer     *mail.Mailer
+	Config     *configuration.Configuration
+	Tokens     *auth.Tokens
+	Stacks     stacks.Interface
+	Dashboards dashboards.Interface
 }
 
 func convertError(err error) error {
@@ -413,6 +417,37 @@ func (s *Server) ListOrganizations(ctx context.Context, in *ListOrganizationsReq
 
 // DeleteOrganization implements account.DeleteOrganization
 func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationRequest) (*empty.Empty, error) {
+	// Check if the organization owns stacks
+	stacks, err := s.Stacks.List(ctx)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	ownsStacks := false
+	for _, stack := range stacks {
+		if stack.Owner.Organization == in.Name {
+			ownsStacks = true
+		}
+	}
+	if ownsStacks {
+		return nil, status.Errorf(codes.FailedPrecondition, "Organization cannot be removed because it still owns stacks. Please remove all stacks belonging to this organization and try again.")
+	}
+
+	// Check if the organization owns dashboards
+	dashboards, err := s.Dashboards.List(ctx)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	ownsDashboards := false
+	for _, dashboard := range dashboards {
+		if dashboard.Owner.Organization == in.Name {
+			ownsDashboards = true
+		}
+	}
+	if ownsDashboards {
+		return nil, status.Errorf(codes.FailedPrecondition, "Organization cannot be removed because it still owns dashboards. Please remove all dashboards belonging to this organization and try again.")
+	}
+
+	// Delete the organization
 	if err := s.Accounts.DeleteOrganization(ctx, in.Name); err != nil {
 		return nil, convertError(err)
 	}

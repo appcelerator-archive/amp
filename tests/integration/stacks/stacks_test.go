@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/appcelerator/amp/api/rpc/account"
 	. "github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/tests"
 	"github.com/docker/docker/pkg/stringid"
@@ -183,5 +184,38 @@ func TestStackListBetweenOrganizations(t *testing.T) {
 	_, err = h.Stacks().Remove(orgCtx, &RemoveRequest{Stack: orgStack})
 	assert.NoError(t, err)
 	_, err = h.Stacks().Remove(anotherOrgCtx, &RemoveRequest{Stack: anotherOrgStack})
+	assert.NoError(t, err)
+}
+
+func TestDeleteAnOrganizationOwningStacksShouldFail(t *testing.T) {
+	// Create organization with a user
+	testUser := h.RandomUser()
+	testOrg := h.RandomOrg()
+	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	orgCtx := h.Switch(ownerCtx, t, testOrg.Name)
+
+	// Compose file
+	compose, err := ioutil.ReadFile("pinger.yml")
+	assert.NoError(t, err)
+
+	// Deploy stack as org
+	orgStack := "my-awesome-stack" + stringid.GenerateNonCryptoID()[:16]
+	rq := &DeployRequest{
+		Name:    orgStack,
+		Compose: compose,
+	}
+	_, err = h.Stacks().Deploy(orgCtx, rq)
+	assert.NoError(t, err)
+
+	// Deleting the organization should fail
+	_, err = h.Accounts().DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
+	assert.Error(t, err)
+
+	// Remove stack
+	_, err = h.Stacks().Remove(orgCtx, &RemoveRequest{Stack: orgStack})
+	assert.NoError(t, err)
+
+	// Deleting the organization should succeed
+	_, err = h.Accounts().DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
 	assert.NoError(t, err)
 }
