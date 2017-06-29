@@ -1,28 +1,17 @@
-SRC := $(shell find . -type f -name '*.go')
+.PHONY: clean test build-image
 
-build: aws.alpine
-	docker build -t appcelerator/amp-aws .
+MAIN := cmd/main.go
+TARGET := bin/aws
 
-aws.alpine: $(SRC)
-	docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		appcelerator/amp-aws-compiler build -o aws.alpine cmd/main.go
+build:
+	go build -o $(TARGET) $(MAIN)
 
-.PHONY: compiler
-compiler:
-	docker build -f Dockerfile.compiler -t appcelerator/amp-aws-compiler .
-
-.PHONY: clean
 clean:
-	rm -f aws.alpine
+	rm -f bin/aws
 
-.PHONY: test
-test: build
-	@: "$${KEYNAME:?KEYNAME environment variable null, empty, or not set}"
-	@: "$${REGION:?REGION environment variable null, empty, or not set}"
-	docker run -it --rm -v $(HOME)/.aws:/root/.aws -v $(PWD):/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		-w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-		-e KEYNAME=$(KEYNAME) \
-		-e REGION=$(REGION) \
-		appcelerator/amp-aws-compiler test -v -timeout 30m
+test:
+	go test -v -timeout 30m
+
+build-image:
+	docker build -t appcelerator/amp-aws .
 

@@ -115,8 +115,6 @@ func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions
 
 	var stack *cf.Stack
 	for _, stack = range output.Stacks {
-		n := stack.StackName
-		fmt.Println(n)
 		//if stack.StackName == input.StackName {
 		if aws.StringValue(stack.StackName) == opts.StackName {
 			break
@@ -178,3 +176,16 @@ func StackOutputToJSON(so []StackOutput) (string, error) {
 	return string(j), nil
 }
 
+// PrettyPrintOutput converts JSON output string to human readable format
+func PrettyPrintOutput(jsonOut string) error {
+	dec := json.NewDecoder(strings.NewReader(jsonOut))
+	var outList StackOutputList
+	if err := dec.Decode(&outList); err != nil {
+		return err
+	}
+	for _, out := range outList.Output {
+		fmt.Printf("%s: %s\n", out.Description, out.OutputValue)
+	}
+
+	return nil
+}

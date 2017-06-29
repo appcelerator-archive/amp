@@ -1,6 +1,7 @@
 package member
 
 import (
+	"errors"
 	"fmt"
 	"text/tabwriter"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type listTeamMemOptions struct {
@@ -65,7 +66,9 @@ func listTeamMem(c cli.Interface, cmd *cobra.Command, opts listTeamMemOptions) e
 	}
 	reply, err := client.GetTeam(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
 		return err

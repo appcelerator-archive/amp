@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type scaleOptions struct {
@@ -53,7 +54,9 @@ func scale(c cli.Interface, cmd *cobra.Command, opts scaleOptions) error {
 		ReplicasNumber: opts.replicas,
 	}
 	if _, err := client.ScaleService(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Println("Service", opts.service, "has been scaled to", opts.replicas, "replicas.")
 	return nil

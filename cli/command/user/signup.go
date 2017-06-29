@@ -1,7 +1,7 @@
 package user
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/version"
@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type signUpOptions struct {
@@ -57,14 +58,18 @@ func signUp(c cli.Interface, cmd *cobra.Command, opts signUpOptions) error {
 		Password: opts.password,
 	}
 	if _, err := client.SignUp(context.Background(), requestSignUp); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 
 	clientVer := version.NewVersionClient(conn)
 	requestVer := &version.GetRequest{}
 	reply, err := clientVer.Get(context.Background(), requestVer)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 
 	// Auto login for cluster with no registration
@@ -85,10 +90,14 @@ func signUp(c cli.Interface, cmd *cobra.Command, opts signUpOptions) error {
 	headers := metadata.MD{}
 	_, err = client.Login(context.Background(), requestLogin, grpc.Header(&headers))
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveToken(headers, c.Server()); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Hi %s! You have been automatically logged in.\n", opts.username)
 	return nil

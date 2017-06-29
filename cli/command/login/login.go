@@ -1,7 +1,7 @@
 package login
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type loginOptions struct {
@@ -50,10 +51,14 @@ func login(c cli.Interface, cmd *cobra.Command, opts loginOptions) error {
 	headers := metadata.MD{}
 	_, err := client.Login(context.Background(), request, grpc.Header(&headers))
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveToken(headers, c.Server()); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Welcome back %s!\n", opts.username)
 	return nil

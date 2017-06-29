@@ -7,6 +7,7 @@ portal/client/node_modules/**
 /*.exe
 coverage.out
 coverage-all.out
+cluster/**/bin
 
 # tests
 *.log

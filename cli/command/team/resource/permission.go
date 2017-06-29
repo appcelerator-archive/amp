@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/resource"
@@ -8,7 +9,7 @@ import (
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type changeTeamResPermLevelOptions struct {
@@ -78,7 +79,9 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 		PermissionLevel:  permissionLevel,
 	}
 	if _, err := client.ChangePermissionLevel(context.Background(), request); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
 		return err

@@ -10,7 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // NewRemoveUserCommand returns a new instance of the remove user command.
@@ -46,8 +46,10 @@ func removeUser(c cli.Interface, args []string) error {
 			Name: name,
 		}
 		if _, err := client.DeleteUser(context.Background(), request); err != nil {
-			errs = append(errs, grpc.ErrorDesc(err))
-			continue
+			if s, ok := status.FromError(err); ok {
+				errs = append(errs, s.Message())
+				continue
+			}
 		}
 		if name == claims.AccountName {
 			if err := cli.RemoveToken(c.Server()); err != nil {

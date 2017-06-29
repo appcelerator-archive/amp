@@ -10,7 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	grpcStatus "google.golang.org/grpc/status"
 )
 
 type nodeListOptions struct {
@@ -41,7 +41,9 @@ func nodeList(c cli.Interface) error {
 	client := cluster.NewClusterClient(c.ClientConn())
 	reply, err := client.NodeList(context.Background(), req)
 	if err != nil {
-		return errors.New(grpc.ErrorDesc(err))
+		if s, ok := grpcStatus.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if nodeListopts.quiet {
 		for _, node := range reply.Nodes {

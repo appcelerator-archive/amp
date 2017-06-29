@@ -1,7 +1,7 @@
 package org
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // NewSwitchCommand returns a new instance of the switch command.
@@ -32,10 +33,14 @@ func switch_(c cli.Interface, args []string) error {
 	headers := metadata.MD{}
 	_, err := client.Switch(context.Background(), request, grpc.Header(&headers))
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	if err := cli.SaveToken(headers, c.Server()); err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("You are now logged in as: %s\n", args[0])
 	return nil

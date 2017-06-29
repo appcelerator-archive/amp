@@ -1,14 +1,14 @@
 package org
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // NewOrgGetCommand returns a new instance of the get organization command.
@@ -31,7 +31,9 @@ func getOrg(c cli.Interface, args []string) error {
 	}
 	reply, err := client.GetOrganization(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Printf("Organization: %s\n", reply.Organization.Name)
 	c.Console().Printf("Email: %s\n", reply.Organization.Email)

@@ -1,13 +1,13 @@
 package service
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 // NewServiceInspectCommand returns a new instance of the service inspect command.
@@ -30,7 +30,9 @@ func inspectService(c cli.Interface, args []string) error {
 	}
 	reply, err := client.InspectService(context.Background(), request)
 	if err != nil {
-		return fmt.Errorf("%s", grpc.ErrorDesc(err))
+		if s, ok := status.FromError(err); ok {
+			return errors.New(s.Message())
+		}
 	}
 	c.Console().Println(reply.ServiceEntity)
 	return nil
