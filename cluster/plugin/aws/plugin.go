@@ -178,3 +178,16 @@ func StackOutputToJSON(so []StackOutput) (string, error) {
 	return string(j), nil
 }
 
+// PrettyPrintOutput converts JSON output string to human readable format
+func PrettyPrintOutput(jsonOut string) error {
+	dec := json.NewDecoder(strings.NewReader(jsonOut))
+	var outList StackOutputList
+	if err := dec.Decode(&outList); err != nil {
+		return err
+	}
+	for _, out := range outList.Output {
+		fmt.Printf("%s: %s\n", out.Description, out.OutputValue)
+	}
+
+	return nil
+}
