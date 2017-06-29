@@ -184,10 +184,12 @@ func registerStatsServer(amp *Amplifier, s *grpc.Server) {
 
 func registerAccountServer(amp *Amplifier, s *grpc.Server) {
 	account.RegisterAccountServer(s, &account.Server{
-		Accounts: amp.accounts,
-		Config:   amp.config,
-		Mailer:   amp.mailer,
-		Tokens:   amp.tokens,
+		Accounts:   amp.accounts,
+		Config:     amp.config,
+		Mailer:     amp.mailer,
+		Tokens:     amp.tokens,
+		Stacks:     amp.stacks,
+		Dashboards: amp.dashboards,
 	})
 }
 
