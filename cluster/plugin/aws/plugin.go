@@ -115,8 +115,6 @@ func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions
 
 	var stack *cf.Stack
 	for _, stack = range output.Stacks {
-		n := stack.StackName
-		fmt.Println(n)
 		//if stack.StackName == input.StackName {
 		if aws.StringValue(stack.StackName) == opts.StackName {
 			break
