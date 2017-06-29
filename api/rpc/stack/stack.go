@@ -136,7 +136,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 		return nil, convertError(dockerErr)
 	}
 	if storageErr != nil {
-		return nil, convertError(dockerErr)
+		return nil, convertError(storageErr)
 	}
 
 	log.Infof("Stack %s removed", in.Stack)
