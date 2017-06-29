@@ -90,17 +90,11 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 				for _, val := range slice {
 					opt := fmt.Sprintf("--%s", name)
 					args = append(args, opt, val)
-
-					// TODO: just for testing, remove when finished
-					fmt.Println(opt, val)
 				}
 
 			} else {
 				opt := fmt.Sprintf("--%s", name)
 				args = append(args, opt, f.Value.String())
-
-				// TODO: just for testing, remove when finished
-				fmt.Println(opt, f.Value.String())
 			}
 
 		}

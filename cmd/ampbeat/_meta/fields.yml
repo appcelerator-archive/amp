@@ -31,6 +31,10 @@
       type: keyword
       description: >
         The task id
+    - name: "task_slot"
+      type: integer
+      description: >
+        The task slot
     - name: "stack_name"
       type: keyword
       description: >

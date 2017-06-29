@@ -9,7 +9,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
@@ -25,6 +24,7 @@ type ContainerData struct {
 	serviceID                string
 	stackName                string
 	taskID                   string
+	taskSlot                 int
 	nodeID                   string
 	role                     string
 	pid                      int
@@ -95,54 +95,68 @@ func (a *Agent) updateContainerMap(action string, containerID string) {
 
 // Add a container to the main container map and retrieve some container information
 func (a *Agent) addContainer(ID string) {
-	_, ok := a.containers[ID]
-	if !ok {
-		inspect, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
-		if err == nil {
-			data := ContainerData{
-				ID:            ID,
-				name:          a.cleanName(inspect.Name),
-				state:         inspect.State.Status,
-				pid:           inspect.State.Pid,
-				health:        "",
-				logsStream:    nil,
-				logsReadError: false,
-			}
-			data.squashedMetricsMessage.Cpu = &stats.MetricsCPUEntry{}
-			data.squashedMetricsMessage.Mem = &stats.MetricsMemEntry{}
-			data.squashedMetricsMessage.Net = &stats.MetricsNetEntry{}
-			data.squashedMetricsMessage.Io = &stats.MetricsIOEntry{}
-			a.clearMetricsMessage(&data)
-			labels := inspect.Config.Labels
-			data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
-			//data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
-			if data.serviceName == "" {
-				data.serviceName = "noService"
-			}
-			data.shortName = fmt.Sprintf("%s_%s", data.serviceName, ID[0:6])
-			data.labels = labels
-			data.serviceID = a.getMapValue(labels, "com.docker.swarm.service.id")
-			data.taskID = a.getMapValue(labels, "com.docker.swarm.task.id")
-			data.nodeID = a.getMapValue(labels, "com.docker.swarm.node.id")
-			data.stackName = a.getMapValue(labels, "com.docker.stack.namespace")
-			if data.stackName == "" {
-				data.stackName = "noStack"
-			}
-			data.role = a.getMapValue(labels, "io.amp.role")
-			if inspect.State.Health != nil {
-				data.health = inspect.State.Health.Status
-			}
-			if data.role == "infrastructure" {
-				log.Infof("add infrastructure container %s\n", data.name)
-			} else {
-				log.Infof("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
-			}
-			data.labels = labels
-			a.containers[ID] = &data
+	_, present := a.containers[ID]
+	if present {
+		return
+	}
+	container, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
+	if err != nil {
+		log.Errorf("Container inspect error: %v\n", err)
+		return
+	}
+
+	// Create container data
+	data := ContainerData{
+		ID:            ID,
+		name:          a.cleanName(container.Name),
+		state:         container.State.Status,
+		pid:           container.State.Pid,
+		health:        "",
+		logsStream:    nil,
+		logsReadError: false,
+	}
+
+	data.squashedMetricsMessage.Cpu = &stats.MetricsCPUEntry{}
+	data.squashedMetricsMessage.Mem = &stats.MetricsMemEntry{}
+	data.squashedMetricsMessage.Net = &stats.MetricsNetEntry{}
+	data.squashedMetricsMessage.Io = &stats.MetricsIOEntry{}
+	a.clearMetricsMessage(&data)
+	labels := container.Config.Labels
+	data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
+	//data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
+	if data.serviceName == "" {
+		data.serviceName = "noService"
+	}
+	data.shortName = fmt.Sprintf("%s_%s", data.serviceName, ID[0:6])
+	data.labels = labels
+	data.serviceID = a.getMapValue(labels, "com.docker.swarm.service.id")
+	data.taskID = a.getMapValue(labels, "com.docker.swarm.task.id")
+	if data.taskID != "" {
+		task, _, err := a.dock.GetClient().TaskInspectWithRaw(context.Background(), data.taskID)
+		if err != nil {
+			log.Errorf("Task inspect error: %v\n", err)
 		} else {
-			log.Errorf("Container inspect error: %v\n", err)
+			data.taskSlot = task.Slot
 		}
 	}
+	data.nodeID = a.getMapValue(labels, "com.docker.swarm.node.id")
+	data.stackName = a.getMapValue(labels, "com.docker.stack.namespace")
+	if data.stackName == "" {
+		data.stackName = "noStack"
+	}
+	data.role = a.getMapValue(labels, "io.amp.role")
+	if container.State.Health != nil {
+		data.health = container.State.Health.Status
+	}
+	if data.role == "infrastructure" {
+		log.Infof("add infrastructure container %s\n", data.name)
+	} else {
+		log.Infof("add user container %s, stack=%s service=%s\n", data.name, data.stackName, data.serviceName)
+	}
+	data.labels = labels
+
+	// Add the container data to the map
+	a.containers[ID] = &data
 }
 
 // Strips '/' from beginning of container name, if present

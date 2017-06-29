@@ -22,16 +22,17 @@ message MetricsEntry {
   string service_name = 6;
   string service_id = 7;
   string task_id = 8;
-  string stack_name = 9;
-  string node_id = 10;
-  string time_id = 11;
-  map<string, string> labels = 12;
-  string group = 13;
-  string sgroup = 14;
-  MetricsCPUEntry cpu = 15;
-  MetricsIOEntry io = 16;
-  MetricsMemEntry mem = 17;
-  MetricsNetEntry net = 18;
+  int32 task_slot = 9;
+  string stack_name = 10;
+  string node_id = 11;
+  string time_id = 12;
+  map<string, string> labels = 13;
+  string group = 14;
+  string sgroup = 15;
+  MetricsCPUEntry cpu = 16;
+  MetricsIOEntry io = 17;
+  MetricsMemEntry mem = 18;
+  MetricsNetEntry net = 19;
 }
 
 message MetricsCPUEntry {
