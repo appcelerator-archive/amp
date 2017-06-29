@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/aws"
@@ -30,7 +31,7 @@ func initClient(cmd *cobra.Command, args []string) {
 	svc = cf.New(sess, aws.NewConfig().WithRegion(opts.Region).WithLogLevel(aws.LogOff))
 }
 
-func provision(cmd *cobra.Command, args []string) {
+func create(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
 	resp, err := plugin.CreateStack(ctx, svc, opts, 20)
@@ -74,7 +75,7 @@ func update(cmd *cobra.Command, args []string) {
 	}
 }
 
-func destroy(cmd *cobra.Command, args []string) {
+func delete(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 	resp, err := plugin.DeleteStack(ctx, svc, opts)
 	if err != nil {
@@ -106,10 +107,8 @@ func info(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	// pretty print json result
-	if err = plugin.PrettyPrintOutput(j); err != nil {
-		log.Fatal(err)
-	}
+	// print json result to stdout
+	fmt.Print(j)
 }
 
 func main() {
@@ -127,7 +126,7 @@ func main() {
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "init cluster in swarm mode",
-		Run:   provision,
+		Run:   create,
 	}
 	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
 
@@ -146,7 +145,7 @@ func main() {
 	destroyCmd := &cobra.Command{
 		Use:   "destroy",
 		Short: "destroy the cluster",
-		Run:   destroy,
+		Run:   delete,
 	}
 
 	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
