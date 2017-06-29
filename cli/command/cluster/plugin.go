@@ -4,13 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/cluster/plugin/aws"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/mitchellh/go-homedir"
+	"encoding/json"
 )
 
 // Supported plugin providers used by the factory function `NewPlugin`
@@ -63,7 +66,9 @@ func NewPlugin(config PluginConfig) (Plugin, error) {
 // RunContainer starts a container using the specified image for the cluster plugin.
 // Cluster plugin commands are `init`, `update`, and `destroy` (provided as the single
 // `args` value). Additional arguments are supplied as environment variables in `env`, not `args`.
-func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string) error {
+// If f is not nil, then your func will be called (as a goroutine) with stdout from the container process;
+// otherwise stdout from the container will be printed to the amp console stdout.
+func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string, f func(r io.Reader)) error {
 	dockerArgs := []string{
 		"run", "-t", "--rm", "--name", fmt.Sprintf("amp-cluster-plugin-%s", stringid.GenerateNonCryptoID()),
 		"--network", "host",
@@ -95,12 +100,17 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 	if err != nil {
 		return err
 	}
-	outscanner := bufio.NewScanner(stdout)
-	go func() {
-		for outscanner.Scan() {
-			c.Console().Println(outscanner.Text())
-		}
-	}()
+
+	if f != nil {
+		go f(stdout)
+	} else {
+		outscanner := bufio.NewScanner(stdout)
+		go func() {
+			for outscanner.Scan() {
+				c.Console().Println(outscanner.Text())
+			}
+		}()
+	}
 
 	stderr, err := proc.StderrPipe()
 	if err != nil {
@@ -178,6 +188,33 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 		dockerOpts.Volumes = append(dockerOpts.Volumes, fmt.Sprintf("%s:/root/.aws", awshome))
 	}
 
+	// function to print the aws plugin output
+	f := func(r io.Reader) {
+		d := json.NewDecoder(r)
+		for {
+			var m aws.StackOutputList
+			if err := d.Decode(&m); err == io.EOF {
+				break
+			} else if err != nil {
+				// If there is an error here, it is because the plugin itself is not returning
+				// json for plugin errors (yet) ... so print the buffer for now
+				outscanner := bufio.NewScanner(d.Buffered())
+				for outscanner.Scan() {
+					c.Console().Println(outscanner.Text())
+				}
+
+				// Still indicate that this was an error because non-JSON responses need to be fixed
+				c.Console().Error(err)
+				return
+			}
+			// print the decoded output
+			for _, o := range m.Output {
+				c.Console().Printf("%s: %s\n", o.Description, o.OutputValue)
+			}
+		}
+
+	}
+
 	img := "appcelerator/amp-aws"
-	return RunContainer(c, img, dockerOpts, args, env)
+	return RunContainer(c, img, dockerOpts, args, env, f)
 }
