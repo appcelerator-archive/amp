@@ -16,6 +16,6 @@ clean:
 test:
 	go test -v -timeout 30m
 
-build-image:
+image:
 	docker build -t $(IMAGE) .
 
