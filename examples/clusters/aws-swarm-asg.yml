@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-b188b4a7
+      Default: ami-edd9defb
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-823b1ae7
+      Default: ami-12f2d377
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-aeddccd7
+      Default: ami-5e5a4827
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-77e4030e
+      Default: ami-138d6d6a
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-de889bbd
+      Default: ami-71b0a212
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -53,7 +53,7 @@ Parameters:
       - 3
       - 5
     Default: 3
-    Description: depending on your HA requirements, should be 1, 3 or 5
+    Description: depending on your HA requirements, should be 1, 3 or 5. This shouldn't be change on a stack update
   CoreWorkerSize:
     Type: Number
     Default: 3
@@ -80,6 +80,29 @@ Parameters:
     - Debian
     Default: Default
     Description: "the default is a pre packaged Ubuntu image, this is the recommended choice"
+  RegistryInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.small
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
   ManagerInstanceType:
     Type: String
     AllowedValues:
@@ -212,16 +235,24 @@ Parameters:
     Default: true
   InstallApplication:
     Type: String
-    Description: If true, AMP will be installed. Expects Sync = true
+    Description: If true, AMP will be installed. Expects Synchronous Deployment = true
     AllowedValues:
     - true
     - false
     Default: true
+  MirrorRegistry:
+    Type: String
+    Description: If true, a mirror registry will be installed
+    AllowedValues:
+    - false
+    - true
+    Default: false
 
 Conditions:
-  Sync: !Equals [ !Ref Sync, "true" ]
+  Sync:               !Equals [ !Ref Sync, "true" ]
   InstallApplication: !Equals [ !Ref InstallApplication, "true" ]
-  ConfigurationURL:  !Equals [ !Ref ConfigurationURL, "" ]
+  ConfigurationURL:   !Equals [ !Ref ConfigurationURL, "" ]
+  MirrorRegistry:     !Equals [ !Ref MirrorRegistry, "true" ]
 
 Resources:
   Vpc:
@@ -388,6 +419,47 @@ Resources:
         Ref: RouteTable
       SubnetId:
         Ref: PublicSubnet3
+  RegistrySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: MirrorRegistry
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Registry security group
+      SecurityGroupIngress:
+      # registry ELB endpoint
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      # registry ELB endpoint (TLS)
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      VpcId:
+        Ref: Vpc
+  RegistrySelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: MirrorRegistry
+    Properties:
+      GroupId:
+        Ref: RegistrySecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: RegistrySecurityGroup
+
   ManagerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     DependsOn: InternetGateway
@@ -733,6 +805,155 @@ Resources:
       Roles:
       - Ref: ClusterRole
 
+  RegistryRole:
+    Type: AWS::IAM::Role
+    Condition: MirrorRegistry
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+  RegistryPolicies:
+    Type: AWS::IAM::Policy
+    Condition: MirrorRegistry
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - 's3:ListBucket'
+          - 's3:GetBucketLocation'
+          - 's3:ListBucketMultipartUploads'
+          Resource:
+            - !Join ['', ['arn:aws:s3:::', !Ref 'RegistryS3Bucket']]
+          Effect: Allow
+        - Action:
+          - 's3:PutObject'
+          - 's3:GetObject'
+          - 's3:DeleteObject'
+          - 's3:ListMultipartUploadParts'
+          - 's3:AbortMultipartUpload'
+          Resource:
+            - !Join ['', ['arn:aws:s3:::', !Ref 'RegistryS3Bucket', "/*"]]
+          Effect: Allow
+        Version: '2012-10-17'
+      PolicyName: registry-policy
+      Roles:
+      - Ref: RegistryRole
+  RegistryInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: MirrorRegistry
+    Properties:
+      Path: /
+      Roles:
+      - Ref: RegistryRole
+  RegistryS3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: MirrorRegistry
+    Properties:
+      AccessControl: Private
+      BucketName:
+        Fn::Join:
+        - '-'
+        - - stack
+          - Ref: AWS::StackName
+          - registry
+
+  RegistryAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Condition: MirrorRegistry
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT30S
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: 3
+      HealthCheckGracePeriod: 200
+      HealthCheckType: ELB
+      LaunchConfigurationName: !Ref RegistryAsgLaunchConfig
+      MaxSize: 4
+      MinSize: 0
+      LoadBalancerNames:
+      - !Ref RegistryInternalELB
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - registry
+      - Key: atomiq.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      VPCZoneIdentifier:
+      - Fn::Join:
+        - ','
+        -  - !Ref PublicSubnet1
+           - !Ref PublicSubnet2
+           - !Ref PublicSubnet3
+  RegistryAsgLaunchConfig:
+    Condition: MirrorRegistry
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref RegistryInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref RegistryInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: RegistrySecurityGroup
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #cloud-config
+            repo_update: false
+            repo_upgrade: none
+            runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-registry -o /usr/local/bin/userdata-aws-registry && chmod +x /usr/local/bin/userdata-aws-registry || true
+              - BUCKET=${RegistryS3Bucket} REGION=${AWS::Region} REGISTRY_VERSION=2.5 /usr/local/bin/userdata-aws-registry || shutdown -h
+  RegistryInternalELB:
+    Condition: MirrorRegistry
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Scheme: internal
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: RegistrySecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort: '5000'
+        Protocol: HTTP
+        InstanceProtocol: HTTP
+      HealthCheck:
+        Target: HTTP:5000/v2/
+        HealthyThreshold: 2
+        UnhealthyThreshold: 3
+        Interval: 30
+        Timeout: 5
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+
   MetricsWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
@@ -809,14 +1030,15 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub |
-            #cloud-config
-            repo_update: false
-            repo_upgrade: none
-            runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-              - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
-
+          !Sub
+            - |
+              #cloud-config
+              repo_update: false
+              repo_upgrade: none
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
+                - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
   CoreWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
@@ -847,7 +1069,7 @@ Resources:
       HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref CoreWorkerAsgLaunchConfig
-      MaxSize: 5
+      MaxSize: 12
       MinSize: 0
       Tags:
       - Key: Name
@@ -894,13 +1116,15 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub |
-            #cloud-config
-            repo_update: false
-            repo_upgrade: none
-            runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-              - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
+          !Sub
+            - |
+              #cloud-config
+              repo_update: false
+              repo_upgrade: none
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
+                - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
 
   UserWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -932,7 +1156,7 @@ Resources:
       HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref UserWorkerAsgLaunchConfig
-      MaxSize: 5
+      MaxSize: 50
       MinSize: 0
       Tags:
       - Key: Name
@@ -979,13 +1203,15 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub |
-            #cloud-config
-            repo_update: false
-            repo_upgrade: none
-            runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-              - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
+          !Sub
+            - |
+              #cloud-config
+              repo_update: false
+              repo_upgrade: none
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
+                - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
 
   ApplicationWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1032,7 +1258,7 @@ Resources:
       HealthCheckGracePeriod: 300
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref ManagerAsgLaunchConfig
-      MaxSize: 5
+      MaxSize: 10
       MinSize: 0
       LoadBalancerNames:
       - !Ref ManagerInternalELB
@@ -1081,13 +1307,15 @@ Resources:
             DeleteOnTermination: true
       UserData:
         Fn::Base64:
-          !Sub |
-            #cloud-config
-            repo_update: false
-            repo_upgrade: none
-            runcmd:
-              - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/userdata-aws-manager || shutdown -h
+          !Sub
+            - |
+              #cloud-config
+              repo_update: false
+              repo_upgrade: none
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
+                - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -1159,6 +1387,11 @@ Metadata:
       - LinuxDistribution
       - ConfigurationURL
     - Label:
+        default: Registry Properties
+      Parameters:
+      - MirrorRegistry
+      - RegistryInstanceType
+    - Label:
         default: Swarm Properties
       Parameters:
       - ManagerSize
@@ -1214,6 +1447,10 @@ Metadata:
         default: Synchronous Deployment
       InstallApplication:
         default: Install Application
+      MirrorRegistry:
+        default: Dedicated Registry
+      RegistryInstanceType:
+        default: Registry instance type?
 
 Outputs:
   DNSTarget:

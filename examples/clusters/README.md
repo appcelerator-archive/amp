@@ -61,3 +61,10 @@ ec2_key_name: "KEY_NAME"
 ```
 
 Once done, copy the AMI Id in the cloudformation template (aws-swarm-asg.yml).
+
+## Registry
+
+An option of the template is the inclusion of a Docker registry.
+It includes a S3 bucket as registry backend, and an autoscaling group of registry containers.
+The registry is composed of non swarm nodes and is not part of the swarm.
+The registry is only available from the VPC, all Docker swarm nodes are configured with the internal endpoint of the registry as mirror registry.

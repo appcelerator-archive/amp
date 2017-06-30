@@ -1,8 +1,10 @@
 ---
-- include: new-instance.yml
+- include: set-constants.yml
+- include: upload-userdata.yml
+- include: run-instance.yml
 - include: wait-for-instance.yml
-- include: snapshot.yml
+- include: snapshot-volume.yml
 #- include: set-volumes.yml
-- include: ami.yml
+- include: register-ami.yml
 - include: copy-ami.yml
-- include: terminate.yml
+- include: terminate-instance.yml

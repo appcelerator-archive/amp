@@ -127,6 +127,9 @@ _set_mirror_registries(){
   fi
   _tmp=$(mktemp)
   for _registry in $_registries; do
+    # Docker pull only accept lower case names,
+    # so it's safer to use lower case also in the registry mirror list
+    _registry=$(echo "$_registry" | tr '[:upper:]' '[:lower:]'})
     if ! echo "$_registry" | grep -q "://" ; then
       echo "$_registry should contain a scheme, ignore" >&2
       continue
@@ -134,6 +137,11 @@ _set_mirror_registries(){
     echo "adding registry $_registry" >&2
     cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp" || return 1
     mv "$_tmp" /etc/docker/daemon.json
+    if echo "$_registry" | grep -q "http://" ; then
+      # declare it as insecure registry
+      cat /etc/docker/daemon.json | jq ".[\"insecure-registries\"] |= .+ [\"${_registry}\"]" > "$_tmp" || return 1
+      mv "$_tmp" /etc/docker/daemon.json
+    fi
   done
 }
 
