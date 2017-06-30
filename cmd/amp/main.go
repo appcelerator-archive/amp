@@ -23,15 +23,17 @@ var (
 func main() {
 	// Initial configuration (before processing environment and flags)
 	cfg = &cli.Configuration{
-		Version: Version,
-		Build:   Build,
-		Server:  cli.DefaultAddress + cli.DefaultPort,
+		Server: cli.DefaultAddress + cli.DefaultPort,
 	}
 
 	// Read the cli config
 	if err := cli.ReadClientConfig(cfg); err != nil {
 		log.Fatalln(err)
 	}
+
+	// Build and Version cannot be overridden
+	cfg.Build = Build
+	cfg.Version = Version
 
 	// Set terminal emulation based on platform as required.
 	stdin, stdout, stderr := term.StdStreams()
