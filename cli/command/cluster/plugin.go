@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,7 +14,6 @@ import (
 	"github.com/appcelerator/amp/cluster/plugin/aws"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/mitchellh/go-homedir"
-	"encoding/json"
 )
 
 // Supported plugin providers used by the factory function `NewPlugin`
