@@ -1,10 +1,11 @@
 .PHONY: vendor clean test build-image
 
-MAIN := cmd/main.go
+PKG := github.com/appcelerator/amp/cluster/plugin/aws
 TARGET := bin/aws
+IMAGE := appcelerator/amp-aws
 
 build:
-	go build -o $(TARGET) $(MAIN)
+	go build -o $(TARGET) $(PKG)
 
 vendor: vendor.conf
 	vndr
@@ -15,6 +16,6 @@ clean:
 test:
 	go test -v -timeout 30m
 
-build-image:
-	docker build -t appcelerator/amp-aws .
+image:
+	docker build -t $(IMAGE) .
 
