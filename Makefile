@@ -360,21 +360,17 @@ test-amp-aws: build-amp-aws
 	@cd $(CPAWSDIR) && $(MAKE) test
 
 # =============================================================================
-# BUILD ENVOY (`amp-envoy`)
+# BUILD AMPADMIN (`ampadmin`)
 # =============================================================================
-ENVOYDIR := cluster/envoy
+AMPADMINDIR := cluster/ampadmin
 
-.PHONY: build-amp-envoy-compiler
-build-amp-envoy-compiler:
-	@cd $(ENVOYDIR) && $(MAKE) compiler
+.PHONY: build-ampadmin
+build-ampadmin: build-ampadmin
+	@cd $(AMPADMINDIR) && $(MAKE) build
 
-.PHONY: build-amp-envoy
-build-amp-envoy: build-amp-envoy-compiler
-	@cd $(ENVOYDIR) && $(MAKE) build
-
-.PHONY: test-amp-envoy
-test-amp-envoy: build-amp-envoy
-	@cd $(ENVOYDIR) && $(MAKE) test
+.PHONY: test-ampadmin
+test-ampadmin:
+	@cd $(AMPADMINDIR) && $(MAKE) test
 
 # =============================================================================
 # Quality checks

@@ -1,43 +1,15 @@
 package main
 
 import (
-	"log"
-
-	"github.com/appcelerator/amp/cluster/envoy"
 	"github.com/spf13/cobra"
 )
-
-type CheckOptions struct {
-	version    bool
-	scheduling bool
-	all        bool
-}
-
-var checksOpts = &CheckOptions{}
-
-func checks(cmd *cobra.Command, args []string) {
-	if checksOpts.version || checksOpts.all {
-		out, err := envoy.VerifyDockerVersion()
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Println(out)
-	}
-	if checksOpts.scheduling || checksOpts.all {
-		out, err := envoy.VerifyServiceScheduling()
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Println(out)
-	}
-}
 
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "envoy",
 		Short: "run commands in target cluster",
 		// If needed
-		// PersistentPreRun: initEnvoy,
+		// PersistentPreRun: initAdmin,
 	}
 
 	checkCmd := &cobra.Command{
