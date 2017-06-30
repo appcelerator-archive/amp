@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 	"text/template"
 
 	"github.com/appcelerator/amp/api/rpc/version"
@@ -17,11 +18,20 @@ import (
 type Version struct {
 	Client *ClientVersionInfo
 	Server *version.Info
+	Error  error
 }
 
-// AmplifierOK Checks if AMP is connected to Amplifier
+// IsConnected Checks if AMP is connected to Amplifier
 func (v Version) IsConnected() bool {
 	return v.Server != nil
+}
+
+// ServerError Return the server connection error if any
+func (v Version) ServerError() string {
+	if v.Error != nil {
+		return strings.TrimSpace(v.Error.Error())
+	}
+	return ""
 }
 
 type ClientVersionInfo struct {
@@ -44,7 +54,7 @@ Server:         {{if .IsConnected}}
  Version:       {{.Server.Version}}
  Build:         {{.Server.Build}}
  Go version:    {{.Server.GoVersion}}
- OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected{{end}}`
+ OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected ({{.ServerError}}){{end}}`
 
 // NewVersionCommand returns a new instance of the version command.
 func NewVersionCommand(c cli.Interface) *cobra.Command {
@@ -78,6 +88,7 @@ func showVersion(c cli.Interface) error {
 
 	conn, err := c.Connect()
 	if err != nil {
+		v.Error = err
 		// print an extra line since grpc debug logging doesn't
 		c.Console().Println()
 	} else {
