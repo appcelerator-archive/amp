@@ -34,7 +34,7 @@ type MetricSet struct {
 // Part of new is also setting up the configuration by processing additional
 // configuration entries if needed.
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	logp.Warn("EXPERIMENTAL: The %v %v metricset is experimental", base.Module().Name(), base.Name())
+	logp.Experimental("The %v %v metricset is experimental", base.Module().Name(), base.Name())
 
 	dialInfo, err := mgo.ParseURL(base.HostData().URI)
 	if err != nil {
@@ -79,7 +79,8 @@ func (m *MetricSet) Fetch() ([]common.MapStr, error) {
 			logp.Err("Failed to retrieve stats for db %s", dbName)
 			continue
 		}
-		events = append(events, eventMapping(result))
+		data, _ := schema.Apply(result)
+		events = append(events, data)
 	}
 
 	if len(events) == 0 {

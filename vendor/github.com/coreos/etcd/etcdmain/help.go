@@ -66,6 +66,10 @@ member flags:
 		comma-separated whitelist of origins for CORS (cross-origin resource sharing).
 	--quota-backend-bytes '0'
 		raise alarms when backend size exceeds the given quota (0 defaults to low space quota).
+	--max-txn-ops '128' 
+		maximum number of operations permitted in a transaction.
+	--max-request-bytes '1572864'
+		maximum client request size in bytes the server will accept.
 
 clustering flags:
 
@@ -93,7 +97,9 @@ clustering flags:
 	--strict-reconfig-check
 		reject reconfiguration requests that would cause quorum loss.
 	--auto-compaction-retention '0'
-		auto compaction retention in hour. 0 means disable auto compaction.
+		auto compaction retention length. 0 means disable auto compaction.
+	--auto-compaction-mode 'periodic'
+		'periodic' means hours, 'revision' means revision numbers to retain by auto compaction
 	--enable-v2
 		Accept etcd V2 client requests.
 
@@ -124,6 +130,8 @@ security flags:
 		path to the client server TLS key file.
 	--client-cert-auth 'false'
 		enable client cert authentication.
+	--client-crl-file ''
+		path to the client certificate revocation list file.
 	--trusted-ca-file ''
 		path to the client server TLS trusted CA key file.
 	--auto-tls 'false'
@@ -140,6 +148,8 @@ security flags:
 		path to the peer server TLS trusted CA file.
 	--peer-auto-tls 'false'
 		peer TLS using self-generated certificates if --peer-key-file and --peer-cert-file are not provided.
+	--peer-crl-file ''
+		path to the peer certificate revocation list file.
 
 logging flags
 

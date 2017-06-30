@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/elastic/beats/libbeat/common"
+	s "github.com/elastic/beats/libbeat/common/schema"
+	c "github.com/elastic/beats/libbeat/common/schema/mapstrstr"
 	"github.com/elastic/beats/metricbeat/module/redis"
-	s "github.com/elastic/beats/metricbeat/schema"
-	c "github.com/elastic/beats/metricbeat/schema/mapstrstr"
 )
 
 // Map data to MapStr
@@ -62,7 +62,8 @@ func parseKeyspaceStats(keyspaceMap map[string]string) map[string]common.MapStr 
 					db[stats[0]] = stats[1]
 				}
 			}
-			keyspace[k] = schema.Apply(db)
+			data, _ := schema.Apply(db)
+			keyspace[k] = data
 		}
 	}
 	return keyspace

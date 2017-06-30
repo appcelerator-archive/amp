@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,7 +15,7 @@ import (
 
 // Defaults for config variables which are not set
 const (
-	DefaultInputType = "log"
+	DefaultType = "log"
 )
 
 type Config struct {
@@ -26,7 +27,7 @@ type Config struct {
 	ConfigDir        string           `config:"config_dir"`
 	ShutdownTimeout  time.Duration    `config:"shutdown_timeout"`
 	Modules          []*common.Config `config:"modules"`
-	ProspectorReload *common.Config   `config:"config.prospectors"`
+	ConfigProspector *common.Config   `config:"config.prospectors"`
 }
 
 var (
@@ -37,17 +38,6 @@ var (
 		ShutdownTimeout: 0,
 	}
 )
-
-const (
-	LogInputType   = "log"
-	StdinInputType = "stdin"
-)
-
-// List of valid input types
-var ValidInputType = map[string]struct{}{
-	StdinInputType: {},
-	LogInputType:   {},
-}
 
 // getConfigFiles returns list of config files.
 // In case path is a file, it will be directly returned.
@@ -89,7 +79,10 @@ func mergeConfigFiles(configFiles []string, config *Config) error {
 		tmpConfig := struct {
 			Filebeat Config
 		}{}
-		cfgfile.Read(&tmpConfig, file)
+		err := cfgfile.Read(&tmpConfig, file)
+		if err != nil {
+			return fmt.Errorf("Failed to read %s: %s", file, err)
+		}
 
 		config.Prospectors = append(config.Prospectors, tmpConfig.Filebeat.Prospectors...)
 	}

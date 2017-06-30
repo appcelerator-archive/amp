@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var debugf = logp.MakeDebug("system-process")
+var debugf = logp.MakeDebug("system.process")
 
 func init() {
 	if err := mb.Registry.AddMetricSet("system", "process", New, parse.EmptyHostParser); err != nil {
@@ -27,19 +27,14 @@ func init() {
 // MetricSet that fetches process metrics.
 type MetricSet struct {
 	mb.BaseMetricSet
-	stats  *ProcStats
-	cgroup *cgroup.Reader
+	stats        *ProcStats
+	cgroup       *cgroup.Reader
+	cacheCmdLine bool
 }
 
 // New creates and returns a new MetricSet.
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	config := struct {
-		Procs        []string `config:"processes"`
-		Cgroups      *bool    `config:"process.cgroups.enabled"`
-		EnvWhitelist []string `config:"process.env.whitelist"`
-	}{
-		Procs: []string{".*"}, // collect all processes by default
-	}
+	config := defaultConfig
 	if err := base.Module().UnpackConfig(&config); err != nil {
 		return nil, err
 	}
@@ -49,6 +44,9 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 		stats: &ProcStats{
 			Procs:        config.Procs,
 			EnvWhitelist: config.EnvWhitelist,
+			CpuTicks:     config.IncludeCPUTicks || (config.CPUTicks != nil && *config.CPUTicks),
+			CacheCmdLine: config.CacheCmdLine,
+			IncludeTop:   config.IncludeTop,
 		},
 	}
 	err := m.stats.InitProcStats()

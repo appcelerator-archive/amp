@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/elastic/beats/filebeat/channel"
 	"github.com/elastic/beats/filebeat/input/file"
 	"github.com/elastic/beats/filebeat/prospector"
 	"github.com/elastic/beats/filebeat/registrar"
@@ -15,14 +16,14 @@ import (
 type Crawler struct {
 	prospectors       map[uint64]*prospector.Prospector
 	prospectorConfigs []*common.Config
-	out               prospector.Outlet
+	out               channel.Outleter
 	wg                sync.WaitGroup
 	reloader          *cfgfile.Reloader
 	once              bool
 	beatDone          chan struct{}
 }
 
-func New(out prospector.Outlet, prospectorConfigs []*common.Config, beatDone chan struct{}, once bool) (*Crawler, error) {
+func New(out channel.Outleter, prospectorConfigs []*common.Config, beatDone chan struct{}, once bool) (*Crawler, error) {
 
 	return &Crawler{
 		out:               out,
@@ -33,7 +34,8 @@ func New(out prospector.Outlet, prospectorConfigs []*common.Config, beatDone cha
 	}, nil
 }
 
-func (c *Crawler) Start(r *registrar.Registrar, reloaderConfig *common.Config) error {
+// Start starts the crawler with all prospectors
+func (c *Crawler) Start(r *registrar.Registrar, configProspectors *common.Config) error {
 
 	logp.Info("Loading Prospectors: %v", len(c.prospectorConfigs))
 
@@ -45,10 +47,10 @@ func (c *Crawler) Start(r *registrar.Registrar, reloaderConfig *common.Config) e
 		}
 	}
 
-	if reloaderConfig.Enabled() {
-		logp.Warn("BETA feature dynamic configuration reloading is enabled.")
+	if configProspectors.Enabled() {
+		logp.Beta("Loading separate prospectors is enabled.")
 
-		c.reloader = cfgfile.NewReloader(reloaderConfig)
+		c.reloader = cfgfile.NewReloader(configProspectors)
 		factory := prospector.NewFactory(c.out, r, c.beatDone)
 		go func() {
 			c.reloader.Run(factory)
@@ -64,7 +66,7 @@ func (c *Crawler) startProspector(config *common.Config, states []file.State) er
 	if !config.Enabled() {
 		return nil
 	}
-	p, err := prospector.NewProspector(config, c.out, c.beatDone)
+	p, err := prospector.NewProspector(config, c.out, c.beatDone, states)
 	if err != nil {
 		return fmt.Errorf("Error in initing prospector: %s", err)
 	}
@@ -72,11 +74,6 @@ func (c *Crawler) startProspector(config *common.Config, states []file.State) er
 
 	if _, ok := c.prospectors[p.ID()]; ok {
 		return fmt.Errorf("Prospector with same ID already exists: %v", p.ID())
-	}
-
-	err = p.LoadStates(states)
-	if err != nil {
-		return fmt.Errorf("error loading states for propsector %v: %v", p.ID(), err)
 	}
 
 	c.prospectors[p.ID()] = p

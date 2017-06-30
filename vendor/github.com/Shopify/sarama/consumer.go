@@ -10,11 +10,12 @@ import (
 
 // ConsumerMessage encapsulates a Kafka message returned by the consumer.
 type ConsumerMessage struct {
-	Key, Value []byte
-	Topic      string
-	Partition  int32
-	Offset     int64
-	Timestamp  time.Time // only set if kafka is version 0.10+
+	Key, Value     []byte
+	Topic          string
+	Partition      int32
+	Offset         int64
+	Timestamp      time.Time // only set if kafka is version 0.10+, inner message timestamp
+	BlockTimestamp time.Time // only set if kafka is version 0.10+, outer (compressed) block timestamp
 }
 
 // ConsumerError is what is provided to the user when an error occurs.
@@ -289,10 +290,11 @@ type PartitionConsumer interface {
 }
 
 type partitionConsumer struct {
-	consumer  *consumer
-	conf      *Config
-	topic     string
-	partition int32
+	highWaterMarkOffset int64 // must be at the top of the struct because https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	consumer            *consumer
+	conf                *Config
+	topic               string
+	partition           int32
 
 	broker   *brokerConsumer
 	messages chan *ConsumerMessage
@@ -302,9 +304,8 @@ type partitionConsumer struct {
 	trigger, dying chan none
 	responseResult error
 
-	fetchSize           int32
-	offset              int64
-	highWaterMarkOffset int64
+	fetchSize int32
+	offset    int64
 }
 
 var errTimedOut = errors.New("timed out feeding messages to the user") // not user-facing
@@ -324,7 +325,7 @@ func (child *partitionConsumer) sendError(err error) {
 }
 
 func (child *partitionConsumer) dispatcher() {
-	for _ = range child.trigger {
+	for range child.trigger {
 		select {
 		case <-child.dying:
 			close(child.trigger)
@@ -411,7 +412,7 @@ func (child *partitionConsumer) Close() error {
 	child.AsyncClose()
 
 	go withRecover(func() {
-		for _ = range child.messages {
+		for range child.messages {
 			// drain
 		}
 	})
@@ -520,12 +521,13 @@ func (child *partitionConsumer) parseResponse(response *FetchResponse) ([]*Consu
 
 			if offset >= child.offset {
 				messages = append(messages, &ConsumerMessage{
-					Topic:     child.topic,
-					Partition: child.partition,
-					Key:       msg.Msg.Key,
-					Value:     msg.Msg.Value,
-					Offset:    offset,
-					Timestamp: msg.Msg.Timestamp,
+					Topic:          child.topic,
+					Partition:      child.partition,
+					Key:            msg.Msg.Key,
+					Value:          msg.Msg.Value,
+					Offset:         offset,
+					Timestamp:      msg.Msg.Timestamp,
+					BlockTimestamp: msgBlock.Msg.Timestamp,
 				})
 				child.offset = offset + 1
 			} else {

@@ -31,6 +31,7 @@ package beat
 
 import (
 	cryptRand "crypto/rand"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -42,21 +43,36 @@ import (
 	"strings"
 	"time"
 
+	"github.com/satori/go.uuid"
+
+	"github.com/elastic/beats/libbeat/api"
 	"github.com/elastic/beats/libbeat/cfgfile"
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/elastic/beats/libbeat/dashboards/dashboards"
+	"github.com/elastic/beats/libbeat/common/file"
+	"github.com/elastic/beats/libbeat/dashboards"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/monitoring/report"
 	"github.com/elastic/beats/libbeat/outputs/elasticsearch"
 	"github.com/elastic/beats/libbeat/paths"
 	"github.com/elastic/beats/libbeat/plugin"
 	"github.com/elastic/beats/libbeat/processors"
-	"github.com/elastic/beats/libbeat/publisher"
+	"github.com/elastic/beats/libbeat/publisher/bc/publisher"
 	svc "github.com/elastic/beats/libbeat/service"
-	"github.com/satori/go.uuid"
+	"github.com/elastic/beats/libbeat/template"
+	"github.com/elastic/beats/libbeat/version"
+
+	// Register publisher pipeline modules
+	_ "github.com/elastic/beats/libbeat/publisher/includes"
 
 	// Register default processors.
 	_ "github.com/elastic/beats/libbeat/processors/actions"
 	_ "github.com/elastic/beats/libbeat/processors/add_cloud_metadata"
+	_ "github.com/elastic/beats/libbeat/processors/add_docker_metadata"
+	_ "github.com/elastic/beats/libbeat/processors/add_kubernetes_metadata"
+	_ "github.com/elastic/beats/libbeat/processors/add_locale"
+
+	// Register default monitoring reporting
+	_ "github.com/elastic/beats/libbeat/monitoring/report/elasticsearch"
 )
 
 // Beater is the interface that must be implemented by every Beat. A Beater
@@ -84,25 +100,33 @@ type Beater interface {
 // the beat its run-loop.
 type Creator func(*Beat, *common.Config) (Beater, error)
 
+// SetupMLCallback can be used by the Beat to register MachineLearning configurations
+// for the enabled modules.
+type SetupMLCallback func(*Beat) error
+
 // Beat contains the basic beat data and the publisher client used to publish
 // events.
 type Beat struct {
-	Name      string              // Beat name.
-	Version   string              // Beat version number. Defaults to the libbeat version when an implementation does not set a version.
-	UUID      uuid.UUID           // ID assigned to a Beat instance.
+	Info      common.BeatInfo     // beat metadata.
 	RawConfig *common.Config      // Raw config that can be unpacked to get Beat specific config data.
 	Config    BeatConfig          // Common Beat configuration data.
 	Publisher publisher.Publisher // Publisher
+
+	SetupMLCallback SetupMLCallback // setup callback for ML job configs
+	InSetupCmd      bool            // this is set to true when the `setup` command is called
 }
 
 // BeatConfig struct contains the basic configuration of every beat
 type BeatConfig struct {
-	Shipper    publisher.ShipperConfig   `config:",inline"`
-	Output     map[string]*common.Config `config:"output"`
-	Logging    logp.Logging              `config:"logging"`
-	Processors processors.PluginConfig   `config:"processors"`
-	Path       paths.Path                `config:"path"`
-	Dashboards *common.Config            `config:"dashboards"`
+	Shipper    publisher.ShipperConfig `config:",inline"`
+	Output     common.ConfigNamespace  `config:"output"`
+	Monitoring *common.Config          `config:"xpack.monitoring"`
+	Logging    logp.Logging            `config:"logging"`
+	Processors processors.PluginConfig `config:"processors"`
+	Path       paths.Path              `config:"path"`
+	Dashboards *common.Config          `config:"setup.dashboards"`
+	Template   *common.Config          `config:"setup.template"`
+	Http       *common.Config          `config:"http"`
 }
 
 var (
@@ -137,24 +161,41 @@ func init() {
 // Beat (e.g. packetbeat or metricbeat). version is version number of the Beater
 // implementation. bt is the `Creator` callback for creating a new beater
 // instance.
+// XXX Move this as a *Beat method?
 func Run(name, version string, bt Creator) error {
-	return handleError(newBeat(name, version).launch(bt))
+	return handleError(func() error {
+		b, err := New(name, version)
+		if err != nil {
+			return err
+		}
+		return b.launch(bt)
+	}())
 }
 
-// newBeat creates a new beat instance
-func newBeat(name, version string) *Beat {
-	if version == "" {
-		version = defaultBeatVersion
+// New creates a new beat instance
+func New(name, v string) (*Beat, error) {
+	if v == "" {
+		v = version.GetDefaultVersion()
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
 	}
 
 	return &Beat{
-		Name:    name,
-		Version: version,
-		UUID:    uuid.NewV4(),
-	}
+		Info: common.BeatInfo{
+			Beat:     name,
+			Version:  v,
+			Name:     hostname,
+			Hostname: hostname,
+			UUID:     uuid.NewV4(),
+		},
+	}, nil
 }
 
-func (b *Beat) launch(bt Creator) error {
+// init does initialization of things common to all actions (read confs, flags)
+func (b *Beat) Init() error {
 	err := b.handleFlags()
 	if err != nil {
 		return err
@@ -164,35 +205,51 @@ func (b *Beat) launch(bt Creator) error {
 		return err
 	}
 
-	svc.BeforeRun()
-	defer svc.Cleanup()
-
 	if err := b.configure(); err != nil {
 		return err
 	}
 
-	// load the beats config section
-	var sub *common.Config
-	configName := strings.ToLower(b.Name)
+	return nil
+}
+
+// load the beats config section
+func (b *Beat) config() (*common.Config, error) {
+	configName := strings.ToLower(b.Info.Beat)
 	if b.RawConfig.HasField(configName) {
-		sub, err = b.RawConfig.Child(configName, -1)
+		sub, err := b.RawConfig.Child(configName, -1)
 		if err != nil {
-			return err
+			return nil, err
 		}
-	} else {
-		sub = common.NewConfig()
+
+		return sub, nil
 	}
 
-	logp.Info("Setup Beat: %s; Version: %s", b.Name, b.Version)
+	return common.NewConfig(), nil
+}
+
+// create and return the beater, this method also initializes all needed items,
+// including template registering, publisher, xpack monitoring
+func (b *Beat) createBeater(bt Creator) (Beater, error) {
+	sub, err := b.config()
+	if err != nil {
+		return nil, err
+	}
+
+	logp.Info("Setup Beat: %s; Version: %s", b.Info.Beat, b.Info.Version)
 	processors, err := processors.New(b.Config.Processors)
 	if err != nil {
-		return fmt.Errorf("error initializing processors: %v", err)
+		return nil, fmt.Errorf("error initializing processors: %v", err)
+	}
+
+	err = b.registerTemplateLoading()
+	if err != nil {
+		return nil, err
 	}
 
 	debugf("Initializing output plugins")
-	publisher, err := publisher.New(b.Name, b.Version, b.Config.Output, b.Config.Shipper, processors)
+	publisher, err := publisher.New(b.Info, b.Config.Output, b.Config.Shipper, processors)
 	if err != nil {
-		return fmt.Errorf("error initializing publisher: %v", err)
+		return nil, fmt.Errorf("error initializing publisher: %v", err)
 	}
 
 	// TODO: some beats race on shutdown with publisher.Stop -> do not call Stop yet,
@@ -202,27 +259,151 @@ func (b *Beat) launch(bt Creator) error {
 	b.Publisher = publisher
 	beater, err := bt(b, sub)
 	if err != nil {
+		return nil, err
+	}
+
+	return beater, nil
+}
+
+func (b *Beat) launch(bt Creator) error {
+	err := b.Init()
+	if err != nil {
 		return err
+	}
+
+	svc.BeforeRun()
+	defer svc.Cleanup()
+
+	beater, err := b.createBeater(bt)
+	if err != nil {
+		return err
+	}
+
+	if b.Config.Monitoring.Enabled() {
+		reporter, err := report.New(b.Info, b.Config.Monitoring, b.Config.Output)
+		if err != nil {
+			return err
+		}
+		defer reporter.Stop()
 	}
 
 	// If -configtest was specified, exit now prior to run.
 	if cfgfile.IsTestConfig() {
+		logp.Deprecate("6.0", "-configtest flag has been deprecated, use configtest subcommand")
 		fmt.Println("Config OK")
 		return GracefulExit
 	}
 
 	svc.HandleSignals(beater.Stop)
 
-	err = b.loadDashboards()
+	// TODO Deprecate this in favor of setup subcommand (7.0)
+	if *setup {
+		logp.Deprecate("6.0", "-setup flag has been deprectad, use setup subcommand")
+	}
+	err = b.loadDashboards(false)
 	if err != nil {
 		return err
 	}
+	if b.SetupMLCallback != nil && *setup {
+		err = b.SetupMLCallback(b)
+		if err != nil {
+			return err
+		}
+	}
 
-	logp.Info("%s start running.", b.Name)
-	defer logp.Info("%s stopped.", b.Name)
+	logp.Info("%s start running.", b.Info.Beat)
+	defer logp.Info("%s stopped.", b.Info.Beat)
 	defer logp.LogTotalExpvars(&b.Config.Logging)
 
+	if b.Config.Http.Enabled() {
+		api.Start(b.Config.Http, b.Info)
+	}
+
 	return beater.Run(b)
+}
+
+// TestConfig check all settings are ok and the beat can be run
+func (b *Beat) TestConfig(bt Creator) error {
+	return handleError(func() error {
+		err := b.Init()
+		if err != nil {
+			return err
+		}
+
+		// Create beater to ensure all settings are OK
+		_, err = b.createBeater(bt)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Config OK")
+		return GracefulExit
+	}())
+}
+
+// Setup registers ES index template and kibana dashboards
+func (b *Beat) Setup(bt Creator, template, dashboards, machineLearning bool) error {
+	return handleError(func() error {
+		err := b.Init()
+		if err != nil {
+			return err
+		}
+
+		// Tell the beat that we're in the setup command
+		b.InSetupCmd = true
+
+		// Create beater to give it the opportunity to set loading callbacks
+		_, err = b.createBeater(bt)
+		if err != nil {
+			return err
+		}
+
+		if template {
+			if b.Config.Output.Name() != "elasticsearch" {
+				return fmt.Errorf("Template loading requested but the Elasticsearch output is not configured/enabled")
+			}
+
+			esConfig := b.Config.Output.Config()
+			if b.Config.Template == nil || (b.Config.Template != nil && b.Config.Template.Enabled()) {
+				loadCallback, err := b.templateLoadingCallback()
+				if err != nil {
+					return err
+				}
+
+				esClient, err := elasticsearch.NewConnectedClient(esConfig)
+				if err != nil {
+					return err
+				}
+
+				// Load template
+				err = loadCallback(esClient)
+				if err != nil {
+					return err
+				}
+			}
+
+			fmt.Println("Loaded index template")
+		}
+
+		if dashboards {
+			err = b.loadDashboards(true)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Loaded dashboards")
+		}
+
+		if machineLearning && b.SetupMLCallback != nil {
+			err = b.SetupMLCallback(b)
+			if err != nil {
+				return err
+			}
+			fmt.Println("Loaded machine learning job configurations")
+		}
+
+		return nil
+	}())
 }
 
 // handleFlags parses the command line flags. It handles the '-version' flag
@@ -230,19 +411,20 @@ func (b *Beat) launch(bt Creator) error {
 func (b *Beat) handleFlags() error {
 	// Due to a dependence upon the beat name, the default config file path
 	// must be updated prior to CLI flag handling.
-	err := cfgfile.ChangeDefaultCfgfileFlag(b.Name)
+	err := cfgfile.ChangeDefaultCfgfileFlag(b.Info.Beat)
 	if err != nil {
 		return fmt.Errorf("failed to set default config file path: %v", err)
 	}
 	flag.Parse()
 
 	if *printVersion {
+		logp.Deprecate("6.0", "-version flag has been deprectad, use version subcommand")
 		fmt.Printf("%s version %s (%s), libbeat %s\n",
-			b.Name, b.Version, runtime.GOARCH, defaultBeatVersion)
+			b.Info.Beat, b.Info.Version, runtime.GOARCH, version.GetDefaultVersion())
 		return GracefulExit
 	}
 
-	if err := logp.HandleFlags(b.Name); err != nil {
+	if err := logp.HandleFlags(b.Info.Beat); err != nil {
 		return err
 	}
 	if err := cfgfile.HandleFlags(); err != nil {
@@ -269,20 +451,29 @@ func (b *Beat) configure() error {
 		return fmt.Errorf("error unpacking config data: %v", err)
 	}
 
+	if name := b.Config.Shipper.Name; name != "" {
+		b.Info.Name = name
+	}
+
 	err = paths.InitPaths(&b.Config.Path)
 	if err != nil {
 		return fmt.Errorf("error setting default paths: %v", err)
 	}
 
-	err = logp.Init(b.Name, &b.Config.Logging)
+	err = logp.Init(b.Info.Beat, &b.Config.Logging)
 	if err != nil {
 		return fmt.Errorf("error initializing logging: %v", err)
 	}
-	// Disable stderr logging if requested by cmdline flag
-	logp.SetStderr()
 
 	// log paths values to help with troubleshooting
 	logp.Info(paths.Paths.String())
+
+	err = b.loadMeta()
+	if err != nil {
+		return err
+	}
+
+	logp.Info("Beat UUID: %v", b.Info.UUID)
 
 	if b.Config.Shipper.MaxProcs != nil {
 		maxProcs := *b.Config.Shipper.MaxProcs
@@ -294,8 +485,79 @@ func (b *Beat) configure() error {
 	return nil
 }
 
-func (b *Beat) loadDashboards() error {
-	if *setup {
+func (b *Beat) loadMeta() error {
+	type meta struct {
+		UUID uuid.UUID `json:"uuid"`
+	}
+
+	metaPath := paths.Resolve(paths.Data, "meta.json")
+	logp.Info("Beat metadata path: %v", metaPath)
+
+	f, err := openRegular(metaPath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("Beat meta file failed to open: %s", err)
+	}
+
+	if err == nil {
+		m := meta{}
+		if err := json.NewDecoder(f).Decode(&m); err != nil {
+			f.Close()
+			return fmt.Errorf("Beat meta file reading error: %v", err)
+		}
+
+		f.Close()
+		valid := !uuid.Equal(m.UUID, uuid.Nil)
+		if valid {
+			b.Info.UUID = m.UUID
+			return nil
+		}
+	}
+
+	// file does not exist or UUID is invalid, let's create a new one
+
+	// write temporary file first
+	tempFile := metaPath + ".new"
+	f, err = os.OpenFile(tempFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("Failed to create Beat meta file: %s", err)
+	}
+
+	err = json.NewEncoder(f).Encode(meta{UUID: b.Info.UUID})
+	f.Close()
+	if err != nil {
+		return fmt.Errorf("Beat meta file failed to write: %s", err)
+	}
+
+	// move temporary file into final location
+	err = file.SafeFileRotate(metaPath, tempFile)
+	return err
+}
+
+func openRegular(filename string) (*os.File, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return f, err
+	}
+
+	info, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+
+	if !info.Mode().IsRegular() {
+		f.Close()
+		if info.IsDir() {
+			return nil, fmt.Errorf("%s is a directory", filename)
+		}
+		return nil, fmt.Errorf("%s is not a regular file", filename)
+	}
+
+	return f, nil
+}
+
+func (b *Beat) loadDashboards(force bool) error {
+	if *setup || force {
 		// -setup implies dashboards.enabled=true
 		if b.Config.Dashboards == nil {
 			b.Config.Dashboards = common.NewConfig()
@@ -306,8 +568,8 @@ func (b *Beat) loadDashboards() error {
 		}
 	}
 
-	if b.Config.Dashboards != nil && b.Config.Dashboards.Enabled() {
-		esConfig := b.Config.Output["elasticsearch"]
+	if b.Config.Dashboards != nil && b.Config.Dashboards.Enabled() && b.Config.Output.Name() == "elasticsearch" {
+		esConfig := b.Config.Output.Config()
 		if esConfig == nil || !esConfig.Enabled() {
 			return fmt.Errorf("Dashboard loading requested but the Elasticsearch output is not configured/enabled")
 		}
@@ -317,7 +579,7 @@ func (b *Beat) loadDashboards() error {
 		}
 		defer esClient.Close()
 
-		err = dashboards.ImportDashboards(b.Name, b.Version, esClient, b.Config.Dashboards)
+		err = dashboards.ImportDashboards(b.Info.Beat, b.Info.Version, esClient, b.Config.Dashboards)
 		if err != nil {
 			return fmt.Errorf("Error importing Kibana dashboards: %v", err)
 		}
@@ -325,6 +587,58 @@ func (b *Beat) loadDashboards() error {
 	}
 
 	return nil
+}
+
+// registerTemplateLoading registers the loading of the template as a callback with
+// the elasticsearch output. It is important the the registration happens before
+// the publisher is created.
+func (b *Beat) registerTemplateLoading() error {
+	// Check if outputting to file is enabled, and output to file if it is
+	if b.Config.Template != nil && b.Config.Template.Enabled() {
+		var cfg template.TemplateConfig
+		err := b.Config.Template.Unpack(&cfg)
+		if err != nil {
+			return fmt.Errorf("unpacking template config fails: %v", err)
+		}
+	}
+
+	// Loads template by default if esOutput is enabled
+	if b.Config.Output.Name() == "elasticsearch" {
+		if b.Config.Template == nil || (b.Config.Template != nil && b.Config.Template.Enabled()) {
+			// load template through callback to make sure it is also loaded
+			// on reconnecting
+			callback, err := b.templateLoadingCallback()
+			if err != nil {
+				return err
+			}
+			elasticsearch.RegisterConnectCallback(callback)
+		}
+	}
+
+	return nil
+}
+
+// Build and return a callback to load index template into ES
+func (b *Beat) templateLoadingCallback() (func(esClient *elasticsearch.Client) error, error) {
+	callback := func(esClient *elasticsearch.Client) error {
+		if b.Config.Template == nil {
+			b.Config.Template = common.NewConfig()
+		}
+
+		loader, err := template.NewLoader(b.Config.Template, esClient, b.Info)
+		if err != nil {
+			return fmt.Errorf("Error creating Elasticsearch template loader: %v", err)
+		}
+
+		err = loader.Load()
+		if err != nil {
+			return fmt.Errorf("Error loading Elasticsearch template: %v", err)
+		}
+
+		return nil
+	}
+
+	return callback, nil
 }
 
 // handleError handles the given error by logging it and then returning the
@@ -339,9 +653,4 @@ func handleError(err error) error {
 	logp.Critical("Exiting: %v", err)
 	fmt.Fprintf(os.Stderr, "Exiting: %v\n", err)
 	return err
-}
-
-// GetDefaultVersion returns the current libbeat version.
-func GetDefaultVersion() string {
-	return defaultBeatVersion
 }

@@ -73,7 +73,7 @@ func NewLeaseProxy(c *clientv3.Client) (pb.LeaseServer, <-chan struct{}) {
 }
 
 func (lp *leaseProxy) LeaseGrant(ctx context.Context, cr *pb.LeaseGrantRequest) (*pb.LeaseGrantResponse, error) {
-	rp, err := lp.leaseClient.LeaseGrant(ctx, cr)
+	rp, err := lp.leaseClient.LeaseGrant(ctx, cr, grpc.FailFast(false))
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (lp *leaseProxy) LeaseKeepAlive(stream pb.Lease_LeaseKeepAliveServer) error
 	errc := make(chan error, 2)
 
 	var lostLeaderC <-chan struct{}
-	if md, ok := metadata.FromContext(stream.Context()); ok {
+	if md, ok := metadata.FromOutgoingContext(stream.Context()); ok {
 		v := md[rpctypes.MetadataRequireLeaderKey]
 		if len(v) > 0 && v[0] == rpctypes.MetadataHasLeader {
 			lostLeaderC = lp.leader.lostNotify()

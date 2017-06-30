@@ -71,7 +71,7 @@ var (
 )
 
 // AckHandler is used for Async Publishing to provide status of the ack.
-// The func will be passed teh GUID and any error state. No error means the
+// The func will be passed the GUID and any error state. No error means the
 // message was successfully received by NATS Streaming.
 type AckHandler func(string, error)
 
@@ -169,6 +169,7 @@ type ack struct {
 }
 
 // Connect will form a connection to the NATS Streaming subsystem.
+// Note that clientID can contain only alphanumeric and `-` or `_` characters.
 func Connect(stanClusterID, clientID string, options ...Option) (Conn, error) {
 	// Process Options
 	c := conn{clientID: clientID, opts: DefaultOptions}
@@ -181,7 +182,7 @@ func Connect(stanClusterID, clientID string, options ...Option) (Conn, error) {
 	c.nc = c.opts.NatsConn
 	// Create a NATS connection if it doesn't exist.
 	if c.nc == nil {
-		nc, err := nats.Connect(c.opts.NatsURL)
+		nc, err := nats.Connect(c.opts.NatsURL, nats.Name(clientID))
 		if err != nil {
 			return nil, err
 		}
@@ -253,10 +254,6 @@ func Connect(stanClusterID, clientID string, options ...Option) (Conn, error) {
 
 // Close a connection to the stan system.
 func (sc *conn) Close() error {
-	if sc == nil {
-		return ErrBadConnection
-	}
-
 	sc.Lock()
 	defer sc.Unlock()
 
@@ -322,9 +319,7 @@ func (sc *conn) processAck(m *nats.Msg) {
 	pa := &pb.PubAck{}
 	err := pa.Unmarshal(m.Data)
 	if err != nil {
-		// FIXME, make closure to have context?
-		fmt.Printf("Error processing unmarshal\n")
-		return
+		panic(fmt.Errorf("Error during ack unmarshal: %v", err))
 	}
 
 	// Remove
@@ -395,11 +390,16 @@ func (sc *conn) publishAsync(subject string, data []byte, ah AckHandler, ch chan
 	// Setup the timer for expiration.
 	sc.Lock()
 	a.t = time.AfterFunc(ackTimeout, func() {
-		sc.removeAck(peGUID)
-		if a.ah != nil {
-			ah(peGUID, ErrTimeout)
+		pubAck := sc.removeAck(peGUID)
+		// processAck could get here before and handle the ack.
+		// If that's the case, we would get nil here and simply return.
+		if pubAck == nil {
+			return
+		}
+		if pubAck.ah != nil {
+			pubAck.ah(peGUID, ErrTimeout)
 		} else if a.ch != nil {
-			a.ch <- ErrTimeout
+			pubAck.ch <- ErrTimeout
 		}
 	})
 	sc.Unlock()
@@ -436,7 +436,7 @@ func (sc *conn) processMsg(raw *nats.Msg) {
 	msg := &Msg{}
 	err := msg.Unmarshal(raw.Data)
 	if err != nil {
-		panic("Error processing unmarshal for msg")
+		panic(fmt.Errorf("Error processing unmarshal for msg: %v", err))
 	}
 	// Lookup the subscription
 	sc.RLock()
@@ -465,12 +465,11 @@ func (sc *conn) processMsg(raw *nats.Msg) {
 		cb(msg)
 	}
 
-	// Proces auto-ack
+	// Process auto-ack
 	if !isManualAck && nc != nil {
 		ack := &pb.Ack{Subject: msg.Subject, Sequence: msg.Sequence}
 		b, _ := ack.Marshal()
-		if err := nc.Publish(ackSubject, b); err != nil {
-			// FIXME(dlc) - Async error handler? Retry?
-		}
+		// FIXME(dlc) - Async error handler? Retry?
+		nc.Publish(ackSubject, b)
 	}
 }

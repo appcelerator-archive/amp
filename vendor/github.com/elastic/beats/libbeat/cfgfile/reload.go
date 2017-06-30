@@ -1,13 +1,13 @@
 package cfgfile
 
 import (
-	"expvar"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/monitoring"
 	"github.com/elastic/beats/libbeat/paths"
 )
 
@@ -21,10 +21,10 @@ var (
 
 	debugf = logp.MakeDebug("cfgfile")
 
-	configReloads = expvar.NewInt("libbeat.config.reloads")
-	moduleStarts  = expvar.NewInt("libbeat.config.module.starts")
-	moduleStops   = expvar.NewInt("libbeat.config.module.stops")
-	moduleRunning = expvar.NewInt("libbeat.config.module.running")
+	configReloads = monitoring.NewInt(nil, "libbeat.config.reloads")
+	moduleStarts  = monitoring.NewInt(nil, "libbeat.config.module.starts")
+	moduleStops   = monitoring.NewInt(nil, "libbeat.config.module.stops")
+	moduleRunning = monitoring.NewInt(nil, "libbeat.config.module.running")
 )
 
 type ReloadConfig struct {
@@ -87,6 +87,13 @@ func (rl *Reloader) Run(runnerFactory RunnerFactory) {
 
 	gw := NewGlobWatcher(path)
 
+	// If reloading is disable, config files should be loaded immidiately
+	if !rl.config.Reload.Enabled {
+		rl.config.Reload.Period = 0
+	}
+
+	overwriteUpate := true
+
 	for {
 		select {
 		case <-rl.done:
@@ -105,7 +112,8 @@ func (rl *Reloader) Run(runnerFactory RunnerFactory) {
 			}
 
 			// no file changes
-			if !updated {
+			if !updated && !overwriteUpate {
+				overwriteUpate = false
 				continue
 			}
 
@@ -135,6 +143,14 @@ func (rl *Reloader) Run(runnerFactory RunnerFactory) {
 
 				runner, err := runnerFactory.Create(c)
 				if err != nil {
+					// Make sure the next run also updates because some runners were not properly loaded
+					overwriteUpate = true
+
+					// In case prospector already is running, do not stop it
+					if runner != nil && rl.registry.Has(runner.ID()) {
+						debugf("Remove module from stoplist: %v", runner.ID())
+						delete(stopList, runner.ID())
+					}
 					logp.Err("Error creating module: %s", err)
 					continue
 				}
@@ -153,6 +169,16 @@ func (rl *Reloader) Run(runnerFactory RunnerFactory) {
 			rl.stopRunners(stopList)
 			rl.startRunners(startList)
 		}
+
+		// Path loading is enabled but not reloading. Loads files only once and then stops.
+		if !rl.config.Reload.Enabled {
+			logp.Info("Loading of config files completed.")
+			select {
+			case <-rl.done:
+				logp.Info("Dynamic config reloader stopped")
+				return
+			}
+		}
 	}
 }
 
@@ -163,6 +189,10 @@ func (rl *Reloader) Stop() {
 }
 
 func (rl *Reloader) startRunners(list map[uint64]Runner) {
+
+	if len(list) == 0 {
+		return
+	}
 
 	logp.Info("Starting %v runners ...", len(list))
 	for id, runner := range list {
@@ -176,6 +206,11 @@ func (rl *Reloader) startRunners(list map[uint64]Runner) {
 }
 
 func (rl *Reloader) stopRunners(list map[uint64]Runner) {
+
+	if len(list) == 0 {
+		return
+	}
+
 	logp.Info("Stopping %v runners ...", len(list))
 
 	wg := sync.WaitGroup{}

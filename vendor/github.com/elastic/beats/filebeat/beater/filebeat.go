@@ -1,22 +1,27 @@
 package beater
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/outputs/elasticsearch"
 
+	"github.com/elastic/beats/filebeat/channel"
 	cfg "github.com/elastic/beats/filebeat/config"
 	"github.com/elastic/beats/filebeat/crawler"
 	"github.com/elastic/beats/filebeat/fileset"
 	"github.com/elastic/beats/filebeat/publisher"
 	"github.com/elastic/beats/filebeat/registrar"
 	"github.com/elastic/beats/filebeat/spooler"
+
+	// Add filebeat level processors
+	_ "github.com/elastic/beats/filebeat/processor/add_kubernetes_metadata"
 )
 
 var (
@@ -37,7 +42,7 @@ func New(b *beat.Beat, rawConfig *common.Config) (beat.Beater, error) {
 		return nil, fmt.Errorf("Error reading config file: %v", err)
 	}
 
-	moduleRegistry, err := fileset.NewModuleRegistry(config.Modules, b.Version)
+	moduleRegistry, err := fileset.NewModuleRegistry(config.Modules, b.Info.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +59,25 @@ func New(b *beat.Beat, rawConfig *common.Config) (beat.Beater, error) {
 	// Add prospectors created by the modules
 	config.Prospectors = append(config.Prospectors, moduleProspectors...)
 
-	if !config.ProspectorReload.Enabled() && len(config.Prospectors) == 0 {
-		return nil, errors.New("No prospectors defined. What files do you want me to watch?")
+	haveEnabledProspectors := false
+	for _, prospector := range config.Prospectors {
+		if prospector.Enabled() {
+			haveEnabledProspectors = true
+			break
+		}
 	}
 
-	if *once && config.ProspectorReload.Enabled() {
-		return nil, errors.New("prospector reloading and -once cannot be used together.")
+	if !config.ConfigProspector.Enabled() && !haveEnabledProspectors {
+		if !b.InSetupCmd {
+			return nil, errors.New("No modules or prospectors enabled and configuration reloading disabled. What files do you want me to watch?")
+		} else {
+			// in the `setup` command, log this only as a warning
+			logp.Warn("Setup called, but no modules enabled.")
+		}
+	}
+
+	if *once && config.ConfigProspector.Enabled() {
+		return nil, errors.New("prospector configs and -once cannot be used together")
 	}
 
 	fb := &Filebeat{
@@ -67,28 +85,53 @@ func New(b *beat.Beat, rawConfig *common.Config) (beat.Beater, error) {
 		config:         &config,
 		moduleRegistry: moduleRegistry,
 	}
+
+	// register `setup` callback for ML jobs
+	if !moduleRegistry.Empty() {
+		b.SetupMLCallback = func(b *beat.Beat) error {
+			return fb.loadModulesML(b)
+		}
+	}
 	return fb, nil
 }
 
-// modulesSetup is called when modules are configured to do the initial
+// loadModulesPipelines is called when modules are configured to do the initial
 // setup.
-func (fb *Filebeat) modulesSetup(b *beat.Beat) error {
-	esConfig := b.Config.Output["elasticsearch"]
-	if esConfig == nil || !esConfig.Enabled() {
-		return fmt.Errorf("Filebeat modules configured but the Elasticsearch output is not configured/enabled")
+func (fb *Filebeat) loadModulesPipelines(b *beat.Beat) error {
+	if b.Config.Output.Name() != "elasticsearch" {
+		logp.Warn("Filebeat is unable to load the Ingest Node pipelines for the configured" +
+			" modules because the Elasticsearch output is not configured/enabled. If you have" +
+			" already loaded the Ingest Node pipelines or are using Logstash pipelines, you" +
+			" can ignore this warning.")
+		return nil
 	}
-	esClient, err := elasticsearch.NewConnectedClient(esConfig)
-	if err != nil {
-		return fmt.Errorf("Error creating ES client: %v", err)
-	}
-	defer esClient.Close()
 
-	err = fb.moduleRegistry.LoadPipelines(esClient)
-	if err != nil {
-		return err
+	// register pipeline loading to happen every time a new ES connection is
+	// established
+	callback := func(esClient *elasticsearch.Client) error {
+		return fb.moduleRegistry.LoadPipelines(esClient)
 	}
+	elasticsearch.RegisterConnectCallback(callback)
 
 	return nil
+}
+
+func (fb *Filebeat) loadModulesML(b *beat.Beat) error {
+	logp.Debug("machine-learning", "Setting up ML jobs for modules")
+
+	if b.Config.Output.Name() != "elasticsearch" {
+		logp.Warn("Filebeat is unable to load the Xpack Machine Learning configurations for the" +
+			" modules because the Elasticsearch output is not configured/enabled.")
+		return nil
+	}
+
+	esConfig := b.Config.Output.Config()
+	esClient, err := elasticsearch.NewConnectedClient(esConfig)
+	if err != nil {
+		return errors.Errorf("Error creating Elasticsearch client: %v", err)
+	}
+
+	return fb.moduleRegistry.LoadML(esClient)
 }
 
 // Run allows the beater to be run as a beat.
@@ -97,7 +140,7 @@ func (fb *Filebeat) Run(b *beat.Beat) error {
 	config := fb.config
 
 	if !fb.moduleRegistry.Empty() {
-		err = fb.modulesSetup(b)
+		err = fb.loadModulesPipelines(b)
 		if err != nil {
 			return err
 		}
@@ -133,7 +176,7 @@ func (fb *Filebeat) Run(b *beat.Beat) error {
 		return err
 	}
 
-	crawler, err := crawler.New(newSpoolerOutlet(fb.done, spooler, wgEvents), config.Prospectors, fb.done, *once)
+	crawler, err := crawler.New(channel.NewOutlet(fb.done, spooler.Channel, wgEvents), config.Prospectors, fb.done, *once)
 	if err != nil {
 		logp.Err("Could not init crawler: %v", err)
 		return err
@@ -175,8 +218,9 @@ func (fb *Filebeat) Run(b *beat.Beat) error {
 		spooler.Stop()
 	}()
 
-	err = crawler.Start(registrar, config.ProspectorReload)
+	err = crawler.Start(registrar, config.ConfigProspector)
 	if err != nil {
+		crawler.Stop()
 		return err
 	}
 

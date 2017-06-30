@@ -41,8 +41,8 @@ type controller struct {
 var _ exec.Controller = &controller{}
 
 // newController returns a docker exec controller for the provided task.
-func newController(client engineapi.APIClient, task *api.Task, secrets exec.SecretGetter) (exec.Controller, error) {
-	adapter, err := newContainerAdapter(client, task, secrets)
+func newController(client engineapi.APIClient, nodeDescription *api.NodeDescription, task *api.Task, secrets exec.SecretGetter) (exec.Controller, error) {
+	adapter, err := newContainerAdapter(client, nodeDescription, task, secrets)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (r *controller) PortStatus(ctx context.Context) (*api.PortStatus, error) {
 	return parsePortStatus(ctnr)
 }
 
-// Update tasks a recent task update and applies it to the container.
+// Update takes a recent task update and applies it to the container.
 func (r *controller) Update(ctx context.Context, t *api.Task) error {
 	log.G(ctx).Warnf("task updates not yet supported")
 	// TODO(stevvooe): While assignment of tasks is idempotent, we do allow

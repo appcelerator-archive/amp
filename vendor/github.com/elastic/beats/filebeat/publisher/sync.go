@@ -3,15 +3,15 @@ package publisher
 import (
 	"sync"
 
-	"github.com/elastic/beats/filebeat/input"
+	"github.com/elastic/beats/filebeat/util"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/elastic/beats/libbeat/publisher"
+	"github.com/elastic/beats/libbeat/publisher/bc/publisher"
 )
 
 type syncLogPublisher struct {
 	pub    publisher.Publisher
 	client publisher.Client
-	in     chan []*input.Event
+	in     chan []*util.Data
 	out    SuccessLogger
 
 	done chan struct{}
@@ -19,7 +19,7 @@ type syncLogPublisher struct {
 }
 
 func newSyncLogPublisher(
-	in chan []*input.Event,
+	in chan []*util.Data,
 	out SuccessLogger,
 	pub publisher.Publisher,
 ) *syncLogPublisher {
@@ -51,7 +51,7 @@ func (p *syncLogPublisher) Start() {
 }
 
 func (p *syncLogPublisher) Publish() error {
-	var events []*input.Event
+	var events []*util.Data
 	select {
 	case <-p.done:
 		return sigPublisherStop

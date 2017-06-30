@@ -44,9 +44,8 @@ func mustFindLeaderEndpoints(c *clientv3.Client) {
 
 	leaderId := uint64(0)
 	for _, ep := range c.Endpoints() {
-		resp, serr := c.Status(context.TODO(), ep)
-		if serr == nil {
-			leaderId = resp.Leader
+		if sresp, serr := c.Status(context.TODO(), ep); serr == nil {
+			leaderId = sresp.Leader
 			break
 		}
 	}
@@ -141,4 +140,15 @@ func newReport() report.Report {
 		return report.NewReportSample(p)
 	}
 	return report.NewReport(p)
+}
+
+func newWeightedReport() report.Report {
+	p := "%4.4f"
+	if precise {
+		p = "%g"
+	}
+	if sample {
+		return report.NewReportSample(p)
+	}
+	return report.NewWeightedReport(report.NewReport(p), p)
 }

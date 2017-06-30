@@ -1,13 +1,14 @@
 package module
 
 import (
-	"expvar"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/monitoring"
 	"github.com/elastic/beats/libbeat/processors"
 	"github.com/elastic/beats/metricbeat/mb"
 
@@ -24,9 +25,10 @@ const (
 )
 
 var (
-	debugf      = logp.MakeDebug("module")
+	debugf = logp.MakeDebug("module")
+
 	fetchesLock = sync.Mutex{}
-	fetches     = expvar.NewMap("fetches")
+	fetches     = map[string]*stats{}
 )
 
 // Wrapper contains the Module and the private data associated with
@@ -35,24 +37,34 @@ var (
 // Use NewWrapper or NewWrappers to construct new Wrappers.
 type Wrapper struct {
 	mb.Module
-	filters    *processors.Processors
-	metricSets []*metricSetWrapper // List of pointers to its associated MetricSets.
-	configHash uint64
+	filters       *processors.Processors
+	metricSets    []*metricSetWrapper // List of pointers to its associated MetricSets.
+	configHash    uint64
+	maxStartDelay time.Duration
 }
 
 // metricSetWrapper contains the MetricSet and the private data associated with
 // running the MetricSet. It contains a pointer to the parent Module.
 type metricSetWrapper struct {
 	mb.MetricSet
-	module *Wrapper    // Parent Module.
-	stats  *expvar.Map // expvar stats for this MetricSet.
+	module *Wrapper // Parent Module.
+	stats  *stats   // stats for this MetricSet.
+}
+
+// stats bundles common metricset stats.
+type stats struct {
+	key      string          // full stats key
+	ref      uint32          // number of modules/metricsets reusing stats instance
+	success  *monitoring.Int // Total success events.
+	failures *monitoring.Int // Total error events.
+	events   *monitoring.Int // Total events published.
 }
 
 // NewWrapper create a new Module and its associated MetricSets based
 // on the given configuration. It constructs the supporting filters and stores
 // them in the Wrapper.
-func NewWrapper(moduleConfig *common.Config, r *mb.Register) (*Wrapper, error) {
-	mws, err := NewWrappers([]*common.Config{moduleConfig}, r)
+func NewWrapper(maxStartDelay time.Duration, moduleConfig *common.Config, r *mb.Register) (*Wrapper, error) {
+	mws, err := NewWrappers(maxStartDelay, []*common.Config{moduleConfig}, r)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +79,7 @@ func NewWrapper(moduleConfig *common.Config, r *mb.Register) (*Wrapper, error) {
 // NewWrappers creates new Modules and their associated MetricSets based
 // on the given configuration. It constructs the supporting filters and stores
 // them all in a Wrapper.
-func NewWrappers(modulesConfig []*common.Config, r *mb.Register) ([]*Wrapper, error) {
+func NewWrappers(maxStartDelay time.Duration, modulesConfig []*common.Config, r *mb.Register) ([]*Wrapper, error) {
 	modules, err := mb.NewModules(modulesConfig, r)
 	if err != nil {
 		return nil, err
@@ -85,8 +97,9 @@ func NewWrappers(modulesConfig []*common.Config, r *mb.Register) ([]*Wrapper, er
 		}
 
 		mw := &Wrapper{
-			Module:  k,
-			filters: f,
+			Module:        k,
+			filters:       f,
+			maxStartDelay: maxStartDelay,
 		}
 		wrappers = append(wrappers, mw)
 
@@ -95,15 +108,10 @@ func NewWrappers(modulesConfig []*common.Config, r *mb.Register) ([]*Wrapper, er
 			debugf("Initializing MetricSet type '%s/%s' for host '%s': %T=%+v",
 				ms.Module().Name(), ms.Name(), ms.Host(), ms, ms)
 
-			expMap, err := getMetricSetExpvarMap(mw.Name(), ms.Name())
-			if err != nil {
-				return nil, err
-			}
-
 			msw := &metricSetWrapper{
 				MetricSet: ms,
 				module:    mw,
-				stats:     expMap,
+				stats:     getMetricSetStats(mw.Name(), ms.Name()),
 			}
 			msws = append(msws, msw)
 		}
@@ -126,7 +134,6 @@ func NewWrappers(modulesConfig []*common.Config, r *mb.Register) ([]*Wrapper, er
 // Start should be called only once in the life of a Wrapper.
 func (mw *Wrapper) Start(done <-chan struct{}) <-chan common.MapStr {
 	debugf("Starting %s", mw)
-	defer debugf("Stopped %s", mw)
 
 	out := make(chan common.MapStr, 1)
 
@@ -135,8 +142,10 @@ func (mw *Wrapper) Start(done <-chan struct{}) <-chan common.MapStr {
 	wg.Add(len(mw.metricSets))
 	for _, msw := range mw.metricSets {
 		go func(msw *metricSetWrapper) {
+			defer releaseStats(msw.stats)
 			defer wg.Done()
-			msw.startFetching(done, out)
+			defer msw.close()
+			msw.run(done, out)
 		}(msw)
 	}
 
@@ -144,6 +153,7 @@ func (mw *Wrapper) Start(done <-chan struct{}) <-chan common.MapStr {
 	go func() {
 		wg.Wait()
 		close(out)
+		debugf("Stopped %s", mw)
 	}()
 
 	return out
@@ -164,7 +174,8 @@ func (mw *Wrapper) Hash() uint64 {
 	}
 	var err error
 
-	// Config is unpacked into map[string]interface{} to also take metricset configs into account for the hash
+	// Config is unpacked into map[string]interface{} to also take metricset
+	// configs into account for the hash.
 	var c map[string]interface{}
 	mw.UnpackConfig(&c)
 	mw.configHash, err = hashstructure.Hash(c, nil)
@@ -176,34 +187,59 @@ func (mw *Wrapper) Hash() uint64 {
 
 // metricSetWrapper methods
 
-// startFetching performs an immediate fetch for the MetricSet then it
-// begins a continuous timer scheduled loop to fetch data. To stop the loop the
-// done channel should be closed.
-func (msw *metricSetWrapper) startFetching(
-	done <-chan struct{},
-	out chan<- common.MapStr,
-) {
+func (msw *metricSetWrapper) run(done <-chan struct{}, out chan<- common.MapStr) {
+	defer logp.Recover(fmt.Sprintf("recovered from panic while fetching "+
+		"'%s/%s' for host '%s'", msw.module.Name(), msw.Name(), msw.Host()))
+
+	// Start each metricset randomly over a period of MaxDelayPeriod.
+	if msw.module.maxStartDelay > 0 {
+		delay := time.Duration(rand.Int63n(int64(msw.module.maxStartDelay)))
+		debugf("%v/%v will start after %v", msw.module.Name(), msw.Name(), delay)
+		select {
+		case <-done:
+			return
+		case <-time.After(delay):
+		}
+	}
+
 	debugf("Starting %s", msw)
 	defer debugf("Stopped %s", msw)
 
-	// Fetch immediately.
-	err := msw.fetch(done, out)
-	if err != nil {
-		logp.Err("%v", err)
+	// Events and errors are reported through this.
+	reporter := &eventReporter{
+		msw:  msw,
+		out:  out,
+		done: done,
 	}
+
+	switch ms := msw.MetricSet.(type) {
+	case mb.PushMetricSet:
+		ms.Run(reporter)
+	case mb.EventFetcher, mb.EventsFetcher, mb.ReportingMetricSet:
+		msw.startPeriodicFetching(reporter)
+	default:
+		// Earlier startup stages prevent this from happening.
+		logp.Err("MetricSet '%s/%s' does not implement an event producing interface",
+			msw.Module().Name(), msw.Name())
+	}
+}
+
+// startPeriodicFetching performs an immediate fetch for the MetricSet then it
+// begins a continuous timer scheduled loop to fetch data. To stop the loop the
+// done channel should be closed.
+func (msw *metricSetWrapper) startPeriodicFetching(reporter *eventReporter) {
+	// Fetch immediately.
+	msw.fetch(reporter)
 
 	// Start timer for future fetches.
 	t := time.NewTicker(msw.Module().Config().Period)
 	defer t.Stop()
 	for {
 		select {
-		case <-done:
+		case <-reporter.done:
 			return
 		case <-t.C:
-			err := msw.fetch(done, out)
-			if err != nil {
-				logp.Err("%v", err)
-			}
+			msw.fetch(reporter)
 		}
 	}
 }
@@ -211,93 +247,121 @@ func (msw *metricSetWrapper) startFetching(
 // fetch invokes the appropriate Fetch method for the MetricSet and publishes
 // the result using the publisher client. This method will recover from panics
 // and log a stack track if one occurs.
-func (msw *metricSetWrapper) fetch(done <-chan struct{}, out chan<- common.MapStr) error {
-	defer logp.Recover(fmt.Sprintf("recovered from panic while fetching "+
-		"'%s/%s' for host '%s'", msw.module.Name(), msw.Name(), msw.Host()))
-
+func (msw *metricSetWrapper) fetch(reporter *eventReporter) {
 	switch fetcher := msw.MetricSet.(type) {
 	case mb.EventFetcher:
-		event, err := msw.singleEventFetch(fetcher)
-		if err != nil {
-			return err
-		}
-		if event != nil {
-			msw.stats.Add(eventsKey, 1)
-			writeEvent(done, out, event)
-		}
+		msw.singleEventFetch(fetcher, reporter)
 	case mb.EventsFetcher:
-		events, err := msw.multiEventFetch(fetcher)
-		if err != nil {
-			return err
-		}
-		for _, event := range events {
-			msw.stats.Add(eventsKey, 1)
-			if !writeEvent(done, out, event) {
-				break
-			}
-		}
+		msw.multiEventFetch(fetcher, reporter)
+	case mb.ReportingMetricSet:
+		msw.reportingFetch(fetcher, reporter)
 	default:
-		return fmt.Errorf("MetricSet '%s/%s' does not implement a Fetcher "+
-			"interface", msw.Module().Name(), msw.Name())
+		panic(fmt.Sprintf("unexpected fetcher type for %v", msw))
 	}
-
-	return nil
 }
 
-func (msw *metricSetWrapper) singleEventFetch(fetcher mb.EventFetcher) (common.MapStr, error) {
-	start := time.Now()
+func (msw *metricSetWrapper) singleEventFetch(fetcher mb.EventFetcher, reporter *eventReporter) {
+	reporter.startFetchTimer()
 	event, err := fetcher.Fetch()
-	elapsed := time.Since(start)
-
-	if err == nil {
-		msw.stats.Add(successesKey, 1)
-	} else {
-		msw.stats.Add(failuresKey, 1)
-	}
-
-	if event, err = createEvent(msw, event, err, start, elapsed); err != nil {
-		return nil, errors.Wrap(err, "createEvent failed")
-	}
-
-	return event, nil
+	reporter.ErrorWith(err, event)
 }
 
-func (msw *metricSetWrapper) multiEventFetch(fetcher mb.EventsFetcher) ([]common.MapStr, error) {
-	start := time.Now()
+func (msw *metricSetWrapper) multiEventFetch(fetcher mb.EventsFetcher, reporter *eventReporter) {
+	reporter.startFetchTimer()
 	events, err := fetcher.Fetch()
-	elapsed := time.Since(start)
-
-	var rtnEvents []common.MapStr
-	if err == nil {
-		msw.stats.Add(successesKey, 1)
-
-		for _, event := range events {
-			if event, err = createEvent(msw, event, nil, start, elapsed); err != nil {
-				return nil, errors.Wrap(err, "createEvent failed")
-			}
-			if event != nil {
-				rtnEvents = append(rtnEvents, event)
-			}
-		}
+	if len(events) == 0 {
+		reporter.ErrorWith(err, nil)
 	} else {
-		msw.stats.Add(failuresKey, 1)
-
-		event, err := createEvent(msw, nil, err, start, elapsed)
-		if err != nil {
-			return nil, errors.Wrap(err, "createEvent failed")
-		}
-		if event != nil {
-			rtnEvents = append(rtnEvents, event)
+		for _, event := range events {
+			reporter.ErrorWith(err, event)
 		}
 	}
+}
 
-	return rtnEvents, nil
+func (msw *metricSetWrapper) reportingFetch(fetcher mb.ReportingMetricSet, reporter *eventReporter) {
+	reporter.startFetchTimer()
+	fetcher.Fetch(reporter)
+}
+
+// close closes the underlying MetricSet if it implements the mb.Closer
+// interface.
+func (msw *metricSetWrapper) close() error {
+	if closer, ok := msw.MetricSet.(mb.Closer); ok {
+		return closer.Close()
+	}
+	return nil
 }
 
 // String returns a string representation of metricSetWrapper.
 func (msw *metricSetWrapper) String() string {
 	return fmt.Sprintf("metricSetWrapper[module=%s, name=%s, host=%s]",
 		msw.module.Name(), msw.Name(), msw.Host())
+}
+
+// Reporter implementation
+
+// eventReporter implements the Reporter interface which is a callback interface
+// used by MetricSet implementations to report an event(s), an error, or an error
+// with some additional metadata.
+type eventReporter struct {
+	msw   *metricSetWrapper
+	done  <-chan struct{}
+	out   chan<- common.MapStr
+	start time.Time // Start time of the current fetch (or zero for push sources).
+}
+
+// startFetchTimer demarcates the start of a new fetch. The elapsed time of a
+// fetch is computed based on the time of this call.
+func (r *eventReporter) startFetchTimer() {
+	r.start = time.Now()
+}
+
+func (r *eventReporter) Done() <-chan struct{} {
+	return r.done
+}
+
+func (r *eventReporter) Event(event common.MapStr) bool {
+	return r.ErrorWith(nil, event)
+}
+
+func (r *eventReporter) Error(err error) bool {
+	return r.ErrorWith(err, nil)
+}
+
+func (r *eventReporter) ErrorWith(err error, meta common.MapStr) bool {
+	// Skip nil events without error
+	if err == nil && meta == nil {
+		return true
+	}
+	timestamp := r.start
+	elapsed := time.Duration(0)
+
+	if !timestamp.IsZero() {
+		elapsed = time.Since(timestamp)
+	} else {
+		timestamp = time.Now()
+	}
+
+	if err == nil {
+		r.msw.stats.success.Add(1)
+	} else {
+		r.msw.stats.failures.Add(1)
+	}
+
+	event, err := createEvent(r.msw, meta, err, timestamp, elapsed)
+	if err != nil {
+		logp.Err("createEvent failed: %v", err)
+		return false
+	}
+
+	if event != nil { // event can be nil if it was dropped by processors
+		if !writeEvent(r.done, r.out, event) {
+			return false
+		}
+		r.msw.stats.events.Add(1)
+	}
+
+	return true
 }
 
 // other utility functions
@@ -311,23 +375,39 @@ func writeEvent(done <-chan struct{}, out chan<- common.MapStr, event common.Map
 	}
 }
 
-func getMetricSetExpvarMap(module, name string) (*expvar.Map, error) {
-	key := fmt.Sprintf("%s-%s", module, name)
+func getMetricSetStats(module, name string) *stats {
+	key := fmt.Sprintf("metricbeat.%s.%s", module, name)
+
 	fetchesLock.Lock()
 	defer fetchesLock.Unlock()
 
-	expVar := fetches.Get(key)
-	switch m := expVar.(type) {
-	case nil:
-		expMap := new(expvar.Map).Init()
-		fetches.Set(key, expMap)
-		expMap.Add(successesKey, 0)
-		expMap.Add(failuresKey, 0)
-		expMap.Add(eventsKey, 0)
-		return expMap, nil
-	case *expvar.Map:
-		return m, nil
-	default:
-		return nil, fmt.Errorf("unexpected expvar.Var type (%T) found for key '%s'", m, key)
+	if s := fetches[key]; s != nil {
+		s.ref++
+		return s
 	}
+
+	reg := monitoring.Default.NewRegistry(key)
+	s := &stats{
+		key:      key,
+		ref:      1,
+		success:  monitoring.NewInt(reg, successesKey),
+		failures: monitoring.NewInt(reg, failuresKey),
+		events:   monitoring.NewInt(reg, eventsKey),
+	}
+
+	fetches[key] = s
+	return s
+}
+
+func releaseStats(s *stats) {
+	fetchesLock.Lock()
+	defer fetchesLock.Unlock()
+
+	s.ref--
+	if s.ref > 0 {
+		return
+	}
+
+	delete(fetches, s.key)
+	monitoring.Default.Remove(s.key)
 }

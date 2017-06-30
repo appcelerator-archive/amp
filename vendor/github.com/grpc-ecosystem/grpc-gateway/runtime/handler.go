@@ -9,8 +9,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime/internal"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/status"
 )
 
 // ForwardResponseStream forwards the stream from gRPC server to REST client.
@@ -67,14 +68,10 @@ func ForwardResponseStream(ctx context.Context, mux *ServeMux, marshaler Marshal
 
 func handleForwardResponseServerMetadata(w http.ResponseWriter, mux *ServeMux, md ServerMetadata) {
 	for k, vs := range md.HeaderMD {
-		hKey := fmt.Sprintf("%s%s", MetadataHeaderPrefix, k)
-		if mux.outgoingHeaderMatcher != nil {
-			if h, ok := mux.outgoingHeaderMatcher(k); ok {
-				hKey = h
+		if h, ok := mux.outgoingHeaderMatcher(k); ok {
+			for _, v := range vs {
+				w.Header().Add(h, v)
 			}
-		}
-		for i := range vs {
-			w.Header().Add(hKey, vs[i])
 		}
 	}
 }
@@ -89,8 +86,8 @@ func handleForwardResponseTrailerHeader(w http.ResponseWriter, md ServerMetadata
 func handleForwardResponseTrailer(w http.ResponseWriter, md ServerMetadata) {
 	for k, vs := range md.TrailerMD {
 		tKey := fmt.Sprintf("%s%s", MetadataTrailerPrefix, k)
-		for i := range vs {
-			w.Header().Add(tKey, vs[i])
+		for _, v := range vs {
+			w.Header().Add(tKey, v)
 		}
 	}
 }
@@ -151,7 +148,10 @@ func handleForwardResponseStreamError(marshaler Marshaler, w http.ResponseWriter
 
 func streamChunk(result proto.Message, err error) map[string]proto.Message {
 	if err != nil {
-		grpcCode := grpc.Code(err)
+		grpcCode := codes.Unknown
+		if s, ok := status.FromError(err); ok {
+			grpcCode = s.Code()
+		}
 		httpCode := HTTPStatusFromCode(grpcCode)
 		return map[string]proto.Message{
 			"error": &internal.StreamError{

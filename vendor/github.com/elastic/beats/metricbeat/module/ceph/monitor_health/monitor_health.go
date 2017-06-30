@@ -1,8 +1,6 @@
 package monitor_health
 
 import (
-	"fmt"
-
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/metricbeat/helper"
@@ -34,7 +32,7 @@ type MetricSet struct {
 }
 
 func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
-	logp.Warn("BETA: The ceph monitor_health metricset is beta")
+	logp.Beta("The ceph monitor_health metricset is beta")
 
 	http := helper.NewHTTP(base)
 	http.SetHeader("Accept", "application/json")
@@ -46,15 +44,10 @@ func New(base mb.BaseMetricSet) (mb.MetricSet, error) {
 }
 
 func (m *MetricSet) Fetch() ([]common.MapStr, error) {
-
 	content, err := m.HTTP.FetchContent()
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("%+v", string(content))
-	fmt.Printf("%+v", eventsMapping(content))
-
 	return eventsMapping(content), nil
-
 }

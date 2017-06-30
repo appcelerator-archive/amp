@@ -1,6 +1,0 @@
-== kafka Module
-
-beta[]
-
-This is the kafka Module.
-

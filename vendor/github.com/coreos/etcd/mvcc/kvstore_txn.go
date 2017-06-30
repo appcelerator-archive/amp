@@ -51,7 +51,7 @@ func (tr *storeTxnRead) End() {
 }
 
 type storeTxnWrite struct {
-	*storeTxnRead
+	storeTxnRead
 	tx backend.BatchTx
 	// beginRev is the revision where the txn begins; it will write to the next revision.
 	beginRev int64
@@ -63,7 +63,7 @@ func (s *store) Write() TxnWrite {
 	tx := s.b.BatchTx()
 	tx.Lock()
 	tw := &storeTxnWrite{
-		storeTxnRead: &storeTxnRead{s, tx, 0, 0},
+		storeTxnRead: storeTxnRead{s, tx, 0, 0},
 		tx:           tx,
 		beginRev:     s.currentRev,
 		changes:      make([]mvccpb.KeyValue, 0, 4),
@@ -105,7 +105,6 @@ func (tw *storeTxnWrite) End() {
 	if len(tw.changes) != 0 {
 		tw.s.revMu.Unlock()
 	}
-	dbTotalSize.Set(float64(tw.s.b.Size()))
 	tw.s.mu.RUnlock()
 }
 

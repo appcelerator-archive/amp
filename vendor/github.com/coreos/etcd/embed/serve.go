@@ -15,7 +15,6 @@
 package embed
 
 import (
-	"crypto/tls"
 	"io/ioutil"
 	defaultLog "log"
 	"net"
@@ -33,6 +32,7 @@ import (
 	"github.com/coreos/etcd/etcdserver/api/v3rpc"
 	etcdservergw "github.com/coreos/etcd/etcdserver/etcdserverpb/gw"
 	"github.com/coreos/etcd/pkg/debugutil"
+	"github.com/coreos/etcd/pkg/transport"
 
 	"github.com/cockroachdb/cmux"
 	gw "github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -65,7 +65,7 @@ func newServeCtx() *serveCtx {
 // serve accepts incoming connections on the listener l,
 // creating a new service goroutine for each. The service goroutines
 // read requests and then call handler to reply to them.
-func (sctx *serveCtx) serve(s *etcdserver.EtcdServer, tlscfg *tls.Config, handler http.Handler, errHandler func(error)) error {
+func (sctx *serveCtx) serve(s *etcdserver.EtcdServer, tlsinfo *transport.TLSInfo, handler http.Handler, errHandler func(error)) error {
 	logger := defaultLog.New(ioutil.Discard, "etcdhttp", 0)
 	<-s.ReadyNotify()
 	plog.Info("ready to serve client requests")
@@ -106,6 +106,10 @@ func (sctx *serveCtx) serve(s *etcdserver.EtcdServer, tlscfg *tls.Config, handle
 	}
 
 	if sctx.secure {
+		tlscfg, tlsErr := tlsinfo.ServerConfig()
+		if tlsErr != nil {
+			return tlsErr
+		}
 		gs := v3rpc.Server(s, tlscfg)
 		sctx.grpcServerC <- gs
 		v3electionpb.RegisterElectionServer(gs, servElection)
@@ -125,7 +129,10 @@ func (sctx *serveCtx) serve(s *etcdserver.EtcdServer, tlscfg *tls.Config, handle
 			return err
 		}
 
-		tlsl := tls.NewListener(m.Match(cmux.Any()), tlscfg)
+		tlsl, lerr := transport.NewTLSListener(m.Match(cmux.Any()), tlsinfo)
+		if lerr != nil {
+			return lerr
+		}
 		// TODO: add debug flag; enable logging when debug flag is set
 		httpmux := sctx.createMux(gwmux, handler)
 
@@ -160,28 +167,38 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 	})
 }
 
-type registerHandlerFunc func(context.Context, *gw.ServeMux, string, []grpc.DialOption) error
+type registerHandlerFunc func(context.Context, *gw.ServeMux, *grpc.ClientConn) error
 
 func (sctx *serveCtx) registerGateway(opts []grpc.DialOption) (*gw.ServeMux, error) {
 	ctx := sctx.ctx
-	addr := sctx.l.Addr().String()
+	conn, err := grpc.DialContext(ctx, sctx.l.Addr().String(), opts...)
+	if err != nil {
+		return nil, err
+	}
 	gwmux := gw.NewServeMux()
 
 	handlers := []registerHandlerFunc{
-		etcdservergw.RegisterKVHandlerFromEndpoint,
-		etcdservergw.RegisterWatchHandlerFromEndpoint,
-		etcdservergw.RegisterLeaseHandlerFromEndpoint,
-		etcdservergw.RegisterClusterHandlerFromEndpoint,
-		etcdservergw.RegisterMaintenanceHandlerFromEndpoint,
-		etcdservergw.RegisterAuthHandlerFromEndpoint,
-		v3lockgw.RegisterLockHandlerFromEndpoint,
-		v3electiongw.RegisterElectionHandlerFromEndpoint,
+		etcdservergw.RegisterKVHandler,
+		etcdservergw.RegisterWatchHandler,
+		etcdservergw.RegisterLeaseHandler,
+		etcdservergw.RegisterClusterHandler,
+		etcdservergw.RegisterMaintenanceHandler,
+		etcdservergw.RegisterAuthHandler,
+		v3lockgw.RegisterLockHandler,
+		v3electiongw.RegisterElectionHandler,
 	}
 	for _, h := range handlers {
-		if err := h(ctx, gwmux, addr, opts); err != nil {
+		if err := h(ctx, gwmux, conn); err != nil {
 			return nil, err
 		}
 	}
+	go func() {
+		<-ctx.Done()
+		if cerr := conn.Close(); cerr != nil {
+			plog.Warningf("failed to close conn to %s: %v", sctx.l.Addr().String(), cerr)
+		}
+	}()
+
 	return gwmux, nil
 }
 
