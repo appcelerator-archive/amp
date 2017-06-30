@@ -11,7 +11,7 @@ vendor: vendor.conf
 	vndr
 
 clean:
-	rm -f bin/envoy
+	rm -f $(TARGET)
 
 test:
 	go test -v -timeout 30m

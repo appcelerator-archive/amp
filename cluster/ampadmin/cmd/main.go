@@ -8,8 +8,6 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "envoy",
 		Short: "run commands in target cluster",
-		// If needed
-		// PersistentPreRun: initAdmin,
 	}
 
 	checkCmd := &cobra.Command{
@@ -22,6 +20,13 @@ func main() {
 	checkCmd.Flags().BoolVarP(&checksOpts.all, "all", "a", false, "all tests")
 
 	rootCmd.AddCommand(checkCmd)
+
+	installCmd := &cobra.Command{
+		Use:   "install",
+		Short: "set up amp services in swarm environment",
+		Run:   install,
+	}
+	rootCmd.AddCommand(installCmd)
 
 	_ = rootCmd.Execute()
 }
