@@ -2,6 +2,7 @@
 
 SYNC=${SYNC:-false}
 #SIGNAL_URL=
+#APP_SIGNAL_URL=
 CHANNEL=${CHANNEL:-stable}
 #PLUGINS=
 REGION=${REGION:-us-west-2}
@@ -336,8 +337,45 @@ _smoke_test(){
 
 _signal_aws() {
   [[ "x$SYNC" != "xtrue" ]] && return 0
+  _url=$1
   [[ -x /usr/local/bin/cfn-signal ]] || return 1
-  /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "${SIGNAL_URL}"
+  if [[ -z "$_url" ]]; then
+    echo "_signal_aws was called without any URL" >&2
+    return 1
+  fi
+  /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "$_url"
+}
+
+# wait for all nodes to be up and running (and labeled)
+_wait_for_full_swarm() {
+  local _timeout=360
+  local _label
+  local _label_prefix="amp.type."
+  local _labels="api route metrics mq kv search core user"
+  local _expected_label_count
+  local _current_labels
+  local _current_label_count
+
+  _expected_label_count=$(echo $_labels | wc -w)
+  echo "waiting for all scheduling labels to be defined on the swarm..." >&2
+  SECONDS=0
+  while [[ $SECONDS -lt $_timeout ]]; do
+    _current_label_count=0
+    _current_labels="$(for n in $(docker node ls -q); do docker node inspect $n --pretty | grep amp.type | sed -e 's/.*\(amp.type.*\) *=.*$/\1/'; done | sort | uniq)"
+    for _label in $_labels; do
+      echo $_current_labels | grep -q "${_label_prefix}${_label}" && ((++_current_label_count))
+    done
+    if [[ $_current_label_count -eq $_expected_label_count ]]; then
+      echo "All labels were found after $SECONDS sec" >&2
+      return 0
+    fi
+  done
+  echo "label search timed out ($SECONDS sec)" >&2
+  return 1
+}
+
+_setup() {
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampadmin
 }
 
 _sanity_check || exit 1
@@ -364,4 +402,9 @@ fi
 _label_node || exit 1
 _drain_node || exit 1
 _smoke_test || exit 1
-_signal_aws
+_signal_aws "${SIGNAL_URL}" || exit 1
+if [[ "x$nodeip" = "x$leader" ]]; then
+  _wait_for_full_swarm || exit 1
+  _setup || exit 1
+  _signal_aws "${APP_SIGNAL_URL}"
+fi

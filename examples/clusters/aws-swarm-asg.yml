@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-f14874e7
+      Default: ami-0de7db1b
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-noneyet
+      Default: ami-b83918dd
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-e60c1d9f
+      Default: ami-7627360f
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-8e5abef7
+      Default: ami-0397707a
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-nonyet
+      Default: ami-d88596bb
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -181,8 +181,8 @@ Parameters:
     Default: false
   ConfigurationURL:
     Type: String
-    Description: Deprecated, don't use
-    Default: https://raw.githubusercontent.com/appcelerator/amp/master/examples/clusters
+    Description: "Can be used to override the default userdata. Example: https://raw.githubusercontent.com/appcelerator/amp/master/examples/clusters"
+    Default: ""
   AufsVolumeSize:
     Type: Number
     Description: Size in GB of the EBS volume for the Docker AUFS storage on each node (mounted on /dev/xvdl)
@@ -210,9 +210,18 @@ Parameters:
     - true
     - false
     Default: true
+  InstallApplication:
+    Type: String
+    Description: If true, AMP will be installed. Expects Sync = true
+    AllowedValues:
+    - true
+    - false
+    Default: true
 
 Conditions:
   Sync: !Equals [ !Ref Sync, "true" ]
+  InstallApplication: !Equals [ !Ref InstallApplication, "true" ]
+  ConfigurationURL:  !Equals [ !Ref ConfigurationURL, "" ]
 
 Resources:
   Vpc:
@@ -805,6 +814,7 @@ Resources:
             repo_update: false
             repo_upgrade: none
             runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
               - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
 
   CoreWaitHandle:
@@ -889,6 +899,7 @@ Resources:
             repo_update: false
             repo_upgrade: none
             runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
               - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
 
   UserWaitHandle:
@@ -973,7 +984,24 @@ Resources:
             repo_update: false
             repo_upgrade: none
             runcmd:
+              - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
               - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} /usr/local/bin/userdata-aws-worker || shutdown -h
+
+  ApplicationWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+
+  ApplicationWaitCondition:
+    Condition: InstallApplication
+    Type: "AWS::CloudFormation::WaitCondition"
+    DependsOn:
+      - ManagerWaitCondition
+      - CoreWaitCondition
+      - MetricsWaitCondition
+      - UserWaitCondition
+    Properties:
+      Handle: !Ref ApplicationWaitHandle
+      Timeout: 900
+      Count: 1
 
   ManagerWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1031,7 +1059,9 @@ Resources:
            - !Ref PublicSubnet3
   ManagerAsgLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
-    DependsOn: ManagerWaitHandle
+    DependsOn:
+      - ManagerWaitHandle
+      - ApplicationWaitHandle
     Properties:
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref ClusterInstanceProfile
@@ -1056,7 +1086,8 @@ Resources:
             repo_update: false
             repo_upgrade: none
             runcmd:
-              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/userdata-aws-manager || shutdown -h
+              - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
+              - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl /usr/local/bin/userdata-aws-manager || shutdown -h
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -1174,13 +1205,15 @@ Metadata:
       DockerPlugins:
         default: Docker plugins
       ConfigurationURL:
-        default: InfraKit configuration base URL
+        default: Base URL for userdata scripts
       AufsVolumeSize:
         default: EBS Volume Size for Docker local storage
       LinuxDistribution:
         default: Linux Distribution
       Sync:
         default: Synchronous Deployment
+      InstallApplication:
+        default: Install Application
 
 Outputs:
   DNSTarget:
