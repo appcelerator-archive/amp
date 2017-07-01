@@ -15,7 +15,7 @@ RUN vndr
 RUN go test -v -timeout 30m
 
 # build
-RUN go build -o /tmp/ampadmin ${PKG}
+RUN go build -o /tmp/ampadmin ${PKG}/cmd
 
 # =============================
 FROM alpine
