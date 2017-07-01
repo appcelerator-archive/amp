@@ -34,10 +34,10 @@
 - debug: msg="New AMI {{ image_id }} in {{ ec2_region }}"
   changed_when: false
 
-#- name: Make AMI Public
-  #ec2_ami:
-    #image_id: "{{ image.image_id }}"
-    #state: present
-    #region: "{{ ec2_region }}"
-    #launch_permissions:
-      #group_names: ['all']
+- name: Make AMI Public
+  ec2_ami:
+    image_id: "{{ image.image_id }}"
+    state: present
+    region: "{{ ec2_region }}"
+    launch_permissions:
+      group_names: ['all']

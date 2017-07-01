@@ -22,11 +22,11 @@
    - "{{ copies.results }}"
   changed_when: false
 
-#- name: Make Copies Public
-  #ec2_ami:
-    #image_id: "{{ item.image_id }}"
-    #region: "{{ item.item }}"
-    #state: present
-    #launch_permissions:
-      #group_names: ['all']
-  #with_items: "{{ copies.results }}"
+- name: Make Copies Public
+  ec2_ami:
+    image_id: "{{ item.image_id }}"
+    region: "{{ item.item }}"
+    state: present
+    launch_permissions:
+      group_names: ['all']
+  with_items: "{{ copies.results }}"
