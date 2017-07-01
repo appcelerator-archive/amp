@@ -1,6 +1,6 @@
 .PHONY: vendor clean test build-image
 
-PKG := github.com/appcelerator/amp/cluster/plugin/aws
+PKG := github.com/appcelerator/amp/cluster/plugin/aws/cmd
 TARGET := bin/aws
 IMAGE := appcelerator/amp-aws
 
