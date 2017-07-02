@@ -1,7 +1,9 @@
 # =============================
 FROM golang:1.8-alpine as build
 # =============================
-RUN apk --no-cache add git build-base
+RUN apk add --no-cache build-base
+RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache git
 
 # go
 RUN go get github.com/LK4D4/vndr
@@ -15,12 +17,12 @@ RUN vndr
 RUN go test -v -timeout 30m
 
 # build
-RUN go build -o /tmp/ampadmin ${PKG}/cmd
+RUN CGO_ENABLED=0 go build -a -ldflags "-s" -o /tmp/ampadmin ${PKG}/cmd
 
 # =============================
-FROM alpine
+FROM scratch
 # =============================
-RUN apk add --no-cache ca-certificates
-COPY --from=build /tmp/ampadmin /usr/local/bin/ampadmin
-ENTRYPOINT [ "ampadmin" ]
+COPY --from=build /etc/ssl/certs /etc/ssl/certs
+COPY --from=build /tmp/ampadmin /ampadmin
+ENTRYPOINT [ "/ampadmin" ]
 
