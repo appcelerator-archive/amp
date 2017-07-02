@@ -29,7 +29,11 @@ func (v Version) IsConnected() bool {
 // ServerError Return the server connection error if any
 func (v Version) ServerError() string {
 	if v.Error != nil {
-		return strings.TrimSpace(v.Error.Error())
+		err := strings.TrimSpace(v.Error.Error())
+		if strings.Contains(err, "certificate") {
+			return fmt.Sprintf("%s\n\nLooks like a certificate error. Try using `amp -k` to connect to the remote server.", err)
+		}
+		return err
 	}
 	return ""
 }
@@ -54,7 +58,8 @@ Server:         {{if .IsConnected}}
  Version:       {{.Server.Version}}
  Build:         {{.Server.Build}}
  Go version:    {{.Server.GoVersion}}
- OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected ({{.ServerError}}){{end}}`
+ OS/Arch:       {{.Server.Os}}/{{.Server.Arch}}{{else}}not connected
+ Error:         {{.ServerError}}{{end}}`
 
 // NewVersionCommand returns a new instance of the version command.
 func NewVersionCommand(c cli.Interface) *cobra.Command {
