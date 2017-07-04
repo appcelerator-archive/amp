@@ -42,6 +42,12 @@ scrape_configs:
         - 'tasks.elasticsearch'
         type: 'A'
         port: 9200
+  - job_name: 'amplifier'
+    dns_sd_configs:
+      - names:
+        - 'tasks.amplifier'
+        type: 'A'
+        port: 5100
 {{- if .Hostnames }}
   - job_name: 'docker-engine'
     static_configs:
