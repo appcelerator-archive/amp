@@ -1256,7 +1256,7 @@ Resources:
     Properties:
       DesiredCapacity: !Ref ManagerSize
       HealthCheckGracePeriod: 300
-      HealthCheckType: EC2
+      HealthCheckType: ELB
       LaunchConfigurationName: !Ref ManagerAsgLaunchConfig
       MaxSize: 10
       MinSize: 0
