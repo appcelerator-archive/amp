@@ -5,7 +5,7 @@ Simple HTTP service (Go [source](https://github.com/subfuzion/docker-pinger)) th
 
 Run in this directory:
 
-    $ amp -s localhost stack deploy -c pinger.yml
+    $ amp stack deploy -c pinger.yml
 
 The app will be available at [http://pinger.examples.local.appcelerator.io/ping](http://pinger.examples.local.appcelerator.io/ping)
 

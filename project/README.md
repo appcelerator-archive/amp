@@ -19,7 +19,7 @@ A high-level roadmap is available at [ROADMAP.md](../ROADMAP.md).
 
 ## Build tools
 
-[hack/make.sh](../hack/make.sh) is the primary build tool for docker. It is used for compiling the official binary,
+[Makefile](../Makefile) is the primary build tool for AMP. It is used for compiling the official binary,
 running the test suite, and pushing releases.
 
 ## Acknowledgements
@@ -28,4 +28,3 @@ The files in this directory are modified versions directly based on Docker's own
 for [hacking on Docker](https://github.com/docker/docker/tree/master/project).
 
 [docker/LICENSE](https://github.com/docker/docker/blob/master/LICENSE)
-
