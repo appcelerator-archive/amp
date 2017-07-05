@@ -39,7 +39,6 @@ const (
 	StateRunning        = "RUNNING"
 	StateError          = "ERROR"
 	StateNoMatchingNode = "NO MATCHING NODE"
-	NoMatchingNodes     = -1
 )
 
 // Docker wrapper
@@ -332,7 +331,7 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		if err != nil {
 			return nil, err
 		}
-		if status.Status == StateError {
+		if status.Status == StateNoMatchingNode || status.Status == StateError {
 			failedServices++
 		}
 		if status.Status == StateRunning {
@@ -415,6 +414,9 @@ func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (i
 	if err != nil {
 		return 0, err
 	}
+	if matchingNodeCount == 0 {
+		return 0, nil
+	}
 	if serviceInfo.Spec.Mode.Global != nil {
 		expectedTasks = matchingNodeCount
 	} else {
@@ -425,7 +427,6 @@ func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (i
 
 // numberOfMatchingNodes returns number of nodes matching placement constraints
 func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Service) (int, error) {
-	var matchingNodes int
 	// placement constraints
 	constraints, _ := constraint.Parse(serviceInfo.Spec.TaskTemplate.Placement.Constraints)
 	// list all nodes in the swarm
@@ -434,12 +435,12 @@ func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Se
 		return 0, err
 	}
 	// inspect every node on the swarm to check for satisfying constraints
+	matchingNodes := 0
 	for _, node := range nodes {
 		apiNode := d.nodeToNode(ctx, node)
-		if !constraint.NodeMatches(constraints, apiNode) {
-			return NoMatchingNodes, nil
+		if constraint.NodeMatches(constraints, apiNode) {
+			matchingNodes++
 		}
-		matchingNodes++
 	}
 	return matchingNodes, nil
 }
@@ -520,7 +521,7 @@ func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceSta
 	if err != nil {
 		return &ServiceStatus{}, err
 	}
-	if totalTasks == NoMatchingNodes {
+	if totalTasks == 0 {
 		return &ServiceStatus{
 			RunningTasks: 0,
 			TotalTasks:   0,
