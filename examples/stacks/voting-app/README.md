@@ -5,7 +5,7 @@ The AMP version of the [Docker Example Voting App](https://github.com/docker/exa
 
 Run in this directory:
 
-    $ amp -s localhost stack up -c voting.yml
+    $ amp stack up -c voting.yml
 
 The voting app will be available at [http://vote.examples.local.appcelerator.io](http://vote.examples.local.appcelerator.io).
 

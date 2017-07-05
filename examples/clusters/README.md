@@ -43,7 +43,7 @@ Once the nodes are up and running, it will run the appcelerator/ampadmin image t
 
 The output of the stack lists the DNS name of the ELB in front of the manager nodes. It can be used for ssh access, https access to swarm services and configuration of the remote server in the CLI (--server option).
 
-| Output | Description | 
+| Output | Description |
 | --------- | ----------- |
 | VpcId | VPC ID |
 | DNSTarget | public facing endpoint for the cluster, It can be used for ssh access, https access to swarm services and configuration of the remote server in the CLI |

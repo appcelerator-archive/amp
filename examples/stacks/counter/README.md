@@ -5,7 +5,7 @@ A sample web application connected to a redis counter. It displays the total num
 
 Run in this directory:
 
-    $ amp -s localhost stack deploy -c counter.yml
+    $ amp stack deploy -c counter.yml
 
 The app will be running at [http://go.counter.examples.local.appcelerator.io](http://go.counter.examples.local.appcelerator.io)
 
