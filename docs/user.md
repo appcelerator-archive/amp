@@ -1,72 +1,113 @@
-### User Management
+## User Management Commands
 
-The `amp user` command manages all user related operations for AMP.
+The `amp user` command is used to manage all user related operations for AMP.
 
-    $ amp user
+Other user-related commands that aren't managed by `amp user` include `login`, `logout` and `whoami`.
 
-    Usage:	amp user COMMAND
+### Usage
 
-    User management operations
+```
+$ amp user --help
 
-    Options:
-      -h, --help            Print usage
-      -s, --server string   Specify server (host:port)
+Usage:	amp user COMMAND
 
-    Commands:
-      forgot-login Retrieve account name
-      get          Get user
-      ls           List users
-      rm           Remove user
-      signup       Signup for a new account
-      verify       Verify account
+User management operations
 
-    Run 'amp user COMMAND --help' for more information on a command.
+Options:
+  -h, --help            Print usage
+  -k, --insecure        Control whether amp verifies the server's certificate chain and host name
+  -s, --server string   Specify server (host:port)
+
+Commands:
+  forgot-login Retrieve account name
+  get          Get user
+  ls           List users
+  rm           Remove user
+  signup       Signup for a new account
+  verify       Verify account
+
+Run 'amp user COMMAND --help' for more information on a command.
+```
 
 ### Examples
 
-* To create a user:
-```
-    $ amp user signup --name foo --password p@ssw0rd --email foo@bar
-```
-    An email with a verification token will be sent to the given email address.
+#### Signing up and Logging in
 
-* To verify newly created account:
+* To signup for a new user account:
 ```
-    $ amp user verify [token]
+$ amp user signup
+username: sample
+email: sample@user.com
+password: [password]
+Hi sample! Please check your email to complete the signup process.
+```
+>NOTE: If you are working on a cluster without email verification, such as a local cluster,
+you will not need to verify your account as you will not be sent an email and you will be logged in automatically.
+
+After signing up, you will then be sent an email to your registered address. In this email, you will
+be sent a link to verify your account with or you can verify your account with the provided CLI command.
+
+* To verify your account using the token in verification email.
+```
+$ amp user verify [token]
+Your account has now been activated.
+```
+>NOTE: If you are working on a cluster without email verification, such as a local cluster,
+this command will be disabled. If you are using hosted AMP, you will need to verify your account.
+
+* To login to your new account.
+```
+$ amp login
+username: sample
+password: [password]
+Welcome back sample!
 ```
 
-* To retrieve account name:
+* Once you have logged in, you can check you are logged with `amp whoami`
 ```
-    $ amp user forgot-login --email foo@bar
+$ amp whoami
+[user sample @ localhost:50101]
+Logged in as user: sample
 ```
-    An email with the username will be sent to the registered email address.
+In addition, every `amp` command will display who you are logged in as at
+the top of the command output:
+```
+$ amp
+[user sample @ localhost:50101]
 
-* To retrieve a list of users:
+Usage:  amp [OPTIONS] COMMAND
+...
 ```
-    $ amp user ls
+
+* To logout of your account
 ```
+$ amp logout
+You have been logged out!
+```
+
+#### Forgotten your username
+
+* In the instance that you have forgotten the username associated with your email,
+you can have the username sent to your registered email account:
+```
+$ amp user forgot-login sample@user.com
+Your login name has been sent to the address: sample@user.com
+```
+>NOTE: If you are working on a cluster without email verification, this command will be disabled.
+
+#### User information
 
 * To retrieve details of a specific user:
 ```
-    $ amp user get foo
+$ amp user get foo
 ```
 
-* To remove of a user:
+* To retrieve a list of users:
 ```
-    $ amp user rm foo
-```
-
-* To login to AMP:
-```
-    $ amp login --name foo --password p@ssw0rd
+$ amp user ls
 ```
 
-* To see who's currently logged in (user or org):
+* To remove a user:
 ```
-    $ amp whoami
-```
-
-* To logout of an account:
-```
-    $ amp logout
+$ amp user rm foo
 ```
