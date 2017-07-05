@@ -25,6 +25,84 @@
               "rgba(50, 172, 45, 0.97)"
             ],
             "datasource": null,
+            "format": "none",
+            "gauge": {
+              "maxValue": 100,
+              "minValue": 0,
+              "show": false,
+              "thresholdLabels": false,
+              "thresholdMarkers": true
+            },
+            "id": 72,
+            "interval": null,
+            "links": [],
+            "mappingType": 1,
+            "mappingTypes": [
+              {
+                "name": "value to text",
+                "value": 1
+              },
+              {
+                "name": "range to text",
+                "value": 2
+              }
+            ],
+            "maxDataPoints": 100,
+            "nullPointMode": "connected",
+            "nullText": null,
+            "postfix": "UP",
+            "postfixFontSize": "50%",
+            "prefix": "",
+            "prefixFontSize": "50%",
+            "rangeMaps": [
+              {
+                "from": "null",
+                "text": "N/A",
+                "to": "null"
+              }
+            ],
+            "span": 1,
+            "sparkline": {
+              "fillColor": "rgba(31, 118, 189, 0.18)",
+              "full": false,
+              "lineColor": "rgb(31, 120, 193)",
+              "show": true
+            },
+            "tableColumn": "",
+            "targets": [
+              {
+                "expr": "sum(up{job=\"amplifier\"})",
+                "format": "time_series",
+                "intervalFactor": 2,
+                "legendFormat": "",
+                "metric": "up",
+                "refId": "A",
+                "step": 60
+              }
+            ],
+            "thresholds": "0.9,1.1",
+            "title": "Amplifier",
+            "type": "singlestat",
+            "valueFontSize": "80%",
+            "valueMaps": [
+              {
+                "op": "=",
+                "text": "N/A",
+                "value": "null"
+              }
+            ],
+            "valueName": "current"
+          },
+          {
+            "cacheTimeout": null,
+            "colorBackground": false,
+            "colorValue": true,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "datasource": null,
             "decimals": 0,
             "format": "none",
             "gauge": {
@@ -4150,6 +4228,343 @@
         "repeatRowId": null,
         "showTitle": true,
         "title": "NODE LIST",
+        "titleSize": "h6"
+      },
+      {
+        "collapse": false,
+        "height": 250,
+        "panels": [
+          {
+            "cacheTimeout": null,
+            "colorBackground": false,
+            "colorValue": false,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "datasource": null,
+            "format": "m",
+            "gauge": {
+              "maxValue": 100,
+              "minValue": 0,
+              "show": false,
+              "thresholdLabels": false,
+              "thresholdMarkers": true
+            },
+            "id": 70,
+            "interval": null,
+            "links": [],
+            "mappingType": 1,
+            "mappingTypes": [
+              {
+                "name": "value to text",
+                "value": 1
+              },
+              {
+                "name": "range to text",
+                "value": 2
+              }
+            ],
+            "maxDataPoints": 100,
+            "nullPointMode": "connected",
+            "nullText": null,
+            "postfix": "",
+            "postfixFontSize": "50%",
+            "prefix": "",
+            "prefixFontSize": "50%",
+            "rangeMaps": [
+              {
+                "from": "null",
+                "text": "N/A",
+                "to": "null"
+              }
+            ],
+            "span": 3,
+            "sparkline": {
+              "fillColor": "rgba(31, 118, 189, 0.18)",
+              "full": true,
+              "lineColor": "rgb(31, 120, 193)",
+              "show": true
+            },
+            "tableColumn": "",
+            "targets": [
+              {
+                "expr": "min(time() - process_start_time_seconds{job=\"amplifier\"})/60",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{instance}}",
+                "metric": "process_start_time_seconds",
+                "refId": "A",
+                "step": 60
+              }
+            ],
+            "thresholds": "",
+            "title": "Amplifier Uptime",
+            "type": "singlestat",
+            "valueFontSize": "80%",
+            "valueMaps": [
+              {
+                "op": "=",
+                "text": "N/A",
+                "value": "null"
+              }
+            ],
+            "valueName": "current"
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 1,
+            "id": 73,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 3,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "grpc_server_msg_received_total{job=\"amplifier\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{grpc_service}}:{{grpc_method}}",
+                "metric": "grpc_server_msg_received_total",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Received Messages",
+            "tooltip": {
+              "shared": false,
+              "sort": 2,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 1,
+            "id": 74,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 3,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "grpc_server_handled_total{job=\"amplifier\",grpc_code=\"OK\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{grpc_service}}:{{grpc_method}}",
+                "metric": "grpc_server_handled_total",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Successful Messages",
+            "tooltip": {
+              "shared": false,
+              "sort": 2,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "decimals": 0,
+            "fill": 1,
+            "id": 75,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 3,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "grpc_server_handled_total{job=\"amplifier\",grpc_code!=\"OK\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{grpc_service}}:{{grpc_method}}:{{grpc_code}}",
+                "metric": "grpc_server_handled_total",
+                "refId": "A",
+                "step": 20
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Failed Messages",
+            "tooltip": {
+              "shared": false,
+              "sort": 2,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          }
+        ],
+        "repeat": null,
+        "repeatIteration": null,
+        "repeatRowId": null,
+        "showTitle": false,
+        "title": "Dashboard Row",
         "titleSize": "h6"
       }
     ],
