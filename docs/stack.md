@@ -1,55 +1,80 @@
-### Stack Management
+## Stack Management Commands
 
-The `amp stack` command is used to manage AMP stacks.
+The `amp stack` command is used to manage all stack related operations for AMP.
 
-    $ amp stack --help
+### Usage
 
-    Usage:	amp stack [OPTIONS] COMMAND
+```
+$ amp stack --help
 
-    Stack management operations
+Usage:  amp stack [OPTIONS] COMMAND
 
-    Options:
-      -h, --help            Print usage
-      -s, --server string   Specify server (host:port)
+Stack management operations
 
-    Commands:
-      deploy      Deploy a stack with a docker compose v3 file
-      logs        Get all logs of a given stack
-      ls          List deployed stacks
-      rm          Remove a deployed stack
-      services    List services of a stack
+Options:
+  -h, --help            Print usage
+  -k, --insecure        Control whether amp verifies the server's certificate chain and host name
+  -s, --server string   Specify server (host:port)
 
-    Run 'amp stack COMMAND --help' for more information on a command.
+Commands:
+  deploy      Deploy a stack with a docker compose v3 file
+  logs        Get all logs of a given stack
+  ls          List deployed stacks
+  rm          Remove a deployed stack
+  services    List services of a stack
+
+Run 'amp stack COMMAND --help' for more information on a command.
+```    
+
+>NOTE: To be able to perform any stack related operations, you must be logged in to AMP using a verified account.
 
 ### Examples
 
-To be able to perform any stack related operations, you must be logged in to AMP using a verified account.
-
 * To deploy a stack using a compose file:
 ```
-    $ amp stack deploy -c [path-to-stackfile] [stackname]
+$ amp stack deploy -c examples/stacks/counter/counter.yml counter
+Deploying stack counter using examples/stacks/counter/counter.yml
+Creating service counter_go
+Creating service counter_redis
 ```
-The Docker name of the stack will be `[stackName]-[id]`, where `[id]` is a unique id given by AMP.
-
-* To list the services within a stack:
-```
-    $ amp stack services [stackname]
-```
-Use the name of an already deployed stack as the argument.
-
-* To update a stack with a new compose file:
-```
-    $ amp stack deploy -c [path-to-stackfile] [stackname]
-```
-Use the name of an already deployed stack as the argument.
-
-* To remove a stack:
-```
-    $ amp stack rm [stackname]
-```
+>NOTE: If no name is specified for the stack, the name of the stack will be `[stackName]-[id]`, where `[id]` is a unique id given by AMP.
 
 * To list the deployed stacks, with detailed status about their services:
 ```
-    $ amp stack ls
+$ amp stack ls
+ID                                                                 NAME      SERVICES   FAILED SERVICES   STATUS    OWNER          ORGANIZATION
+95508f3ca3ad3877e8c33e69a92a9e3490eb60395bd1b26f0c6f80f1f5521976   counter   2/2        0                 RUNNING   sample
 ```
-Note that this command only displays stacks created by the user. No infrastructure stacks are displayed.
+> NOTE: this command only displays stacks created by the user or organization. No infrastructure stacks are displayed.
+
+* To list the services within a stack:
+```
+$ amp stack services counter
+ID            NAME           MODE        REPLICAS  IMAGE
+k5fzzzryjpda  counter_redis  replicated  1/1       redis
+njsru7ka1gek  counter_go     replicated  3/3       htilford/go-redis-counter
+```
+
+* To view the logs of the entire stack:
+```
+$ amp stack logs counter
+...
+1:M 05 Jul 21:21:36.050 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+1:M 05 Jul 21:21:36.056 # Server started, Redis version 3.2.9
+1:M 05 Jul 21:21:36.056 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+...
+```
+
+* To update a stack with a new compose file:
+```
+$ amp stack deploy -c examples/stacks/counter/counter-2.yml counter
+Deploying stack counter using examples/stacks/counter/counter-2.yml
+Updating service counter_go (id: njsru7ka1gek1xzdt6z4b8wez)
+Updating service counter_redis (id: k5fzzzryjpdaanlvqqu5b5qr7)
+```
+
+* To remove a stack:
+```
+$ amp stack rm counter
+counter
+```
