@@ -3,7 +3,7 @@
 # not finding the version is an error
 test_has_version() {
   result=$(amp -k version)
-  version="v[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}"
+  version="[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}"
   echo $result | grep -E "Version:[[:space:]]+$version"
 }
 

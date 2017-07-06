@@ -526,13 +526,13 @@ bootstrap_cluster() {
     ok
   fi
 
-  if [[ -n "$registryurl" && "x$TAG" = "xlocal" ]]; then
+  if [[ -n "$registryurl" ]] && echo "$TAG" | grep -q -- "-dev"; then
     echo "push images to cluster"
     for image in amplifier gateway ampbeat agent; do
-      pushimage "${registryurl}" "appcelerator/${image}:${TAG:-local}"
+      pushimage "${registryurl}" "appcelerator/${image}:${TAG}"
     done
   else
-    echo "image push to cluster is ignored (tag=${TAG:-latest})"
+    echo "image push to cluster is ignored (tag=${TAG})"
   fi
 }
 

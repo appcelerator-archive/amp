@@ -17,7 +17,7 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 	}
 	flags := cmd.Flags()
 	//flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
-	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for bootstrap images (default is '0.12.0', use 'local' for development)")
+	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for the amp-bootstrap image")
 	return cmd
 }
 
