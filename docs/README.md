@@ -68,6 +68,13 @@ Place the `amp` binary from the release archive into some location in your syste
 ```
 $ sudo mv ./amp /usr/local/bin
 ```
+
+### Certificates
+
+The connection between the CLI and the ANP server is secured with TLS.
+In the case the certificate on the server is not valid (self signed or expired), you can use the `-k` option.
+For local deployment you can also add the CA to your local key store.
+
 ### Using the unstable version
 
 Alternatively, if you wish to work with the latest development version directly from `master` on Github,
@@ -152,23 +159,23 @@ You can also add a default `--server|-s` value to your `amp.yml` config file.
 
 >For more information on creating your configuration file, see the [config documentation](config.md).
 
-The server location of our hosted AMP is `cloud.appcelerator.io`. This location is currently
+The server location of our hosted AMP is `COMING SOON`. This location is currently
 acting as a playground for anyone to signup and use as they like.
 
 The default value for the `--server|-s` option is `localhost:50101`, which points to a local
-cluster that can be deployed on your systems docker engine.
+cluster that can be deployed on your system's docker engine.
 
 In order to make sure you're connected to the specified server when running commands,
 you can run the `amp version` command to test this.
 
 ```
-$ amp -s cloud.appcelerator.io version
-[cloud.appcelerator.io:50101]
+$ amp -s your.server.com version
+[your.server.com:50101]
 Client:
  Version:       v0.12.0-dev
  Build:         fe0947b5
- Server:        cloud.appcelerator.io:50101
- Go version:    go1.8
+ Server:        your.server.com:50101
+ Go version:    go1.8.1
  OS/Arch:       darwin/amd64
 
 Server:
@@ -180,13 +187,12 @@ Server:
 
 #### Creating a local AMP cluster
 
-If you do not want to use our hosted AMP at `cloud.appcelerator.io`, you can create a local
-AMP cluster with the `amp cluster` commands.
 ```
 $ amp cluster create
 ```
 >*If you are using the unstable version of the CLI, you will need to build the `amp-bootstrap`
-image using the command `ampmake build-bootstrap` and then specify the `--tag=local` option*
+image using the command `make build-bootstrap` or `ampmake build-bootstrap` if your don't have the build tools,
+and then specify the `--tag=local` option to the CLI*
 
 For more examples of cluster commands and deployment in different environments, see the [cluster documentation](cluster.md).
 
@@ -206,6 +212,7 @@ password: [password]
 ```
 After signing up, you will then be sent an email to your registered address. In this email, you will
 be sent a link to verify your account with or you can verify your account with the provided CLI command.
+>*The verification step is skipped for local deployment, you'll be logged automatically*
 
 To verify your account using the token in verification email.
 ```
@@ -231,21 +238,23 @@ UI, a Grafana Dashboard and Kibana Dashboard.
 
 #### UI
 
-local: https://local.appcelerator.io
+local: http://local.appcelerator.io
 
-hosted: https://cloud.appcelerator.io
+hosted: https://cloud.YOUR.DOMAIN
+
+Note: TLS can be use also for a local deployment, but you'll have to add the self signed certificate to your key store.
 
 #### Grafana
 
-local: https://dashboard.local.appcelerator.io
+local: http://dashboard.local.appcelerator.io
 
-hosted: https://dashboard.cloud.appcelerator.io
+hosted: https://dashboard.YOUR.DOMAIN
 
 #### Kibana
 
-local:  https://kibana.local.appcelerator.io
+local:  http://kibana.local.appcelerator.io
 
-hosted:  https://kibana.cloud.appcelerator.io
+hosted:  https://kibana.YOUR.DOMAIN
 
 ### Examples
 

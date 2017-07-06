@@ -25,7 +25,6 @@ Commands:
   ls          List deployed amp clusters
   rm          Destroy an amp cluster
   status      Retrieve details about an amp cluster
-  update      Update an amp cluster
 
 Run 'amp cluster COMMAND --help' for more information on a command.
 ```
@@ -41,6 +40,8 @@ the cluster images as well as the target for the cluster you are performing oper
 
 
 #### Creating a cluster on your local system
+
+This is the default mode.
 
 * To create a cluster locally:
 ```
@@ -66,26 +67,4 @@ If the secret is already created, it will be used as is without any modification
 
 #### Creating a cluster on AWS
 
->NOTE: Creating a cluster on AWS is currently in a state of transition
-
-To create a cluster on AWS:
-```
-$ amp cluster create
-```
-
-
-
-* To update a cluster with new parameter values:
-```
-$ amp cluster update
-```
-
-* To retrieve the status of the cluster:
-```
-$ amp cluster status
-```
-
-* To remove a cluster:
-```
-$ amp cluster remove
-```
+Not available on 0.12, coming on next release.
