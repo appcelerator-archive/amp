@@ -1,4 +1,4 @@
-# ampadmin
+# ampagent
 
 Runs a container in a target cluster environment to perform various tasks, which may include
 set up, smoke tests, etc.
