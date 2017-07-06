@@ -7,9 +7,9 @@ The `amp config` command displays the AMP configuration. It can be accessed by s
 ```
 $ amp config --help
 
-Usage:  amp config
+Usage:	amp config
 
-Display amp configuration
+Display configuration
 
 Options:
   -h, --help            Print usage

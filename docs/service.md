@@ -7,7 +7,7 @@ The `amp service` command is used to manage all service related operations for A
 ```
 $ amp service --help
 
-Usage:  amp service [OPTIONS] COMMAND
+Usage:	amp service [OPTIONS] COMMAND 
 
 Service management operations
 
@@ -18,7 +18,7 @@ Options:
 
 Commands:
   inspect     Display detailed information of a service
-  logs        Get all logs of a given service
+  logs        Display logs of given service matching provided criteria
   ls          List services
   ps          List tasks of a service
   scale       Scale a replicated service

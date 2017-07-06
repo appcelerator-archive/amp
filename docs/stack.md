@@ -7,7 +7,7 @@ The `amp stack` command is used to manage all stack related operations for AMP.
 ```
 $ amp stack --help
 
-Usage:  amp stack [OPTIONS] COMMAND
+Usage:	amp stack [OPTIONS] COMMAND 
 
 Stack management operations
 
@@ -17,10 +17,10 @@ Options:
   -s, --server string   Specify server (host:port)
 
 Commands:
-  deploy      Deploy a stack with a docker compose v3 file
-  logs        Get all logs of a given stack
+  deploy      Deploy a stack with a Docker Compose v3 file
+  logs        Display logs of given stack matching provided criteria
   ls          List deployed stacks
-  rm          Remove a deployed stack
+  rm          Remove one or more deployed stacks
   services    List services of a stack
 
 Run 'amp stack COMMAND --help' for more information on a command.

@@ -7,9 +7,9 @@ The `amp stats` command is used to query or stream statistics. It provides group
 ```
 $ amp stats --help
 
-Usage:  amp stats [OPTIONS] SERVICE
+Usage:	amp stats [OPTIONS] SERVICE
 
-Display amp statistics
+Display statistics
 
 Options:
       --container                Display stats on containers
@@ -32,7 +32,7 @@ Options:
       --service-id string        Filter on service id
       --stack                    Display stats on stacks
       --stack-name string        Filter on stack name
-      --time-group string        Historic extraction by time group, for instance: "1d", "3h", , with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second          
+      --time-group string        Historic extraction by time group, for instance: "1d", "3h", , with y=year, M=month, w=week, d=day, h=hour, m=minute, s=second      
 ```
 
 ### Examples

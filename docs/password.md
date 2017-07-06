@@ -7,7 +7,7 @@ The `amp password` command is used to manage all password related operations for
 ```
 $ amp password --help
 
-Usage:  amp password [OPTIONS] COMMAND
+Usage:	amp password [OPTIONS] COMMAND 
 
 Password management operations
 

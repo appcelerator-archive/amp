@@ -104,11 +104,9 @@ Run `amp --help` to get the CLI help menu for amp.
 ```
 $ amp --help
 
-[localhost:50101]
+Usage:	amp [OPTIONS] COMMAND 
 
-Usage:  amp [OPTIONS] COMMAND
-
-Deploy, manage, and monitor container stacks and functions.
+Deploy, manage, and monitor container stacks.
 
 Examples:
 amp version
@@ -129,13 +127,13 @@ Management Commands:
   user        User management operations
 
 Commands:
-  config      Display amp configuration
+  config      Display configuration
   login       Login to account
   logout      Logout of account
-  logs        Fetch log entries matching provided criteria
-  stats       Display amp statistics
-  version     Show amp version information
-  whoami      Display currently logged-in user
+  logs        Display logs matching provided criteria
+  stats       Display statistics
+  version     Show version information
+  whoami      Display currently logged in account name
 
 Run 'amp COMMAND --help' for more information on a command.
 ```

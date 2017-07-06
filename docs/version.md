@@ -7,9 +7,9 @@ The `amp version` command displays the current version of AMP.
 ```
 $ amp version --help
 
-Usage:  amp version
+Usage:	amp version
 
-Show amp version information
+Show version information
 
 Options:
   -h, --help            Print usage

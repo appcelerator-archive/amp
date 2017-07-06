@@ -7,9 +7,9 @@ Other user-related commands that aren't managed by `amp user` include `login`, `
 ### Usage
 
 ```
-$ amp user --help
+ $ amp user --help
 
-Usage:	amp user COMMAND
+Usage:	amp user [OPTIONS] COMMAND 
 
 User management operations
 
@@ -20,9 +20,9 @@ Options:
 
 Commands:
   forgot-login Retrieve account name
-  get          Get user
+  get          Get user information
   ls           List users
-  rm           Remove user
+  rm           Remove one or more users
   signup       Signup for a new account
   verify       Verify account
 
