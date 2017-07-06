@@ -158,7 +158,7 @@ buildall-cli: $(AMPTARGET)
 # =============================================================================
 AMPL := amplifier
 AMPLBINARY=$(AMPL).alpine
-AMPLTAG := local
+AMPLTAG := $(VERSION)
 AMPLIMG := appcelerator/$(AMPL):$(AMPLTAG)
 AMPLTARGET := $(CMDDIR)/$(AMPL)/$(AMPLBINARY)
 AMPLDIRS := $(CMDDIR)/$(AMPL) api data $(COMMONDIRS)
@@ -191,7 +191,7 @@ clean-server:
 # =============================================================================
 GW := gateway
 GWBINARY=$(GW).alpine
-GWTAG := local
+GWTAG := $(VERSION)
 GWIMG := appcelerator/$(GW):$(GWTAG)
 GWTARGET := $(CMDDIR)/$(GW)/$(GWBINARY)
 GWDIRS := $(CMDDIR)/$(GW) api data $(COMMONDIRS)
@@ -221,7 +221,7 @@ clean-gateway:
 # =============================================================================
 MONIT := monitoring
 MONITBINARY=promctl.alpine
-MONITTAG := local
+MONITTAG := $(VERSION)
 MONITIMG := appcelerator/amp-prometheus:$(MONITTAG)
 MONITTARGET := $(MONIT)/$(MONITBINARY)
 MONITDIRS := $(MONIT)/promctl $(COMMONDIRS)
@@ -251,7 +251,7 @@ clean-monit:
 # =============================================================================
 BEAT := ampbeat
 BEATBINARY=$(BEAT).alpine
-BEATTAG := local
+BEATTAG := $(VERSION)
 BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
 BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
 BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
@@ -281,7 +281,7 @@ clean-beat:
 # =============================================================================
 AGENT := agent
 AGENTBINARY=$(AGENT).alpine
-AGENTTAG := local
+AGENTTAG := $(VERSION)
 AGENTIMG := appcelerator/$(AGENT):$(AGENTTAG)
 AGENTTARGET := $(CMDDIR)/$(AGENT)/$(AGENTBINARY)
 AGENTDIRS := $(CMDDIR)/$(AGENT) agent api $(COMMONDIRS)
@@ -311,7 +311,7 @@ clean-agent:
 AMPBOOTDIR := platform
 AMPBOOTBIN := platform
 AMPBOOTIMG := appcelerator/amp-bootstrap
-AMPBOOTVER ?= local
+AMPBOOTVER ?= $(VERSION)
 AMPBOOTSRC := platform/bin/deploy platform/bin/dev $(shell find $(AMPBOOTDIR) -type f)
 
 .PHONY: build-bootstrap
