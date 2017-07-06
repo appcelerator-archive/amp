@@ -12,7 +12,7 @@ Usage:	amp logs [OPTIONS] SERVICE
 Display logs matching provided criteria
 
 Options:
-      --container string   Filter by the given Container
+      --container string   Filter by the given container
   -f, --follow             Follow log output
   -h, --help               Print usage
   -i, --include            Include AMP logs
