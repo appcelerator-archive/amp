@@ -17,7 +17,7 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for bootstrap images, use 'local' for development")
+	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for the amp-bootstrap image")
 	//flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
 	return cmd
