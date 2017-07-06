@@ -2,8 +2,8 @@ package member
 
 import (
 	"errors"
-
 	"fmt"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
@@ -55,7 +55,8 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeMemOrgOpti
 		opts.role = c.Console().GetInput("organization role")
 	}
 	orgRole := accounts.OrganizationRole_ORGANIZATION_MEMBER
-	switch opts.role {
+	role := strings.ToLower(opts.role)
+	switch role {
 	case "owner":
 		orgRole = accounts.OrganizationRole_ORGANIZATION_OWNER
 	case "member":
