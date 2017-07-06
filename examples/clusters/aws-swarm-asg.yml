@@ -226,16 +226,9 @@ Parameters:
     Type: String
     Description: "space separated list of plugins to install. Example: rexray/ebs"
     Default: ""
-  Sync:
-    Type: String
-    Description: If true, the stack will wait for all nodes to be up
-    AllowedValues:
-    - true
-    - false
-    Default: true
   InstallApplication:
     Type: String
-    Description: If true, AMP will be installed. Expects Synchronous Deployment = true
+    Description: If true, AMP will be installed
     AllowedValues:
     - true
     - false
@@ -249,7 +242,6 @@ Parameters:
     Default: false
 
 Conditions:
-  Sync:               !Equals [ !Ref Sync, "true" ]
   InstallApplication: !Equals [ !Ref InstallApplication, "true" ]
   ConfigurationURL:   !Equals [ !Ref ConfigurationURL, "" ]
   MirrorRegistry:     !Equals [ !Ref MirrorRegistry, "true" ]
@@ -958,7 +950,6 @@ Resources:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
   MetricsWaitCondition:
-    Condition: Sync
     Type: "AWS::CloudFormation::WaitCondition"
     DependsOn: MetricsWorkerAutoScalingGroup
     Properties:
@@ -1037,13 +1028,12 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=${Sync} SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
   CoreWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
   CoreWaitCondition:
-    Condition: Sync
     Type: "AWS::CloudFormation::WaitCondition"
     DependsOn: CoreWorkerAutoScalingGroup
     Properties:
@@ -1123,14 +1113,13 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=${Sync} SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
 
   UserWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
   UserWaitCondition:
-    Condition: Sync
     Type: "AWS::CloudFormation::WaitCondition"
     DependsOn: UserWorkerAutoScalingGroup
     Properties:
@@ -1210,7 +1199,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=${Sync} SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
 
   ApplicationWaitHandle:
@@ -1233,7 +1222,6 @@ Resources:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
   ManagerWaitCondition:
-    Condition: Sync
     Type: "AWS::CloudFormation::WaitCondition"
     DependsOn: ManagerAutoScalingGroup
     Properties:
@@ -1314,7 +1302,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=${Sync} SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
+                - SYNC=true SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
@@ -1443,8 +1431,6 @@ Metadata:
         default: EBS Volume Size for Docker local storage
       LinuxDistribution:
         default: Linux Distribution
-      Sync:
-        default: Synchronous Deployment
       InstallApplication:
         default: Install Application
       MirrorRegistry:
@@ -1456,6 +1442,9 @@ Outputs:
   DNSTarget:
     Description: public facing endpoint for the cluster
     Value: !GetAtt ManagerExternalELB.DNSName
+  InternalRegistryTarget:
+    Description: internal endpoint for the registry service
+    Value: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ]
   MetricsURL:
     Description: URL for cluster health dashboard
     Value:

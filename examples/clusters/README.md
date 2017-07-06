@@ -36,7 +36,6 @@ Once the nodes are up and running, it will run the appcelerator/ampadmin image t
 | OverlayNetworks | name of overlay networks that should be created once swarm is initialized | ampnet | public storage search mq |
 | DockerChannel | channel for Docker installation | stable | edge |
 | DockerPlugins | space separated list of plugins to install | | rexray/ebs |
-| Sync | the stack will wait for all nodes to be up | true | false |
 | InstallApplication | install AMP | true | false |
 
 ## Output
@@ -47,6 +46,7 @@ The output of the stack lists the DNS name of the ELB in front of the manager no
 | --------- | ----------- |
 | VpcId | VPC ID |
 | DNSTarget | public facing endpoint for the cluster, It can be used for ssh access, https access to swarm services and configuration of the remote server in the CLI |
+| InternalRegistryTarget | internal endpoint for the registry service |
 | MetricsURL | URL for cluster health dashboard |
 
 ## Custom AMI
