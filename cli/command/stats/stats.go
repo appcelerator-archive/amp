@@ -51,7 +51,7 @@ var displayGroupMap = map[string]string{
 func NewStatsCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stats [OPTIONS] SERVICE",
-		Short: "Display amp statistics",
+		Short: "Display statistics",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getStats(c, args)
 		},

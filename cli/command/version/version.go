@@ -65,7 +65,7 @@ Server:         {{if .IsConnected}}
 func NewVersionCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "version",
-		Short:   "Show amp version information",
+		Short:   "Show version information",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showVersion(c)

@@ -21,7 +21,7 @@ var t = `AMP Configuration:
 func NewConfigCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "config",
-		Short:   "Display amp configuration",
+		Short:   "Display configuration",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showConfig(c)

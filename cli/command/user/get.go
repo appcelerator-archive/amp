@@ -15,7 +15,7 @@ import (
 func NewGetUserCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "get USERNAME",
-		Short:   "Get user",
+		Short:   "Get user information",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getUser(c, args)

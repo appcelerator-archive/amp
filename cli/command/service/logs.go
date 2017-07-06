@@ -11,7 +11,7 @@ func NewServiceLogsCommand(c cli.Interface) *cobra.Command {
 	opts := logs.LogsOptions{}
 	cmd := &cobra.Command{
 		Use:     "logs [OPTIONS] SERVICE",
-		Short:   "Fetch log entries of given service matching provided criteria",
+		Short:   "Display logs of given service matching provided criteria",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return logs.GetLogs(c, args, opts)

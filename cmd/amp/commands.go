@@ -36,7 +36,7 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 	opts := &opts{}
 	cmd := &cobra.Command{
 		Use:           "amp",
-		Short:         "Deploy, manage, and monitor container stacks and functions.",
+		Short:         "Deploy, manage, and monitor container stacks.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example:       "amp version",

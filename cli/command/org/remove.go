@@ -19,7 +19,7 @@ import (
 func NewOrgRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "rm ORGANIZATION(S)",
-		Short:   "Remove organization",
+		Short:   "Remove one or more organizations",
 		Aliases: []string{"remove"},
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

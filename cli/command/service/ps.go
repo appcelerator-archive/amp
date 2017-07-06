@@ -21,7 +21,7 @@ type taskOptions struct {
 func NewServicePsCommand(c cli.Interface) *cobra.Command {
 	opts := taskOptions{}
 	cmd := &cobra.Command{
-		Use:     "ps SERVICE [OPTIONS]",
+		Use:     "ps [OPTIONS] SERVICE",
 		Short:   "List tasks of a service",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

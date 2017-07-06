@@ -16,7 +16,7 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "rm STACK(S)",
 		Aliases: []string{"remove", "down", "stop"},
-		Short:   "Remove a deployed stack",
+		Short:   "Remove one or more deployed stacks",
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return remove(c, args)
