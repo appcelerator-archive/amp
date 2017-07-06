@@ -1,11 +1,14 @@
 # ampagent
 
-Runs a container in a target cluster environment to perform various tasks, which may include
-set up, smoke tests, etc.
+Runs a container in a target cluster environment for monitoring various
+swarm events, as well as to perform various adminstrative tasks, which may include
+running amp initialization and system checks, etc.
 
 ## Build
 
-* `make` (or `make build`) - builds target `bin/ampadmin`
-* `make clean` - removes `bin/aws`
+* `make` | `make build` - builds target `bin/ampctl`
+* `make clean` - removes `bin/ampctl`
 * `make test` - runs tests
-* `make build-image` - builds `appcelerator/ampadmin` using the multi-stage `Dockerfile`
+* `make image` - builds `appcelerator/ampaagent` using the multi-stage `Dockerfile`
+* `make run` - runs `ampctl monitor` in a container (to mount swarm control socket)
+
