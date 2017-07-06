@@ -11,6 +11,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func NewMonitorCommand() *cobra.Command {
+	monitorCmd := &cobra.Command{
+		Use:   "monitor",
+		Short: "Monitor swarm events",
+		Run:   monitor,
+	}
+	return monitorCmd
+}
+
 func monitor(cmd *cobra.Command, args []string) {
 	c, conn, err := sk.Dial(sk.DefaultSocket())
 	if err != nil {
