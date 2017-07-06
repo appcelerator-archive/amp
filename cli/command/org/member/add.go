@@ -19,8 +19,8 @@ type addMemOrgOptions struct {
 func NewOrgAddMemCommand(c cli.Interface) *cobra.Command {
 	opts := addMemOrgOptions{}
 	cmd := &cobra.Command{
-		Use:     "add [OPTIONS] MEMBER",
-		Short:   "Add member to organization",
+		Use:     "add [OPTIONS] MEMBER(S)",
+		Short:   "Add one or more members",
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addOrgMem(c, cmd, args, opts)

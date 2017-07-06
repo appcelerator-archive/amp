@@ -17,7 +17,7 @@ import (
 func NewRemoveUserCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "rm USERNAME(S)",
-		Short:   "Remove user",
+		Short:   "Remove one or more users",
 		Aliases: []string{"remove"},
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

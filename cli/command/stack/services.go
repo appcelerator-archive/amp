@@ -24,7 +24,7 @@ var (
 // NewServicesCommand returns a new instance of the stack command.
 func NewServicesCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "services STACK [OPTIONS]",
+		Use:     "services [OPTIONS] STACK",
 		Aliases: []string{"srv"},
 		Short:   "List services of a stack",
 		PreRunE: cli.ExactArgs(1),

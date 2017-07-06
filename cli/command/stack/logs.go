@@ -16,7 +16,7 @@ func NewLogsCommand(c cli.Interface) *cobra.Command {
 	opts := logs.LogsOptions{}
 	cmd := &cobra.Command{
 		Use:     "logs [OPTIONS] STACK",
-		Short:   "Fetch log entries of given stack matching provided criteria",
+		Short:   "Display logs of given stack matching provided criteria",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Stack = args[0]

@@ -9,7 +9,7 @@ import (
 func NewTeamMemberCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "member",
-		Short:   "Team member management operations",
+		Short:   "Manage team members",
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}

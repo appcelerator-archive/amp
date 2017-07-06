@@ -13,7 +13,7 @@ import (
 func NewWhoAmICommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "whoami",
-		Short:   "Display currently logged-in user",
+		Short:   "Display currently logged in account name",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return whoami(c)

@@ -31,7 +31,7 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deploy [OPTIONS] STACK",
 		Aliases: []string{"up", "start"},
-		Short:   "Deploy a stack with a docker compose v3 file",
+		Short:   "Deploy a stack with a Docker Compose v3 file",
 		PreRunE: cli.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deploy(c, cmd, args)
