@@ -18,7 +18,7 @@ Options:
 
 Commands:
   deploy      Deploy a stack with a Docker Compose v3 file
-  logs        Display logs of given stack matching provided criteria
+  logs        Display filtered logs for stack
   ls          List deployed stacks
   rm          Remove one or more deployed stacks
   services    List services of a stack
