@@ -9,7 +9,7 @@ networks:
 services:
 
   portal:
-    image: appcelerator/portal:latest
+    image: appcelerator/portal:${TAG:-0.12.0}
     networks:
       - default
     deploy:
