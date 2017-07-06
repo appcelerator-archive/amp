@@ -4,7 +4,6 @@ networks:
   default:
     external:
       name: ampnet
-  infrastructure:
 
 services:
 
@@ -12,8 +11,9 @@ services:
     image: manomarks/visualizer
     networks:
       - default
-    ports:
-      - "50180:8080/tcp"
+    environment:
+      SERVICE_PORTS: "8080"
+      VIRTUAL_HOST: "http://visualizer.*,https://visualizer.*"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     deploy:
@@ -24,8 +24,9 @@ services:
     image: portainer/portainer
     networks:
       - default
-    ports:
-      - "50190:9000"
+    environment:
+      SERVICE_PORTS: "9000"
+      VIRTUAL_HOST: "http://portainer.*,https://portainer.*"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     deploy:
