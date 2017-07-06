@@ -137,7 +137,7 @@ Commands:
   config      Display configuration
   login       Login to account
   logout      Logout of account
-  logs        Display logs matching provided criteria
+  logs        Display filtered logs
   stats       Display statistics
   version     Show version information
   whoami      Display currently logged in account name
@@ -279,7 +279,7 @@ For more information on inspecting and manipulating the services within your sta
 
 The `amp logs` command allows for the querying and filtering of both realtime and historical logs.
 
-To fetch the logs of your cluster:
+To fetch the logs for your cluster:
 ```
 $ amp logs
 ...
