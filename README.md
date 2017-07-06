@@ -4,19 +4,16 @@
 
 An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-caas/) for Docker, batteries included.
 
- * Host your own high availability cluster or use `cloud.appcelerator.io`
- * [Docker Infrakit](https://github.com/docker/infrakit) for self-healing infrastructure (currently a work-in-progress)
  * Use Docker Compose v3 [stackfiles](https://docs.docker.com/compose/compose-file/) to deploy your stacks
  * Account management support for users, organizations and teams with role-based access controls
  * Logs and metrics realtime filtered feeds and historical query support
- * [AMP UI](https://cloud.appcelerator.io) included
- * [Grafana Dashboard](https://dashboard.cloud.appcelerator.io) included
- * [Kibana dashboard](https://www.elastic.co/guide/en/kibana/current/dashboard.html) service included
+ * [AMP UI](https://cloud.local.appcelerator.io) included
+ * [Grafana Dashboard](https://dashboard.local.appcelerator.io) included
+ * [Kibana dashboard](https://kibana.local.appcelerator.io) included
 
-While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.12 in mid-June).
-In the meantime, you can use the current playground hosted at `cloud.appcelerator.io`,
-and you can also host your own cluster. You can even create a full cluster on your own laptop
-with `amp cluster create` using the CLI.
+While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.12).
+You'll be able to create your own HA cluster on the cloud, or use our playground.
+In the meantime, you can create a full cluster on your own laptop with `amp cluster create` using the CLI.
 
 ## Getting started
 

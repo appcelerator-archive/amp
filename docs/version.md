@@ -25,7 +25,7 @@ Options:
     Client:
      Version:       v0.10.0-dev
      Build:         6f590348
-     Server:        cloud.appcelerator.io:50101
+     Server:        localhost:50101
      Go version:    go1.8
      OS/Arch:       darwin/amd64
 
