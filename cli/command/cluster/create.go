@@ -27,7 +27,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	// during this refactoring.
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
 	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
-	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider (\"local\" (default) or \"aws\")")
+	//flags.StringVar(&opts.provider, "provider", "local", "Cluster provider (\"local\" (default) or \"aws\")")
 	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
 	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster images (use 'local' for development)")
 
@@ -62,11 +62,11 @@ func create(c cli.Interface, cmd *cobra.Command) error {
 		m := map[string]string{
 			"local-workers":  "-w",
 			"local-managers": "-m",
-			"provider":       "-t",
-			"name":           "-l",
-			"tag":            "-T",
-			"registration":   "-r",
-			"notifications":  "-n",
+			//"provider":       "-t",
+			"name":          "-l",
+			"tag":           "-T",
+			"registration":  "-r",
+			"notifications": "-n",
 		}
 
 		// the following ensures that flags are added before the final command arg

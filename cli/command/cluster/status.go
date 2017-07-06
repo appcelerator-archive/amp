@@ -16,7 +16,7 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	//flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVarP(&opts.tag, "tag", "t", "0.10.1", "Specify tag for bootstrap images (default is '0.10.1', use 'local' for development)")
 	return cmd
 }
@@ -24,8 +24,8 @@ func NewStatusCommand(c cli.Interface) *cobra.Command {
 func status(c cli.Interface, cmd *cobra.Command) error {
 	// This is a map from cli cluster flag name to bootstrap script flag name
 	m := map[string]string{
-		"provider": "-t",
-		"tag":      "-T",
+		//"provider": "-t",
+		"tag": "-T",
 	}
 	// TODO call api to get status
 	args := []string{"bin/deploy", "-s"}
