@@ -1,0 +1,64 @@
+version: "3.2"
+
+services:
+  database:
+    image: dockersamples/atsea_db
+    environment:
+      POSTGRES_USER: gordonuser
+      POSTGRES_DB_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: atsea
+    networks:
+      - back-tier
+    secrets:
+      - postgres_password
+
+  appserver:
+    image: dockersamples/atsea_app
+    networks:
+      - front-tier
+      - back-tier
+      - payment
+      - default
+    environment:
+      SERVICE_PORTS: 8080
+      VIRTUAL_HOST: "https://atsea.examples.*,atsea.examples.*"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    secrets:
+      - postgres_password
+
+  payment_gateway:
+    image: dockersamples/atseasampleshopapp_payment_gateway
+    secrets:
+      - source: staging_token
+        target: payment_token
+    networks:
+      - payment
+    deploy:
+      update_config:
+        failure_action: rollback
+
+networks:
+  front-tier:
+  back-tier:
+  payment:
+    driver: overlay
+    driver_opts:
+      encrypted: 'yes'
+  default:
+    external:
+      name: ampnet
+
+secrets:
+  postgres_password:
+    external: true
+  staging_token:
+    external: true
