@@ -18,7 +18,7 @@ Options:
 
 Commands:
   inspect     Display detailed information of a service
-  logs        Display logs of given service matching provided criteria
+  logs        Display filtered service logs
   ls          List services
   ps          List tasks of a service
   scale       Scale a replicated service
