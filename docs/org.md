@@ -7,7 +7,7 @@ The `amp org` command is used to manage all organization related operations for 
 ```
 $ amp org --help
 
-Usage:  amp org [OPTIONS] COMMAND
+Usage:	amp org [OPTIONS] COMMAND 
 
 Organization management operations
 
@@ -21,9 +21,9 @@ Management Commands:
 
 Commands:
   create      Create organization
-  get         Get organization
+  get         Get organization information
   ls          List organization
-  rm          Remove organization
+  rm          Remove one or more organizations
   switch      Switch account
 
 Run 'amp org COMMAND --help' for more information on a command.
@@ -81,7 +81,7 @@ The `amp org member` command is used to manage all organization member operation
 ```
 $ amp org member --help
 
-Usage:  amp org member [OPTIONS] COMMAND
+Usage:	amp org member [OPTIONS] COMMAND 
 
 Manage organization members
 
@@ -91,9 +91,9 @@ Options:
   -s, --server string   Specify server (host:port)
 
 Commands:
-  add         Add member to organization
+  add         Add one or more members
   ls          List members
-  rm          Remove member from organization
+  rm          Remove one or more members
   role        Change member role
 
 Run 'amp org member COMMAND --help' for more information on a command.

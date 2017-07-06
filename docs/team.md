@@ -7,7 +7,7 @@ The `amp team` command is used to manage all team related operations for AMP.
 ```
 $ amp team --help
 
-Usage:  amp team [OPTIONS] COMMAND
+Usage:	amp team [OPTIONS] COMMAND 
 
 Team management operations
 
@@ -17,14 +17,14 @@ Options:
   -s, --server string   Specify server (host:port)
 
 Management Commands:
-  member      Team member management operations
-  resource    Team resource management operations
+  member      Manage team members
+  resource    Manage team resources
 
 Commands:
   create      Create team
-  get         Get team
-  ls          List team
-  rm          Remove team
+  get         Get team information
+  ls          List teams
+  rm          Remove one or more teams
 
 Run 'amp team COMMAND --help' for more information on a command.
 ```
@@ -76,9 +76,9 @@ The `amp team member` command is used to manage all team member related operatio
 ```
 $ amp team member --help
 
-Usage:  amp team member [OPTIONS] COMMAND
+Usage:	amp team member [OPTIONS] COMMAND 
 
-Team member management operations
+Manage team members
 
 Options:
   -h, --help            Print usage
@@ -86,9 +86,9 @@ Options:
   -s, --server string   Specify server (host:port)
 
 Commands:
-  add         Add member to team
+  add         Add one or more members
   ls          List members
-  rm          Remove member from team
+  rm          Remove one or more members
 
 Run 'amp team member COMMAND --help' for more information on a command.
 ```
@@ -132,9 +132,9 @@ The `amp team resource` command is used to manage all team resource related oper
 ```
 $ amp team resource --help
 
-Usage:  amp team resource [OPTIONS] COMMAND
+Usage:	amp team resource [OPTIONS] COMMAND 
 
-Team resource management operations
+Manage team resources
 
 Options:
   -h, --help            Print usage
@@ -142,10 +142,10 @@ Options:
   -s, --server string   Specify server (host:port)
 
 Commands:
-  add         Add resource to team
+  add         Add one or more resources
   ls          List resources
   perm        Change permission level over a resource
-  rm          Remove resource from team
+  rm          Remove one or more resources
 
 Run 'amp team resource COMMAND --help' for more information on a command.
 ```

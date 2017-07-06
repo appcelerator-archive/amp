@@ -7,12 +7,12 @@ The `amp logs` command is used to query or stream logs. It provides useful filte
 ```
 $ amp logs --help
 
-Usage:  amp logs [OPTIONS] SERVICE
+Usage:	amp logs [OPTIONS] SERVICE
 
-Fetch log entries matching provided criteria
+Display logs matching provided criteria
 
 Options:
-      --container string   Filter by the given container
+      --container string   Filter by the given Container
   -f, --follow             Follow log output
   -h, --help               Print usage
   -i, --include            Include AMP logs
