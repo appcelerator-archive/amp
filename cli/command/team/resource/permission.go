@@ -23,7 +23,7 @@ type changeTeamResPermLevelOptions struct {
 func NewChangeTeamResPermissionLevelCommand(c cli.Interface) *cobra.Command {
 	opts := changeTeamResPermLevelOptions{}
 	cmd := &cobra.Command{
-		Use:     "perm [OPTIONS] RESOURCEID PERMISSION",
+		Use:     "perm [OPTIONS] RESOURCE read|write|admin",
 		Short:   "Change permission level over a resource",
 		PreRunE: cli.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

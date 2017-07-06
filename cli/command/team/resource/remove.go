@@ -22,7 +22,7 @@ func NewRemoveTeamResCommand(c cli.Interface) *cobra.Command {
 	opts := remTeamResOptions{}
 	cmd := &cobra.Command{
 		Use:     "rm [OPTIONS] RESOURCE(S)",
-		Short:   "Remove resource from team",
+		Short:   "Remove one or more resources",
 		Aliases: []string{"del"},
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

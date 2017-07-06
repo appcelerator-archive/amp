@@ -33,7 +33,7 @@ func NewOrgChangeMemRoleCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&opts.name, "org", "", "Organization name")
 	flags.StringVar(&opts.member, "member", "", "Member name")
-	flags.StringVar(&opts.role, "role", "", "Organization role")
+	flags.StringVar(&opts.role, "role", "member", "Organization role (value can be 'member' or 'role')")
 	return cmd
 }
 

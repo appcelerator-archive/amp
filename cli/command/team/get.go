@@ -20,7 +20,7 @@ func NewTeamGetCommand(c cli.Interface) *cobra.Command {
 	opts := getTeamOptions{}
 	cmd := &cobra.Command{
 		Use:     "get [OPTIONS] TEAM",
-		Short:   "Get team",
+		Short:   "Get team information",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getTeam(c, cmd, args, opts)

@@ -15,7 +15,7 @@ import (
 func NewOrgGetCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "get ORGANIZATION",
-		Short:   "Get organization",
+		Short:   "Get organization information",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getOrg(c, args)

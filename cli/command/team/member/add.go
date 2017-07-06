@@ -20,8 +20,8 @@ type addTeamMemOptions struct {
 func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 	opts := addTeamMemOptions{}
 	cmd := &cobra.Command{
-		Use:     "add [OPTIONS] MEMBER",
-		Short:   "Add member to team",
+		Use:     "add [OPTIONS] MEMBER(S)",
+		Short:   "Add one or more members",
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addTeamMem(c, cmd, args, opts)
