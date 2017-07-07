@@ -8,6 +8,7 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
+	"github.com/appcelerator/amp/cli/command/completion"
 	"github.com/appcelerator/amp/cli/command/config"
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
@@ -86,6 +87,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 	cmd.AddCommand(
 		//config
 		config.NewConfigCommand(c),
+
+		//completion
+		completion.NewCompletionCommand(c),
 
 		// cluster
 		cluster.NewClusterCommand(c),
