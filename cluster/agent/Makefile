@@ -20,5 +20,8 @@ image:
 	docker build -t $(IMAGE) .
 
 run:
-	docker run -it --rm -v /var/run/docker:/var/run/docker $(IMAGE) monitor
+	docker run -t --rm -v /var/run/docker:/var/run/docker:ro $(IMAGE) monitor
+
+run-checks:
+	docker run -t --rm -v /var/run/docker:/var/run/docker:ro -v /var/run/docker.sock:/var/run/docker.sock:ro appcelerator/ampagent check -a
 
