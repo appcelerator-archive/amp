@@ -205,6 +205,13 @@ _wait_for_quorum(){
   TIMEOUT=300
   SECONDS=0
   echo "waiting for quorum ($MANAGER_SIZE) (will timeout after $TIMEOUT s)" >&2
+  if [[ "$MANAGER_SIZE" -eq 1 ]]; then
+    # to avoid side effect of ASG launching a new manager and killing the old one once this one is up
+    # which would elect the previous manager, soon to be killed
+    # if the size of the ASG is 1, then this node should obviously be the leader
+    _get_node_ip
+    return 0
+  fi
   while [[ $_quorum_size -lt $MANAGER_SIZE ]]; do
     _quorum=$(aws ec2 describe-instances --region="${REGION}" --filters "Name=tag:Name,Values=${STACK_NAME}-manager" "Name=instance-state-name,Values=pending,running" "Name=vpc-id,Values=${VPC_ID}" | jq -r '.Reservations[].Instances[].PrivateIpAddress')
     _quorum_size=$(echo $_quorum | wc -w)
