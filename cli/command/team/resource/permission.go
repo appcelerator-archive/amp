@@ -3,6 +3,7 @@ package resource
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/cli"
@@ -60,7 +61,8 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 		}
 	}
 	permissionLevel := accounts.TeamPermissionLevel_TEAM_READ
-	switch opts.permissionLevel {
+	permLevel := strings.ToLower(opts.permissionLevel)
+	switch permLevel {
 	case "read":
 		permissionLevel = accounts.TeamPermissionLevel_TEAM_READ
 	case "write":
