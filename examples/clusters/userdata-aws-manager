@@ -390,7 +390,7 @@ _wait_for_full_swarm() {
 }
 
 _setup() {
-  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampadmin
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent
 }
 
 _sanity_check || exit 1
