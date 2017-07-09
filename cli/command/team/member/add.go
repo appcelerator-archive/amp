@@ -6,6 +6,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
@@ -28,23 +29,24 @@ func NewAddTeamMemCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&opts.org, "org", "", "Organization name")
+	//flags.StringVar(&opts.org, "org", "", "Organization name")
 	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
 func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeamMemOptions) error {
 	var errs []string
-	org, err := cli.ReadOrg(c.Server())
-	if !cmd.Flag("org").Changed {
-		switch {
-		case err == nil:
-			opts.org = org
-			c.Console().Println("organization name:", opts.org)
-		default:
-			opts.org = c.Console().GetInput("organization name")
-		}
-	}
+	opts.org = accounts.DefaultOrganization
+	//org, err := cli.ReadOrg(c.Server())
+	//if !cmd.Flag("org").Changed {
+	//	switch {
+	//	case err == nil:
+	//		opts.org = org
+	//		c.Console().Println("organization name:", opts.org)
+	//	default:
+	//		opts.org = c.Console().GetInput("organization name")
+	//	}
+	//}
 	team, err := cli.ReadTeam(c.Server())
 	if !cmd.Flag("team").Changed {
 		switch {
@@ -74,9 +76,9 @@ func addTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts addTeam
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
-	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
-		return err
-	}
+	//if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+	//	return err
+	//}
 	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
 		return err
 	}

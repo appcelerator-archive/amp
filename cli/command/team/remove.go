@@ -6,6 +6,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
@@ -28,22 +29,23 @@ func NewTeamRemoveCommand(c cli.Interface) *cobra.Command {
 			return removeTeam(c, cmd, args, opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.org, "org", "", "Organization name")
+	//cmd.Flags().StringVar(&opts.org, "org", "", "Organization name")
 	return cmd
 }
 
 func removeTeam(c cli.Interface, cmd *cobra.Command, args []string, opts removeTeamOptions) error {
 	var errs []string
-	org, err := cli.ReadOrg(c.Server())
-	if !cmd.Flag("org").Changed {
-		switch {
-		case err == nil:
-			opts.org = org
-			c.Console().Println("organization name:", opts.org)
-		default:
-			opts.org = c.Console().GetInput("organization name")
-		}
-	}
+	opts.org = accounts.DefaultOrganization
+	//org, err := cli.ReadOrg(c.Server())
+	//if !cmd.Flag("org").Changed {
+	//	switch {
+	//	case err == nil:
+	//		opts.org = org
+	//		c.Console().Println("organization name:", opts.org)
+	//	default:
+	//		opts.org = c.Console().GetInput("organization name")
+	//	}
+	//}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	for _, team := range args {

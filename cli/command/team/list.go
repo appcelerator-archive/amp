@@ -7,6 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/cli"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -31,22 +32,23 @@ func NewTeamListCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&opts.org, "org", "", "Organization name")
+	//flags.StringVar(&opts.org, "org", "", "Organization name")
 	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display team names")
 	return cmd
 }
 
 func listTeam(c cli.Interface, cmd *cobra.Command, opts listTeamOptions) error {
-	org, err := cli.ReadOrg(c.Server())
-	if !cmd.Flag("org").Changed {
-		switch {
-		case err == nil:
-			opts.org = org
-			c.Console().Println("organization name:", opts.org)
-		default:
-			opts.org = c.Console().GetInput("organization name")
-		}
-	}
+	opts.org = accounts.DefaultOrganization
+	//org, err := cli.ReadOrg(c.Server())
+	//if !cmd.Flag("org").Changed {
+	//	switch {
+	//	case err == nil:
+	//		opts.org = org
+	//		c.Console().Println("organization name:", opts.org)
+	//	default:
+	//		opts.org = c.Console().GetInput("organization name")
+	//	}
+	//}
 	conn := c.ClientConn()
 	client := account.NewAccountClient(conn)
 	request := &account.ListTeamsRequest{
