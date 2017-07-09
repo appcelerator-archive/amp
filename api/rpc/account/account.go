@@ -104,6 +104,14 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		return nil, convertError(err)
 	}
 
+	// There is no personal account in this release, add the user to the default organization
+	if err := s.Accounts.AddUserToOrganization(ctx, accounts.DefaultOrganization, in.Name); err != nil {
+		if errd := s.Accounts.DeleteNotVerifiedUser(ctx, in.Name); errd != nil {
+			return nil, convertError(fmt.Errorf("Delete user error [%v] comming after AddUserToOrganization error [%v]", errd, err))
+		}
+		return nil, convertError(err)
+	}
+
 	switch s.Config.Registration {
 	case configuration.RegistrationEmail:
 		// Create a verification token valid for an hour
@@ -157,8 +165,15 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	if err := s.Accounts.CheckUserPassword(ctx, in.Name, in.Password); err != nil {
 		return nil, convertError(err)
 	}
+
+	// There are no personal accounts, users are automatically logged into the default organization
+	organization := accounts.DefaultOrganization
+	if in.Name == accounts.SuperUser {
+		organization = accounts.SuperOrganization
+	}
+
 	// Create an authentication token valid for a day
-	token, err := s.Tokens.CreateLoginToken(in.Name, "")
+	token, err := s.Tokens.CreateLoginToken(in.Name, organization)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -422,6 +437,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	if err != nil {
 		return nil, convertError(err)
 	}
+	log.Println("stacks", stacks)
 	ownsStacks := false
 	for _, stack := range stacks {
 		if stack.Owner.Organization == in.Name {
@@ -437,6 +453,7 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	if err != nil {
 		return nil, convertError(err)
 	}
+	log.Println("dashboards", dashboards)
 	ownsDashboards := false
 	for _, dashboard := range dashboards {
 		if dashboard.Owner.Organization == in.Name {
