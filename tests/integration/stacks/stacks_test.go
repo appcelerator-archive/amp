@@ -208,7 +208,7 @@ func TestDeleteAnOrganizationOwningStacksShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Deleting the organization should fail
-	_, err = h.Accounts().DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
+	_, err = h.Accounts().DeleteOrganization(orgCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
 	assert.Error(t, err)
 
 	// Remove stack
@@ -216,6 +216,6 @@ func TestDeleteAnOrganizationOwningStacksShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Deleting the organization should succeed
-	_, err = h.Accounts().DeleteOrganization(ownerCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
+	_, err = h.Accounts().DeleteOrganization(orgCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
 	assert.NoError(t, err)
 }

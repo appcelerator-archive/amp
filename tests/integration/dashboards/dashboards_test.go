@@ -54,12 +54,12 @@ func TestDashboardCreate(t *testing.T) {
 	assert.NotEmpty(t, r.Dashboard.CreateDt)
 	assert.NotEmpty(t, r.Dashboard.Owner)
 	assert.Equal(t, testUser.Name, r.Dashboard.Owner.User)
-	assert.Empty(t, r.Dashboard.Owner.Organization)
+	assert.NotEmpty(t, r.Dashboard.Owner.Organization)
 	assert.Equal(t, rq.Name, r.Dashboard.Name)
 	assert.Equal(t, rq.Data, r.Dashboard.Data)
 }
 
-func TestDashboardCreateNameAlreadyExistsshouldFail(t *testing.T) {
+func TestDashboardCreateNameAlreadyExistsShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// Create user

@@ -1803,7 +1803,7 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
+func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 	testOrg := h.RandomOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
@@ -1816,7 +1816,7 @@ func TestTeamDeleteNonExistingTeamShouldSucceed(t *testing.T) {
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestTeamDeleteNotOrgOwnerShouldFail(t *testing.T) {
