@@ -437,7 +437,6 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("stacks", stacks)
 	ownsStacks := false
 	for _, stack := range stacks {
 		if stack.Owner.Organization == in.Name {
@@ -453,7 +452,6 @@ func (s *Server) DeleteOrganization(ctx context.Context, in *DeleteOrganizationR
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Println("dashboards", dashboards)
 	ownsDashboards := false
 	for _, dashboard := range dashboards {
 		if dashboard.Owner.Organization == in.Name {

@@ -62,7 +62,7 @@ func remTeamMem(c cli.Interface, cmd *cobra.Command, args []string, opts remTeam
 	client := account.NewAccountClient(conn)
 	for _, member := range args {
 		request := &account.RemoveUserFromTeamRequest{
-			OrganizationName: accounts.DefaultOrganization,
+			OrganizationName: opts.org,
 			TeamName:         opts.team,
 			UserName:         member,
 		}
