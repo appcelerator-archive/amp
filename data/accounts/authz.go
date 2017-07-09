@@ -245,7 +245,7 @@ func (c *OwnerCondition) Fulfills(value interface{}, r *ladon.Request) bool {
 	}
 
 	// Get super organization
-	so, err := store.GetOrganization(context.Background(), superOrganization)
+	so, err := store.GetOrganization(context.Background(), SuperOrganization)
 	if err != nil {
 		return false
 	}

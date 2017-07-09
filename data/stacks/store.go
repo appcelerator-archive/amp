@@ -134,6 +134,8 @@ func (s *Store) List(ctx context.Context) ([]*Stack, error) {
 			stacks = append(stacks, stack)
 		case stack.Owner.Organization: // If the stack belongs to the active organization, add the stack to the results
 			stacks = append(stacks, stack)
+		case accounts.SuperOrganization: // If the requester is a member of the super organization, add the stack to the results
+			stacks = append(stacks, stack)
 		default:
 		}
 	}

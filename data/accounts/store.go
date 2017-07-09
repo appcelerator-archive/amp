@@ -22,8 +22,9 @@ import (
 const superAccountRootKey = "sa"
 const usersRootKey = "users"
 const organizationsRootKey = "organizations"
-const superUser = "su"
-const superOrganization = "so"
+const SuperUser = "su"
+const SuperOrganization = "so"
+const DefaultOrganization = "default"
 
 // Store implements user data.Interface
 type Store struct {
@@ -49,19 +50,19 @@ func NewStore(s storage.Interface, registration string, SUPassword string) (*Sto
 		}
 	}
 
-	if err := store.createSuperAccounts(SUPassword); err != nil {
+	if err := store.createDefaultAccounts(SUPassword); err != nil {
 		return nil, err
 	}
 	return store, nil
 }
 
-func (s *Store) createSuperAccounts(SUPassword string) error {
+func (s *Store) createDefaultAccounts(SUPassword string) error {
 	if SUPassword == "" {
 		log.Warnf("SUPassword is empty. Skipping creation of super accounts.")
 		return nil
 	}
 
-	// Check if super accounts haven been created already
+	// Check if default accounts haven been created already
 	ctx := context.Background()
 	err := s.storage.Create(ctx, path.Join(superAccountRootKey, "created"), &User{}, nil, 0)
 	switch err {
@@ -73,7 +74,7 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 	}
 
 	// Create the initial super user
-	user, err := s.GetUser(ctx, superUser)
+	user, err := s.GetUser(ctx, SuperUser)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 		return fmt.Errorf("Initial super user should not exist already. Check the storage.")
 	}
 	su := &User{
-		Name:       superUser,
+		Name:       SuperUser,
 		Email:      "super@user.amp",
 		IsVerified: true,
 		CreateDt:   time.Now().Unix(),
@@ -95,7 +96,7 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 	log.Infoln("Successfully created initial super user")
 
 	// Create the super organization
-	org, err := s.GetOrganization(ctx, superOrganization)
+	org, err := s.GetOrganization(ctx, SuperOrganization)
 	if err != nil {
 		return err
 	}
@@ -103,12 +104,12 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 		return fmt.Errorf("Super organization should not exist already. Check the storage.")
 	}
 	so := &Organization{
-		Name:     superOrganization,
+		Name:     SuperOrganization,
 		Email:    "super@organization.amp",
 		CreateDt: time.Now().Unix(),
 		Members: []*OrganizationMember{
 			{
-				Name: superUser,
+				Name: SuperUser,
 				Role: OrganizationRole_ORGANIZATION_OWNER,
 			},
 		},
@@ -129,6 +130,26 @@ func (s *Store) createSuperAccounts(SUPassword string) error {
 			"owner": &OwnerCondition{},
 		},
 	})
+
+	// Create the default organization
+	org, err = s.GetOrganization(ctx, DefaultOrganization)
+	if err != nil {
+		return err
+	}
+	if org != nil {
+		return fmt.Errorf("Default organization should not exist already. Check the storage.")
+	}
+	do := &Organization{
+		Name:     DefaultOrganization,
+		Email:    "default@organization.amp",
+		CreateDt: time.Now().Unix(),
+		Members:  []*OrganizationMember{},
+	}
+	if err := s.storage.Create(ctx, path.Join(organizationsRootKey, do.Name), do, nil, 0); err != nil {
+		return err
+	}
+	log.Infoln("Successfully created default organization")
+
 	return nil
 }
 
@@ -235,7 +256,6 @@ func (s *Store) VerifyUser(ctx context.Context, userName string) error {
 		if !ok {
 			return nil, fmt.Errorf("value is not the right type (expected User): %T", user)
 		}
-
 		if user.TokenUsed {
 			return nil, TokenAlreadyUsed
 		}
@@ -470,7 +490,8 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 	}
 
 	// Get the user
-	user, err := s.getVerifiedUser(ctx, userName)
+	//user, err := s.getVerifiedUser(ctx, userName)
+	user, err := s.getUser(ctx, userName)
 	if err != nil {
 		return err
 	}
@@ -487,10 +508,16 @@ func (s *Store) AddUserToOrganization(ctx context.Context, organizationName stri
 			return nil, UserAlreadyExists
 		}
 
+		// Special case of default organization
+		role := OrganizationRole_ORGANIZATION_MEMBER
+		if organization.Name == DefaultOrganization && len(organization.Members) == 0 {
+			role = OrganizationRole_ORGANIZATION_OWNER
+		}
+
 		// Add the user as a team member
 		organization.Members = append(organization.Members, &OrganizationMember{
 			Name: user.Name,
-			Role: OrganizationRole_ORGANIZATION_MEMBER,
+			Role: role,
 		})
 
 		// Validate update
@@ -650,7 +677,7 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	// Check authorization
-	if name == superOrganization {
+	if name == SuperOrganization {
 		return NotAuthorized
 	}
 	if !s.IsAuthorized(ctx, &Account{"", name}, DeleteAction, OrganizationRN, name) {
@@ -1017,11 +1044,6 @@ func (s *Store) ListTeams(ctx context.Context, organizationName string) ([]*Team
 
 // DeleteTeam deletes a team by name
 func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamName string) error {
-	// Check authorization
-	if !s.IsAuthorized(ctx, &Account{"", organizationName}, DeleteAction, TeamRN, "") {
-		return NotAuthorized
-	}
-
 	// Update organization
 	uf := func(current proto.Message) (proto.Message, error) {
 		organization, ok := current.(*Organization)
@@ -1029,10 +1051,21 @@ func (s *Store) DeleteTeam(ctx context.Context, organizationName string, teamNam
 			return nil, fmt.Errorf("value is not the right type (expected Organization): %T", organization)
 		}
 
+		// Get team
+		team := organization.getTeam(teamName)
+		if team == nil {
+			return nil, TeamNotFound
+		}
+
+		// Check authorization
+		if !s.IsAuthorized(ctx, team.Owner, DeleteAction, TeamRN, teamName) {
+			return nil, NotAuthorized
+		}
+
 		// Check if the team is actually a team in the organization
 		teamIndex := organization.getTeamIndex(teamName)
 		if teamIndex == -1 {
-			return nil, nil // Team is not part of the organization, return
+			return nil, TeamNotFound // Team is not part of the organization, return
 		}
 
 		// Remove the user from members. For details, check http://stackoverflow.com/questions/25025409/delete-element-in-a-slice

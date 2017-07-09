@@ -105,6 +105,8 @@ func (s *Store) List(ctx context.Context) ([]*Dashboard, error) {
 			dashboards = append(dashboards, dashboard)
 		case dashboard.Owner.Organization: // If the dashboard belongs to the active organization, add the dashboard to the results
 			dashboards = append(dashboards, dashboard)
+		case accounts.SuperOrganization: // If the requester is a member of the super organization, add the stack to the results
+			dashboards = append(dashboards, dashboard)
 		default:
 		}
 	}
