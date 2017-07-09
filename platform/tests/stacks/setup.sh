@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp -k login --name su --password password
+amp -k login --name owner --password password

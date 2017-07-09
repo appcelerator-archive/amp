@@ -1,4 +1,6 @@
 #!/bin/bash
 
-ResId=$(amp -k stack ls -q)
-amp -k team resource rm $ResId | grep -q "$ResId"
+for id in $(amp -k stack ls -q)
+do
+  amp -k team resource rm $id | grep -q $id
+done
