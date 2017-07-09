@@ -13,7 +13,6 @@ import (
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
-	"github.com/appcelerator/amp/cli/command/org"
 	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/service"
 	"github.com/appcelerator/amp/cli/command/stack"
@@ -104,7 +103,7 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 		logs.NewLogsCommand(c),
 
 		// org
-		org.NewOrgCommand(c),
+		//org.NewOrgCommand(c),
 
 		// password
 		password.NewPasswordCommand(c),
@@ -144,7 +143,7 @@ func info(c cli.Interface) {
 		})
 		if claims, ok := pToken.Claims.(*auth.AuthClaims); ok {
 			if claims.ActiveOrganization != "" {
-				fmt.Fprintf(c.Err(), "[organization %s @ %s]\n", claims.ActiveOrganization, s)
+				fmt.Fprintf(c.Err(), "[user %s in organization %s @ %s]\n", claims.AccountName, claims.ActiveOrganization, s)
 			} else {
 				fmt.Fprintf(c.Err(), "[user %s @ %s]\n", claims.AccountName, s)
 			}

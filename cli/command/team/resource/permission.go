@@ -34,22 +34,23 @@ func NewChangeTeamResPermissionLevelCommand(c cli.Interface) *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVar(&opts.org, "org", "", "Organization name")
+	//flags.StringVar(&opts.org, "org", "", "Organization name")
 	flags.StringVar(&opts.team, "team", "", "Team name")
 	return cmd
 }
 
 func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPermLevelOptions) error {
-	org, err := cli.ReadOrg(c.Server())
-	if !cmd.Flag("org").Changed {
-		switch {
-		case err == nil:
-			opts.org = org
-			c.Console().Println("organization name:", opts.org)
-		default:
-			opts.org = c.Console().GetInput("organization name")
-		}
-	}
+	opts.org = accounts.DefaultOrganization
+	//org, err := cli.ReadOrg(c.Server())
+	//if !cmd.Flag("org").Changed {
+	//	switch {
+	//	case err == nil:
+	//		opts.org = org
+	//		c.Console().Println("organization name:", opts.org)
+	//	default:
+	//		opts.org = c.Console().GetInput("organization name")
+	//	}
+	//}
 	team, err := cli.ReadTeam(c.Server())
 	if !cmd.Flag("team").Changed {
 		switch {
@@ -85,9 +86,9 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 			return errors.New(s.Message())
 		}
 	}
-	if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
-		return err
-	}
+	//if err := cli.SaveOrg(opts.org, c.Server()); err != nil {
+	//	return err
+	//}
 	if err := cli.SaveTeam(opts.team, c.Server()); err != nil {
 		return err
 	}
