@@ -5,7 +5,7 @@ INTERVAL="${2:-2}"
 [[ "$DOCKERHOST" = "m1" ]] && amps="docker run -it --rm --network=hostnet docker --host=m1" || amps="docker --host=$DOCKERHOST"
 
 check() {
-  list=$($amps service ls)
+  list=$($amps service ls | grep "\samp_")
   result=$(echo "$list" | awk '{ print $4 }' | tail -n +2)
 
   read -ra replicas <<< $result
@@ -21,9 +21,9 @@ check() {
 
 dumplogs() {
   uptime
-  $amps service ls
+  $amps service ls | grep "\samp_"
 
-  list=$($amps service ls)
+  list=$($amps service ls | grep "\samp_")
   result=$(echo "$list" | awk '{ print $2 }' | tail -n +2)
 
   read -ra services <<< $result
@@ -48,6 +48,6 @@ while true; do
   # heartbeat trace so CI builds don't time out
   if [ $(($SECONDS - $trace)) -gt 10 ]; then
     trace=$SECONDS
-    $amps service ls
+    $amps service ls | grep "\samp_"
   fi
 done
