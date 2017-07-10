@@ -8,7 +8,7 @@ networks:
 services:
 
   visualizer:
-    image: manomarks/visualizer
+    image: dockersamples/visualizer
     networks:
       - default
     environment:
