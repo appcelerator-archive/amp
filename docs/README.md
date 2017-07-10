@@ -18,7 +18,7 @@
     * [Deploying a stack](#deploying-a-stack)
     * [Viewing and filtering logs](#viewing-and-filtering-logs)
     * [Displaying metrics and statistics](#displaying-metrics-and-statistics)
-    * [Organization and team management](#organization-and-team-management)
+    * [Team management](#team-management)
 
 ## Installation
 
@@ -111,7 +111,7 @@ Run `amp --help` to get the CLI help menu for amp.
 ```
 $ amp --help
 
-Usage:	amp [OPTIONS] COMMAND 
+Usage:  amp [OPTIONS] COMMAND
 
 Deploy, manage, and monitor container stacks.
 
@@ -126,7 +126,6 @@ Options:
 
 Management Commands:
   cluster     Cluster management operations
-  org         Organization management operations
   password    Password management operations
   service     Service management operations
   stack       Stack management operations
@@ -348,30 +347,30 @@ pinger_pinger_cbf5cd   0.00%   4.5 MB      2.0 GB   0.2%    0/s       0/s       
 
 For more detailed examples of the querying and filtering options for stats, see the [stats documentation](stats.md)
 
-#### Organization and team management
+#### Team management
 
-Once you have signed up with `amp signup`, you can start creating organizations and within those organizations,
-you can add members or create teams of members.
+Once you have signed up with `amp signup`, you will be automatically added to the default organization. As the first user,
+you will become the `owner` of this organization. Within this organization, you can start creating individual teams of users and
+associate resources, primarily stacks, with those teams.
 
-To create an organization:
+>Organization management features will be available in future releases.
+
+To create an team:
 ```
-$ amp org create
-organization name: org
-email: sample@org.com
-Organization has been created.
+$ amp team create samplers
+Team has been created in the organization.
 ```
->NOTE: The majority of the org and team commands are interactive, you can look at the org and team documentation or the `--help`
+>NOTE: The majority of the team commands are interactive, you can look at the team documentation or the `--help`
 option to see which commands take arguments or options.
 
-After creating an organization, you will be the owner of that organization and you can then add other users to that organization.
+After creating a team, you can add a resource to that team.
 
-With an organization created, you can "log in" to into that organization by switching to the context of the organization using:
+Following on from the previous example, you can add your `pinger` stack to the team, as a resource, using its ID:
 ```
-$ amp org switch org
-You are now logged in as: org
+$ amp stack ls -q
+faa4ef6e59f01d5de65e4a8059095d412b057b929c2cd47fbaa3f3a7d11e3e33
+$ amp team resource add faa4ef6e59f01d5de6...
+team name: samplers
+Resource(s) have been added to team.
 ```
-Whilst logged in on behalf of the organization, you can deploy stacks within the context of that organization that cannot be accessed
-by users outside of that organization. In addition, by creating new teams within that organization, you can delegate resources in the
-form of stacks using the `amp team resource` commands.
-
-For more information on organization and team management, see the [org documentation](org.md) and the [team documentation](team.md)
+For more information on team management, see the [team documentation](team.md)
