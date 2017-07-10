@@ -219,3 +219,34 @@ func TestDeleteAnOrganizationOwningStacksShouldFail(t *testing.T) {
 	_, err = h.Accounts().DeleteOrganization(orgCtx, &account.DeleteOrganizationRequest{Name: testOrg.Name})
 	assert.NoError(t, err)
 }
+
+func TestDeleteUserOwningStacksShouldFail(t *testing.T) {
+	// Create a user
+	testUser := h.RandomUser()
+	userCtx := h.CreateUser(t, &testUser)
+
+	// Compose file
+	compose, err := ioutil.ReadFile("pinger.yml")
+	assert.NoError(t, err)
+
+	// Deploy stack as user
+	stack := "my-awesome-stack" + stringid.GenerateNonCryptoID()[:16]
+	rq := &DeployRequest{
+		Name:    stack,
+		Compose: compose,
+	}
+	_, err = h.Stacks().Deploy(userCtx, rq)
+	assert.NoError(t, err)
+
+	// Deleting the user should fail
+	_, err = h.Accounts().DeleteUser(userCtx, &account.DeleteUserRequest{Name: testUser.Name})
+	assert.Error(t, err)
+
+	// Remove stack
+	_, err = h.Stacks().Remove(userCtx, &RemoveRequest{Stack: stack})
+	assert.NoError(t, err)
+
+	// Deleting the user should succeed
+	_, err = h.Accounts().DeleteUser(userCtx, &account.DeleteUserRequest{Name: testUser.Name})
+	assert.NoError(t, err)
+}
