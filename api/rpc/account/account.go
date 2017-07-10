@@ -296,6 +296,36 @@ func (s *Server) ListUsers(ctx context.Context, in *ListUsersRequest) (*ListUser
 
 // DeleteUser implements account.DeleteUser
 func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.Empty, error) {
+	// Check if the user owns stacks
+	stacks, err := s.Stacks.List(ctx)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	ownsStacks := false
+	for _, stack := range stacks {
+		if stack.Owner.User == in.Name {
+			ownsStacks = true
+		}
+	}
+	if ownsStacks {
+		return nil, status.Errorf(codes.FailedPrecondition, "User cannot be removed because they still own stacks. Please remove all stacks belonging to this user and try again.")
+	}
+
+	// Check if the user owns dashboards
+	dashboards, err := s.Dashboards.List(ctx)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	ownsDashboards := false
+	for _, dashboard := range dashboards {
+		if dashboard.Owner.User == in.Name {
+			ownsDashboards = true
+		}
+	}
+	if ownsDashboards {
+		return nil, status.Errorf(codes.FailedPrecondition, "User cannot be removed because they still own dashboards. Please remove all dashboards belonging to this user and try again.")
+	}
+
 	// Get requesting user
 	user, err := s.Accounts.GetUser(ctx, in.Name)
 	if err != nil {
