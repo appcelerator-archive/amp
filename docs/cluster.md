@@ -37,21 +37,20 @@ We recommend you stick to the outlined examples for deploying cluster environmen
 All the cluster commands use both the `--tag` and `--provider` options, which specify the tag for
 the cluster images as well as the target for the cluster you are performing operations on.
 
-
-
 #### Creating a cluster on your local system
 
 This is the default mode.
 
 * To create a cluster locally:
 ```
-$ amp cluster create --provider local
+$ amp cluster create
 ...
 Cluster status: healthy
 ...
 ```
-This will deploy the `AMP` stack on your local docker engine. This AMP deployment only
-uses one Manager node to deploy services on.
+This will deploy the `AMP` stack on your local docker engine.
+Using the `--tag` option will allow you deploy a cluster with a specific image tag.
+Otherwise, the image tag will default to be synchronized with the version of the CLI you are currently using.
 
 The target for this cluster will be `localhost:50101`.
 
