@@ -75,7 +75,7 @@ The connection between the CLI and the ANP server is secured with TLS.
 In the case the certificate on the server is not valid (self signed or expired), you can use the `-k` option.
 For local deployment you can also add the CA to your local key store.
 
-### Using the unstable version
+### Using the development version
 
 Alternatively, if you wish to work with the latest development version directly from `master` on Github,
 you can fork the repo and build your own CLI. The entire toolchain has been containerized so you do not need
@@ -92,17 +92,12 @@ $ export PATH=bin/{YourOS}/amd64:$PATH
 ```
 This will clone the repository into your `go` workspace and add the CLI path to your system `$PATH`.
 
-To build the CLI, you can then run:
+To build the CLI and the core `AMP` images, you can then run:
 ```
-$ ampmake buildall-cli
+$ ampmake build
 ```
 This will build cross-compiled versions of the CLI and place them in the appropriate locations under `./bin`.
-
-If you already have `gnu` installed on your system, you can instead run:
-```
-$ make build-cli
-```
-This will build your OS-specific CLI in `./bin` and it is much faster.
+In addition, this will build the development versions of each of the images necessary for deployment of the `AMP` cluster.
 
 ## Usage
 
@@ -133,10 +128,11 @@ Management Commands:
   user        User management operations
 
 Commands:
+  completion  Output shell completion code for the specified shell (bash or zsh)
   config      Display configuration
   login       Login to account
   logout      Logout of account
-  logs        Display filtered logs
+  logs        Display logs matching provided criteria
   stats       Display statistics
   version     Show version information
   whoami      Display currently logged in account name
@@ -156,8 +152,7 @@ You can also add a default `--server|-s` value to your `amp.yml` config file.
 
 >For more information on creating your configuration file, see the [config documentation](config.md).
 
-The server location of our hosted AMP is `COMING SOON`. This location is currently
-acting as a playground for anyone to signup and use as they like.
+The server location of our hosted AMP is currently a work-in-progress.
 
 The default value for the `--server|-s` option is `localhost:50101`, which points to a local
 cluster that can be deployed on your system's docker engine.
@@ -184,12 +179,10 @@ Server:
 
 #### Creating a local AMP cluster
 
+To create a new cluster on your local docker system:
 ```
 $ amp cluster create
 ```
->*If you are using the unstable version of the CLI, you will need to build the `amp-bootstrap`
-image using the command `make build-bootstrap` or `ampmake build-bootstrap` if your don't have the build tools,
-and then specify the `--tag=local` option to the CLI*
 
 For more examples of cluster commands and deployment in different environments, see the [cluster documentation](cluster.md).
 
@@ -209,6 +202,7 @@ password: [password]
 ```
 After signing up, you will then be sent an email to your registered address. In this email, you will
 be sent a link to verify your account with or you can verify your account with the provided CLI command.
+
 >*The verification step is skipped for local deployment, you'll be logged automatically*
 
 To verify your account using the token in verification email.
