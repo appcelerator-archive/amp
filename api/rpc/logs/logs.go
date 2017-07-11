@@ -90,7 +90,7 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Perform ES request
 	searchResult, err := request.Query(masterQuery).Do(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
+		return nil, status.Errorf(codes.Internal, elasticsearch.FormatError(err))
 	}
 
 	// Build reply
