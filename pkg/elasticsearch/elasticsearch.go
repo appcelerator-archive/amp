@@ -2,6 +2,8 @@ package elasticsearch
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"gopkg.in/olivere/elastic.v5"
@@ -95,4 +97,20 @@ func (es *Elasticsearch) Index(ctx context.Context, esIndex string, esType strin
 		return err
 	}
 	return nil
+}
+
+// FormatError formats an elastic.Error
+func FormatError(err error) string {
+	e, ok := err.(*elastic.Error)
+	if !ok {
+		return "Unable to cast to elastic.Error"
+	}
+	if len(e.Details.RootCause) == 0 {
+		return e.Error()
+	}
+	details, err := json.MarshalIndent(e.Details.RootCause[0], "", "    ")
+	if err != nil {
+		return err.Error()
+	}
+	return fmt.Sprintf("%s\n%s", e.Error(), string(details))
 }
