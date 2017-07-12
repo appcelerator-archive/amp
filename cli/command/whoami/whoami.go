@@ -30,11 +30,11 @@ func whoami(c cli.Interface) error {
 		return []byte{}, nil
 	})
 	if claims, ok := pToken.Claims.(*auth.AuthClaims); ok {
-		if claims.ActiveOrganization != "" {
-			c.Console().Printf("Logged in as organization: %s (on behalf of user %s)\n", claims.ActiveOrganization, claims.AccountName)
-		} else {
-			c.Console().Printf("Logged in as user: %s\n", claims.AccountName)
-		}
+		//if claims.ActiveOrganization != "" {
+		//	c.Console().Printf("Logged in as organization: %s (on behalf of user %s)\n", claims.ActiveOrganization, claims.AccountName)
+		//} else {
+		c.Console().Printf("Logged in as user: %s\n", claims.AccountName)
+		//}
 	}
 	return nil
 }
