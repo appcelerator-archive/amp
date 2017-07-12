@@ -108,6 +108,10 @@
         "includeAmpLogs": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "since": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

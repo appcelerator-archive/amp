@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const SinceMax = 100
+
 type LogsOptions struct {
 	Follow         bool
 	IncludeAmpLogs bool
@@ -23,6 +25,7 @@ type LogsOptions struct {
 	Container      string
 	Stack          string
 	Node           string
+	Since          int32
 }
 
 func AddLogFlags(flags *pflag.FlagSet, opts *LogsOptions) {
@@ -34,6 +37,7 @@ func AddLogFlags(flags *pflag.FlagSet, opts *LogsOptions) {
 	flags.StringVar(&opts.Container, "container", "", "Filter by the given Container")
 	flags.StringVar(&opts.Node, "node", "", "Filter by the given node")
 	flags.BoolVarP(&opts.Raw, "raw", "r", false, "Display raw logs (no prefix)")
+	flags.Int32Var(&opts.Since, "since", 2, "Number of days to include in the search (maximum "+strconv.Itoa(SinceMax)+")")
 }
 
 // NewLogsCommand returns a new instance of the logs command.
@@ -63,6 +67,10 @@ func GetLogs(c cli.Interface, args []string, opts LogsOptions) error {
 	request.Node = opts.Node
 	request.Size = opts.Number
 	request.IncludeAmpLogs = opts.IncludeAmpLogs
+	request.Since = opts.Since
+	if request.Since > SinceMax {
+		request.Since = SinceMax
+	}
 
 	// Get logs from amplifier
 	ctx := context.Background()
