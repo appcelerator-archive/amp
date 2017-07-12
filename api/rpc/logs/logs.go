@@ -39,7 +39,11 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	// Prepares indices
 	indices := []string{}
 	date := time.Now().UTC()
-	for i := 0; i < 2; i++ {
+	since := int(in.Since)
+	if since < 2 {
+		since = 2
+	}
+	for i := 0; i < since; i++ {
 		indices = append(indices, "ampbeat-"+date.Format("2006.01.02"))
 		date = date.AddDate(0, 0, -1)
 	}

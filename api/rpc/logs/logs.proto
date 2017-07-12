@@ -45,6 +45,7 @@ message GetRequest {
   string stack = 6;
   string task = 7;
   bool includeAmpLogs = 8;
+  int32 since = 9; // In days
 }
 
 message GetReply {
