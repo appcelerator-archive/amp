@@ -47,7 +47,7 @@ services:
         - node.labels.amp.type.mq == true
 
   etcd:
-    image: appcelerator/etcd:3.1.9
+    image: appcelerator/etcd:3.1.10
     networks:
       - default
     volumes:
