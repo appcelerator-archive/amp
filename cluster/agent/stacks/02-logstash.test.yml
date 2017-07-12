@@ -1,0 +1,28 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  logstash:
+    image: appcelerator/alpine:3.6.0
+    networks:
+      - default
+    command: ["curl", "-sfm", "5", "${AMP_STACK:-amp}_logstash:9600/"]
+    labels:
+      io.amp.role: "infrastructure"
+      io.amp.test:
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.test:
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+      restart_policy:
+        condition: none

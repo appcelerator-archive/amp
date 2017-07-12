@@ -1,6 +1,6 @@
-################### Ampbeat Configuration Example #########################
+########################## Ampbeat Configuration ##############################
 
-############################# Ampbeat ######################################
+################################ Ampbeat ######################################
 
 ampbeat:
   # Defines how often an event is sent to the output
@@ -27,19 +27,23 @@ ampbeat:
 # Multiple outputs may be used.
 
 #-------------------------- Elasticsearch output ------------------------------
-output.elasticsearch:
-  # Array of hosts to connect to.
-  hosts: ["elasticsearch:9200"]
+#output.elasticsearch:
+  ## Array of hosts to connect to.
+  #hosts: ["elasticsearch:9200"]
+  #template.versions.2x.enabled: false
 
-  # Optional protocol and basic auth credentials.
-  #protocol: "https"
-  #username: "elastic"
-  #password: "changeme"
+  ## Optional protocol and basic auth credentials.
+  ##protocol: "https"
+  ##username: "elastic"
+  ##password: "changeme"
 
 #----------------------------- Logstash output --------------------------------
-#output.logstash:
+output.logstash:
   # The Logstash hosts
-  #hosts: ["localhost:5044"]
+  hosts: ["logstash:5044"]
+  index: "ampbeat"
+  pipelining: 8
+  bulk_max_size: 2048
 
   # Optional SSL. By default is off.
   # List of root certificates for HTTPS server verifications
@@ -50,6 +54,13 @@ output.elasticsearch:
 
   # Client Certificate Key
   #ssl.key: "/etc/pki/client/cert.key"
+
+#------------------------------- Redis output ---------------------------------
+#output.redis:
+  #hosts: ["redis"]
+  #key: "ampbeat"
+  #datatype: "list"
+  #bulk_max_size: 2048
 
 #================================ Logging =====================================
 

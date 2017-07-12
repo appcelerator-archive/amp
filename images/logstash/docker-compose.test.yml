@@ -1,0 +1,6 @@
+version: '2'
+services:
+  sut:
+    build: .
+    image: appcelerator/amp-logstash
+    command: "--version"

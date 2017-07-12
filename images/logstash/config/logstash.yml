@@ -1,0 +1,30 @@
+# node.name: hostname
+# path.data: LOGSTASH_HOME/data
+# pipeline.workers: 2
+# pipeline.output.workers: 1
+# pipeline.batch.size: 125
+# pipeline.batch.delay: 5
+# pipeline.unsafe_shutdown: false
+path.config: /usr/share/logstash/pipeline
+# config.string:
+# config.test_and_exit: false
+config.reload.automatic: true
+config.reload.interval: 3
+# config.debug: false
+# config.support_escapes: false
+queue.type: persisted
+# path.queue:
+# queue.page_capacity: 250mb
+# queue.max_events: 0
+# queue.max_bytes: 1024mb
+# queue.checkpoint.acks: 1024
+# queue.checkpoint.writes: 1024
+# queue.checkpoint.interval: 1000
+# dead_letter_queue.enable: false
+# path.dead_letter_queue:
+http.host: "0.0.0.0"
+# http.port: 9600-9700
+# log.level: info
+# path.logs:
+# path.plugins: []
+# xpack.monitoring.enabled: false

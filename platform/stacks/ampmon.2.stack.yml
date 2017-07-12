@@ -5,7 +5,27 @@ networks:
     external:
       name: ampnet
 
+volumes:
+  logstash-data:
+
 services:
+
+  logstash:
+    image: appcelerator/amp-logstash:5.5.0
+    networks:
+      - default
+    volumes:
+      - logstash-data:/usr/share/logstash/data
+    labels:
+      io.amp.role: "infrastructure"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
 
   ampbeat:
     image: appcelerator/ampbeat:${TAG:-0.13.1}
@@ -23,7 +43,7 @@ services:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:5.4.2
+    image: appcelerator/kibana:5.5.0
     networks:
       - default
     deploy:

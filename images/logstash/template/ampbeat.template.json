@@ -1,0 +1,201 @@
+{
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "norms": false
+      },
+      "_meta": {
+        "version": "5.3.1"
+      },
+      "date_detection": false,
+      "dynamic_templates": [
+        {
+          "strings_as_keyword": {
+            "mapping": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            },
+            "match_mapping_type": "string"
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "beat": {
+          "properties": {
+            "hostname": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            },
+            "name": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            },
+            "version": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            }
+          }
+        },
+        "container_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "container_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "container_short_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "container_state": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "fail_count": {
+          "type": "long"
+        },
+        "fields": {
+          "properties": {}
+        },
+        "limit": {
+          "type": "long"
+        },
+        "max_usage": {
+          "type": "long"
+        },
+        "meta": {
+          "properties": {
+            "cloud": {
+              "properties": {
+                "availability_zone": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                },
+                "instance_id": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                },
+                "machine_type": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                },
+                "project_id": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                },
+                "provider": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                },
+                "region": {
+                  "ignore_above": 1024,
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "msg": {
+          "norms": false,
+          "type": "text"
+        },
+        "node_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "read": {
+          "type": "long"
+        },
+        "role": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "rx_bytes": {
+          "type": "long"
+        },
+        "rx_dropped": {
+          "type": "long"
+        },
+        "rx_errors": {
+          "type": "long"
+        },
+        "rx_packets": {
+          "type": "long"
+        },
+        "service_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "service_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "stack_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "tags": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "task_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "task_slot": {
+          "type": "long"
+        },
+        "time_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "total": {
+          "type": "long"
+        },
+        "total_bytes": {
+          "type": "long"
+        },
+        "total_usage": {
+          "type": "double"
+        },
+        "tx_bytes": {
+          "type": "long"
+        },
+        "tx_dropped": {
+          "type": "long"
+        },
+        "tx_errors": {
+          "type": "long"
+        },
+        "tx_packets": {
+          "type": "long"
+        },
+        "usage": {
+          "type": "long"
+        },
+        "usage_in_kernel_mode": {
+          "type": "double"
+        },
+        "usage_in_user_mode": {
+          "type": "double"
+        },
+        "usage_pct": {
+          "type": "double"
+        },
+        "write": {
+          "type": "long"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index.mapping.total_fields.limit": 10000,
+    "index.refresh_interval": "5s"
+  },
+  "template": "ampbeat-*"
+}
