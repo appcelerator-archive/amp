@@ -40,8 +40,11 @@ var (
 	}
 )
 
+type ValidateUser func(string) bool
+
 type Interceptors struct {
-	Tokens *Tokens
+	Tokens      *Tokens
+	IsUserValid ValidateUser
 }
 
 func isAnonymous(elem string) bool {
@@ -106,6 +109,9 @@ func (i *Interceptors) authorize(ctx context.Context) (context.Context, error) {
 	claims, err := i.Tokens.ValidateToken(token, TokenTypeLogin)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
+	}
+	if !i.IsUserValid(claims.AccountName) {
+		return nil, status.Errorf(codes.Unauthenticated, "user not found. Please sign up.")
 	}
 	// Enrich the context
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))

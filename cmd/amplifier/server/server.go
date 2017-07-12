@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -109,7 +110,17 @@ func (a *Amplifier) Start() error {
 		return fmt.Errorf("could not load TLS keys: %s", err)
 	}
 
-	interceptors := &auth.Interceptors{Tokens: a.tokens}
+	// Initialize authentication interceptors
+	interceptors := &auth.Interceptors{
+		Tokens: a.tokens,
+		IsUserValid: func(userName string) bool {
+			user, err := a.accounts.GetUser(context.Background(), userName)
+			if err != nil || user == nil {
+				return false
+			}
+			return true
+		},
+	}
 
 	// Enable prometheus time histograms
 	grpc_prometheus.EnableHandlingTimeHistogram()
