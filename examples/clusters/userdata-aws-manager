@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SYNC=${SYNC:-false}
+SYSTEM_PRUNE=${SYSTEM_PRUNE:-false}
 #SIGNAL_URL=
 #APP_SIGNAL_URL=
 CHANNEL=${CHANNEL:-stable}
@@ -58,6 +59,15 @@ _install_plugins(){
     docker plugin install "$plugin" --alias "$alias" --grant-all-permissions # || return 1
   done
   return 0
+}
+
+_configure_system_prune(){
+  local _cmd="docker system prune -af"
+  local _cron_spec="@hourly"
+
+  [[ "x$SYSTEM_PRUNE" != x@(true|yes) ]] && return 0
+  echo "configuring crontab for system prune" >&2
+  (crontab -l 2>/dev/null; echo "$_cron_spec $_cmd") | crontab -
 }
 
 # expose the Docker remote api
@@ -314,7 +324,7 @@ _label_node(){
   local _publicip
   _self=$(docker node inspect self -f '{{.ID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
-  echo "applying labels amp.type.api and anp.type.route" >&2
+  echo "applying labels amp.type.api and amp.type.route" >&2
   docker node update --label-add "PublicIP=$_publicip" "$_self" || return 1
   docker node update --label-add "amp.type.api=true" "$_self" || return 1
   docker node update --label-add "amp.type.route=true" "$_self"
@@ -416,9 +426,10 @@ else
 fi
 _label_node || exit 1
 _drain_node || exit 1
+_configure_system_prune || exit 1
 _smoke_test || exit 1
 _signal_aws "${SIGNAL_URL}" || exit 1
-if [[ "x$nodeip" = "x$leader" ]]; then
+if [[ "x$nodeip" = "x$leader" && -n "$APP_SIGNAL_URL" ]]; then
   _wait_for_full_swarm || exit 1
   _setup || exit 1
   _signal_aws "${APP_SIGNAL_URL}"

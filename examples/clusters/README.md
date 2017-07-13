@@ -31,12 +31,13 @@ Once the nodes are up and running, it will run the appcelerator/ampadmin image t
 | CoreInstanceType | Instance type for the core worker nodes. Must be a valid EC2 HVM instance type | m4.large | c4.large |
 | UserInstanceType | Instance type for the user worker nodes. Must be a valid EC2 HVM instance type | t2.medium | m4.large |
 | MetricsInstanceType | Instance type for the metrics worker nodes. Must be a valid EC2 HVM instance type | t2.large | m4.large |
-| DrainManager | Should we drain services from the manager nodes? | false | true |
+| DrainManager | Should we drain services from the manager nodes? | no | yes |
 | AufsVolumeSize | Size in GB of the EBS for the /var/lib/docker FS | 26 | 100 |
 | OverlayNetworks | name of overlay networks that should be created once swarm is initialized | ampnet | public storage search mq |
 | DockerChannel | channel for Docker installation | stable | edge |
 | DockerPlugins | space separated list of plugins to install | | rexray/ebs |
-| InstallApplication | install AMP | true | false |
+| InstallApplication | install AMP | yes | no |
+| EnableSystemPrune | Enable Docker system prune | yes | no |
 
 ## Output
 

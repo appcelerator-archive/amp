@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-edd9defb
+      Default: ami-8b2a249d
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-12f2d377
+      Default: ami-7da78618
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-5e5a4827
+      Default: ami-f9243880
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-138d6d6a
+      Default: ami-bd56b4c4
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-71b0a212
+      Default: ami-9f9a87fc
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -197,11 +197,11 @@ Parameters:
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
   DrainManager:
     Type: String
-    Description: If true, disables the services on the manager nodes
+    Description: If yes, disables the services on the manager nodes
     AllowedValues:
-    - false
-    - true
-    Default: false
+    - no
+    - yes
+    Default: no
   ConfigurationURL:
     Type: String
     Description: "Can be used to override the default userdata. Example: https://raw.githubusercontent.com/appcelerator/amp/master/examples/clusters"
@@ -228,23 +228,31 @@ Parameters:
     Default: ""
   InstallApplication:
     Type: String
-    Description: If true, AMP will be installed
+    Description: If yes, AMP will be installed
     AllowedValues:
-    - true
-    - false
-    Default: true
+    - yes
+    - no
+    Default: yes
   MirrorRegistry:
     Type: String
-    Description: If true, a mirror registry will be installed
+    Description: If yes, a mirror registry will be installed
     AllowedValues:
-    - false
-    - true
-    Default: false
+    - no
+    - yes
+    Default: no
+  EnableSystemPrune:
+    Type: String
+    Description: "Cleans up unused images, containers, networks and volumes"
+    AllowedValues:
+    - yes
+    - no
+    Default: yes
 
 Conditions:
-  InstallApplication: !Equals [ !Ref InstallApplication, "true" ]
+  InstallApplication: !Equals [ !Ref InstallApplication, "yes" ]
+  EnableSystemPrune: !Equals [ !Ref EnableSystemPrune, "yes" ]
   ConfigurationURL:   !Equals [ !Ref ConfigurationURL, "" ]
-  MirrorRegistry:     !Equals [ !Ref MirrorRegistry, "true" ]
+  MirrorRegistry:     !Equals [ !Ref MirrorRegistry, "yes" ]
 
 Resources:
   Vpc:
@@ -1028,8 +1036,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${MetricsWaitHandle}" LABELS="amp.type.metrics=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
   CoreWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
@@ -1113,8 +1121,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
 
   UserWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1199,8 +1207,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
 
   ApplicationWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1302,8 +1310,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationWaitHandle}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="http://${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistry, !GetAtt RegistryInternalELB.DNSName, "" ] }
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistry, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplication, !Ref ApplicationWaitHandle, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -1398,6 +1406,7 @@ Metadata:
       - DockerPlugins
       - AufsVolumeSize
       - OverlayNetworks
+      - EnableSystemPrune
     ParameterLabels:
       KeyName:
         default: Which SSH key to use?
@@ -1433,6 +1442,8 @@ Metadata:
         default: Linux Distribution
       InstallApplication:
         default: Install Application
+      EnableSystemPrune:
+        default: Enable System Prune
       MirrorRegistry:
         default: Dedicated Registry
       RegistryInstanceType:
