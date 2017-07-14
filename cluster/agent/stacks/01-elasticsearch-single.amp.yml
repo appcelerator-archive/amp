@@ -1,0 +1,33 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  elasticsearch-data:
+
+services:
+
+  elasticsearch:
+    image: appcelerator/elasticsearch-amp:5.4.2
+    networks:
+      - default
+    volumes:
+      - elasticsearch-data:/opt/elasticsearch-5.4.2/data
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "10s"
+      amp.service.stabilize.timeout: "30s"
+    environment:
+      NETWORK_HOST: "_eth0_"
+      JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.search == true

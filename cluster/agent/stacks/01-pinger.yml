@@ -1,9 +1,0 @@
-version: "3"
-
-services:
-  pinger:
-    image: subfuzion/pinger
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure

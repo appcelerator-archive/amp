@@ -1,0 +1,46 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+secrets:
+  amplifier_yml:
+    external: true
+  certificate_atomiq:
+    external: true
+
+services:
+
+  amplifier:
+    image: appcelerator/amplifier:${TAG:-0.12.0}
+    networks:
+      - default
+    environment:
+      REGISTRATION: ${REGISTRATION:-email}
+      NOTIFICATIONS: ${NOTIFICATIONS:-true}
+    ports:
+      - "50101:50101"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "6s"
+      amp.service.stabilize.timeout: "30s"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+        - node.labels.amp.type.api == true
+    secrets:
+      - source: amplifier_yml
+        target: amplifier.yml
+        mode: 0400
+      - source: certificate_atomiq
+        target: cert0.pem
+        mode: 0400

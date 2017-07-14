@@ -1,0 +1,27 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  nats:
+    image: appcelerator/amp-nats-streaming:v0.5.0
+    networks:
+      default:
+        aliases:
+          - nats
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.mq == true

@@ -1,0 +1,44 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  prometheus-data:
+
+secrets:
+  prometheus_alerts_rules:
+    external: true
+
+services:
+
+  prometheus:
+    image: appcelerator/amp-prometheus:${TAG:-0.12.0}
+    networks:
+      - default
+    volumes:
+      - prometheus-data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      SERVICE_PORTS: 9090
+      VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
+    ports:
+      - "9090:9090"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "8s"
+      amp.service.stabilize.timeout: "30s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+    secrets:
+      - source: prometheus_alerts_rules
+        target: alerts.rules
+        mode: 0400

@@ -1,0 +1,29 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  nats_exporter:
+    image: appcelerator/prometheus-nats-exporter:latest
+    networks:
+      - default
+    command: ["-varz", "-routez", "-connz", "-subz", "nats,http://nats:8222"]
+    #ports:
+      #- target: 7777
+      #- published: 7777
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true

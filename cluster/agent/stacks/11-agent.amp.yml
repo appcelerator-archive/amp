@@ -1,0 +1,27 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  ampagent:
+
+services:
+
+  agent:
+    image: appcelerator/agent:${TAG:-0.12.0}
+    networks:
+      - default
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "30s"
+    volumes:
+      - ampagent:/containers
+      - /var/run/docker.sock:/var/run/docker.sock
