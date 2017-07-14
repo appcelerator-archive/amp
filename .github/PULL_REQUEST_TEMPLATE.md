@@ -6,6 +6,8 @@ https://github.com/appcelerator/amp/blob/master/project/CONTRIBUTING.md
 
 Make sure your description includes "fixes #xxxx" or "closes #xxxx".
 
+Reference any relevant issues with "ref #xxxx".
+
 Please provide the following information:
 -->
 
@@ -22,4 +24,3 @@ pull request for inclusion in the changelog:
 -->
 
 ### A good quote or short joke (not mandatory but encouraged)
-

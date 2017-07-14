@@ -2,17 +2,14 @@
 
 Want to contribute to AMP? We think you're awesome! This page should help you get started.
 
+Before becoming involved, make sure you read our [code of conduct](CODE-OF-CONDUCT.md).
+
 ## Topics
 
-* [Code of Conduct](#code-of-conduct)
 * [Reporting security issues](#reporting-security-issues)
 * [Reporting other issues](#reporting-other-issues)
 * [Quick contribution tips and guidelines](#quick-contribution-tips-and-guidelines)
 * [Coding style](#coding-style)
-
-## Code of Conduct
-
-Before becoming involved, please read our [CODE-OF-CONDUCT](CODE-OF-CONDUCT.md).
 
 ## Reporting security issues
 
@@ -36,15 +33,18 @@ issue itself. GitHub now provides the ability to add [reactions](https://github.
 to issues and comments, if you want to show your enthusiasm (or lack thereof) for anything
 in particular.
 
-### When reporting an issue
+When reporting an issue please include:
 
-Please include:
-
+  * A brief description of the problem.
+  * Steps to reproduce the problem, if applicable.
+  * Describe the results you expected.
+  * Describe the results you received.
+  * Any additional information you think is important.
   * The output of `docker version`.
   * The output of `docker info`.
-  * The output of `amp --version`.
-  * The output of `amp --config`.
-  * Steps to reproduce the problem (if possible and applicable).
+  * The output of `amp version`.
+  * The output of `amp config`.
+  * Additional environment details (AWS, etc., if applicable).
 
 If sending lengthy output such as logs, it is preferred that you create a
 [gist](https://gist.github.com) and provide the link. Remove any sensitive data
@@ -62,15 +62,20 @@ before work is started.
 
 Fork the repository and make changes on your fork in a feature branch:
 
+>Make sure you look at our [docs](https://github.com/appcelerator/amp/master/docs/README.md#using-the-unstable-version)
+to see how to get started working with the repo directly.
+
 - If it's a bug fix branch, name it `XXXX-something` where `XXXX` is the number of
-	the issue. 
+	the issue and `something` is the relevant area of the issue.
 - If it's a feature branch, create an enhancement issue to announce
 	your intentions, and name it `XXXX-something` where `XXXX` is the number of the
 	issue.
 
-Submit unit tests for your changes. Go has a great test framework built in; use
-it! Take a look at existing tests for inspiration. Run the full test
-suite (`make test`) on your branch before submitting a pull request.
+Submit smoke tests / updates to existing smoke tests if you are working on our CLI. For more information, see the
+[smoke test documentation](https://github.com/appcelerator/amp/blob/master/project/platform/testing/README.md)
+
+Submit integration tests / updates to existing integration tests if you are working on our APIs. For more information,
+see the [integration test documentation](https://github.com/appcelerator/amp/blob/master/tests/integration/README.md)
 
 Update the documentation when creating or modifying features. Test your
 documentation changes for clarity, concision, and correctness, as well as a
@@ -78,8 +83,8 @@ clean documentation build. For a good set of style and grammar conventions,
 see Docker's guide [here](https://docker.github.io/opensource/doc-style/).
 
 Write clean code. Universally formatted code promotes ease of writing, reading,
-and maintenance. Always run `gofmt -s -w file.go` on each changed file before
-committing your changes. Most editors have plug-ins that do this automatically.
+and maintenance. Always run `make fmt` before committing your changes.
+Most editors have plug-ins that do this automatically.
 
 Pull request descriptions should be as clear as possible and include a reference
 to all the issues that they address.
@@ -108,8 +113,9 @@ down to one.
 Include documentation changes in the same pull request so that a revert would
 remove all traces of the feature or fix.
 
-Include an issue reference like `Closes #XXXX` or `Fixes #XXXX` in commits that
-close an issue. Including references automatically closes the issue on a merge.
+Include an issue reference like `Closes #XXXX`, `Resolves #XXXX` or `Fixes #XXXX` in commits that
+close an issue. Including references automatically closes the issue on a merge. In addition, the
+issue reference `Ref #XXXX` will reference the issue, but will not close the issue on merge.
 
 Please do not add yourself to the `AUTHORS` file, as it is regenerated regularly
 from the Git history.
@@ -122,9 +128,9 @@ Maintainers use LGTM (Looks Good To Me) in comments on the code review to
 indicate acceptance.
 
 A change requires LGTMs from an absolute majority of the maintainers of each
-component affected. For example, if a change affects `docs/` and `registry/`, it
+component affected. For example, if a change affects `docs/` and `api/`, it
 needs an absolute majority from the maintainers of `docs/` AND, separately, an
-absolute majority of the maintainers of `registry/`.
+absolute majority of the maintainers of `api/`.
 
 For more details, see the [MAINTAINERS](MAINTAINERS) page.
 
@@ -213,7 +219,7 @@ mind when nudging others to comply.
 
 The rules:
 
-1. All code should be formatted with `gofmt -s`.
+1. All code should be formatted with `make fmt`.
 2. All code should pass the default levels of
    [`golint`](https://github.com/golang/lint).
 3. All code should follow the guidelines covered in [Effective
@@ -243,4 +249,3 @@ If you are having trouble getting into the mood of idiomatic Go, we recommend
 reading through [Effective Go](https://golang.org/doc/effective_go.html). The
 [Go Blog](https://blog.golang.org) is also a great resource. Drinking the
 kool-aid is a lot easier than going thirsty.
-

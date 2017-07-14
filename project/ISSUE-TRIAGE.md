@@ -14,11 +14,14 @@ If you don't have time to code, consider helping with triage. The community will
 
 Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how this to categorize the issue. Standard information that *must* be included in most issues are things such as:
 
+-   accurate steps to reproduce the issue
 -   the output of `docker version`
--   Docker for Mac or Docker for Windows version, if applicable
--   the output of `amp --version`
--   a reproducible case if this is a bug, Dockerfiles FTW
--   page URL if this is a docs issue or the name of a man page
+-   the output of `docker info`
+-   the output of `amp version`
+-   the output of `amp config`
+-   additional environment details (AWS, page URL, etc..)
+
+>Look at the [issue template](#https://github.com/appcelerator/amp/blob/master/.github/ISSUE_TEMPLATE.md) for additional information for issue triaging
 
 Depending on the issue, you might not feel all this information is needed. Use your best judgement.  If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the above information to clarify the problem.
 
@@ -38,29 +41,34 @@ have:
 
 #### Issue kind
 
-| Kind             | Description                                                                                                                     |
-|------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| kind/bug         | Bugs are bugs. The cause may or may not be known at triage time so debugging should be taken account into the time estimate.    |
-| kind/enhancement | Enhancement are not bugs or new features but can drastically improve usability or performance of a project component.           |
-| kind/feature     | Functionality or other elements that the project does not currently support.  Features are new and shiny.                       |
-| kind/question    | Contains a user or contributor question requiring a response.                                                                   |
+| Kind              | Description                                                                                                                     |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| kind/bug          | Bugs are bugs. The cause may or may not be known at triage time so debugging should be taken account into the time estimate.    |
+| kind/docs         | Additions or updates to new or existing documentation. Always tied to any kind of major code changes or refactoring.            |
+| kind/enhancement  | Enhancement are not bugs or new features but can drastically improve usability or performance of a project component.           |
+| kind/experimental | An enhancement or feature which is "bleeding edge" or unconventional. Will always need consensus and thorough testing.          |
+| kind/feature      | Functionality or other elements that the project does not currently support.  Features are new and shiny.                       |
+| kind/performance  | Improvement to existing functionality to improve efficiency or usability.                                                       |
+| kind/question     | Contains a user or contributor question requiring a response.                                                                   |
+| kind/refactor     | Retreading existing ground to improve code as per code quality standards.                                                       |
+| kind/robustness   | Improving code quality to better handle different situations. E.g. sanitizing data types, avoiding loop holes.                  |
+| kind/ux           | Simplifying or streamlining the user's experience. Can include better output or increased performance.                          |
 
 #### Functional area
 
 | Area                      |
 |---------------------------|
+| area/account              |
 | area/api                  |
-| area/build                |
 | area/cli                  |
-| area/data                 |
 | area/diagnostics          |
 | area/docs                 |
-| area/kernel               |
+| area/examples             |
+| area/gateway              |
 | area/logging              |
-| area/messaging            |
 | area/monitoring           |
 | area/networking           |
-| area/project              |
+| area/platform             |
 | area/registry             |
 | area/reverse-proxy        |
 | area/security             |
@@ -69,17 +77,17 @@ have:
 | area/storage              |
 | area/swarm                |
 | area/test                 |
+| area/tools                |
+| area/ui                   |
 | area/vendoring            |
-| area/volumes              |
 
 #### Docker-for-X
 
 | Platform                  |
 |---------------------------|
+| docker/linux              |
 | docker/mac                |
 | docker/windows            |
-| toolbox/mac               |
-| toolbox/windows           |
 
 #### Experience level
 
@@ -110,7 +118,7 @@ labels to issues. These labels prevent duplicating effort.
 | status/more-info-needed       | Apply this to issues that are missing information (e.g. no `docker version` or `docker info` output, or no steps to reproduce), or require feedback from the reporter. If the issue is not updated after a week, it can generally be closed.
 | status/needs-attention        | Apply this label if an issue (or PR) needs more eyes.
 
-### 3. Priorize the issue
+### 3. Prioritize the issue
 
 When, and only when, an issue is attached to a specific milestone, the issue can be labeled with the
 following labels to indicate their degree of priority (from more urgent to less urgent).
@@ -119,7 +127,7 @@ following labels to indicate their degree of priority (from more urgent to less 
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | priority/P0 | Urgent: Security, critical bugs, blocking issues. P0 basically means drop everything you are doing until this issue is addressed. |
 | priority/P1 | Important: P1 issues are a top priority and a must-have for the next release.                                                     |
-| priority/P2 | Normal priority: this is the default.                                                                                         |
+| priority/P2 | Normal priority: this is the default.                                                                                             |
 | priority/P3 | Best effort: those are nice to have / minor issues.                                                                               |
 
-And that's it. That should be all the information required for a new or existing contributor to come in an resolve an issue.
+And that's it. That should be all the information required for a new or existing contributor to come in and resolve an issue.

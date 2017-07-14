@@ -36,16 +36,14 @@ You do NOT have to include this information if this is a FEATURE REQUEST
 Briefly describe the problem you are having in a few paragraphs.
 -->
 
-**Steps to reproduce the issue:**
+**Steps to reproduce the issue, if applicable:**
 1.
 2.
 3.
 
-**Describe the results you received:**
-
-
 **Describe the results you expected:**
 
+**Describe the results you received:**
 
 **Additional information you deem important (e.g. issue happens only occasionally):**
 
@@ -55,7 +53,7 @@ Briefly describe the problem you are having in a few paragraphs.
 (paste your output here)
 ```
 
-**Docker for Mac/Windows version, if applicable:**
+**Output of `docker info`:**
 
 ```
 (paste your output here)
@@ -67,4 +65,10 @@ Briefly describe the problem you are having in a few paragraphs.
 (paste your output here)
 ```
 
-**Additional environment details (AWS, etc., if applicable):**
+**Output of `amp config`:**
+
+```
+(paste your output here)
+```
+
+**Additional environment details (AWS, page URL (for docs), etc., if applicable):**
