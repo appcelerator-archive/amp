@@ -142,11 +142,11 @@ func info(c cli.Interface) {
 			return []byte{}, nil
 		})
 		if claims, ok := pToken.Claims.(*auth.AuthClaims); ok {
-			if claims.ActiveOrganization != "" {
-				fmt.Fprintf(c.Err(), "[user %s in organization %s @ %s]\n", claims.AccountName, claims.ActiveOrganization, s)
-			} else {
-				fmt.Fprintf(c.Err(), "[user %s @ %s]\n", claims.AccountName, s)
-			}
+			//if claims.ActiveOrganization != "" {
+			//	fmt.Fprintf(c.Err(), "[user %s in organization %s @ %s]\n", claims.AccountName, claims.ActiveOrganization, s)
+			//} else {
+			fmt.Fprintf(c.Err(), "[user %s @ %s]\n", claims.AccountName, s)
+			//}
 		}
 	}
 }
