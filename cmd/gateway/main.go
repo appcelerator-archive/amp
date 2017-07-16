@@ -122,7 +122,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Infoln("gateway successfuly initialized. Start listening on:", listenAddress)
+	log.Infoln("gateway successfully initialized. Start listening on:", listenAddress)
 	log.Fatalln(http.ListenAndServe(listenAddress, handlers.CompressHandler(handlers.CombinedLoggingHandler(os.Stdout, allowCORS(mux)))))
 	return
 }
