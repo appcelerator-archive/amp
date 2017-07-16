@@ -56,7 +56,7 @@ func (ns *NatsStreaming) Connect() error {
 		return fmt.Errorf("unable to connect to nats streaming: %v", err)
 	}
 	ns.connected = true
-	log.Infoln("Connected to nats streaming successfuly")
+	log.Infoln("Connected to nats streaming successfully")
 	return nil
 }
 

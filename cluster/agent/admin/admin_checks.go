@@ -267,7 +267,7 @@ func VerifyServiceScheduling() error {
 	if observed := waitForEvents(eventChan, "WATCH_ACTION_CREATE", 3, 10); !observed {
 		return errors.New("failed to read the server task creation events")
 	} else {
-		log.Println("Task creation events successfuly read")
+		log.Println("Task creation events successfully read")
 	}
 	clientServiceId, err := createService(c, testServiceSpec{Name: "check-client", Image: "alpine:3.6", Command: []string{"sh", "-c", "while true; do nc -zv check-server 5968; done"}, Networks: []string{testNetwork}, Replicas: 3, Constraints: []string{"node.labels.amp.type.core==true"}})
 	if err != nil {
@@ -281,7 +281,7 @@ func VerifyServiceScheduling() error {
 	if observed := waitForEvents(eventChan, "WATCH_ACTION_CREATE", 3, 10); !observed {
 		return errors.New("failed to read the client task creation events")
 	} else {
-		log.Println("Task creation events successfuly read")
+		log.Println("Task creation events successfully read")
 	}
 	// wait 6 seconds to make sure no tasks are dropped
 	if dropped := waitForEvents(eventChan, "WATCH_ACTION_REMOVE", 1, 6); dropped {
