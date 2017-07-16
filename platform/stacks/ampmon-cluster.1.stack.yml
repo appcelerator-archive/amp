@@ -43,9 +43,7 @@ services:
   nats:
     image: appcelerator/amp-nats-streaming:v0.5.0
     networks:
-      default:
-        aliases:
-          - nats
+      - default
     labels:
       io.amp.role: "infrastructure"
     deploy:
@@ -60,9 +58,7 @@ services:
   etcd:
     image: appcelerator/etcd:3.1.9
     networks:
-      default:
-        aliases:
-          - etcd
+      - default
     volumes:
       - etcd-data:/data
     environment:
