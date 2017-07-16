@@ -21,9 +21,7 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.7.1
     networks:
-      default:
-        aliases:
-          - alertmanager
+      - default
     volumes:
       - alertmanager-data:/alertmanager
     ports:
@@ -49,9 +47,7 @@ services:
   prometheus:
     image: appcelerator/amp-prometheus:${TAG:-0.12.0}
     networks:
-      default:
-        aliases:
-          - prometheus
+      - default
     volumes:
       - prometheus-data:/prometheus
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -77,6 +73,8 @@ services:
 
   node_exporter:
     image: prom/node-exporter:v0.14.0
+    networks:
+      - default
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -98,6 +96,8 @@ services:
     #ports:
       #- target: 7777
       #- published: 7777
+    networks:
+      - default
     labels:
       io.amp.role: "infrastructure"
     deploy:
@@ -113,9 +113,7 @@ services:
     image: prom/haproxy-exporter:v0.7.1
     command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
-      default:
-        aliases:
-          - haproxy_exporter
+      - default
     #ports:
       #- target: 9101
       #- published: 9101
@@ -133,9 +131,7 @@ services:
   grafana:
     image: appcelerator/grafana-amp:1.2.3
     networks:
-      default:
-        aliases:
-          - grafana
+      - default
     volumes:
       - grafana-data:/var/lib/grafana
     environment:

@@ -19,9 +19,7 @@ services:
   amplifier:
     image: appcelerator/amplifier:${TAG:-0.12.0}
     networks:
-      default:
-        aliases:
-          - amplifier
+      - default
     environment:
       REGISTRATION: ${REGISTRATION:-email}
       NOTIFICATIONS: ${NOTIFICATIONS:-true}
@@ -51,9 +49,7 @@ services:
   gateway:
     image: appcelerator/gateway:${TAG:-0.12.0}
     networks:
-      default:
-        aliases:
-          - gateway
+      - default
     labels:
       io.amp.role: "infrastructure"
     environment:
@@ -72,9 +68,7 @@ services:
   agent:
     image: appcelerator/agent:${TAG:-0.12.0}
     networks:
-      default:
-        aliases:
-          - agent
+      - default
     deploy:
       mode: global
       labels:
