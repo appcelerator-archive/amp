@@ -27,13 +27,18 @@ func install(cmd *cobra.Command, args []string) error {
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := docker.NewDockerCli(stdin, stdout, stderr)
 
+	namespace := ""
+	if len(args) > 0 {
+		namespace = args[0]
+	}
+
 	files, err := getStackFiles("./stacks")
 	if err != nil {
 		return err
 	}
 	for _, f := range files {
 		log.Println(f)
-		err := deploy(dockerCli, f)
+		err := deploy(dockerCli, f, namespace)
 		if err != nil {
 			return err
 		}
@@ -67,10 +72,12 @@ func getStackFiles(path string) ([]string, error) {
 	return stackfiles, nil
 }
 
-func deploy(d *command.DockerCli, stackfile string) error {
-	// use the stackfile basename as the default stack namespace
-	namespace := filepath.Base(stackfile)
-	namespace = strings.TrimSuffix(namespace, filepath.Ext(namespace))
+func deploy(d *command.DockerCli, stackfile string, namespace string) error {
+	if namespace == "" {
+		// use the stackfile basename as the default stack namespace
+		namespace = filepath.Base(stackfile)
+		namespace = strings.TrimSuffix(namespace, filepath.Ext(namespace))
+	}
 
 	opts := stack.DeployOptions{
 		Namespace: namespace,
