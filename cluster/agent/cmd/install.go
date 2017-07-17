@@ -12,6 +12,7 @@ import (
 
 	"github.com/appcelerator/amp/cluster/agent/admin"
 	"github.com/appcelerator/amp/cluster/agent/pkg/docker"
+	"github.com/appcelerator/amp/cluster/agent/pkg/docker/stack"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/compose/convert"
 	"github.com/docker/docker/api/types"
@@ -21,7 +22,7 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/subfuzion/stack/stack"
+	substack "github.com/subfuzion/stack/stack"
 )
 
 const (
@@ -48,7 +49,8 @@ func install(cmd *cobra.Command, args []string) error {
 	}
 
 	target := targetSingle // TODO: Add a parameter or detect the number of swarm nodes
-	files, err := getStackFiles("./stacks", target)
+//	files, err := getStackFiles("./stacks", target)
+	files, err := getStackFiles("./stacksamples", target)
 	if err != nil {
 		return err
 	}
@@ -57,7 +59,7 @@ func install(cmd *cobra.Command, args []string) error {
 		log.Println(f)
 		if strings.Contains(f, "test") {
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
-			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
+			substack.Remove(dockerCli, substack.RemoveOptions{Namespaces: []string{"test"}})
 			if err != nil {
 				return err
 			}
@@ -121,7 +123,9 @@ func deploy(d *command.DockerCli, stackfile string, namespace string) error {
 		SendRegistryAuth: false,
 		Prune:            false,
 	}
-	err := stack.Deploy(d, opts)
+
+
+	err := stack.Deploy(context.Background(), d, opts)
 	return err
 }
 
@@ -144,7 +148,7 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 		// List stack tasks
 		options := types.TaskListOptions{Filters: filters.NewArgs()}
 		options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
-		tasks, err := stack.ListTasks(context.Background(), c, options)
+		tasks, err := substack.ListTasks(context.Background(), c, options)
 		if err != nil {
 			return err
 		}

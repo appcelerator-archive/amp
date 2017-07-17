@@ -91,3 +91,4 @@ func pruneServices(ctx context.Context, dockerCli command.Cli, namespace convert
 	}
 	return removeServices(ctx, dockerCli, pruneServices)
 }
+
