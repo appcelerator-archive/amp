@@ -1,0 +1,36 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  etcd-data:
+
+services:
+
+  etcd:
+    image: appcelerator/etcd:3.1.9
+    networks:
+      default:
+    volumes:
+      - etcd-data:/data
+    environment:
+      SERVICE_NAME: "etcd"
+      MIN_SEEDS_COUNT: 1
+    command:
+      - "--advertise-client-urls"
+      - "http://etcd:2379"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.kv == true

@@ -1,0 +1,28 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  portal:
+    image: appcelerator/portal:latest
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+    environment:
+      SERVICE_PORTS: "80"
+      VIRTUAL_HOST: "http://portal.*,https://portal.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "30s"

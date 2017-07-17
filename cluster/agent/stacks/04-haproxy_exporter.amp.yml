@@ -1,0 +1,29 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  haproxy_exporter:
+    image: prom/haproxy-exporter:v0.7.1
+    command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
+    networks:
+      - default
+    #ports:
+      #- target: 9101
+      #- published: 9101
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true

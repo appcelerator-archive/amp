@@ -1,0 +1,30 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+
+  kibana:
+    image: appcelerator/kibana:5.4.2
+    networks:
+      - default
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.mapping: "kibana:5601"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "10s"
+      amp.service.stabilize.timeout: "30s"
+    environment:
+      ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      SERVICE_PORTS: 5601
+      VIRTUAL_HOST: "http://kibana.*,https://kibana.*"

@@ -1,0 +1,43 @@
+version: "3.1"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  alertmanager-data:
+
+secrets:
+  alertmanager_yml:
+    external: true
+
+services:
+
+  alertmanager:
+    image: prom/alertmanager:v0.7.1
+    networks:
+      - default
+    volumes:
+      - alertmanager-data:/alertmanager
+    ports:
+      - "9093:9093"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+    secrets:
+      - source: alertmanager_yml
+        target: alertmanager.yml
+        mode: 0400
+    command: [ "-config.file=/run/secrets/alertmanager.yml",
+             "-storage.path=/alertmanager",
+             "-web.external-url=http://localhost:9093" ]
