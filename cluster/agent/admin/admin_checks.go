@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	defaultURL        = "unix:///var/run/docker.sock"
-	defaultVersion    = "1.29"
+	DefaultURL        = "unix:///var/run/docker.sock"
+	DefaultVersion    = "1.29"
 	minimumApiVersion = 1.29
 	testNetwork       = "amptest"
 )
@@ -37,7 +37,7 @@ type testServiceSpec struct {
 }
 
 func VerifyDockerVersion() error {
-	c, err := client.NewClient(defaultURL, defaultVersion, nil, nil)
+	c, err := client.NewClient(DefaultURL, DefaultVersion, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func VerifyLabels() error {
 	expectedLabels := []string{"amp.type.api=true", "amp.type.route=true", "amp.type.core=true", "amp.type.metrics=true",
 		"amp.type.search=true", "amp.type.mq=true", "amp.type.kv=true", "amp.type.user=true"}
 	missingLabel := false
-	c, err := client.NewClient(defaultURL, defaultVersion, nil, nil)
+	c, err := client.NewClient(DefaultURL, DefaultVersion, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func eventWatcher(eventType string) (chan *api.WatchMessage_Event, error) {
 }
 
 func VerifyServiceScheduling() error {
-	c, err := client.NewClient(defaultURL, defaultVersion, nil, nil)
+	c, err := client.NewClient(DefaultURL, DefaultVersion, nil, nil)
 	if err != nil {
 		return err
 	}
