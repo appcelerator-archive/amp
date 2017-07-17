@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,5 +17,9 @@ func main() {
 	rootCmd.AddCommand(NewInstallCommand())
 	rootCmd.AddCommand(NewMonitorCommand())
 
-	_ = rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		log.Println(err)
+		os.Exit(-1)
+	}
 }

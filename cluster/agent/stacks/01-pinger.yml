@@ -1,17 +1,8 @@
 version: "3"
 
-networks:
-  default:
-    external:
-      name: ampnet
-
 services:
   pinger:
-    image: subfuzion/pinger:${TAG:-latest}
-    networks:
-      default:
-        aliases:
-          - pinger
+    image: subfuzion/pinger
     deploy:
       replicas: 1
       restart_policy:
