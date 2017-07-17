@@ -16,7 +16,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
+	//	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	// TODO get rid of apiclient or dockerclient
 	apiclient "github.com/docker/docker/client"
@@ -312,17 +312,18 @@ func deployServices(
 			}
 		}
 
-		//fmt.Printf("serviceSpec: %+v\n", serviceSpec.TaskTemplate.ContainerSpec.Labels)
-		//stabilizeDelay := time.Duration(5) * time.Second
+		// service stabilization defaults
+		stabilizeDelay := time.Duration(5) * time.Second
 		stabilizeTimeout := time.Duration(1) * time.Minute
 
+		// override service stabilization default settings based on spec labels
 		labels := serviceSpec.TaskTemplate.ContainerSpec.Labels
-		//if labels["amp.service.stabilize.delay"] != "" {
-		//	stabilizeDelay, err = time.ParseDuration(labels["amp.service.stabilize.delay"])
-		//	if err != nil {
-		//		return err
-		//	}
-		//}
+		if labels["amp.service.stabilize.delay"] != "" {
+			stabilizeDelay, err = time.ParseDuration(labels["amp.service.stabilize.delay"])
+			if err != nil {
+				return err
+			}
+		}
 		if labels["amp.service.stabilize.timeout"] != "" {
 			stabilizeTimeout, err = time.ParseDuration(labels["amp.service.stabilize.timeout"])
 			if err != nil {
@@ -330,12 +331,18 @@ func deployServices(
 			}
 		}
 
-		// TODO: wip, ignore cancel for now
+		//fmt.Printf("serviceSpec: %+v\n", serviceSpec.TaskTemplate.ContainerSpec.Labels)
+		fmt.Printf("amp.service.stablize.delay:   %s", stabilizeDelay)
+		fmt.Printf("amp.service.stablize.timeout: %s", stabilizeTimeout)
+
+		// apply service stabilization timeout setting - the service must be stable before the timeout
 		ctx, _ := context.WithTimeout(ctx, stabilizeTimeout)
-		ctx, cancel := context.WithCancel(ctx)
+		var imageName string
 
 		if service, exists := existingServiceMap[name]; exists {
 			fmt.Fprintf(out, "Updating service %s (id: %s)\n", name, service.ID)
+			fmt.Fprintf(out, "service: %+v\n", service)
+			imageName = service.Spec.TaskTemplate.ContainerSpec.Image
 
 			updateOpts := types.ServiceUpdateOptions{EncodedRegistryAuth: encodedAuth}
 
@@ -360,33 +367,10 @@ func deployServices(
 		} else {
 			// TODO: will want to filter on service tasks and wait for all tasks to be healthy
 			// TODO: logic should also apply to the service update above, not just create here
-			f := filters.NewArgs()
-			f.Add("type", events.ServiceEventType)
-			f.Add("type", events.ContainerEventType)
-			opts := types.EventsOptions{
-				Filters: f,
-			}
-			c, _ := context.WithTimeout(ctx, time.Duration(300)*time.Second)
-		//	ev, errs := apiClient.Events(c, opts)
-			ev, _ := apiClient.Events(c, opts)
-			done := make(chan struct{})
-			//go func() {
-			//	for {
-			//		select {
-			//		case evt := <-ev:
-			//			//fmt.Fprintf(out, "event: %+v\n", evt)
-			//			fmt.Fprintf(out, "event:\n%s", MessageString(evt))
-			//		case err := <-errs:
-			//			fmt.Fprintf(out, "err: %+v\n", err)
-			//			close(done)
-			//			return
-			//		}
-			//	}
-			//}()
 
 			fmt.Fprintf(out, "Creating service %s\n", name)
 			createOpts := types.ServiceCreateOptions{EncodedRegistryAuth: encodedAuth}
-			// query registry if flag disabling it was not set
+			// query registry if flag disabling was not set
 			if resolveImage == ResolveImageAlways || resolveImage == ResolveImageChanged {
 				createOpts.QueryRegistry = true
 			}
@@ -396,18 +380,37 @@ func deployServices(
 				return errors.Wrapf(err, "failed to create service %s", name)
 			}
 			fmt.Fprintf(out, "service: %+v\n", resp)
-
-			// test event_utils
-			eventHandler := command.InitEventHandler()
-			eventHandler.Handle("create", func(m events.Message) {
-				fmt.Fprintf(out, "EVENT CREATE: %s\n", MessageString(m))
-				cancel()
-			})
-			eventHandler.Watch(ev)
-
-			<-done
-			fmt.Fprintf(out, "done\n")
+			imageName = serviceSpec.TaskTemplate.ContainerSpec.Image
 		}
+
+		fmt.Fprintf(out, "image: %s\n", imageName)
+		done := make(chan bool)
+
+		// create a watcher for service/container events based on the service image
+		options := NewEventsWatcherOptions(events.ServiceEventType, events.ContainerEventType)
+		options.AddImageFilter(imageName)
+
+		w := NewEventsWatcherWithCancel(ctx, apiClient, options)
+		w.On("*", func(m events.Message) {
+			fmt.Fprintf(out, "EVENT: %s\n", MessageString(m))
+		})
+		w.OnError(func(err error) {
+			fmt.Fprintf(out, "Error: %s\n", err)
+			w.Cancel()
+			done <- true
+		})
+		w.Watch()
+
+		NotifyState(ctx, apiClient, imageName, swarm.TaskStateRunning, stabilizeDelay, func(err error) {
+			if err != nil {
+				fmt.Fprintf(out, "Error: %s\n", err)
+			} else {
+				fmt.Fprintf(out, "Success!!!")
+			}
+			done <- true
+		})
+
+		<-done
 	}
 	return nil
 }
@@ -421,4 +424,59 @@ func MessageString(m events.Message) string {
 		m.ID, m.Status, m.From, m.Type, m.Action, m.Actor.ID, a, m.Scope, m.Time, m.TimeNano)
 }
 
+func NotifyState(ctx context.Context, apiClient apiclient.APIClient, image string, desiredState swarm.TaskState, stabilizeDelay time.Duration, callback func(error)) {
+	deadline, isSet := ctx.Deadline()
+	if !isSet {
+		deadline = time.Now().Add(1 * time.Minute)
+	}
 
+	go func() {
+		counter := 0
+		for {
+			// all tasks need to match the desired state and be stable within the deadline
+			if time.Now().After(deadline) {
+				callback(errors.New("failed to achieve desired state before deadline"))
+				return
+			}
+
+			// get tasks
+			taskOpts := types.TaskListOptions{}
+			//		taskOpts.Filters.Add("label", )
+			tasks, err := ListTasks(ctx, apiClient, taskOpts)
+			if err != nil {
+				callback(err)
+				return
+			}
+
+			// if *any* task does not match the desired state then wait for another loop iteration to check again
+			failure := false
+			for _, t := range tasks {
+				if t.Status.State != desiredState {
+					failure = true
+					break
+				}
+			}
+
+			// all tasks matched the desired state - now wait for things to stablize, or if already stabilized,
+			// then callback with success
+			if !failure {
+				if counter < 1 {
+					// make sure we have enough time to wait for things to stabilize within the deadline
+					if time.Now().Add(stabilizeDelay).After(deadline) {
+						callback(errors.New("failed to achieve desired state with stablization delay before deadline"))
+						return
+					}
+					time.Sleep(stabilizeDelay)
+					counter++
+				} else {
+					// success!
+					callback(nil)
+					return
+				}
+			}
+
+			// task polling interval
+			time.Sleep(1 * time.Second)
+		}
+	}()
+}
