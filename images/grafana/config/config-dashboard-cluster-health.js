@@ -789,7 +789,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load1",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -870,7 +870,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load5",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -951,7 +951,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_load15",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1029,7 +1029,7 @@
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1107,7 +1107,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_filesystem_free",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1186,7 +1186,7 @@
                 "legendFormat": "{{instance}}",
                 "metric": "node_filesystem_free",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1276,7 +1276,7 @@
                 "legendFormat": "{{backend}}",
                 "metric": "haproxy_server_current_queue",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1355,7 +1355,7 @@
                 "legendFormat": "{{frontend}}",
                 "metric": "haproxy_frontend_current_sessions",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -1434,7 +1434,7 @@
                 "legendFormat": "{{frontend}}-{{code}}",
                 "metric": "haproxy_frontend_http_responses_total",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2238,7 +2238,7 @@
                 "legendFormat": "{{instance}} WAL fsync",
                 "metric": "etcd_disk_wal_fsync_duration_seconds_bucket",
                 "refId": "A",
-                "step": 20
+                "step": 10
               },
               {
                 "expr": "histogram_quantile(0.99, sum(rate(etcd_disk_backend_commit_duration_seconds_bucket [5m])) by (instance, le))",
@@ -2247,7 +2247,7 @@
                 "legendFormat": "{{instance}} DB fsync",
                 "metric": "etcd_disk_backend_commit_duration_seconds_bucket",
                 "refId": "B",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2324,7 +2324,7 @@
                 "legendFormat": "{{instance}} Client Traffic In",
                 "metric": "etcd_network_client_grpc_received_bytes_total",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2401,7 +2401,7 @@
                 "legendFormat": "{{instance}} Client Traffic Out",
                 "metric": "etcd_network_client_grpc_sent_bytes_total",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2455,18 +2455,18 @@
           {
             "cacheTimeout": null,
             "colorBackground": false,
-            "colorValue": true,
+            "colorValue": false,
             "colors": [
-              "rgba(50, 172, 45, 0.97)",
-              "rgba(237, 129, 40, 0.89)",
-              "rgba(245, 54, 54, 0.9)"
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 234, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
             ],
             "datasource": null,
             "format": "none",
             "gauge": {
-              "maxValue": 100,
+              "maxValue": 2,
               "minValue": 0,
-              "show": false,
+              "show": true,
               "thresholdLabels": false,
               "thresholdMarkers": true
             },
@@ -2499,26 +2499,36 @@
               },
               {
                 "from": "0",
-                "text": "GREEN",
-                "to": "0"
+                "text": "not ready",
+                "to": "0.8"
               },
               {
-                "from": "1",
-                "text": "UNSTABLE",
-                "to": "9999"
+                "from": "0.8",
+                "text": "no replica",
+                "to": "1.8"
+              },
+              {
+                "from": "1.8",
+                "text": "replicated",
+                "to": "2.2"
+              },
+              {
+                "from": "2.2",
+                "text": "N/A",
+                "to": "999"
               }
             ],
             "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
-              "full": false,
+              "full": true,
               "lineColor": "rgb(31, 120, 193)",
               "show": true
             },
             "tableColumn": "",
             "targets": [
               {
-                "expr": "sum(es_cluster_status)",
+                "expr": "2 - sum(es_cluster_status) / count(es_cluster_status)",
                 "format": "time_series",
                 "interval": "",
                 "intervalFactor": 2,
@@ -2528,10 +2538,10 @@
                 "step": 60
               }
             ],
-            "thresholds": "0.1,1.1",
+            "thresholds": "0.8,1.8",
             "title": "Cluster Status",
             "type": "singlestat",
-            "valueFontSize": "80%",
+            "valueFontSize": "50%",
             "valueMaps": [
               {
                 "op": "=",
@@ -2607,7 +2617,7 @@
               }
             ],
             "thresholds": "1,1",
-            "title": "Nodes Number",
+            "title": "Node Count",
             "type": "singlestat",
             "valueFontSize": "80%",
             "valueMaps": [
@@ -2622,7 +2632,7 @@
           {
             "cacheTimeout": null,
             "colorBackground": false,
-            "colorValue": true,
+            "colorValue": false,
             "colors": [
               "rgba(50, 172, 45, 0.97)",
               "rgba(237, 129, 40, 0.89)",
@@ -2668,7 +2678,7 @@
             "span": 2,
             "sparkline": {
               "fillColor": "rgba(31, 118, 189, 0.18)",
-              "full": false,
+              "full": true,
               "lineColor": "rgb(31, 120, 193)",
               "show": true
             },
@@ -2684,7 +2694,7 @@
                 "step": 60
               }
             ],
-            "thresholds": "70,90",
+            "thresholds": "70,80",
             "title": "Mem Heap Percent Used",
             "type": "singlestat",
             "valueFontSize": "80%",
@@ -2695,7 +2705,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -2814,7 +2824,7 @@
                 "legendFormat": "{{cluster}}",
                 "metric": "es_cluster_task_max_waiting_time_seconds",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2824,6 +2834,245 @@
             "tooltip": {
               "shared": true,
               "sort": 0,
+              "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+              "buckets": null,
+              "mode": "time",
+              "name": null,
+              "show": true,
+              "values": []
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true
+              }
+            ]
+          },
+          {
+            "cacheTimeout": null,
+            "colorBackground": false,
+            "colorValue": false,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "datasource": null,
+            "decimals": null,
+            "format": "short",
+            "gauge": {
+              "maxValue": 100,
+              "minValue": 0,
+              "show": false,
+              "thresholdLabels": false,
+              "thresholdMarkers": true
+            },
+            "id": 78,
+            "interval": null,
+            "links": [],
+            "mappingType": 1,
+            "mappingTypes": [
+              {
+                "name": "value to text",
+                "value": 1
+              },
+              {
+                "name": "range to text",
+                "value": 2
+              }
+            ],
+            "maxDataPoints": 100,
+            "nullPointMode": "connected",
+            "nullText": null,
+            "postfix": "",
+            "postfixFontSize": "50%",
+            "prefix": "",
+            "prefixFontSize": "50%",
+            "rangeMaps": [
+              {
+                "from": "null",
+                "text": "N/A",
+                "to": "null"
+              }
+            ],
+            "span": 2,
+            "sparkline": {
+              "fillColor": "rgba(31, 118, 189, 0.18)",
+              "full": true,
+              "lineColor": "rgb(31, 120, 193)",
+              "show": true
+            },
+            "tableColumn": "",
+            "targets": [
+              {
+                "expr": "avg(es_cluster_shards_number{type=\"active\"})",
+                "format": "time_series",
+                "intervalFactor": 2,
+                "legendFormat": "",
+                "metric": "es_cluster_shards_number",
+                "refId": "A",
+                "step": 60
+              }
+            ],
+            "thresholds": "",
+            "title": "Active Cluster Shards",
+            "type": "singlestat",
+            "valueFontSize": "80%",
+            "valueMaps": [
+              {
+                "op": "=",
+                "text": "N/A",
+                "value": "null"
+              }
+            ],
+            "valueName": "current"
+          },
+          {
+            "cacheTimeout": null,
+            "colorBackground": false,
+            "colorValue": false,
+            "colors": [
+              "rgba(245, 54, 54, 0.9)",
+              "rgba(237, 129, 40, 0.89)",
+              "rgba(50, 172, 45, 0.97)"
+            ],
+            "datasource": null,
+            "decimals": null,
+            "format": "percent",
+            "gauge": {
+              "maxValue": 100,
+              "minValue": 0,
+              "show": true,
+              "thresholdLabels": false,
+              "thresholdMarkers": true
+            },
+            "id": 77,
+            "interval": null,
+            "links": [],
+            "mappingType": 1,
+            "mappingTypes": [
+              {
+                "name": "value to text",
+                "value": 1
+              },
+              {
+                "name": "range to text",
+                "value": 2
+              }
+            ],
+            "maxDataPoints": 100,
+            "nullPointMode": "connected",
+            "nullText": null,
+            "postfix": "",
+            "postfixFontSize": "50%",
+            "prefix": "",
+            "prefixFontSize": "50%",
+            "rangeMaps": [
+              {
+                "from": "null",
+                "text": "N/A",
+                "to": "null"
+              }
+            ],
+            "span": 2,
+            "sparkline": {
+              "fillColor": "rgba(31, 118, 189, 0.18)",
+              "full": true,
+              "lineColor": "rgb(31, 120, 193)",
+              "show": true
+            },
+            "tableColumn": "",
+            "targets": [
+              {
+                "expr": "avg(es_cluster_shards_active_percent)",
+                "format": "time_series",
+                "intervalFactor": 2,
+                "legendFormat": "",
+                "metric": "es_cluster_shards_active_percent",
+                "refId": "A",
+                "step": 60
+              }
+            ],
+            "thresholds": "",
+            "title": "Active Shards",
+            "type": "singlestat",
+            "valueFontSize": "80%",
+            "valueMaps": [
+              {
+                "op": "=",
+                "text": "N/A",
+                "value": "null"
+              }
+            ],
+            "valueName": "current"
+          },
+          {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": null,
+            "fill": 1,
+            "id": 76,
+            "legend": {
+              "alignAsTable": true,
+              "avg": false,
+              "current": true,
+              "hideEmpty": true,
+              "hideZero": true,
+              "max": false,
+              "min": false,
+              "show": true,
+              "total": false,
+              "values": true
+            },
+            "lines": true,
+            "linewidth": 1,
+            "links": [],
+            "nullPointMode": "null",
+            "percentage": false,
+            "pointradius": 5,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "span": 8,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+              {
+                "expr": "es_index_shards_number{type=~\"active|active_primary|shards\"}",
+                "format": "time_series",
+                "interval": "",
+                "intervalFactor": 2,
+                "legendFormat": "{{index}}:{{type}}",
+                "metric": "es_index_shards_number",
+                "refId": "A",
+                "step": 10
+              }
+            ],
+            "thresholds": [],
+            "timeFrom": null,
+            "timeShift": null,
+            "title": "Index Shards",
+            "tooltip": {
+              "shared": false,
+              "sort": 2,
               "value_type": "individual"
             },
             "type": "graph",
@@ -2904,7 +3153,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_connections",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -2982,7 +3231,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_subscriptions",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -3061,7 +3310,7 @@
                 "legendFormat": "{{server_id}}",
                 "metric": "gnatsd_varz_slow_consumers",
                 "refId": "A",
-                "step": 20
+                "step": 10
               }
             ],
             "thresholds": [],
@@ -4563,8 +4812,8 @@
         "repeat": null,
         "repeatIteration": null,
         "repeatRowId": null,
-        "showTitle": false,
-        "title": "Dashboard Row",
+        "showTitle": true,
+        "title": "AMPLIFIER",
         "titleSize": "h6"
       }
     ],

@@ -129,7 +129,7 @@ services:
         - node.labels.amp.type.metrics == true
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.3
+    image: appcelerator/grafana-amp:1.2.4
     networks:
       - default
     volumes:
