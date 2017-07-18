@@ -11,11 +11,11 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.4.2
+    image: appcelerator/elasticsearch-amp:5.5.0
     networks:
       - default
     volumes:
-      - elasticsearch-data:/opt/elasticsearch-5.4.2/data
+      - elasticsearch-data:/opt/elasticsearch/data
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "15s"

@@ -8,7 +8,7 @@ networks:
 services:
 
   kibana:
-    image: appcelerator/kibana:5.4.2
+    image: appcelerator/kibana:5.5.0
     networks:
       - default
     deploy:

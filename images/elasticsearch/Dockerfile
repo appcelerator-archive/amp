@@ -1,31 +1,28 @@
 FROM appcelerator/alpine:3.6.0
 
-RUN apk update && apk upgrade && apk --no-cache add openjdk8-jre bind-tools
+RUN apk --no-cache add openjdk8-jre bind-tools
 
 ENV PATH /bin:/opt/elasticsearch/bin:$PATH
-ENV ELASTIC_VERSION 5.4.2
+ENV ELASTIC_VERSION 5.5.0
+
+RUN mkdir -p /opt/elasticsearch && adduser -D -h /opt/elasticsearch -s /sbin/nologin elastico && rm -rf /opt
+
+COPY config /_config
 
 RUN curl -L https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ELASTIC_VERSION.tar.gz -o /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz && \
     mkdir /opt && \
     tar xzf /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz -C /opt && \
-    ln -s /opt/elasticsearch-$ELASTIC_VERSION /opt/elasticsearch && \
+    mv /opt/elasticsearch-$ELASTIC_VERSION /opt/elasticsearch && \
     rm -f /opt/elasticsearch/bin/elasticsearch*exe /opt/elasticsearch/bin/elasticsearch*bat && \
-    rm /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz
+    rm /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz && \
+    mv /_config/* /opt/elasticsearch/config/ && rm -rf /_config && \
+    mkdir -p /opt/elasticsearch/config/scripts && \
+    /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.5.0.0.zip && \
+    chown -R elastico:elastico /opt/elasticsearch
 
-WORKDIR /opt/elasticsearch
-
-COPY config/java.policy /opt/elasticsearch/config/java.policy
-COPY config/elasticsearch.yml /opt/elasticsearch/config/elasticsearch.yml.tpl
-COPY config/log4j2.properties /opt/elasticsearch/config/
 COPY /bin/docker-entrypoint.sh /bin/
 
-RUN /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.4.2.0.zip
-
-RUN mkdir -p /opt/elasticsearch/config/scripts
-RUN adduser -D -h /opt/elasticsearch -s /sbin/nologin elastico
-RUN chown -R elastico:elastico /opt/elasticsearch
-
-VOLUME /opt/elasticsearch-$ELASTIC_VERSION/data
+VOLUME /opt/elasticsearch/data
 
 EXPOSE 9200 9300
 #ENV JAVA_HEAP_SIZE=256
