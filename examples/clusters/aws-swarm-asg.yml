@@ -774,7 +774,7 @@ Resources:
           - - Ref: AWS::StackName
             - worker
             - metrics
-      - Key: atomiq.clusterid
+      - Key: amp.clusterid
         PropagateAtLaunch: true
         Value: !Ref AWS::StackName
       - Key: SwarmRole
@@ -858,7 +858,7 @@ Resources:
           - - Ref: AWS::StackName
             - worker
             - core
-      - Key: atomiq.clusterid
+      - Key: amp.clusterid
         PropagateAtLaunch: true
         Value: !Ref AWS::StackName
       - Key: SwarmRole
@@ -943,7 +943,7 @@ Resources:
           - - Ref: AWS::StackName
             - worker
             - user
-      - Key: atomiq.clusterid
+      - Key: amp.clusterid
         PropagateAtLaunch: true
         Value: !Ref AWS::StackName
       - Key: SwarmRole
@@ -1045,7 +1045,7 @@ Resources:
           - '-'
           - - Ref: AWS::StackName
             - manager
-      - Key: atomiq.clusterid
+      - Key: amp.clusterid
         PropagateAtLaunch: true
         Value: !Ref AWS::StackName
       - Key: SwarmRole

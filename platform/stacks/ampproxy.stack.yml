@@ -6,7 +6,7 @@ networks:
       name: ampnet
 
 secrets:
-  certificate_atomiq:
+  certificate_amp:
     external: true
 
 services:
@@ -33,6 +33,6 @@ services:
       - "443:443"
       - "1936:1936"
     secrets:
-      - source: certificate_atomiq
+      - source: certificate_amp
         target: cert0.pem
         mode: 0400

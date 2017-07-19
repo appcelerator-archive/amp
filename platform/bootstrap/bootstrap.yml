@@ -514,7 +514,7 @@ Resources:
           - '-'
           - - Ref: AWS::StackName
             - manager
-      - Key: atomiq.clusterid
+      - Key: amp.clusterid
         PropagateAtLaunch: true
         Value: !Ref AWS::StackName
       - Key: SwarmRole

@@ -27,4 +27,4 @@
 {{ var "/aws/instancetype/compute" "c3.large" }}
 {{ var "/aws/instancetype/memory" "r3.large" }}
 {{ var "/aws/instancetype/monit" "t2.small" }}
-{{ var "/docker/label/cluster/key" "atomiq.clusterid" }}
+{{ var "/docker/label/cluster/key" "amp.clusterid" }}

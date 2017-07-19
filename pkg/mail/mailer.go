@@ -10,7 +10,7 @@ import (
 
 const (
 	// DefaultSender default email sender
-	DefaultSender = "amp@atomiq.io"
+	DefaultSender = "none@example.com"
 )
 
 type emailTemplate struct {

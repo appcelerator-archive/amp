@@ -10,7 +10,7 @@ ROLE_LABEL=tools
 INFRAKIT_OPTIONS="-e INFRAKIT_HOME=$INFRAKIT_HOME -v $BOOTSTRAP_VOLUME:$INFRAKIT_HOME --label=io.amp.role=$ROLE_LABEL"
 INFRAKIT_PLUGINS_OPTIONS="-v /var/run/docker.sock:/var/run/docker.sock -e INFRAKIT_PLUGINS_DIR=$INFRAKIT_HOME/plugins"
 BRIDGE_NETWORK=hostnet
-CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-atomiq.clusterid}
+CLUSTER_LABEL_NAME=${CLUSTER_LABEL_NAME:-amp.clusterid}
 INFRAKIT_LOG_LEVEL=4
 WORKER_GROUP_LIST="gp cpu mem dat monit proxy"
 
@@ -673,14 +673,14 @@ _list(){
     return 1
   fi
   for _group in $_groups; do
-    docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags atomiq.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
+    docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags amp.clusterid="$_clusterid" --tags infrakit.group="$_group" -q 2>&1 | awk -v clusterid="$_clusterid" -v group="$_group" '{print clusterid, group, $2, $1}'
     if [[ $? -ne 0 ]]; then
       echo "failed to describe group $_group" >&2
       return 1
     fi
   done
   # also list instances outside of a group
-  docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags atomiq.clusterid="$_clusterid" -q 2>&1 | grep -v "infrakit.group" | grep -v registry | awk -v clusterid="$_clusterid" -v group="none" '{print clusterid, group, $2, $1}'
+  docker ${LEADER_HOST:+-H $LEADER_HOST} exec infrakit infrakit instance --name="$_instance_plugin" describe --tags amp.clusterid="$_clusterid" -q 2>&1 | grep -v "infrakit.group" | grep -v registry | awk -v clusterid="$_clusterid" -v group="none" '{print clusterid, group, $2, $1}'
 }
 
 _create_seed_aws(){

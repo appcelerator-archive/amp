@@ -23,7 +23,7 @@ readonly awscli="docker run --rm -v $HOME/.aws:/root/.aws:ro -v $BOOTSTRAPDIR:$B
 
 # IP range that should have access to the docker remote API
 readonly rapi_cidr="$(curl -sf ifconfig.co/ip)/32"
-readonly localdomainname="local.atomiq.io"
+readonly localdomainname="local.appcelerator.io"
 
 # global vars
 DEPLOYMENT_TARGET=local
@@ -405,7 +405,7 @@ prepare_certificates() {
   if [[ $# -ne 1 ]]; then
     return 1
   fi
-  $amps secret ls | grep -q "certificate_atomiq" && return 0
+  $amps secret ls | grep -q "certificate_amp" && return 0
 
   local name=$1
   local certfile="$SECRETSDIR/$name.pem"
@@ -426,7 +426,7 @@ prepare_certificates() {
   docker cp "$certfile" $cid:/secrets/$name.pem
   docker kill "$cid" >/dev/null 2>&1
   echo "creating the certificate secret"
-  $amps secret create "certificate_atomiq" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_atomiq successfully created" >&2
+  $amps secret create "certificate_amp" "$secrets_path/$name.pem" >/dev/null && echo "secret certificate_amp successfully created" >&2
 }
 
 # process the command line options and arguments
