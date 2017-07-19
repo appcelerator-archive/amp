@@ -6,7 +6,7 @@ Resource | Name | Values | Description
 --- | --- | --- | ---
 container | `io.amp.role` | [`infrastructure`, `tool` ] | Set on amp containers to describe their role |
 service | `io.amp.role` | [`infrastructure`, `tool` ] | Set on amp containers to describe their role |
-daemon | `atomiq.clusterid` | Cluster ID | Docker engine label for the local bootstrap cluster |
+daemon | `amp.clusterid` | Cluster ID | Docker engine label for the local bootstrap cluster |
 daemon | `infrakit.group` |  InfraKit group name | Docker engine label for the local bootstrap cluster (is an EC2 tag on AWS cluster deployment) |
 node | `amp.type.api` | true | Docker node label for service scheduling (api server) |
 node | `amp.type.route` | true | Docker node label for service scheduling (proxy service) |

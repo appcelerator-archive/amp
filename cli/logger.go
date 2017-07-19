@@ -11,7 +11,7 @@ import (
 // to suppress any terminal formatting codes when not attached to a tty;
 // then add terminal formatting (color) support for CLI info/warn/success/fail functions.
 
-// Logger is a simple logger for the Atomiq CLI that also implements grpclog.Logger
+// Logger is a simple logger for the AMP CLI that also implements grpclog.Logger
 type Logger struct {
 	out     *OutStream
 	verbose bool

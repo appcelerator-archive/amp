@@ -8,7 +8,7 @@ networks:
 secrets:
   amplifier_yml:
     external: true
-  certificate_atomiq:
+  certificate_amp:
     external: true
 
 services:
@@ -41,6 +41,6 @@ services:
       - source: amplifier_yml
         target: amplifier.yml
         mode: 0400
-      - source: certificate_atomiq
+      - source: certificate_amp
         target: cert0.pem
         mode: 0400

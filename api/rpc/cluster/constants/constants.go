@@ -5,7 +5,7 @@ const (
 	LabelKeyRole = "io.amp.role"
 
 	SecretAmplifier   = "amplifier_yml"
-	SecretCertificate = "certificate_atomiq"
+	SecretCertificate = "certificate_amp"
 )
 
 // cluster vars

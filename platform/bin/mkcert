@@ -17,7 +17,6 @@ cat >> "$cfg" << EOF
 
 [ alternate_names ]
 DNS.1       = *.local.appcelerator.io
-DNS.2       = *.local.atomiq.io
 IP.1       = 127.0.0.1
 EOF
 cacfg="$(mktemp)"
@@ -29,7 +28,6 @@ subjectKeyIdentifier = hash
 
 [ alternate_names ]
 DNS.1       = *.local.appcelerator.io
-DNS.2       = *.local.atomiq.io
 IP.1       = 127.0.0.1
 EOF
 
@@ -41,8 +39,8 @@ CERT=$(mktemp).pem
 PEM=$(mktemp).pem
 KEYLEN=2048
 EXPIRE=356
-CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=ca-$(hostname)"
-SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=Atomiq/CN=*.local.appcelerator.io"
+CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=AMP/CN=ca-$(hostname)"
+SUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=AMP/CN=*.local.appcelerator.io"
 
 openssl genrsa -out $CAKEY $KEYLEN
 openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT"
