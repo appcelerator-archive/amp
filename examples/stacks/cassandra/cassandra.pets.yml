@@ -1,0 +1,82 @@
+version: "3.2"
+
+services:
+  node1:
+    image: cassandra:3.11
+    environment:
+      CASSANDRA_SEEDS: "node1,node2,node3"
+      CASSANDRA_CLUSTER_NAME: "Demo Cluster"
+      CASSANDRA_LISTEN_ADDRESS: "node1"
+      JVM_OPTS: "-Xms263m -Xmx263m"
+    volumes:
+      - ebs_node1_data:/var/lib/cassandra
+    networks:
+      - data
+    deploy:
+      placement:
+        constraints: [node.labels.user.type == db1]
+        #constraints: [node.labels.amp.type.user == true]
+      replicas: 1
+      resources:
+        limits:
+          memory: 630M
+        reservations:
+          memory: 263M
+
+  node2:
+    image: cassandra:3.11
+    environment:
+      CASSANDRA_SEEDS: "node1,node2,node3"
+      CASSANDRA_CLUSTER_NAME: "Demo Cluster"
+      CASSANDRA_LISTEN_ADDRESS: "node2"
+      JVM_OPTS: "-Xms263m -Xmx263m"
+    volumes:
+      - ebs_node2_data:/var/lib/cassandra
+    networks:
+      - data
+    deploy:
+      placement:
+        constraints: [node.labels.user.type == db2]
+        #constraints: [node.labels.amp.type.user == true]
+      replicas: 1
+      resources:
+        limits:
+          memory: 630M
+        reservations:
+          memory: 263M
+
+  node3:
+    image: cassandra:3.11
+    environment:
+      CASSANDRA_SEEDS: "node1,node2,node3"
+      CASSANDRA_CLUSTER_NAME: "Demo Cluster"
+      CASSANDRA_LISTEN_ADDRESS: "node3"
+      JVM_OPTS: "-Xms263m -Xmx263m"
+    volumes:
+      - ebs_node3_data:/var/lib/cassandra
+    networks:
+      - data
+    deploy:
+      placement:
+        constraints: [node.labels.user.type == db3]
+        #constraints: [node.labels.amp.type.user == true]
+      replicas: 1
+      resources:
+        limits:
+          memory: 630M
+        reservations:
+          memory: 263M
+
+networks:
+  data:
+
+volumes:
+  #node1_data:
+  #node2_data:
+  #node3_data:
+  ebs_node1_data:
+    driver: rexray/ebs
+  ebs_node2_data:
+    driver: rexray/ebs
+  ebs_node3_data:
+    driver: rexray/ebs
