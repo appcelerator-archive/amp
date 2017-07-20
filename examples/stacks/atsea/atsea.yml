@@ -11,6 +11,9 @@ services:
       - back-tier
     secrets:
       - postgres_password
+    deploy:
+      placement:
+        constraints: [node.labels.amp.type.user == true]
 
   appserver:
     image: dockersamples/atsea_app
@@ -23,6 +26,8 @@ services:
       SERVICE_PORTS: 8080
       VIRTUAL_HOST: "https://atsea.examples.*,atsea.examples.*"
     deploy:
+      placement:
+        constraints: [node.labels.amp.type.user == true]
       replicas: 2
       update_config:
         parallelism: 2
@@ -43,6 +48,8 @@ services:
     networks:
       - payment
     deploy:
+      placement:
+        constraints: [node.labels.amp.type.user == true]
       update_config:
         failure_action: rollback
 
