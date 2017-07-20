@@ -1,0 +1,29 @@
+version: "3.2"
+
+services:
+  cassandra:
+    image: ndegory/cassandra
+    environment:
+      SWARM_SERVICE_NAME: cassandra
+      CASSANDRA_CLUSTER_NAME: "Demo Cluster"
+      JVM_OPTS: "-Xms263m -Xmx263m"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - data
+    deploy:
+      placement:
+        constraints: [node.labels.amp.type.user == true]
+      replicas: 3
+      resources:
+        limits:
+          memory: 630M
+        reservations:
+          memory: 263M
+
+networks:
+  data:
+    attachable: true
+
+volumes:
+  cassandra-data:
