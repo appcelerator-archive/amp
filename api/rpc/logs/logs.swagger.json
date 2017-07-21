@@ -149,6 +149,9 @@
         "stack_name": {
           "type": "string"
         },
+        "stack_id": {
+          "type": "string"
+        },
         "node_id": {
           "type": "string"
         },

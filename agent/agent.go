@@ -11,6 +11,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
+	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/api/types"
@@ -34,6 +37,7 @@ type Agent struct {
 	logsBuffer          *logs.GetReply
 	logsBufferMutex     *sync.Mutex
 	first10Min          int //send metrics every 10 sec, the first 10 min and then use the setting value
+	storage             storage.Interface
 }
 
 // AgentInit Connect to docker engine, get initial containers list and start the agent
@@ -58,6 +62,13 @@ func AgentInit(version, build string) error {
 	}
 	agent.natsStreaming = ns.NewClient(ns.DefaultURL, ns.ClusterID, os.Args[0]+"-"+hostname, time.Minute)
 	if err = agent.natsStreaming.Connect(); err != nil {
+		return err
+	}
+
+	// Connection to storage
+	etcdEndpoints := []string{etcd.DefaultEndpoint}
+	agent.storage = etcd.New(etcdEndpoints, "amp", configuration.DefaultTimeout)
+	if err := agent.storage.Connect(); err != nil {
 		return err
 	}
 

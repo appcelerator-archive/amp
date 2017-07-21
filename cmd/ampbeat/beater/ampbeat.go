@@ -104,6 +104,7 @@ func logMessageHandler(msg *stan.Msg) {
 			"task_id":              e.TaskId,
 			"task_slot":            e.TaskSlot,
 			"stack_name":           e.StackName,
+			"stack_id":             e.StackId,
 			"node_id":              e.NodeId,
 			"time_id":              e.TimeId,
 			"msg":                  e.Msg,

@@ -74,7 +74,11 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		)
 	}
 	if in.Stack != "" {
-		masterQuery.Filter(elastic.NewPrefixQuery("stack_name", in.Stack))
+		boolQuery := elastic.NewBoolQuery()
+		masterQuery.Filter(
+			boolQuery.Should(elastic.NewPrefixQuery("stack_id", in.Stack)),
+			boolQuery.Should(elastic.NewPrefixQuery("stack_name", in.Stack)),
+		)
 	}
 	if in.Task != "" {
 		masterQuery.Filter(elastic.NewPrefixQuery("task_id", in.Task))
@@ -185,7 +189,10 @@ func match(entry *LogEntry, in *GetRequest) bool {
 		match = match && (strings.HasPrefix(serviceID, prefix) || strings.HasPrefix(serviceName, prefix))
 	}
 	if in.Stack != "" {
-		match = match && strings.HasPrefix(strings.ToLower(entry.StackName), strings.ToLower(in.Stack))
+		prefix := strings.ToLower(in.Stack)
+		stackID := strings.ToLower(entry.StackId)
+		stackName := strings.ToLower(entry.StackName)
+		match = match && (strings.HasPrefix(stackID, prefix) || strings.HasPrefix(stackName, prefix))
 	}
 	if in.Task != "" {
 		match = match && strings.HasPrefix(strings.ToLower(entry.TaskId), strings.ToLower(in.Task))
