@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ctx context.Context
-	h   *helpers.Helper
+	anonymous context.Context
+	h         *helpers.Helper
 )
 
 func setup() (err error) {
@@ -22,7 +22,7 @@ func setup() (err error) {
 	if err != nil {
 		return err
 	}
-	ctx = context.Background()
+	anonymous = context.Background()
 	return nil
 }
 
@@ -44,7 +44,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(ctx, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testUser)
 	assert.NoError(t, err)
 
 	// Create a token
@@ -52,7 +52,7 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = h.Accounts().Verify(ctx, &VerificationRequest{Token: token})
+	_, err = h.Accounts().Verify(anonymous, &VerificationRequest{Token: token})
 	assert.NoError(t, err)
 }
 
@@ -62,7 +62,7 @@ func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Name = "UpperCaseIsNotAllowed"
-	_, err := h.Accounts().SignUp(ctx, &invalidSignUp)
+	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
@@ -72,7 +72,7 @@ func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Email = "this is not an email"
-	_, err := h.Accounts().SignUp(ctx, &invalidSignUp)
+	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
@@ -82,7 +82,7 @@ func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
 	// SignUp
 	invalidSignUp := testUser
 	invalidSignUp.Password = ""
-	_, err := h.Accounts().SignUp(ctx, &invalidSignUp)
+	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
@@ -90,11 +90,11 @@ func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(ctx, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testUser)
 	assert.NoError(t, err)
 
 	// SignUp
-	_, err = h.Accounts().SignUp(ctx, &testUser)
+	_, err = h.Accounts().SignUp(anonymous, &testUser)
 	assert.Error(t, err)
 }
 
@@ -108,7 +108,7 @@ func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
 	// SignUp user with organization name
 	conflictSignUp := testUser
 	conflictSignUp.Name = testOrg.Name
-	_, err := h.Accounts().SignUp(ctx, &conflictSignUp)
+	_, err := h.Accounts().SignUp(anonymous, &conflictSignUp)
 	assert.Error(t, err)
 }
 
@@ -116,11 +116,11 @@ func TestUserVerifyNotATokenShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(ctx, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testUser)
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = h.Accounts().Verify(ctx, &VerificationRequest{Token: "this is not a token"})
+	_, err = h.Accounts().Verify(anonymous, &VerificationRequest{Token: "this is not a token"})
 	assert.Error(t, err)
 }
 
@@ -130,7 +130,7 @@ func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify
-	_, err = h.Accounts().Verify(ctx, &VerificationRequest{Token: token})
+	_, err = h.Accounts().Verify(anonymous, &VerificationRequest{Token: token})
 	assert.Error(t, err)
 }
 
@@ -141,7 +141,7 @@ func TestUserLogin(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Login
-	_, err := h.Accounts().Login(ctx, &LogInRequest{
+	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: testUser.Password,
 	})
@@ -152,7 +152,7 @@ func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// Login
-	_, err := h.Accounts().Login(ctx, &LogInRequest{
+	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: testUser.Password,
 	})
@@ -166,7 +166,7 @@ func TestUserLoginInvalidNameShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Login
-	_, err := h.Accounts().Login(ctx, &LogInRequest{
+	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     "not the right user name",
 		Password: testUser.Password,
 	})
@@ -180,7 +180,7 @@ func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Login
-	_, err := h.Accounts().Login(ctx, &LogInRequest{
+	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "not the right password",
 	})
@@ -194,7 +194,7 @@ func TestUserPasswordReset(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 }
 
@@ -205,7 +205,7 @@ func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: "this is not a valid user name"})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: "this is not a valid user name"})
 	assert.Error(t, err)
 }
 
@@ -216,7 +216,7 @@ func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: "nonexistinguser"})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: "nonexistinguser"})
 	assert.Error(t, err)
 }
 
@@ -228,14 +228,14 @@ func TestUserPasswordSet(t *testing.T) {
 
 	// Password Set
 	token, _ := h.Tokens().CreatePasswordToken(testUser.Name)
-	_, err := h.Accounts().PasswordSet(ctx, &PasswordSetRequest{
+	_, err := h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
 	})
 	assert.NoError(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -249,18 +249,18 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
-	_, err = h.Accounts().PasswordSet(ctx, &PasswordSetRequest{
+	_, err = h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    "this is an invalid token",
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -274,19 +274,19 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
 	token, _ := h.Tokens().CreatePasswordToken("nonexistinguser")
-	_, err = h.Accounts().PasswordSet(ctx, &PasswordSetRequest{
+	_, err = h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "newPassword",
 	})
@@ -300,19 +300,19 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(ctx, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
 	assert.NoError(t, err)
 
 	// Password Set
 	token, _ := h.Tokens().CreatePasswordToken(testUser.Name)
-	_, err = h.Accounts().PasswordSet(ctx, &PasswordSetRequest{
+	_, err = h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    token,
 		Password: "",
 	})
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: "",
 	})
@@ -334,7 +334,7 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -356,7 +356,7 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -378,7 +378,7 @@ func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -400,7 +400,7 @@ func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
 	assert.Error(t, err)
 
 	// Login
-	_, err = h.Accounts().Login(ctx, &LogInRequest{
+	_, err = h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     testUser.Name,
 		Password: newPassword,
 	})
@@ -411,11 +411,11 @@ func TestUserForgotLogin(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(ctx, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testUser)
 	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, err = h.Accounts().ForgotLogin(ctx, &ForgotLoginRequest{
+	_, err = h.Accounts().ForgotLogin(anonymous, &ForgotLoginRequest{
 		Email: testUser.Email,
 	})
 	assert.NoError(t, err)
@@ -425,11 +425,11 @@ func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(ctx, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testUser)
 	assert.NoError(t, err)
 
 	// ForgotLogin
-	_, err = h.Accounts().ForgotLogin(ctx, &ForgotLoginRequest{
+	_, err = h.Accounts().ForgotLogin(anonymous, &ForgotLoginRequest{
 		Email: "this is not a valid email",
 	})
 	assert.Error(t, err)
@@ -439,7 +439,7 @@ func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// ForgotLogin
-	_, err := h.Accounts().ForgotLogin(ctx, &ForgotLoginRequest{
+	_, err := h.Accounts().ForgotLogin(anonymous, &ForgotLoginRequest{
 		Email: testUser.Email,
 	})
 	assert.Error(t, err)
@@ -449,22 +449,39 @@ func TestUserGet(t *testing.T) {
 	testUser := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	userCtx := h.CreateUser(t, &testUser)
 
 	// Get
-	getReply, err := h.Accounts().GetUser(ctx, &GetUserRequest{
+	getReply, err := h.Accounts().GetUser(userCtx, &GetUserRequest{
 		Name: testUser.Name,
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, getReply)
-	assert.Equal(t, getReply.User.Name, testUser.Name)
-	assert.Equal(t, getReply.User.Email, testUser.Email)
+	assert.Equal(t, testUser.Name, getReply.User.Name)
+	assert.Equal(t, testUser.Email, getReply.User.Email)
+	assert.NotEmpty(t, getReply.User.CreateDt)
+}
+
+func TestAnonymousUserGetShouldNotReturnUserEmail(t *testing.T) {
+	testUser := h.RandomUser()
+
+	// Create a user
+	h.CreateUser(t, &testUser)
+
+	// Get
+	getReply, err := h.Accounts().GetUser(anonymous, &GetUserRequest{
+		Name: testUser.Name,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, getReply)
+	assert.Equal(t, testUser.Name, getReply.User.Name)
+	assert.Empty(t, getReply.User.Email)
 	assert.NotEmpty(t, getReply.User.CreateDt)
 }
 
 func TestUserGetMalformedUserShouldFail(t *testing.T) {
 	// Get
-	_, err := h.Accounts().GetUser(ctx, &GetUserRequest{
+	_, err := h.Accounts().GetUser(anonymous, &GetUserRequest{
 		Name: "this user is malformed",
 	})
 	assert.Error(t, err)
@@ -472,7 +489,7 @@ func TestUserGetMalformedUserShouldFail(t *testing.T) {
 
 func TestUserGetNonExistingUserShouldFail(t *testing.T) {
 	// Get
-	_, err := h.Accounts().GetUser(ctx, &GetUserRequest{
+	_, err := h.Accounts().GetUser(anonymous, &GetUserRequest{
 		Name: "nonexistinguser",
 	})
 	assert.Error(t, err)
@@ -485,7 +502,7 @@ func TestUserList(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// List
-	listReply, err := h.Accounts().ListUsers(ctx, &ListUsersRequest{})
+	listReply, err := h.Accounts().ListUsers(anonymous, &ListUsersRequest{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
 	found := false
@@ -1005,7 +1022,7 @@ func TestOrganizationGet(t *testing.T) {
 	h.CreateOrganization(t, &testOrg, &testUser)
 
 	// Get
-	getReply, err := h.Accounts().GetOrganization(ctx, &GetOrganizationRequest{
+	getReply, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
 		Name: testOrg.Name,
 	})
 	assert.NoError(t, err)
@@ -1017,7 +1034,7 @@ func TestOrganizationGet(t *testing.T) {
 
 func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
 	// Get
-	_, err := h.Accounts().GetOrganization(ctx, &GetOrganizationRequest{
+	_, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
 		Name: "this organization is malformed",
 	})
 	assert.Error(t, err)
@@ -1031,7 +1048,7 @@ func TestOrganizationList(t *testing.T) {
 	h.CreateOrganization(t, &testOrg, &testUser)
 
 	// List
-	listReply, err := h.Accounts().ListOrganizations(ctx, &ListOrganizationsRequest{})
+	listReply, err := h.Accounts().ListOrganizations(anonymous, &ListOrganizationsRequest{})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
 	found := false
@@ -1729,7 +1746,7 @@ func TestTeamList(t *testing.T) {
 	h.CreateTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
-	listReply, err := h.Accounts().ListTeams(ctx, &ListTeamsRequest{
+	listReply, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
 		OrganizationName: testOrg.Name,
 	})
 	assert.NoError(t, err)
@@ -1750,7 +1767,7 @@ func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
 	h.CreateTeam(t, &testOrg, &testUser, &testTeam)
 
 	// List
-	_, err := h.Accounts().ListTeams(ctx, &ListTeamsRequest{
+	_, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
 		OrganizationName: "this is not a valid name",
 	})
 	assert.Error(t, err)
@@ -1765,7 +1782,7 @@ func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 	h.CreateUser(t, &testUser)
 
 	// List
-	_, err := h.Accounts().ListTeams(ctx, &ListTeamsRequest{
+	_, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
 		OrganizationName: testTeam.OrganizationName,
 	})
 	assert.Error(t, err)
@@ -1845,7 +1862,7 @@ func TestSuperUserLogin(t *testing.T) {
 	superUser := h.SuperUser()
 
 	// Login
-	_, err := h.Accounts().Login(ctx, &LogInRequest{
+	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     superUser.Name,
 		Password: superUser.Password,
 	})

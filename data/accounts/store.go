@@ -166,11 +166,14 @@ func (s *Store) rawUser(ctx context.Context, name string) (*User, error) {
 	return user, nil
 }
 
-func secureUser(user *User) *User {
+func (s *Store) secureUser(ctx context.Context, user *User) *User {
 	if user == nil {
 		return nil
 	}
 	user.PasswordHash = "" // For security reasons, remove the password hash
+	if !s.IsAuthorized(ctx, &Account{user.Name, ""}, ReadAction, UserRN, user.Name) {
+		user.Email = ""
+	}
 	return user
 }
 
@@ -245,7 +248,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 	if err := s.storage.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
 		return nil, err
 	}
-	return secureUser(user), nil
+	return s.secureUser(ctx, user), nil
 }
 
 // VerifyUser verifies a user account
@@ -322,7 +325,7 @@ func (s *Store) GetUser(ctx context.Context, name string) (user *User, err error
 	if err != nil {
 		return nil, err
 	}
-	return secureUser(user), nil
+	return s.secureUser(ctx, user), nil
 }
 
 // GetUserByEmail fetches a user by email
@@ -330,13 +333,14 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error)
 	if _, err := CheckEmailAddress(email); err != nil {
 		return nil, err
 	}
-	users, err := s.ListUsers(ctx)
-	if err != nil {
+	protos := []proto.Message{}
+	if err := s.storage.List(ctx, usersRootKey, storage.Everything, &User{}, &protos); err != nil {
 		return nil, err
 	}
-	for _, user := range users {
+	for _, proto := range protos {
+		user := proto.(*User)
 		if strings.EqualFold(user.Email, email) {
-			return secureUser(user), nil
+			return s.secureUser(ctx, user), nil
 		}
 	}
 	return nil, nil
@@ -365,7 +369,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*User, error) {
 	}
 	users := []*User{}
 	for _, proto := range protos {
-		users = append(users, secureUser(proto.(*User)))
+		users = append(users, s.secureUser(ctx, proto.(*User)))
 	}
 	return users, nil
 }
