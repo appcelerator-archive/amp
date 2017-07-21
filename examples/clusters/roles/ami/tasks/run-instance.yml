@@ -2,6 +2,11 @@
 - debug: msg="New instance on VPC {{ ec2_vpc_id }} and region {{ ec2_region }}"
   changed_when: false
 
+- name: Set the Grub configuration
+  set_fact:
+    grub_config: "{{ lookup('file', '50-cloudimg-settings.cfg') | b64encode }}"
+  changed_when: false
+
 - name: Run instance
   ec2:
     region: "{{ ec2_region }}"
