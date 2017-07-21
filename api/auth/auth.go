@@ -58,8 +58,8 @@ func isAnonymous(elem string) bool {
 
 // StreamInterceptor is an interceptor checking for authentication tokens
 func (i *Interceptors) StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if !isAnonymous(info.FullMethod) {
-		if _, err := i.authorize(stream.Context()); err != nil {
+	if _, err := i.authorize(stream.Context()); err != nil {
+		if !isAnonymous(info.FullMethod) {
 			return err
 		}
 	}
@@ -68,8 +68,8 @@ func (i *Interceptors) StreamInterceptor(srv interface{}, stream grpc.ServerStre
 
 // Interceptor is an interceptor checking for authentication tokens
 func (i *Interceptors) Interceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (h interface{}, err error) {
-	if !isAnonymous(info.FullMethod) {
-		if ctx, err = i.authorize(ctx); err != nil {
+	if ctx, err = i.authorize(ctx); err != nil {
+		if !isAnonymous(info.FullMethod) {
 			return nil, err
 		}
 	}
@@ -95,23 +95,23 @@ func ForgeAuthorizationHeader(token string) string {
 func (i *Interceptors) authorize(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return ctx, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	authorizations := md[AuthorizationHeader]
 	if len(authorizations) == 0 {
-		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return ctx, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	authorization := authorizations[0]
 	scheme, token := parseAuthorizationHeader(authorization)
 	if scheme != AuthorizationScheme || token == "" {
-		return nil, status.Errorf(codes.Unauthenticated, CredentialsRequired)
+		return ctx, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}
 	claims, err := i.Tokens.ValidateToken(token, TokenTypeLogin)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
+		return ctx, status.Errorf(codes.Unauthenticated, "invalid credentials. Please log in again.")
 	}
 	if !i.IsUserValid(claims.AccountName) {
-		return nil, status.Errorf(codes.Unauthenticated, "user not found. Please sign up.")
+		return ctx, status.Errorf(codes.Unauthenticated, "user not found. Please sign up.")
 	}
 	// Enrich the context
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(UserKey, claims.AccountName, ActiveOrganizationKey, claims.ActiveOrganization))

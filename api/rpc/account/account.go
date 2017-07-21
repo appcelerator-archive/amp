@@ -241,7 +241,7 @@ func (s *Server) PasswordChange(ctx context.Context, in *PasswordChangeRequest) 
 	return &empty.Empty{}, nil
 }
 
-// ForgotLogin implements account.PasswordChange
+// ForgotLogin implements account.ForgotLogin
 func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empty.Empty, error) {
 	// Get the user
 	user, err := s.Accounts.GetUserByEmail(ctx, in.Email)
@@ -252,7 +252,7 @@ func (s *Server) ForgotLogin(ctx context.Context, in *ForgotLoginRequest) (*empt
 		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Email)
 	}
 	// Send the account name reminder email
-	if err := s.Mailer.SendAccountNameReminderEmail(user.Email, user.Name); err != nil {
+	if err := s.Mailer.SendAccountNameReminderEmail(in.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
 	log.Infoln("Successfully processed forgot login request for user", user.Name)
