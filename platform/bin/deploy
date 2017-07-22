@@ -353,20 +353,20 @@ prepare_amplifier_configuration(){
 prepare_prometheus_configuration(){
   local _conf
   local cid
-  $amps secret ls | grep -q "prometheus_alerts_rules" && return 0
+  $amps config ls | grep -q "prometheus_alerts_rules" && return 0
   _conf="$SECRETSDIR/prometheus_alerts.rules"
   if [[ ! -f "$_conf" ]]; then
     mkdir -p "$SECRETSDIR"
     echo > "$_conf"
   else
-    echo "using existing configuration for the prometheus_alerts_rules secret" >&2
+    echo "using existing configuration for the prometheus_alerts_rules config" >&2
   fi
   # copy the configuration in the amp-secrets volume
   cid=$(docker run -d --rm -v amp-secrets:/secrets alpine:3.5 sleep 15)
   if [[ $? -ne 0 || -z "$cid" ]]; then return 1; fi
   docker cp "$_conf" $cid:/secrets/
   docker kill "$cid" >/dev/null 2>&1
-  $amps secret create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" >/dev/null && echo "secret prometheus_alerts_rules successfully created" >&2
+  $amps config create "prometheus_alerts_rules" "$secrets_path/$(basename $_conf)" >/dev/null && echo "config prometheus_alerts_rules successfully created" >&2
 }
 
 prepare_alertmanager_configuration(){

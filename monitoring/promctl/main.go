@@ -37,6 +37,7 @@ var prometheusArgs = []string{
 	"-storage.local.path=/prometheus",
 	"-web.console.libraries=/usr/share/prometheus/console_libraries",
 	"-web.console.templates=/usr/share/prometheus/consoles",
+	"-alertmanager.url=http://alertmanager:9093",
 }
 
 type Inventory struct {
