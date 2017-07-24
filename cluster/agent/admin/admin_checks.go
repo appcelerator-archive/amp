@@ -7,13 +7,13 @@ import (
 	"io"
 	"log"
 	"regexp"
-	"strconv"
 	"time"
 
 	sk "github.com/appcelerator/amp/cluster/agent/swarm"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/swarmkit/api"
 	"golang.org/x/net/context"
@@ -22,8 +22,8 @@ import (
 
 const (
 	DefaultURL        = "unix:///var/run/docker.sock"
-	DefaultVersion    = "1.29"
-	minimumApiVersion = 1.29
+	DefaultVersion    = "1.30"
+	minimumApiVersion = "1.30"
 	testNetwork       = "amptest"
 )
 
@@ -43,12 +43,9 @@ func VerifyDockerVersion() error {
 	}
 	version, err := c.ServerVersion(context.Background())
 	log.Printf("Docker engine version %s\n", version.Version)
-	apiVersion, err := strconv.ParseFloat(version.APIVersion, 32)
-	if err != nil {
-		return err
-	}
-	if apiVersion < minimumApiVersion {
-		log.Printf("minimum expected: %.3g, observed: %.3g", minimumApiVersion, apiVersion)
+	apiVersion := version.APIVersion
+	if versions.LessThan(apiVersion, minimumApiVersion) {
+		log.Printf("minimum expected: %.s, observed: %.s", minimumApiVersion, apiVersion)
 		return errors.New("Docker engine doesn't meet the requirements (API Version)")
 	}
 	return nil
