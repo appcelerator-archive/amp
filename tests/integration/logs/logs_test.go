@@ -108,7 +108,7 @@ func TestLogsShouldFilterByService(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.ServiceName, helpers.TestServiceName) || strings.HasPrefix(entry.ServiceId, helpers.TestServiceID))
 	}
 
-	r, err = h.Logs().Get(ctx, &GetRequest{Service: helpers.TestServiceName})
+	r, err = h.Logs().Get(ctx, &GetRequest{Service: helpers.TestServiceID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -129,14 +129,23 @@ func TestLogsShouldFilterByMessage(t *testing.T) {
 	}
 }
 
-func TestLogsShouldFilterByStackName(t *testing.T) {
+func TestLogsShouldFilterByStack(t *testing.T) {
 	r, err := h.Logs().Get(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
 	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
 	for _, entry := range r.Entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName))
+		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName) || strings.HasPrefix(entry.StackId, helpers.TestStackID))
+	}
+
+	r, err = h.Logs().Get(ctx, &GetRequest{Stack: helpers.TestStackID})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.NotEmpty(t, r.Entries, "We should have at least one entry")
+	for _, entry := range r.Entries {
+		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName) || strings.HasPrefix(entry.StackId, helpers.TestStackID))
 	}
 }
 
@@ -290,7 +299,7 @@ func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 	}
 }
 
-func TestLogsShouldStreamAndFilterByStackName(t *testing.T) {
+func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
 	stream, err := h.Logs().GetStream(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
@@ -303,7 +312,7 @@ func TestLogsShouldStreamAndFilterByStackName(t *testing.T) {
 	assert.Equal(t, NumberOfEntries, len(entries))
 
 	for entry := range entries {
-		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName))
+		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName) || strings.HasPrefix(entry.StackId, helpers.TestStackID))
 	}
 }
 

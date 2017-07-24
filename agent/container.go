@@ -10,9 +10,12 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/rpc/stats"
+	"github.com/appcelerator/amp/data/stacks"
+	"github.com/appcelerator/amp/data/storage"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/golang/protobuf/proto"
 )
 
 // ContainerData data
@@ -23,6 +26,7 @@ type ContainerData struct {
 	serviceName              string
 	serviceID                string
 	stackName                string
+	stackID                  string
 	taskID                   string
 	taskSlot                 int
 	nodeID                   string
@@ -144,6 +148,7 @@ func (a *Agent) addContainer(ID string) {
 	if data.stackName == "" {
 		data.stackName = "noStack"
 	}
+	data.stackID = a.getStackID(data.stackName)
 	data.role = a.getMapValue(labels, "io.amp.role")
 	if container.State.Health != nil {
 		data.health = container.State.Health.Status
@@ -204,6 +209,20 @@ func (a *Agent) updateContainer(id string) {
 func (a *Agent) getMapValue(labelMap map[string]string, name string) string {
 	if val, exist := labelMap[name]; exist {
 		return val
+	}
+	return ""
+}
+
+func (a *Agent) getStackID(stackName string) string {
+	protos := []proto.Message{}
+	if err := a.storage.List(context.Background(), "stacks", storage.Everything, &stacks.Stack{}, &protos); err != nil {
+		return ""
+	}
+	for _, proto := range protos {
+		stack := proto.(*stacks.Stack)
+		if stack.Name == stackName {
+			return stack.Id
+		}
 	}
 	return ""
 }

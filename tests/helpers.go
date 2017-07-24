@@ -335,6 +335,7 @@ var (
 	TestContainerState     = "testcontainerstate"
 	TestServiceID          = stringid.GenerateNonCryptoID()
 	TestServiceName        = "testservice"
+	TestStackID            = stringid.GenerateNonCryptoID()
 	TestStackName          = "teststack"
 	TestNodeID             = stringid.GenerateNonCryptoID()
 	TestTaskID             = stringid.GenerateNonCryptoID()
@@ -383,6 +384,7 @@ func (lp *LogProducer) buildLogEntry(infrastructure bool) *logs.LogEntry {
 		ServiceId:          TestServiceID,
 		TaskId:             TestTaskID,
 		StackName:          TestStackName,
+		StackId:            TestStackID,
 		NodeId:             TestNodeID,
 		TimeId:             fmt.Sprintf("%016X", lp.counter),
 		Labels:             make(map[string]string),
