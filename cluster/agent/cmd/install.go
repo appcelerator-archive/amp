@@ -49,7 +49,6 @@ func install(cmd *cobra.Command, args []string) error {
 
 	target := targetSingle // TODO: Add a parameter or detect the number of swarm nodes
 	files, err := getStackFiles("./stacks", target)
-	//files, err := getStackFiles("./stacksamples", target)
 	if err != nil {
 		return err
 	}
