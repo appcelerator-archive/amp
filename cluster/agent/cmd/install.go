@@ -22,7 +22,6 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	substack "github.com/subfuzion/stack/stack"
 )
 
 const (
@@ -49,8 +48,8 @@ func install(cmd *cobra.Command, args []string) error {
 	}
 
 	target := targetSingle // TODO: Add a parameter or detect the number of swarm nodes
-//	files, err := getStackFiles("./stacks", target)
-	files, err := getStackFiles("./stacksamples", target)
+	files, err := getStackFiles("./stacks", target)
+	//files, err := getStackFiles("./stacksamples", target)
 	if err != nil {
 		return err
 	}
@@ -59,7 +58,7 @@ func install(cmd *cobra.Command, args []string) error {
 		log.Println(f)
 		if strings.Contains(f, "test") {
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
-			substack.Remove(dockerCli, substack.RemoveOptions{Namespaces: []string{"test"}})
+			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
 			if err != nil {
 				return err
 			}
@@ -148,7 +147,7 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 		// List stack tasks
 		options := types.TaskListOptions{Filters: filters.NewArgs()}
 		options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
-		tasks, err := substack.ListTasks(context.Background(), c, options)
+		tasks, err := stack.ListTasks(context.Background(), c, options)
 		if err != nil {
 			return err
 		}
