@@ -16,9 +16,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
-	//	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
-	// TODO get rid of apiclient or dockerclient
 	apiclient "github.com/docker/docker/client"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
@@ -332,10 +330,6 @@ func deployServices(
 			}
 		}
 
-		//fmt.Printf("serviceSpec: %+v\n", serviceSpec.TaskTemplate.ContainerSpec.Labels)
-		fmt.Printf("amp.service.stablize.delay:   %s", stabilizeDelay)
-		fmt.Printf("amp.service.stablize.timeout: %s", stabilizeTimeout)
-
 		// apply service stabilization timeout setting - the service must be stable before the timeout
 		ctx, _ := context.WithTimeout(ctx, stabilizeTimeout)
 		var imageName string
@@ -368,9 +362,6 @@ func deployServices(
 				fmt.Fprintln(dockerCli.Err(), warning)
 			}
 		} else {
-			// TODO: will want to filter on service tasks and wait for all tasks to be healthy
-			// TODO: logic should also apply to the service update above, not just create here
-
 			fmt.Fprintf(out, "Creating service %s\n", name)
 			createOpts := types.ServiceCreateOptions{EncodedRegistryAuth: encodedAuth}
 			// query registry if flag disabling was not set
@@ -408,8 +399,6 @@ func deployServices(
 		NotifyState(ctx, apiClient, serviceID, swarm.TaskStateRunning, stabilizeDelay, func(err error) {
 			if err != nil {
 				fmt.Fprintf(out, "Error: %s\n", err)
-			} else {
-				fmt.Fprintf(out, "Success!!!")
 			}
 			done <- true
 		})
