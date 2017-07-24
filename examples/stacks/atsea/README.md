@@ -5,8 +5,8 @@ The AMP version of the [AtSea Shop Demonstration Application](https://github.com
 
 Run in this directory:
 
-    $ echo gordonpass | docker secret create postgres_password -
-    $ echo staging | docker secret create staging_token -
+    $ docker secret create postgres_password postgres.password
+    $ docker secret create staging_token staging.token
     $ amp stack up -c atsea.yml
 
 The webapp will be available at [http://atsea.examples.local.appcelerator.io](http://atsea.examples.local.appcelerator.io).
