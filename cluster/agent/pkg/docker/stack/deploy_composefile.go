@@ -23,6 +23,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	"github.com/docker/docker/api/types/filters"
 )
 
 func deployCompose(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
@@ -338,11 +339,13 @@ func deployServices(
 		// apply service stabilization timeout setting - the service must be stable before the timeout
 		ctx, _ := context.WithTimeout(ctx, stabilizeTimeout)
 		var imageName string
+		var serviceID string
 
 		if service, exists := existingServiceMap[name]; exists {
 			fmt.Fprintf(out, "Updating service %s (id: %s)\n", name, service.ID)
 			fmt.Fprintf(out, "service: %+v\n", service)
 			imageName = service.Spec.TaskTemplate.ContainerSpec.Image
+			serviceID = service.ID
 
 			updateOpts := types.ServiceUpdateOptions{EncodedRegistryAuth: encodedAuth}
 
@@ -380,6 +383,7 @@ func deployServices(
 				return errors.Wrapf(err, "failed to create service %s", name)
 			}
 			fmt.Fprintf(out, "service: %+v\n", resp)
+			serviceID = resp.ID
 			imageName = serviceSpec.TaskTemplate.ContainerSpec.Image
 		}
 
@@ -401,7 +405,7 @@ func deployServices(
 		})
 		w.Watch()
 
-		NotifyState(ctx, apiClient, imageName, swarm.TaskStateRunning, stabilizeDelay, func(err error) {
+		NotifyState(ctx, apiClient, serviceID, swarm.TaskStateRunning, stabilizeDelay, func(err error) {
 			if err != nil {
 				fmt.Fprintf(out, "Error: %s\n", err)
 			} else {
@@ -415,6 +419,7 @@ func deployServices(
 	return nil
 }
 
+// MessageString returns a formatted event message
 func MessageString(m events.Message) string {
 	a := ""
 	for k, v := range m.Actor.Attributes {
@@ -424,14 +429,19 @@ func MessageString(m events.Message) string {
 		m.ID, m.Status, m.From, m.Type, m.Action, m.Actor.ID, a, m.Scope, m.Time, m.TimeNano)
 }
 
-func NotifyState(ctx context.Context, apiClient apiclient.APIClient, image string, desiredState swarm.TaskState, stabilizeDelay time.Duration, callback func(error)) {
+// NotifyState calls the provided callback when the desired service state is achieved for all tasks or when the deadline is exceeded
+func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID string, desiredState swarm.TaskState, stabilizeDelay time.Duration, callback func(error)) {
 	deadline, isSet := ctx.Deadline()
 	if !isSet {
 		deadline = time.Now().Add(1 * time.Minute)
 	}
 
 	go func() {
+		taskOpts := types.TaskListOptions{}
+		taskOpts.Filters = filters.NewArgs()
+		taskOpts.Filters.Add("service", serviceID)
 		counter := 0
+
 		for {
 			// all tasks need to match the desired state and be stable within the deadline
 			if time.Now().After(deadline) {
@@ -440,8 +450,6 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, image strin
 			}
 
 			// get tasks
-			taskOpts := types.TaskListOptions{}
-			//		taskOpts.Filters.Add("label", )
 			tasks, err := ListTasks(ctx, apiClient, taskOpts)
 			if err != nil {
 				callback(err)
