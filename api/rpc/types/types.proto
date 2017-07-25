@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package types;
+// Attribution: Docker (github.com/docker/swarmkit)
+// This proto file based on docker/swarmkit/api/types.proto and docker/swarmkit/api/specs.proto
+// This is an interim approach toward leveraging swarmkit types
+// Notes: we're not using gogoprotbuf (but maybe we should)
+
+import "google/protobuf/timestamp.proto";
+
+// Version tracks the last time an object in the store was updated.
+message Version {
+  uint64 index = 1;
+}
+message IndexEntry {
+  string key = 1;
+  string val = 2;
+}
+
+// Annotations provide useful information to identify API objects. They are
+// common to all API specs.
+message Annotations {
+  string name = 1;
+  map<string, string> labels = 2;
+
+  // Indices provides keys and values for indexing this object.
+  // A single key may have multiple values.
+  repeated IndexEntry indices = 4;
+}
+
+// Driver is a generic driver type to be used throughout the API. For now, a
+// driver is simply a name and set of options. The field contents depend on the
+// target use case and driver application. For example, a network driver may
+// have different rules than a volume driver.
+message Driver {
+  string name = 1;
+  map <string, string> options = 2;
+}
+
+// ConfigSpec specifies user-provided configuration files.
+message ConfigSpec {
+  Annotations annotations = 1;
+
+  // Data is the config payload - the maximum size is 500KB (that is, 500*1024 bytes)
+  bytes data = 2;
+
+  // Templating controls whether and how to evaluate the secret payload as
+  // a template. If it is not set, no templating is used.
+  //
+  // The currently recognized values are:
+  // - golang: Go templating
+  Driver templating = 3;
+}
+
+// Meta contains metadata about objects. Every object contains a meta field.
+// from: api/objects.proto
+message Meta {
+  // Version tracks the current version of the object.
+  Version version = 1;
+
+  // Object timestamps.
+  // Note: can't use stdtime because these fields are nullable.
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
