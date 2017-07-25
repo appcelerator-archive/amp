@@ -391,36 +391,36 @@ func (s *Store) DeleteNotVerifiedUser(ctx context.Context, name string) error {
 }
 
 // DeleteUser deletes a user by name
-func (s *Store) DeleteUser(ctx context.Context, name string) error {
-
+func (s *Store) DeleteUser(ctx context.Context, name string) (*User, error) {
 	// Check authorization
 	if !s.IsAuthorized(ctx, &Account{name, ""}, DeleteAction, UserRN, name) {
-		return NotAuthorized
+		return nil, NotAuthorized
 	}
 
 	// Get organizations this user is member of
 	organizations, err := s.GetUserOrganizations(ctx, name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Check if user can be removed from all organizations
 	for _, o := range organizations {
 		if err := s.canRemoveUserFromOrganization(ctx, o.Name, name); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	// If yes, remove the user from all organizations
 	for _, o := range organizations {
 		if err := s.RemoveUserFromOrganization(ctx, o.Name, name); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	// Delete the user
-	if err := s.storage.Delete(ctx, path.Join(usersRootKey, name), false, nil); err != nil {
-		return err
+	user := &User{}
+	if err := s.storage.Delete(ctx, path.Join(usersRootKey, name), false, user); err != nil {
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
 
 // Organizations
@@ -547,7 +547,7 @@ func (s *Store) canRemoveUserFromOrganization(ctx context.Context, organizationN
 	}
 
 	// Get the user
-	user, err := s.getVerifiedUser(ctx, userName)
+	user, err := s.getUser(ctx, userName)
 	if err != nil {
 		return err
 	}
@@ -575,7 +575,7 @@ func (s *Store) RemoveUserFromOrganization(ctx context.Context, organizationName
 	}
 
 	// Get the user
-	user, err := s.getVerifiedUser(ctx, userName)
+	user, err := s.getUser(ctx, userName)
 	if err != nil {
 		return err
 	}

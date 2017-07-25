@@ -326,16 +326,8 @@ func (s *Server) DeleteUser(ctx context.Context, in *DeleteUserRequest) (*empty.
 		return nil, status.Errorf(codes.FailedPrecondition, "User cannot be removed because they still own dashboards. Please remove all dashboards belonging to this user and try again.")
 	}
 
-	// Get requesting user
-	user, err := s.Accounts.GetUser(ctx, in.Name)
+	user, err := s.Accounts.DeleteUser(ctx, in.Name)
 	if err != nil {
-		return nil, convertError(err)
-	}
-	if user == nil {
-		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
-	}
-
-	if err := s.Accounts.DeleteUser(ctx, in.Name); err != nil {
 		return nil, convertError(err)
 	}
 	if err := s.Mailer.SendAccountRemovedEmail(user.Email, user.Name); err != nil {

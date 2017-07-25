@@ -63,7 +63,7 @@ type Interface interface {
 	DeleteNotVerifiedUser(ctx context.Context, name string) (err error)
 
 	// DeleteUser deletes a user by name
-	DeleteUser(ctx context.Context, name string) (err error)
+	DeleteUser(ctx context.Context, name string) (*User, error)
 
 	// CreateOrganization creates a new organization
 	CreateOrganization(ctx context.Context, name string, email string) (err error)
