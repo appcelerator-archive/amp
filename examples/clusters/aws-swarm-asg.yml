@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Swarm cluster with autoscaling groups
+Description: Swarm cluster with autoscaling groups v0.14.0-dev
 
 Mappings:
   AMI:
@@ -1245,7 +1245,7 @@ Resources:
       - UserWaitCondition
     Properties:
       Handle: !Ref ApplicationWaitHandle
-      Timeout: 900
+      Timeout: 1800
       Count: 1
 
   ManagerWaitHandle:
