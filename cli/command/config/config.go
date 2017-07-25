@@ -20,8 +20,8 @@ var t = `AMP Configuration:
 // NewConfigCommand returns a new instance of the config command.
 func NewConfigCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
-		Use:     "config",
-		Short:   "Display configuration",
+		Use:     "settings",
+		Short:   "Display AMP configuration",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showConfig(c)
