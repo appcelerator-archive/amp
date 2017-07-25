@@ -25,12 +25,15 @@ func NewChecksCommand() *cobra.Command {
 	checkCmd.Flags().BoolVar(&checksOpts.version, "version", false, "check Docker version")
 	checkCmd.Flags().BoolVar(&checksOpts.labels, "labels", false, "check all required labels are defined on the swarm")
 	checkCmd.Flags().BoolVar(&checksOpts.scheduling, "scheduling", false, "check Docker service scheduling")
-	checkCmd.Flags().BoolVarP(&checksOpts.all, "all", "a", false, "all tests")
 
 	return checkCmd
 }
 
 func checks(cmd *cobra.Command, args []string) {
+	// if zero tests have been explicitely asked, run them all
+	if !checksOpts.version && !checksOpts.labels && !checksOpts.scheduling {
+		checksOpts.all = true
+	}
 	if checksOpts.version || checksOpts.all {
 		if err := adm.VerifyDockerVersion(); err != nil {
 			log.Println("Version test: FAIL")

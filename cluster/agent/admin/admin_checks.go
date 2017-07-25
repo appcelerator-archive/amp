@@ -42,10 +42,10 @@ func VerifyDockerVersion() error {
 		return err
 	}
 	version, err := c.ServerVersion(context.Background())
-	log.Printf("Docker engine version %s\n", version.Version)
 	apiVersion := version.APIVersion
 	if versions.LessThan(apiVersion, minimumApiVersion) {
-		log.Printf("minimum expected: %.s, observed: %.s", minimumApiVersion, apiVersion)
+		log.Printf("Docker engine version %s\n", version.Version)
+		log.Printf("API version - minimum expected: %.s, observed: %.s", minimumApiVersion, apiVersion)
 		return errors.New("Docker engine doesn't meet the requirements (API Version)")
 	}
 	return nil
