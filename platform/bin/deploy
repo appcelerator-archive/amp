@@ -38,6 +38,33 @@ deployment_target() {
   echo $DEPLOYMENT_TARGET
 }
 
+_local_system_check() {
+  local mmcmin=262144
+  typeset -i mmc
+  local ocm
+
+  # only check prerequisites on systems where it makes sense (Linux system)
+  if [[ $(uname) != "Linux" ]]; then
+    return 0
+  fi
+
+  # elasticsearch
+  # mandatory
+  mmc=$(sysctl -n vm.max_map_count 2>/dev/null)
+  if [[ $? -eq 0 ]]; then
+    if [[ $mmc -lt $mmcmin ]]; then
+      echo "#####################################    WARNING    ###################################" >&2
+      echo "your max map count limit is too low for elasticsearch" >&2
+      echo "you should edit your /etc/sysctl.conf file and add the line 'vm.max_map_count = 262144'" >&2
+      echo "or add a /etc/sysctl.d/99-amp.conf with that line" >&2
+      echo "to set it in your current session, you can run 'sudo sysctl -w vm.max_map_count=262144'" >&2
+      echo "#######################################################################################" >&2
+      return 1
+    fi
+  fi
+  return 0
+}
+
 # create the cluster and echo the cluster id
 cluster_create() {
   local _clusterid
@@ -49,6 +76,7 @@ cluster_create() {
   _target="$(deployment_target)"
   case $_target in
   local) # for local, enable swarm mode if not already enabled and create the ampnet overlay network
+    _local_system_check || return 1
     docker node ls &>/dev/null
     if [[ $? -ne 0 ]]; then
       # works most of the time without the advertise-addr
