@@ -13,7 +13,7 @@ ENV PKG github.com/appcelerator/amp/cluster/agent
 ENV PKGCMD ${PKG}/cmd
 ENV PKGROOT /go/src/${PKG}
 ENV PKGCMD ${PKG}/cmd
-ENV LDFLAGS "-s"
+ARG LDFLAGS="-s"
 
 RUN go get github.com/LK4D4/vndr
 
@@ -28,7 +28,7 @@ WORKDIR ${PKGROOT}
 RUN go test -v -timeout 30m ${PKG}/admin
 
 # build
-RUN CGO_ENABLED=0 go build -a -ldflags ${LDFLAGS} -o ${TARGET} ${PKGCMD}
+RUN CGO_ENABLED=0 go build -a -ldflags "${LDFLAGS}" -o ${TARGET} ${PKGCMD}
 
 # =============================
 FROM scratch

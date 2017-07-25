@@ -173,9 +173,7 @@ $(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
 
 build-server: $(AMPLTARGET)
 	@echo "build $(AMPLIMG)"
-	@cp -f ~/.config/amp/amplifier.y*ml cmd/amplifier/amplifier.yml &> /dev/null || (echo "Warning: ~/.config/amp/amplifier.yml not found (sendgrid key needed to send email)" && touch cmd/amplifier/amplifier.yml)
 	@$(DOCKER_CMD) build -t $(AMPLIMG) $(CMDDIR)/$(AMPL) || (rm -f $(AMPLTARGET); exit 1)
-	@rm -f cmd/amplifier/amplifier.yml
 
 rebuild-server: clean-server build-server
 
