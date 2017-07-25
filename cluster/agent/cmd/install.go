@@ -46,6 +46,9 @@ func install(cmd *cobra.Command, args []string) error {
 	// Create initial secrets
 	createInitialSecrets()
 
+	// Create initial configs
+	createInitialConfigs()
+
 	// Create initial networks
 	createInitialNetworks()
 
@@ -382,5 +385,95 @@ func createInitialNetworks() error {
 		return err
 	}
 	log.Println("Successfully created network:", ampnet)
+	return nil
+}
+
+func ListConfigs() ([]swarm.Config, error) {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.ConfigList(context.Background(), types.ConfigListOptions{})
+}
+
+func ConfigExists(name string) (bool, error) {
+	configs, err := ListConfigs()
+	if err != nil {
+		return false, err
+	}
+	for _, config := range configs {
+		if config.Spec.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func CreateConfig(name string, data []byte) error {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return err
+	}
+	spec := swarm.ConfigSpec{
+		Annotations: swarm.Annotations{
+			Name: name,
+		},
+		Data: data,
+	}
+	_, err = c.ConfigCreate(context.Background(), spec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// AMP configs map: Config name paired to config file in ./defaults
+var ampConfigs = map[string]string{
+	"prometheus_alerts_rules":  "prometheus_alerts.rules",
+}
+
+// This is the default configs path
+const defaultConfigsPath = "defaults"
+
+func createInitialConfigs() error {
+	// Computing config path
+	configPath := path.Join("/", defaultConfigsPath)
+	pe, err := pathExists(configPath)
+	if err != nil {
+		return err
+	}
+	if !pe {
+		configPath = defaultConfigsPath
+	}
+	configPath, err = filepath.Abs(configPath)
+	if err != nil {
+		return err
+	}
+	log.Println("Using the following path for configs:", configPath)
+
+	// Creating configs
+	for config, filename := range ampConfigs {
+		// Check if config already exists
+		exists, err := ConfigExists(config)
+		if err != nil {
+			return err
+		}
+		if exists {
+			log.Println("Skipping already existing config:", config)
+			continue
+		}
+
+		// Load config data
+		data, err := ioutil.ReadFile(path.Join(configPath, filename))
+		if err != nil {
+			return err
+		}
+
+		// Create config
+		if err := CreateConfig(config, data); err != nil {
+			return err
+		}
+		log.Println("Successfully created config:", config)
+	}
 	return nil
 }
