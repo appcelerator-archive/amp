@@ -25,7 +25,7 @@ the following alias:
 
 ### Create a private certificate
 
-    $ openssl genrsa -out privatekey.pem 1024
+    $ openssl genrsa -out privatekey 1024
     Generating RSA private key, 1024 bit long modulus
     ..........++++++
     ...................++++++
@@ -33,13 +33,13 @@ the following alias:
 
 ### Create a public certificate
 
-    $ openssl rsa -in privatekey.pem -out publickey.pem -outform PEM -pubout
+    $ openssl rsa -in privatekey -out publickey -outform PEM -pubout
     writing RSA key
 
 ### Use the public key to encrypt a message
 
     $ echo "hello world" > message.txt
-    $ openssl rsautl -encrypt -inkey publickey.pem -pubin -in message.txt -out message.dat
+    $ openssl rsautl -encrypt -inkey publickey -pubin -in message.txt -out message.dat
 
 Verify the message is encrypted:
 
@@ -48,7 +48,7 @@ Verify the message is encrypted:
 
 Verify the private key can unencrypt it:
 
-    $ openssl rsautl -decrypt -inkey privatekey.pem -in message.dat
+    $ openssl rsautl -decrypt -inkey privatekey -in message.dat
 
 ## Create a stack file for the service and secret
 
@@ -73,7 +73,7 @@ services:
 
 secrets:
   privatekey:
-    file: ./privatekey.pem
+    file: ./privatekey
 
 ```
 
