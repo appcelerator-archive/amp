@@ -1,15 +1,15 @@
-## Configuration Command
+## Settings Command
 
-The `amp config` command displays the AMP configuration. It can be accessed by storing the value in a config file or passing it as a command-line argument.
+The `amp settings` command displays the AMP settings. It can be accessed by storing the value in a settings file or passing it as a command-line argument.
 
 ### Usage
 
 ```
-$ amp config --help
+$ amp settings --help
 
-Usage:	amp config
+Usage:	amp settings
 
-Display configuration
+Display AMP settings
 
 Options:
   -h, --help            Print usage
@@ -24,7 +24,7 @@ In order to start using the CLI configuration:
 - Add values to the file in format:
   - `Variable: value`
 
->NOTE: For the moment, the configuration file only stores the `Server` parameter,
+>NOTE: For the moment, the settings file only stores the `Server` parameter,
 which is used to point the CLI to a target cluster. More will be added in future releases.
 
 ### Examples
@@ -36,9 +36,9 @@ Server: local.appcelerator.io
 
 * You can view the configuration of AMP using:
 ```
-$ amp config
+$ amp settings
 [local.appcelerator.io:50101]
-Configuration file: /Users/Username/.config/amp/amp.yml
-AMP Configuration:
+Settings file: /Users/Username/.config/amp/amp.yml
+AMP Settings:
   Server:        local.appcelerator.io:50101
 ```
