@@ -331,13 +331,9 @@ push-bootstrap:
 CPDIR := cluster/plugin
 CPAWSDIR := $(CPDIR)/aws
 
-.PHONY: build-amp-aws-compiler
-build-amp-aws-compiler:
-	@cd $(CPAWSDIR) && $(MAKE) compiler
-
 .PHONY: build-amp-aws
-build-amp-aws: build-amp-aws-compiler
-	@cd $(CPAWSDIR) && $(MAKE) build
+build-amp-aws:
+	@cd $(CPAWSDIR) && $(MAKE) image
 
 # WARNING:
 # If the environment variables for $KEYNAME and $REGION are not set, the
