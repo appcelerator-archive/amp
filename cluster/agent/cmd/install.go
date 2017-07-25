@@ -52,6 +52,11 @@ func install(cmd *cobra.Command, args []string) error {
 	// Create initial networks
 	createInitialNetworks()
 
+	// Environment variables
+	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version
+		os.Setenv("TAG", Version)
+	}
+
 	namespace := "amp"
 	if len(args) > 0 {
 		namespace = args[0]
