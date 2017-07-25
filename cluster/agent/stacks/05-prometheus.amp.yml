@@ -15,7 +15,7 @@ configs:
 services:
 
   prometheus:
-    image: appcelerator/amp-prometheus:${TAG:-0.12.0}
+    image: appcelerator/amp-prometheus:${TAG:-0.13.0}
     networks:
       - default
     volumes:

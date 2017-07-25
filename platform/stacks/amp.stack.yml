@@ -17,7 +17,7 @@ secrets:
 services:
 
   amplifier:
-    image: appcelerator/amplifier:${TAG:-0.12.0}
+    image: appcelerator/amplifier:${TAG:-0.13.0}
     networks:
       - default
     environment:
@@ -47,7 +47,7 @@ services:
         mode: 0400
 
   gateway:
-    image: appcelerator/gateway:${TAG:-0.12.0}
+    image: appcelerator/gateway:${TAG:-0.13.0}
     networks:
       - default
     labels:
@@ -66,7 +66,7 @@ services:
         - node.labels.amp.type.core == true
 
   agent:
-    image: appcelerator/agent:${TAG:-0.12.0}
+    image: appcelerator/agent:${TAG:-0.13.0}
     networks:
       - default
     deploy:

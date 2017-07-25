@@ -8,7 +8,7 @@ networks:
 services:
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG:-0.12.0}
+    image: appcelerator/ampbeat:${TAG:-0.13.0}
     networks:
       - default
     deploy:

@@ -11,7 +11,7 @@ volumes:
 services:
 
   agent:
-    image: appcelerator/agent:${TAG:-0.12.0}
+    image: appcelerator/agent:${TAG:-0.13.0}
     networks:
       - default
     deploy:

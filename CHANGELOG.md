@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0 (2017-07-25)
+
+* HA and self healing Cluster deployment on AWS
+* Numerous fixes, usability, and stability updates
+* Security model refactoring
+* Fixed issues related to resource access management
+* Bash and Zsh completion for the CLI
+* Updates to docs website: http://appcelerator.io/
+
 ## 0.11.0 (2017-05-22)
 
 * Significant new functionality in web UI
