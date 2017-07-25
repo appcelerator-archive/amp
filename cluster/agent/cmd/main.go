@@ -26,9 +26,25 @@ func main() {
 	rootCmd.AddCommand(NewInstallCommand())
 	rootCmd.AddCommand(NewMonitorCommand())
 
-	err := rootCmd.Execute()
-	if err != nil {
-		log.Println(err)
-		os.Exit(-1)
+	// if no arg has been provided, execute check and install
+	if len(os.Args[1:]) == 0 {
+		rootCmd.SetArgs([]string{"check"})
+		err := rootCmd.Execute()
+		if err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
+		rootCmd.SetArgs([]string{"install"})
+		err = rootCmd.Execute()
+		if err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
+	} else {
+		err := rootCmd.Execute()
+		if err != nil {
+			log.Println(err)
+			os.Exit(-1)
+		}
 	}
 }
