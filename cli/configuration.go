@@ -27,7 +27,7 @@ func ReadClientConfig(config *Configuration) error {
 	if err := viper.ReadInConfig(); err == nil {
 		// Unmarshal the config file into CLI Configuration object
 		if err := viper.Unmarshal(config); err != nil {
-			return fmt.Errorf("error unmarshalling config file: %s", err)
+			return fmt.Errorf("error unmarshalling settings file: %s", err)
 		}
 	}
 	return nil

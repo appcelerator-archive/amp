@@ -1,4 +1,4 @@
-package config
+package settings
 
 import (
 	"bytes"
@@ -14,14 +14,14 @@ type AMPConfig struct {
 	Config *cli.Configuration
 }
 
-var t = `AMP Configuration:
+var t = `AMP Settings:
  Server:        {{.Config.Server}}`
 
-// NewConfigCommand returns a new instance of the config command.
-func NewConfigCommand(c cli.Interface) *cobra.Command {
+// NewSettingsCommand returns a new instance of the settings command.
+func NewSettingsCommand(c cli.Interface) *cobra.Command {
 	return &cobra.Command{
 		Use:     "settings",
-		Short:   "Display AMP configuration",
+		Short:   "Display AMP settings",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showConfig(c)
@@ -46,9 +46,9 @@ func showConfig(c cli.Interface) error {
 		return fmt.Errorf("template execution error: %v\n", err)
 	}
 	if viper.ConfigFileUsed() != "" {
-		c.Console().Println("Configuration file:", viper.ConfigFileUsed())
+		c.Console().Println("Settings file:", viper.ConfigFileUsed())
 	} else {
-		c.Console().Println("Configuration file: none")
+		c.Console().Println("Settings file: none")
 	}
 	c.Console().Println(doc.String())
 	return nil
