@@ -25,9 +25,13 @@ type DeployOptions struct {
 	ResolveImage     string
 	SendRegistryAuth bool
 	Prune            bool
+	ExpectedState    swarm.TaskState
 }
 
 func Deploy(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
+	if opts.ExpectedState == "" {
+		opts.ExpectedState = swarm.TaskStateRunning
+	}
 	if err := validateResolveImageFlag(dockerCli, &opts); err != nil {
 		return err
 	}
@@ -91,4 +95,3 @@ func pruneServices(ctx context.Context, dockerCli command.Cli, namespace convert
 	}
 	return removeServices(ctx, dockerCli, pruneServices)
 }
-

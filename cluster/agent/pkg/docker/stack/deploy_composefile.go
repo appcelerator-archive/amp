@@ -16,12 +16,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	apiclient "github.com/docker/docker/client"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"github.com/docker/docker/api/types/filters"
 )
 
 func deployCompose(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
@@ -95,7 +95,7 @@ func deployCompose(ctx context.Context, dockerCli command.Cli, opts DeployOption
 	if err != nil {
 		return err
 	}
-	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage)
+	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage, opts.ExpectedState)
 }
 
 func getServicesDeclaredNetworks(serviceConfigs []composetypes.ServiceConfig) map[string]struct{} {
@@ -284,6 +284,7 @@ func deployServices(
 	namespace convert.Namespace,
 	sendAuth bool,
 	resolveImage string,
+	expectedState swarm.TaskState,
 ) error {
 	apiClient := dockerCli.Client()
 	out := dockerCli.Out()
@@ -387,16 +388,16 @@ func deployServices(
 
 		w := NewEventsWatcherWithCancel(ctx, apiClient, options)
 		w.On("*", func(m events.Message) {
-			fmt.Fprintf(out, "EVENT: %s\n", MessageString(m))
+			//fmt.Fprintf(out, "EVENT: %s\n", MessageString(m))
 		})
 		w.OnError(func(err error) {
-			fmt.Fprintf(out, "Error: %s\n", err)
+			//fmt.Fprintf(out, "OnError: %s\n", err)
 			w.Cancel()
 			done <- true
 		})
 		w.Watch()
 
-		NotifyState(ctx, apiClient, serviceID, swarm.TaskStateRunning, stabilizeDelay, func(err error) {
+		NotifyState(ctx, apiClient, serviceID, expectedState, stabilizeDelay, func(err error) {
 			if err != nil {
 				fmt.Fprintf(out, "Error: %s\n", err)
 			}
@@ -454,13 +455,13 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID s
 				}
 			}
 
-			// all tasks matched the desired state - now wait for things to stablize, or if already stabilized,
+			// all tasks matched the desired state - now wait for things to stabilize, or if already stabilized,
 			// then callback with success
 			if !failure {
 				if counter < 1 {
 					// make sure we have enough time to wait for things to stabilize within the deadline
 					if time.Now().Add(stabilizeDelay).After(deadline) {
-						callback(errors.New("failed to achieve desired state with stablization delay before deadline"))
+						callback(errors.New("failed to achieve desired state with stabilization delay before deadline"))
 						return
 					}
 					time.Sleep(stabilizeDelay)

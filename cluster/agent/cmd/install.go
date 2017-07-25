@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/term"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -108,6 +107,10 @@ func getStackFiles(path string, target string) ([]string, error) {
 }
 
 func deploy(d *command.DockerCli, stackfile string, namespace string) error {
+	return deployExpectingState(d, stackfile, namespace, swarm.TaskStateRunning)
+}
+
+func deployExpectingState(d *command.DockerCli, stackfile string, namespace string, expectedState swarm.TaskState) error {
 	if namespace == "" {
 		// use the stackfile basename as the default stack namespace
 		namespace = filepath.Base(stackfile)
@@ -120,17 +123,15 @@ func deploy(d *command.DockerCli, stackfile string, namespace string) error {
 		ResolveImage:     stack.ResolveImageNever,
 		SendRegistryAuth: false,
 		Prune:            false,
+		ExpectedState:    expectedState,
 	}
 
-
-	err := stack.Deploy(context.Background(), d, opts)
-	return err
+	return stack.Deploy(context.Background(), d, opts)
 }
 
 func deployTest(d *command.DockerCli, stackfile string, namespace string, timeout int) error {
 	// Deploy the test stack
-	err := deploy(d, stackfile, namespace)
-	if err != nil {
+	if err := deployExpectingState(d, stackfile, namespace, swarm.TaskStateComplete); err != nil {
 		return err
 	}
 
@@ -140,42 +141,30 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 		return err
 	}
 
-	for i := 0; i < timeout; i++ {
-		time.Sleep(time.Second)
-
-		// List stack tasks
-		options := types.TaskListOptions{Filters: filters.NewArgs()}
-		options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
-		tasks, err := stack.ListTasks(context.Background(), c, options)
-		if err != nil {
-			return err
-		}
-
-		// Assert we have at least one task
-		if len(tasks) == 0 {
-			continue
-		}
-
-		// Assert we have only one task
-		if len(tasks) != 1 {
-			return fmt.Errorf("too many tasks for test: %d", len(tasks))
-		}
-
-		task := tasks[0]
-		//log.Println("task.Status.State", task.Status.State)
-		//log.Println("task.DesiredState", task.DesiredState)
-		//log.Println("task.Status.Err", task.Status.Err)
-
-		// If the task has an error, the test has failed
-		if task.Status.Err != "" {
-			return fmt.Errorf("test failed: %s", task.Status.Err)
-		}
-
-		// Check that the task has the expected status (complete, shutdown and no error)
-		if task.Status.State == swarm.TaskStateComplete && task.DesiredState == swarm.TaskStateShutdown {
-			log.Println("Test successful")
-			return nil
-		}
+	// List stack tasks
+	options := types.TaskListOptions{Filters: filters.NewArgs()}
+	options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
+	tasks, err := stack.ListTasks(context.Background(), c, options)
+	if err != nil {
+		return err
 	}
-	return errors.New("test timed out")
+
+	// Assert we have at least one task
+	if len(tasks) == 0 {
+		return fmt.Errorf("no task for test")
+	}
+
+	// Assert we have only one task
+	if len(tasks) != 1 {
+		return fmt.Errorf("too many tasks for test: %d", len(tasks))
+	}
+
+	// If the task has an error, the test has failed
+	task := tasks[0]
+	if task.Status.Err != "" {
+		return fmt.Errorf("test failed with status: %s", task.Status.Err)
+	}
+
+	log.Println("Test successful")
+	return nil
 }

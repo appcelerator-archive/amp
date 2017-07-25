@@ -92,7 +92,7 @@ func deployBundle(ctx context.Context, dockerCli command.Cli, opts DeployOptions
 	if err := createNetworks(ctx, dockerCli, namespace, networks); err != nil {
 		return err
 	}
-	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage)
+	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage, opts.ExpectedState)
 }
 
 func loadBundlefile(stderr io.Writer, namespace string, path string) (*bundlefile.Bundlefile, error) {
