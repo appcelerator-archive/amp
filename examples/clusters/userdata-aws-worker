@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SYNC=${SYNC:-false}
+SYSTEM_PRUNE=${SYSTEM_PRUNE:-false}
 #SIGNAL_URL=
 LABELS=${LABELS:-amp.type.user=true amp.type.core=true amp.type.search=true amp.type.mq=true amp.type.kv=true amp.type.metrics=true}
 CHANNEL=${CHANNEL:-stable}
@@ -55,6 +56,15 @@ _install_plugins(){
     docker plugin install "$plugin" --alias "$alias" --grant-all-permissions # || return 1
   done
   return 0
+}
+
+_configure_system_prune(){
+  local _cmd="docker system prune -af"
+  local _cron_spec="@hourly"
+
+  [[ "x$SYSTEM_PRUNE" != x@(true|yes) ]] && return 0
+  echo "configuring crontab for system prune" >&2
+  (crontab -l 2>/dev/null; echo "$_cron_spec $_cmd") | crontab -
 }
 
 _restart_docker(){
@@ -127,6 +137,9 @@ _set_mirror_registries(){
   fi
   _tmp=$(mktemp)
   for _registry in $_registries; do
+    # Docker pull only accept lower case names,
+    # so it's safer to use lower case also in the registry mirror list
+    _registry=$(echo "$_registry" | tr '[:upper:]' '[:lower:]'})
     if ! echo "$_registry" | grep -q "://" ; then
       echo "$_registry should contain a scheme, ignore" >&2
       continue
@@ -134,6 +147,11 @@ _set_mirror_registries(){
     echo "adding registry $_registry" >&2
     cat /etc/docker/daemon.json | jq ".[\"registry-mirrors\"] |= .+ [\"$_registry\"]" > "$_tmp" || return 1
     mv "$_tmp" /etc/docker/daemon.json
+    if echo "$_registry" | grep -q "http://" ; then
+      # declare it as insecure registry
+      cat /etc/docker/daemon.json | jq ".[\"insecure-registries\"] |= .+ [\"${_registry}\"]" > "$_tmp" || return 1
+      mv "$_tmp" /etc/docker/daemon.json
+    fi
   done
 }
 
@@ -243,5 +261,6 @@ _set_metrics_address "$nodeip" "9323" || exit 1
 _restart_docker || exit 1
 _swarm_join "$LEADER" || exit 1
 _label_node "$LEADER" || exit 1
+_configure_system_prune || exit 1
 _smoke_test || exit 1
 _signal_aws

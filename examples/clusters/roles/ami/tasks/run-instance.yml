@@ -2,23 +2,10 @@
 - debug: msg="New instance on VPC {{ ec2_vpc_id }} and region {{ ec2_region }}"
   changed_when: false
 
-- name: Set timestamp
+- name: Set the Grub configuration
   set_fact:
-    timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+    grub_config: "{{ lookup('file', '50-cloudimg-settings.cfg') | b64encode }}"
   changed_when: false
-
-- name: Upload managers userdata
-  s3:
-    bucket: "{{ s3_bucket }}"
-    object: "scripts/userdata-aws-manager"
-    src: userdata-aws-manager
-    mode: put
-- name: Upload workers userdata
-  s3:
-    bucket: "{{ s3_bucket }}"
-    object: "scripts/userdata-aws-worker"
-    src: userdata-aws-worker
-    mode: put
 
 - name: Run instance
   ec2:

@@ -31,13 +31,13 @@ Once the nodes are up and running, it will run the appcelerator/ampadmin image t
 | CoreInstanceType | Instance type for the core worker nodes. Must be a valid EC2 HVM instance type | m4.large | c4.large |
 | UserInstanceType | Instance type for the user worker nodes. Must be a valid EC2 HVM instance type | t2.medium | m4.large |
 | MetricsInstanceType | Instance type for the metrics worker nodes. Must be a valid EC2 HVM instance type | t2.large | m4.large |
-| DrainManager | Should we drain services from the manager nodes? | false | true |
+| DrainManager | Should we drain services from the manager nodes? | no | yes |
 | AufsVolumeSize | Size in GB of the EBS for the /var/lib/docker FS | 26 | 100 |
 | OverlayNetworks | name of overlay networks that should be created once swarm is initialized | ampnet | public storage search mq |
 | DockerChannel | channel for Docker installation | stable | edge |
 | DockerPlugins | space separated list of plugins to install | | rexray/ebs |
-| Sync | the stack will wait for all nodes to be up | true | false |
-| InstallApplication | install AMP | true | false |
+| InstallApplication | install AMP | yes | no |
+| EnableSystemPrune | Enable Docker system prune | yes | no |
 
 ## Output
 
@@ -47,6 +47,7 @@ The output of the stack lists the DNS name of the ELB in front of the manager no
 | --------- | ----------- |
 | VpcId | VPC ID |
 | DNSTarget | public facing endpoint for the cluster, It can be used for ssh access, https access to swarm services and configuration of the remote server in the CLI |
+| InternalRegistryTarget | internal endpoint for the registry service |
 | MetricsURL | URL for cluster health dashboard |
 
 ## Custom AMI
@@ -61,3 +62,10 @@ ec2_key_name: "KEY_NAME"
 ```
 
 Once done, copy the AMI Id in the cloudformation template (aws-swarm-asg.yml).
+
+## Registry
+
+An option of the template is the inclusion of a Docker registry.
+It includes a S3 bucket as registry backend, and an autoscaling group of registry containers.
+The registry is composed of non swarm nodes and is not part of the swarm.
+The registry is only available from the VPC, all Docker swarm nodes are configured with the internal endpoint of the registry as mirror registry.

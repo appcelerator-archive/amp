@@ -1,0 +1,19 @@
+---
+- name: Upload managers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-manager"
+    src: userdata-aws-manager
+    mode: put
+- name: Upload workers userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-worker"
+    src: userdata-aws-worker
+    mode: put
+- name: Upload registry userdata
+  s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-registry"
+    src: userdata-aws-registry
+    mode: put

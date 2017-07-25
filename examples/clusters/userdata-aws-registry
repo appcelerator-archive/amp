@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Mandatory variables
+if [[ -z "$BUCKET" ]]; then
+  echo "a bucket name is required"
+  exit 1
+fi
+if [[ -z "$REGION" ]]; then
+  echo "region is required"
+  exit 1
+fi
+# Optional values
+SECRET=${SECRET:-F1Am4d9zE}
+PORT=${PORT:-5000}
+DEBUG_PORT=${DEBUG_PORT:=5001}
+REGISTRY_VERSION=${REGISTRY_VERSION:-2}
+
+# make sure the prerequisites are already installed, install them in the other case
+which dpkg &>/dev/null
+if [[ $? -eq 0 ]]; then
+  grep -A1 docker-ce /var/lib/dpkg/status | grep -q "installed$" || wget -qO- https://get.docker.com/ | sh
+fi
+
+# Prepare the registry configuration
+cat > /etc/docker/registry.yml << EOF
+version: 0.1
+log:
+  level: info
+  fields:
+    service: registry
+storage:
+  delete:
+    enabled: true
+  redirect:
+    disable: true
+  cache:
+    blobdescriptor: inmemory
+  s3:
+    bucket: ${BUCKET}
+    region: ${REGION}
+    encrypt: false
+    secure: true
+    v4auth: true
+http:
+  addr: :${PORT}
+  secret: ${SECRET}
+  headers:
+    X-Content-Type-Options: [nosniff]
+  debug:
+    addr: :${DEBUG_PORT}
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
+EOF
+
+# run the registry
+docker run -d --restart=always -v /etc/docker/registry.yml:/etc/docker/registry/config.yml -p ${PORT}:${PORT} -p ${DEBUG_PORT}:${DEBUG_PORT} --name registry registry:${REGISTRY_VERSION}
