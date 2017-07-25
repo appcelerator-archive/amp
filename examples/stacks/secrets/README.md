@@ -83,6 +83,16 @@ secrets:
 
 This will start two services: `demo_echo` listening on port `8887` and `demo_secure_echo` listening on `8888`.
 
+## Test the services
+
+Use netcat (`nc`) to send the encrypted message to each service and check the service logs for the result.
+`demo_echo` is not configured to use the secret and therefore will fail to decrypt the message.
+`demo_secure_echo` should succeed.
+
+If you don't have netcat installed on your system, you can create an alias to use the version in the secure-echo image:
+
+    $ alias nc="docker run -it --rm --entrypoint nc subfuzion/secure-echo"
+
 Test `demo_echo`:
 
     $ cat message.dat | nc localhost 8887
@@ -96,9 +106,4 @@ Test `demo_secure_echo`:
     $ amp service logs demo_secure_echo
     ...
     hello world
-
-
-
-
-
 
