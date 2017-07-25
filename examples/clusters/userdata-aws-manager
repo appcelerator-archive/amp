@@ -14,6 +14,7 @@ DRAIN_MANAGER=${DRAIN_MANAGER:-false}
 OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
 #MIRROR_REGISTRIES=
 #DOCKER_DEVICE=/dev/sdl
+AMPAGENT_VERSION=${APP_VERSION:-latest}
 SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
 SYSV_DOCKER_DEFAULT=/etc/default/docker
 
@@ -369,6 +370,7 @@ _signal_aws() {
     return 1
   fi
   /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "$_url"
+  return 0
 }
 
 # wait for all nodes to be up and running (and labeled)
@@ -400,7 +402,7 @@ _wait_for_full_swarm() {
 }
 
 _setup() {
-  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent
+  docker run --rm -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent:${AMPAGENT_VERSION}
 }
 
 _sanity_check || exit 1
