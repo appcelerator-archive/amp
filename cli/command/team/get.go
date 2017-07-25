@@ -58,7 +58,7 @@ func getTeam(c cli.Interface, cmd *cobra.Command, args []string, opts getTeamOpt
 		}
 	}
 	c.Console().Printf("Team: %s\n", reply.Team.Name)
-	c.Console().Printf("Organization: %s\n", opts.org)
+	//c.Console().Printf("Organization: %s\n", opts.org)
 	c.Console().Printf("Created On: %s\n", time.ConvertTime(reply.Team.CreateDt))
 	return nil
 }

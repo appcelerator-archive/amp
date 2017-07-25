@@ -61,6 +61,6 @@ func createTeam(c cli.Interface, cmd *cobra.Command, args []string, opts createT
 	if err := cli.SaveTeam(team, c.Server()); err != nil {
 		return err
 	}
-	c.Console().Println("Team has been created in the organization.")
+	c.Console().Println("Team has been created.")
 	return nil
 }

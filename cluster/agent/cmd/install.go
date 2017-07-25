@@ -12,6 +12,7 @@ import (
 
 	"github.com/appcelerator/amp/cluster/agent/admin"
 	"github.com/appcelerator/amp/cluster/agent/pkg/docker"
+	"github.com/appcelerator/amp/cluster/agent/pkg/docker/stack"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/compose/convert"
 	"github.com/docker/docker/api/types"
@@ -19,14 +20,12 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/term"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/subfuzion/stack/stack"
 )
 
 const (
-	targetSingle  = "single"
-	targetCluster = "cluster"
+	TARGET_SINGLE  = "single"
+	TARGET_CLUSTER = "cluster"
 )
 
 func NewInstallCommand() *cobra.Command {
@@ -47,8 +46,16 @@ func install(cmd *cobra.Command, args []string) error {
 		namespace = args[0]
 	}
 
-	target := targetSingle // TODO: Add a parameter or detect the number of swarm nodes
-	files, err := getStackFiles("./stacks", target)
+	etcdClusterMode, err := serviceDeploymentMode(dockerCli.Client(), "amp.type.kv", "true")
+	if err != nil {
+		return err
+	}
+	elasticsearchClusterMode, err := serviceDeploymentMode(dockerCli.Client(), "amp.type.search", "true")
+	if err != nil {
+		return err
+	}
+	clusterMode := map[string]string{"elasticsearch": elasticsearchClusterMode, "etcd": etcdClusterMode}
+	files, err := getStackFiles("./stacks", clusterMode)
 	if err != nil {
 		return err
 	}
@@ -72,13 +79,42 @@ func install(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// returns the deployment mode
+// based on the number of nodes with the label passed as argument
+// if number of nodes > 2, mode = cluster, else mode = single
+func serviceDeploymentMode(c client.APIClient, labelKey string, labelValue string) (string, error) {
+	// unfortunately filtering labels on NodeList won't work as expected, Cf. https://github.com/moby/moby/issues/27231
+	nodes, err := c.NodeList(context.Background(), types.NodeListOptions{})
+	if err != nil {
+		return "", err
+	}
+	matchingNodes := 0
+	for _, node := range nodes {
+		// node is a swarm.Node
+		for k, v := range node.Spec.Labels {
+			if k == labelKey {
+				if labelValue == "" || labelValue == v {
+					matchingNodes++
+				}
+			}
+		}
+	}
+	switch matchingNodes {
+	case 0:
+		return "", fmt.Errorf("can't find a node with label %s", labelKey)
+	case 1:
+		fallthrough
+	case 2:
+		return TARGET_SINGLE, nil
+	default:
+		return TARGET_CLUSTER, nil
+	}
+}
+
 // returns sorted list of yaml file pathnames
-func getStackFiles(path string, target string) ([]string, error) {
+func getStackFiles(path string, clusterMode map[string]string) ([]string, error) {
 	if path == "" {
 		path = "./stacks"
-	}
-	if target == "" {
-		target = targetSingle
 	}
 
 	// a bit more work but we can't just use filepath.Glob
@@ -95,11 +131,17 @@ func getStackFiles(path string, target string) ([]string, error) {
 		if err != nil {
 			log.Println(err)
 		} else if matched {
-			if strings.Contains(name, targetSingle) && target != targetSingle {
-				continue
-			}
-			if strings.Contains(name, targetCluster) && target != targetCluster {
-				continue
+			// looking for the service name, in case there's an indication for the cluster mode (single vs cluster)
+			// expecting a file with a name NN-SERVICENAME-mode.*
+			split := strings.Split(name, "-")
+			if len(split) == 3 {
+				serviceName := split[1]
+				if strings.Contains(name, TARGET_SINGLE) && clusterMode[serviceName] != TARGET_SINGLE {
+					continue
+				}
+				if strings.Contains(name, TARGET_CLUSTER) && clusterMode[serviceName] != TARGET_CLUSTER {
+					continue
+				}
 			}
 			stackfiles = append(stackfiles, filepath.Join(path, name))
 		}
@@ -108,6 +150,10 @@ func getStackFiles(path string, target string) ([]string, error) {
 }
 
 func deploy(d *command.DockerCli, stackfile string, namespace string) error {
+	return deployExpectingState(d, stackfile, namespace, swarm.TaskStateRunning)
+}
+
+func deployExpectingState(d *command.DockerCli, stackfile string, namespace string, expectedState swarm.TaskState) error {
 	if namespace == "" {
 		// use the stackfile basename as the default stack namespace
 		namespace = filepath.Base(stackfile)
@@ -120,15 +166,15 @@ func deploy(d *command.DockerCli, stackfile string, namespace string) error {
 		ResolveImage:     stack.ResolveImageNever,
 		SendRegistryAuth: false,
 		Prune:            false,
+		ExpectedState:    expectedState,
 	}
-	err := stack.Deploy(d, opts)
-	return err
+
+	return stack.Deploy(context.Background(), d, opts)
 }
 
 func deployTest(d *command.DockerCli, stackfile string, namespace string, timeout int) error {
 	// Deploy the test stack
-	err := deploy(d, stackfile, namespace)
-	if err != nil {
+	if err := deployExpectingState(d, stackfile, namespace, swarm.TaskStateComplete); err != nil {
 		return err
 	}
 
@@ -138,42 +184,30 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 		return err
 	}
 
-	for i := 0; i < timeout; i++ {
-		time.Sleep(time.Second)
-
-		// List stack tasks
-		options := types.TaskListOptions{Filters: filters.NewArgs()}
-		options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
-		tasks, err := stack.ListTasks(context.Background(), c, options)
-		if err != nil {
-			return err
-		}
-
-		// Assert we have at least one task
-		if len(tasks) == 0 {
-			continue
-		}
-
-		// Assert we have only one task
-		if len(tasks) != 1 {
-			return fmt.Errorf("too many tasks for test: %d", len(tasks))
-		}
-
-		task := tasks[0]
-		//log.Println("task.Status.State", task.Status.State)
-		//log.Println("task.DesiredState", task.DesiredState)
-		//log.Println("task.Status.Err", task.Status.Err)
-
-		// If the task has an error, the test has failed
-		if task.Status.Err != "" {
-			return fmt.Errorf("test failed: %s", task.Status.Err)
-		}
-
-		// Check that the task has the expected status (complete, shutdown and no error)
-		if task.Status.State == swarm.TaskStateComplete && task.DesiredState == swarm.TaskStateShutdown {
-			log.Println("Test successful")
-			return nil
-		}
+	// List stack tasks
+	options := types.TaskListOptions{Filters: filters.NewArgs()}
+	options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
+	tasks, err := stack.ListTasks(context.Background(), c, options)
+	if err != nil {
+		return err
 	}
-	return errors.New("test timed out")
+
+	// Assert we have at least one task
+	if len(tasks) == 0 {
+		return fmt.Errorf("no task for test")
+	}
+
+	// Assert we have only one task
+	if len(tasks) != 1 {
+		return fmt.Errorf("too many tasks for test: %d", len(tasks))
+	}
+
+	// If the task has an error, the test has failed
+	task := tasks[0]
+	if task.Status.Err != "" {
+		return fmt.Errorf("test failed with status: %s", task.Status.Err)
+	}
+
+	log.Println("Test successful")
+	return nil
 }

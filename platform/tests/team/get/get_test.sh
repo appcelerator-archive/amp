@@ -2,4 +2,4 @@
 
 amp -k team get team | grep -q "Team: team"
 #amp -k team get team | grep -q "Organization: org"
-amp -k team get team | grep -q "Organization: default"
+#amp -k team get team | grep -q "Organization: default"
