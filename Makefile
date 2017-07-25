@@ -107,7 +107,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit build-ampagent
 build: build-base buildall-cli
 
 # =============================================================================
@@ -360,17 +360,16 @@ test-amp-aws: build-amp-aws
 	@cd $(CPAWSDIR) && $(MAKE) test
 
 # =============================================================================
-# BUILD AMPADMIN (`ampadmin`)
+# BUILD AMPAGENT (`ampagent`)
 # =============================================================================
-AMPADMINDIR := cluster/ampadmin
+AMPAGENTDIR := cluster/agent
+AMPAGENTTAG := $(VERSION)
+AMPAGENTIMG := appcelerator/ampagent:$(AMPAGENTTAG)
 
-.PHONY: build-ampadmin
-build-ampadmin: build-ampadmin
-	@cd $(AMPADMINDIR) && $(MAKE) build
-
-.PHONY: test-ampadmin
-test-ampadmin:
-	@cd $(AMPADMINDIR) && $(MAKE) test
+.PHONY: build-ampagent
+build-ampagent:
+	@echo "build $(AMPAGENTDIR)"
+	@$(DOCKER_CMD) build -t $(AMPAGENTIMG) $(AMPAGENTDIR)
 
 # =============================================================================
 # Quality checks

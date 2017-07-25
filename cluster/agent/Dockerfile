@@ -37,6 +37,7 @@ ENV SWARM_SOCKET "/var/run/docker/swarm/control.sock"
 
 COPY --from=build /etc/ssl/certs /etc/ssl/certs
 COPY --from=build /tmp/bin/ /bin
+COPY ./stacks /stacks
 
 ENTRYPOINT [ "/bin/ampctl" ]
 
