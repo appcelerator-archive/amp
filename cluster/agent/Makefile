@@ -2,7 +2,8 @@
 
 PKG := github.com/appcelerator/amp/cluster/agent/cmd
 TARGET := bin/ampctl
-IMAGE := appcelerator/ampagent
+VERSION ?= latest
+IMAGE := appcelerator/ampagent:$(VERSION)
 
 build:
 	go build -o $(TARGET) $(PKG)
@@ -14,7 +15,7 @@ clean:
 	rm -f $(TARGET)
 
 test:
-	go test -v -timeout 30m
+	go test -v -timeout 30m $(PKG)/../admin
 
 image:
 	docker build -t $(IMAGE) .
