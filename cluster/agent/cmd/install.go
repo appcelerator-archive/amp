@@ -46,6 +46,9 @@ func install(cmd *cobra.Command, args []string) error {
 	// Create initial secrets
 	createInitialSecrets()
 
+	// Create initial networks
+	createInitialNetworks()
+
 	namespace := "amp"
 	if len(args) > 0 {
 		namespace = args[0]
@@ -258,9 +261,9 @@ func CreateSecret(name string, data []byte) error {
 
 // AMP secrets map: Secret name paired to secret file in ./defaults
 var ampSecrets = map[string]string{
-	"alertmanager_yml":        "alertmanager.yml",
-	"amplifier_yml":           "amplifier.yml",
-	"certificate_amp":         "certificate.amp",
+	"alertmanager_yml": "alertmanager.yml",
+	"amplifier_yml":    "amplifier.yml",
+	"certificate_amp":  "certificate.amp",
 }
 
 // This is the default secrets path
@@ -318,5 +321,66 @@ func createInitialSecrets() error {
 		}
 		log.Println("Successfully created secret:", secret)
 	}
+	return nil
+}
+
+func ListNetworks() ([]types.NetworkResource, error) {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.NetworkList(context.Background(), types.NetworkListOptions{})
+}
+
+func NetworkExists(name string) (bool, error) {
+	networks, err := ListNetworks()
+	if err != nil {
+		return false, err
+	}
+	for _, network := range networks {
+		if network.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func CreateNetwork(name string, overlay bool, attachable bool) error {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return err
+	}
+	spec := types.NetworkCreate{
+		CheckDuplicate: true,
+		Attachable:     attachable,
+	}
+	if overlay {
+		spec.Driver = "overlay"
+	}
+	_, err = c.NetworkCreate(context.Background(), name, spec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+const ampnet = "ampnet"
+
+func createInitialNetworks() error {
+	// Check if network already exists
+	exists, err := NetworkExists(ampnet)
+	if err != nil {
+		return err
+	}
+	if exists {
+		log.Println("Skipping already existing network:", ampnet)
+		return nil
+	}
+
+	// Create network
+	if err := CreateNetwork(ampnet, true, true); err != nil {
+		return err
+	}
+	log.Println("Successfully created network:", ampnet)
 	return nil
 }
