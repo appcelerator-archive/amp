@@ -245,6 +245,7 @@ _signal_aws() {
   [[ "x$SYNC" != "xtrue" ]] && return 0
   [[ -x /usr/local/bin/cfn-signal ]] || return 1
   /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "${SIGNAL_URL}"
+  return 0
 }
 
 _sanity_check || exit 1
