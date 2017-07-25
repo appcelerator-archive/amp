@@ -12,7 +12,7 @@ global:
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
-  - "/run/secrets/*.rules"
+  - "/etc/prometheus/*.rules"
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.

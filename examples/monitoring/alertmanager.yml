@@ -10,6 +10,6 @@ receivers:
   slack_configs:
   - channel: "#YOUR_CHANNEL"
     username: "Alertmanager"
-    title: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
-    text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+    title: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
     send_resolved: true

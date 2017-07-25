@@ -1,4 +1,4 @@
-version: "3.1"
+version: "3.3"
 
 networks:
   default:
@@ -11,9 +11,11 @@ volumes:
   grafana-data:
 
 secrets:
-  prometheus_alerts_rules:
-    external: true
   alertmanager_yml:
+    external: true
+
+configs:
+  prometheus_alerts_rules:
     external: true
 
 services:
@@ -66,9 +68,9 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.metrics == true
-    secrets:
+    configs:
       - source: prometheus_alerts_rules
-        target: alerts.rules
+        target: /etc/prometheus/alerts.rules
         mode: 0400
 
   node_exporter:

@@ -1,4 +1,4 @@
-version: "3.1"
+version: "3.3"
 
 networks:
   default:
@@ -8,7 +8,7 @@ networks:
 volumes:
   prometheus-data:
 
-secrets:
+configs:
   prometheus_alerts_rules:
     external: true
 
@@ -38,7 +38,7 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.metrics == true
-    secrets:
+    configs:
       - source: prometheus_alerts_rules
-        target: alerts.rules
+        target: /etc/prometheus/alerts.rules
         mode: 0400
