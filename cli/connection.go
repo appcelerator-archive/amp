@@ -15,7 +15,7 @@ func NewClientConn(addr string, token string, skipVerify bool) (*grpc.ClientConn
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(creds),
 		grpc.WithBlock(),
-		grpc.WithTimeout(time.Second),
+		grpc.WithTimeout(10 * time.Second),
 		grpc.WithPerRPCCredentials(&LoginCredentials{Token: token}),
 		grpc.WithCompressor(grpc.NewGZIPCompressor()),
 		grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
