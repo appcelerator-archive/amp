@@ -13,6 +13,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
 	"github.com/appcelerator/amp/cli/command/password"
+	"github.com/appcelerator/amp/cli/command/secret"
 	"github.com/appcelerator/amp/cli/command/service"
 	"github.com/appcelerator/amp/cli/command/settings"
 	"github.com/appcelerator/amp/cli/command/stack"
@@ -104,6 +105,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// password
 		password.NewPasswordCommand(c),
+
+		// secret
+		secret.NewSecretCommand(c),
 
 		// service
 		service.NewServiceCommand(c),
