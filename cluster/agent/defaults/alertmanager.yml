@@ -1,0 +1,9 @@
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alertmanager@example.org'
+route:
+  receiver: none
+receivers:
+- name: 'none'
+  email_configs:
+  - to: 'null@localhost'
