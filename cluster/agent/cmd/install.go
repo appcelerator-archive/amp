@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -40,6 +42,9 @@ func NewInstallCommand() *cobra.Command {
 func install(cmd *cobra.Command, args []string) error {
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := docker.NewDockerCli(stdin, stdout, stderr)
+
+	// Create initial secrets
+	createInitialSecrets()
 
 	namespace := "amp"
 	if len(args) > 0 {
@@ -209,5 +214,109 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 	}
 
 	log.Println("Test successful")
+	return nil
+}
+
+func ListSecrets() ([]swarm.Secret, error) {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.SecretList(context.Background(), types.SecretListOptions{})
+}
+
+func SecretExists(name string) (bool, error) {
+	secrets, err := ListSecrets()
+	if err != nil {
+		return false, err
+	}
+	for _, secret := range secrets {
+		if secret.Spec.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func CreateSecret(name string, data []byte) error {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return err
+	}
+	spec := swarm.SecretSpec{
+		Annotations: swarm.Annotations{
+			Name: name,
+		},
+		Data: data,
+	}
+	_, err = c.SecretCreate(context.Background(), spec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// AMP secrets map: Secret name paired to secret file in ./defaults
+var ampSecrets = map[string]string{
+	"alertmanager_yml":        "alertmanager.yml",
+	"amplifier_yml":           "amplifier.yml",
+	"certificate_amp":         "certificate.amp",
+}
+
+// This is the default secrets path
+const defaultSecretsPath = "defaults"
+
+// exists returns whether the given file or directory exists or not
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
+
+func createInitialSecrets() error {
+	// Computing secret path
+	secretPath := path.Join("/", defaultSecretsPath)
+	pe, err := pathExists(secretPath)
+	if err != nil {
+		return err
+	}
+	if !pe {
+		secretPath = defaultSecretsPath
+	}
+	secretPath, err = filepath.Abs(secretPath)
+	if err != nil {
+		return err
+	}
+	log.Println("Using the following path for secrets:", secretPath)
+
+	// Creating secrets
+	for secret, filename := range ampSecrets {
+		// Check if secret already exists
+		exists, err := SecretExists(secret)
+		if err != nil {
+			return err
+		}
+		if exists {
+			log.Println("Skipping already existing secret:", secret)
+			continue
+		}
+
+		// Load secret data
+		data, err := ioutil.ReadFile(path.Join(secretPath, filename))
+		if err != nil {
+			return err
+		}
+
+		// Create secret
+		if err := CreateSecret(secret, data); err != nil {
+			return err
+		}
+		log.Println("Successfully created secret:", secret)
+	}
 	return nil
 }

@@ -34,10 +34,12 @@ RUN CGO_ENABLED=0 go build -a -ldflags "${LDFLAGS}" -o ${TARGET} ${PKGCMD}
 FROM scratch
 # =============================
 ENV SWARM_SOCKET "/var/run/docker/swarm/control.sock"
+ENV PKG github.com/appcelerator/amp/cluster/agent
+ENV PKGROOT /go/src/${PKG}
 
 COPY --from=build /etc/ssl/certs /etc/ssl/certs
 COPY --from=build /tmp/bin/ /bin
+COPY --from=build ${PKGROOT}/defaults /defaults
 COPY ./stacks /stacks
 
 ENTRYPOINT [ "/bin/ampctl" ]
-
