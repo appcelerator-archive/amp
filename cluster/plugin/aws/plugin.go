@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DefaultTemplateURL = "https://editions-us-east-1.s3.amazonaws.com/aws/edge/Docker.tmpl"
+	DefaultTemplateURL = "https://s3.amazonaws.com/io-amp-binaries/templates/v0.13.0/aws-swarm-asg.yml"
 )
 
 // RequestOptions stores raw request input options before transformation into a AWS SDK specific
@@ -174,4 +174,3 @@ func StackOutputToJSON(so []StackOutput) (string, error) {
 	}
 	return string(j), nil
 }
-
