@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-10a3f06b
+      Default: ami-98366be3
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-62517107
+      Default: ami-35200050
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-dd2e35a4
+      Default: ami-47a8b33e
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-789c7401
+      Default: ami-6b04ec12
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-ce352aad
+      Default: ami-84cbd4e7
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -224,7 +224,7 @@ Parameters:
     - edge
   DockerPlugins:
     Type: String
-    Description: "space separated list of plugins to install. Example: rexray/ebs"
+    Description: "space separated list of plugins to install. Options can be passed separated with pound sign. Example: rexray/ebs#REXRAY_PREEMPT=true"
     Default: ""
   InstallApplication:
     Type: String
@@ -235,7 +235,7 @@ Parameters:
     Default: yes
   ApplicationVersion:
     Type: String
-    Description: Use the latest release version for the best result (a tag, e.g. 0.13.0)
+    Description: Use the latest release version for the best result (a tag, e.g. 0.13.1)
     Default: latest
   MirrorRegistry:
     Type: String

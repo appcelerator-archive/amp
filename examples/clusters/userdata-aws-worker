@@ -47,13 +47,20 @@ _install_docker(){
   docker version >&2
 }
 
+# install Docker plugins
+# specification of a plugin is in the form PluginName:Version#Options
+# plugin specifications should be space separated
 _install_plugins(){
   local plugin
   local alias
+  local options
   for plugin in $PLUGINS; do
+    options="${plugin#*#}"
+    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//#/ }"
+    plugin="${plugin%%#*}"
     alias=${plugin#store/}
     alias=${alias%:*}
-    docker plugin install "$plugin" --alias "$alias" --grant-all-permissions # || return 1
+    docker plugin install "$plugin" $options --alias "$alias" --grant-all-permissions # || return 1
   done
   return 0
 }
