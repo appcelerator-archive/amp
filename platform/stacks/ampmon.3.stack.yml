@@ -47,7 +47,7 @@ services:
              "-web.external-url=http://localhost:9093" ]
 
   prometheus:
-    image: appcelerator/amp-prometheus:${TAG:-0.13.0}
+    image: appcelerator/amp-prometheus:${TAG:-0.13.1}
     networks:
       - default
     volumes:

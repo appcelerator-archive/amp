@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.1 (2017-07-25)
+
+* gRPC timeout in the CLI raised from 1sec to 10sec (fix timeout with remote clusters)
+* A non verified user can be deleted
+* Docker Plugin can now be installed with options
+
 ## 0.13.0 (2017-07-25)
 
 * HA and self healing Cluster deployment on AWS
