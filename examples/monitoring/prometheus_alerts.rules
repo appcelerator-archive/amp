@@ -18,7 +18,7 @@ ALERT Availability
 
 # elasticsearch
 ALERT ElasticsearchClusterStatus
-  IF es_cluster_status < 1
+  IF es_cluster_status > 1
   FOR 1m
   ANNOTATIONS {
    summary = "elasticsearch cluster status",
