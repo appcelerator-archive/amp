@@ -15,7 +15,7 @@ ENV PKGROOT /go/src/${PKG}
 ENV PKGCMD ${PKG}/cmd
 ARG LDFLAGS="-s"
 
-RUN go get github.com/LK4D4/vndr
+#RUN go get github.com/LK4D4/vndr
 
 COPY . ${PKGROOT}
 WORKDIR ${PKGROOT}
@@ -28,7 +28,8 @@ WORKDIR ${PKGROOT}
 RUN go test -v -timeout 30m ${PKG}/admin
 
 # build
-RUN CGO_ENABLED=0 go build -a -ldflags "${LDFLAGS}" -o ${TARGET} ${PKGCMD}
+RUN echo "Building ampagent with ${LDFLAGS}" && \
+    CGO_ENABLED=0 go build -a -ldflags "${LDFLAGS}" -o ${TARGET} ${PKGCMD}
 
 # =============================
 FROM scratch
