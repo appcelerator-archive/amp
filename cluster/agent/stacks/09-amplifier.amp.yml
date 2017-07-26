@@ -14,7 +14,7 @@ secrets:
 services:
 
   amplifier:
-    image: appcelerator/amplifier:${TAG:-0.13.0}
+    image: appcelerator/amplifier:${TAG:-0.13.1}
     networks:
       - default
     environment:

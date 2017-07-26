@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DefaultTemplateURL = "https://s3.amazonaws.com/io-amp-binaries/templates/v0.13.0/aws-swarm-asg.yml"
+	DefaultTemplateURL = "https://s3.amazonaws.com/io-amp-binaries/templates/v0.13.1/aws-swarm-asg.yml"
 )
 
 // RequestOptions stores raw request input options before transformation into a AWS SDK specific
