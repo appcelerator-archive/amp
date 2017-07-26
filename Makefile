@@ -120,7 +120,7 @@ AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
-$(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC)
+$(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) VERSION
 	@echo "Compiling $(AMP) source(s) ($(GOOS)/$(GOARCH))"
 	@echo $?
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) hack/lbuild $(REPO)/bin $(AMP) $(AMPPKG) $(LDFLAGS)
@@ -147,7 +147,7 @@ cleanall-cli:
 	@rm -f bin/darwin/amd64/amp bin/linux/amd64/amp bin/alpine/amd64/amp
 
 # Build cross-compiled versions of the cli
-buildall-cli: $(AMPTARGET)
+buildall-cli: $(AMPTARGET) VERSION
 	@echo "cross-compiling $(AMP) cli for supported targets"
 	@hack/xbuild $(REPO)/bin $(AMP) $(REPO)/$(CMDDIR)/$(AMP) $(LDFLAGS)
 
@@ -165,7 +165,7 @@ AMPLDIRS := $(CMDDIR)/$(AMPL) api data $(COMMONDIRS)
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
-$(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC)
+$(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC) VERSION
 	@echo "Compiling $(AMPL) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AMPLTARGET) $(AMPLPKG) $(LDFLAGS)
@@ -196,7 +196,7 @@ GWDIRS := $(CMDDIR)/$(GW) api data $(COMMONDIRS)
 GWSRC := $(shell find $(GWDIRS) -type f -name '*.go')
 GWPKG := $(REPO)/$(CMDDIR)/$(GW)
 
-$(GWTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(GWSRC)
+$(GWTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(GWSRC) VERSION
 	@echo "Compiling $(GW) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(GWTARGET) $(GWPKG) $(LDFLAGS)
@@ -226,7 +226,7 @@ MONITDIRS := $(MONIT)/promctl $(COMMONDIRS)
 MONITSRC := $(shell find $(MONITDIRS) -type f -name '*.go')
 MONITPKG := $(REPO)/$(MONIT)/promctl
 
-$(MONITTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(MONITSRC)
+$(MONITTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(MONITSRC) VERSION
 	@echo "Compiling $(MONIT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(MONITTARGET) $(MONITPKG) $(LDFLAGS)
@@ -256,7 +256,7 @@ BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
-$(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC)
+$(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC) VERSION
 	@echo "Compiling $(BEAT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(BEATTARGET) $(BEATPKG) $(LDFLAGS)
@@ -286,7 +286,7 @@ AGENTDIRS := $(CMDDIR)/$(AGENT) agent api $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
-$(AGENTTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AGENTSRC)
+$(AGENTTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AGENTSRC) VERSION
 	@echo "Compiling $(AGENT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AGENTTARGET) $(AGENTPKG) $(LDFLAGS)
@@ -363,7 +363,7 @@ AMPAGENTIMG := appcelerator/ampagent:$(AMPAGENTTAG)
 .PHONY: build-ampagent
 build-ampagent:
 	@echo "build $(AMPAGENTDIR)"
-	@$(DOCKER_CMD) build -t $(AMPAGENTIMG) $(AMPAGENTDIR)
+	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(AMPAGENTIMG) $(AMPAGENTDIR)
 
 # =============================================================================
 # Quality checks
