@@ -16,22 +16,17 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 			return remove(c, cmd)
 		},
 	}
+
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for the amp-bootstrap image")
-	//flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
+	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster plugin image")
 	flags.StringVar(&opts.name, "name", "", "Cluster Label")
+
+	// local options
+	flags.Bool("local-force-leave", false, "Force leave the swarm")
 	return cmd
 }
 
 func remove(c cli.Interface, cmd *cobra.Command) error {
-	// This is a map from cli cluster flag name to bootstrap script flag name
-	m := map[string]string{
-		//"provider": "-t",
-		"tag": "-T",
-	}
-	// TODO: only supporting local cluster management for this release
-	args := []string{"bin/deploy", "-d"}
-	args = reflag(cmd, m, args)
-	env := map[string]string{"TAG": opts.tag}
-	return queryCluster(c, args, env)
+	return runPluginCommand(c, cmd, "destroy")
 }
