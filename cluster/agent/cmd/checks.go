@@ -20,7 +20,7 @@ func NewChecksCommand() *cobra.Command {
 	checkCmd := &cobra.Command{
 		Use:   "check",
 		Short: "Run validation tests on the cluster",
-		Run:   checks,
+		RunE:   checks,
 	}
 	checkCmd.Flags().BoolVar(&checksOpts.version, "version", false, "check Docker version")
 	checkCmd.Flags().BoolVar(&checksOpts.labels, "labels", false, "check all required labels are defined on the swarm")
@@ -29,7 +29,7 @@ func NewChecksCommand() *cobra.Command {
 	return checkCmd
 }
 
-func checks(cmd *cobra.Command, args []string) {
+func checks(cmd *cobra.Command, args []string) error {
 	// if zero tests have been explicitely asked, run them all
 	if !checksOpts.version && !checksOpts.labels && !checksOpts.scheduling {
 		checksOpts.all = true
@@ -37,7 +37,7 @@ func checks(cmd *cobra.Command, args []string) {
 	if checksOpts.version || checksOpts.all {
 		if err := adm.VerifyDockerVersion(); err != nil {
 			log.Println("Version test: FAIL")
-			log.Fatal(err)
+			return err
 		} else {
 			log.Println("Version test: PASS")
 		}
@@ -45,7 +45,7 @@ func checks(cmd *cobra.Command, args []string) {
 	if checksOpts.labels || checksOpts.all {
 		if err := adm.VerifyLabels(); err != nil {
 			log.Println("Labels test: FAIL")
-			log.Fatal(err)
+			return err
 		} else {
 			log.Println("Labels test: PASS")
 		}
@@ -53,9 +53,11 @@ func checks(cmd *cobra.Command, args []string) {
 	if checksOpts.scheduling || checksOpts.all {
 		if err := adm.VerifyServiceScheduling(); err != nil {
 			log.Println("Labels test: FAIL")
-			log.Fatal(err)
+			return err
 		} else {
 			log.Println("Labels test: PASS")
 		}
 	}
+
+	return nil
 }

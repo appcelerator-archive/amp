@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -20,31 +19,20 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "ampctl",
 		Short: "Run commands in target amp cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// perform checks and install by default when no sub-command is specified
+			if err := checks(cmd, args); err != nil {
+				return err
+			}
+			return install(cmd, args)
+		},
 	}
 
 	rootCmd.AddCommand(NewChecksCommand())
 	rootCmd.AddCommand(NewInstallCommand())
 	rootCmd.AddCommand(NewMonitorCommand())
 
-	// if no arg has been provided, execute check and install
-	if len(os.Args[1:]) == 0 {
-		rootCmd.SetArgs([]string{"check"})
-		err := rootCmd.Execute()
-		if err != nil {
-			log.Println(err)
-			os.Exit(-1)
-		}
-		rootCmd.SetArgs([]string{"install"})
-		err = rootCmd.Execute()
-		if err != nil {
-			log.Println(err)
-			os.Exit(-1)
-		}
-	} else {
-		err := rootCmd.Execute()
-		if err != nil {
-			log.Println(err)
-			os.Exit(-1)
-		}
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatalf("Error: %s\n", err)
 	}
 }
