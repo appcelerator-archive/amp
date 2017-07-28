@@ -3,33 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	sk "github.com/appcelerator/amp/cluster/agent/swarm"
 	"github.com/docker/swarmkit/api"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 func NewMonitorCommand() *cobra.Command {
 	monitorCmd := &cobra.Command{
 		Use:   "monitor",
 		Short: "Monitor swarm events",
-		Run:   monitor,
+		RunE:   monitor,
 	}
 	return monitorCmd
 }
 
-func monitor(cmd *cobra.Command, args []string) {
+func monitor(cmd *cobra.Command, args []string) error {
 	c, conn, err := sk.Dial(sk.DefaultSocket())
 	if err != nil {
-		s, ok := status.FromError(err)
-		if ok {
-			fmt.Println("Error: ", s)
-		} else {
-			fmt.Println("Error:", err)
-		}
-		os.Exit(-1)
+		return err
 	}
 
 	// this is just to prove things are working...
@@ -49,17 +41,17 @@ func monitor(cmd *cobra.Command, args []string) {
 	in := sk.NewWatchRequest(watchEntries, nil, true)
 	w, err := watcher.Watch(ctx, in)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+		return err
 	}
 
 	for {
 		msg, err := w.Recv()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
+			return err
 		}
 
 		fmt.Println(msg.String())
 	}
+
+	return nil
 }
