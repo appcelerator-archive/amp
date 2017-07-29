@@ -45,7 +45,7 @@ type RequestOptions struct {
 // StackOutput contains the converted output from the create stack operation
 type StackOutput struct {
 	// Description is the user defined description associated with the output
-	Description string `json:"description""`
+	Description string `json:"description"`
 
 	// OutputKey is the key associated with the output
 	OutputKey string `json:"key"`
