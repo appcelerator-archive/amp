@@ -107,7 +107,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit build-ampagent
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit build-ampagent build-amp-local
 build: build-base buildall-cli
 
 # =============================================================================
@@ -352,6 +352,20 @@ build-amp-aws:
 .PHONY: test-amp-aws
 test-amp-aws: build-amp-aws
 	@cd $(CPAWSDIR) && $(MAKE) test
+
+# =============================================================================
+# BUILD CLUSTER PLUGINS (`amp-local`)
+# Needed for `amp cluster init` CLI command support.
+# Plugins are located under `cluster/plugin`
+# =============================================================================
+CPLOCALDIR := $(CPDIR)/local
+CPLOCALTAG := $(VERSION)
+CPLOCALIMG := appcelerator/amp-local:$(CPLOCALTAG)
+
+.PHONY: build-amp-local
+build-amp-local:
+	@echo "build $(CPLOCALDIR)"
+	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPLOCALIMG) $(CPLOCALDIR)
 
 # =============================================================================
 # BUILD AMPAGENT (`ampagent`)
