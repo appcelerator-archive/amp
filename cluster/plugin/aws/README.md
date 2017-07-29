@@ -13,34 +13,31 @@ For more details about the design and use, see the
 
 # Build
 
-`make compiler` builds an Alpine image (`appcelerator/amp-aws-compiler`) with
-a Go compiler, the AWS SDK package, and other necessary packages to to build 
-the `appcelerator/amp-aws` image to be used as a cluster plugin by AMP.
-
-An automated build for the repo also creates the `appcelerator/amp-aws-compiler`
-image on [Docker Hub](https://hub.docker.com/r/appcelerator/amp-aws-compiler/).
-
 `make` (or `make build`) builds `appcelerator/amp-aws`.
 
-`make clean` removes the target binary (`aws.alpine`) that is created by the
-compiler to be copied into the `appcelerator/amp-aws` image when building it.
+`make clean` removes the target binary (`aws.alpine`).
 
 `make test` uses `appcelerator/amp-aws` to create, update, and remove test stacks.
 
 ### Options
 
-The plugin allows you to provide all the parameters that are supported by the [Docker for AWS CloudFormation template](https://docs.docker.com/docker-for-aws/#configuration-options), including:
+The plugin allows you to provide all the parameters that are supported by the [CloudFormation template](https://github.com/appcelerator/amp/blob/master/examples/clusters/README.md), including:
 
  * KeyName
- * EnableCloudWatchLogs
  * ManagerSize
+ * CoreWorkerSize
+ * MetricsWorkerSize
+ * UserWorkerSize
  * ManagerInstanceType
- * ManagerDiskSize
- * ManagerDiskType
- * ClusterSize
- * InstanceType
- * WorkerDiskSize
- * WorkerDiskType
+ * CoreWorkerInstanceType
+ * MetricsWorkerInstanceType
+ * UserWorkerInstanceType
+ * RegistryInstanceType
+ * DockerPlugins
+ * InstallApplication
+ * ApplicationVersion
+ * MirrorRegistry
+ * EnableSystemPrune
 
 The format for adding a parameter (`-p | --parameter`) is more compact than the format used by the AWS CLI. For example, instead of:
 
@@ -68,14 +65,13 @@ just use this instead:
 
 You can block until a command completes using the `-s | --sync` option. For example:
 
-    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws update --region us-west-2 --stackname tony-amp-10 -p KeyName=tony-amp-dev -p ClusterSize=4 --sync
+    $ docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws update --region us-west-2 --stackname tony-amp-10 -p KeyName=tony-amp-dev -p ManagerSize=5 --sync
 
 ## Trying it out
 
 From the `cluster/plugin/aws` directory, run the following:
 
-    $ make compiler
-    $ make
+    $ make image
     $ export REGION=us-west-2 # or any region where you have a valid keypair
     $ export KEYNAME=tony-amp-dev
     $ export STACKNAME=tony-amp-1
@@ -143,7 +139,7 @@ Update an existing stack with the `update` command:
         --region $REGION \
         --stackname $STACKNAME \
         -p KeyName=$KEYNAME \
-        -p ClusterSize=4 # new value! \
+        -p UserInstanceType=m4.large # new value! \
         --sync # block until done!
 
 ### Destroy Stack

@@ -20,7 +20,7 @@ func NewChecksCommand() *cobra.Command {
 	checkCmd := &cobra.Command{
 		Use:   "check",
 		Short: "Run validation tests on the cluster",
-		RunE:   checks,
+		RunE:  checks,
 	}
 	checkCmd.Flags().BoolVar(&checksOpts.version, "version", false, "check Docker version")
 	checkCmd.Flags().BoolVar(&checksOpts.labels, "labels", false, "check all required labels are defined on the swarm")
@@ -52,10 +52,10 @@ func checks(cmd *cobra.Command, args []string) error {
 	}
 	if checksOpts.scheduling || checksOpts.all {
 		if err := adm.VerifyServiceScheduling(); err != nil {
-			log.Println("Labels test: FAIL")
+			log.Println("Service scheduling test: FAIL")
 			return err
 		} else {
-			log.Println("Labels test: PASS")
+			log.Println("Service scheduling test: PASS")
 		}
 	}
 
