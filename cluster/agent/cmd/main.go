@@ -31,6 +31,7 @@ func main() {
 	rootCmd.AddCommand(NewChecksCommand())
 	rootCmd.AddCommand(NewInstallCommand())
 	rootCmd.AddCommand(NewMonitorCommand())
+	rootCmd.AddCommand(NewUninstallCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Error: %s\n", err)

@@ -17,6 +17,7 @@ import (
 	"github.com/appcelerator/amp/cluster/agent/pkg/docker/stack"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/compose/convert"
+	"github.com/docker/cli/opts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
@@ -372,6 +373,17 @@ func CreateNetwork(name string, overlay bool, attachable bool) error {
 	return nil
 }
 
+func RemoveNetwork(name string) error {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return err
+	}
+	if err := c.NetworkRemove(context.Background(), name); err != nil {
+		return err
+	}
+	return nil
+}
+
 const ampnet = "ampnet"
 
 func createInitialNetworks() error {
@@ -390,6 +402,25 @@ func createInitialNetworks() error {
 		return err
 	}
 	log.Println("Successfully created network:", ampnet)
+	return nil
+}
+
+func removeInitialNetworks() error {
+	// Check if network already exists
+	exists, err := NetworkExists(ampnet)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		log.Println("Skipping non existing network:", ampnet)
+		return nil
+	}
+
+	// Remove network
+	if err := RemoveNetwork(ampnet); err != nil {
+		return err
+	}
+	log.Println("Successfully removed network:", ampnet)
 	return nil
 }
 
@@ -434,7 +465,7 @@ func CreateConfig(name string, data []byte) error {
 
 // AMP configs map: Config name paired to config file in ./defaults
 var ampConfigs = map[string]string{
-	"prometheus_alerts_rules":  "prometheus_alerts.rules",
+	"prometheus_alerts_rules": "prometheus_alerts.rules",
 }
 
 // This is the default configs path
@@ -480,5 +511,60 @@ func createInitialConfigs() error {
 		}
 		log.Println("Successfully created config:", config)
 	}
+	return nil
+}
+
+func ListVolumes(filter opts.FilterOpt) ([]*types.Volume, error) {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	reply, err := c.VolumeList(context.Background(), filter.Value())
+	if err != nil {
+		return nil, err
+	}
+	return reply.Volumes, nil
+}
+
+func RemoveVolume(name string, force bool, retries int) error {
+	c, err := client.NewClient(admin.DefaultURL, admin.DefaultVersion, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	success := false
+	for i := 0; i < 10; i++ {
+		if err := c.VolumeRemove(context.Background(), name, force); err != nil {
+			time.Sleep(time.Second)
+			continue
+		}
+		success = true
+		break
+	}
+	if !success {
+		return fmt.Errorf("Timed out trying to remove volume: %s", name)
+	}
+	return nil
+}
+
+const ampVolumesPrefix = "amp_"
+
+func removeVolumes() error {
+	// List amp volumes
+	filter := opts.NewFilterOpt()
+	filter.Set("name=" + ampVolumesPrefix)
+	volumes, err := ListVolumes(filter)
+	if err != nil {
+		return nil
+	}
+
+	// Remove volumes
+	for _, volume := range volumes {
+		if err := RemoveVolume(volume.Name, true, 10); err != nil {
+			return err
+		}
+		log.Println("Successfully removed volume:", volume.Name)
+	}
+
 	return nil
 }
