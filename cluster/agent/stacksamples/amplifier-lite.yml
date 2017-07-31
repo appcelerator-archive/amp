@@ -8,18 +8,16 @@ networks:
 volumes:
   etcd-data:
 
-configs:
-  default.amplifier.yml:
-    file: defaults/amplifier.yml
-
 secrets:
   default.certificate.amp:
     file: defaults/certificate.amp
+  default.amplifier.yml:
+    file: defaults/amplifier.yml
 
 services:
 
   amplifier:
-    image: appcelerator/amplifier:${TAG:-0.13.0}
+    image: appcelerator/amplifier:${TAG:-0.13.1}
     networks:
       - default
     environment:
@@ -43,7 +41,6 @@ services:
       - source: default.certificate.amp
         target: cert0.pem
         mode: 0400
-    configs:
       - source: default.amplifier.yml
         target: /run/configs/amplifier.yml
 
