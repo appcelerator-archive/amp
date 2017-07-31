@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/completion"
+	"github.com/appcelerator/amp/cli/command/config"
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
@@ -85,11 +86,14 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 // addCommands adds the cli commands to the root command that we want to make available for a release.
 func addCommands(cmd *cobra.Command, c cli.Interface) {
 	cmd.AddCommand(
+		// cluster
+		cluster.NewClusterCommand(c),
+
 		//completion
 		completion.NewCompletionCommand(c),
 
-		// cluster
-		cluster.NewClusterCommand(c),
+		//config
+		config.NewConfigCommand(c),
 
 		// login
 		login.NewLoginCommand(c),
