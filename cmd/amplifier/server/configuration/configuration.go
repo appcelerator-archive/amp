@@ -18,7 +18,7 @@ const (
 	RegistrationDefault  = RegistrationEmail
 	NotificationsDefault = true
 	SecretsDir           = "/run/secrets/"
-	ConfigDir            = "/run/configs/"
+	ConfigsDir           = "/run/configs/"
 	ConfigName           = "amplifier"
 	CertificateSecret    = "cert0.pem"
 )
@@ -56,7 +56,7 @@ func ReadConfig(config *Configuration) error {
 
 	// Add default config file search paths in order of decreasing precedence.
 	viper.SetConfigName(ConfigName)
-	viper.AddConfigPath(ConfigDir)
+	viper.AddConfigPath(SecretsDir)
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Fatal error reading configuration file: %s", err)
 	}
