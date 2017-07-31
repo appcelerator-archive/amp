@@ -6,10 +6,14 @@ networks:
       name: ampnet
 
 secrets:
-  amplifier_yml:
-    external: true
-  certificate_amp:
-    external: true
+#  amplifier_yml:
+#    external: true
+#  certificate_amp:
+#    external: true
+  default.amplifier.yml:
+    file: defaults/amplifier.yml
+  default.certificate.amp:
+    file: defaults/certificate.amp
 
 services:
 
@@ -34,13 +38,14 @@ services:
         io.amp.role: "infrastructure"
       restart_policy:
         condition: on-failure
-      placement:
-        constraints:
-        - node.labels.amp.type.api == true
+#      placement:
+#        constraints:
+#        - node.labels.amp.type.api == true
     secrets:
-      - source: amplifier_yml
+      - source: default.amplifier.yml
         target: amplifier.yml
         mode: 0400
-      - source: certificate_amp
+      - source: default.certificate.amp
         target: cert0.pem
         mode: 0400
+
