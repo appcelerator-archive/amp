@@ -6,6 +6,8 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/types"
 	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/docker/client"
+	"github.com/docker/docker/pkg/term"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,7 +17,7 @@ import (
 const MaxSecretSize = 500 * 1024 // 500KB
 
 type Server struct {
-	Docker   *docker.Docker
+	Docker *docker.Docker
 }
 
 // CreateSecret creates and return a `CreateSecretResponse` with a `Secret` based
@@ -30,10 +32,26 @@ func (s *Server) CreateSecret(ctx context.Context, request *CreateSecretRequest)
 		return nil, err
 	}
 
+	// TODO: fix vendored packages
+	// all this because we can't use the same types right now due to vendor conflicts
+	from := request.GetSpec()
+	data := from.GetData()
+	annotations := from.GetAnnotations()
+	name := annotations.GetName()
+	labels := annotations.GetLabels()
+
+	stdin, stdout, stderr := term.StdStreams()
+	cli := client.NewDockerCli(stdin, stdout, stderr)
+
+	id, err := client.SecretCreate(cli, name, labels, data)
+	if err != nil {
+		return nil, err
+	}
+
 	resp := &CreateSecretResponse{
 		Secret: &Secret{
-			Id:   "foo",
-			Spec: request.GetSpec(),
+			Id:   id,
+			Spec: from,
 		},
 	}
 	return resp, nil
@@ -66,4 +84,3 @@ func validateConfigOrSecretAnnotations(m *types.Annotations) error {
 
 // configs and secrets have different naming requirements from tasks and services
 var isValidConfigOrSecretName = regexp.MustCompile(`^[a-zA-Z0-9]+(?:[a-zA-Z0-9-_.]*[a-zA-Z0-9])?$`)
-

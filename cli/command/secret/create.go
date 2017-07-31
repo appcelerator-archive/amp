@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/appcelerator/amp/api/rpc/secret"
 	"github.com/appcelerator/amp/api/rpc/types"
 	"github.com/appcelerator/amp/cli"
-	dockercli "github.com/appcelerator/docker/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
@@ -48,7 +46,7 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 	var err error
 
 	if source == "-" {
-		data, err = ioutil.ReadAll(os.Stdin)
+		data, err = ioutil.ReadAll(c.In())
 		if err != nil {
 			return fmt.Errorf("Error reading content from STDIN: %s", err.Error())
 		}
@@ -78,8 +76,6 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Error creating secret: %s", err)
 	}
 	fmt.Printf("%+v\n", resp)
-
-	dockercli.Hello()
 
 	return nil
 }
