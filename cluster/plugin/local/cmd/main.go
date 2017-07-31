@@ -43,7 +43,7 @@ func create(cmd *cobra.Command, args []string) {
 	if err := plugin.LabelNode(ctx, dockerClient, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := plugin.RunAgent(ctx, dockerClient, "", opts); err != nil {
+	if err := plugin.RunAgent(ctx, dockerClient, "install", opts); err != nil {
 		log.Fatal(err)
 	}
 	// use the info command to print json cluster info to stdout
@@ -93,18 +93,19 @@ func main() {
 		PersistentPreRunE: initClient,
 	}
 	rootCmd.PersistentFlags().StringVarP(&opts.Tag, "tag", "t", "latest", "Tag (version) to deploy")
-	rootCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "email", "registration mode")
-	rootCmd.PersistentFlags().StringVarP(&opts.Notifications, "notifications", "n", "none", "notifications mode")
-	rootCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
-	rootCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
-	rootCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
-	rootCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "init cluster in swarm mode",
 		Run:   create,
 	}
+	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "email", "registration mode")
+	initCmd.PersistentFlags().StringVarP(&opts.Notifications, "notifications", "n", "none", "notifications mode")
+	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
+	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
+	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
+	initCmd.PersistentFlags().BoolVar(&opts.SkipTests, "fast", false, "Skip tests while deploying the core services")
+	initCmd.PersistentFlags().BoolVar(&opts.NoMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
 
 	infoCmd := &cobra.Command{
 		Use:   "info",
@@ -123,6 +124,7 @@ func main() {
 		Short: "destroy the cluster",
 		Run:   delete,
 	}
+	destroyCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
 
 	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
 

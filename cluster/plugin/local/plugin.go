@@ -41,6 +41,8 @@ type RequestOptions struct {
 	Registration  string
 	Notifications string
 	ForceLeave    bool
+	SkipTests     bool
+	NoMonitoring  bool
 }
 
 type FullSwarmInfo struct {
@@ -99,7 +101,7 @@ func removeAgent(ctx context.Context, c *client.Client, cid string) error {
 	return c.ContainerRemove(ctx, cid, types.ContainerRemoveOptions{Force: true})
 }
 
-// RunAgent runs the ampagent image to init (action ="") or destroy (action="uninstall")
+// RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
 func RunAgent(ctx context.Context, c *client.Client, action string, opts *RequestOptions) error {
 	containerName := ContainerName
 	config := container.Config{
@@ -112,8 +114,21 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		Labels: ContainerLabels,
 		Tty:    false,
 	}
-	if action != "" {
-		config.Cmd = []string{action}
+	var actionArgs []string
+	if opts.SkipTests {
+		actionArgs = append(actionArgs, "--fast")
+	}
+	if opts.NoMonitoring {
+		actionArgs = append(actionArgs, "--no-monitoring")
+	}
+	switch action {
+	case "install":
+		action = ""
+		config.Cmd = actionArgs
+	case "uninstall":
+		config.Cmd = append([]string{action}, actionArgs...)
+	default:
+		return fmt.Errorf("action %s is not implemented", action)
 	}
 	mounts := []mount.Mount{
 		mount.Mount{

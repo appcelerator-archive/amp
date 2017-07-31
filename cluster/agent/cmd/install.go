@@ -31,6 +31,13 @@ const (
 	TARGET_CLUSTER = "cluster"
 )
 
+type InstallOptions struct {
+	skipTests    bool
+	noMonitoring bool
+}
+
+var installOpts = &InstallOptions{}
+
 func NewInstallCommand() *cobra.Command {
 	installCmd := &cobra.Command{
 		Use:   "install",
@@ -59,7 +66,7 @@ func install(cmd *cobra.Command, args []string) error {
 	}
 
 	namespace := "amp"
-	if len(args) > 0 {
+	if len(args) > 0 && args[0] != "" {
 		namespace = args[0]
 	}
 
@@ -79,7 +86,13 @@ func install(cmd *cobra.Command, args []string) error {
 
 	for _, f := range files {
 		log.Println(f)
-		if strings.Contains(f, "test") {
+		if strings.Contains(f, ".ampmon.") && installOpts.noMonitoring {
+			continue
+		}
+		if strings.Contains(f, ".test.") {
+			if installOpts.skipTests {
+				continue
+			}
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
 			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
 			if err != nil {
