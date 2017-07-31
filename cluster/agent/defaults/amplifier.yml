@@ -1,2 +1,8 @@
 SUPassword: password
 JWTSecretKey: secretkey
+
+# beware: the following are generally overridden by environment variables in the compose file
+# so if not working as expected, check your environment settings
+Registration: email
+Notifications: true
+

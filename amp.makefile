@@ -63,6 +63,6 @@ rebuildall: rebuildserver rebuildcli
 
 build: all
 
-runamplifier: $(AMPLTARGET)
+deploy: $(AMPLTARGET)
 	@cd cluster/agent && TAG=$(VERSION) docker stack deploy -c stacksamples/amplifier-lite.yml amplifier
 
