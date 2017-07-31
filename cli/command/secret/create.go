@@ -9,6 +9,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/secret"
 	"github.com/appcelerator/amp/api/rpc/types"
 	"github.com/appcelerator/amp/cli"
+	dockercli "github.com/appcelerator/docker/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
@@ -77,6 +78,8 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Error creating secret: %s", err)
 	}
 	fmt.Printf("%+v\n", resp)
+
+	dockercli.Hello()
 
 	return nil
 }
