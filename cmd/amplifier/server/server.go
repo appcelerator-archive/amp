@@ -106,7 +106,7 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 // Start starts the amplifier server
 func (a *Amplifier) Start() error {
 	// Create the TLS credentials
-	pemLocation := filepath.Join(configuration.SecretsFolder, configuration.CertificateSecret)
+	pemLocation := filepath.Join(configuration.SecretsDir, configuration.CertificateSecret)
 	creds, err := credentials.NewServerTLSFromFile(pemLocation, pemLocation)
 	if err != nil {
 		return fmt.Errorf("could not load TLS keys: %s", err)

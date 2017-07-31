@@ -10,15 +10,17 @@ import (
 )
 
 const (
-	DefaultPort         = ":50101"
-	DefaultH1Port       = ":5100"
-	DefaultTimeout      = time.Minute
-	RegistrationNone    = "none"
-	RegistrationEmail   = "email"
-	RegistrationDefault = RegistrationEmail
-	SecretsFolder       = "/run/secrets/"
-	ConfigSecret        = "amplifier"
-	CertificateSecret   = "cert0.pem"
+	DefaultPort          = ":50101"
+	DefaultH1Port        = ":5100"
+	DefaultTimeout       = time.Minute
+	RegistrationNone     = "none"
+	RegistrationEmail    = "email"
+	RegistrationDefault  = RegistrationEmail
+	NotificationsDefault = true
+	SecretsDir           = "/run/secrets/"
+	ConfigDir            = "/run/configs/"
+	ConfigName           = "amplifier"
+	CertificateSecret    = "cert0.pem"
 )
 
 // Configuration is used for amplifier configuration settings
@@ -53,8 +55,8 @@ func ReadConfig(config *Configuration) error {
 	viper.AutomaticEnv()
 
 	// Add default config file search paths in order of decreasing precedence.
-	viper.SetConfigName(ConfigSecret)
-	viper.AddConfigPath(SecretsFolder)
+	viper.SetConfigName(ConfigName)
+	viper.AddConfigPath(ConfigDir)
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Fatal error reading configuration file: %s", err)
 	}
@@ -64,10 +66,10 @@ func ReadConfig(config *Configuration) error {
 		return fmt.Errorf("Fatal error unmarshalling configuration file: %s", err)
 	}
 
-	// Read environment variable
+	// validate registration environment variable
 	registration, match := viper.GetString("registration"), false
-	for _, valid := range []string{RegistrationNone, RegistrationEmail} {
-		if strings.EqualFold(valid, registration) {
+	for _, v := range []string{RegistrationNone, RegistrationEmail} {
+		if strings.EqualFold(v, registration) {
 			match = true
 			break
 		}

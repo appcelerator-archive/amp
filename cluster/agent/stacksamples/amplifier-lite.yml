@@ -1,4 +1,4 @@
-version: "3.1"
+version: "3.3"
 
 networks:
   default:
@@ -8,9 +8,11 @@ networks:
 volumes:
   etcd-data:
 
-secrets:
+configs:
   default.amplifier.yml:
     file: defaults/amplifier.yml
+
+secrets:
   default.certificate.amp:
     file: defaults/certificate.amp
 
@@ -21,8 +23,8 @@ services:
     networks:
       - default
     environment:
-      REGISTRATION: ${REGISTRATION:-email}
-      NOTIFICATIONS: ${NOTIFICATIONS:-true}
+      REGISTRATION: ${REGISTRATION:-none}
+      NOTIFICATIONS: ${NOTIFICATIONS:-false}
     ports:
       - "50101:50101"
     volumes:
@@ -38,12 +40,12 @@ services:
       restart_policy:
         condition: on-failure
     secrets:
-      - source: default.amplifier.yml
-        target: amplifier.yml
-        mode: 0400
       - source: default.certificate.amp
         target: cert0.pem
         mode: 0400
+    configs:
+      - source: default.amplifier.yml
+        target: /run/configs/amplifier.yml
 
   etcd:
     image: appcelerator/etcd:3.1.10
