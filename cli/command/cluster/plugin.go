@@ -14,7 +14,6 @@ import (
 	"github.com/appcelerator/amp/cluster/plugin/aws"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
 )
 
 // Supported plugin providers used by the factory function `NewPlugin`
@@ -227,26 +226,3 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	return RunContainer(c, img, dockerOpts, args, env, f)
 }
 
-func runPluginCommand(c cli.Interface, cmd *cobra.Command, command string) error {
-	// args and env will be supplied to the cluster plugin container
-	var args []string
-	var env map[string]string
-	//	env = map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications)}
-
-	args = append(args, command)
-	args = stripPrefixes(cmd, args)
-
-	config := PluginConfig{
-		Provider:   opts.provider,
-		DockerOpts: opts.docker,
-		// TODO: not clear yet if we'll need this
-		Options: opts.options,
-	}
-
-	p, err := NewPlugin(config)
-	if err != nil {
-		return err
-	}
-
-	return p.Run(c, args, env)
-}
