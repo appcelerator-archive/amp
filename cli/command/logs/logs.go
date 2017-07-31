@@ -22,6 +22,7 @@ type LogsOptions struct {
 	Raw            bool
 	Number         int64
 	Msg            string
+	Regexp         bool
 	Container      string
 	Stack          string
 	Node           string
@@ -34,6 +35,7 @@ func AddLogFlags(flags *pflag.FlagSet, opts *LogsOptions) {
 	flags.BoolVarP(&opts.Meta, "meta", "m", false, "Display entry metadata")
 	flags.Int64VarP(&opts.Number, "number", "n", 1000, "Number of results")
 	flags.StringVar(&opts.Msg, "msg", "", "Filter the message content by the given pattern")
+	flags.BoolVar(&opts.Regexp, "regexp", false, "Treat '--msg' option as a regular expression")
 	flags.StringVar(&opts.Container, "container", "", "Filter by the given Container")
 	flags.StringVar(&opts.Node, "node", "", "Filter by the given node")
 	flags.BoolVarP(&opts.Raw, "raw", "r", false, "Display raw logs (no prefix)")
@@ -62,6 +64,7 @@ func GetLogs(c cli.Interface, args []string, opts LogsOptions) error {
 		request.Service = args[0]
 	}
 	request.Message = opts.Msg
+	request.Regexp = opts.Regexp
 	request.Container = opts.Container
 	request.Stack = opts.Stack
 	request.Node = opts.Node

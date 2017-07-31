@@ -41,4 +41,3 @@ func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
-	
