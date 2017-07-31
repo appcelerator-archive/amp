@@ -41,12 +41,13 @@ message GetRequest {
   string container = 1;
   string message = 2;
   string node = 3;
-  sint64 size = 4;
-  string service = 5;
-  string stack = 6;
-  string task = 7;
-  bool includeAmpLogs = 8;
-  int32 since = 9; // In days
+  bool regexp = 4;
+  sint64 size = 5;
+  string service = 6;
+  string stack = 7;
+  string task = 8;
+  bool includeAmpLogs = 9;
+  int32 since = 10; // In days
 }
 
 message GetReply {

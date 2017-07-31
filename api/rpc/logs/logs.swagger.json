@@ -92,6 +92,10 @@
         "node": {
           "type": "string"
         },
+        "regexp": {
+          "type": "boolean",
+          "format": "boolean"
+        },
         "size": {
           "type": "string",
           "format": "int64"
