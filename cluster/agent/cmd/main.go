@@ -21,7 +21,7 @@ func main() {
 		Short: "Run commands in target amp cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// perform checks and install by default when no sub-command is specified
-			if err := checks(cmd, args); err != nil {
+			if err := checks(cmd, []string{}); err != nil {
 				return err
 			}
 			return install(cmd, args)
@@ -32,6 +32,10 @@ func main() {
 	rootCmd.AddCommand(NewInstallCommand())
 	rootCmd.AddCommand(NewMonitorCommand())
 	rootCmd.AddCommand(NewUninstallCommand())
+
+	// should be in the Install command, but since the local
+	rootCmd.PersistentFlags().BoolVar(&installOpts.skipTests, "fast", false, "Skip tests while deploying the core services")
+	rootCmd.PersistentFlags().BoolVar(&installOpts.noMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Error: %s\n", err)
