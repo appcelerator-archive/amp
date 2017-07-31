@@ -107,7 +107,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-bootstrap build-monit build-ampagent build-amp-local
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-monit build-ampagent build-amp-local
 build: build-base buildall-cli
 
 # =============================================================================
@@ -128,7 +128,7 @@ $(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) VERSION
 
 # Warning: this only builds the CLI for the current OS, so when building under `ampmake`,
 # the binary will be created under `bin/linux/amd64`.
-build-cli: $(AMPTARGET) build-bootstrap
+build-cli: $(AMPTARGET)
 
 .PHONY: rebuild-cli
 rebuild-cli: clean-cli build-cli
@@ -301,27 +301,6 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
-
-# =============================================================================
-# BUILD BOOTSTRAP (`amp-bootstrap`)
-# Bootstrap local amp cluster
-# =============================================================================
-AMPBOOTDIR := platform
-AMPBOOTBIN := platform
-AMPBOOTIMG := appcelerator/amp-bootstrap
-AMPBOOTVER ?= $(VERSION)
-AMPBOOTSRC := platform/bin/deploy platform/bin/dev $(shell find $(AMPBOOTDIR) -type f)
-
-.PHONY: build-bootstrap
-build-bootstrap:
-	@echo "Building $(AMPBOOTIMG):$(AMPBOOTVER)"
-	@rm -f $(AMPBOOTDIR)/stacks/*.pem
-	@$(DOCKER_CMD) build -t $(AMPBOOTIMG):$(AMPBOOTVER) $(AMPBOOTDIR) >/dev/null
-
-.PHONY: push-bootstrap
-push-bootstrap:
-	@echo "Pushing $(AMPBOOTIMG)"
-	@$(AMPBOOTDIR)/build
 
 # =============================================================================
 # BUILD CLUSTER PLUGINS (`amp-aws`)
