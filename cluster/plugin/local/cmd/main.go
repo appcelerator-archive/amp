@@ -70,6 +70,10 @@ func delete(cmd *cobra.Command, args []string) {
 	log.Println("cluster deleted")
 }
 
+func version(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s - Build: %s\n", Version, Build)
+}
+
 func info(cmd *cobra.Command, args []string) {
 	// docker node inspect self -f '{{.Status.State}}'
 	ctx := context.Background()
@@ -111,6 +115,11 @@ func main() {
 	initCmd.PersistentFlags().BoolVar(&opts.SkipTests, "fast", false, "Skip tests while deploying the core services")
 	initCmd.PersistentFlags().BoolVar(&opts.NoMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
 
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "version of the plugin",
+		Run:   version,
+	}
 	infoCmd := &cobra.Command{
 		Use:   "info",
 		Short: "get information about the cluster",
@@ -130,7 +139,7 @@ func main() {
 	}
 	destroyCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
 
-	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
+	rootCmd.AddCommand(initCmd, versionCmd, infoCmd, updateCmd, destroyCmd)
 
 	_ = rootCmd.Execute()
 }
