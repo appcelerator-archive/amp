@@ -20,12 +20,16 @@ var (
 	// Version is set with a linker flag (see Makefile)
 	Version string
 	// Build is set with a linker flag (see Makefile)
-	Build               string
-	dockerClientVersion string
-	engineURL           string
-	dockerClient        *client.Client
-	defaultLabels       = map[string]string{"amp.type.api": "true", "amp.type.route": "true", "amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.metrics": "true", "amp.type.core": "true", "amp.type.user": "true"}
-	opts                = &plugin.RequestOptions{InitRequest: swarm.InitRequest{}, Labels: defaultLabels}
+	Build         string
+	dockerClient  *client.Client
+	defaultLabels = map[string]string{"amp.type.api": "true", "amp.type.route": "true", "amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.metrics": "true", "amp.type.core": "true", "amp.type.user": "true"}
+	opts          = &plugin.RequestOptions{
+		InitRequest: swarm.InitRequest{},
+		Labels:      defaultLabels,
+		// sane defaults for the local plugin
+		Registration:  "none", // overrides current stack default "email"
+		Notifications: false,  // just being explicit
+	}
 )
 
 func initClient(cmd *cobra.Command, args []string) (err error) {
@@ -99,8 +103,8 @@ func main() {
 		Short: "init cluster in swarm mode",
 		Run:   create,
 	}
-	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "email", "registration mode")
-	initCmd.PersistentFlags().StringVarP(&opts.Notifications, "notifications", "n", "none", "notifications mode")
+	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "none", "registration mode")
+	initCmd.PersistentFlags().BoolVarP(&opts.Notifications, "notifications", "n", false, "notifications mode")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
 	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
