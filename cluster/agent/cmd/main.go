@@ -33,10 +33,6 @@ func main() {
 	rootCmd.AddCommand(NewMonitorCommand())
 	rootCmd.AddCommand(NewUninstallCommand())
 
-	// should be in the Install command, but since the local
-	rootCmd.PersistentFlags().BoolVar(&installOpts.skipTests, "fast", false, "Skip tests while deploying the core services")
-	rootCmd.PersistentFlags().BoolVar(&installOpts.noMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
-
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Error: %s\n", err)
 	}
