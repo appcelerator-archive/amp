@@ -1,7 +1,6 @@
 package secret
 
 import (
-
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 )
@@ -24,4 +23,3 @@ func remove(c cli.Interface, cmd *cobra.Command) error {
 	// TODO call service to remove one or more secrets
 	return nil
 }
-
