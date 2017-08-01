@@ -162,11 +162,17 @@ type localPlugin struct {
 func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
 	// TODO: local plugin and ampagent need to be modified so this hack isn't necessary
 	// pull the image since the local plugin doesn't (and shouldn't - it should use the ampagent package)
-	// NOTE: use the `latest` tag, not `c.Version()` because the local dev tag is not pushed
-	img := fmt.Sprintf("appcelerator/ampagent:latest")
+	// Try to pull the tag that corresponds to this build verson of the CLI, but fall back
+	// to pulling latest.
+	img := fmt.Sprintf("appcelerator/ampagent:%s", c.Version())
 	err := pullImage(c, img)
 	if err != nil {
-		return err
+		c.Console().Warnf("image not found: %s (%s)", img, err)
+		img = fmt.Sprintf("appcelerator/ampagent:latest")
+		err = pullImage(c, img)
+		if err != nil {
+			return err
+		}
 	}
 
 	dockerOpts := p.config.DockerOpts
@@ -175,7 +181,6 @@ func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string)
 		p.config.DockerOpts.Volumes = []string{}
 	}
 
-	img = fmt.Sprintf("appcelerator/amp-local:%s", c.Version())
 	return RunContainer(c, img, dockerOpts, args, env, nil)
 }
 
