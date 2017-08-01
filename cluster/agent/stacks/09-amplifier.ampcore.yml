@@ -38,10 +38,10 @@ services:
         constraints:
         - node.labels.amp.type.api == true
     secrets:
-      - source: default.amplifier.yml
+      - source: amplifier_yml
         target: amplifier.yml
         mode: 0400
-      - source: default.certificate.amp
+      - source: certificate_amp
         target: cert0.pem
         mode: 0400
 
