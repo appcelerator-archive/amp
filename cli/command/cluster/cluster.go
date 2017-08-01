@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/appcelerator/amp/cli"
@@ -92,8 +93,16 @@ func stripPrefixes(cmd *cobra.Command, args []string) []string {
 func runPluginCommand(c cli.Interface, cmd *cobra.Command, command string) error {
 	// args and env will be supplied to the cluster plugin container
 	var args []string
-	var env map[string]string
-	//	env = map[string]string{"TAG": opts.tag, "REGISTRATION": opts.registration, "NOTIFICATIONS": strconv.FormatBool(opts.notifications)}
+	env := map[string]string{}
+	if opts.tag != "" {
+		env["TAG"] = opts.tag
+	}
+	if opts.registration != "" {
+		env["REGISTRATION"] = opts.registration
+	}
+	if opts.notifications {
+		env["NOTIFICATIONS"] = strconv.FormatBool(opts.notifications)
+	}
 
 	args = append(args, command)
 	args = stripPrefixes(cmd, args)
