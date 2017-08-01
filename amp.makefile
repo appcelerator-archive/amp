@@ -30,7 +30,7 @@ PROTODIRS := api cmd data tests $(COMMONDIRS)
 PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
 PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
-PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.pb.gw.go=.swagger.json)
+PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.proto=.swagger.json)
 PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
 
 # build any proto target (.pb.go, .pb.gw.go, .swagger.json) that is missing or not newer than .proto
