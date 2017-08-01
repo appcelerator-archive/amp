@@ -160,13 +160,22 @@ type localPlugin struct {
 }
 
 func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
+	// TODO: local plugin and ampagent need to be modified so this hack isn't necessary
+	// pull the image since the local plugin doesn't (and shouldn't - it should use the ampagent package)
+	// NOTE: use the `latest` tag, not `c.Version()` because the local dev tag is not pushed
+	img := fmt.Sprintf("appcelerator/ampagent:latest")
+	err := pullImage(c, img)
+	if err != nil {
+		return err
+	}
+
 	dockerOpts := p.config.DockerOpts
 
 	if dockerOpts.Volumes == nil {
 		p.config.DockerOpts.Volumes = []string{}
 	}
 
-	img := fmt.Sprintf("appcelerator/amp-local:%s", c.Version())
+	img = fmt.Sprintf("appcelerator/amp-local:%s", c.Version())
 	return RunContainer(c, img, dockerOpts, args, env, nil)
 }
 
@@ -226,3 +235,41 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	return RunContainer(c, img, dockerOpts, args, env, f)
 }
 
+func pullImage(c cli.Interface, img string) error {
+	proc := exec.Command("docker", "pull", img)
+
+	stdout, err := proc.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	outscanner := bufio.NewScanner(stdout)
+	go func() {
+		for outscanner.Scan() {
+			c.Console().Println(outscanner.Text())
+		}
+	}()
+
+	stderr, err := proc.StderrPipe()
+	if err != nil {
+		return err
+	}
+	errscanner := bufio.NewScanner(stderr)
+	go func() {
+		for errscanner.Scan() {
+			c.Console().Println(errscanner.Text())
+		}
+	}()
+
+	err = proc.Start()
+	if err != nil {
+		return err
+	}
+
+	err = proc.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
