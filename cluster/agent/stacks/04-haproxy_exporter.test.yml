@@ -11,7 +11,7 @@ services:
     image: appcelerator/alpine:3.6.0
     networks:
       - default
-    command: ["curl", "-sfm", "5", "${AMP_STACK:-amp}_haproxy_exporter:9101/metrics"]
+    command: ["curl", "-sfm", "10", "${AMP_STACK:-amp}_haproxy_exporter:9101/metrics"]
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
