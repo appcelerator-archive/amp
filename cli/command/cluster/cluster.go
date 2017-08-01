@@ -1,9 +1,14 @@
 package cluster
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 )
 
 type docker struct {
@@ -60,22 +65,59 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-func queryCluster(c cli.Interface, args []string, env map[string]string) error {
-	if err := check(opts.provider); err != nil {
-		return err
-	}
-	err := Run(c, args, env)
-	return err
+// Strip provider prefix from CLI options to provider-specific options that will be supplied to the plugin.
+// For example, `--aws-region us-west-2` becomes `--region us-west-2` (as expected by the aws plugin)
+func stripPrefixes(cmd *cobra.Command, args []string) []string {
+	cmd.Flags().Visit(func(f *flag.Flag) {
+		if strings.HasPrefix(f.Name, opts.provider) {
+			name := strings.TrimPrefix(f.Name, opts.provider+"-")
+
+			if strings.HasSuffix(f.Value.Type(), "Slice") {
+				// error shouldn't happen here since we're asking for the slice it says it has
+				slice, _ := cmd.Flags().GetStringSlice(f.Name)
+				for _, val := range slice {
+					opt := fmt.Sprintf("--%s", name)
+					args = append(args, opt, val)
+				}
+
+			} else {
+				opt := fmt.Sprintf("--%s", name)
+				args = append(args, opt, f.Value.String())
+			}
+
+		}
+	})
+	return args
 }
 
-// Map cli cluster flags to target bootstrap cluster command flags,
-// append to and return args array
-func reflag(cmd *cobra.Command, flags map[string]string, args []string) []string {
-	// transform src flags to target flags and add flag and value to cargs
-	for s, t := range flags {
-		if cmd.Flag(s).Changed {
-			args = append(args, t, cmd.Flag(s).Value.String())
-		}
+func runPluginCommand(c cli.Interface, cmd *cobra.Command, command string) error {
+	// args and env will be supplied to the cluster plugin container
+	var args []string
+	env := map[string]string{}
+	if opts.tag != "" {
+		env["TAG"] = opts.tag
 	}
-	return args
+	if opts.registration != "" {
+		env["REGISTRATION"] = opts.registration
+	}
+	if opts.notifications {
+		env["NOTIFICATIONS"] = strconv.FormatBool(opts.notifications)
+	}
+
+	args = append(args, command)
+	args = stripPrefixes(cmd, args)
+
+	config := PluginConfig{
+		Provider:   opts.provider,
+		DockerOpts: opts.docker,
+		// TODO: not clear yet if we'll need this
+		Options: opts.options,
+	}
+
+	p, err := NewPlugin(config)
+	if err != nil {
+		return err
+	}
+
+	return p.Run(c, args, env)
 }

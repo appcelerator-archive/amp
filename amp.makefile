@@ -1,4 +1,4 @@
-.PHONY: cleancli rebuildcli cleanserver rebuildserver cleanall rebuildall deploy
+.PHONY: cleanproto cleancli rebuildcli cleanserver rebuildserver cleanall rebuildall deploy
 
 export VERSION := $(shell cat VERSION)
 export BUILD := $(shell git rev-parse HEAD | cut -c1-8)
@@ -15,7 +15,9 @@ COMMONDIRS := pkg
 
 all: protoc server cli
 
-cleanall: cleanserver cleancli
+clean: cleanserver cleancli
+
+cleanall: cleanproto cleanserver cleancli
 
 rebuildall: rebuildserver rebuildcli
 
@@ -28,7 +30,7 @@ PROTODIRS := api cmd data tests $(COMMONDIRS)
 PROTOFILES := $(shell find $(PROTODIRS) -type f -name '*.proto')
 PROTOTARGETS := $(PROTOFILES:.proto=.pb.go)
 PROTOGWFILES := $(shell find $(PROTODIRS) -type f -name '*.proto' -exec grep -l 'google.api.http' {} \;)
-PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.pb.gw.go=.swagger.json)
+PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.proto=.swagger.json)
 PROTOALLTARGETS := $(PROTOTARGETS) $(PROTOGWTARGETS)
 
 # build any proto target (.pb.go, .pb.gw.go, .swagger.json) that is missing or not newer than .proto
@@ -36,9 +38,11 @@ protoc: $(PROTOALLTARGETS)
 
 # build any proto target - use dockerized protobuf toolchain
 %.pb.go %.pb.gw.go %.swagger.json: %.proto
-	@echo $<
 	@echo "compile proto files"
 	@ docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools make protoc
+
+cleanproto:
+	rm -f $(PROTOALLTARGETS)
 
 # ===============================================
 # cli

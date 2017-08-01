@@ -160,7 +160,13 @@ type localPlugin struct {
 }
 
 func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
-	return queryCluster(c, args, env)
+	dockerOpts := p.config.DockerOpts
+	if dockerOpts.Volumes == nil {
+		p.config.DockerOpts.Volumes = []string{}
+	}
+
+	img := fmt.Sprintf("appcelerator/amp-local:%s", c.Version())
+	return RunContainer(c, img, dockerOpts, args, env, nil)
 }
 
 // ========================================================
@@ -215,6 +221,7 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 
 	}
 
-	img := "appcelerator/amp-aws"
+	img := fmt.Sprintf("appcelerator/amp-aws:%s", c.Version())
 	return RunContainer(c, img, dockerOpts, args, env, f)
 }
+

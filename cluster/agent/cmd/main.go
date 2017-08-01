@@ -33,9 +33,9 @@ func main() {
 	rootCmd.AddCommand(NewMonitorCommand())
 	rootCmd.AddCommand(NewUninstallCommand())
 
-	// should be in the Install command, but since the local
-	rootCmd.PersistentFlags().BoolVar(&installOpts.skipTests, "fast", false, "Skip tests while deploying the core services")
-	rootCmd.PersistentFlags().BoolVar(&installOpts.noMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
+	// These flags pertain to install, but need to be enabled here at root and persiste for when it is invoked with no subcommand
+	rootCmd.PersistentFlags().BoolVar(&installOpts.skipTests, "fast", false, "Skip service smoke tests")
+	rootCmd.PersistentFlags().BoolVar(&installOpts.noMonitoring, "no-monitoring", false, "Don't deploy monitoring services")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Error: %s\n", err)

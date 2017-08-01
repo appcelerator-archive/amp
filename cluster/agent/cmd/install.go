@@ -44,6 +44,7 @@ func NewInstallCommand() *cobra.Command {
 		Short: "Set up amp services in swarm environment",
 		RunE:  install,
 	}
+
 	return installCmd
 }
 

@@ -24,7 +24,7 @@ script:
   - set -e
   - ampmake clean build-base build-cli
   - ls -la bin/linux/amd64
-  - amp cluster create
+  - amp cluster create --local-fast
   - TESTINCLUDE=platform/testing testrunner platform/tests
   - docker build -t appcelerator/amp-integration .
   - docker service create --detach=false --restart-condition=none --network ampnet --name integration appcelerator/amp-integration

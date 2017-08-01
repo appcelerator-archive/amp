@@ -20,12 +20,16 @@ var (
 	// Version is set with a linker flag (see Makefile)
 	Version string
 	// Build is set with a linker flag (see Makefile)
-	Build               string
-	dockerClientVersion string
-	engineURL           string
-	dockerClient        *client.Client
-	defaultLabels       = map[string]string{"amp.type.api": "true", "amp.type.route": "true", "amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.metrics": "true", "amp.type.core": "true", "amp.type.user": "true"}
-	opts                = &plugin.RequestOptions{InitRequest: swarm.InitRequest{}, Labels: defaultLabels}
+	Build         string
+	dockerClient  *client.Client
+	defaultLabels = map[string]string{"amp.type.api": "true", "amp.type.route": "true", "amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.metrics": "true", "amp.type.core": "true", "amp.type.user": "true"}
+	opts          = &plugin.RequestOptions{
+		InitRequest: swarm.InitRequest{},
+		Labels:      defaultLabels,
+		// sane defaults for the local plugin
+		Registration:  "none", // overrides current stack default "email"
+		Notifications: false,  // just being explicit
+	}
 )
 
 func initClient(cmd *cobra.Command, args []string) (err error) {
@@ -66,6 +70,10 @@ func delete(cmd *cobra.Command, args []string) {
 	log.Println("cluster deleted")
 }
 
+func version(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s - Build: %s\n", Version, Build)
+}
+
 func info(cmd *cobra.Command, args []string) {
 	// docker node inspect self -f '{{.Status.State}}'
 	ctx := context.Background()
@@ -99,14 +107,19 @@ func main() {
 		Short: "init cluster in swarm mode",
 		Run:   create,
 	}
-	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "email", "registration mode")
-	initCmd.PersistentFlags().StringVarP(&opts.Notifications, "notifications", "n", "none", "notifications mode")
+	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "none", "registration mode")
+	initCmd.PersistentFlags().BoolVarP(&opts.Notifications, "notifications", "n", false, "notifications mode")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
 	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
 	initCmd.PersistentFlags().BoolVar(&opts.SkipTests, "fast", false, "Skip tests while deploying the core services")
 	initCmd.PersistentFlags().BoolVar(&opts.NoMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
 
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "version of the plugin",
+		Run:   version,
+	}
 	infoCmd := &cobra.Command{
 		Use:   "info",
 		Short: "get information about the cluster",
@@ -126,7 +139,7 @@ func main() {
 	}
 	destroyCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
 
-	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
+	rootCmd.AddCommand(initCmd, versionCmd, infoCmd, updateCmd, destroyCmd)
 
 	_ = rootCmd.Execute()
 }

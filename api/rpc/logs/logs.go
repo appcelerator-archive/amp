@@ -3,6 +3,7 @@ package logs
 import (
 	"encoding/json"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
@@ -87,9 +88,13 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 		masterQuery.Filter(elastic.NewPrefixQuery("node_id", in.Node))
 	}
 	if in.Message != "" {
-		queryString := elastic.NewSimpleQueryStringQuery(in.Message)
-		queryString.Field("msg")
-		masterQuery.Filter(queryString)
+		if in.Regexp {
+			masterQuery.Filter(elastic.NewRegexpQuery("msg", in.Message))
+		} else {
+			queryString := elastic.NewSimpleQueryStringQuery(in.Message)
+			queryString.Field("msg")
+			masterQuery.Filter(queryString)
+		}
 	}
 	if !in.IncludeAmpLogs {
 		masterQuery.MustNot(elastic.NewExistsQuery(dockerToEsLabel(constants.LabelKeyRole)))
@@ -201,7 +206,13 @@ func match(entry *LogEntry, in *GetRequest) bool {
 		match = match && strings.HasPrefix(strings.ToLower(entry.NodeId), strings.ToLower(in.Node))
 	}
 	if in.Message != "" {
-		match = match && strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
+		if in.Regexp {
+			matched, _ := regexp.MatchString(in.Message, entry.Msg)
+			match = match && matched
+		} else {
+			match = match && strings.Contains(strings.ToLower(entry.Msg), strings.ToLower(in.Message))
+		}
+
 	}
 	if !in.IncludeAmpLogs {
 		_, ampLogs := entry.Labels[constants.LabelKeyRole]
