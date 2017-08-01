@@ -8,7 +8,7 @@ IMAGE := appcelerator/amp-local
 export LDFLAGS := "-s -X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 build:
-	go build -o $(TARGET) $(PKG)
+	go build -ldflags $(LDFLAGS) -o $(TARGET) $(PKG)
 
 vendor: vendor.conf
 	vndr
