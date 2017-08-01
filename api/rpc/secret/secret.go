@@ -88,6 +88,24 @@ func (s *Server) ListSecrets(ctx context.Context, request *ListSecretsRequest) (
 	return resp, nil
 }
 
+// RemoveSecret removes the secret referenced by `RemoveSecretRequest.ID`.
+// - Returns `InvalidArgument` if `RemoveSecretRequest.ID` is empty.
+// - Returns `NotFound` if the a secret named `RemoveSecretRequest.ID` is not found.
+// - Returns an error if the deletion fails.
+// From: api/control.proto
+func (s *Server) RemoveSecret(ctx context.Context, request *RemoveSecretRequest) (*RemoveSecretResponse, error) {
+	fmt.Printf("RemoveSecret: %+v\n", request)
+
+	stdin, stdout, stderr := term.StdStreams()
+	cli := client.NewDockerCli(stdin, stdout, stderr)
+
+	if err := client.SecretRemove(cli, request.SecretId); err != nil {
+		return nil, err
+	}
+
+	return &RemoveSecretResponse{}, nil
+}
+
 func validateSecretSpec(spec *SecretSpec) error {
 	if spec == nil {
 		return status.Errorf(codes.InvalidArgument, "invalid argument")
