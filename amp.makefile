@@ -1,4 +1,4 @@
-.PHONY: cleancli rebuildcli cleanserver rebuildserver cleanall rebuildall deploy
+.PHONY: cleanproto cleancli rebuildcli cleanserver rebuildserver cleanall rebuildall deploy
 
 export VERSION := $(shell cat VERSION)
 export BUILD := $(shell git rev-parse HEAD | cut -c1-8)
@@ -15,7 +15,9 @@ COMMONDIRS := pkg
 
 all: protoc server cli
 
-cleanall: cleanserver cleancli
+clean: cleanserver cleancli
+
+cleanall: cleanproto cleanserver cleancli
 
 rebuildall: rebuildserver rebuildcli
 
@@ -39,6 +41,9 @@ protoc: $(PROTOALLTARGETS)
 	@echo $<
 	@echo "compile proto files"
 	@ docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools make protoc
+
+cleanproto:
+	rm -f $(PROTOALLTARGETS)
 
 # ===============================================
 # cli
