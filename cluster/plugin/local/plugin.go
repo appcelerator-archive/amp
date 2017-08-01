@@ -104,8 +104,9 @@ func removeAgent(ctx context.Context, c *client.Client, cid string) error {
 // RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
 func RunAgent(ctx context.Context, c *client.Client, action string, opts *RequestOptions) error {
 	containerName := ContainerName
+	image := fmt.Sprintf("%s:%s", ImageName, opts.Tag)
 	config := container.Config{
-		Image: fmt.Sprintf("%s:%s", ImageName, opts.Tag),
+		Image: image,
 		Env: []string{
 			fmt.Sprintf("TAG=%s", opts.Tag),
 			fmt.Sprintf("REGISTRATION=%s", opts.Registration),
@@ -145,6 +146,23 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 	hostConfig := container.HostConfig{
 		AutoRemove: false,
 		Mounts:     mounts,
+	}
+	reader, err := c.ImagePull(ctx, image, types.ImagePullOptions{})
+	if err != nil {
+		// don't exit, if not in the registry we may still want to run the container with a local image
+		fmt.Printf("ImagePull failed, which is fine if using a development version: %f", err)
+	} else {
+		// wait for the image to be pulled
+		data := make([]byte, 1000, 1000)
+		for {
+			_, err := reader.Read(data)
+			if err != nil {
+				if err.Error() == "EOF" {
+					break
+				}
+				return err
+			}
+		}
 	}
 	r, err := c.ContainerCreate(ctx, &config, &hostConfig, nil, containerName)
 	if err != nil {
