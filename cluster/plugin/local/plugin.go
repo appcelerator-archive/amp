@@ -39,7 +39,7 @@ type RequestOptions struct {
 	// Tag of the ampagent image
 	Tag           string
 	Registration  string
-	Notifications string
+	Notifications bool
 	ForceLeave    bool
 	SkipTests     bool
 	NoMonitoring  bool
