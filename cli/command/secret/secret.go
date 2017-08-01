@@ -1,8 +1,8 @@
 package secret
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/appcelerator/amp/cli"
+	"github.com/spf13/cobra"
 )
 
 // NewSecretCommand returns a new instance of the secret command.
@@ -20,4 +20,3 @@ func NewSecretCommand(c cli.Interface) *cobra.Command {
 
 	return cmd
 }
-

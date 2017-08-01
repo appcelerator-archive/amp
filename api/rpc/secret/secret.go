@@ -57,6 +57,37 @@ func (s *Server) CreateSecret(ctx context.Context, request *CreateSecretRequest)
 	return resp, nil
 }
 
+// ListSecrets returns a `ListSecretResponse` with a list all non-internal `Secret`s being
+// managed, or all secrets matching any name in `ListSecretsRequest.Names`, any
+// name prefix in `ListSecretsRequest.NamePrefixes`, any id in
+// `ListSecretsRequest.SecretIDs`, or any id prefix in `ListSecretsRequest.IDPrefixes`.
+// - Returns an error if listing fails.
+// From: api/control.proto
+func (s *Server) ListSecrets(ctx context.Context, request *ListSecretsRequest) (*ListSecretsResponse, error) {
+	fmt.Printf("ListSecrets: %+v\n", request)
+
+	stdin, stdout, stderr := term.StdStreams()
+	cli := client.NewDockerCli(stdin, stdout, stderr)
+
+	secrets, err := client.SecretList(cli)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &ListSecretsResponse{}
+	for _, secret := range secrets {
+		s := &Secret{
+			Spec: &SecretSpec{
+				Annotations: &types.Annotations{
+					Name: secret,
+				},
+			},
+		}
+		resp.Secrets = append(resp.Secrets, s)
+	}
+	return resp, nil
+}
+
 func validateSecretSpec(spec *SecretSpec) error {
 	if spec == nil {
 		return status.Errorf(codes.InvalidArgument, "invalid argument")
