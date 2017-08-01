@@ -51,3 +51,10 @@ func SecretList(dockerCli command.Cli) ([]string, error) {
 	}
 	return secrets, nil
 }
+
+// SecretRemove is intended to be used as the client from the amplifier API
+func SecretRemove(dockerCli command.Cli, id string) error {
+	cli := dockerCli.Client()
+	ctx := context.Background()
+	return cli.SecretRemove(ctx, id)
+}
