@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cluster/plugin/aws"
@@ -161,35 +160,13 @@ type localPlugin struct {
 }
 
 func (p *localPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
-	// TODO: local plugin and ampagent need to be modified so this hack isn't necessary
-	// pull the image since the local plugin doesn't (and shouldn't - it should use the ampagent package)
-	// Try to pull the tag that corresponds to this build verson of the CLI, but fall back
-	// to pulling latest.
-	img := fmt.Sprintf("appcelerator/ampagent:%s", c.Version())
-
 	dockerOpts := p.config.DockerOpts
-
 	if dockerOpts.Volumes == nil {
 		p.config.DockerOpts.Volumes = []string{}
 	}
 
-	err := RunContainer(c, img, dockerOpts, args, env, nil)
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		// if the container failed to run because the tagged version of ampagent was not found
-		// then attempt to pull the tagged version ... and if that fails, then attempt to pull latest
-		c.Console().Warnf("image not available locally, attempting to pull %s", img)
-		err = pullImage(c, img)
-		if err != nil {
-			img = "appcelerator/ampagent:latest"
-			c.Console().Warnf("attempting to pull %s", img)
-			err = pullImage(c, img)
-			if err != nil {
-				return err
-			}
-		}
-		return RunContainer(c, img, dockerOpts, args, env, nil)
-	}
-	return nil
+	img := fmt.Sprintf("appcelerator/amp-local:%s", c.Version())
+	return RunContainer(c, img, dockerOpts, args, env, nil)
 }
 
 // ========================================================
@@ -248,41 +225,3 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	return RunContainer(c, img, dockerOpts, args, env, f)
 }
 
-func pullImage(c cli.Interface, img string) error {
-	proc := exec.Command("docker", "pull", img)
-
-	stdout, err := proc.StdoutPipe()
-	if err != nil {
-		return err
-	}
-
-	outscanner := bufio.NewScanner(stdout)
-	go func() {
-		for outscanner.Scan() {
-			c.Console().Println(outscanner.Text())
-		}
-	}()
-
-	stderr, err := proc.StderrPipe()
-	if err != nil {
-		return err
-	}
-	errscanner := bufio.NewScanner(stderr)
-	go func() {
-		for errscanner.Scan() {
-			c.Console().Println(errscanner.Text())
-		}
-	}()
-
-	err = proc.Start()
-	if err != nil {
-		return err
-	}
-
-	err = proc.Wait()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
