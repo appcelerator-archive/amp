@@ -38,7 +38,6 @@ protoc: $(PROTOALLTARGETS)
 
 # build any proto target - use dockerized protobuf toolchain
 %.pb.go %.pb.gw.go %.swagger.json: %.proto
-	@echo $<
 	@echo "compile proto files"
 	@ docker run -it --rm -v $${PWD}:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools make protoc
 
