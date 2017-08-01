@@ -45,9 +45,6 @@ func NewInstallCommand() *cobra.Command {
 		RunE:  install,
 	}
 
-	installCmd.Flags().BoolVar(&installOpts.skipTests, "fast", false, "Skip service smoke tests")
-	installCmd.Flags().BoolVar(&installOpts.noMonitoring, "no-monitoring", false, "Don't deploy monitoring services")
-
 	return installCmd
 }
 

@@ -27,6 +27,8 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	// local options
 	flags.String("local-advertise-addr", "", "Swarm advertised address (format: <ip|interface>[:port])")
 	flags.Bool("local-force-new-cluster", false, "Force initialization of a new swarm")
+	flags.Bool("local-fast", false, "Skip cluster service smoke tests")
+	flags.Bool("local-no-monitoring", false, "Don't deploy monitoring services")
 
 	// aws options
 	flags.String("aws-onfailure", "", "'DO_NOTHING', 'ROLLBACK' (default), or 'DELETE")
