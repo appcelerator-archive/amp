@@ -254,6 +254,7 @@ BEATIMG := appcelerator/$(BEAT):$(BEATTAG)
 BEATTARGET := $(CMDDIR)/$(BEAT)/$(BEATBINARY)
 BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
+BEATCONF := $(shell find $(CMDDIR)/$(BEAT) -type f \( -name '*.yml' -o -name '*.json' \))
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
 $(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC) VERSION
@@ -262,13 +263,13 @@ $(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC) VERSION
 	@hack/build4alpine $(REPO)/$(BEATTARGET) $(BEATPKG) $(LDFLAGS)
 	@echo "bin/$(GOOS)/$(GOARCH)/$(BEAT)"
 
-build-beat: $(BEATTARGET)
+build-beat: $(BEATTARGET) $(BEATCONF) $(CMDDIR)/$(BEAT)/Dockerfile
 	@echo "build $(BEATIMG)"
 	@$(DOCKER_CMD) build -t $(BEATIMG) $(CMDDIR)/$(BEAT) || (rm -f $(BEATTARGET); exit 1)
 
 rebuild-beat: clean-beat build-beat
 
-.PHONY: clean-beat
+.PHONY: clean-beat build-beat
 clean-beat:
 	@rm -f $(BEATTARGET)
 

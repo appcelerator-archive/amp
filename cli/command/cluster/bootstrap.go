@@ -21,6 +21,7 @@ func init() {
 	dockerArgs = []string{
 		"run", "-t", "--rm", "--name", "amp-bootstrap",
 		"--network", "host",
+		"--label", "io.amp.role=infrastructure",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
 	}
