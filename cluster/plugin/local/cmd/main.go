@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	plugin "github.com/appcelerator/amp/cluster/plugin/local"
 	"github.com/docker/docker/api/types/swarm"
@@ -24,6 +25,7 @@ var (
 	dockerClient  *client.Client
 	defaultLabels = map[string]string{"amp.type.api": "true", "amp.type.route": "true", "amp.type.search": "true", "amp.type.kv": "true", "amp.type.mq": "true", "amp.type.metrics": "true", "amp.type.core": "true", "amp.type.user": "true"}
 	opts          = &plugin.RequestOptions{
+		Tag:         Version,
 		InitRequest: swarm.InitRequest{},
 		Labels:      defaultLabels,
 		// sane defaults for the local plugin
@@ -100,15 +102,12 @@ func main() {
 		Short:             "init/update/destroy an local cluster in Docker swarm mode",
 		PersistentPreRunE: initClient,
 	}
-	rootCmd.PersistentFlags().StringVarP(&opts.Tag, "tag", "t", "latest", "Tag (version) to deploy")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
 		Short: "init cluster in swarm mode",
 		Run:   create,
 	}
-	initCmd.PersistentFlags().StringVarP(&opts.Registration, "registration", "r", "none", "registration mode")
-	initCmd.PersistentFlags().BoolVarP(&opts.Notifications, "notifications", "n", false, "notifications mode")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
 	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
@@ -138,6 +137,20 @@ func main() {
 		Run:   delete,
 	}
 	destroyCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
+
+	// override default value if env vars are set
+	val, ok := os.LookupEnv("TAG")
+	if ok {
+		opts.Tag = val
+	}
+	val, ok = os.LookupEnv("REGISTRATION")
+	if ok {
+		opts.Registration = val
+	}
+	val, ok = os.LookupEnv("NOTIFICATIONS")
+	if ok {
+		opts.Notifications = val == "true"
+	}
 
 	rootCmd.AddCommand(initCmd, versionCmd, infoCmd, updateCmd, destroyCmd)
 
