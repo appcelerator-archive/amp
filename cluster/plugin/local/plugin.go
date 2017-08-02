@@ -150,7 +150,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 	reader, err := c.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
 		// don't exit, if not in the registry we may still want to run the container with a local image
-		fmt.Printf("ImagePull failed, which is fine if using a development version: %f", err)
+		fmt.Println("ampagent image pull failed, which is expected on a development version")
 	} else {
 		// wait for the image to be pulled
 		data := make([]byte, 1000, 1000)
