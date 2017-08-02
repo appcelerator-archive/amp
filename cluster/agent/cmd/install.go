@@ -86,7 +86,6 @@ func install(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, f := range files {
-		log.Println(f)
 		if strings.Contains(f, ".ampmon.") && installOpts.noMonitoring {
 			continue
 		}
@@ -94,12 +93,14 @@ func install(cmd *cobra.Command, args []string) error {
 			if installOpts.skipTests {
 				continue
 			}
+			log.Println(f)
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
 			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
 			if err != nil {
 				return err
 			}
 		} else {
+			log.Println(f)
 			err := deploy(dockerCli, f, namespace)
 			if err != nil {
 				return err
@@ -199,7 +200,9 @@ func deployExpectingState(d *command.DockerCli, stackfile string, namespace stri
 		ExpectedState:    expectedState,
 	}
 
-	return stack.Deploy(context.Background(), d, opts)
+	err := stack.Deploy(context.Background(), d, opts)
+	log.Printf("Service has reached expected state (%s)\n", string(expectedState))
+	return err
 }
 
 func deployTest(d *command.DockerCli, stackfile string, namespace string, timeout int) error {
@@ -430,6 +433,7 @@ func removeInitialNetworks() error {
 	}
 
 	// Remove network
+	time.Sleep(2 * time.Second)
 	if err := RemoveNetwork(ampnet); err != nil {
 		return err
 	}
