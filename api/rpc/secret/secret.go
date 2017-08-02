@@ -99,11 +99,13 @@ func (s *Server) RemoveSecret(ctx context.Context, request *RemoveSecretRequest)
 	stdin, stdout, stderr := term.StdStreams()
 	cli := client.NewDockerCli(stdin, stdout, stderr)
 
-	if err := client.SecretRemove(cli, request.SecretId); err != nil {
+	id := request.GetSecretId()
+
+	if err := client.SecretRemove(cli, id); err != nil {
 		return nil, err
 	}
 
-	return &RemoveSecretResponse{}, nil
+	return &RemoveSecretResponse{SecretId: id}, nil
 }
 
 func validateSecretSpec(spec *SecretSpec) error {

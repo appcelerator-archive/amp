@@ -31,13 +31,14 @@ func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	client := secret.NewSecretServiceClient(conn)
 	for _, id := range args {
 		request := &secret.RemoveSecretRequest{SecretId: id}
-		_, err := client.RemoveSecret(context.Background(), request)
+		resp, err := client.RemoveSecret(context.Background(), request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				return errors.New(s.Message())
 			}
 			return fmt.Errorf("Error removing secret: %s", err)
 		}
+		c.Console().Println(resp.GetSecretId())
 	}
 	return nil
 }
