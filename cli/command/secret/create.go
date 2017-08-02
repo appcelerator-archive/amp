@@ -75,7 +75,7 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("Error creating secret: %s", err)
 	}
-	fmt.Printf("%+v\n", resp)
+	fmt.Println(resp.GetSecret().GetId())
 
 	return nil
 }

@@ -50,6 +50,16 @@ Verify the private key can unencrypt it:
 
     $ openssl rsautl -decrypt -inkey privatekey -in message.dat
 
+## Add the secret to the swarm
+
+    $ amp secret create privatekey ./privatekey
+
+NOTE: this is currently the only method that is supported for deploying a secret using amp.
+
+## List secrets to verify
+
+    $ amp secret ls
+
 ## Create a stack file for the service and secret
 
 See the existing `stack.yml` file.
@@ -73,13 +83,16 @@ services:
 
 secrets:
   privatekey:
-    file: ./privatekey
+    external: true
 
 ```
 
 ## Deploy the stack
 
     $ amp stack deploy -c stack.yml demo
+    Creating network demo_default
+    Creating service demo_echo
+    Creating service demo_secure_echo
 
 This will start two services: `demo_echo` listening on port `8887` and `demo_secure_echo` listening on `8888`.
 
@@ -106,4 +119,11 @@ Test `demo_secure_echo`:
     $ amp service logs demo_secure_echo
     ...
     hello world
+
+
+## Clean up
+
+    $ amp stack rm demo
+    $ amp secret rm privatekey
+
 
