@@ -107,8 +107,10 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-monit build-ampagent build-amp-local
-build: build-base buildall-cli
+build-base: install-deps protoc build-server build-gateway build-beat build-agent build-monit
+build-local-plugin: build-amp-local build-ampagent
+build-plugins: build-amp-local build-amp-aws build-ampagent
+build: build-base build-plugins buildall-cli
 
 # =============================================================================
 # BUILD CLI (`amp`)
@@ -309,10 +311,11 @@ clean-agent:
 # =============================================================================
 CPDIR := cluster/plugin
 CPAWSDIR := $(CPDIR)/aws
+CPAWSIMG := appcelerator/amp-aws:$(VERSION)
 
 .PHONY: build-amp-aws
 build-amp-aws:
-	@cd $(CPAWSDIR) && $(MAKE) image
+	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPAWSIMG) $(CPAWSDIR)
 
 # WARNING:
 # If the environment variables for $KEYNAME and $REGION are not set, the
