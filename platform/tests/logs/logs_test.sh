@@ -12,7 +12,7 @@ test_logs() {
 }
 
 test_logs_container() {
-  amp -k logs --container "pinger_pinger.1" | grep -q "pinger_pinger.1.*listening on :3000"
+  amp -k logs --container "pinger_pinger." | grep -q "pinger_pinger.*listening on :3000"
 }
 
 test_logs_include() {
