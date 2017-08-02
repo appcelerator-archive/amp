@@ -337,8 +337,8 @@ func deployServices(
 		var serviceID string
 
 		if service, exists := existingServiceMap[name]; exists {
-			fmt.Fprintf(out, "Updating service %s (id: %s)\n", name, service.ID)
-			fmt.Fprintf(out, "service: %+v\n", service)
+			fmt.Fprintf(out, "Updating service       %s (id: %s)\n", name, service.ID)
+			fmt.Fprintf(out, "service:               %+v\n", service)
 			imageName = service.Spec.TaskTemplate.ContainerSpec.Image
 			serviceID = service.ID
 
@@ -374,12 +374,14 @@ func deployServices(
 			if resp, err = apiClient.ServiceCreate(ctx, serviceSpec, createOpts); err != nil {
 				return errors.Wrapf(err, "failed to create service %s", name)
 			}
-			fmt.Fprintf(out, "service: %+v\n", resp)
+			fmt.Fprintf(out, "service:               %+v\n", resp)
 			serviceID = resp.ID
 			imageName = serviceSpec.TaskTemplate.ContainerSpec.Image
 		}
 
-		fmt.Fprintf(out, "image: %s\n", imageName)
+		fmt.Fprintf(out, "image:                 %s\n", imageName)
+		fmt.Fprintf(out, "Stabilization delay:   %s\n", stabilizeDelay)
+		fmt.Fprintf(out, "Stabilization timeout: %s\n", stabilizeTimeout)
 		done := make(chan bool)
 
 		// create a watcher for service/container events based on the service image
