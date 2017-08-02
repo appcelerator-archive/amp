@@ -1,0 +1,28 @@
+version: "3"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      - default
+    ports:
+     - 9090:9090
+    volumes:
+     - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+
+  node-exporter:
+   image: prom/node-exporter:latest
+   networks:
+     - default
+   volumes:
+     - /proc:/host/proc:ro
+     - /sys:/host/sys:ro
+     - /:/rootfs:ro
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+   ports:
+     - "9100:9100"
+   command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
+
+  pinger:
+    image: appcelerator/pinger:latest
+    ports:
+      - 3000:3000
