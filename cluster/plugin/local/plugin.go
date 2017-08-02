@@ -171,8 +171,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 
 	done := make(chan bool, 1)
 	interruption := make(chan os.Signal, 1)
-	signal.Notify(interruption, os.Interrupt)
-	signal.Notify(interruption, os.Kill)
+	signal.Notify(interruption, os.Interrupt, os.Kill)
 	go func() {
 		sig := <-interruption
 		fmt.Printf("Received signal %s\n", sig.String())
@@ -180,6 +179,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		if err != nil {
 			fmt.Printf("%v\n", err)
 		}
+		_ = removeAgent(ctx, c, r.ID)
 		done <- true
 		return
 	}()
