@@ -2,13 +2,16 @@ package cluster
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path"
+	"time"
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cluster/plugin/aws"
@@ -63,14 +66,36 @@ func NewPlugin(config PluginConfig) (Plugin, error) {
 	return p, nil
 }
 
+func killContainer(c cli.Interface, name string, sig string) error {
+	cmd := "docker"
+	dockerArgs := []string{
+		"kill", "--signal", sig, name,
+	}
+	proc := exec.Command(cmd, dockerArgs...)
+	var out bytes.Buffer
+	var e bytes.Buffer
+	proc.Stdout = &out
+	proc.Stderr = &e
+	err := proc.Run()
+	if err != nil {
+		c.Console().Printf(out.String())
+		c.Console().Printf(e.String())
+		c.Console().Printf("failed to kill container %s, you may have to remove it manually\n", name)
+	} else {
+		c.Console().Printf("Plugin container %s has been successfully stopped\n", name)
+	}
+	return err
+}
+
 // RunContainer starts a container using the specified image for the cluster plugin.
 // Cluster plugin commands are `init`, `update`, and `destroy` (provided as the single
 // `args` value). Additional arguments are supplied as environment variables in `env`, not `args`.
 // If f is not nil, then your func will be called (as a goroutine) with stdout from the container process;
 // otherwise stdout from the container will be printed to the amp console stdout.
 func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string, f func(r io.Reader)) error {
+	containerName := fmt.Sprintf("amp-cluster-plugin-%s", stringid.GenerateNonCryptoID())
 	dockerArgs := []string{
-		"run", "-t", "--rm", "--name", fmt.Sprintf("amp-cluster-plugin-%s", stringid.GenerateNonCryptoID()),
+		"run", "-t", "--rm", "--name", containerName,
 		"--network", "host",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
@@ -95,6 +120,17 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 	args = append(dockerArgs, args...)
 
 	proc := exec.Command(cmd, args...)
+
+	interruption := make(chan os.Signal, 1)
+	signalCaught := make(chan bool, 1)
+	signal.Notify(interruption, os.Interrupt, os.Kill)
+	go func() {
+		sig := <-interruption
+		signalCaught <- true
+		c.Console().Printf("CLI received signal %s\n", sig.String())
+		_ = killContainer(c, containerName, "INT")
+		return
+	}()
 
 	stdout, err := proc.StdoutPipe()
 	if err != nil {
@@ -130,7 +166,13 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 
 	err = proc.Wait()
 	if err != nil {
-		return err
+		// if it returns directly, we won't be able to process the interrupt signal
+		select {
+		case <-signalCaught:
+			time.Sleep(5 * time.Second)
+		default:
+			return err
+		}
 	}
 
 	return nil
