@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-98366be3
+      Default: ami-c582a4be
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-35200050
+      Default: ami-0ee4c46b
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-47a8b33e
+      Default: ami-6736d11f
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-6b04ec12
+      Default: ami-2fc33756
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-84cbd4e7
+      Default: ami-d08a94b3
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -1332,7 +1332,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}+${MetricsWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-manager || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
