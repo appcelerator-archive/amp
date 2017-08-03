@@ -10,6 +10,7 @@ REGION=${REGION:-us-west-2}
 STACK_NAME=${STACK_NAME:-unset}
 VPC_ID=${VPC_ID:-unset}
 MANAGER_SIZE=${MANAGER_SIZE:-3}
+#CLUSTER_SIZE=
 DRAIN_MANAGER=${DRAIN_MANAGER:-false}
 OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
 #MIRROR_REGISTRIES=
@@ -383,17 +384,36 @@ _signal_aws() {
 # wait for all nodes to be up and running (and labeled)
 _wait_for_full_swarm() {
   local _timeout=360
+  local _timeout_label=60
   local _label
   local _label_prefix="amp.type."
   local _labels="api route metrics mq kv search core user"
   local _expected_label_count
   local _current_labels
   local _current_label_count
+  local _size
+
+  if [[ -n "$CLUSTER_SIZE" ]]; then
+    echo "Waiting for all nodes to join the swarm" >&2
+    # the var can be in the form "N+M+O"
+    CLUSTER_SIZE=$((CLUSTER_SIZE))
+    SECONDS=0
+    while [[ $SECONDS -lt $_timeout ]]; do
+      _size=$(docker node ls -q | wc -l)
+      if [[ $_size -ge $CLUSTER_SIZE ]]; then
+        echo "All nodes have joined after $SECONDS sec" >&2
+        break
+      fi
+      sleep 1
+    done
+  else
+    echo "No knowledge of the swarm size, skipping the wait for the nodes" >&2
+  fi
 
   _expected_label_count=$(echo $_labels | wc -w)
   echo "waiting for all scheduling labels to be defined on the swarm..." >&2
   SECONDS=0
-  while [[ $SECONDS -lt $_timeout ]]; do
+  while [[ $SECONDS -lt $_timeout_label ]]; do
     _current_label_count=0
     _current_labels="$(for n in $(docker node ls -q); do docker node inspect $n --pretty | grep amp.type | sed -e 's/.*\(amp.type.*\) *=.*$/\1/'; done | sort | uniq)"
     for _label in $_labels; do
@@ -401,11 +421,16 @@ _wait_for_full_swarm() {
     done
     if [[ $_current_label_count -eq $_expected_label_count ]]; then
       echo "All labels were found after $SECONDS sec" >&2
-      return 0
+      break
     fi
+    sleep 1
   done
-  echo "label search timed out ($SECONDS sec)" >&2
-  return 1
+  if [[ $_current_label_count -lt $_expected_label_count ]]; then
+    echo "label search timed out ($SECONDS sec)" >&2
+    return 1
+  fi
+
+  
 }
 
 _setup() {

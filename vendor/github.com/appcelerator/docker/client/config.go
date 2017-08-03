@@ -8,39 +8,39 @@ import (
 	"golang.org/x/net/context"
 )
 
-type secretCreateOptions struct {
+type configCreateOptions struct {
 	name   string
 	file   string
 	labels opts.ListOpts
 }
 
-// SecretCreate is intended to be used as the client from the amplifier API
-func SecretCreate(dockerCli command.Cli, name string, labels map[string]string, data []byte) (string, error) {
+// ConfigCreate is intended to be used as the client from the amplifier API
+func ConfigCreate(dockerCli command.Cli, name string, labels map[string]string, data []byte) (string, error) {
 	cli := dockerCli.Client()
 	ctx := context.Background()
 
-	spec := swarm.SecretSpec{
+	spec := swarm.ConfigSpec{
 		Annotations: swarm.Annotations{
 			Name:   name,
 			Labels: labels,
 		},
 		Data: data,
 	}
-	resp, err := cli.SecretCreate(ctx, spec)
+	resp, err := cli.ConfigCreate(ctx, spec)
 	if err != nil {
 		return "", err
 	}
 	return resp.ID, nil
 }
 
-// SecretList is intended to be used as the client from the amplifier API
-func SecretList(dockerCli command.Cli) ([]string, error) {
+// ConfigList is intended to be used as the client from the amplifier API
+func ConfigList(dockerCli command.Cli) ([]string, error) {
 	cli := dockerCli.Client()
 	ctx := context.Background()
 
 	opts := opts.NewFilterOpt()
 
-	list, err := cli.SecretList(ctx, types.SecretListOptions{Filters: opts.Value()})
+	list, err := cli.ConfigList(ctx, types.ConfigListOptions{Filters: opts.Value()})
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +52,9 @@ func SecretList(dockerCli command.Cli) ([]string, error) {
 	return secrets, nil
 }
 
-// SecretRemove is intended to be used as the client from the amplifier API
-func SecretRemove(dockerCli command.Cli, id string) error {
+// ConfigRemove is intended to be used as the client from the amplifier API
+func ConfigRemove(dockerCli command.Cli, id string) error {
 	cli := dockerCli.Client()
 	ctx := context.Background()
-	return cli.SecretRemove(ctx, id)
+	return cli.ConfigRemove(ctx, id)
 }
