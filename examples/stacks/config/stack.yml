@@ -1,0 +1,18 @@
+version: "3.3"
+
+services:
+
+  config:
+    image: "alpine"
+    command: "cat /demo.config"
+    deploy:
+      restart_policy:
+        condition: none
+    configs:
+      - source: demo_config
+        target: /demo.config
+
+configs:
+  demo_config:
+    external: true
+
