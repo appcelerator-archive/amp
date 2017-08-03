@@ -13,6 +13,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
+	"github.com/appcelerator/amp/api/rpc/config"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
@@ -58,17 +59,18 @@ type Amplifier struct {
 
 // Service initializers register the services with the grpc server
 var serviceInitializers = []serviceInitializer{
-	registerVersionServer,
-	registerLogsServer,
-	registerStackServer,
-	registerStatsServer,
 	registerAccountServer,
+	registerConfigServiceServer,
 	registerClusterServer,
-	registerSecretServiceServer,
-	registerServiceServer,
+	registerDashboardServer,
+	registerLogsServer,
 	registerNodeServer,
 	registerResourceServer,
-	registerDashboardServer,
+	registerSecretServiceServer,
+	registerServiceServer,
+	registerStackServer,
+	registerStatsServer,
+	registerVersionServer,
 }
 
 func New(config *configuration.Configuration) (*Amplifier, error) {
@@ -176,6 +178,12 @@ func registerServices(amp *Amplifier, s *grpc.Server) {
 
 	// Wait for all service registrations to complete.
 	wg.Wait()
+}
+
+func registerConfigServiceServer(amp *Amplifier, s *grpc.Server) {
+	config.RegisterConfigServiceServer(s, &config.Server{
+		Docker: amp.docker,
+	})
 }
 
 func registerVersionServer(amp *Amplifier, s *grpc.Server) {
