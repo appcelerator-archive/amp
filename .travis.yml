@@ -22,7 +22,7 @@ before_script:
 
 script:
   - set -e
-  - ampmake clean build-base build-cli
+  - ampmake clean build-base build-local-plugin build-cli
   - ls -la bin/linux/amd64
   - amp cluster create --local-fast
   - TESTINCLUDE=platform/testing testrunner platform/tests

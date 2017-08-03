@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// replace latest by the version when releasing the plugin
 	DefaultTemplateURL = "https://s3.amazonaws.com/io-amp-binaries/templates/latest/aws-swarm-asg.yml"
 )
 

@@ -12,8 +12,9 @@ COPY . ${DIR}
 WORKDIR ${DIR}
 RUN vndr
 
+ARG LDFLAGS="-s"
 # build
-RUN go build -o /tmp/aws cmd/main.go
+RUN go build -ldflags "$LDFLAGS" -o /tmp/aws cmd/main.go
 
 # =============================
 FROM alpine

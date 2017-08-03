@@ -20,5 +20,5 @@ test:
 	go test -v -timeout 30m
 
 image:
-	docker build -t $(IMAGE) .
+	docker build --build-arg LDFLAGS=$(LDFLAGS) -t $(IMAGE) .
 
