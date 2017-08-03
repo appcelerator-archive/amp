@@ -91,6 +91,6 @@ func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
 			return errors.New(s.Message())
 		}
 	}
-	c.Console().Println(reply.Answer)
+	c.Console().Print(reply.Answer)
 	return nil
 }
