@@ -382,7 +382,7 @@ func deployServices(
 		fmt.Fprintf(out, "image:                 %s\n", imageName)
 		fmt.Fprintf(out, "Stabilization delay:   %s\n", stabilizeDelay)
 		fmt.Fprintf(out, "Stabilization timeout: %s\n", stabilizeTimeout)
-		done := make(chan bool)
+		done := make(chan error)
 
 		// create a watcher for service/container events based on the service image
 		options := NewEventsWatcherOptions(events.ServiceEventType, events.ContainerEventType)
@@ -395,18 +395,21 @@ func deployServices(
 		w.OnError(func(err error) {
 			//fmt.Fprintf(out, "OnError: %s\n", err)
 			w.Cancel()
-			done <- true
+			done <- err
 		})
 		w.Watch()
 
 		NotifyState(ctx, apiClient, serviceID, expectedState, stabilizeDelay, func(err error) {
-			if err != nil {
-				fmt.Fprintf(out, "Error: %s\n", err)
-			}
-			done <- true
+			done <- err
 		})
 
-		<-done
+		err = <-done
+		// unlike what docker does with stack deployment,
+		// we consider that a failing service should fail the stack deployment
+		if err != nil {
+			w.Cancel()
+			return err
+		}
 	}
 	return nil
 }
