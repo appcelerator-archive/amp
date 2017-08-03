@@ -32,13 +32,14 @@ func remove(c cli.Interface, args []string) error {
 		req := &stack.RemoveRequest{
 			Stack: name,
 		}
-		if _, err := client.Remove(context.Background(), req); err != nil {
+		reply, err := client.Remove(context.Background(), req)
+		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				errs = append(errs, s.Message())
 				continue
 			}
 		}
-		c.Console().Println(name)
+		c.Console().Print(reply.Answer)
 	}
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
