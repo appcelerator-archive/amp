@@ -110,7 +110,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		Env: []string{
 			fmt.Sprintf("TAG=%s", opts.Tag),
 			fmt.Sprintf("REGISTRATION=%s", opts.Registration),
-			fmt.Sprintf("NOTIFICATIONS=%s", opts.Notifications),
+			fmt.Sprintf("NOTIFICATIONS=%t", opts.Notifications),
 		},
 		Labels: ContainerLabels,
 		Tty:    false,

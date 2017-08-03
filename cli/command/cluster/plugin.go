@@ -224,4 +224,3 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	img := fmt.Sprintf("appcelerator/amp-aws:%s", c.Version())
 	return RunContainer(c, img, dockerOpts, args, env, f)
 }
-

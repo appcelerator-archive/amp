@@ -1,0 +1,217 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/config/config.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "ListConfigsRequestFilters": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "id_prefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "name_prefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "configConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/definitions/typesMeta"
+        },
+        "spec": {
+          "$ref": "#/definitions/configConfigSpec",
+          "description": "Spec contains the actual config data, as well as any context around the\nconfig data that the user provides."
+        }
+      },
+      "title": "Config represents a set of configuration files that should be passed to a\ncontainer.\nfrom: api/objects.proto"
+    },
+    "configConfigSpec": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/typesAnnotations"
+        },
+        "data": {
+          "type": "string",
+          "format": "byte",
+          "title": "Data is the config payload - the maximum size is 500KB (that is, 500*1024 bytes)"
+        },
+        "templating": {
+          "$ref": "#/definitions/typesDriver",
+          "description": "Templating controls whether and how to evaluate the secret payload as\na template. If it is not set, no templating is used.\n\nThe currently recognized values are:\n- golang: Go templating"
+        }
+      },
+      "title": "ConfigSpec specifies user-provided configuration files.\nfrom: api/specs.proto"
+    },
+    "configCreateConfigRequest": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "$ref": "#/definitions/configConfigSpec"
+        }
+      },
+      "title": "CreateConfigRequest specifies a new config (it will not update an existing\nconfig) to create.\nfrom: api/control.proto"
+    },
+    "configCreateConfigResponse": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/configConfig"
+        }
+      },
+      "title": "CreateConfigResponse contains the newly created `Config` corresponding to the\nname in `CreateConfigRequest`.\nfrom: api/control.proto"
+    },
+    "configListConfigsRequest": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "$ref": "#/definitions/ListConfigsRequestFilters"
+        }
+      },
+      "title": "ListConfigRequest is the request to list all configs in the config store,\nor all configs filtered by (name or name prefix or id prefix) and labels.\nfrom: api/control.proto"
+    },
+    "configListConfigsResponse": {
+      "type": "object",
+      "properties": {
+        "configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/configConfig"
+          }
+        }
+      },
+      "title": "ListConfigResponse contains a list of all the configs that match the name or\nname prefix filters provided in `ListConfigRequest`.\nfrom: api/control.proto"
+    },
+    "configRemoveConfigRequest": {
+      "type": "object",
+      "properties": {
+        "config_id": {
+          "type": "string"
+        }
+      },
+      "title": "RemoveConfigRequest contains the ID of the config that should be removed.  This\nremoves all versions of the config.\nfrom: api/control.proto"
+    },
+    "configRemoveConfigResponse": {
+      "type": "object",
+      "properties": {
+        "config_id": {
+          "type": "string"
+        }
+      },
+      "title": "RemoveConfigResponse is an empty object indicating the successful removal of\na config.\nfrom: api/control.proto"
+    },
+    "typesAnnotations": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "indices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/typesIndexEntry"
+          },
+          "description": "Indices provides keys and values for indexing this object.\nA single key may have multiple values."
+        }
+      },
+      "description": "Annotations provide useful information to identify API objects. They are\ncommon to all API specs."
+    },
+    "typesDriver": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Driver is a generic driver type to be used throughout the API. For now, a\ndriver is simply a name and set of options. The field contents depend on the\ntarget use case and driver application. For example, a network driver may\nhave different rules than a volume driver."
+    },
+    "typesIndexEntry": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "val": {
+          "type": "string"
+        }
+      }
+    },
+    "typesMeta": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/typesVersion",
+          "description": "Version tracks the current version of the object."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Object timestamps.\nNote: can't use stdtime because these fields are nullable."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "Meta contains metadata about objects. Every object contains a meta field.\nfrom: api/objects.proto"
+    },
+    "typesVersion": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "description": "Version tracks the last time an object in the store was updated."
+    }
+  }
+}

@@ -337,8 +337,8 @@ func deployServices(
 		var serviceID string
 
 		if service, exists := existingServiceMap[name]; exists {
-			fmt.Fprintf(out, "Updating service %s (id: %s)\n", name, service.ID)
-			fmt.Fprintf(out, "service: %+v\n", service)
+			fmt.Fprintf(out, "Updating service       %s (id: %s)\n", name, service.ID)
+			fmt.Fprintf(out, "service:               %+v\n", service)
 			imageName = service.Spec.TaskTemplate.ContainerSpec.Image
 			serviceID = service.ID
 
@@ -374,13 +374,15 @@ func deployServices(
 			if resp, err = apiClient.ServiceCreate(ctx, serviceSpec, createOpts); err != nil {
 				return errors.Wrapf(err, "failed to create service %s", name)
 			}
-			fmt.Fprintf(out, "service: %+v\n", resp)
+			fmt.Fprintf(out, "service:               %+v\n", resp)
 			serviceID = resp.ID
 			imageName = serviceSpec.TaskTemplate.ContainerSpec.Image
 		}
 
-		fmt.Fprintf(out, "image: %s\n", imageName)
-		done := make(chan bool)
+		fmt.Fprintf(out, "image:                 %s\n", imageName)
+		fmt.Fprintf(out, "Stabilization delay:   %s\n", stabilizeDelay)
+		fmt.Fprintf(out, "Stabilization timeout: %s\n", stabilizeTimeout)
+		done := make(chan error)
 
 		// create a watcher for service/container events based on the service image
 		options := NewEventsWatcherOptions(events.ServiceEventType, events.ContainerEventType)
@@ -393,18 +395,21 @@ func deployServices(
 		w.OnError(func(err error) {
 			//fmt.Fprintf(out, "OnError: %s\n", err)
 			w.Cancel()
-			done <- true
+			done <- err
 		})
 		w.Watch()
 
 		NotifyState(ctx, apiClient, serviceID, expectedState, stabilizeDelay, func(err error) {
-			if err != nil {
-				fmt.Fprintf(out, "Error: %s\n", err)
-			}
-			done <- true
+			done <- err
 		})
 
-		<-done
+		err = <-done
+		// unlike what docker does with stack deployment,
+		// we consider that a failing service should fail the stack deployment
+		if err != nil {
+			w.Cancel()
+			return err
+		}
 	}
 	return nil
 }
