@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# server passed on commandline overrides both local and home configs
+# server passed on commandline overrides both local and home settings
 test_cli_local_home() {
   # create local config
   mkdir -p $PWD/.amp
@@ -19,7 +19,7 @@ test_cli_local_home() {
   return $ec
 }
 
-# server passed in local config overrides home config
+# server passed in local settings overrides home settings
 test_local_home() {
   # create local config
   mkdir -p $PWD/.amp
@@ -37,7 +37,7 @@ test_local_home() {
   return $ec
 }
 
-# server passed in home config
+# server passed in home settings
 test_home() {
   # create home config
   mkdir -p $HOME/.config/amp
