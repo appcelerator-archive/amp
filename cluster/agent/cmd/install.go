@@ -87,13 +87,7 @@ func install(cmd *cobra.Command, args []string) error {
 
 	for _, f := range files {
 		log.Println(f)
-		if strings.Contains(f, ".ampmon.") && installOpts.noMonitoring {
-			continue
-		}
 		if strings.Contains(f, ".test.") {
-			if installOpts.skipTests {
-				continue
-			}
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
 			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
 			if err != nil {
@@ -154,6 +148,7 @@ func getStackFiles(path string, clusterMode map[string]string) ([]string, error)
 		return nil, err
 	}
 	stackfiles := []string{}
+	companionFilesToSkip := map[string]bool{}
 	for _, f := range files {
 		name := f.Name()
 		// not compiling regex since only expecting less than a dozen stackfiles
@@ -161,6 +156,19 @@ func getStackFiles(path string, clusterMode map[string]string) ([]string, error)
 		if err != nil {
 			log.Println(err)
 		} else if matched {
+			if strings.Contains(name, ".ampmon.") && installOpts.noMonitoring {
+				// we skip this file, and we'll skip also the companion test file
+				if split := strings.Split(name, "."); len(split) == 3 {
+					companionFilesToSkip[fmt.Sprintf("%s.test.yml", split[0])] = true
+				}
+				continue
+			}
+			if strings.Contains(name, ".test.") && installOpts.skipTests {
+				continue
+			}
+			if _, skip := companionFilesToSkip[name]; skip {
+				continue
+			}
 			// looking for the service name, in case there's an indication for the cluster mode (single vs cluster)
 			// expecting a file with a name NN-SERVICENAME-mode.*
 			split := strings.Split(name, "-")
