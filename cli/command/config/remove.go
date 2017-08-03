@@ -1,48 +1,44 @@
 package config
 
 import (
-	"context"
 	"errors"
-
-	"strings"
+	"fmt"
 
 	"github.com/appcelerator/amp/api/rpc/config"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
 )
 
 // NewRemoveCommand returns a new instance of the remove command for removing one or more configs
 func NewRemoveCommand(c cli.Interface) *cobra.Command {
-	return &cobra.Command{
-		Use:     "rm [OPTIONS]",
+	cmd := &cobra.Command{
+		Use:     "remove [OPTIONS]",
 		Short:   "Remove one or more configs",
-		Aliases: []string{"remove"},
+		Aliases: []string{"rm"},
 		PreRunE: cli.AtLeastArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return remove(c, args)
+			return remove(c, cmd, args)
 		},
 	}
+
+	return cmd
 }
 
-func remove(c cli.Interface, args []string) error {
-	var errs []string
+func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	conn := c.ClientConn()
-	client := config.NewConfigClient(conn)
-	for _, cfg := range args {
-		request := &config.RemoveConfigRequest{
-			Name: cfg,
-		}
-		if _, err := client.RemoveConfig(context.Background(), request); err != nil {
+	client := config.NewConfigServiceClient(conn)
+	for _, id := range args {
+		request := &config.RemoveConfigRequest{ConfigId: id}
+		resp, err := client.RemoveConfig(context.Background(), request)
+		if err != nil {
 			if s, ok := status.FromError(err); ok {
-				errs = append(errs, s.Message())
-				continue
+				return errors.New(s.Message())
 			}
+			return fmt.Errorf("Error removing config: %s", err)
 		}
-		c.Console().Println(cfg)
-	}
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, "\n"))
+		c.Console().Println(resp.GetConfigId())
 	}
 	return nil
 }
