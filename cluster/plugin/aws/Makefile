@@ -2,10 +2,13 @@
 
 PKG := github.com/appcelerator/amp/cluster/plugin/aws/cmd
 TARGET := bin/aws
+VERSION ?= $(shell cat ../../../VERSION)
+BUILD := $(shell git rev-parse HEAD | cut -c1-8)
 IMAGE := appcelerator/amp-aws
+export LDFLAGS := "-s -X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 build:
-	go build -o $(TARGET) $(PKG)
+	go build -ldflags $(LDFLAGS) -o $(TARGET) $(PKG)
 
 vendor: vendor.conf
 	vndr
@@ -17,5 +20,5 @@ test:
 	go test -v -timeout 30m
 
 image:
-	docker build -t $(IMAGE) .
+	docker build --build-arg LDFLAGS=$(LDFLAGS) -t $(IMAGE) .
 

@@ -14,15 +14,21 @@ import (
 )
 
 var (
-	opts = &plugin.RequestOptions{
-		OnFailure: "DO_NOTHING",
-		Params:    []string{},
+	Version string
+	Build   string
+	opts    = &plugin.RequestOptions{
+		OnFailure:   "DO_NOTHING",
+		Params:      []string{},
 		TemplateURL: plugin.DefaultTemplateURL,
 	}
 
 	sess *session.Session
-	svc *cf.CloudFormation
+	svc  *cf.CloudFormation
 )
+
+func version(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s - Build: %s\n", Version, Build)
+}
 
 func initClient(cmd *cobra.Command, args []string) {
 	sess = session.Must(session.NewSession())
@@ -113,8 +119,8 @@ func info(cmd *cobra.Command, args []string) {
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "awsplugin",
-		Short: "init/update/destroy an AWS cluster in Docker swarm mode",
+		Use:              "awsplugin",
+		Short:            "init/update/destroy an AWS cluster in Docker swarm mode",
 		PersistentPreRun: initClient,
 	}
 	rootCmd.PersistentFlags().StringVarP(&opts.Region, "region", "r", "", "aws region")
@@ -131,9 +137,9 @@ func main() {
 	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
 
 	infoCmd := &cobra.Command{
-		Use: "info",
+		Use:   "info",
 		Short: "get information about the cluster",
-		Run: info,
+		Run:   info,
 	}
 
 	updateCmd := &cobra.Command{
@@ -148,7 +154,12 @@ func main() {
 		Run:   delete,
 	}
 
-	rootCmd.AddCommand(initCmd, infoCmd, updateCmd, destroyCmd)
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "version of the plugin",
+		Run:   version,
+	}
+	rootCmd.AddCommand(versionCmd, initCmd, infoCmd, updateCmd, destroyCmd)
 
 	_ = rootCmd.Execute()
 }

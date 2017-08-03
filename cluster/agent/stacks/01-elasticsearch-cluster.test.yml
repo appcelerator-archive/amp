@@ -11,7 +11,7 @@ services:
     image: appcelerator/alpine:3.6.0
     networks:
       - default
-    command: ["curl", "-sfm", "30", "${AMP_STACK:-amp}_elasticsearch:9200/_cluster/health?wait_for_status=green&timeout=20s" ]
+    command: ["curl", "-sfm", "55", "${AMP_STACK:-amp}_elasticsearch:9200/_cluster/health?wait_for_status=green&timeout=50s" ]
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
