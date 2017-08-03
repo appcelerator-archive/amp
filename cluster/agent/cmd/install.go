@@ -201,7 +201,9 @@ func deployExpectingState(d *command.DockerCli, stackfile string, namespace stri
 	}
 
 	err := stack.Deploy(context.Background(), d, opts)
-	log.Printf("Service has reached expected state (%s)\n", string(expectedState))
+	if err == nil {
+		log.Printf("Service has reached expected state (%s)\n", string(expectedState))
+	}
 	return err
 }
 
