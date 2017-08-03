@@ -12,42 +12,42 @@ test_logs() {
 }
 
 test_logs_container() {
-  amp -k logs --container "pinger_pinger." | grep -q "pinger_pinger.*listening on :3000"
+  amp -k logs --container "pinger_pinger." | pcregrep -q "pinger_pinger.*listening on :3000"
 }
 
 test_logs_include() {
-  amp -k logs -i | grep -q "amp_"
+  amp -k logs -i | pcregrep -q "amp_"
 }
 
 test_logs_metadata() {
-  amp -k logs -m | grep -q ".*container_name:.*pinger_pinger.*container_state.*running.*"
+  amp -k logs -m | pcregrep -q ".*container_name:.*pinger_pinger.*container_state.*running.*"
 }
 
 test_logs_msg() {
-  amp -k logs --msg "listening on :3000" | grep -q "pinger_pinger.*listening on :3000.*"
+  amp -k logs --msg "listening on :3000" | pcregrep -q "pinger_pinger.*listening on :3000.*"
 }
 
 test_logs_node() {
   nodeid=$(docker node inspect self --format "{{.ID}}")
-  amp -k logs --node $nodeid | grep -q "pinger_pinger.*listening on :3000.*"
+  amp -k logs --node $nodeid | pcregrep -q "pinger_pinger.*listening on :3000.*"
 }
 
 test_logs_number() {
-  amp -k logs -n 2 | wc -l | grep -q "2"
+  amp -k logs -n 2 | wc -l | pcregrep -q "2"
 }
 
 test_logs_raw() {
-  amp -k logs -r | grep -q ".*listening on :3000"
+  amp -k logs -r | pcregrep -q ".*listening on :3000"
 }
 
 test_logs_regexp() {
-  amp -k logs --regexp --msg ".*listening.*" | grep -q "pinger_pinger.*listening on :3000.*"
+  amp -k logs --regexp --msg ".*listening.*" | pcregrep -q "pinger_pinger.*listening on :3000.*"
 }
 
 test_logs_since() {
-  amp -k logs --since 1 | grep -q "pinger_pinger.*listening on :3000"
+  amp -k logs --since 1 | pcregrep -q "pinger_pinger.*listening on :3000"
 }
 
 test_logs_stack() {
-  amp -k logs --stack pinger | grep -q "pinger_pinger.*listening on :3000"
+  amp -k logs --stack pinger | pcregrep -q "pinger_pinger.*listening on :3000"
 }

@@ -5,5 +5,5 @@ test_stack_deploy() {
  }
 
 test_service_list_based_on_stack() {
-  amp -k service ls --stack pinger | grep -Evq "counter"
+  amp -k service ls --stack pinger | pcregrep -vq "counter"
 }

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-amp -k team ls | grep -q "team"
+amp -k team ls | pcregrep -q "team"
