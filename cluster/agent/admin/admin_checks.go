@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"os/signal"
 	"regexp"
 	"time"
 
@@ -195,8 +197,7 @@ func waitForEvents(eventChan chan *api.WatchMessage_Event, expectedEvent string,
 				return true
 			}
 		case <-timeout:
-			// log.Printf("timeout reached, count = %d/%d\n", count, expectedCount)
-			log.Printf("timeout reached while waiting for %s events", expectedEvent)
+			log.Printf("INFO: timeout reached while waiting for %s events", expectedEvent)
 			return false
 		}
 	}
@@ -235,7 +236,32 @@ func VerifyServiceScheduling() error {
 		return err
 	}
 
-	nwId, err := createNetwork(c, testNetwork)
+	var clientServiceId string
+	var serverServiceId string
+	var nwId string
+	// in case the container is interrupted, we don't want to leave services or network behind
+	interruption := make(chan os.Signal, 1)
+	signal.Notify(interruption, os.Interrupt)
+	signal.Notify(interruption, os.Kill)
+	go func() {
+		sig := <-interruption
+		fmt.Printf("Received signal %s\n", sig.String())
+		if clientServiceId != "" {
+			fmt.Println("Removing service check-client")
+			_ = c.ServiceRemove(context.Background(), clientServiceId)
+		}
+		if serverServiceId != "" {
+			fmt.Println("Removing service check-server")
+			_ = c.ServiceRemove(context.Background(), serverServiceId)
+		}
+		if nwId != "" {
+			fmt.Println("Removing network amptest")
+			_ = c.NetworkRemove(context.Background(), nwId)
+		}
+		return
+	}()
+
+	nwId, err = createNetwork(c, testNetwork)
 	if err != nil {
 		return err
 	}
@@ -251,13 +277,14 @@ func VerifyServiceScheduling() error {
 	if err != nil {
 		return err
 	}
-	serverServiceId, err := createService(c, testServiceSpec{Name: "check-server", Image: "alpine:3.6", Command: []string{"nc", "-kvlp", "5968", "-e", "echo"}, Networks: []string{testNetwork}, Replicas: 3, Constraints: []string{"node.labels.amp.type.api==true"}})
+	serverServiceId, err = createService(c, testServiceSpec{Name: "check-server", Image: "alpine:3.6", Command: []string{"nc", "-kvlp", "5968", "-e", "echo"}, Networks: []string{testNetwork}, Replicas: 3, Constraints: []string{"node.labels.amp.type.api==true"}})
 	if err != nil {
 		return err
 	}
 	defer func() {
 		log.Printf("Removing service %s (%s)\n", "check-server", serverServiceId)
 		_ = c.ServiceRemove(context.Background(), serverServiceId)
+		// wait for the removal to take effect
 		time.Sleep(2 * time.Second)
 	}()
 	// look for task creation events
@@ -266,7 +293,12 @@ func VerifyServiceScheduling() error {
 	} else {
 		log.Println("Task creation events successfully read")
 	}
-	clientServiceId, err := createService(c, testServiceSpec{Name: "check-client", Image: "alpine:3.6", Command: []string{"sh", "-c", "while true; do nc -zv check-server 5968; done"}, Networks: []string{testNetwork}, Replicas: 3, Constraints: []string{"node.labels.amp.type.core==true"}})
+	// once tasks creation events have been watched, wait for tasks to be running
+	time.Sleep(2 * time.Second)
+	if err := assertServiceHasRunningTasks(c, "check-server", 3); err != nil {
+		return errors.New("Service check-server doesn't have correct count of running tasks")
+	}
+	clientServiceId, err = createService(c, testServiceSpec{Name: "check-client", Image: "alpine:3.6", Command: []string{"sh", "-c", "while true; do nc -zv check-server 5968; done"}, Networks: []string{testNetwork}, Replicas: 3, Constraints: []string{"node.labels.amp.type.core==true"}})
 	if err != nil {
 		return err
 	}
@@ -280,19 +312,35 @@ func VerifyServiceScheduling() error {
 	} else {
 		log.Println("Task creation events successfully read")
 	}
+	// once tasks creation events have been watched, wait for tasks to be running
+	time.Sleep(2 * time.Second)
+	if err := assertServiceHasRunningTasks(c, "check-client", 3); err != nil {
+		return errors.New("Service check-client doesn't have correct count of running tasks")
+	}
 	// wait 6 seconds to make sure no tasks are dropped
 	if dropped := waitForEvents(eventChan, "WATCH_ACTION_REMOVE", 1, 6); dropped {
-		return errors.New("tasks have been dropped")
+		return errors.New("tasks have been unexpectedly removed")
 	} else {
-		log.Println("No dropped task")
+		log.Println("No dropped task, this is good")
 	}
-	time.Sleep(5 * time.Second)
-	log.Println("Counting request success rate")
-	body, err := c.ServiceLogs(context.Background(), clientServiceId, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	// wait for test services to do their stuff
+	time.Sleep(2 * time.Second)
+	log.Println("Counting test requests success rate")
+	var body io.ReadCloser
+	// do it several times, in case the system is slow
+	for _ = range []int{0, 1, 2, 3, 4} {
+		body, err = c.ServiceLogs(context.Background(), clientServiceId, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+		defer body.Close()
+		if err == nil {
+			break
+		}
+		log.Printf("INFO: not yet there, %v\n", err)
+		time.Sleep(2 * time.Second)
+	}
 	if err != nil {
+		log.Println("The tests are failing, which means that for some reason the two services weren't able to communicate reliably together")
 		return err
 	}
-	defer body.Close()
 	scanner := bufio.NewScanner(body)
 	var lineCount int
 	var openCount int
@@ -311,9 +359,9 @@ func VerifyServiceScheduling() error {
 		log.Printf("%d connections / %d success\n", lineCount, openCount)
 		return errors.New("Connection test failed, expected more connections")
 	}
+	log.Printf("%d connections / %d success\n", lineCount, openCount)
 	// 80% is not so great, but let's make it work...
 	if openCount < 80*lineCount/100 {
-		log.Printf("%d connections / %d success\n", lineCount, openCount)
 		return errors.New("Connection test failed, not enough successes")
 	}
 	return nil
