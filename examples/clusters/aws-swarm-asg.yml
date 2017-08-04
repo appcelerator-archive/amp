@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Swarm cluster with autoscaling groups v0.14.0-dev
+Description: Swarm cluster with autoscaling groups v0.14.0
 
 Mappings:
   AMI:
@@ -235,8 +235,8 @@ Parameters:
     Default: yes
   ApplicationVersion:
     Type: String
-    Description: Use the latest release version for the best result (a tag, e.g. 0.13.1)
-    Default: latest
+    Description: Use the latest release version for the best result (a tag, e.g. 0.14.0)
+    Default: 0.14.0
   MirrorRegistry:
     Type: String
     Description: If yes, a mirror registry will be installed
