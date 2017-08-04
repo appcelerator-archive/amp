@@ -43,10 +43,12 @@ This is the default mode.
 
 * To create a cluster locally:
 ```
-$ amp cluster create
+$ amp cluster create --local-fast
 ...
-Cluster status: healthy
+2017/08/04 01:17:59 ampctl (version: 0.14.0-dev, build: 08772ef3)
 ...
+{"SwarmID":"sdo9fm7ner6htnu56ww2plo0k","NodeID":"zxij8nozr9xay175jl78xdafu"}
+
 ```
 This will deploy the `AMP` stack on your local docker engine.
 Using the `--tag` option will allow you deploy a cluster with a specific image tag.
@@ -66,4 +68,6 @@ If the secret is already created, it will be used as is without any modification
 
 #### Creating a cluster on AWS
 
-Not available on 0.12, coming on next release.
+To target AWS, you should use the --provider aws option.
+
+More details on the AWS creation on the [AMP wiki](https://github.com/appcelerator/amp/wiki/AMP-deployment-on-AWS)

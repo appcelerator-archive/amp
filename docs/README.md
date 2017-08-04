@@ -10,6 +10,7 @@
 * [Usage](#usage)
   * [Target an AMP cluster](#target-an-amp-cluster)
     * [Creating a local AMP cluster](#creating-a-local-amp-cluster)
+    * [Creating an AMP cluster on AWS](#creating-an-amp-cluster-on-aws)
   * [Signing up and logging in](#signing-up-and-logging-in)
   * [UI and Dashboard](#ui-and-dashboard)
     * [UI](#ui)
@@ -185,6 +186,10 @@ $ amp cluster create
 ```
 
 For more examples of cluster commands and deployment in different environments, see the [cluster documentation](cluster.md).
+
+#### Creating an AMP cluster on AWS
+
+See the [cluster documentation](cluster.md#creating-a-cluster-on-aws).
 
 ### Signing up and logging in
 
