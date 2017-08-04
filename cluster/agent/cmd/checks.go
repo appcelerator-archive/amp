@@ -50,14 +50,14 @@ func checks(cmd *cobra.Command, args []string) error {
 			log.Println("Labels test: PASS")
 		}
 	}
-	//if checksOpts.scheduling || checksOpts.all {
-	//	if err := adm.VerifyServiceScheduling(); err != nil {
-	//		log.Println("Service scheduling test: FAIL")
-	//		return err
-	//	} else {
-	//		log.Println("Service scheduling test: PASS")
-	//	}
-	//}
+	if checksOpts.scheduling || checksOpts.all {
+		if err := adm.VerifyServiceScheduling(); err != nil {
+			log.Println("Service scheduling test: FAIL")
+			return err
+		} else {
+			log.Println("Service scheduling test: PASS")
+		}
+	}
 
 	return nil
 }
