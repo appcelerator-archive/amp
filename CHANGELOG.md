@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.0 (2017-08-04)
+
+* `amp secret` (#1612) and `amp config` (#1613)
+* AMP deployment on local swarm updates
+  * now based on the generic plugin model
+  * new local deployment options: fast (no tests) and no-monitoring (skip elasticsearch and prometheus)
+* log messages filter can take regexes (#1582)
+* fix `amp cluster status` (#1534)
+* fix elasticsearch alerts on multi instance deployments (#1590)
+
 ## 0.13.1 (2017-07-25)
 
 * gRPC timeout in the CLI raised from 1sec to 10sec (fix timeout with remote clusters)
