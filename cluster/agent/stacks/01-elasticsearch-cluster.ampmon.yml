@@ -18,8 +18,8 @@ services:
       - elasticsearch-data:/opt/elasticsearch/data
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "35s"
-      amp.service.stabilize.timeout: "90s"
+      amp.service.stabilize.delay: "45s"
+      amp.service.stabilize.timeout: "180s"
     environment:
       MIN_MASTER_NODES: 2
       NETWORK_HOST: "_eth0_"
