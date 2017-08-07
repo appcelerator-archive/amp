@@ -1,6 +1,6 @@
 #!/bin/bash
 
-amp -k service ps pinger_pinger 2>/dev/null | pcregrep -o -w -q '[[:alnum:]]{25}'
+amp -k service ps pinger_pinger 2>/dev/null | pcregrep -q '[[:alnum:]]{25}'
 
 amp -k service ps pinger_pinger 2>/dev/null | pcregrep -vq 'SHUTDOWN'
 

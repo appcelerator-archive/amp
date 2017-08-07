@@ -3,7 +3,7 @@
 test_logs() {
   while true
   do
-     if amp -k logs | grep -q "pinger_pinger.*listening on :3000"
+     if amp -k logs | pcregrep -q "pinger_pinger.*listening on :3000"
      then
              break
      fi
