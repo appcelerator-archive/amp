@@ -97,8 +97,8 @@ func LabelNode(ctx context.Context, c *client.Client, opts *RequestOptions) erro
 	return c.NodeUpdate(ctx, node.ID, version, nodeSpec)
 }
 
-func removeAgent(ctx context.Context, c *client.Client, cid string) error {
-	return c.ContainerRemove(ctx, cid, types.ContainerRemoveOptions{Force: true})
+func removeAgent(ctx context.Context, c *client.Client, cid string, force bool) error {
+	return c.ContainerRemove(ctx, cid, types.ContainerRemoveOptions{Force: force})
 }
 
 // RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
@@ -179,7 +179,12 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		if err != nil {
 			fmt.Printf("%v\n", err)
 		}
-		_ = removeAgent(ctx, c, r.ID)
+		for i:=0; i<10; i++ {
+			if err := removeAgent(ctx, c, r.ID, false); err == nil {
+				break
+			}
+			time.Sleep(time.Second)
+		}
 		done <- true
 		return
 	}()
@@ -202,8 +207,9 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 			time.Sleep(time.Second)
 		}
 	}()
+
 	if err = c.ContainerStart(ctx, r.ID, types.ContainerStartOptions{}); err != nil {
-		_ = removeAgent(ctx, c, r.ID)
+		_ = removeAgent(ctx, c, r.ID, true)
 		return err
 	}
 
@@ -223,7 +229,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 	<-done
 	// give time to clear the logs
 	time.Sleep(1200 * time.Millisecond)
-	_ = removeAgent(ctx, c, r.ID)
+	_ = removeAgent(ctx, c, r.ID, true)
 	return nil
 }
 

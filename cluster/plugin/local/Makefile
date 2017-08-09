@@ -4,7 +4,7 @@ PKG := github.com/appcelerator/amp/cluster/plugin/local/cmd
 TARGET := bin/amp-local
 VERSION ?= $(shell cat ../../../VERSION)
 BUILD := $(shell git rev-parse HEAD | cut -c1-8)
-IMAGE := appcelerator/amp-local
+IMAGE := appcelerator/amp-local:$(VERSION)
 export LDFLAGS := "-s -X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 build:
