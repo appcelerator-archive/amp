@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -29,6 +30,7 @@ import (
 const (
 	TARGET_SINGLE  = "single"
 	TARGET_CLUSTER = "cluster"
+	TEST_NAMESPACE = "test"
 )
 
 type InstallOptions struct {
@@ -71,6 +73,17 @@ func install(cmd *cobra.Command, args []string) error {
 		namespace = args[0]
 	}
 
+	// Handle interrupt signal
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			log.Println("\nReceived an interrupt signal - removing AMP services")
+			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace, TEST_NAMESPACE}})
+			os.Exit(1)
+		}
+	}()
+
 	etcdClusterMode, err := serviceDeploymentMode(dockerCli.Client(), "amp.type.kv", "true")
 	if err != nil {
 		return err
@@ -94,16 +107,18 @@ func install(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			log.Println(f)
-      
+
 			err := deployTest(dockerCli, f, "test", 60 /* timeout in seconds */)
-			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{"test"}})
+			stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{TEST_NAMESPACE}})
 			if err != nil {
+				stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})
 				return err
 			}
 		} else {
 			log.Println(f)
 			err := deploy(dockerCli, f, namespace)
 			if err != nil {
+				stack.Remove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace, TEST_NAMESPACE}})
 				return err
 			}
 		}
