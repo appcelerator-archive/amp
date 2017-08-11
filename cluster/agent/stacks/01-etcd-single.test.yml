@@ -17,6 +17,8 @@ services:
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
+      amp.service.stabilize.delay: "0s"
+      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: replicated
       replicas: 1
