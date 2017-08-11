@@ -10,7 +10,7 @@ test_has_version() {
 # finding "not connected" is an error
 test_is_connected() {
   result=$(amp -k version)
-  echo $result | pcregrep "not connected"
+  echo $result | grep "not connected"
   (( $? == 0 )) && return 1 || return 0
 }
 
