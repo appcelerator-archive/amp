@@ -319,6 +319,21 @@ _create_networks(){
   done
 }
 
+_swarm_cleanup(){
+  local _manager=$1
+  echo "removing dead nodes from the Swarm" >&2
+	# possible node statuses: https://github.com/moby/moby/blob/master/api/types/swarm/node.go#L106-L115
+  _down_nodes=$(docker -H "$_manager:2375" node ls --filter "role=manager" --format "{{.Hostname}} {{.Status}}"| grep -i down$ | cut -d' ' -f1)
+	# should we also check if corresponding instance is not running/pending in AWS ?
+  # like resolve hostname to IP and lookup instance state
+  # but assuming if node is down then it is not temporary state and we do not need extra checks
+	for _node in $_down_nodes; do
+	  echo "removing $_node from the Swarm" >&2
+		docker -H "$_manager:2375" node demote $_node
+		docker -H "$_manager:2375" node rm $_node
+	done 
+}
+
 _swarm_join(){
   local _manager=$1
   local _token
@@ -456,6 +471,7 @@ if [[ "x$nodeip" = "x$leader" ]]; then
   _swarm_init "$nodeip" || exit 1
   _create_networks $OVERLAY_NETWORKS || exit 1
 else
+	_swarm_cleanup "$leader" 
   _swarm_join "$leader" || exit 1
 fi
 _label_node || exit 1
