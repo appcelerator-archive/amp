@@ -18,8 +18,9 @@ services:
       - elasticsearch-data:/opt/elasticsearch/data
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "15s"
-      amp.service.stabilize.timeout: "35s"
+      amp.service.stabilize.delay: "8s"
+      amp.service.stabilize.timeout: "25s"
+      amp.service.pull.timeout: "120s"
     environment:
       NETWORK_HOST: "_eth0_"
       JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"

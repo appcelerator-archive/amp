@@ -17,8 +17,8 @@ services:
       #- published: 7777
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "60s"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: replicated
       replicas: 1
