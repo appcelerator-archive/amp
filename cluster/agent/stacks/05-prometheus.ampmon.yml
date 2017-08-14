@@ -28,7 +28,7 @@ services:
       - "9090:9090"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "8s"
+      amp.service.stabilize.delay: "5s"
       amp.service.stabilize.timeout: "30s"
     deploy:
       mode: replicated

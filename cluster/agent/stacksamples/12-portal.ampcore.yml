@@ -24,5 +24,5 @@ services:
       VIRTUAL_HOST: "http://portal.*,https://portal.*,http://cloud.*,http://local.*,https://cloud.*,https://local.*"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "30s"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"

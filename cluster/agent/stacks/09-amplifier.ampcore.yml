@@ -26,7 +26,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "6s"
+      amp.service.stabilize.delay: "4s"
       amp.service.stabilize.timeout: "30s"
     deploy:
       mode: global
