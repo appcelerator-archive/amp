@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1 (2017-08-14)
+
+* AMP cluster deployment enhancement: timeout for image pull
+* Fix Swarm manager self healing for AWS clusters
+* Clean rollback on cluster creation failure
+
 ## 0.14.0 (2017-08-04)
 
 * `amp secret` (#1612) and `amp config` (#1613)
