@@ -235,7 +235,7 @@ Parameters:
     Default: yes
   ApplicationVersion:
     Type: String
-    Description: Use the latest release version for the best result (a tag, e.g. 0.14.0)
+    Description: Use the latest release version for the best result (a tag, e.g. 0.14.1)
     Default: latest
   MirrorRegistry:
     Type: String
