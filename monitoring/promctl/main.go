@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strings"
 	"syscall"
 	"text/template"
 	"time"
@@ -30,6 +31,8 @@ const (
 	dockerEngineMetricsPort = 9323
 	systemMetricsPort       = 9100 // node-exporter
 	prometheusCmd           = "/bin/prometheus"
+	monitoringNetwork       = "ampnet"
+	stackName               = "amp"
 )
 
 var prometheusArgs = []string{
@@ -41,31 +44,77 @@ var prometheusArgs = []string{
 }
 
 type Inventory struct {
+	Jobs                    []Job
 	Hostnames               []string
 	DockerEngineMetricsPort int
 	SystemMetricsPort       int
 }
 
-func update(pid int, client *docker.Docker, configurationTemplate string, configuration string) error {
-	var configurationFile *os.File
+type Job struct {
+	Name           string
+	StaticConfigs  []StaticConfig
+	RelabelConfigs []RelabelConfig
+	MetricsPath    string
+}
+
+// static config for a prometheus job
+type StaticConfig struct {
+	Target string
+	Port   int
+	Labels map[string]string
+}
+type RelabelConfig struct {
+	SourceLabels []string
+	Separator    string
+	TargetLabel  string
+}
+
+type Target struct {
+	Name        string
+	Port        int
+	MetricsPath string
+}
+
+var services = []Target{
+	Target{Name: "etcd", Port: 2379, MetricsPath: "/metrics"},
+	Target{Name: "elasticsearch", Port: 9200, MetricsPath: "/_prometheus/metrics"},
+	Target{Name: "amplifier", Port: 5100, MetricsPath: "/metrics"},
+}
+
+// get the name and host IP of the tasks of the services
+func prepareJobs(networkResource types.NetworkResource) []Job {
+	var jobs []Job
+	for _, service := range services {
+		s, ok := networkResource.Services[fmt.Sprintf("%s_%s", stackName, service.Name)]
+		if !ok {
+			log.Printf("Warning: service %s not found in network %s\n", service.Name, monitoringNetwork)
+			continue
+		}
+		if len(s.Tasks) != 0 {
+			job := Job{Name: service.Name, MetricsPath: service.MetricsPath}
+			for _, task := range s.Tasks {
+				job.StaticConfigs = append(job.StaticConfigs, StaticConfig{
+					Target: task.EndpointIP,
+					Port:   service.Port,
+					Labels: map[string]string{
+						"hostip":   task.Info["Host IP"],
+						"taskname": task.Name,
+					},
+				})
+			}
+			// all jobs have the same relabel config
+			job.RelabelConfigs = append(job.RelabelConfigs,
+				RelabelConfig{SourceLabels: []string{"hostip"}, Separator: "@", TargetLabel: "instance"})
+
+			jobs = append(jobs, job)
+		}
+	}
+	return jobs
+}
+
+// get the docker nodes hostnames or IPs
+func prepareNodes(networkResource types.NetworkResource) ([]string, error) {
 	var hostnames []string
-	// connect to the engine API
-	if err := client.Connect(); err != nil {
-		return err
-	}
-	filter := filters.NewArgs()
-	filter.Add("name", "ingress")
-	networkResources, err := client.GetClient().NetworkList(context.Background(), types.NetworkListOptions{Filters: filter})
-	if err != nil {
-		return err
-	}
-	if len(networkResources) != 1 {
-		return errors.New("ingress network lookup failed")
-	}
-	networkId := networkResources[0].ID
-	// when the vendors are updated to docker 17.06:
-	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
-	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, false)
 	for _, peer := range networkResource.Peers {
 		if peer.Name == "moby" && peer.IP == "127.0.0.1" {
 			// DockerForMac
@@ -74,7 +123,7 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 			// non addressable, let's hope the hostname is a better option
 			hostnames = append(hostnames, peer.Name)
 		} else {
-			if _, err = net.LookupHost(peer.Name); err != nil {
+			if _, err := net.LookupHost(peer.Name); err != nil {
 				// can't resolve host, will use IP
 				hostnames = append(hostnames, peer.IP)
 			} else {
@@ -83,11 +132,40 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 		}
 	}
 	if len(hostnames) == 0 {
-		return errors.New("host list is empty")
+		return nil, errors.New("host list is empty")
 	}
-	inventory := &Inventory{Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
+	return hostnames, nil
+}
+
+func update(pid int, client *docker.Docker, configurationTemplate string, configuration string) error {
+	var configurationFile *os.File
+	// connect to the engine API
+	if err := client.Connect(); err != nil {
+		return err
+	}
+	filter := filters.NewArgs()
+	filter.Add("name", monitoringNetwork)
+	networkResources, err := client.GetClient().NetworkList(context.Background(), types.NetworkListOptions{Filters: filter})
+	if err != nil {
+		return err
+	}
+	if len(networkResources) != 1 {
+		return errors.New("network lookup failed")
+	}
+	networkId := networkResources[0].ID
+	// when the vendors are updated to docker 17.06:
+	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
+	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, true)
+
+	jobs := prepareJobs(networkResource)
+	hostnames, err := prepareNodes(networkResource)
+	if err != nil {
+		return err
+	}
+
+	inventory := &Inventory{Jobs: jobs, Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
 	// prepare the configuration
-	t := template.Must(template.New("prometheus.tpl").ParseFiles(configurationTemplate))
+	t := template.Must(template.New("prometheus.tpl").Funcs(template.FuncMap{"StringsJoin": strings.Join}).ParseFiles(configurationTemplate))
 	configurationFile, err = os.Create(configuration)
 	if err != nil {
 		return err

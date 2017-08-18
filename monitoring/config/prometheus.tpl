@@ -21,33 +21,39 @@ scrape_configs:
     static_configs:
       - targets:
         - localhost:9090
-  - job_name: 'etcd'
-    dns_sd_configs:
-      - names:
-        - 'tasks.etcd'
-        type: 'A'
-        port: 2379
+{{- range .Jobs }}
+  - job_name: '{{ .Name }}'
+    metrics_path: '{{ .MetricsPath }}'
+    static_configs:
+{{- range .StaticConfigs }}
+      - targets:
+        - '{{ .Target }}:{{ .Port }}'
+        labels:
+{{- range $key, $value := .Labels }}
+          {{ $key }}: '{{ $value }}'
+{{- end }}
+{{- end }}
+{{- range .RelabelConfigs }}
+    relabel_configs:
+      - source_labels: [ {{ StringsJoin .SourceLabels ", " }} ]
+        separator: '{{ .Separator }}'
+        target_label: {{ .TargetLabel }}
+{{- end }}
+{{- end }}
   - job_name: 'haproxy'
     static_configs:
       - targets:
         - haproxy_exporter:9101
+    relabel_configs:
+      - replacement: haproxy
+        target_label: instance
   - job_name: 'nats'
     static_configs:
       - targets:
         - nats_exporter:7777
-  - job_name: 'elasticsearch'
-    metrics_path: "/_prometheus/metrics"
-    dns_sd_configs:
-      - names:
-        - 'tasks.elasticsearch'
-        type: 'A'
-        port: 9200
-  - job_name: 'amplifier'
-    dns_sd_configs:
-      - names:
-        - 'tasks.amplifier'
-        type: 'A'
-        port: 5100
+    relabel_configs:
+      - replacement: nats
+        target_label: instance
 {{- if .Hostnames }}
   - job_name: 'docker-engine'
     static_configs:
@@ -55,6 +61,11 @@ scrape_configs:
 {{- range .Hostnames }}
         - '{{ . }}:{{ $dockerPort }}'
 {{- end }}
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: (.*):.*
+        replacement: $1
+        target_label: instance
 {{- end }}
 {{- if .Hostnames }}
   - job_name: 'nodes'
@@ -63,4 +74,9 @@ scrape_configs:
 {{- range .Hostnames }}
         - '{{ . }}:{{ $systemPort }}'
 {{- end }}
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: (.*):.*
+        replacement: $1
+        target_label: instance
 {{- end }}
