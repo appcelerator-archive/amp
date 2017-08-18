@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/template"
@@ -33,6 +34,9 @@ const (
 	prometheusCmd           = "/bin/prometheus"
 	monitoringNetwork       = "ampnet"
 	stackName               = "amp"
+	metricsPortLabel        = "io.amp.metrics.port"
+	metricsPathLabel        = "io.amp.metrics.path"
+	metricsModeLabel        = "io.amp.metrics.mode"
 )
 
 var prometheusArgs = []string{
@@ -52,6 +56,7 @@ type Inventory struct {
 
 type Job struct {
 	Name           string
+	Mode           string
 	StaticConfigs  []StaticConfig
 	RelabelConfigs []RelabelConfig
 	MetricsPath    string
@@ -63,10 +68,12 @@ type StaticConfig struct {
 	Port   int
 	Labels map[string]string
 }
+
 type RelabelConfig struct {
 	SourceLabels []string
 	Separator    string
 	TargetLabel  string
+	Replacement  string
 }
 
 type Target struct {
@@ -75,41 +82,82 @@ type Target struct {
 	MetricsPath string
 }
 
-var services = []Target{
-	Target{Name: "etcd", Port: 2379, MetricsPath: "/metrics"},
-	Target{Name: "elasticsearch", Port: 9200, MetricsPath: "/_prometheus/metrics"},
-	Target{Name: "amplifier", Port: 5100, MetricsPath: "/metrics"},
-}
-
+// discovers services with the io.amp.metrics.port label
 // get the name and host IP of the tasks of the services
-func prepareJobs(networkResource types.NetworkResource) []Job {
+func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) ([]Job, error) {
 	var jobs []Job
+	filter := filters.NewArgs()
+	filter.Add("label", metricsPortLabel)
+	services, err := client.GetClient().ServiceList(context.Background(), types.ServiceListOptions{Filters: filter})
+	if err != nil {
+		return nil, err
+	}
+	if len(services) == 0 {
+		fmt.Println("Warning: no service discovered for monitoring")
+	}
 	for _, service := range services {
-		s, ok := networkResource.Services[fmt.Sprintf("%s_%s", stackName, service.Name)]
+		name := service.Spec.Annotations.Name
+		strMetricsPort, ok := service.Spec.Annotations.Labels[metricsPortLabel]
 		if !ok {
-			log.Printf("Warning: service %s not found in network %s\n", service.Name, monitoringNetwork)
+			return nil, fmt.Errorf("unable to get metrics port label for service %s", name)
+		}
+		metricsPort, err := strconv.Atoi(strMetricsPort)
+		if err != nil {
+			log.Printf("Warning: non numerical port for service %s: %s\n", name, strMetricsPort)
 			continue
 		}
-		if len(s.Tasks) != 0 {
-			job := Job{Name: service.Name, MetricsPath: service.MetricsPath}
+		metricsPath, ok := service.Spec.Annotations.Labels[metricsPathLabel]
+		if !ok {
+			metricsPath = "/metrics"
+		}
+		// mode can be tasks or exporter
+		metricsMode, ok := service.Spec.Annotations.Labels[metricsModeLabel]
+		if !ok {
+			metricsMode = "tasks"
+		} else if metricsMode != "exporter" && metricsMode != "tasks" {
+			fmt.Printf("Warning: wrong metrics mode (%s) for service %s, force it to tasks\n", metricsMode, name)
+			metricsMode = "tasks"
+		}
+		fmt.Printf("discovered service %s on port %d and path %s, mode %s\n", name, metricsPort, metricsPath, metricsMode)
+		s, ok := networkResource.Services[name]
+		if !ok {
+			return nil, fmt.Errorf("Warning: service %s not found in network %s\n", name, monitoringNetwork)
+		}
+		switch metricsMode {
+		case "tasks":
+			if len(s.Tasks) == 0 {
+				continue
+			}
+			job := Job{Name: strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), Mode: "tasks", MetricsPath: metricsPath}
 			for _, task := range s.Tasks {
 				job.StaticConfigs = append(job.StaticConfigs, StaticConfig{
 					Target: task.EndpointIP,
-					Port:   service.Port,
+					Port:   metricsPort,
 					Labels: map[string]string{
 						"hostip":   task.Info["Host IP"],
 						"taskname": task.Name,
 					},
 				})
 			}
-			// all jobs have the same relabel config
+			// all "tasks" jobs have the same relabel config
 			job.RelabelConfigs = append(job.RelabelConfigs,
 				RelabelConfig{SourceLabels: []string{"hostip"}, Separator: "@", TargetLabel: "instance"})
-
+			jobs = append(jobs, job)
+		case "exporter":
+			shortName := strings.TrimSuffix(strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), "_exporter")
+			job := Job{Name: shortName, Mode: "exporter", MetricsPath: metricsPath}
+			job.StaticConfigs = []StaticConfig{
+				StaticConfig{
+					Target: name,
+					Port:   metricsPort,
+				},
+			}
+			job.RelabelConfigs = append(job.RelabelConfigs,
+				RelabelConfig{Replacement: shortName, TargetLabel: "instance"})
 			jobs = append(jobs, job)
 		}
 	}
-	return jobs
+	return jobs, nil
 }
 
 // get the docker nodes hostnames or IPs
@@ -157,7 +205,10 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
 	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, true)
 
-	jobs := prepareJobs(networkResource)
+	jobs, err := prepareJobs(client, networkResource)
+	if err != nil {
+		return err
+	}
 	hostnames, err := prepareNodes(networkResource)
 	if err != nil {
 		return err

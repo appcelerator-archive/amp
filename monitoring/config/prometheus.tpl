@@ -22,6 +22,8 @@ scrape_configs:
       - targets:
         - localhost:9090
 {{- range .Jobs }}
+{{/* services with metrics available on all tasks */}}
+{{- if eq .Mode "tasks" }}
   - job_name: '{{ .Name }}'
     metrics_path: '{{ .MetricsPath }}'
     static_configs:
@@ -39,21 +41,23 @@ scrape_configs:
         separator: '{{ .Separator }}'
         target_label: {{ .TargetLabel }}
 {{- end }}
+{{/* exporter service in front of a real service */}}
+{{- else if eq .Mode "exporter" }}
+  - job_name: '{{ .Name }}'
+    metrics_path: '{{ .MetricsPath }}'
+    static_configs:
+{{- range .StaticConfigs }}
+      - targets:
+        - '{{ .Target }}:{{ .Port }}'
 {{- end }}
-  - job_name: 'haproxy'
-    static_configs:
-      - targets:
-        - haproxy_exporter:9101
+{{- range .RelabelConfigs }}
     relabel_configs:
-      - replacement: haproxy
-        target_label: instance
-  - job_name: 'nats'
-    static_configs:
-      - targets:
-        - nats_exporter:7777
-    relabel_configs:
-      - replacement: nats
-        target_label: instance
+      - replacement: '{{ .Replacement }}'
+        target_label: {{ .TargetLabel }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{/* Docker Engine metrics */}}
 {{- if .Hostnames }}
   - job_name: 'docker-engine'
     static_configs:
@@ -66,8 +70,7 @@ scrape_configs:
         regex: (.*):.*
         replacement: $1
         target_label: instance
-{{- end }}
-{{- if .Hostnames }}
+{{/* System metrics */}}
   - job_name: 'nodes'
     static_configs:
       - targets:
