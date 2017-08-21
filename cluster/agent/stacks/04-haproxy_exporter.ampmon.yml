@@ -28,4 +28,4 @@ services:
         io.amp.metrics.mode: "exporter"
       placement:
         constraints:
-        - node.labels.amp.type.metrics == true
+        - node.labels.amp.type.core == true

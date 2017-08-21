@@ -88,6 +88,7 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 	var jobs []Job
 	filter := filters.NewArgs()
 	filter.Add("label", metricsPortLabel)
+	// only available on manager nodes
 	services, err := client.GetClient().ServiceList(context.Background(), types.ServiceListOptions{Filters: filter})
 	if err != nil {
 		return nil, err
@@ -178,6 +179,7 @@ func prepareNodes(networkResource types.NetworkResource) ([]string, error) {
 				hostnames = append(hostnames, peer.Name)
 			}
 		}
+		fmt.Printf("discovered node %s\n", peer.Name)
 	}
 	if len(hostnames) == 0 {
 		return nil, errors.New("host list is empty")
@@ -237,8 +239,45 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 	return nil
 }
 
+// Docker client init
+func dockerClientInit(host string) (*docker.Docker, error) {
+	hasAScheme, err := regexp.MatchString(".*://.*", host)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAScheme {
+		host = "tcp://" + host
+	}
+	hasAPort, err := regexp.MatchString(".*(:[0-9]+|sock)", host)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAPort {
+		host = host + ":2375"
+	}
+	client := docker.NewClient(host, docker.DefaultVersion)
+	return client, nil
+}
+
+// am I a manager?
+func isAManager(client *docker.Docker) (bool, error) {
+	if err := client.Connect(); err != nil {
+		return false, err
+	}
+	info, err := client.GetClient().Info(context.Background())
+	if err != nil {
+		return false, err
+	}
+	nodeId := info.Swarm.NodeID
+	for _, peer := range info.Swarm.RemoteManagers {
+		if peer.NodeID == nodeId {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func main() {
-	var client *docker.Docker
 	var configuration string
 	var configurationTemplate string
 	var host string
@@ -250,22 +289,14 @@ func main() {
 		Short: "Prometheus controller",
 		Long:  `Keep the Prometheus configuration up to date with swarm discovery`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Docker client init
-			hasAScheme, err := regexp.MatchString(".*://.*", host)
+			client, err := dockerClientInit(host)
 			if err != nil {
 				return err
 			}
-			if !hasAScheme {
-				host = "tcp://" + host
+			manager, err := isAManager(client)
+			if !manager || err != nil {
+				return fmt.Errorf("service discovery requires a connection to a manager engine socket")
 			}
-			hasAPort, err := regexp.MatchString(".*(:[0-9]+|sock)", host)
-			if err != nil {
-				return err
-			}
-			if !hasAPort {
-				host = host + ":2375"
-			}
-			client = docker.NewClient(host, docker.DefaultVersion)
 			stop := make(chan os.Signal, 1)
 			signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 			tick := time.Tick(time.Duration(period) * time.Minute)
@@ -278,7 +309,9 @@ func main() {
 			for {
 				select {
 				case <-tick:
-					update(prometheusPID, client, configurationTemplate, configuration)
+					if err := update(prometheusPID, client, configurationTemplate, configuration); err != nil {
+						fmt.Println(err.Error())
+					}
 				case sig := <-stop:
 					log.Printf("%v signal trapped\n", sig)
 					break loop
