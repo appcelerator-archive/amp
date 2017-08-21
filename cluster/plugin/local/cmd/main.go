@@ -79,16 +79,20 @@ func version(cmd *cobra.Command, args []string) {
 func info(cmd *cobra.Command, args []string) {
 	// docker node inspect self -f '{{.Status.State}}'
 	ctx := context.Background()
-	swarmResp, err := plugin.InfoCluster(ctx, dockerClient)
+	coreResp, err := plugin.InfoAMPCore(ctx, dockerClient)
 	if err != nil {
 		log.Fatal(err)
 	}
-	nodeResp, err := plugin.InfoNode(ctx, dockerClient)
+	userResp, err := plugin.InfoUser(ctx, dockerClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+	types, err := dockerClient.Info(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	j, err := plugin.InfoToJSON(swarmResp, nodeResp)
+	j, err := plugin.InfoToJSON(string(types.Swarm.LocalNodeState), coreResp, userResp)
 	if err != nil {
 		log.Fatal(err)
 	}

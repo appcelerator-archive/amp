@@ -25,6 +25,7 @@ const (
 	ImageName         = "appcelerator/ampagent"
 	DockerSocket      = "/var/run/docker.sock"
 	DockerSwarmSocket = "/var/run/docker"
+	CoreStackName = "amp"
 )
 
 var (
@@ -50,8 +51,9 @@ type FullSwarmInfo struct {
 	Node  swarm.Node
 }
 type ShortSwarmInfo struct {
-	SwarmID string `json:"SwarmID"`
-	NodeID  string `json:"NodeID"`
+	SwarmStatus string `json:"Swarm Status"`
+	CoreServices  int `json:"Core Services"`
+	UserServices  int `json:"User Services"`
 }
 
 // EnsureSwarmExists checks that the Swarm is initialized, and does it if it's not the case
@@ -248,9 +250,39 @@ func InfoNode(ctx context.Context, c *client.Client) (swarm.Node, error) {
 	return node, err
 }
 
-func InfoToJSON(sw swarm.Swarm, node swarm.Node) (string, error) {
+// InfoAMPCore returns the number of AMP core services
+func InfoAMPCore(ctx context.Context, c *client.Client) (int, error) {
+	var count int
+	services, err := c.ServiceList(ctx, types.ServiceListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	for _, service := range services {
+		if strings.HasPrefix(service.Spec.Name, fmt.Sprintf("%s_", CoreStackName)) {
+			count++
+		}
+	}
+	return count, err
+}
+
+// InfoUser returns the number of user services
+func InfoUser(ctx context.Context, c *client.Client) (int, error) {
+	var count int
+	services, err := c.ServiceList(ctx, types.ServiceListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	for _, service := range services {
+		if !strings.HasPrefix(service.Spec.Name, CoreStackName) {
+			count++
+		}
+	}
+	return count, err
+}
+
+func InfoToJSON(status string, csCount int, usCount int) (string, error) {
 	// filter the swarm content
-	si := ShortSwarmInfo{SwarmID: sw.ID, NodeID: node.ID}
+	si := ShortSwarmInfo{SwarmStatus: status, CoreServices: csCount, UserServices: usCount}
 	j, err := json.Marshal(si)
 	if err != nil {
 		return "", err
