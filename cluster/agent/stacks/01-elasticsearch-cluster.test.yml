@@ -11,10 +11,12 @@ services:
     image: appcelerator/alpine:3.6.0
     networks:
       - default
-    command: ["curl", "-sfm", "65", "${AMP_STACK:-amp}_elasticsearch:9200/_cluster/health?wait_for_status=green&timeout=60s" ]
+    command: ["curl", "--retry", "3", "--retry-connrefused", "--retry-delay", "5", "-sfm", "65", "${AMP_STACK:-amp}_elasticsearch:9200/_cluster/health?wait_for_status=green&timeout=60s" ]
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
+      amp.service.stabilize.delay: "0s"
+      amp.service.stabilize.timeout: "90s"
     deploy:
       mode: replicated
       replicas: 1

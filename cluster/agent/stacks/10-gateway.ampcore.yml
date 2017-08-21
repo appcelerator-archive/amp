@@ -8,13 +8,13 @@ networks:
 services:
 
   gateway:
-    image: appcelerator/gateway:${TAG:-0.14.0}
+    image: appcelerator/gateway:${TAG:-0.14.1}
     networks:
       - default
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "30s"
+      amp.service.stabilize.timeout: "20s"
     environment:
       SERVICE_PORTS: 80
       VIRTUAL_HOST: "https://gw.*,http://gw.*"

@@ -315,6 +315,7 @@ func deployServices(
 		// service stabilization defaults
 		stabilizeDelay := time.Duration(5) * time.Second
 		stabilizeTimeout := time.Duration(1) * time.Minute
+		pullTimeout := time.Duration(1) * time.Minute
 
 		// override service stabilization default settings based on spec labels
 		labels := serviceSpec.TaskTemplate.ContainerSpec.Labels
@@ -330,9 +331,15 @@ func deployServices(
 				return err
 			}
 		}
+		if labels["amp.service.pull.timeout"] != "" {
+			pullTimeout, err = time.ParseDuration(labels["amp.service.pull.timeout"])
+			if err != nil {
+				return err
+			}
+		}
 
 		// apply service stabilization timeout setting - the service must be stable before the timeout
-		ctx, _ := context.WithTimeout(ctx, stabilizeTimeout)
+		ctx, _ := context.WithTimeout(ctx, pullTimeout+stabilizeTimeout)
 		var imageName string
 		var serviceID string
 
@@ -399,7 +406,7 @@ func deployServices(
 		})
 		w.Watch()
 
-		NotifyState(ctx, apiClient, serviceID, expectedState, stabilizeDelay, func(err error) {
+		NotifyState(ctx, apiClient, serviceID, expectedState, stabilizeDelay, stabilizeTimeout, pullTimeout, func(err error) {
 			done <- err
 		})
 
@@ -424,22 +431,73 @@ func MessageString(m events.Message) string {
 		m.ID, m.Status, m.From, m.Type, m.Action, m.Actor.ID, a, m.Scope, m.Time, m.TimeNano)
 }
 
-// NotifyState calls the provided callback when the desired service state is achieved for all tasks or when the deadline is exceeded
-func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID string, desiredState swarm.TaskState, stabilizeDelay time.Duration, callback func(error)) {
-	deadline, isSet := ctx.Deadline()
-	if !isSet {
-		deadline = time.Now().Add(1 * time.Minute)
+// if *any* task is failed and the desired state is Complete (test service), no need to wait anymore
+func reachedDesiredState(tasks []swarm.Task, desiredState swarm.TaskState) (bool, error) {
+	for _, t := range tasks {
+		// a test stack should fail fast
+		if t.Status.State == swarm.TaskStateFailed && desiredState == swarm.TaskStateComplete {
+			return false, errors.New("at least one task failed")
+		}
+		if t.Status.State != desiredState {
+			return false, nil
+		}
 	}
+	//fmt.Println("service has reached desired state")
+	return true, nil
+}
+
+// if a single task does not have the image ready, it returns false
+func imageIsPulled(tasks []swarm.Task) (bool, error) {
+	// task states where the image is ready
+	preparedStates := map[swarm.TaskState]bool{
+		swarm.TaskStateNew:       false,
+		swarm.TaskStateAllocated: false,
+		swarm.TaskStatePending:   false,
+		swarm.TaskStateAssigned:  false,
+		swarm.TaskStatePreparing: false,
+		swarm.TaskStateReady:     true,
+		swarm.TaskStateStarting:  true,
+		swarm.TaskStateRunning:   true,
+		swarm.TaskStateComplete:  true,
+		swarm.TaskStateShutdown:  true,
+		swarm.TaskStateFailed:    true,
+		swarm.TaskStateRejected:  false,
+	}
+	if len(tasks) == 0 {
+		// that case may happen, the ListTasks request may return an empty list,
+		// in which case we should retry
+		return false, nil
+	}
+	for _, t := range tasks {
+		if t.Status.State == swarm.TaskStateRejected {
+			return false, errors.New("unable to pull the image")
+		}
+		if !preparedStates[t.Status.State] {
+			//fmt.Printf("task status: %s\n", string(t.Status.State))
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// NotifyState calls the provided callback when the desired service state is achieved for all tasks or when the deadline is exceeded
+func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID string, desiredState swarm.TaskState, stabilizeDelay time.Duration, stabilizeTimeout time.Duration, pullTimeout time.Duration, callback func(error)) {
+	startTime := time.Now()
+	// first deadline for the image pull
+	pullDeadline := startTime.Add(pullTimeout)
+	// second deadline based on the stabilize timeout
+	deadline := startTime.Add(stabilizeTimeout)
 
 	go func() {
 		taskOpts := types.TaskListOptions{}
 		taskOpts.Filters = filters.NewArgs()
 		taskOpts.Filters.Add("service", serviceID)
-		counter := 0
-
+		stabilized := false
+		pulled := false
+		reachedState := false
 		for {
 			// all tasks need to match the desired state and be stable within the deadline
-			if time.Now().After(deadline) {
+			if pulled && time.Now().After(deadline) {
 				callback(errors.New("failed to achieve desired state before deadline"))
 				return
 			}
@@ -451,30 +509,53 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID s
 				return
 			}
 
-			// if *any* task does not match the desired state then wait for another loop iteration to check again
-			failure := false
-			for _, t := range tasks {
-				if t.Status.State != desiredState {
-					failure = true
-					break
+			// update the pulled status
+			if !pulled {
+				prepared, err := imageIsPulled(tasks)
+				if err != nil {
+					callback(err)
+					return
+				}
+				if prepared {
+					fmt.Printf("image has been pulled after %s\n", time.Since(startTime))
+					pulled = true
+					// update stabilization timeout deadline
+					deadline = time.Now().Add(stabilizeTimeout)
+				} else if time.Now().After(pullDeadline) {
+					callback(errors.New("failed to pull the image on time"))
+					return
+				}
+			}
+			if pulled && !reachedState {
+				reachedState, err = reachedDesiredState(tasks, desiredState)
+				if err != nil {
+					callback(err)
+					return
+				}
+				if reachedState {
+					fmt.Printf("service has reached state after %s\n", time.Since(startTime))
 				}
 			}
 
-			// all tasks matched the desired state - now wait for things to stabilize, or if already stabilized,
-			// then callback with success
-			if !failure {
-				if counter < 1 {
-					// make sure we have enough time to wait for things to stabilize within the deadline
-					if time.Now().Add(stabilizeDelay).After(deadline) {
-						callback(errors.New("failed to achieve desired state with stabilization delay before deadline"))
-						return
-					}
-					time.Sleep(stabilizeDelay)
-					counter++
-				} else {
+			// if *any* task does not match the desired state then wait for
+			// another loop iteration to check again
+			if pulled && reachedState {
+				// all tasks matched the desired state
+				// now wait for things to stabilize, or if already stabilized,
+				// then callback with success
+				if stabilized {
 					// success!
 					callback(nil)
 					return
+				} else {
+					// make sure we have enough time to wait for
+					// things to stabilize within the deadline
+					if time.Now().Add(stabilizeDelay).After(deadline) {
+						callback(errors.New("won't be able to achieve desired state with stabilization delay before deadline"))
+						return
+					}
+					time.Sleep(stabilizeDelay)
+					stabilized = true
 				}
 			}
 

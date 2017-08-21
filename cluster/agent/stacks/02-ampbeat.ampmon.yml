@@ -8,7 +8,7 @@ networks:
 services:
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG:-0.14.0}
+    image: appcelerator/ampbeat:${TAG:-0.14.1}
     networks:
       - default
     deploy:
@@ -21,6 +21,5 @@ services:
         - node.labels.amp.type.core == true
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "30s"
-
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"

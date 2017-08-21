@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-c582a4be
+      Default: ami-598ebb22
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-0ee4c46b
+      Default: ami-60bf9f05
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-6736d11f
+      Default: ami-8d24c7f5
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-2fc33756
+      Default: ami-b66494cf
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-d08a94b3
+      Default: ami-a3677fc0
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -235,7 +235,7 @@ Parameters:
     Default: yes
   ApplicationVersion:
     Type: String
-    Description: Use the latest release version for the best result (a tag, e.g. 0.14.0)
+    Description: Use the latest release version for the best result (a tag, e.g. 0.14.1)
     Default: latest
   MirrorRegistry:
     Type: String

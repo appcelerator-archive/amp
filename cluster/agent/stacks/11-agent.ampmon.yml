@@ -11,7 +11,7 @@ volumes:
 services:
 
   agent:
-    image: appcelerator/agent:${TAG:-0.14.0}
+    image: appcelerator/agent:${TAG:-0.14.1}
     networks:
       - default
     deploy:
@@ -20,8 +20,8 @@ services:
         io.amp.role: "infrastructure"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "30s"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
     volumes:
       - ampagent:/containers
       - /var/run/docker.sock:/var/run/docker.sock

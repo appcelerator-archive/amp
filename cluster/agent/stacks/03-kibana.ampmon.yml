@@ -22,8 +22,9 @@ services:
         - node.labels.amp.type.core == true
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "25s"
-      amp.service.stabilize.timeout: "40s"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "60s"
+      amp.service.pull.timeout: "120s"
     environment:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
       SERVICE_PORTS: 5601

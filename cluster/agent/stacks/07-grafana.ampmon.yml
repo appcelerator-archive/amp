@@ -21,8 +21,9 @@ services:
       VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "10s"
+      amp.service.stabilize.delay: "6s"
       amp.service.stabilize.timeout: "60s"
+      amp.service.pull.timeout: "120s"
     deploy:
       mode: replicated
       replicas: 1
