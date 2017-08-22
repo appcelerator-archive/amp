@@ -75,20 +75,30 @@ func (s *Server) getRequesterEmail(ctx context.Context) string {
 	if activeOrganization != "" {
 		organization, err := s.Accounts.GetOrganization(ctx, activeOrganization)
 		if err != nil {
+			log.Infoln("getRequesterEmail:", err.Error)
 			return ""
 		}
 		if organization == nil {
+			log.Infoln("getRequesterEmail: no active organization")
 			return ""
+		}
+		if organization.Email == "" {
+			log.Infoln("getRequesterEmail: active organization has no email")
 		}
 		return organization.Email
 	}
 
 	user, err := s.Accounts.GetUser(ctx, auth.GetUser(ctx))
 	if err != nil {
+		log.Infoln("getRequesterEmail:", err.Error)
 		return ""
 	}
 	if user == nil {
+		log.Infoln("getRequesterEmail: user does not exist")
 		return ""
+	}
+	if user.Email == "" {
+		log.Infoln("getRequesterEmail: user has no email")
 	}
 	return user.Email
 }
@@ -98,27 +108,38 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 	// Create user
 	user, err := s.Accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
+		log.Errorf("User creation failed (%s)", in.Name)
 		if errd := s.Accounts.DeleteNotVerifiedUser(ctx, in.Name); errd != nil {
-			return nil, convertError(fmt.Errorf("Delete user error [%v] comming after CreateUser error [%v]", errd, err))
+			log.Infof("User deletion also failed (%s)", in.Name)
 		}
 		return nil, convertError(err)
 	}
 
 	// There is no personal account in this release, add the user to the default organization
 	if err := s.Accounts.AddUserToOrganization(ctx, accounts.DefaultOrganization, in.Name); err != nil {
+		log.Errorf("Unable to add user %s to the default organization: %s", in.Name, err.Error())
 		if errd := s.Accounts.DeleteNotVerifiedUser(ctx, in.Name); errd != nil {
-			return nil, convertError(fmt.Errorf("Delete user error [%v] comming after AddUserToOrganization error [%v]", errd, err))
+			log.Errorf("User deletion failed (%s)", in.Name)
 		}
 		return nil, convertError(err)
 	}
 
 	switch s.Config.Registration {
 	case configuration.RegistrationEmail:
+		if user.Email == "" {
+			log.Errorf("Fail to send verification notification to user %s, no email set", user.Name)
+			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
+				log.Errorf("Fail to delete user %s", user.Name)
+			} else {
+				log.Infof("user %s has been deleted", user.Name)
+			}
+			return nil, convertError(fmt.Errorf("unable to send email to %s, there's no email set for this user", user.Name))
+		}
 		// Create a verification token valid for an hour
 		token, err := s.Tokens.CreateVerificationToken(user.Name)
 		if err != nil {
 			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
-				return nil, convertError(fmt.Errorf("Delete user error [%v] comming after to VerificationToken error [%v]", errd, err))
+				return nil, convertError(fmt.Errorf("user deletion error [%v] after a VerificationToken error [%v]", errd, err))
 			}
 			return nil, convertError(err)
 		}
@@ -130,6 +151,7 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 			}
 			return nil, err
 		}
+		log.Infof("Verification email sent to %s (%s)", user.Email, user.Name)
 	}
 	log.Infoln("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
@@ -152,7 +174,11 @@ func (s *Server) Verify(ctx context.Context, in *VerificationRequest) (*empty.Em
 	if user == nil {
 		return nil, accounts.UserNotFound
 	}
-	if err := s.Mailer.SendAccountVerifiedEmail(user.Email, user.Name); err != nil {
+	if user.Email == "" {
+		log.Infof("Unable to send the validation notification to user %s, no email available", user.Name)
+		// no reason to exit in error, it's just a notification, if it's not delivered
+		// it's not blocking the workflow for the user
+	} else if err := s.Mailer.SendAccountVerifiedEmail(user.Email, user.Name); err != nil {
 		return nil, convertError(err)
 	}
 	log.Infoln("Successfully verified user", user.Name)
