@@ -28,6 +28,7 @@ var (
 		"/account.Account/PasswordReset",
 		"/account.Account/PasswordSet",
 		"/account.Account/ForgotLogin",
+		"/account.Account/ResendVerify",
 		"/account.Account/GetUser",
 		"/account.Account/ListUsers",
 		"/account.Account/GetOrganization",
