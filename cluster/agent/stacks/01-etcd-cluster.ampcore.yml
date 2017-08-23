@@ -11,7 +11,7 @@ volumes:
 services:
 
   etcd:
-    image: appcelerator/etcd:3.1.10
+    image: appcelerator/etcd:3.2.6
     networks:
       default:
     volumes:
@@ -34,8 +34,8 @@ services:
         delay: 30s
       restart_policy:
         condition: any
-        delay: 5s
-        window: 25s
+        delay: 25s
+        window: 15s
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "2379"
