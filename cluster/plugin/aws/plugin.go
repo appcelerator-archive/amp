@@ -175,3 +175,13 @@ func StackOutputToJSON(so []StackOutput) (string, error) {
 	}
 	return string(j), nil
 }
+
+// ListStack lists the stacks based on the filter on stack status
+func ListStack(ctx context.Context, svc *cf.CloudFormation) (*cf.ListStacksOutput, error) {
+	statusFilter := []string{cf.StackStatusCreateFailed, cf.StackStatusCreateInProgress, cf.ChangeSetStatusCreateComplete, cf.StackStatusRollbackInProgress, cf.StackStatusRollbackFailed, cf.StackStatusDeleteInProgress}
+	input := &cf.ListStacksInput{
+		StackStatusFilter: aws.StringSlice(statusFilter),
+	}
+
+	return svc.ListStacksWithContext(ctx, input)
+}
