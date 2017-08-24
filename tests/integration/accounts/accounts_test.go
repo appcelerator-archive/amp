@@ -41,14 +41,14 @@ func TestMain(m *testing.M) {
 // Users
 
 func TestUserShouldSignUpAndVerify(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(anonymous, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testOwner)
 	assert.NoError(t, err)
 
 	// Create a token
-	token, err := h.Tokens().CreateVerificationToken(testUser.Name)
+	token, err := h.Tokens().CreateVerificationToken(testOwner.Name)
 	assert.NoError(t, err)
 
 	// Verify
@@ -57,66 +57,66 @@ func TestUserShouldSignUpAndVerify(t *testing.T) {
 }
 
 func TestUserSignUpInvalidNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	invalidSignUp := testUser
+	invalidSignUp := testOwner
 	invalidSignUp.Name = "UpperCaseIsNotAllowed"
 	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidEmailShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	invalidSignUp := testUser
+	invalidSignUp := testOwner
 	invalidSignUp.Email = "this is not an email"
 	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpInvalidPasswordShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	invalidSignUp := testUser
+	invalidSignUp := testOwner
 	invalidSignUp.Password = ""
 	_, err := h.Accounts().SignUp(anonymous, &invalidSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpAlreadyExistsShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(anonymous, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testOwner)
 	assert.NoError(t, err)
 
 	// SignUp
-	_, err = h.Accounts().SignUp(anonymous, &testUser)
+	_, err = h.Accounts().SignUp(anonymous, &testOwner)
 	assert.Error(t, err)
 }
 
 func TestUserSignUpConflictWithOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testOrg := h.RandomOrg()
 
 	// Create an organization
-	h.CreateOrganization(t, &testOrg, &testUser)
+	h.CreateOrganization(t, &testOrg, &testOwner)
 
 	// SignUp user with organization name
-	conflictSignUp := testUser
+	conflictSignUp := testOwner
 	conflictSignUp.Name = testOrg.Name
 	_, err := h.Accounts().SignUp(anonymous, &conflictSignUp)
 	assert.Error(t, err)
 }
 
 func TestUserVerifyNotATokenShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(anonymous, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testOwner)
 	assert.NoError(t, err)
 
 	// Verify
@@ -135,74 +135,74 @@ func TestUserVerifyNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestUserLogin(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Login
 	_, err := h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
-		Password: testUser.Password,
+		Name:     testOwner.Name,
+		Password: testOwner.Password,
 	})
 	assert.NoError(t, err)
 }
 
 func TestUserLoginNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Login
 	_, err := h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
-		Password: testUser.Password,
+		Name:     testOwner.Name,
+		Password: testOwner.Password,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserLoginInvalidNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Login
 	_, err := h.Accounts().Login(anonymous, &LogInRequest{
 		Name:     "not the right user name",
-		Password: testUser.Password,
+		Password: testOwner.Password,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserLoginInvalidPasswordShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Login
 	_, err := h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: "not the right password",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordReset(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 }
 
 func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
 	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: "this is not a valid user name"})
@@ -210,10 +210,10 @@ func TestUserPasswordResetMalformedRequestShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
 	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: "nonexistinguser"})
@@ -221,13 +221,13 @@ func TestUserPasswordResetNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestUserPasswordSet(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Set
-	token, _ := h.Tokens().CreatePasswordToken(testUser.Name)
+	token, _ := h.Tokens().CreatePasswordToken(testOwner.Name)
 	_, err := h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    token,
 		Password: "newPassword",
@@ -236,20 +236,20 @@ func TestUserPasswordSet(t *testing.T) {
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: "newPassword",
 	})
 	assert.NoError(t, err)
 }
 
 func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 
 	// Password Set
@@ -261,20 +261,20 @@ func TestUserPasswordSetInvalidTokenShouldFail(t *testing.T) {
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 
 	// Password Set
@@ -287,24 +287,24 @@ func TestUserPasswordSetNonExistingUserShouldFail(t *testing.T) {
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: "newPassword",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Password Reset
-	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testUser.Name})
+	_, err := h.Accounts().PasswordReset(anonymous, &PasswordResetRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 
 	// Password Set
-	token, _ := h.Tokens().CreatePasswordToken(testUser.Name)
+	token, _ := h.Tokens().CreatePasswordToken(testOwner.Name)
 	_, err = h.Accounts().PasswordSet(anonymous, &PasswordSetRequest{
 		Token:    token,
 		Password: "",
@@ -313,39 +313,39 @@ func TestUserPasswordSetInvalidPasswordShouldFail(t *testing.T) {
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: "",
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordChange(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Password Change
 	newPassword := "newPassword"
 	_, err := h.Accounts().PasswordChange(ownerCtx, &PasswordChangeRequest{
-		ExistingPassword: testUser.Password,
+		ExistingPassword: testOwner.Password,
 		NewPassword:      newPassword,
 	})
 	assert.NoError(t, err)
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: newPassword,
 	})
 	assert.NoError(t, err)
 }
 
 func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Password Change
 	newPassword := "newPassword"
@@ -357,75 +357,75 @@ func TestUserPasswordChangeInvalidExistingPassword(t *testing.T) {
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: newPassword,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordChangeEmptyNewPassword(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Password Change
 	newPassword := ""
 	_, err := h.Accounts().PasswordChange(ownerCtx, &PasswordChangeRequest{
-		ExistingPassword: testUser.Password,
+		ExistingPassword: testOwner.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: newPassword,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserPasswordChangeInvalidNewPassword(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Password Change
 	newPassword := "aze"
 	_, err := h.Accounts().PasswordChange(ownerCtx, &PasswordChangeRequest{
-		ExistingPassword: testUser.Password,
+		ExistingPassword: testOwner.Password,
 		NewPassword:      newPassword,
 	})
 	assert.Error(t, err)
 
 	// Login
 	_, err = h.Accounts().Login(anonymous, &LogInRequest{
-		Name:     testUser.Name,
+		Name:     testOwner.Name,
 		Password: newPassword,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserForgotLogin(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(anonymous, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testOwner)
 	assert.NoError(t, err)
 
 	// ForgotLogin
 	_, err = h.Accounts().ForgotLogin(anonymous, &ForgotLoginRequest{
-		Email: testUser.Email,
+		Email: testOwner.Email,
 	})
 	assert.NoError(t, err)
 }
 
 func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// SignUp
-	_, err := h.Accounts().SignUp(anonymous, &testUser)
+	_, err := h.Accounts().SignUp(anonymous, &testOwner)
 	assert.NoError(t, err)
 
 	// ForgotLogin
@@ -436,45 +436,45 @@ func TestUserForgotLoginMalformedEmailShouldFail(t *testing.T) {
 }
 
 func TestUserForgotLoginNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// ForgotLogin
 	_, err := h.Accounts().ForgotLogin(anonymous, &ForgotLoginRequest{
-		Email: testUser.Email,
+		Email: testOwner.Email,
 	})
 	assert.Error(t, err)
 }
 
 func TestUserGet(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	userCtx := h.CreateUser(t, &testUser)
+	userCtx := h.CreateUser(t, &testOwner)
 
 	// Get
 	getReply, err := h.Accounts().GetUser(userCtx, &GetUserRequest{
-		Name: testUser.Name,
+		Name: testOwner.Name,
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, getReply)
-	assert.Equal(t, testUser.Name, getReply.User.Name)
-	assert.Equal(t, testUser.Email, getReply.User.Email)
+	assert.Equal(t, testOwner.Name, getReply.User.Name)
+	assert.Equal(t, testOwner.Email, getReply.User.Email)
 	assert.NotEmpty(t, getReply.User.CreateDt)
 }
 
 func TestAnonymousUserGetShouldNotReturnUserEmail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Get
 	getReply, err := h.Accounts().GetUser(anonymous, &GetUserRequest{
-		Name: testUser.Name,
+		Name: testOwner.Name,
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, getReply)
-	assert.Equal(t, testUser.Name, getReply.User.Name)
+	assert.Equal(t, testOwner.Name, getReply.User.Name)
 	assert.Empty(t, getReply.User.Email)
 	assert.NotEmpty(t, getReply.User.CreateDt)
 }
@@ -496,10 +496,10 @@ func TestUserGetNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestUserList(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// List
 	listReply, err := h.Accounts().ListUsers(anonymous, &ListUsersRequest{})
@@ -507,7 +507,7 @@ func TestUserList(t *testing.T) {
 	assert.NotEmpty(t, listReply)
 	found := false
 	for _, user := range listReply.Users {
-		if user.Name == testUser.Name {
+		if user.Name == testOwner.Name {
 			found = true
 			break
 		}
@@ -516,22 +516,22 @@ func TestUserList(t *testing.T) {
 }
 
 func TestUserDelete(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Delete
-	_, err := h.Accounts().DeleteUser(ownerCtx, &DeleteUserRequest{Name: testUser.Name})
+	_, err := h.Accounts().DeleteUser(ownerCtx, &DeleteUserRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 }
 
 func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
 
 	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Create another user
 	h.CreateUser(t, &testMember)
@@ -541,581 +541,581 @@ func TestUserDeleteSomeoneElseAccountShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create an organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a member
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
-
-	// Delete
-	_, err := h.Accounts().DeleteUser(memberCtx, &DeleteUserRequest{Name: testMember.Name})
-	assert.NoError(t, err)
-}
-
-// Organizations
-
-func TestOrganizationCreate(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// CreateOrganization
-	_, err := h.Accounts().CreateOrganization(ownerCtx, &testOrg)
-	assert.NoError(t, err)
-}
-
-func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// CreateOrganization
-	invalidRequest := testOrg
-	invalidRequest.Name = "this is not a valid name"
-	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
-	assert.Error(t, err)
-}
-
-func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// CreateOrganization
-	invalidRequest := testOrg
-	invalidRequest.Email = "this is not a valid email"
-	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
-	assert.Error(t, err)
-}
-
-func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// CreateOrganization again
-	_, err := h.Accounts().CreateOrganization(ownerCtx, &testOrg)
-	assert.Error(t, err)
-}
-
-func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// CreateOrganization
-	invalidRequest := testOrg
-	invalidRequest.Name = testUser.Name
-	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddUser(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-}
-
-func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: "this is not a valid name",
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         "this is not a valid name",
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create owner
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	memberCtx := h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(memberCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// AddUserToOrganization
-	_, err = h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveUser(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-}
-
-func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: "this is not a valid name",
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         "this is not a valid name",
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// RemoveUserFromOrganization
-	_, err := h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	memberCtx := h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(memberCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testUser.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// RemoveUserFromOrganization
-	_, err := h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-
-	// RemoveUserFromOrganization
-	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testUser.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationChangeUserRole(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a member
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
-
-	_, err := h.Accounts().ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
-	})
-	assert.NoError(t, err)
-}
-
-func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a member
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
-
-	_, err := h.Accounts().ChangeOrganizationMemberRole(memberCtx, &ChangeOrganizationMemberRoleRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create user
-	h.CreateUser(t, &testMember)
-
-	_, err := h.Accounts().ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationGet(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a organization
-	h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Get
-	getReply, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
-		Name: testOrg.Name,
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, getReply)
-	assert.Equal(t, getReply.Organization.Name, testOrg.Name)
-	assert.Equal(t, getReply.Organization.Email, testOrg.Email)
-	assert.NotEmpty(t, getReply.Organization.CreateDt)
-}
-
-func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
-	// Get
-	_, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
-		Name: "this organization is malformed",
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationList(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	h.CreateOrganization(t, &testOrg, &testUser)
-
-	// List
-	listReply, err := h.Accounts().ListOrganizations(anonymous, &ListOrganizationsRequest{})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, listReply)
-	found := false
-	for _, org := range listReply.Organizations {
-		if org.Name == testOrg.Name {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found)
-}
-
-func TestOrganizationDelete(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Delete
-	_, err := h.Accounts().DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
-		Name: testOrg.Name,
-	})
-	assert.NoError(t, err)
-}
-
-func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a member
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
-
-	// Delete
-	_, err := h.Accounts().DeleteOrganization(memberCtx, &DeleteOrganizationRequest{
-		Name: testOrg.Name,
-	})
-	assert.Error(t, err)
-}
-
-func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-
-	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// Delete
-	_, err := h.Accounts().DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
-		Name: testOrg.Name,
-	})
-	assert.Error(t, err)
-}
+//func testOwnerDeleteUserNotOwnerOfOrganizationShouldSucceed(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create an organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create a member
+//	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+//
+//	// Delete
+//	_, err := h.Accounts().DeleteUser(memberCtx, &DeleteUserRequest{Name: testMember.Name})
+//	assert.NoError(t, err)
+//}
+//
+//// Organizations
+//
+//func TestOrganizationCreate(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// CreateOrganization
+//	_, err := h.Accounts().CreateOrganization(ownerCtx, &testOrg)
+//	assert.NoError(t, err)
+//}
+//
+//func TestOrganizationCreateInvalidNameShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// CreateOrganization
+//	invalidRequest := testOrg
+//	invalidRequest.Name = "this is not a valid name"
+//	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationCreateInvalidEmailShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// CreateOrganization
+//	invalidRequest := testOrg
+//	invalidRequest.Email = "this is not a valid email"
+//	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationCreateAlreadyExistsShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// CreateOrganization again
+//	_, err := h.Accounts().CreateOrganization(ownerCtx, &testOrg)
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationCreateConflictsWithUserShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// CreateOrganization
+//	invalidRequest := testOrg
+//	invalidRequest.Name = testOwner.Name
+//	_, err := h.Accounts().CreateOrganization(ownerCtx, &invalidRequest)
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddUser(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//}
+//
+//func TestOrganizationAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: "this is not a valid name",
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddUserInvalidUserNameShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         "this is not a valid name",
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create owner
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddUserNotOwnerShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	memberCtx := h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(memberCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddNonExistingUserShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationAddSameUserTwiceShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// AddUserToOrganization
+//	_, err = h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveUser(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//}
+//
+//func TestOrganizationRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: "this is not a valid name",
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveUserInvalidUserNameShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         "this is not a valid name",
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// RemoveUserFromOrganization
+//	_, err := h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveUserNotOwnerShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	memberCtx := h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(memberCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testOwner.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveNonExistingUserShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// RemoveUserFromOrganization
+//	_, err := h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveSameUserTwiceShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationRemoveAllOwnersShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err := h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//
+//	// RemoveUserFromOrganization
+//	_, err = h.Accounts().RemoveUserFromOrganization(ownerCtx, &RemoveUserFromOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testOwner.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationChangeUserRole(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create a member
+//	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+//
+//	_, err := h.Accounts().ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+//	})
+//	assert.NoError(t, err)
+//}
+//
+//func TestOrganizationChangeUserRoleNotOwnerShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create a member
+//	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+//
+//	_, err := h.Accounts().ChangeOrganizationMemberRole(memberCtx, &ChangeOrganizationMemberRoleRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationChangeUserRoleNonExistingUserShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create organization
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create user
+//	h.CreateUser(t, &testMember)
+//
+//	_, err := h.Accounts().ChangeOrganizationMemberRole(ownerCtx, &ChangeOrganizationMemberRoleRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//		Role:             accounts.OrganizationRole_ORGANIZATION_OWNER,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationGet(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a organization
+//	h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Get
+//	getReply, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
+//		Name: testOrg.Name,
+//	})
+//	assert.NoError(t, err)
+//	assert.NotEmpty(t, getReply)
+//	assert.Equal(t, getReply.Organization.Name, testOrg.Name)
+//	assert.Equal(t, getReply.Organization.Email, testOrg.Email)
+//	assert.NotEmpty(t, getReply.Organization.CreateDt)
+//}
+//
+//func TestOrganizationGetMalformedOrganizationShouldFail(t *testing.T) {
+//	// Get
+//	_, err := h.Accounts().GetOrganization(anonymous, &GetOrganizationRequest{
+//		Name: "this organization is malformed",
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationList(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// List
+//	listReply, err := h.Accounts().ListOrganizations(anonymous, &ListOrganizationsRequest{})
+//	assert.NoError(t, err)
+//	assert.NotEmpty(t, listReply)
+//	found := false
+//	for _, org := range listReply.Organizations {
+//		if org.Name == testOrg.Name {
+//			found = true
+//			break
+//		}
+//	}
+//	assert.True(t, found)
+//}
+//
+//func TestOrganizationDelete(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Delete
+//	_, err := h.Accounts().DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
+//		Name: testOrg.Name,
+//	})
+//	assert.NoError(t, err)
+//}
+//
+//func TestOrganizationDeleteNotOwnerShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create a member
+//	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+//
+//	// Delete
+//	_, err := h.Accounts().DeleteOrganization(memberCtx, &DeleteOrganizationRequest{
+//		Name: testOrg.Name,
+//	})
+//	assert.Error(t, err)
+//}
+//
+//func TestOrganizationDeleteNonExistingOrganizationShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//
+//	// Create a user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// Delete
+//	_, err := h.Accounts().DeleteOrganization(ownerCtx, &DeleteOrganizationRequest{
+//		Name: testOrg.Name,
+//	})
+//	assert.Error(t, err)
+//}
 
 // Teams
 
 func TestTeamCreate(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// CreateTeam
 	_, err := h.Accounts().CreateTeam(ownerCtx, &testTeam)
@@ -1123,12 +1123,12 @@ func TestTeamCreate(t *testing.T) {
 }
 
 func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// CreateTeam
 	invalidRequest := testTeam
@@ -1138,12 +1138,12 @@ func TestTeamCreateInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// CreateTeam
 	invalidRequest := testTeam
@@ -1152,45 +1152,45 @@ func TestTeamCreateInvalidTeamNameShouldFail(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-	testTeam := h.RandomTeam(testOrg.Name)
-
-	// Create a user
-	ownerCtx := h.CreateUser(t, &testUser)
-
-	// CreateTeam
-	invalidRequest := testTeam
-	invalidRequest.OrganizationName = "non-existing-org"
-	_, err := h.Accounts().CreateTeam(ownerCtx, &invalidRequest)
-	assert.Error(t, err)
-}
-
-func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-	testTeam := h.RandomTeam(testOrg.Name)
-
-	// Create organization
-	h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a user not part of the organization
-	notOrgOwnerCtx := h.CreateUser(t, &testMember)
-
-	// CreateTeam
-	_, err := h.Accounts().CreateTeam(notOrgOwnerCtx, &testTeam)
-	assert.Error(t, err)
-}
+//func TestTeamCreateNonExistingOrganizationShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testOrg := h.DefaultOrg()
+//	testTeam := h.RandomTeam(testOrg.Name)
+//
+//	// Create a user
+//	ownerCtx := h.CreateUser(t, &testOwner)
+//
+//	// CreateTeam
+//	invalidRequest := testTeam
+//	invalidRequest.OrganizationName = "non-existing-org"
+//	_, err := h.Accounts().CreateTeam(ownerCtx, &invalidRequest)
+//	assert.Error(t, err)
+//}
+//s
+//func TestTeamCreateNotOrgOwnerShouldFail(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.DefaultOrg()
+//	testOrg := h.RandomOrg()
+//	testTeam := h.RandomTeam(testOrg.Name)
+//
+//	// Create organization
+//	h.CreateOrganization(t, &testOrg, &testOwner)
+//
+//	// Create a user not part of the organization
+//	notOrgOwnerCtx := h.CreateUser(t, &testMember)
+//
+//	// CreateTeam
+//	_, err := h.Accounts().CreateTeam(notOrgOwnerCtx, &testTeam)
+//	assert.Error(t, err)
+//}
 
 func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// CreateTeam again
 	_, err := h.Accounts().CreateTeam(ownerCtx, &testTeam)
@@ -1198,14 +1198,14 @@ func TestTeamCreateAlreadyExistsShouldFail(t *testing.T) {
 }
 
 func TestTeamCreateByOrgMemberShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create organization and add a member
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testOwner)
+	memberCtx := h.CreateUser(t, &testMember)
 
 	// CreateTeam
 	_, err := h.Accounts().CreateTeam(memberCtx, &testTeam)
@@ -1213,14 +1213,14 @@ func TestTeamCreateByOrgMemberShouldSucceed(t *testing.T) {
 }
 
 func TestTeamAddUser(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1232,13 +1232,13 @@ func TestTeamAddUser(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1250,13 +1250,13 @@ func TestTeamAddUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1268,12 +1268,12 @@ func TestTeamAddUserInvalidTeamNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1285,13 +1285,13 @@ func TestTeamAddUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
@@ -1304,14 +1304,14 @@ func TestTeamAddUserToNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	ownerCtx := h.CreateUser(t, &testOwner)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1323,13 +1323,13 @@ func TestTeamAddUserToNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1341,14 +1341,14 @@ func TestTeamAddNonExistingUserToTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
+	memberCtx := h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(memberCtx, &AddUserToTeamRequest{
@@ -1360,14 +1360,14 @@ func TestTeamAddUserNotOrganizationOwnerShouldFail(t *testing.T) {
 }
 
 func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1387,30 +1387,30 @@ func TestTeamAddSameUserTwiceShouldFail(t *testing.T) {
 }
 
 func TestTeamChangeName(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Change team name
 	_, err := h.Accounts().ChangeTeamName(ownerCtx, &ChangeTeamNameRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
-		NewName:          "newteamname",
+		NewName:          "new" + testTeam.TeamName,
 	})
 	assert.NoError(t, err)
 }
 
 func TestTeamChangeNameToAlreadyExistingTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 	anotherTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create another team
 	_, err := h.Accounts().CreateTeam(ownerCtx, &anotherTeam)
@@ -1426,16 +1426,16 @@ func TestTeamChangeNameToAlreadyExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUser(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1455,16 +1455,16 @@ func TestTeamRemoveUser(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1484,16 +1484,16 @@ func TestTeamRemoveUserInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1513,16 +1513,16 @@ func TestTeamRemoveUserInvalidTeamNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1542,13 +1542,13 @@ func TestTeamRemoveUserInvalidUserNameShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Create member
 	h.CreateUser(t, &testMember)
@@ -1563,13 +1563,13 @@ func TestTeamRemoveUserFromNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Create member
 	h.CreateUser(t, &testMember)
@@ -1584,16 +1584,16 @@ func TestTeamRemoveUserFromNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	memberCtx := h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err := h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -1613,13 +1613,13 @@ func TestTeamRemoveUserNotOwnerShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// RemoveUserFromTeam
 	_, err := h.Accounts().RemoveUserFromTeam(ownerCtx, &RemoveUserFromTeamRequest{
@@ -1631,13 +1631,13 @@ func TestTeamRemoveNonExistingUserShouldFail(t *testing.T) {
 }
 
 func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member
 	h.CreateUser(t, &testMember)
@@ -1652,12 +1652,12 @@ func TestTeamRemoveUserNotPartOfTheTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamGet(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Get
 	getReply, err := h.Accounts().GetTeam(ownerCtx, &GetTeamRequest{
@@ -1670,16 +1670,16 @@ func TestTeamGet(t *testing.T) {
 	assert.Equal(t, getReply.Team.Name, testTeam.TeamName)
 	assert.NotEmpty(t, getReply.Team.CreateDt)
 	assert.NotEmpty(t, getReply.Team.Members)
-	assert.Equal(t, getReply.Team.Members[0], testUser.Name)
+	assert.Equal(t, getReply.Team.Members[0], testOwner.Name)
 }
 
 func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Get
 	_, err := h.Accounts().GetTeam(ownerCtx, &GetTeamRequest{
@@ -1690,12 +1690,12 @@ func TestTeamGetNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create org
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Get
 	_, err := h.Accounts().GetTeam(ownerCtx, &GetTeamRequest{
@@ -1706,12 +1706,12 @@ func TestTeamGetNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Get
 	_, err := h.Accounts().GetTeam(ownerCtx, &GetTeamRequest{
@@ -1722,12 +1722,12 @@ func TestTeamGetMalformedOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Get
 	_, err := h.Accounts().GetTeam(ownerCtx, &GetTeamRequest{
@@ -1738,12 +1738,12 @@ func TestTeamGetMalformedTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamList(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create a team
-	h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// List
 	listReply, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
@@ -1751,20 +1751,28 @@ func TestTeamList(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listReply)
-	assert.Len(t, listReply.Teams, 1)
-	assert.Equal(t, listReply.Teams[0].Name, testTeam.TeamName)
-	assert.NotEmpty(t, listReply.Teams[0].CreateDt)
-	assert.NotEmpty(t, listReply.Teams[0].Members)
-	assert.Equal(t, listReply.Teams[0].Members[0], testUser.Name)
+	assert.NotEmpty(t, listReply.Teams)
+	var team *accounts.Team
+	for _, t := range listReply.Teams {
+		if t.Name == testTeam.TeamName {
+			team = t
+			break
+		}
+	}
+	assert.NotEmpty(t, team)
+	assert.Equal(t, team.Name, testTeam.TeamName)
+	assert.NotEmpty(t, team.CreateDt)
+	assert.NotEmpty(t, team.Members)
+	assert.Equal(t, team.Members[0], testOwner.Name)
 }
 
 func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// List
 	_, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
@@ -1774,12 +1782,12 @@ func TestTeamListInvalidOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testOrg := h.RandomOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// List
 	_, err := h.Accounts().ListTeams(anonymous, &ListTeamsRequest{
@@ -1789,12 +1797,12 @@ func TestTeamListNonExistingOrganizationNameShouldFail(t *testing.T) {
 }
 
 func TestTeamDelete(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Delete
 	_, err := h.Accounts().DeleteTeam(ownerCtx, &DeleteTeamRequest{
@@ -1805,12 +1813,12 @@ func TestTeamDelete(t *testing.T) {
 }
 
 func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create org
-	ownerCtx := h.CreateUser(t, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Delete
 	_, err := h.Accounts().DeleteTeam(ownerCtx, &DeleteTeamRequest{
@@ -1821,12 +1829,12 @@ func TestTeamDeleteNonExistingOrganizationShouldFail(t *testing.T) {
 }
 
 func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create org
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	ownerCtx := h.CreateUser(t, &testOwner)
 
 	// Delete
 	_, err := h.Accounts().DeleteTeam(ownerCtx, &DeleteTeamRequest{
@@ -1837,16 +1845,16 @@ func TestTeamDeleteNonExistingTeamShouldFail(t *testing.T) {
 }
 
 func TestTeamDeleteNotOrgOwnerShouldFail(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	memberCtx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	memberCtx := h.CreateUser(t, &testMember)
 
 	// Delete
 	_, err := h.Accounts().DeleteTeam(memberCtx, &DeleteTeamRequest{
@@ -1870,60 +1878,60 @@ func TestSuperUserLogin(t *testing.T) {
 }
 
 func TestSuperUserDeleteSomeoneElseAccountShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 
 	// Create a user
-	h.CreateUser(t, &testUser)
+	h.CreateUser(t, &testOwner)
 
 	// Super user
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
 	// Delete
-	_, err = h.Accounts().DeleteUser(su, &DeleteUserRequest{Name: testUser.Name})
+	_, err = h.Accounts().DeleteUser(su, &DeleteUserRequest{Name: testOwner.Name})
 	assert.NoError(t, err)
 }
 
-func TestSuperUserNotOwnerOfOrganizationAddUserShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
-	su, err := h.SuperLogin()
-	assert.NoError(t, err)
-
-	// Create organization
-	h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create member
-	h.CreateUser(t, &testMember)
-
-	// AddUserToOrganization
-	_, err = h.Accounts().AddUserToOrganization(su, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
-}
+//func TestSuperUserNotOwnerOfOrganizationAddUserShouldSucceed(t *testing.T) {
+//	testOwner := h.RandomUser()
+//	testMember := h.RandomUser()
+//	testOrg := h.DefaultOrg()
+//	su, err := h.SuperLogin()
+//	assert.NoError(t, err)
+//
+//	// Create owner
+//	h.CreateUser(t, &testOwner)
+//
+//	// Create member
+//	h.CreateUser(t, &testMember)
+//
+//	// AddUserToOrganization
+//	_, err = h.Accounts().AddUserToOrganization(su, &AddUserToOrganizationRequest{
+//		OrganizationName: testOrg.Name,
+//		UserName:         testMember.Name,
+//	})
+//	assert.NoError(t, err)
+//}
 
 func TestSuperUserNotOwnerOfOrganizationRemoveUserShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	// Create owner
+	h.CreateUser(t, &testOwner)
 
 	// Create member
 	h.CreateUser(t, &testMember)
 
-	// AddUserToOrganization
-	_, err = h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
-		OrganizationName: testOrg.Name,
-		UserName:         testMember.Name,
-	})
-	assert.NoError(t, err)
+	//// AddUserToOrganization
+	//_, err = h.Accounts().AddUserToOrganization(ownerCtx, &AddUserToOrganizationRequest{
+	//	OrganizationName: testOrg.Name,
+	//	UserName:         testMember.Name,
+	//})
+	//assert.NoError(t, err)
 
 	// RemoveUserFromOrganization
 	_, err = h.Accounts().RemoveUserFromOrganization(su, &RemoveUserFromOrganizationRequest{
@@ -1934,17 +1942,17 @@ func TestSuperUserNotOwnerOfOrganizationRemoveUserShouldSucceed(t *testing.T) {
 }
 
 func TestSuperUserNotOwnerOfOrganizationChangeUserRoleShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
-	// Create organization
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	// Create owner
+	h.CreateUser(t, &testOwner)
 
 	// Create a member
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	_, err = h.Accounts().ChangeOrganizationMemberRole(su, &ChangeOrganizationMemberRoleRequest{
 		OrganizationName: testOrg.Name,
@@ -1954,35 +1962,27 @@ func TestSuperUserNotOwnerOfOrganizationChangeUserRoleShouldSucceed(t *testing.T
 	assert.NoError(t, err)
 }
 
-func TestSuperUserNotOwnerOfOrganizationDeleteShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
-	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+func TestSuperDeleteDefaultOrganizationShouldFail(t *testing.T) {
+	testOrg := h.DefaultOrg()
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
-
-	// Create a user
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Create a member
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
 
 	// Delete
 	_, err = h.Accounts().DeleteOrganization(su, &DeleteOrganizationRequest{
 		Name: testOrg.Name,
 	})
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestSuperUserNotOrgOwnerTeamCreateShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOwner := h.RandomUser()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
-	// Create organization
-	h.CreateOrganization(t, &testOrg, &testUser)
+	// Create owner
+	h.CreateUser(t, &testOwner)
 
 	// CreateTeam
 	_, err = h.Accounts().CreateTeam(su, &testTeam)
@@ -1990,16 +1990,16 @@ func TestSuperUserNotOrgOwnerTeamCreateShouldSucceed(t *testing.T) {
 }
 
 func TestSuperUserNotOrgOwnerTeamAddUserShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
 	// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err = h.Accounts().AddUserToTeam(su, &AddUserToTeamRequest{
@@ -2011,18 +2011,18 @@ func TestSuperUserNotOrgOwnerTeamAddUserShouldSucceed(t *testing.T) {
 }
 
 func TestSuperUserNotOrgOwnerTeamRemoveUserShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
 	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
+	ownerCtx := h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
 
 	// Create member in org
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateUser(t, &testMember)
 
 	// AddUserToTeam
 	_, err = h.Accounts().AddUserToTeam(ownerCtx, &AddUserToTeamRequest{
@@ -2042,16 +2042,16 @@ func TestSuperUserNotOrgOwnerTeamRemoveUserShouldSucceed(t *testing.T) {
 }
 
 func TestSuperUserNotOrgOwnerTeamDeleteShouldSucceed(t *testing.T) {
-	testUser := h.RandomUser()
+	testOwner := h.RandomUser()
 	testMember := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 	su, err := h.SuperLogin()
 	assert.NoError(t, err)
 
 	/// Create team
-	ownerCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-	h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember)
+	h.CreateTeam(t, &testOrg, &testOwner, &testTeam)
+	h.CreateUser(t, &testMember)
 
 	// Delete
 	_, err = h.Accounts().DeleteTeam(su, &DeleteTeamRequest{

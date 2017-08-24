@@ -17,6 +17,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
+	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
@@ -216,6 +217,14 @@ func (h *Helper) RandomTeam(org string) account.CreateTeamRequest {
 	}
 }
 
+// DefaultOrg returns the default organization CreateOrganizationRequest
+func (h *Helper) DefaultOrg() account.CreateOrganizationRequest {
+	return account.CreateOrganizationRequest{
+		Name:  accounts.DefaultOrganization,
+		Email: accounts.DefaultOrganizationEmail,
+	}
+}
+
 // DeployStack deploys a stack with given name and file location
 func (h *Helper) DeployStack(ctx context.Context, name string, composeFile string) (string, error) {
 	contents, err := ioutil.ReadFile(composeFile)
@@ -284,7 +293,7 @@ func (h *Helper) CreateAndAddUserToOrganization(ownerCtx context.Context, t *tes
 // CreateTeam creates the given owner, creates the given organization and creates a team in this organization
 func (h *Helper) CreateTeam(t *testing.T, org *account.CreateOrganizationRequest, owner *account.SignUpRequest, team *account.CreateTeamRequest) context.Context {
 	// Create a user
-	ownerCtx := h.CreateOrganization(t, org, owner)
+	ownerCtx := h.CreateUser(t, owner)
 
 	// CreateTeam
 	_, err := h.accounts.CreateTeam(ownerCtx, team)

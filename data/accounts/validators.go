@@ -60,20 +60,10 @@ func checkOrganizationMember(member *OrganizationMember) (err error) {
 }
 
 func checkOrganizationMembers(members []*OrganizationMember) error {
-	if len(members) == 0 {
-		return AtLeastOneOwner
-	}
-	haveAtLeastOneOwner := false
 	for _, member := range members {
 		if err := checkOrganizationMember(member); err != nil {
 			return err
 		}
-		if member.Role == OrganizationRole_ORGANIZATION_OWNER {
-			haveAtLeastOneOwner = true
-		}
-	}
-	if !haveAtLeastOneOwner {
-		return AtLeastOneOwner
 	}
 	return nil
 }
