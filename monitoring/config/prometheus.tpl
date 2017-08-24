@@ -1,5 +1,3 @@
-{{ $dockerPort := .DockerEngineMetricsPort -}}
-{{ $systemPort := .SystemMetricsPort -}}
 global:
   scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
@@ -56,30 +54,4 @@ scrape_configs:
         target_label: {{ .TargetLabel }}
 {{- end }}
 {{- end }}
-{{- end }}
-{{/* Docker Engine metrics */}}
-{{- if .Hostnames }}
-  - job_name: 'docker-engine'
-    static_configs:
-      - targets:
-{{- range .Hostnames }}
-        - '{{ . }}:{{ $dockerPort }}'
-{{- end }}
-    relabel_configs:
-      - source_labels: [__address__]
-        regex: (.*):.*
-        replacement: $1
-        target_label: instance
-{{/* System metrics */}}
-  - job_name: 'nodes'
-    static_configs:
-      - targets:
-{{- range .Hostnames }}
-        - '{{ . }}:{{ $systemPort }}'
-{{- end }}
-    relabel_configs:
-      - source_labels: [__address__]
-        regex: (.*):.*
-        replacement: $1
-        target_label: instance
 {{- end }}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -24,19 +23,19 @@ import (
 )
 
 const (
-	defaultTemplate         = "/etc/prometheus/prometheus.tpl"
-	defaultConfiguration    = "/etc/prometheus/prometheus.yml"
-	defaultHost             = docker.DefaultURL
-	defaultPeriod           = 1
-	dockerForMacIP          = "192.168.65.1"
-	dockerEngineMetricsPort = 9323
-	systemMetricsPort       = 9100 // node-exporter
-	prometheusCmd           = "/bin/prometheus"
-	monitoringNetwork       = "ampnet"
-	stackName               = "amp"
-	metricsPortLabel        = "io.amp.metrics.port"
-	metricsPathLabel        = "io.amp.metrics.path"
-	metricsModeLabel        = "io.amp.metrics.mode"
+	defaultTemplate      = "/etc/prometheus/prometheus.tpl"
+	defaultConfiguration = "/etc/prometheus/prometheus.yml"
+	defaultHost          = docker.DefaultURL
+	defaultPeriod        = 1
+	dockerForMacIP       = "192.168.65.1"
+	prometheusCmd        = "/bin/prometheus"
+	monitoringNetwork    = "ampnet"
+	stackName            = "amp"
+	metricsPortLabel     = "io.amp.metrics.port"
+	metricsPathLabel     = "io.amp.metrics.path"
+	metricsModeLabel     = "io.amp.metrics.mode"
+	metricsModeTasks     = "tasks"
+	metricsModeExporter  = "exporter"
 )
 
 var prometheusArgs = []string{
@@ -48,10 +47,7 @@ var prometheusArgs = []string{
 }
 
 type Inventory struct {
-	Jobs                    []Job
-	Hostnames               []string
-	DockerEngineMetricsPort int
-	SystemMetricsPort       int
+	Jobs []Job
 }
 
 type Job struct {
@@ -100,7 +96,8 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 		name := service.Spec.Annotations.Name
 		strMetricsPort, ok := service.Spec.Annotations.Labels[metricsPortLabel]
 		if !ok {
-			return nil, fmt.Errorf("unable to get metrics port label for service %s", name)
+			fmt.Printf("Warning: unable to get metrics port label for service %s, ignoring it\n", name)
+			continue
 		}
 		metricsPort, err := strconv.Atoi(strMetricsPort)
 		if err != nil {
@@ -114,22 +111,24 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 		// mode can be tasks or exporter
 		metricsMode, ok := service.Spec.Annotations.Labels[metricsModeLabel]
 		if !ok {
-			metricsMode = "tasks"
-		} else if metricsMode != "exporter" && metricsMode != "tasks" {
-			fmt.Printf("Warning: wrong metrics mode (%s) for service %s, force it to tasks\n", metricsMode, name)
-			metricsMode = "tasks"
+			metricsMode = metricsModeTasks
 		}
 		fmt.Printf("discovered service %s on port %d and path %s, mode %s\n", name, metricsPort, metricsPath, metricsMode)
 		s, ok := networkResource.Services[name]
 		if !ok {
-			return nil, fmt.Errorf("Warning: service %s not found in network %s\n", name, monitoringNetwork)
+			fmt.Printf("Warning: service %s not found in network %s, ignoring it\n", name, monitoringNetwork)
+			continue
 		}
 		switch metricsMode {
-		case "tasks":
+		default:
+			fmt.Printf("Warning: wrong metrics mode (%s) for service %s, force it to %s\n", metricsMode, name, metricsModeTasks)
+			metricsMode = metricsModeTasks
+			fallthrough
+		case metricsModeTasks:
 			if len(s.Tasks) == 0 {
 				continue
 			}
-			job := Job{Name: strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), Mode: "tasks", MetricsPath: metricsPath}
+			job := Job{Name: strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), Mode: metricsModeTasks, MetricsPath: metricsPath}
 			for _, task := range s.Tasks {
 				job.StaticConfigs = append(job.StaticConfigs, StaticConfig{
 					Target: task.EndpointIP,
@@ -144,11 +143,11 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 			job.RelabelConfigs = append(job.RelabelConfigs,
 				RelabelConfig{SourceLabels: []string{"hostip"}, Separator: "@", TargetLabel: "instance"})
 			jobs = append(jobs, job)
-		case "exporter":
+		case metricsModeExporter:
 			shortName := strings.TrimSuffix(strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), "_exporter")
-			job := Job{Name: shortName, Mode: "exporter", MetricsPath: metricsPath}
+			job := Job{Name: shortName, Mode: metricsModeExporter, MetricsPath: metricsPath}
 			job.StaticConfigs = []StaticConfig{
-				StaticConfig{
+				{
 					Target: name,
 					Port:   metricsPort,
 				},
@@ -161,33 +160,7 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 	return jobs, nil
 }
 
-// get the docker nodes hostnames or IPs
-func prepareNodes(networkResource types.NetworkResource) ([]string, error) {
-	var hostnames []string
-	for _, peer := range networkResource.Peers {
-		if peer.Name == "moby" && peer.IP == "127.0.0.1" {
-			// DockerForMac
-			hostnames = append(hostnames, dockerForMacIP)
-		} else if peer.IP == "127.0.0.1" || peer.IP == "0.0.0.0" {
-			// non addressable, let's hope the hostname is a better option
-			hostnames = append(hostnames, peer.Name)
-		} else {
-			if _, err := net.LookupHost(peer.Name); err != nil {
-				// can't resolve host, will use IP
-				hostnames = append(hostnames, peer.IP)
-			} else {
-				hostnames = append(hostnames, peer.Name)
-			}
-		}
-		fmt.Printf("discovered node %s\n", peer.Name)
-	}
-	if len(hostnames) == 0 {
-		return nil, errors.New("host list is empty")
-	}
-	return hostnames, nil
-}
-
-func update(pid int, client *docker.Docker, configurationTemplate string, configuration string) error {
+func update(client *docker.Docker, configurationTemplate string, configuration string) error {
 	var configurationFile *os.File
 	// connect to the engine API
 	if err := client.Connect(); err != nil {
@@ -211,12 +184,8 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 	if err != nil {
 		return err
 	}
-	hostnames, err := prepareNodes(networkResource)
-	if err != nil {
-		return err
-	}
 
-	inventory := &Inventory{Jobs: jobs, Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
+	inventory := &Inventory{Jobs: jobs}
 	// prepare the configuration
 	t := template.Must(template.New("prometheus.tpl").Funcs(template.FuncMap{"StringsJoin": strings.Join}).ParseFiles(configurationTemplate))
 	configurationFile, err = os.Create(configuration)
@@ -282,7 +251,6 @@ func main() {
 	var configurationTemplate string
 	var host string
 	var period int32
-	var prometheusPID int
 
 	var RootCmd = &cobra.Command{
 		Use:   "promctl",
@@ -301,7 +269,7 @@ func main() {
 			signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 			tick := time.Tick(time.Duration(period) * time.Minute)
 			time.Sleep(5 * time.Second)
-			if err := update(prometheusPID, client, configurationTemplate, configuration); err != nil {
+			if err := update(client, configurationTemplate, configuration); err != nil {
 				return err
 			}
 
@@ -309,7 +277,7 @@ func main() {
 			for {
 				select {
 				case <-tick:
-					if err := update(prometheusPID, client, configurationTemplate, configuration); err != nil {
+					if err := update(client, configurationTemplate, configuration); err != nil {
 						fmt.Println(err.Error())
 					}
 				case sig := <-stop:
