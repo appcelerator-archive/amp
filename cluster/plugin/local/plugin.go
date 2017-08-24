@@ -262,7 +262,7 @@ func InfoAMPCore(ctx context.Context, c *client.Client) (int, error) {
 			count++
 		}
 	}
-	return count, err
+	return count, nil
 }
 
 // InfoUser returns the number of user services
@@ -296,4 +296,13 @@ func DeleteCluster(ctx context.Context, c *client.Client, opts *RequestOptions) 
 		return c.SwarmLeave(ctx, true)
 	}
 	return nil
+}
+
+// SwarmNodeStatus returns the swarm status for this node
+func SwarmNodeStatus(client *client.Client) (swarm.LocalNodeState, error) {
+	info, err := client.Info(context.Background())
+	if err != nil {
+		return "", err
+	}
+	return info.Swarm.LocalNodeState, nil
 }

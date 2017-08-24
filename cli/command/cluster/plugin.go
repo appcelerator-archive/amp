@@ -92,7 +92,7 @@ func killContainer(c cli.Interface, name string, sig string) error {
 // `args` value). Additional arguments are supplied as environment variables in `env`, not `args`.
 // If f is not nil, then your func will be called (as a goroutine) with stdout from the container process;
 // otherwise stdout from the container will be printed to the amp console stdout.
-func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string, f func(r io.Reader)) error {
+func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string, env map[string]string, f func(r io.Reader, c chan bool)) error {
 	containerName := fmt.Sprintf("amp-cluster-plugin-%s", stringid.GenerateNonCryptoID())
 	dockerArgs := []string{
 		"run", "-t", "--rm", "--name", containerName,
@@ -137,14 +137,16 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 		return err
 	}
 
+	stdOutDone := make(chan bool)
 	if f != nil {
-		go f(stdout)
+		go f(stdout, stdOutDone)
 	} else {
 		outscanner := bufio.NewScanner(stdout)
 		go func() {
 			for outscanner.Scan() {
 				c.Console().Println(outscanner.Text())
 			}
+			stdOutDone <- true
 		}()
 	}
 
@@ -152,17 +154,23 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 	if err != nil {
 		return err
 	}
+
+	stdErrDone := make(chan bool)
 	errscanner := bufio.NewScanner(stderr)
 	go func() {
 		for errscanner.Scan() {
 			c.Console().Println(errscanner.Text())
 		}
+		stdErrDone <- true
 	}()
 
 	err = proc.Start()
 	if err != nil {
 		return err
 	}
+
+	<-stdOutDone
+	<-stdErrDone
 
 	err = proc.Wait()
 	if err != nil {
@@ -237,11 +245,12 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	}
 
 	// function to print the aws plugin output
-	f := func(r io.Reader) {
+	f := func(r io.Reader, done chan bool) {
 		d := json.NewDecoder(r)
 		for {
 			var m aws.StackOutputList
 			if err := d.Decode(&m); err == io.EOF {
+				done <- true
 				break
 			} else if err != nil {
 				// If there is an error here, it is because the plugin itself is not returning
@@ -251,6 +260,7 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 					c.Console().Println(outscanner.Text())
 				}
 
+				done <- true
 				// Still indicate that this was an error because non-JSON responses need to be fixed
 				c.Console().Error(err)
 				return
@@ -260,7 +270,6 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 				c.Console().Printf("%s: %s\n", o.Description, o.OutputValue)
 			}
 		}
-
 	}
 
 	img := fmt.Sprintf("appcelerator/amp-aws:%s", c.Version())
