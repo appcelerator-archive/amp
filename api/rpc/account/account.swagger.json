@@ -715,6 +715,38 @@
         ]
       }
     },
+    "/v1/users/{name}/reverify": {
+      "post": {
+        "operationId": "ResendVerify",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/protobufEmpty"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/accountResendVerifyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Account"
+        ]
+      }
+    },
     "/v1/verify/{token}": {
       "post": {
         "operationId": "Verify",
@@ -1040,6 +1072,17 @@
           "type": "string"
         },
         "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "accountResendVerifyRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }
