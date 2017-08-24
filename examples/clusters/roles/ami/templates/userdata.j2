@@ -15,6 +15,8 @@ packages:
   - xfsprogs
 # setuptools needed for the installation of the cfn tools (including cfn-signal)
   - python-setuptools
+# brctl, to inspect connected containers to a bridge interface
+  - bridge-utils
 write_files:
   - path: "/etc/default/grub.d/50-cloudimg-settings.cfg"
     encoding: "base64"

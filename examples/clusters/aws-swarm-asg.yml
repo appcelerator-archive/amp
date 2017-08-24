@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-f2526889
+      Default: ami-09b3b572
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-002d0e65
+      Default: ami-5817343d
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-a47897dc
+      Default: ami-97df36ef
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-81cc33f8
+      Default: ami-28956c51
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-68f7ec0b
+      Default: ami-f16d7792
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:

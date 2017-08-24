@@ -180,6 +180,11 @@ _set_metrics_address(){
   if [[ ! -f /etc/docker/daemon.json ]]; then
     echo "{}" > /etc/docker/daemon.json
   fi
+  # multihost bridge is most probably 172.18.0.1
+  if [[ "$_host" = "bridge" ]]; then
+    _host=$(ip route show dev docker_gwbridge | sed 's/.*src \([0-9\.]*\).*/\1/')
+    [[ -z "$_host" ]] && _host=0.0.0.0
+  fi
   _tmp=$(mktemp)
   echo "setting the metrics address ($_host:$_port)" >&2
   cat /etc/docker/daemon.json | jq ".\"metrics-addr\" = \"${_host}:${_port}\" | .experimental = true" > "$_tmp" || return 1
@@ -265,7 +270,7 @@ _install_docker || exit 1
 _install_plugins || exit 1
 _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
 _set_log_rotation "10m" "3" || exit 1
-_set_metrics_address "$nodeip" "9323" || exit 1
+_set_metrics_address "bridge" "9323" || exit 1
 _restart_docker || exit 1
 _swarm_join "$LEADER" || exit 1
 _label_node "$LEADER" || exit 1
