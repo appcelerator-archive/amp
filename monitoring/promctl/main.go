@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
+	"strings"
 	"syscall"
 	"text/template"
 	"time"
@@ -22,14 +23,19 @@ import (
 )
 
 const (
-	defaultTemplate         = "/etc/prometheus/prometheus.tpl"
-	defaultConfiguration    = "/etc/prometheus/prometheus.yml"
-	defaultHost             = docker.DefaultURL
-	defaultPeriod           = 1
-	dockerForMacIP          = "192.168.65.1"
-	dockerEngineMetricsPort = 9323
-	systemMetricsPort       = 9100 // node-exporter
-	prometheusCmd           = "/bin/prometheus"
+	defaultTemplate      = "/etc/prometheus/prometheus.tpl"
+	defaultConfiguration = "/etc/prometheus/prometheus.yml"
+	defaultHost          = docker.DefaultURL
+	defaultPeriod        = 1
+	dockerForMacIP       = "192.168.65.1"
+	prometheusCmd        = "/bin/prometheus"
+	monitoringNetwork    = "ampnet"
+	stackName            = "amp"
+	metricsPortLabel     = "io.amp.metrics.port"
+	metricsPathLabel     = "io.amp.metrics.path"
+	metricsModeLabel     = "io.amp.metrics.mode"
+	metricsModeTasks     = "tasks"
+	metricsModeExporter  = "exporter"
 )
 
 var prometheusArgs = []string{
@@ -41,53 +47,147 @@ var prometheusArgs = []string{
 }
 
 type Inventory struct {
-	Hostnames               []string
-	DockerEngineMetricsPort int
-	SystemMetricsPort       int
+	Jobs []Job
 }
 
-func update(pid int, client *docker.Docker, configurationTemplate string, configuration string) error {
+type Job struct {
+	Name           string
+	Mode           string
+	StaticConfigs  []StaticConfig
+	RelabelConfigs []RelabelConfig
+	MetricsPath    string
+}
+
+// static config for a prometheus job
+type StaticConfig struct {
+	Target string
+	Port   int
+	Labels map[string]string
+}
+
+type RelabelConfig struct {
+	SourceLabels []string
+	Separator    string
+	TargetLabel  string
+	Replacement  string
+}
+
+type Target struct {
+	Name        string
+	Port        int
+	MetricsPath string
+}
+
+// discovers services with the io.amp.metrics.port label
+// get the name and host IP of the tasks of the services
+func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) ([]Job, error) {
+	var jobs []Job
+	filter := filters.NewArgs()
+	filter.Add("label", metricsPortLabel)
+	// only available on manager nodes
+	services, err := client.GetClient().ServiceList(context.Background(), types.ServiceListOptions{Filters: filter})
+	if err != nil {
+		return nil, err
+	}
+	if len(services) == 0 {
+		fmt.Println("Warning: no service discovered for monitoring")
+	}
+	for _, service := range services {
+		name := service.Spec.Annotations.Name
+		strMetricsPort, ok := service.Spec.Annotations.Labels[metricsPortLabel]
+		if !ok {
+			fmt.Printf("Warning: unable to get metrics port label for service %s, ignoring it\n", name)
+			continue
+		}
+		metricsPort, err := strconv.Atoi(strMetricsPort)
+		if err != nil {
+			log.Printf("Warning: non numerical port for service %s: %s\n", name, strMetricsPort)
+			continue
+		}
+		metricsPath, ok := service.Spec.Annotations.Labels[metricsPathLabel]
+		if !ok {
+			metricsPath = "/metrics"
+		}
+		// mode can be tasks or exporter
+		metricsMode, ok := service.Spec.Annotations.Labels[metricsModeLabel]
+		if !ok {
+			metricsMode = metricsModeTasks
+		}
+		fmt.Printf("discovered service %s on port %d and path %s, mode %s\n", name, metricsPort, metricsPath, metricsMode)
+		s, ok := networkResource.Services[name]
+		if !ok {
+			fmt.Printf("Warning: service %s not found in network %s, ignoring it\n", name, monitoringNetwork)
+			continue
+		}
+		switch metricsMode {
+		default:
+			fmt.Printf("Warning: wrong metrics mode (%s) for service %s, force it to %s\n", metricsMode, name, metricsModeTasks)
+			metricsMode = metricsModeTasks
+			fallthrough
+		case metricsModeTasks:
+			if len(s.Tasks) == 0 {
+				continue
+			}
+			job := Job{Name: strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), Mode: metricsModeTasks, MetricsPath: metricsPath}
+			for _, task := range s.Tasks {
+				job.StaticConfigs = append(job.StaticConfigs, StaticConfig{
+					Target: task.EndpointIP,
+					Port:   metricsPort,
+					Labels: map[string]string{
+						"hostip":   task.Info["Host IP"],
+						"taskname": task.Name,
+					},
+				})
+			}
+			// all "tasks" jobs have the same relabel config
+			job.RelabelConfigs = append(job.RelabelConfigs,
+				RelabelConfig{SourceLabels: []string{"hostip"}, Separator: "@", TargetLabel: "instance"})
+			jobs = append(jobs, job)
+		case metricsModeExporter:
+			shortName := strings.TrimSuffix(strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), "_exporter")
+			job := Job{Name: shortName, Mode: metricsModeExporter, MetricsPath: metricsPath}
+			job.StaticConfigs = []StaticConfig{
+				{
+					Target: name,
+					Port:   metricsPort,
+				},
+			}
+			job.RelabelConfigs = append(job.RelabelConfigs,
+				RelabelConfig{Replacement: shortName, TargetLabel: "instance"})
+			jobs = append(jobs, job)
+		}
+	}
+	return jobs, nil
+}
+
+func update(client *docker.Docker, configurationTemplate string, configuration string) error {
 	var configurationFile *os.File
-	var hostnames []string
 	// connect to the engine API
 	if err := client.Connect(); err != nil {
 		return err
 	}
 	filter := filters.NewArgs()
-	filter.Add("name", "ingress")
+	filter.Add("name", monitoringNetwork)
 	networkResources, err := client.GetClient().NetworkList(context.Background(), types.NetworkListOptions{Filters: filter})
 	if err != nil {
 		return err
 	}
 	if len(networkResources) != 1 {
-		return errors.New("ingress network lookup failed")
+		return errors.New("network lookup failed")
 	}
 	networkId := networkResources[0].ID
 	// when the vendors are updated to docker 17.06:
 	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
-	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, false)
-	for _, peer := range networkResource.Peers {
-		if peer.Name == "moby" && peer.IP == "127.0.0.1" {
-			// DockerForMac
-			hostnames = append(hostnames, dockerForMacIP)
-		} else if peer.IP == "127.0.0.1" || peer.IP == "0.0.0.0" {
-			// non addressable, let's hope the hostname is a better option
-			hostnames = append(hostnames, peer.Name)
-		} else {
-			if _, err = net.LookupHost(peer.Name); err != nil {
-				// can't resolve host, will use IP
-				hostnames = append(hostnames, peer.IP)
-			} else {
-				hostnames = append(hostnames, peer.Name)
-			}
-		}
+	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, true)
+
+	jobs, err := prepareJobs(client, networkResource)
+	if err != nil {
+		return err
 	}
-	if len(hostnames) == 0 {
-		return errors.New("host list is empty")
-	}
-	inventory := &Inventory{Hostnames: hostnames, DockerEngineMetricsPort: dockerEngineMetricsPort, SystemMetricsPort: systemMetricsPort}
+
+	inventory := &Inventory{Jobs: jobs}
 	// prepare the configuration
-	t := template.Must(template.New("prometheus.tpl").ParseFiles(configurationTemplate))
+	t := template.Must(template.New("prometheus.tpl").Funcs(template.FuncMap{"StringsJoin": strings.Join}).ParseFiles(configurationTemplate))
 	configurationFile, err = os.Create(configuration)
 	if err != nil {
 		return err
@@ -108,40 +208,68 @@ func update(pid int, client *docker.Docker, configurationTemplate string, config
 	return nil
 }
 
+// Docker client init
+func dockerClientInit(host string) (*docker.Docker, error) {
+	hasAScheme, err := regexp.MatchString(".*://.*", host)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAScheme {
+		host = "tcp://" + host
+	}
+	hasAPort, err := regexp.MatchString(".*(:[0-9]+|sock)", host)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAPort {
+		host = host + ":2375"
+	}
+	client := docker.NewClient(host, docker.DefaultVersion)
+	return client, nil
+}
+
+// am I a manager?
+func isAManager(client *docker.Docker) (bool, error) {
+	if err := client.Connect(); err != nil {
+		return false, err
+	}
+	info, err := client.GetClient().Info(context.Background())
+	if err != nil {
+		return false, err
+	}
+	nodeId := info.Swarm.NodeID
+	for _, peer := range info.Swarm.RemoteManagers {
+		if peer.NodeID == nodeId {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func main() {
-	var client *docker.Docker
 	var configuration string
 	var configurationTemplate string
 	var host string
 	var period int32
-	var prometheusPID int
 
 	var RootCmd = &cobra.Command{
 		Use:   "promctl",
 		Short: "Prometheus controller",
 		Long:  `Keep the Prometheus configuration up to date with swarm discovery`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Docker client init
-			hasAScheme, err := regexp.MatchString(".*://.*", host)
+			client, err := dockerClientInit(host)
 			if err != nil {
 				return err
 			}
-			if !hasAScheme {
-				host = "tcp://" + host
+			manager, err := isAManager(client)
+			if !manager || err != nil {
+				return fmt.Errorf("service discovery requires a connection to a manager engine socket")
 			}
-			hasAPort, err := regexp.MatchString(".*(:[0-9]+|sock)", host)
-			if err != nil {
-				return err
-			}
-			if !hasAPort {
-				host = host + ":2375"
-			}
-			client = docker.NewClient(host, docker.DefaultVersion)
 			stop := make(chan os.Signal, 1)
 			signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 			tick := time.Tick(time.Duration(period) * time.Minute)
 			time.Sleep(5 * time.Second)
-			if err := update(prometheusPID, client, configurationTemplate, configuration); err != nil {
+			if err := update(client, configurationTemplate, configuration); err != nil {
 				return err
 			}
 
@@ -149,7 +277,9 @@ func main() {
 			for {
 				select {
 				case <-tick:
-					update(prometheusPID, client, configurationTemplate, configuration)
+					if err := update(client, configurationTemplate, configuration); err != nil {
+						fmt.Println(err.Error())
+					}
 				case sig := <-stop:
 					log.Printf("%v signal trapped\n", sig)
 					break loop

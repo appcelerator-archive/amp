@@ -33,7 +33,7 @@ services:
         io.amp.role: "infrastructure"
       placement:
         constraints:
-        - node.labels.amp.type.metrics == true
+        - node.labels.amp.type.core == true
     secrets:
       - source: alertmanager_yml
         target: alertmanager.yml

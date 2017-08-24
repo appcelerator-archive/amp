@@ -1,5 +1,3 @@
-{{ $dockerPort := .DockerEngineMetricsPort -}}
-{{ $systemPort := .SystemMetricsPort -}}
 global:
   scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
@@ -21,46 +19,39 @@ scrape_configs:
     static_configs:
       - targets:
         - localhost:9090
-  - job_name: 'etcd'
-    dns_sd_configs:
-      - names:
-        - 'tasks.etcd'
-        type: 'A'
-        port: 2379
-  - job_name: 'haproxy'
+{{- range .Jobs }}
+{{/* services with metrics available on all tasks */}}
+{{- if eq .Mode "tasks" }}
+  - job_name: '{{ .Name }}'
+    metrics_path: '{{ .MetricsPath }}'
     static_configs:
+{{- range .StaticConfigs }}
       - targets:
-        - haproxy_exporter:9101
-  - job_name: 'nats'
-    static_configs:
-      - targets:
-        - nats_exporter:7777
-  - job_name: 'elasticsearch'
-    metrics_path: "/_prometheus/metrics"
-    dns_sd_configs:
-      - names:
-        - 'tasks.elasticsearch'
-        type: 'A'
-        port: 9200
-  - job_name: 'amplifier'
-    dns_sd_configs:
-      - names:
-        - 'tasks.amplifier'
-        type: 'A'
-        port: 5100
-{{- if .Hostnames }}
-  - job_name: 'docker-engine'
-    static_configs:
-      - targets:
-{{- range .Hostnames }}
-        - '{{ . }}:{{ $dockerPort }}'
+        - '{{ .Target }}:{{ .Port }}'
+        labels:
+{{- range $key, $value := .Labels }}
+          {{ $key }}: '{{ $value }}'
 {{- end }}
 {{- end }}
-{{- if .Hostnames }}
-  - job_name: 'nodes'
+{{- range .RelabelConfigs }}
+    relabel_configs:
+      - source_labels: [ {{ StringsJoin .SourceLabels ", " }} ]
+        separator: '{{ .Separator }}'
+        target_label: {{ .TargetLabel }}
+{{- end }}
+{{/* exporter service in front of a real service */}}
+{{- else if eq .Mode "exporter" }}
+  - job_name: '{{ .Name }}'
+    metrics_path: '{{ .MetricsPath }}'
     static_configs:
+{{- range .StaticConfigs }}
       - targets:
-{{- range .Hostnames }}
-        - '{{ . }}:{{ $systemPort }}'
+        - '{{ .Target }}:{{ .Port }}'
+{{- end }}
+{{- range .RelabelConfigs }}
+    relabel_configs:
+      - replacement: '{{ .Replacement }}'
+        target_label: {{ .TargetLabel }}
+{{- end }}
 {{- end }}
 {{- end }}
