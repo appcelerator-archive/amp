@@ -222,7 +222,7 @@ _label_node(){
   _self=$(docker info -f '{{.Swarm.NodeID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
   echo "applying label PublicIP=$_publicip" >&2
-  docker -H "$_manager" node update --label-add "PublicIP=$_publicip" "$_self" || return 1
+  docker -H "$_manager" node update --label-add "PublicIP=$_publicip" "$_self" >/dev/null || return 1
   for _label in $LABELS; do
     echo "applying label $_label" >&2
     docker -H "$_manager" node update --label-add "${_label}" "$_self" >/dev/null || return 1

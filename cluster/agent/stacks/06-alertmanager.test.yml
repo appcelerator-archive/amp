@@ -25,6 +25,6 @@ services:
         io.amp.test:
       placement:
         constraints:
-        - node.labels.amp.type.metrics == true
+        - node.labels.amp.type.core == true
       restart_policy:
         condition: none

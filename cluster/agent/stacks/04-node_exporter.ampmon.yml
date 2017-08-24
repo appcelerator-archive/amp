@@ -7,7 +7,7 @@ networks:
 
 services:
 
-  node_exporter:
+  nodes:
     image: prom/node-exporter:v0.14.0
     networks:
       - default
@@ -27,3 +27,4 @@ services:
       mode: global
       labels:
         io.amp.role: "infrastructure"
+        io.amp.metrics.port: "9100"

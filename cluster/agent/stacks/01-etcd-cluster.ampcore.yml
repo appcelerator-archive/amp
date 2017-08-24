@@ -38,6 +38,7 @@ services:
         window: 25s
       labels:
         io.amp.role: "infrastructure"
+        io.amp.metrics.port: "2379"
       placement:
         constraints:
         - node.labels.amp.type.kv == true

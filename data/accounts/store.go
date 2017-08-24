@@ -248,7 +248,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 	if err := s.storage.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
 		return nil, err
 	}
-	return s.secureUser(ctx, user), nil
+	return user, nil
 }
 
 // VerifyUser verifies a user account

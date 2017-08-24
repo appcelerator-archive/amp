@@ -11,7 +11,7 @@ services:
     image: appcelerator/alpine:3.6.0
     networks:
       - default
-    command: ["curl", "-sf", "${AMP_STACK:-amp}_node_exporter:9100/metrics"]
+    command: ["curl", "-sf", "${AMP_STACK:-amp}_nodes:9100/metrics"]
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
