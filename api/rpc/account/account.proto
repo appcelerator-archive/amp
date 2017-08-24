@@ -19,7 +19,6 @@ service Account {
       post: "/v1/verify/{token}"
     };
   };
-
   rpc Login (LogInRequest) returns (LogInReply) {
     option (google.api.http) = {
       post: "/v1/login",
@@ -55,6 +54,12 @@ service Account {
   rpc ForgotLogin (ForgotLoginRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/users/{email}/reminder",
+      body: "*"
+    };
+  };
+  rpc ResendVerify (ResendVerifyRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/{name}/reverify",
       body: "*"
     };
   };
@@ -187,6 +192,11 @@ message SwitchRequest {
 
 message SwitchAnswer {
   string auth = 1;
+}
+
+message ResendVerifyRequest {
+  string name = 1;
+  string url = 2;
 }
 
 message PasswordResetRequest {
