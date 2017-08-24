@@ -29,6 +29,8 @@ services:
       replicas: 1
       labels:
         io.amp.role: "infrastructure"
+        io.amp.metrics.port: "9200"
+        io.amp.metrics.path: "/_prometheus/metrics"
       placement:
         constraints:
         - node.labels.amp.type.search == true
