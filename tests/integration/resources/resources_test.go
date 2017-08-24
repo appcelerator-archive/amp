@@ -39,59 +39,59 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestListResourcesShouldReturnOnlyActiveOrganizationResources(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
-	anotherUser := h.RandomUser()
-	anotherOrg := h.RandomOrg()
-
-	// Create user and org
-	userCtx := h.CreateOrganization(t, &testOrg, &testUser)
-
-	// Switch to organization account
-	orgCtx := h.Switch(userCtx, t, testOrg.Name)
-
-	// Deploy stack as organization
-	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
-	assert.NoError(t, err)
-
-	// Create a dashboard as organization
-	_, err = h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "data"})
-	assert.NoError(t, err)
-
-	// Create another user and another org
-	anotherUserCtx := h.CreateOrganization(t, &anotherOrg, &anotherUser)
-
-	// Switch to another organization account
-	anotherOrgCtx := h.Switch(anotherUserCtx, t, anotherOrg.Name)
-
-	// Deploy stack as another organization
-	anotherStackID, err := h.DeployStack(anotherOrgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
-	assert.NoError(t, err)
-
-	// Create a dashboard as another organization
-	_, err = h.Dashboards().Create(anotherOrgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "another data"})
-	assert.NoError(t, err)
-
-	// Make sure we only get only our organization resources
-	reply, err := h.Resources().List(orgCtx, &resource.ListRequest{})
-	assert.NoError(t, err)
-	assert.Len(t, reply.Resources, 2)
-
-	// Make sure we only get only our another organization resources
-	reply, err = h.Resources().List(anotherOrgCtx, &resource.ListRequest{})
-	assert.NoError(t, err)
-	assert.Len(t, reply.Resources, 2)
-
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
-	assert.NoError(t, err)
-	_, err = h.Stacks().Remove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherStackID})
-	assert.NoError(t, err)
-}
+//func TestListResourcesShouldReturnOnlyActiveOrganizationResources(t *testing.T) {
+//	testUser := h.RandomUser()
+//	testOrg := h.RandomOrg()
+//	anotherUser := h.RandomUser()
+//	anotherOrg := h.RandomOrg()
+//
+//	// Create user and org
+//	userCtx := h.CreateOrganization(t, &testOrg, &testUser)
+//
+//	// Switch to organization account
+//	orgCtx := h.Switch(userCtx, t, testOrg.Name)
+//
+//	// Deploy stack as organization
+//	stackID, err := h.DeployStack(orgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
+//	assert.NoError(t, err)
+//
+//	// Create a dashboard as organization
+//	_, err = h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "data"})
+//	assert.NoError(t, err)
+//
+//	// Create another user and another org
+//	anotherUserCtx := h.CreateOrganization(t, &anotherOrg, &anotherUser)
+//
+//	// Switch to another organization account
+//	anotherOrgCtx := h.Switch(anotherUserCtx, t, anotherOrg.Name)
+//
+//	// Deploy stack as another organization
+//	anotherStackID, err := h.DeployStack(anotherOrgCtx, stringid.GenerateNonCryptoID()[:32], "pinger.yml")
+//	assert.NoError(t, err)
+//
+//	// Create a dashboard as another organization
+//	_, err = h.Dashboards().Create(anotherOrgCtx, &dashboard.CreateRequest{Name: stringid.GenerateNonCryptoID()[:32], Data: "another data"})
+//	assert.NoError(t, err)
+//
+//	// Make sure we only get only our organization resources
+//	reply, err := h.Resources().List(orgCtx, &resource.ListRequest{})
+//	assert.NoError(t, err)
+//	assert.Len(t, reply.Resources, 2)
+//
+//	// Make sure we only get only our another organization resources
+//	reply, err = h.Resources().List(anotherOrgCtx, &resource.ListRequest{})
+//	assert.NoError(t, err)
+//	assert.Len(t, reply.Resources, 2)
+//
+//	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
+//	assert.NoError(t, err)
+//	_, err = h.Stacks().Remove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherStackID})
+//	assert.NoError(t, err)
+//}
 
 func TestAddSameResourceTwiceShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user, org and team
@@ -126,7 +126,7 @@ func TestAddSameResourceTwiceShouldFail(t *testing.T) {
 
 func TestRemoveNonExistingResourceShouldFail(t *testing.T) {
 	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user, org and team
@@ -153,7 +153,7 @@ func TestRemoveNonExistingResourceShouldFail(t *testing.T) {
 
 func TestDeletedStackShouldNotBelongToTheTeamAnymore(t *testing.T) {
 	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user, org and team
@@ -197,7 +197,7 @@ func TestDeletedStackShouldNotBelongToTheTeamAnymore(t *testing.T) {
 
 func TestDeletedDashboardShouldNotBelongToTheTeamAnymore(t *testing.T) {
 	testUser := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user, org and team
@@ -246,15 +246,15 @@ func TestShareResourceReadPermission(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember1 := h.RandomUser()
 	testMember2 := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user and org
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	h.CreateUser(t, &testUser)
 
 	// Add members
-	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
-	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
+	member1Ctx := h.CreateUser(t, &testMember1)
+	member2Ctx := h.CreateUser(t, &testMember2)
 
 	// Switch to organization account
 	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
@@ -332,15 +332,15 @@ func TestShareResourceWritePermission(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember1 := h.RandomUser()
 	testMember2 := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user and org
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	h.CreateUser(t, &testUser)
 
 	// Add members
-	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
-	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
+	member1Ctx := h.CreateUser(t, &testMember1)
+	member2Ctx := h.CreateUser(t, &testMember2)
 
 	// Switch to organization account
 	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
@@ -427,15 +427,15 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	testUser := h.RandomUser()
 	testMember1 := h.RandomUser()
 	testMember2 := h.RandomUser()
-	testOrg := h.RandomOrg()
+	testOrg := h.DefaultOrg()
 	testTeam := h.RandomTeam(testOrg.Name)
 
 	// Create user and org
-	ownerCtx := h.CreateOrganization(t, &testOrg, &testUser)
+	h.CreateUser(t, &testUser)
 
 	// Add members
-	member1Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember1)
-	member2Ctx := h.CreateAndAddUserToOrganization(ownerCtx, t, &testOrg, &testMember2)
+	member1Ctx := h.CreateUser(t, &testMember1)
+	member2Ctx := h.CreateUser(t, &testMember2)
 
 	// Switch to organization account
 	member1Ctx = h.Switch(member1Ctx, t, testOrg.Name)
