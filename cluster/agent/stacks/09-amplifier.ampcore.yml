@@ -32,6 +32,7 @@ services:
       mode: global
       labels:
         io.amp.role: "infrastructure"
+        io.amp.metrics.port: "5100"
       restart_policy:
         condition: on-failure
       placement:
