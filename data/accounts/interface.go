@@ -50,6 +50,9 @@ type Interface interface {
 	// GetUserByEmail fetches a user by email
 	GetUserByEmail(ctx context.Context, email string) (user *User, err error)
 
+	//GetUserEmail fetches a users email
+	GetUserEmail(ctx context.Context, user *User) (string, error)
+
 	// GetUserOrganizations gets the organizations the given user is member of
 	GetUserOrganizations(ctx context.Context, name string) (organizations []*Organization, err error)
 

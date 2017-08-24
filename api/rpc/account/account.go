@@ -212,6 +212,42 @@ func (s *Server) Login(ctx context.Context, in *LogInRequest) (*LogInReply, erro
 	return &LogInReply{Auth: token}, nil //Angular issue with custom header
 }
 
+// ResendVerify implements account.ResendVerify
+func (s *Server) ResendVerify(ctx context.Context, in *ResendVerifyRequest) (*empty.Empty, error) {
+	// Get the user
+	user, err := s.Accounts.GetUser(ctx, in.Name)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.NotFound, "user not found: %s", in.Name)
+	}
+
+	// Check if user is already verified
+	if user.IsVerified {
+		return nil, convertError(fmt.Errorf("user is already verified: %s", user.Name))
+	}
+
+	// Get the users email
+	email, err := s.Accounts.GetUserEmail(ctx, user)
+	if err != nil {
+		return nil, convertError(err)
+	}
+
+	// Create a verification token valid for an hour
+	token, err := s.Tokens.CreateVerificationToken(user.Name)
+	if err != nil {
+		return nil, convertError(err)
+	}
+
+	// Send the verification email
+	if err := s.Mailer.SendAccountVerificationEmail(email, user.Name, token, in.Url); err != nil {
+		return nil, convertError(err)
+	}
+	log.Infoln("Successfully processed resend verify request for user", user.Name)
+	return &empty.Empty{}, nil
+}
+
 // PasswordReset implements account.PasswordReset
 func (s *Server) PasswordReset(ctx context.Context, in *PasswordResetRequest) (*empty.Empty, error) {
 	// Get the user
