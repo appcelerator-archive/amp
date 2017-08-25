@@ -25,6 +25,7 @@ const organizationsRootKey = "organizations"
 const SuperUser = "su"
 const SuperOrganization = "so"
 const DefaultOrganization = "default"
+const DefaultOrganizationEmail = "default@organization.amp"
 
 // Store implements user data.Interface
 type Store struct {
@@ -141,7 +142,7 @@ func (s *Store) createDefaultAccounts(SUPassword string) error {
 	}
 	do := &Organization{
 		Name:     DefaultOrganization,
-		Email:    "default@organization.amp",
+		Email:    DefaultOrganizationEmail,
 		CreateDt: time.Now().Unix(),
 		Members:  []*OrganizationMember{},
 	}
@@ -346,6 +347,18 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error)
 	return nil, nil
 }
 
+// GetUserEmail fetches a users email
+func (s *Store) GetUserEmail(ctx context.Context, user *User) (string, error) {
+	user, err := s.getUser(ctx, user.Name)
+	if err != nil {
+		return "", err
+	}
+	if user.Email == "" {
+		return "", fmt.Errorf("user's email not found.")
+	}
+	return user.Email, nil
+}
+
 // GetUserOrganizations gets the organizations the given user is member of
 func (s *Store) GetUserOrganizations(ctx context.Context, name string) ([]*Organization, error) {
 	organizations, err := s.ListOrganizations(ctx)
@@ -473,7 +486,7 @@ func (s *Store) CreateOrganization(ctx context.Context, name string, email strin
 		Members: []*OrganizationMember{
 			{
 				Name: auth.GetUser(ctx),
-				Role: OrganizationRole_ORGANIZATION_OWNER,
+				Role: OrganizationRole_ORGANIZATION_MEMBER,
 			},
 		},
 	}
@@ -681,7 +694,7 @@ func (s *Store) ListOrganizations(ctx context.Context) ([]*Organization, error) 
 // DeleteOrganization deletes a organization by name
 func (s *Store) DeleteOrganization(ctx context.Context, name string) error {
 	// Check authorization
-	if name == SuperOrganization {
+	if name == SuperOrganization || name == DefaultOrganization {
 		return NotAuthorized
 	}
 	if !s.IsAuthorized(ctx, &Account{"", name}, DeleteAction, OrganizationRN, name) {

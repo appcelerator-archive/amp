@@ -56,6 +56,7 @@ func signUp(c cli.Interface, cmd *cobra.Command, opts signUpOptions) error {
 		Name:     opts.username,
 		Email:    opts.email,
 		Password: opts.password,
+		Url:      c.Server(),
 	}
 	if _, err := client.SignUp(context.Background(), requestSignUp); err != nil {
 		if s, ok := status.FromError(err); ok {

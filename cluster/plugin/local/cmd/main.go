@@ -77,23 +77,33 @@ func version(cmd *cobra.Command, args []string) {
 }
 
 func info(cmd *cobra.Command, args []string) {
-	// docker node inspect self -f '{{.Status.State}}'
-	ctx := context.Background()
-	swarmResp, err := plugin.InfoCluster(ctx, dockerClient)
-	if err != nil {
-		log.Fatal(err)
-	}
-	nodeResp, err := plugin.InfoNode(ctx, dockerClient)
+	// Check the node status
+	swarmStatus, err := plugin.SwarmNodeStatus(dockerClient)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	j, err := plugin.InfoToJSON(swarmResp, nodeResp)
+	// Assuming the swarm is not active
+	coreServices := 0
+	userServices := 0
+	if swarmStatus == swarm.LocalNodeStateActive { // if it is, update the services
+		ctx := context.Background()
+		coreServices, err = plugin.InfoAMPCore(ctx, dockerClient)
+		if err != nil {
+			log.Fatal(err)
+		}
+		userServices, err = plugin.InfoUser(ctx, dockerClient)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// print json result to stdout
+	json, err := plugin.InfoToJSON(string(swarmStatus), coreServices, userServices)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// print json result to stdout
-	fmt.Print(j)
+	fmt.Println(json)
 }
 
 func main() {
