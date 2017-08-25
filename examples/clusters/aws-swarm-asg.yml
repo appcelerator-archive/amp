@@ -222,6 +222,12 @@ Parameters:
     - yes
     - no
     Default: yes
+  MonitoringPort:
+    Type: Number
+    Description: Public port for the monitoring dashboard
+    Default: 8080
+    MinValue: 1025
+    MaxValue: 32768
 
 Conditions:
   InstallApplicationCond: !Or [ !Equals [ !Ref InstallApplication, "yes" ], !Equals [ !Ref InstallApplication, "true" ] ]
@@ -677,8 +683,20 @@ Resources:
         IpProtocol: tcp
         FromPort: '9090'
         ToPort: '9090'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: !Ref MonitoringPort
+        ToPort: !Ref MonitoringPort
       VpcId:
         Ref: Vpc
+  MetricsSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: MetricsSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId:
+        Ref: MetricsSecurityGroup
 
   ClusterRole:
     Type: AWS::IAM::Role
@@ -1201,6 +1219,7 @@ Resources:
         - !Ref PublicSubnet3
       SecurityGroups:
         - Ref: ManagerSecurityGroup
+        - Ref: MetricsSecurityGroup
       CrossZone: true
       Listeners:
       - LoadBalancerPort: '22'
@@ -1215,10 +1234,24 @@ Resources:
         InstancePort: '443'
         Protocol: TCP
         InstanceProtocol: TCP
+      - LoadBalancerPort: !Ref MonitoringPort
+        InstancePort: '3000'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '9090'
+        InstancePort: '9090'
+        Protocol: TCP
+        InstanceProtocol: TCP
       - LoadBalancerPort: '50101'
         InstancePort: '50101'
         Protocol: TCP
         InstanceProtocol: TCP
+      HealthCheck:
+        Target: TCP:22
+        HealthyThreshold: 10
+        UnhealthyThreshold: 5
+        Interval: 30
+        Timeout: 5
       ConnectionDrainingPolicy:
         Enabled: 'true'
         Timeout: '60'
@@ -1232,6 +1265,7 @@ Metadata:
       - KeyName
       - LinuxDistribution
       - ConfigurationURL
+      - MonitoringPort
     - Label:
         default: Registry Properties
       Parameters:
@@ -1299,6 +1333,8 @@ Metadata:
         default: Dedicated Registry
       RegistryInstanceType:
         default: Registry instance type?
+      MonitoringPort:
+        default: Monitoring Port
 
 Outputs:
   DNSTarget:
@@ -1313,7 +1349,7 @@ Outputs:
       Fn::Join:
         - ':'
         - - !GetAtt ManagerExternalELB.DNSName
-          - "9090"
+          - !Ref MonitoringPort
   VpcId:
     Description: VPC ID
     Value: !Ref Vpc
