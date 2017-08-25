@@ -53,7 +53,7 @@ func (cfg *AgentConfig) loadConfigUsingEnvVariable() {
 	cfg.apiPort = getenv("API_PORT", cfg.apiPort)
 	cfg.period = getenvi("PERIOD", cfg.period)
 	cfg.clientID = getenv("CLIENTID", cfg.clientID)
-	cfg.clusterID = getenv("CLIENTID", cfg.clusterID)
+	cfg.clusterID = getenv("CLUSTERID", cfg.clusterID)
 	cfg.metricsPeriod = getenvi("METRICS_PERIOD", cfg.metricsPeriod)
 	cfg.logsBufferSize = getenvi("LOGS_BUFFER_SIZE", cfg.logsBufferSize)
 	cfg.logsBufferPeriod = getenvi("LOGS_BUFFER_PERIOD", cfg.logsBufferPeriod)
