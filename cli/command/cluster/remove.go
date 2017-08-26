@@ -24,6 +24,12 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 
 	// local options
 	flags.Bool("local-force-leave", false, "Force leave the swarm")
+
+	// aws options
+	flags.String("aws-region", "", "Region to use to delete the instance")
+	flags.String("aws-stackname", "", "Name of the AWS stack to be deleted")
+	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
+
 	return cmd
 }
 
