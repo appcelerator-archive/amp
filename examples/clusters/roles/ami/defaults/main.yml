@@ -23,8 +23,8 @@ ec2_instance_type: "t2.small"
 iam_instance_profile: "amp-image-builder-role"
 
 ## Source AMI
-# ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170619.1 in oregon
-ec2_ami: "ami-835b4efa"
+# ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20170803 in oregon
+ec2_ami: "ami-db3bdda3"
 
 ## Security Group
 # should open port 80 (and optionally port 22 for debugging)
