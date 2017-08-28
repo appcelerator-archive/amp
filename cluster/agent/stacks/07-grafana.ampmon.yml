@@ -11,7 +11,7 @@ volumes:
 services:
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.4
+    image: appcelerator/grafana-amp:1.2.5
     networks:
       - default
     volumes:
