@@ -357,7 +357,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "cacheTimeout": null,
@@ -3564,7 +3564,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "gnatsd_varz_in_msgs",
+                "expr": "gnatsd_varz_in_msgs{job=\"nats\"}",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "",
@@ -3643,7 +3643,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "gnatsd_varz_out_msgs",
+                "expr": "gnatsd_varz_out_msgs{job=\"nats\"}",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "",
@@ -3722,7 +3722,7 @@
             "tableColumn": "",
             "targets": [
               {
-                "expr": "gnatsd_varz_in_msgs - gnatsd_varz_out_msgs",
+                "expr": "gnatsd_varz_in_msgs{job=\"nats\"} - gnatsd_varz_out_msgs{job=\"nats\"}",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "",

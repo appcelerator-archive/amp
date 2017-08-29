@@ -8,8 +8,8 @@ networks:
 services:
 
   haproxy_exporter:
-    image: prom/haproxy-exporter:v0.7.1
-    command: ["-haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
+    image: prom/haproxy-exporter:v0.8.0
+    command: ["--haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
       - default
     #ports:

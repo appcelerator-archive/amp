@@ -82,22 +82,43 @@ func update(cmd *cobra.Command, args []string) {
 }
 
 func delete(cmd *cobra.Command, args []string) {
+	var flag bool
 	ctx := context.Background()
-	resp, err := plugin.DeleteStack(ctx, svc, opts)
+	resp, err := plugin.ListStack(ctx, svc)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(awsutil.StringValue(resp))
+	for _, stk := range resp.StackSummaries {
+		if *stk.StackName != opts.StackName {
+			flag = true
+			continue
+		} else {
+			switch *stk.StackStatus {
+			case cf.StackStatusCreateInProgress, cf.StackStatusCreateComplete, cf.StackStatusCreateFailed, cf.StackStatusRollbackFailed, cf.StackStatusRollbackComplete:
+				if _, err := plugin.DeleteStack(ctx, svc, opts); err != nil {
+					log.Fatal(err)
+				}
 
-	input := &cf.DescribeStacksInput{
-		StackName: aws.String(opts.StackName),
-	}
-	if opts.Sync {
-		if err := svc.WaitUntilStackDeleteCompleteWithContext(ctx, input); err != nil {
-			log.Fatal(err)
+				input := &cf.DescribeStacksInput{
+					StackName: aws.String(opts.StackName),
+				}
+				if opts.Sync {
+					if err := svc.WaitUntilStackDeleteCompleteWithContext(ctx, input); err != nil {
+						log.Fatal(err)
+					}
+				}
+				log.Printf("stack deleted: %s\n", opts.StackName)
+				return
+			case cf.StackStatusDeleteInProgress:
+				log.Fatal("stack deletion already in progress")
+			default:
+				log.Fatalf("stack deletion not possible with the current stack status - %s", *stk.StackStatus)
+			}
 		}
-		log.Printf("stack deleted: %s\n", opts.StackName)
+	}
+	if flag {
+		log.Fatal(opts.StackName, " stack does not exist")
 	}
 }
 

@@ -11,7 +11,7 @@ volumes:
 services:
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.4
+    image: appcelerator/grafana-amp:1.2.5
     networks:
       - default
     volumes:
@@ -19,6 +19,8 @@ services:
     environment:
       SERVICE_PORTS: 3000
       VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+    ports:
+      - "3000:3000"
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "8s"

@@ -16,8 +16,8 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - "9100:9100"
+    #ports:
+    #  - "9100:9100"
     command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
     labels:
       io.amp.role: "infrastructure"
