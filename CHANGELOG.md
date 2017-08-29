@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 (2017-08-28)
+
+* Dynamic metrics discovery
+* Remove the limitation on the first logged in user that couldn't be deleted
+* Fix the email notification on user signup
+* Fix the `amp cluster status` output
+* Other minor fixes
+
 ## 0.14.1 (2017-08-14)
 
 * AMP cluster deployment enhancement: timeout for image pull
