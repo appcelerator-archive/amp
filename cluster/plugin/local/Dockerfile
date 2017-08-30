@@ -1,5 +1,5 @@
 # =============================
-FROM golang:1.8-alpine as build
+FROM golang:1.9-alpine as build
 # =============================
 # system deps
 RUN apk --no-cache add git
