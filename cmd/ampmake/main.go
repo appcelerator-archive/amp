@@ -19,8 +19,8 @@ var (
 	build           = "-"
 	owner           = "appcelerator"
 	repo            = "github.com/appcelerator/amp"
-	dockerCmd       = "sudo docker"
-	toolsImage      = "appcelerator/amptools"
+	dockerCmd       = "/usr/sbin/gosu root docker"
+	toolsImage      = "appcelerator/amptools:1.7"
 	localToolsImage = "amptools"
 	dockerArgs      []string
 )
@@ -65,7 +65,7 @@ func init() {
 // build a local image to avoid leaving files with broken permissions
 func buildLocalToolsImage() {
 	// build the local image "amptools" for the current user
-	content := []byte(fmt.Sprintf("FROM appcelerator/amptools\nRUN sed -i \"s/sudoer:x:[0-9]*:[0-9]*/sudoer:x:%s/\" /etc/passwd", ug))
+	content := []byte(fmt.Sprintf("FROM %s\nRUN sed -i \"s/sudoer:x:[0-9]*:[0-9]*/sudoer:x:%s/\" /etc/passwd", toolsImage, ug))
 	tmpdir, err := ioutil.TempDir("", "dockerbuild")
 	if err != nil {
 		panic(err)

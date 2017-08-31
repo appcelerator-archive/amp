@@ -1,10 +1,10 @@
-FROM appcelerator/gotools:1.9.0
-#RUN apk --no-cache add sudo iproute2
+FROM appcelerator/gotools:1.10.0
+#RUN apk --no-cache add gosu iproute2
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   man \
   pcregrep \
   iproute2 \
-  sudo \
+  gosu \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add Docker client from:
@@ -26,9 +26,10 @@ RUN set -ex; \
 	rm -rf docker docker.tgz && \
 	docker -v
 
-COPY sudoers /etc/sudoers.d/amp
-RUN chmod 0440 /etc/sudoers.d/amp
+# originally: -rwxr-xr-x 1 root root 1687016 Jan 24  2017 /usr/sbin/gosu
+# adding the sticky bit to allow users to execute command as root
 RUN adduser --disabled-password --gecos "" --shell /bin/sh sudoer
+RUN chgrp sudoer /usr/sbin/gosu && chmod +s /usr/sbin/gosu
 
 # pass commands through docker-entrypoint first for special handling
 # it's fine to override entrypoint if not running a docker command
