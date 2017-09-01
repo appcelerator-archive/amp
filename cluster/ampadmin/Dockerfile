@@ -1,5 +1,5 @@
 # =============================
-FROM golang:1.8-alpine as build
+FROM golang:1.9-alpine as build
 # =============================
 RUN apk add --no-cache build-base
 RUN apk add --no-cache ca-certificates

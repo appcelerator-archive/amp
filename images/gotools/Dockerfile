@@ -1,4 +1,4 @@
-FROM golang:1.8
+FROM golang:1.9
 # This builds a convenience "all-in-one" image for go development.
 # It intentionally does not remove any build prerequisites like most of our other
 # images since this image is meant strictly for building things.
@@ -7,7 +7,7 @@ FROM golang:1.8
 # ca-certificates, musl, musl-dev, openssl, curl, make, gcc, g++, libstdc++, libc-dev, tar, bzip2, git
 # The rest are for building grpc or for any other convenience.
 #RUN apk --no-cache add alpine-sdk bash vim autoconf automake libtool bind-tools drill
-RUN apt-get update -y && apt-get install -y apt-utils autoconf automake bash ca-certificates dnsutils git jq libtool vim sudo tar zip
+RUN apt-get update -y && apt-get install --no-install-recommends -y apt-utils autoconf automake bash ca-certificates dnsutils git jq libtool vim tar zip unzip && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Helper commands, like go-getter and install-protoc
 ADD bin /usr/local/bin/
@@ -35,4 +35,3 @@ ADD etc/profile.d /etc/profile.d
 # TODO: might want to use /go as the work directory...
 WORKDIR /go/src
 CMD [ "echo", "[gotools] specify the command to run" ]
-

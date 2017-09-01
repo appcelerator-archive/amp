@@ -1,5 +1,6 @@
 #!/bin/sh
-git clone https://github.com/google/protobuf.git --branch v3.3.0 --depth 1
+set -e
+git clone https://github.com/google/protobuf.git --branch v3.4.0 --depth 1
 cd protobuf
 git submodule update --init
 ./autogen.sh
@@ -11,3 +12,4 @@ ldconfig
 make clean
 cd ..
 rm -r protobuf
+/usr/local/bin/protoc --version
