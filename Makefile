@@ -98,7 +98,7 @@ clean-protoc:
 # clean doesn't remove the vendor directory since installing is time-intensive;
 # you can do this explicitly: `ampmake clean-deps clean`
 
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit clean-amp-local clean-amp-aws clean-ampagent
 cleanall: clean cleanall-deps
 
 # =============================================================================
@@ -182,6 +182,7 @@ rebuild-server: clean-server build-server
 .PHONY: clean-server
 clean-server:
 	@rm -f $(AMPLTARGET)
+	@docker image rm $(AMPLIMG) 2>/dev/null || true
 
 
 # =============================================================================
@@ -213,6 +214,7 @@ rebuild-gateway: clean-gateway build-gateway
 .PHONY: clean-gateway
 clean-gateway:
 	@rm -f $(GWTARGET)
+	@docker image rm $(GWIMG) 2>/dev/null || true
 
 # =============================================================================
 # BUILD monitoring (`promctl`)
@@ -243,6 +245,7 @@ rebuild-monit: clean-monit build-monit
 .PHONY: clean-monit
 clean-monit:
 	@rm -f $(MONITTARGET)
+	@docker image rm $(MONITIMG) 2>/dev/null || true
 
 # =============================================================================
 # BUILD BEAT (`ampbeat`)
@@ -273,6 +276,7 @@ rebuild-beat: clean-beat build-beat
 .PHONY: clean-beat
 clean-beat:
 	@rm -f $(BEATTARGET)
+	@docker image rm $(BEATIMG) 2>/dev/null || true
 
 # =============================================================================
 # BUILD AGENT (`agent`)
@@ -303,6 +307,7 @@ rebuild-agent: clean-agent build-agent
 .PHONY: clean-agent
 clean-agent:
 	@rm -f $(AGENTTARGET)
+	@docker image rm $(AGENTIMG) 2>/dev/null || true
 
 # =============================================================================
 # BUILD CLUSTER PLUGINS (`amp-aws`)
@@ -316,6 +321,10 @@ CPAWSIMG := appcelerator/amp-aws:$(VERSION)
 .PHONY: build-amp-aws
 build-amp-aws:
 	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPAWSIMG) $(CPAWSDIR)
+
+.PHONY: clean-amp-aws
+clean-amp-aws:
+	@docker image rm $(CPAWSIMG) 2>/dev/null || true
 
 # WARNING:
 # If the environment variables for $KEYNAME and $REGION are not set, the
@@ -349,6 +358,10 @@ build-amp-local:
 	@echo "build $(CPLOCALDIR)"
 	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPLOCALIMG) $(CPLOCALDIR)
 
+.PHONY: clean-amp-local
+clean-amp-local:
+	@docker image rm $(CPLOCALIMG) 2>/dev/null || true
+
 # =============================================================================
 # BUILD AMPAGENT (`ampagent`)
 # =============================================================================
@@ -360,6 +373,10 @@ AMPAGENTIMG := appcelerator/ampagent:$(AMPAGENTTAG)
 build-ampagent:
 	@echo "build $(AMPAGENTDIR)"
 	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(AMPAGENTIMG) $(AMPAGENTDIR)
+
+.PHONY: clean-ampagent
+clean-ampagent:
+	@docker image rm $(AMPAGENTIMG) 2>/dev/null || true
 
 # =============================================================================
 # Quality checks

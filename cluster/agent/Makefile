@@ -15,6 +15,7 @@ vendor: vendor.conf
 
 clean:
 	rm -f $(TARGET)
+	@docker image rm $(IMAGE) 2>/dev/null || true
 
 test:
 	go test -v -timeout 30m $(PKG)/../admin
