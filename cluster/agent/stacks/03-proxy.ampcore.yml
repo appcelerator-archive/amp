@@ -22,13 +22,20 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.route == true
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 150M
+        reservations:
+          cpus: '0.05'
+          memory: 100M
     environment:
       CERT_FOLDER: "/run/secrets"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.delay: "5s"
       amp.service.stabilize.timeout: "30s"
     ports:
       - "80:80"

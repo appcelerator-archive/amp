@@ -38,6 +38,12 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.api == true
+      resources:
+        limits:
+          memory: 250M
+        reservations:
+          cpus: '0.15'
+          memory: 150M
     secrets:
       - source: amplifier_yml
         target: amplifier.yml

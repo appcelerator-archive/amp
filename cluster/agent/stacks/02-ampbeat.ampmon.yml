@@ -19,6 +19,10 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 20M
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"

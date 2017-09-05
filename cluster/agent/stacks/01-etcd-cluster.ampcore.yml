@@ -11,7 +11,7 @@ volumes:
 services:
 
   etcd:
-    image: appcelerator/etcd:3.2.6
+    image: appcelerator/etcd:3.2.7
     networks:
       default:
     volumes:
@@ -42,3 +42,6 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.kv == true
+      resources:
+        reservations:
+          memory: '80M'

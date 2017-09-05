@@ -18,6 +18,10 @@ services:
       mode: global
       labels:
         io.amp.role: "infrastructure"
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 15M
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"

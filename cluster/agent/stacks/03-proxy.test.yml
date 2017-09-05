@@ -11,12 +11,12 @@ services:
     image: appcelerator/alpine:3.6.0
     networks:
       - default
-    command: ["curl", "-sf", "http://stats:stats@${AMP_STACK:-amp}_proxy:1936/haproxy?stats;csv"]
+    command: ["curl", "--retry", "3", "--retry-connrefused", "--retry-delay", "5", "-sfm", "5", "http://stats:stats@${AMP_STACK:-amp}_proxy:1936/haproxy?stats;csv"]
     labels:
       io.amp.role: "infrastructure"
       io.amp.test:
       amp.service.stabilize.delay: "0s"
-      amp.service.stabilize.timeout: "15s"
+      amp.service.stabilize.timeout: "30s"
     deploy:
       mode: replicated
       replicas: 1

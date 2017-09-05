@@ -38,6 +38,12 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.metrics == true
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          cpus: '0.10'
+          memory: 500M
     configs:
       - source: prometheus_alerts_rules
         target: /etc/prometheus/alerts.rules
