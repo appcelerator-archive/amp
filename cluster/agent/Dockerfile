@@ -25,7 +25,7 @@ WORKDIR ${PKGROOT}
 #RUN vndr
 
 # test
-RUN go test -v -timeout 30m ${PKG}/admin
+#RUN go test -v -timeout 30m ${PKG}/admin
 
 # build
 RUN echo "Building ampagent with ${LDFLAGS}" && \

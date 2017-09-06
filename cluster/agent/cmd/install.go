@@ -270,7 +270,8 @@ func deployTest(d *command.DockerCli, stackfile string, namespace string, timeou
 	// If the task has an error, the test has failed
 	task := tasks[0]
 	if task.Status.Err != "" {
-		return fmt.Errorf("test failed with status: %s", task.Status.Err)
+		log.Println(task.Status.Message)
+		return fmt.Errorf("test failed with status %s: %s", string(task.Status.State), task.Status.Err)
 	}
 
 	log.Println("Test successful")

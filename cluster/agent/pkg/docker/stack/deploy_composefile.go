@@ -436,13 +436,31 @@ func reachedDesiredState(tasks []swarm.Task, desiredState swarm.TaskState) (bool
 	for _, t := range tasks {
 		// a test stack should fail fast
 		if t.Status.State == swarm.TaskStateFailed && desiredState == swarm.TaskStateComplete {
-			return false, errors.New("at least one task failed")
+			return false, fmt.Errorf("at least one task failed, %s, %s", t.Status.State, t.Status.Message)
 		}
 		if t.Status.State != desiredState {
 			return false, nil
 		}
 	}
 	//fmt.Println("service has reached desired state")
+	return true, nil
+}
+
+func assessTasksStatus(tasks []swarm.Task, statesMap map[swarm.TaskState]bool) (bool, error) {
+	if len(tasks) == 0 {
+		// that case may happen, the ListTasks request may return an empty list,
+		// in which case we should retry
+		return false, nil
+	}
+	for i, t := range tasks {
+		if t.Status.State == swarm.TaskStateRejected {
+			return false, errors.New("a node rejected a task, the image may be not available")
+		}
+		fmt.Printf("task #%d status:        %s\n", i, string(t.Status.State))
+		if !statesMap[t.Status.State] {
+			return false, nil
+		}
+	}
 	return true, nil
 }
 
@@ -463,29 +481,36 @@ func imageIsPulled(tasks []swarm.Task) (bool, error) {
 		swarm.TaskStateFailed:    true,
 		swarm.TaskStateRejected:  false,
 	}
-	if len(tasks) == 0 {
-		// that case may happen, the ListTasks request may return an empty list,
-		// in which case we should retry
-		return false, nil
+	return assessTasksStatus(tasks, preparedStates)
+}
+
+func tasksAreAllAssigned(tasks []swarm.Task) (bool, error) {
+	// task states where the image is ready
+	assignedStates := map[swarm.TaskState]bool{
+		swarm.TaskStateNew:       false,
+		swarm.TaskStateAllocated: false,
+		swarm.TaskStatePending:   false,
+		swarm.TaskStateAssigned:  true,
+		swarm.TaskStatePreparing: true,
+		swarm.TaskStateReady:     true,
+		swarm.TaskStateStarting:  true,
+		swarm.TaskStateRunning:   true,
+		swarm.TaskStateComplete:  true,
+		swarm.TaskStateShutdown:  true,
+		swarm.TaskStateFailed:    true,
+		swarm.TaskStateRejected:  false,
 	}
-	for _, t := range tasks {
-		if t.Status.State == swarm.TaskStateRejected {
-			return false, errors.New("unable to pull the image")
-		}
-		if !preparedStates[t.Status.State] {
-			//fmt.Printf("task status: %s\n", string(t.Status.State))
-			return false, nil
-		}
-	}
-	return true, nil
+	return assessTasksStatus(tasks, assignedStates)
 }
 
 // NotifyState calls the provided callback when the desired service state is achieved for all tasks or when the deadline is exceeded
 func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID string, desiredState swarm.TaskState, stabilizeDelay time.Duration, stabilizeTimeout time.Duration, pullTimeout time.Duration, callback func(error)) {
 	startTime := time.Now()
-	// first deadline for the image pull
+	// first deadline for the assignement
+	assignDeadline := startTime.Add(5 * time.Second)
+	// second deadline for the image pull
 	pullDeadline := startTime.Add(pullTimeout)
-	// second deadline based on the stabilize timeout
+	// third deadline based on the stabilize timeout
 	deadline := startTime.Add(stabilizeTimeout)
 
 	go func() {
@@ -494,6 +519,7 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID s
 		taskOpts.Filters.Add("service", serviceID)
 		stabilized := false
 		pulled := false
+		assigned := false
 		reachedState := false
 		for {
 			// all tasks need to match the desired state and be stable within the deadline
@@ -509,15 +535,28 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID s
 				return
 			}
 
-			// update the pulled status
-			if !pulled {
-				prepared, err := imageIsPulled(tasks)
+			if !assigned {
+				var err error
+				assigned, err = tasksAreAllAssigned(tasks)
 				if err != nil {
 					callback(err)
 					return
 				}
-				if prepared {
-					fmt.Printf("image has been pulled after %s\n", time.Since(startTime))
+				if !assigned && time.Now().After(assignDeadline) {
+					callback(errors.New("failed to assign tasks on nodes"))
+					return
+				}
+			}
+			// update the pulled status
+			if assigned && !pulled {
+				var err error
+				pulled, err = imageIsPulled(tasks)
+				if err != nil {
+					callback(err)
+					return
+				}
+				if pulled {
+					//fmt.Printf("image has been pulled after %s\n", time.Since(startTime))
 					pulled = true
 					// update stabilization timeout deadline
 					deadline = time.Now().Add(stabilizeTimeout)
@@ -560,7 +599,7 @@ func NotifyState(ctx context.Context, apiClient apiclient.APIClient, serviceID s
 			}
 
 			// task polling interval
-			time.Sleep(1 * time.Second)
+			time.Sleep(700 * time.Millisecond)
 		}
 	}()
 }
