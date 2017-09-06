@@ -123,6 +123,13 @@ print_teardown() {
   true
 }
 
+print_progress() {
+  local ec=$?
+  [[ $VERBOSE -eq 2 || -z "$PRINT_PROGRESS" ]] && return $ec
+  [[ $ec -eq 0 ]] && echo "PASSED - $(test_timestamp): $1" || echo "FAILED - $(test_timestamp): $1"
+  return $ec
+}
+
 printresults() {
   elapsed=$1
   count=$2
@@ -188,6 +195,7 @@ run_suite() {
   run_child_suites "$1" || return 1
 
   run_teardown "$1"
+  print_progress "$1"
   check "test suite setup failed"
 }
 
