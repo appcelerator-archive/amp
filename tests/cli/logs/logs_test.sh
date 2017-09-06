@@ -33,7 +33,7 @@ test_logs_node() {
 }
 
 test_logs_number() {
-  amp -k logs -n 2 | wc -l | grep -q "2"
+  amp -k logs -i -n 2 | wc -l | grep -q "2"
 }
 
 test_logs_raw() {
