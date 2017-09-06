@@ -1,7 +1,8 @@
 #!/bin/bash
 tmpfile=$(mktemp)
 code=0
-docker run --rm --network ampnet appcelerator/alpine:3.6.0 curl -sf http://prometheus:9090/config > $tmpfile
+_timeout=15
+docker run --rm --network ampnet appcelerator/alpine:3.6.0 curl -sfm $_timeout http://prometheus:9090/config > $tmpfile
 grep -q -- "- job_name: nodes" $tmpfile
 code=$((code+$?))
 grep -q -- "- job_name: docker-engine" $tmpfile
