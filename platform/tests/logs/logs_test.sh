@@ -1,13 +1,18 @@
 #!/bin/bash
 
 test_logs() {
+  SECONDS=0
+  local _timeout=35
   while true
   do
-     if amp -k logs | grep -q "pinger_pinger.*listening on :3000"
-     then
-             break
-     fi
+     amp -k logs | grep -q "pinger_pinger.*listening on :3000" && return 0
      sleep 1
+     if [[ $SECONDS -gt $_timeout ]]; then
+       echo "test_logs timed out, unable to find 'pinger_pinger.*listening on :3000' in logs:" >&2
+       amp -k logs >&2
+       amp -k service ps pinger_pinger >&2
+       return 1
+     fi
   done
 }
 
@@ -16,7 +21,17 @@ test_logs_container() {
 }
 
 test_logs_include() {
-  amp -k logs -i | grep -q "amp_"
+  local amplogs
+  local ec
+  amplogs=$(amp -k logs -i 2>/dev/null)
+  if [[ -z "$amplogs" ]]; then
+    echo "no logs available yet" >&2
+    return 1
+  fi
+  echo $amplogs | grep -q "amp_"
+  ec=$?
+  [[ $? -ne 0 ]] && echo $amplogs
+  return $ec
 }
 
 test_logs_metadata() {
@@ -28,8 +43,14 @@ test_logs_msg() {
 }
 
 test_logs_node() {
+  local code
+  local amplogs
   nodeid=$(docker node inspect self --format "{{.ID}}")
-  amp -k logs --node $nodeid | grep -q "pinger_pinger.*listening on :3000.*"
+  amplogs=$(amp -k logs --node $nodeid 2>/dev/null)
+  echo $amplogs | grep -q "pinger_pinger.*listening on :3000.*"
+  code=$?
+  [[ $code -ne 0 ]] && echo $amplogs
+  return $code
 }
 
 test_logs_number() {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +24,7 @@ const (
 	ImageName         = "appcelerator/ampagent"
 	DockerSocket      = "/var/run/docker.sock"
 	DockerSwarmSocket = "/var/run/docker"
-	CoreStackName = "amp"
+	CoreStackName     = "amp"
 )
 
 var (
@@ -51,9 +50,9 @@ type FullSwarmInfo struct {
 	Node  swarm.Node
 }
 type ShortSwarmInfo struct {
-	SwarmStatus string `json:"Swarm Status"`
-	CoreServices  int `json:"Core Services"`
-	UserServices  int `json:"User Services"`
+	SwarmStatus  string `json:"Swarm Status"`
+	CoreServices int    `json:"Core Services"`
+	UserServices int    `json:"User Services"`
 }
 
 // EnsureSwarmExists checks that the Swarm is initialized, and does it if it's not the case
@@ -101,6 +100,19 @@ func LabelNode(ctx context.Context, c *client.Client, opts *RequestOptions) erro
 
 func removeAgent(ctx context.Context, c *client.Client, cid string, force bool) error {
 	return c.ContainerRemove(ctx, cid, types.ContainerRemoveOptions{Force: force})
+}
+
+func containerLogs(ctx context.Context, c *client.Client, id string) {
+	reader, err := c.ContainerLogs(ctx, id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+	})
+	if err != nil {
+		return
+	}
+	defer reader.Close()
+	_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, reader)
 }
 
 // RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
@@ -181,7 +193,7 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		if err != nil {
 			fmt.Printf("%v\n", err)
 		}
-		for i:=0; i<10; i++ {
+		for i := 0; i < 10; i++ {
 			if err := removeAgent(ctx, c, r.ID, false); err == nil {
 				break
 			}
@@ -191,29 +203,12 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 		return
 	}()
 
-	go func() {
-		var timestamp int64
-		for {
-			reader, err := c.ContainerLogs(ctx, r.ID, types.ContainerLogsOptions{
-				ShowStdout: true,
-				ShowStderr: true,
-				Follow:     false,
-				Since:      strconv.FormatInt(timestamp, 10),
-			})
-			timestamp = time.Now().Unix()
-			if err != nil {
-				return
-			}
-			defer reader.Close()
-			_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, reader)
-			time.Sleep(time.Second)
-		}
-	}()
-
 	if err = c.ContainerStart(ctx, r.ID, types.ContainerStartOptions{}); err != nil {
 		_ = removeAgent(ctx, c, r.ID, true)
 		return err
 	}
+
+	go containerLogs(ctx, c, r.ID)
 
 	go func() {
 		for {
@@ -229,8 +224,6 @@ func RunAgent(ctx context.Context, c *client.Client, action string, opts *Reques
 	}()
 
 	<-done
-	// give time to clear the logs
-	time.Sleep(1200 * time.Millisecond)
 	_ = removeAgent(ctx, c, r.ID, true)
 	return nil
 }

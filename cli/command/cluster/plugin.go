@@ -97,6 +97,7 @@ func RunContainer(c cli.Interface, img string, dockerOpts docker, args []string,
 	dockerArgs := []string{
 		"run", "-t", "--rm", "--name", containerName,
 		"--network", "host",
+		"--label", "io.amp.role=infrastructure",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-e", "GOPATH=/go",
 	}

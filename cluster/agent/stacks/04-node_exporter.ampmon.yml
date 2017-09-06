@@ -28,3 +28,7 @@ services:
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "9100"
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 15M

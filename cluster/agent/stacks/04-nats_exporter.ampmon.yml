@@ -29,3 +29,7 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 10M

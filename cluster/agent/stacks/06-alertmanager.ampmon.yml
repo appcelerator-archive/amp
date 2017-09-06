@@ -34,6 +34,10 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.02'
+          memory: 30M
     secrets:
       - source: alertmanager_yml
         target: alertmanager.yml
