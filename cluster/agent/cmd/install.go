@@ -426,8 +426,18 @@ func RemoveNetwork(name string) error {
 	if err != nil {
 		return err
 	}
-	if err := c.NetworkRemove(context.Background(), name); err != nil {
-		return err
+	// service deletion is async, it may take a few seconds before all tasks
+	// depending on this network are really removed, so we try a few times
+	success := false
+	for i := 0; i < 10; i++ {
+		if err := c.NetworkRemove(context.Background(), name); err == nil {
+			success = true
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if !success {
+		return fmt.Errorf("Timed out trying to remove network: %s", name)
 	}
 	return nil
 }
@@ -581,9 +591,12 @@ func RemoveVolume(name string, force bool, retries int) error {
 		return err
 	}
 
+	if retries < 1 {
+		retries = 1
+	}
 	success := false
-	for i := 0; i < 10; i++ {
-		if err := c.VolumeRemove(context.Background(), name, force); err != nil {
+	for i := 0; i < retries; i++ {
+		if err = c.VolumeRemove(context.Background(), name, force); err != nil {
 			time.Sleep(time.Second)
 			continue
 		}
@@ -591,7 +604,7 @@ func RemoveVolume(name string, force bool, retries int) error {
 		break
 	}
 	if !success {
-		return fmt.Errorf("Timed out trying to remove volume: %s", name)
+		return fmt.Errorf("Timed out after %d attempts to remove volume %s: %v", retries, name, err)
 	}
 	return nil
 }
@@ -608,8 +621,8 @@ func removeVolumes() error {
 	}
 
 	// Remove volumes
-	for _, volume := range volumes {
-		if err := RemoveVolume(volume.Name, true, 10); err != nil {
+	for i, volume := range volumes {
+		if err := RemoveVolume(volume.Name, true, 20-i); err != nil {
 			return err
 		}
 		log.Println("Successfully removed volume:", volume.Name)
