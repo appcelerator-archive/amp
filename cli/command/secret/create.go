@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 
 	"github.com/appcelerator/amp/api/rpc/secret"
-	"github.com/appcelerator/amp/api/rpc/types"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -48,34 +47,31 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 	if source == "-" {
 		data, err = ioutil.ReadAll(c.In())
 		if err != nil {
-			return fmt.Errorf("Error reading content from STDIN: %s", err.Error())
+			return fmt.Errorf("error reading content from STDIN: %s", err.Error())
 		}
 
 	} else {
 		data, err = ioutil.ReadFile(source)
 		if err != nil {
-			return fmt.Errorf("Error reading from file '%s': %s", source, err.Error())
+			return fmt.Errorf("error reading from file '%s': %s", source, err.Error())
 		}
 
 	}
 
 	conn := c.ClientConn()
-	client := secret.NewSecretServiceClient(conn)
-	spec := &secret.SecretSpec{
-		Annotations: &types.Annotations{Name: name},
-		Data:        data,
+	client := secret.NewSecretClient(conn)
+	request := &secret.CreateRequest{
+		Name: name,
+		Data: data,
 	}
-	request := &secret.CreateSecretRequest{
-		Spec: spec,
-	}
-	resp, err := client.CreateSecret(context.Background(), request)
+	reply, err := client.Create(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}
-		return fmt.Errorf("Error creating secret: %s", err)
+		return fmt.Errorf("error creating secret: %s", err)
 	}
-	fmt.Println(resp.GetSecret().GetId())
+	fmt.Println(reply.GetId())
 
 	return nil
 }

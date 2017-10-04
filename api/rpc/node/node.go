@@ -1,8 +1,8 @@
 package node
 
 import (
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

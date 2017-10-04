@@ -1,4 +1,4 @@
-# ![Ladon](logo.png)
+# ![Ladon](https://storage.googleapis.com/ory.am/ory_banners-49.png)
 
 [![Join the chat at https://gitter.im/ory-am/hydra](https://img.shields.io/badge/join-chat-00cc99.svg)](https://gitter.im/ory-am/hydra?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Join newsletter](https://img.shields.io/badge/join-newsletter-00cc99.svg)](http://eepurl.com/bKT3N9)
@@ -42,6 +42,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
     - [Conditions](#conditions)
       - [CIDR Condition](#cidr-condition)
       - [String Equal Condition](#string-equal-condition)
+      - [String Match Condition](#string-match-condition)
       - [Subject Condition](#subject-condition)
       - [String Pairs Equal Condition](#string-pairs-equal-condition)
       - [Adding Custom Conditions](#adding-custom-conditions)
@@ -366,6 +367,32 @@ var err = warden.IsAllowed(&ladon.Request{
          "some-arbitrary-key": "the-value-should-be-this",
     },
 }
+```
+
+##### [String Match Condition](condition_string_match.go)
+
+Checks if the value passed in the access request's context matches the regular expression that was given initially
+
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+      "some-arbitrary-key": &ladon.StringMatchCondition{
+          Matches: "regex-pattern-here.+"
+      }
+    }
+}
+```
+
+and would match in the following case:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+          "some-arbitrary-key": "regex-pattern-here111"
+    }
+  }
+})
 ```
 
 ##### [Subject Condition](condition_subject_equal.go)

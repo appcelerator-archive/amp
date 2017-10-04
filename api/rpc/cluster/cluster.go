@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

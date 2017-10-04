@@ -8,23 +8,19 @@ It is generated from these files:
 	github.com/appcelerator/amp/api/rpc/config/config.proto
 
 It has these top-level messages:
-	ConfigSpec
-	Config
-	CreateConfigRequest
-	CreateConfigResponse
-	GetConfigRequest
-	GetConfigResponse
-	ListConfigsRequest
-	ListConfigsResponse
-	RemoveConfigRequest
-	RemoveConfigResponse
+	CreateRequest
+	CreateReply
+	ListRequest
+	ConfigEntry
+	ListReply
+	RemoveRequest
+	RemoveReply
 */
 package config
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import types "github.com/appcelerator/amp/api/rpc/types"
 
 import (
 	context "golang.org/x/net/context"
@@ -42,286 +38,134 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// ConfigSpec specifies user-provided configuration files.
-// from: api/specs.proto
-type ConfigSpec struct {
-	Annotations *types.Annotations `protobuf:"bytes,1,opt,name=annotations" json:"annotations,omitempty"`
-	// Data is the config payload - the maximum size is 500KB (that is, 500*1024 bytes)
+type CreateRequest struct {
+	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	// Templating controls whether and how to evaluate the secret payload as
-	// a template. If it is not set, no templating is used.
-	//
-	// The currently recognized values are:
-	// - golang: Go templating
-	Templating *types.Driver `protobuf:"bytes,3,opt,name=templating" json:"templating,omitempty"`
 }
 
-func (m *ConfigSpec) Reset()                    { *m = ConfigSpec{} }
-func (m *ConfigSpec) String() string            { return proto.CompactTextString(m) }
-func (*ConfigSpec) ProtoMessage()               {}
-func (*ConfigSpec) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
+func (m *CreateRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateRequest) ProtoMessage()               {}
+func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *ConfigSpec) GetAnnotations() *types.Annotations {
+func (m *CreateRequest) GetName() string {
 	if m != nil {
-		return m.Annotations
+		return m.Name
 	}
-	return nil
+	return ""
 }
 
-func (m *ConfigSpec) GetData() []byte {
+func (m *CreateRequest) GetData() []byte {
 	if m != nil {
 		return m.Data
 	}
 	return nil
 }
 
-func (m *ConfigSpec) GetTemplating() *types.Driver {
-	if m != nil {
-		return m.Templating
-	}
-	return nil
+type CreateReply struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 }
 
-// Config represents a set of configuration files that should be passed to a
-// container.
-// from: api/objects.proto
-type Config struct {
-	Id   string      `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Meta *types.Meta `protobuf:"bytes,2,opt,name=meta" json:"meta,omitempty"`
-	// Spec contains the actual config data, as well as any context around the
-	// config data that the user provides.
-	Spec *ConfigSpec `protobuf:"bytes,3,opt,name=spec" json:"spec,omitempty"`
-}
+func (m *CreateReply) Reset()                    { *m = CreateReply{} }
+func (m *CreateReply) String() string            { return proto.CompactTextString(m) }
+func (*CreateReply) ProtoMessage()               {}
+func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *Config) Reset()                    { *m = Config{} }
-func (m *Config) String() string            { return proto.CompactTextString(m) }
-func (*Config) ProtoMessage()               {}
-func (*Config) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *Config) GetId() string {
+func (m *CreateReply) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *Config) GetMeta() *types.Meta {
+type ListRequest struct {
+}
+
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+type ConfigEntry struct {
+	Id   string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+}
+
+func (m *ConfigEntry) Reset()                    { *m = ConfigEntry{} }
+func (m *ConfigEntry) String() string            { return proto.CompactTextString(m) }
+func (*ConfigEntry) ProtoMessage()               {}
+func (*ConfigEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *ConfigEntry) GetId() string {
 	if m != nil {
-		return m.Meta
-	}
-	return nil
-}
-
-func (m *Config) GetSpec() *ConfigSpec {
-	if m != nil {
-		return m.Spec
-	}
-	return nil
-}
-
-// CreateConfigRequest specifies a new config (it will not update an existing
-// config) to create.
-// from: api/control.proto
-type CreateConfigRequest struct {
-	Spec *ConfigSpec `protobuf:"bytes,1,opt,name=spec" json:"spec,omitempty"`
-}
-
-func (m *CreateConfigRequest) Reset()                    { *m = CreateConfigRequest{} }
-func (m *CreateConfigRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateConfigRequest) ProtoMessage()               {}
-func (*CreateConfigRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *CreateConfigRequest) GetSpec() *ConfigSpec {
-	if m != nil {
-		return m.Spec
-	}
-	return nil
-}
-
-// CreateConfigResponse contains the newly created `Config` corresponding to the
-// name in `CreateConfigRequest`.
-// from: api/control.proto
-type CreateConfigResponse struct {
-	Config *Config `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
-}
-
-func (m *CreateConfigResponse) Reset()                    { *m = CreateConfigResponse{} }
-func (m *CreateConfigResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateConfigResponse) ProtoMessage()               {}
-func (*CreateConfigResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *CreateConfigResponse) GetConfig() *Config {
-	if m != nil {
-		return m.Config
-	}
-	return nil
-}
-
-// GetConfigRequest is the request to get a `Config` object given a config id.
-// from: api/control.proto
-type GetConfigRequest struct {
-	ConfigId string `protobuf:"bytes,1,opt,name=config_id,json=configId" json:"config_id,omitempty"`
-}
-
-func (m *GetConfigRequest) Reset()                    { *m = GetConfigRequest{} }
-func (m *GetConfigRequest) String() string            { return proto.CompactTextString(m) }
-func (*GetConfigRequest) ProtoMessage()               {}
-func (*GetConfigRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *GetConfigRequest) GetConfigId() string {
-	if m != nil {
-		return m.ConfigId
+		return m.Id
 	}
 	return ""
 }
 
-// GetConfigResponse contains the Config corresponding to the id in
-// `GetConfigRequest`.
-// from: api/control.proto
-type GetConfigResponse struct {
-	Config *Config `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
-}
-
-func (m *GetConfigResponse) Reset()                    { *m = GetConfigResponse{} }
-func (m *GetConfigResponse) String() string            { return proto.CompactTextString(m) }
-func (*GetConfigResponse) ProtoMessage()               {}
-func (*GetConfigResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *GetConfigResponse) GetConfig() *Config {
+func (m *ConfigEntry) GetName() string {
 	if m != nil {
-		return m.Config
-	}
-	return nil
-}
-
-// ListConfigRequest is the request to list all configs in the config store,
-// or all configs filtered by (name or name prefix or id prefix) and labels.
-// from: api/control.proto
-type ListConfigsRequest struct {
-	Filters *ListConfigsRequest_Filters `protobuf:"bytes,1,opt,name=filters" json:"filters,omitempty"`
-}
-
-func (m *ListConfigsRequest) Reset()                    { *m = ListConfigsRequest{} }
-func (m *ListConfigsRequest) String() string            { return proto.CompactTextString(m) }
-func (*ListConfigsRequest) ProtoMessage()               {}
-func (*ListConfigsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *ListConfigsRequest) GetFilters() *ListConfigsRequest_Filters {
-	if m != nil {
-		return m.Filters
-	}
-	return nil
-}
-
-type ListConfigsRequest_Filters struct {
-	Names        []string          `protobuf:"bytes,1,rep,name=names" json:"names,omitempty"`
-	IdPrefixes   []string          `protobuf:"bytes,2,rep,name=id_prefixes,json=idPrefixes" json:"id_prefixes,omitempty"`
-	Labels       map[string]string `protobuf:"bytes,3,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	NamePrefixes []string          `protobuf:"bytes,4,rep,name=name_prefixes,json=namePrefixes" json:"name_prefixes,omitempty"`
-}
-
-func (m *ListConfigsRequest_Filters) Reset()                    { *m = ListConfigsRequest_Filters{} }
-func (m *ListConfigsRequest_Filters) String() string            { return proto.CompactTextString(m) }
-func (*ListConfigsRequest_Filters) ProtoMessage()               {}
-func (*ListConfigsRequest_Filters) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6, 0} }
-
-func (m *ListConfigsRequest_Filters) GetNames() []string {
-	if m != nil {
-		return m.Names
-	}
-	return nil
-}
-
-func (m *ListConfigsRequest_Filters) GetIdPrefixes() []string {
-	if m != nil {
-		return m.IdPrefixes
-	}
-	return nil
-}
-
-func (m *ListConfigsRequest_Filters) GetLabels() map[string]string {
-	if m != nil {
-		return m.Labels
-	}
-	return nil
-}
-
-func (m *ListConfigsRequest_Filters) GetNamePrefixes() []string {
-	if m != nil {
-		return m.NamePrefixes
-	}
-	return nil
-}
-
-// ListConfigResponse contains a list of all the configs that match the name or
-// name prefix filters provided in `ListConfigRequest`.
-// from: api/control.proto
-type ListConfigsResponse struct {
-	Configs []*Config `protobuf:"bytes,1,rep,name=configs" json:"configs,omitempty"`
-}
-
-func (m *ListConfigsResponse) Reset()                    { *m = ListConfigsResponse{} }
-func (m *ListConfigsResponse) String() string            { return proto.CompactTextString(m) }
-func (*ListConfigsResponse) ProtoMessage()               {}
-func (*ListConfigsResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
-
-func (m *ListConfigsResponse) GetConfigs() []*Config {
-	if m != nil {
-		return m.Configs
-	}
-	return nil
-}
-
-// RemoveConfigRequest contains the ID of the config that should be removed.  This
-// removes all versions of the config.
-// from: api/control.proto
-type RemoveConfigRequest struct {
-	ConfigId string `protobuf:"bytes,1,opt,name=config_id,json=configId" json:"config_id,omitempty"`
-}
-
-func (m *RemoveConfigRequest) Reset()                    { *m = RemoveConfigRequest{} }
-func (m *RemoveConfigRequest) String() string            { return proto.CompactTextString(m) }
-func (*RemoveConfigRequest) ProtoMessage()               {}
-func (*RemoveConfigRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
-
-func (m *RemoveConfigRequest) GetConfigId() string {
-	if m != nil {
-		return m.ConfigId
+		return m.Name
 	}
 	return ""
 }
 
-// RemoveConfigResponse is an empty object indicating the successful removal of
-// a config.
-// from: api/control.proto
-type RemoveConfigResponse struct {
-	ConfigId string `protobuf:"bytes,1,opt,name=config_id,json=configId" json:"config_id,omitempty"`
+type ListReply struct {
+	Entries []*ConfigEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
 }
 
-func (m *RemoveConfigResponse) Reset()                    { *m = RemoveConfigResponse{} }
-func (m *RemoveConfigResponse) String() string            { return proto.CompactTextString(m) }
-func (*RemoveConfigResponse) ProtoMessage()               {}
-func (*RemoveConfigResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (m *ListReply) String() string            { return proto.CompactTextString(m) }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
-func (m *RemoveConfigResponse) GetConfigId() string {
+func (m *ListReply) GetEntries() []*ConfigEntry {
 	if m != nil {
-		return m.ConfigId
+		return m.Entries
+	}
+	return nil
+}
+
+type RemoveRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *RemoveRequest) Reset()                    { *m = RemoveRequest{} }
+func (m *RemoveRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoveRequest) ProtoMessage()               {}
+func (*RemoveRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *RemoveRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type RemoveReply struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *RemoveReply) Reset()                    { *m = RemoveReply{} }
+func (m *RemoveReply) String() string            { return proto.CompactTextString(m) }
+func (*RemoveReply) ProtoMessage()               {}
+func (*RemoveReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *RemoveReply) GetId() string {
+	if m != nil {
+		return m.Id
 	}
 	return ""
 }
 
 func init() {
-	proto.RegisterType((*ConfigSpec)(nil), "config.ConfigSpec")
-	proto.RegisterType((*Config)(nil), "config.Config")
-	proto.RegisterType((*CreateConfigRequest)(nil), "config.CreateConfigRequest")
-	proto.RegisterType((*CreateConfigResponse)(nil), "config.CreateConfigResponse")
-	proto.RegisterType((*GetConfigRequest)(nil), "config.GetConfigRequest")
-	proto.RegisterType((*GetConfigResponse)(nil), "config.GetConfigResponse")
-	proto.RegisterType((*ListConfigsRequest)(nil), "config.ListConfigsRequest")
-	proto.RegisterType((*ListConfigsRequest_Filters)(nil), "config.ListConfigsRequest.Filters")
-	proto.RegisterType((*ListConfigsResponse)(nil), "config.ListConfigsResponse")
-	proto.RegisterType((*RemoveConfigRequest)(nil), "config.RemoveConfigRequest")
-	proto.RegisterType((*RemoveConfigResponse)(nil), "config.RemoveConfigResponse")
+	proto.RegisterType((*CreateRequest)(nil), "config.CreateRequest")
+	proto.RegisterType((*CreateReply)(nil), "config.CreateReply")
+	proto.RegisterType((*ListRequest)(nil), "config.ListRequest")
+	proto.RegisterType((*ConfigEntry)(nil), "config.ConfigEntry")
+	proto.RegisterType((*ListReply)(nil), "config.ListReply")
+	proto.RegisterType((*RemoveRequest)(nil), "config.RemoveRequest")
+	proto.RegisterType((*RemoveReply)(nil), "config.RemoveReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -332,158 +176,130 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for ConfigService service
+// Client API for Config service
 
-type ConfigServiceClient interface {
-	// CreateConfig creates and return a `CreateConfigResponse` with a `Config` based
-	// on the provided `CreateConfigRequest.ConfigSpec`.
-	// - Returns `InvalidArgument` if the `CreateConfigRequest.ConfigSpec` is malformed,
-	//   or if the config data is too long or contains invalid characters.
-	// - Returns an error if the creation fails.
-	CreateConfig(ctx context.Context, in *CreateConfigRequest, opts ...grpc.CallOption) (*CreateConfigResponse, error)
-	// ListConfigs returns a `ListConfigResponse` with a list of `Config`s being
-	// managed, or all configs matching any name in `ListConfigsRequest.Names`, any
-	// name prefix in `ListConfigsRequest.NamePrefixes`, any id in
-	// `ListConfigsRequest.ConfigIDs`, or any id prefix in `ListConfigsRequest.IDPrefixes`.
-	// - Returns an error if listing fails.
-	ListConfigs(ctx context.Context, in *ListConfigsRequest, opts ...grpc.CallOption) (*ListConfigsResponse, error)
-	// RemoveConfig removes the config referenced by `RemoveConfigRequest.ID`.
-	// - Returns `InvalidArgument` if `RemoveConfigRequest.ID` is empty.
-	// - Returns `NotFound` if the a config named `RemoveConfigRequest.ID` is not found.
-	// - Returns an error if the deletion fails.
-	RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*RemoveConfigResponse, error)
+type ConfigClient interface {
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error)
 }
 
-type configServiceClient struct {
+type configClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewConfigServiceClient(cc *grpc.ClientConn) ConfigServiceClient {
-	return &configServiceClient{cc}
+func NewConfigClient(cc *grpc.ClientConn) ConfigClient {
+	return &configClient{cc}
 }
 
-func (c *configServiceClient) CreateConfig(ctx context.Context, in *CreateConfigRequest, opts ...grpc.CallOption) (*CreateConfigResponse, error) {
-	out := new(CreateConfigResponse)
-	err := grpc.Invoke(ctx, "/config.ConfigService/CreateConfig", in, out, c.cc, opts...)
+func (c *configClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
+	out := new(CreateReply)
+	err := grpc.Invoke(ctx, "/config.Config/Create", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *configServiceClient) ListConfigs(ctx context.Context, in *ListConfigsRequest, opts ...grpc.CallOption) (*ListConfigsResponse, error) {
-	out := new(ListConfigsResponse)
-	err := grpc.Invoke(ctx, "/config.ConfigService/ListConfigs", in, out, c.cc, opts...)
+func (c *configClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
+	err := grpc.Invoke(ctx, "/config.Config/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *configServiceClient) RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*RemoveConfigResponse, error) {
-	out := new(RemoveConfigResponse)
-	err := grpc.Invoke(ctx, "/config.ConfigService/RemoveConfig", in, out, c.cc, opts...)
+func (c *configClient) Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error) {
+	out := new(RemoveReply)
+	err := grpc.Invoke(ctx, "/config.Config/Remove", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for ConfigService service
+// Server API for Config service
 
-type ConfigServiceServer interface {
-	// CreateConfig creates and return a `CreateConfigResponse` with a `Config` based
-	// on the provided `CreateConfigRequest.ConfigSpec`.
-	// - Returns `InvalidArgument` if the `CreateConfigRequest.ConfigSpec` is malformed,
-	//   or if the config data is too long or contains invalid characters.
-	// - Returns an error if the creation fails.
-	CreateConfig(context.Context, *CreateConfigRequest) (*CreateConfigResponse, error)
-	// ListConfigs returns a `ListConfigResponse` with a list of `Config`s being
-	// managed, or all configs matching any name in `ListConfigsRequest.Names`, any
-	// name prefix in `ListConfigsRequest.NamePrefixes`, any id in
-	// `ListConfigsRequest.ConfigIDs`, or any id prefix in `ListConfigsRequest.IDPrefixes`.
-	// - Returns an error if listing fails.
-	ListConfigs(context.Context, *ListConfigsRequest) (*ListConfigsResponse, error)
-	// RemoveConfig removes the config referenced by `RemoveConfigRequest.ID`.
-	// - Returns `InvalidArgument` if `RemoveConfigRequest.ID` is empty.
-	// - Returns `NotFound` if the a config named `RemoveConfigRequest.ID` is not found.
-	// - Returns an error if the deletion fails.
-	RemoveConfig(context.Context, *RemoveConfigRequest) (*RemoveConfigResponse, error)
+type ConfigServer interface {
+	Create(context.Context, *CreateRequest) (*CreateReply, error)
+	List(context.Context, *ListRequest) (*ListReply, error)
+	Remove(context.Context, *RemoveRequest) (*RemoveReply, error)
 }
 
-func RegisterConfigServiceServer(s *grpc.Server, srv ConfigServiceServer) {
-	s.RegisterService(&_ConfigService_serviceDesc, srv)
+func RegisterConfigServer(s *grpc.Server, srv ConfigServer) {
+	s.RegisterService(&_Config_serviceDesc, srv)
 }
 
-func _ConfigService_CreateConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateConfigRequest)
+func _Config_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConfigServiceServer).CreateConfig(ctx, in)
+		return srv.(ConfigServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/config.ConfigService/CreateConfig",
+		FullMethod: "/config.Config/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServiceServer).CreateConfig(ctx, req.(*CreateConfigRequest))
+		return srv.(ConfigServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ConfigService_ListConfigs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListConfigsRequest)
+func _Config_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConfigServiceServer).ListConfigs(ctx, in)
+		return srv.(ConfigServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/config.ConfigService/ListConfigs",
+		FullMethod: "/config.Config/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServiceServer).ListConfigs(ctx, req.(*ListConfigsRequest))
+		return srv.(ConfigServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ConfigService_RemoveConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveConfigRequest)
+func _Config_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConfigServiceServer).RemoveConfig(ctx, in)
+		return srv.(ConfigServer).Remove(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/config.ConfigService/RemoveConfig",
+		FullMethod: "/config.Config/Remove",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServiceServer).RemoveConfig(ctx, req.(*RemoveConfigRequest))
+		return srv.(ConfigServer).Remove(ctx, req.(*RemoveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _ConfigService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "config.ConfigService",
-	HandlerType: (*ConfigServiceServer)(nil),
+var _Config_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "config.Config",
+	HandlerType: (*ConfigServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateConfig",
-			Handler:    _ConfigService_CreateConfig_Handler,
+			MethodName: "Create",
+			Handler:    _Config_Create_Handler,
 		},
 		{
-			MethodName: "ListConfigs",
-			Handler:    _ConfigService_ListConfigs_Handler,
+			MethodName: "List",
+			Handler:    _Config_List_Handler,
 		},
 		{
-			MethodName: "RemoveConfig",
-			Handler:    _ConfigService_RemoveConfig_Handler,
+			MethodName: "Remove",
+			Handler:    _Config_Remove_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -495,40 +311,23 @@ func init() {
 }
 
 var fileDescriptor0 = []byte{
-	// 553 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0xdd, 0x8e, 0xd2, 0x40,
-	0x14, 0xde, 0x16, 0x04, 0x39, 0x85, 0xcd, 0x3a, 0x70, 0x41, 0x8a, 0xc9, 0x92, 0x9a, 0x6c, 0xb8,
-	0xb1, 0x4d, 0x58, 0x8d, 0xff, 0x1a, 0xb3, 0xba, 0x6a, 0x76, 0x4d, 0xcc, 0xf8, 0x00, 0x9b, 0xa1,
-	0x3d, 0xe0, 0xc4, 0xfe, 0x8c, 0xed, 0x40, 0xe4, 0x01, 0x7c, 0x2c, 0xdf, 0xc7, 0x7b, 0x5f, 0xc0,
-	0x30, 0x33, 0x85, 0x12, 0xd0, 0x75, 0x6f, 0x60, 0x66, 0xbe, 0xf3, 0x7d, 0xdf, 0xf9, 0x4b, 0xe1,
-	0xd1, 0x8c, 0xcb, 0x2f, 0xf3, 0x89, 0x1f, 0x66, 0x49, 0xc0, 0x84, 0x08, 0x31, 0xc6, 0x9c, 0xc9,
-	0x2c, 0x0f, 0x58, 0x22, 0x02, 0x26, 0x78, 0x90, 0x8b, 0x30, 0x08, 0xb3, 0x74, 0xca, 0x67, 0xe6,
-	0xcf, 0x17, 0x79, 0x26, 0x33, 0xd2, 0xd0, 0x37, 0xf7, 0xe1, 0xff, 0x08, 0xc8, 0xa5, 0xc0, 0x42,
-	0xff, 0x6a, 0xba, 0xf7, 0xc3, 0x02, 0x38, 0x53, 0x0a, 0x9f, 0x05, 0x86, 0xe4, 0x01, 0x38, 0x2c,
-	0x4d, 0x33, 0xc9, 0x24, 0xcf, 0xd2, 0xa2, 0x6f, 0x0d, 0xad, 0x91, 0x33, 0x26, 0xbe, 0x66, 0xbc,
-	0xde, 0x20, 0xb4, 0x1a, 0x46, 0x08, 0xd4, 0x23, 0x26, 0x59, 0xdf, 0x1e, 0x5a, 0xa3, 0x36, 0x55,
-	0x67, 0x72, 0x1f, 0x40, 0x62, 0x22, 0x62, 0x26, 0x79, 0x3a, 0xeb, 0xd7, 0x94, 0x50, 0xc7, 0x08,
-	0xbd, 0xc9, 0xf9, 0x02, 0x73, 0x5a, 0x09, 0xf0, 0x18, 0x34, 0x74, 0x1a, 0xe4, 0x10, 0x6c, 0x1e,
-	0x29, 0xe7, 0x16, 0xb5, 0x79, 0x44, 0x8e, 0xa1, 0x9e, 0xa0, 0x11, 0x77, 0xc6, 0x8e, 0x91, 0xf8,
-	0x88, 0x92, 0x51, 0x05, 0x90, 0x13, 0xa8, 0x17, 0x02, 0x43, 0xe3, 0x41, 0x7c, 0xd3, 0x9e, 0x4d,
-	0x55, 0x54, 0xe1, 0xde, 0x0b, 0xe8, 0x9e, 0xe5, 0xc8, 0x24, 0x6a, 0x84, 0xe2, 0xb7, 0x39, 0x16,
-	0x72, 0x4d, 0xb7, 0xae, 0xa1, 0xbf, 0x84, 0xde, 0x36, 0xbd, 0x10, 0x59, 0x5a, 0x20, 0x39, 0x01,
-	0x33, 0x02, 0xa3, 0x70, 0xb8, 0xad, 0x40, 0x0d, 0xea, 0x05, 0x70, 0xf4, 0x0e, 0xe5, 0xb6, 0xf7,
-	0x00, 0x5a, 0x1a, 0xbd, 0x5a, 0x97, 0x7c, 0x5b, 0x3f, 0x7c, 0x88, 0xbc, 0x67, 0x70, 0xa7, 0x42,
-	0xb8, 0xa1, 0xdb, 0x4f, 0x1b, 0xc8, 0x25, 0x2f, 0x0c, 0xbd, 0x28, 0x0d, 0x9f, 0x43, 0x73, 0xca,
-	0x63, 0x89, 0x79, 0x39, 0x5b, 0xaf, 0xe4, 0xef, 0x06, 0xfb, 0xe7, 0x3a, 0x92, 0x96, 0x14, 0xf7,
-	0x97, 0x05, 0x4d, 0xf3, 0x48, 0x7a, 0x70, 0x2b, 0x65, 0x09, 0xae, 0x74, 0x6a, 0xa3, 0x16, 0xd5,
-	0x17, 0x72, 0x0c, 0x0e, 0x8f, 0xae, 0x44, 0x8e, 0x53, 0xfe, 0x1d, 0x8b, 0xbe, 0xad, 0x30, 0xe0,
-	0xd1, 0x27, 0xf3, 0x42, 0xce, 0xa1, 0x11, 0xb3, 0x09, 0xc6, 0x45, 0xbf, 0x36, 0xac, 0x8d, 0x9c,
-	0xb1, 0x7f, 0xbd, 0xbf, 0x7f, 0xa9, 0x08, 0x6f, 0x53, 0x99, 0x2f, 0xa9, 0x61, 0x93, 0x7b, 0xd0,
-	0x59, 0x39, 0x6e, 0xac, 0xea, 0xca, 0xaa, 0xbd, 0x7a, 0x2c, 0xcd, 0xdc, 0x27, 0xe0, 0x54, 0xb8,
-	0xe4, 0x08, 0x6a, 0x5f, 0x71, 0x69, 0xfa, 0xbc, 0x3a, 0xae, 0x8a, 0x58, 0xb0, 0x78, 0x8e, 0x6a,
-	0xb9, 0x5a, 0x54, 0x5f, 0x9e, 0xda, 0x8f, 0x2d, 0xef, 0x15, 0x74, 0xb7, 0x32, 0x32, 0xed, 0x1f,
-	0x41, 0x53, 0xe7, 0xab, 0xeb, 0xde, 0xed, 0x7f, 0x09, 0x7b, 0x63, 0xe8, 0x52, 0x4c, 0xb2, 0x05,
-	0xde, 0x60, 0xe2, 0xa7, 0xd0, 0xdb, 0xe6, 0x18, 0xd7, 0x7f, 0x91, 0xc6, 0xbf, 0x2d, 0xe8, 0x98,
-	0x65, 0xc5, 0x7c, 0xc1, 0x43, 0x24, 0x17, 0xd0, 0xae, 0x6e, 0x2a, 0x19, 0xac, 0x73, 0xdc, 0x5d,
-	0x7f, 0xf7, 0xee, 0x7e, 0x50, 0x3b, 0x7b, 0x07, 0xe4, 0x3d, 0x38, 0x95, 0x46, 0x10, 0xf7, 0xef,
-	0xf3, 0x72, 0x07, 0x7b, 0xb1, 0xb5, 0xd2, 0x05, 0xb4, 0xab, 0xd5, 0x6d, 0xd2, 0xda, 0xd3, 0xa7,
-	0x4d, 0x5a, 0xfb, 0x1a, 0xe2, 0x1d, 0x4c, 0x1a, 0xea, 0xf3, 0x75, 0xfa, 0x27, 0x00, 0x00, 0xff,
-	0xff, 0x2c, 0x8b, 0xe1, 0x78, 0x38, 0x05, 0x00, 0x00,
+	// 283 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x51, 0xdd, 0x4a, 0xc3, 0x30,
+	0x14, 0xa6, 0x75, 0x54, 0x76, 0x6a, 0x05, 0x33, 0x84, 0x32, 0x18, 0x96, 0x5c, 0xf5, 0xc6, 0x16,
+	0xe7, 0x60, 0xe0, 0xed, 0xf0, 0xce, 0xab, 0xbc, 0x41, 0xd6, 0x1e, 0x67, 0x60, 0x6d, 0x62, 0x9a,
+	0x09, 0xbe, 0x8f, 0x0f, 0x2a, 0x69, 0xfa, 0xb7, 0xe9, 0x55, 0x4e, 0x4e, 0xbe, 0xf3, 0xfd, 0x9c,
+	0xc0, 0xf6, 0x20, 0xcc, 0xc7, 0x69, 0x9f, 0x15, 0xb2, 0xca, 0xb9, 0x52, 0x05, 0x1e, 0x51, 0x73,
+	0x23, 0x75, 0xce, 0x2b, 0x95, 0x73, 0x25, 0x72, 0xad, 0x8a, 0xbc, 0x90, 0xf5, 0xbb, 0x38, 0x74,
+	0x47, 0xa6, 0xb4, 0x34, 0x92, 0x04, 0xee, 0x46, 0xb7, 0x10, 0xed, 0x34, 0x72, 0x83, 0x0c, 0x3f,
+	0x4f, 0xd8, 0x18, 0x42, 0x60, 0x56, 0xf3, 0x0a, 0x63, 0x2f, 0xf1, 0xd2, 0x39, 0x6b, 0x6b, 0xdb,
+	0x2b, 0xb9, 0xe1, 0xb1, 0x9f, 0x78, 0xe9, 0x0d, 0x6b, 0x6b, 0xba, 0x82, 0xb0, 0x1f, 0x54, 0xc7,
+	0x6f, 0x72, 0x0b, 0xbe, 0x28, 0xbb, 0x21, 0x5f, 0x94, 0x34, 0x82, 0xf0, 0x4d, 0x34, 0xa6, 0x63,
+	0xa5, 0x4f, 0x10, 0xee, 0x5a, 0xc1, 0xd7, 0xda, 0xe8, 0x3f, 0xe8, 0x41, 0xd4, 0x1f, 0x45, 0xe9,
+	0x0b, 0xcc, 0x1d, 0x83, 0xa5, 0x7f, 0x84, 0x6b, 0xac, 0x8d, 0x16, 0xd8, 0xc4, 0x5e, 0x72, 0x95,
+	0x86, 0xeb, 0x45, 0xd6, 0xc5, 0x99, 0xd0, 0xb2, 0x1e, 0x43, 0x1f, 0x20, 0x62, 0x58, 0xc9, 0xaf,
+	0x21, 0xd5, 0xa5, 0xbd, 0x15, 0x84, 0x3d, 0xe0, 0x1f, 0xf7, 0xeb, 0x1f, 0x0f, 0x02, 0x47, 0x4c,
+	0x36, 0x10, 0xb8, 0x9c, 0xe4, 0x7e, 0x90, 0x9c, 0x2e, 0x6c, 0xb9, 0xb8, 0x6c, 0x5b, 0xc2, 0x0c,
+	0x66, 0xd6, 0x3c, 0x19, 0x1e, 0x27, 0xcb, 0x58, 0xde, 0x9d, 0x37, 0x2d, 0x7e, 0x03, 0x81, 0xf3,
+	0x33, 0xaa, 0x9c, 0x05, 0x18, 0x55, 0x26, 0xb6, 0xf7, 0x41, 0xfb, 0x97, 0xcf, 0xbf, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0x25, 0x5c, 0x35, 0x8c, 0x06, 0x02, 0x00, 0x00,
 }

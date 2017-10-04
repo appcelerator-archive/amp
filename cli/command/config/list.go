@@ -8,7 +8,6 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/config"
 	"github.com/appcelerator/amp/cli"
-	//"github.com/appcelerator/amp/pkg/time"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/status"
 )
@@ -44,47 +43,22 @@ func NewListCommand(c cli.Interface) *cobra.Command {
 	return cmd
 }
 
-//func list(c cli.Interface, cmd *cobra.Command, opts *ListOpts) error {
-//	request := &config.ListConfigsRequest{}
-//	conn := c.ClientConn()
-//	client := config.NewConfigServiceClient(conn)
-//	reply, err := client.ListConfigs(context.Background(), request)
-//	if err != nil {
-//		if s, ok := status.FromError(err); ok {
-//			return errors.New(s.Message())
-//		}
-//	}
-//	if opts.quiet {
-//		for _, cfg := range reply.Configs {
-//			c.Console().Println(cfg.Id)
-//		}
-//		return nil
-//	}
-//	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-//	fmt.Fprintln(w, "ID\tNAME\tCREATED ON\tUPDATED ON")
-//	for _, cfg := range reply.Configs {
-//		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", cfg.Id, cfg.Name, time.ConvertTime(cfg.Created), time.ConvertTime(cfg.Updated))
-//	}
-//	w.Flush()
-//	return nil
-//}
-
 func list(c cli.Interface, cmd *cobra.Command) error {
 	conn := c.ClientConn()
-	client := config.NewConfigServiceClient(conn)
-	request := &config.ListConfigsRequest{}
-	resp, err := client.ListConfigs(context.Background(), request)
+	client := config.NewConfigClient(conn)
+	request := &config.ListRequest{}
+	reply, err := client.List(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}
-		return fmt.Errorf("Error listing config: %s", err)
+		return fmt.Errorf("error listing config: %entry", err)
 	}
 
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "NAME\t")
-	for _, s := range resp.Configs {
-		fmt.Fprintf(w, "%s\t\n", s.Spec.Annotations.Name)
+	fmt.Fprintln(w, "ID\tNAME\t")
+	for _, entry := range reply.Entries {
+		fmt.Fprintf(w, "%s\t%s\t\n", entry.Id, entry.Name)
 	}
 	w.Flush()
 	return nil

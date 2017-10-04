@@ -6,12 +6,12 @@ import (
 	"io"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"fmt"
 
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
-	"github.com/docker/docker/api/types"
 	"github.com/golang/protobuf/proto"
 )
 

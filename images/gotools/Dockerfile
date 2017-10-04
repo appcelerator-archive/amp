@@ -23,12 +23,6 @@ RUN go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 RUN go get -u github.com/alecthomas/gometalinter
 RUN gometalinter --install
 
-# Install glide for vendoring support
-RUN curl -s https://glide.sh/get | sh
-# Use /tmp/glide for the glide cache
-RUN mkdir -p /tmp/glide && chmod 777 /tmp/glide
-VOLUME /tmp/glide
-
 # Custom settings for interactive shell
 ADD etc/profile.d /etc/profile.d
 

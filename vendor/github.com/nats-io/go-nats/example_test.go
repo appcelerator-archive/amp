@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // Shows different ways to create a Conn
@@ -220,7 +220,7 @@ func ExampleEncodedConn_Subscribe() {
 
 // BindSendChan() allows binding of a Go channel to a nats
 // subject for publish operations. The Encoder attached to the
-// EncodedConn will be used for marshalling.
+// EncodedConn will be used for marshaling.
 func ExampleEncodedConn_BindSendChan() {
 	nc, _ := nats.Connect(nats.DefaultURL)
 	c, _ := nats.NewEncodedConn(nc, "json")
@@ -241,7 +241,7 @@ func ExampleEncodedConn_BindSendChan() {
 
 // BindRecvChan() allows binding of a Go channel to a nats
 // subject for subscribe operations. The Encoder attached to the
-// EncodedConn will be used for un-marshalling.
+// EncodedConn will be used for un-marshaling.
 func ExampleEncodedConn_BindRecvChan() {
 	nc, _ := nats.Connect(nats.DefaultURL)
 	c, _ := nats.NewEncodedConn(nc, "json")

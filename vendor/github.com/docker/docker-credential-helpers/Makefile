@@ -1,4 +1,4 @@
-.PHONY: all deps osxkeychain secretservice test validate wincred
+.PHONY: all deps osxkeychain secretservice test validate wincred pass deb
 
 TRAVIS_OS_NAME ?= linux
 VERSION := $(shell grep 'const Version' credentials/version.go | awk -F'"' '{ print $$2 }')
@@ -6,14 +6,14 @@ VERSION := $(shell grep 'const Version' credentials/version.go | awk -F'"' '{ pr
 all: test
 
 deps:
-	go get github.com/golang/lint/golint
+	go get -u github.com/golang/lint/golint
 
 clean:
 	rm -rf bin
 	rm -rf release
 
 osxkeychain:
-	mkdir bin
+	mkdir -p bin
 	go build -ldflags -s -o bin/docker-credential-osxkeychain osxkeychain/cmd/main_darwin.go
 
 osxcodesign: osxkeychain
@@ -27,12 +27,21 @@ osxrelease: clean vet_osx lint fmt test osxcodesign
 	cd bin && tar cvfz ../release/docker-credential-osxkeychain-v$(VERSION)-amd64.tar.gz docker-credential-osxkeychain
 
 secretservice:
-	mkdir bin
+	mkdir -p bin
 	go build -o bin/docker-credential-secretservice secretservice/cmd/main_linux.go
 
+pass:
+	mkdir -p bin
+	go build -o bin/docker-credential-pass pass/cmd/main_linux.go
+
 wincred:
-	mkdir bin
+	mkdir -p bin
 	go build -o bin/docker-credential-wincred.exe wincred/cmd/main_windows.go
+
+winrelease: clean vet_win lint fmt test wincred
+	mkdir -p release
+	@echo "\nPackaging version ${VERSION}\n"
+	cd bin && zip ../release/docker-credential-wincred-v$(VERSION)-amd64.zip docker-credential-wincred.exe
 
 test:
 	# tests all packages except vendor
@@ -59,3 +68,15 @@ fmt:
 	gofmt -s -l `ls **/*.go | grep -v vendor`
 
 validate: vet lint fmt
+
+
+BUILDIMG:=docker-credential-secretservice-$(VERSION)
+deb:
+	mkdir -p release
+	docker build -f deb/Dockerfile \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg DISTRO=xenial \
+		--tag $(BUILDIMG) \
+		.
+	docker run --rm --net=none $(BUILDIMG) tar cf - /release | tar xf -
+	docker rmi $(BUILDIMG)

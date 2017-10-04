@@ -74,7 +74,15 @@ func RegisterVersionHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeM
 // RegisterVersionHandler registers the http handlers for service Version to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterVersionHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewVersionClient(conn)
+	return RegisterVersionHandlerClient(ctx, mux, NewVersionClient(conn))
+}
+
+// RegisterVersionHandler registers the http handlers for service Version to "mux".
+// The handlers forward requests to the grpc endpoint over the given implementation of "VersionClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "VersionClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "VersionClient" to call the correct interceptors.
+func RegisterVersionHandlerClient(ctx context.Context, mux *runtime.ServeMux, client VersionClient) error {
 
 	mux.Handle("GET", pattern_Version_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)

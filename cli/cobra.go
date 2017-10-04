@@ -1,7 +1,7 @@
 // NOTICE
 // This file is copyrighted by Docker under the Apache 2.0 license
 // The original can be found here:
-// https://github.com/docker/docker/blob/master/cli/cobra.go
+// https://github.com/appcelerator/amp/docker/docker/blob/master/cli/cobra.go
 
 package cli
 
@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/pkg/term"
+	"github.com/appcelerator/amp/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
 

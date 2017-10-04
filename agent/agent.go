@@ -8,15 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
-	"github.com/docker/docker/api/types"
 	"golang.org/x/net/context"
 )
 

@@ -3,7 +3,7 @@ package core
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const baseURL = "/api/v1"

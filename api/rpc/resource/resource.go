@@ -1,12 +1,12 @@
 package resource
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/dashboards"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/golang/protobuf/ptypes/empty"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

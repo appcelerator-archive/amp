@@ -220,7 +220,15 @@ func RegisterResourceHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 // RegisterResourceHandler registers the http handlers for service Resource to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterResourceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewResourceClient(conn)
+	return RegisterResourceHandlerClient(ctx, mux, NewResourceClient(conn))
+}
+
+// RegisterResourceHandler registers the http handlers for service Resource to "mux".
+// The handlers forward requests to the grpc endpoint over the given implementation of "ResourceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ResourceClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "ResourceClient" to call the correct interceptors.
+func RegisterResourceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ResourceClient) error {
 
 	mux.Handle("GET", pattern_Resource_List_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)

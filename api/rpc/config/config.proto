@@ -1,123 +1,38 @@
 syntax = "proto3";
 
 package config;
-// Attribution: Docker (github.com/docker/swarmkit)
-// This proto file based on docker/swarmkit/api/types.proto and docker/swarmkit/api/specs.proto
-// This is an interim approach toward leveraging swarmkit types
-// Notes: we're not using gogoprotbuf (but maybe we should)
 
-import "github.com/appcelerator/amp/api/rpc/types/types.proto";
+service Config {
+  rpc Create (CreateRequest) returns (CreateReply);
+  rpc List (ListRequest) returns (ListReply);
+  rpc Remove (RemoveRequest) returns (RemoveReply);
+}
 
-// ConfigSpec specifies user-provided configuration files.
-// from: api/specs.proto
-message ConfigSpec {
-  types.Annotations annotations = 1;
-
-  // Data is the config payload - the maximum size is 500KB (that is, 500*1024 bytes)
+message CreateRequest {
+  string name = 1;
   bytes data = 2;
-
-  // Templating controls whether and how to evaluate the secret payload as
-  // a template. If it is not set, no templating is used.
-  //
-  // The currently recognized values are:
-  // - golang: Go templating
-  types.Driver templating = 3;
 }
 
-// Config represents a set of configuration files that should be passed to a
-// container.
-// from: api/objects.proto
-message Config {
+message CreateReply {
   string id = 1;
-
-  types.Meta meta = 2;
-
-  // Spec contains the actual config data, as well as any context around the
-  // config data that the user provides.
-  ConfigSpec spec = 3;
 }
 
-// CreateConfigRequest specifies a new config (it will not update an existing
-// config) to create.
-// from: api/control.proto
-message CreateConfigRequest {
-  ConfigSpec spec = 1;
+message ListRequest {
 }
 
-// CreateConfigResponse contains the newly created `Config` corresponding to the
-// name in `CreateConfigRequest`.
-// from: api/control.proto
-message CreateConfigResponse {
-  Config config = 1;
+message ConfigEntry {
+  string id = 1;
+  string name = 2;
 }
 
-// GetConfigRequest is the request to get a `Config` object given a config id.
-// from: api/control.proto
-message GetConfigRequest {
-  string config_id = 1;
+message ListReply {
+  repeated ConfigEntry entries = 1;
 }
 
-// GetConfigResponse contains the Config corresponding to the id in
-// `GetConfigRequest`.
-// from: api/control.proto
-message GetConfigResponse {
-  Config config = 1;
+message RemoveRequest {
+  string id = 1;
 }
 
-// ListConfigRequest is the request to list all configs in the config store,
-// or all configs filtered by (name or name prefix or id prefix) and labels.
-// from: api/control.proto
-message ListConfigsRequest {
-  message Filters {
-    repeated string names = 1;
-    repeated string id_prefixes = 2;
-    map<string, string> labels = 3;
-    repeated string name_prefixes = 4;
-  }
-
-  Filters filters = 1;
+message RemoveReply {
+  string id = 1;
 }
-
-// ListConfigResponse contains a list of all the configs that match the name or
-// name prefix filters provided in `ListConfigRequest`.
-// from: api/control.proto
-message ListConfigsResponse {
-  repeated Config configs = 1;
-}
-
-// RemoveConfigRequest contains the ID of the config that should be removed.  This
-// removes all versions of the config.
-// from: api/control.proto
-message RemoveConfigRequest {
-  string config_id = 1;
-}
-
-// RemoveConfigResponse is an empty object indicating the successful removal of
-// a config.
-// from: api/control.proto
-message RemoveConfigResponse {
-  string config_id = 1;
-}
-
-service ConfigService {
-  // CreateConfig creates and return a `CreateConfigResponse` with a `Config` based
-  // on the provided `CreateConfigRequest.ConfigSpec`.
-  // - Returns `InvalidArgument` if the `CreateConfigRequest.ConfigSpec` is malformed,
-  //   or if the config data is too long or contains invalid characters.
-  // - Returns an error if the creation fails.
-  rpc CreateConfig(CreateConfigRequest) returns (CreateConfigResponse) {}
-
-  // ListConfigs returns a `ListConfigResponse` with a list of `Config`s being
-  // managed, or all configs matching any name in `ListConfigsRequest.Names`, any
-  // name prefix in `ListConfigsRequest.NamePrefixes`, any id in
-  // `ListConfigsRequest.ConfigIDs`, or any id prefix in `ListConfigsRequest.IDPrefixes`.
-  // - Returns an error if listing fails.
-  rpc ListConfigs(ListConfigsRequest) returns (ListConfigsResponse) {}
-
-  // RemoveConfig removes the config referenced by `RemoveConfigRequest.ID`.
-  // - Returns `InvalidArgument` if `RemoveConfigRequest.ID` is empty.
-  // - Returns `NotFound` if the a config named `RemoveConfigRequest.ID` is not found.
-  // - Returns an error if the deletion fails.
-  rpc RemoveConfig(RemoveConfigRequest) returns (RemoveConfigResponse) {}
-}
-

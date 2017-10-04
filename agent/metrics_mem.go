@@ -1,8 +1,8 @@
 package core
 
 import (
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/api/rpc/stats"
-	"github.com/docker/docker/api/types"
 )
 
 // publish one memory metrics event

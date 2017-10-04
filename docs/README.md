@@ -25,7 +25,7 @@
 
 ### Prerequisites
 
-We recommend installing the Docker CE stable channel release 17.06 on your system.
+We recommend installing the Docker CE stable channel release 17.09 on your system.
 Make sure you check the "What to know before you install" section on the Docker site to ensure your system meets the requirements.
 
 >NOTE: We currently do not support Docker Toolbox on any OS.

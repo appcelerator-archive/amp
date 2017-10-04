@@ -15,7 +15,7 @@ import (
 
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/cluster/plugin/aws"
-	"github.com/docker/docker/pkg/stringid"
+	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
 	"github.com/mitchellh/go-homedir"
 )
 

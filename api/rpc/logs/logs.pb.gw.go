@@ -90,7 +90,15 @@ func RegisterLogsHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux,
 // RegisterLogsHandler registers the http handlers for service Logs to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterLogsHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewLogsClient(conn)
+	return RegisterLogsHandlerClient(ctx, mux, NewLogsClient(conn))
+}
+
+// RegisterLogsHandler registers the http handlers for service Logs to "mux".
+// The handlers forward requests to the grpc endpoint over the given implementation of "LogsClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "LogsClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "LogsClient" to call the correct interceptors.
+func RegisterLogsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client LogsClient) error {
 
 	mux.Handle("POST", pattern_Logs_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)

@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // MetadataHeaderPrefix is the http prefix that represents custom metadata
@@ -51,7 +51,7 @@ func AnnotateContext(ctx context.Context, mux *ServeMux, req *http.Request) (con
 		var err error
 		timeout, err = timeoutDecode(tm)
 		if err != nil {
-			return nil, grpc.Errorf(codes.InvalidArgument, "invalid grpc-timeout: %s", tm)
+			return nil, status.Errorf(codes.InvalidArgument, "invalid grpc-timeout: %s", tm)
 		}
 	}
 
@@ -61,10 +61,8 @@ func AnnotateContext(ctx context.Context, mux *ServeMux, req *http.Request) (con
 			if strings.ToLower(key) == "authorization" {
 				pairs = append(pairs, "authorization", val)
 			}
-			if mux.incomingHeaderMatcher != nil {
-				if h, ok := mux.incomingHeaderMatcher(key); ok {
-					pairs = append(pairs, h, val)
-				}
+			if h, ok := mux.incomingHeaderMatcher(key); ok {
+				pairs = append(pairs, h, val)
 			}
 		}
 	}

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"

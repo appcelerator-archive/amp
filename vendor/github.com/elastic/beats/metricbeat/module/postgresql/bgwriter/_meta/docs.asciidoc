@@ -1,3 +1,0 @@
-=== postgresql bgwriter MetricSet
-
-This is the bgwriter metricset of the module postgresql.

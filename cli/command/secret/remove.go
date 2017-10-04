@@ -28,17 +28,17 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 
 func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	conn := c.ClientConn()
-	client := secret.NewSecretServiceClient(conn)
+	client := secret.NewSecretClient(conn)
 	for _, id := range args {
-		request := &secret.RemoveSecretRequest{SecretId: id}
-		resp, err := client.RemoveSecret(context.Background(), request)
+		request := &secret.RemoveRequest{Id: id}
+		reply, err := client.Remove(context.Background(), request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				return errors.New(s.Message())
 			}
-			return fmt.Errorf("Error removing secret: %s", err)
+			return fmt.Errorf("error removing secret: %s", err)
 		}
-		c.Console().Println(resp.GetSecretId())
+		c.Console().Println(reply.GetId())
 	}
 	return nil
 }
