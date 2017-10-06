@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/appcelerator/amp/api/rpc/dashboard"
+	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
 	"github.com/appcelerator/amp/tests"
-	"github.com/docker/docker/pkg/stringid"
 	"github.com/stretchr/testify/assert"
 )
 

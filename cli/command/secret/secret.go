@@ -9,7 +9,7 @@ import (
 func NewSecretCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "secret",
-		Short:   "Manage secrets",
+		Short:   "Manage secret",
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}

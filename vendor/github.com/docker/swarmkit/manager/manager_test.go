@@ -31,8 +31,6 @@ import (
 )
 
 func TestManager(t *testing.T) {
-	ctx := context.Background()
-
 	temp, err := ioutil.TempFile("", "test-socket")
 	assert.NoError(t, err)
 	assert.NoError(t, temp.Close())
@@ -73,7 +71,7 @@ func TestManager(t *testing.T) {
 	done := make(chan error)
 	defer close(done)
 	go func() {
-		done <- m.Run(ctx)
+		done <- m.Run(tc.Context)
 	}()
 
 	opts := []grpc.DialOption{
@@ -89,9 +87,9 @@ func TestManager(t *testing.T) {
 
 	// We have to send a dummy request to verify if the connection is actually up.
 	client := api.NewDispatcherClient(conn)
-	_, err = client.Heartbeat(ctx, &api.HeartbeatRequest{})
+	_, err = client.Heartbeat(tc.Context, &api.HeartbeatRequest{})
 	assert.Equal(t, dispatcher.ErrNodeNotRegistered.Error(), grpc.ErrorDesc(err))
-	_, err = client.Session(ctx, &api.SessionRequest{})
+	_, err = client.Session(tc.Context, &api.SessionRequest{})
 	assert.NoError(t, err)
 
 	// Try to have a client in a different org access this manager
@@ -108,7 +106,7 @@ func TestManager(t *testing.T) {
 
 	client = api.NewDispatcherClient(conn2)
 	_, err = client.Heartbeat(context.Background(), &api.HeartbeatRequest{})
-	assert.Contains(t, grpc.ErrorDesc(err), "Permission denied: unauthorized peer role: rpc error: code = 7 desc = Permission denied: remote certificate not part of organization")
+	assert.Contains(t, grpc.ErrorDesc(err), "Permission denied: unauthorized peer role: rpc error: code = PermissionDenied desc = Permission denied: remote certificate not part of organization")
 
 	// Verify that requests to the various GRPC services running on TCP
 	// are rejected if they don't have certs.
@@ -125,15 +123,15 @@ func TestManager(t *testing.T) {
 
 	client = api.NewDispatcherClient(noCertConn)
 	_, err = client.Heartbeat(context.Background(), &api.HeartbeatRequest{})
-	assert.EqualError(t, err, "rpc error: code = 7 desc = Permission denied: unauthorized peer role: rpc error: code = 7 desc = no client certificates in request")
+	assert.EqualError(t, err, "rpc error: code = PermissionDenied desc = Permission denied: unauthorized peer role: rpc error: code = PermissionDenied desc = no client certificates in request")
 
 	controlClient := api.NewControlClient(noCertConn)
 	_, err = controlClient.ListNodes(context.Background(), &api.ListNodesRequest{})
-	assert.EqualError(t, err, "rpc error: code = 7 desc = Permission denied: unauthorized peer role: rpc error: code = 7 desc = no client certificates in request")
+	assert.EqualError(t, err, "rpc error: code = PermissionDenied desc = Permission denied: unauthorized peer role: rpc error: code = PermissionDenied desc = no client certificates in request")
 
 	raftClient := api.NewRaftMembershipClient(noCertConn)
 	_, err = raftClient.Join(context.Background(), &api.JoinRequest{})
-	assert.EqualError(t, err, "rpc error: code = 7 desc = Permission denied: unauthorized peer role: rpc error: code = 7 desc = no client certificates in request")
+	assert.EqualError(t, err, "rpc error: code = PermissionDenied desc = Permission denied: unauthorized peer role: rpc error: code = PermissionDenied desc = no client certificates in request")
 
 	opts = []grpc.DialOption{
 		grpc.WithTimeout(10 * time.Second),
@@ -187,6 +185,18 @@ func TestManager(t *testing.T) {
 		)
 	}))
 	controlClient = api.NewControlClient(controlConn)
+	_, err = controlClient.CreateNetwork(context.Background(), &api.CreateNetworkRequest{
+		Spec: &api.NetworkSpec{
+			Annotations: api.Annotations{
+				Name: "test-network-bad-driver",
+			},
+			DriverConfig: &api.Driver{
+				Name: "invalid-must-never-exist",
+			},
+		},
+	})
+	assert.Error(t, err)
+
 	_, err = controlClient.RemoveNode(context.Background(),
 		&api.RemoveNodeRequest{
 			NodeID: agentID,
@@ -199,7 +209,7 @@ func TestManager(t *testing.T) {
 	_, err = client.Heartbeat(context.Background(), &api.HeartbeatRequest{})
 	assert.Contains(t, grpc.ErrorDesc(err), "removed from swarm")
 
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 
 	// After stopping we should MAY receive an error from ListenAndServe if
 	// all this happened before WaitForLeader completed, so don't check the
@@ -209,8 +219,6 @@ func TestManager(t *testing.T) {
 
 // Tests locking and unlocking the manager and key rotations
 func TestManagerLockUnlock(t *testing.T) {
-	ctx := context.Background()
-
 	temp, err := ioutil.TempFile("", "test-manager-lock")
 	require.NoError(t, err)
 	require.NoError(t, temp.Close())
@@ -245,7 +253,7 @@ func TestManagerLockUnlock(t *testing.T) {
 	done := make(chan error)
 	defer close(done)
 	go func() {
-		done <- m.Run(ctx)
+		done <- m.Run(tc.Context)
 	}()
 
 	opts := []grpc.DialOption{
@@ -265,7 +273,7 @@ func TestManagerLockUnlock(t *testing.T) {
 	client := api.NewControlClient(conn)
 
 	require.NoError(t, testutils.PollFuncWithTimeout(nil, func() error {
-		resp, err := client.ListClusters(ctx, &api.ListClustersRequest{})
+		resp, err := client.ListClusters(tc.Context, &api.ListClustersRequest{})
 		if err != nil {
 			return err
 		}
@@ -291,13 +299,13 @@ func TestManagerLockUnlock(t *testing.T) {
 
 	// update the lock key - this may fail due to update out of sequence errors, so try again
 	for {
-		getResp, err := client.GetCluster(ctx, &api.GetClusterRequest{ClusterID: cluster.ID})
+		getResp, err := client.GetCluster(tc.Context, &api.GetClusterRequest{ClusterID: cluster.ID})
 		require.NoError(t, err)
 		cluster = getResp.Cluster
 
 		spec := cluster.Spec.Copy()
 		spec.EncryptionConfig.AutoLockManagers = true
-		updateResp, err := client.UpdateCluster(ctx, &api.UpdateClusterRequest{
+		updateResp, err := client.UpdateCluster(tc.Context, &api.UpdateClusterRequest{
 			ClusterID:      cluster.ID,
 			ClusterVersion: &cluster.Meta.Version,
 			Spec:           spec,
@@ -314,7 +322,7 @@ func TestManagerLockUnlock(t *testing.T) {
 	require.NoError(t, err)
 
 	caConn := api.NewCAClient(conn)
-	unlockKeyResp, err := caConn.GetUnlockKey(ctx, &api.GetUnlockKeyRequest{})
+	unlockKeyResp, err := caConn.GetUnlockKey(tc.Context, &api.GetUnlockKeyRequest{})
 	require.NoError(t, err)
 
 	// this should update the TLS key, rotate the DEK, and finish snapshotting
@@ -365,13 +373,13 @@ func TestManagerLockUnlock(t *testing.T) {
 
 	// update the lock key to nil
 	for i := 0; i < 3; i++ {
-		getResp, err := client.GetCluster(ctx, &api.GetClusterRequest{ClusterID: cluster.ID})
+		getResp, err := client.GetCluster(tc.Context, &api.GetClusterRequest{ClusterID: cluster.ID})
 		require.NoError(t, err)
 		cluster = getResp.Cluster
 
 		spec := cluster.Spec.Copy()
 		spec.EncryptionConfig.AutoLockManagers = false
-		_, err = client.UpdateCluster(ctx, &api.UpdateClusterRequest{
+		_, err = client.UpdateCluster(tc.Context, &api.UpdateClusterRequest{
 			ClusterID:      cluster.ID,
 			ClusterVersion: &cluster.Meta.Version,
 			Spec:           spec,
@@ -408,117 +416,7 @@ func TestManagerLockUnlock(t *testing.T) {
 	require.NotNil(t, unencryptedDEK)
 	require.Equal(t, currentDEK, unencryptedDEK)
 
-	m.Stop(ctx, false)
-
-	// After stopping we should MAY receive an error from ListenAndServe if
-	// all this happened before WaitForLeader completed, so don't check the
-	// error.
-	<-done
-}
-
-// If the root CA material is updated in the memory store, a manager will update its own
-// security configs even if it's "not the leader" (which we will fake by calling `becomeFollower`)
-func TestManagerUpdatesSecurityConfig(t *testing.T) {
-	ctx := context.Background()
-
-	temp, err := ioutil.TempFile("", "test-manager-update-security-config")
-	require.NoError(t, err)
-	require.NoError(t, temp.Close())
-	require.NoError(t, os.Remove(temp.Name()))
-
-	defer os.RemoveAll(temp.Name())
-
-	stateDir, err := ioutil.TempDir("", "test-raft")
-	require.NoError(t, err)
-	defer os.RemoveAll(stateDir)
-
-	tc := cautils.NewTestCA(t)
-	defer tc.Stop()
-
-	managerSecurityConfig, err := tc.NewNodeConfig(ca.ManagerRole)
-	require.NoError(t, err)
-
-	_, _, err = managerSecurityConfig.KeyReader().Read()
-	require.NoError(t, err)
-
-	m, err := New(&Config{
-		RemoteAPI:      &RemoteAddrs{ListenAddr: "127.0.0.1:0"},
-		ControlAPI:     temp.Name(),
-		StateDir:       stateDir,
-		SecurityConfig: managerSecurityConfig,
-		RootCAPaths:    tc.Paths.RootCA,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, m)
-
-	done := make(chan error)
-	defer close(done)
-	go func() {
-		done <- m.Run(ctx)
-	}()
-
-	// wait until the CA server is running
-	opts := []grpc.DialOption{
-		grpc.WithTimeout(10 * time.Second),
-		grpc.WithTransportCredentials(managerSecurityConfig.ClientTLSCreds),
-	}
-
-	conn, err := grpc.Dial(m.Addr(), opts...)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, conn.Close())
-	}()
-
-	client := api.NewCAClient(conn)
-
-	require.NoError(t, testutils.PollFuncWithTimeout(nil, func() error {
-		ctx, _ := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		_, err := client.GetRootCACertificate(ctx, &api.GetRootCACertificateRequest{})
-		return err
-	}, time.Second))
-
-	// wait until the cluster is up
-	var clusters []*api.Cluster
-
-	require.NoError(t, testutils.PollFuncWithTimeout(nil, func() error {
-		var err error
-		m.raftNode.MemoryStore().View(func(tx store.ReadTx) {
-			clusters, err = store.FindClusters(tx, store.ByName(store.DefaultClusterName))
-		})
-		if err != nil {
-			return err
-		}
-		if len(clusters) == 0 {
-			return fmt.Errorf("cluster not ready yet")
-		}
-		return nil
-	}, 1*time.Second))
-
-	// stop running CA server and other leader functions
-	m.mu.Lock()
-	m.becomeFollower()
-	m.mu.Unlock()
-
-	newRootCert, _, err := cautils.CreateRootCertAndKey("rootOther")
-	require.NoError(t, err)
-	updatedCA := append(tc.RootCA.Certs, newRootCert...)
-
-	// Update the RootCA to have a bundle
-	require.NoError(t, m.raftNode.MemoryStore().Update(func(tx store.Tx) error {
-		cluster := store.GetCluster(tx, clusters[0].ID)
-		cluster.RootCA.CACert = updatedCA
-		return store.UpdateCluster(tx, cluster)
-	}))
-
-	// wait for the manager's security config to be updated
-	require.NoError(t, testutils.PollFuncWithTimeout(nil, func() error {
-		if !bytes.Equal(managerSecurityConfig.RootCA().Certs, updatedCA) {
-			return fmt.Errorf("root CA not updated yet")
-		}
-		return nil
-	}, 1*time.Second))
-
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 
 	// After stopping we should MAY receive an error from ListenAndServe if
 	// all this happened before WaitForLeader completed, so don't check the
@@ -528,8 +426,6 @@ func TestManagerUpdatesSecurityConfig(t *testing.T) {
 
 // Tests manager rotates encryption of root key data in the raft store
 func TestManagerEncryptsDecryptsRootKeyMaterial(t *testing.T) {
-	ctx := context.Background()
-
 	tc := cautils.NewTestCA(t)
 	defer tc.Stop()
 
@@ -567,7 +463,7 @@ func TestManagerEncryptsDecryptsRootKeyMaterial(t *testing.T) {
 		require.NotNil(t, m)
 
 		go func() {
-			done <- m.Run(ctx)
+			done <- m.Run(tc.Context)
 		}()
 	}
 
@@ -594,7 +490,7 @@ func TestManagerEncryptsDecryptsRootKeyMaterial(t *testing.T) {
 	defer os.Unsetenv(ca.PassphraseENVVar)
 
 	// restart
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 	<-done
 	startManager()
 
@@ -623,7 +519,7 @@ func TestManagerEncryptsDecryptsRootKeyMaterial(t *testing.T) {
 	defer os.Unsetenv(ca.PassphraseENVVarPrev)
 
 	// restart
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 	<-done
 	startManager()
 
@@ -675,11 +571,11 @@ G80TfNRRr/qdB9hLwfyOyk2tBipkAgs6cl+CZAaqx3k=
 	}))
 
 	// restart
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 	<-done
 	startManager()
 	require.NoError(t, pollDecrypted())
 
-	m.Stop(ctx, false)
+	m.Stop(tc.Context, false)
 	<-done
 }

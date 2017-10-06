@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"

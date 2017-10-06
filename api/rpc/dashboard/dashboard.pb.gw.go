@@ -201,7 +201,15 @@ func RegisterDashboardHandlerFromEndpoint(ctx context.Context, mux *runtime.Serv
 // RegisterDashboardHandler registers the http handlers for service Dashboard to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterDashboardHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewDashboardClient(conn)
+	return RegisterDashboardHandlerClient(ctx, mux, NewDashboardClient(conn))
+}
+
+// RegisterDashboardHandler registers the http handlers for service Dashboard to "mux".
+// The handlers forward requests to the grpc endpoint over the given implementation of "DashboardClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "DashboardClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "DashboardClient" to call the correct interceptors.
+func RegisterDashboardHandlerClient(ctx context.Context, mux *runtime.ServeMux, client DashboardClient) error {
 
 	mux.Handle("POST", pattern_Dashboard_Create_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)

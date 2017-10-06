@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -12,6 +11,7 @@ import (
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/appcelerator/amp/pkg/sms"
+	log "github.com/sirupsen/logrus"
 )
 
 // build vars

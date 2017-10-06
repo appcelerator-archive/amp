@@ -28,17 +28,17 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 
 func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	conn := c.ClientConn()
-	client := config.NewConfigServiceClient(conn)
+	client := config.NewConfigClient(conn)
 	for _, id := range args {
-		request := &config.RemoveConfigRequest{ConfigId: id}
-		resp, err := client.RemoveConfig(context.Background(), request)
+		request := &config.RemoveRequest{Id: id}
+		reply, err := client.Remove(context.Background(), request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				return errors.New(s.Message())
 			}
-			return fmt.Errorf("Error removing config: %s", err)
+			return fmt.Errorf("error removing config: %s", err)
 		}
-		c.Console().Println(resp.GetConfigId())
+		c.Console().Println(reply.GetId())
 	}
 	return nil
 }

@@ -15,9 +15,9 @@ import (
 	"text/template"
 	"time"
 
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/pkg/docker"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
@@ -176,9 +176,7 @@ func update(client *docker.Docker, configurationTemplate string, configuration s
 		return errors.New("network lookup failed")
 	}
 	networkId := networkResources[0].ID
-	// when the vendors are updated to docker 17.06:
-	//networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{})
-	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, true)
+	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{Verbose: true})
 
 	jobs, err := prepareJobs(client, networkResource)
 	if err != nil {

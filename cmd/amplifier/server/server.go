@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
@@ -37,6 +36,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -60,13 +60,13 @@ type Amplifier struct {
 // Service initializers register the services with the grpc server
 var serviceInitializers = []serviceInitializer{
 	registerAccountServer,
-	registerConfigServiceServer,
+	registerConfigServer,
 	registerClusterServer,
 	registerDashboardServer,
 	registerLogsServer,
 	registerNodeServer,
 	registerResourceServer,
-	registerSecretServiceServer,
+	registerSecretServer,
 	registerServiceServer,
 	registerStackServer,
 	registerStatsServer,
@@ -180,8 +180,8 @@ func registerServices(amp *Amplifier, s *grpc.Server) {
 	wg.Wait()
 }
 
-func registerConfigServiceServer(amp *Amplifier, s *grpc.Server) {
-	config.RegisterConfigServiceServer(s, &config.Server{
+func registerConfigServer(amp *Amplifier, s *grpc.Server) {
+	config.RegisterConfigServer(s, &config.Server{
 		Docker: amp.docker,
 	})
 }
@@ -238,8 +238,8 @@ func registerClusterServer(amp *Amplifier, s *grpc.Server) {
 	})
 }
 
-func registerSecretServiceServer(amp *Amplifier, s *grpc.Server) {
-	secret.RegisterSecretServiceServer(s, &secret.Server{
+func registerSecretServer(amp *Amplifier, s *grpc.Server) {
+	secret.RegisterSecretServer(s, &secret.Server{
 		Docker: amp.docker,
 	})
 }

@@ -3,7 +3,6 @@ package account
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
@@ -11,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/golang/protobuf/ptypes/empty"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

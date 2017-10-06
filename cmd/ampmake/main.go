@@ -20,7 +20,7 @@ var (
 	owner           = "appcelerator"
 	repo            = "github.com/appcelerator/amp"
 	dockerCmd       = "/usr/sbin/gosu root docker"
-	toolsImage      = "appcelerator/amptools:1.7"
+	toolsImage      = "appcelerator/amptools:1.8"
 	localToolsImage = "amptools"
 	dockerArgs      []string
 )

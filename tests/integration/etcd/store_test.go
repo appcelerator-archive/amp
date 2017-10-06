@@ -14,8 +14,8 @@ import (
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/state"
-	"github.com/docker/docker/pkg/testutil/assert"
 	"github.com/golang/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
 

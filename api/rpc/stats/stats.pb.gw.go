@@ -69,7 +69,15 @@ func RegisterStatsHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux
 // RegisterStatsHandler registers the http handlers for service Stats to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterStatsHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	client := NewStatsClient(conn)
+	return RegisterStatsHandlerClient(ctx, mux, NewStatsClient(conn))
+}
+
+// RegisterStatsHandler registers the http handlers for service Stats to "mux".
+// The handlers forward requests to the grpc endpoint over the given implementation of "StatsClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "StatsClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "StatsClient" to call the correct interceptors.
+func RegisterStatsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client StatsClient) error {
 
 	mux.Handle("POST", pattern_Stats_StatsQuery_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)

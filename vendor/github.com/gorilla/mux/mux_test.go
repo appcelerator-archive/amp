@@ -1215,6 +1215,28 @@ func TestSubRouter(t *testing.T) {
 			pathTemplate: `/{category}`,
 			shouldMatch:  true,
 		},
+		{
+			title:        "Build with scheme on parent router",
+			route:        new(Route).Schemes("ftp").Host("google.com").Subrouter().Path("/"),
+			request:      newRequest("GET", "ftp://google.com/"),
+			scheme:       "ftp",
+			host:         "google.com",
+			path:         "/",
+			pathTemplate: `/`,
+			hostTemplate: `google.com`,
+			shouldMatch:  true,
+		},
+		{
+			title:        "Prefer scheme on child route when building URLs",
+			route:        new(Route).Schemes("https", "ftp").Host("google.com").Subrouter().Schemes("ftp").Path("/"),
+			request:      newRequest("GET", "ftp://google.com/"),
+			scheme:       "ftp",
+			host:         "google.com",
+			path:         "/",
+			pathTemplate: `/`,
+			hostTemplate: `google.com`,
+			shouldMatch:  true,
+		},
 	}
 
 	for _, test := range tests {
@@ -1848,4 +1870,43 @@ func newRequest(method, url string) *http.Request {
 		panic(err)
 	}
 	return req
+}
+
+func TestNoMatchMethodErrorHandler(t *testing.T) {
+	func1 := func(w http.ResponseWriter, r *http.Request) {}
+
+	r := NewRouter()
+	r.HandleFunc("/", func1).Methods("GET", "POST")
+
+	req, _ := http.NewRequest("PUT", "http://localhost/", nil)
+	match := new(RouteMatch)
+	matched := r.Match(req, match)
+
+	if matched {
+		t.Error("Should not have matched route for methods")
+	}
+
+	if match.MatchErr != ErrMethodMismatch {
+		t.Error("Should get ErrMethodMismatch error")
+	}
+
+	resp := NewRecorder()
+	r.ServeHTTP(resp, req)
+	if resp.Code != 405 {
+		t.Errorf("Expecting code %v", 405)
+	}
+
+	// Add matching route
+	r.HandleFunc("/", func1).Methods("PUT")
+
+	match = new(RouteMatch)
+	matched = r.Match(req, match)
+
+	if !matched {
+		t.Error("Should have matched route for methods")
+	}
+
+	if match.MatchErr != nil {
+		t.Error("Should not have any matching error. Found:", match.MatchErr)
+	}
 }

@@ -30,35 +30,6 @@ CMDDIR := cmd
 all: build
 
 # =============================================================================
-# VENDOR MANAGEMENT (GLIDE)
-# =============================================================================
-GLIDETARGETS := vendor
-
-$(GLIDETARGETS): glide.yaml
-	@glide install || (rm -rf vendor; exit 1)
-# TODO: temporary fix for trace conflict, remove when resolved
-	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
-	@rm -rf vendor/github.com/docker/swarmkit/vendor/golang.org/x/net/trace
-
-install-deps: $(GLIDETARGETS)
-
-.PHONY: update-deps
-update-deps:
-	@glide update
-# TODO: temporary fix for trace conflict, remove when resolved
-	@rm -rf vendor/github.com/docker/docker/vendor/golang.org/x/net/trace
-	@rm -rf vendor/github.com/docker/swarmkit/vendor/golang.org/x/net/trace
-
-.PHONY: clean-deps
-clean-deps:
-	@rm -rf vendor
-
-.PHONY: cleanall-deps
-# cleanall-deps will effectively causes `install-deps` to behave like `update-deps`
-cleanall-deps: clean-deps
-	@rm -rf .glide glide.lock
-
-# =============================================================================
 # PROTOC (PROTOCOL BUFFER COMPILER)
 # Generate *.pb.go, *.pb.gw.go files in any non-excluded directory
 # with *.proto files.
@@ -94,12 +65,8 @@ clean-protoc:
 # =============================================================================
 # CLEAN
 # =============================================================================
-.PHONY: clean cleanall
-# clean doesn't remove the vendor directory since installing is time-intensive;
-# you can do this explicitly: `ampmake clean-deps clean`
-
+.PHONY: clean
 clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit clean-amp-local clean-amp-aws clean-ampagent
-cleanall: clean cleanall-deps
 
 # =============================================================================
 # BUILD
@@ -107,7 +74,7 @@ cleanall: clean cleanall-deps
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: install-deps protoc build-server build-gateway build-beat build-agent build-monit
+build-base: protoc build-server build-gateway build-beat build-agent build-monit
 build-local-plugin: build-amp-local build-ampagent
 build-plugins: build-amp-local build-amp-aws build-ampagent
 build: build-base build-plugins buildall-cli

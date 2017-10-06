@@ -8,21 +8,19 @@ It is generated from these files:
 	github.com/appcelerator/amp/api/rpc/secret/secret.proto
 
 It has these top-level messages:
-	SecretSpec
-	Secret
-	CreateSecretRequest
-	CreateSecretResponse
-	ListSecretsRequest
-	ListSecretsResponse
-	RemoveSecretRequest
-	RemoveSecretResponse
+	CreateRequest
+	CreateReply
+	ListRequest
+	SecretEntry
+	ListReply
+	RemoveRequest
+	RemoveReply
 */
 package secret
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import types "github.com/appcelerator/amp/api/rpc/types"
 
 import (
 	context "golang.org/x/net/context"
@@ -40,258 +38,134 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// SecretSpec specifies a user-provided secret.
-// from: api/specs.proto
-type SecretSpec struct {
-	Annotations *types.Annotations `protobuf:"bytes,1,opt,name=annotations" json:"annotations,omitempty"`
-	// Data is the secret payload - the maximum size is 500KB (that is, 500*1024 bytes)
+type CreateRequest struct {
+	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	// Templating controls whether and how to evaluate the secret payload as
-	// a template. If it is not set, no templating is used.
-	//
-	// The currently recognized values are:
-	// - golang: Go templating
-	Templating *types.Driver `protobuf:"bytes,3,opt,name=templating" json:"templating,omitempty"`
 }
 
-func (m *SecretSpec) Reset()                    { *m = SecretSpec{} }
-func (m *SecretSpec) String() string            { return proto.CompactTextString(m) }
-func (*SecretSpec) ProtoMessage()               {}
-func (*SecretSpec) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
+func (m *CreateRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateRequest) ProtoMessage()               {}
+func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *SecretSpec) GetAnnotations() *types.Annotations {
+func (m *CreateRequest) GetName() string {
 	if m != nil {
-		return m.Annotations
+		return m.Name
 	}
-	return nil
+	return ""
 }
 
-func (m *SecretSpec) GetData() []byte {
+func (m *CreateRequest) GetData() []byte {
 	if m != nil {
 		return m.Data
 	}
 	return nil
 }
 
-func (m *SecretSpec) GetTemplating() *types.Driver {
-	if m != nil {
-		return m.Templating
-	}
-	return nil
+type CreateReply struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 }
 
-// Secret represents a secret that should be passed to a container or a node,
-// and is immutable.
-// from: api/objects.proto
-type Secret struct {
-	Id   string      `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Meta *types.Meta `protobuf:"bytes,2,opt,name=meta" json:"meta,omitempty"`
-	// Spec contains the actual secret data, as well as any context around the
-	// secret data that the user provides.
-	Spec *SecretSpec `protobuf:"bytes,3,opt,name=spec" json:"spec,omitempty"`
-	// Whether the secret is an internal secret (not set by a user) or not.
-	Internal bool `protobuf:"varint,4,opt,name=internal" json:"internal,omitempty"`
-}
+func (m *CreateReply) Reset()                    { *m = CreateReply{} }
+func (m *CreateReply) String() string            { return proto.CompactTextString(m) }
+func (*CreateReply) ProtoMessage()               {}
+func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *Secret) Reset()                    { *m = Secret{} }
-func (m *Secret) String() string            { return proto.CompactTextString(m) }
-func (*Secret) ProtoMessage()               {}
-func (*Secret) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *Secret) GetId() string {
+func (m *CreateReply) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *Secret) GetMeta() *types.Meta {
+type ListRequest struct {
+}
+
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+type SecretEntry struct {
+	Id   string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+}
+
+func (m *SecretEntry) Reset()                    { *m = SecretEntry{} }
+func (m *SecretEntry) String() string            { return proto.CompactTextString(m) }
+func (*SecretEntry) ProtoMessage()               {}
+func (*SecretEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *SecretEntry) GetId() string {
 	if m != nil {
-		return m.Meta
-	}
-	return nil
-}
-
-func (m *Secret) GetSpec() *SecretSpec {
-	if m != nil {
-		return m.Spec
-	}
-	return nil
-}
-
-func (m *Secret) GetInternal() bool {
-	if m != nil {
-		return m.Internal
-	}
-	return false
-}
-
-// CreateSecretRequest specifies a new secret (it will not update an existing
-// secret) to create.
-// from: api/control.proto
-type CreateSecretRequest struct {
-	Spec *SecretSpec `protobuf:"bytes,1,opt,name=spec" json:"spec,omitempty"`
-}
-
-func (m *CreateSecretRequest) Reset()                    { *m = CreateSecretRequest{} }
-func (m *CreateSecretRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateSecretRequest) ProtoMessage()               {}
-func (*CreateSecretRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *CreateSecretRequest) GetSpec() *SecretSpec {
-	if m != nil {
-		return m.Spec
-	}
-	return nil
-}
-
-// CreateSecretResponse contains the newly created `Secret` corresponding to the
-// name in `CreateSecretRequest`.  The `Secret.Spec.Data` field should be nil instead
-// of actually containing the secret bytes.
-// from: api/control.proto
-type CreateSecretResponse struct {
-	Secret *Secret `protobuf:"bytes,1,opt,name=secret" json:"secret,omitempty"`
-}
-
-func (m *CreateSecretResponse) Reset()                    { *m = CreateSecretResponse{} }
-func (m *CreateSecretResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateSecretResponse) ProtoMessage()               {}
-func (*CreateSecretResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *CreateSecretResponse) GetSecret() *Secret {
-	if m != nil {
-		return m.Secret
-	}
-	return nil
-}
-
-// ListSecretRequest is the request to list all non-internal secrets in the secret store,
-// or all secrets filtered by (name or name prefix or id prefix) and labels.
-// from: api/control.proto
-type ListSecretsRequest struct {
-	Filters *ListSecretsRequest_Filters `protobuf:"bytes,1,opt,name=filters" json:"filters,omitempty"`
-}
-
-func (m *ListSecretsRequest) Reset()                    { *m = ListSecretsRequest{} }
-func (m *ListSecretsRequest) String() string            { return proto.CompactTextString(m) }
-func (*ListSecretsRequest) ProtoMessage()               {}
-func (*ListSecretsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *ListSecretsRequest) GetFilters() *ListSecretsRequest_Filters {
-	if m != nil {
-		return m.Filters
-	}
-	return nil
-}
-
-type ListSecretsRequest_Filters struct {
-	Names        []string          `protobuf:"bytes,1,rep,name=names" json:"names,omitempty"`
-	IdPrefixes   []string          `protobuf:"bytes,2,rep,name=id_prefixes,json=idPrefixes" json:"id_prefixes,omitempty"`
-	Labels       map[string]string `protobuf:"bytes,3,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	NamePrefixes []string          `protobuf:"bytes,4,rep,name=name_prefixes,json=namePrefixes" json:"name_prefixes,omitempty"`
-}
-
-func (m *ListSecretsRequest_Filters) Reset()                    { *m = ListSecretsRequest_Filters{} }
-func (m *ListSecretsRequest_Filters) String() string            { return proto.CompactTextString(m) }
-func (*ListSecretsRequest_Filters) ProtoMessage()               {}
-func (*ListSecretsRequest_Filters) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 0} }
-
-func (m *ListSecretsRequest_Filters) GetNames() []string {
-	if m != nil {
-		return m.Names
-	}
-	return nil
-}
-
-func (m *ListSecretsRequest_Filters) GetIdPrefixes() []string {
-	if m != nil {
-		return m.IdPrefixes
-	}
-	return nil
-}
-
-func (m *ListSecretsRequest_Filters) GetLabels() map[string]string {
-	if m != nil {
-		return m.Labels
-	}
-	return nil
-}
-
-func (m *ListSecretsRequest_Filters) GetNamePrefixes() []string {
-	if m != nil {
-		return m.NamePrefixes
-	}
-	return nil
-}
-
-// ListSecretResponse contains a list of all the secrets that match the name or
-// name prefix filters provided in `ListSecretRequest`.  The `Secret.Spec.Data`
-// field in each `Secret` object should be nil instead of actually containing
-// the secret bytes.
-// from: api/control.proto
-type ListSecretsResponse struct {
-	Secrets []*Secret `protobuf:"bytes,1,rep,name=secrets" json:"secrets,omitempty"`
-}
-
-func (m *ListSecretsResponse) Reset()                    { *m = ListSecretsResponse{} }
-func (m *ListSecretsResponse) String() string            { return proto.CompactTextString(m) }
-func (*ListSecretsResponse) ProtoMessage()               {}
-func (*ListSecretsResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *ListSecretsResponse) GetSecrets() []*Secret {
-	if m != nil {
-		return m.Secrets
-	}
-	return nil
-}
-
-// RemoveSecretRequest contains the ID of the secret that should be removed.  This
-// removes all versions of the secret.
-// From: api/control.proto
-type RemoveSecretRequest struct {
-	SecretId string `protobuf:"bytes,1,opt,name=secret_id,json=secretId" json:"secret_id,omitempty"`
-}
-
-func (m *RemoveSecretRequest) Reset()                    { *m = RemoveSecretRequest{} }
-func (m *RemoveSecretRequest) String() string            { return proto.CompactTextString(m) }
-func (*RemoveSecretRequest) ProtoMessage()               {}
-func (*RemoveSecretRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *RemoveSecretRequest) GetSecretId() string {
-	if m != nil {
-		return m.SecretId
+		return m.Id
 	}
 	return ""
 }
 
-// RemoveSecretResponse contains the ID of the secret that was successfully removed.
-// From: api/control.proto
-type RemoveSecretResponse struct {
-	SecretId string `protobuf:"bytes,1,opt,name=secret_id,json=secretId" json:"secret_id,omitempty"`
+func (m *SecretEntry) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
 }
 
-func (m *RemoveSecretResponse) Reset()                    { *m = RemoveSecretResponse{} }
-func (m *RemoveSecretResponse) String() string            { return proto.CompactTextString(m) }
-func (*RemoveSecretResponse) ProtoMessage()               {}
-func (*RemoveSecretResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+type ListReply struct {
+	Entries []*SecretEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
+}
 
-func (m *RemoveSecretResponse) GetSecretId() string {
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (m *ListReply) String() string            { return proto.CompactTextString(m) }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ListReply) GetEntries() []*SecretEntry {
 	if m != nil {
-		return m.SecretId
+		return m.Entries
+	}
+	return nil
+}
+
+type RemoveRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *RemoveRequest) Reset()                    { *m = RemoveRequest{} }
+func (m *RemoveRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoveRequest) ProtoMessage()               {}
+func (*RemoveRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *RemoveRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type RemoveReply struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *RemoveReply) Reset()                    { *m = RemoveReply{} }
+func (m *RemoveReply) String() string            { return proto.CompactTextString(m) }
+func (*RemoveReply) ProtoMessage()               {}
+func (*RemoveReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *RemoveReply) GetId() string {
+	if m != nil {
+		return m.Id
 	}
 	return ""
 }
 
 func init() {
-	proto.RegisterType((*SecretSpec)(nil), "secret.SecretSpec")
-	proto.RegisterType((*Secret)(nil), "secret.Secret")
-	proto.RegisterType((*CreateSecretRequest)(nil), "secret.CreateSecretRequest")
-	proto.RegisterType((*CreateSecretResponse)(nil), "secret.CreateSecretResponse")
-	proto.RegisterType((*ListSecretsRequest)(nil), "secret.ListSecretsRequest")
-	proto.RegisterType((*ListSecretsRequest_Filters)(nil), "secret.ListSecretsRequest.Filters")
-	proto.RegisterType((*ListSecretsResponse)(nil), "secret.ListSecretsResponse")
-	proto.RegisterType((*RemoveSecretRequest)(nil), "secret.RemoveSecretRequest")
-	proto.RegisterType((*RemoveSecretResponse)(nil), "secret.RemoveSecretResponse")
+	proto.RegisterType((*CreateRequest)(nil), "secret.CreateRequest")
+	proto.RegisterType((*CreateReply)(nil), "secret.CreateReply")
+	proto.RegisterType((*ListRequest)(nil), "secret.ListRequest")
+	proto.RegisterType((*SecretEntry)(nil), "secret.SecretEntry")
+	proto.RegisterType((*ListReply)(nil), "secret.ListReply")
+	proto.RegisterType((*RemoveRequest)(nil), "secret.RemoveRequest")
+	proto.RegisterType((*RemoveReply)(nil), "secret.RemoveReply")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -302,164 +176,130 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// Client API for SecretService service
+// Client API for Secret service
 
-type SecretServiceClient interface {
-	// CreateSecret creates and return a `CreateSecretResponse` with a `Secret` based
-	// on the provided `CreateSecretRequest.SecretSpec`.
-	// - Returns `InvalidArgument` if the `CreateSecretRequest.SecretSpec` is malformed,
-	//   or if the secret data is too long or contains invalid characters.
-	// - Returns an error if the creation fails.
-	// From: api/control.proto
-	CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error)
-	// ListSecrets returns a `ListSecretResponse` with a list of all non-internal `Secret`s being
-	// managed, or all secrets matching any name in `ListSecretsRequest.Names`, any
-	// name prefix in `ListSecretsRequest.NamePrefixes`, any id in
-	// `ListSecretsRequest.SecretIDs`, or any id prefix in `ListSecretsRequest.IDPrefixes`.
-	// - Returns an error if listing fails.
-	// From: api/control.proto
-	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
-	// RemoveSecret removes the secret referenced by `RemoveSecretRequest.ID`.
-	// - Returns `InvalidArgument` if `RemoveSecretRequest.ID` is empty.
-	// - Returns `NotFound` if the a secret named `RemoveSecretRequest.ID` is not found.
-	// - Returns an error if the deletion fails.
-	// From: api/control.proto
-	RemoveSecret(ctx context.Context, in *RemoveSecretRequest, opts ...grpc.CallOption) (*RemoveSecretResponse, error)
+type SecretClient interface {
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error)
 }
 
-type secretServiceClient struct {
+type secretClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewSecretServiceClient(cc *grpc.ClientConn) SecretServiceClient {
-	return &secretServiceClient{cc}
+func NewSecretClient(cc *grpc.ClientConn) SecretClient {
+	return &secretClient{cc}
 }
 
-func (c *secretServiceClient) CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error) {
-	out := new(CreateSecretResponse)
-	err := grpc.Invoke(ctx, "/secret.SecretService/CreateSecret", in, out, c.cc, opts...)
+func (c *secretClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
+	out := new(CreateReply)
+	err := grpc.Invoke(ctx, "/secret.Secret/Create", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretServiceClient) ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error) {
-	out := new(ListSecretsResponse)
-	err := grpc.Invoke(ctx, "/secret.SecretService/ListSecrets", in, out, c.cc, opts...)
+func (c *secretClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
+	err := grpc.Invoke(ctx, "/secret.Secret/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *secretServiceClient) RemoveSecret(ctx context.Context, in *RemoveSecretRequest, opts ...grpc.CallOption) (*RemoveSecretResponse, error) {
-	out := new(RemoveSecretResponse)
-	err := grpc.Invoke(ctx, "/secret.SecretService/RemoveSecret", in, out, c.cc, opts...)
+func (c *secretClient) Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error) {
+	out := new(RemoveReply)
+	err := grpc.Invoke(ctx, "/secret.Secret/Remove", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for SecretService service
+// Server API for Secret service
 
-type SecretServiceServer interface {
-	// CreateSecret creates and return a `CreateSecretResponse` with a `Secret` based
-	// on the provided `CreateSecretRequest.SecretSpec`.
-	// - Returns `InvalidArgument` if the `CreateSecretRequest.SecretSpec` is malformed,
-	//   or if the secret data is too long or contains invalid characters.
-	// - Returns an error if the creation fails.
-	// From: api/control.proto
-	CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error)
-	// ListSecrets returns a `ListSecretResponse` with a list of all non-internal `Secret`s being
-	// managed, or all secrets matching any name in `ListSecretsRequest.Names`, any
-	// name prefix in `ListSecretsRequest.NamePrefixes`, any id in
-	// `ListSecretsRequest.SecretIDs`, or any id prefix in `ListSecretsRequest.IDPrefixes`.
-	// - Returns an error if listing fails.
-	// From: api/control.proto
-	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
-	// RemoveSecret removes the secret referenced by `RemoveSecretRequest.ID`.
-	// - Returns `InvalidArgument` if `RemoveSecretRequest.ID` is empty.
-	// - Returns `NotFound` if the a secret named `RemoveSecretRequest.ID` is not found.
-	// - Returns an error if the deletion fails.
-	// From: api/control.proto
-	RemoveSecret(context.Context, *RemoveSecretRequest) (*RemoveSecretResponse, error)
+type SecretServer interface {
+	Create(context.Context, *CreateRequest) (*CreateReply, error)
+	List(context.Context, *ListRequest) (*ListReply, error)
+	Remove(context.Context, *RemoveRequest) (*RemoveReply, error)
 }
 
-func RegisterSecretServiceServer(s *grpc.Server, srv SecretServiceServer) {
-	s.RegisterService(&_SecretService_serviceDesc, srv)
+func RegisterSecretServer(s *grpc.Server, srv SecretServer) {
+	s.RegisterService(&_Secret_serviceDesc, srv)
 }
 
-func _SecretService_CreateSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSecretRequest)
+func _Secret_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretServiceServer).CreateSecret(ctx, in)
+		return srv.(SecretServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secret.SecretService/CreateSecret",
+		FullMethod: "/secret.Secret/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretServiceServer).CreateSecret(ctx, req.(*CreateSecretRequest))
+		return srv.(SecretServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretService_ListSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListSecretsRequest)
+func _Secret_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretServiceServer).ListSecrets(ctx, in)
+		return srv.(SecretServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secret.SecretService/ListSecrets",
+		FullMethod: "/secret.Secret/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretServiceServer).ListSecrets(ctx, req.(*ListSecretsRequest))
+		return srv.(SecretServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretService_RemoveSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveSecretRequest)
+func _Secret_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SecretServiceServer).RemoveSecret(ctx, in)
+		return srv.(SecretServer).Remove(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/secret.SecretService/RemoveSecret",
+		FullMethod: "/secret.Secret/Remove",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretServiceServer).RemoveSecret(ctx, req.(*RemoveSecretRequest))
+		return srv.(SecretServer).Remove(ctx, req.(*RemoveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _SecretService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "secret.SecretService",
-	HandlerType: (*SecretServiceServer)(nil),
+var _Secret_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "secret.Secret",
+	HandlerType: (*SecretServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateSecret",
-			Handler:    _SecretService_CreateSecret_Handler,
+			MethodName: "Create",
+			Handler:    _Secret_Create_Handler,
 		},
 		{
-			MethodName: "ListSecrets",
-			Handler:    _SecretService_ListSecrets_Handler,
+			MethodName: "List",
+			Handler:    _Secret_List_Handler,
 		},
 		{
-			MethodName: "RemoveSecret",
-			Handler:    _SecretService_RemoveSecret_Handler,
+			MethodName: "Remove",
+			Handler:    _Secret_Remove_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -471,41 +311,23 @@ func init() {
 }
 
 var fileDescriptor0 = []byte{
-	// 561 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xdd, 0x6e, 0xd3, 0x4c,
-	0x10, 0xad, 0x9d, 0x7c, 0x69, 0x33, 0x4e, 0xaa, 0x4f, 0x9b, 0x5c, 0x58, 0x0e, 0x52, 0x23, 0x23,
-	0x55, 0xbe, 0xc1, 0x91, 0x52, 0x10, 0x3f, 0xe2, 0x47, 0x08, 0xa8, 0x40, 0x2d, 0x12, 0xda, 0x3e,
-	0x40, 0xb5, 0xb1, 0xa7, 0x65, 0x85, 0x7f, 0x96, 0xf5, 0x26, 0x22, 0x17, 0x5c, 0xf2, 0x58, 0xbc,
-	0x0f, 0xf7, 0xbc, 0x00, 0xca, 0xee, 0x3a, 0x71, 0x68, 0x28, 0xdc, 0x24, 0xbb, 0x73, 0xe6, 0x9c,
-	0x33, 0x3b, 0x33, 0x32, 0x3c, 0xbc, 0xe6, 0xea, 0xe3, 0x7c, 0x16, 0x27, 0x65, 0x3e, 0x61, 0x42,
-	0x24, 0x98, 0xa1, 0x64, 0xaa, 0x94, 0x13, 0x96, 0x8b, 0x09, 0x13, 0x7c, 0x22, 0x45, 0x32, 0xa9,
-	0x30, 0x91, 0xa8, 0xec, 0x5f, 0x2c, 0x64, 0xa9, 0x4a, 0xd2, 0x31, 0xb7, 0xe0, 0xc1, 0xbf, 0x08,
-	0xa8, 0xa5, 0xc0, 0xca, 0xfc, 0x1a, 0x7a, 0xf8, 0xcd, 0x01, 0xb8, 0xd0, 0x0a, 0x17, 0x02, 0x13,
-	0x72, 0x1f, 0x3c, 0x56, 0x14, 0xa5, 0x62, 0x8a, 0x97, 0x45, 0xe5, 0x3b, 0x63, 0x27, 0xf2, 0xa6,
-	0x24, 0x36, 0x8c, 0x97, 0x1b, 0x84, 0x36, 0xd3, 0x08, 0x81, 0x76, 0xca, 0x14, 0xf3, 0xdd, 0xb1,
-	0x13, 0xf5, 0xa8, 0x3e, 0x93, 0x7b, 0x00, 0x0a, 0x73, 0x91, 0x31, 0xc5, 0x8b, 0x6b, 0xbf, 0xa5,
-	0x85, 0xfa, 0x56, 0xe8, 0xb5, 0xe4, 0x0b, 0x94, 0xb4, 0x91, 0x10, 0x7e, 0x85, 0x8e, 0x29, 0x83,
-	0x1c, 0x82, 0xcb, 0x53, 0xed, 0xdc, 0xa5, 0x2e, 0x4f, 0xc9, 0x11, 0xb4, 0x73, 0xb4, 0xe2, 0xde,
-	0xd4, 0xb3, 0x12, 0xef, 0x51, 0x31, 0xaa, 0x01, 0x72, 0x0c, 0xed, 0x4a, 0x60, 0x62, 0x3d, 0x48,
-	0x6c, 0xdb, 0xb3, 0x79, 0x15, 0xd5, 0x38, 0x09, 0xe0, 0x80, 0x17, 0x0a, 0x65, 0xc1, 0x32, 0xbf,
-	0x3d, 0x76, 0xa2, 0x03, 0xba, 0xbe, 0x87, 0xcf, 0x60, 0xf0, 0x4a, 0x22, 0x53, 0x68, 0x58, 0x14,
-	0x3f, 0xcf, 0xb1, 0x52, 0x6b, 0x69, 0xe7, 0x76, 0xe9, 0xf0, 0x39, 0x0c, 0xb7, 0xe9, 0x95, 0x28,
-	0x8b, 0x0a, 0xc9, 0x31, 0xd8, 0xf1, 0x58, 0x85, 0xc3, 0x6d, 0x05, 0x6a, 0xd1, 0xf0, 0xbb, 0x0b,
-	0xe4, 0x9c, 0x57, 0xca, 0x84, 0xab, 0xda, 0xfe, 0x29, 0xec, 0x5f, 0xf1, 0x4c, 0xa1, 0xac, 0x27,
-	0x11, 0xd6, 0xfc, 0x9b, 0xc9, 0xf1, 0xa9, 0xc9, 0xa4, 0x35, 0x25, 0xf8, 0xe1, 0xc0, 0xbe, 0x0d,
-	0x92, 0x21, 0xfc, 0x57, 0xb0, 0x1c, 0x57, 0x3a, 0xad, 0xa8, 0x4b, 0xcd, 0x85, 0x1c, 0x81, 0xc7,
-	0xd3, 0x4b, 0x21, 0xf1, 0x8a, 0x7f, 0xc1, 0xca, 0x77, 0x35, 0x06, 0x3c, 0xfd, 0x60, 0x23, 0xe4,
-	0x14, 0x3a, 0x19, 0x9b, 0x61, 0x56, 0xf9, 0xad, 0x71, 0x2b, 0xf2, 0xa6, 0xf1, 0xdf, 0xfd, 0xe3,
-	0x73, 0x4d, 0x78, 0x53, 0x28, 0xb9, 0xa4, 0x96, 0x4d, 0xee, 0x42, 0x7f, 0xe5, 0xb8, 0xb1, 0x6a,
-	0x6b, 0xab, 0xde, 0x2a, 0x58, 0x9b, 0x05, 0x8f, 0xc1, 0x6b, 0x70, 0xc9, 0xff, 0xd0, 0xfa, 0x84,
-	0x4b, 0xbb, 0x08, 0xab, 0xe3, 0xea, 0x11, 0x0b, 0x96, 0xcd, 0x51, 0xaf, 0x42, 0x97, 0x9a, 0xcb,
-	0x13, 0xf7, 0x91, 0x13, 0xbe, 0x80, 0xc1, 0x56, 0x45, 0xb6, 0xfd, 0x11, 0xec, 0x9b, 0x7a, 0xcd,
-	0xbb, 0x6f, 0xf6, 0xbf, 0x86, 0xc3, 0x29, 0x0c, 0x28, 0xe6, 0xe5, 0xe2, 0xb7, 0xf9, 0x8f, 0xa0,
-	0x6b, 0x32, 0x2e, 0xd7, 0x2b, 0x79, 0x60, 0x02, 0xef, 0xd2, 0xf0, 0x04, 0x86, 0xdb, 0x1c, 0xeb,
-	0x7a, 0x1b, 0x69, 0xfa, 0xd3, 0x81, 0xbe, 0x5d, 0x1f, 0x94, 0x0b, 0x9e, 0x20, 0x39, 0x83, 0x5e,
-	0x73, 0x77, 0xc8, 0xa8, 0xae, 0x71, 0xc7, 0x42, 0x06, 0x77, 0x76, 0x83, 0xc6, 0x39, 0xdc, 0x23,
-	0x6f, 0xc1, 0x6b, 0x34, 0x82, 0x04, 0x7f, 0x9e, 0x57, 0x30, 0xda, 0x89, 0xad, 0x95, 0xce, 0xa0,
-	0xd7, 0x7c, 0xdd, 0xa6, 0xac, 0x1d, 0x7d, 0xda, 0x94, 0xb5, 0xab, 0x21, 0xe1, 0xde, 0xac, 0xa3,
-	0x3f, 0x36, 0x27, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0xd5, 0x73, 0x7c, 0xb0, 0xe6, 0x04, 0x00,
-	0x00,
+	// 282 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x51, 0xcd, 0x4a, 0xc3, 0x40,
+	0x10, 0x26, 0xb1, 0x44, 0x3a, 0x31, 0x82, 0x5b, 0x84, 0x50, 0x28, 0x86, 0x3d, 0xe5, 0x62, 0x82,
+	0xb5, 0x50, 0xf0, 0x2a, 0xde, 0x3c, 0xc5, 0x27, 0xd8, 0x26, 0x83, 0x2e, 0x34, 0xc9, 0xba, 0x99,
+	0x0a, 0xbe, 0x8f, 0x0f, 0x2a, 0x9b, 0xcd, 0x6f, 0xf5, 0xb4, 0xb3, 0xb3, 0xdf, 0x7c, 0x3f, 0xb3,
+	0xb0, 0x7f, 0x97, 0xf4, 0x71, 0x3a, 0x24, 0x79, 0x5d, 0xa6, 0x42, 0xa9, 0x1c, 0x8f, 0xa8, 0x05,
+	0xd5, 0x3a, 0x15, 0xa5, 0x4a, 0x85, 0x92, 0xa9, 0x56, 0x79, 0xda, 0x60, 0xae, 0x91, 0xba, 0x23,
+	0x51, 0xba, 0xa6, 0x9a, 0x79, 0xf6, 0xc6, 0xf7, 0x10, 0x3c, 0x6b, 0x14, 0x84, 0x19, 0x7e, 0x9e,
+	0xb0, 0x21, 0xc6, 0x60, 0x51, 0x89, 0x12, 0x43, 0x27, 0x72, 0xe2, 0x65, 0xd6, 0xd6, 0xa6, 0x57,
+	0x08, 0x12, 0xa1, 0x1b, 0x39, 0xf1, 0x55, 0xd6, 0xd6, 0x7c, 0x03, 0x7e, 0x3f, 0xa8, 0x8e, 0xdf,
+	0xec, 0x1a, 0x5c, 0x59, 0x74, 0x43, 0xae, 0x2c, 0x78, 0x00, 0xfe, 0xab, 0x6c, 0xa8, 0x63, 0xe5,
+	0x0f, 0xe0, 0xbf, 0xb5, 0x82, 0x2f, 0x15, 0xe9, 0x3f, 0xe8, 0x41, 0xd4, 0x1d, 0x45, 0xf9, 0x13,
+	0x2c, 0x2d, 0x83, 0xa1, 0xbf, 0x87, 0x4b, 0xac, 0x48, 0x4b, 0x6c, 0x42, 0x27, 0xba, 0x88, 0xfd,
+	0xed, 0x2a, 0xe9, 0xe2, 0x4c, 0x68, 0xb3, 0x1e, 0xc3, 0xef, 0x20, 0xc8, 0xb0, 0xac, 0xbf, 0x86,
+	0x54, 0xe7, 0xf6, 0x36, 0xe0, 0xf7, 0x80, 0x7f, 0xdc, 0x6f, 0x7f, 0x1c, 0xf0, 0x2c, 0x31, 0xdb,
+	0x81, 0x67, 0x73, 0xb2, 0xdb, 0x5e, 0x72, 0xb6, 0xb0, 0xf5, 0xea, 0xbc, 0x6d, 0x08, 0x13, 0x58,
+	0x18, 0xf3, 0x6c, 0x78, 0x9c, 0x2c, 0x63, 0x7d, 0x33, 0x6f, 0x1a, 0xfc, 0x0e, 0x3c, 0xeb, 0x67,
+	0x54, 0x99, 0x05, 0x18, 0x55, 0x26, 0xb6, 0x0f, 0x5e, 0xfb, 0x97, 0x8f, 0xbf, 0x01, 0x00, 0x00,
+	0xff, 0xff, 0xbc, 0x8d, 0x64, 0x25, 0x06, 0x02, 0x00, 0x00,
 }

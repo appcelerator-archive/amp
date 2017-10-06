@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"text/tabwriter"
@@ -8,7 +9,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/secret"
 	"github.com/appcelerator/amp/cli"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
 )
 
@@ -25,11 +25,12 @@ var listOpts = &ListOpts{
 // NewListCommand returns a new instance of the list command for listing secrets
 func NewListCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list [OPTIONS]",
+		Use:     "ls [OPTIONS]",
 		Short:   "List secrets",
+		Aliases: []string{"list"},
 		PreRunE: cli.NoArgs,
-		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			//return list(c, cmd, listOpts)
 			return list(c, cmd)
 		},
 	}
@@ -44,20 +45,20 @@ func NewListCommand(c cli.Interface) *cobra.Command {
 
 func list(c cli.Interface, cmd *cobra.Command) error {
 	conn := c.ClientConn()
-	client := secret.NewSecretServiceClient(conn)
-	request := &secret.ListSecretsRequest{}
-	resp, err := client.ListSecrets(context.Background(), request)
+	client := secret.NewSecretClient(conn)
+	request := &secret.ListRequest{}
+	reply, err := client.List(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}
-		return fmt.Errorf("Error listing secret: %s", err)
+		return fmt.Errorf("error listing secret: %entry", err)
 	}
 
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "NAME\t")
-	for _, s := range resp.Secrets {
-		fmt.Fprintf(w, "%s\t\n", s.Spec.Annotations.Name)
+	fmt.Fprintln(w, "ID\tNAME\t")
+	for _, entry := range reply.Entries {
+		fmt.Fprintf(w, "%s\t%s\t\n", entry.Id, entry.Name)
 	}
 	w.Flush()
 	return nil

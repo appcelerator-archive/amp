@@ -1,3 +1,0 @@
-=== ceph cluster_health MetricSet
-
-This is the cluster_health metricset of the module ceph.

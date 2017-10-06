@@ -1,4 +1,4 @@
-FROM appcelerator/gotools:1.10.0
+FROM appcelerator/gotools:1.11.0
 #RUN apk --no-cache add gosu iproute2
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   man \
@@ -10,10 +10,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-instal
 # Add Docker client from:
 # https://github.com/docker-library/docker/blob/master/17.06/Dockerfile
 ENV DOCKER_BUCKET download.docker.com
-ENV DOCKER_VERSION 17.06.1-ce
+ENV DOCKER_VERSION 17.09.0-ce
 ENV DOCKER_CHANNEL stable
-ENV DOCKER_SHA256_x86_64 e35fe12806eadbb7eb8aa63e3dfb531bda5f901cd2c14ac9cdcd54df6caed697
-ENV DOCKER_SHA256_armel c3d7fcb09338a5a01320ef5e32fa9dc9161b1a4179700bb46509ff0e0d995054
+ENV DOCKER_SHA256_x86_64 a9e90a73c3cdfbf238f148e1ec0eaff5eb181f92f35bdd938fd7dab18e1c4647
 
 ENV dockerArch=x86_64
 

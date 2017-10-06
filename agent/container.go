@@ -8,14 +8,14 @@ import (
 	"path"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/events"
+	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 // ContainerData data

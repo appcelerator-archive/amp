@@ -9,12 +9,13 @@
   notifications:
     email: false
   go:
-    - 1.6
+    - 1.8
   install: make deps
   addons:
     apt:
       packages:
         - libsecret-1-dev
+        - pass
   before_script:
     - "export DISPLAY=:99.0"
     - if [[ "$TRAVIS_OS_NAME" == "linux"  ]]; then sh ci/before_script_linux.sh; fi

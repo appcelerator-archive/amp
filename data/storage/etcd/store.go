@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/coreos/etcd/clientv3"

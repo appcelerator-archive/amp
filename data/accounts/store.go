@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
 	"github.com/ory/ladon"
