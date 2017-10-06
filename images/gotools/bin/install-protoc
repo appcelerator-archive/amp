@@ -1,15 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
-git clone https://github.com/google/protobuf.git --branch v3.4.0 --depth 1
-cd protobuf
-git submodule update --init
-./autogen.sh
-./configure
-make -j 3
-make check
-make install
-ldconfig
-make clean
-cd ..
-rm -r protobuf
-/usr/local/bin/protoc --version
+VERSION=3.4.0
+wget -N -q "https://github.com/google/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-x86_64.zip" 2>&1
+unzip -q "protoc-$VERSION-linux-x86_64.zip"
+mv bin/protoc /usr/local/bin
+chmod +x /usr/local/bin/protoc
+mv include/google /usr/local/include/google
+chmod -R 755 /usr/local/include/google

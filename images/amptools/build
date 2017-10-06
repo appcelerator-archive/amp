@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TAGS=( latest 1.8 1.8.0 )
+TAGS=( latest 1.9 1.9.0 )
 OWNER=appcelerator
 IMAGE=amptools
 
