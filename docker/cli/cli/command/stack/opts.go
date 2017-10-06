@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/appcelerator/amp/docker/cli/cli/command/bundlefile"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-	"github.com/appcelerator/amp/docker/cli/cli/command/bundlefile"
 )
 
 func addComposefileFlag(opt *string, flags *pflag.FlagSet) {

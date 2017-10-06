@@ -163,10 +163,21 @@
         }
       }
     },
+    "stackListRequest": {
+      "type": "object"
+    },
     "stackRemoveReply": {
       "type": "object",
       "properties": {
         "answer": {
+          "type": "string"
+        }
+      }
+    },
+    "stackRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "stack": {
           "type": "string"
         }
       }
@@ -179,6 +190,14 @@
           "items": {
             "$ref": "#/definitions/stackStackService"
           }
+        }
+      }
+    },
+    "stackServicesRequest": {
+      "type": "object",
+      "properties": {
+        "stack_name": {
+          "type": "string"
         }
       }
     },

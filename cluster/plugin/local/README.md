@@ -11,17 +11,6 @@ AMP cli.
 For more details about the design and use, see the
 [wiki](https://github.com/appcelerator/amp/wiki/AMP-Clusters).
 
-# Build
-
-`make` (or `make build`) builds `appcelerator/amp-local`.
-
-`make vendor` updates the vendors.
-
-`make clean` removes the target binary (`local.alpine`) that is created by the
-compiler to be copied into the `appcelerator/amp-local` image when building it.
-
-`make test` uses `appcelerator/amp-local` to create, update, and remove test clusters.
-
 ### Options
 
 The parameters available for the local plugins are:

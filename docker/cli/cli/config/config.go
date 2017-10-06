@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/docker/cli/cli/config/configfile"
 	"github.com/appcelerator/amp/docker/cli/cli/config/credentials"
 	"github.com/appcelerator/amp/docker/docker/pkg/homedir"
 	"github.com/pkg/errors"
-	"docker.io/go-docker/api/types"
 )
 
 const (

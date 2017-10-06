@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+
 	"docker.io/go-docker/api/types/swarm"
 	"github.com/appcelerator/amp/docker/cli/cli/command/formatter"
 )

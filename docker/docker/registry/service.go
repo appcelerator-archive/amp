@@ -9,12 +9,12 @@ import (
 
 	"golang.org/x/net/context"
 
+	"docker.io/go-docker/api/types"
+	registrytypes "docker.io/go-docker/api/types/registry"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/client/auth"
-	registrytypes "docker.io/go-docker/api/types/registry"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"docker.io/go-docker/api/types"
 )
 
 const (

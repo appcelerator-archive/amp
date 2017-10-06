@@ -11,14 +11,6 @@ AMP cli.
 For more details about the design and use, see the
 [wiki](https://github.com/appcelerator/amp/wiki/AMP-Clusters).
 
-# Build
-
-`make` (or `make build`) builds `appcelerator/amp-aws`.
-
-`make clean` removes the target binary (`aws.alpine`).
-
-`make test` uses `appcelerator/amp-aws` to create, update, and remove test stacks.
-
 ### Options
 
 The plugin allows you to provide all the parameters that are supported by the [CloudFormation template](https://github.com/appcelerator/amp/blob/master/examples/clusters/README.md), including:

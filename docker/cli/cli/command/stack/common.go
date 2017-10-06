@@ -1,13 +1,13 @@
 package stack
 
 import (
-	"golang.org/x/net/context"
+	"docker.io/go-docker"
+	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/filters"
+	"docker.io/go-docker/api/types/swarm"
 	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 	"github.com/appcelerator/amp/docker/cli/opts"
-	"docker.io/go-docker"
-	"docker.io/go-docker/api/types/swarm"
-	"docker.io/go-docker/api/types"
+	"golang.org/x/net/context"
 )
 
 func getStackFilter(namespace string) filters.Args {

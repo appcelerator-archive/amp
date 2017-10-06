@@ -8,6 +8,9 @@ import (
 	"runtime"
 	"time"
 
+	"docker.io/go-docker"
+	"docker.io/go-docker/api"
+	"github.com/appcelerator/amp/docker/cli"
 	cliconfig "github.com/appcelerator/amp/docker/cli/cli/config"
 	"github.com/appcelerator/amp/docker/cli/cli/config/configfile"
 	cliflags "github.com/appcelerator/amp/docker/cli/cli/flags"
@@ -17,9 +20,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"docker.io/go-docker"
-	"docker.io/go-docker/api"
-	"github.com/appcelerator/amp/docker/cli"
 )
 
 // Streams is an interface which exposes the standard input and output streams

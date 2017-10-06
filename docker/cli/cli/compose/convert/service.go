@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	servicecli "github.com/appcelerator/amp/docker/cli/cli/command/service"
-	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
-	"github.com/appcelerator/amp/docker/cli/opts"
+	client "docker.io/go-docker"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/swarm"
 	"docker.io/go-docker/api/types/versions"
-	client "docker.io/go-docker"
+	servicecli "github.com/appcelerator/amp/docker/cli/cli/command/service"
+	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
+	"github.com/appcelerator/amp/docker/cli/opts"
 	"github.com/pkg/errors"
 )
 

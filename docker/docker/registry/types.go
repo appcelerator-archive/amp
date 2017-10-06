@@ -1,8 +1,8 @@
 package registry
 
 import (
-	"github.com/docker/distribution/reference"
 	registrytypes "docker.io/go-docker/api/types/registry"
+	"github.com/docker/distribution/reference"
 )
 
 // RepositoryData tracks the image list, list of endpoints for a repository

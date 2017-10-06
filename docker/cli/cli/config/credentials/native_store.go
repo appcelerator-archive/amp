@@ -1,9 +1,9 @@
 package credentials
 
 import (
+	"docker.io/go-docker/api/types"
 	"github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker-credential-helpers/credentials"
-	"docker.io/go-docker/api/types"
 )
 
 const (

@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/docker/distribution/registry/client/transport"
 	registrytypes "docker.io/go-docker/api/types/registry"
+	"github.com/docker/distribution/registry/client/transport"
 	"github.com/sirupsen/logrus"
 )
 

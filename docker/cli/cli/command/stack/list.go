@@ -3,25 +3,21 @@ package stack
 import (
 	"sort"
 
-	"golang.org/x/net/context"
-	"vbom.ml/util/sortorder"
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/command/formatter"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
+	"github.com/appcelerator/amp/docker/cli/cli/command"
+	"github.com/appcelerator/amp/docker/cli/cli/command/formatter"
 	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+	"vbom.ml/util/sortorder"
 )
 
-type listOptions struct {
-	format string
+type ListOptions struct {
+	Format string
 }
 
-func NewListOptions() listOptions {
-	return listOptions{}
-}
-
-func RunList(dockerCli command.Cli, opts listOptions) error {
+func RunList(dockerCli command.Cli, opts ListOptions) error {
 	client := dockerCli.Client()
 	ctx := context.Background()
 
@@ -29,7 +25,7 @@ func RunList(dockerCli command.Cli, opts listOptions) error {
 	if err != nil {
 		return err
 	}
-	format := opts.format
+	format := opts.Format
 	if len(format) == 0 {
 		format = formatter.TableFormatKey
 	}

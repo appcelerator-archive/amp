@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/docker/cli/cli/config/credentials"
 	"github.com/appcelerator/amp/docker/cli/opts"
 	"github.com/pkg/errors"
-	"docker.io/go-docker/api/types"
 )
 
 const (

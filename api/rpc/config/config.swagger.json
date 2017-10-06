@@ -35,6 +35,18 @@
         }
       }
     },
+    "configCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
     "configListReply": {
       "type": "object",
       "properties": {
@@ -46,7 +58,18 @@
         }
       }
     },
+    "configListRequest": {
+      "type": "object"
+    },
     "configRemoveReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "configRemoveRequest": {
       "type": "object",
       "properties": {
         "id": {

@@ -7,8 +7,8 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/pkg/errors"
 	"github.com/appcelerator/amp/docker/cli/templates"
+	"github.com/pkg/errors"
 )
 
 // Format keys used to specify certain kinds of output formats

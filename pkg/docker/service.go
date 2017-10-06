@@ -2,9 +2,15 @@ package docker
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/swarm"
+	"github.com/appcelerator/amp/docker/cli/cli/command"
+	"github.com/appcelerator/amp/docker/cli/cli/service/progress"
+	"github.com/appcelerator/amp/docker/docker/pkg/jsonmessage"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
@@ -93,4 +99,25 @@ func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceSta
 // ServiceList list the services
 func (d *Docker) ServicesList(ctx context.Context, options types.ServiceListOptions) ([]swarm.Service, error) {
 	return d.client.ServiceList(ctx, options)
+}
+
+// WaitOnService waits for the service to converge. It outputs a progress bar,
+func (d *Docker) WaitOnService(ctx context.Context, serviceID string, quiet bool) error {
+	errChan := make(chan error, 1)
+	pipeReader, pipeWriter := io.Pipe()
+
+	go func() {
+		errChan <- progress.ServiceProgress(ctx, d.client, serviceID, pipeWriter)
+	}()
+
+	if quiet {
+		go io.Copy(ioutil.Discard, pipeReader)
+		return <-errChan
+	}
+
+	err := jsonmessage.DisplayJSONMessagesToStream(pipeReader, command.NewOutStream(os.Stdout), nil)
+	if err == nil {
+		err = <-errChan
+	}
+	return err
 }

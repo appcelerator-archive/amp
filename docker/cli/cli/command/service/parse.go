@@ -1,12 +1,12 @@
 package service
 
 import (
+	"docker.io/go-docker"
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
+	swarmtypes "docker.io/go-docker/api/types/swarm"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"docker.io/go-docker/api/types/filters"
-	"docker.io/go-docker"
-	swarmtypes "docker.io/go-docker/api/types/swarm"
-	"docker.io/go-docker/api/types"
 )
 
 // ParseSecrets retrieves the secrets with the requested names and fills
