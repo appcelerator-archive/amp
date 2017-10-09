@@ -8,7 +8,7 @@ networks:
 services:
 
   pinger:
-    image: subfuzion/pinger:${TAG:-latest}
+    image: appcelerator/pinger:${TAG:-latest}
     networks:
       default:
         aliases:

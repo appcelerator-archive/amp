@@ -38,8 +38,6 @@ by setting `Connection: close` in the response header.
 
 ## Development
 
-`make.sh` - runs the go compiler in a container to create an alpine binary
-
 `build.sh` - builds an alpine-based image: `appcelerator/pinger`
 
 `run.sh` - convenience script for `docker run ...`
@@ -47,4 +45,3 @@ by setting `Connection: close` in the response header.
 `service-start.sh` - convenience script for `docker service create ...`
 
 `service-stop.sh` - convenience script for `docker service rm ...`
-
