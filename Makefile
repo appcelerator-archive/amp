@@ -8,7 +8,7 @@ BASEDIR := $(shell echo $${PWD})
 # =============================================================================
 export UG := $(shell echo "$$(id -u):$$(id -g)")
 
-export VERSION := $(shell cat VERSION)
+export VERSION ?= $(shell cat VERSION)
 export BUILD := $(shell git rev-parse HEAD | cut -c1-8)
 export LDFLAGS := "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
@@ -21,7 +21,7 @@ export GOARCH := $(shell go env | grep GOARCH | sed 's/"//g' | cut -c8-)
 # =============================================================================
 # COMMON DIRECTORIES
 # =============================================================================
-COMMONDIRS := pkg
+COMMONDIRS := pkg docker
 CMDDIR := cmd
 
 # =============================================================================
@@ -66,7 +66,7 @@ clean-protoc:
 # CLEAN
 # =============================================================================
 .PHONY: clean
-clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit clean-amp-local clean-amp-aws clean-ampagent
+clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit clean-plugin-local clean-plugin-aws clean-ampagent
 
 # =============================================================================
 # BUILD
@@ -75,8 +75,7 @@ clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit
 DOCKER_CMD ?= "docker"
 
 build-base: protoc build-server build-gateway build-beat build-agent build-monit
-build-local-plugin: build-amp-local build-ampagent
-build-plugins: build-amp-local build-amp-aws build-ampagent
+build-plugins: build-plugin-local build-plugin-aws build-ampagent
 build: build-base build-plugins buildall-cli
 
 # =============================================================================
@@ -89,7 +88,7 @@ AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
-$(AMPTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPSRC) VERSION
+$(AMPTARGET): $(PROTOTARGETS) $(AMPSRC) VERSION
 	@echo "Compiling $(AMP) source(s) ($(GOOS)/$(GOARCH))"
 	@echo $?
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) hack/lbuild $(REPO)/bin $(AMP) $(AMPPKG) $(LDFLAGS)
@@ -134,7 +133,7 @@ AMPLDIRS := $(CMDDIR)/$(AMPL) api data $(COMMONDIRS)
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
-$(AMPLTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AMPLSRC) VERSION
+$(AMPLTARGET): $(PROTOTARGETS) $(AMPLSRC) VERSION
 	@echo "Compiling $(AMPL) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AMPLTARGET) $(AMPLPKG) $(LDFLAGS)
@@ -166,7 +165,7 @@ GWDIRS := $(CMDDIR)/$(GW) api data $(COMMONDIRS)
 GWSRC := $(shell find $(GWDIRS) -type f -name '*.go')
 GWPKG := $(REPO)/$(CMDDIR)/$(GW)
 
-$(GWTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(GWSRC) VERSION
+$(GWTARGET): $(PROTOTARGETS) $(GWSRC) VERSION
 	@echo "Compiling $(GW) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(GWTARGET) $(GWPKG) $(LDFLAGS)
@@ -197,7 +196,7 @@ MONITDIRS := $(MONIT)/promctl $(COMMONDIRS)
 MONITSRC := $(shell find $(MONITDIRS) -type f -name '*.go')
 MONITPKG := $(REPO)/$(MONIT)/promctl
 
-$(MONITTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(MONITSRC) VERSION
+$(MONITTARGET): $(PROTOTARGETS) $(MONITSRC) VERSION
 	@echo "Compiling $(MONIT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(MONITTARGET) $(MONITPKG) $(LDFLAGS)
@@ -228,7 +227,7 @@ BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
-$(BEATTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(BEATSRC) VERSION
+$(BEATTARGET): $(PROTOTARGETS) $(BEATSRC) VERSION
 	@echo "Compiling $(BEAT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(BEATTARGET) $(BEATPKG) $(LDFLAGS)
@@ -259,7 +258,7 @@ AGENTDIRS := $(CMDDIR)/$(AGENT) agent api $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
-$(AGENTTARGET): $(GLIDETARGETS) $(PROTOTARGETS) $(AGENTSRC) VERSION
+$(AGENTTARGET): $(PROTOTARGETS) $(AGENTSRC) VERSION
 	@echo "Compiling $(AGENT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AGENTTARGET) $(AGENTPKG) $(LDFLAGS)
@@ -277,78 +276,110 @@ clean-agent:
 	@docker image rm $(AGENTIMG) 2>/dev/null || true
 
 # =============================================================================
-# BUILD CLUSTER PLUGINS (`amp-aws`)
-# Needed for `amp cluster init` CLI command support.
-# Plugins are located under `cluster/plugin`
+# CLUSTER PLUGINS
 # =============================================================================
 CPDIR := cluster/plugin
+
+# =============================================================================
+# BUILD AWS CLUSTER PLUGIN (`amp-aws`)
+# Saves binary to `cluster/plugin/aws/aws.alpine`,
+# then builds `appcelerator/amp-aws` image
+# =============================================================================
+CPAWS := amp-aws
+CPAWSBINARY=$(CPAWS).alpine
+CPAWSTAG := $(VERSION)
+CPAWSIMG := appcelerator/$(CPAWS):$(CPAWSTAG)
 CPAWSDIR := $(CPDIR)/aws
-CPAWSIMG := appcelerator/amp-aws:$(VERSION)
+CPAWSDIRS := $(CPAWSDIR) $(COMMONDIRS)
+CPAWSTARGET := $(CPAWSDIR)/$(CPAWSBINARY)
+CPAWSSRC := $(shell find $(CPAWSDIRS) -type f -name '*.go')
+CPAWSPKG := $(REPO)/$(CPAWSDIR)
 
-.PHONY: build-amp-aws
-build-amp-aws:
-	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPAWSIMG) $(CPAWSDIR)
+$(CPAWSTARGET): $(PROTOTARGETS) $(CPAWSSRC) VERSION
+	@echo "Compiling $(CPAWS) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(CPAWSTARGET) $(CPAWSPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(CPAWS)"
 
-.PHONY: clean-amp-aws
-clean-amp-aws:
+build-plugin-aws: $(CPAWSTARGET)
+	@echo "build $(CPAWSIMG)"
+	@$(DOCKER_CMD) build -t $(CPAWSIMG) $(CPAWSDIR) || (rm -f $(CPAWSTARGET); exit 1)
+
+rebuild-cpaws: clean-plugin-aws build-plugin-aws
+
+.PHONY: clean-plugin-aws
+clean-plugin-aws:
+	@rm -f $(CPAWSTARGET)
 	@docker image rm $(CPAWSIMG) 2>/dev/null || true
 
-# WARNING:
-# If the environment variables for $KEYNAME and $REGION are not set, the
-# test will fail with misleading error output:
-# docker run -it --rm -v /root/.aws:/root/.aws -v /go/src/github.com/appcelerator/amp/cluster/plugin/aws:/go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-#          -w /go/src/github.com/appcelerator/amp/cluster/plugin/aws \
-#          -e KEYNAME= \
-#          -e REGION= \
-#          appcelerator/amp-aws-compiler test -v -timeout 30m
-#  can't load package: package github.com/appcelerator/amp/cluster/plugin/aws: no buildable Go source files in /go/src/github.com/appcelerator/amp/cluster/plugin/aws
-#  Makefile:21: recipe for target 'test' failed
-#
-# To succeed, ensure that these environment variables have values, like this:
-# $ KEYNAME=tony-amp-dev REGION=us-west-2 make test-amp-aws
-#
-.PHONY: test-amp-aws
-test-amp-aws: build-amp-aws
-	@cd $(CPAWSDIR) && $(MAKE) test
-
 # =============================================================================
-# BUILD CLUSTER PLUGINS (`amp-local`)
-# Needed for `amp cluster init` CLI command support.
-# Plugins are located under `cluster/plugin`
+# BUILD LOCAL CLUSTER PLUGIN (`amp-local`)
+# Saves binary to `cluster/plugin/local/local.alpine`,
+# then builds `appcelerator/amp-local` image
 # =============================================================================
-CPLOCALDIR := $(CPDIR)/local
+CPLOCAL := amp-local
+CPLOCALBINARY=$(CPLOCAL).alpine
 CPLOCALTAG := $(VERSION)
-CPLOCALIMG := appcelerator/amp-local:$(CPLOCALTAG)
+CPLOCALIMG := appcelerator/$(CPLOCAL):$(CPLOCALTAG)
+CPLOCALDIR := $(CPDIR)/local
+CPLOCALDIRS := $(CPLOCALDIR) $(COMMONDIRS)
+CPLOCALTARGET := $(CPLOCALDIR)/$(CPLOCALBINARY)
+CPLOCALSRC := $(shell find $(CPLOCALDIRS) -type f -name '*.go')
+CPLOCALPKG := $(REPO)/$(CPLOCALDIR)
 
-.PHONY: build-amp-local
-build-amp-local:
-	@echo "build $(CPLOCALDIR)"
-	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(CPLOCALIMG) $(CPLOCALDIR)
+$(CPLOCALTARGET): $(PROTOTARGETS) $(CPLOCALSRC) VERSION
+	@echo "Compiling $(CPLOCAL) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(CPLOCALTARGET) $(CPLOCALPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(CPLOCAL)"
 
-.PHONY: clean-amp-local
-clean-amp-local:
+build-plugin-local: $(CPLOCALTARGET)
+	@echo "build $(CPLOCALIMG)"
+	@$(DOCKER_CMD) build -t $(CPLOCALIMG) $(CPLOCALDIR) || (rm -f $(CPLOCALTARGET); exit 1)
+
+rebuild-cplocal: clean-plugin-local build-plugin-local
+
+.PHONY: clean-plugin-local
+clean-plugin-local:
+	@rm -f $(CPLOCALTARGET)
 	@docker image rm $(CPLOCALIMG) 2>/dev/null || true
 
 # =============================================================================
 # BUILD AMPAGENT (`ampagent`)
+# Saves binary to `cluster/ampagent/ampagent.alpine`,
+# then builds `appcelerator/ampagent` image
 # =============================================================================
-AMPAGENTDIR := cluster/agent
+AMPAGENT := ampagent
+AMPAGENTBINARY=$(AMPAGENT).alpine
 AMPAGENTTAG := $(VERSION)
-AMPAGENTIMG := appcelerator/ampagent:$(AMPAGENTTAG)
+AMPAGENTIMG := appcelerator/$(AMPAGENT):$(AMPAGENTTAG)
+AMPAGENTDIR := cluster/$(AMPAGENT)
+AMPAGENTDIRS := $(AMPAGENTDIR) $(COMMONDIRS)
+AMPAGENTTARGET := $(AMPAGENTDIR)/$(AMPAGENTBINARY)
+AMPAGENTSRC := $(shell find $(AMPAGENTDIRS) -type f -name '*.go')
+AMPAGENTPKG := $(REPO)/$(AMPAGENTDIR)
 
-.PHONY: build-ampagent
-build-ampagent:
-	@echo "build $(AMPAGENTDIR)"
-	@$(DOCKER_CMD) build --build-arg LDFLAGS=$(LDFLAGS) -t $(AMPAGENTIMG) $(AMPAGENTDIR)
+$(AMPAGENTTARGET): $(PROTOTARGETS) $(AMPAGENTSRC) VERSION
+	@echo "Compiling $(AMPAGENT) source(s):"
+	@echo $?
+	@hack/build4alpine $(REPO)/$(AMPAGENTTARGET) $(AMPAGENTPKG) $(LDFLAGS)
+	@echo "bin/$(GOOS)/$(GOARCH)/$(AMPAGENT)"
+
+build-ampagent: $(AMPAGENTTARGET)
+	@echo "build $(AMPAGENTIMG)"
+	@$(DOCKER_CMD) build -t $(AMPAGENTIMG) $(AMPAGENTDIR) || (rm -f $(AMPAGENTTARGET); exit 1)
+
+rebuild-ampagent: clean-ampagent build-ampagent
 
 .PHONY: clean-ampagent
 clean-ampagent:
+	@rm -f $(AMPAGENTTARGET)
 	@docker image rm $(AMPAGENTIMG) 2>/dev/null || true
 
 # =============================================================================
 # Quality checks
 # =============================================================================
-CHECKDIRS := agent api cli cmd data monitoring tests $(COMMONDIRS)
+CHECKDIRS := agent api cli cluster cmd data monitoring tests $(COMMONDIRS)
 CHECKSRCS := $(shell find $(CHECKDIRS) -type f \( -name '*.go' -and -not -name '*.pb.go' -and -not -name '*.pb.gw.go'  \))
 
 # format and simplify if possible (https://golang.org/cmd/gofmt/#hdr-The_simplify_command)

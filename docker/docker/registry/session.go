@@ -17,17 +17,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/distribution/reference"
-	"github.com/docker/distribution/registry/api/errcode"
+	"docker.io/go-docker/api/types"
 	registrytypes "docker.io/go-docker/api/types/registry"
 	"github.com/appcelerator/amp/docker/docker/pkg/ioutils"
 	"github.com/appcelerator/amp/docker/docker/pkg/jsonmessage"
 	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
 	"github.com/appcelerator/amp/docker/docker/pkg/tarsum"
 	"github.com/appcelerator/amp/docker/docker/registry/resumable"
+	"github.com/docker/distribution/reference"
+	"github.com/docker/distribution/registry/api/errcode"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"docker.io/go-docker/api/types"
 )
 
 var (

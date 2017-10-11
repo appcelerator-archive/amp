@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/appcelerator/amp/docker/cli"
+	"github.com/appcelerator/amp/docker/cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/appcelerator/amp/docker/cli/templates"
-	"github.com/appcelerator/amp/docker/cli"
 )
 
 // Inspector defines an interface to implement to process elements

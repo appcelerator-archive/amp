@@ -3,36 +3,27 @@ package stack
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
-	"github.com/appcelerator/amp/docker/cli/opts"
+	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/docker/cli/cli/command/formatter"
 	"github.com/appcelerator/amp/docker/cli/cli/command/service"
+	"github.com/appcelerator/amp/docker/cli/opts"
+	"golang.org/x/net/context"
 )
 
-type servicesOptions struct {
-	quiet     bool
-	format    string
-	filter    opts.FilterOpt
-	namespace string
+type ServicesOptions struct {
+	Quiet     bool
+	Format    string
+	Filter    opts.FilterOpt
+	Namespace string
 }
 
-func NewServicesOptions(quiet bool, format string, filter opts.FilterOpt, namespace string) servicesOptions {
-	return servicesOptions{
-		quiet:     quiet,
-		format:    format,
-		filter:    filter,
-		namespace: namespace,
-	}
-}
-
-func RunServices(dockerCli command.Cli, options servicesOptions) error {
+func RunServices(dockerCli command.Cli, options ServicesOptions) error {
 	ctx := context.Background()
 	client := dockerCli.Client()
 
-	filter := getStackFilterFromOpt(options.namespace, options.filter)
+	filter := getStackFilterFromOpt(options.Namespace, options.Filter)
 	services, err := client.ServiceList(ctx, types.ServiceListOptions{Filters: filter})
 	if err != nil {
 		return err
@@ -40,12 +31,12 @@ func RunServices(dockerCli command.Cli, options servicesOptions) error {
 
 	// if no services in this stack, print message and exit 0
 	if len(services) == 0 {
-		fmt.Fprintf(dockerCli.Err(), "Nothing found in stack: %s\n", options.namespace)
+		fmt.Fprintf(dockerCli.Err(), "Nothing found in stack: %s\n", options.Namespace)
 		return nil
 	}
 
 	info := map[string]formatter.ServiceListInfo{}
-	if !options.quiet {
+	if !options.Quiet {
 		taskFilter := filters.NewArgs()
 		for _, service := range services {
 			taskFilter.Add("service", service.ID)
@@ -64,9 +55,9 @@ func RunServices(dockerCli command.Cli, options servicesOptions) error {
 		info = service.GetServicesStatus(services, nodes, tasks)
 	}
 
-	format := options.format
+	format := options.Format
 	if len(format) == 0 {
-		if len(dockerCli.ConfigFile().ServicesFormat) > 0 && !options.quiet {
+		if len(dockerCli.ConfigFile().ServicesFormat) > 0 && !options.Quiet {
 			format = dockerCli.ConfigFile().ServicesFormat
 		} else {
 			format = formatter.TableFormatKey
@@ -75,7 +66,7 @@ func RunServices(dockerCli command.Cli, options servicesOptions) error {
 
 	servicesCtx := formatter.Context{
 		Output: dockerCli.Out(),
-		Format: formatter.NewServiceListFormat(format, options.quiet),
+		Format: formatter.NewServiceListFormat(format, options.Quiet),
 	}
 	return formatter.ServiceListWrite(servicesCtx, services, info)
 }

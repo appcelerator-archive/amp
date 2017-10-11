@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/go-connections/nat"
 	"docker.io/go-docker/api/types/swarm"
+	"github.com/docker/go-connections/nat"
 )
 
 const (

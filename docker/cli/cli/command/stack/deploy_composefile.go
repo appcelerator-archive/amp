@@ -9,20 +9,20 @@ import (
 	"sort"
 	"strings"
 
-	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
+	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
 	"docker.io/go-docker/api/types/swarm"
+	"github.com/appcelerator/amp/docker/cli/cli/command"
+	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
+	"github.com/appcelerator/amp/docker/cli/cli/compose/loader"
+	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/compose/loader"
-	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
-	"docker.io/go-docker"
 )
 
-func deployCompose(ctx context.Context, dockerCli command.Cli, opts deployOptions) error {
-	configDetails, err := getConfigDetails(opts.composefile, dockerCli.In())
+func deployCompose(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
+	configDetails, err := getConfigDetails(opts.Composefile, dockerCli.In())
 	if err != nil {
 		return err
 	}
@@ -53,9 +53,9 @@ func deployCompose(ctx context.Context, dockerCli command.Cli, opts deployOption
 		return err
 	}
 
-	namespace := convert.NewNamespace(opts.namespace)
+	namespace := convert.NewNamespace(opts.Namespace)
 
-	if opts.prune {
+	if opts.Prune {
 		services := map[string]struct{}{}
 		for _, service := range config.Services {
 			services[service.Name] = struct{}{}
@@ -92,7 +92,7 @@ func deployCompose(ctx context.Context, dockerCli command.Cli, opts deployOption
 	if err != nil {
 		return err
 	}
-	return deployServices(ctx, dockerCli, services, namespace, opts.sendRegistryAuth, opts.resolveImage)
+	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage)
 }
 
 func getServicesDeclaredNetworks(serviceConfigs []composetypes.ServiceConfig) map[string]struct{} {

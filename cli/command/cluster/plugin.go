@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/cluster/plugin/aws"
+	aws "github.com/appcelerator/amp/cluster/plugin/aws/plugin"
 	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
 	"github.com/mitchellh/go-homedir"
 )

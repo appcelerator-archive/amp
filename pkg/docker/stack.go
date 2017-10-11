@@ -3,16 +3,19 @@ package docker
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
 	"docker.io/go-docker/api/types"
-	"docker.io/go-docker/api/types/swarm"
+	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
 	"github.com/appcelerator/amp/docker/cli/cli/command/stack"
+	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 	"github.com/appcelerator/amp/docker/cli/cli/config/configfile"
 	"github.com/appcelerator/amp/docker/cli/opts"
 	"golang.org/x/net/context"
@@ -53,8 +56,14 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 			cli.SetConfigFile(&cf)
 		}
 
-		deployOpt := stack.NewDeployOptions("", compose.Name(), stackName, stack.ResolveImageAlways, true, false)
-		if err := stack.RunDeploy(cli, deployOpt); err != nil {
+		opts := stack.DeployOptions{
+			Composefile:      compose.Name(),
+			Namespace:        stackName,
+			ResolveImage:     stack.ResolveImageAlways,
+			SendRegistryAuth: true,
+			Prune:            false,
+		}
+		if err := stack.RunDeploy(cli, opts); err != nil {
 			return err
 		}
 		return nil
@@ -68,8 +77,8 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 // StackList list the stacks
 func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
-		listOpt := stack.NewListOptions()
-		if err := stack.RunList(cli, listOpt); err != nil {
+		opts := stack.ListOptions{}
+		if err := stack.RunList(cli, opts); err != nil {
 			return err
 		}
 		return nil
@@ -83,8 +92,8 @@ func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 // StackRemove remove a stack
 func (d *Docker) StackRemove(ctx context.Context, stackName string) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
-		rmOpt := stack.NewRemoveOptions([]string{stackName})
-		if err := stack.RunRemove(cli, rmOpt); err != nil {
+		opts := stack.RemoveOptions{Namespaces: []string{stackName}}
+		if err := stack.RunRemove(cli, opts); err != nil {
 			return err
 		}
 		return nil
@@ -93,23 +102,17 @@ func (d *Docker) StackRemove(ctx context.Context, stackName string) (output stri
 		return "", err
 	}
 	return string(output), nil
-}
-
-// TaskList list the tasks
-func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
-	return d.client.TaskList(ctx, options)
-}
-
-// NodeList list the nodes
-func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([]swarm.Node, error) {
-	return d.client.NodeList(ctx, options)
 }
 
 // StackServices list the services of a stack
-func (d *Docker) StackServices(ctx context.Context, stackName string, quietOption bool) (output string, err error) {
+func (d *Docker) StackServices(ctx context.Context, stackName string, quiet bool) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
-		servicesOpt := stack.NewServicesOptions(quietOption, "", opts.NewFilterOpt(), stackName)
-		if err := stack.RunServices(cli, servicesOpt); err != nil {
+		opts := stack.ServicesOptions{
+			Quiet:     quiet,
+			Filter:    opts.NewFilterOpt(),
+			Namespace: stackName,
+		}
+		if err := stack.RunServices(cli, opts); err != nil {
 			return err
 		}
 		return nil
@@ -120,8 +123,8 @@ func (d *Docker) StackServices(ctx context.Context, stackName string, quietOptio
 	return string(output), nil
 }
 
-// serviceIDs returns service ids of all services in a given stack
-func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, error) {
+// StackServiceIDs returns service ids of all services in a given stack
+func (d *Docker) StackServiceIDs(ctx context.Context, stackName string) ([]string, error) {
 	result, err := d.StackServices(ctx, stackName, true)
 	if err != nil {
 		return nil, err
@@ -133,7 +136,7 @@ func (d *Docker) serviceIDs(ctx context.Context, stackName string) ([]string, er
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
 	var readyServices, failedServices int32
-	services, err := d.serviceIDs(ctx, stackName)
+	services, err := d.StackServiceIDs(ctx, stackName)
 	if err != nil {
 		return nil, err
 	}
@@ -172,4 +175,32 @@ func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatu
 		FailedServices:  failedServices,
 		Status:          StateStarting,
 	}, nil
+}
+
+// waitOnService waits for the service to converge. It outputs a progress bar,
+// if appropriate based on the CLI flags.
+func (d *Docker) WaitOnStack(ctx context.Context, namespace string, progressWriter io.Writer) []error {
+	// List stack services
+	options := types.ServiceListOptions{Filters: filters.NewArgs()}
+	options.Filters.Add("label", convert.LabelNamespace+"="+namespace)
+	services, err := d.client.ServiceList(context.Background(), options)
+	if err != nil {
+		return []error{err}
+	}
+
+	errors := make([]error, len(services))
+	var wg sync.WaitGroup
+	wg.Add(len(services))
+
+	for i, service := range services {
+		go func(serviceID string, err *error) {
+			defer wg.Done()
+			*err = d.WaitOnService(ctx, serviceID, true)
+		}(service.ID, &errors[i])
+	}
+
+	// Wait for all services to converge.
+	wg.Wait()
+
+	return errors
 }

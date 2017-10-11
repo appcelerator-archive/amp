@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"strings"
 
-	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
-	networktypes "docker.io/go-docker/api/types/network"
 	"docker.io/go-docker/api/types"
+	networktypes "docker.io/go-docker/api/types/network"
 	"docker.io/go-docker/api/types/swarm"
+	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
 )
 
 const (

@@ -3,12 +3,12 @@ package stack
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-	"golang.org/x/net/context"
+	"docker.io/go-docker/api/types/swarm"
 	"docker.io/go-docker/api/types/versions"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
 	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
-	"docker.io/go-docker/api/types/swarm"
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -18,27 +18,16 @@ const (
 	ResolveImageNever    = "never"
 )
 
-type deployOptions struct {
-	bundlefile       string
-	composefile      string
-	namespace        string
-	resolveImage     string
-	sendRegistryAuth bool
-	prune            bool
+type DeployOptions struct {
+	Bundlefile       string
+	Composefile      string
+	Namespace        string
+	ResolveImage     string
+	SendRegistryAuth bool
+	Prune            bool
 }
 
-func NewDeployOptions(bundlefile string, composefile string, namespace string, resolveImage string, sendRegistryAuth bool, prune bool) deployOptions {
-	return deployOptions{
-		bundlefile:       bundlefile,
-		composefile:      composefile,
-		namespace:        namespace,
-		resolveImage:     resolveImage,
-		sendRegistryAuth: sendRegistryAuth,
-		prune:            prune,
-	}
-}
-
-func RunDeploy(dockerCli command.Cli, opts deployOptions) error {
+func RunDeploy(dockerCli command.Cli, opts DeployOptions) error {
 	ctx := context.Background()
 
 	if err := validateResolveImageFlag(dockerCli, &opts); err != nil {
@@ -46,27 +35,27 @@ func RunDeploy(dockerCli command.Cli, opts deployOptions) error {
 	}
 
 	switch {
-	case opts.bundlefile == "" && opts.composefile == "":
+	case opts.Bundlefile == "" && opts.Composefile == "":
 		return errors.Errorf("Please specify either a bundle file (with --bundle-file) or a Compose file (with --compose-file).")
-	case opts.bundlefile != "" && opts.composefile != "":
+	case opts.Bundlefile != "" && opts.Composefile != "":
 		return errors.Errorf("You cannot specify both a bundle file and a Compose file.")
-	case opts.bundlefile != "":
+	case opts.Bundlefile != "":
 		return deployBundle(ctx, dockerCli, opts)
 	default:
 		return deployCompose(ctx, dockerCli, opts)
 	}
 }
 
-// validateResolveImageFlag validates the opts.resolveImage command line option
+// validateResolveImageFlag validates the opts.ResolveImage command line option
 // and also turns image resolution off if the version is older than 1.30
-func validateResolveImageFlag(dockerCli command.Cli, opts *deployOptions) error {
-	if opts.resolveImage != ResolveImageAlways && opts.resolveImage != ResolveImageChanged && opts.resolveImage != ResolveImageNever {
-		return errors.Errorf("Invalid option %s for flag --resolve-image", opts.resolveImage)
+func validateResolveImageFlag(dockerCli command.Cli, opts *DeployOptions) error {
+	if opts.ResolveImage != ResolveImageAlways && opts.ResolveImage != ResolveImageChanged && opts.ResolveImage != ResolveImageNever {
+		return errors.Errorf("Invalid option %s for flag --resolve-image", opts.ResolveImage)
 	}
 	// client side image resolution should not be done when the supported
 	// server version is older than 1.30
 	if versions.LessThan(dockerCli.Client().ClientVersion(), "1.30") {
-		opts.resolveImage = ResolveImageNever
+		opts.ResolveImage = ResolveImageNever
 	}
 	return nil
 }

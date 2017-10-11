@@ -2,23 +2,15 @@ package docker
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"strings"
 
 	"docker.io/go-docker"
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/flags"
 )
 
 // Docker constants
 const (
-	DefaultURL          = "unix:///var/run/docker.sock"
-	DefaultVersion      = "1.32"
-	StateStarting       = "STARTING"
-	StateRunning        = "RUNNING"
-	StateError          = "ERROR"
-	StateNoMatchingNode = "NO MATCHING NODE"
+	DefaultURL     = "unix:///var/run/docker.sock"
+	DefaultVersion = "1.32"
+	MinVersion     = "1.32"
 )
 
 // Docker wrapper
@@ -47,19 +39,4 @@ func (d *Docker) Connect() (err error) {
 // GetClient returns the native docker client
 func (d *Docker) GetClient() *docker.Client {
 	return d.client
-}
-
-func cliWrapper(cmd func(cli *command.DockerCli) error) (string, error) {
-	r, w, _ := os.Pipe()
-	cli := command.NewDockerCli(os.Stdin, w, w)
-	if err := cli.Initialize(flags.NewClientOptions()); err != nil {
-		return "", err
-	}
-	if err := cmd(cli); err != nil {
-		return "", err
-	}
-	w.Close()
-	out, _ := ioutil.ReadAll(r)
-	outs := strings.Replace(string(out), "docker", "amp", -1)
-	return string(outs), nil
 }

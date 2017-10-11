@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/registry"
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/distribution/registry/client/auth/challenge"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"docker.io/go-docker/api/types"
-	"docker.io/go-docker/api/types/registry"
 )
 
 const (

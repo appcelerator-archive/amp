@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	units "github.com/docker/go-units"
 	"docker.io/go-docker/api/types/filters"
+	units "github.com/docker/go-units"
 )
 
 var (

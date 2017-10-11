@@ -5,26 +5,20 @@ import (
 	"sort"
 	"strings"
 
-	"golang.org/x/net/context"
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/swarm"
 	"docker.io/go-docker/api/types/versions"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"docker.io/go-docker/api/types/swarm"
 	"github.com/pkg/errors"
-	"docker.io/go-docker/api/types"
+	"golang.org/x/net/context"
 )
 
-type removeOptions struct {
-	namespaces []string
+type RemoveOptions struct {
+	Namespaces []string
 }
 
-func NewRemoveOptions(namespace []string) removeOptions {
-	return removeOptions{
-		namespaces: namespace,
-	}
-}
-
-func RunRemove(dockerCli command.Cli, opts removeOptions) error {
-	namespaces := opts.namespaces
+func RunRemove(dockerCli command.Cli, opts RemoveOptions) error {
+	namespaces := opts.Namespaces
 	client := dockerCli.Client()
 	ctx := context.Background()
 

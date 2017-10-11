@@ -38,8 +38,12 @@
   name = "github.com/Nvveen/Gotty"
 
 [[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "1.12.8"
+
+[[constraint]]
   name = "github.com/coreos/etcd"
-  version = "3.2.8"
+  version = "3.2.9"
 
 [[constraint]]
   name = "github.com/dgrijalva/jwt-go"
@@ -176,6 +180,10 @@
 [[constraint]]
   branch = "master"
   name = "golang.org/x/sys"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/time"
 
 [[constraint]]
   branch = "master"

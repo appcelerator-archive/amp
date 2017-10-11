@@ -19,6 +19,11 @@ func (d *Docker) NodeInspect(ctx context.Context, nodeID string) (swarm.Node, er
 	return nodeEntity, nil
 }
 
+// NodeList list the nodes
+func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([]swarm.Node, error) {
+	return d.client.NodeList(ctx, options)
+}
+
 // ExpectedNumberOfTasks returns expected number of tasks of a service
 func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (int, error) {
 	var expectedTasks int

@@ -194,7 +194,13 @@
         }
       }
     },
+    "clusterGetRegistrationStatusRequest": {
+      "type": "object"
+    },
     "clusterListReply": {
+      "type": "object"
+    },
+    "clusterListRequest": {
       "type": "object"
     },
     "clusterNodeListReply": {
@@ -207,6 +213,9 @@
           }
         }
       }
+    },
+    "clusterNodeListRequest": {
+      "type": "object"
     },
     "clusterNodeReply": {
       "type": "object",
@@ -240,7 +249,23 @@
         }
       }
     },
+    "clusterRemoveRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
     "clusterStatusReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "clusterStatusRequest": {
       "type": "object",
       "properties": {
         "id": {

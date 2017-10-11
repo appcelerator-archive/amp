@@ -3,14 +3,14 @@ package stack
 import (
 	"golang.org/x/net/context"
 
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/swarm"
+	"github.com/appcelerator/amp/docker/cli/cli/command"
+	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 )
 
-func deployBundle(ctx context.Context, dockerCli command.Cli, opts deployOptions) error {
-	bundle, err := loadBundlefile(dockerCli.Err(), opts.namespace, opts.bundlefile)
+func deployBundle(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
+	bundle, err := loadBundlefile(dockerCli.Err(), opts.Namespace, opts.Bundlefile)
 	if err != nil {
 		return err
 	}
@@ -19,9 +19,9 @@ func deployBundle(ctx context.Context, dockerCli command.Cli, opts deployOptions
 		return err
 	}
 
-	namespace := convert.NewNamespace(opts.namespace)
+	namespace := convert.NewNamespace(opts.Namespace)
 
-	if opts.prune {
+	if opts.Prune {
 		services := map[string]struct{}{}
 		for service := range bundle.Services {
 			services[service] = struct{}{}
@@ -87,5 +87,5 @@ func deployBundle(ctx context.Context, dockerCli command.Cli, opts deployOptions
 	if err := createNetworks(ctx, dockerCli, namespace, networks); err != nil {
 		return err
 	}
-	return deployServices(ctx, dockerCli, services, namespace, opts.sendRegistryAuth, opts.resolveImage)
+	return deployServices(ctx, dockerCli, services, namespace, opts.SendRegistryAuth, opts.ResolveImage)
 }

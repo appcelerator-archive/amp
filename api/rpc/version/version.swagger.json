@@ -57,6 +57,9 @@
         }
       }
     },
+    "versionGetRequest": {
+      "type": "object"
+    },
     "versionInfo": {
       "type": "object",
       "properties": {
@@ -91,6 +94,9 @@
           "type": "string"
         }
       }
+    },
+    "versionValidateGtwURLRequest": {
+      "type": "object"
     }
   }
 }

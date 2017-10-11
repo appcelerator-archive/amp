@@ -7,6 +7,11 @@ import (
 	"golang.org/x/net/context"
 )
 
+// TaskList list the tasks
+func (d *Docker) TaskList(ctx context.Context, options types.TaskListOptions) ([]swarm.Task, error) {
+	return d.client.TaskList(ctx, options)
+}
+
 // checkTasks returns the running and failing tasks of a service
 func (d *Docker) checkTasks(ctx context.Context, service string) (map[string]int, error) {
 	args := filters.NewArgs()

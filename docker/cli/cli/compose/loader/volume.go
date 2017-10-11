@@ -5,8 +5,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/appcelerator/amp/docker/cli/cli/compose/types"
 	"docker.io/go-docker/api/types/mount"
+	"github.com/appcelerator/amp/docker/cli/cli/compose/types"
 	"github.com/pkg/errors"
 )
 

@@ -1,8 +1,8 @@
 package credentials
 
 import (
-	"github.com/appcelerator/amp/docker/docker/registry"
 	"docker.io/go-docker/api/types"
+	"github.com/appcelerator/amp/docker/docker/registry"
 )
 
 type store interface {

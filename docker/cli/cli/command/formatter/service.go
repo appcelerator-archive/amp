@@ -5,14 +5,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
+	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/mount"
+	"docker.io/go-docker/api/types/swarm"
+	"github.com/appcelerator/amp/docker/cli/cli/command/inspect"
+	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/go-units"
 	"github.com/pkg/errors"
-	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
-	"docker.io/go-docker/api/types/swarm"
-	"docker.io/go-docker/api/types"
-	"github.com/appcelerator/amp/docker/cli/cli/command/inspect"
 )
 
 const serviceInspectPrettyTemplate Format = `

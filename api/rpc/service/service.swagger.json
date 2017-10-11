@@ -153,6 +153,14 @@
         }
       }
     },
+    "serviceServiceInspectRequest": {
+      "type": "object",
+      "properties": {
+        "service_id": {
+          "type": "string"
+        }
+      }
+    },
     "serviceServiceListEntry": {
       "type": "object",
       "properties": {
@@ -187,6 +195,26 @@
         }
       }
     },
+    "serviceServiceListRequest": {
+      "type": "object",
+      "properties": {
+        "stack_name": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceServiceScaleRequest": {
+      "type": "object",
+      "properties": {
+        "service_id": {
+          "type": "string"
+        },
+        "replicas_number": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
     "serviceTask": {
       "type": "object",
       "properties": {
@@ -218,6 +246,14 @@
           "items": {
             "$ref": "#/definitions/serviceTask"
           }
+        }
+      }
+    },
+    "serviceTasksRequest": {
+      "type": "object",
+      "properties": {
+        "service_id": {
+          "type": "string"
         }
       }
     }
