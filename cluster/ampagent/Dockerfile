@@ -1,6 +1,4 @@
-FROM alpine
-
-RUN apk --no-cache add ca-certificates
+FROM scratch
 
 COPY defaults /defaults
 COPY stacks /stacks
