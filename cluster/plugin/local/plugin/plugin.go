@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"time"
 
@@ -103,6 +102,19 @@ func removeAgent(ctx context.Context, c *docker.Client, cid string, force bool) 
 	return c.ContainerRemove(ctx, cid, types.ContainerRemoveOptions{Force: force})
 }
 
+func containerLogs(ctx context.Context, c *docker.Client, id string) {
+	reader, err := c.ContainerLogs(ctx, id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+	})
+	if err != nil {
+		return
+	}
+	defer reader.Close()
+	_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, reader)
+}
+
 // RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
 func RunAgent(ctx context.Context, c *docker.Client, action string, opts *RequestOptions) error {
 	containerName := ContainerName
@@ -191,29 +203,12 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 		return
 	}()
 
-	go func() {
-		var timestamp int64
-		for {
-			reader, err := c.ContainerLogs(ctx, r.ID, types.ContainerLogsOptions{
-				ShowStdout: true,
-				ShowStderr: true,
-				Follow:     false,
-				Since:      strconv.FormatInt(timestamp, 10),
-			})
-			timestamp = time.Now().Unix()
-			if err != nil {
-				return
-			}
-			defer reader.Close()
-			_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, reader)
-			time.Sleep(time.Second)
-		}
-	}()
-
 	if err = c.ContainerStart(ctx, r.ID, types.ContainerStartOptions{}); err != nil {
 		_ = removeAgent(ctx, c, r.ID, true)
 		return err
 	}
+
+	go containerLogs(ctx, c, r.ID)
 
 	go func() {
 		for {
@@ -229,8 +224,6 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 	}()
 
 	<-done
-	// give time to clear the logs
-	time.Sleep(1200 * time.Millisecond)
 	_ = removeAgent(ctx, c, r.ID, true)
 	return nil
 }
