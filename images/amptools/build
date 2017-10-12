@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-TAGS=( latest 1.9 1.9.0 )
+VERSION=$(cat VERSION)
+TAGS=( latest $VERSION $VERSION.0 )
 OWNER=appcelerator
 IMAGE=amptools
 
@@ -12,4 +13,3 @@ do
   docker tag ${OWNER}/${IMAGE} ${OWNER}/${IMAGE}:${tag}
 #  docker push ${OWNER}/${IMAGE}:${tag}
 done
-
