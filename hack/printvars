@@ -1,7 +1,0 @@
-#!/bin/bash
-
-echo "\$UG = $UG"
-echo "\$VERSION = $VERSION"
-echo "\$BUILD = $BUILD"
-echo "\$OWNER = $OWNER"
-echo "\$REPO = $REPO"
