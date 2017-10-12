@@ -203,14 +203,6 @@
         }
       }
     },
-    "dashboardGetRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
     "dashboardListReply": {
       "type": "object",
       "properties": {
@@ -222,17 +214,6 @@
         }
       }
     },
-    "dashboardListRequest": {
-      "type": "object"
-    },
-    "dashboardRemoveRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
     "dashboardUpdateDataRequest": {
       "type": "object",
       "properties": {
@@ -240,17 +221,6 @@
           "type": "string"
         },
         "data": {
-          "type": "string"
-        }
-      }
-    },
-    "dashboardUpdateNameRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
           "type": "string"
         }
       }
