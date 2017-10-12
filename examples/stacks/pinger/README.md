@@ -22,3 +22,5 @@ Test with
 
 Because 3 replicas was specified, you should see 3 different hosts in
 the brackets as you repeat the curl command (or refresh your browser page).
+
+Each container serves Prometheus metrics, they can be read on http://pinger.examples.local.appcelerator.io/metrics
