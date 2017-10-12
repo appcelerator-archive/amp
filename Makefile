@@ -10,7 +10,7 @@ export UG := $(shell echo "$$(id -u):$$(id -g)")
 
 export VERSION ?= $(shell cat VERSION)
 export BUILD := $(shell git rev-parse HEAD | cut -c1-8)
-export LDFLAGS := "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
+export LDFLAGS := "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD) -s -w"
 
 export OWNER := appcelerator
 export REPO := github.com/$(OWNER)/amp
