@@ -2,8 +2,7 @@
 DIR="$(dirname $0)"
 cd "$DIR"
 DIR="$(pwd -P)"
-image="williamyeh/ansible:alpine3"
-image="appcelerator/ansible"
+image="appcelerator/ansible:2.3"
 REGIONS="us-east-1 us-east-2 us-west-2 eu-west-1 ap-southeast-2"
 OWNER=654814900965
 IMAGE_NAME=ubuntu-xenial-docker
