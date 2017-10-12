@@ -8,7 +8,6 @@ LDFLAGS=$4
 # target => $GOOS $GOARCH
 # see: https://golang.org/doc/install/source#environment
 TARGETS=(
-    alpine amd64
     darwin amd64
     linux amd64
     windows amd64
@@ -20,11 +19,5 @@ for ((i=0; i<"${#TARGETS[@]}"; $((i=i+2)) )); do
   OUTPUT="$DEST/$GOOS/$GOARCH/$NAME"
   [[ "$GOOS" = "windows" ]] && OUTPUT="${OUTPUT}.exe"
   echo "$OUTPUT"
-  if [[ "$GOOS" = "alpine" ]]; then
-    # build alpine as a special case
-    GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -ldflags "$LDFLAGS" \
-      -o "$DEST/alpine/$GOARCH/$NAME" "$PKG"
-  else
-    GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$OUTPUT" "$PKG"
-  fi
+  GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$OUTPUT" "$PKG"
 done

@@ -1,7 +1,0 @@
-#!/bin/sh
-# push a local image to the local amp cluster's registry
-
-repo=$1
-docker tag $repo 127.0.0.1:5000/$repo
-docker push 127.0.0.1:5000/$repo
-
