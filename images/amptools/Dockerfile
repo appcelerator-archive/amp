@@ -1,4 +1,4 @@
-FROM appcelerator/gotools:1.11.0
+FROM appcelerator/gotools:1.12.0
 #RUN apk --no-cache add gosu iproute2
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
   man \

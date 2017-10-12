@@ -44,9 +44,6 @@
         }
       }
     },
-    "nodeGetNodesRequest": {
-      "type": "object"
-    },
     "nodeNodeEntry": {
       "type": "object",
       "properties": {

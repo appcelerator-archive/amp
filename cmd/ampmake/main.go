@@ -15,12 +15,9 @@ import (
 
 var (
 	ug              = "0:0"
-	version         = "0.0.0"
-	build           = "-"
-	owner           = "appcelerator"
 	repo            = "github.com/appcelerator/amp"
 	dockerCmd       = "/usr/sbin/gosu root docker"
-	toolsImage      = "appcelerator/amptools:1.8"
+	toolsImage      = "appcelerator/amptools:1.9"
 	localToolsImage = "amptools"
 	dockerArgs      []string
 )
@@ -48,10 +45,6 @@ func init() {
 		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp:ro", homedir),
 		"-v", fmt.Sprintf("%s:/go/src/%s", wd, repo),
 		"-w", fmt.Sprintf("/go/src/%s", repo),
-		"-e", fmt.Sprintf("VERSION=%s", version),
-		"-e", fmt.Sprintf("BUILD=%s", build),
-		"-e", fmt.Sprintf("OWNER=%s", owner),
-		"-e", fmt.Sprintf("REPO=%s", repo),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
 		"-e", "GOPATH=/go",
 	}
