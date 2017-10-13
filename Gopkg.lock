@@ -32,10 +32,16 @@
   version = "v1.13.0"
 
 [[projects]]
+  name = "github.com/appcelerator/go-docker"
+  packages = ["cli","cli/cli/command","cli/cli/command/bundlefile","cli/cli/command/formatter","cli/cli/command/inspect","cli/cli/command/service","cli/cli/command/stack","cli/cli/compose/convert","cli/cli/compose/interpolation","cli/cli/compose/loader","cli/cli/compose/schema","cli/cli/compose/template","cli/cli/compose/types","cli/cli/config","cli/cli/config/configfile","cli/cli/config/credentials","cli/cli/flags","cli/cli/service/progress","cli/opts","cli/templates","docker/pkg/homedir","docker/pkg/idtools","docker/pkg/ioutils","docker/pkg/jsonmessage","docker/pkg/longpath","docker/pkg/progress","docker/pkg/stdcopy","docker/pkg/streamformatter","docker/pkg/stringid","docker/pkg/system","docker/pkg/tarsum","docker/pkg/term","docker/pkg/term/windows","docker/registry","docker/registry/resumable"]
+  revision = "386bc7b4d8bd8fbfd4ef3c9c6012d79e1060b482"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/xml/xmlutil","service/cloudformation","service/sts"]
-  revision = "885962fbd7bf49bf62db54f63fb89f75611677cf"
-  version = "v1.12.8"
+  revision = "7cb0cfd8c7a20efc2ec149e50eb55fc770c673d8"
+  version = "v1.12.10"
 
 [[projects]]
   branch = "master"
@@ -470,7 +476,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "4d6af280c76ff7d266434f2dba207c4b75dfc076"
+  revision = "7b2c5ac9fc04fc5efafb60700713d4fa609b777b"
 
 [[projects]]
   branch = "master"
@@ -529,7 +535,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows","windows/svc","windows/svc/debug"]
-  revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
+  revision = "43eea11bc92608addb41b8a406b0407495c106f6"
 
 [[projects]]
   branch = "master"
@@ -594,6 +600,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5af1985d2165a4ce4b4c1349cadad57ce8a9285b3c3d0f9fe307f65cd39488d4"
+  inputs-digest = "b96d00ecebb1f30aa331edca17a46637a411523b86b16a1e434f64deb3fa685e"
   solver-name = "gps-cdcl"
   solver-version = 1

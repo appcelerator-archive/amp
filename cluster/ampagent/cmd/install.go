@@ -17,12 +17,12 @@ import (
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/filters"
 	"docker.io/go-docker/api/types/swarm"
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/command/stack"
-	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
-	"github.com/appcelerator/amp/docker/cli/opts"
-	"github.com/appcelerator/amp/docker/docker/pkg/term"
 	ampdocker "github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/go-docker/cli/cli/command"
+	"github.com/appcelerator/go-docker/cli/cli/command/stack"
+	"github.com/appcelerator/go-docker/cli/cli/compose/convert"
+	"github.com/appcelerator/go-docker/cli/opts"
+	"github.com/appcelerator/go-docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
 

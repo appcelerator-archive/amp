@@ -15,7 +15,7 @@ import (
 	"docker.io/go-docker/api/types/filters"
 	"docker.io/go-docker/api/types/mount"
 	"docker.io/go-docker/api/types/swarm"
-	"github.com/appcelerator/amp/docker/docker/pkg/stdcopy"
+	"github.com/appcelerator/go-docker/docker/pkg/stdcopy"
 )
 
 const (

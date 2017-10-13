@@ -1,7 +1,7 @@
 // NOTICE
 // This file is copyrighted by Docker under the Apache 2.0 license
 // The original can be found here:
-// https://github.com/appcelerator/amp/docker/docker/blob/master/cli/command/out.go
+// https://github.com/appcelerator/go-docker/docker/blob/master/cli/command/out.go
 
 package cli
 
@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/appcelerator/amp/docker/docker/pkg/term"
+	"github.com/appcelerator/go-docker/docker/pkg/term"
 )
 
 // OutStream is an output stream used by the Cli to write normal program

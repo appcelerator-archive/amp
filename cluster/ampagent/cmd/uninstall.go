@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/appcelerator/amp/docker/cli/cli/command/stack"
-	"github.com/appcelerator/amp/docker/docker/pkg/term"
 	"github.com/appcelerator/amp/pkg/docker"
+	"github.com/appcelerator/go-docker/cli/cli/command/stack"
+	"github.com/appcelerator/go-docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/docker/cli/cli/config"
+	"github.com/appcelerator/go-docker/cli/cli/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
