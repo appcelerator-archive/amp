@@ -11,6 +11,7 @@ install:
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get install docker-ce
   - export PATH=bin/linux/amd64:tests/cli/testing:$PATH
+  - export GOPATH="" # Make sure to use temporary directory on travis
 
 before_script:
 

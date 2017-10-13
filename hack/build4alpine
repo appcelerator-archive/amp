@@ -6,4 +6,4 @@ DEST=$GOPATH/src/$1
 PKG=$2
 LDFLAGS="${3:-$LDFLAGS}"
 
-GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -a -ldflags "$LDFLAGS" -o $DEST $PKG
+GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -i -pkgdir $GOPATH/pkg -ldflags "$LDFLAGS" -o $DEST $PKG

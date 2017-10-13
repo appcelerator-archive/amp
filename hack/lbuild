@@ -9,5 +9,5 @@ GOOS=${GOOS:-$(uname | tr [:upper:] [:lower:])}
 GOARCH=${GOARCH:-amd64}
 
 echo $GOOS/$GOARCH
-GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o $DEST/$GOOS/$GOARCH/$NAME $PKG
+GOOS=$GOOS GOARCH=$GOARCH go build -i -pkgdir $GOPATH/pkg -ldflags "$LDFLAGS" -o $DEST/$GOOS/$GOARCH/$NAME $PKG
 
