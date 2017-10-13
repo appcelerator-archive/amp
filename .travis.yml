@@ -10,7 +10,7 @@ install:
   - sudo apt-get update
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get install docker-ce
-  - export PATH=bin/linux/amd64:platform/bin:platform/bootstrap:platform/testing:$PATH
+  - export PATH=bin/linux/amd64:tests/cli/testing:$PATH
 
 before_script:
 
@@ -26,7 +26,7 @@ script:
   - sudo apt-get install pcregrep
   - sudo mkdir -p $HOME/.config/amp
   - sudo chown -R $(id -u):$(id -g) $HOME/.config/amp
-  - TESTINCLUDE=platform/testing testrunner platform/tests
+  - TESTINCLUDE=tests/cli/testing testrunner tests/cli
 # Tests: Integration
   - docker run -it --rm --network ampnet -v $PWD:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools go test github.com/appcelerator/amp/tests/integration/...
 # Tests: Teardown
