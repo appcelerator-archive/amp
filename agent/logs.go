@@ -11,13 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/docker/docker/pkg/stdcopy"
-	log "github.com/sirupsen/logrus"
-
 	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/go-docker/docker/pkg/stdcopy"
 	"github.com/gogo/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 const (

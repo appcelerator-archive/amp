@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/flags"
+	"github.com/appcelerator/go-docker/cli/cli/command"
+	"github.com/appcelerator/go-docker/cli/cli/flags"
 )
 
 func NewDockerCli(stdin io.ReadCloser, stdout, stderr io.Writer) *command.DockerCli {

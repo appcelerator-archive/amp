@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/appcelerator/amp/cli"
-	"github.com/appcelerator/amp/docker/docker/pkg/term"
+	"github.com/appcelerator/go-docker/docker/pkg/term"
 )
 
 var (

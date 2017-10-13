@@ -8,9 +8,9 @@ import (
 
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/swarm"
-	"github.com/appcelerator/amp/docker/cli/cli/command"
-	"github.com/appcelerator/amp/docker/cli/cli/service/progress"
-	"github.com/appcelerator/amp/docker/docker/pkg/jsonmessage"
+	"github.com/appcelerator/go-docker/cli/cli/command"
+	"github.com/appcelerator/go-docker/cli/cli/service/progress"
+	"github.com/appcelerator/go-docker/docker/pkg/jsonmessage"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )

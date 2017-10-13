@@ -1,7 +1,7 @@
 // NOTICE
 // This file is copyrighted by Docker under the Apache 2.0 license
 // The original can be found here:
-// https://github.com/appcelerator/amp/docker/docker/blob/master/cli/error.go
+// https://github.com/appcelerator/go-docker/docker/blob/master/cli/error.go
 
 package cli
 

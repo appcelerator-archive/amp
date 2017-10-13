@@ -7,7 +7,7 @@ import (
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/storage"
-	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
+	"github.com/appcelerator/go-docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )

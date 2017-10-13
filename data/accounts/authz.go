@@ -1,11 +1,10 @@
 package accounts
 
 import (
-	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/auth"
+	"github.com/appcelerator/go-docker/docker/pkg/stringid"
 	"github.com/ory/ladon"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 

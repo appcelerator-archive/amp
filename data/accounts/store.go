@@ -6,16 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/go-docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
 	"github.com/hlandau/passlib"
 	"github.com/ory/ladon"
 	"github.com/ory/ladon/manager/memory"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 

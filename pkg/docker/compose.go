@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
-	"github.com/appcelerator/amp/docker/cli/cli/compose/loader"
-	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
+	"github.com/appcelerator/go-docker/cli/cli/compose/loader"
+	composetypes "github.com/appcelerator/go-docker/cli/cli/compose/types"
 	"golang.org/x/net/context"
 )
 

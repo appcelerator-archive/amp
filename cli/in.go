@@ -1,7 +1,7 @@
 // NOTICE
 // This file is copyrighted by Docker under the Apache 2.0 license
 // The original can be found here:
-// https://github.com/appcelerator/amp/docker/docker/blob/master/cli/command/in.go
+// https://github.com/appcelerator/go-docker/docker/blob/master/cli/command/in.go
 
 package cli
 
@@ -11,7 +11,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/appcelerator/amp/docker/docker/pkg/term"
+	"github.com/appcelerator/go-docker/docker/pkg/term"
 )
 
 // InStream is an input stream used by the DockerCli to read user input
