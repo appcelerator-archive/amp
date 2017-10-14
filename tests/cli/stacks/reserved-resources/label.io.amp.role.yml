@@ -21,7 +21,7 @@ services:
       SERVICE_PORTS: "3000"
       VIRTUAL_HOST: "https://pinger.*"
     deploy:
-      replicas: 3
+      replicas: 1
       labels:
         io.amp.role: "pinger"
       restart_policy:

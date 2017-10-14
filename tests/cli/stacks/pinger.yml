@@ -1,32 +1,24 @@
-version: "3.1"
+version: "3"
 
 networks:
   default:
     external:
       name: ampnet
 
-secrets:
-  certificate_amp:
-    external: true
-
 services:
 
   pinger:
-    image: subfuzion/pinger
+    image: appcelerator/pinger:${TAG:-latest}
     networks:
       default:
         aliases:
           - pinger
     environment:
       SERVICE_PORTS: "3000"
-      VIRTUAL_HOST: "https://pinger.*"
+      VIRTUAL_HOST: "pinger.examples.*,https://pinger.examples.*"
     deploy:
       replicas: 1
-      labels:
-        io.amp.role: "pinger"
       restart_policy:
         condition: on-failure
-    secrets:
-      - source: certificate_amp
-        target: cert0.pem
-        mode: 0400
+      placement:
+        constraints: [node.labels.amp.type.user == true]

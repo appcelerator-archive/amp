@@ -8,8 +8,8 @@ test_cli_config() {
 # server address passed in local config
 test_local_config() {
   mkdir -p $PWD/.amp
-  echo "Server: LOCAL" > $PWD/.amp/amp.yml
-  echo $(amp -k settings) | grep -Eq "Settings file: $PWD/.amp/amp.yml\s+[[:alpha:][:space:]]+: Server:\s+LOCAL"
+  echo "Server: google.com" > $PWD/.amp/amp.yml
+  echo $(amp -k settings) | grep -Eq "Settings file: $PWD/.amp/amp.yml\s+[[:alpha:][:space:]]+: Server:\s+google.com"
 }
 
 test_local_cleanup() {
@@ -19,8 +19,8 @@ test_local_cleanup() {
 # server address passed in home config
 test_home_config() {
   mkdir -p $HOME/.config/amp
-  echo "Server: HOME" > $HOME/.config/amp/amp.yml
-  echo $(amp -k settings) | grep -Eq "Settings file: $HOME/.config/amp/amp.yml\s+[[:alpha:][:space:]]+: Server:\s+HOME"
+  echo "Server: aws.com" > $HOME/.config/amp/amp.yml
+  echo $(amp -k settings) | grep -Eq "Settings file: $HOME/.config/amp/amp.yml\s+[[:alpha:][:space:]]+: Server:\s+aws.com"
 }
 
 test_home_cleanup() {
