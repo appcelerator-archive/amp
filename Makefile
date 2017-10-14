@@ -80,7 +80,6 @@ build: build-base build-plugins buildall-cli
 
 # =============================================================================
 # BUILD CLI (`amp`)
-# Saves binary to `cmd/amp/amp.alpine`, then builds `appcelerator/amp` image
 # =============================================================================
 AMP := amp
 AMPTARGET := bin/$(GOOS)/$(GOARCH)/$(AMP)

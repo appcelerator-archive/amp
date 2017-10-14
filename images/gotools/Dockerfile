@@ -1,20 +1,16 @@
-FROM golang:1.9
+FROM golang:1.9-alpine
 # This builds a convenience "all-in-one" image for go development.
 # It intentionally does not remove any build prerequisites like most of our other
 # images since this image is meant strictly for building things.
 
-# The alpine-sdk adds a bunch of essential tools, such as
-# ca-certificates, musl, musl-dev, openssl, curl, make, gcc, g++, libstdc++, libc-dev, tar, bzip2, git
-# The rest are for building grpc or for any other convenience.
-#RUN apk --no-cache add alpine-sdk bash vim autoconf automake libtool bind-tools drill
-RUN apt-get update -y && apt-get install --no-install-recommends -y apt-utils autoconf automake bash ca-certificates dnsutils git jq libtool vim tar zip unzip && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /etc/apk/repositories
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+RUN apk update
+RUN apk add bash git curl protobuf-dev
 
-# Helper commands, like go-getter and install-protoc
-ADD bin /usr/local/bin/
-
-# Install protoc
 WORKDIR /tmp
-RUN install-protoc
 
 # Version of the packages must be in sync with those in Gopkg.toml/Gopkg.lock
 RUN mkdir -p $GOPATH/src/github.com/alecthomas/gometalinter && \
@@ -52,9 +48,6 @@ RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 RUN go install github.com/golang/protobuf/protoc-gen-go
 RUN go install github.com/alecthomas/gometalinter
 
-# Custom settings for interactive shell
-ADD etc/profile.d /etc/profile.d
+WORKDIR /go
 
-# TODO: might want to use /go as the work directory...
-WORKDIR /go/src
 CMD [ "echo", "[gotools] specify the command to run" ]

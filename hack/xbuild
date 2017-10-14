@@ -19,5 +19,5 @@ for ((i=0; i<"${#TARGETS[@]}"; $((i=i+2)) )); do
   OUTPUT="$DEST/$GOOS/$GOARCH/$NAME"
   [[ "$GOOS" = "windows" ]] && OUTPUT="${OUTPUT}.exe"
   echo "$OUTPUT"
-  GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "$LDFLAGS" -o "$OUTPUT" "$PKG"
+  GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build -ldflags "$LDFLAGS" -o "$OUTPUT" "$PKG"
 done

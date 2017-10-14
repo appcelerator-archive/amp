@@ -16,8 +16,8 @@ import (
 var (
 	ug              = "0:0"
 	repo            = "github.com/appcelerator/amp"
-	dockerCmd       = "/usr/sbin/gosu root docker"
-	toolsImage      = "appcelerator/amptools:1.9"
+	dockerCmd       = "gosu root docker"
+	toolsImage      = "appcelerator/amptools:1.10"
 	localToolsImage = "amptools"
 	dockerArgs      []string
 )
