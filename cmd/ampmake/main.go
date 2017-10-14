@@ -33,6 +33,19 @@ func init() {
 		panic(err)
 	}
 
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = os.TempDir()
+		if err := os.Mkdir(goPath+"/pkg", os.ModePerm); err != nil {
+			if err := os.Chmod(goPath+"/pkg", os.ModePerm); err != nil {
+				panic(err)
+			}
+		}
+		fmt.Printf("No GOPATH. Using %s as temporary GOPATH.\n", goPath)
+	} else {
+		fmt.Println("Using existing GOPATH:", goPath)
+	}
+
 	if runtime.GOOS == "linux" {
 		ug = fmt.Sprintf("%s:%s", strconv.Itoa(os.Getuid()), strconv.Itoa(os.Getgid()))
 	}
@@ -44,9 +57,9 @@ func init() {
 		"-v", fmt.Sprintf("%s/.ssh:/root/.ssh:ro", homedir),
 		"-v", fmt.Sprintf("%s/.config/amp:/root/.config/amp:ro", homedir),
 		"-v", fmt.Sprintf("%s:/go/src/%s", wd, repo),
+		"-v", fmt.Sprintf("%s/pkg:/go/pkg", goPath),
 		"-w", fmt.Sprintf("/go/src/%s", repo),
 		"-e", fmt.Sprintf("DOCKER_CMD=%s", dockerCmd),
-		"-e", "GOPATH=/go",
 	}
 	if runtime.GOOS == "linux" {
 		dockerArgs = append(dockerArgs, []string{localToolsImage}...)
