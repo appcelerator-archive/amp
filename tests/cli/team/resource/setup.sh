@@ -1,4 +1,5 @@
 #!/bin/bash
 
-amp -k stack up -c examples/stacks/pinger/pinger.yml
-amp -k stack up -c examples/stacks/pinger/pinger.yml pi
+amp -k stack up -c tests/cli/team/resource/pinger.yml p1
+amp -k stack up -c tests/cli/team/resource/pinger.yml p2
+
