@@ -41,8 +41,9 @@ type RequestOptions struct {
 	Registration  string
 	Notifications bool
 	ForceLeave    bool
-	SkipTests     bool
-	NoMonitoring  bool
+	NoLogs        bool
+	NoMetrics     bool
+	NoProxy       bool
 }
 
 type FullSwarmInfo struct {
@@ -130,11 +131,14 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 		Tty:    false,
 	}
 	var actionArgs []string
-	if opts.SkipTests {
-		actionArgs = append(actionArgs, "--fast")
+	if opts.NoLogs {
+		actionArgs = append(actionArgs, "--no-logs")
 	}
-	if opts.NoMonitoring {
-		actionArgs = append(actionArgs, "--no-monitoring")
+	if opts.NoMetrics {
+		actionArgs = append(actionArgs, "--no-metrics")
+	}
+	if opts.NoProxy {
+		actionArgs = append(actionArgs, "--no-proxy")
 	}
 	switch action {
 	case "install":

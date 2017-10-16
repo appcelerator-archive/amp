@@ -34,9 +34,10 @@ func main() {
 	rootCmd.AddCommand(cmd.NewInstallCommand())
 	rootCmd.AddCommand(cmd.NewUninstallCommand())
 
-	// These flags pertain to install, but need to be enabled here at root and persiste for when it is invoked with no subcommand
-	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.SkipTests, "fast", false, "Skip service smoke tests")
-	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMonitoring, "no-monitoring", false, "Don't deploy monitoring services")
+	// These flags pertain to install, but need to be enabled here at root and persist for when it is invoked with no subcommand
+	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoLogs, "no-logs", false, "Don't deploy logs stack")
+	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
+	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
 
 	// Environment variables
 	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version

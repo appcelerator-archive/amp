@@ -9,8 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/filters"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
@@ -18,6 +16,7 @@ import (
 	"github.com/appcelerator/amp/docker/cli/cli/compose/convert"
 	"github.com/appcelerator/amp/docker/cli/cli/config/configfile"
 	"github.com/appcelerator/amp/docker/cli/opts"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
