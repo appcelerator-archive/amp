@@ -121,8 +121,9 @@ func main() {
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
 	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
-	initCmd.PersistentFlags().BoolVar(&opts.SkipTests, "fast", false, "Skip tests while deploying the core services")
-	initCmd.PersistentFlags().BoolVar(&opts.NoMonitoring, "no-monitoring", false, "Don't deploy the monitoring core services")
+	initCmd.PersistentFlags().BoolVar(&opts.NoLogs, "no-logs", false, "Don't deploy logs stack")
+	initCmd.PersistentFlags().BoolVar(&opts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
+	initCmd.PersistentFlags().BoolVar(&opts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",

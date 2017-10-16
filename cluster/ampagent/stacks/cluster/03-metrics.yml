@@ -1,0 +1,186 @@
+version: "3.3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  alertmanager-data:
+  grafana-data:
+  prometheus-data:
+
+configs:
+  prometheus_alerts_rules:
+    external: true
+
+secrets:
+  alertmanager_yml:
+    external: true
+
+services:
+
+  prometheus:
+    image: appcelerator/amp-prometheus:${TAG:-0.15.0}
+    networks:
+      - default
+    volumes:
+      - prometheus-data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      SERVICE_PORTS: 9090
+      VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
+    ports:
+      - "9090:9090"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "5s"
+      amp.service.stabilize.timeout: "45s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.metrics == true
+    configs:
+      - source: prometheus_alerts_rules
+        target: /etc/prometheus/alerts.rules
+        mode: 0400
+
+  docker-engine:
+    image: appcelerator/socat:latest
+    networks:
+      - default
+    #ports:
+    #  - "4999:4999"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.metrics.port: "4999"
+
+  haproxy_exporter:
+    image: prom/haproxy-exporter:v0.8.0
+    command: ["--haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
+    networks:
+      - default
+    #ports:
+      #- target: 9101
+      #- published: 9101
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.metrics.port: "9101"
+        io.amp.metrics.mode: "exporter"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+
+  nats_exporter:
+    image: appcelerator/prometheus-nats-exporter:latest
+    networks:
+      - default
+    command: ["-varz", "-routez", "-connz", "-subz", "nats,http://nats:8222"]
+    #ports:
+      #- target: 7777
+      #- published: 7777
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.metrics.port: "7777"
+        io.amp.metrics.mode: "exporter"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+
+  nodes:
+    image: prom/node-exporter:v0.14.0
+    networks:
+      - default
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    #ports:
+    #  - "9100:9100"
+    command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.metrics.port: "9100"
+
+  alertmanager:
+    image: prom/alertmanager:v0.8.0
+    networks:
+      - default
+    volumes:
+      - alertmanager-data:/alertmanager
+    ports:
+      - "9093:9093"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "30s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true
+    secrets:
+      - source: alertmanager_yml
+        target: alertmanager.yml
+        mode: 0400
+    command: [ "-config.file=/run/secrets/alertmanager.yml",
+             "-storage.path=/alertmanager",
+             "-web.external-url=http://localhost:9093" ]
+  grafana:
+    image: appcelerator/grafana-amp:1.2.5
+    networks:
+      - default
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      SERVICE_PORTS: 3000
+      VIRTUAL_HOST: "http://dashboard.*,https://dashboard.*"
+    ports:
+      - "3000:3000"
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "8s"
+      amp.service.stabilize.timeout: "60s"
+      amp.service.pull.timeout: "120s"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.labels.amp.type.core == true

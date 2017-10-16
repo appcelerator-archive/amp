@@ -24,8 +24,6 @@ type clusterOpts struct {
 	tag           string
 	registration  string
 	notifications bool
-	// TODO: not clear yet if we'll need this
-	options map[string]string
 }
 
 var (
@@ -40,8 +38,6 @@ var (
 		tag:           "latest",
 		registration:  configuration.RegistrationDefault,
 		notifications: true,
-		// TODO: not clear yet if we'll need this
-		options: map[string]string{},
 	}
 )
 
@@ -110,8 +106,6 @@ func runPluginCommand(c cli.Interface, cmd *cobra.Command, command string) error
 	config := PluginConfig{
 		Provider:   opts.provider,
 		DockerOpts: opts.docker,
-		// TODO: not clear yet if we'll need this
-		Options: opts.options,
 	}
 
 	p, err := NewPlugin(config)
