@@ -3,8 +3,8 @@ FROM appcelerator/alpine:3.6.0
 RUN apk --no-cache add nodejs freetype-dev fontconfig-dev
 
 # Kibana installation
-ENV KIBANA_MAJOR 5.5
-ENV KIBANA_VERSION 5.5.0
+ENV KIBANA_MAJOR 5.6
+ENV KIBANA_VERSION 5.6.3
 RUN mkdir -p /opt/kibana && adduser -D -h /opt/kibana -s /sbin/nologin elastico && rm -rf /opt/kibana
 RUN curl -LO https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz \
     && tar xzf /kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz -C /opt \

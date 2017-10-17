@@ -112,7 +112,7 @@ services:
         - node.labels.amp.type.core == true
 
   nodes:
-    image: prom/node-exporter:v0.14.0
+    image: prom/node-exporter:v0.15.0
     networks:
       - default
     volumes:
@@ -122,7 +122,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     #ports:
     #  - "9100:9100"
-    command: [ "-collector.procfs", "/host/proc", "-collector.sysfs", "/host/sys", "-collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
+    command: [ "--path.procfs", "/host/proc", "--path.sysfs", "/host/sys", "--collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"
@@ -134,7 +134,7 @@ services:
         io.amp.metrics.port: "9100"
 
   alertmanager:
-    image: prom/alertmanager:v0.8.0
+    image: prom/alertmanager:v0.9.1
     networks:
       - default
     volumes:
@@ -161,7 +161,7 @@ services:
              "-storage.path=/alertmanager",
              "-web.external-url=http://localhost:9093" ]
   grafana:
-    image: appcelerator/grafana-amp:1.2.5
+    image: appcelerator/grafana-amp:1.2.6
     networks:
       - default
     volumes:
