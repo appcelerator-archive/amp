@@ -10,6 +10,12 @@ import (
 )
 
 func (d *Docker) ListVolumes(filter opts.FilterOpt) ([]*types.Volume, error) {
+	if d.GetClient() == nil {
+		err := d.Connect()
+		if err != nil {
+			return nil, err
+		}
+	}
 	reply, err := d.client.VolumeList(context.Background(), filter.Value())
 	if err != nil {
 		return nil, err
