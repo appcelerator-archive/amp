@@ -19,6 +19,9 @@ func NewUninstallCommand() *cobra.Command {
 func Uninstall(cmd *cobra.Command, args []string) error {
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := docker.NewDockerCli(stdin, stdout, stderr)
+	if err := Docker.Connect(); err != nil {
+		return err
+	}
 
 	namespace := "amp"
 	if len(args) > 0 {

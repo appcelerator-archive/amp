@@ -10,6 +10,9 @@ import (
 )
 
 func (d *Docker) ListVolumes(filter opts.FilterOpt) ([]*types.Volume, error) {
+	if d.GetClient() == nil {
+		return nil, fmt.Errorf("Docker client is not connected")
+	}
 	reply, err := d.client.VolumeList(context.Background(), filter.Value())
 	if err != nil {
 		return nil, err
