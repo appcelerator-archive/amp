@@ -12,7 +12,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.5.0
+    image: appcelerator/elasticsearch-amp:5.6.3
     networks:
       - default
     volumes:
@@ -73,7 +73,7 @@ services:
       amp.service.stabilize.timeout: "20s"
 
   kibana:
-    image: appcelerator/kibana:5.5.0
+    image: appcelerator/kibana:5.6.3
     networks:
       - default
     deploy:

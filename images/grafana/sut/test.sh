@@ -28,7 +28,7 @@ r=0
 while [[ $r -lt 1 ]]; do
   ((i++))
   sleep 1
-  r=$(curl -u $GRAFANA_USER:$GRAFANA_PASS $GRAFANA_HOST:3000/api/admin/stats 2>/dev/null | jq -r '.user_count')
+  r=$(curl -u $GRAFANA_USER:$GRAFANA_PASS $GRAFANA_HOST:3000/api/admin/stats 2>/dev/null | jq -r '.users')
   if [[ $i -gt 40 ]]; then break; fi
 done
 if [[ $r -lt 1 ]]; then

@@ -17,7 +17,7 @@ volumes:
 services:
 
   etcd:
-    image: appcelerator/etcd:3.2.6
+    image: appcelerator/etcd:3.2.9
     networks:
       default:
     volumes:

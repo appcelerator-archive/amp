@@ -3,7 +3,7 @@ FROM appcelerator/alpine:3.6.0
 RUN apk --no-cache add openjdk8-jre bind-tools
 
 ENV PATH /bin:/opt/elasticsearch/bin:$PATH
-ENV ELASTIC_VERSION 5.5.0
+ENV ELASTIC_VERSION 5.6.3
 
 RUN mkdir -p /opt/elasticsearch && adduser -D -h /opt/elasticsearch -s /sbin/nologin elastico && rm -rf /opt
 
@@ -17,7 +17,7 @@ RUN curl -L https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$
     rm /tmp/elasticsearch-$ELASTIC_VERSION.tar.gz && \
     mv /_config/* /opt/elasticsearch/config/ && rm -rf /_config && \
     mkdir -p /opt/elasticsearch/config/scripts && \
-    /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.5.0.0.zip && \
+    /opt/elasticsearch/bin/elasticsearch-plugin install -b https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-${ELASTIC_VERSION}.0.zip && \
     chown -R elastico:elastico /opt/elasticsearch
 
 COPY /bin/docker-entrypoint.sh /bin/
