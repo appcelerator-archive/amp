@@ -21,7 +21,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/secret"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
-	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
@@ -69,7 +68,7 @@ var serviceInitializers = []serviceInitializer{
 	registerSecretServer,
 	registerServiceServer,
 	registerStackServer,
-	registerStatsServer,
+	//registerStatsServer,
 	registerVersionServer,
 }
 
@@ -207,11 +206,11 @@ func registerLogsServer(amp *Amplifier, s *grpc.Server) {
 	})
 }
 
-func registerStatsServer(amp *Amplifier, s *grpc.Server) {
-	stats.RegisterStatsServer(s, &stats.Stats{
-		ES: amp.es,
-	})
-}
+//func registerStatsServer(amp *Amplifier, s *grpc.Server) {
+//	stats.RegisterStatsServer(s, &stats.Stats{
+//		ES: amp.es,
+//	})
+//}
 
 func registerAccountServer(amp *Amplifier, s *grpc.Server) {
 	account.RegisterAccountServer(s, &account.Server{

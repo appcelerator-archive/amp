@@ -8,8 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"docker.io/go-docker/api/types"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
@@ -17,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/data/storage/etcd"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -31,12 +30,9 @@ type Agent struct {
 	eventStreamReading  bool
 	logsSavedDatePeriod int
 	natsStreaming       *ns.NatsStreaming
-	nbMetrics           int
-	nbMetricsComputed   int
 	nbLogs              int
 	logsBuffer          *logs.GetReply
 	logsBufferMutex     *sync.Mutex
-	first10Min          int //send metrics every 10 sec, the first 10 min and then use the setting value
 	storage             storage.Interface
 }
 
@@ -99,39 +95,20 @@ func AgentInit(version, build string) error {
 func (a *Agent) start() {
 	a.initAPI()
 	nb := 0
-	//start a thread looking for the Metrics Buffer to send it if full or period time reached
-	a.startMetricsSender()
 	//start a thread looking for the Logs Buffer to send it if full or period time reached
 	a.startLogsBufferSender()
 	for {
-		//looks for new containers to add or to remove, for each added, opem a stream for logs and a stream for metrics feeding the buffers
-		a.updateStreams()
+		//looks for new containers to add or to remove, for each added, open a stream for logs feeding the buffers
+		a.updateLogsStream()
+		a.updateEventsStream()
 		nb++
 		if nb == 10 {
-			log.Infof("Sent %d logs and %d metrics (%d computed) on the last %d seconds\n", a.nbLogs, a.nbMetrics, a.nbMetricsComputed, nb*conf.period)
+			log.Infof("Sent %d logs on the last %d seconds\n", a.nbLogs, nb*conf.period)
 			nb = 0
 			a.nbLogs = 0
-			a.nbMetrics = 0
-			a.nbMetricsComputed = 0
 		}
 		time.Sleep(time.Duration(conf.period) * time.Second)
 	}
-}
-
-//start a thread looking for the Metrics Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
-func (a *Agent) startMetricsSender() {
-	a.first10Min = 60
-	go func() {
-		for {
-			if conf.metricsPeriod > 10 && a.first10Min > 0 {
-				a.first10Min--
-				time.Sleep(10 * time.Second)
-			} else {
-				time.Sleep(time.Second * time.Duration(conf.metricsPeriod))
-			}
-			a.sendSquashedMetricsMessages()
-		}
-	}()
 }
 
 //start a thread looking for the Logs Buffer to send it if full or period time reached, if no buffer is set, then do nothing than initialize the buffer to one element
@@ -150,17 +127,9 @@ func (a *Agent) startLogsBufferSender() {
 	}()
 }
 
-// Starts logs and metrics stream of eech new started container
-func (a *Agent) updateStreams() {
-	a.updateLogsStream()
-	a.updateMetricsStreams()
-	a.updateEventsStream()
-}
-
 // Close AgentInit resources
 func (a *Agent) stop(status int) {
 	a.closeLogsStreams()
-	a.closeMetricsStreams()
 	if err := a.dock.GetClient().Close(); err != nil {
 		log.Errorf("Docker api close error: %v\n", err)
 	}
