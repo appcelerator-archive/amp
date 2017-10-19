@@ -183,7 +183,7 @@ services:
              "-storage.path=/alertmanager",
              "-web.external-url=http://localhost:9093" ]
   grafana:
-    image: appcelerator/grafana-amp:1.2.6
+    image: appcelerator/grafana-amp:1.2.7
     networks:
       - default
     volumes:
