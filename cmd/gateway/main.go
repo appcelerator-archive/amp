@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/dashboard"
@@ -17,11 +15,11 @@ import (
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/service"
 	"github.com/appcelerator/amp/api/rpc/stack"
-	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/api/rpc/version"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -107,9 +105,6 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := stack.RegisterStackHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
-		log.Fatal(err)
-	}
-	if err := stats.RegisterStatsHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {
 		log.Fatal(err)
 	}
 	if err := service.RegisterServiceHandlerFromEndpoint(ctx, mux, amplifierEndpoint, opts); err != nil {

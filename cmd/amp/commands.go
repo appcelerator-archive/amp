@@ -18,7 +18,6 @@ import (
 	"github.com/appcelerator/amp/cli/command/service"
 	"github.com/appcelerator/amp/cli/command/settings"
 	"github.com/appcelerator/amp/cli/command/stack"
-	"github.com/appcelerator/amp/cli/command/stats"
 	"github.com/appcelerator/amp/cli/command/team"
 	"github.com/appcelerator/amp/cli/command/user"
 	"github.com/appcelerator/amp/cli/command/version"
@@ -89,10 +88,10 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 		// cluster
 		cluster.NewClusterCommand(c),
 
-		//completion
+		// completion
 		completion.NewCompletionCommand(c),
 
-		//config
+		// config
 		config.NewConfigCommand(c),
 
 		// login
@@ -123,7 +122,7 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 		stack.NewStackCommand(c),
 
 		// stats
-		stats.NewStatsCommand(c),
+		//stats.NewStatsCommand(c),
 
 		// team
 		team.NewTeamCommand(c),

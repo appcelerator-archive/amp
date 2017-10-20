@@ -11,7 +11,6 @@ import (
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/events"
 	"docker.io/go-docker/api/types/filters"
-	"github.com/appcelerator/amp/api/rpc/stats"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/golang/protobuf/proto"
@@ -20,30 +19,26 @@ import (
 
 // ContainerData data
 type ContainerData struct {
-	name                     string
-	ID                       string
-	shortName                string
-	serviceName              string
-	serviceID                string
-	stackName                string
-	stackID                  string
-	taskID                   string
-	taskSlot                 int
-	nodeID                   string
-	role                     string
-	pid                      int
-	state                    string
-	health                   string
-	logsStream               io.ReadCloser
-	logsReadError            bool
-	metricsStream            io.ReadCloser
-	metricsReadError         bool
-	previousIOStats          *IOStats
-	previousNetStats         *NetStats
-	lastDateSaveTime         time.Time
-	labels                   map[string]string
-	squashedMetricsMessage   stats.MetricsEntry
-	squashedMetricsMessageNb int64
+	name             string
+	ID               string
+	shortName        string
+	serviceName      string
+	serviceID        string
+	stackName        string
+	stackID          string
+	taskID           string
+	taskSlot         int
+	nodeID           string
+	role             string
+	pid              int
+	state            string
+	health           string
+	logsStream       io.ReadCloser
+	logsReadError    bool
+	metricsStream    io.ReadCloser
+	metricsReadError bool
+	lastDateSaveTime time.Time
+	labels           map[string]string
 }
 
 // Verify if the event stream is working, if not start it
@@ -120,11 +115,6 @@ func (a *Agent) addContainer(ID string) {
 		logsReadError: false,
 	}
 
-	data.squashedMetricsMessage.Cpu = &stats.MetricsCPUEntry{}
-	data.squashedMetricsMessage.Mem = &stats.MetricsMemEntry{}
-	data.squashedMetricsMessage.Net = &stats.MetricsNetEntry{}
-	data.squashedMetricsMessage.Io = &stats.MetricsIOEntry{}
-	a.clearMetricsMessage(&data)
 	labels := container.Config.Labels
 	data.serviceName = a.getMapValue(labels, "com.docker.swarm.service.name")
 	//data.serviceName = strings.TrimPrefix(labels["com.docker.swarm.service.name"], labels["com.docker.stack.namespace"]+"_")
@@ -182,27 +172,6 @@ func (a *Agent) removeContainer(ID string) {
 	err := os.Remove(path.Join(containersDataDir, ID))
 	if err != nil {
 		log.Errorln("Error removing container", err)
-	}
-}
-
-// Update container status and health
-// TODO
-// nolint: unused
-func (a *Agent) updateContainer(id string) {
-	data, ok := a.containers[id]
-	if ok {
-		inspect, err := a.dock.GetClient().ContainerInspect(context.Background(), id)
-		if err == nil {
-			// labels = inspect.Config.Labels
-			data.state = inspect.State.Status
-			data.health = ""
-			if inspect.State.Health != nil {
-				data.health = inspect.State.Health.Status
-			}
-			log.Infoln("Updating container", data.name)
-		} else {
-			log.Errorf("Container %s inspect error: %v\n", data.name, err)
-		}
 	}
 }
 
