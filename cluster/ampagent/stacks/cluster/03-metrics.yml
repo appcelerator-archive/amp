@@ -49,6 +49,28 @@ services:
         target: /etc/prometheus/alerts.rules
         mode: 0400
 
+  cadvisor:
+    image: appcelerator/cadvisor:20171019
+    networks:
+      - default
+    labels:
+      io.amp.role: "infrastructure"
+      amp.service.stabilize.delay: "3s"
+      amp.service.stabilize.timeout: "20s"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      #- /dev/disk:/dev/disk:ro
+    # ports:
+    #  - "8080:8080"
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+        io.amp.metrics.port: "8080"
+
   docker-engine:
     image: appcelerator/socat:latest
     networks:
@@ -161,7 +183,7 @@ services:
              "-storage.path=/alertmanager",
              "-web.external-url=http://localhost:9093" ]
   grafana:
-    image: appcelerator/grafana-amp:1.2.6
+    image: appcelerator/grafana-amp:1.2.7
     networks:
       - default
     volumes:
