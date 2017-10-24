@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -23,42 +24,54 @@ type RequestOptions struct {
 	// Valid values are: "DO_NOTHING", "ROLLBACK", "DELETE"
 	// Default: "ROLLBACK"
 	OnFailure string
-
 	// Params are for parameters supported by the CloudFormation template that will be used
 	Params []string
-
 	// Page is for aws requests that return paged information (pages start at 1)
 	Page int
-
 	// Region is the AWS region, ex: us-west-2
 	Region string
-
 	// StackName is the user-supplied name for identifying the stack
 	StackName string
-
 	// Sync, if true, causes the create operation to block until finished
 	Sync bool
-
 	// TemplateURL is the URL for the AWS CloudFormation to use
 	TemplateURL string
 }
 
 // StackOutput contains the converted output from the create stack operation
+// Meant to be included in PluginOutput
 type StackOutput struct {
 	// Description is the user defined description associated with the output
 	Description string `json:"description"`
-
 	// OutputKey is the key associated with the output
 	OutputKey string `json:"key"`
-
 	// OutputValue is the value associated with the output
 	OutputValue string `json:"value"`
 }
 
-// StackOutputList is used as a container for output by the StackOutputToJSON helper function
-type StackOutputList struct {
-	// Output is a slice of StackOutput
-	Output []StackOutput `json:"output""`
+// StackEvent contains the converted event from the create stack operation
+// Similar to the structure from the aws SDK
+// Meant to be included in PluginOutput
+type StackEvent struct {
+	ClientRequestToken   string `json:"ClientRequestToken"`
+	EventId              string `json:"EventId"`
+	LogicalResourceId    string `json:"LogicalResourceId"`
+	PhysicalResourceId   string `json:"PhysicalResourceId"`
+	ResourceProperties   string `json:"ResourceProperties"`
+	ResourceStatus       string `json:"ResourceStatus"`
+	ResourceStatusReason string `json:"ResourceStatusReason"`
+	ResourceType         string `json:"ResourceType"`
+	StackId              string `json:"StackId"`
+	StackName            string `json:"StackName"`
+	Timestamp            string `json:"Timestamp"`
+}
+
+// PluginOutput contains the stack output, the stack events and the errors that the plugin
+// will transmit to the CLI. it's not a single envelop, it can be repeated
+type PluginOutput struct {
+	Output []StackOutput `json:"Output"`
+	Event  *StackEvent   `"json:"Event"`
+	Error  string        `"json:"Error"`
 }
 
 func parseParam(s string) *cf.Parameter {
@@ -86,7 +99,7 @@ func toParameters(sa []string) []*cf.Parameter {
 }
 
 // CreateStack starts the AWS stack creation operation
-// The operation will return immediately unless opts.Sync is true
+// The operation will return immediately
 func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions, timeout int64) (*cf.CreateStackOutput, error) {
 	input := &cf.CreateStackInput{
 		StackName: aws.String(opts.StackName),
@@ -139,7 +152,7 @@ func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions
 }
 
 // UpdateStack starts the update operation
-// The operation will return immediately unless opts.Sync is true
+// The operation will return immediately
 func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.UpdateStackOutput, error) {
 	input := &cf.UpdateStackInput{
 		StackName: aws.String(opts.StackName),
@@ -154,7 +167,7 @@ func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 }
 
 // DeleteStack starts the delete operation
-// The operation will return immediately unless opts.Sync is true
+// The operation will return immediately
 func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.DeleteStackOutput, error) {
 	input := &cf.DeleteStackInput{
 		StackName: aws.String(opts.StackName),
@@ -163,13 +176,25 @@ func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 	return svc.DeleteStackWithContext(ctx, input)
 }
 
-// StackOutputToJSON is a helper function that converts a slice of StackOutput to a JSON string representation
-// of StackOutputList
-func StackOutputToJSON(so []StackOutput) (string, error) {
-	list := StackOutputList{
-		Output: so,
+// PluginOutputToJSON is a helper function that wrap an event, an error or a slice of StackOutput
+// to a JSON string representation of PluginOutput
+func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, error) {
+	reg, err := regexp.Compile("[^a-zA-Z0-9:;,. ]+")
+	if err != nil {
+		return "", err
 	}
-	j, err := json.Marshal(list)
+
+	po := PluginOutput{
+		Output: so,
+		Event:  ev,
+	}
+	//if ev != nil && ev.LogicalResourceId != "" {
+	//po.Event = *ev
+	//}
+	if e != nil {
+		po.Error = reg.ReplaceAllString(e.Error(), "")
+	}
+	j, err := json.Marshal(po)
 	if err != nil {
 		return "", err
 	}
