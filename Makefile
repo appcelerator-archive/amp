@@ -83,7 +83,8 @@ build: build-base build-plugins buildall-cli
 # =============================================================================
 AMP := amp
 AMPTARGET := bin/$(GOOS)/$(GOARCH)/$(AMP)
-AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS)
+PLUGINDIRS := cluster/plugin/aws/plugin cluster/plugin/local/plugin
+AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS) $(PLUGINDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
