@@ -209,6 +209,13 @@ Parameters:
     - no
     - yes
     Default: no
+  NFSEndpoint:
+    Type: String
+    Description: If yes, a NFSv4 service will be provided
+    AllowedValues:
+    - no
+    - yes
+    Default: no
   EnableSystemPrune:
     Type: String
     Description: "Cleans up unused images, containers, networks and volumes"
@@ -227,6 +234,7 @@ Conditions:
   InstallApplicationCond: !Or [ !Equals [ !Ref InstallApplication, "yes" ], !Equals [ !Ref InstallApplication, "true" ] ]
   EnableSystemPruneCond:  !Or [ !Equals [ !Ref EnableSystemPrune, "yes" ], !Equals [ !Ref EnableSystemPrune, "true" ] ]
   MirrorRegistryCond:     !Or [ !Equals [ !Ref MirrorRegistry, "yes" ], !Equals [ !Ref MirrorRegistry, "true" ] ]
+  NFSEndpointCond:     !Or [ !Equals [ !Ref NFSEndpoint, "yes" ], !Equals [ !Ref NFSEndpoint, "true" ] ]
 
 Resources:
   Vpc:
@@ -1250,6 +1258,59 @@ Resources:
         Enabled: 'true'
         Timeout: '60'
 
+  SharedFileSystem:
+    Type: AWS::EFS::FileSystem
+    Condition: NFSEndpointCond
+    Properties:
+      PerformanceMode: generalPurpose
+      FileSystemTags:
+      - Key: "Name"
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::AccountId
+            - Ref: AWS::StackName
+            - FS
+  FSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: NFSEndpointCond
+    Properties:
+      VpcId: !Ref Vpc
+      GroupDescription: "Security group for EFS mount target"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '2049'
+          ToPort: '2049'
+          CidrIp:
+            Fn::FindInMap:
+            - VpcCidrs
+            - vpc
+            - cidr
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Condition: NFSEndpointCond
+    Properties:
+      FileSystemId: !Ref SharedFileSystem
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroups:
+        - Ref: FSSecurityGroup
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Condition: NFSEndpointCond
+    Properties:
+      FileSystemId: !Ref SharedFileSystem
+      SubnetId: !Ref PublicSubnet2
+      SecurityGroups:
+        - Ref: FSSecurityGroup
+  MountTarget3:
+    Type: AWS::EFS::MountTarget
+    Condition: NFSEndpointCond
+    Properties:
+      FileSystemId: !Ref SharedFileSystem
+      SubnetId: !Ref PublicSubnet3
+      SecurityGroups:
+        - Ref: FSSecurityGroup
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -1260,6 +1321,7 @@ Metadata:
       - LinuxDistribution
       - ConfigurationURL
       - MonitoringPort
+      - NFSEndpoint
     - Label:
         default: Registry Properties
       Parameters:
@@ -1322,6 +1384,8 @@ Metadata:
         default: Enable System Prune
       MirrorRegistry:
         default: Dedicated Registry
+      NFSEndpoint:
+        default: Shared File System
       RegistryInstanceType:
         default: Registry instance type?
       MonitoringPort:
@@ -1333,7 +1397,7 @@ Outputs:
     Value: !GetAtt ManagerExternalELB.DNSName
   InternalRegistryTarget:
     Description: internal endpoint for the registry service
-    Value: !If [ MirrorRegistryCond, !GetAtt RegistryInternalELB.DNSName, "" ]
+    Value: !If [ MirrorRegistryCond, !GetAtt RegistryInternalELB.DNSName, "disabled" ]
   MetricsURL:
     Description: URL for cluster health dashboard
     Value:
@@ -1344,3 +1408,10 @@ Outputs:
   VpcId:
     Description: VPC ID
     Value: !Ref Vpc
+  NFSEndpoint:
+    Description: NFSv4 Endpoint
+    Value:
+      Fn::If:
+      - NFSEndpointCond
+      - !Join [ '.', [ !Ref SharedFileSystem, efs, !Ref 'AWS::Region', 'amazonaws.com' ]]
+      - 'disabled'
