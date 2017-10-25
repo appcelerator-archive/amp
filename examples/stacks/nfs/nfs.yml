@@ -1,0 +1,35 @@
+version: "3.2"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+services:
+  client:
+    #image: nginx
+    image: ndegory/nginx-prometheus:latest
+    networks:
+      - default
+    environment:
+      SERVICE_PORTS: "80"
+      VIRTUAL_HOST: "nfs.examples.*,https://nfs.examples.*"
+    volumes:
+      - type: volume
+        source: nfs_export
+        #target: /usr/share/nginx/html
+        target: /html
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.labels.amp.type.user == true]
+
+volumes:
+  nfs_export:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/
+      o: addr=${NFS_SERVER:-fs-0a000a00.efs.us-west-2.amazonaws.com},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
