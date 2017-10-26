@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/appcelerator/amp/cli"
@@ -227,6 +228,45 @@ type awsPlugin struct {
 	plugin
 }
 
+func decodeAwsPluginOutput(c cli.Interface, d *json.Decoder) error {
+	var po aws.PluginOutput
+	if err := d.Decode(&po); err != nil {
+		return err
+	}
+	// if there's an event, that's the relevant information
+	if po.Event != nil {
+		e := po.Event
+		status := e.ResourceStatus
+		if e.ResourceStatusReason != "" {
+			status = fmt.Sprintf("%s (%s)", e.ResourceStatus, e.ResourceStatusReason)
+		}
+		c.Console().Printf("%-31s %-28s %s\n", e.Timestamp, e.LogicalResourceId, status)
+		if e.ResourceType == "AWS::CloudFormation::Stack" && (e.ResourceStatus == "ROLLBACK_COMPLETE" || e.ResourceStatus == "DELETE_COMPLETE") {
+			return fmt.Errorf("deployment failed")
+		}
+		// the caller should loop on the reader
+		return nil
+	}
+	// next, look for an output
+	if po.Output != nil {
+		c.Console().Printf("-------------------------------------------------------------------------------\n")
+		for _, o := range po.Output {
+			c.Console().Printf("%-42s | %s\n", o.Description, o.OutputValue)
+		}
+		return nil
+	}
+	// last, look for an error
+	if po.Error != "" {
+		c.Console().Printf("Error: %s\n", po.Error)
+		if strings.Contains(po.Error, "Throttling: Rate exceeded") == true {
+			// we shouldn't stop
+			return nil
+		}
+		return fmt.Errorf("deployment failed, see error details above")
+	}
+	return nil
+}
+
 func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) error {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -249,26 +289,20 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	f := func(r io.Reader, done chan bool) {
 		d := json.NewDecoder(r)
 		for {
-			var m aws.StackOutputList
-			if err := d.Decode(&m); err == io.EOF {
+			if err = decodeAwsPluginOutput(c, d); err == io.EOF {
 				done <- true
 				break
 			} else if err != nil {
-				// If there is an error here, it is because the plugin itself is not returning
-				// json for plugin errors (yet) ... so print the buffer for now
+				done <- true
+				// If there is an error here, it is because the plugin itself
+				// failed to return json for plugin errors
+				// so print the buffer for now
 				outscanner := bufio.NewScanner(d.Buffered())
 				for outscanner.Scan() {
 					c.Console().Println(outscanner.Text())
 				}
-
-				done <- true
-				// Still indicate that this was an error because non-JSON responses need to be fixed
-				c.Console().Error(err)
+				c.Console().Error(err) // these errors need to be fixed
 				return
-			}
-			// print the decoded output
-			for _, o := range m.Output {
-				c.Console().Printf("%s: %s\n", o.Description, o.OutputValue)
 			}
 		}
 	}
