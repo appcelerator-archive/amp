@@ -108,10 +108,6 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 	// Create user
 	user, err := s.Accounts.CreateUser(ctx, in.Name, in.Email, in.Password)
 	if err != nil {
-		log.Errorf("User creation failed (%s)", in.Name)
-		if errd := s.Accounts.DeleteNotVerifiedUser(ctx, in.Name); errd != nil {
-			log.Infof("User deletion also failed (%s)", in.Name)
-		}
 		return nil, convertError(err)
 	}
 
@@ -123,37 +119,22 @@ func (s *Server) SignUp(ctx context.Context, in *SignUpRequest) (*empty.Empty, e
 		}
 		return nil, convertError(err)
 	}
+	log.Infoln("Successfully created user", user.Name)
 
 	switch s.Config.Registration {
 	case configuration.RegistrationEmail:
-		if user.Email == "" {
-			log.Errorf("Fail to send verification notification to user %s, no email set", user.Name)
-			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
-				log.Errorf("Fail to delete user %s", user.Name)
-			} else {
-				log.Infof("user %s has been deleted", user.Name)
-			}
-			return nil, convertError(fmt.Errorf("unable to send email to %s, there's no email set for this user", user.Name))
-		}
 		// Create a verification token valid for an hour
 		token, err := s.Tokens.CreateVerificationToken(user.Name)
 		if err != nil {
-			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
-				return nil, convertError(fmt.Errorf("user deletion error [%v] after a VerificationToken error [%v]", errd, err))
-			}
 			return nil, convertError(err)
 		}
 
 		// Send the verification email
 		if err := s.Mailer.SendAccountVerificationEmail(user.Email, user.Name, token, in.Url); err != nil {
-			if errd := s.Accounts.DeleteNotVerifiedUser(ctx, user.Name); errd != nil {
-				return nil, convertError(fmt.Errorf("Delete user error [%v] comming after SendAccountVerificationEmail error [%v]", errd, err))
-			}
-			return nil, err
+			return nil, convertError(err)
 		}
 		log.Infof("Verification email sent to %s (%s)", user.Email, user.Name)
 	}
-	log.Infoln("Successfully created user", user.Name)
 	return &empty.Empty{}, nil
 }
 

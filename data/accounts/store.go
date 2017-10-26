@@ -218,7 +218,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		return nil, EmailAlreadyUsed
 	}
 
-	// Check if organization with the same name already exists.
+	// Check if an organization with the same name already exists.
 	orgAlreadyExists, err := s.GetOrganization(ctx, name)
 	if err != nil {
 		return nil, err
@@ -247,6 +247,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 		return nil, err
 	}
 	if err := s.storage.Create(ctx, path.Join(usersRootKey, name), user, nil, 0); err != nil {
+		s.storage.Delete(ctx, path.Join(usersRootKey, name), false, nil)
 		return nil, err
 	}
 	return user, nil
