@@ -3,8 +3,8 @@
 SECONDS=0
 
 test_stack_deploy() {
-  amp -k stack up -c tests/cli/stacks/list/global.service.yml global
-  amp -k stack up -c tests/cli/stacks/list/replicated.service.yml replicated
+  amp -k stack up -c tests/cli/stack/list/global.service.yml global
+  amp -k stack up -c tests/cli/stack/list/replicated.service.yml replicated
 }
 
 test_stack_starting() {

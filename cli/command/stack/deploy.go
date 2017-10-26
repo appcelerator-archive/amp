@@ -3,7 +3,6 @@ package stack
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/cli"
 	"github.com/appcelerator/amp/docker/cli/cli/config"
+	"github.com/appcelerator/amp/docker/cli/opts"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
@@ -18,12 +18,16 @@ import (
 
 type deployStackOptions struct {
 	file         string
-	envVar       string
+	env          opts.ListOpts
+	envFile      opts.ListOpts
 	registryAuth bool
 }
 
 var (
-	opts = deployStackOptions{}
+	options = deployStackOptions{
+		env:     opts.NewListOpts(opts.ValidateEnv),
+		envFile: opts.NewListOpts(nil),
+	}
 )
 
 // NewDeployCommand returns a new instance of the stack command.
@@ -37,50 +41,63 @@ func NewDeployCommand(c cli.Interface) *cobra.Command {
 			return deploy(c, cmd, args)
 		},
 	}
-	cmd.Flags().StringVarP(&opts.file, "compose-file", "c", "", "Path to a Compose v3 file")
-	cmd.Flags().StringVarP(&opts.envVar, "env", "e", "", "Environment variable to set during deployment format: var=value")
-	cmd.Flags().BoolVar(&opts.registryAuth, "with-registry-auth", false, "Send registry authentication details to swarm agents")
+	cmd.Flags().StringVarP(&options.file, "compose-file", "c", "", "Path to a Compose v3 file")
+	cmd.Flags().VarP(&options.env, "env", "e", "Set environment variables")
+	cmd.Flags().Var(&options.envFile, "env-file", "Read in a file of environment variables")
+	cmd.Flags().BoolVar(&options.registryAuth, "with-registry-auth", false, "Send registry authentication details to swarm agents")
 	return cmd
 }
 
 func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
-	envArgs := make(map[string]string)
-	if opts.envVar != "" {
-		envs := strings.Split(opts.envVar, "=")
-		if len(envs) != 2 {
-			return fmt.Errorf("--env parameter format error, should be: var=value found:: %s", opts.envVar)
-		}
-		envArgs[envs[0]] = envs[1]
+	// Environment
+	environment, err := opts.ReadKVStrings(options.envFile.GetAll(), options.env.GetAll())
+	if err != nil {
+		return err
 	}
+	currentEnv := make([]string, 0, len(environment))
+	for _, env := range environment { // need to process each var, in order
+		k := strings.SplitN(env, "=", 2)[0]
+		for i, current := range currentEnv { // remove duplicates
+			if current == env {
+				continue // no update required, may hide this behind flag to preserve order of environment
+			}
+			if strings.HasPrefix(current, k+"=") {
+				currentEnv = append(currentEnv[:i], currentEnv[i+1:]...)
+			}
+		}
+		currentEnv = append(currentEnv, env)
+	}
+
+	// Compose file
 	var name string
 	if len(args) == 0 {
-		basename := filepath.Base(opts.file)
-		name = strings.Split(strings.TrimSuffix(basename, filepath.Ext(opts.file)), ".")[0]
+		basename := filepath.Base(options.file)
+		name = strings.Split(strings.TrimSuffix(basename, filepath.Ext(options.file)), ".")[0]
 	} else {
 		name = args[0]
 	}
-	c.Console().Printf("Deploying stack %s using %s\n", name, opts.file)
+	c.Console().Printf("Deploying stack %s using %s\n", name, options.file)
 
-	contents, err := ioutil.ReadFile(opts.file)
+	contents, err := ioutil.ReadFile(options.file)
 	if err != nil {
 		return err
 	}
 
 	req := &stack.DeployRequest{
-		Name:    name,
-		Compose: contents,
-		EnvVar:  envArgs,
+		Name:        name,
+		Compose:     contents,
+		Environment: environment,
 	}
 
 	// If registryAuth was set, send the docker CLI configuration file to amplifier
-	if opts.registryAuth {
+	if options.registryAuth {
 		cf, err := config.Load(config.Dir())
 		if err != nil {
-			return errors.New("Unable to read docker CLI configuration file.")
+			return errors.New("unable to read docker CLI configuration file")
 		}
 		req.Config, err = json.Marshal(cf)
 		if err != nil {
-			return errors.New("Unable to marshal docker CLI configuration file.")
+			return errors.New("unable to marshal docker CLI configuration file")
 		}
 	}
 

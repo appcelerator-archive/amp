@@ -2,6 +2,7 @@ package stack
 
 import (
 	"fmt"
+	"os"
 
 	"docker.io/go-docker/api/types/swarm"
 	"docker.io/go-docker/api/types/versions"
@@ -25,10 +26,15 @@ type DeployOptions struct {
 	ResolveImage     string
 	SendRegistryAuth bool
 	Prune            bool
+	Environment      []string
 }
 
 func RunDeploy(dockerCli command.Cli, opts DeployOptions) error {
 	ctx := context.Background()
+
+	if len(opts.Environment) == 0 {
+		opts.Environment = os.Environ()
+	}
 
 	if err := validateResolveImageFlag(dockerCli, &opts); err != nil {
 		return err

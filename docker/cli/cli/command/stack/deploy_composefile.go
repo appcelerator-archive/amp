@@ -22,7 +22,7 @@ import (
 )
 
 func deployCompose(ctx context.Context, dockerCli command.Cli, opts DeployOptions) error {
-	configDetails, err := getConfigDetails(opts.Composefile, dockerCli.In())
+	configDetails, err := getConfigDetails(opts.Composefile, dockerCli.In(), opts)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func propertyWarnings(properties map[string]string) string {
 	return strings.Join(msgs, "\n\n")
 }
 
-func getConfigDetails(composefile string, stdin io.Reader) (composetypes.ConfigDetails, error) {
+func getConfigDetails(composefile string, stdin io.Reader, opts DeployOptions) (composetypes.ConfigDetails, error) {
 	var details composetypes.ConfigDetails
 
 	if composefile == "-" {
@@ -141,11 +141,11 @@ func getConfigDetails(composefile string, stdin io.Reader) (composetypes.ConfigD
 	}
 	// TODO: support multiple files
 	details.ConfigFiles = []composetypes.ConfigFile{*configFile}
-	details.Environment, err = buildEnvironment(os.Environ())
+	details.Environment, err = BuildEnvironment(opts.Environment)
 	return details, err
 }
 
-func buildEnvironment(env []string) (map[string]string, error) {
+func BuildEnvironment(env []string) (map[string]string, error) {
 	result := make(map[string]string, len(env))
 	for _, s := range env {
 		// if value is empty, s is like "K=", not "K".

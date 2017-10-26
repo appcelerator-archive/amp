@@ -8,7 +8,7 @@ networks:
 services:
 
   pinger:
-    image: subfuzion/pinger
+    image: appcelerator/pinger
     networks:
       default:
         aliases:
