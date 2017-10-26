@@ -230,8 +230,7 @@ type awsPlugin struct {
 
 func decodeAwsPluginOutput(c cli.Interface, d *json.Decoder) error {
 	var po aws.PluginOutput
-	err := d.Decode(&po)
-	if err != nil {
+	if err := d.Decode(&po); err != nil {
 		return err
 	}
 	// if there's an event, that's the relevant information
@@ -243,7 +242,7 @@ func decodeAwsPluginOutput(c cli.Interface, d *json.Decoder) error {
 		}
 		c.Console().Printf("%-31s %-28s %s\n", e.Timestamp, e.LogicalResourceId, status)
 		if e.ResourceType == "AWS::CloudFormation::Stack" && (e.ResourceStatus == "ROLLBACK_COMPLETE" || e.ResourceStatus == "DELETE_COMPLETE") {
-			return fmt.Errorf("Deployment failed")
+			return fmt.Errorf("deployment failed")
 		}
 		// the caller should loop on the reader
 		return nil
@@ -251,8 +250,7 @@ func decodeAwsPluginOutput(c cli.Interface, d *json.Decoder) error {
 	// next, look for an output
 	if po.Output != nil {
 		c.Console().Printf("-------------------------------------------------------------------------------\n")
-		m := po.Output
-		for _, o := range m {
+		for _, o := range po.Output {
 			c.Console().Printf("%-42s | %s\n", o.Description, o.OutputValue)
 		}
 		return nil
@@ -264,7 +262,7 @@ func decodeAwsPluginOutput(c cli.Interface, d *json.Decoder) error {
 			// we shouldn't stop
 			return nil
 		}
-		return fmt.Errorf("Deployment failed, see error details above")
+		return fmt.Errorf("deployment failed, see error details above")
 	}
 	return nil
 }
@@ -291,13 +289,11 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 	f := func(r io.Reader, done chan bool) {
 		d := json.NewDecoder(r)
 		for {
-			err = decodeAwsPluginOutput(c, d)
-			if err == io.EOF {
+			if err = decodeAwsPluginOutput(c, d); err == io.EOF {
 				done <- true
 				break
 			} else if err != nil {
 				done <- true
-				fmt.Println(err)
 				// If there is an error here, it is because the plugin itself
 				// failed to return json for plugin errors
 				// so print the buffer for now
@@ -309,7 +305,6 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 				return
 			}
 		}
-		return
 	}
 
 	img := fmt.Sprintf("appcelerator/amp-aws:%s", c.Version())

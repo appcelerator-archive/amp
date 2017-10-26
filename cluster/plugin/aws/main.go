@@ -49,15 +49,26 @@ func initClient(cmd *cobra.Command, args []string) {
 // used by the create function to parse the events and send meaningful information to the CLI
 func scanEvents(mode string) error {
 	var emptyReason string
-	significantEventTypes := map[string]bool{"AWS::CloudFormation::Stack": true, "AWS::EC2::VPC": true, "AWS::CloudFormation::WaitCondition": true, "AWS::AutoScaling::AutoScalingGroup": true}
-	significantEventStatuses := map[string]bool{"CREATE_IN_PROGRESS": false, "CREATE_COMPLETE": true, "CREATE_FAILED": true, "ROLLBACK_IN_PROGRESS": true, "ROLLBACK_COMPLETE": true, "DELETE_IN_PROGRESS": true}
+	significantEventTypes := map[string]bool{
+		"AWS::CloudFormation::Stack":         true,
+		"AWS::EC2::VPC":                      true,
+		"AWS::CloudFormation::WaitCondition": true,
+		"AWS::AutoScaling::AutoScalingGroup": true,
+	}
+	significantEventStatuses := map[string]bool{
+		cf.StackStatusCreateInProgress:   false,
+		cf.StackStatusCreateComplete:     true,
+		cf.StackStatusCreateFailed:       true,
+		cf.StackStatusRollbackInProgress: true,
+		cf.StackStatusRollbackComplete:   true,
+		cf.StackStatusDeleteInProgress:   true,
+	}
 	eventInput := &cf.DescribeStackEventsInput{
 		StackName: aws.String(opts.StackName),
 		NextToken: nil,
 	}
 	eventIds := map[string]bool{}
 	for {
-		//resp, err := svc.DescribeStackEventsWithContext(ctx, eventInput, nil)
 		resp, err := svc.DescribeStackEvents(eventInput)
 		if err != nil {
 			if strings.Contains(err.Error(), "Throttling: Rate exceeded") == true {
@@ -70,7 +81,7 @@ func scanEvents(mode string) error {
 		events := resp.StackEvents
 		sort.Slice(events, func(i, j int) bool { return events[i].Timestamp.Unix() < events[j].Timestamp.Unix() })
 		for _, se := range events {
-			if eventIds[*se.EventId] == true {
+			if eventIds[*se.EventId] {
 				// already processed, ignore it
 				continue
 			}
@@ -83,7 +94,14 @@ func scanEvents(mode string) error {
 					// we'll have an indirection, so better secure it
 					se.ResourceStatusReason = &emptyReason
 				}
-				eventOutput := plugin.StackEvent{EventId: *se.EventId, LogicalResourceId: *se.LogicalResourceId, ResourceStatus: *se.ResourceStatus, ResourceStatusReason: *se.ResourceStatusReason, ResourceType: *se.ResourceType, Timestamp: se.Timestamp.Format(time.UnixDate)}
+				eventOutput := plugin.StackEvent{
+					EventId:              *se.EventId,
+					LogicalResourceId:    *se.LogicalResourceId,
+					ResourceStatus:       *se.ResourceStatus,
+					ResourceStatusReason: *se.ResourceStatusReason,
+					ResourceType:         *se.ResourceType,
+					Timestamp:            se.Timestamp.Format(time.UnixDate),
+				}
 				j, err := plugin.PluginOutputToJSON(&eventOutput, nil, nil)
 				if err != nil {
 					return err
@@ -91,27 +109,36 @@ func scanEvents(mode string) error {
 				fmt.Println(j)
 			}
 			// check end condition, based on the action
+			if *se.ResourceType != "AWS::CloudFormation::Stack" {
+				continue
+			}
 			switch mode {
 			case STACK_MODE_CREATE:
-				if *se.ResourceType == "AWS::CloudFormation::Stack" &&
-					(*se.ResourceStatus == "CREATE_COMPLETE" || *se.ResourceStatus == "DELETE_COMPLETE" || *se.ResourceStatus == "ROLLBACK_COMPLETE") {
+				switch *se.ResourceStatus {
+				case cf.StackStatusCreateComplete, cf.StackStatusDeleteComplete, cf.StackStatusRollbackComplete:
 					return nil
+				default:
+					// not an end condition, continue the loop
 				}
 			case STACK_MODE_DELETE:
-				if *se.ResourceType == "AWS::CloudFormation::Stack" &&
-					(*se.ResourceStatus == "DELETE_FAILED" || *se.ResourceStatus == "DELETE_COMPLETE") {
+				switch *se.ResourceStatus {
+				case cf.StackStatusDeleteFailed, cf.StackStatusDeleteComplete:
 					return nil
+				default:
+					// not an end condition, continue the loop
 				}
 			case STACK_MODE_UPDATE:
-				if *se.ResourceType == "AWS::CloudFormation::Stack" &&
-					(*se.ResourceStatus == "UPDATE_FAILED" || *se.ResourceStatus == "UPDATE_COMPLETE" || *se.ResourceStatus == "ROLLBACK_COMPLETE") {
-					// this is the end
+				switch *se.ResourceStatus {
+				case cf.ResourceStatusUpdateFailed, cf.ResourceStatusUpdateComplete, cf.StackStatusRollbackComplete:
 					return nil
+				default:
+					// not an end condition, continue the loop
 				}
 			default:
 				return fmt.Errorf("unknown mode: %s", mode)
 			}
 		}
+		// waiting before reading next batch of events (if too short, the API throttles)
 		time.Sleep(500 * time.Millisecond)
 	}
 	return nil
@@ -143,7 +170,15 @@ func create(cmd *cobra.Command, args []string) {
 		}
 		info(cmd, args)
 	} else {
-		event := plugin.StackEvent{EventId: "NoSync-000", LogicalResourceId: opts.StackName, ResourceType: "AWS::CloudFormation:Stack", ResourceStatus: "CREATE_IN_PROGRESS", ResourceStatusReason: "The sync flag was not used, please check the status of the stack on the AWS console and read the output", Timestamp: time.Now().Format(time.UnixDate), StackId: *resp.StackId}
+		event := plugin.StackEvent{
+			EventId:              "NoSync-000",
+			LogicalResourceId:    opts.StackName,
+			ResourceType:         "AWS::CloudFormation:Stack",
+			ResourceStatus:       cf.StackStatusCreateInProgress,
+			ResourceStatusReason: "The sync flag was not used, please check the status of the stack on the AWS console and read the output",
+			Timestamp:            time.Now().Format(time.UnixDate),
+			StackId:              *resp.StackId,
+		}
 		j, err := plugin.PluginOutputToJSON(&event, nil, nil)
 		if err != nil {
 			log.Fatal(err)
@@ -172,7 +207,15 @@ func update(cmd *cobra.Command, args []string) {
 		}
 		info(cmd, args)
 	} else {
-		event := plugin.StackEvent{EventId: "NoSync-000", LogicalResourceId: opts.StackName, ResourceType: "AWS::CloudFormation:Stack", ResourceStatus: "UPDATE_IN_PROGRESS", ResourceStatusReason: "The sync flag was not used, please check the status of the stack on the AWS console and read the output", Timestamp: time.Now().Format(time.UnixDate), StackId: *resp.StackId}
+		event := plugin.StackEvent{
+			EventId:              "NoSync-000",
+			LogicalResourceId:    opts.StackName,
+			ResourceType:         "AWS::CloudFormation:Stack",
+			ResourceStatus:       cf.StackStatusUpdateInProgress,
+			ResourceStatusReason: "The sync flag was not used, please check the status of the stack on the AWS console and read the output",
+			Timestamp:            time.Now().Format(time.UnixDate),
+			StackId:              *resp.StackId,
+		}
 		j, err := plugin.PluginOutputToJSON(&event, nil, nil)
 		if err != nil {
 			log.Fatal(err)

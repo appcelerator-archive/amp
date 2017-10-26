@@ -188,9 +188,6 @@ func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, erro
 		Output: so,
 		Event:  ev,
 	}
-	//if ev != nil && ev.LogicalResourceId != "" {
-	//po.Event = *ev
-	//}
 	if e != nil {
 		po.Error = reg.ReplaceAllString(e.Error(), "")
 	}
