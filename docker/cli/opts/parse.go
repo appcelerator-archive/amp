@@ -2,6 +2,7 @@ package opts
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 // ReadKVStrings reads a file of line terminated key=value pairs, and overrides any keys
 // present in the file with additional pairs specified in the override parameter
 func ReadKVStrings(files []string, override []string) ([]string, error) {
-	envVariables := []string{}
+	envVariables := os.Environ()
 	for _, ef := range files {
 		parsedVars, err := ParseEnvFile(ef)
 		if err != nil {

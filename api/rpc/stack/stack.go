@@ -1,14 +1,12 @@
 package stack
 
 import (
-	"os"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,7 +36,7 @@ func convertError(err error) error {
 // Deploy implements stack.Server
 func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
 	// Check if stack is using restricted resources
-	compose, err := s.Docker.ComposeParse(ctx, in.Compose)
+	compose, err := s.Docker.ComposeParse(ctx, in.Compose, in.Environment)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -63,17 +61,8 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 		}
 	}
 
-	for envName, envValue := range in.EnvVar {
-		os.Setenv(envName, envValue)
-	}
-
 	// Deploy stack
-	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose, in.Config)
-
-	for envName := range in.EnvVar {
-		os.Setenv(envName, "")
-	}
-
+	output, err := s.Docker.StackDeploy(ctx, stack.Name, in.Compose, in.Config, in.Environment)
 	if err != nil {
 		s.Stacks.Delete(ctx, stack.Id)
 		return nil, convertError(err)

@@ -8,8 +8,8 @@ test_stack_deploy() {
 }
 
 test_service_starting() {
-  amp -k service ls 2>/dev/null | pcregrep -q "\s*global\s*0/1\s*[0-9]\s*STARTING\s*subfuzion/pinger\s*latest\s*"
-  amp -k service ls 2>/dev/null | pcregrep -q "\s*replicated\s*0/1\s*[0-9]\s*STARTING\s*subfuzion/pinger\s*latest\s*"
+  amp -k service ls 2>/dev/null | pcregrep -q "\s*global\s*0/1\s*[0-9]\s*STARTING\s*appcelerator/pinger\s*latest\s*"
+  amp -k service ls 2>/dev/null | pcregrep -q "\s*replicated\s*0/1\s*[0-9]\s*STARTING\s*appcelerator/pinger\s*latest\s*"
 }
 
 test_service_global_running() {

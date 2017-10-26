@@ -28,7 +28,7 @@ type StackStatus struct {
 }
 
 // StackDeploy deploy a stack
-func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte, configFile []byte) (output string, err error) {
+func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte, configFile []byte, environment []string) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		// Write the compose file to a temporary file
 		compose, err := ioutil.TempFile("", stackName)
@@ -61,6 +61,7 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 			ResolveImage:     stack.ResolveImageAlways,
 			SendRegistryAuth: true,
 			Prune:            false,
+			Environment:      environment,
 		}
 		if err := stack.RunDeploy(cli, opts); err != nil {
 			return err
@@ -70,7 +71,7 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 	if output, err = cliWrapper(cmd); err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return output, nil
 }
 
 // StackList list the stacks
@@ -85,7 +86,7 @@ func (d *Docker) StackList(ctx context.Context) (output string, err error) {
 	if output, err = cliWrapper(cmd); err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return output, nil
 }
 
 // StackRemove remove a stack
@@ -100,7 +101,7 @@ func (d *Docker) StackRemove(ctx context.Context, stackName string) (output stri
 	if output, err = cliWrapper(cmd); err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return output, nil
 }
 
 // StackServices list the services of a stack
@@ -119,7 +120,7 @@ func (d *Docker) StackServices(ctx context.Context, stackName string, quiet bool
 	if output, err = cliWrapper(cmd); err != nil {
 		return "", err
 	}
-	return string(output), nil
+	return output, nil
 }
 
 // StackServiceIDs returns service ids of all services in a given stack

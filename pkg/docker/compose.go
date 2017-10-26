@@ -1,18 +1,18 @@
 package docker
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
+	"github.com/appcelerator/amp/docker/cli/cli/command/stack"
 	"github.com/appcelerator/amp/docker/cli/cli/compose/loader"
 	composetypes "github.com/appcelerator/amp/docker/cli/cli/compose/types"
 	"golang.org/x/net/context"
 )
 
 // ComposeParse parses a compose file
-func (d *Docker) ComposeParse(ctx context.Context, composeFile []byte) (*composetypes.Config, error) {
+func (d *Docker) ComposeParse(ctx context.Context, composeFile []byte, environment []string) (*composetypes.Config, error) {
 	var details composetypes.ConfigDetails
 	var err error
 
@@ -31,18 +31,7 @@ func (d *Docker) ComposeParse(ctx context.Context, composeFile []byte) (*compose
 		Filename: "filename",
 		Config:   config,
 	}}
-
-	// Environment
-	env := os.Environ()
-	details.Environment = make(map[string]string, len(env))
-	for _, s := range env {
-		if !strings.Contains(s, "=") {
-			return nil, fmt.Errorf("unexpected environment %q", s)
-		}
-		kv := strings.SplitN(s, "=", 2)
-		details.Environment[kv[0]] = kv[1]
-	}
-
+	details.Environment, err = stack.BuildEnvironment(environment)
 	return loader.Load(details)
 }
 
