@@ -55,7 +55,7 @@ func main() {
 		DockerURL:        docker.DefaultURL,
 		DockerVersion:    docker.DefaultVersion,
 		Registration:     configuration.RegistrationDefault,
-		Notifications:    true,
+		Notifications:    configuration.NotificationsDefault,
 	}
 
 	// Override with configuration file
