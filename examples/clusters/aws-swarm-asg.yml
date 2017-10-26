@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-7ea06904
+      Default: ami-2167c25b
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-5d785438
+      Default: ami-7db59918
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-e2d6109a
+      Default: ami-dbac63a3
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-2a68bb53
+      Default: ami-1be63c62
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-1438da76
+      Default: ami-a242aec0
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -187,12 +187,6 @@ Parameters:
     Type: String
     Description: Docker overlay networks to create on the swarm, separated by space
     Default: ampnet
-  DockerChannel:
-    Type: String
-    Default: stable
-    AllowedValues:
-    - stable
-    - edge
   DockerPlugins:
     Type: String
     Description: "space separated list of plugins to install. Options can be passed separated with pound sign. Example: rexray/ebs#REXRAY_PREEMPT=true"
@@ -989,7 +983,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
 
   UserWaitHandle:
@@ -1075,7 +1069,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL=${DockerChannel} PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
 
   ApplicationWaitHandle:
@@ -1178,7 +1172,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="${DockerChannel}" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.api=true amp.type.route=true amp.type.metrics=true" /usr/local/bin/userdata-aws-manager || shutdown -h
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.api=true amp.type.route=true amp.type.metrics=true" /usr/local/bin/userdata-aws-manager || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
@@ -1284,7 +1278,6 @@ Metadata:
     - Label:
         default: Docker Configuration
       Parameters:
-      - DockerChannel
       - DockerPlugins
       - AufsVolumeSize
       - OverlayNetworks
@@ -1313,8 +1306,6 @@ Metadata:
         default: Drain manager nodes?
       OverlayNetworks:
         default: Docker overlay networks
-      DockerChannel:
-        default: Docker channel
       DockerPlugins:
         default: Docker plugins
       ConfigurationURL:

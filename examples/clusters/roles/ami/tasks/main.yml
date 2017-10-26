@@ -1,10 +1,10 @@
 ---
-- include: set-constants.yml
-- include: upload-userdata.yml
-- include: run-instance.yml
-- include: wait-for-instance.yml
-- include: snapshot-volume.yml
-#- include: set-volumes.yml
-- include: register-ami.yml
-- include: copy-ami.yml
-- include: terminate-instance.yml
+- import_tasks: set-constants.yml
+- import_tasks: upload-userdata.yml
+- import_tasks: run-instance.yml
+- import_tasks: wait-for-instance.yml
+- import_tasks: snapshot-volume.yml
+#- import_tasks: set-volumes.yml
+- import_tasks: register-ami.yml
+- import_tasks: copy-ami.yml
+- import_tasks: terminate-instance.yml
