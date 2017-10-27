@@ -54,6 +54,7 @@ func scanEvents(mode string) error {
 		"AWS::EC2::VPC":                      true,
 		"AWS::CloudFormation::WaitCondition": true,
 		"AWS::AutoScaling::AutoScalingGroup": true,
+		"AWS::EFS::FileSystem":               true,
 	}
 	significantEventStatuses := map[string]bool{
 		cf.StackStatusCreateInProgress:   false,
