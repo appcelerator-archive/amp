@@ -72,10 +72,25 @@ func scanEvents(mode string) error {
 	for {
 		resp, err := svc.DescribeStackEvents(eventInput)
 		if err != nil {
-			if strings.Contains(err.Error(), "Throttling: Rate exceeded") == true {
+			if strings.Contains(err.Error(), "Throttling: Rate exceeded") {
 				// ignore it, and continue processing the events
 				time.Sleep(time.Second)
 				continue
+			} else if mode == STACK_MODE_DELETE && strings.Contains(err.Error(), fmt.Sprintf("Stack [%s] does not exist", opts.StackName)) {
+				// stack does not exist, probably because we've just successfuly deleted it
+				event := plugin.StackEvent{
+					EventId:           "NoSync-999",
+					LogicalResourceId: opts.StackName,
+					ResourceType:      "AWS::CloudFormation:Stack",
+					ResourceStatus:    cf.StackStatusDeleteComplete,
+					Timestamp:         time.Now().Format(time.UnixDate),
+				}
+				j, err := plugin.PluginOutputToJSON(&event, nil, nil)
+				if err != nil {
+					return err
+				}
+				fmt.Println(j)
+				return nil
 			}
 			return err
 		}
@@ -264,7 +279,11 @@ func delete(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-	if flag {
+	if flag || len(resp.StackSummaries) == 0 {
+		if j, err := plugin.PluginOutputToJSON(nil, nil, fmt.Errorf("stack [%s] doesn't seem to exist", opts.StackName)); err == nil {
+			fmt.Println(j)
+			os.Exit(1)
+		}
 		log.Fatal(opts.StackName, " stack doesn't seem to exist")
 	}
 }
@@ -273,7 +292,7 @@ func info(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 	resp, err := plugin.InfoStack(ctx, svc, opts)
 	if err != nil {
-		if j, jerr := plugin.PluginOutputToJSON(nil, nil, err); jerr != nil {
+		if j, jerr := plugin.PluginOutputToJSON(nil, nil, err); jerr == nil {
 			// print json error to stdout
 			fmt.Println(j)
 			os.Exit(1)

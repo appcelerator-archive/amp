@@ -179,7 +179,7 @@ func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptio
 // PluginOutputToJSON is a helper function that wrap an event, an error or a slice of StackOutput
 // to a JSON string representation of PluginOutput
 func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, error) {
-	reg, err := regexp.Compile("[^a-zA-Z0-9:;,. ]+")
+	reg, err := regexp.Compile("[^a-zA-Z0-9:;,.\\-()\\[\\]'\" ]+")
 	if err != nil {
 		return "", err
 	}
@@ -189,7 +189,7 @@ func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, erro
 		Event:  ev,
 	}
 	if e != nil {
-		po.Error = reg.ReplaceAllString(e.Error(), "")
+		po.Error = reg.ReplaceAllString(e.Error(), "%")
 	}
 	j, err := json.Marshal(po)
 	if err != nil {
