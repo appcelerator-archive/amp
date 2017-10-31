@@ -1,0 +1,141 @@
+[
+    {
+      "Key": "vars",
+      "Launch": {
+        "inproc": {
+          "Kind": "vars",
+          "Options": {
+            "InitialTemplate": ""
+          }
+        }
+      }
+    },
+    {
+      "Key": "manager-file",
+      "Launch": {
+        "inproc": {
+          "Kind": "manager",
+          "Options": {
+            "Name": "",
+            "Group": "group-stateless",
+            "Metadata": "vars"
+          },
+          "Backend": "file"
+        }
+      }
+    },
+    {
+      "Key": "manager-swarm",
+      "Launch": {
+        "inproc": {
+          "Kind": "manager",
+          "Options": {
+            "Name": "",
+            "Group": "group-stateless",
+            "Metadata": "vars"
+          },
+          "Backend": "swarm",
+          "Settings": {
+            "PollInterval": "5s",
+            "Docker": {
+              "Host": "unix:///var/run/docker.sock",
+              "TLS": {
+                "CAFile": "",
+                "CertFile": "",
+                "KeyFile": "",
+                "InsecureSkipVerify": false,
+                "ClientAuth": 0
+              }
+            }
+          },
+          "Mux": {
+            "Listen": ":24864",
+            "Advertise": "localhost:24864"
+          }
+        }
+      }
+    },
+    {
+      "Key": "group-stateless",
+      "Launch": {
+        "inproc": {
+          "Kind": "group",
+          "Options": {
+            "PollInterval": "10s",
+            "MaxParallelNum": 0,
+            "PollIntervalGroupSpec": "10s",
+            "PollIntervalGroupDetail": "10s"
+          }
+        }
+      }
+    },
+    {
+      "Key": "instance-aws",
+      "Launch": {
+        "inproc": {
+          "Kind": "aws",
+          "Options": {
+            "Namespace": {},
+            "ELBNames": [
+              ""
+            ],
+            "Region": "",
+            "AccessKeyID": "",
+            "SecretAccessKey": "",
+            "SessionToken": "",
+            "Retries": 0,
+            "Debug": false,
+            "Template": "",
+            "TemplateOptions": {
+              "DelimLeft": "",
+              "DelimRight": "",
+              "MultiPass": false,
+              "CacheDir": ""
+            },
+            "StackName": "",
+            "PollInterval": "1m0s"
+          }
+        }
+      }
+    },
+    {
+      "Key": "flavor-combo",
+      "Launch": {
+        "inproc": {
+          "Kind": "combo",
+          "Options": {
+          }
+        }
+      }
+    },
+    {
+      "Key": "flavor-vanilla",
+      "Launch": {
+        "inproc": {
+          "Kind": "vanilla",
+          "Options": {
+            "DelimLeft": "",
+            "DelimRight": "",
+            "MultiPass": true,
+            "CacheDir": ""
+          }
+        }
+      }
+    },
+    {
+      "Key": "flavor-swarm",
+      "Launch": {
+        "inproc": {
+          "Kind": "swarm",
+          "Options": {
+            "DelimLeft": "",
+            "DelimRight": "",
+            "MultiPass": true,
+            "CacheDir": "",
+            "ManagerInitScriptTemplate": "",
+            "WorkerInitScriptTemplate": ""
+          }
+        }
+      }
+    }
+]

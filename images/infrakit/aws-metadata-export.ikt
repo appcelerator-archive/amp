@@ -1,0 +1,31 @@
+{{/*
+
+AWS specific - This is where we introspect the environment and export the values to other templates.
+Copy of https://raw.githubusercontent.com/infrakit/examples/master/latest/metadata/aws/export.ikt
+
+*/}}
+
+{{ $availabilityZone := include "http://169.254.169.254/latest/meta-data/placement/availability-zone" }}
+{{ $amiID := include "http://169.254.169.254/latest/meta-data/ami-id" }}
+{{ $instanceType := include "http://169.254.169.254/latest/meta-data/instance-type" }}
+{{ $keyName := (include "http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key" | split " ")._2 | trim }}
+{{ $mac:= include "http://169.254.169.254/latest/meta-data/network/interfaces/macs"}} {{/* assumes only one */}}
+{{ $netprefix:= cat "http://169.254.169.254/latest/meta-data/network/interfaces/macs/" $mac | nospace }}
+{{ $securityGroups := cat $netprefix "security-groups" | nospace | include }}     {{/* assumes only one */}}
+{{ $securityGroupIDs := cat $netprefix "security-group-ids" | nospace | include }}  {{/* assumes only one */}}
+{{ $subnetID := cat $netprefix "subnet-id" | nospace | include }}
+{{ $vpcID := cat $netprefix "vpc-id" | nospace | include }}
+
+{{ $iam := include "http://169.254.169.254/latest/meta-data/iam/info" | jsonDecode }} {{/* parsed as object */}}
+
+{{/* export them values here as metadata */}}
+{{ export "local/availabilityZone" $availabilityZone }}
+{{ export "local/amiID" $amiID }}
+{{ export "local/instanceType" $instanceType }}
+{{ export "local/keyName" $keyName }}
+{{ export "local/mac" $mac }}
+{{ export "local/securityGroups" $securityGroups }}
+{{ export "local/securityGroupIDs" $securityGroupIDs }}
+{{ export "local/subnetID" $subnetID }}
+{{ export "local/vpcID" $vpcID }}
+{{ export "local/iam" $iam }} {{/* an object */}}
