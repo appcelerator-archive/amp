@@ -37,13 +37,14 @@ type RequestOptions struct {
 	// Node labels
 	Labels map[string]string
 	// Tag of the ampagent image
-	Tag           string
-	Registration  string
-	Notifications bool
-	ForceLeave    bool
-	NoLogs        bool
-	NoMetrics     bool
-	NoProxy       bool
+	Tag              string
+	Registration     string
+	Notifications    bool
+	ForceLeave       bool
+	NoLogs           bool
+	NoMetrics        bool
+	NoProxy          bool
+	NoNodeManagement bool
 }
 
 type FullSwarmInfo struct {
@@ -139,6 +140,9 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 	}
 	if opts.NoProxy {
 		actionArgs = append(actionArgs, "--no-proxy")
+	}
+	if opts.NoNodeManagement {
+		actionArgs = append(actionArgs, "--no-node-management")
 	}
 	switch action {
 	case "install":

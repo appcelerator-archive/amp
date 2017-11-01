@@ -30,6 +30,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.Bool("local-no-logs", false, "Don't deploy logs stack")
 	flags.Bool("local-no-metrics", false, "Don't deploy metrics stack")
 	flags.Bool("local-no-proxy", false, "Don't deploy proxy stack")
+	flags.Bool("local-no-node-management", true, "Don't deploy node management services")
 
 	// aws options
 	flags.String("aws-onfailure", "", "'DO_NOTHING', 'ROLLBACK' (default), or 'DELETE")

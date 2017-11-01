@@ -1,0 +1,35 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  infrakit-config:
+
+services:
+
+  infrakit:
+    image: appcelerator/infrakit:latest
+    networks:
+      - default
+    deploy:
+      mode: global
+      labels:
+        io.amp.role: "infrastructure"
+      placement:
+        constraints:
+        - node.role == manager
+    environment:
+      INFRAKIT_LOG_LEVEL: 4
+      INFRAKIT_AWS_NAMESPACE_TAGS: "infrakit.scope=${STACK_NAME:-undefined}"
+      INFRAKIT_AWS_STACKNAME: "${STACK_NAME:-undefined}"
+      INFRAKIT_MANAGER_BACKEND: "swarm"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - infrakit-config:/infrakit
+    labels:
+      io.amp.role: "infrastructure"
+    ports:
+      - "24864:24864"

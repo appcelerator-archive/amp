@@ -38,6 +38,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoLogs, "no-logs", false, "Don't deploy logs stack")
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
+	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoNodeManagement, "no-node-management", false, "Don't deploy node management stack")
 
 	// Environment variables
 	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version

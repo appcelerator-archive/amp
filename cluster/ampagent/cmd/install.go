@@ -29,9 +29,10 @@ const (
 )
 
 type InstallOptions struct {
-	NoLogs    bool
-	NoMetrics bool
-	NoProxy   bool
+	NoLogs           bool
+	NoMetrics        bool
+	NoProxy          bool
+	NoNodeManagement bool
 }
 
 var InstallOpts = &InstallOptions{}
@@ -92,7 +93,8 @@ func Install(cmd *cobra.Command, args []string) error {
 	for _, stackFile := range stackFiles {
 		if strings.Contains(stackFile, "logs") && InstallOpts.NoLogs ||
 			strings.Contains(stackFile, "metrics") && InstallOpts.NoMetrics ||
-			strings.Contains(stackFile, "proxy") && InstallOpts.NoProxy {
+			strings.Contains(stackFile, "proxy") && InstallOpts.NoProxy ||
+			strings.Contains(stackFile, "nodemngt") && InstallOpts.NoNodeManagement {
 			continue
 		}
 		log.Println("Deploying stack", stackFile)
