@@ -214,16 +214,24 @@ _get_worker_join_token(){
 _swarm_join(){
   local _manager=$1
   local _token
-  _token=$(_get_worker_join_token "$_manager") || return 1
+  if [[ -n "$_manager" ]]; then
+    _token=$(_get_worker_join_token "$_manager") || return 1
+  else
+    # infrakit mode
+    _manager="{{ SPEC.SwarmJoinIP }}"
+    _token="{{ SWARM_JOIN_TOKENS.Worker }}"
+  fi
   echo "joining the Swarm" >&2
-  docker swarm join --token "$_token" "$_manager:2377"
+  docker swarm join --token "$_token" "${_manager}:2377"
 }
 
 # add labels on the Swarm node
+# TODO: should be done by InfraKit, not by the node itself
 _label_node(){
   local _manager=$1
   local _self
   local _publicip
+  [[ -z "$_manager" ]] && return 0
   _self=$(docker info -f '{{.Swarm.NodeID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
   echo "applying label PublicIP=$_publicip" >&2
