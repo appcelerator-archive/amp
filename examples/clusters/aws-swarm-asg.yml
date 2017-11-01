@@ -494,6 +494,11 @@ Resources:
         IpProtocol: udp
         FromPort: '4789'
         ToPort: '4789'
+      # infrakit mux server
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '24864'
+        ToPort: '24864'
       # node exporter
       - SourceSecurityGroupId:
           !Ref MetricsSecurityGroup
@@ -1242,6 +1247,10 @@ Resources:
         InstanceProtocol: TCP
       - LoadBalancerPort: '9090'
         InstancePort: '9090'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '24864'
+        InstancePort: '24864'
         Protocol: TCP
         InstanceProtocol: TCP
       - LoadBalancerPort: '50101'
