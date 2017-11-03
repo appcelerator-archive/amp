@@ -6,16 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage"
+	"github.com/appcelerator/amp/docker/docker/pkg/stringid"
 	"github.com/golang/protobuf/proto"
-	"github.com/hlandau/passlib"
 	"github.com/ory/ladon"
 	"github.com/ory/ladon/manager/memory"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 )
 
@@ -26,6 +25,7 @@ const SuperUser = "su"
 const SuperOrganization = "so"
 const DefaultOrganization = "default"
 const DefaultOrganizationEmail = "default@organization.amp"
+const BCryptCost = 12
 
 // Store implements user data.Interface
 type Store struct {
@@ -88,7 +88,7 @@ func (s *Store) createDefaultAccounts(SUPassword string) error {
 		IsVerified: true,
 		CreateDt:   time.Now().Unix(),
 	}
-	if su.PasswordHash, err = passlib.Hash(SUPassword); err != nil {
+	if su.PasswordHash, err = bcrypt.GenerateFromPassword([]byte(SUPassword), BCryptCost); err != nil {
 		return err
 	}
 	if err := s.storage.Create(ctx, path.Join(usersRootKey, su.Name), su, nil, 0); err != nil {
@@ -171,7 +171,7 @@ func (s *Store) secureUser(ctx context.Context, user *User) *User {
 	if user == nil {
 		return nil
 	}
-	user.PasswordHash = "" // For security reasons, remove the password hash
+	user.PasswordHash = nil // For security reasons, remove the password hash
 	if !s.IsAuthorized(ctx, &Account{user.Name, ""}, ReadAction, UserRN, user.Name) {
 		user.Email = ""
 	}
@@ -240,7 +240,7 @@ func (s *Store) CreateUser(ctx context.Context, name string, email string, passw
 	if password, err = CheckPassword(password); err != nil {
 		return nil, err
 	}
-	if user.PasswordHash, err = passlib.Hash(password); err != nil {
+	if user.PasswordHash, err = bcrypt.GenerateFromPassword([]byte(password), BCryptCost); err != nil {
 		return nil, err
 	}
 	if err := user.Validate(); err != nil {
@@ -283,7 +283,7 @@ func (s *Store) CheckUserPassword(ctx context.Context, name string, password str
 	if err != nil {
 		return err
 	}
-	if _, err = passlib.Verify(password, user.PasswordHash); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return WrongPassword
 	}
 	return nil
@@ -295,7 +295,7 @@ func (s *Store) SetUserPassword(ctx context.Context, name string, password strin
 	if _, err := CheckPassword(password); err != nil {
 		return err
 	}
-	passwordHash, err := passlib.Hash(password)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), BCryptCost)
 	if err != nil {
 		return err
 	}

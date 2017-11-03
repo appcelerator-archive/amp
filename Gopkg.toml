@@ -39,7 +39,7 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.12.8"
+  version = "1.12.22"
 
 [[constraint]]
   name = "github.com/coreos/etcd"
@@ -47,7 +47,7 @@
 
 [[constraint]]
   name = "github.com/dgrijalva/jwt-go"
-  version = "3.0.0"
+  version = "3.1.0"
 
 [[constraint]]
   name = "github.com/docker/docker-credential-helpers"
@@ -83,7 +83,7 @@
 
 [[constraint]]
   name = "github.com/gorilla/handlers"
-  version = "1.2.1"
+  version = "1.3.0"
 
 [[constraint]]
   branch = "master"
@@ -96,10 +96,6 @@
 [[constraint]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
   revision = "c323909dd41de182a54b4d1610f26034da5e097e"
-
-[[constraint]]
-  name = "github.com/hlandau/passlib"
-  version = "1.0.9"
 
 [[constraint]]
   branch = "master"
@@ -135,7 +131,7 @@
 
 [[constraint]]
   name = "github.com/ory/ladon"
-  version = "0.8.2"
+  version = "0.8.3"
 
 [[constraint]]
   name = "github.com/pkg/errors"
@@ -154,8 +150,8 @@
   version = "1.0.3"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/spf13/cobra"
+  version = "0.0.1"
 
 [[constraint]]
   name = "github.com/spf13/pflag"
@@ -172,6 +168,11 @@
 [[constraint]]
   name = "github.com/xeipuuv/gojsonschema"
   revision = "93e72a773fade158921402d6a24c819b48aba29d"
+
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
 
 [[constraint]]
   branch = "master"
@@ -195,7 +196,7 @@
 
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v5"
-  version = "5.0.48"
+  version = "5.0.53"
 
 [[constraint]]
   branch = "v2"
