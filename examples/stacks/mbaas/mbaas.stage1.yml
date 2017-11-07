@@ -1,0 +1,106 @@
+version: "3.3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+volumes:
+  mongo-primary-db:
+  mongo-secondary-db:
+  mongo-arbiter-db:
+  consul-data:
+
+services:
+  mongo-primary:
+    image: mongo:3.4.10
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    #volumes:
+      #- mongo-primary-db:/data/db
+    environment:
+      SERVICE_PORTS: 28017
+      VIRTUAL_HOST: "mongo.mbaas.*,https://mongo.mbaas.*"
+    command:
+      ["--httpinterface", "--rest", "--replSet", "data"]
+
+  mongo-secondary:
+    image: mongo:3.4.10
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    #volumes:
+      #- mongo-secondary-db:/data/db
+    environment:
+      SERVICE_PORTS: 28017
+      VIRTUAL_HOST: "mongo.mbaas.*,https://mongo.mbaas.*"
+    command:
+      ["--httpinterface", "--rest", "--replSet", "data"]
+
+  mongo-arbiter:
+    image: mongo:3.4.10
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    #volumes:
+      #- mongo-arbiter-db:/data/db
+    command:
+      ["--httpinterface", "--rest", "--replSet", "data"]
+
+  mongo_exporter:
+    image: eses/mongodb_exporter:latest
+    networks:
+      - default
+    environment:
+      MONGODB_URI: "mongodb://mongo-primary:27017"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+      labels:
+        io.amp.metrics.port: "9104"
+        io.amp.metrics.mode: "exporter"
+
+  consul:
+    image: consul:1.0.0
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.mbaas.*,consul.mbaas.*"
+
+  consul_exporter:
+    image: prom/consul-exporter:v0.3.0
+    networks:
+      - default
+    command:
+      ["-consul.server=consul:8500"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+      labels:
+        io.amp.metrics.port: "9107"
+        io.amp.metrics.mode: "exporter"
