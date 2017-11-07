@@ -8,7 +8,7 @@ networks:
 services:
 
   acs:
-    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/arrowdb:1.6.2
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/arrowdb:1.6.0-sp2
     networks:
       - default
     deploy:
@@ -23,4 +23,22 @@ services:
     entrypoint:
       - /usr/local/bin/start-arrowdb.sh
       - api
+      - production
+
+  dashboard:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/dashboard:1.6.0-sp2
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: consul
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SERVICE_PORTS: 9009
+      VIRTUAL_HOST: "https://dashboard.mbaas.*,dashboard.mbaas.*"
+    entrypoint:
+      - /usr/local/bin/start-360-docker.sh
       - production
