@@ -93,11 +93,16 @@ func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
 	if options.registryAuth {
 		cf, err := config.Load(config.Dir())
 		if err != nil {
-			return errors.New("unable to read docker CLI configuration file")
+			return errors.New("unable to read Docker configuration file")
 		}
+		cf.AuthConfigs, err = cf.GetAllCredentials()
+		if err != nil {
+			return errors.New("unable to retrieve credentials from Docker configuration file")
+		}
+		cf.CredentialsStore = "" // Make sure we're not using a credential store anymore
 		req.Config, err = json.Marshal(cf)
 		if err != nil {
-			return errors.New("unable to marshal docker CLI configuration file")
+			return errors.New("unable to marshal Docker configuration file")
 		}
 	}
 
