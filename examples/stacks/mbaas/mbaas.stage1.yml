@@ -10,6 +10,7 @@ volumes:
   mongo-secondary-db:
   mongo-arbiter-db:
   consul-data:
+  redis-data:
 
 services:
   mongo-primary:
@@ -103,4 +104,31 @@ services:
         - node.labels.amp.type.user == true
       labels:
         io.amp.metrics.port: "9107"
+        io.amp.metrics.mode: "exporter"
+
+  redis:
+    image: redis:alpine
+    networks:
+      - default
+    volumes:
+      - redis-data:/data
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+
+  redis_exporter:
+    image: oliver006/redis_exporter:v0.13
+    networks:
+      - default
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+      labels:
+        io.amp.metrics.port: "9121"
         io.amp.metrics.mode: "exporter"
