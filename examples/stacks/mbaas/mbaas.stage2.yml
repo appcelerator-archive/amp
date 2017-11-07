@@ -8,6 +8,8 @@ networks:
 configs:
   mongo_dbinit:
     external: true
+  consul_kv:
+    external: true
 
 services:
   mongo-init:
@@ -34,4 +36,24 @@ services:
     configs:
       - source: mongo_dbinit
         target: /usr/local/bin/mongo_dbinit.sh
+        mode: 0554
+
+  consul-init:
+    image: consul:1.0.0
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+      restart_policy:
+        condition: none
+    environment:
+      CONSUL_HTTP_ADDR: "consul:8500"
+    command:
+      ["consul", "kv", "import", "@values.json"]
+    configs:
+      - source: consul_kv
+        target: /values.json
         mode: 0554
