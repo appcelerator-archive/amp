@@ -1,0 +1,37 @@
+version: "3.3"
+
+networks:
+  default:
+    external:
+      name: ampnet
+
+configs:
+  mongo_dbinit:
+    external: true
+
+services:
+  mongo-init:
+    image: mongo:3.4.10
+    networks:
+      - default
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+      restart_policy:
+        condition: none
+    environment:
+      MBAAS_MONGO_ADMIN_USERNAME: "appcadmin"
+      MBAAS_MONGO_ADMIN_PASSWORD: "changeme"
+      MBAAS_MONGO_PRODUCTS: "arrowdb dashboard"
+      MBAAS_MONGO_ARROWDB_USERNAME: "appcelerator"
+      MBAAS_MONGO_ARROWDB_PASSWORD: "changeme"
+      MBAAS_MONGO_DASHBOARD_USERNAME: "appcelerator"
+      MBAAS_MONGO_DASHBOARD_PASSWORD: "changeme"
+    command:
+      ["/usr/local/bin/mongo_dbinit.sh"]
+    configs:
+      - source: mongo_dbinit
+        target: /usr/local/bin/mongo_dbinit.sh
+        mode: 0554

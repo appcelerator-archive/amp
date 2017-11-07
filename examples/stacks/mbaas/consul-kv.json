@@ -1,0 +1,197 @@
+[
+	{
+		"key": "arrowdb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/arrowdb_domain",
+		"flags": 0,
+		"value": "bWJhYXMuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "arrowdb/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/data/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/data/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_api",
+		"flags": 0,
+		"value": "YWNzX2FwaQ=="
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_global_apps",
+		"flags": 0,
+		"value": "YWNzX2dsb2JhbF9hcHBz"
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_log",
+		"flags": 0,
+		"value": "YWNzX2xvZw=="
+	},
+	{
+		"key": "arrowdb/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/log/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/log/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/protocol",
+		"flags": 0,
+		"value": "aHR0cHM="
+	},
+	{
+		"key": "arrowdb/storage_type",
+		"flags": 0,
+		"value": "bG9jYWw="
+	},
+	{
+		"key": "arrowdb/user_name",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "global/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/arrowdb_domain_name",
+		"flags": 0,
+		"value": "bWJhYXMuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "global/cluster",
+		"flags": 0,
+		"value": "bWJhYXM="
+	},
+	{
+		"key": "global/log_level",
+		"flags": 0,
+		"value": "REVCVUc="
+	},
+	{
+		"key": "global/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "global/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/data/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/data/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/data/rsname",
+		"flags": 0,
+		"value": "ZGF0YQ=="
+	},
+	{
+		"key": "global/mongodb/data/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "global/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/log/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/log/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/log/rsname",
+		"flags": 0,
+		"value": "bG9n"
+	},
+	{
+		"key": "global/mongodb/log/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "protocol",
+		"flags": 0,
+		"value": "aHR0cHM="
+	}
+]
