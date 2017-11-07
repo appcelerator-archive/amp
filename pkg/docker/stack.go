@@ -41,7 +41,7 @@ func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile 
 		}
 
 		if configFile != nil {
-			log.Infoln("Using client configuration file")
+			log.Infoln("Using client registry credentials")
 
 			// Read client configuration file from reader
 			cf := configfile.ConfigFile{
