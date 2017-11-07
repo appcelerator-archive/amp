@@ -1,4 +1,4 @@
-# ![Ladon](https://storage.googleapis.com/ory.am/ory_banners-49.png)
+# ![ORY Ladon](https://storage.googleapis.com/ory.am/github-banner/ory_01-ladon.png)
 
 [![Join the chat at https://gitter.im/ory-am/hydra](https://img.shields.io/badge/join-chat-00cc99.svg)](https://gitter.im/ory-am/hydra?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Join newsletter](https://img.shields.io/badge/join-newsletter-00cc99.svg)](http://eepurl.com/bKT3N9)
@@ -9,6 +9,7 @@
 [![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
 [![Coverage Status](https://coveralls.io/repos/ory/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory/ladon?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ory/ladon)](https://goreportcard.com/report/github.com/ory/ladon)
+[![GoDoc](https://godoc.org/github.com/ory/ladon?status.png)](https://godoc.org/github.com/ory/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
@@ -318,7 +319,7 @@ The CIDR condition matches CIDR IP Ranges. Using this condition would look like 
 ```json
 {
     "conditions": {
-        "remoteIP": {
+        "remoteIPAddress": {
             "type": "CIDRCondition",
             "options": {
                 "cidr": "192.168.0.1/16"

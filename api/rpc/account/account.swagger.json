@@ -1134,7 +1134,8 @@
           "type": "string"
         },
         "password_hash": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         },
         "is_verified": {
           "type": "boolean",
