@@ -95,6 +95,7 @@ create_user() {
 		*)
 			;;
 	esac
+  echo "adding user $username for dbs $dbs"
 
 	for db in "${dbs[@]}"; do
 		mongo ${primary_host_ip}:${primary_host_port} --eval "db=db.getSiblingDB(\"${db}\"); db.createUser( { user: \"${username}\", pwd: \"${password}\", roles: [ \"readWrite\" ] } )"
@@ -136,3 +137,5 @@ create_admin_user ${primary_host_ip} "${admin_username}" "${admin_password}"
 create_user ${primary_host_ip} "${arrowcloud_username}" "${arrowcloud_password}" "arrowcloud"
 create_user ${primary_host_ip} "${arrowdb_username}" "${arrowdb_password}" "arrowdb"
 create_user ${primary_host_ip} "${dashboard_username}" "${dashboard_password}" "dashboard"
+
+echo DONE
