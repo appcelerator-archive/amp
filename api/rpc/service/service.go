@@ -66,37 +66,37 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 	}
 	reply := &ServiceListReply{}
 	for _, service := range serviceList {
-		if _, ok := service.Spec.Labels[RoleLabel]; !ok {
-			if in.StackName == "" || service.Spec.Labels[StackNameLabelName] == in.StackName {
-				entity := &ServiceEntity{
-					Id:   service.ID,
-					Name: service.Spec.Name,
-				}
-				if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, "@") {
-					imageTag := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, "@")[0]
-					it := strings.Split(imageTag, ":")
-					entity.Image = it[0]
-					entity.Tag = it[1]
-				} else if strings.Contains(service.Spec.TaskTemplate.ContainerSpec.Image, ":") {
-					it := strings.Split(service.Spec.TaskTemplate.ContainerSpec.Image, ":")
-					entity.Image = it[0]
-					entity.Tag = it[1]
-				} else {
-					entity.Image = service.Spec.TaskTemplate.ContainerSpec.Image
-					entity.Tag = LatestTag
-				}
-				if service.Spec.Mode.Global != nil {
-					entity.Mode = GlobalMode
-				} else {
-					entity.Mode = ReplicatedMode
-				}
-				response, err := s.serviceStatusReplicas(ctx, entity)
-				if err != nil {
-					return nil, status.Errorf(codes.Internal, "%v", err)
-				}
-				reply.Entries = append(reply.Entries, response)
-			}
+		if _, ok := service.Spec.Labels[RoleLabel]; ok {
+			continue // ignore amp infrastructure services
 		}
+		stackName := service.Spec.Labels[StackNameLabelName]
+		if in.StackName != "" && stackName != in.StackName {
+			continue // filter based on provided stack name
+		}
+		entity := &ServiceEntity{
+			Id:   service.ID,
+			Name: service.Spec.Name,
+		}
+		image := service.Spec.TaskTemplate.ContainerSpec.Image
+		if strings.Contains(image, "@") {
+			image = strings.Split(image, "@")[0] // trimming the hash
+		}
+		entity.Image = image
+		entity.Tag = LatestTag
+		if strings.Contains(image, ":") {
+			index := strings.LastIndex(image, ":")
+			entity.Image = image[:index]
+			entity.Tag = image[index+1:]
+		}
+		entity.Mode = ReplicatedMode
+		if service.Spec.Mode.Global != nil {
+			entity.Mode = GlobalMode
+		}
+		response, err := s.serviceStatusReplicas(ctx, entity)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+		reply.Entries = append(reply.Entries, response)
 	}
 	return reply, nil
 }
