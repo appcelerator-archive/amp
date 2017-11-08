@@ -25,15 +25,15 @@ func NewServiceInspectCommand(c cli.Interface) *cobra.Command {
 func inspectService(c cli.Interface, args []string) error {
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
-	request := &service.ServiceInspectRequest{
-		ServiceId: args[0],
+	request := &service.InspectRequest{
+		Service: args[0],
 	}
-	reply, err := client.InspectService(context.Background(), request)
+	reply, err := client.Inspect(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}
 	}
-	c.Console().Println(reply.ServiceEntity)
+	c.Console().Println(reply.Json)
 	return nil
 }

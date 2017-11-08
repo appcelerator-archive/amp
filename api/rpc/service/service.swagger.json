@@ -15,20 +15,20 @@
     "application/json"
   ],
   "paths": {
-    "/v1/inspect/{service_id}": {
+    "/v1/inspect/{service}": {
       "get": {
-        "operationId": "InspectService",
+        "operationId": "Inspect",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/serviceServiceInspectReply"
+              "$ref": "#/definitions/serviceInspectReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "service_id",
+            "name": "service",
             "in": "path",
             "required": true,
             "type": "string"
@@ -39,9 +39,9 @@
         ]
       }
     },
-    "/v1/scale/{service_id}/{replicas_number}": {
+    "/v1/scale/{service}/{replicas}": {
       "put": {
-        "operationId": "ScaleService",
+        "operationId": "Scale",
         "responses": {
           "200": {
             "description": "",
@@ -52,13 +52,13 @@
         },
         "parameters": [
           {
-            "name": "service_id",
+            "name": "service",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "replicas_number",
+            "name": "replicas",
             "in": "path",
             "required": true,
             "type": "string",
@@ -70,20 +70,20 @@
         ]
       }
     },
-    "/v1/services/{stack_name}": {
+    "/v1/services/{stack}": {
       "get": {
-        "operationId": "ListService",
+        "operationId": "List",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/serviceServiceListReply"
+              "$ref": "#/definitions/serviceListReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "stack_name",
+            "name": "stack",
             "in": "path",
             "required": true,
             "type": "string"
@@ -94,20 +94,20 @@
         ]
       }
     },
-    "/v1/tasks/{service_id}": {
+    "/v1/tasks/{service}": {
       "get": {
-        "operationId": "Tasks",
+        "operationId": "Ps",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/serviceTasksReply"
+              "$ref": "#/definitions/servicePsReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "service_id",
+            "name": "service",
             "in": "path",
             "required": true,
             "type": "string"
@@ -125,7 +125,37 @@
       "description": "service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
       "title": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:"
     },
-    "serviceServiceEntity": {
+    "serviceInspectReply": {
+      "type": "object",
+      "properties": {
+        "json": {
+          "type": "string"
+        }
+      }
+    },
+    "serviceListReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceServiceEntry"
+          }
+        }
+      }
+    },
+    "servicePsReply": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/serviceTask"
+          }
+        }
+      }
+    },
+    "serviceServiceEntry": {
       "type": "object",
       "properties": {
         "id": {
@@ -142,28 +172,8 @@
         },
         "tag": {
           "type": "string"
-        }
-      }
-    },
-    "serviceServiceInspectReply": {
-      "type": "object",
-      "properties": {
-        "service_entity": {
-          "type": "string"
-        }
-      }
-    },
-    "serviceServiceListEntry": {
-      "type": "object",
-      "properties": {
-        "service": {
-          "$ref": "#/definitions/serviceServiceEntity"
         },
-        "failed_tasks": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "ready_tasks": {
+        "running_tasks": {
           "type": "integer",
           "format": "int32"
         },
@@ -173,17 +183,6 @@
         },
         "status": {
           "type": "string"
-        }
-      }
-    },
-    "serviceServiceListReply": {
-      "type": "object",
-      "properties": {
-        "entries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceServiceListEntry"
-          }
         }
       }
     },
@@ -207,17 +206,13 @@
         },
         "error": {
           "type": "string"
-        }
-      }
-    },
-    "serviceTasksReply": {
-      "type": "object",
-      "properties": {
-        "tasks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/serviceTask"
-          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "slot": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }

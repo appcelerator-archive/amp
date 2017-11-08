@@ -38,10 +38,10 @@ func NewServiceListCommand(c cli.Interface) *cobra.Command {
 func listServices(c cli.Interface, opts listServiceOptions) error {
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
-	request := &service.ServiceListRequest{
-		StackName: opts.stack,
+	request := &service.ListRequest{
+		Stack: opts.stack,
 	}
-	reply, err := client.ListService(context.Background(), request)
+	reply, err := client.List(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
@@ -49,14 +49,14 @@ func listServices(c cli.Interface, opts listServiceOptions) error {
 	}
 	if opts.quiet {
 		for _, entry := range reply.Entries {
-			c.Console().Println(entry.Service.Id)
+			c.Console().Println(entry.Id)
 		}
 		return nil
 	}
 	w := tabwriter.NewWriter(c.Out(), 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tMODE\tREPLICAS\tFAILED TASKS\tSTATUS\tIMAGE\tTAG")
+	fmt.Fprintln(w, "ID\tNAME\tMODE\tREPLICAS\tSTATUS\tIMAGE\tTAG")
 	for _, entry := range reply.Entries {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d/%d\t%d\t%s\t%s\t%s\n", entry.Service.Id, entry.Service.Name, entry.Service.Mode, entry.ReadyTasks, entry.TotalTasks, entry.FailedTasks, entry.Status, entry.Service.Image, entry.Service.Tag)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%d/%d\t%s\t%s\t%s\n", entry.Id, entry.Name, entry.Mode, entry.RunningTasks, entry.TotalTasks, entry.Status, entry.Image, entry.Tag)
 	}
 	w.Flush()
 	return nil

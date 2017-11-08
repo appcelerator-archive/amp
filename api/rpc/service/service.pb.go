@@ -8,16 +8,15 @@ It is generated from these files:
 	github.com/appcelerator/amp/api/rpc/service/service.proto
 
 It has these top-level messages:
-	TasksRequest
+	PsRequest
 	Task
-	TasksReply
-	ServiceListRequest
-	ServiceListReply
-	ServiceListEntry
-	ServiceEntity
-	ServiceInspectRequest
-	ServiceInspectReply
-	ServiceScaleRequest
+	PsReply
+	ListRequest
+	ListReply
+	ServiceEntry
+	InspectRequest
+	InspectReply
+	ScaleRequest
 */
 package service
 
@@ -43,18 +42,18 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type TasksRequest struct {
-	ServiceId string `protobuf:"bytes,1,opt,name=service_id,json=serviceId" json:"service_id,omitempty"`
+type PsRequest struct {
+	Service string `protobuf:"bytes,1,opt,name=service" json:"service,omitempty"`
 }
 
-func (m *TasksRequest) Reset()                    { *m = TasksRequest{} }
-func (m *TasksRequest) String() string            { return proto.CompactTextString(m) }
-func (*TasksRequest) ProtoMessage()               {}
-func (*TasksRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *PsRequest) Reset()                    { *m = PsRequest{} }
+func (m *PsRequest) String() string            { return proto.CompactTextString(m) }
+func (*PsRequest) ProtoMessage()               {}
+func (*PsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *TasksRequest) GetServiceId() string {
+func (m *PsRequest) GetService() string {
 	if m != nil {
-		return m.ServiceId
+		return m.Service
 	}
 	return ""
 }
@@ -66,6 +65,8 @@ type Task struct {
 	DesiredState string `protobuf:"bytes,4,opt,name=desired_state,json=desiredState" json:"desired_state,omitempty"`
 	NodeId       string `protobuf:"bytes,5,opt,name=node_id,json=nodeId" json:"node_id,omitempty"`
 	Error        string `protobuf:"bytes,6,opt,name=error" json:"error,omitempty"`
+	Name         string `protobuf:"bytes,7,opt,name=name" json:"name,omitempty"`
+	Slot         int32  `protobuf:"varint,8,opt,name=slot" json:"slot,omitempty"`
 }
 
 func (m *Task) Reset()                    { *m = Task{} }
@@ -115,217 +116,206 @@ func (m *Task) GetError() string {
 	return ""
 }
 
-type TasksReply struct {
-	Tasks []*Task `protobuf:"bytes,1,rep,name=tasks" json:"tasks,omitempty"`
-}
-
-func (m *TasksReply) Reset()                    { *m = TasksReply{} }
-func (m *TasksReply) String() string            { return proto.CompactTextString(m) }
-func (*TasksReply) ProtoMessage()               {}
-func (*TasksReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *TasksReply) GetTasks() []*Task {
-	if m != nil {
-		return m.Tasks
-	}
-	return nil
-}
-
-type ServiceListRequest struct {
-	StackName string `protobuf:"bytes,1,opt,name=stack_name,json=stackName" json:"stack_name,omitempty"`
-}
-
-func (m *ServiceListRequest) Reset()                    { *m = ServiceListRequest{} }
-func (m *ServiceListRequest) String() string            { return proto.CompactTextString(m) }
-func (*ServiceListRequest) ProtoMessage()               {}
-func (*ServiceListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *ServiceListRequest) GetStackName() string {
-	if m != nil {
-		return m.StackName
-	}
-	return ""
-}
-
-type ServiceListReply struct {
-	Entries []*ServiceListEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
-}
-
-func (m *ServiceListReply) Reset()                    { *m = ServiceListReply{} }
-func (m *ServiceListReply) String() string            { return proto.CompactTextString(m) }
-func (*ServiceListReply) ProtoMessage()               {}
-func (*ServiceListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *ServiceListReply) GetEntries() []*ServiceListEntry {
-	if m != nil {
-		return m.Entries
-	}
-	return nil
-}
-
-type ServiceListEntry struct {
-	Service     *ServiceEntity `protobuf:"bytes,1,opt,name=service" json:"service,omitempty"`
-	FailedTasks int32          `protobuf:"varint,2,opt,name=failed_tasks,json=failedTasks" json:"failed_tasks,omitempty"`
-	ReadyTasks  int32          `protobuf:"varint,3,opt,name=ready_tasks,json=readyTasks" json:"ready_tasks,omitempty"`
-	TotalTasks  int32          `protobuf:"varint,4,opt,name=total_tasks,json=totalTasks" json:"total_tasks,omitempty"`
-	Status      string         `protobuf:"bytes,5,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *ServiceListEntry) Reset()                    { *m = ServiceListEntry{} }
-func (m *ServiceListEntry) String() string            { return proto.CompactTextString(m) }
-func (*ServiceListEntry) ProtoMessage()               {}
-func (*ServiceListEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *ServiceListEntry) GetService() *ServiceEntity {
-	if m != nil {
-		return m.Service
-	}
-	return nil
-}
-
-func (m *ServiceListEntry) GetFailedTasks() int32 {
-	if m != nil {
-		return m.FailedTasks
-	}
-	return 0
-}
-
-func (m *ServiceListEntry) GetReadyTasks() int32 {
-	if m != nil {
-		return m.ReadyTasks
-	}
-	return 0
-}
-
-func (m *ServiceListEntry) GetTotalTasks() int32 {
-	if m != nil {
-		return m.TotalTasks
-	}
-	return 0
-}
-
-func (m *ServiceListEntry) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-type ServiceEntity struct {
-	Id    string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Name  string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Mode  string `protobuf:"bytes,3,opt,name=mode" json:"mode,omitempty"`
-	Image string `protobuf:"bytes,4,opt,name=image" json:"image,omitempty"`
-	Tag   string `protobuf:"bytes,5,opt,name=tag" json:"tag,omitempty"`
-}
-
-func (m *ServiceEntity) Reset()                    { *m = ServiceEntity{} }
-func (m *ServiceEntity) String() string            { return proto.CompactTextString(m) }
-func (*ServiceEntity) ProtoMessage()               {}
-func (*ServiceEntity) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *ServiceEntity) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *ServiceEntity) GetName() string {
+func (m *Task) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *ServiceEntity) GetMode() string {
+func (m *Task) GetSlot() int32 {
+	if m != nil {
+		return m.Slot
+	}
+	return 0
+}
+
+type PsReply struct {
+	Tasks []*Task `protobuf:"bytes,1,rep,name=tasks" json:"tasks,omitempty"`
+}
+
+func (m *PsReply) Reset()                    { *m = PsReply{} }
+func (m *PsReply) String() string            { return proto.CompactTextString(m) }
+func (*PsReply) ProtoMessage()               {}
+func (*PsReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *PsReply) GetTasks() []*Task {
+	if m != nil {
+		return m.Tasks
+	}
+	return nil
+}
+
+type ListRequest struct {
+	Stack string `protobuf:"bytes,1,opt,name=stack" json:"stack,omitempty"`
+}
+
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (m *ListRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *ListRequest) GetStack() string {
+	if m != nil {
+		return m.Stack
+	}
+	return ""
+}
+
+type ListReply struct {
+	Entries []*ServiceEntry `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
+}
+
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (m *ListReply) String() string            { return proto.CompactTextString(m) }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ListReply) GetEntries() []*ServiceEntry {
+	if m != nil {
+		return m.Entries
+	}
+	return nil
+}
+
+type ServiceEntry struct {
+	Id           string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name         string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Mode         string `protobuf:"bytes,3,opt,name=mode" json:"mode,omitempty"`
+	Image        string `protobuf:"bytes,4,opt,name=image" json:"image,omitempty"`
+	Tag          string `protobuf:"bytes,5,opt,name=tag" json:"tag,omitempty"`
+	RunningTasks int32  `protobuf:"varint,6,opt,name=running_tasks,json=runningTasks" json:"running_tasks,omitempty"`
+	TotalTasks   int32  `protobuf:"varint,7,opt,name=total_tasks,json=totalTasks" json:"total_tasks,omitempty"`
+	Status       string `protobuf:"bytes,8,opt,name=status" json:"status,omitempty"`
+}
+
+func (m *ServiceEntry) Reset()                    { *m = ServiceEntry{} }
+func (m *ServiceEntry) String() string            { return proto.CompactTextString(m) }
+func (*ServiceEntry) ProtoMessage()               {}
+func (*ServiceEntry) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *ServiceEntry) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *ServiceEntry) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *ServiceEntry) GetMode() string {
 	if m != nil {
 		return m.Mode
 	}
 	return ""
 }
 
-func (m *ServiceEntity) GetImage() string {
+func (m *ServiceEntry) GetImage() string {
 	if m != nil {
 		return m.Image
 	}
 	return ""
 }
 
-func (m *ServiceEntity) GetTag() string {
+func (m *ServiceEntry) GetTag() string {
 	if m != nil {
 		return m.Tag
 	}
 	return ""
 }
 
-type ServiceInspectRequest struct {
-	ServiceId string `protobuf:"bytes,1,opt,name=service_id,json=serviceId" json:"service_id,omitempty"`
+func (m *ServiceEntry) GetRunningTasks() int32 {
+	if m != nil {
+		return m.RunningTasks
+	}
+	return 0
 }
 
-func (m *ServiceInspectRequest) Reset()                    { *m = ServiceInspectRequest{} }
-func (m *ServiceInspectRequest) String() string            { return proto.CompactTextString(m) }
-func (*ServiceInspectRequest) ProtoMessage()               {}
-func (*ServiceInspectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
-
-func (m *ServiceInspectRequest) GetServiceId() string {
+func (m *ServiceEntry) GetTotalTasks() int32 {
 	if m != nil {
-		return m.ServiceId
+		return m.TotalTasks
+	}
+	return 0
+}
+
+func (m *ServiceEntry) GetStatus() string {
+	if m != nil {
+		return m.Status
 	}
 	return ""
 }
 
-type ServiceInspectReply struct {
-	ServiceEntity string `protobuf:"bytes,1,opt,name=service_entity,json=serviceEntity" json:"service_entity,omitempty"`
+type InspectRequest struct {
+	Service string `protobuf:"bytes,1,opt,name=service" json:"service,omitempty"`
 }
 
-func (m *ServiceInspectReply) Reset()                    { *m = ServiceInspectReply{} }
-func (m *ServiceInspectReply) String() string            { return proto.CompactTextString(m) }
-func (*ServiceInspectReply) ProtoMessage()               {}
-func (*ServiceInspectReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (m *InspectRequest) Reset()                    { *m = InspectRequest{} }
+func (m *InspectRequest) String() string            { return proto.CompactTextString(m) }
+func (*InspectRequest) ProtoMessage()               {}
+func (*InspectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
-func (m *ServiceInspectReply) GetServiceEntity() string {
+func (m *InspectRequest) GetService() string {
 	if m != nil {
-		return m.ServiceEntity
+		return m.Service
 	}
 	return ""
 }
 
-type ServiceScaleRequest struct {
-	ServiceId      string `protobuf:"bytes,1,opt,name=service_id,json=serviceId" json:"service_id,omitempty"`
-	ReplicasNumber uint64 `protobuf:"varint,2,opt,name=replicas_number,json=replicasNumber" json:"replicas_number,omitempty"`
+type InspectReply struct {
+	Json string `protobuf:"bytes,1,opt,name=json" json:"json,omitempty"`
 }
 
-func (m *ServiceScaleRequest) Reset()                    { *m = ServiceScaleRequest{} }
-func (m *ServiceScaleRequest) String() string            { return proto.CompactTextString(m) }
-func (*ServiceScaleRequest) ProtoMessage()               {}
-func (*ServiceScaleRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (m *InspectReply) Reset()                    { *m = InspectReply{} }
+func (m *InspectReply) String() string            { return proto.CompactTextString(m) }
+func (*InspectReply) ProtoMessage()               {}
+func (*InspectReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
-func (m *ServiceScaleRequest) GetServiceId() string {
+func (m *InspectReply) GetJson() string {
 	if m != nil {
-		return m.ServiceId
+		return m.Json
 	}
 	return ""
 }
 
-func (m *ServiceScaleRequest) GetReplicasNumber() uint64 {
+type ScaleRequest struct {
+	Service  string `protobuf:"bytes,1,opt,name=service" json:"service,omitempty"`
+	Replicas uint64 `protobuf:"varint,2,opt,name=replicas" json:"replicas,omitempty"`
+}
+
+func (m *ScaleRequest) Reset()                    { *m = ScaleRequest{} }
+func (m *ScaleRequest) String() string            { return proto.CompactTextString(m) }
+func (*ScaleRequest) ProtoMessage()               {}
+func (*ScaleRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *ScaleRequest) GetService() string {
 	if m != nil {
-		return m.ReplicasNumber
+		return m.Service
+	}
+	return ""
+}
+
+func (m *ScaleRequest) GetReplicas() uint64 {
+	if m != nil {
+		return m.Replicas
 	}
 	return 0
 }
 
 func init() {
-	proto.RegisterType((*TasksRequest)(nil), "service.TasksRequest")
+	proto.RegisterType((*PsRequest)(nil), "service.PsRequest")
 	proto.RegisterType((*Task)(nil), "service.Task")
-	proto.RegisterType((*TasksReply)(nil), "service.TasksReply")
-	proto.RegisterType((*ServiceListRequest)(nil), "service.ServiceListRequest")
-	proto.RegisterType((*ServiceListReply)(nil), "service.ServiceListReply")
-	proto.RegisterType((*ServiceListEntry)(nil), "service.ServiceListEntry")
-	proto.RegisterType((*ServiceEntity)(nil), "service.ServiceEntity")
-	proto.RegisterType((*ServiceInspectRequest)(nil), "service.ServiceInspectRequest")
-	proto.RegisterType((*ServiceInspectReply)(nil), "service.ServiceInspectReply")
-	proto.RegisterType((*ServiceScaleRequest)(nil), "service.ServiceScaleRequest")
+	proto.RegisterType((*PsReply)(nil), "service.PsReply")
+	proto.RegisterType((*ListRequest)(nil), "service.ListRequest")
+	proto.RegisterType((*ListReply)(nil), "service.ListReply")
+	proto.RegisterType((*ServiceEntry)(nil), "service.ServiceEntry")
+	proto.RegisterType((*InspectRequest)(nil), "service.InspectRequest")
+	proto.RegisterType((*InspectReply)(nil), "service.InspectReply")
+	proto.RegisterType((*ScaleRequest)(nil), "service.ScaleRequest")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -339,10 +329,10 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Service service
 
 type ServiceClient interface {
-	Tasks(ctx context.Context, in *TasksRequest, opts ...grpc.CallOption) (*TasksReply, error)
-	ListService(ctx context.Context, in *ServiceListRequest, opts ...grpc.CallOption) (*ServiceListReply, error)
-	InspectService(ctx context.Context, in *ServiceInspectRequest, opts ...grpc.CallOption) (*ServiceInspectReply, error)
-	ScaleService(ctx context.Context, in *ServiceScaleRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error)
+	Ps(ctx context.Context, in *PsRequest, opts ...grpc.CallOption) (*PsReply, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	Inspect(ctx context.Context, in *InspectRequest, opts ...grpc.CallOption) (*InspectReply, error)
+	Scale(ctx context.Context, in *ScaleRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error)
 }
 
 type serviceClient struct {
@@ -353,36 +343,36 @@ func NewServiceClient(cc *grpc.ClientConn) ServiceClient {
 	return &serviceClient{cc}
 }
 
-func (c *serviceClient) Tasks(ctx context.Context, in *TasksRequest, opts ...grpc.CallOption) (*TasksReply, error) {
-	out := new(TasksReply)
-	err := grpc.Invoke(ctx, "/service.Service/Tasks", in, out, c.cc, opts...)
+func (c *serviceClient) Ps(ctx context.Context, in *PsRequest, opts ...grpc.CallOption) (*PsReply, error) {
+	out := new(PsReply)
+	err := grpc.Invoke(ctx, "/service.Service/Ps", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serviceClient) ListService(ctx context.Context, in *ServiceListRequest, opts ...grpc.CallOption) (*ServiceListReply, error) {
-	out := new(ServiceListReply)
-	err := grpc.Invoke(ctx, "/service.Service/ListService", in, out, c.cc, opts...)
+func (c *serviceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
+	err := grpc.Invoke(ctx, "/service.Service/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serviceClient) InspectService(ctx context.Context, in *ServiceInspectRequest, opts ...grpc.CallOption) (*ServiceInspectReply, error) {
-	out := new(ServiceInspectReply)
-	err := grpc.Invoke(ctx, "/service.Service/InspectService", in, out, c.cc, opts...)
+func (c *serviceClient) Inspect(ctx context.Context, in *InspectRequest, opts ...grpc.CallOption) (*InspectReply, error) {
+	out := new(InspectReply)
+	err := grpc.Invoke(ctx, "/service.Service/Inspect", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serviceClient) ScaleService(ctx context.Context, in *ServiceScaleRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error) {
+func (c *serviceClient) Scale(ctx context.Context, in *ScaleRequest, opts ...grpc.CallOption) (*google_protobuf1.Empty, error) {
 	out := new(google_protobuf1.Empty)
-	err := grpc.Invoke(ctx, "/service.Service/ScaleService", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/service.Service/Scale", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -392,84 +382,84 @@ func (c *serviceClient) ScaleService(ctx context.Context, in *ServiceScaleReques
 // Server API for Service service
 
 type ServiceServer interface {
-	Tasks(context.Context, *TasksRequest) (*TasksReply, error)
-	ListService(context.Context, *ServiceListRequest) (*ServiceListReply, error)
-	InspectService(context.Context, *ServiceInspectRequest) (*ServiceInspectReply, error)
-	ScaleService(context.Context, *ServiceScaleRequest) (*google_protobuf1.Empty, error)
+	Ps(context.Context, *PsRequest) (*PsReply, error)
+	List(context.Context, *ListRequest) (*ListReply, error)
+	Inspect(context.Context, *InspectRequest) (*InspectReply, error)
+	Scale(context.Context, *ScaleRequest) (*google_protobuf1.Empty, error)
 }
 
 func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
 	s.RegisterService(&_Service_serviceDesc, srv)
 }
 
-func _Service_Tasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TasksRequest)
+func _Service_Ps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).Tasks(ctx, in)
+		return srv.(ServiceServer).Ps(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.Service/Tasks",
+		FullMethod: "/service.Service/Ps",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).Tasks(ctx, req.(*TasksRequest))
+		return srv.(ServiceServer).Ps(ctx, req.(*PsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_ListService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServiceListRequest)
+func _Service_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).ListService(ctx, in)
+		return srv.(ServiceServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.Service/ListService",
+		FullMethod: "/service.Service/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).ListService(ctx, req.(*ServiceListRequest))
+		return srv.(ServiceServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_InspectService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServiceInspectRequest)
+func _Service_Inspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InspectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).InspectService(ctx, in)
+		return srv.(ServiceServer).Inspect(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.Service/InspectService",
+		FullMethod: "/service.Service/Inspect",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).InspectService(ctx, req.(*ServiceInspectRequest))
+		return srv.(ServiceServer).Inspect(ctx, req.(*InspectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_ScaleService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServiceScaleRequest)
+func _Service_Scale_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScaleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).ScaleService(ctx, in)
+		return srv.(ServiceServer).Scale(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.Service/ScaleService",
+		FullMethod: "/service.Service/Scale",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).ScaleService(ctx, req.(*ServiceScaleRequest))
+		return srv.(ServiceServer).Scale(ctx, req.(*ScaleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -479,20 +469,20 @@ var _Service_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Tasks",
-			Handler:    _Service_Tasks_Handler,
+			MethodName: "Ps",
+			Handler:    _Service_Ps_Handler,
 		},
 		{
-			MethodName: "ListService",
-			Handler:    _Service_ListService_Handler,
+			MethodName: "List",
+			Handler:    _Service_List_Handler,
 		},
 		{
-			MethodName: "InspectService",
-			Handler:    _Service_InspectService_Handler,
+			MethodName: "Inspect",
+			Handler:    _Service_Inspect_Handler,
 		},
 		{
-			MethodName: "ScaleService",
-			Handler:    _Service_ScaleService_Handler,
+			MethodName: "Scale",
+			Handler:    _Service_Scale_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -504,48 +494,45 @@ func init() {
 }
 
 var fileDescriptor0 = []byte{
-	// 687 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x5d, 0x6a, 0xdb, 0x4a,
-	0x14, 0xc7, 0xf1, 0x37, 0x39, 0xfe, 0xb8, 0x61, 0x72, 0xe3, 0xeb, 0x28, 0xb9, 0x69, 0xa2, 0x50,
-	0x1a, 0x0a, 0xb5, 0x92, 0x18, 0x0a, 0x85, 0xbe, 0x86, 0x12, 0x28, 0x79, 0x90, 0xfb, 0x5a, 0xcc,
-	0x58, 0x9a, 0x28, 0x43, 0x24, 0xcd, 0x74, 0x34, 0x0e, 0x88, 0x90, 0x97, 0x6e, 0xa1, 0x6b, 0xe8,
-	0x06, 0xba, 0x83, 0xae, 0xa1, 0x5b, 0xe8, 0x42, 0xca, 0x7c, 0x39, 0x96, 0x93, 0x42, 0x5e, 0x6c,
-	0xcd, 0xff, 0xfc, 0xcf, 0xfc, 0x34, 0xe7, 0x1c, 0x0d, 0xbc, 0x4b, 0xa8, 0xbc, 0x5e, 0xcc, 0xc7,
-	0x11, 0xcb, 0x02, 0xcc, 0x79, 0x44, 0x52, 0x22, 0xb0, 0x64, 0x22, 0xc0, 0x19, 0x0f, 0x30, 0xa7,
-	0x81, 0xe0, 0x51, 0x50, 0x10, 0x71, 0x4b, 0x23, 0xe2, 0xfe, 0xc7, 0x5c, 0x30, 0xc9, 0x50, 0xc7,
-	0x2e, 0xbd, 0xbd, 0x84, 0xb1, 0x24, 0x25, 0xda, 0x8e, 0xf3, 0x9c, 0x49, 0x2c, 0x29, 0xcb, 0x0b,
-	0x63, 0xf3, 0x26, 0x2b, 0x84, 0x84, 0xa5, 0x38, 0x4f, 0x02, 0x1d, 0x98, 0x2f, 0xae, 0x02, 0x2e,
-	0x4b, 0x4e, 0x8a, 0x80, 0x64, 0x5c, 0x96, 0xe6, 0xd7, 0x24, 0xf9, 0x6f, 0xa0, 0xf7, 0x09, 0x17,
-	0x37, 0x45, 0x48, 0xbe, 0x2c, 0x48, 0x21, 0xd1, 0xff, 0x00, 0x96, 0x36, 0xa3, 0xf1, 0xa8, 0x76,
-	0x50, 0x3b, 0xde, 0x08, 0x37, 0xac, 0x72, 0x11, 0xfb, 0xdf, 0x6b, 0xd0, 0x54, 0x7e, 0x34, 0x80,
-	0xfa, 0x32, 0x5e, 0xa7, 0x31, 0xfa, 0x17, 0x5a, 0x34, 0xc3, 0x09, 0x19, 0xd5, 0xb5, 0x64, 0x16,
-	0xe8, 0x08, 0xfa, 0xd1, 0x42, 0x08, 0x92, 0xcb, 0x59, 0x21, 0xb1, 0x24, 0xa3, 0x86, 0x8e, 0xf6,
-	0xac, 0x38, 0x55, 0x9a, 0x32, 0xc5, 0xa4, 0xa0, 0x82, 0xc4, 0xd6, 0xd4, 0x34, 0x26, 0x2b, 0x1a,
-	0xd3, 0x7f, 0xd0, 0xc9, 0x59, 0xac, 0x5f, 0xaa, 0xa5, 0xc3, 0x6d, 0xb5, 0xbc, 0xd0, 0x60, 0x22,
-	0x04, 0x13, 0xa3, 0xb6, 0x01, 0xeb, 0x85, 0x7f, 0x0a, 0x60, 0x8f, 0xc5, 0xd3, 0x12, 0x1d, 0x41,
-	0x4b, 0xaa, 0xd5, 0xa8, 0x76, 0xd0, 0x38, 0xee, 0x9e, 0xf5, 0xc7, 0xae, 0xbe, 0xca, 0x13, 0x9a,
-	0x98, 0x3f, 0x01, 0x34, 0x35, 0xf2, 0x47, 0x5a, 0xc8, 0xd5, 0x7a, 0x48, 0x1c, 0xdd, 0xcc, 0x72,
-	0x9c, 0x91, 0x65, 0x3d, 0x94, 0x72, 0x89, 0x33, 0xe2, 0x7f, 0x80, 0xcd, 0x4a, 0x92, 0xa2, 0x4d,
-	0xa0, 0x43, 0x72, 0x29, 0x28, 0x71, 0xbc, 0x9d, 0x25, 0x6f, 0xc5, 0x7b, 0x9e, 0x4b, 0x51, 0x86,
-	0xce, 0xe9, 0xff, 0xac, 0x55, 0x76, 0xd2, 0x51, 0x74, 0x02, 0xae, 0xf5, 0x9a, 0xdc, 0x3d, 0x1b,
-	0xae, 0xef, 0x74, 0x9e, 0x4b, 0x2a, 0xcb, 0xd0, 0xd9, 0xd0, 0x21, 0xf4, 0xae, 0x30, 0x4d, 0x49,
-	0x3c, 0x33, 0x07, 0x56, 0xdd, 0x68, 0x85, 0x5d, 0xa3, 0xe9, 0x8a, 0xa0, 0x17, 0xd0, 0x15, 0x04,
-	0xc7, 0xa5, 0x75, 0x34, 0xb4, 0x03, 0xb4, 0xb4, 0x34, 0x48, 0x26, 0x71, 0x6a, 0x0d, 0x4d, 0x63,
-	0xd0, 0x92, 0x31, 0x0c, 0xa1, 0xad, 0x1a, 0xb5, 0x28, 0x5c, 0x2b, 0xcc, 0xca, 0x67, 0xd0, 0xaf,
-	0xbc, 0xd6, 0xa3, 0x21, 0x41, 0xd0, 0xd4, 0x65, 0x34, 0x33, 0xa2, 0x9f, 0x95, 0x96, 0xb1, 0xd8,
-	0x4d, 0x86, 0x7e, 0x7e, 0x18, 0xa6, 0xe6, 0xea, 0x30, 0x6d, 0x42, 0x43, 0xe2, 0xc4, 0x32, 0xd5,
-	0xa3, 0xff, 0x16, 0xb6, 0x2d, 0xf0, 0x22, 0x2f, 0x38, 0x89, 0xe4, 0x33, 0xa7, 0xf8, 0x3d, 0x6c,
-	0xad, 0xe7, 0xa9, 0xc6, 0xbd, 0x84, 0x81, 0xcb, 0x22, 0xfa, 0x00, 0x36, 0xb3, 0x5f, 0xac, 0x9e,
-	0xca, 0xff, 0xbc, 0xcc, 0x9e, 0x46, 0x38, 0x25, 0xcf, 0x63, 0xa2, 0x57, 0xf0, 0x8f, 0x20, 0x3c,
-	0xa5, 0x11, 0x2e, 0x66, 0xf9, 0x22, 0x9b, 0x13, 0xa1, 0xcb, 0xd0, 0x0c, 0x07, 0x4e, 0xbe, 0xd4,
-	0xea, 0xd9, 0x8f, 0x06, 0x74, 0xec, 0xfe, 0x68, 0x0a, 0x2d, 0x53, 0xf2, 0xed, 0xca, 0xc8, 0xba,
-	0xaf, 0xd5, 0xdb, 0x5a, 0x97, 0x79, 0x5a, 0xfa, 0xfb, 0x5f, 0x7f, 0xfd, 0xfe, 0x56, 0x1f, 0xa1,
-	0x61, 0x70, 0x7b, 0x1a, 0xe8, 0x1e, 0x06, 0x77, 0x0f, 0x6f, 0x76, 0x8f, 0xae, 0xa1, 0xab, 0x46,
-	0xcc, 0x31, 0x76, 0x9f, 0x9a, 0x4e, 0x07, 0xd8, 0x79, 0x3a, 0xa8, 0x30, 0x87, 0x1a, 0xb3, 0x8b,
-	0x76, 0x14, 0xc6, 0xba, 0x14, 0x69, 0xf9, 0xb5, 0xdc, 0x23, 0x0e, 0x03, 0x5b, 0x60, 0x07, 0xdb,
-	0x5f, 0xdf, 0xaf, 0xda, 0x38, 0x6f, 0xef, 0xaf, 0x71, 0x85, 0x3c, 0xd0, 0x48, 0x0f, 0x8d, 0x14,
-	0x92, 0x9a, 0x48, 0xf5, 0x6c, 0xb7, 0xd0, 0xd3, 0x4d, 0x71, 0xbc, 0x47, 0xfb, 0xad, 0xb6, 0xcc,
-	0x1b, 0x8e, 0xcd, 0x85, 0x3a, 0x76, 0xf7, 0xe4, 0xf8, 0x5c, 0x5d, 0x8d, 0xfe, 0x89, 0xe6, 0xbc,
-	0xf6, 0x8e, 0xf5, 0xd1, 0x54, 0x46, 0x85, 0x12, 0xdc, 0xad, 0x75, 0xf2, 0x7e, 0xde, 0xd6, 0x3b,
-	0x4c, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0xa8, 0x20, 0x35, 0xbf, 0xe6, 0x05, 0x00, 0x00,
+	// 638 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x54, 0x4f, 0x6f, 0xd3, 0x4e,
+	0x10, 0x55, 0x5c, 0x27, 0x6e, 0xa6, 0x69, 0x55, 0xed, 0x2f, 0x69, 0x2d, 0xff, 0x0a, 0x44, 0xae,
+	0x40, 0x15, 0x07, 0x5b, 0xb4, 0x27, 0x24, 0x8e, 0x54, 0xa8, 0x12, 0x42, 0x95, 0xcb, 0x81, 0x13,
+	0xd5, 0xd6, 0x5e, 0xcc, 0x52, 0x67, 0x77, 0xd9, 0xdd, 0x54, 0x8a, 0xaa, 0x5e, 0xf8, 0x0a, 0x7c,
+	0x2d, 0x38, 0x71, 0xe5, 0xc8, 0x07, 0x41, 0xfb, 0xc7, 0xae, 0x4b, 0x0f, 0xbd, 0xc4, 0x33, 0x6f,
+	0xde, 0xbc, 0xf5, 0xbc, 0xd9, 0x18, 0x5e, 0xd6, 0x54, 0x7f, 0x5e, 0x5e, 0x64, 0x25, 0x5f, 0xe4,
+	0x58, 0x88, 0x92, 0x34, 0x44, 0x62, 0xcd, 0x65, 0x8e, 0x17, 0x22, 0xc7, 0x82, 0xe6, 0x52, 0x94,
+	0xb9, 0x22, 0xf2, 0x8a, 0x96, 0xa4, 0x7d, 0x66, 0x42, 0x72, 0xcd, 0x51, 0xe4, 0xd3, 0x64, 0xaf,
+	0xe6, 0xbc, 0x6e, 0x88, 0xa5, 0x63, 0xc6, 0xb8, 0xc6, 0x9a, 0x72, 0xa6, 0x1c, 0x2d, 0x39, 0xea,
+	0x9d, 0x50, 0xf3, 0x06, 0xb3, 0x3a, 0xb7, 0x85, 0x8b, 0xe5, 0xa7, 0x5c, 0xe8, 0x95, 0x20, 0x2a,
+	0x27, 0x0b, 0xa1, 0x57, 0xee, 0xd7, 0x35, 0xa5, 0x4f, 0x61, 0x7c, 0xaa, 0x0a, 0xf2, 0x75, 0x49,
+	0x94, 0x46, 0x31, 0xb4, 0x47, 0xc5, 0x83, 0xf9, 0xe0, 0x60, 0x5c, 0xb4, 0x69, 0xfa, 0x73, 0x00,
+	0xe1, 0x7b, 0xac, 0x2e, 0xd1, 0x16, 0x04, 0xb4, 0xf2, 0xd5, 0x80, 0x56, 0x68, 0x0a, 0x43, 0xba,
+	0xc0, 0x35, 0x89, 0x03, 0x0b, 0xb9, 0x04, 0xed, 0xc3, 0x66, 0xb9, 0x94, 0x92, 0x30, 0x7d, 0xae,
+	0x34, 0xd6, 0x24, 0x5e, 0xb3, 0xd5, 0x89, 0x07, 0xcf, 0x0c, 0x66, 0x48, 0x15, 0x51, 0x54, 0x92,
+	0xca, 0x93, 0x42, 0x47, 0xf2, 0xa0, 0x23, 0xed, 0x42, 0xc4, 0x78, 0x45, 0xce, 0x69, 0x15, 0x0f,
+	0x6d, 0x79, 0x64, 0xd2, 0x13, 0x7b, 0x30, 0x91, 0x92, 0xcb, 0x78, 0xe4, 0x0e, 0xb6, 0x09, 0x42,
+	0x10, 0x32, 0xbc, 0x20, 0x71, 0x64, 0x41, 0x1b, 0x1b, 0x4c, 0x35, 0x5c, 0xc7, 0xeb, 0xf3, 0xc1,
+	0xc1, 0xb0, 0xb0, 0x71, 0x9a, 0x41, 0x64, 0xc6, 0x16, 0xcd, 0x0a, 0xed, 0xc3, 0x50, 0x63, 0x75,
+	0xa9, 0xe2, 0xc1, 0x7c, 0xed, 0x60, 0xe3, 0x70, 0x33, 0x6b, 0xcd, 0x37, 0xf3, 0x16, 0xae, 0x96,
+	0xee, 0xc3, 0xc6, 0x5b, 0xaa, 0x74, 0x6b, 0xd4, 0x14, 0x86, 0x4a, 0xe3, 0xf2, 0xd2, 0x1b, 0xe1,
+	0x92, 0xf4, 0x15, 0x8c, 0x1d, 0xc9, 0xc8, 0xe6, 0x10, 0x11, 0xa6, 0x25, 0x25, 0xad, 0xf0, 0xac,
+	0x13, 0x3e, 0x73, 0xcf, 0x63, 0xa6, 0xe5, 0xaa, 0x68, 0x59, 0xe9, 0x8f, 0x01, 0x4c, 0xfa, 0x95,
+	0x7b, 0x56, 0xb7, 0xb3, 0x05, 0x77, 0x67, 0x5b, 0xf0, 0xaa, 0xf5, 0xd7, 0xc6, 0xb7, 0x2b, 0x09,
+	0xfb, 0x2b, 0xd9, 0x86, 0x35, 0x8d, 0x6b, 0x6f, 0xa2, 0x09, 0x8d, 0xff, 0x72, 0xc9, 0x18, 0x65,
+	0xf5, 0xb9, 0x33, 0x60, 0x64, 0x0d, 0x9a, 0x78, 0xd0, 0x8c, 0xaf, 0xd0, 0x13, 0xd8, 0xd0, 0x5c,
+	0xe3, 0xc6, 0x53, 0x22, 0x4b, 0x01, 0x0b, 0x39, 0xc2, 0x0e, 0x8c, 0xcc, 0xf6, 0x96, 0xca, 0xfa,
+	0x3b, 0x2e, 0x7c, 0x96, 0x3e, 0x87, 0xad, 0x13, 0xa6, 0x04, 0x29, 0xf5, 0xc3, 0xb7, 0x2b, 0x85,
+	0x49, 0xc7, 0x35, 0xde, 0x21, 0x08, 0xbf, 0x28, 0xce, 0x3c, 0xcd, 0xc6, 0xe9, 0x6b, 0x98, 0x9c,
+	0x95, 0xb8, 0x21, 0x0f, 0xaa, 0xa1, 0x04, 0xd6, 0x25, 0x11, 0x0d, 0x2d, 0xb1, 0xb2, 0x5e, 0x85,
+	0x45, 0x97, 0x1f, 0xfe, 0x0e, 0x20, 0xf2, 0x26, 0xa3, 0x37, 0x10, 0x9c, 0x2a, 0x84, 0xba, 0xb5,
+	0x74, 0xff, 0x83, 0x64, 0xfb, 0x0e, 0x26, 0x9a, 0x55, 0xfa, 0xff, 0xb7, 0x5f, 0x7f, 0xbe, 0x07,
+	0x33, 0xf4, 0x5f, 0x7e, 0xf5, 0x22, 0xb7, 0x56, 0xe4, 0xd7, 0x9e, 0x73, 0x83, 0xde, 0x41, 0x68,
+	0xf6, 0x8e, 0xa6, 0x5d, 0x5b, 0xef, 0xae, 0x24, 0xe8, 0x1f, 0xd4, 0xc8, 0xed, 0x59, 0xb9, 0x1d,
+	0x34, 0x35, 0x72, 0xbe, 0x6c, 0x14, 0xcd, 0x35, 0xba, 0x41, 0x1f, 0x20, 0xf2, 0x76, 0xa0, 0xdd,
+	0xae, 0xf9, 0xae, 0x99, 0xc9, 0xec, 0x7e, 0xc1, 0x08, 0x3f, 0xb2, 0xc2, 0xbb, 0x68, 0x66, 0x84,
+	0xa9, 0xab, 0xf4, 0xde, 0xf4, 0x23, 0x0c, 0xad, 0x89, 0xa8, 0x77, 0x19, 0x7b, 0xa6, 0x26, 0x3b,
+	0x99, 0xfb, 0xc2, 0x64, 0xed, 0x87, 0x23, 0x3b, 0x36, 0xdf, 0x8a, 0xf4, 0x99, 0x95, 0x9d, 0x27,
+	0x8f, 0xed, 0xfb, 0x9a, 0x8e, 0x5b, 0xd1, 0xfc, 0xba, 0x75, 0xf7, 0xe6, 0x62, 0x64, 0xfb, 0x8e,
+	0xfe, 0x06, 0x00, 0x00, 0xff, 0xff, 0xe8, 0x1f, 0x09, 0xb0, 0xed, 0x04, 0x00, 0x00,
 }

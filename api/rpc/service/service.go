@@ -2,9 +2,8 @@ package service
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/filters"
@@ -12,6 +11,7 @@ import (
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/golang/protobuf/ptypes/empty"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,47 +33,52 @@ const (
 	StackNameLabelName = "com.docker.stack.namespace"
 )
 
-// Tasks implements service.Containers
-func (s *Server) Tasks(ctx context.Context, in *TasksRequest) (*TasksReply, error) {
-	log.Infoln("[service] Tasks", in.ServiceId)
+// Ps implements service.Ps
+func (s *Server) Ps(ctx context.Context, in *PsRequest) (*PsReply, error) {
+	log.Infoln("[service] PsService", in.Service)
 	args := filters.NewArgs()
-	args.Add("service", in.ServiceId)
-	list, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: args})
+	args.Add("service", in.Service)
+	tasks, err := s.Docker.TaskList(ctx, types.TaskListOptions{Filters: args})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
-	taskList := &TasksReply{}
-	for _, item := range list {
+
+	// Sort tasks by slot, then by most recent
+	sort.Stable(docker.TasksBySlot(tasks))
+	taskList := &PsReply{}
+
+	for _, task := range tasks {
 		task := &Task{
-			Id:           item.ID,
-			Image:        strings.Split(item.Spec.ContainerSpec.Image, "@")[0],
-			CurrentState: strings.ToUpper(string(item.Status.State)),
-			DesiredState: strings.ToUpper(string(item.DesiredState)),
-			NodeId:       item.NodeID,
-			Error:        item.Status.Err,
+			Id:           task.ID,
+			Image:        strings.Split(task.Spec.ContainerSpec.Image, "@")[0],
+			CurrentState: strings.ToUpper(string(task.Status.State)),
+			DesiredState: strings.ToUpper(string(task.DesiredState)),
+			NodeId:       task.NodeID,
+			Error:        task.Status.Err,
+			Slot:         int32(task.Slot),
 		}
 		taskList.Tasks = append(taskList.Tasks, task)
 	}
 	return taskList, nil
 }
 
-// ListService implements service.ListService
-func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*ServiceListReply, error) {
-	log.Infoln("[service] List ", in.StackName)
+// List implements service.List
+func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+	log.Infoln("[service] List ", in.Stack)
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
-	reply := &ServiceListReply{}
+	reply := &ListReply{}
 	for _, service := range serviceList {
 		if _, ok := service.Spec.Labels[RoleLabel]; ok {
 			continue // ignore amp infrastructure services
 		}
 		stackName := service.Spec.Labels[StackNameLabelName]
-		if in.StackName != "" && stackName != in.StackName {
+		if in.Stack != "" && stackName != in.Stack {
 			continue // filter based on provided stack name
 		}
-		entity := &ServiceEntity{
+		entry := &ServiceEntry{
 			Id:   service.ID,
 			Name: service.Spec.Name,
 		}
@@ -81,49 +86,45 @@ func (s *Server) ListService(ctx context.Context, in *ServiceListRequest) (*Serv
 		if strings.Contains(image, "@") {
 			image = strings.Split(image, "@")[0] // trimming the hash
 		}
-		entity.Image = image
-		entity.Tag = LatestTag
+		entry.Image = image
+		entry.Tag = LatestTag
 		if strings.Contains(image, ":") {
 			index := strings.LastIndex(image, ":")
-			entity.Image = image[:index]
-			entity.Tag = image[index+1:]
+			entry.Image = image[:index]
+			entry.Tag = image[index+1:]
 		}
-		entity.Mode = ReplicatedMode
+		entry.Mode = ReplicatedMode
 		if service.Spec.Mode.Global != nil {
-			entity.Mode = GlobalMode
+			entry.Mode = GlobalMode
 		}
-		response, err := s.serviceStatusReplicas(ctx, entity)
+		status, err := s.Docker.ServiceStatus(ctx, &service)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%v", err)
+			return nil, err
 		}
-		reply.Entries = append(reply.Entries, response)
+		entry.RunningTasks = status.RunningTasks
+		entry.TotalTasks = status.TotalTasks
+		entry.Status = status.Status
+
+		reply.Entries = append(reply.Entries, entry)
 	}
 	return reply, nil
 }
 
-func (s *Server) serviceStatusReplicas(ctx context.Context, service *ServiceEntity) (*ServiceListEntry, error) {
-	statusReplicas, err := s.Docker.ServiceStatus(ctx, service.Id)
-	if err != nil {
-		return nil, err
-	}
-	return &ServiceListEntry{Service: service, ReadyTasks: statusReplicas.RunningTasks, TotalTasks: statusReplicas.TotalTasks, FailedTasks: statusReplicas.FailedTasks, Status: statusReplicas.Status}, nil
-}
-
-// InspectService inspects a service
-func (s *Server) InspectService(ctx context.Context, in *ServiceInspectRequest) (*ServiceInspectReply, error) {
-	log.Infoln("[service] Inspect", in.ServiceId)
-	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
+// Inspect inspects a service
+func (s *Server) Inspect(ctx context.Context, in *InspectRequest) (*InspectReply, error) {
+	log.Infoln("[service] Inspect", in.Service)
+	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.Service)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	entity, _ := json.MarshalIndent(serviceEntity, "", "	")
-	return &ServiceInspectReply{ServiceEntity: string(entity)}, nil
+	return &InspectReply{Json: string(entity)}, nil
 }
 
-// ScaleService scales a service
-func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*empty.Empty, error) {
-	log.Infoln("[service] Scale", in.ServiceId)
-	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.ServiceId)
+// Scale scales a service
+func (s *Server) Scale(ctx context.Context, in *ScaleRequest) (*empty.Empty, error) {
+	log.Infoln("[service] Scale", in.Service)
+	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.Service)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -142,7 +143,7 @@ func (s *Server) ScaleService(ctx context.Context, in *ServiceScaleRequest) (*em
 		return nil, status.Errorf(codes.PermissionDenied, "user not authorized")
 	}
 
-	if err := s.Docker.ServiceScale(ctx, in.ServiceId, in.ReplicasNumber); err != nil {
+	if err := s.Docker.ServiceScale(ctx, in.Service, in.Replicas); err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	return &empty.Empty{}, nil

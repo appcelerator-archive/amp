@@ -14,7 +14,6 @@ import (
 )
 
 type taskOptions struct {
-	all   bool
 	quiet bool
 }
 
@@ -36,23 +35,39 @@ func NewServicePsCommand(c cli.Interface) *cobra.Command {
 func tasks(c cli.Interface, args []string, opts taskOptions) error {
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
-	request := &service.TasksRequest{
-		ServiceId: args[0],
+	request := &service.PsRequest{
+		Service: args[0],
 	}
-	reply, err := client.Tasks(context.Background(), request)
+	reply, err := client.Ps(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}
 	}
 
+	prevName := ""
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
-	fmt.Fprintln(w, "ID\tIMAGE\tDESIRED STATE\tCURRENT STATE\tNODE ID\tERROR")
+	fmt.Fprintln(w, "ID\tNAME\tIMAGE\tDESIRED STATE\tCURRENT STATE\tNODE ID\tERROR")
+
 	for _, task := range reply.Tasks {
 		if opts.quiet {
 			c.Console().Println(task.Id)
+			return nil
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", task.Id, task.Image, task.DesiredState, task.CurrentState, task.NodeId, task.Error)
+			var name string
+			if task.Slot != 0 {
+				name = fmt.Sprintf("%v.%v", args[0], task.Slot)
+			} else {
+				name = fmt.Sprintf("%v.%v", args[0], task.NodeId)
+			}
+			// Indent the name if necessary
+			indentedName := name
+			if name == prevName {
+				indentedName = fmt.Sprintf(" \\_ %s", indentedName)
+			}
+			prevName = name
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", task.Id, indentedName, task.Image, task.DesiredState, task.CurrentState, task.NodeId, task.Error)
 		}
 	}
 	if !opts.quiet {
