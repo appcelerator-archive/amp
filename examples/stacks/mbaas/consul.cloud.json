@@ -17,7 +17,7 @@
 	{
 		"key": "arrowdb/arrowdb_domain",
 		"flags": 0,
-		"value": "bWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "arrowdb/arrowdb_url_prefix",
@@ -137,7 +137,7 @@
 	{
 		"key": "dashboard/dashboard_domain",
 		"flags": 0,
-		"value": "bWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "dashboard/dashboard_session_cookie_secure",
@@ -262,7 +262,7 @@
 	{
 		"key": "global/arrowdb_domain_name",
 		"flags": 0,
-		"value": "bWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "global/cluster",
@@ -272,12 +272,12 @@
 	{
 		"key": "global/dashboard_domain_name",
 		"flags": 0,
-		"value": "bWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "global/dashboard_url",
 		"flags": 0,
-		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "global/dedicated_swarm_managers",
@@ -287,7 +287,7 @@
 	{
 		"key": "global/external_dashboard_url",
 		"flags": 0,
-		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
 		"key": "global/has_internet_access",
