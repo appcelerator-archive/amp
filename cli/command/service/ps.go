@@ -18,24 +18,18 @@ type taskOptions struct {
 	quiet bool
 }
 
-const (
-	StateRunning = "RUNNING"
-)
-
 // NewServicePsCommand returns a new instance of the service ps command
 func NewServicePsCommand(c cli.Interface) *cobra.Command {
 	opts := taskOptions{}
 	cmd := &cobra.Command{
 		Use:     "ps [OPTIONS] SERVICE",
-		Short:   "List running tasks of a service",
+		Short:   "List tasks of a service",
 		PreRunE: cli.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return tasks(c, args, opts)
 		},
 	}
-	flags := cmd.Flags()
-	flags.BoolVarP(&opts.all, "all", "a", false, "Display all tasks")
-	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only display task ids")
+	cmd.Flags().BoolVarP(&opts.quiet, "quiet", "q", false, "Only display task ids")
 	return cmd
 }
 
@@ -55,9 +49,6 @@ func tasks(c cli.Interface, args []string, opts taskOptions) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, cli.Padding, ' ', 0)
 	fmt.Fprintln(w, "ID\tIMAGE\tDESIRED STATE\tCURRENT STATE\tNODE ID\tERROR")
 	for _, task := range reply.Tasks {
-		if !opts.all && task.CurrentState != StateRunning {
-			continue
-		}
 		if opts.quiet {
 			c.Console().Println(task.Id)
 		} else {
