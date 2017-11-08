@@ -385,7 +385,7 @@ $(AMPAGENTTARGET): $(PROTOTARGETS) $(AMPAGENTSRC) VERSION vendor
 
 build-ampagent: $(AMPAGENTTARGET)
 	@echo "build $(AMPAGENTIMG)"
-	@$(DOCKER_CMD) build -t $(AMPAGENTIMG) $(AMPAGENTDIR) || (rm -f $(AMPAGENTTARGET); exit 1)
+	@$(DOCKER_CMD) build --no-cache -t $(AMPAGENTIMG) $(AMPAGENTDIR) || (rm -f $(AMPAGENTTARGET); exit 1)
 
 rebuild-ampagent: clean-ampagent build-ampagent
 

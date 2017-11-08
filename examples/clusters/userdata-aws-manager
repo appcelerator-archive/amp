@@ -469,7 +469,7 @@ _wait_for_full_swarm() {
 }
 
 _setup() {
-  docker run --rm -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent:${AMPAGENT_VERSION}
+  docker run --rm -e VPC_ID="${VPC_ID}" -e STACK_NAME="${STACK_NAME}" -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent:${AMPAGENT_VERSION}
 }
 
 _sanity_check || exit 1

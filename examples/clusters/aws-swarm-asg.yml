@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-3f20a845
+      Default: ami-4e029134
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-dff6d8ba
+      Default: ami-c09fb1a5
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-bcf02dc4
+      Default: ami-5dc91725
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-8fd463f6
+      Default: ami-ffda6986
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-38b2585a
+      Default: ami-428e7b20
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -494,6 +494,11 @@ Resources:
         IpProtocol: udp
         FromPort: '4789'
         ToPort: '4789'
+      # infrakit mux server
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '24864'
+        ToPort: '24864'
       # node exporter
       - SourceSecurityGroupId:
           !Ref MetricsSecurityGroup
@@ -746,8 +751,9 @@ Resources:
           - 'ec2:DeleteNetworkInterface'
           - 'elasticfilesystem:DescribeFileSystems'
           - 'elasticfilesystem:DescribeMountTargets'
-          #  next line for cluster status command
+            # next two lines for aws metadata plugin
           - 'cloudformation:DescribeStacks'
+          - 'cloudformation:DescribeStackResources'
           # next lines for cluster object command
           - 's3:CreateBucket'
           - 's3:ListBucket'
@@ -1254,6 +1260,10 @@ Resources:
         InstanceProtocol: TCP
       - LoadBalancerPort: '9090'
         InstancePort: '9090'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '24864'
+        InstancePort: '24864'
         Protocol: TCP
         InstanceProtocol: TCP
       - LoadBalancerPort: '50101'
