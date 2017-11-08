@@ -22,7 +22,7 @@ The mongodb configuration and the consul configuration have to be created as Doc
     amp -k user signup
 
     amp -k config create mongo_dbinit mongo_dbinit.sh
-    amp -k config create consul_kv consul-kv.json
+    amp -k config create consul_kv consul.local.json
 
     amp -k stack deploy --with-registry-auth -c mbaas.stage1.yml
     # Check point: amp -k service ps mbaas_mongo-primary
@@ -38,3 +38,10 @@ The mongodb configuration and the consul configuration have to be created as Doc
 * Consul: https://consul.mbaas.local.appcelerator.io
 * ACS: https://acs.mbaas.local.appcelerator.io
 * Dashboard: https://dashboard.mbaas.local.appcelerator.io
+
+## Dashboard
+
+In order to login to **Dashboard**, use the following credentials:
+
+* login: admin@dashboard.local
+* password: changeme

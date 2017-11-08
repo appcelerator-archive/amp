@@ -1,0 +1,437 @@
+[
+	{
+		"key": "arrowdb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/airbrake_key",
+		"flags": 0,
+		"value": "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg="
+	},
+	{
+		"key": "arrowdb/arrowdb_api_maxconn",
+		"flags": 0,
+		"value": "MTA="
+	},
+	{
+		"key": "arrowdb/arrowdb_domain",
+		"flags": 0,
+		"value": "bWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "arrowdb/arrowdb_url_prefix",
+		"flags": 0,
+		"value": "YWNz"
+	},
+	{
+		"key": "arrowdb/cookie_secret",
+		"flags": 0,
+		"value": "ZWNkNzQzOTM0NzA3MTcwYWRhY2VmYTQ0ZTlkMjQ3Njg5Zjc2YWE1MGMwYjRiMzIwZDE1YjAwMDNlZjEyMmZiMzliNmMxMzY4MGJkN2QzOGFlNjVjNTQ0OTc3ZjE2NDU5ZmVhMTI1NmVlY2U0MjM5OTZmMzJmOWI5Y2ZlN2JkZTI="
+	},
+	{
+		"key": "arrowdb/devise_pepper",
+		"flags": 0,
+		"value": "ZWU1Y2RjZDRlMjBjZmJkZTEzZWJhZDMxZmJkYzFjYWU0ZmE2M2M1NzgyMDEyZGRmYjhkZTk4NjgxMWFhZTgwZTllMjZlNDgxOTJmMDBhMzg2YTU0MzhjMzcyNGIzMWRiZDU2NzU5MmU2NGMyNjJmMTAxMTZmN2EyYmIyMWVkMmM="
+	},
+	{
+		"key": "arrowdb/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/acs_global_apps/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/data/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/data/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_api",
+		"flags": 0,
+		"value": "YWNzX2FwaQ=="
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_global_apps",
+		"flags": 0,
+		"value": "YWNzX2dsb2JhbF9hcHBz"
+	},
+	{
+		"key": "arrowdb/mongodb/dbname/acs_log",
+		"flags": 0,
+		"value": "YWNzX2xvZw=="
+	},
+	{
+		"key": "arrowdb/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowdb/mongodb/log/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "arrowdb/mongodb/log/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "arrowdb/protocol",
+		"flags": 0,
+		"value": "aHR0cHM="
+	},
+	{
+		"key": "arrowdb/solr_hostname",
+		"flags": 0,
+		"value": "bG9jYWxob3N0"
+	},
+	{
+		"key": "arrowdb/storage_type",
+		"flags": 0,
+		"value": "bG9jYWw="
+	},
+	{
+		"key": "arrowdb/studio_login_url",
+		"flags": 0,
+		"value": "aHR0cHM6Ly9hcGkuYXBwY2VsZXJhdG9yLm5ldC9wL3YxL3Nzby1sb2dpbg=="
+	},
+	{
+		"key": "arrowdb/user_name",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "dashboard/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "dashboard/dashboard_domain",
+		"flags": 0,
+		"value": "bWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "dashboard/dashboard_session_cookie_secure",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "dashboard/dashboard_url_prefix",
+		"flags": 0,
+		"value": "ZGFzaGJvYXJk"
+	},
+	{
+		"key": "dashboard/dashboard_x_auth_token",
+		"flags": 0,
+		"value": "cjgzSjhjRExaVXNDS01jamJ2blN5TVJ5S2NlajNm"
+	},
+	{
+		"key": "dashboard/default_user",
+		"flags": 0,
+		"value": "YWRtaW5AZGFzaGJvYXJkLmxvY2Fs"
+	},
+	{
+		"key": "dashboard/default_user_password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "dashboard/external_port",
+		"flags": 0,
+		"value": "NDQz"
+	},
+	{
+		"key": "dashboard/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "dashboard/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "dashboard/mongodb/data/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "dashboard/mongodb/data/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "dashboard/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "dashboard/mongodb/log/password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "dashboard/mongodb/log/username",
+		"flags": 0,
+		"value": "YXBwY2VsZXJhdG9y"
+	},
+	{
+		"key": "dashboard/pem_auth_token",
+		"flags": 0,
+		"value": "NmZhNGI3MTEtMjdmMi00OTgzLTliYmYtZTc1Y2UxZjhkNTdi"
+	},
+	{
+		"key": "dashboard/protocol",
+		"flags": 0,
+		"value": "aHR0cHM="
+	},
+	{
+		"key": "dashboard/session_secret",
+		"flags": 0,
+		"value": "ZDFjOXFhelp2QXdqNGNTRlh2N0RJN1BN"
+	},
+	{
+		"key": "dashboard/ssl",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "dashboard/tooling_auth_token",
+		"flags": 0,
+		"value": "NmY3NzNhMjktYTNmOC00NjFjLTg3OWEtOTQ5NDE5MDkwZDdk"
+	},
+	{
+		"key": "global/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_certificate",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_certificate_authorities",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_certificate_key",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_key_passphrase",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_server",
+		"flags": 0,
+		"value": "Tk8="
+	},
+	{
+		"key": "global/arrowdb_domain_name",
+		"flags": 0,
+		"value": "bWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "global/cluster",
+		"flags": 0,
+		"value": "bWJhYXM="
+	},
+	{
+		"key": "global/dashboard_domain_name",
+		"flags": 0,
+		"value": "bWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "global/dashboard_url",
+		"flags": 0,
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "global/dedicated_swarm_managers",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "global/external_dashboard_url",
+		"flags": 0,
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubG9jYWwuYXBwY2VsZXJhdG9yLmlv"
+	},
+	{
+		"key": "global/has_internet_access",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "global/image_tag",
+		"flags": 0,
+		"value": "MS42LjAtc3Ay"
+	},
+	{
+		"key": "global/log_level",
+		"flags": 0,
+		"value": "REVCVUc="
+	},
+	{
+		"key": "global/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/acs_global_apps/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "global/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/data/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/data/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/data/rsname",
+		"flags": 0,
+		"value": "ZGF0YQ=="
+	},
+	{
+		"key": "global/mongodb/data/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "global/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/mongodb/log/port",
+		"flags": 0,
+		"value": "MjcwMTc="
+	},
+	{
+		"key": "global/mongodb/log/primary-host",
+		"flags": 0,
+		"value": "bW9uZ28tcHJpbWFyeQ=="
+	},
+	{
+		"key": "global/mongodb/log/rsname",
+		"flags": 0,
+		"value": "bG9n"
+	},
+	{
+		"key": "global/mongodb/log/secondary-host",
+		"flags": 0,
+		"value": "bW9uZ28tc2Vjb25kYXJ5"
+	},
+	{
+		"key": "global/mongodb_admin_password",
+		"flags": 0,
+		"value": "Y2hhbmdlbWU="
+	},
+	{
+		"key": "global/nfs_server",
+		"flags": 0,
+		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
+	},
+	{
+		"key": "global/nfs_server_ip",
+		"flags": 0,
+		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
+	},
+	{
+		"key": "global/product_type",
+		"flags": 0,
+		"value": "YWxs"
+	},
+	{
+		"key": "global/proxy_host",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_password",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_port",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_username",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/redis_host",
+		"flags": 0,
+		"value": "cmVkaXM="
+	},
+	{
+		"key": "global/redis_password",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/version",
+		"flags": 0,
+		"value": "MS42LjAtc3Ay"
+	}
+]

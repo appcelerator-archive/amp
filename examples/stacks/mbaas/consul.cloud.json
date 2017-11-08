@@ -5,6 +5,16 @@
 		"value": ""
 	},
 	{
+		"key": "arrowdb/airbrake_key",
+		"flags": 0,
+		"value": "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg="
+	},
+	{
+		"key": "arrowdb/arrowdb_api_maxconn",
+		"flags": 0,
+		"value": "MTA="
+	},
+	{
 		"key": "arrowdb/arrowdb_domain",
 		"flags": 0,
 		"value": "bWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
@@ -17,7 +27,12 @@
 	{
 		"key": "arrowdb/cookie_secret",
 		"flags": 0,
-		"value": "ZWNkNzQzOTM0NzA4MTgwYWRhY2VmYTQ0ZTlkMjQ3Njg5Zjc2YWE1MGMwYjRiMzIwZDE1YjAwMDNlZjEyMmZiMzliNmMxMzY4MGJkN2QzOGFlNjVjNTQ0OTc3ZjE2NDU5ZmVhMTI1NmVlY2U0MjM5OTZmMzJmOWI5Y2ZlN2JkZTI="
+		"value": "ZWNkNzQzOTM0NzA3MTcwYWRhY2VmYTQ0ZTlkMjQ3Njg5Zjc2YWE1MGMwYjRiMzIwZDE1YjAwMDNlZjEyMmZiMzliNmMxMzY4MGJkN2QzOGFlNjVjNTQ0OTc3ZjE2NDU5ZmVhMTI1NmVlY2U0MjM5OTZmMzJmOWI5Y2ZlN2JkZTI="
+	},
+	{
+		"key": "arrowdb/devise_pepper",
+		"flags": 0,
+		"value": "ZWU1Y2RjZDRlMjBjZmJkZTEzZWJhZDMxZmJkYzFjYWU0ZmE2M2M1NzgyMDEyZGRmYjhkZTk4NjgxMWFhZTgwZTllMjZlNDgxOTJmMDBhMzg2YTU0MzhjMzcyNGIzMWRiZDU2NzU5MmU2NGMyNjJmMTAxMTZmN2EyYmIyMWVkMmM="
 	},
 	{
 		"key": "arrowdb/mongodb/",
@@ -95,9 +110,19 @@
 		"value": "aHR0cHM="
 	},
 	{
+		"key": "arrowdb/solr_hostname",
+		"flags": 0,
+		"value": "bG9jYWxob3N0"
+	},
+	{
 		"key": "arrowdb/storage_type",
 		"flags": 0,
 		"value": "bG9jYWw="
+	},
+	{
+		"key": "arrowdb/studio_login_url",
+		"flags": 0,
+		"value": "aHR0cHM6Ly9hcGkuYXBwY2VsZXJhdG9yLm5ldC9wL3YxL3Nzby1sb2dpbg=="
 	},
 	{
 		"key": "arrowdb/user_name",
@@ -127,7 +152,7 @@
 	{
 		"key": "dashboard/dashboard_x_auth_token",
 		"flags": 0,
-		"value": "cjgzSjhjRExaVXNDS01jamJ2blNhTVJ5S2NlajNm"
+		"value": "cjgzSjhjRExaVXNDS01jamJ2blN5TVJ5S2NlajNm"
 	},
 	{
 		"key": "dashboard/default_user",
@@ -180,6 +205,11 @@
 		"value": "YXBwY2VsZXJhdG9y"
 	},
 	{
+		"key": "dashboard/pem_auth_token",
+		"flags": 0,
+		"value": "NmZhNGI3MTEtMjdmMi00OTgzLTliYmYtZTc1Y2UxZjhkNTdi"
+	},
+	{
 		"key": "dashboard/protocol",
 		"flags": 0,
 		"value": "aHR0cHM="
@@ -187,12 +217,47 @@
 	{
 		"key": "dashboard/session_secret",
 		"flags": 0,
-		"value": "QTFjOHFhelpxQXdqNGNTRlh2N2RJN1Bt"
+		"value": "ZDFjOXFhelp2QXdqNGNTRlh2N0RJN1BN"
+	},
+	{
+		"key": "dashboard/ssl",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "dashboard/tooling_auth_token",
+		"flags": 0,
+		"value": "NmY3NzNhMjktYTNmOC00NjFjLTg3OWEtOTQ5NDE5MDkwZDdk"
 	},
 	{
 		"key": "global/",
 		"flags": 0,
 		"value": ""
+	},
+	{
+		"key": "global/adi_certificate",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_certificate_authorities",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_certificate_key",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_key_passphrase",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/adi_server",
+		"flags": 0,
+		"value": "Tk8="
 	},
 	{
 		"key": "global/arrowdb_domain_name",
@@ -212,17 +277,27 @@
 	{
 		"key": "global/dashboard_url",
 		"flags": 0,
-		"value": "ZGFzaGJvYXJkLm1iYWFzLm5kZS5hcHBjZWxlcmF0b3IuaW8="
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
 	},
 	{
-		"key": "global/dashboard_x_auth_token",
+		"key": "global/dedicated_swarm_managers",
 		"flags": 0,
-		"value": "cjgzSjhjRExaVXNDS01jamJ2blNhTVJ5S2NlajNm"
+		"value": "dHJ1ZQ=="
 	},
 	{
 		"key": "global/external_dashboard_url",
 		"flags": 0,
-		"value": "ZGFzaGJvYXJkLm1iYWFzLm5kZS5hcHBjZWxlcmF0b3IuaW8="
+		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMubmRlLmFwcGNlbGVyYXRvci5pbw=="
+	},
+	{
+		"key": "global/has_internet_access",
+		"flags": 0,
+		"value": "dHJ1ZQ=="
+	},
+	{
+		"key": "global/image_tag",
+		"flags": 0,
+		"value": "MS42LjAtc3Ay"
 	},
 	{
 		"key": "global/log_level",
@@ -248,11 +323,6 @@
 		"key": "global/mongodb/acs_global_apps/primary-host",
 		"flags": 0,
 		"value": "bW9uZ28tcHJpbWFyeQ=="
-	},
-	{
-		"key": "global/mongodb/acs_global_apps/rsname",
-		"flags": 0,
-		"value": "ZGF0YQ=="
 	},
 	{
 		"key": "global/mongodb/acs_global_apps/secondary-host",
@@ -315,11 +385,6 @@
 		"value": "Y2hhbmdlbWU="
 	},
 	{
-		"key": "global/mongodb_password",
-		"flags": 0,
-		"value": "Y2hhbmdlbWU="
-	},
-	{
 		"key": "global/nfs_server",
 		"flags": 0,
 		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
@@ -330,18 +395,43 @@
 		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
 	},
 	{
+		"key": "global/product_type",
+		"flags": 0,
+		"value": "YWxs"
+	},
+	{
+		"key": "global/proxy_host",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_password",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_port",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "global/proxy_username",
+		"flags": 0,
+		"value": ""
+	},
+	{
 		"key": "global/redis_host",
 		"flags": 0,
 		"value": "cmVkaXM="
 	},
 	{
-		"key": "global/version",
+		"key": "global/redis_password",
 		"flags": 0,
-		"value": "MS42LjAtcmMy"
+		"value": ""
 	},
 	{
-		"key": "protocol",
+		"key": "global/version",
 		"flags": 0,
-		"value": "aHR0cHM="
+		"value": "MS42LjAtc3Ay"
 	}
 ]
