@@ -134,7 +134,7 @@ services:
         - node.labels.amp.type.core == true
 
   nodes:
-    image: prom/node-exporter:v0.15.0
+    image: prom/node-exporter:v0.15.1
     networks:
       - default
     volumes:
@@ -156,7 +156,7 @@ services:
         io.amp.metrics.port: "9100"
 
   alertmanager:
-    image: prom/alertmanager:v0.9.1
+    image: prom/alertmanager:v0.10.0
     networks:
       - default
     volumes:

@@ -39,11 +39,12 @@ const (
 )
 
 var prometheusArgs = []string{
-	"-config.file=/etc/prometheus/prometheus.yml",
-	"-storage.local.path=/prometheus",
-	"-web.console.libraries=/usr/share/prometheus/console_libraries",
-	"-web.console.templates=/usr/share/prometheus/consoles",
-	"-alertmanager.url=http://alertmanager:9093",
+	"--config.file=/etc/prometheus/prometheus.yml",
+	"--storage.tsdb.path=/prometheus",
+	"--storage.tsdb.retention=15d",
+	"--web.console.libraries=/usr/share/prometheus/console_libraries",
+	"--web.console.templates=/usr/share/prometheus/consoles",
+	"--storage.tsdb.no-lockfile",
 }
 
 type Inventory struct {
@@ -326,6 +327,12 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+		err = proc.Wait()
+		log.Println("Prometheus has exited")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		// TODO: process is terminated without error, we should probably also stop the root cmd
 	}()
 	if err := RootCmd.Execute(); err != nil {
 		log.Fatalln(err)
