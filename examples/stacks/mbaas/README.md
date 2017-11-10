@@ -58,6 +58,12 @@ The mongodb configuration and the consul configuration have to be created as Doc
 
     curl -k -H Host:acs.mbaas.local.appcelerator.io https://$REMOTE_SERVER/v1/admins/ping.json
 
+PS: the consul template can be updated with the target domain name. For that, execute the following command before creating the docker config:
+
+    DOMAIN=bob.appcelerator.io examples/stacks/mbaas/prepare-consul-docker-config.sh
+
+This will update the `consul.cloud.json` file.
+
 ## Links
 
 * Mongo: https://mongo.mbaas.local.appcelerator.io
