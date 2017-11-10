@@ -1,16 +1,15 @@
 version: "3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
 
 services:
 
   visualizer:
     image: dockersamples/visualizer
     networks:
-      - default
+      - public
     environment:
       SERVICE_PORTS: "8080"
       VIRTUAL_HOST: "http://visualizer.*,https://visualizer.*"
@@ -23,7 +22,7 @@ services:
   portainer:
     image: portainer/portainer
     networks:
-      - default
+      - public
     environment:
       SERVICE_PORTS: "9000"
       VIRTUAL_HOST: "http://portainer.*,https://portainer.*"

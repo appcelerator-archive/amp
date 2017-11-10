@@ -31,7 +31,7 @@ services:
       VIRTUAL_HOST: "https://vote.examples.*,vote.examples.*"
     networks:
       - frontend
-      - default
+      - public
     depends_on:
       - redis
     deploy:
@@ -50,7 +50,7 @@ services:
       VIRTUAL_HOST: "https://result.examples.*,result.examples.*"
     networks:
       - backend
-      - default
+      - public
     depends_on:
       - db
     deploy:
@@ -83,9 +83,8 @@ services:
 networks:
   frontend:
   backend:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
 
 volumes:
   db-data:

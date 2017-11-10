@@ -1,9 +1,8 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  db:
+    driver: overlay
 
 configs:
   mongo_dbinit:
@@ -15,7 +14,7 @@ services:
   mongo-init:
     image: mongo:3.4.10
     networks:
-      - default
+      - db
     deploy:
       replicas: 1
       placement:
@@ -41,7 +40,7 @@ services:
   consul-init:
     image: consul:1.0.0
     networks:
-      - default
+      - db
     deploy:
       replicas: 1
       placement:

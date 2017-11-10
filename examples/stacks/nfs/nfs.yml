@@ -1,16 +1,15 @@
 version: "3.2"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
 
 services:
   client:
     #image: nginx
     image: ndegory/nginx-prometheus:latest
     networks:
-      - default
+      - public
     environment:
       SERVICE_PORTS: "80"
       VIRTUAL_HOST: "nfs.examples.*,https://nfs.examples.*"

@@ -21,7 +21,7 @@ The webapp will be available at [http://atsea.examples.local.appcelerator.io](ht
     networks:
       - default
 ```
-- The default network `ampnet` has been added in order to expose the `appserver` service behind the AMP reverse proxy.
+- The default network `public` has been added in order to expose the `appserver` service behind the AMP reverse proxy.
 
 - Docker secrets required for the reverse proxy have been removed accordingly.
 

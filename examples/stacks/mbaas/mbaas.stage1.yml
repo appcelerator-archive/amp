@@ -1,9 +1,14 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  monit:
+    external: true
+  backend:
+    driver: overlay
+  db:
+    driver: overlay
 
 volumes:
   mongo-primary-db:
@@ -16,7 +21,9 @@ services:
   mongo-primary:
     image: mongo:3.4.10
     networks:
-      - default
+      - backend
+      - db
+      - public
     deploy:
       replicas: 1
       placement:
@@ -33,7 +40,9 @@ services:
   mongo-secondary:
     image: mongo:3.4.10
     networks:
-      - default
+      - backend
+      - db
+      - public
     deploy:
       replicas: 1
       placement:
@@ -50,7 +59,7 @@ services:
   mongo-arbiter:
     image: mongo:3.4.10
     networks:
-      - default
+      - db
     deploy:
       replicas: 1
       placement:
@@ -64,7 +73,8 @@ services:
   mongo_exporter:
     image: eses/mongodb_exporter:latest
     networks:
-      - default
+      - db
+      - monit
     environment:
       MONGODB_URI: "mongodb://mongo-primary:27017"
     deploy:
@@ -79,7 +89,9 @@ services:
   consul:
     image: consul:1.0.0
     networks:
-      - default
+      - backend
+      - db
+      - public
     deploy:
       replicas: 1
       placement:
@@ -94,7 +106,8 @@ services:
   consul_exporter:
     image: prom/consul-exporter:v0.3.0
     networks:
-      - default
+      - db
+      - monit
     command:
       ["-consul.server=consul:8500"]
     deploy:
@@ -109,7 +122,8 @@ services:
   redis:
     image: redis:alpine
     networks:
-      - default
+      - db
+      - backend
     volumes:
       - redis-data:/data
     deploy:
@@ -121,7 +135,8 @@ services:
   redis_exporter:
     image: oliver006/redis_exporter:v0.13
     networks:
-      - default
+      - db
+      - monit
     environment:
       REDIS_ADDR: "redis://redis:6379"
     deploy:

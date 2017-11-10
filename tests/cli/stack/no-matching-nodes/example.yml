@@ -1,18 +1,15 @@
 version: "3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
 
 services:
 
   pinger:
     image: appcelerator/pinger:${TAG:-latest}
     networks:
-      default:
-        aliases:
-          - pinger
+      - public
     environment:
       SERVICE_PORTS: "3000"
       VIRTUAL_HOST: "pinger.examples.*,https://pinger.examples.*"
