@@ -29,7 +29,7 @@ const (
 	defaultPeriod        = 1
 	dockerForMacIP       = "192.168.65.1"
 	prometheusCmd        = "/bin/prometheus"
-	monitoringNetwork    = "ampnet"
+	monitoringNetwork    = "monit"
 	stackName            = "amp"
 	metricsPortLabel     = "io.amp.metrics.port"
 	metricsPathLabel     = "io.amp.metrics.path"

@@ -1,9 +1,12 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  monit:
+    external: true
+  core:
+    external: true
 
 volumes:
   elasticsearch-data:
@@ -14,7 +17,8 @@ services:
   elasticsearch:
     image: appcelerator/elasticsearch-amp:5.6.3
     networks:
-      - default
+      - monit
+      - core
     volumes:
       - elasticsearch-data:/opt/elasticsearch/data
     labels:
@@ -24,7 +28,7 @@ services:
       amp.service.pull.timeout: "120s"
     environment:
       MIN_MASTER_NODES: 2
-      NETWORK_HOST: "_eth0_"
+      NETWORK_HOST: "_site_"
       UNICAST_HOSTS: "tasks.elasticsearch"
       JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
     deploy:
@@ -48,9 +52,7 @@ services:
   nats:
     image: appcelerator/amp-nats-streaming:v0.6.0
     networks:
-      default:
-        aliases:
-          - nats
+      - core
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"
@@ -67,7 +69,7 @@ services:
   ampbeat:
     image: appcelerator/ampbeat:${TAG:-0.15.0}
     networks:
-      - default
+      - core
     deploy:
       mode: replicated
       replicas: 1
@@ -84,7 +86,8 @@ services:
   kibana:
     image: appcelerator/kibana:5.6.3
     networks:
-      - default
+      - core
+      - public
     deploy:
       mode: replicated
       replicas: 1
@@ -107,7 +110,7 @@ services:
   agent:
     image: appcelerator/agent:${TAG:-0.15.0}
     networks:
-      - default
+      - core
     deploy:
       mode: global
       labels:

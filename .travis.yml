@@ -29,7 +29,7 @@ script:
   - sudo chown -R $(id -u):$(id -g) $HOME/.config/amp
   - TESTINCLUDE=tests/cli/testing testrunner tests/cli
 # Tests: Integration
-  - docker run -it --rm --network ampnet -v $PWD:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools go test github.com/appcelerator/amp/tests/integration/...
+  - docker run -it --rm --network core -v $PWD:/go/src/github.com/appcelerator/amp -w /go/src/github.com/appcelerator/amp appcelerator/amptools go test github.com/appcelerator/amp/tests/integration/...
 # Tests: Teardown
   - amp cluster rm
   #- ampmake lint

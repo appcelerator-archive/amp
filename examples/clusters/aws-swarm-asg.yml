@@ -186,7 +186,7 @@ Parameters:
   OverlayNetworks:
     Type: String
     Description: Docker overlay networks to create on the swarm, separated by space
-    Default: ampnet
+    Default: "public core monit"
   DockerPlugins:
     Type: String
     Description: "space separated list of plugins to install. Options can be passed separated with pound sign. Example: rexray/ebs#REXRAY_PREEMPT=true"

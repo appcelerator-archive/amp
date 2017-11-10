@@ -7,7 +7,7 @@ It is compatible with regions us-east-1, us-east-2, us-west-2, eu-west-1 and ap-
 
 Alternatively it can be used through the aws plugin of AMP:
 
-    docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws:latest init --region us-west-2 --stackname STACKNAME --parameter KeyName=KEYNAME --parameter OverlayNetworks=ampnet --template https://s3.amazonaws.com/io-amp-binaries/templates/latest/aws-swarm-asg.yml
+    docker run -it --rm -v ~/.aws:/root/.aws appcelerator/amp-aws:latest init --region us-west-2 --stackname STACKNAME --parameter KeyName=KEYNAME --template https://s3.amazonaws.com/io-amp-binaries/templates/latest/aws-swarm-asg.yml
 
 ## Content
 
@@ -33,7 +33,7 @@ Once the nodes are up and running, it will run the appcelerator/ampadmin image t
 | MetricsInstanceType | Instance type for the metrics worker nodes. Must be a valid EC2 HVM instance type | t2.large | m4.large |
 | DrainManager | Should we drain services from the manager nodes? | no | yes |
 | AufsVolumeSize | Size in GB of the EBS for the /var/lib/docker FS | 26 | 100 |
-| OverlayNetworks | name of overlay networks that should be created once swarm is initialized | ampnet | public storage search mq |
+| OverlayNetworks | name of overlay networks that should be created once swarm is initialized | public core monit | public storage search mq |
 | DockerChannel | channel for Docker installation | stable | edge |
 | DockerPlugins | space separated list of plugins to install | | rexray/ebs |
 | InstallApplication | install AMP | yes | no |

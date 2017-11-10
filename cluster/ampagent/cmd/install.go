@@ -302,42 +302,46 @@ func createInitialSecrets() error {
 	return nil
 }
 
-const ampnet = "ampnet"
+var ampnetworks = []string{"public", "monit", "core"}
 
 func createInitialNetworks() error {
-	// Check if network already exists
-	exists, err := Docker.NetworkExists(ampnet)
-	if err != nil {
-		return err
+	for _, network := range ampnetworks {
+		// Check if network already exists
+		exists, err := Docker.NetworkExists(network)
+		if err != nil {
+			return err
+		}
+		if exists {
+			log.Println("Skipping already existing network:", network)
+			continue
+		}
+		if _, err := Docker.CreateNetwork(network, true, true); err != nil {
+			return err
+		}
+		log.Println("Successfully created network:", network)
 	}
-	if exists {
-		log.Println("Skipping already existing network:", ampnet)
-		return nil
-	}
-	if _, err := Docker.CreateNetwork(ampnet, true, true); err != nil {
-		return err
-	}
-	log.Println("Successfully created network:", ampnet)
 	return nil
 }
 
 func removeInitialNetworks() error {
-	// Check if network already exists
-	exists, err := Docker.NetworkExists(ampnet)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		log.Println("Skipping non existing network:", ampnet)
-		return nil
-	}
+	for _, network := range ampnetworks {
+		// Check if network already exists
+		exists, err := Docker.NetworkExists(network)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			log.Println("Skipping non existing network:", network)
+			return nil
+		}
 
-	// Remove network
-	time.Sleep(2 * time.Second)
-	if err := Docker.RemoveNetwork(ampnet); err != nil {
-		return err
+		// Remove network
+		time.Sleep(2 * time.Second)
+		if err := Docker.RemoveNetwork(network); err != nil {
+			return err
+		}
+		log.Println("Successfully removed network:", network)
 	}
-	log.Println("Successfully removed network:", ampnet)
 	return nil
 }
 

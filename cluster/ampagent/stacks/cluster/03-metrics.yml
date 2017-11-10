@@ -1,9 +1,12 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  monit:
+    external: true
+  core:
+    external: true
 
 volumes:
   alertmanager-data:
@@ -23,7 +26,9 @@ services:
   prometheus:
     image: appcelerator/amp-prometheus:${TAG:-0.15.0}
     networks:
-      - default
+      - public
+      - monit
+      - core
     volumes:
       - prometheus-data:/prometheus
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -52,7 +57,8 @@ services:
   cadvisor:
     image: google/cadvisor:v0.28.0
     networks:
-      - default
+      - core
+      - monit
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"
@@ -74,7 +80,8 @@ services:
   docker-engine:
     image: appcelerator/socat:latest
     networks:
-      - default
+      - core
+      - monit
     #ports:
     #  - "4999:4999"
     labels:
@@ -91,7 +98,8 @@ services:
     image: prom/haproxy-exporter:v0.8.0
     command: ["--haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
-      - default
+      - monit
+      - core
     #ports:
       #- target: 9101
       #- published: 9101
@@ -113,7 +121,8 @@ services:
   nats_exporter:
     image: appcelerator/prometheus-nats-exporter:latest
     networks:
-      - default
+      - monit
+      - core
     command: ["-varz", "-routez", "-connz", "-subz", "nats,http://nats:8222"]
     #ports:
       #- target: 7777
@@ -136,11 +145,12 @@ services:
   nodes:
     image: prom/node-exporter:v0.15.1
     networks:
-      - default
+      - monit
+      - core
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
-      - /:/rootfs:ro
+      - /:/rootfs
       - /var/run/docker.sock:/var/run/docker.sock:ro
     #ports:
     #  - "9100:9100"
@@ -158,7 +168,7 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.10.0
     networks:
-      - default
+      - core
     volumes:
       - alertmanager-data:/alertmanager
     ports:
@@ -182,10 +192,12 @@ services:
     command: [ "-config.file=/run/secrets/alertmanager.yml",
              "-storage.path=/alertmanager",
              "-web.external-url=http://localhost:9093" ]
+
   grafana:
     image: appcelerator/grafana-amp:1.2.8
     networks:
-      - default
+      - core
+      - public
     volumes:
       - grafana-data:/var/lib/grafana
     environment:
