@@ -1,5 +1,45 @@
 [
 	{
+		"key": "arrowcloud/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowcloud/mongodb/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowcloud/mongodb/data/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowcloud/mongodb/data/password",
+		"flags": 0,
+		"value": "changeme"
+	},
+	{
+		"key": "arrowcloud/mongodb/data/username",
+		"flags": 0,
+		"value": "appcelerator"
+	},
+	{
+		"key": "arrowcloud/mongodb/log/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "arrowcloud/mongodb/log/password",
+		"flags": 0,
+		"value": "changeme"
+	},
+	{
+		"key": "arrowcloud/mongodb/log/username",
+		"flags": 0,
+		"value": "appcelerator"
+	},
+	{
 		"key": "arrowdb/",
 		"flags": 0,
 		"value": ""
@@ -7,32 +47,32 @@
 	{
 		"key": "arrowdb/airbrake_key",
 		"flags": 0,
-		"value": "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg="
+		"value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 	},
 	{
 		"key": "arrowdb/arrowdb_api_maxconn",
 		"flags": 0,
-		"value": "MTA="
+		"value": "10"
 	},
 	{
 		"key": "arrowdb/arrowdb_domain",
 		"flags": 0,
-		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "apirs.local.appcelerator.io"
 	},
 	{
 		"key": "arrowdb/arrowdb_url_prefix",
 		"flags": 0,
-		"value": "YWNz"
+		"value": "acs"
 	},
 	{
 		"key": "arrowdb/cookie_secret",
 		"flags": 0,
-		"value": "ZWNkNzQzOTM0NzA3MTcwYWRhY2VmYTQ0ZTlkMjQ3Njg5Zjc2YWE1MGMwYjRiMzIwZDE1YjAwMDNlZjEyMmZiMzliNmMxMzY4MGJkN2QzOGFlNjVjNTQ0OTc3ZjE2NDU5ZmVhMTI1NmVlY2U0MjM5OTZmMzJmOWI5Y2ZlN2JkZTI="
+		"value": "ecd743934707170adacefa44e9d247689f76aa50c0b4b320d15b0003ef122fb39b6c13680bd7d38ae65c544977f16459fea1256eece423996f32f9b9cfe7bde2"
 	},
 	{
 		"key": "arrowdb/devise_pepper",
 		"flags": 0,
-		"value": "ZWU1Y2RjZDRlMjBjZmJkZTEzZWJhZDMxZmJkYzFjYWU0ZmE2M2M1NzgyMDEyZGRmYjhkZTk4NjgxMWFhZTgwZTllMjZlNDgxOTJmMDBhMzg2YTU0MzhjMzcyNGIzMWRiZDU2NzU5MmU2NGMyNjJmMTAxMTZmN2EyYmIyMWVkMmM="
+		"value": "ee5cdcd4e20cfbde13ebad31fbdc1cae4fa63c5782012ddfb8de986811aae80e9e26e48192f00a386a5438c3724b31dbd567592e64c262f10116f7a2bb21ed2c"
 	},
 	{
 		"key": "arrowdb/mongodb/",
@@ -47,12 +87,12 @@
 	{
 		"key": "arrowdb/mongodb/acs_global_apps/password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "arrowdb/mongodb/acs_global_apps/username",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "arrowdb/mongodb/data/",
@@ -62,12 +102,12 @@
 	{
 		"key": "arrowdb/mongodb/data/password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "arrowdb/mongodb/data/username",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "arrowdb/mongodb/dbname/",
@@ -77,17 +117,17 @@
 	{
 		"key": "arrowdb/mongodb/dbname/acs_api",
 		"flags": 0,
-		"value": "YWNzX2FwaQ=="
+		"value": "acs_api"
 	},
 	{
 		"key": "arrowdb/mongodb/dbname/acs_global_apps",
 		"flags": 0,
-		"value": "YWNzX2dsb2JhbF9hcHBz"
+		"value": "acs_global_apps"
 	},
 	{
 		"key": "arrowdb/mongodb/dbname/acs_log",
 		"flags": 0,
-		"value": "YWNzX2xvZw=="
+		"value": "acs_log"
 	},
 	{
 		"key": "arrowdb/mongodb/log/",
@@ -97,37 +137,37 @@
 	{
 		"key": "arrowdb/mongodb/log/password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "arrowdb/mongodb/log/username",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "arrowdb/protocol",
 		"flags": 0,
-		"value": "aHR0cHM="
+		"value": "https"
 	},
 	{
 		"key": "arrowdb/solr_hostname",
 		"flags": 0,
-		"value": "bG9jYWxob3N0"
+		"value": "localhost"
 	},
 	{
 		"key": "arrowdb/storage_type",
 		"flags": 0,
-		"value": "bG9jYWw="
+		"value": "local"
 	},
 	{
 		"key": "arrowdb/studio_login_url",
 		"flags": 0,
-		"value": "aHR0cHM6Ly9hcGkuYXBwY2VsZXJhdG9yLm5ldC9wL3YxL3Nzby1sb2dpbg=="
+		"value": "https://api.appcelerator.net/p/v1/sso-login"
 	},
 	{
 		"key": "arrowdb/user_name",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "dashboard/",
@@ -137,37 +177,37 @@
 	{
 		"key": "dashboard/dashboard_domain",
 		"flags": 0,
-		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "apirs.local.appcelerator.io"
 	},
 	{
 		"key": "dashboard/dashboard_session_cookie_secure",
 		"flags": 0,
-		"value": "dHJ1ZQ=="
+		"value": "true"
 	},
 	{
 		"key": "dashboard/dashboard_url_prefix",
 		"flags": 0,
-		"value": "ZGFzaGJvYXJk"
+		"value": "dashboard"
 	},
 	{
 		"key": "dashboard/dashboard_x_auth_token",
 		"flags": 0,
-		"value": "cjgzSjhjRExaVXNDS01jamJ2blN5TVJ5S2NlajNm"
+		"value": "r83J8cDLZUsCKMcjbvnSyMRyKcej3f"
 	},
 	{
 		"key": "dashboard/default_user",
 		"flags": 0,
-		"value": "YWRtaW5AZGFzaGJvYXJkLmxvY2Fs"
+		"value": "admin@dashboard.local"
 	},
 	{
 		"key": "dashboard/default_user_password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "dashboard/external_port",
 		"flags": 0,
-		"value": "NDQz"
+		"value": "443"
 	},
 	{
 		"key": "dashboard/mongodb/",
@@ -182,12 +222,12 @@
 	{
 		"key": "dashboard/mongodb/data/password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "dashboard/mongodb/data/username",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "dashboard/mongodb/log/",
@@ -197,37 +237,37 @@
 	{
 		"key": "dashboard/mongodb/log/password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "dashboard/mongodb/log/username",
 		"flags": 0,
-		"value": "YXBwY2VsZXJhdG9y"
+		"value": "appcelerator"
 	},
 	{
 		"key": "dashboard/pem_auth_token",
 		"flags": 0,
-		"value": "NmZhNGI3MTEtMjdmMi00OTgzLTliYmYtZTc1Y2UxZjhkNTdi"
+		"value": "6fa4b711-27f2-4983-9bbf-e75ce1f8d57b"
 	},
 	{
 		"key": "dashboard/protocol",
 		"flags": 0,
-		"value": "aHR0cHM="
+		"value": "https"
 	},
 	{
 		"key": "dashboard/session_secret",
 		"flags": 0,
-		"value": "ZDFjOXFhelp2QXdqNGNTRlh2N0RJN1BN"
+		"value": "d1c9qazZvAwj4cSFXv7DI7PM"
 	},
 	{
 		"key": "dashboard/ssl",
 		"flags": 0,
-		"value": "dHJ1ZQ=="
+		"value": "true"
 	},
 	{
 		"key": "dashboard/tooling_auth_token",
 		"flags": 0,
-		"value": "NmY3NzNhMjktYTNmOC00NjFjLTg3OWEtOTQ5NDE5MDkwZDdk"
+		"value": "6f773a29-a3f8-461c-879a-949419090d7d"
 	},
 	{
 		"key": "global/",
@@ -257,52 +297,52 @@
 	{
 		"key": "global/adi_server",
 		"flags": 0,
-		"value": "Tk8="
+		"value": "NO"
 	},
 	{
 		"key": "global/arrowdb_domain_name",
 		"flags": 0,
-		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "apirs.local.appcelerator.io"
 	},
 	{
 		"key": "global/cluster",
 		"flags": 0,
-		"value": "bWJhYXM="
+		"value": "apirs"
 	},
 	{
 		"key": "global/dashboard_domain_name",
 		"flags": 0,
-		"value": "bWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "apirs.local.appcelerator.io"
 	},
 	{
 		"key": "global/dashboard_url",
 		"flags": 0,
-		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "https://dashboard.apirs.local.appcelerator.io"
 	},
 	{
 		"key": "global/dedicated_swarm_managers",
 		"flags": 0,
-		"value": "dHJ1ZQ=="
+		"value": "true"
 	},
 	{
 		"key": "global/external_dashboard_url",
 		"flags": 0,
-		"value": "aHR0cHM6Ly9kYXNoYm9hcmQubWJhYXMuYXdzLmFwcGNlbGVyYXRvci5pbw=="
+		"value": "https://dashboard.apirs.local.appcelerator.io"
 	},
 	{
 		"key": "global/has_internet_access",
 		"flags": 0,
-		"value": "dHJ1ZQ=="
+		"value": "true"
 	},
 	{
 		"key": "global/image_tag",
 		"flags": 0,
-		"value": "MS42LjAtc3Ay"
+		"value": "1.6.0-sp2"
 	},
 	{
 		"key": "global/log_level",
 		"flags": 0,
-		"value": "REVCVUc="
+		"value": "DEBUG"
 	},
 	{
 		"key": "global/mongodb/",
@@ -317,17 +357,17 @@
 	{
 		"key": "global/mongodb/acs_global_apps/port",
 		"flags": 0,
-		"value": "MjcwMTc="
+		"value": "27017"
 	},
 	{
 		"key": "global/mongodb/acs_global_apps/primary-host",
 		"flags": 0,
-		"value": "bW9uZ28tcHJpbWFyeQ=="
+		"value": "mongo-primary"
 	},
 	{
 		"key": "global/mongodb/acs_global_apps/secondary-host",
 		"flags": 0,
-		"value": "bW9uZ28tc2Vjb25kYXJ5"
+		"value": "mongo-secondary"
 	},
 	{
 		"key": "global/mongodb/data/",
@@ -337,22 +377,22 @@
 	{
 		"key": "global/mongodb/data/port",
 		"flags": 0,
-		"value": "MjcwMTc="
+		"value": "27017"
 	},
 	{
 		"key": "global/mongodb/data/primary-host",
 		"flags": 0,
-		"value": "bW9uZ28tcHJpbWFyeQ=="
+		"value": "mongo-primary"
 	},
 	{
 		"key": "global/mongodb/data/rsname",
 		"flags": 0,
-		"value": "ZGF0YQ=="
+		"value": "data"
 	},
 	{
 		"key": "global/mongodb/data/secondary-host",
 		"flags": 0,
-		"value": "bW9uZ28tc2Vjb25kYXJ5"
+		"value": "mongo-secondary"
 	},
 	{
 		"key": "global/mongodb/log/",
@@ -362,42 +402,42 @@
 	{
 		"key": "global/mongodb/log/port",
 		"flags": 0,
-		"value": "MjcwMTc="
+		"value": "27017"
 	},
 	{
 		"key": "global/mongodb/log/primary-host",
 		"flags": 0,
-		"value": "bW9uZ28tcHJpbWFyeQ=="
+		"value": "mongo-primary"
 	},
 	{
 		"key": "global/mongodb/log/rsname",
 		"flags": 0,
-		"value": "bG9n"
+		"value": "log"
 	},
 	{
 		"key": "global/mongodb/log/secondary-host",
 		"flags": 0,
-		"value": "bW9uZ28tc2Vjb25kYXJ5"
+		"value": "mongo-secondary"
 	},
 	{
 		"key": "global/mongodb_admin_password",
 		"flags": 0,
-		"value": "Y2hhbmdlbWU="
+		"value": "changeme"
 	},
 	{
 		"key": "global/nfs_server",
 		"flags": 0,
-		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
+		"value": "fs-f9922550.efs.us-west-2.amazonaws.com"
 	},
 	{
 		"key": "global/nfs_server_ip",
 		"flags": 0,
-		"value": "ZnMtZjk5MjI1NTAuZWZzLnVzLXdlc3QtMi5hbWF6b25hd3MuY29t"
+		"value": "fs-f9922550.efs.us-west-2.amazonaws.com"
 	},
 	{
 		"key": "global/product_type",
 		"flags": 0,
-		"value": "YWxs"
+		"value": "all"
 	},
 	{
 		"key": "global/proxy_host",
@@ -422,7 +462,7 @@
 	{
 		"key": "global/redis_host",
 		"flags": 0,
-		"value": "cmVkaXM="
+		"value": "redis"
 	},
 	{
 		"key": "global/redis_password",
@@ -432,6 +472,6 @@
 	{
 		"key": "global/version",
 		"flags": 0,
-		"value": "MS42LjAtc3Ay"
+		"value": "1.6.0-sp2"
 	}
 ]

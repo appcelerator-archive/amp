@@ -1,0 +1,131 @@
+version: "3.3"
+
+networks:
+  public:
+    external: true
+  backend:
+    driver: overlay
+
+services:
+
+  acs:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/arrowdb:1.6.0-sp2
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: consul
+      SERVICE_PORTS: 8082
+      VIRTUAL_HOST: "https://acs.apirs.*,acs.apirs.*"
+    entrypoint:
+      - /usr/local/bin/start-arrowdb.sh
+      - api
+      - production
+
+  dashboard:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/dashboard:1.6.0-sp2
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: consul
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SERVICE_PORTS: 9009
+      VIRTUAL_HOST: "https://dashboard.apirs.*,dashboard.apirs.*"
+    entrypoint:
+      - /usr/local/bin/start-360-docker.sh
+      - production
+
+  admin:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/stratus:1.6.0-sp2
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: "consul"
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      ON_PREMISE: "no"
+      DEPLOY_DASHBOARD: "false"
+      DOCKER_REGISTRY_CONFIG_FILE: "/etc/docker/registry/config.yml"
+      GO_CLIENT_IMAGE: "services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/go-client:1.6.0-sp2"
+      SERVICE_PORTS: 7000
+      VIRTUAL_HOST: "https://admin.apirs.*,admin.apirs.*"
+    entrypoint:
+      - "start-stratus.sh"
+      - "/usr/src/app/bin/stratus"
+      - "admin"
+      - "7000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  stratus:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/stratus:1.6.0-sp2
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: consul
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      INTERNET_ACCESS: "true"
+      REGISTRY_AUTH_SERVICE_NAME: "registry-auth"
+      REGISTRY_AUTH_SERVICE_PORT: 9000
+      APP_BASE_IMAGE: "services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/app_base:1.6.0-sp2"
+      SERVICE_PORTS: 7000
+      VIRTUAL_HOST: "https://stratus.apirs.*,stratus.apirs.*"
+    entrypoint:
+      - "start-stratus.sh"
+      - "/usr/src/app/bin/stratus"
+      - "stratus"
+      - "7000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  app-stats-monitor:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/app-stats-monitor:1.6.0-sp2
+    networks:
+      - backend
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/sys/fs/cgroup:/docker_host/sys/fs/cgroup"
+      - "/var/lib/docker/volumes:/var/lib/docker/volumes"
+
+  push-dispatcher:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/arrowdb:1.6.0-sp2
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    environment:
+      CONSUL: consul
+    entrypoint:
+      - /usr/local/bin/start-arrowdb.sh
+      - push-dispatcher
+      - production

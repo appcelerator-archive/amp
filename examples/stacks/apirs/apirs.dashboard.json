@@ -170,7 +170,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "mongodb_mongod_connections{instance=\"mbaas_mongo\"}",
+              "expr": "mongodb_mongod_connections{instance=\"apirs_mongo\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{state}}",
@@ -247,7 +247,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "mongodb_mongod_op_counters_total{instance=\"mbaas_mongo\"}",
+              "expr": "mongodb_mongod_op_counters_total{instance=\"apirs_mongo\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{type}}",
@@ -1015,6 +1015,6 @@
     ]
   },
   "timezone": "",
-  "title": "MBaaS dashboard",
+  "title": "Apirs dashboard",
   "version": 2
 }

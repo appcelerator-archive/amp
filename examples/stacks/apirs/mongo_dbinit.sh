@@ -4,15 +4,15 @@
 
 primary_host_ip=mongo-primary
 primary_host_port=27017
-admin_username=${MBAAS_MONGO_ADMIN_USERNAME:-appcadmin}
-admin_password=${MBAAS_MONGO_ADMIN_PASSWORD:-cocoafish}
-products="${MBAAS_MONGO_PRODUCTS:-arrowcloud arrowdb dashboard}"
-arrowcloud_username=${MBAAS_MONGO_ARROWCLOUD_USERNAME:-appcelerator}
-arrowcloud_password=${MBAAS_MONGO_ARROWCLOUD_PASSWORD:-cocoafish}
-arrowdb_username=${MBAAS_MONGO_ARROWDB_USERNAME:-appcelerator}
-arrowdb_password=${MBAAS_MONGO_ARROWDB_PASSWORD:-cocoafish}
-dashboard_username=${MBAAS_MONGO_DASHBOARD_USERNAME:-appcelerator}
-dashboard_password=${MBAAS_MONGO_DASHBOARD_PASSWORD:-cocoafish}
+admin_username=${APIRS_MONGO_ADMIN_USERNAME:-appcadmin}
+admin_password=${APIRS_MONGO_ADMIN_PASSWORD:-cocoafish}
+products="${APIRS_MONGO_PRODUCTS:-arrowcloud arrowdb dashboard}"
+arrowcloud_username=${APIRS_MONGO_ARROWCLOUD_USERNAME:-appcelerator}
+arrowcloud_password=${APIRS_MONGO_ARROWCLOUD_PASSWORD:-cocoafish}
+arrowdb_username=${APIRS_MONGO_ARROWDB_USERNAME:-appcelerator}
+arrowdb_password=${APIRS_MONGO_ARROWDB_PASSWORD:-cocoafish}
+dashboard_username=${APIRS_MONGO_DASHBOARD_USERNAME:-appcelerator}
+dashboard_password=${APIRS_MONGO_DASHBOARD_PASSWORD:-cocoafish}
 
 # return 0 means master is ready
 check_is_master() {

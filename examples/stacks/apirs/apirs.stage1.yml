@@ -21,9 +21,11 @@ services:
   mongo-primary:
     image: mongo:3.4.10
     networks:
-      - backend
-      - db
-      - public
+      backend:
+        aliases:
+          - mongo
+      db:
+      public:
     deploy:
       replicas: 1
       placement:
@@ -33,16 +35,18 @@ services:
       #- mongo-primary-db:/data/db
     environment:
       SERVICE_PORTS: 28017
-      VIRTUAL_HOST: "mongo.mbaas.*,https://mongo.mbaas.*"
+      VIRTUAL_HOST: "mongo.apirs.*,https://mongo.apirs.*"
     command:
       ["--httpinterface", "--rest", "--replSet", "data"]
 
   mongo-secondary:
     image: mongo:3.4.10
     networks:
-      - backend
-      - db
-      - public
+      backend:
+        aliases:
+          - mongo
+      db:
+      public:
     deploy:
       replicas: 1
       placement:
@@ -52,7 +56,7 @@ services:
       #- mongo-secondary-db:/data/db
     environment:
       SERVICE_PORTS: 28017
-      VIRTUAL_HOST: "mongo.mbaas.*,https://mongo.mbaas.*"
+      VIRTUAL_HOST: "mongo.apirs.*,https://mongo.apirs.*"
     command:
       ["--httpinterface", "--rest", "--replSet", "data"]
 
@@ -101,7 +105,7 @@ services:
       - consul-data:/consul/data
     environment:
       SERVICE_PORTS: 8500
-      VIRTUAL_HOST: "https://consul.mbaas.*,consul.mbaas.*"
+      VIRTUAL_HOST: "https://consul.apirs.*,consul.apirs.*"
 
   consul_exporter:
     image: prom/consul-exporter:v0.3.0
@@ -147,3 +151,40 @@ services:
       labels:
         io.amp.metrics.port: "9121"
         io.amp.metrics.mode: "exporter"
+
+  registry:
+    image: registry:2
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+    environment:
+#      REGISTRY_STORAGE_MAINTENANCE_READONLY_ENABLED: "false"
+      SERVICE_PORTS: 5000
+      VIRTUAL_HOST: "registry.apirs.*,https://registry.apirs.*"
+
+  registry-auth:
+    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/harbor:0.5.0-17-g6fbbac8
+    networks:
+      - backend
+      - public
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+    environment:
+      CONSUL: "consul"
+      CONFIG_PATH: "/etc/ui/app.conf"
+      USE_COMPRESSED_JS: "on"
+      GODEBUG: "netdns=cgo"
+      SERVICE_PORTS: 9000
+      VIRTUAL_HOST: "registry-auth.apirs.*,https://registry-auth.apirs.*"
+    entrypoint:
+      - bash
+      - start-with-consul.sh
+      - /harbor/harbor_ui
