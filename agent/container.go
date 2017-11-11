@@ -171,7 +171,7 @@ func (a *Agent) removeContainer(ID string) {
 	}
 	err := os.Remove(path.Join(containersDataDir, ID))
 	if err != nil {
-		log.Errorln("Error removing container", err)
+		log.Errorln(err)
 	}
 }
 

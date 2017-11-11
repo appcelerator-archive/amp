@@ -34,20 +34,20 @@ func (a *Agent) updateLogsStream() {
 		if data.logsStream == nil || data.logsReadError {
 			lastTimeID := a.getLastTimeID(ID)
 			if lastTimeID == "" {
-				log.Infof("open logs stream from the beginning container %s\n", data.name)
+				log.Infof("open logs stream from new container %s\n", data.name)
 			} else {
 				log.Infof("open logs stream from time_id=%s on container %s\n", lastTimeID, data.name)
 			}
 			stream, err := a.openLogsStream(ID, lastTimeID)
 			if err != nil {
-				log.Errorf("Error opening logs stream on container: %s\n", data.name)
+				log.Errorf("opening logs stream on container: %s\n", data.name)
 			} else {
 				data.logsStream = stream
 
 				// Inspect the container to check if it's a TTY
 				c, err := a.dock.GetClient().ContainerInspect(context.Background(), ID)
 				if err != nil {
-					log.Errorf("Error inspecting container for TTY: %s\n", data.name)
+					log.Errorf("inspecting container for TTY: %s\n", data.name)
 					continue
 				}
 
@@ -62,13 +62,13 @@ func (a *Agent) updateLogsStream() {
 					// Read logs
 					log.Infof("start reading log stream of container: %s\n", data.name)
 					if err := logReader(ID, data); err != nil {
-						log.Errorf("Error reading log stream of container %s: %v", data.name, err)
+						log.Errorf("reading log stream of container %s: %v", data.name, err)
 					}
 					log.Infof("stop reading log stream of container: %s\n", data.name)
 
 					// Close log stream
 					if err := data.logsStream.Close(); err != nil {
-						log.Errorf("Error closing log stream of container %s: %v", data.name, err)
+						log.Errorf("closing log stream of container %s: %v", data.name, err)
 					}
 				}(ID, data, c.Config.Tty)
 			}
@@ -194,7 +194,7 @@ func (a *Agent) readLogs(ID string, data *ContainerData) error {
 		case stdcopy.Stderr:
 		case stdcopy.Systemerr:
 		default:
-			return fmt.Errorf("Unrecognized input header: %d", buf[stdWriterFdIndex])
+			return fmt.Errorf("unrecognized input header: %d", buf[stdWriterFdIndex])
 		}
 
 		// Retrieve the size of the frame
@@ -225,7 +225,7 @@ func (a *Agent) readLogs(ID string, data *ContainerData) error {
 		// we might have an error from the source mixed up in our multiplexed
 		// stream. if we do, return it.
 		if stream == stdcopy.Systemerr {
-			return fmt.Errorf("error from daemon in stream: %s", string(buf[stdWriterPrefixLen:frameSize+stdWriterPrefixLen]))
+			return fmt.Errorf("daemon in stream: %s", string(buf[stdWriterPrefixLen:frameSize+stdWriterPrefixLen]))
 		}
 
 		// Compute TimeId
@@ -272,12 +272,12 @@ func (a *Agent) addLogEntry(entry *logs.LogEntry, data *ContainerData, date stri
 func (a *Agent) sendLogsBuffer() {
 	encoded, err := proto.Marshal(a.logsBuffer)
 	if err != nil {
-		log.Errorf("error marshalling log entries: %v\n", err)
+		log.Errorf("marshalling log entries: %v\n", err)
 		return
 	}
 	_, err = a.natsStreaming.GetClient().PublishAsync(ns.LogsSubject, encoded, nil)
 	if err != nil {
-		log.Errorf("error sending log entry: %v\n", err)
+		log.Errorf("sending log entry: %v\n", err)
 		return
 	}
 	a.nbLogs += len(a.logsBuffer.Entries)
@@ -288,7 +288,7 @@ func (a *Agent) periodicDataSave(data *ContainerData, date string) {
 	if now.Sub(data.lastDateSaveTime).Seconds() >= float64(a.logsSavedDatePeriod) {
 		err := ioutil.WriteFile(path.Join(containersDataDir, data.ID), []byte(date), 0666)
 		if err != nil {
-			log.Errorf("error writing to container data directory: ", err)
+			log.Errorf("writing to container data directory: ", err)
 		}
 		data.lastDateSaveTime = now
 	}
@@ -300,7 +300,7 @@ func (a *Agent) closeLogsStreams() {
 		if data.logsStream != nil {
 			err := data.logsStream.Close()
 			if err != nil {
-				log.Errorf("Error closing a log stream: ", err)
+				log.Errorf("closing a log stream: ", err)
 			}
 		}
 	}
