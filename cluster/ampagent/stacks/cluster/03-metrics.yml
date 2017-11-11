@@ -50,7 +50,7 @@ services:
         mode: 0400
 
   cadvisor:
-    image: appcelerator/cadvisor:20171019
+    image: google/cadvisor:v0.28.0
     networks:
       - default
     labels:
@@ -144,7 +144,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     #ports:
     #  - "9100:9100"
-    command: [ "--path.procfs", "/host/proc", "--path.sysfs", "/host/sys", "--collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc)($$|/)"]
+    command: [ "--path.procfs", "/host/proc", "--path.sysfs", "/host/sys", "--collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc|var|rootfs/var/lib/docker|rootfs/run/docker/netns|rootfs/sys/kernel/debug)($$|/)"]
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"
