@@ -8,6 +8,13 @@ global:
   external_labels:
       monitor: 'amp'
 
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
   - "/etc/prometheus/*.rules"

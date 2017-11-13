@@ -2458,7 +2458,7 @@
         "colorValue": false,
         "colors": [
           "rgba(245, 54, 54, 0.9)",
-          "rgba(237, 234, 40, 0.89)",
+          "rgba(237, 129, 40, 0.89)",
           "rgba(50, 172, 45, 0.97)"
         ],
         "datasource": null,
@@ -3008,7 +3008,7 @@
             "step": 60
           }
         ],
-        "thresholds": "",
+        "thresholds": "50,80",
         "title": "Active Shards",
         "type": "singlestat",
         "valueFontSize": "80%",
