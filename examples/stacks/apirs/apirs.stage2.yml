@@ -23,13 +23,13 @@ services:
       restart_policy:
         condition: none
     environment:
-      MBAAS_MONGO_ADMIN_USERNAME: "appcadmin"
-      MBAAS_MONGO_ADMIN_PASSWORD: "changeme"
-      MBAAS_MONGO_PRODUCTS: "arrowdb dashboard"
-      MBAAS_MONGO_ARROWDB_USERNAME: "appcelerator"
-      MBAAS_MONGO_ARROWDB_PASSWORD: "changeme"
-      MBAAS_MONGO_DASHBOARD_USERNAME: "appcelerator"
-      MBAAS_MONGO_DASHBOARD_PASSWORD: "changeme"
+      APIRS_MONGO_ADMIN_USERNAME: "appcadmin"
+      APIRS_MONGO_ADMIN_PASSWORD: "changeme"
+      APIRS_MONGO_PRODUCTS: "arrowdb dashboard"
+      APIRS_MONGO_ARROWDB_USERNAME: "appcelerator"
+      APIRS_MONGO_ARROWDB_PASSWORD: "changeme"
+      APIRS_MONGO_DASHBOARD_USERNAME: "appcelerator"
+      APIRS_MONGO_DASHBOARD_PASSWORD: "changeme"
     command:
       ["/usr/local/bin/mongo_dbinit.sh"]
     configs:
