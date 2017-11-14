@@ -5,8 +5,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sort"
 
 	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
 	"docker.io/go-docker/api/types/swarm"
 	"github.com/appcelerator/amp/docker/cli/cli/command"
 	"github.com/appcelerator/amp/docker/cli/cli/service/progress"
@@ -16,10 +18,11 @@ import (
 )
 
 type ServiceStatus struct {
-	RunningTasks int32
-	FailedTasks  int32
-	TotalTasks   int32
-	Status       string
+	RunningTasks   int32
+	CompletedTasks int32
+	FailedTasks    int32
+	TotalTasks     int32
+	Status         string
 }
 
 // ServiceInspect inspects a service
@@ -55,43 +58,104 @@ func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64)
 }
 
 // ServiceStatus returns service status
-func (d *Docker) ServiceStatus(ctx context.Context, service string) (*ServiceStatus, error) {
-	taskMap, err := d.checkTasks(ctx, service)
+func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*ServiceStatus, error) {
+	expectedTaskCount, err := d.ExpectedNumberOfTasks(ctx, service.ID)
 	if err != nil {
-		return &ServiceStatus{}, err
+		return nil, err
 	}
-	totalTasks, err := d.ExpectedNumberOfTasks(ctx, service)
-	if err != nil {
-		return &ServiceStatus{}, err
-	}
-	if totalTasks == 0 {
+	if expectedTaskCount == 0 {
 		return &ServiceStatus{
 			RunningTasks: 0,
 			TotalTasks:   0,
-			FailedTasks:  0,
 			Status:       StateNoMatchingNode,
 		}, nil
 	}
-	if taskMap[StateError] != 0 && taskMap[StateRunning] != totalTasks {
+	args := filters.NewArgs()
+	args.Add("service", service.ID)
+	taskMap := map[string]int{}
+	tasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
+	if err != nil {
+		return nil, err
+	}
+
+	// Sort tasks by slot, then by most recent
+	sort.Stable(TasksBySlot(tasks))
+
+	// Build a map with only the most recent task per slot
+	mostRecentTasks := map[int]swarm.Task{}
+	for _, task := range tasks {
+		if _, exists := mostRecentTasks[task.Slot]; !exists {
+			mostRecentTasks[task.Slot] = task
+		}
+	}
+
+	// Computing service status based on task status - use switch for all task states
+	for _, task := range mostRecentTasks {
+		switch task.Status.State {
+		case swarm.TaskStatePreparing:
+			taskMap[StatePreparing]++
+		case swarm.TaskStateReady:
+			taskMap[StateReady]++
+		case swarm.TaskStateStarting:
+			taskMap[StateStarting]++
+		case swarm.TaskStateRunning:
+			taskMap[StateRunning]++
+		case swarm.TaskStateComplete:
+			taskMap[StateComplete]++
+		case swarm.TaskStateFailed, swarm.TaskStateRejected:
+			taskMap[StateError]++
+		}
+	}
+
+	// If any task has an ERROR status, the service status is ERROR
+	if taskMap[StateError] != 0 {
 		return &ServiceStatus{
 			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(totalTasks),
-			FailedTasks:  int32(taskMap[StateError]),
+			TotalTasks:   int32(expectedTaskCount),
 			Status:       StateError,
 		}, nil
 	}
-	if taskMap[StateRunning] == totalTasks {
+
+	// If all tasks are PREPARING, the service status is PREPARING
+	if taskMap[StatePreparing] == expectedTaskCount {
 		return &ServiceStatus{
 			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(totalTasks),
-			FailedTasks:  int32(taskMap[StateError]),
+			TotalTasks:   int32(expectedTaskCount),
+			Status:       StatePreparing,
+		}, nil
+	}
+
+	// If all tasks are READY, the service status is READY
+	if taskMap[StateReady] == expectedTaskCount {
+		return &ServiceStatus{
+			RunningTasks: int32(taskMap[StateRunning]),
+			TotalTasks:   int32(expectedTaskCount),
+			Status:       StateReady,
+		}, nil
+	}
+
+	// If all tasks are RUNNING, the service status is RUNNING
+	if taskMap[StateRunning] == expectedTaskCount {
+		return &ServiceStatus{
+			RunningTasks: int32(taskMap[StateRunning]),
+			TotalTasks:   int32(expectedTaskCount),
 			Status:       StateRunning,
 		}, nil
 	}
+
+	// If all tasks are COMPLETE, the service status is COMPLETE
+	if taskMap[StateComplete] == expectedTaskCount {
+		return &ServiceStatus{
+			RunningTasks: int32(taskMap[StateRunning]),
+			TotalTasks:   int32(expectedTaskCount),
+			Status:       StateComplete,
+		}, nil
+	}
+
+	// Else the service status is STARTING
 	return &ServiceStatus{
 		RunningTasks: int32(taskMap[StateRunning]),
-		TotalTasks:   int32(totalTasks),
-		FailedTasks:  int32(taskMap[StateError]),
+		TotalTasks:   int32(expectedTaskCount),
 		Status:       StateStarting,
 	}, nil
 }

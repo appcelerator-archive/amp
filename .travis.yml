@@ -9,7 +9,7 @@ install:
 # Install latest stable docker
   - sudo apt-get update
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get install docker-ce
+  - sudo apt-get install docker-ce=17.09.0~ce-0~ubuntu
   - export PATH=bin/linux/amd64:tests/cli/testing:$PATH
   - export GOPATH="" # Make sure to use temporary directory on travis
 

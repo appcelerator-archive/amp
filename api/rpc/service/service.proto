@@ -6,78 +6,75 @@ import "google/api/annotations.proto";
 import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 
 service Service {
-  rpc Tasks (TasksRequest) returns (TasksReply) {
-    option (google.api.http) = {
-      get: "/v1/tasks/{service_id}"
+    rpc Ps (PsRequest) returns (PsReply) {
+        option (google.api.http) = {
+      get: "/v1/tasks/{service}"
     };
-  }
-  rpc ListService (ServiceListRequest) returns (ServiceListReply) {
-    option (google.api.http) = {
-      get: "/v1/services/{stack_name}"
+    }
+    rpc List (ListRequest) returns (ListReply) {
+        option (google.api.http) = {
+      get: "/v1/services/{stack}"
     };
-  }
-  rpc InspectService (ServiceInspectRequest) returns (ServiceInspectReply) {
-    option (google.api.http) = {
-      get: "/v1/inspect/{service_id}"
+    }
+    rpc Inspect (InspectRequest) returns (InspectReply) {
+        option (google.api.http) = {
+      get: "/v1/inspect/{service}"
     };
-  }
-  rpc ScaleService (ServiceScaleRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      put: "/v1/scale/{service_id}/{replicas_number}"
+    }
+    rpc Scale (ScaleRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+      put: "/v1/scale/{service}/{replicas}"
     };
-  }
+    }
 }
 
-message TasksRequest {
-  string service_id = 1;
+message PsRequest {
+    string service = 1;
 }
 
 message Task {
-  string id = 1;
-  string image = 2;
-  string current_state = 3;
-  string desired_state = 4;
-  string node_id = 5;
-  string error = 6;
+    string id = 1;
+    string image = 2;
+    string current_state = 3;
+    string desired_state = 4;
+    string node_id = 5;
+    string error = 6;
+    string name = 7;
+    int32 slot = 8;
 }
 
-message TasksReply {
-  repeated Task tasks = 1;
+message PsReply {
+    repeated Task tasks = 1;
 }
 
-message ServiceListRequest {
-  string stack_name = 1;
+message ListRequest {
+    string stack = 1;
 }
 
-message ServiceListReply {
-  repeated ServiceListEntry entries = 1;
+message ListReply {
+    repeated ServiceEntry entries = 1;
 }
 
-message ServiceListEntry {
-  ServiceEntity service = 1;
-  int32 failed_tasks = 2;
-  int32 ready_tasks = 3;
-  int32 total_tasks = 4;
-  string status = 5;
+message ServiceEntry {
+    string id = 1;
+    string name = 2;
+    string mode = 3;
+    string image = 4;
+    string tag = 5;
+    int32 running_tasks = 6;
+    int32 total_tasks = 7;
+    string status = 8;
 }
 
-message ServiceEntity {
-  string id = 1;
-  string name = 2;
-  string mode = 3;
-  string image = 4;
-  string tag = 5;
+message InspectRequest {
+    string service = 1;
 }
 
-message ServiceInspectRequest {
-  string service_id = 1;
+message InspectReply {
+    string json = 1;
 }
 
-message ServiceInspectReply {
-  string service_entity = 1;
-}
-
-message ServiceScaleRequest {
-  string service_id = 1;
-  uint64 replicas_number = 2;
+message ScaleRequest {
+    string service = 1;
+    uint64 replicas = 2;
 }

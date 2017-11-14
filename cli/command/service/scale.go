@@ -49,11 +49,11 @@ func scale(c cli.Interface, cmd *cobra.Command, opts scaleOptions) error {
 
 	conn := c.ClientConn()
 	client := service.NewServiceClient(conn)
-	request := &service.ServiceScaleRequest{
-		ServiceId:      opts.service,
-		ReplicasNumber: opts.replicas,
+	request := &service.ScaleRequest{
+		Service:  opts.service,
+		Replicas: opts.replicas,
 	}
-	if _, err := client.ScaleService(context.Background(), request); err != nil {
+	if _, err := client.Scale(context.Background(), request); err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}

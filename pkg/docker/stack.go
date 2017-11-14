@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"sync"
 
 	"docker.io/go-docker/api/types"
@@ -123,33 +122,25 @@ func (d *Docker) StackServices(ctx context.Context, stackName string, quiet bool
 	return output, nil
 }
 
-// StackServiceIDs returns service ids of all services in a given stack
-func (d *Docker) StackServiceIDs(ctx context.Context, stackName string) ([]string, error) {
-	result, err := d.StackServices(ctx, stackName, true)
-	if err != nil {
-		return nil, err
-	}
-	serviceIDs := strings.Fields(result)
-	return serviceIDs, nil
-}
-
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
 	var readyServices, failedServices int32
-	services, err := d.StackServiceIDs(ctx, stackName)
+	filter := filters.NewArgs()
+	filter.Add("label", convert.LabelNamespace+"="+stackName)
+	services, err := d.ServicesList(ctx, types.ServiceListOptions{Filters: filter})
 	if err != nil {
 		return nil, err
 	}
 	totalServices := int32(len(services))
 	for _, service := range services {
-		status, err := d.ServiceStatus(ctx, service)
+		status, err := d.ServiceStatus(ctx, &service)
 		if err != nil {
 			return nil, err
 		}
 		if status.Status == StateNoMatchingNode || status.Status == StateError {
 			failedServices++
 		}
-		if status.Status == StateRunning {
+		if status.Status == StateRunning || status.Status == StateComplete {
 			readyServices++
 		}
 	}

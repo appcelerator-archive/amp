@@ -265,7 +265,7 @@ func getGroupByFilterText(query *stats.StatsRequest) string {
 		filters = append(filters, fmt.Sprintf("ServiceName=%s", query.FilterServiceName))
 	}
 	if query.FilterServiceId != "" {
-		filters = append(filters, fmt.Sprintf("ServiceId=%s", query.FilterServiceId))
+		filters = append(filters, fmt.Sprintf("Service=%s", query.FilterServiceId))
 	}
 	if query.FilterStackName != "" {
 		filters = append(filters, fmt.Sprintf("StackName=%s", query.FilterStackName))
