@@ -70,6 +70,23 @@ clean-protoc:
 clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit clean-plugin-local clean-plugin-aws clean-ampagent
 
 # =============================================================================
+# VENDOR
+# =============================================================================
+.PHONY: clean-vendor install-vendor
+
+clean-vendor:
+	@rm -rf vendor
+
+Gopkg.lock: Gopkg.toml
+	@dep ensure -update
+	@dep prune
+
+# not named `vendor` to avoid inopportune triggering
+install-vendor: Gopkg.lock
+	@dep ensure
+	@dep prune
+
+# =============================================================================
 # BUILD
 # =============================================================================
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
@@ -89,7 +106,7 @@ AMPDIRS := $(CMDDIR)/$(AMP) cli $(COMMONDIRS) $(PLUGINDIRS)
 AMPSRC := $(shell find $(AMPDIRS) -type f -name '*.go')
 AMPPKG := $(REPO)/$(CMDDIR)/$(AMP)
 
-$(AMPTARGET): $(PROTOTARGETS) $(AMPSRC) VERSION
+$(AMPTARGET): $(PROTOTARGETS) $(AMPSRC) VERSION vendor
 	@echo "Compiling $(AMP) source(s) ($(GOOS)/$(GOARCH))"
 	@echo $?
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) hack/lbuild $(REPO)/bin $(AMP) $(AMPPKG) $(LDFLAGS)
@@ -134,7 +151,7 @@ AMPLDIRS := $(CMDDIR)/$(AMPL) api data $(COMMONDIRS)
 AMPLSRC := $(shell find $(AMPLDIRS) -type f -name '*.go')
 AMPLPKG := $(REPO)/$(CMDDIR)/$(AMPL)
 
-$(AMPLTARGET): $(PROTOTARGETS) $(AMPLSRC) VERSION
+$(AMPLTARGET): $(PROTOTARGETS) $(AMPLSRC) VERSION vendor
 	@echo "Compiling $(AMPL) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AMPLTARGET) $(AMPLPKG) $(LDFLAGS)
@@ -166,7 +183,7 @@ GWDIRS := $(CMDDIR)/$(GW) api data $(COMMONDIRS)
 GWSRC := $(shell find $(GWDIRS) -type f -name '*.go')
 GWPKG := $(REPO)/$(CMDDIR)/$(GW)
 
-$(GWTARGET): $(PROTOTARGETS) $(GWSRC) VERSION
+$(GWTARGET): $(PROTOTARGETS) $(GWSRC) VERSION vendor
 	@echo "Compiling $(GW) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(GWTARGET) $(GWPKG) $(LDFLAGS)
@@ -197,7 +214,7 @@ MONITDIRS := $(MONIT)/promctl $(COMMONDIRS)
 MONITSRC := $(shell find $(MONITDIRS) -type f -name '*.go')
 MONITPKG := $(REPO)/$(MONIT)/promctl
 
-$(MONITTARGET): $(PROTOTARGETS) $(MONITSRC) VERSION
+$(MONITTARGET): $(PROTOTARGETS) $(MONITSRC) VERSION vendor
 	@echo "Compiling $(MONIT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(MONITTARGET) $(MONITPKG) $(LDFLAGS)
@@ -228,7 +245,7 @@ BEATDIRS := $(CMDDIR)/$(BEAT) api data $(COMMONDIRS)
 BEATSRC := $(shell find $(BEATDIRS) -type f -name '*.go')
 BEATPKG := $(REPO)/$(CMDDIR)/$(BEAT)
 
-$(BEATTARGET): $(PROTOTARGETS) $(BEATSRC) VERSION
+$(BEATTARGET): $(PROTOTARGETS) $(BEATSRC) VERSION vendor
 	@echo "Compiling $(BEAT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(BEATTARGET) $(BEATPKG) $(LDFLAGS)
@@ -259,7 +276,7 @@ AGENTDIRS := $(CMDDIR)/$(AGENT) agent api $(COMMONDIRS)
 AGENTSRC := $(shell find $(AGENTDIRS) -type f -name '*.go')
 AGENTPKG := $(REPO)/$(CMDDIR)/$(AGENT)
 
-$(AGENTTARGET): $(PROTOTARGETS) $(AGENTSRC) VERSION
+$(AGENTTARGET): $(PROTOTARGETS) $(AGENTSRC) VERSION vendor
 	@echo "Compiling $(AGENT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AGENTTARGET) $(AGENTPKG) $(LDFLAGS)
@@ -296,7 +313,7 @@ CPAWSTARGET := $(CPAWSDIR)/$(CPAWSBINARY)
 CPAWSSRC := $(shell find $(CPAWSDIRS) -type f -name '*.go')
 CPAWSPKG := $(REPO)/$(CPAWSDIR)
 
-$(CPAWSTARGET): $(PROTOTARGETS) $(CPAWSSRC) VERSION
+$(CPAWSTARGET): $(PROTOTARGETS) $(CPAWSSRC) VERSION vendor
 	@echo "Compiling $(CPAWS) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(CPAWSTARGET) $(CPAWSPKG) $(LDFLAGS)
@@ -328,7 +345,7 @@ CPLOCALTARGET := $(CPLOCALDIR)/$(CPLOCALBINARY)
 CPLOCALSRC := $(shell find $(CPLOCALDIRS) -type f -name '*.go')
 CPLOCALPKG := $(REPO)/$(CPLOCALDIR)
 
-$(CPLOCALTARGET): $(PROTOTARGETS) $(CPLOCALSRC) VERSION
+$(CPLOCALTARGET): $(PROTOTARGETS) $(CPLOCALSRC) VERSION vendor
 	@echo "Compiling $(CPLOCAL) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(CPLOCALTARGET) $(CPLOCALPKG) $(LDFLAGS)
@@ -360,7 +377,7 @@ AMPAGENTTARGET := $(AMPAGENTDIR)/$(AMPAGENTBINARY)
 AMPAGENTSRC := $(shell find $(AMPAGENTDIRS) -type f -name '*.go')
 AMPAGENTPKG := $(REPO)/$(AMPAGENTDIR)
 
-$(AMPAGENTTARGET): $(PROTOTARGETS) $(AMPAGENTSRC) VERSION
+$(AMPAGENTTARGET): $(PROTOTARGETS) $(AMPAGENTSRC) VERSION vendor
 	@echo "Compiling $(AMPAGENT) source(s):"
 	@echo $?
 	@hack/build4alpine $(REPO)/$(AMPAGENTTARGET) $(AMPAGENTPKG) $(LDFLAGS)
