@@ -1,9 +1,12 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  core:
+    external: true
+  monit:
+    external: true
 
 secrets:
   certificate_amp:
@@ -14,7 +17,8 @@ services:
   proxy:
     image: dockercloud/haproxy
     networks:
-      - default
+      - core
+      - public
     deploy:
       mode: global
       labels:

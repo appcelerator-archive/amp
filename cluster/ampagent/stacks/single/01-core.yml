@@ -1,9 +1,12 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  core:
+    external: true
+  monit:
+    external: true
 
 secrets:
   amplifier_yml:
@@ -19,7 +22,8 @@ services:
   etcd:
     image: appcelerator/etcd:3.2.9
     networks:
-      default:
+      - core
+      - monit
     volumes:
       - etcd-data:/data
     environment:
@@ -45,7 +49,8 @@ services:
   amplifier:
     image: appcelerator/amplifier:${TAG:-0.15.0}
     networks:
-      - default
+      - core
+      - monit
     environment:
       REGISTRATION: ${REGISTRATION:-email}
       NOTIFICATIONS: ${NOTIFICATIONS:-true}
@@ -78,7 +83,8 @@ services:
   gateway:
     image: appcelerator/gateway:${TAG:-0.15.0}
     networks:
-      - default
+      - core
+      - public
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "5s"

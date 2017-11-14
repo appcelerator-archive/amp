@@ -1,15 +1,17 @@
 version: "3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  backend:
+    driver: overlay
+  public:
+    external: true
 
 services:
   go:
     image: htilford/go-redis-counter
     networks:
-      - default
+      - public
+      - backend
     environment:
       SERVICE_PORTS: "80"
       VIRTUAL_HOST: "http://go.counter.examples*,https://go.counter.examples.*"
@@ -21,7 +23,7 @@ services:
   redis:
     image: redis
     networks:
-      - default
+      - backend
     deploy:
       replicas: 1
       placement:

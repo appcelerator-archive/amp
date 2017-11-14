@@ -1,16 +1,18 @@
 version: "3.3"
 
 networks:
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
+  backend:
+    driver: overlay
 
 services:
 
   acs:
     image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/arrowdb:1.6.0-sp2
     networks:
-      - default
+      - backend
+      - public
     deploy:
       replicas: 1
       placement:
@@ -28,7 +30,8 @@ services:
   dashboard:
     image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/dashboard:1.6.0-sp2
     networks:
-      - default
+      - backend
+      - public
     deploy:
       replicas: 1
       placement:

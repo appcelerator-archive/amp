@@ -21,7 +21,7 @@ services:
       - front-tier
       - back-tier
       - payment
-      - default
+      - public
     environment:
       SERVICE_PORTS: 8080
       VIRTUAL_HOST: "https://atsea.examples.*,atsea.examples.*"
@@ -60,9 +60,8 @@ networks:
     driver: overlay
     driver_opts:
       encrypted: 'yes'
-  default:
-    external:
-      name: ampnet
+  public:
+    external: true
 
 secrets:
   postgres_password:

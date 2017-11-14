@@ -6,7 +6,7 @@ TIMEOUT=25
 while [[ $code -ne 0 ]]; do
   [[ $SECONDS -gt $TIMEOUT ]] && break
   code=0
-  docker run --rm --network ampnet appcelerator/alpine:3.6.0 curl -sf http://prometheus:9090/targets > $tmpfile
+  docker run --rm --network core appcelerator/alpine:3.6.0 curl -sf http://prometheus:9090/targets > $tmpfile
   countstate=$(grep -wc "State" $tmpfile)
   countup=$(grep -wc "up" $tmpfile)
   [[ $countstate -eq $countup && $countup -gt 0 ]] && break
