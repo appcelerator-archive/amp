@@ -32,7 +32,7 @@ Login to Portus with your Portus credentials using docker login:
 
     $ docker login services-registry.cloudapp-enterprise-preprod.appctest.com:5000
 
-Build the `kvcodec` tool in order to prepare your consul KV configuration:
+Build the `kvcodec` tool in order to prepare your consul KV configuration and run in this directory:
 
     $ go build -o kvcodec .
     
@@ -53,6 +53,9 @@ Then you need to create the following Docker `config`s:
     amp -k config create consul_kv kv.json
 
 ### Deploying the stacks
+
+Run in this directory:
+
     amp -k stack deploy --with-registry-auth -c apirs.stage1.yml
     # Check point: amp -k service ps apirs_mongo-primary
 
@@ -106,7 +109,9 @@ Then you need to create the following Docker `config`s:
 
 * Mongo: https://mongo.apirs.local.appcelerator.io
 * Consul: https://consul.apirs.local.appcelerator.io
-* ACS: https://acs.apirs.local.appcelerator.io/v1/admins/ping.json and https://acs.apirs.local.appcelerator.io/v1/admins/pingdb.json
+* ACS: 
+    * https://acs.apirs.local.appcelerator.io/v1/admins/ping.json 
+    * https://acs.apirs.local.appcelerator.io/v1/admins/pingdb.json
 * Dashboard: https://dashboard.apirs.local.appcelerator.io
 
 ## Apirs Dashboard
