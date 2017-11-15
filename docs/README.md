@@ -5,8 +5,9 @@
     * [MacOS](#macos)
     * [Windows](#windows)
     * [Linux](#linux)
-  * [Getting the CLI](#getting-the-cli)
-  * [Using the unstable version](#using-the-unstable-version)
+  * [Downloading the CLI](#downloading-the-cli)
+  * [Certificates](#certificates)
+  * [Using the development version](#using-the-development-version)
 * [Usage](#usage)
   * [Target an AMP cluster](#target-an-amp-cluster)
     * [Creating a local AMP cluster](#creating-a-local-amp-cluster)
@@ -15,10 +16,10 @@
   * [UI and Dashboard](#ui-and-dashboard)
     * [UI](#ui)
     * [Grafana](#grafana)
+    * [Kibana](#kibana)
   * [Examples](#examples)
     * [Deploying a stack](#deploying-a-stack)
     * [Viewing and filtering logs](#viewing-and-filtering-logs)
-    * [Displaying metrics and statistics](#displaying-metrics-and-statistics)
     * [Team management](#team-management)
 
 ## Installation
@@ -32,7 +33,8 @@ Make sure you check the "What to know before you install" section on the Docker 
 
 #### MacOS
 
-On MacOS, Docker can be installed via the Docker website.
+On MacOS, Docker can be installed via the Docker website. 
+> NOTE: Please use the edge version for Mac.
 
 [Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
 
@@ -151,7 +153,7 @@ This option is used to define the target cluster you will be running your comman
 The target server is displayed at the top of every CLI command output.
 You can also add a default `--server|-s` value to your `amp.yml` config file.
 
->For more information on creating your configuration file, see the [config documentation](config.md).
+>For more information on creating your configuration file, see the [settings documentation](settings.md).
 
 The server location of our hosted AMP is currently a work-in-progress.
 
