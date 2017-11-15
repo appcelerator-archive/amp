@@ -37,7 +37,7 @@ func NewServicesCommand(c cli.Interface) *cobra.Command {
 }
 
 func services(c cli.Interface, stackName string) error {
-	req := &stack.ServicesRequest{StackName: stackName}
+	req := &stack.ServicesRequest{Stack: stackName}
 	client := stack.NewStackClient(c.ClientConn())
 	reply, err := client.Services(context.Background(), req)
 	if err != nil {

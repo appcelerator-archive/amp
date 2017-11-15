@@ -82,7 +82,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 		return nil, convertError(err)
 	}
 	for _, stack := range stacks {
-		entry, err := s.toStackListEntry(ctx, stack)
+		entry, err := s.toStackEntry(ctx, stack)
 		if err != nil {
 			return nil, convertError(err)
 		}
@@ -91,13 +91,20 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	return reply, nil
 }
 
-func (s *Server) toStackListEntry(ctx context.Context, stack *stacks.Stack) (*StackListEntry, error) {
+func (s *Server) toStackEntry(ctx context.Context, stack *stacks.Stack) (*StackEntry, error) {
 	status, err := s.Docker.StackStatus(ctx, stack.Name)
 	if err != nil {
 		return nil, convertError(err)
 	}
-	log.Infoln("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services and", status.FailedServices, "failed services")
-	return &StackListEntry{Stack: stack, RunningServices: status.RunningServices, FailedServices: status.FailedServices, TotalServices: status.TotalServices, Status: status.Status}, nil
+	log.Infoln("[stack] Stack", stack.Name, "is", status.Status, "with", status.RunningServices, "out of", status.TotalServices, "services")
+	return &StackEntry{
+		Stack:             stack,
+		RunningServices:   status.RunningServices,
+		TotalServices:     status.TotalServices,
+		Status:            status.Status,
+		CompleteServices:  status.CompleteServices,
+		PreparingServices: status.PreparingServices,
+	}, nil
 }
 
 // Remove implements stack.Server
@@ -136,7 +143,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
 	log.Infoln("[stack] Services", in.String())
 
-	stack, err := s.Stacks.GetByFragmentOrName(ctx, in.StackName)
+	stack, err := s.Stacks.GetByFragmentOrName(ctx, in.Stack)
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -152,7 +159,7 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 
 	cols := strings.Split(output, "\n")
 	ans := &ServicesReply{
-		Services: []*StackService{},
+		Services: []*ServiceEntry{},
 	}
 	for _, col := range cols[1:] {
 		service := s.getOneServiceListLine(ctx, col)
@@ -163,10 +170,10 @@ func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesRe
 	return ans, nil
 }
 
-func (s *Server) getOneServiceListLine(ctx context.Context, line string) *StackService {
+func (s *Server) getOneServiceListLine(ctx context.Context, line string) *ServiceEntry {
 	cols := strings.Split(line, " ")
 	nn := 0
-	service := &StackService{}
+	service := &ServiceEntry{}
 	for _, val := range cols {
 		if val != "" {
 			nn++

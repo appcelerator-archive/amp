@@ -20,13 +20,14 @@ import (
 )
 
 type StackStatus struct {
-	RunningServices int32
-	FailedServices  int32
-	TotalServices   int32
-	Status          string
+	RunningServices   int32
+	TotalServices     int32
+	Status            string
+	CompleteServices  int32
+	PreparingServices int32
 }
 
-// StackDeploy deploy a stack
+// StackDeploy deploys a stack
 func (d *Docker) StackDeploy(ctx context.Context, stackName string, composeFile []byte, configFile []byte, environment []string) (output string, err error) {
 	cmd := func(cli *command.DockerCli) error {
 		// Write the compose file to a temporary file
@@ -124,47 +125,88 @@ func (d *Docker) StackServices(ctx context.Context, stackName string, quiet bool
 
 // StackStatus returns stack status
 func (d *Docker) StackStatus(ctx context.Context, stackName string) (*StackStatus, error) {
-	var readyServices, failedServices int32
+	// List all services of stack
 	filter := filters.NewArgs()
 	filter.Add("label", convert.LabelNamespace+"="+stackName)
 	services, err := d.ServicesList(ctx, types.ServiceListOptions{Filters: filter})
 	if err != nil {
 		return nil, err
 	}
-	totalServices := int32(len(services))
+
+	// Compute stack status based on service status
+	serviceMap := map[string]int32{}
 	for _, service := range services {
 		status, err := d.ServiceStatus(ctx, &service)
 		if err != nil {
 			return nil, err
 		}
-		if status.Status == StateNoMatchingNode || status.Status == StateError {
-			failedServices++
-		}
-		if status.Status == StateRunning || status.Status == StateComplete {
-			readyServices++
+		switch status.Status {
+		case StatePreparing:
+			serviceMap[StatePreparing]++
+		case StateStarting:
+			serviceMap[StateStarting]++
+		case StateRunning:
+			serviceMap[StateRunning]++
+		case StateComplete:
+			serviceMap[StateComplete]++
+		case StateNoMatchingNode, StateError:
+			serviceMap[StateError]++
 		}
 	}
-	if failedServices != 0 && readyServices != totalServices {
+
+	totalServices := int32(len(services))
+
+	// If any service has an ERROR status, the stack status is ERROR
+	if serviceMap[StateError] > 0 {
 		return &StackStatus{
-			RunningServices: readyServices,
-			TotalServices:   totalServices,
-			FailedServices:  failedServices,
-			Status:          StateError,
+			RunningServices:   serviceMap[StateRunning],
+			TotalServices:     totalServices,
+			Status:            StateError,
+			CompleteServices:  serviceMap[StateComplete],
+			PreparingServices: serviceMap[StatePreparing],
 		}, nil
 	}
-	if readyServices == totalServices {
+
+	// If all services are PREPARING, the stack status is PREPARING
+	if serviceMap[StatePreparing] > 0 {
 		return &StackStatus{
-			RunningServices: readyServices,
-			TotalServices:   totalServices,
-			FailedServices:  failedServices,
-			Status:          StateRunning,
+			RunningServices:   serviceMap[StateRunning],
+			TotalServices:     totalServices,
+			Status:            StatePreparing,
+			CompleteServices:  serviceMap[StateComplete],
+			PreparingServices: serviceMap[StatePreparing],
 		}, nil
 	}
+
+	// If all services are RUNNING, the stack status is RUNNING
+	if serviceMap[StateRunning] == totalServices-serviceMap[StateComplete] {
+		return &StackStatus{
+			RunningServices:   serviceMap[StateRunning],
+			TotalServices:     totalServices,
+			Status:            StateRunning,
+			CompleteServices:  serviceMap[StateComplete],
+			PreparingServices: serviceMap[StatePreparing],
+		}, nil
+	}
+
+	// If all services are COMPLETE, the stack status is COMPLETE
+	if serviceMap[StateComplete] == totalServices {
+		return &StackStatus{
+			RunningServices:   serviceMap[StateRunning],
+			TotalServices:     totalServices,
+			Status:            StateComplete,
+			CompleteServices:  serviceMap[StateComplete],
+			PreparingServices: serviceMap[StatePreparing],
+		}, nil
+	}
+
+	// Else the status status is STARTING
 	return &StackStatus{
-		RunningServices: readyServices,
-		TotalServices:   totalServices,
-		FailedServices:  failedServices,
-		Status:          StateStarting,
+		RunningServices:   serviceMap[StateRunning],
+		TotalServices:     totalServices,
+		Status:            StateStarting,
+		CompleteServices:  serviceMap[StateComplete],
+		PreparingServices: serviceMap[StatePreparing],
 	}, nil
 }
 
