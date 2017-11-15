@@ -166,25 +166,3 @@ services:
 #      REGISTRY_STORAGE_MAINTENANCE_READONLY_ENABLED: "false"
       SERVICE_PORTS: 5000
       VIRTUAL_HOST: "registry.apirs.*,https://registry.apirs.*"
-
-  registry-auth:
-    image: services-registry.cloudapp-enterprise-preprod.appctest.com:5000/arrowcloud/harbor:0.5.0-17-g6fbbac8
-    networks:
-      - backend
-      - public
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-        - node.labels.amp.type.user == true
-    environment:
-      CONSUL: "consul"
-      CONFIG_PATH: "/etc/ui/app.conf"
-      USE_COMPRESSED_JS: "on"
-      GODEBUG: "netdns=cgo"
-      SERVICE_PORTS: 9000
-      VIRTUAL_HOST: "registry-auth.apirs.*,https://registry-auth.apirs.*"
-    entrypoint:
-      - bash
-      - start-with-consul.sh
-      - /harbor/harbor_ui

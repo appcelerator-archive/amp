@@ -10,10 +10,11 @@ The deployment consists in 3 stages:
   * consul
   * redis
   * registry
-  * registry-auth
+
 * Stage 2 initializes:
   * the replica set in mongodb
   * KV store in consul
+
 * Stage 3 starts:
   * acs
   * dashboard
@@ -21,6 +22,7 @@ The deployment consists in 3 stages:
   * stratus
   * app-stats-monitor
   * push-dispatcher
+  * registry-auth
 
 The mongodb configuration and the consul configuration have to be created as Docker config beforehand.
 

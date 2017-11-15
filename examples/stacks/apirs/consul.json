@@ -473,5 +473,75 @@
 		"key": "global/version",
 		"flags": 0,
 		"value": "1.6.0-sp2"
+	},
+	{
+		"key": "registry/",
+		"flags": 0,
+		"value": ""
+	},
+	{
+		"key": "registry/app_check",
+		"flags": 0,
+		"value": "true"
+	},
+	{
+		"key": "registry/app_only",
+		"flags": 0,
+		"value": "true"
+	},
+	{
+		"key": "registry/auth_mode",
+		"flags": 0,
+		"value": "appcelerator"
+	},
+	{
+		"key": "registry/auth_secret",
+		"flags": 0,
+		"value": "MWcQDTo5APG1DFTN"
+	},
+	{
+		"key": "registry/external_auth_url",
+		"flags": 0,
+		"value": "registry-auth.apirs.local.appcelerator.io"
+	},
+	{
+		"key": "registry/external_registry_url",
+		"flags": 0,
+		"value": "registry.apirs.local.appcelerator.io"
+	},
+	{
+		"key": "registry/internal_auth_url",
+		"flags": 0,
+		"value": "http://registry-auth:9000"
+	},
+	{
+		"key": "registry/internal_registry_url",
+		"flags": 0,
+		"value": "http://registry:5000"
+	},
+	{
+		"key": "registry/log_level",
+		"flags": 0,
+		"value": "info"
+	},
+	{
+		"key": "registry/project_creation_restriction",
+		"flags": 0,
+		"value": "adminonly"
+	},
+	{
+		"key": "registry/self_registration",
+		"flags": 0,
+		"value": "false"
+	},
+	{
+		"key": "registry/token_expiration",
+		"flags": 0,
+		"value": "30"
+	},
+	{
+		"key": "registry/verify_remote_cert",
+		"flags": 0,
+		"value": "false"
 	}
 ]
