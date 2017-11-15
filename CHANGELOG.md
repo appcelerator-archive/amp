@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.16.0 (2017-11-15)
+
+* Update to Docker 17.09 stable release
+* AMP core now uses different networks (network isolation)
+* Enabling native credentials store support for stack deployment using registry authentication
+* Add environment variables support for stack deployment 
+* Improved service ls to reflect more accurate statuses
+* Improved service ps to display failed tasks
+* AWS cluster deployment events on CLI
+* AWS cluster deployment option to provision NFS
+* Add a new Grafana dashboard with container metrics
+* Remove amp stats command (temporarily)
+* Update amptools to build using Golang 1.9
+* Update Prometheus to 2.0.0
+* Update Grafana to 4.6.1
+* Update nats to v0.6.0 
+* Optimize plugins image size 
+* Use incremental builds
+* Use dep as vendoring tool 
+* Various fixes
+
 ## 0.15.0 (2017-08-28)
 
 * Dynamic metrics discovery
