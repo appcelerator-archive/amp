@@ -59,6 +59,7 @@ func (d *Docker) ServiceScale(ctx context.Context, service string, scale uint64)
 
 // ServiceStatus returns service status
 func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*ServiceStatus, error) {
+	// Get expected number of tasks for the service
 	expectedTaskCount, err := d.ExpectedNumberOfTasks(ctx, service.ID)
 	if err != nil {
 		return nil, err
@@ -70,9 +71,10 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 			Status:       StateNoMatchingNode,
 		}, nil
 	}
+
+	// List all tasks of service
 	args := filters.NewArgs()
 	args.Add("service", service.ID)
-	taskMap := map[string]int{}
 	tasks, err := d.TaskList(ctx, types.TaskListOptions{Filters: args})
 	if err != nil {
 		return nil, err
@@ -89,7 +91,8 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 		}
 	}
 
-	// Computing service status based on task status - use switch for all task states
+	// Computing service status based on task status
+	taskMap := map[string]int32{}
 	for _, task := range mostRecentTasks {
 		switch task.Status.State {
 		case swarm.TaskStatePreparing:
@@ -108,10 +111,10 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 	}
 
 	// If any task has an ERROR status, the service status is ERROR
-	if taskMap[StateError] != 0 {
+	if taskMap[StateError] > 0 {
 		return &ServiceStatus{
-			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(expectedTaskCount),
+			RunningTasks: taskMap[StateRunning],
+			TotalTasks:   expectedTaskCount,
 			Status:       StateError,
 		}, nil
 	}
@@ -119,8 +122,8 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 	// If all tasks are PREPARING, the service status is PREPARING
 	if taskMap[StatePreparing] == expectedTaskCount {
 		return &ServiceStatus{
-			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(expectedTaskCount),
+			RunningTasks: taskMap[StateRunning],
+			TotalTasks:   expectedTaskCount,
 			Status:       StatePreparing,
 		}, nil
 	}
@@ -128,8 +131,8 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 	// If all tasks are READY, the service status is READY
 	if taskMap[StateReady] == expectedTaskCount {
 		return &ServiceStatus{
-			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(expectedTaskCount),
+			RunningTasks: taskMap[StateRunning],
+			TotalTasks:   expectedTaskCount,
 			Status:       StateReady,
 		}, nil
 	}
@@ -137,8 +140,8 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 	// If all tasks are RUNNING, the service status is RUNNING
 	if taskMap[StateRunning] == expectedTaskCount {
 		return &ServiceStatus{
-			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(expectedTaskCount),
+			RunningTasks: taskMap[StateRunning],
+			TotalTasks:   expectedTaskCount,
 			Status:       StateRunning,
 		}, nil
 	}
@@ -146,16 +149,16 @@ func (d *Docker) ServiceStatus(ctx context.Context, service *swarm.Service) (*Se
 	// If all tasks are COMPLETE, the service status is COMPLETE
 	if taskMap[StateComplete] == expectedTaskCount {
 		return &ServiceStatus{
-			RunningTasks: int32(taskMap[StateRunning]),
-			TotalTasks:   int32(expectedTaskCount),
+			RunningTasks: taskMap[StateRunning],
+			TotalTasks:   expectedTaskCount,
 			Status:       StateComplete,
 		}, nil
 	}
 
 	// Else the service status is STARTING
 	return &ServiceStatus{
-		RunningTasks: int32(taskMap[StateRunning]),
-		TotalTasks:   int32(expectedTaskCount),
+		RunningTasks: taskMap[StateRunning],
+		TotalTasks:   expectedTaskCount,
 		Status:       StateStarting,
 	}, nil
 }

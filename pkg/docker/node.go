@@ -25,8 +25,8 @@ func (d *Docker) NodeList(ctx context.Context, options types.NodeListOptions) ([
 }
 
 // ExpectedNumberOfTasks returns expected number of tasks of a service
-func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (int, error) {
-	var expectedTasks int
+func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (int32, error) {
+	var expectedTasks int32
 	serviceInfo, err := d.ServiceInspect(ctx, serviceID)
 	if err != nil {
 		return 0, err
@@ -41,13 +41,13 @@ func (d *Docker) ExpectedNumberOfTasks(ctx context.Context, serviceID string) (i
 	if serviceInfo.Spec.Mode.Global != nil {
 		expectedTasks = matchingNodeCount
 	} else {
-		expectedTasks = int(*serviceInfo.Spec.Mode.Replicated.Replicas)
+		expectedTasks = int32(*serviceInfo.Spec.Mode.Replicated.Replicas)
 	}
 	return expectedTasks, nil
 }
 
 // numberOfMatchingNodes returns number of nodes matching placement constraints
-func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Service) (int, error) {
+func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Service) (int32, error) {
 	// placement constraints
 	constraints, _ := constraint.Parse(serviceInfo.Spec.TaskTemplate.Placement.Constraints)
 	// list all nodes in the swarm
@@ -56,7 +56,7 @@ func (d *Docker) numberOfMatchingNodes(ctx context.Context, serviceInfo swarm.Se
 		return 0, err
 	}
 	// inspect every node on the swarm to check for satisfying constraints
-	matchingNodes := 0
+	var matchingNodes int32
 	for _, node := range nodes {
 		apiNode := d.nodeToNode(ctx, node)
 		if constraint.NodeMatches(constraints, apiNode) {

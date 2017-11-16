@@ -24,7 +24,7 @@ service Stack {
   }
   rpc Services (ServicesRequest) returns (ServicesReply) {
     option (google.api.http) = {
-      get: "/v1/stacks/{stack_name}/services"
+      get: "/v1/stacks/{stack}/services"
     };
   }
 }
@@ -46,15 +46,16 @@ message ListRequest {
 }
 
 message ListReply {
-  repeated StackListEntry entries = 1;
+  repeated StackEntry entries = 1;
 }
 
-message StackListEntry {
+message StackEntry {
   stacks.Stack stack = 1;
-  int32 failed_services = 2;
-  int32 running_services = 3;
-  int32 total_services = 4;
-  string status = 5;
+  int32 running_services = 2;
+  int32 total_services = 3;
+  string status = 4;
+  int32 complete_services = 5;
+  int32 preparing_services = 6;
 }
 
 message RemoveRequest {
@@ -66,10 +67,10 @@ message RemoveReply {
 }
 
 message ServicesRequest {
-  string stack_name = 1;
+  string stack = 1;
 }
 
-message StackService {
+message ServiceEntry {
   string id = 1;
   string name = 2;
   string mode = 3;
@@ -78,5 +79,5 @@ message StackService {
 }
 
 message ServicesReply {
-  repeated StackService services = 1;
+  repeated ServiceEntry services = 1;
 }

@@ -88,15 +88,15 @@ func request_Stack_Services_0(ctx context.Context, marshaler runtime.Marshaler, 
 		_   = err
 	)
 
-	val, ok = pathParams["stack_name"]
+	val, ok = pathParams["stack"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "stack_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "stack")
 	}
 
-	protoReq.StackName, err = runtime.String(val)
+	protoReq.Stack, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stack_name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stack", err)
 	}
 
 	msg, err := client.Services(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -268,7 +268,7 @@ var (
 
 	pattern_Stack_Remove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "stacks", "stack"}, ""))
 
-	pattern_Stack_Services_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "stacks", "stack_name", "services"}, ""))
+	pattern_Stack_Services_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "stacks", "stack", "services"}, ""))
 )
 
 var (

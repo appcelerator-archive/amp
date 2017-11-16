@@ -55,20 +55,20 @@
         ]
       }
     },
-    "/v1/stacks/{stack_name}/services": {
-      "get": {
-        "operationId": "Services",
+    "/v1/stacks/{stack}": {
+      "delete": {
+        "operationId": "Remove",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/stackServicesReply"
+              "$ref": "#/definitions/stackRemoveReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "stack_name",
+            "name": "stack",
             "in": "path",
             "required": true,
             "type": "string"
@@ -79,14 +79,14 @@
         ]
       }
     },
-    "/v1/stacks/{stack}": {
-      "delete": {
-        "operationId": "Remove",
+    "/v1/stacks/{stack}/services": {
+      "get": {
+        "operationId": "Services",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/stackRemoveReply"
+              "$ref": "#/definitions/stackServicesReply"
             }
           }
         },
@@ -158,7 +158,7 @@
         "entries": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/stackStackListEntry"
+            "$ref": "#/definitions/stackStackEntry"
           }
         }
       }
@@ -171,41 +171,7 @@
         }
       }
     },
-    "stackServicesReply": {
-      "type": "object",
-      "properties": {
-        "services": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/stackStackService"
-          }
-        }
-      }
-    },
-    "stackStackListEntry": {
-      "type": "object",
-      "properties": {
-        "stack": {
-          "$ref": "#/definitions/stacksStack"
-        },
-        "failed_services": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "running_services": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "total_services": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "status": {
-          "type": "string"
-        }
-      }
-    },
-    "stackStackService": {
+    "stackServiceEntry": {
       "type": "object",
       "properties": {
         "id": {
@@ -222,6 +188,44 @@
         },
         "image": {
           "type": "string"
+        }
+      }
+    },
+    "stackServicesReply": {
+      "type": "object",
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/stackServiceEntry"
+          }
+        }
+      }
+    },
+    "stackStackEntry": {
+      "type": "object",
+      "properties": {
+        "stack": {
+          "$ref": "#/definitions/stacksStack"
+        },
+        "running_services": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total_services": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
+          "type": "string"
+        },
+        "complete_services": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "preparing_services": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
