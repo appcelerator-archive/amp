@@ -67,7 +67,7 @@ services:
         - node.labels.amp.type.mq == true
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG:-0.15.0}
+    image: appcelerator/ampbeat:${TAG:-0.16.0}
     networks:
       - core
     deploy:
@@ -108,7 +108,7 @@ services:
       VIRTUAL_HOST: "http://kibana.*,https://kibana.*"
 
   agent:
-    image: appcelerator/agent:${TAG:-0.15.0}
+    image: appcelerator/agent:${TAG:-0.16.0}
     networks:
       - core
     deploy:
