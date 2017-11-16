@@ -24,7 +24,7 @@ secrets:
 services:
 
   prometheus:
-    image: appcelerator/amp-prometheus:${TAG:-0.15.0}
+    image: appcelerator/amp-prometheus:${TAG:-latest}
     networks:
       - public
       - monit
