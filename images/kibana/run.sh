@@ -1,7 +1,5 @@
 #!/bin/bash
 
-ES_ALIVE=/tmp/elastic_search_is_alive
-
 # Add kibana as command if needed
 if [ "${1:0:1}" = '-' ]; then
     echo "INFO - adding arguments $@ to kibana"
@@ -32,20 +30,28 @@ else
         exit 1
     fi
 fi
+
 chown elastico /opt/kibana/config/kibana.yml
 
-rm -f "$ES_ALIVE"
-# Start pre-configuration in case ES is already available
-# In background because it will need a connection from Kibana to ES
-/preconfiguration.sh &
-
-# wait a bit for elasticsearch
-for w in $(seq 16); do
-  if [[ -f "$ES_ALIVE" ]]; then
-    break
-  fi
+# Adding index to Kibana to set as defaultIndex
+maxretries=60
+rc=1
+try=1
+while [ $rc != 0 ]; do
+  echo "Adding index to Kibana (Attempt $try/$maxretries)"
+  curl -sf -XPUT $ELASTICSEARCH_URL/.kibana/index-pattern/ampbeat-* -d '{"title" : "ampbeat-*",  "timeFieldName": "@timestamp"}' &> /dev/null
+  rc=$?
   sleep 1
+  if [ $try -gt $maxretries ]; then
+    echo "[$0] FATAL - Can't find reach Elasticsearch"
+    exit 1
+  fi
+  ((try++))
 done
+
+# Update Kibana config to set index as default index
+curl -sf -XPUT $ELASTICSEARCH_URL/.kibana/config/$KIBANA_VERSION -d '{"defaultIndex" : "ampbeat-*"}' &> /dev/null
+echo "Successfully configured Kibana default index"
 
 # Drop root privileges if we are running kibana
 # allow the container to be started with `--user`

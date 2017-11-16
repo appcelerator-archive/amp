@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tag=${1:-latest}
 shift
