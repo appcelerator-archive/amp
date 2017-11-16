@@ -6,8 +6,6 @@ Based on Alpine Linux (appcelerator/alpine).
 
 The container will wait for the availability of Elasticsearch, import the index pattern ampbeat-\* and the save objects.
 
-To update the save objects, use the `update-saved-objects.sh` script.
-
 ## Run
 
 Most basic form:
@@ -25,7 +23,3 @@ docker run -t -p 443:443 -v /etc/kibana/ssl:/etc/kibana/ssl -e SERVER_SSL_CERTIF
 - `KIBANA_BASE_PATH`: Value of 'server.basePath' inside kibana.yml. Default value: *Empty*
 - `SERVER_SSL_CERTIFICATE`: full container path for a TLS certificate
 - `SERVER_SSL_KEY`: full container path for a ssl key
-
-## Tags
-
-- 5.3.2, 5.3, latest

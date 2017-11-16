@@ -55,17 +55,8 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
-        "fail_count": {
-          "type": "long"
-        },
         "fields": {
           "properties": {}
-        },
-        "limit": {
-          "type": "long"
-        },
-        "max_usage": {
-          "type": "long"
         },
         "meta": {
           "properties": {
@@ -107,24 +98,9 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
-        "read": {
-          "type": "long"
-        },
         "role": {
           "ignore_above": 1024,
           "type": "keyword"
-        },
-        "rx_bytes": {
-          "type": "long"
-        },
-        "rx_dropped": {
-          "type": "long"
-        },
-        "rx_errors": {
-          "type": "long"
-        },
-        "rx_packets": {
-          "type": "long"
         },
         "service_id": {
           "ignore_above": 1024,
@@ -152,42 +128,6 @@
         "time_id": {
           "ignore_above": 1024,
           "type": "keyword"
-        },
-        "total": {
-          "type": "long"
-        },
-        "total_bytes": {
-          "type": "long"
-        },
-        "total_usage": {
-          "type": "double"
-        },
-        "tx_bytes": {
-          "type": "long"
-        },
-        "tx_dropped": {
-          "type": "long"
-        },
-        "tx_errors": {
-          "type": "long"
-        },
-        "tx_packets": {
-          "type": "long"
-        },
-        "usage": {
-          "type": "long"
-        },
-        "usage_in_kernel_mode": {
-          "type": "double"
-        },
-        "usage_in_user_mode": {
-          "type": "double"
-        },
-        "usage_pct": {
-          "type": "double"
-        },
-        "write": {
-          "type": "long"
         }
       }
     }
