@@ -20,7 +20,7 @@ type LogsOptions struct {
 	IncludeAmpLogs bool
 	Meta           bool
 	Raw            bool
-	Number         int64
+	Number         int32
 	Msg            string
 	Regexp         bool
 	Container      string
@@ -33,7 +33,7 @@ func AddLogFlags(flags *pflag.FlagSet, opts *LogsOptions) {
 	flags.BoolVarP(&opts.Follow, "follow", "f", false, "Follow log output")
 	flags.BoolVarP(&opts.IncludeAmpLogs, "include", "i", false, "Include AMP logs")
 	flags.BoolVarP(&opts.Meta, "meta", "m", false, "Display entry metadata")
-	flags.Int64VarP(&opts.Number, "number", "n", 1000, "Number of results")
+	flags.Int32VarP(&opts.Number, "number", "n", 1000, "Number of results")
 	flags.StringVar(&opts.Msg, "msg", "", "Filter the message content by the given pattern")
 	flags.BoolVar(&opts.Regexp, "regexp", false, "Treat '--msg' option as a regular expression")
 	flags.StringVar(&opts.Container, "container", "", "Filter by the given Container")

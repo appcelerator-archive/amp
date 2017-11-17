@@ -7,13 +7,12 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/go-nats-streaming"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,10 +52,13 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	request := s.ES.GetClient().Search().Index(indices...).IgnoreUnavailable(true)
 	request.Type("logs")
 	request.Sort("time_id", false)
+	request.Size(NumberOfEntries)
 	if in.Size != 0 {
 		request.Size(int(in.Size))
-	} else {
-		request.Size(NumberOfEntries)
+	}
+	// Pagination
+	if in.From != "" {
+		request.SearchAfter(in.From)
 	}
 
 	masterQuery := elastic.NewBoolQuery()
@@ -107,12 +109,24 @@ func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	}
 
 	// Build reply
-	reply := GetReply{}
-	reply.Entries = make([]*LogEntry, len(searchResult.Hits.Hits))
+	size := len(searchResult.Hits.Hits)
+	reply := GetReply{
+		Size:  int32(size),
+		Total: int32(searchResult.Hits.TotalHits),
+	}
+	reply.Entries = make([]*LogEntry, size)
 	for i, hit := range searchResult.Hits.Hits {
 		entry := &LogEntry{}
 		if err := s.unmarshal(*hit.Source, entry); err != nil {
 			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+		// Pagination
+		if len(hit.Sort) > 0 {
+			if fromID, ok := hit.Sort[0].(string); ok {
+				entry.FromId = fromID
+			} else {
+				log.Warnln("rpc-logs: Unable to cast fromID to string. Got value:", hit.Sort[0])
+			}
 		}
 		reply.Entries[i] = entry
 
@@ -221,10 +235,5 @@ func match(entry *LogEntry, in *GetRequest) bool {
 	return match
 }
 
-func dockerToEsLabel(name string) string {
-	return "labels." + strings.Replace(name, ".", "-", -1)
-}
-
-func esToDockerLabel(name string) string {
-	return strings.Replace(name, "-", ".", -1)
-}
+func dockerToEsLabel(name string) string { return "labels." + strings.Replace(name, ".", "-", -1) }
+func esToDockerLabel(name string) string { return strings.Replace(name, "-", ".", -1) }
