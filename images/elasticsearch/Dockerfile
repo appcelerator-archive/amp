@@ -3,7 +3,7 @@ FROM appcelerator/alpine:3.6.0
 RUN apk --no-cache add openjdk8-jre bind-tools
 
 ENV PATH /bin:/opt/elasticsearch/bin:$PATH
-ENV ELASTIC_VERSION 5.6.3
+ENV ELASTIC_VERSION 5.6.4
 
 RUN mkdir -p /opt/elasticsearch && adduser -D -h /opt/elasticsearch -s /sbin/nologin elastico && rm -rf /opt
 

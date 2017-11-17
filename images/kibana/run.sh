@@ -34,23 +34,26 @@ fi
 chown elastico /opt/kibana/config/kibana.yml
 
 # Adding index to Kibana to set as defaultIndex
-maxretries=60
+SECONDS=0
+maxtime=60
 rc=1
-try=1
-while [ $rc != 0 ]; do
-  echo "Adding index to Kibana (Attempt $try/$maxretries)"
+while [[ $rc -ne 0 ]]; do
+  echo "Attempt to add index to Kibana ($((maxtime - SECONDS)) sec left)"
   curl -sf -XPUT $ELASTICSEARCH_URL/.kibana/index-pattern/ampbeat-* -d '{"title" : "ampbeat-*",  "timeFieldName": "@timestamp"}' &> /dev/null
   rc=$?
-  sleep 1
-  if [ $try -gt $maxretries ]; then
-    echo "[$0] FATAL - Can't find reach Elasticsearch"
+  if [ $SECONDS -gt $maxtime ]; then
+    echo "[$0] FATAL - Can't reach Elasticsearch"
     exit 1
   fi
-  ((try++))
+  sleep 1
 done
 
 # Update Kibana config to set index as default index
 curl -sf -XPUT $ELASTICSEARCH_URL/.kibana/config/$KIBANA_VERSION -d '{"defaultIndex" : "ampbeat-*"}' &> /dev/null
+if [[ $? -ne 0 ]]; then
+  echo "Failed to configure Kibana default index"
+  exit 1
+fi
 echo "Successfully configured Kibana default index"
 
 # Drop root privileges if we are running kibana
