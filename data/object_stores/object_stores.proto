@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package object_stores;
+
+import "github.com/appcelerator/amp/data/accounts/accounts.proto";
+
+message ObjectStore {
+  string id = 1;
+  string name = 2;
+  accounts.Account owner = 3;
+  int64 create_dt = 4;
+  string location = 5;
+}

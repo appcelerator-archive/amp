@@ -13,6 +13,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
+	"github.com/appcelerator/amp/cli/command/object_store"
 	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/secret"
 	"github.com/appcelerator/amp/cli/command/service"
@@ -121,6 +122,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		//settings
 		settings.NewSettingsCommand(c),
+
+		// object storage
+		object_store.NewObjectStoreCommand(c),
 
 		// stack
 		stack.NewStackCommand(c),

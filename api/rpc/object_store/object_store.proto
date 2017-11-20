@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package object_store;
+
+import "github.com/appcelerator/amp/data/object_stores/object_stores.proto";
+import "google/api/annotations.proto";
+
+service ObjectStore {
+  rpc Create (CreateRequest) returns (CreateReply) {
+    option (google.api.http) = {
+      post: "/v1/objectstores",
+      body: "*"
+    };
+  };
+  rpc List (ListRequest) returns (ListReply) {
+    option (google.api.http) = {
+      get: "/v1/objectstores"
+    };
+  };
+  rpc Remove (RemoveRequest) returns (RemoveReply) {
+    option (google.api.http) = {
+      delete: "/v1/objectstores/{name}"
+    };
+  };
+  rpc Forget (ForgetRequest) returns (ForgetReply) {
+    option (google.api.http) = {
+      delete: "/v1/objectstores/{name}"
+    };
+  };
+}
+
+message CreateRequest {
+  string name = 1;
+  string acl = 2;
+}
+
+message CreateReply {
+  string id = 1;
+  string name = 2;
+  string location = 3;
+}
+
+message ListRequest {
+}
+
+message ListReply {
+  repeated ObjectStoreEntry entries = 1;
+}
+
+message ObjectStoreEntry {
+  object_stores.ObjectStore object_store = 1;
+  string region = 2;
+  string acl = 3;
+  bool missing = 4;
+}
+
+message RemoveRequest {
+  string name = 1;
+  bool force = 2;
+}
+
+message RemoveReply {
+  string name = 1;
+}
+
+message ForgetRequest {
+  string name = 1;
+}
+
+message ForgetReply {
+  string name = 1;
+}

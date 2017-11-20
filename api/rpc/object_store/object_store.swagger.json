@@ -1,0 +1,187 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/object_store/object_store.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/objectstores": {
+      "get": {
+        "operationId": "List",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/object_storeListReply"
+            }
+          }
+        },
+        "tags": [
+          "ObjectStore"
+        ]
+      },
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/object_storeCreateReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/object_storeCreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ObjectStore"
+        ]
+      }
+    },
+    "/v1/objectstores/{name}": {
+      "delete": {
+        "operationId": "Forget",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/object_storeForgetReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ObjectStore"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "accountsAccount": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "string"
+        }
+      }
+    },
+    "object_storeCreateReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        }
+      }
+    },
+    "object_storeCreateRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "acl": {
+          "type": "string"
+        }
+      }
+    },
+    "object_storeForgetReply": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "object_storeListReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/object_storeObjectStoreEntry"
+          }
+        }
+      }
+    },
+    "object_storeObjectStoreEntry": {
+      "type": "object",
+      "properties": {
+        "object_store": {
+          "$ref": "#/definitions/object_storesObjectStore"
+        },
+        "region": {
+          "type": "string"
+        },
+        "acl": {
+          "type": "string"
+        },
+        "missing": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "object_storeRemoveReply": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "object_storesObjectStore": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/accountsAccount"
+        },
+        "create_dt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "location": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
