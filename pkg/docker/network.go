@@ -22,6 +22,19 @@ func (d *Docker) NetworkExists(name string) (bool, error) {
 	return false, nil
 }
 
+func (d *Docker) NetworkID(name string) (string, error) {
+	networks, err := d.ListNetworks()
+	if err != nil {
+		return "", err
+	}
+	for _, network := range networks {
+		if network.Name == name {
+			return network.ID, nil
+		}
+	}
+	return "", nil
+}
+
 func (d *Docker) CreateNetwork(name string, overlay bool, attachable bool) (string, error) {
 	spec := types.NetworkCreate{
 		CheckDuplicate: true,

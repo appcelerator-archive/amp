@@ -31,7 +31,7 @@ func (d *Docker) RemoveVolume(name string, force bool, retries int) error {
 		break
 	}
 	if !success {
-		return fmt.Errorf("timed out trying to remove volume: %s", name)
+		return fmt.Errorf("timed out trying to remove volume [%s]", name)
 	}
 	return nil
 }
