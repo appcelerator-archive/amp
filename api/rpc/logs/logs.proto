@@ -35,6 +35,7 @@ message LogEntry {
   string time_id = 13;
   map<string, string> labels = 14;
   string msg = 15;
+  string from_id = 16;
 }
 
 message GetRequest {
@@ -42,14 +43,17 @@ message GetRequest {
   string message = 2;
   string node = 3;
   bool regexp = 4;
-  sint64 size = 5;
+  int32 size = 5;
   string service = 6;
   string stack = 7;
   string task = 8;
   bool includeAmpLogs = 9;
   int32 since = 10; // In days
+  string from = 11; // For pagination
 }
 
 message GetReply {
   repeated LogEntry entries = 1;
+  int32 size = 2;
+  int32 total = 3;
 }

@@ -77,6 +77,14 @@
           "items": {
             "$ref": "#/definitions/logsLogEntry"
           }
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -97,8 +105,8 @@
           "format": "boolean"
         },
         "size": {
-          "type": "string",
-          "format": "int64"
+          "type": "integer",
+          "format": "int32"
         },
         "service": {
           "type": "string"
@@ -116,6 +124,9 @@
         "since": {
           "type": "integer",
           "format": "int32"
+        },
+        "from": {
+          "type": "string"
         }
       }
     },
@@ -169,6 +180,9 @@
           }
         },
         "msg": {
+          "type": "string"
+        },
+        "from_id": {
           "type": "string"
         }
       }

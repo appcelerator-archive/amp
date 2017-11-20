@@ -177,12 +177,12 @@ func TestLogsShouldIncludeAmpLogs(t *testing.T) {
 }
 
 func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
-	for i := int64(1); i < 100; i += 10 {
+	for i := int32(1); i < 100; i += 10 {
 		r, err := h.Logs().Get(ctx, &GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
 		}
-		assert.Equal(t, i, int64(len(r.Entries)))
+		assert.Equal(t, i, int32(len(r.Entries)))
 	}
 }
 
@@ -198,6 +198,33 @@ func TestLogsShouldBeOrdered(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, current > previous, "Should be true but got current: %v <= previous: %v", current, previous)
 		previous = current
+	}
+}
+
+func TestLogsShouldPaginate(t *testing.T) {
+	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 20})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Len(t, r.Entries, 20, "We should have exactly 20 entries")
+
+	// Keep track of the IDs
+	IDs := []string{}
+	for _, entry := range r.Entries {
+		IDs = append(IDs, entry.FromId)
+	}
+
+	// Note that the log entries are reversed compared to the ES query in order to display logs from least recent to most recent.
+	// Therefore, We need to use the first result FromId (the least recent one) as the starting point in subsequent request
+	r, err = h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 10, From: IDs[0]})
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Len(t, r.Entries, 10, "We should have exactly 10 entries")
+
+	// Make sure we get different entries
+	for _, entry := range r.Entries {
+		assert.NotContains(t, IDs, entry.FromId)
 	}
 }
 
