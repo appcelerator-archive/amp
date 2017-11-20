@@ -64,7 +64,7 @@ func create(c cli.Interface, cmd *cobra.Command, args []string) error {
 		Name: name,
 		Data: data,
 	}
-	reply, err := client.Create(context.Background(), request)
+	reply, err := client.ConfigCreate(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

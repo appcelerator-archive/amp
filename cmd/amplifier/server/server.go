@@ -14,7 +14,6 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/config"
-	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/resource"
@@ -61,7 +60,6 @@ var serviceInitializers = []serviceInitializer{
 	registerAccountServer,
 	registerConfigServer,
 	registerClusterServer,
-	registerDashboardServer,
 	registerLogsServer,
 	registerNodeServer,
 	registerResourceServer,
@@ -262,11 +260,5 @@ func registerResourceServer(amp *Amplifier, s *grpc.Server) {
 		Accounts:   amp.accounts,
 		Dashboards: amp.dashboards,
 		Stacks:     amp.stacks,
-	})
-}
-
-func registerDashboardServer(amp *Amplifier, s *grpc.Server) {
-	dashboard.RegisterDashboardServer(s, &dashboard.Server{
-		Dashboards: amp.dashboards,
 	})
 }

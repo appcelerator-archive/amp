@@ -17,7 +17,7 @@
   "paths": {
     "/v1/resources": {
       "get": {
-        "operationId": "List",
+        "operationId": "ResourceList",
         "responses": {
           "200": {
             "description": "",
@@ -33,7 +33,7 @@
     },
     "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}": {
       "delete": {
-        "operationId": "RemoveFromTeam",
+        "operationId": "ResourceRemoveFromTeam",
         "responses": {
           "200": {
             "description": "",
@@ -67,7 +67,7 @@
         ]
       },
       "post": {
-        "operationId": "AddToTeam",
+        "operationId": "ResourceAddToTeam",
         "responses": {
           "200": {
             "description": "",
@@ -109,7 +109,7 @@
         ]
       },
       "put": {
-        "operationId": "ChangePermissionLevel",
+        "operationId": "ResourceChangePermissionLevel",
         "responses": {
           "200": {
             "description": "",

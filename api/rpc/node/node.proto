@@ -5,7 +5,7 @@ package node;
 import "google/api/annotations.proto";
 
 service Node {
-  rpc GetNodes (GetNodesRequest) returns (GetNodesReply) {
+  rpc NodeGet (GetRequest) returns (GetReply) {
     option (google.api.http) = {
       get: "/v1/nodes"
     };
@@ -28,9 +28,9 @@ message NodeEntry {
   string reachability = 13;
 }
 
-message GetNodesRequest {
+message GetRequest {
 }
 
-message GetNodesReply {
+message GetReply {
   repeated NodeEntry entries = 1;
 }

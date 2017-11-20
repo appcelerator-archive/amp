@@ -14,12 +14,12 @@ type Server struct {
 }
 
 // GetNodes implements Node.GetNodes
-func (s *Server) GetNodes(ctx context.Context, in *GetNodesRequest) (*GetNodesReply, error) {
+func (s *Server) NodeGet(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	list, err := s.Docker.NodeList(ctx, types.NodeListOptions{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
-	nodeList := &GetNodesReply{}
+	nodeList := &GetReply{}
 	for _, item := range list {
 		node := &NodeEntry{
 			Id:           item.ID,

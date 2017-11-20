@@ -17,7 +17,7 @@
   "paths": {
     "/v1/clusters": {
       "get": {
-        "operationId": "List",
+        "operationId": "ClusterList",
         "responses": {
           "200": {
             "description": "",
@@ -31,7 +31,7 @@
         ]
       },
       "post": {
-        "operationId": "Create",
+        "operationId": "ClusterCreate",
         "responses": {
           "200": {
             "description": "",
@@ -57,7 +57,7 @@
     },
     "/v1/clusters/nodes": {
       "get": {
-        "operationId": "NodeList",
+        "operationId": "ClusterNodeList",
         "responses": {
           "200": {
             "description": "",
@@ -71,25 +71,9 @@
         ]
       }
     },
-    "/v1/clusters/registration": {
-      "get": {
-        "operationId": "GetRegistrationStatus",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/clusterGetRegistrationStatusReply"
-            }
-          }
-        },
-        "tags": [
-          "Cluster"
-        ]
-      }
-    },
     "/v1/clusters/{id}": {
       "get": {
-        "operationId": "Status",
+        "operationId": "ClusterStatus",
         "responses": {
           "200": {
             "description": "",
@@ -111,7 +95,7 @@
         ]
       },
       "delete": {
-        "operationId": "Remove",
+        "operationId": "ClusterRemove",
         "responses": {
           "200": {
             "description": "",
@@ -133,7 +117,7 @@
         ]
       },
       "put": {
-        "operationId": "Update",
+        "operationId": "ClusterUpdate",
         "responses": {
           "200": {
             "description": "",
@@ -182,15 +166,6 @@
         "compose": {
           "type": "string",
           "format": "byte"
-        }
-      }
-    },
-    "clusterGetRegistrationStatusReply": {
-      "type": "object",
-      "properties": {
-        "email_confirmation": {
-          "type": "boolean",
-          "format": "boolean"
         }
       }
     },

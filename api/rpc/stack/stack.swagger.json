@@ -17,7 +17,7 @@
   "paths": {
     "/v1/stacks": {
       "get": {
-        "operationId": "List",
+        "operationId": "StackList",
         "responses": {
           "200": {
             "description": "",
@@ -31,7 +31,7 @@
         ]
       },
       "post": {
-        "operationId": "Deploy",
+        "operationId": "StackDeploy",
         "responses": {
           "200": {
             "description": "",
@@ -57,7 +57,7 @@
     },
     "/v1/stacks/{stack}": {
       "delete": {
-        "operationId": "Remove",
+        "operationId": "StackRemove",
         "responses": {
           "200": {
             "description": "",
@@ -81,7 +81,7 @@
     },
     "/v1/stacks/{stack}/services": {
       "get": {
-        "operationId": "Services",
+        "operationId": "StackServices",
         "responses": {
           "200": {
             "description": "",

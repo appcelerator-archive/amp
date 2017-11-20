@@ -41,7 +41,7 @@ func listServices(c cli.Interface, opts listServiceOptions) error {
 	request := &service.ListRequest{
 		Stack: opts.stack,
 	}
-	reply, err := client.List(context.Background(), request)
+	reply, err := client.ServiceList(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

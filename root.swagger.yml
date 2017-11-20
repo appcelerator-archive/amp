@@ -1,0 +1,16 @@
+swagger: '2.0'
+info:
+  title: AMP
+  version: 0.17.0-dev
+apis:
+  - url: 'api/rpc/account/account.swagger.json'
+  - url: 'api/rpc/cluster/cluster.swagger.json'
+  - url: 'api/rpc/config/config.swagger.json'
+  - url: 'api/rpc/logs/logs.swagger.json'
+  - url: 'api/rpc/node/node.swagger.json'
+  - url: 'api/rpc/resource/resource.swagger.json'
+  - url: 'api/rpc/secret/secret.swagger.json'
+  - url: 'api/rpc/service/service.swagger.json'
+  - url: 'api/rpc/stack/stack.swagger.json'
+  - url: 'api/rpc/stats/stats.swagger.json'
+  - url: 'api/rpc/version/version.swagger.json'

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/appcelerator/amp/api/rpc/account"
-	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
 	"github.com/appcelerator/amp/data/accounts"
@@ -74,18 +73,18 @@ func TestMain(m *testing.M) {
 //	assert.NoError(t, err)
 //
 //	// Make sure we only get only our organization resources
-//	reply, err := h.Resources().List(orgCtx, &resource.ListRequest{})
+//	reply, err := h.Resources().ResourceList(orgCtx, &resource.ListRequest{})
 //	assert.NoError(t, err)
 //	assert.Len(t, reply.Resources, 2)
 //
 //	// Make sure we only get only our another organization resources
-//	reply, err = h.Resources().List(anotherOrgCtx, &resource.ListRequest{})
+//	reply, err = h.Resources().ResourceList(anotherOrgCtx, &resource.ListRequest{})
 //	assert.NoError(t, err)
 //	assert.Len(t, reply.Resources, 2)
 //
-//	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
+//	_, err = h.Stacks().StackRemove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 //	assert.NoError(t, err)
-//	_, err = h.Stacks().Remove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherStackID})
+//	_, err = h.Stacks().StackRemove(anotherOrgCtx, &stack.RemoveRequest{Stack: anotherStackID})
 //	assert.NoError(t, err)
 //}
 
@@ -105,7 +104,7 @@ func TestAddSameResourceTwiceShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// AddToTeam
-	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(orgCtx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -113,14 +112,14 @@ func TestAddSameResourceTwiceShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// AddToTeam again
-	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(orgCtx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
 	})
 	assert.Error(t, err)
 
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 }
 
@@ -140,14 +139,14 @@ func TestRemoveNonExistingResourceShouldFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// RemoveFromTeam
-	_, err = h.Resources().RemoveFromTeam(orgCtx, &resource.RemoveFromTeamRequest{
+	_, err = h.Resources().ResourceRemoveFromTeam(orgCtx, &resource.RemoveFromTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
 	})
 	assert.Error(t, err)
 
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 }
 
@@ -167,7 +166,7 @@ func TestDeletedStackShouldNotBelongToTheTeamAnymore(t *testing.T) {
 	assert.NoError(t, err)
 
 	// AddToTeam
-	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(orgCtx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -183,54 +182,7 @@ func TestDeletedStackShouldNotBelongToTheTeamAnymore(t *testing.T) {
 	assert.NotEmpty(t, reply.Team.Resources)
 
 	// Delete the stack
-	_, err = h.Stacks().Remove(orgCtx, &stack.RemoveRequest{Stack: stackID})
-	assert.NoError(t, err)
-
-	// GetTeam
-	reply, err = h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
-		OrganizationName: testTeam.OrganizationName,
-		TeamName:         testTeam.TeamName,
-	})
-	assert.NoError(t, err)
-	assert.Empty(t, reply.Team.Resources)
-}
-
-func TestDeletedDashboardShouldNotBelongToTheTeamAnymore(t *testing.T) {
-	testUser := h.RandomUser()
-	testOrg := h.DefaultOrg()
-	testTeam := h.RandomTeam(testOrg.Name)
-
-	// Create user, org and team
-	userCtx := h.CreateTeam(t, &testOrg, &testUser, &testTeam)
-
-	// Switch to organization account
-	orgCtx := h.Switch(userCtx, t, testOrg.Name)
-
-	// Create dashboard as organization
-	r, err := h.Dashboards().Create(orgCtx, &dashboard.CreateRequest{
-		Name: "my awesome dashboard" + stringid.GenerateNonCryptoID(),
-		Data: "my awesome data",
-	})
-	assert.NoError(t, err)
-
-	// AddToTeam
-	_, err = h.Resources().AddToTeam(orgCtx, &resource.AddToTeamRequest{
-		OrganizationName: testTeam.OrganizationName,
-		TeamName:         testTeam.TeamName,
-		ResourceId:       r.Dashboard.Id,
-	})
-	assert.NoError(t, err)
-
-	// GetTeam
-	reply, err := h.Accounts().GetTeam(orgCtx, &account.GetTeamRequest{
-		OrganizationName: testTeam.OrganizationName,
-		TeamName:         testTeam.TeamName,
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, reply.Team.Resources)
-
-	// Remove dashboard
-	_, err = h.Dashboards().Remove(orgCtx, &dashboard.RemoveRequest{Id: r.Dashboard.Id})
+	_, err = h.Stacks().StackRemove(orgCtx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 
 	// GetTeam
@@ -265,10 +217,10 @@ func TestShareResourceReadPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err := h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
@@ -278,15 +230,15 @@ func TestShareResourceReadPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
 	// AddToTeam
-	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(member1Ctx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -297,10 +249,10 @@ func TestShareResourceReadPermission(t *testing.T) {
 	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
 
@@ -309,22 +261,22 @@ func TestShareResourceReadPermission(t *testing.T) {
 	assert.Error(t, err)
 
 	// Member 2 should not be able to remove the stack
-	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.Error(t, err)
 
 	// Remove member 2 from the team
 	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
 	// Remove stack
-	_, err = h.Stacks().Remove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 }
 
@@ -351,10 +303,10 @@ func TestShareResourceWritePermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err := h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
@@ -364,15 +316,15 @@ func TestShareResourceWritePermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
 	// AddToTeam
-	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(member1Ctx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -380,7 +332,7 @@ func TestShareResourceWritePermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// ChangePermissionLevel
-	_, err = h.Resources().ChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
+	_, err = h.Resources().ResourceChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -392,10 +344,10 @@ func TestShareResourceWritePermission(t *testing.T) {
 	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
 
@@ -404,22 +356,22 @@ func TestShareResourceWritePermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Member 2 should not be able to remove the stack
-	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.Error(t, err)
 
 	// Remove member 2 from the team
 	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
 	// Remove stack
-	_, err = h.Stacks().Remove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(member1Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 }
 
@@ -446,10 +398,10 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err := h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err := h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
@@ -459,15 +411,15 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 
 	// AddToTeam
-	_, err = h.Resources().AddToTeam(member1Ctx, &resource.AddToTeamRequest{
+	_, err = h.Resources().ResourceAddToTeam(member1Ctx, &resource.AddToTeamRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -475,7 +427,7 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// ChangePermissionLevel
-	_, err = h.Resources().ChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
+	_, err = h.Resources().ResourceChangePermissionLevel(member1Ctx, &resource.ChangePermissionLevelRequest{
 		OrganizationName: testTeam.OrganizationName,
 		TeamName:         testTeam.TeamName,
 		ResourceId:       stackID,
@@ -487,10 +439,10 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	h.AddUserToTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Len(t, reply.Resources, 1)
 
@@ -499,17 +451,17 @@ func TestShareResourceAdminPermission(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Member 2 should be able to remove the stack
-	_, err = h.Stacks().Remove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
+	_, err = h.Stacks().StackRemove(member2Ctx, &stack.RemoveRequest{Stack: stackID})
 	assert.NoError(t, err)
 
 	// Remove member 2 from the team
 	h.RemoveUserFromTeam(member1Ctx, t, &testTeam, &testMember2)
 
 	// Make sure we can list only our resources
-	reply, err = h.Resources().List(member1Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member1Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
-	reply, err = h.Resources().List(member2Ctx, &resource.ListRequest{})
+	reply, err = h.Resources().ResourceList(member2Ctx, &resource.ListRequest{})
 	assert.NoError(t, err)
 	assert.Empty(t, reply.Resources)
 }

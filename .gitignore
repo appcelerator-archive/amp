@@ -8,6 +8,7 @@ portal/client/node_modules/**
 coverage.out
 coverage-all.out
 cluster/**/bin
+swagger.json
 
 # tests
 *.log

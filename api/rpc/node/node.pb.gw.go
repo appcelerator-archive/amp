@@ -28,11 +28,11 @@ var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
-func request_Node_GetNodes_0(ctx context.Context, marshaler runtime.Marshaler, client NodeClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetNodesRequest
+func request_Node_NodeGet_0(ctx context.Context, marshaler runtime.Marshaler, client NodeClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
-	msg, err := client.GetNodes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.NodeGet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -75,7 +75,7 @@ func RegisterNodeHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 // "NodeClient" to call the correct interceptors.
 func RegisterNodeHandlerClient(ctx context.Context, mux *runtime.ServeMux, client NodeClient) error {
 
-	mux.Handle("GET", pattern_Node_GetNodes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Node_NodeGet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -93,14 +93,14 @@ func RegisterNodeHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Node_GetNodes_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Node_NodeGet_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Node_GetNodes_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Node_NodeGet_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -108,9 +108,9 @@ func RegisterNodeHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 }
 
 var (
-	pattern_Node_GetNodes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "nodes"}, ""))
+	pattern_Node_NodeGet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "nodes"}, ""))
 )
 
 var (
-	forward_Node_GetNodes_0 = runtime.ForwardResponseMessage
+	forward_Node_NodeGet_0 = runtime.ForwardResponseMessage
 )

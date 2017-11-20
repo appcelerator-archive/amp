@@ -17,7 +17,7 @@
   "paths": {
     "/v1/inspect/{service}": {
       "get": {
-        "operationId": "Inspect",
+        "operationId": "ServiceInspect",
         "responses": {
           "200": {
             "description": "",
@@ -41,7 +41,7 @@
     },
     "/v1/scale/{service}/{replicas}": {
       "put": {
-        "operationId": "Scale",
+        "operationId": "ServiceScale",
         "responses": {
           "200": {
             "description": "",
@@ -72,7 +72,7 @@
     },
     "/v1/services/{stack}": {
       "get": {
-        "operationId": "List",
+        "operationId": "ServiceList",
         "responses": {
           "200": {
             "description": "",
@@ -96,7 +96,7 @@
     },
     "/v1/tasks/{service}": {
       "get": {
-        "operationId": "Ps",
+        "operationId": "ServicePs",
         "responses": {
           "200": {
             "description": "",

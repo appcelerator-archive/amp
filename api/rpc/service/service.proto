@@ -6,22 +6,22 @@ import "google/api/annotations.proto";
 import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 
 service Service {
-    rpc Ps (PsRequest) returns (PsReply) {
+    rpc ServicePs (PsRequest) returns (PsReply) {
         option (google.api.http) = {
       get: "/v1/tasks/{service}"
     };
     }
-    rpc List (ListRequest) returns (ListReply) {
+    rpc ServiceList (ListRequest) returns (ListReply) {
         option (google.api.http) = {
       get: "/v1/services/{stack}"
     };
     }
-    rpc Inspect (InspectRequest) returns (InspectReply) {
+    rpc ServiceInspect (InspectRequest) returns (InspectReply) {
         option (google.api.http) = {
       get: "/v1/inspect/{service}"
     };
     }
-    rpc Scale (ScaleRequest) returns (google.protobuf.Empty) {
+    rpc ServiceScale (ScaleRequest) returns (google.protobuf.Empty) {
         option (google.api.http) = {
       put: "/v1/scale/{service}/{replicas}"
     };

@@ -17,12 +17,12 @@
   "paths": {
     "/v1/nodes": {
       "get": {
-        "operationId": "GetNodes",
+        "operationId": "NodeGet",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/nodeGetNodesReply"
+              "$ref": "#/definitions/nodeGetReply"
             }
           }
         },
@@ -33,7 +33,7 @@
     }
   },
   "definitions": {
-    "nodeGetNodesReply": {
+    "nodeGetReply": {
       "type": "object",
       "properties": {
         "entries": {

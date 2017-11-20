@@ -5,7 +5,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositori
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 RUN apk update
-RUN apk add gosu docker make
+RUN apk add gosu docker make nodejs jq
+
+## swagger-combine for API documentation
+RUN npm install --save swagger-combine
 
 ## originally: -rwxr-xr-x 1 root root 1687016 Jan 24  2017 /usr/sbin/gosu
 ## adding the sticky bit to allow users to execute command as root

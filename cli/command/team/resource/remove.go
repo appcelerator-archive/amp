@@ -67,7 +67,7 @@ func remTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts remTeam
 			OrganizationName: opts.org,
 			TeamName:         opts.team,
 		}
-		if _, err := client.RemoveFromTeam(context.Background(), request); err != nil {
+		if _, err := client.ResourceRemoveFromTeam(context.Background(), request); err != nil {
 			if s, ok := status.FromError(err); ok {
 				errs = append(errs, s.Message())
 				continue

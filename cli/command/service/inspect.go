@@ -28,7 +28,7 @@ func inspectService(c cli.Interface, args []string) error {
 	request := &service.InspectRequest{
 		Service: args[0],
 	}
-	reply, err := client.Inspect(context.Background(), request)
+	reply, err := client.ServiceInspect(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

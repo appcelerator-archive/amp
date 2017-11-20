@@ -34,7 +34,7 @@ func convertError(err error) error {
 }
 
 // Deploy implements stack.Server
-func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
+func (s *Server) StackDeploy(ctx context.Context, in *DeployRequest) (*DeployReply, error) {
 	// Check if stack is using restricted resources
 	compose, err := s.Docker.ComposeParse(ctx, in.Compose, in.Environment)
 	if err != nil {
@@ -72,7 +72,7 @@ func (s *Server) Deploy(ctx context.Context, in *DeployRequest) (*DeployReply, e
 }
 
 // List implements stack.Server
-func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+func (s *Server) StackList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	log.Infoln("[stack] List", in.String())
 
 	// List stacks
@@ -108,7 +108,7 @@ func (s *Server) toStackEntry(ctx context.Context, stack *stacks.Stack) (*StackE
 }
 
 // Remove implements stack.Server
-func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
+func (s *Server) StackRemove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	log.Infoln("[stack] Remove", in.String())
 
 	// Retrieve the stack
@@ -140,7 +140,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 }
 
 // Services Ctx implements stack.Server
-func (s *Server) Services(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
+func (s *Server) StackServices(ctx context.Context, in *ServicesRequest) (*ServicesReply, error) {
 	log.Infoln("[stack] Services", in.String())
 
 	stack, err := s.Stacks.GetByFragmentOrName(ctx, in.Stack)

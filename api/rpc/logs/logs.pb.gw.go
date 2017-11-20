@@ -28,7 +28,7 @@ var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
-func request_Logs_Get_0(ctx context.Context, marshaler runtime.Marshaler, client LogsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Logs_LogsGet_0(ctx context.Context, marshaler runtime.Marshaler, client LogsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -36,12 +36,12 @@ func request_Logs_Get_0(ctx context.Context, marshaler runtime.Marshaler, client
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.LogsGet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func request_Logs_GetStream_0(ctx context.Context, marshaler runtime.Marshaler, client LogsClient, req *http.Request, pathParams map[string]string) (Logs_GetStreamClient, runtime.ServerMetadata, error) {
+func request_Logs_LogsGetStream_0(ctx context.Context, marshaler runtime.Marshaler, client LogsClient, req *http.Request, pathParams map[string]string) (Logs_LogsGetStreamClient, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -49,7 +49,7 @@ func request_Logs_GetStream_0(ctx context.Context, marshaler runtime.Marshaler, 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	stream, err := client.GetStream(ctx, &protoReq)
+	stream, err := client.LogsGetStream(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
 	}
@@ -100,7 +100,7 @@ func RegisterLogsHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 // "LogsClient" to call the correct interceptors.
 func RegisterLogsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client LogsClient) error {
 
-	mux.Handle("POST", pattern_Logs_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Logs_LogsGet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -118,18 +118,18 @@ func RegisterLogsHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Logs_Get_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Logs_LogsGet_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Logs_Get_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Logs_LogsGet_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Logs_GetStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Logs_LogsGetStream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -147,14 +147,14 @@ func RegisterLogsHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Logs_GetStream_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Logs_LogsGetStream_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Logs_GetStream_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_Logs_LogsGetStream_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -162,13 +162,13 @@ func RegisterLogsHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 }
 
 var (
-	pattern_Logs_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "logs"}, ""))
+	pattern_Logs_LogsGet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "logs"}, ""))
 
-	pattern_Logs_GetStream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "logs", "stream"}, ""))
+	pattern_Logs_LogsGetStream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "logs", "stream"}, ""))
 )
 
 var (
-	forward_Logs_Get_0 = runtime.ForwardResponseMessage
+	forward_Logs_LogsGet_0 = runtime.ForwardResponseMessage
 
-	forward_Logs_GetStream_0 = runtime.ForwardResponseStream
+	forward_Logs_LogsGetStream_0 = runtime.ForwardResponseStream
 )

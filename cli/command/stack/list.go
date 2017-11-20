@@ -36,7 +36,7 @@ func NewListCommand(c cli.Interface) *cobra.Command {
 func list(c cli.Interface, opts listStackOptions) error {
 	req := &stack.ListRequest{}
 	client := stack.NewStackClient(c.ClientConn())
-	reply, err := client.List(context.Background(), req)
+	reply, err := client.StackList(context.Background(), req)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

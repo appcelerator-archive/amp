@@ -6,23 +6,23 @@ import "github.com/appcelerator/amp/data/stacks/stacks.proto";
 import "google/api/annotations.proto";
 
 service Stack {
-  rpc Deploy (DeployRequest) returns (DeployReply) {
+  rpc StackDeploy (DeployRequest) returns (DeployReply) {
     option (google.api.http) = {
       post: "/v1/stacks",
       body: "*"
     };
   }
-  rpc List (ListRequest) returns (ListReply) {
+  rpc StackList (ListRequest) returns (ListReply) {
     option (google.api.http) = {
       get: "/v1/stacks"
     };
   }
-  rpc Remove (RemoveRequest) returns (RemoveReply) {
+  rpc StackRemove (RemoveRequest) returns (RemoveReply) {
     option (google.api.http) = {
       delete: "/v1/stacks/{stack}"
     };
   }
-  rpc Services (ServicesRequest) returns (ServicesReply) {
+  rpc StackServices (ServicesRequest) returns (ServicesReply) {
     option (google.api.http) = {
       get: "/v1/stacks/{stack}/services"
     };
