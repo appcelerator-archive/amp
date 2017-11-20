@@ -1,9 +1,17 @@
 package cluster
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 
 	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/filters"
+	"docker.io/go-docker/api/types/swarm"
+	"github.com/appcelerator/amp/pkg/cloud"
+	"github.com/appcelerator/amp/pkg/cloud/aws"
 	"github.com/appcelerator/amp/pkg/docker"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -12,8 +20,14 @@ import (
 
 // Server is used to implement cluster.ClusterServer
 type Server struct {
-	Docker *docker.Docker
+	Docker   *docker.Docker
+	Provider cloud.Provider
+	Region   string
 }
+
+const (
+	CoreStackName = "amp"
+)
 
 // Create implements cluster.Server
 func (s *Server) ClusterCreate(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
@@ -30,16 +44,99 @@ func (s *Server) ClusterCreate(ctx context.Context, in *CreateRequest) (*CreateR
 func (s *Server) ClusterList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	log.Infoln("[cluster] List", in.String())
 
-	log.Infoln("[cluster] Success: list")
-	return &ListReply{}, nil
+	// TODO
+
+	//return &ListReply{}, nil
+	log.Infoln("[cluster] NotImplemented: list")
+	return nil, status.Errorf(codes.Unimplemented, "Not implemented yet")
+}
+
+// swarmNodeStatus returns the swarm status for this node
+func swarmNodeStatus(c *docker.Docker) (swarm.LocalNodeState, error) {
+	info, err := c.GetClient().Info(context.Background())
+	if err != nil {
+		return "", err
+	}
+	return info.Swarm.LocalNodeState, nil
+}
+
+// infoAMPCore returns the number of AMP core services
+func infoAMPCore(ctx context.Context, c *docker.Docker) (int, error) {
+	var count int
+	services, err := c.GetClient().ServiceList(ctx, types.ServiceListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	for _, service := range services {
+		if strings.HasPrefix(service.Spec.Name, fmt.Sprintf("%s_", CoreStackName)) {
+			count++
+		}
+	}
+	return count, nil
+}
+
+// infoUser returns the number of user services
+func infoUser(ctx context.Context, c *docker.Docker) (int, error) {
+	var count int
+	services, err := c.GetClient().ServiceList(ctx, types.ServiceListOptions{})
+	if err != nil {
+		return 0, err
+	}
+	for _, service := range services {
+		if !strings.HasPrefix(service.Spec.Name, CoreStackName) {
+			count++
+		}
+	}
+	return count, err
 }
 
 // Status implements cluster.Server
 func (s *Server) ClusterStatus(ctx context.Context, in *StatusRequest) (*StatusReply, error) {
 	log.Infoln("[cluster] Status", in.String())
 
-	log.Infoln("[cluster] Success: list")
-	return &StatusReply{}, nil
+	// Check the node status
+	swarmStatus, err := swarmNodeStatus(s.Docker)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+
+	// Assuming the swarm is not active
+	coreServices := 0
+	userServices := 0
+	if swarmStatus == swarm.LocalNodeStateActive { // if it is, update the services
+		ctx := context.Background()
+		coreServices, err = infoAMPCore(ctx, s.Docker)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+		userServices, err = infoUser(ctx, s.Docker)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+	}
+	stackInfo := map[string]string{"StackName": "local", "Region": s.Region, "NFSEndpoint": "disabled"}
+
+	// check cloud providers
+	switch s.Provider {
+	case cloud.ProviderAWS:
+		if err := aws.StackInfo(ctx, &stackInfo); err != nil {
+			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+	case cloud.ProviderLocal:
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "provider [%s] is not yet implemented", string(s.Provider))
+	}
+	log.Infoln("[cluster] Success: status")
+	return &StatusReply{
+		Name:         stackInfo["StackName"],
+		Provider:     string(s.Provider),
+		Region:       s.Region,
+		SwarmStatus:  string(swarmStatus),
+		CoreServices: strconv.Itoa(coreServices),
+		UserServices: strconv.Itoa(userServices),
+		Endpoint:     stackInfo["DNSTarget"],
+		NfsEndpoint:  stackInfo["NFSEndpoint"],
+	}, nil
 }
 
 // Update implements cluster.Server
@@ -62,15 +159,50 @@ func (s *Server) ClusterRemove(ctx context.Context, in *RemoveRequest) (*RemoveR
 func (s *Server) ClusterNodeList(ctx context.Context, in *NodeListRequest) (*NodeListReply, error) {
 	log.Infoln("[cluster] NodeList", in.String())
 
-	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
+	filter := filters.NewArgs()
+	if in.Id != "" {
+		filter.Add("id", in.Id)
+	}
+	if in.Name != "" {
+		filter.Add("name", in.Name)
+	}
+	if in.Role != "" {
+		filter.Add("role", in.Role)
+	}
+	if in.EngineLabel != "" {
+		filter.Add("label", in.EngineLabel)
+	}
+	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{Filters: filter})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	ret := &NodeListReply{}
+	// prepare key value for label filtering
+	lk := strings.Split(in.NodeLabel, "=")[0]
+	lv := ""
+	if strings.Contains(in.NodeLabel, "=") {
+		lv = strings.Split(in.NodeLabel, "=")[1]
+	}
 	for _, node := range list {
+		if lk != "" {
+			labelMatch := false
+			for k, v := range node.Spec.Annotations.Labels {
+				if k == lk && (lv == "" || lv == v) {
+					labelMatch = true
+					break
+				}
+			}
+			if !labelMatch {
+				continue
+			}
+		}
 		leader := false
 		if node.ManagerStatus != nil {
 			leader = node.ManagerStatus.Leader
+		}
+		var enginePlugins []*EnginePlugin
+		for _, p := range node.Description.Engine.Plugins {
+			enginePlugins = append(enginePlugins, &EnginePlugin{Type: p.Type, Name: p.Name})
 		}
 		ret.Nodes = append(ret.Nodes, &NodeReply{
 			Id:            node.ID,
@@ -79,6 +211,12 @@ func (s *Server) ClusterNodeList(ctx context.Context, in *NodeListRequest) (*Nod
 			Availability:  string(node.Spec.Availability),
 			Role:          string(node.Spec.Role),
 			ManagerLeader: leader,
+			NodeLabels:    node.Spec.Annotations.Labels,
+			EngineLabels:  node.Description.Engine.Labels,
+			NanoCpus:      node.Description.Resources.NanoCPUs,
+			MemoryBytes:   node.Description.Resources.MemoryBytes,
+			EngineVersion: node.Description.Engine.EngineVersion,
+			EnginePlugins: enginePlugins,
 		})
 	}
 	return ret, nil

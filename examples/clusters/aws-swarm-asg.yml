@@ -746,6 +746,8 @@ Resources:
           - 'ec2:DeleteNetworkInterface'
           - 'elasticfilesystem:DescribeFileSystems'
           - 'elasticfilesystem:DescribeMountTargets'
+          #  next line for cluster status command
+          - 'cloudformation:DescribeStacks'
           Resource: '*'
           Effect: Allow
         Version: '2012-10-17'

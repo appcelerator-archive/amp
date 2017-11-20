@@ -9,10 +9,11 @@ import (
 func NewNodeCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "node",
-		Short:   "Cluster node management operations",
+		Short:   "Node management operations",
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
 	cmd.AddCommand(NewNodeListCommand(c))
+	cmd.AddCommand(NewNodeInspectCommand(c))
 	return cmd
 }

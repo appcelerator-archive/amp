@@ -66,12 +66,44 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "node_label",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "engine_label",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Cluster"
         ]
       }
     },
-    "/v1/clusters/{id}": {
+    "/v1/clusters/status": {
       "get": {
         "operationId": "ClusterStatus",
         "responses": {
@@ -82,18 +114,12 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
         "tags": [
           "Cluster"
         ]
-      },
+      }
+    },
+    "/v1/clusters/{id}": {
       "delete": {
         "operationId": "ClusterRemove",
         "responses": {
@@ -169,6 +195,17 @@
         }
       }
     },
+    "clusterEnginePlugin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "clusterListReply": {
       "type": "object"
     },
@@ -204,6 +241,35 @@
         "manager_leader": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "nano_cpus": {
+          "type": "string",
+          "format": "int64"
+        },
+        "memory_bytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "node_labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "engine_labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "engine_plugins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clusterEnginePlugin"
+          }
+        },
+        "engine_version": {
+          "type": "string"
         }
       }
     },
@@ -218,7 +284,28 @@
     "clusterStatusReply": {
       "type": "object",
       "properties": {
-        "id": {
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "swarm_status": {
+          "type": "string"
+        },
+        "core_services": {
+          "type": "string"
+        },
+        "user_services": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "nfs_endpoint": {
           "type": "string"
         }
       }

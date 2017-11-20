@@ -27,6 +27,7 @@ import (
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
+	"github.com/appcelerator/amp/pkg/cloud"
 	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
@@ -53,6 +54,8 @@ type Amplifier struct {
 	accounts   accounts.Interface
 	stacks     stacks.Interface
 	dashboards dashboards.Interface
+	provider   cloud.Provider
+	region     string
 }
 
 // Service initializers register the services with the grpc server
@@ -87,6 +90,18 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	if err := docker.Connect(); err != nil {
 		return nil, err
 	}
+	provider, err := cloud.CloudProvider()
+	if err != nil {
+		return nil, err
+	}
+	region, err := cloud.Region()
+	if err != nil {
+		return nil, err
+	}
+	log.Infoln("Deployment context", string(provider))
+	if region != "" {
+		log.Infoln("Region", region)
+	}
 	amp := &Amplifier{
 		config:     config,
 		storage:    etcd,
@@ -98,6 +113,8 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		accounts:   accounts,
 		stacks:     stacks.NewStore(etcd, accounts),
 		dashboards: dashboards.NewStore(etcd, accounts),
+		provider:   provider,
+		region:     region,
 	}
 	return amp, nil
 }
@@ -231,7 +248,9 @@ func registerStackServer(amp *Amplifier, s *grpc.Server) {
 
 func registerClusterServer(amp *Amplifier, s *grpc.Server) {
 	cluster.RegisterClusterServer(s, &cluster.Server{
-		Docker: amp.docker,
+		Docker:   amp.docker,
+		Provider: amp.provider,
+		Region:   amp.region,
 	})
 }
 

@@ -53,9 +53,13 @@ func newRootCommand(c cli.Interface) *cobra.Command {
 			if cmd.Parent() != nil && cmd.Parent().Use == "cluster" {
 				// TODO special case handling for cluster this release
 				local := strings.HasPrefix(c.Server(), "127.0.0.1") ||
-					strings.HasPrefix(c.Server(), "localhost")
-				if !local {
-					return errors.New("only cluster operations with '--server=localhost' supported in this release")
+					strings.HasPrefix(c.Server(), "localhost") ||
+					strings.Contains(c.Server(), "local.appcelerator.io")
+				switch cmd.Use {
+				case "create", "rm", "update":
+					if !local {
+						return errors.New("cluster operations on remote server are not supported in this release")
+					}
 				}
 			}
 
