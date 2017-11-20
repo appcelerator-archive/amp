@@ -21,7 +21,7 @@ RUN mkdir -p $GOPATH/src/github.com/alecthomas/gometalinter && \
 RUN mkdir -p $GOPATH/src/github.com/grpc-ecosystem/grpc-gateway && \
     git clone https://github.com/grpc-ecosystem/grpc-gateway.git $GOPATH/src/github.com/grpc-ecosystem/grpc-gateway && \
     cd $GOPATH/src/github.com/grpc-ecosystem/grpc-gateway && \
-    git checkout c323909dd41de182a54b4d1610f26034da5e097e
+    git checkout tags/v1.3.0
 
 RUN mkdir -p $GOPATH/src/github.com/golang/glog && \
     git clone https://github.com/golang/glog.git $GOPATH/src/github.com/golang/glog && \

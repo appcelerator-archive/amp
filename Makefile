@@ -46,6 +46,7 @@ PROTOGWTARGETS := $(PROTOGWFILES:.proto=.pb.gw.go) $(PROTOGWFILES:.pb.gw.go=.swa
 
 PROTOOPTS := -I$(GOPATH)/src/ \
 	-I $(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+	-I $(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway \
 	--go_out=plugins=grpc:$(GOPATH)/src/ \
 	--grpc-gateway_out=logtostderr=true:$(GOPATH)/src \
 	--swagger_out=logtostderr=true:$(GOPATH)/src/
