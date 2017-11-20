@@ -1,7 +1,8 @@
 # based on https://github.com/bvis/docker-socat
 FROM alpine:3.6
+RUN echo "@community http://nl.alpinelinux.org/alpine/v3.6/community" >> /etc/apk/repositories
 ENV IN "9323"
 ENV OUT "4999"
-RUN apk add --no-cache socat
+RUN apk add --no-cache socat tini@community
 COPY entrypoint.sh /bin/
-ENTRYPOINT /bin/entrypoint.sh
+ENTRYPOINT ["/sbin/tini", "--", "/bin/entrypoint.sh"]

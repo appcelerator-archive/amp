@@ -119,7 +119,7 @@ services:
         - node.labels.amp.type.core == true
 
   nats_exporter:
-    image: appcelerator/prometheus-nats-exporter:latest
+    image: appcelerator/prometheus-nats-exporter:0.17.0
     networks:
       - monit
       - core
@@ -194,7 +194,7 @@ services:
              "-web.external-url=http://localhost:9093" ]
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.8
+    image: appcelerator/grafana-amp:1.2.9
     networks:
       - core
       - public
