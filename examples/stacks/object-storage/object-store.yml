@@ -1,0 +1,39 @@
+version: "3.3"
+
+networks:
+  backend:
+    driver: overlay
+
+services:
+  writer:
+    image: cgswong/aws:s3cmd
+    networks:
+      backend:
+    environment:
+      BUCKET_NAME: "${BUCKET_NAME:-you-should-set-your-bucket-env-var}"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+      restart_policy:
+        condition: none
+    command:
+      ["put", "/etc/hostname", "s3://${BUCKET_NAME}/objstore-test.txt"]
+
+  reader:
+    image: cgswong/aws:s3cmd
+    networks:
+      backend:
+    environment:
+      BUCKET_NAME: "${BUCKET_NAME:-you-should-set-your-bucket-env-var}"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+      restart_policy:
+        condition: on-failure
+    command:
+      ["ls", "s3://${BUCKET_NAME}/objstore-test.txt"]
+
