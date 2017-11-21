@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/prometheus"
 	"github.com/appcelerator/amp/pkg/sms"
 	log "github.com/sirupsen/logrus"
 )
@@ -56,6 +57,7 @@ func main() {
 		DockerVersion:    docker.DefaultVersion,
 		Registration:     configuration.RegistrationDefault,
 		Notifications:    configuration.NotificationsDefault,
+		PrometheusURL:    prometheus.DefaultURL,
 	}
 
 	// Override with configuration file

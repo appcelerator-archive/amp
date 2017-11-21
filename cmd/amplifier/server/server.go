@@ -15,6 +15,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/config"
 	"github.com/appcelerator/amp/api/rpc/logs"
+	"github.com/appcelerator/amp/api/rpc/metrics"
 	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/object_store"
 	"github.com/appcelerator/amp/api/rpc/resource"
@@ -34,6 +35,7 @@ import (
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
+	"github.com/appcelerator/amp/pkg/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -46,19 +48,20 @@ type serviceInitializer func(*Amplifier, *grpc.Server)
 
 // Amplifier represents the AMP gRPC server
 type Amplifier struct {
-	config       *configuration.Configuration
-	docker       *docker.Docker
-	storage      storage.Interface
-	es           *elasticsearch.Elasticsearch
-	ns           *ns.NatsStreaming
-	mailer       *mail.Mailer
-	tokens       *auth.Tokens
-	accounts     accounts.Interface
-	stacks       stacks.Interface
-	dashboards   dashboards.Interface
+	config     *configuration.Configuration
+	docker     *docker.Docker
+	storage    storage.Interface
+	es         *elasticsearch.Elasticsearch
+	ns         *ns.NatsStreaming
+	mailer     *mail.Mailer
+	tokens     *auth.Tokens
+	accounts   accounts.Interface
+	stacks     stacks.Interface
+	dashboards dashboards.Interface
 	objectStores object_stores.Interface
-	provider     cloud.Provider
-	region       string
+	provider   cloud.Provider
+	region     string
+	prometheus *prometheus.Prometheus
 }
 
 // Service initializers register the services with the grpc server
@@ -67,6 +70,7 @@ var serviceInitializers = []serviceInitializer{
 	registerConfigServer,
 	registerClusterServer,
 	registerLogsServer,
+	registerMetricsServer,
 	registerNodeServer,
 	registerObjectStoreServer,
 	registerResourceServer,
@@ -106,20 +110,26 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	if region != "" {
 		log.Infoln("Region", region)
 	}
+	prometheus, err := prometheus.NewClient(config.PrometheusURL)
+	if err != nil {
+		return nil, err
+	}
+
 	amp := &Amplifier{
-		config:       config,
-		storage:      etcd,
-		es:           elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
-		ns:           ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
-		docker:       docker,
-		mailer:       mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
-		tokens:       auth.New(config.JWTSecretKey),
-		accounts:     accounts,
-		stacks:       stacks.NewStore(etcd, accounts),
-		dashboards:   dashboards.NewStore(etcd, accounts),
+		config:     config,
+		storage:    etcd,
+		es:         elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
+		ns:         ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
+		docker:     docker,
+		mailer:     mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
+		tokens:     auth.New(config.JWTSecretKey),
+		accounts:   accounts,
+		stacks:     stacks.NewStore(etcd, accounts),
+		dashboards: dashboards.NewStore(etcd, accounts),
 		objectStores: object_stores.NewStore(etcd, accounts),
-		provider:     provider,
-		region:       region,
+		provider:   provider,
+		region:     region,
+		prometheus: prometheus,
 	}
 	return amp, nil
 }
@@ -223,6 +233,12 @@ func registerLogsServer(amp *Amplifier, s *grpc.Server) {
 	logs.RegisterLogsServer(s, &logs.Server{
 		ES: amp.es,
 		NS: amp.ns,
+	})
+}
+
+func registerMetricsServer(amp *Amplifier, s *grpc.Server) {
+	metrics.RegisterMetricsServer(s, &metrics.Metrics{
+		Prometheus: amp.prometheus,
 	})
 }
 

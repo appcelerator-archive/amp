@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package metrics;
+
+import "google/api/annotations.proto";
+
+service Metrics {
+    rpc CPUMetricsQuery (CPUMetricsRequest) returns (CPUMetricsResponse) {
+        option (google.api.http) = {
+            get: "/v1/metrics/cpu",
+        };
+    };
+}
+
+message CPUMetricsRequest {
+    bool average = 1;
+}
+
+message CPUMetricsResponse {
+    repeated CPUMetricsEntry entries = 1;
+}
+
+message CPUMetricsEntry {
+    string service = 1;
+    float usage = 2;
+}

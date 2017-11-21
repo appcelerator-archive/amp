@@ -14,6 +14,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
 	"github.com/appcelerator/amp/cli/command/object_store"
+	"github.com/appcelerator/amp/cli/command/metrics"
 	"github.com/appcelerator/amp/cli/command/password"
 	"github.com/appcelerator/amp/cli/command/secret"
 	"github.com/appcelerator/amp/cli/command/service"
@@ -107,6 +108,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// logs
 		logs.NewLogsCommand(c),
+
+		// metrics
+		metrics.NewMetricsCommand(c),
 
 		// org
 		//org.NewOrgCommand(c),

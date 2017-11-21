@@ -43,10 +43,11 @@ type Configuration struct {
 	SmsSender        string
 	Registration     string
 	Notifications    bool
+	PrometheusURL    string
 }
 
 func (c *Configuration) String() string {
-	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nH1Port: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.H1Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
+	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nH1Port: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nPrometheusURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.H1Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.PrometheusURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
 }
 
 // ReadConfig reads the configuration file
