@@ -98,7 +98,7 @@ func showVersion(c cli.Interface) error {
 		c.Console().Println()
 	} else {
 		client := version.NewVersionClient(conn)
-		reply, err := client.Get(context.Background(), &version.GetRequest{})
+		reply, err := client.VersionGet(context.Background(), &version.GetRequest{})
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				return errors.New(s.Message())

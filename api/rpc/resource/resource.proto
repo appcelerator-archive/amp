@@ -7,24 +7,24 @@ import "github.com/golang/protobuf/ptypes/empty/empty.proto";
 import "google/api/annotations.proto";
 
 service Resource {
-  rpc List (ListRequest) returns (ListReply) {
+  rpc ResourceList (ListRequest) returns (ListReply) {
     option (google.api.http) = {
       get: "/v1/resources"
     };
   };
-  rpc AddToTeam (AddToTeamRequest) returns (google.protobuf.Empty) {
+  rpc ResourceAddToTeam (AddToTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}",
       body: "*"
     };
   };
-  rpc ChangePermissionLevel (ChangePermissionLevelRequest) returns (google.protobuf.Empty) {
+  rpc ResourceChangePermissionLevel (ChangePermissionLevelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       put: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}",
       body: "*"
     };
   };
-  rpc RemoveFromTeam (RemoveFromTeamRequest) returns (google.protobuf.Empty) {
+  rpc ResourceRemoveFromTeam (RemoveFromTeamRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v1/resources/{resource_id}/organizations/{organization_name}/teams/{team_name}"
     };

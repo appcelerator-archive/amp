@@ -15,7 +15,7 @@ type Server struct {
 	Docker *docker.Docker
 }
 
-func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
+func (s *Server) SecretCreate(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 	spec := swarm.SecretSpec{
 		Annotations: swarm.Annotations{Name: in.Name},
 		Data:        in.Data,
@@ -28,7 +28,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 	return &CreateReply{Id: reply.ID}, nil
 }
 
-func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+func (s *Server) SecretList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	options := types.SecretListOptions{}
 	secrets, err := s.Docker.GetClient().SecretList(ctx, options)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 	return reply, nil
 }
 
-func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
+func (s *Server) SecretRemove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	if err := s.Docker.GetClient().SecretRemove(ctx, in.Id); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

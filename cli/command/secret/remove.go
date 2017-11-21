@@ -31,7 +31,7 @@ func remove(c cli.Interface, cmd *cobra.Command, args []string) error {
 	client := secret.NewSecretClient(conn)
 	for _, id := range args {
 		request := &secret.RemoveRequest{Id: id}
-		reply, err := client.Remove(context.Background(), request)
+		reply, err := client.SecretRemove(context.Background(), request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				return errors.New(s.Message())

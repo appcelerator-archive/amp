@@ -3,9 +3,9 @@ syntax = "proto3";
 package config;
 
 service Config {
-  rpc Create (CreateRequest) returns (CreateReply);
-  rpc List (ListRequest) returns (ListReply);
-  rpc Remove (RemoveRequest) returns (RemoveReply);
+  rpc ConfigCreate (CreateRequest) returns (CreateReply);
+  rpc ConfigList (ListRequest) returns (ListReply);
+  rpc ConfigRemove (RemoveRequest) returns (RemoveReply);
 }
 
 message CreateRequest {

@@ -34,7 +34,7 @@ const (
 )
 
 // Ps implements service.Ps
-func (s *Server) Ps(ctx context.Context, in *PsRequest) (*PsReply, error) {
+func (s *Server) ServicePs(ctx context.Context, in *PsRequest) (*PsReply, error) {
 	log.Infoln("[service] PsService", in.Service)
 	args := filters.NewArgs()
 	args.Add("service", in.Service)
@@ -63,7 +63,7 @@ func (s *Server) Ps(ctx context.Context, in *PsRequest) (*PsReply, error) {
 }
 
 // List implements service.List
-func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+func (s *Server) ServiceList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	log.Infoln("[service] List ", in.Stack)
 	serviceList, err := s.Docker.ServicesList(ctx, types.ServiceListOptions{})
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 }
 
 // Inspect inspects a service
-func (s *Server) Inspect(ctx context.Context, in *InspectRequest) (*InspectReply, error) {
+func (s *Server) ServiceInspect(ctx context.Context, in *InspectRequest) (*InspectReply, error) {
 	log.Infoln("[service] Inspect", in.Service)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.Service)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *Server) Inspect(ctx context.Context, in *InspectRequest) (*InspectReply
 }
 
 // Scale scales a service
-func (s *Server) Scale(ctx context.Context, in *ScaleRequest) (*empty.Empty, error) {
+func (s *Server) ServiceScale(ctx context.Context, in *ScaleRequest) (*empty.Empty, error) {
 	log.Infoln("[service] Scale", in.Service)
 	serviceEntity, err := s.Docker.ServiceInspect(ctx, in.Service)
 	if err != nil {

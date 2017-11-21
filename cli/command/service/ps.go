@@ -38,7 +38,7 @@ func tasks(c cli.Interface, args []string, opts taskOptions) error {
 	request := &service.PsRequest{
 		Service: args[0],
 	}
-	reply, err := client.Ps(context.Background(), request)
+	reply, err := client.ServicePs(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

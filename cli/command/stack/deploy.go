@@ -107,7 +107,7 @@ func deploy(c cli.Interface, cmd *cobra.Command, args []string) error {
 	}
 
 	client := stack.NewStackClient(c.ClientConn())
-	reply, err := client.Deploy(context.Background(), req)
+	reply, err := client.StackDeploy(context.Background(), req)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

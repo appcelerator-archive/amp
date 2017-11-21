@@ -34,7 +34,7 @@ func convertError(err error) error {
 }
 
 // List implements resource.List
-func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+func (s *Server) ResourceList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	reply := &ListReply{}
 
 	activeOrganization := auth.GetActiveOrganization(ctx)
@@ -68,8 +68,8 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 }
 
 // AddToTeam implements resource.AddToTeam
-func (s *Server) AddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Empty, error) {
-	reply, err := s.List(ctx, &ListRequest{})
+func (s *Server) ResourceAddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Empty, error) {
+	reply, err := s.ResourceList(ctx, &ListRequest{})
 	if err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
@@ -110,8 +110,8 @@ func (s *Server) AddToTeam(ctx context.Context, in *AddToTeamRequest) (*empty.Em
 }
 
 // ChangePermissionLevel implements resource.ChangePermissionLevel
-func (s *Server) ChangePermissionLevel(ctx context.Context, in *ChangePermissionLevelRequest) (*empty.Empty, error) {
-	reply, err := s.List(ctx, &ListRequest{})
+func (s *Server) ResourceChangePermissionLevel(ctx context.Context, in *ChangePermissionLevelRequest) (*empty.Empty, error) {
+	reply, err := s.ResourceList(ctx, &ListRequest{})
 	if err != nil {
 		return &empty.Empty{}, convertError(err)
 	}
@@ -151,7 +151,7 @@ func (s *Server) ChangePermissionLevel(ctx context.Context, in *ChangePermission
 }
 
 // RemoveFromTeam implements resource.RemoveFromTeam
-func (s *Server) RemoveFromTeam(ctx context.Context, in *RemoveFromTeamRequest) (*empty.Empty, error) {
+func (s *Server) ResourceRemoveFromTeam(ctx context.Context, in *RemoveFromTeamRequest) (*empty.Empty, error) {
 	if err := s.Accounts.RemoveResourceFromTeam(ctx, in.OrganizationName, in.TeamName, in.ResourceId); err != nil {
 		return &empty.Empty{}, convertError(err)
 	}

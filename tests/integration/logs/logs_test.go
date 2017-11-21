@@ -62,7 +62,7 @@ func TestLogsShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 	expected := NumberOfEntries
 	actual := -1
 	for i := 0; i < 60; i++ {
-		r, err := h.Logs().Get(ctx, &GetRequest{})
+		r, err := h.Logs().LogsGet(ctx, &GetRequest{})
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -77,7 +77,7 @@ func TestLogsShouldGetAHundredLogEntriesByDefault(t *testing.T) {
 }
 
 func TestLogsShouldFilterByContainer(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -88,7 +88,7 @@ func TestLogsShouldFilterByContainer(t *testing.T) {
 }
 
 func TestLogsShouldFilterByNode(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Node: helpers.TestNodeID})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Node: helpers.TestNodeID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -99,7 +99,7 @@ func TestLogsShouldFilterByNode(t *testing.T) {
 }
 
 func TestLogsShouldFilterByService(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Service: "test"})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,7 +108,7 @@ func TestLogsShouldFilterByService(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.ServiceName, helpers.TestServiceName) || strings.HasPrefix(entry.ServiceId, helpers.TestServiceID))
 	}
 
-	r, err = h.Logs().Get(ctx, &GetRequest{Service: helpers.TestServiceID})
+	r, err = h.Logs().LogsGet(ctx, &GetRequest{Service: helpers.TestServiceID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -119,7 +119,7 @@ func TestLogsShouldFilterByService(t *testing.T) {
 }
 
 func TestLogsShouldFilterByMessage(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Message: "test"})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Message: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -130,7 +130,7 @@ func TestLogsShouldFilterByMessage(t *testing.T) {
 }
 
 func TestLogsShouldFilterByStack(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Stack: "test"})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -139,7 +139,7 @@ func TestLogsShouldFilterByStack(t *testing.T) {
 		assert.True(t, strings.HasPrefix(entry.StackName, helpers.TestStackName) || strings.HasPrefix(entry.StackId, helpers.TestStackID))
 	}
 
-	r, err = h.Logs().Get(ctx, &GetRequest{Stack: helpers.TestStackID})
+	r, err = h.Logs().LogsGet(ctx, &GetRequest{Stack: helpers.TestStackID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -150,7 +150,7 @@ func TestLogsShouldFilterByStack(t *testing.T) {
 }
 
 func TestLogsShouldExcludeAmpLogs(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -161,7 +161,7 @@ func TestLogsShouldExcludeAmpLogs(t *testing.T) {
 }
 
 func TestLogsShouldIncludeAmpLogs(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Service: "amp_amplifier", IncludeAmpLogs: true})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Service: "amp_amplifier", IncludeAmpLogs: true})
 	if err != nil {
 		t.Error(err)
 	}
@@ -178,7 +178,7 @@ func TestLogsShouldIncludeAmpLogs(t *testing.T) {
 
 func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 	for i := int32(1); i < 100; i += 10 {
-		r, err := h.Logs().Get(ctx, &GetRequest{Size: i})
+		r, err := h.Logs().LogsGet(ctx, &GetRequest{Size: i})
 		if err != nil {
 			t.Error(err)
 		}
@@ -187,7 +187,7 @@ func TestLogsShouldFetchGivenNumberOfEntries(t *testing.T) {
 }
 
 func TestLogsShouldBeOrdered(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -202,7 +202,7 @@ func TestLogsShouldBeOrdered(t *testing.T) {
 }
 
 func TestLogsShouldPaginate(t *testing.T) {
-	r, err := h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 20})
+	r, err := h.Logs().LogsGet(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 20})
 	if err != nil {
 		t.Error(err)
 	}
@@ -216,7 +216,7 @@ func TestLogsShouldPaginate(t *testing.T) {
 
 	// Note that the log entries are reversed compared to the ES query in order to display logs from least recent to most recent.
 	// Therefore, We need to use the first result FromId (the least recent one) as the starting point in subsequent request
-	r, err = h.Logs().Get(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 10, From: IDs[0]})
+	r, err = h.Logs().LogsGet(ctx, &GetRequest{Container: helpers.TestContainerID, Size: 10, From: IDs[0]})
 	if err != nil {
 		t.Error(err)
 	}
@@ -229,7 +229,7 @@ func TestLogsShouldPaginate(t *testing.T) {
 }
 
 func TestLogsShouldStreamLogs(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -242,7 +242,7 @@ func TestLogsShouldStreamLogs(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Container: helpers.TestContainerID})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Container: helpers.TestContainerID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -259,7 +259,7 @@ func TestLogsShouldStreamAndFilterByContainer(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Node: helpers.TestNodeID})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Node: helpers.TestNodeID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -276,7 +276,7 @@ func TestLogsShouldStreamAndFilterByNode(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByService(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Service: "test"})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Service: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -293,7 +293,7 @@ func TestLogsShouldStreamAndFilterByService(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByMessage(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Message: helpers.TestMessage})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Message: helpers.TestMessage})
 	if err != nil {
 		t.Error(err)
 	}
@@ -310,7 +310,7 @@ func TestLogsShouldStreamAndFilterByMessage(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Message: strings.ToUpper(helpers.TestMessage)})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Message: strings.ToUpper(helpers.TestMessage)})
 	if err != nil {
 		t.Error(err)
 	}
@@ -327,7 +327,7 @@ func TestLogsShouldStreamAndFilterCaseInsensitivelyByMessage(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{Stack: "test"})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{Stack: "test"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -344,7 +344,7 @@ func TestLogsShouldStreamAndFilterByStack(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndExcludeAmpLogs(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -361,7 +361,7 @@ func TestLogsShouldStreamAndExcludeAmpLogs(t *testing.T) {
 }
 
 func TestLogsShouldStreamAndIncludeAmpLogs(t *testing.T) {
-	stream, err := h.Logs().GetStream(ctx, &GetRequest{IncludeAmpLogs: true})
+	stream, err := h.Logs().LogsGetStream(ctx, &GetRequest{IncludeAmpLogs: true})
 	if err != nil {
 		t.Error(err)
 	}
@@ -384,7 +384,7 @@ func TestLogsShouldStreamAndIncludeAmpLogs(t *testing.T) {
 
 // Helpers
 
-func listenToLogEntries(stream Logs_GetStreamClient, howMany int) (chan *LogEntry, error) {
+func listenToLogEntries(stream Logs_LogsGetStreamClient, howMany int) (chan *LogEntry, error) {
 	entries := make(chan *LogEntry, howMany)
 	entryCount := 0
 	timeout := time.After(30 * time.Second)

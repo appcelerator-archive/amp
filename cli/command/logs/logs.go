@@ -79,7 +79,7 @@ func GetLogs(c cli.Interface, args []string, opts LogsOptions) error {
 	ctx := context.Background()
 	conn := c.ClientConn()
 	lc := logs.NewLogsClient(conn)
-	r, err := lc.Get(ctx, &request)
+	r, err := lc.LogsGet(ctx, &request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
@@ -93,7 +93,7 @@ func GetLogs(c cli.Interface, args []string, opts LogsOptions) error {
 	}
 
 	// If Follow is requested, get subsequent logs and stream it
-	stream, err := lc.GetStream(ctx, &request)
+	stream, err := lc.LogsGetStream(ctx, &request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

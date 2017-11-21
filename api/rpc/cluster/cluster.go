@@ -1,9 +1,6 @@
 package cluster
 
 import (
-	"fmt"
-	"os"
-
 	log "github.com/sirupsen/logrus"
 
 	"docker.io/go-docker/api/types"
@@ -19,7 +16,7 @@ type Server struct {
 }
 
 // Create implements cluster.Server
-func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
+func (s *Server) ClusterCreate(ctx context.Context, in *CreateRequest) (*CreateReply, error) {
 	log.Infoln("[cluster] Create", in.String())
 
 	log.Infoln(in.Name)
@@ -30,7 +27,7 @@ func (s *Server) Create(ctx context.Context, in *CreateRequest) (*CreateReply, e
 }
 
 // List implements cluster.Server
-func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) {
+func (s *Server) ClusterList(ctx context.Context, in *ListRequest) (*ListReply, error) {
 	log.Infoln("[cluster] List", in.String())
 
 	log.Infoln("[cluster] Success: list")
@@ -38,7 +35,7 @@ func (s *Server) List(ctx context.Context, in *ListRequest) (*ListReply, error) 
 }
 
 // Status implements cluster.Server
-func (s *Server) Status(ctx context.Context, in *StatusRequest) (*StatusReply, error) {
+func (s *Server) ClusterStatus(ctx context.Context, in *StatusRequest) (*StatusReply, error) {
 	log.Infoln("[cluster] Status", in.String())
 
 	log.Infoln("[cluster] Success: list")
@@ -46,7 +43,7 @@ func (s *Server) Status(ctx context.Context, in *StatusRequest) (*StatusReply, e
 }
 
 // Update implements cluster.Server
-func (s *Server) Update(ctx context.Context, in *UpdateRequest) (*UpdateReply, error) {
+func (s *Server) ClusterUpdate(ctx context.Context, in *UpdateRequest) (*UpdateReply, error) {
 	log.Infoln("[cluster] Update", in.String())
 
 	log.Infoln("[cluster] Success: list")
@@ -54,7 +51,7 @@ func (s *Server) Update(ctx context.Context, in *UpdateRequest) (*UpdateReply, e
 }
 
 // Remove implements cluster.Server
-func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
+func (s *Server) ClusterRemove(ctx context.Context, in *RemoveRequest) (*RemoveReply, error) {
 	log.Infoln("[cluster] Remove", in.String())
 
 	log.Infoln("[cluster] Success: removed", in.Id)
@@ -62,7 +59,7 @@ func (s *Server) Remove(ctx context.Context, in *RemoveRequest) (*RemoveReply, e
 }
 
 // NodeList get cluster node list
-func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListReply, error) {
+func (s *Server) ClusterNodeList(ctx context.Context, in *NodeListRequest) (*NodeListReply, error) {
 	log.Infoln("[cluster] NodeList", in.String())
 
 	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
@@ -83,16 +80,6 @@ func (s *Server) NodeList(ctx context.Context, in *NodeListRequest) (*NodeListRe
 			Role:          string(node.Spec.Role),
 			ManagerLeader: leader,
 		})
-	}
-	return ret, nil
-}
-
-// GetRegistrationStatus get the registration status
-func (s *Server) GetRegistrationStatus(ctx context.Context, in *GetRegistrationStatusRequest) (*GetRegistrationStatusReply, error) {
-	ret := &GetRegistrationStatusReply{EmailConfirmation: false}
-	fmt.Printf("Registration: %s\n", os.Getenv("REGISTRATION"))
-	if os.Getenv("REGISTRATION") == "email" {
-		ret.EmailConfirmation = true
 	}
 	return ret, nil
 }

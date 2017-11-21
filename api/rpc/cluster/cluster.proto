@@ -5,39 +5,34 @@ package cluster;
 import "google/api/annotations.proto";
 
 service Cluster {
-  rpc Create (CreateRequest) returns (CreateReply) {
+  rpc ClusterCreate (CreateRequest) returns (CreateReply) {
     option (google.api.http) = {
       post: "/v1/clusters",
       body: "*"
     };
   };
-  rpc List (ListRequest) returns (ListReply) {
+  rpc ClusterList (ListRequest) returns (ListReply) {
     option (google.api.http) = {
       get: "/v1/clusters"
     };
   };
-  rpc NodeList (NodeListRequest) returns (NodeListReply) {
+  rpc ClusterNodeList (NodeListRequest) returns (NodeListReply) {
     option (google.api.http) = {
       get: "/v1/clusters/nodes"
     };
   };
-  rpc GetRegistrationStatus (GetRegistrationStatusRequest) returns (GetRegistrationStatusReply) {
-    option (google.api.http) = {
-      get: "/v1/clusters/registration"
-    };
-  };
-  rpc Status (StatusRequest) returns (StatusReply) {
+  rpc ClusterStatus (StatusRequest) returns (StatusReply) {
     option (google.api.http) = {
       get: "/v1/clusters/{id}"
     };
   };
-  rpc Update (UpdateRequest) returns (UpdateReply) {
+  rpc ClusterUpdate (UpdateRequest) returns (UpdateReply) {
     option (google.api.http) = {
       put: "/v1/clusters/{id}",
       body: "*"
     };
   };
-  rpc Remove (RemoveRequest) returns (RemoveReply) {
+  rpc ClusterRemove (RemoveRequest) returns (RemoveReply) {
     option (google.api.http) = {
       delete: "/v1/clusters/{id}"
     };
@@ -97,12 +92,4 @@ message NodeReply {
   string availability = 4;
   string role = 5;
   bool manager_leader = 6;
-}
-
-message GetRegistrationStatusRequest {
-
-}
-
-message GetRegistrationStatusReply {
-  bool email_confirmation = 1;
 }

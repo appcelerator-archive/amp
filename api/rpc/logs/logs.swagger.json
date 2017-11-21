@@ -17,7 +17,7 @@
   "paths": {
     "/v1/logs": {
       "post": {
-        "operationId": "Get",
+        "operationId": "LogsGet",
         "responses": {
           "200": {
             "description": "",
@@ -43,7 +43,7 @@
     },
     "/v1/logs/stream": {
       "post": {
-        "operationId": "GetStream",
+        "operationId": "LogsGetStream",
         "responses": {
           "200": {
             "description": "(streaming responses)",

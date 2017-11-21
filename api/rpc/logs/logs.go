@@ -30,7 +30,7 @@ type Server struct {
 }
 
 // Get implements logs.LogsServer
-func (s *Server) Get(ctx context.Context, in *GetRequest) (*GetReply, error) {
+func (s *Server) LogsGet(ctx context.Context, in *GetRequest) (*GetReply, error) {
 	if err := s.ES.Connect(); err != nil {
 		return nil, errors.New("unable to connect to elasticsearch service")
 	}
@@ -163,7 +163,7 @@ func (s *Server) unmarshal(data []byte, entry *LogEntry) error {
 }
 
 // GetStream implements log.LogServer
-func (s *Server) GetStream(in *GetRequest, stream Logs_GetStreamServer) error {
+func (s *Server) LogsGetStream(in *GetRequest, stream Logs_LogsGetStreamServer) error {
 	if err := s.NS.Connect(); err != nil {
 		return errors.New("unable to connect to nats service")
 	}

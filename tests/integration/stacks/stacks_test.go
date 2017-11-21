@@ -51,7 +51,7 @@ func TestStackDeploy(t *testing.T) {
 		Name:    "my-awesome-stack" + stringid.GenerateNonCryptoID()[:16],
 		Compose: compose,
 	}
-	drp, err := h.Stacks().Deploy(userCtx, drq)
+	drp, err := h.Stacks().StackDeploy(userCtx, drq)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, drp.FullName)
 	assert.NotEmpty(t, drp.Answer)
@@ -59,7 +59,7 @@ func TestStackDeploy(t *testing.T) {
 	rrq := &RemoveRequest{
 		Stack: drp.FullName,
 	}
-	_, err = h.Stacks().Remove(userCtx, rrq)
+	_, err = h.Stacks().StackRemove(userCtx, rrq)
 	assert.NoError(t, err)
 }
 
@@ -119,9 +119,9 @@ func TestStackDeploy(t *testing.T) {
 //	assert.Error(t, err)
 //
 //	// Remove stacks
-//	_, err = h.Stacks().Remove(orgCtx, &RemoveRequest{Stack: orgStack})
+//	_, err = h.Stacks().StackRemove(orgCtx, &RemoveRequest{Stack: orgStack})
 //	assert.NoError(t, err)
-//	_, err = h.Stacks().Remove(anotherOrgCtx, &RemoveRequest{Stack: anotherOrgStack})
+//	_, err = h.Stacks().StackRemove(anotherOrgCtx, &RemoveRequest{Stack: anotherOrgStack})
 //	assert.NoError(t, err)
 //}
 
@@ -181,9 +181,9 @@ func TestStackDeploy(t *testing.T) {
 //	}
 //
 //	// Remove stacks
-//	_, err = h.Stacks().Remove(orgCtx, &RemoveRequest{Stack: orgStack})
+//	_, err = h.Stacks().StackRemove(orgCtx, &RemoveRequest{Stack: orgStack})
 //	assert.NoError(t, err)
-//	_, err = h.Stacks().Remove(anotherOrgCtx, &RemoveRequest{Stack: anotherOrgStack})
+//	_, err = h.Stacks().StackRemove(anotherOrgCtx, &RemoveRequest{Stack: anotherOrgStack})
 //	assert.NoError(t, err)
 //}
 
@@ -212,7 +212,7 @@ func TestStackDeploy(t *testing.T) {
 //	assert.Error(t, err)
 //
 //	// Remove stack
-//	_, err = h.Stacks().Remove(orgCtx, &RemoveRequest{Stack: orgStack})
+//	_, err = h.Stacks().StackRemove(orgCtx, &RemoveRequest{Stack: orgStack})
 //	assert.NoError(t, err)
 //
 //	// Deleting the organization should succeed
@@ -235,7 +235,7 @@ func TestDeleteUserOwningStacksShouldFail(t *testing.T) {
 		Name:    stack,
 		Compose: compose,
 	}
-	_, err = h.Stacks().Deploy(userCtx, rq)
+	_, err = h.Stacks().StackDeploy(userCtx, rq)
 	assert.NoError(t, err)
 
 	// Deleting the user should fail
@@ -243,7 +243,7 @@ func TestDeleteUserOwningStacksShouldFail(t *testing.T) {
 	assert.Error(t, err)
 
 	// Remove stack
-	_, err = h.Stacks().Remove(userCtx, &RemoveRequest{Stack: stack})
+	_, err = h.Stacks().StackRemove(userCtx, &RemoveRequest{Stack: stack})
 	assert.NoError(t, err)
 
 	// Deleting the user should succeed

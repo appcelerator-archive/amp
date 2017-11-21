@@ -5,16 +5,11 @@ package version;
 import "google/api/annotations.proto";
 
 service Version {
-  rpc Get (GetRequest) returns (GetReply) {
+  rpc VersionGet (GetRequest) returns (GetReply) {
     option (google.api.http) = {
       get: "/v1/version"
     };
   }
-  rpc ValidateGtwURL (ValidateGtwURLRequest) returns (ValidateGtwURLReply) {
-    option (google.api.http) = {
-      get: "/v1/gw/validate"
-    };
-  };
 }
 
 message Info {
@@ -29,11 +24,7 @@ message Info {
 
 message GetRequest {
 }
+
 message GetReply {
   Info info = 1;
-}
-message ValidateGtwURLRequest {
-}
-message ValidateGtwURLReply {
-  string reply = 1;
 }

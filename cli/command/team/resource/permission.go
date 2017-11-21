@@ -81,7 +81,7 @@ func changeOrgMemRole(c cli.Interface, cmd *cobra.Command, opts changeTeamResPer
 		ResourceId:       opts.resource,
 		PermissionLevel:  permissionLevel,
 	}
-	if _, err := client.ChangePermissionLevel(context.Background(), request); err != nil {
+	if _, err := client.ResourceChangePermissionLevel(context.Background(), request); err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())
 		}

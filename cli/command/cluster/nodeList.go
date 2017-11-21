@@ -39,7 +39,7 @@ func NewNodeListCommand(c cli.Interface) *cobra.Command {
 func nodeList(c cli.Interface) error {
 	req := &cluster.NodeListRequest{}
 	client := cluster.NewClusterClient(c.ClientConn())
-	reply, err := client.NodeList(context.Background(), req)
+	reply, err := client.ClusterNodeList(context.Background(), req)
 	if err != nil {
 		if s, ok := grpcStatus.FromError(err); ok {
 			return errors.New(s.Message())

@@ -47,7 +47,7 @@ func list(c cli.Interface, cmd *cobra.Command) error {
 	conn := c.ClientConn()
 	client := secret.NewSecretClient(conn)
 	request := &secret.ListRequest{}
-	reply, err := client.List(context.Background(), request)
+	reply, err := client.SecretList(context.Background(), request)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

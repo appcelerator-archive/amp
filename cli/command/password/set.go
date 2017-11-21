@@ -39,7 +39,7 @@ func set(c cli.Interface, cmd *cobra.Command, opts setPasswordOptions) error {
 	conn := c.ClientConn()
 	clientVer := version.NewVersionClient(conn)
 	requestVer := &version.GetRequest{}
-	reply, err := clientVer.Get(context.Background(), requestVer)
+	reply, err := clientVer.VersionGet(context.Background(), requestVer)
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			return errors.New(s.Message())

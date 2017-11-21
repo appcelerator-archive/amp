@@ -12,7 +12,6 @@ import (
 	"github.com/appcelerator/amp/api/auth"
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster/constants"
-	"github.com/appcelerator/amp/api/rpc/dashboard"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/stack"
@@ -58,7 +57,6 @@ type Helper struct {
 	logs       logs.LogsClient
 	resources  resource.ResourceClient
 	stacks     stack.StackClient
-	dashboards dashboard.DashboardClient
 	tokens     *auth.Tokens
 	suPassword string
 }
@@ -85,7 +83,6 @@ func New() (*Helper, error) {
 		logs:       logs.NewLogsClient(conn),
 		stacks:     stack.NewStackClient(conn),
 		resources:  resource.NewResourceClient(conn),
-		dashboards: dashboard.NewDashboardClient(conn),
 		tokens:     auth.New(cfg.JWTSecretKey),
 		suPassword: cfg.SUPassword,
 	}
@@ -110,11 +107,6 @@ func (h *Helper) Stacks() stack.StackClient {
 // Resources returns a resource client
 func (h *Helper) Resources() resource.ResourceClient {
 	return h.resources
-}
-
-// Dashboards returns a dashbord client
-func (h *Helper) Dashboards() dashboard.DashboardClient {
-	return h.dashboards
 }
 
 // Tokens returns a token manager instance
@@ -235,7 +227,7 @@ func (h *Helper) DeployStack(ctx context.Context, name string, composeFile strin
 		Name:    name,
 		Compose: contents,
 	}
-	reply, err := h.stacks.Deploy(ctx, request)
+	reply, err := h.stacks.StackDeploy(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -460,7 +452,7 @@ func (lp *LogProducer) PopulateLogs() error {
 	// Wait for them to be indexed in elasticsearch
 	for {
 		time.Sleep(1 * time.Second)
-		r, err := client.Get(ctx, &logs.GetRequest{Service: TestServiceID})
+		r, err := client.LogsGet(ctx, &logs.GetRequest{Service: TestServiceID})
 		if err != nil {
 			log.Println(err)
 			continue

@@ -75,7 +75,7 @@ clean: clean-protoc cleanall-cli clean-server clean-beat clean-agent clean-monit
 # When running in the amptools container, set DOCKER_CMD="sudo docker"
 DOCKER_CMD ?= "docker"
 
-build-base: protoc build-server build-gateway build-beat build-agent build-monit
+build-base: protoc swagger build-server build-gateway build-beat build-agent build-monit
 build-plugins: build-plugin-local build-plugin-aws build-ampagent
 build: build-base build-plugins buildall-cli
 
@@ -376,6 +376,13 @@ rebuild-ampagent: clean-ampagent build-ampagent
 clean-ampagent:
 	@rm -f $(AMPAGENTTARGET)
 	@docker image rm $(AMPAGENTIMG) 2>/dev/null || true
+
+# =============================================================================
+# Swagger combine
+# =============================================================================
+swagger: protoc
+	@rm -f swagger.json
+	@node swagger-combine.js | jq . > swagger.json
 
 # =============================================================================
 # Quality checks

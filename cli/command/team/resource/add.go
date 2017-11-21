@@ -66,7 +66,7 @@ func addTeamRes(c cli.Interface, cmd *cobra.Command, args []string, opts addTeam
 			OrganizationName: opts.org,
 			TeamName:         opts.team,
 		}
-		if _, err := client.AddToTeam(context.Background(), request); err != nil {
+		if _, err := client.ResourceAddToTeam(context.Background(), request); err != nil {
 			if s, ok := status.FromError(err); ok {
 				errs = append(errs, s.Message())
 				continue
