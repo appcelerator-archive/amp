@@ -13,7 +13,7 @@ VPC_ID=${VPC_ID:-unset}
 MANAGER_SIZE=${MANAGER_SIZE:-3}
 #CLUSTER_SIZE=
 DRAIN_MANAGER=${DRAIN_MANAGER:-false}
-OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-ampnet}
+#OVERLAY_NETWORKS=${OVERLAY_NETWORKS:-core public monit}
 #MIRROR_REGISTRIES=
 #DOCKER_DEVICE=/dev/sdl
 AMPAGENT_VERSION=${APP_VERSION:-latest}
@@ -496,7 +496,6 @@ else
 fi
 _label_node || exit 1
 _drain_node || exit 1
-_configure_system_prune || exit 1
 _smoke_test || exit 1
 _signal_aws "${SIGNAL_URL}" || exit 1
 if [[ "x$nodeip" = "x$leader" && -n "$APP_SIGNAL_URL" ]]; then
@@ -504,3 +503,4 @@ if [[ "x$nodeip" = "x$leader" && -n "$APP_SIGNAL_URL" ]]; then
   _setup || exit 1
   _signal_aws "${APP_SIGNAL_URL}"
 fi
+_configure_system_prune || exit 1

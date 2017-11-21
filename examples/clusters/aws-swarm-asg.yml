@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-2167c25b
+      Default: ami-3f20a845
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-7db59918
+      Default: ami-dff6d8ba
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-dbac63a3
+      Default: ami-bcf02dc4
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-1be63c62
+      Default: ami-8fd463f6
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-a242aec0
+      Default: ami-38b2585a
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -186,7 +186,7 @@ Parameters:
   OverlayNetworks:
     Type: String
     Description: Docker overlay networks to create on the swarm, separated by space
-    Default: "public core monit"
+    Default: ""
   DockerPlugins:
     Type: String
     Description: "space separated list of plugins to install. Options can be passed separated with pound sign. Example: rexray/ebs#REXRAY_PREEMPT=true"
