@@ -341,7 +341,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&opts.Region, "region", "r", "", "aws region")
 	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
-	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
+	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", true, "block until operation is complete")
 	rootCmd.PersistentFlags().StringVar(&opts.AccessKeyId, "access-key-id", "", "access key id (for example, AKIAIOSFODNN7EXAMPLE)")
 	rootCmd.PersistentFlags().StringVar(&opts.SecretAccessKey, "secret-access-key", "", "secret access key (for example, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY)")
 	rootCmd.PersistentFlags().StringVar(&opts.Profile, "profile", "default", "credential profile")

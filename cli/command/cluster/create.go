@@ -36,7 +36,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.StringSlice("aws-parameter", []string{}, "Key-value pairs to pass through to the AWS CloudFormation template")
 	flags.String("aws-region", "", "The region to use when launching the instance")
 	flags.String("aws-stackname", "", "The name of the AWS stack that will be created")
-	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
+	flags.Bool("aws-sync", true, "If true, block until the command finishes")
 	flags.String("aws-template", "", "UNSUPPORTED: cloud formation template url")
 	flags.String("aws-access-key-id", "", "aws credential: access key id")
 	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
