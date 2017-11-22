@@ -40,6 +40,7 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.String("aws-template", "", "UNSUPPORTED: cloud formation template url")
 	flags.String("aws-access-key-id", "", "aws credential: access key id")
 	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
+	flags.String("aws-profile", "default", "aws credential: profile")
 
 	return cmd
 }

@@ -40,6 +40,8 @@ type RequestOptions struct {
 	AccessKeyId string
 	// AWS Secret Access Key
 	SecretAccessKey string
+	// AWS Profile
+	Profile string
 }
 
 // StackOutput contains the converted output from the create stack operation

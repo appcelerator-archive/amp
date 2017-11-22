@@ -25,6 +25,7 @@ var (
 		TemplateURL:     plugin.DefaultTemplateURL,
 		AccessKeyId:     "",
 		SecretAccessKey: "",
+		Profile:         "default",
 	}
 
 	sess *session.Session
@@ -48,6 +49,7 @@ func initClient(cmd *cobra.Command, args []string) {
 		os.Setenv("AWS_SECRET_ACCESS_KEY", opts.SecretAccessKey)
 	} else {
 		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+		os.Setenv("AWS_PROFILE", opts.Profile)
 	}
 	config := aws.NewConfig().WithLogLevel(aws.LogOff)
 	// region can be set with a CLI option, but if not set it can be set by the config file
@@ -342,6 +344,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
 	rootCmd.PersistentFlags().StringVar(&opts.AccessKeyId, "access-key-id", "", "access key id (for example, AKIAIOSFODNN7EXAMPLE)")
 	rootCmd.PersistentFlags().StringVar(&opts.SecretAccessKey, "secret-access-key", "", "secret access key (for example, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY)")
+	rootCmd.PersistentFlags().StringVar(&opts.Profile, "profile", "default", "credential profile")
 
 	initCmd := &cobra.Command{
 		Use:   "init",

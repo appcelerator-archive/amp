@@ -31,6 +31,7 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
 	flags.String("aws-access-key-id", "", "aws credential: access key id")
 	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
+	flags.String("aws-profile", "default", "aws credential: profile")
 
 	return cmd
 }
