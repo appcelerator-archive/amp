@@ -46,11 +46,18 @@ func initClient(cmd *cobra.Command, args []string) {
 	if opts.AccessKeyId != "" && opts.SecretAccessKey != "" {
 		os.Setenv("AWS_ACCESS_KEY_ID", opts.AccessKeyId)
 		os.Setenv("AWS_SECRET_ACCESS_KEY", opts.SecretAccessKey)
+	} else {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+	}
+	config := aws.NewConfig().WithLogLevel(aws.LogOff)
+	// region can be set with a CLI option, but if not set it can be set by the config file
+	if opts.Region != "" {
+		config.Region = aws.String(opts.Region)
 	}
 	sess = session.Must(session.NewSession())
 
 	// Create the service's client with the session.
-	svc = cf.New(sess, aws.NewConfig().WithRegion(opts.Region).WithLogLevel(aws.LogOff))
+	svc = cf.New(sess, config)
 }
 
 // used by the create function to parse the events and send meaningful information to the CLI
@@ -293,7 +300,11 @@ func delete(cmd *cobra.Command, args []string) {
 			fmt.Println(j)
 			os.Exit(1)
 		}
-		log.Fatal(opts.StackName, " stack doesn't seem to exist")
+		if opts.Region != "" {
+			log.Fatal(fmt.Sprintf("stack [%s] doesn't seem to exist in region %s", opts.StackName, opts.Region))
+		} else {
+			log.Fatal(fmt.Sprintf("stack [%s] doesn't seem to exist", opts.StackName))
+		}
 	}
 }
 
