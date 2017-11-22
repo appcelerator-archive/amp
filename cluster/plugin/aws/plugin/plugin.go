@@ -36,6 +36,10 @@ type RequestOptions struct {
 	Sync bool
 	// TemplateURL is the URL for the AWS CloudFormation to use
 	TemplateURL string
+	// AWS Access Key ID
+	AccessKeyId string
+	// AWS Secret Access Key
+	SecretAccessKey string
 }
 
 // StackOutput contains the converted output from the create stack operation

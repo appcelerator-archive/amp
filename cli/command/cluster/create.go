@@ -38,6 +38,8 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	flags.String("aws-stackname", "", "The name of the AWS stack that will be created")
 	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
 	flags.String("aws-template", "", "UNSUPPORTED: cloud formation template url")
+	flags.String("aws-access-key-id", "", "aws credential: access key id")
+	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
 
 	return cmd
 }

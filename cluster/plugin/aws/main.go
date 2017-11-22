@@ -20,9 +20,11 @@ var (
 	Version string
 	Build   string
 	opts    = &plugin.RequestOptions{
-		OnFailure:   "DO_NOTHING",
-		Params:      []string{},
-		TemplateURL: plugin.DefaultTemplateURL,
+		OnFailure:       "DO_NOTHING",
+		Params:          []string{},
+		TemplateURL:     plugin.DefaultTemplateURL,
+		AccessKeyId:     "",
+		SecretAccessKey: "",
 	}
 
 	sess *session.Session
@@ -40,6 +42,11 @@ func version(cmd *cobra.Command, args []string) {
 }
 
 func initClient(cmd *cobra.Command, args []string) {
+	// export vars if creds are passed as arguments
+	if opts.AccessKeyId != "" && opts.SecretAccessKey != "" {
+		os.Setenv("AWS_ACCESS_KEY_ID", opts.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", opts.SecretAccessKey)
+	}
 	sess = session.Must(session.NewSession())
 
 	// Create the service's client with the session.
@@ -320,7 +327,8 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
-	rootCmd.PersistentFlags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
+	rootCmd.PersistentFlags().StringVar(&opts.AccessKeyId, "access-key-id", "", "access key id (for example, AKIAIOSFODNN7EXAMPLE)")
+	rootCmd.PersistentFlags().StringVar(&opts.SecretAccessKey, "secret-access-key", "", "secret access key (for example, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY)")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
@@ -328,6 +336,7 @@ func main() {
 		Run:   create,
 	}
 	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
+	initCmd.Flags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
 
 	infoCmd := &cobra.Command{
 		Use:   "info",
@@ -340,6 +349,7 @@ func main() {
 		Short: "update the cluster",
 		Run:   update,
 	}
+	updateCmd.Flags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
 
 	destroyCmd := &cobra.Command{
 		Use:   "destroy",

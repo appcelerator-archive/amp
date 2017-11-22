@@ -19,6 +19,8 @@ func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider")
 	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster plugin image")
+	flags.String("aws-access-key-id", "", "aws credential: access key id")
+	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
 	return cmd
 }
 
