@@ -280,9 +280,11 @@ func delete(cmd *cobra.Command, args []string) {
 				}
 				return
 			case cf.StackStatusDeleteInProgress:
-				log.Fatal("stack deletion already in progress")
+				log.Fatal("cluster deletion already in progress, check again in a few minutes")
+			case cf.StackStatusRollbackInProgress:
+				log.Fatal("cluster deployment is performing a rollback, the deletion is not possible right now, please try again in in a few minutes")
 			default:
-				log.Fatalf("stack deletion not possible with the current stack status - %s", *stk.StackStatus)
+				log.Fatalf("cluster deletion not possible with the current status [%s], try again in a few minutes", *stk.StackStatus)
 			}
 		}
 	}
