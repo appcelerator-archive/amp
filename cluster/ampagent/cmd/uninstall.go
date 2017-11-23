@@ -36,7 +36,12 @@ func Uninstall(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := removeVolumes(); err != nil {
+	// workaround for https://github.com/moby/moby/issues/32620
+	if err := removeExitedContainers(30); err != nil {
+		return err
+	}
+
+	if err := removeVolumes(5); err != nil {
 		return err
 	}
 
