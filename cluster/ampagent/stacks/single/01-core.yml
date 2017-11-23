@@ -20,7 +20,7 @@ volumes:
 services:
 
   etcd:
-    image: appcelerator/etcd:3.2.9
+    image: appcelerator/etcd:3.2.10
     networks:
       - core
       - monit

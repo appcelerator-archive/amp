@@ -1,6 +1,6 @@
 FROM appcelerator/alpine:3.6.0
 
-RUN apk --no-cache add openjdk8-jre bind-tools
+RUN apk --no-cache add openjdk8-jre bind-tools tini@community
 
 ENV PATH /bin:/opt/elasticsearch/bin:$PATH
 ENV ELASTIC_VERSION 5.6.4
@@ -30,5 +30,5 @@ ENV MIN_MASTER_NODES 1
 
 #HEALTHCHECK --interval=15s --retries=3 --timeout=5s CMD curl -s 127.0.0.1:9200 | jq .version.number | grep -qv null
 
-ENTRYPOINT ["/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/bin/docker-entrypoint.sh"]
 CMD ["elasticsearch"]

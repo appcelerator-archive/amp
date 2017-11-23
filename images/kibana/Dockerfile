@@ -1,6 +1,6 @@
 FROM appcelerator/alpine:3.6.0
 
-RUN apk --no-cache add nodejs freetype-dev fontconfig-dev
+RUN apk --no-cache add nodejs freetype-dev fontconfig-dev tini@community
 
 ENV ELASTICSEARCH_URL http://elasticsearch:9200
 ENV KIBANA_MAJOR 5.6
@@ -24,7 +24,7 @@ COPY run.sh /
 
 EXPOSE 5601
 
-ENTRYPOINT ["/run.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/run.sh"]
 CMD ["kibana"]
 
 #HEALTHCHECK --interval=5s --retries=24 --timeout=1s CMD curl -s "127.0.0.1:5601/api/status" | jq -r '.status.overall.state' | grep -q green

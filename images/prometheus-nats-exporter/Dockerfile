@@ -1,5 +1,6 @@
 FROM appcelerator/alpine:3.6.0
 
+RUN apk --no-cache add tini@community
 #ENV PROMETHEUS_NATS_EXPORTER_VERSION 1.0.0
 
 ENV GOLANG_VERSION 1.9.2
@@ -28,4 +29,4 @@ RUN apk update && apk upgrade && \
 
 EXPOSE 7777
 
-ENTRYPOINT ["/prometheus-nats-exporter"]
+ENTRYPOINT ["/sbin/tini", "--", "/prometheus-nats-exporter"]
