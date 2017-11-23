@@ -118,7 +118,11 @@ func containerLogs(ctx context.Context, c *docker.Client, id string) {
 
 // RunAgent runs the ampagent image to init (action ="install") or destroy (action="uninstall")
 func RunAgent(ctx context.Context, c *docker.Client, action string, opts *RequestOptions) error {
-	containerName := ContainerName
+	// first remove any exited or dead container with same name
+	// this can happen when Docker crashes while the plugin and the agent are running
+	if err := removeExitedAgent(c); err != nil {
+		return err
+	}
 	image := fmt.Sprintf("%s:%s", ImageName, opts.Tag)
 	config := container.Config{
 		Image: image,
@@ -182,7 +186,7 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 			}
 		}
 	}
-	r, err := c.ContainerCreate(ctx, &config, &hostConfig, nil, containerName)
+	r, err := c.ContainerCreate(ctx, &config, &hostConfig, nil, ContainerName)
 	if err != nil {
 		return err
 	}
@@ -302,4 +306,25 @@ func SwarmNodeStatus(c *docker.Client) (swarm.LocalNodeState, error) {
 		return "", err
 	}
 	return info.Swarm.LocalNodeState, nil
+}
+
+func removeExitedAgent(c *docker.Client) error {
+	filter := filters.NewArgs()
+	filter.Add("name", ContainerName)
+	l, err := c.ContainerList(context.Background(), types.ContainerListOptions{All: true, Filters: filter})
+	if err != nil {
+		return err
+	}
+	if len(l) == 1 {
+		switch l[0].State {
+		case "exited", "dead":
+			fmt.Printf("found an exited ampagent container [%s], removing it\n", l[0].ID)
+			return removeAgent(context.Background(), c, l[0].ID, false)
+		case "created", "running":
+			return fmt.Errorf("ampagent is already %s, this means you probably already have an amp CLI running", l[0].State)
+		default:
+			return fmt.Errorf("ampagent is in an unexpected state [%s]", l[0].State)
+		}
+	}
+	return nil
 }
