@@ -53,11 +53,11 @@ func NewClusterCommand(c cli.Interface) *cobra.Command {
 	cmd.PersistentFlags().StringSliceVarP(&opts.Volumes, "volume", "v", []string{}, "Bind mount a volume")
 
 	cmd.AddCommand(NewCreateCommand(c))
-	cmd.AddCommand(NewListCommand(c))
 	cmd.AddCommand(NewRemoveCommand(c))
 	cmd.AddCommand(NewStatusCommand(c))
-	cmd.AddCommand(NewUpdateCommand(c))
 	cmd.AddCommand(NewNodeCommand(c))
+	// Update command is not fully implemented, disabled for now
+	//cmd.AddCommand(NewUpdateCommand(c))
 	return cmd
 }
 

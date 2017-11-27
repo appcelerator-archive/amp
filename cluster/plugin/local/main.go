@@ -106,6 +106,10 @@ func info(cmd *cobra.Command, args []string) {
 	fmt.Println(json)
 }
 
+func deprecationWarning(cmd *cobra.Command, args []string) {
+	fmt.Println("Deprecated, update your CLI")
+}
+
 func main() {
 	rootCmd := &cobra.Command{
 		Use:               "localplugin",
@@ -132,8 +136,8 @@ func main() {
 	}
 	infoCmd := &cobra.Command{
 		Use:   "info",
-		Short: "get information about the cluster",
-		Run:   info,
+		Short: "get information about the cluster (deprecated)",
+		Run:   deprecationWarning,
 	}
 
 	updateCmd := &cobra.Command{

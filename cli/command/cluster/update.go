@@ -8,7 +8,7 @@ import (
 // NewUpdateCommand returns a new instance of the update command for updating an cluster.
 func NewUpdateCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "update [OPTIONS]",
+		Use:     "update",
 		Short:   "Update an amp cluster",
 		PreRunE: cli.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

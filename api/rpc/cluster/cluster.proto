@@ -23,7 +23,7 @@ service Cluster {
   };
   rpc ClusterStatus (StatusRequest) returns (StatusReply) {
     option (google.api.http) = {
-      get: "/v1/clusters/{id}"
+      get: "/v1/clusters/status"
     };
   };
   rpc ClusterUpdate (UpdateRequest) returns (UpdateReply) {
@@ -54,12 +54,24 @@ message ListRequest {
 message ListReply {
 }
 
+message InfoRequest {
+}
+
+message InfoReply {
+}
+
 message StatusRequest {
-  string id = 1;
 }
 
 message StatusReply {
-  string id = 1;
+  string name = 1;
+  string provider = 2;
+  string region = 3;
+  string swarm_status = 4;
+  string core_services = 5;
+  string user_services = 6;
+  string endpoint = 7;
+  string nfs_endpoint = 8;
 }
 
 message UpdateRequest {
@@ -79,6 +91,11 @@ message RemoveReply {
 }
 
 message NodeListRequest {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  string node_label = 4;
+  string engine_label = 5;
 }
 
 message NodeListReply {
@@ -91,5 +108,16 @@ message NodeReply {
   string status = 3;
   string availability = 4;
   string role = 5;
-  bool manager_leader = 6;
+  bool   manager_leader = 6;
+  int64  nano_cpus = 7;
+  int64  memory_bytes = 8;
+  map<string,string> node_labels = 9;
+  map<string,string> engine_labels = 10;
+  repeated EnginePlugin engine_plugins = 11;
+  string engine_version = 12;
+}
+
+message EnginePlugin {
+  string type = 1;
+  string name = 2;
 }

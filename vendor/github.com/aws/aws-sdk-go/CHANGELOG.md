@@ -1,3 +1,69 @@
+Release v1.12.27 (2017-11-14)
+===
+
+### Service Client Updates
+* `service/ecs`: Updates service API and documentation
+  * Added new mode for Task Networking in ECS, called awsvpc mode. Mode configuration parameters to be passed in via awsvpcConfiguration. Updated APIs now use/show this new mode - RegisterTaskDefinition, CreateService, UpdateService, RunTask, StartTask.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/lightsail`: Updates service API and documentation
+  * Lightsail now supports attached block storage, which allows you to scale your applications and protect application data with additional SSD-backed storage disks. This feature allows Lightsail customers to attach secure storage disks to their Lightsail instances and manage their attached disks, including creating and deleting disks, attaching and detaching disks from instances, and backing up disks via snapshot.
+* `service/route53`: Updates service API and documentation
+  * When a Route 53 health check or hosted zone is created by a linked AWS service, the object now includes information about the service that created it. Hosted zones or health checks that are created by a linked service can't be updated or deleted using Route 53.
+* `service/ssm`: Updates service API and documentation
+  * EC2 Systems Manager GetInventory API adds support for aggregation.
+
+### SDK Enhancements
+* `aws/request`: Remove default port from HTTP host header ([#1618](https://github.com/aws/aws-sdk-go/pull/1618))
+  * Updates the SDK to automatically remove default ports based on the URL's scheme when setting the HTTP Host header's value.
+  * Fixes [#1537](https://github.com/aws/aws-sdk-go/issues/1537)
+
+Release v1.12.26 (2017-11-09)
+===
+
+### Service Client Updates
+* `service/ec2`: Updates service API and documentation
+  * Introduces the following features: 1. Create a default subnet in an Availability Zone if no default subnet exists. 2. Spot Fleet integrates with Elastic Load Balancing to enable you to attach one or more load balancers to a Spot Fleet request. When you attach the load balancer, it automatically registers the instance in the Spot Fleet to the load balancers which distributes incoming traffic across the instances.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.12.25 (2017-11-08)
+===
+
+### Service Client Updates
+* `service/application-autoscaling`: Updates service API and documentation
+* `service/batch`: Updates service documentation
+  * Documentation updates for AWS Batch.
+* `service/ec2`: Updates service API and documentation
+  * AWS PrivateLink for Amazon Services - Customers can now privately access Amazon services from their Amazon Virtual Private Cloud (VPC), without using public IPs, and without requiring the traffic to traverse across the Internet.
+* `service/elasticache`: Updates service API and documentation
+  * This release adds online resharding for ElastiCache for Redis offering, providing the ability to add and remove shards from a running cluster. Developers can now dynamically scale-out or scale-in their Redis cluster workloads to adapt to changes in demand. ElastiCache will resize the cluster by adding or removing shards and redistribute hash slots uniformly across the new shard configuration, all while the cluster continues to stay online and serves requests.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.12.24 (2017-11-07)
+===
+
+### Service Client Updates
+* `service/elasticloadbalancingv2`: Updates service documentation
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/rds`: Updates service API and documentation
+  * DescribeOrderableDBInstanceOptions now returns the minimum and maximum allowed values for storage size, total provisioned IOPS, and provisioned IOPS per GiB for a DB instance.
+* `service/s3`: Updates service API, documentation, and examples
+  * This releases adds support for 4 features: 1. Default encryption for S3 Bucket, 2. Encryption status in inventory and Encryption support for inventory.  3. Cross region replication of KMS-encrypted objects, and 4. ownership overwrite for CRR.
+
+Release v1.12.23 (2017-11-07)
+===
+
+### Service Client Updates
+* `service/api.pricing`: Adds new service
+* `service/ec2`: Updates service API
+  * You are now able to create and launch EC2 C5 instances, the next generation of EC2's compute-optimized instances, in us-east-1, us-west-2 and eu-west-1. C5 instances offer up to 72 vCPUs, 144 GiB of DDR4 instance memory, 25 Gbps in Network bandwidth and improved EBS and Networking bandwidth on smaller instance sizes to deliver improved performance for compute-intensive workloads.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/kms`: Updates service API, documentation, and examples
+  * Documentation updates for AWS KMS.
+* `service/organizations`: Updates service documentation
+  * This release updates permission statements for several API operations, and corrects some other minor errors.
+* `service/states`: Updates service API, documentation, and paginators
+  * Documentation update.
+
 Release v1.12.22 (2017-11-03)
 ===
 
