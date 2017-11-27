@@ -36,6 +36,8 @@ const (
 	metricsModeLabel     = "io.amp.metrics.mode"
 	metricsModeTasks     = "tasks"
 	metricsModeExporter  = "exporter"
+	externalURLEnv       = "PROMETHEUS_EXTERNAL_URL"
+	externalURLOption    = "--web.external-url"
 )
 
 var prometheusArgs = []string{
@@ -299,6 +301,10 @@ func main() {
 	RootCmd.PersistentFlags().StringVar(&host, "host", defaultHost, "host")
 	RootCmd.PersistentFlags().Int32VarP(&period, "period", "p", defaultPeriod, "reload period in minute")
 
+	// Set Prometheus external URL if provided
+	if url := os.Getenv(externalURLEnv); url != "" {
+		prometheusArgs = append(prometheusArgs, fmt.Sprintf("%s=%s", externalURLOption, url))
+	}
 	// start Prometheus
 	proc := exec.Command(prometheusCmd, prometheusArgs...)
 	stdout, err := proc.StdoutPipe()

@@ -35,6 +35,7 @@ services:
     environment:
       SERVICE_PORTS: 9090
       VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
+      PROMETHEUS_EXTERNAL_URL: "${PROMETHEUS_EXTERNAL_URL:-https://alerts.local.appcelerator.io}"
     ports:
       - "9090:9090"
     labels:
@@ -173,6 +174,9 @@ services:
       - alertmanager-data:/alertmanager
     ports:
       - "9093:9093"
+    environment:
+      VIRTUAL_HOST: "https://alertmanager.*,alertmanager.*"
+      SERVICE_PORTS: "9093"
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "3s"
