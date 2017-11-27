@@ -36,6 +36,12 @@ type RequestOptions struct {
 	Sync bool
 	// TemplateURL is the URL for the AWS CloudFormation to use
 	TemplateURL string
+	// AWS Access Key ID
+	AccessKeyId string
+	// AWS Secret Access Key
+	SecretAccessKey string
+	// AWS Profile
+	Profile string
 }
 
 // StackOutput contains the converted output from the create stack operation
@@ -200,7 +206,7 @@ func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, erro
 
 // ListStack lists the stacks based on the filter on stack status
 func ListStack(ctx context.Context, svc *cf.CloudFormation) (*cf.ListStacksOutput, error) {
-	statusFilter := []string{cf.StackStatusCreateFailed, cf.StackStatusCreateInProgress, cf.ChangeSetStatusCreateComplete, cf.StackStatusRollbackInProgress, cf.StackStatusRollbackFailed, cf.StackStatusDeleteInProgress}
+	statusFilter := []string{cf.StackStatusCreateFailed, cf.StackStatusCreateInProgress, cf.StackStatusCreateComplete, cf.StackStatusRollbackInProgress, cf.StackStatusRollbackFailed, cf.StackStatusDeleteInProgress, cf.StackStatusRollbackComplete}
 	input := &cf.ListStacksInput{
 		StackStatusFilter: aws.StringSlice(statusFilter),
 	}

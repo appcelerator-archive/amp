@@ -28,7 +28,10 @@ func NewRemoveCommand(c cli.Interface) *cobra.Command {
 	// aws options
 	flags.String("aws-region", "", "Region to use to delete the instance")
 	flags.String("aws-stackname", "", "Name of the AWS stack to be deleted")
-	flags.Bool("aws-sync", false, "If true, block until the command finishes (default: false)")
+	flags.Bool("aws-sync", true, "If true, block until the command finishes")
+	flags.String("aws-access-key-id", "", "aws credential: access key id")
+	flags.String("aws-secret-access-key", "", "aws credential: secret access key")
+	flags.String("aws-profile", "default", "aws credential: profile")
 
 	return cmd
 }

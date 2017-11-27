@@ -20,9 +20,12 @@ var (
 	Version string
 	Build   string
 	opts    = &plugin.RequestOptions{
-		OnFailure:   "DO_NOTHING",
-		Params:      []string{},
-		TemplateURL: plugin.DefaultTemplateURL,
+		OnFailure:       "DO_NOTHING",
+		Params:          []string{},
+		TemplateURL:     plugin.DefaultTemplateURL,
+		AccessKeyId:     "",
+		SecretAccessKey: "",
+		Profile:         "default",
 	}
 
 	sess *session.Session
@@ -40,10 +43,23 @@ func version(cmd *cobra.Command, args []string) {
 }
 
 func initClient(cmd *cobra.Command, args []string) {
+	// export vars if creds are passed as arguments
+	if opts.AccessKeyId != "" && opts.SecretAccessKey != "" {
+		os.Setenv("AWS_ACCESS_KEY_ID", opts.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", opts.SecretAccessKey)
+	} else {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+		os.Setenv("AWS_PROFILE", opts.Profile)
+	}
+	config := aws.NewConfig().WithLogLevel(aws.LogOff)
+	// region can be set with a CLI option, but if not set it can be set by the config file
+	if opts.Region != "" {
+		config.Region = aws.String(opts.Region)
+	}
 	sess = session.Must(session.NewSession())
 
 	// Create the service's client with the session.
-	svc = cf.New(sess, aws.NewConfig().WithRegion(opts.Region).WithLogLevel(aws.LogOff))
+	svc = cf.New(sess, config)
 }
 
 // used by the create function to parse the events and send meaningful information to the CLI
@@ -273,9 +289,11 @@ func delete(cmd *cobra.Command, args []string) {
 				}
 				return
 			case cf.StackStatusDeleteInProgress:
-				log.Fatal("stack deletion already in progress")
+				log.Fatal("cluster deletion already in progress, check again in a few minutes")
+			case cf.StackStatusRollbackInProgress:
+				log.Fatal("cluster deployment is performing a rollback, the deletion is not possible right now, please try again in in a few minutes")
 			default:
-				log.Fatalf("stack deletion not possible with the current stack status - %s", *stk.StackStatus)
+				log.Fatalf("cluster deletion not possible with the current status [%s], try again in a few minutes", *stk.StackStatus)
 			}
 		}
 	}
@@ -284,7 +302,11 @@ func delete(cmd *cobra.Command, args []string) {
 			fmt.Println(j)
 			os.Exit(1)
 		}
-		log.Fatal(opts.StackName, " stack doesn't seem to exist")
+		if opts.Region != "" {
+			log.Fatal(fmt.Sprintf("stack [%s] doesn't seem to exist in region %s", opts.StackName, opts.Region))
+		} else {
+			log.Fatal(fmt.Sprintf("stack [%s] doesn't seem to exist", opts.StackName))
+		}
 	}
 }
 
@@ -319,8 +341,10 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&opts.Region, "region", "r", "", "aws region")
 	rootCmd.PersistentFlags().StringVarP(&opts.StackName, "stackname", "n", "", "aws stack name")
 	rootCmd.PersistentFlags().StringSliceVarP(&opts.Params, "parameter", "p", []string{}, "parameter")
-	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", false, "block until operation is complete")
-	rootCmd.PersistentFlags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
+	rootCmd.PersistentFlags().BoolVarP(&opts.Sync, "sync", "s", true, "block until operation is complete")
+	rootCmd.PersistentFlags().StringVar(&opts.AccessKeyId, "access-key-id", "", "access key id (for example, AKIAIOSFODNN7EXAMPLE)")
+	rootCmd.PersistentFlags().StringVar(&opts.SecretAccessKey, "secret-access-key", "", "secret access key (for example, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY)")
+	rootCmd.PersistentFlags().StringVar(&opts.Profile, "profile", "default", "credential profile")
 
 	initCmd := &cobra.Command{
 		Use:   "init",
@@ -328,6 +352,7 @@ func main() {
 		Run:   create,
 	}
 	initCmd.Flags().StringVar(&opts.OnFailure, "onfailure", "ROLLBACK", "action to take if stack creation fails")
+	initCmd.Flags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
 
 	infoCmd := &cobra.Command{
 		Use:   "info",
@@ -340,6 +365,7 @@ func main() {
 		Short: "update the cluster",
 		Run:   update,
 	}
+	updateCmd.Flags().StringVarP(&opts.TemplateURL, "template", "t", plugin.DefaultTemplateURL, "cloud formation template url")
 
 	destroyCmd := &cobra.Command{
 		Use:   "destroy",
