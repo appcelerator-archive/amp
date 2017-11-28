@@ -1,297 +1,227 @@
-# Global alert (nats, etcd, haproxy, docker engine, system)
-ALERT FileDescriptors
-  IF 100 * (process_max_fds - process_open_fds)/ process_max_fds < 10
-  FOR 30s
-  ANNOTATIONS {
-   summary = "file descriptors exhaustion",
-   description = "file descriptor usage on {{ $labels.job }} / {{ $labels.instance }} is more than 90%"
-  }
-
-# Global alert (nats, etcd, haproxy, docker engine, system)
-ALERT Availability
-  IF up < 1
-  FOR 5m
-  ANNOTATIONS {
-   summary = "resource unavailability",
-   description = "{{ $labels.job }} / {{ $labels.instance }} is not up"
-  }
-
-# elasticsearch
-ALERT ElasticsearchClusterStatus
-  IF es_cluster_status > 1
-  FOR 1m
-  ANNOTATIONS {
-   summary = "elasticsearch cluster status",
-   description = "elasticsearch cluster status is {{ $value }}"
-  }
-ALERT ElasticsearchHeapPercent
-  IF es_jvm_mem_heap_used_percent > 95
-  FOR 1m
-  ANNOTATIONS {
-   summary = "elasticsearch java heap size high usage",
-   description = "elasticsearch instance on {{ $labels.instance }} uses {{ $value }} of its java heap size"
-  }
-ALERT ElasticsearchPendingTasks
-  IF es_cluster_pending_tasks_number > 1000
-  FOR 1m
-  ANNOTATIONS {
-   summary = "elasticsearch high number of pending tasks",
-   description = "elasticsearch instance on {{ $labels.instance }} has {{ $value }} pending tasks"
-  }
-
-# ETCD
-# from https://github.com/coreos/etcd/blob/master/Documentation/op-guide/etcd3_alert.rules
-# general cluster availability
-
-# alert if another failed member will result in an unavailable cluster
-ALERT InsufficientMembers
-IF count(up{job="etcd"}) > 1 and count(up{job="etcd"} == 0) > (count(up{job="etcd"}) / 2 - 1)
-FOR 3m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "etcd cluster insufficient members",
-  description = "If one more etcd member goes down the cluster will be unavailable",
-}
-
-# etcd leader alerts
-# ==================
-
-# alert if any etcd instance has no leader
-ALERT NoLeader
-IF etcd_server_has_leader{job="etcd"} == 0
-FOR 1m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "etcd member has no leader",
-  description = "etcd member {{ $labels.instance }} has no leader",
-}
-
-# alert if there are lots of leader changes
-ALERT HighNumberOfLeaderChanges
-IF increase(etcd_server_leader_changes_seen_total{job="etcd"}[1h]) > 3
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "a high number of leader changes within the etcd cluster are happening",
-  description = "etcd instance {{ $labels.instance }} has seen {{ $value }} leader changes within the last hour",
-}
-
-# gRPC request alerts
-# ===================
-
-# alert if more than 1% of gRPC method calls have failed within the last 5 minutes
-ALERT HighNumberOfFailedGRPCRequests
-IF sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m]))
-  / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.01
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "a high number of gRPC requests are failing",
-  description = "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}",
-}
-
-# alert if more than 5% of gRPC method calls have failed within the last 5 minutes
-ALERT HighNumberOfFailedGRPCRequests
-IF sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m]))
-  / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.05
-FOR 5m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "a high number of gRPC requests are failing",
-  description = "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}",
-}
-
-# alert if the 99th percentile of gRPC method calls take more than 150ms
-ALERT GRPCRequestsSlow
-IF histogram_quantile(0.99, rate(etcd_grpc_unary_requests_duration_seconds_bucket[5m])) > 0.15
-FOR 10m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "slow gRPC requests",
-  description = "on etcd instance {{ $labels.instance }} gRPC requests to {{ $label.grpc_method }} are slow",
-}
-
-# HTTP requests alerts
-# ====================
-
-# alert if more than 1% of requests to an HTTP endpoint have failed within the last 5 minutes
-ALERT HighNumberOfFailedHTTPRequests
-IF sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m]))
-  / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.01
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "a high number of HTTP requests are failing",
-  description = "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}",
-}
-
-# alert if more than 5% of requests to an HTTP endpoint have failed within the last 5 minutes
-ALERT HighNumberOfFailedHTTPRequests
-IF sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m])) 
-  / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.05
-FOR 5m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "a high number of HTTP requests are failing",
-  description = "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}",
-}
-
-# alert if the 99th percentile of HTTP requests take more than 150ms
-ALERT HTTPRequestsSlow
-IF histogram_quantile(0.99, rate(etcd_http_successful_duration_seconds_bucket[5m])) > 0.15
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "slow HTTP requests",
-  description = "on etcd instance {{ $labels.instance }} HTTP requests to {{ $label.method }} are slow",
-}
-
-# file descriptor alerts
-# ======================
-
-instance:fd_utilization = process_open_fds / process_max_fds
-
-# alert if file descriptors are likely to exhaust within the next 4 hours
-ALERT FdExhaustionClose
-IF predict_linear(instance:fd_utilization[1h], 3600 * 4) > 1
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "file descriptors soon exhausted",
-  description = "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon",
-}
-
-# alert if file descriptors are likely to exhaust within the next hour
-ALERT FdExhaustionClose
-IF predict_linear(instance:fd_utilization[10m], 3600) > 1
-FOR 10m
-LABELS {
-  severity = "critical"
-}
-ANNOTATIONS {
-  summary = "file descriptors soon exhausted",
-  description = "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon",
-}
-
-# etcd member communication alerts
-# ================================
-
-# alert if 99th percentile of round trips take 150ms
-ALERT EtcdMemberCommunicationSlow
-IF histogram_quantile(0.99, rate(etcd_network_member_round_trip_time_seconds_bucket[5m])) > 0.15
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "etcd member communication is slow",
-  description = "etcd instance {{ $labels.instance }} member communication with {{ $label.To }} is slow",
-}
-
-# etcd proposal alerts
-# ====================
-
-# alert if there are several failed proposals within an hour
-ALERT HighNumberOfFailedProposals
-IF increase(etcd_server_proposals_failed_total{job="etcd"}[1h]) > 5
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "a high number of proposals within the etcd cluster are failing",
-  description = "etcd instance {{ $labels.instance }} has seen {{ $value }} proposal failures within the last hour",
-}
-
-# etcd disk io latency alerts
-# ===========================
-
-# alert if 99th percentile of fsync durations is higher than 500ms
-ALERT HighFsyncDurations
-IF histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "high fsync durations",
-  description = "etcd instance {{ $labels.instance }} fync durations are high",
-}
-
-# alert if 99th percentile of commit durations is higher than 250ms
-ALERT HighCommitDurations
-IF histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[5m])) > 0.25
-FOR 10m
-LABELS {
-  severity = "warning"
-}
-ANNOTATIONS {
-  summary = "high commit durations",
-  description = "etcd instance {{ $labels.instance }} commit durations are high",
-}
-
-
-# NATS
-ALERT NatsHttpRequestDuration
-  IF http_request_duration_microseconds{job="nats", quantile="0.9"} > 5000
-  ANNOTATIONS {
-   summary = "slow nats http requests",
-   description = "a nats instance on {{ $labels.instance }} experiences slow http requests ({{ $value }} sec)"
-  }
-
-# HAPROXY
-ALERT HaproxyServerCurrentQueue
-  IF haproxy_server_current_queue{job="haproxy"} > 10
-  FOR 2m
-  ANNOTATIONS {
-   summary = "Queue is filling up",
-   description = "haproxy backend {{ $labels.backend }} has ({{ $value }} requests in queue"
-  }
-
-# NODES
-ALERT SystemLoad15
-  IF node_load15{job="nodes"} > 2
-  FOR 1m
-  ANNOTATIONS {
-   summary = "high system load",
-   description = "the average system load on 15 min on {{ $labels.instance }} has reached {{ $value }}"
-  }
-ALERT SystemLoad5
-  IF node_load5{job="nodes"} > 4
-  FOR 1m
-  ANNOTATIONS {
-   summary = "high system load",
-   description = "the average system load on 5 min on {{ $labels.instance }} has reached {{ $value }}"
-  }
-ALERT FSUsage
-  IF 100 * node_filesystem_free / node_filesystem_size{fstype=~"xfs|ext4",mountpoint=~"/rootfs|/rootfs/var/lib/docker"} <  20
-  FOR 1m
-  ANNOTATIONS {
-   summary = "FS soon running out of space",
-   description = "the {{ $labels.mountpoint }} on {{ $labels.instance }} has only {{ $value }}% space available"
-  }
-ALERT MemoryUsage
-  IF 100 * node_memory_MemFree / node_memory_MemTotal < 10
-  FOR 5m 
-  ANNOTATIONS {
-   summary = "high memory usage",
-   description = "instance {{ $labels.instance }} has only {{ $value }}% memory available"
-  }
+groups:
+  - name: amp
+    rules:
+    # Global alert (nats, etcd, haproxy, docker engine, system)
+    - alert: FileDescriptors
+      expr: 100 * (process_max_fds - process_open_fds)/ process_max_fds < 10
+      for: 30s
+      labels:
+      annotations:
+        summary: file descriptors exhaustion
+        description: "file descriptor usage on {{ $labels.job }} / {{ $labels.instance }} is more than 90%"
+    # Global alert (nats, etcd, haproxy, docker engine, system)
+    - alert: Availability
+      expr: up < 1
+      for: 5m
+      annotations:
+        summary: "resource unavailability"
+        description: "{{ $labels.job }} / {{ $labels.instance }} is not up"
+    # elasticsearch
+    - alert: ElasticsearchClusterStatus
+      expr: es_cluster_status > 1
+      for: 1m
+      annotations:
+        summary: "elasticsearch cluster status"
+        description: "elasticsearch cluster status is {{ $value }}"
+    - alert: ElasticsearchHeapPercent
+      expr: es_jvm_mem_heap_used_percent > 95
+      for: 1m
+      annotations:
+        summary: "elasticsearch java heap size high usage"
+        description: "elasticsearch instance on {{ $labels.instance }} uses {{ $value }} of its java heap size"
+    - alert: ElasticsearchPendingTasks
+      expr: es_cluster_pending_tasks_number > 1000
+      for: 1m
+      annotations:
+        summary: "elasticsearch high number of pending tasks"
+        description: "elasticsearch instance on {{ $labels.instance }} has {{ $value }} pending tasks"
+    # ETCD
+    # from https://github.com/coreos/etcd/blob/master/Documentation/op-guide/etcd3_alert.rules
+    # general cluster availability
+    # alert if another failed member will result in an unavailable cluster
+    - alert: InsufficientMembers
+      expr: count(up{job="etcd"}) > 1 and count(up{job="etcd"} == 0) > (count(up{job="etcd"}) / 2 - 1)
+      for: 3m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "etcd cluster insufficient members"
+        description: "If one more etcd member goes down the cluster will be unavailable"
+    # etcd leader alerts
+    # ==================
+    # alert if any etcd instance has no leader
+    - alert: NoLeader
+      expr: etcd_server_has_leader{job="etcd"} == 0
+      for: 1m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "etcd member has no leader"
+        description: "etcd member {{ $labels.instance }} has no leader"
+    # alert if there are lots of leader changes
+    - alert: HighNumberOfLeaderChanges
+      expr: increase(etcd_server_leader_changes_seen_total{job="etcd"}[1h]) > 3
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "a high number of leader changes within the etcd cluster are happening"
+        description: "etcd instance {{ $labels.instance }} has seen {{ $value }} leader changes within the last hour"
+    # gRPC request alerts
+    # ===================
+    # alert if more than 1% of gRPC method calls have failed within the last 5 minutes
+    - alert: HighNumberOfFailedGRPCRequests
+      expr: sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m])) / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.01
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "a high number of gRPC requests are failing"
+        description: "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}"
+    # alert if more than 5% of gRPC method calls have failed within the last 5 minutes
+    - alert: HighNumberOfFailedGRPCRequests
+      expr: sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m])) / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "a high number of gRPC requests are failing"
+        description: "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}"
+    # alert if the 99th percentile of gRPC method calls take more than 150ms
+    - alert: GRPCRequestsSlow
+      expr: histogram_quantile(0.99, rate(etcd_grpc_unary_requests_duration_seconds_bucket[5m])) > 0.15
+      for: 10m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "slow gRPC requests"
+        description: "on etcd instance {{ $labels.instance }} gRPC requests to {{ $label.grpc_method }} are slow"
+    # HTTP requests alerts
+    # ====================
+    # alert if more than 1% of requests to an HTTP endpoint have failed within the last 5 minutes
+    - alert: HighNumberOfFailedHTTPRequests
+      expr: sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m])) / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.01
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "a high number of HTTP requests are failing"
+        description: "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}"
+    # alert if more than 5% of requests to an HTTP endpoint have failed within the last 5 minutes
+    - alert: HighNumberOfFailedHTTPRequests
+      expr: sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m])) / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "a high number of HTTP requests are failing"
+        description: "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}"
+    # alert if the 99th percentile of HTTP requests take more than 150ms
+    - alert: HTTPRequestsSlow
+      expr: histogram_quantile(0.99, rate(etcd_http_successful_duration_seconds_bucket[5m])) > 0.15
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "slow HTTP requests"
+        description: "on etcd instance {{ $labels.instance }} HTTP requests to {{ $label.method }} are slow"
+    # file descriptor alerts
+    # ======================
+    - record: instance:fd_utilization
+      expr: process_open_fds / process_max_fds
+    # alert if file descriptors are likely to exhaust within the next 4 hours
+    - alert: FdExhaustionClose
+      expr: predict_linear(instance:fd_utilization[1h], 3600 * 4) > 1
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "file descriptors soon exhausted"
+        description: "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon"
+    # alert if file descriptors are likely to exhaust within the next hour
+    - alert: FdExhaustionClose
+      expr: predict_linear(instance:fd_utilization[10m], 3600) > 1
+      for: 10m
+      labels:
+        severity: "critical"
+      annotations:
+        summary: "file descriptors soon exhausted"
+        description: "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon"
+    # etcd member communication alerts
+    # ================================
+    # alert if 99th percentile of round trips take 150ms
+    - alert: EtcdMemberCommunicationSlow
+      expr: histogram_quantile(0.99, rate(etcd_network_member_round_trip_time_seconds_bucket[5m])) > 0.15
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "etcd member communication is slow"
+        description: "etcd instance {{ $labels.instance }} member communication with {{ $label.To }} is slow"
+    # etcd proposal alerts
+    # ====================
+    # alert if there are several failed proposals within an hour
+    - alert: HighNumberOfFailedProposals
+      expr: increase(etcd_server_proposals_failed_total{job="etcd"}[1h]) > 5
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "a high number of proposals within the etcd cluster are failing"
+        description: "etcd instance {{ $labels.instance }} has seen {{ $value }} proposal failures within the last hour"
+    # etcd disk io latency alerts
+    # ===========================
+    # alert if 99th percentile of fsync durations is higher than 500ms
+    - alert: HighFsyncDurations
+      expr: histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "high fsync durations"
+        description: "etcd instance {{ $labels.instance }} fync durations are high"
+    # alert if 99th percentile of commit durations is higher than 250ms
+    - alert: HighCommitDurations
+      expr: histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[5m])) > 0.25
+      for: 10m
+      labels:
+        severity: "warning"
+      annotations:
+        summary: "high commit durations"
+        description: "etcd instance {{ $labels.instance }} commit durations are high"
+    # NATS
+    - alert: NatsHttpRequestDuration
+      expr: http_request_duration_microseconds{job="nats", quantile="0.9"} > 5000
+      annotations:
+        summary: "slow nats http requests"
+        description: "a nats instance on {{ $labels.instance }} experiences slow http requests ({{ $value }} sec)"
+    # HAPROXY
+    - alert: HaproxyServerCurrentQueue
+      expr: haproxy_server_current_queue{job="haproxy"} > 10
+      for: 2m
+      annotations:
+        summary: "Queue is filling up"
+        description: "haproxy backend {{ $labels.backend }} has ({{ $value }} requests in queue"
+    # NODES
+    - alert: SystemLoad15
+      expr: node_load15{job="nodes"} > 2
+      for: 1m
+      annotations:
+        summary: "high system load"
+        description: "the average system load on 15 min on {{ $labels.instance }} has reached {{ $value }}"
+    - alert: SystemLoad5
+      expr: node_load5{job="nodes"} > 4
+      for: 1m
+      annotations:
+        summary: "high system load"
+        description: "the average system load on 5 min on {{ $labels.instance }} has reached {{ $value }}"
+    - alert: FSUsage
+      expr: 100 * node_filesystem_free / node_filesystem_size{fstype=~"xfs|ext4",mountpoint=~"/rootfs|/rootfs/var/lib/docker"} <  20
+      for: 1m
+      annotations:
+        summary: "FS soon running out of space"
+        description: "the {{ $labels.mountpoint }} on {{ $labels.instance }} has only {{ $value }}% space available"
+    - alert: MemoryUsage
+      expr: 100 * node_memory_MemFree / node_memory_MemTotal < 10
+      for: 5m 
+      annotations:
+        summary: "high memory usage"
+        description: "instance {{ $labels.instance }} has only {{ $value }}% memory available"
