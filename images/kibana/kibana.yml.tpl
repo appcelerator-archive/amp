@@ -21,7 +21,7 @@ server.basePath: "{{ .KIBANA_BASE_PATH | default "" }}"
 #server.maxPayloadBytes: 1048576
 
 # The Kibana server's name.  This is used for display purposes.
-#server.name: "your-hostname"
+server.name: "kibana"
 
 # The URL of the Elasticsearch instance to use for all your queries.
 #elasticsearch.url: "http://localhost:9200"
