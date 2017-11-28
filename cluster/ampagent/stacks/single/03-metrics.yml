@@ -167,7 +167,7 @@ services:
         io.amp.metrics.port: "9100"
 
   alertmanager:
-    image: prom/alertmanager:v0.10.0
+    image: prom/alertmanager:v0.11.0
     networks:
       - core
     volumes:
