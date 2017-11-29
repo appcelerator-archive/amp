@@ -3,15 +3,16 @@
 SECONDS=0
 
 test_stack_deploy() {
-  amp -k stack up -c tests/cli/service/list/global.service.yml global
+  amp -k stack up -c tests/cli/service/list/global.service.yml global || return 1
   amp -k stack up -c tests/cli/service/list/replicated.service.yml replicated
 }
 
 test_service_starting() {
-  amp -k service ls 2>/dev/null | grep -q "\s*global\s*0/1\s*STARTING|RUNNING\s*appcelerator/pinger\s*latest\s*"
-  amp -k service ls 2>/dev/null | grep -q "\s*replicated\s*0/1\s*STARTING\s*appcelerator/pinger\s*latest\s*"
+  amp -k service ls 2>/dev/null | pcregrep -q "global_pinger\s*.*s*(STARTING|RUNNING)\s*appcelerator/pinger" || return 1
+  amp -k service ls 2>/dev/null | pcregrep -q "replicated_pinger\s*.*\s*(STARTING|RUNNING)\s*appcelerator/pinger"
 }
 
+# FIXME: this test is not reliable, test condition and usage of the internal variable SECONDS
 test_service_global_running() {
   while true
   do
@@ -24,6 +25,7 @@ test_service_global_running() {
   done
 }
 
+# FIXME: this test is not reliable, test condition and usage of the internal variable SECONDS
 test_service_replicated_running() {
   while true
   do
