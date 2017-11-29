@@ -16,23 +16,25 @@ type Metrics struct {
 }
 
 // CPUMetricsQuery extracts CPU metrics according to CPUMetricsRequest
-func (m *Metrics) CPUMetricsQuery(ctx context.Context, in *CPUMetricsRequest) (*CPUMetricsResponse, error) {
+func (m *Metrics) CPUMetricsQuery(ctx context.Context, in *MetricsRequest) (*CPUMetricsResponse, error) {
 	response := &CPUMetricsResponse{}
-	log.Infoln("Get", in.String())
-	query := "container_cpu_user_seconds_total"
-	if in.Average {
-		query = "avg_over_time(container_cpu_user_seconds_total[1m])"
-	}
-	samples, err := m.Prometheus.Api().Query(context.Background(), query, time.Now())
-	if err != nil {
-		return nil, errors.New("unable to query Prometheus")
-	}
-	for _, sample := range samples.(model.Vector) {
-		entry := &CPUMetricsEntry{
-			Service: string(sample.Metric["container_label_com_docker_swarm_service_name"]),
-			Usage:   float32(sample.Value / 100),
+	log.Infoln("Get metrics:", in.String())
+	if in.Cpu {
+		query := "container_cpu_user_seconds_total"
+		if in.Average {
+			query = "avg_over_time(container_cpu_user_seconds_total[" + in.TimeRange + "m])"
 		}
-		response.Entries = append(response.Entries, entry)
+		samples, err := m.Prometheus.Api().Query(context.Background(), query, time.Now())
+		if err != nil {
+			return nil, errors.New("unable to query Prometheus")
+		}
+		for _, sample := range samples.(model.Vector) {
+			entry := &CPUMetricsEntry{
+				Service: string(sample.Metric["container_label_com_docker_swarm_service_name"]),
+				Usage:   float32(sample.Value / 100),
+			}
+			response.Entries = append(response.Entries, entry)
+		}
 	}
 	return response, nil
 }

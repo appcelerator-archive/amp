@@ -15,7 +15,7 @@
     "application/json"
   ],
   "paths": {
-    "/v1/metrics/cpu": {
+    "/v1/metrics": {
       "get": {
         "operationId": "CPUMetricsQuery",
         "responses": {
@@ -27,6 +27,40 @@
           }
         },
         "parameters": [
+          {
+            "name": "cpu",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "mem",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "disk",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "net",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          },
+          {
+            "name": "time_range",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
           {
             "name": "average",
             "in": "query",

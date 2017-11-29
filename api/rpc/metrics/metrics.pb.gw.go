@@ -33,7 +33,7 @@ var (
 )
 
 func request_Metrics_CPUMetricsQuery_0(ctx context.Context, marshaler runtime.Marshaler, client MetricsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CPUMetricsRequest
+	var protoReq MetricsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Metrics_CPUMetricsQuery_0); err != nil {
@@ -116,7 +116,7 @@ func RegisterMetricsHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Metrics_CPUMetricsQuery_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "metrics", "cpu"}, ""))
+	pattern_Metrics_CPUMetricsQuery_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "metrics"}, ""))
 )
 
 var (

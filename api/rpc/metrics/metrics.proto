@@ -5,16 +5,16 @@ package metrics;
 import "google/api/annotations.proto";
 
 service Metrics {
-    rpc CPUMetricsQuery (CPUMetricsRequest) returns (CPUMetricsResponse) {
+    rpc CPUMetricsQuery (MetricsRequest) returns (CPUMetricsResponse) {
         option (google.api.http) = {
-            get: "/v1/metrics/cpu",
+            get: "/v1/metrics",
         };
     };
 }
 
-message CPUMetricsRequest {
-    bool average = 1;
-}
+//message CPUMetricsRequest {
+//    bool average = 1;
+//}
 
 message CPUMetricsResponse {
     repeated CPUMetricsEntry entries = 1;
@@ -23,4 +23,20 @@ message CPUMetricsResponse {
 message CPUMetricsEntry {
     string service = 1;
     float usage = 2;
+}
+
+message MetricsRequest {
+    bool cpu = 1;
+    bool mem = 2;
+    bool disk = 3;
+    bool net = 4;
+    string time_range = 6;
+    bool average = 7;
+}
+
+message MetricsResponse {
+    CPUMetricsEntry cpu = 1;
+    //MemMetricsEntry mem = 2;
+    //DiskMetricsEntry mem = 3;
+    //NetMetricsEntry net = 4;
 }
