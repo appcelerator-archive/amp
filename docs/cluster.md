@@ -22,7 +22,6 @@ Management Commands:
 
 Commands:
   create      Set up a cluster in swarm mode
-  ls          List deployed amp clusters
   rm          Destroy an amp cluster
   status      Retrieve details about an amp cluster
 
@@ -43,7 +42,7 @@ This is the default mode.
 
 * To create a cluster locally:
 ```
-$ amp cluster create --local-fast
+$ amp cluster create --local-no-logs --local-no-metrics
 ...
 2017/08/04 01:17:59 ampctl (version: 0.14.0-dev, build: 08772ef3)
 ...
@@ -68,6 +67,6 @@ If the secret is already created, it will be used as is without any modification
 
 #### Creating a cluster on AWS
 
-To target AWS, you should use the --provider aws option.
+To target AWS, you should use the --provider aws option, refer to the help for details on aws options: `amp cluster create -h`.
 
-More details on the AWS creation on the [AMP wiki](https://github.com/appcelerator/amp/wiki/AMP-deployment-on-AWS)
+More details on the AWS creation on the [AMP wiki](https://github.com/appcelerator/amp/wiki/AMP-Clusters-deployment-on-AWS)
