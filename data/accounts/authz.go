@@ -17,6 +17,7 @@ const (
 	TeamRN          = AmpResourceName + ":team"
 	StackRN         = AmpResourceName + ":stack"
 	DashboardRN     = AmpResourceName + ":dashboard"
+	ObjectStoreRN   = AmpResourceName + ":objectstore"
 
 	CreateAction = "create"
 	ReadAction   = "read"
@@ -176,6 +177,34 @@ var (
 		},
 	}
 
+	objectStoresReadByTeamReadPermission = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{ObjectStoreRN},
+		Actions:   []string{"<" + ReadAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"owner": &OwnerCondition{
+				[]OrganizationRole{},
+				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_READ},
+			},
+		},
+	}
+
+	objectStoresAdminByOwner = &ladon.DefaultPolicy{
+		ID:        stringid.GenerateNonCryptoID(),
+		Subjects:  []string{"<.*>"},
+		Resources: []string{ObjectStoreRN},
+		Actions:   []string{"<" + AnyAction + ">"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"owner": &OwnerCondition{
+				[]OrganizationRole{OrganizationRole_ORGANIZATION_OWNER},
+				[]TeamPermissionLevel{TeamPermissionLevel_TEAM_ADMIN},
+			},
+		},
+	}
+
 	// Policies represent access control policies for amp
 	policies = []ladon.Policy{
 		usersAdminByThemselves,
@@ -189,6 +218,8 @@ var (
 		dashboardsReadByTeamReadPermission,
 		dashboardsReadUpdateByTeamWritePermission,
 		dashboardsAdminByOwners,
+		objectStoresReadByTeamReadPermission,
+		objectStoresAdminByOwner,
 	}
 )
 

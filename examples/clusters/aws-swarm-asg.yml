@@ -748,6 +748,16 @@ Resources:
           - 'elasticfilesystem:DescribeMountTargets'
           #  next line for cluster status command
           - 'cloudformation:DescribeStacks'
+          # next lines for cluster object command
+          - 's3:CreateBucket'
+          - 's3:ListBucket'
+          - 's3:ListAllMyBuckets'
+          - 's3:DeleteBucket'
+          - 's3:GetBucketLocation'
+          # next lines to allow access to s3 buckets
+          - 's3:GetObject*'
+          - 's3:PutObject*'
+          - 's3:DeleteObject*'
           Resource: '*'
           Effect: Allow
         Version: '2012-10-17'

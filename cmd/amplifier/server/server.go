@@ -16,6 +16,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/config"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
+	"github.com/appcelerator/amp/api/rpc/object_store"
 	"github.com/appcelerator/amp/api/rpc/resource"
 	"github.com/appcelerator/amp/api/rpc/secret"
 	"github.com/appcelerator/amp/api/rpc/service"
@@ -24,6 +25,7 @@ import (
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/accounts"
 	"github.com/appcelerator/amp/data/dashboards"
+	"github.com/appcelerator/amp/data/object_stores"
 	"github.com/appcelerator/amp/data/stacks"
 	"github.com/appcelerator/amp/data/storage"
 	"github.com/appcelerator/amp/data/storage/etcd"
@@ -44,18 +46,19 @@ type serviceInitializer func(*Amplifier, *grpc.Server)
 
 // Amplifier represents the AMP gRPC server
 type Amplifier struct {
-	config     *configuration.Configuration
-	docker     *docker.Docker
-	storage    storage.Interface
-	es         *elasticsearch.Elasticsearch
-	ns         *ns.NatsStreaming
-	mailer     *mail.Mailer
-	tokens     *auth.Tokens
-	accounts   accounts.Interface
-	stacks     stacks.Interface
-	dashboards dashboards.Interface
-	provider   cloud.Provider
-	region     string
+	config       *configuration.Configuration
+	docker       *docker.Docker
+	storage      storage.Interface
+	es           *elasticsearch.Elasticsearch
+	ns           *ns.NatsStreaming
+	mailer       *mail.Mailer
+	tokens       *auth.Tokens
+	accounts     accounts.Interface
+	stacks       stacks.Interface
+	dashboards   dashboards.Interface
+	objectStores object_stores.Interface
+	provider     cloud.Provider
+	region       string
 }
 
 // Service initializers register the services with the grpc server
@@ -65,6 +68,7 @@ var serviceInitializers = []serviceInitializer{
 	registerClusterServer,
 	registerLogsServer,
 	registerNodeServer,
+	registerObjectStoreServer,
 	registerResourceServer,
 	registerSecretServer,
 	registerServiceServer,
@@ -103,18 +107,19 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		log.Infoln("Region", region)
 	}
 	amp := &Amplifier{
-		config:     config,
-		storage:    etcd,
-		es:         elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
-		ns:         ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
-		docker:     docker,
-		mailer:     mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
-		tokens:     auth.New(config.JWTSecretKey),
-		accounts:   accounts,
-		stacks:     stacks.NewStore(etcd, accounts),
-		dashboards: dashboards.NewStore(etcd, accounts),
-		provider:   provider,
-		region:     region,
+		config:       config,
+		storage:      etcd,
+		es:           elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
+		ns:           ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
+		docker:       docker,
+		mailer:       mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
+		tokens:       auth.New(config.JWTSecretKey),
+		accounts:     accounts,
+		stacks:       stacks.NewStore(etcd, accounts),
+		dashboards:   dashboards.NewStore(etcd, accounts),
+		objectStores: object_stores.NewStore(etcd, accounts),
+		provider:     provider,
+		region:       region,
 	}
 	return amp, nil
 }
@@ -271,6 +276,15 @@ func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 func registerNodeServer(amp *Amplifier, s *grpc.Server) {
 	node.RegisterNodeServer(s, &node.Server{
 		Docker: amp.docker,
+	})
+}
+
+func registerObjectStoreServer(amp *Amplifier, s *grpc.Server) {
+	object_store.RegisterObjectStoreServer(s, &object_store.Server{
+		Accounts:     amp.accounts,
+		ObjectStores: amp.objectStores,
+		Provider:     amp.provider,
+		Region:       amp.region,
 	})
 }
 
