@@ -5,7 +5,7 @@ package metrics;
 import "google/api/annotations.proto";
 
 service Metrics {
-    rpc CPUMetricsQuery (MetricsRequest) returns (CPUMetricsResponse) {
+    rpc MetricsQuery (MetricsRequest) returns (CPUMetricsResponse) {
         option (google.api.http) = {
             get: "/v1/metrics",
         };

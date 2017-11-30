@@ -48,20 +48,20 @@ type serviceInitializer func(*Amplifier, *grpc.Server)
 
 // Amplifier represents the AMP gRPC server
 type Amplifier struct {
-	config     *configuration.Configuration
-	docker     *docker.Docker
-	storage    storage.Interface
-	es         *elasticsearch.Elasticsearch
-	ns         *ns.NatsStreaming
-	mailer     *mail.Mailer
-	tokens     *auth.Tokens
-	accounts   accounts.Interface
-	stacks     stacks.Interface
-	dashboards dashboards.Interface
+	config       *configuration.Configuration
+	docker       *docker.Docker
+	storage      storage.Interface
+	es           *elasticsearch.Elasticsearch
+	ns           *ns.NatsStreaming
+	mailer       *mail.Mailer
+	tokens       *auth.Tokens
+	accounts     accounts.Interface
+	stacks       stacks.Interface
+	dashboards   dashboards.Interface
 	objectStores object_stores.Interface
-	provider   cloud.Provider
-	region     string
-	prometheus *prometheus.Prometheus
+	provider     cloud.Provider
+	region       string
+	prometheus   *prometheus.Prometheus
 }
 
 // Service initializers register the services with the grpc server
@@ -116,20 +116,20 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	}
 
 	amp := &Amplifier{
-		config:     config,
-		storage:    etcd,
-		es:         elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
-		ns:         ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
-		docker:     docker,
-		mailer:     mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
-		tokens:     auth.New(config.JWTSecretKey),
-		accounts:   accounts,
-		stacks:     stacks.NewStore(etcd, accounts),
-		dashboards: dashboards.NewStore(etcd, accounts),
+		config:       config,
+		storage:      etcd,
+		es:           elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
+		ns:           ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
+		docker:       docker,
+		mailer:       mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
+		tokens:       auth.New(config.JWTSecretKey),
+		accounts:     accounts,
+		stacks:       stacks.NewStore(etcd, accounts),
+		dashboards:   dashboards.NewStore(etcd, accounts),
 		objectStores: object_stores.NewStore(etcd, accounts),
-		provider:   provider,
-		region:     region,
-		prometheus: prometheus,
+		provider:     provider,
+		region:       region,
+		prometheus:   prometheus,
 	}
 	return amp, nil
 }

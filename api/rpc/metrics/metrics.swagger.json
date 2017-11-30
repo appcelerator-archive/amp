@@ -17,7 +17,7 @@
   "paths": {
     "/v1/metrics": {
       "get": {
-        "operationId": "CPUMetricsQuery",
+        "operationId": "MetricsQuery",
         "responses": {
           "200": {
             "description": "",

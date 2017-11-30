@@ -263,6 +263,14 @@ file {
         type: TYPE_INT32
         json_name: "end"
       }
+      field {
+        name: "options"
+        number: 3
+        label: LABEL_OPTIONAL
+        type: TYPE_MESSAGE
+        type_name: ".google.protobuf.ExtensionRangeOptions"
+        json_name: "options"
+      }
     }
     nested_type {
       name: "ReservedRange"
@@ -280,6 +288,21 @@ file {
         type: TYPE_INT32
         json_name: "end"
       }
+    }
+  }
+  message_type {
+    name: "ExtensionRangeOptions"
+    field {
+      name: "uninterpreted_option"
+      number: 999
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".google.protobuf.UninterpretedOption"
+      json_name: "uninterpretedOption"
+    }
+    extension_range {
+      start: 1000
+      end: 536870912
     }
   }
   message_type {
@@ -491,6 +514,38 @@ file {
       type_name: ".google.protobuf.EnumOptions"
       json_name: "options"
     }
+    field {
+      name: "reserved_range"
+      number: 4
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".google.protobuf.EnumDescriptorProto.EnumReservedRange"
+      json_name: "reservedRange"
+    }
+    field {
+      name: "reserved_name"
+      number: 5
+      label: LABEL_REPEATED
+      type: TYPE_STRING
+      json_name: "reservedName"
+    }
+    nested_type {
+      name: "EnumReservedRange"
+      field {
+        name: "start"
+        number: 1
+        label: LABEL_OPTIONAL
+        type: TYPE_INT32
+        json_name: "start"
+      }
+      field {
+        name: "end"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_INT32
+        json_name: "end"
+      }
+    }
   }
   message_type {
     name: "EnumValueDescriptorProto"
@@ -674,6 +729,14 @@ file {
       json_name: "pyGenericServices"
     }
     field {
+      name: "php_generic_services"
+      number: 42
+      label: LABEL_OPTIONAL
+      type: TYPE_BOOL
+      default_value: "false"
+      json_name: "phpGenericServices"
+    }
+    field {
       name: "deprecated"
       number: 23
       label: LABEL_OPTIONAL
@@ -709,6 +772,20 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "swiftPrefix"
+    }
+    field {
+      name: "php_class_prefix"
+      number: 40
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "phpClassPrefix"
+    }
+    field {
+      name: "php_namespace"
+      number: 41
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "phpNamespace"
     }
     field {
       name: "uninterpreted_option"
@@ -790,6 +867,10 @@ file {
     reserved_range {
       start: 8
       end: 9
+    }
+    reserved_range {
+      start: 9
+      end: 10
     }
   }
   message_type {
@@ -933,6 +1014,10 @@ file {
     extension_range {
       start: 1000
       end: 536870912
+    }
+    reserved_range {
+      start: 5
+      end: 6
     }
   }
   message_type {
@@ -1203,6 +1288,7 @@ file {
     java_outer_classname: "DescriptorProtos"
     optimize_for: SPEED
     go_package: "github.com/golang/protobuf/protoc-gen-go/descriptor;descriptor"
+    cc_enable_arenas: true
     objc_class_prefix: "GPB"
     csharp_namespace: "Google.Protobuf.Reflection"
   }
@@ -4051,6 +4137,13 @@ file {
       number: 768
       options {
         66001: "TaskStateRejected"
+      }
+    }
+    value {
+      name: "REMOVE"
+      number: 800
+      options {
+        66001: "TaskStateRemove"
       }
     }
     value {

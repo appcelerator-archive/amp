@@ -15,8 +15,8 @@ type Metrics struct {
 	Prometheus *prometheus.Prometheus
 }
 
-// CPUMetricsQuery extracts CPU metrics according to CPUMetricsRequest
-func (m *Metrics) CPUMetricsQuery(ctx context.Context, in *MetricsRequest) (*CPUMetricsResponse, error) {
+// MetricsQuery extracts CPU metrics according to CPUMetricsRequest
+func (m *Metrics) MetricsQuery(ctx context.Context, in *MetricsRequest) (*CPUMetricsResponse, error) {
 	response := &CPUMetricsResponse{}
 	log.Infoln("Get metrics:", in.String())
 	if in.Cpu {
@@ -24,6 +24,7 @@ func (m *Metrics) CPUMetricsQuery(ctx context.Context, in *MetricsRequest) (*CPU
 		if in.Average {
 			query = "avg_over_time(container_cpu_user_seconds_total[" + in.TimeRange + "m])"
 		}
+		log.Infoln(query)
 		samples, err := m.Prometheus.Api().Query(context.Background(), query, time.Now())
 		if err != nil {
 			return nil, errors.New("unable to query Prometheus")

@@ -10,8 +10,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/cli"
-
-	"github.com/cloudfoundry/bytefmt"
+	"code.cloudfoundry.org/bytefmt"
 	"github.com/spf13/cobra"
 	grpcStatus "google.golang.org/grpc/status"
 )
