@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.17.0 (2017-11-29)
+
+* Public REST API documentation
+* Pagination in logs API
+* Swagger consolitation in a single file
+* Object storage API / CLI command
+* Cluster status and cluster node list implemented in the API
+* Extended cluster status in the CLI output
+* gRPC gateway updated to 1.3.0
+* CLI accepts aws credential as arguments (alternative method)
+* CLI error messages more user friendly
+* CLI service inspect subcommand now accepts the --format option 
+* Fix: alerts rules sample for Prometheus 2.0
+* Fix: Prometheus link in Alertmanager
+* Fix: CLI deletion of a rollbacked AWS stack
+* Fix: force cleanup of docker volumes at cluster destruction
+* Fix: automatic creation of the index pattern for Kibana
+* Fix: race condition between system prune and cluster creation
+
 ## 0.16.0 (2017-11-15)
 
 * Update to Docker 17.09 stable release

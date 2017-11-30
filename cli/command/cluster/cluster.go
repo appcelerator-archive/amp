@@ -35,7 +35,7 @@ var (
 		workers:       2,
 		provider:      "local",
 		name:          "",
-		tag:           "latest",
+		tag:           "0.17.0",
 		registration:  configuration.RegistrationDefault,
 		notifications: true,
 	}
