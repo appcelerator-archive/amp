@@ -290,8 +290,11 @@ func (p *awsPlugin) Run(c cli.Interface, args []string, env map[string]string) e
 		// automatically attempt to mount aws credentials if present
 		awshome := path.Join(home, ".aws")
 		awscreds := path.Join(awshome, "credentials")
-		if _, err := os.Stat(awscreds); err != nil {
-			return fmt.Errorf("no $HOME/.aws/credentials found, please refer to http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html to configure it")
+		awsconfig := path.Join(awshome, "config")
+		_, errcreds := os.Stat(awscreds)
+		_, errconfig := os.Stat(awsconfig)
+		if errcreds != nil && errconfig != nil {
+			return fmt.Errorf("no credentials or config file found in $HOME/.aws/, please refer to http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html to configure your aws credentials, or check the help message on how to use credentials as arguments to the CLI")
 		}
 		dockerOpts.Volumes = append(dockerOpts.Volumes, fmt.Sprintf("%s:/root/.aws", awshome))
 	}
