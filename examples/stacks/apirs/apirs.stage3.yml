@@ -18,6 +18,16 @@ services:
       placement:
         constraints:
           - node.labels.amp.type.user == true
+    volumes:
+      - type: volume
+        source: arrowdb_photos
+        target: /opt/appcelerator/acs-api/public/photos
+      - type: volume
+        source: arrowdb_files
+        target: /opt/appcelerator/acs-api/public/file
+      - type: volume
+        source: arrowdb_exports
+        target: /opt/appcelerator/acs-api/public/exports
     environment:
       CONSUL: consul
       SERVICE_PORTS: 8082
@@ -151,3 +161,23 @@ services:
       - bash
       - start-with-consul.sh
       - /harbor/harbor_ui
+
+volumes:
+  arrowdb_photos:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/arrowdb/photos
+      o: addr=${NFS_SERVER:-fs-0a000a00.efs.us-west-2.amazonaws.com},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+  arrowdb_files:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/arrowdb/files
+      o: addr=${NFS_SERVER:-fs-0a000a00.efs.us-west-2.amazonaws.com},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+  arrowdb_exports:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/arrowdb/exports
+      o: addr=${NFS_SERVER:-fs-0a000a00.efs.us-west-2.amazonaws.com},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
