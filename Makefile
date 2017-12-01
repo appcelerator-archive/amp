@@ -79,7 +79,7 @@ clean-vendor:
 
 # not named `vendor` to avoid inopportune triggering
 install-vendor:
-	@dep ensure
+	@dep ensure -vendor-only
 	@dep prune
 
 # =============================================================================

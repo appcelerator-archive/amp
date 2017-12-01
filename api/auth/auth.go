@@ -92,7 +92,7 @@ func ForgeAuthorizationHeader(token string) string {
 }
 
 func (i *Interceptors) authorize(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ctx, status.Errorf(codes.Unauthenticated, CredentialsRequired)
 	}

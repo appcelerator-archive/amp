@@ -20,6 +20,7 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["github.com/rcrowley/go-metrics"]
 
 [[constraint]]
   name = "docker.io/go-docker"
@@ -39,11 +40,11 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.12.26"
+  version = "1.12.44"
 
 [[constraint]]
   name = "github.com/coreos/etcd"
-  version = "3.2.9"
+  version = "3.2.11"
 
 [[constraint]]
   name = "github.com/dgrijalva/jwt-go"
@@ -62,12 +63,12 @@
   version = "0.3.2"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/docker/swarmkit"
-
-[[constraint]]
   name = "github.com/elastic/beats"
   version = "=5.3.1"
+
+[[constraint]]
+  name = "github.com/rcrowley/go-metrics"
+  revision = "ab2277b1c5d15c3cba104e9cbddbdfc622df5ad8"
 
 [[constraint]]
   name = "github.com/fatih/color"
@@ -95,7 +96,7 @@
 
 [[constraint]]
   name = "github.com/grpc-ecosystem/grpc-gateway"
-  revision = "c323909dd41de182a54b4d1610f26034da5e097e"
+  version = "1.3.0"
 
 [[constraint]]
   branch = "master"
@@ -131,7 +132,7 @@
 
 [[constraint]]
   name = "github.com/ory/ladon"
-  version = "0.8.3"
+  version = "0.8.6"
 
 [[constraint]]
   name = "github.com/pkg/errors"
@@ -147,7 +148,7 @@
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.0.3"
+  version = "1.0.4"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
@@ -168,7 +169,6 @@
 [[constraint]]
   name = "github.com/xeipuuv/gojsonschema"
   revision = "93e72a773fade158921402d6a24c819b48aba29d"
-
 
 [[constraint]]
   branch = "master"
@@ -192,11 +192,11 @@
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "=1.5.2"
+  version = "1.8.1"
 
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v5"
-  version = "5.0.53"
+  version = "5.0.58"
 
 [[constraint]]
   branch = "v2"
@@ -205,7 +205,3 @@
 [[constraint]]
   branch = "master"
   name = "vbom.ml/util"
-
-[[constraint]]
-  name = "github.com/cloudfoundry/bytefmt"
-  revision = "f4415fafc5619dd75599a54a7c91fb3948ad58bd"

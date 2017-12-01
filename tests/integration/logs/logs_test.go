@@ -34,7 +34,7 @@ func setup() (err error) {
 	if err != nil {
 		return err
 	}
-	ctx = metadata.NewContext(context.Background(), credentials)
+	ctx = metadata.NewOutgoingContext(context.Background(), credentials)
 
 	// Log producer helper
 	lp = helpers.NewLogProducer(h)
