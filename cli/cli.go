@@ -45,7 +45,7 @@ type cli struct {
 
 const (
 	// DefaultAddress for amp connection
-	DefaultAddress = "localhost"
+	DefaultAddress = "127.0.0.1"
 
 	// DefaultPort for amp connection
 	DefaultPort = configuration.DefaultPort

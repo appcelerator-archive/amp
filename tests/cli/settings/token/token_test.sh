@@ -5,7 +5,7 @@ test_setup() {
 }
 
 test_name() {
-  find $HOME/.config/amp -name 'localhost*'
+  find $HOME/.config/amp -name '127.0.0.1.credentials'
 }
 
 test_teardown() {
