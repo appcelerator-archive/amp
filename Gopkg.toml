@@ -207,5 +207,5 @@
   name = "vbom.ml/util"
 
 [[constraint]]
-  name = "github.com/cloudfoundry/bytefmt"
+  name = "code.cloudfoundry.org/bytefmt"
   revision = "f4415fafc5619dd75599a54a7c91fb3948ad58bd"
