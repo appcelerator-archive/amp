@@ -56,3 +56,28 @@ services:
       - source: consul_kv
         target: /values.json
         mode: 0554
+
+  nfs-init:
+    image: alpine:3.6
+    networks:
+      - db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - type: volume
+        source: nfs_init
+        target: /nfs
+    command: [ "mkdir", "-p", "/nfs/appc/arrowdb/photos", "/nfs/appc/arrowdb/files", "/nfs/appc/arrowdb/exports" ]
+
+volumes:
+  nfs_init:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/
+      o: addr=${NFS_SERVER:-fs-0a000a00.efs.us-west-2.amazonaws.com},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
