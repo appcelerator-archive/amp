@@ -15,7 +15,7 @@ secrets:
 services:
 
   proxy:
-    image: dockercloud/haproxy
+    image: dockercloud/haproxy:1.6.7
     networks:
       - core
       - public
