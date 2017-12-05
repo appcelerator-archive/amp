@@ -2,7 +2,7 @@
 
 # server address passed as command-line argument
 test_cli_config() {
-  echo $(amp -k settings) | grep -Eq "Settings file: none\s+[[:alpha:][:space:]]+: Server:\s+localhost"
+  echo $(amp -k settings) | grep -Eq "Settings file: none\s+[[:alpha:][:space:]]+: Server:\s+127.0.0.1"
 }
 
 # server address passed in local config
