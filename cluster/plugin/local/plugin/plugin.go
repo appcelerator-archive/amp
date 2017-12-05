@@ -4,8 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,12 +23,13 @@ import (
 )
 
 const (
-	InitTimeout       = 10
-	ContainerName     = "ampagent"
-	ImageName         = "appcelerator/ampagent"
-	DockerSocket      = "/var/run/docker.sock"
-	DockerSwarmSocket = "/var/run/docker"
-	CoreStackName     = "amp"
+	InitTimeout            = 10
+	ContainerName          = "ampagent"
+	ImageName              = "appcelerator/ampagent"
+	DockerSocket           = "/var/run/docker.sock"
+	DockerSwarmSocket      = "/var/run/docker"
+	CoreStackName          = "amp"
+	MaxMapCountRequirement = 262144 // as specified here: https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
 )
 
 var (
@@ -54,6 +59,36 @@ type ShortSwarmInfo struct {
 	SwarmStatus  string `json:"Swarm Status"`
 	CoreServices int    `json:"Core Services"`
 	UserServices int    `json:"User Services"`
+}
+
+// Check prerequisites
+func CheckPrerequisites(opts *RequestOptions) error {
+	switch runtime.GOOS {
+	case "linux":
+		if opts.NoLogs {
+			return nil
+		}
+
+		// Check max_map_count settings for Elasticsearch
+		path := path.Join("proc", "sys", "vm", "max_map_count")
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("unable to read system configuration at %s: %s", path, err.Error())
+		}
+		value := strings.TrimSpace(string(bytes))
+		maxMapCount, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("unable to convert value %s: %s", value, err.Error())
+		}
+		if maxMapCount < MaxMapCountRequirement {
+			return fmt.Errorf("vm.max_map_count value is too low. Got: %d, expected: >= %d, please check the documentation on local cluster deployment prerequisites", maxMapCount, MaxMapCountRequirement)
+		}
+		return nil
+
+	default:
+		return nil
+	}
+	return nil
 }
 
 // EnsureSwarmExists checks that the Swarm is initialized, and does it if it's not the case

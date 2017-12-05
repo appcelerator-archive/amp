@@ -40,9 +40,11 @@ func initClient(cmd *cobra.Command, args []string) (err error) {
 }
 
 func create(cmd *cobra.Command, args []string) {
-	// docker swarn init --advertise-addr $interface
 	ctx := context.Background()
 
+	if err := plugin.CheckPrerequisites(opts); err != nil {
+		log.Fatal(err)
+	}
 	if err := plugin.EnsureSwarmExists(ctx, dockerClient, opts); err != nil {
 		log.Fatal(err)
 	}
@@ -52,6 +54,7 @@ func create(cmd *cobra.Command, args []string) {
 	if err := plugin.RunAgent(ctx, dockerClient, "install", opts); err != nil {
 		log.Fatal(err)
 	}
+
 	// use the info command to print json cluster info to stdout
 	info(cmd, args)
 }
