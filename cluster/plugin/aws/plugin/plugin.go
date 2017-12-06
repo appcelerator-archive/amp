@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	cf "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 const (
@@ -17,9 +19,8 @@ const (
 	DefaultTemplateURL = "https://s3.amazonaws.com/io-amp-binaries/templates/latest/aws-swarm-asg.yml"
 )
 
-// RequestOptions stores raw request input options before transformation into a AWS SDK specific
-// structs  used by the cloudformation api.
-type RequestOptions struct {
+// Configuration stores raw request input options before transformation into a AWS SDK specific structs  used by the cloudformation api.
+type Configuration struct {
 	// OnFailure determines what happens if stack creations fails.
 	// Valid values are: "DO_NOTHING", "ROLLBACK", "DELETE"
 	// Default: "ROLLBACK"
@@ -76,12 +77,53 @@ type StackEvent struct {
 // will transmit to the CLI. it's not a single envelop, it can be repeated
 type PluginOutput struct {
 	Output []StackOutput `json:"Output"`
-	Event  *StackEvent   `"json:"Event"`
-	Error  string        `"json:"Error"`
+	Event  *StackEvent   `json:"Event"`
+	Error  string        `json:"Error"`
 }
 
-func parseParam(s string) *cf.Parameter {
-	p := &cf.Parameter{}
+// AWSPlugin is the AWS plugin
+type AWSPlugin struct {
+	Config *Configuration
+	cf     *cloudformation.CloudFormation
+}
+
+var (
+	Config = &Configuration{
+		OnFailure:   "DO_NOTHING",
+		Params:      []string{},
+		TemplateURL: DefaultTemplateURL,
+		Profile:     "default",
+	}
+	AWS *AWSPlugin
+)
+
+// New returns a new AWS Plugin instance
+func New(config *Configuration) *AWSPlugin {
+	// export vars if creds are passed as arguments
+	if config.AccessKeyId != "" && config.SecretAccessKey != "" {
+		os.Setenv("AWS_ACCESS_KEY_ID", config.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", config.SecretAccessKey)
+	} else {
+		os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+		os.Setenv("AWS_PROFILE", config.Profile)
+	}
+
+	awsConfig := aws.NewConfig().WithLogLevel(aws.LogOff)
+
+	// region can be set with a CLI option, but if not set it can be set by the Config file
+	if config.Region != "" {
+		awsConfig.Region = aws.String(config.Region)
+	}
+
+	// Create the service's client with the session.
+	return &AWSPlugin{
+		Config: config,
+		cf:     cloudformation.New(session.Must(session.NewSession()), awsConfig),
+	}
+}
+
+func parseParam(s string) *cloudformation.Parameter {
+	p := &cloudformation.Parameter{}
 
 	// split string to at most 2 substrings
 	// if there is only 1 substring, then assume UsePreviousValue=true
@@ -96,8 +138,8 @@ func parseParam(s string) *cf.Parameter {
 	return p
 }
 
-func toParameters(sa []string) []*cf.Parameter {
-	params := make([]*cf.Parameter, len(sa))
+func toParameters(sa []string) []*cloudformation.Parameter {
+	params := make([]*cloudformation.Parameter, len(sa))
 	for i := range sa {
 		params[i] = parseParam(sa[i])
 	}
@@ -106,43 +148,42 @@ func toParameters(sa []string) []*cf.Parameter {
 
 // CreateStack starts the AWS stack creation operation
 // The operation will return immediately
-func CreateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions, timeout int64) (*cf.CreateStackOutput, error) {
-	input := &cf.CreateStackInput{
-		StackName: aws.String(opts.StackName),
+func (p *AWSPlugin) CreateStack(ctx context.Context, timeout int64) (*cloudformation.CreateStackOutput, error) {
+	input := &cloudformation.CreateStackInput{
+		StackName: aws.String(p.Config.StackName),
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
-		OnFailure:        aws.String(opts.OnFailure),
-		Parameters:       toParameters(opts.Params),
-		TemplateURL:      aws.String(opts.TemplateURL),
+		OnFailure:        aws.String(p.Config.OnFailure),
+		Parameters:       toParameters(p.Config.Params),
+		TemplateURL:      aws.String(p.Config.TemplateURL),
 		TimeoutInMinutes: aws.Int64(timeout),
 	}
-
-	return svc.CreateStackWithContext(ctx, input)
+	return p.cf.CreateStackWithContext(ctx, input)
 }
 
 // InfoStack returns the output information that was produced when the stack was created or updated
-func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) ([]StackOutput, error) {
-	input := &cf.DescribeStacksInput{
-		StackName: aws.String(opts.StackName),
-		NextToken: aws.String(strconv.Itoa(opts.Page)),
+func (p *AWSPlugin) InfoStack(ctx context.Context) ([]StackOutput, error) {
+	input := &cloudformation.DescribeStacksInput{
+		StackName: aws.String(p.Config.StackName),
+		NextToken: aws.String(strconv.Itoa(p.Config.Page)),
 	}
-	output, err := svc.DescribeStacksWithContext(ctx, input)
+	output, err := p.cf.DescribeStacksWithContext(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	var stack *cf.Stack
+	var stack *cloudformation.Stack
 	for _, stack = range output.Stacks {
 		//if stack.StackName == input.StackName {
-		if aws.StringValue(stack.StackName) == opts.StackName {
+		if aws.StringValue(stack.StackName) == p.Config.StackName {
 			break
 		}
 		stack = nil
 	}
 
 	if stack == nil {
-		return nil, errors.New("stack not found: " + opts.StackName)
+		return nil, errors.New("stack not found: " + p.Config.StackName)
 	}
 
 	stackOutputs := []StackOutput{}
@@ -159,27 +200,25 @@ func InfoStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions
 
 // UpdateStack starts the update operation
 // The operation will return immediately
-func UpdateStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.UpdateStackOutput, error) {
-	input := &cf.UpdateStackInput{
-		StackName: aws.String(opts.StackName),
+func (p *AWSPlugin) UpdateStack(ctx context.Context) (*cloudformation.UpdateStackOutput, error) {
+	input := &cloudformation.UpdateStackInput{
+		StackName: aws.String(p.Config.StackName),
 		Capabilities: []*string{
 			aws.String("CAPABILITY_IAM"),
 		},
-		Parameters:  toParameters(opts.Params),
-		TemplateURL: aws.String(opts.TemplateURL),
+		Parameters:  toParameters(p.Config.Params),
+		TemplateURL: aws.String(p.Config.TemplateURL),
 	}
-
-	return svc.UpdateStackWithContext(ctx, input)
+	return p.cf.UpdateStackWithContext(ctx, input)
 }
 
 // DeleteStack starts the delete operation
 // The operation will return immediately
-func DeleteStack(ctx context.Context, svc *cf.CloudFormation, opts *RequestOptions) (*cf.DeleteStackOutput, error) {
-	input := &cf.DeleteStackInput{
-		StackName: aws.String(opts.StackName),
+func (p *AWSPlugin) DeleteStack(ctx context.Context) (*cloudformation.DeleteStackOutput, error) {
+	input := &cloudformation.DeleteStackInput{
+		StackName: aws.String(p.Config.StackName),
 	}
-
-	return svc.DeleteStackWithContext(ctx, input)
+	return p.cf.DeleteStackWithContext(ctx, input)
 }
 
 // PluginOutputToJSON is a helper function that wrap an event, an error or a slice of StackOutput
@@ -205,11 +244,18 @@ func PluginOutputToJSON(ev *StackEvent, so []StackOutput, e error) (string, erro
 }
 
 // ListStack lists the stacks based on the filter on stack status
-func ListStack(ctx context.Context, svc *cf.CloudFormation) (*cf.ListStacksOutput, error) {
-	statusFilter := []string{cf.StackStatusCreateFailed, cf.StackStatusCreateInProgress, cf.StackStatusCreateComplete, cf.StackStatusRollbackInProgress, cf.StackStatusRollbackFailed, cf.StackStatusDeleteInProgress, cf.StackStatusRollbackComplete}
-	input := &cf.ListStacksInput{
+func (p *AWSPlugin) ListStack(ctx context.Context) (*cloudformation.ListStacksOutput, error) {
+	statusFilter := []string{
+		cloudformation.StackStatusCreateFailed,
+		cloudformation.StackStatusCreateInProgress,
+		cloudformation.StackStatusCreateComplete,
+		cloudformation.StackStatusRollbackInProgress,
+		cloudformation.StackStatusRollbackFailed,
+		cloudformation.StackStatusDeleteInProgress,
+		cloudformation.StackStatusRollbackComplete,
+	}
+	input := &cloudformation.ListStacksInput{
 		StackStatusFilter: aws.StringSlice(statusFilter),
 	}
-
-	return svc.ListStacksWithContext(ctx, input)
+	return p.cf.ListStacksWithContext(ctx, input)
 }
