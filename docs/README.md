@@ -102,3 +102,6 @@ $ ampmake build
 ```
 This will build cross-compiled versions of the CLI and place them in the appropriate locations under `./bin`.
 In addition, this will build the development versions of each of the images necessary for creation of the AMP cluster.
+
+
+> NOTE: For detailed information on AMP commands, see the [reference documentation](reference) for each command. 

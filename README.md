@@ -16,6 +16,8 @@ In the meantime, you can get started on your own laptop with `amp cluster create
 
 For getting started and more detailed information, see [docs](docs/).
 
+If you are familiar with AMP, here is the reference on AMP CLI [commands](docs/reference/).
+
 ## Contributing
 
 If you're already familiar with the project and want to hack on the project, we have a fully containerized toolchain.
