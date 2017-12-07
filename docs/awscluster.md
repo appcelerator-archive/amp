@@ -1,30 +1,99 @@
-#### Creating a cluster on AWS
+# AWS cluster creation
 
-To target AWS, you should use the --provider aws option, refer to the help for details on aws options: `amp cluster create -h`.
+This page outlines the steps to set up an AMP cluster on AWS.
 
-##### Prerequisites
+## Why do you need an AMP cluster on AWS?
 
-the AMP CLI can be used to create a new AMP cluster on AWS. The prerequisite is to have access to an AWS account with enough IAM rights to deploy a stack (with IAM policies creation), and to have the credentials defined in the default profile of `$HOME/.aws/credentials`. If you don't, download the [AWS cli](http://docs.aws.amazon.com/cli/latest/userguide/installing.html), and run `aws configure`. You can check with `aws configure list`.
+When you application is ready or when you want your team to share a common cluster, it is easy to spin up an AMP cluster on AWS. 
 
-You can download CLI here: https://github.com/appcelerator/amp/releases
+## Prerequisites
 
-##### Cluster creation
+The prerequisites for creating an AWS cluster on AMP is to have:
+ 
+### AWS Account
+ 
+You will need an AWS account with adequate IAM rights to deploy Cloud Formation stacks. 
 
-Make sure to define the variables with the proper region (i.e. us-west-2), stack name (i.e. amp-YOURNAME) and keypair name. This keypair should already exist on AWS (you can list them in the AWS EC2 page for the chosen region).
+If you don't already have one, sign up [here](https://portal.aws.amazon.com/billing/signup#/start). 
 
+To learn more about managing IAM roles, see the official documentation from AWS [here](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html?icmpid=docs_iam_console).
+ 
+### AWS Key Pair 
+ 
+You will need an AWS key pair specific to the region you choose. 
+
+For creating key pairs on AWS, see the official documentation from AWS [here](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
+
+### AWS Access Key
+
+You will need to provide your `AWS Access Key ID` and `AWS Secret Access Key` in order to deploy an AMP cluster.
+
+You can find out more about AWS access keys [here](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey).
+
+> NOTE:  If you already have the AWS CLI installed on your system, make sure it is configured since the AMP CLI will use this information for cluster creation. See more details [here](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html). 
+
+## Checklist
+
+Before deploying your cluster, you will need the following elements:
+
+* Pick a region, for instance `us-west-2`
+* AWS Key pair name in the region you chose
+* AWS Access Key ID
+* AWS Secret Access Key
+* Stack name
+
+> NOTE: If you already have the AWS CLI installed, the AMP CLI will use the `Region`, `AWS Access Key ID` and `AWS Secret Access Key` from it.
+
+## Cluster Deployment
+
+If you don't have the AWS CLI installed, enter the following:
 ```
-amp cluster create --provider aws --aws-region $REGION --aws-stackname $STACK_NAME --aws-parameter KeyName=$KEY_NAME
+export REGION=us-west-2
+export KEY_NAME=user-keypair
+export ACCESS_KEY_ID=xxxxx
+export SECRET_ACCESS_KEY=xxxxx
+export STACK_NAME=amp-test
+
+amp cluster create --provider aws --aws-region $REGION --aws-parameter KeyName=$KEY_NAME --aws-access-key-id $ACCESS_KEY_ID --aws-secret-access-key $SECRET_ACCESS_KEY --aws-stackname $STACK_NAME --aws-sync
 ```
 
-The CLI will give back control once the cluster is fully deployed, which should take 10 min. It will display some information, including the ELB dns name for the manager nodes (which can be used to configure a CNAME with the domain served by this cluster).
+If you have the AWS CLI installed, enter the following:
+```
+export KEY_NAME=user-keypair
+export STACK_NAME=amp-test
 
-##### Customization
+amp cluster create --provider aws --aws-parameter KeyName=$KEY_NAME --aws-stackname $STACK_NAME --aws-sync
+```
 
-The cluster has been created with the default configuration. You'll need to update it for your convenience.
+The AMP cluster deployment on AWS takes roughly 10 minutes to complete. On success, the output looks something like this:
+```
+Fri Dec  8 01:16:53 UTC 2017    amp-test                     CREATE_IN_PROGRESS (User Initiated)
+Fri Dec  8 01:17:16 UTC 2017    Vpc                          CREATE_COMPLETE
+Fri Dec  8 01:19:34 UTC 2017    ManagerAutoScalingGroup      CREATE_COMPLETE
+Fri Dec  8 01:20:56 UTC 2017    ManagerWaitCondition         CREATE_COMPLETE
+Fri Dec  8 01:21:02 UTC 2017    CoreWorkerAutoScalingGroup   CREATE_COMPLETE
+Fri Dec  8 01:21:02 UTC 2017    UserWorkerAutoScalingGroup   CREATE_COMPLETE
+Fri Dec  8 01:21:58 UTC 2017    CoreWaitCondition            CREATE_COMPLETE
+Fri Dec  8 01:21:59 UTC 2017    UserWaitCondition            CREATE_COMPLETE
+Fri Dec  8 01:23:50 UTC 2017    ApplicationWaitCondition     CREATE_COMPLETE
+Fri Dec  8 01:23:54 UTC 2017    amp-test                     CREATE_COMPLETE
+-------------------------------------------------------------------------------
+VPC ID                                     | vpc-a92ec8d0
+NFSv4 Endpoint                             | disabled
+URL for cluster health dashboard           | amp-test-ManagerEx-8IKHVRJOUT98-636105687.us-west-2.elb.amazonaws.com:8080
+internal endpoint for the registry service | disabled
+public facing endpoint for the cluster     | amp-test-ManagerEx-8IKHVRJOUT98-636105687.us-west-2.elb.amazonaws.com
+```
 
-For 0.14, the customization should be done on one manager node of the cluster, so you should be able to ssh to it with the key you specified at cluster creation, with user `ubuntu`.
+## What's next?
 
-##### Certificate
+You can now deploy a stackfile on your newly created local cluster. Please follow the instructions listed [here](stackdeploy.md).
+
+## Customization
+
+The cluster has been created with the default configuration. You'll need to update it according to your convenience.
+
+## Domain Certificate
 
 You should generate a certificate valid for the domain that will be served by the cluster. Ideally it can be a wildcard certificate, but it should at least include the virtual hosts amplifier, dashboard, kibana and alerts.
 
@@ -48,10 +117,20 @@ docker service ps amp_amplifier
 docker service ps amp_proxy
 ```
 
-##### Amplifier configuration
+## Secrets
+
+`amp cluster create` uses a docker secret named `amplifier_yml` for amplifier configuration.
+
+If the secret is not present before the invocation of `amp cluster create`, it will be automatically generated with sensible values for the following keys:
+- `JWTSecretKey`: A secret key of 128 random characters will be generated.
+- `SUPassword`: A super user password of 32 characters will be generated and displayed during the execution of the command.
+
+If the secret is already created, it will be used as is without any modifications.
+
+## Amplifier configuration
 
 The secret `amplifier_yml` contains the configuration for the user registration.
-To enable it, you should get a Sendgrid key (you can have a 30 days trial key [here](https://app.sendgrid.com/signup?id=71713987-9f01-4dea-b3d4-8d0bcd9d53ed)).
+To enable it, you should get a Sendgrid key (you can have a 30 days trial key [here](https://app.sendgrid.com/signup?id=71713987-9f01-4dea-b3d4-8d0bcd9d53ed).
 
 ```
 cat > amplifier.yml << EOF
@@ -70,7 +149,7 @@ docker service update --secret-rm amplifier_yml --secret-add source=amplifier_ym
 
 Check that the service is stabilizing with the new configuration.
 
-##### Alerting configuration
+## Alerting configuration
 
 You can configure where notifications will be sent. The default (no notification configured) is in the secret `alertmanager_yml`.
 
@@ -123,13 +202,13 @@ docker service update --config-rm prometheus_alerts_rules --config-add source=pr
 
 Check that the service is stabilizing with the new configuration.
 
-##### Update the domain name
+## Update the domain name
 
 You should create or update the domain name that you use to create the certificate. Use a service such as route53, dnsimple or similar to create a CNAME pointing to the DNS name from the output of the cluster creation. If you don't have access to it anymore, you can find it in the output of the cloudformation stack on the AWS console.
 
 Wait for the DNS to be updated.
 
-##### Login and validate the configuration
+## Login and validate the configuration
 
 Use the CLI from your workstation (not from the cluster anymore) and check that the connection is done and that the certificate is valid:
 
@@ -156,7 +235,7 @@ USERNAME   EMAIL   CREATED ON
 su                 29 Nov 17 14:41
 ```
 
-##### Cleanup
+## Cluster Cleanup
 
 You can remove the old secrets and config now that the cluster is configured and running.
 
@@ -167,10 +246,33 @@ docker secret rm certificate_amp
 docker config rm prometheus_alerts_rules
 ```
 
-##### Teardown 
+## Cluster Teardown 
 
-Below is example of command to sunset some cluster.
+If you no longer use the deployed cluster, it can be removed by running the following command:
 
 ```
-REGION=us-west-2; STACK_NAME=nderzhak-test016; ./amp cluster rm --provider aws --aws-stackname $STACK_NAME --aws-region $REGION
+amp cluster rm --provider aws --aws-stackname $STACK_NAME --aws-sync
+```
+
+The cluster teardown on AWS takes about 10 minutes to complete. On success, the output looks something like this:
+```
+Fri Dec  8 01:17:16 UTC 2017    Vpc                          CREATE_COMPLETE
+Fri Dec  8 01:19:34 UTC 2017    ManagerAutoScalingGroup      CREATE_COMPLETE
+Fri Dec  8 01:20:56 UTC 2017    ManagerWaitCondition         CREATE_COMPLETE
+Fri Dec  8 01:21:02 UTC 2017    UserWorkerAutoScalingGroup   CREATE_COMPLETE
+Fri Dec  8 01:21:02 UTC 2017    CoreWorkerAutoScalingGroup   CREATE_COMPLETE
+Fri Dec  8 01:21:58 UTC 2017    CoreWaitCondition            CREATE_COMPLETE
+Fri Dec  8 01:21:59 UTC 2017    UserWaitCondition            CREATE_COMPLETE
+Fri Dec  8 01:23:50 UTC 2017    ApplicationWaitCondition     CREATE_COMPLETE
+Fri Dec  8 01:23:54 UTC 2017    amp-test                     CREATE_COMPLETE
+Fri Dec  8 01:26:12 UTC 2017    amp-test                     DELETE_IN_PROGRESS (User Initiated)
+Fri Dec  8 01:26:14 UTC 2017    ApplicationWaitCondition     DELETE_IN_PROGRESS
+Fri Dec  8 01:26:15 UTC 2017    UserWaitCondition            DELETE_IN_PROGRESS
+Fri Dec  8 01:26:15 UTC 2017    CoreWaitCondition            DELETE_IN_PROGRESS
+Fri Dec  8 01:26:17 UTC 2017    UserWorkerAutoScalingGroup   DELETE_IN_PROGRESS
+Fri Dec  8 01:26:17 UTC 2017    CoreWorkerAutoScalingGroup   DELETE_IN_PROGRESS
+Fri Dec  8 01:29:54 UTC 2017    ManagerWaitCondition         DELETE_IN_PROGRESS
+Fri Dec  8 01:29:56 UTC 2017    ManagerAutoScalingGroup      DELETE_IN_PROGRESS
+Fri Dec  8 01:35:11 UTC 2017    Vpc                          DELETE_IN_PROGRESS
+Fri Dec  8 01:35:30 UTC 2017    amp-test                     DELETE_COMPLETE
 ```

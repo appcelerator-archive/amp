@@ -6,7 +6,7 @@ An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-ca
 
  * Use Docker Compose v3 [stackfiles](https://docs.docker.com/compose/compose-file/) to deploy your stacks
  * Account management support for users and teams with role-based access controls
- * Logs and metrics realtime filtered feeds and historical query support
+ * Logs and metrics with real-time filtered feeds and historical query support
 
 While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.17).
 You'll be able to create your own HA cluster on the cloud, or use our playground.
