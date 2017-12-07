@@ -1,9 +1,11 @@
 APIRS
 =====
 
+This document outlines the steps to deploy the APIRS stack on AMP.  
+
 ## Overview
 
-The deployment consists in 3 stages:
+The deployment consists of 3 stages:
 
 * Stage 1 starts: 
   * mongodb
@@ -24,11 +26,13 @@ The deployment consists in 3 stages:
   * push-dispatcher
   * registry-auth
 
-The mongodb configuration and the consul configuration have to be created as Docker config beforehand.
+> NOTE: *The mongodb configuration and the consul configuration have to be created as a Docker config beforehand.*
 
 ## Prerequisite
 
-Login to Portus with your Portus credentials using docker login:
+> NOTE: Make sure you follow the [prerequisites](docs/README#prerequisites) specific to your OS before getting started.
+
+Login to Portus with your Portus credentials using Docker login:
 
     $ docker login services-registry.cloudapp-enterprise-preprod.appctest.com:5000
 
@@ -36,7 +40,7 @@ Build the `kvcodec` tool in order to prepare your consul KV configuration and ru
 
     $ go build -o kvcodec .
     
-Make sure your amp CLI is at least version 0.17.0.
+Make sure your AMP CLI is at least version [0.17.0](https://github.com/appcelerator/amp/releases/tag/v0.17.0).
 
 If you plan to deploy on AWS, prepare your AWS credentials. The recommended way is to use the [~/.aws/credentials file](http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html) but you can also pass the access key id and the secret access key as parameter to the CLI, as described in `amp cluster create -h`.
 
@@ -74,35 +78,35 @@ Run in this directory:
 
 ## Cloud Deployment
 
-Full instructions on cluster deployment on AWS is available on the [amp wiki](https://github.com/appcelerator/amp/wiki/AMP-Clusters-deployment-on-AWS), the following section is a quick guide adapted to the APIRS use case.
+Full instructions on cluster deployment on AWS is available in the [AWS cluster documentation](docs/awscluster.md), the following section is a quick guide adapted to the APIRS use case.
 
-### Cluster creation & sign up
+### Cluster Configuration
 
     export STACK_NAME=amp-$USER
-    export STACK_NAME=YOUR_KEYPAIR
+    export KEYPAIR_NAME=YOUR_KEYPAIR
+    export REGION=YOUR_REGION (for instance: us-west-2)
     
 #### Create cluster
 
-    amp cluster create --provider aws --aws-region us-west-2 --aws-stackname $STACK_NAME --aws-parameter KeyName=$KEYPAIR_NAME --aws-parameter NFSEndpoint=true
+    amp cluster create --provider aws --aws-region $REGION --aws-stackname $STACK_NAME --aws-parameter KeyName=$KEYPAIR_NAME --aws-parameter NFSEndpoint=true
 
-the output will show the URL of the cluster. We'll refer to is as $REMOTE_SERVER.
-it will also show the NFS endpoint. We'll refer to is as $NFS_ENDPOINT.
+The output will show the URL of the cluster. We will refer to this as $REMOTE_SERVER.
+It will also show the NFS endpoint. We will refer to this as $NFS_ENDPOINT.
 
     export REMOTE_SERVER="URL of the cluster"
     export NFS_ENDPOINT="URL of the NFS server"
     
-PS: if you don't want to store your credentials in the ~/.aws/ folder, you can alternatively use CLI arguments to pass the credentials:
+If you don't want to store your credentials in the ~/.aws/ folder, you can alternatively use CLI arguments to pass the credentials:
 
-      --aws-access-key-id YOUR_ACCESS_KEY_ID --aws-secret-access-key YOUR_SECRET_ACCESS_KEY
+    amp cluster create --provider aws --aws-region $REGION --aws-stackname $STACK_NAME --aws-parameter KeyName=$KEYPAIR_NAME --aws-parameter NFSEndpoint=true --aws-access-key-id YOUR_ACCESS_KEY_ID --aws-secret-access-key YOUR_SECRET_ACCESS_KEY
 
 #### Enable user registration
 
-this is a cloud cluster creation, the user registration will go through email notifications and will require a user verification.
-to use this feature, the cluster requires a SendGrid key, without it the user registration will fail
+This is a cloud cluster creation, the user registration will go through email notifications and will require a user verification.
+In order to use this feature, the cluster requires a SendGrid key, without which the user registration will fail.
 First, obtain a Sendgrid key. You can get a 30 days trial here: https://app.sendgrid.com/signup?id=71713987-9f01-4dea-b3d4-8d0bcd9d53ed
 
-ssh to a manager node
-update the amplifier configuration with the following lines:
+SSH into a manager node and update the amplifier configuration with the following lines:
 
     cat > amplifier.yml << EOF
     EmailKey: _SENDGRID_KEY_
@@ -120,7 +124,7 @@ Register your user:
 
 #### Adding object storage
 
-You can now add object storage for APIRS. In the following command we'll use BUCKET1 and BUCKET2, you should use your own unique names.
+You can now add object storage for APIRS. In the following command, we will use `BUCKET1` and `BUCKET2`. You should use your own unique names.
 
 Create the new buckets:
 
@@ -133,7 +137,7 @@ List the existing buckets available in the cluster, make sure you see BUCKET1 an
 
 ### Configuration
 
-The `consul.json` file is configured for local deployments. You need to replace the all the domain names occurrences 
+The `consul.json` file is configured for local deployments. You need to replace all the domain names occurrences 
 in `consul.json` from `apirs.local.appcelerator.io` to the domain you're going to use. For instance:
 
     sed s/apirs.local.appcelerator.io/apirs.aws.appcelerator.io/g consul.json > cloud.json
@@ -149,14 +153,14 @@ Then you need to create the following Docker `config`s:
 
 ### Deploying the stacks
 
-    amp -k -s $REMOTE_SERVER config stack deploy -c apirs.stage1.yml
+    amp -k -s $REMOTE_SERVER stack deploy -c apirs.stage1.yml
     # Check point: amp -k -s $REMOTE_SERVER service ps apirs_mongo-primary
 
-    amp -k -s $REMOTE_SERVER config stack deploy -c apirs.stage2.yml
+    amp -k -s $REMOTE_SERVER stack deploy -c apirs.stage2.yml
     # Check point: amp -k -s $REMOTE_SERVER service ps apirs_mongo-init
     # Have a look at consul, and update the key value store with your domain name. There's also the global/nfs_server and global/nfs_server_ip that should be updated if you have one.
 
-    amp -k -s $REMOTE_SERVER config stack deploy --with-registry-auth -c apirs.stage3.yml
+    amp -k -s $REMOTE_SERVER stack deploy --with-registry-auth -c apirs.stage3.yml
 
     curl -k -H Host:acs.apirs.local.appcelerator.io https://$REMOTE_SERVER/v1/admins/ping.json
 
@@ -171,7 +175,7 @@ This last line simulates a DNS alias by using a HTTP header, but if you set a re
     * https://acs.apirs.local.appcelerator.io/v1/admins/pingdb.json
 * Dashboard: https://dashboard.apirs.local.appcelerator.io
 
-## Apirs Dashboard
+## APIRS Dashboard
 
 In order to login to **Dashboard**, use the following credentials:
 
@@ -184,4 +188,4 @@ For local deployment, connect to http://dashboard.local.appcelerator.io/
 
 For cloud deployment, check the output of the cluster creation for the link to the dashboards.
 
-An extra dashboard sample with panels specific to Apirs can be imported in Grafana: `apirs.dashboard.json`.
+An extra dashboard sample with panels specific to APIRS can be imported in Grafana: `apirs.dashboard.json`.

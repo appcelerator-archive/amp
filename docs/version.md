@@ -7,7 +7,7 @@ The `amp version` command displays the current version of AMP.
 ```
 $ amp version --help
 
-Usage:	amp version
+Usage:	amp version [flags]
 
 Show version information
 
@@ -19,13 +19,17 @@ Options:
 
 ### Examples
 
+> TIP: It would be useful to set an alias for `amp` as `alias amp='amp -k'` in case the certificate on the server is not valid.
+
+> NOTE: For the purpose of illustration, we will use the local cluster (which is default) for running AMP commands.
+
 * To view the client and server version for AMP.
 ```
     $ amp version
     Client:
      Version:       v0.10.0-dev
      Build:         6f590348
-     Server:        localhost:50101
+     Server:        127.0.0.1:50101
      Go version:    go1.8
      OS/Arch:       darwin/amd64
 
@@ -36,15 +40,19 @@ Options:
      OS/Arch:       linux/amd64
 ```
 
+> NOTE: The above example is just a sample of the output of `amp version` command. The output will vary according to the version of AMP used.
+
 * Viewing the version when the target server doesn't exist.
 ```
     $ amp version
     Client:
       Version:       v0.12.0-dev
       Build:         4166f646
-      Server:        localhost:50101
+      Server:        127.0.0.1:50101
       Go version:    go1.8
       OS/Arch:       darwin/amd64
 
     Server:         not connected
+    Error:          unable to establish grpc connection: context deadline exceeded
 ```
+> NOTE: The above example is just a sample of the output of `amp version` command. The output will vary according to the version of AMP used.

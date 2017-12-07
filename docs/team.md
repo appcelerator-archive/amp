@@ -29,35 +29,31 @@ Commands:
 Run 'amp team COMMAND --help' for more information on a command.
 ```
 
->NOTE: To be able to perform any team related operations, you must be logged in to AMP using a verified account.
-
->`amp team` commands that require the `--team` option will remember the last used team using a local config file.
-If you want to override this, specify the `--team` option in the command.
+> NOTE: To be able to perform any team related operations, you must be logged in to AMP using a verified account.
 
 #### Examples
+
+> NOTE: `amp team` commands that require the `--team` option will remember the last used team using a local config file.
+If you want to override this, specify the `--team` option in the command.
 
 * To create a team in an organization:
 ```
 $ amp team create team
-organization name: org
-Team has been created in the organization.
+Team has been created.
 ```
 
 * To retrieve details of a specific team:
 ```
 $ amp team get team
-organization name: org
 Team: team
-Organization: org
-Created On: 05 Jul 17 15:25
+Created On: 05 Dec 17 15:25
 ```
 
 * To retrieve the list of teams:
 ```
 $ amp team ls
-organization name: org
 TEAM   CREATED ON
-team   05 Jul 17 15:25
+team   05 Dec 17 15:25
 ```
 
 * To remove a team:

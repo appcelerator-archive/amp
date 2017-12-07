@@ -9,7 +9,7 @@ import (
 func NewConfigCommand(c cli.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "config",
-		Short:   "Manage config",
+		Short:   "Configuration management operations",
 		PreRunE: cli.NoArgs,
 		RunE:    c.ShowHelp,
 	}
