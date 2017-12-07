@@ -5,10 +5,10 @@
 An open source [CaaS](https://blog.docker.com/2016/02/containers-as-a-service-caas/) for Docker, batteries included.
 
  * Use Docker Compose v3 [stackfiles](https://docs.docker.com/compose/compose-file/) to deploy your stacks
- * Account management support for users, organizations and teams with role-based access controls
+ * Account management support for users and teams with role-based access controls
  * Logs and metrics realtime filtered feeds and historical query support
 
-While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.12).
+While not recommended for production use quite yet, it's getting close (anticipated shortly after v0.17).
 You'll be able to create your own HA cluster on the cloud, or use our playground.
 In the meantime, you can get started on your own laptop with `amp cluster create` using the CLI.
 
@@ -24,6 +24,6 @@ so check out [CONTRIBUTING](project/CONTRIBUTING.md) and other docs under [proje
 
 ## License
 
-AMP is an open source project sponsord by [Axway](https://www.axway.com), and available under the Apache License, Version 2.0.
+AMP is an open source project sponsored by [Axway](https://www.axway.com), and available under the Apache License, Version 2.0.
 See [LICENSE](https://github.com/appcelerator/amp/blob/master/LICENSE)
 for the full license text.

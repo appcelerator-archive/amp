@@ -42,7 +42,7 @@ Your password change has been successful.
 ```
 $ amp password reset [username]
 ```
->NOTE: If you are working on a cluster without email verification, such as a local cluster,
+> NOTE: If you are working on a cluster without email verification, such as a local cluster,
 you will not be able to reset your password as you will not be sent an email and this command will be disabled.
 
 An email with instructions to reset password will be sent to the registered email address. In this email,
@@ -52,5 +52,5 @@ you will be sent a link to reset your password with or you can reset it with the
 ```
 $ amp password set --token [token.]
 ```
->NOTE: If you are working on a cluster without email verification, such as a local cluster,
+> NOTE: If you are working on a cluster without email verification, such as a local cluster,
 this command will be disabled
