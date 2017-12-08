@@ -1,6 +1,6 @@
 # Local cluster creation
 
-This is the default mode for cluster creation. 
+This is the default mode for cluster creation on AMP. 
 
 ## Why do you need a local cluster?
 
@@ -69,7 +69,7 @@ To create a cluster locally:
 ```
 $ amp cluster create
 ...
-2017/08/04 01:17:59 ampctl (version: 0.18.0-dev, build: a51daf88)
+2017/12/04 01:17:59 ampctl (version: 0.18.0-dev, build: a51daf88)
 ...
 {"Swarm Status":"active","Core Services":17,"User Services":0}
 
@@ -95,7 +95,9 @@ While deploying a local cluster, the default certificate is self-signed. You nee
 
 You can now deploy a stackfile on your newly created local cluster. Please follow the instructions listed [here](stackdeploy.md).
 
-## Cluster creation options
+## Customization
+
+### Cluster creation options
 
 AMP comprises of 4 features: 
 
@@ -119,6 +121,69 @@ $ amp cluster create --local-no-logs
 To create a local cluster without proxy:
 ```
 $ amp cluster create --local-no-proxy
+```
+
+## Cluster Status
+
+You can check if a cluster is running or not by running the following command: 
+```
+amp cluster status
+``` 
+
+The output of this command displays the provider, swarm status, and the number of core and user services running.
+```
+Provider:      local
+Swarm Status:  active
+Core Services: 17
+User Services: 0
+```
+
+> NOTE: You must be logged in to the AMP cluster to run this command.
+
+## Cluster Teardown
+
+If you no longer use the deployed cluster, it can be removed by running the following command:
+
+```
+amp cluster rm
+```
+
+On success, the output looks something like this:
+```
+2017/12/08 21:49:40 ampctl (version: 0.18.0-dev, build: 4ad78fdd)
+Removing service amp_agent
+Removing service amp_alertmanager
+Removing service amp_ampbeat
+Removing service amp_amplifier
+Removing service amp_cadvisor
+Removing service amp_docker-engine
+Removing service amp_elasticsearch
+Removing service amp_etcd
+Removing service amp_gateway
+Removing service amp_grafana
+Removing service amp_haproxy_exporter
+Removing service amp_kibana
+Removing service amp_nats
+Removing service amp_nats_exporter
+Removing service amp_nodes
+Removing service amp_prometheus
+Removing service amp_proxy
+2017/12/08 21:49:40 waiting for all services to clear up...
+2017/12/08 21:49:40 Removing container /amp_ampbeat.1.rwh3rnmwpf94rasrcah5hunk1 [Exited (1) 10 minutes ago]
+2017/12/08 21:49:52 Removing container /amp_prometheus.1.bj1g2byp3te34sjov0rlz6gos [Exited (0) 9 seconds ago]
+2017/12/08 21:49:52 Removing container /amp_nats_exporter.1.mv8lgp1c3jqm3ng009izh3oak [Exited (143) 9 seconds ago]
+2017/12/08 21:49:55 Removing container /amp_agent.7z8aobvghzadvrb8n3zf22ake.pinz6oz4mk2m6y8h47455nrxk [Exited (137) 3 seconds ago]
+2017/12/08 21:49:56 cleared up
+2017/12/08 21:49:56 Removing volume [amp_etcd-data]...
+2017/12/08 21:49:56 Removing volume [amp_ampagent]...
+2017/12/08 21:49:56 Removing volume [amp_elasticsearch-data]...
+2017/12/08 21:49:56 Removing volume [amp_prometheus-data]...
+2017/12/08 21:49:56 Removing volume [amp_alertmanager-data]...
+2017/12/08 21:49:56 Removing volume [amp_grafana-data]...
+2017/12/08 21:49:56 Successfully removed network public [prn2d38x4q90vq3vqhejcb2h5]
+2017/12/08 21:49:56 Successfully removed network monit [ik9ojg3hh5t2gdjv96s098cis]
+2017/12/08 21:49:56 Successfully removed network core [zfc7cios4kmz4ogdknu5mrd2k]
+2017/12/08 21:49:58 cluster deleted
 ```
 
 > TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.
