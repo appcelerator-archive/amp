@@ -13,6 +13,11 @@ RUN apk add bash git curl protobuf-dev
 WORKDIR /tmp
 
 # Version of the packages must be in sync with those in Gopkg.toml/Gopkg.lock
+RUN mkdir -p $GOPATH/src/github.com/golang/dep && \
+    git clone https://github.com/golang/dep.git $GOPATH/src/github.com/golang/dep && \
+    cd $GOPATH/src/github.com/golang/dep && \
+    git checkout tags/v0.3.2
+
 RUN mkdir -p $GOPATH/src/github.com/alecthomas/gometalinter && \
     git clone https://github.com/alecthomas/gometalinter.git $GOPATH/src/github.com/alecthomas/gometalinter && \
     cd $GOPATH/src/github.com/alecthomas/gometalinter && \
@@ -43,6 +48,7 @@ RUN mkdir -p $GOPATH/src/google.golang.org/grpc/grpc-go && \
     cd $GOPATH/src/google.golang.org/grpc/grpc-go && \
     git checkout tags/v1.5.2
 
+RUN go install github.com/golang/dep/cmd/dep
 RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 RUN go install github.com/golang/protobuf/protoc-gen-go

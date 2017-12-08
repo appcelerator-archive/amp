@@ -1,4 +1,4 @@
-FROM appcelerator/gotools:1.14.0
+FROM appcelerator/gotools:1.15.0
 
 RUN rm -rf /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories

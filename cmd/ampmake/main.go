@@ -17,7 +17,7 @@ var (
 	ug              = "0:0"
 	repo            = "github.com/appcelerator/amp"
 	dockerCmd       = "gosu root docker"
-	toolsImage      = "appcelerator/amptools:1.12"
+	toolsImage      = "appcelerator/amptools:1.13"
 	localToolsImage = "amptools"
 	dockerArgs      []string
 )
