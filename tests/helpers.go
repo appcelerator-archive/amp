@@ -169,7 +169,7 @@ func (h *Helper) SuperLogin() (context.Context, error) {
 	}
 	token := tokens[0]
 	credentials := metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token))
-	return metadata.NewContext(context.Background(), credentials), nil
+	return metadata.NewOutgoingContext(context.Background(), credentials), nil
 }
 
 // SuperUser returns the super user SignUpRequest
@@ -253,7 +253,7 @@ func (h *Helper) CreateUser(t *testing.T, user *account.SignUpRequest) context.C
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
+	return metadata.NewOutgoingContext(ctx, metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
 }
 
 // CreateOrganization signs up and logs in the given user and creates an organization
@@ -324,7 +324,7 @@ func (h *Helper) Switch(userCtx context.Context, t *testing.T, accountName strin
 	token := tokens[0]
 	assert.NotEmpty(t, token)
 
-	return metadata.NewContext(context.Background(), metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
+	return metadata.NewOutgoingContext(context.Background(), metadata.Pairs(auth.AuthorizationHeader, auth.ForgeAuthorizationHeader(token)))
 }
 
 // Log Producer constants
@@ -442,7 +442,7 @@ func (lp *LogProducer) PopulateLogs() error {
 	if err != nil {
 		return err
 	}
-	ctx := metadata.NewContext(context.Background(), credentials)
+	ctx := metadata.NewOutgoingContext(context.Background(), credentials)
 
 	// Populate logs
 	if err := lp.produce(logs.NumberOfEntries); err != nil {

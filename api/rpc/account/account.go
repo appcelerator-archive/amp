@@ -59,7 +59,7 @@ func convertError(err error) error {
 }
 
 func getServerAddress(ctx context.Context) string {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ""
 	}
