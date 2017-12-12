@@ -7,7 +7,7 @@ networks:
 services:
 
   pinger:
-    image: appcelerator/pinger:${TAG:-latest}
+    image: appcelerator/pinger:latest
     networks:
       - public
     environment:

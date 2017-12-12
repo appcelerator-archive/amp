@@ -11,8 +11,7 @@ import (
 
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/cli"
-
-	"github.com/cloudfoundry/bytefmt"
+	"github.com/docker/go-units"
 	"github.com/spf13/cobra"
 	grpcStatus "google.golang.org/grpc/status"
 )
@@ -88,7 +87,7 @@ func nodeList(c cli.Interface) error {
 		}
 		fmt.Fprintf(w, "Engine Version\t%s\n", node.EngineVersion)
 		fmt.Fprintf(w, "CPUs\t%0.2f\n", float64(node.NanoCpus)/1000000000)
-		fmt.Fprintf(w, "Memory\t%s\n", bytefmt.ByteSize(uint64(node.MemoryBytes)))
+		fmt.Fprintf(w, "Memory\t%s\n", units.BytesSize(float64(node.MemoryBytes)))
 		fmt.Fprintf(w, "Node Labels\n")
 		for k, v := range node.NodeLabels {
 			fmt.Fprintf(w, "\t- %s=%s\n", k, v)
@@ -109,7 +108,7 @@ func nodeList(c cli.Interface) error {
 			if node.Role == "manager" && node.ManagerLeader {
 				role = "Manager (leader)"
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%0.2f\t%s\n", node.Id, node.Hostname, strings.Title(node.Status), strings.Title(node.Availability), role, node.EngineVersion, float64(node.NanoCpus)/1000000000, bytefmt.ByteSize(uint64(node.MemoryBytes)))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%0.2f\t%s\n", node.Id, node.Hostname, strings.Title(node.Status), strings.Title(node.Availability), role, node.EngineVersion, float64(node.NanoCpus)/1000000000, units.BytesSize(float64(node.MemoryBytes)))
 		}
 	}
 	w.Flush()
