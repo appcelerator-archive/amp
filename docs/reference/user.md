@@ -1,13 +1,13 @@
-## User Management Commands
+# User Management Commands
 
 The `amp user` command is used to manage all user related operations for AMP.
 
 Other user-related commands that are not managed by `amp user` include `login`, `logout` and `whoami`.
 
-### Usage
+## Usage
 
 ```
- $ amp user --help
+$ amp user --help
 
 Usage:	amp user [OPTIONS] COMMAND
 
@@ -30,10 +30,11 @@ Commands:
 Run 'amp user COMMAND --help' for more information on a command.
 ```
 
-### Examples
+> TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.
+
+## Examples
 
 > NOTE: For the purpose of illustration, we will use the local cluster (which is default) for running AMP commands. 
-If you specify a different server address in the command, it will appear in the first line of the command output. 
 
 * To signup for a new user account:
 ```
@@ -48,8 +49,8 @@ Hi sample! Please check your email to complete the signup process.
 > NOTE: If you are working on a cluster without email verification, such as a local cluster,
 you will not need to verify your account as you will not be sent an email and you will be logged in automatically.
 > ```
-> $ amp user signup
-> [127.0.0.1:50101]
+>  amp user signup
+>  [127.0.0.1:50101]
 >  username: sample
 >  email: sample@amp.co,
 >  password:
@@ -69,7 +70,7 @@ Your account has now been activated.
 > NOTE: If you are working on a cluster without email verification, such as a local cluster,
 this command will be disabled. 
 > ```
->  $ amp -k user verify <TOKEN>
+>  amp -k user verify <TOKEN>
 >  [user sample @ 127.0.0.1:50101]
 >  Error: `amp user verify` disabled. This cluster has no registration policy
 > ```
@@ -135,5 +136,3 @@ $ amp user rm sample1
 Error: user not authorized
 ```
 However, the `su` account has the privileges of removing other accounts in the cluster. 
-
-> TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.

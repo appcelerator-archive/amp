@@ -7,7 +7,7 @@ The `amp service` command is used to manage all service related operations for A
 ```
 $ amp service --help
 
-Usage:	amp service [OPTIONS] COMMAND 
+Usage:	amp service [OPTIONS] COMMAND
 
 Service management operations
 
@@ -18,7 +18,7 @@ Options:
 
 Commands:
   inspect     Display detailed information of a service
-  logs        Display filtered service logs
+  logs        Display logs of given service matching provided criteria
   ls          List services
   ps          List tasks of a service
   scale       Scale a replicated service
@@ -26,7 +26,9 @@ Commands:
 Run 'amp service COMMAND --help' for more information on a command.
 ```
 
->NOTE: To be able to perform any service related operations, you must be logged in to AMP using a verified account.
+> TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.
+
+> NOTE: To be able to perform any service related operations, you must be logged in to AMP using a verified account.
 
 ### Examples
 
@@ -60,37 +62,39 @@ $ amp service inspect pinger
                         },
 ...
 ```
->Use the `service-id` or `service-name` as the argument.
+> TIP: Use the `service-id` or `service-name` as the argument.
 
 * To list the available services with detailed status about their tasks:
 ```
 $ amp service ls
-ID                          NAME            MODE         REPLICAS   FAILED TASKS   STATUS    IMAGE                       TAG
-0k1fzgc2pfuyowej0gedm6kmr   pinger_pinger   replicated   3/3        0              RUNNING   subfuzion/pinger            latest
+ID                          NAME            MODE         REPLICAS   STATUS    IMAGE                 TAG
+0k1fzgc2pfuyowej0gedm6kmr   pinger_pinger   replicated   3/3        RUNNING   appcelerator/pinger      latest
 ```
 > NOTE: this command only displays services which are part of user deployed stacks.
 
 * To list the tasks of a service:
 ```
 $ amp service ps pinger_pinger
-ID                          IMAGE                     DESIRED STATE   CURRENT STATE   NODE ID                     ERROR
-2oyhxm5eon3u40didkvglc4oa   subfuzion/pinger:latest   RUNNING         RUNNING         z8abovo2189upwpgpd063qs4d
-9uy23btldzx9ww901djhaph4c   subfuzion/pinger:latest   RUNNING         RUNNING         z8abovo2189upwpgpd063qs4d
-nwm34nsxexmhujixni7b1k6gh   subfuzion/pinger:latest   RUNNING         RUNNING         z8abovo2189upwpgpd063qs4d
+ID                          NAME              IMAGE                        DESIRED STATE   CURRENT STATE   NODE ID                     ERROR
+2oyhxm5eon3u40didkvglc4oa   pinger_pinger.1   appcelerator/pinger:latest   RUNNING         RUNNING         7z8aobvghzadvrb8n3zf22ake
+9uy23btldzx9ww901djhaph4c   pinger_pinger.2   appcelerator/pinger:latest   RUNNING         RUNNING         7z8aobvghzadvrb8n3zf22ake
+nwm34nsxexmhujixni7b1k6gh   pinger_pinger.3   appcelerator/pinger:latest   RUNNING         RUNNING         7z8aobvghzadvrb8n3zf22ake
 ```
 
 * To retrieve logs of a service:
 ```
 $ amp service logs pinger
-2017/07/05 21:15:13 listening on :3000
-2017/07/05 21:15:14 listening on :3000
-2017/07/05 21:15:15 listening on :3000
-2017/07/05 22:00:49 listening on :3000
+         pinger_pinger.2 | listening on :3000
+         pinger_pinger.1 | listening on :3000
+         pinger_pinger.3 | listening on :3000
+         pinger_pinger.2 | listening on :3000
+         pinger_pinger.1 | listening on :3000
+         pinger_pinger.3 | listening on :3000
 ...
 ```
->Use the `service-id` or `service-name` as the argument.
+> TIP: Use the `service-id` or `service-name` as the argument.
 
-* To scale the number of replicas of the service:
+* To scale up or scale down the number of replicas of the service:
 ```
 $ amp service scale
 service id or name: pinger_pinger

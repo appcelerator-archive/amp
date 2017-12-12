@@ -1,8 +1,8 @@
-## Completion Command
+# AMP Completion Command
 
 The `amp completion` command allows you to add shell completion to your AMP CLI.
 
-### Usage
+## Usage
 
 ```
 $ amp completion --help
@@ -43,11 +43,13 @@ Options:
   -s, --server string   Specify server (host:port)
 ```
 
-### Installation
+> TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.
+
+## Installation
 
 In order to use shell completion with AMP, follow the installation instructions for your corresponding shell.
 
-#### Bash
+### Bash
 
 Make sure bash completion is installed:
 * Most current Linux OS (non-minimal installations) have bash completion.
@@ -72,7 +74,7 @@ source "$HOME/.config/amp/completion.bash.inc"
 
 Then either source your `~/.bash_profile` or launch a new terminal again.
 
-#### Zsh
+### Zsh
 
 In a Zsh shell, load the amp completion code with:
 ```
@@ -80,7 +82,7 @@ $ source <(amp completion zsh)
 ```
 or add `source <(amp completion zsh)` to your `~/.zshrc` file.
 
-### Examples
+## Examples
 
 With the shell completion code loaded for AMP, you can hit tab twice to view the shell completion.
 ```
