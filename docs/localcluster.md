@@ -83,7 +83,7 @@ Verification is not necessary for this cluster.
 Hi user1! You have been automatically logged in.
 ```
 
-> NOTE: See the [user](user.md) documentation for additional details about the user account related operations.
+> NOTE: See the [user](reference/user.md) documentation for additional details about the user account related operations.
 
 With the local cluster, you do not need to verify the account created and you will be logged in automatically after an account creation. 
 
@@ -95,39 +95,11 @@ While deploying a local cluster, the default certificate is self-signed. You nee
 
 You can now deploy a stackfile on your newly created local cluster. Please follow the instructions listed [here](stackdeploy.md).
 
-## Customization
-
-### Cluster creation options
-
-AMP comprises of 4 features: 
-
-* core (mandatory)
-* metrics (optional) 
-* logs (optional)
-* proxy (optional)
-
-It is possible to disable the optional features using the following commands:
-
-To create a local cluster without metrics: 
-```
-$ amp cluster create --local-no-metrics
-``` 
-
-To create a local cluster without logging:
-```
-$ amp cluster create --local-no-logs
-```
-
-To create a local cluster without proxy:
-```
-$ amp cluster create --local-no-proxy
-```
-
 ## Cluster Status
 
 You can check if a cluster is running or not by running the following command: 
 ```
-amp cluster status
+$ amp cluster status
 ``` 
 
 The output of this command displays the provider, swarm status, and the number of core and user services running.
@@ -145,7 +117,7 @@ User Services: 0
 If you no longer use the deployed cluster, it can be removed by running the following command:
 
 ```
-amp cluster rm
+$ amp cluster rm
 ```
 
 On success, the output looks something like this:

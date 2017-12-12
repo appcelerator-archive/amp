@@ -30,7 +30,7 @@ You will need to provide your `AWS Access Key ID` and `AWS Secret Access Key` in
 
 You can find out more about AWS access keys [here](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey).
 
-> NOTE:  If you already have the AWS CLI installed on your system, make sure it is configured since the AMP CLI will use this information for cluster creation. See more details [here](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html). 
+> NOTE: If you already have the AWS CLI installed on your system, make sure it is configured since the AMP CLI will use this information for cluster creation. See more details [here](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html). 
 
 ## Checklist
 
@@ -48,21 +48,21 @@ Before deploying your cluster, you will need the following elements:
 
 If you don't have the AWS CLI installed, enter the following:
 ```
-export REGION=us-west-2
-export KEY_NAME=user-keypair
-export ACCESS_KEY_ID=xxxxx
-export SECRET_ACCESS_KEY=xxxxx
-export STACK_NAME=amp-test
+$ export REGION=us-west-2
+$ export KEY_NAME=user-keypair
+$ export ACCESS_KEY_ID=xxxxx
+$ export SECRET_ACCESS_KEY=xxxxx
+$ export STACK_NAME=amp-test
 
-amp cluster create --provider aws --aws-region $REGION --aws-parameter KeyName=$KEY_NAME --aws-access-key-id $ACCESS_KEY_ID --aws-secret-access-key $SECRET_ACCESS_KEY --aws-stackname $STACK_NAME --aws-sync
+$ amp cluster create --provider aws --aws-region $REGION --aws-parameter KeyName=$KEY_NAME --aws-access-key-id $ACCESS_KEY_ID --aws-secret-access-key $SECRET_ACCESS_KEY --aws-stackname $STACK_NAME --aws-sync
 ```
 
 If you have the AWS CLI installed, enter the following:
 ```
-export KEY_NAME=user-keypair
-export STACK_NAME=amp-test
+$ export KEY_NAME=user-keypair
+$ export STACK_NAME=amp-test
 
-amp cluster create --provider aws --aws-parameter KeyName=$KEY_NAME --aws-stackname $STACK_NAME --aws-sync
+$ amp cluster create --provider aws --aws-parameter KeyName=$KEY_NAME --aws-stackname $STACK_NAME --aws-sync
 ```
 
 The AMP cluster deployment on AWS takes roughly 10 minutes to complete. On success, the output looks something like this:
@@ -100,21 +100,21 @@ You should generate a certificate valid for the domain that will be served by th
 The default certificate is stored in the secret `certificate_amp`. It should include the private key, the certificate and the full certificate chain (in this order). Create a new secret with your new certificate:
 
 ```
-cat certificate.pem | docker secret create certificate_amp_custom -
+$ cat certificate.pem | docker secret create certificate_amp_custom -
 ```
 
 Update the services that use it:
 
 ```
-docker service update --secret-rm certificate_amp --secret-add source=certificate_amp_custom,target=/run/secrets/cert0.pem amp_amplifier
-docker service update --secret-rm certificate_amp --secret-add source=certificate_amp_custom,target=/run/secrets/cert0.pem amp_proxy
+$ docker service update --secret-rm certificate_amp --secret-add source=certificate_amp_custom,target=/run/secrets/cert0.pem amp_amplifier
+$ docker service update --secret-rm certificate_amp --secret-add source=certificate_amp_custom,target=/run/secrets/cert0.pem amp_proxy
 ```
 
 Check that the service is stabilizing with the new configuration
 
 ```
-docker service ps amp_amplifier
-docker service ps amp_proxy
+$ docker service ps amp_amplifier
+$ docker service ps amp_proxy
 ```
 
 ## Secrets
@@ -133,18 +133,18 @@ The secret `amplifier_yml` contains the configuration for the user registration.
 To enable it, you should get a Sendgrid key (you can have a 30 days trial key [here](https://app.sendgrid.com/signup?id=71713987-9f01-4dea-b3d4-8d0bcd9d53ed).
 
 ```
-cat > amplifier.yml << EOF
+$ cat > amplifier.yml << EOF
 EmailKey: SENDGRID_KEY
 SUPassword: SUPER_USER_PASSWORD
 JWTSecretKey: JWT_RANDOM_STRING
 EOF
-cat amplifier.yml | docker secret create amplifier_yml_custom -
+$ cat amplifier.yml | docker secret create amplifier_yml_custom -
 ```
 
 Update the service:
 
 ```
-docker service update --secret-rm amplifier_yml --secret-add source=amplifier_yml_custom,target=/run/secrets/amplifier.yml amp_amplifier
+$ docker service update --secret-rm amplifier_yml --secret-add source=amplifier_yml_custom,target=/run/secrets/amplifier.yml amp_amplifier
 ```
 
 Check that the service is stabilizing with the new configuration.
@@ -155,7 +155,7 @@ You can configure where notifications will be sent. The default (no notification
 
 Create a new file with your configuration:
 ```
-cat > alertmanager.yml << EOF
+$ cat > alertmanager.yml << EOF
 ---
 global:
   slack_api_url: "https://hooks.slack.com/services/YOUR_WEB_HOOK"
@@ -175,13 +175,13 @@ receivers:
     text: '{{ range .Alerts }}{{ .Annotations.description }} {{ end }}'
     send_resolved: true
 EOF
-cat alertmanager.yml | docker secret create alertmanager_yml_custom -
+$ cat alertmanager.yml | docker secret create alertmanager_yml_custom -
 ```
 
 Update the service:
 
 ```
-docker service update --secret-rm alertmanager_yml --secret-add source=alertmanager_yml_custom,target=/run/secrets/alertmanager.yml amp_alertmanager
+$ docker service update --secret-rm alertmanager_yml --secret-add source=alertmanager_yml_custom,target=/run/secrets/alertmanager.yml amp_alertmanager
 ```
 
 Check that the service is stabilizing with the new configuration.
@@ -191,13 +191,13 @@ Now you can also configure the alerts definitions. By default, the Docker config
 Create a new file with the configuration. You can find an example in the amp repo in `examples/monitoring/prometheus_alerts.rules`.
 
 ```
-cat prometheus_alerts.rules | docker config create prometheus_alerts_rules_custom -
+$ cat prometheus_alerts.rules | docker config create prometheus_alerts_rules_custom -
 ```
 
 Update the service
 
 ```
-docker service update --config-rm prometheus_alerts_rules --config-add source=prometheus_alerts_rules_custom,target=/etc/prometheus/alerts.rules amp_prometheus
+$ docker service update --config-rm prometheus_alerts_rules --config-add source=prometheus_alerts_rules_custom,target=/etc/prometheus/alerts.rules amp_prometheus
 ```
 
 Check that the service is stabilizing with the new configuration.
@@ -213,23 +213,23 @@ Wait for the DNS to be updated.
 Use the CLI from your workstation (not from the cluster anymore) and check that the connection is done and that the certificate is valid:
 
 ```
-amp -s DOMAIN_NAME user ls
+$ amp -s DOMAIN_NAME user ls
 ```
 
 Then signup a new user
 
 ```
-amp -s DOMAIN_NAME user signup --name LOGIN --email EMAIL
+$ amp -s DOMAIN_NAME user signup --name LOGIN --email EMAIL
 ```
 
 You should receive an email with a command line for the validation of the account.
 
-Note. If it is test cluster you can skip certificate creation step and use -k (--insecure) amp CLI argument.
+Note that if it is a test cluster, you can skip certificate creation step and use -k (--insecure) AMP CLI argument.
 
 Also you can grab public endpoint (ELB) DNS name from Cloudformation -> Stacks - Outputs -> DNSTarget key.
 
 ```
-nderzhakmba-2:doc-test nikolaiderzhak$ DOMAIN_NAME=nderzhak-ManagerE-1FQNBP6KF3O24-818587690.us-west-2.elb.amazonaws.com; ./amp -s $DOMAIN_NAME -k user ls
+$ DOMAIN_NAME=nderzhak-ManagerE-1FQNBP6KF3O24-818587690.us-west-2.elb.amazonaws.com; ./amp -s $DOMAIN_NAME -k user ls
 [nderzhak-ManagerE-1FQNBP6KF3O24-818587690.us-west-2.elb.amazonaws.com:50101]
 USERNAME   EMAIL   CREATED ON
 su                 29 Nov 17 14:41
@@ -240,10 +240,10 @@ su                 29 Nov 17 14:41
 You can remove the old secrets and config now that the cluster is configured and running.
 
 ```
-docker secret rm amplifier_yml
-docker secret rm alertmanager_yml
-docker secret rm certificate_amp
-docker config rm prometheus_alerts_rules
+$ docker secret rm amplifier_yml
+$ docker secret rm alertmanager_yml
+$ docker secret rm certificate_amp
+$ docker config rm prometheus_alerts_rules
 ```
 
 ## Cluster Teardown 
@@ -251,7 +251,7 @@ docker config rm prometheus_alerts_rules
 If you no longer use the deployed cluster, it can be removed by running the following command:
 
 ```
-amp cluster rm --provider aws --aws-stackname $STACK_NAME --aws-sync
+$ amp cluster rm --provider aws --aws-stackname $STACK_NAME --aws-sync
 ```
 
 The cluster teardown on AWS takes about 10 minutes to complete. On success, the output looks something like this:

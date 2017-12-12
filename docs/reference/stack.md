@@ -24,7 +24,9 @@ Commands:
   services    List services of a stack
 
 Run 'amp stack COMMAND --help' for more information on a command.
-```    
+``` 
+
+> TIP: Use `-h` or `--help` option for any of the AMP commands or sub-commands to more information about the command's usage.   
 
 >NOTE: To be able to perform any stack related operations, you must be logged in to AMP using a verified account.
 
@@ -37,15 +39,15 @@ Deploying stack counter using examples/stacks/counter/counter.yml
 Creating service counter_go
 Creating service counter_redis
 ```
->NOTE: If no name is specified for the stack, the name of the stack will be `[stackName]-[id]`, where `[id]` is a unique id given by AMP.
+>NOTE: If no name is specified for the stack, the name of the stack will be the filename.
 
 * To list the deployed stacks, with detailed status about their services:
 ```
 $ amp stack ls
-ID                                                                 NAME      SERVICES   FAILED SERVICES   STATUS    OWNER          ORGANIZATION
-95508f3ca3ad3877e8c33e69a92a9e3490eb60395bd1b26f0c6f80f1f5521976   counter   2/2        0                 RUNNING   sample
+ID                                                                 NAME      RUNNING   COMPLETE   PREPARING   TOTAL   SERVICES   STATUS    OWNER
+95508f3ca3ad3877e8c33e69a92a9e3490eb60395bd1b26f0c6f80f1f5521976   counter   2         0          0           2       2/2        RUNNING   su
 ```
-> NOTE: this command only displays stacks created by the user or organization. No infrastructure stacks are displayed.
+> NOTE: this command only displays stacks created by the user. No infrastructure stacks are displayed.
 
 * To list the services within a stack:
 ```
@@ -76,5 +78,6 @@ Updating service counter_redis (id: k5fzzzryjpdaanlvqqu5b5qr7)
 * To remove a stack:
 ```
 $ amp stack rm counter
-counter
+Removing service counter_redis
+Removing service counter_go
 ```

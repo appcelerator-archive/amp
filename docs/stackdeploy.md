@@ -104,5 +104,5 @@ $ amp service logs pinger
 
 > NOTE: The above example is just a sample of the output of `amp logs` command and its sub-commands. The output may vary on different machines.
 
-For more detailed examples of the querying and filtering options for logs, see the [logs documentation](logs.md)  
+For more detailed examples of the querying and filtering options for logs, see the [logs documentation](reference/logs.md)  
   
