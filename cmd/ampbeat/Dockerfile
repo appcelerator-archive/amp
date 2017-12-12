@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.7
 COPY ampbeat.alpine /beat/ampbeat
 COPY ampbeat.*.json /beat/
 COPY ampbeat.yml /beat/ampbeat.yml

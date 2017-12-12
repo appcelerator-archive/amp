@@ -1,7 +1,6 @@
-FROM appcelerator/alpine:3.6.0
+FROM appcelerator/alpine:3.7.0
 
-RUN apk --no-cache add tini@community
-#ENV PROMETHEUS_NATS_EXPORTER_VERSION 1.0.0
+ENV PROMETHEUS_NATS_EXPORTER_VERSION master
 
 ENV GOLANG_VERSION 1.9.2
 ENV GOLANG_SRC_URL https://storage.googleapis.com/golang/go$GOLANG_VERSION.src.tar.gz
@@ -22,7 +21,7 @@ RUN apk update && apk upgrade && \
     go version && \
     go get -v github.com/nats-io/prometheus-nats-exporter && \
     cd $GOPATH/src/github.com/nats-io/prometheus-nats-exporter && \
-    if [ $PROMETHEUS_NATS_EXPORTER_VERSION != "master" ]; then git checkout -q --detach "${PROMETHEUS_NATS_EXPORTER_VERSION}" ; fi && \
+    if [ "x$PROMETHEUS_NATS_EXPORTER_VERSION" != "xmaster" ]; then git checkout -q --detach "${PROMETHEUS_NATS_EXPORTER_VERSION}" ; fi && \
     go build -o /prometheus-nats-exporter && \
     apk del build-deps && \
     cd / && rm -rf /var/cache/apk/* $GOPATH /usr/local/go

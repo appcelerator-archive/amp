@@ -56,7 +56,7 @@ services:
         mode: 0400
 
   cadvisor:
-    image: google/cadvisor:v0.28.0
+    image: google/cadvisor:v0.28.3
     networks:
       - core
       - monit
@@ -79,7 +79,7 @@ services:
         io.amp.metrics.port: "8080"
 
   docker-engine:
-    image: appcelerator/socat:latest
+    image: appcelerator/socat:1.0.0
     networks:
       - core
       - monit
@@ -120,7 +120,7 @@ services:
         - node.labels.amp.type.core == true
 
   nats_exporter:
-    image: appcelerator/prometheus-nats-exporter:0.17.0
+    image: appcelerator/prometheus-nats-exporter:latest
     networks:
       - monit
       - core
@@ -144,7 +144,7 @@ services:
         - node.labels.amp.type.core == true
 
   nodes:
-    image: prom/node-exporter:v0.15.1
+    image: prom/node-exporter:v0.15.2
     networks:
       - monit
       - core
@@ -198,7 +198,7 @@ services:
              "-web.external-url=http://localhost:9093" ]
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.8
+    image: appcelerator/grafana-amp:1.2.10
     networks:
       - core
       - public

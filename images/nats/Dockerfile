@@ -1,4 +1,5 @@
-FROM golang:1.9.2 AS builder
+FROM golang:1.9.2-alpine AS builder
+
 ENV VERSION v0.6.0
 RUN go get -d github.com/nats-io/nats-streaming-server
 WORKDIR /go/src/github.com/nats-io/nats-streaming-server

@@ -1,10 +1,11 @@
-FROM appcelerator/alpine:3.6.0
+FROM appcelerator/alpine:3.7.0
 
-RUN apk --no-cache add nodejs freetype-dev fontconfig-dev tini@community
+RUN apk --no-cache add nodejs-current freetype-dev fontconfig-dev
 
+ENV ELASTIC_CONTAINER true
 ENV ELASTICSEARCH_URL http://elasticsearch:9200
-ENV KIBANA_MAJOR 5.6
-ENV KIBANA_VERSION 5.6.4
+ENV KIBANA_MAJOR 6.0
+ENV KIBANA_VERSION 6.0.0
 
 # Kibana installation
 RUN mkdir -p /opt/kibana && adduser -D -h /opt/kibana -s /sbin/nologin elastico && rm -rf /opt/kibana

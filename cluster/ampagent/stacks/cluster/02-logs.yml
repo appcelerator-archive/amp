@@ -15,7 +15,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:5.6.4
+    image: appcelerator/elasticsearch-amp:6.0.0
     networks:
       - monit
       - core
@@ -84,7 +84,7 @@ services:
       amp.service.stabilize.timeout: "20s"
 
   kibana:
-    image: appcelerator/kibana:5.6.4
+    image: appcelerator/kibana:6.0.0
     networks:
       - core
       - public
