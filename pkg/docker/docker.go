@@ -2,8 +2,10 @@ package docker
 
 import (
 	"fmt"
+	"os"
 
 	"docker.io/go-docker"
+	log "github.com/sirupsen/logrus"
 )
 
 // Docker constants
@@ -20,8 +22,30 @@ type Docker struct {
 	version string
 }
 
+// NewEnvClient instantiates a new Docker wrapper
+func NewEnvClient() *Docker {
+	url := os.Getenv("DOCKER_HOST")
+	if url == "" {
+		url = DefaultURL
+	}
+	version := os.Getenv("DOCKER_API_VERSION")
+	if version == "" {
+		version = DefaultVersion
+	}
+	return &Docker{
+		url:     url,
+		version: version,
+	}
+}
+
 // NewClient instantiates a new Docker wrapper
 func NewClient(url string, version string) *Docker {
+	if err := os.Setenv("DOCKER_HOST", url); err != nil {
+		return nil
+	}
+	if err := os.Setenv("DOCKER_API_VERSION", version); err != nil {
+		return nil
+	}
 	return &Docker{
 		url:     url,
 		version: version,
@@ -30,9 +54,10 @@ func NewClient(url string, version string) *Docker {
 
 // Connect to the docker API
 func (d *Docker) Connect() (err error) {
-	if d.client, err = docker.NewClient(d.url, d.version, nil, nil); err != nil {
+	if d.client, err = docker.NewEnvClient(); err != nil {
 		return fmt.Errorf("unable to connect to Docker at %s: %v", d.url, err)
 	}
+	log.Printf("Connected to Docker [%v]\n", d.client)
 	return nil
 }
 

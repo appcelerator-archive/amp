@@ -36,7 +36,7 @@ type InstallOptions struct {
 }
 
 var InstallOpts = &InstallOptions{}
-var Docker = ampdocker.NewClient(ampdocker.DefaultURL, ampdocker.DefaultVersion)
+var Docker *ampdocker.Docker
 
 func NewInstallCommand() *cobra.Command {
 	installCmd := &cobra.Command{
@@ -49,6 +49,7 @@ func NewInstallCommand() *cobra.Command {
 }
 
 func Install(cmd *cobra.Command, args []string) error {
+	Docker = ampdocker.NewEnvClient()
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := ampdocker.NewDockerCli(stdin, stdout, stderr)
 	if err := Docker.Connect(); err != nil {
@@ -84,6 +85,7 @@ func Install(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Deploying in %s mode\n", deploymentMode)
 
 	stackFiles, err := getStackFiles("./stacks", deploymentMode)
 	if err != nil {
