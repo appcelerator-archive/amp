@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -32,8 +33,6 @@ type Configuration struct {
 	EtcdEndpoints    []string
 	ElasticsearchURL string
 	NatsURL          string
-	DockerURL        string
-	DockerVersion    string
 	JWTSecretKey     string `yaml:"JWTSecretKey"`
 	SUPassword       string `yaml:"SUPassword"`
 	EmailKey         string `yaml:"EmailKey"`
@@ -46,7 +45,7 @@ type Configuration struct {
 }
 
 func (c *Configuration) String() string {
-	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nH1Port: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerVersion: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.H1Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, c.DockerURL, c.DockerVersion, c.Registration, c.Notifications)
+	return fmt.Sprintf("Version: %s\nBuild: %s\nPort: %s\nH1Port: %s\nEtcdEndpoints: %v\nElasticsearchURL: %s\nNatsURL: %s\nDockerURL: %s\nDockerTLSVerify: %s\nRegistration: %s\nNotifications: %v\n", c.Version, c.Build, c.Port, c.H1Port, c.EtcdEndpoints, c.ElasticsearchURL, c.NatsURL, os.Getenv("DOCKER_HOST"), os.Getenv("DOCKER_TLS_VERIFY"), c.Registration, c.Notifications)
 }
 
 // ReadConfig reads the configuration file
