@@ -31,11 +31,20 @@ services:
       - core
     volumes:
       - prometheus-data:/prometheus
+{{- if  .EnableTLS }}
+      - ${AMP_CERT_PATH:-/root/.docker}:/root/.docker:ro
+{{- else }}
       - /var/run/docker.sock:/var/run/docker.sock:ro
+{{- end }}
     environment:
       SERVICE_PORTS: 9090
       VIRTUAL_HOST: "http://alerts.*,https://alerts.*"
       PROMETHEUS_EXTERNAL_URL: "${PROMETHEUS_EXTERNAL_URL:-https://alerts.local.appcelerator.io}"
+{{- if .EnableTLS }}
+      DOCKER_HOST: ${AMP_HOST}
+      DOCKER_TLS_VERIFY: ${AMP_TLS_VERIFY}
+      DOCKER_CERT_PATH: "/root/.docker"
+{{- end }}
     ports:
       - "9090:9090"
     labels:
