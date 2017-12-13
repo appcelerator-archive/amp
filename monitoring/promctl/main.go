@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -25,7 +24,6 @@ import (
 const (
 	defaultTemplate      = "/etc/prometheus/prometheus.tpl"
 	defaultConfiguration = "/etc/prometheus/prometheus.yml"
-	defaultHost          = docker.DefaultURL
 	defaultPeriod        = 1
 	dockerForMacIP       = "192.168.65.1"
 	prometheusCmd        = "/bin/prometheus"
@@ -209,26 +207,6 @@ func update(client *docker.Docker, configurationTemplate string, configuration s
 	return nil
 }
 
-// Docker client init
-func dockerClientInit(host string) (*docker.Docker, error) {
-	hasAScheme, err := regexp.MatchString(".*://.*", host)
-	if err != nil {
-		return nil, err
-	}
-	if !hasAScheme {
-		host = "tcp://" + host
-	}
-	hasAPort, err := regexp.MatchString(".*(:[0-9]+|sock)", host)
-	if err != nil {
-		return nil, err
-	}
-	if !hasAPort {
-		host = host + ":2375"
-	}
-	client := docker.NewClient(host, docker.DefaultVersion)
-	return client, nil
-}
-
 // am I a manager?
 func isAManager(client *docker.Docker) (bool, error) {
 	if err := client.Connect(); err != nil {
@@ -250,7 +228,6 @@ func isAManager(client *docker.Docker) (bool, error) {
 func main() {
 	var configuration string
 	var configurationTemplate string
-	var host string
 	var period int32
 
 	var RootCmd = &cobra.Command{
@@ -258,10 +235,7 @@ func main() {
 		Short: "Prometheus controller",
 		Long:  `Keep the Prometheus configuration up to date with swarm discovery`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client, err := dockerClientInit(host)
-			if err != nil {
-				return err
-			}
+			client := docker.NewEnvClient()
 			manager, err := isAManager(client)
 			if !manager || err != nil {
 				return fmt.Errorf("service discovery requires a connection to a manager engine socket")
@@ -298,7 +272,6 @@ func main() {
 
 	RootCmd.PersistentFlags().StringVarP(&configuration, "config", "c", defaultConfiguration, "config file")
 	RootCmd.PersistentFlags().StringVarP(&configurationTemplate, "template", "t", defaultTemplate, "template file")
-	RootCmd.PersistentFlags().StringVar(&host, "host", defaultHost, "host")
 	RootCmd.PersistentFlags().Int32VarP(&period, "period", "p", defaultPeriod, "reload period in minute")
 
 	// Set Prometheus external URL if provided
