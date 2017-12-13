@@ -23,15 +23,30 @@ services:
       - elasticsearch-data:/opt/elasticsearch/data
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "8s"
-      amp.service.stabilize.timeout: "25s"
+      amp.service.stabilize.delay: "30s"
+      amp.service.stabilize.timeout: "180s"
       amp.service.pull.timeout: "120s"
     environment:
+{{- if eq .DeploymentMode "cluster" }}
+      MIN_MASTER_NODES: 2
+      UNICAST_HOSTS: "tasks.elasticsearch"
+{{- end }}
       NETWORK_HOST: "_site_"
       JAVA_HEAP_SIZE: "${ES_JAVA_HEAP_SIZE:-1024}"
     deploy:
       mode: replicated
+{{- if eq .DeploymentMode "cluster" }}
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 45s
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 25s
+{{- else }}
       replicas: 1
+{{- end }}
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "9200"
