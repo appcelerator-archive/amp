@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
@@ -25,6 +26,11 @@ const (
 	TARGET_SINGLE  = "single"
 	TARGET_CLUSTER = "cluster"
 )
+
+type StackVariables struct {
+	DeploymentMode string
+	EnableTLS      bool
+}
 
 type InstallOptions struct {
 	NoLogs    bool
@@ -136,7 +142,6 @@ func getStackFiles(path string, deploymentMode string) ([]string, error) {
 	if path == "" {
 		path = "./stacks"
 	}
-	path += "/" + deploymentMode
 
 	// a bit more work but we can't just use filepath.Glob
 	// since we need to match both *.yml and *.yaml
@@ -145,9 +150,25 @@ func getStackFiles(path string, deploymentMode string) ([]string, error) {
 		return nil, err
 	}
 	stackfiles := []string{}
+	stackVars := StackVariables{DeploymentMode: deploymentMode, EnableTLS: os.Getenv("AMP_TLS_VERIFY") != ""}
 	for _, f := range files {
 		name := f.Name()
-		if matched, _ := regexp.MatchString("\\.ya?ml$", name); matched {
+		// first, look for yml.tpl files and transform them to yml files
+		if matched, _ := regexp.MatchString("\\.ya?ml.tpl$", name); matched {
+			log.Println("converting template", name, "to yml file")
+			t := template.Must(template.New(name).Funcs(template.FuncMap{"StringsJoin": strings.Join}).ParseFiles(filepath.Join(path, name)))
+			if err != nil {
+				return nil, err
+			}
+			ymlFilepath := strings.TrimSuffix(filepath.Join(path, name), ".tpl")
+			ymlFile, err := os.Create(ymlFilepath)
+			err = t.Execute(ymlFile, stackVars)
+			if err != nil {
+				return nil, err
+			}
+			ymlFile.Close()
+			stackfiles = append(stackfiles, ymlFilepath)
+		} else if matched, _ := regexp.MatchString("\\.ya?ml$", name); matched {
 			stackfiles = append(stackfiles, filepath.Join(path, name))
 		}
 	}
