@@ -247,7 +247,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "mongodb_mongod_op_counters_total{instance=\"apirs_mongo\"}",
+              "expr": "rate(mongodb_mongod_op_counters_total{instance=\"apirs_mongo\"}[1m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{type}}",
@@ -258,7 +258,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "MongoDB Operations",
+          "title": "MongoDB Operations (per sec)",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -296,7 +296,7 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": false,
-      "title": "Dashboard Row",
+      "title": "Mongo",
       "titleSize": "h6"
     },
     {
@@ -391,91 +391,82 @@
           "valueName": "current"
         },
         {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": true,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
           "datasource": "${DS_PROMETHEUS}",
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
+          "fill": 1,
+          "id": 14,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": true,
+            "rightSide": false,
+            "show": true,
+            "total": false,
+            "values": true
           },
-          "id": 7,
-          "interval": null,
+          "lines": true,
+          "linewidth": 1,
           "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
           "span": 3,
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
+          "stack": false,
+          "steppedLine": false,
           "targets": [
             {
               "expr": "consul_health_node_status",
               "format": "time_series",
+              "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "",
-              "refId": "A",
-              "step": 20
+              "legendFormat": "{{node}}",
+              "refId": "A"
             }
           ],
-          "thresholds": "0.1,0.9",
-          "title": "Consul Health Status",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Health Node Status",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
             {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
             },
             {
-              "op": "=",
-              "text": "UNHEALTHY",
-              "value": "0"
-            },
-            {
-              "op": "=",
-              "text": "HEALTHY",
-              "value": "1"
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
             }
-          ],
-          "valueName": "current"
+          ]
         },
         {
           "cacheTimeout": null,
@@ -636,7 +627,7 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": false,
-      "title": "Dashboard Row",
+      "title": "Consul",
       "titleSize": "h6"
     },
     {
@@ -975,7 +966,7 @@
       "repeatIteration": null,
       "repeatRowId": null,
       "showTitle": false,
-      "title": "Dashboard Row",
+      "title": "Redis",
       "titleSize": "h6"
     }
   ],
