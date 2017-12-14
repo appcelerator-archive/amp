@@ -8,6 +8,7 @@
   ec2_ami:
     architecture: x86_64
     virtualization_type: hvm
+    enhanced_networking: true
     root_device_name: /dev/sda1
     device_mapping:
       - device_name: /dev/sda1
@@ -36,6 +37,7 @@
 
 - name: Make AMI Public
   ec2_ami:
+    name: "{{ image_name }}"
     image_id: "{{ image.image_id }}"
     state: present
     region: "{{ ec2_region }}"
