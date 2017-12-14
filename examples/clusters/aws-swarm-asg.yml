@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-3f20a845
+      Default: ami-2a5f2a50
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-dff6d8ba
+      Default: ami-db4c64be
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-bcf02dc4
+      Default: ami-f9cd6c81
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-8fd463f6
+      Default: ami-2d7afe54
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-38b2585a
+      Default: ami-2afb0d48
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -96,6 +96,29 @@ Parameters:
     - r4.4xlarge
     ConstraintDescription: Must be a valid EC2 HVM instance type.
     Default: t2.small
+    Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
+  CAInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - m3.medium
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    ConstraintDescription: Must be a valid EC2 HVM instance type.
+    Default: t2.nano
     Description: EC2 HVM instance type (t2.micro, m3.medium, etc)
   ManagerInstanceType:
     Type: String
@@ -202,6 +225,10 @@ Parameters:
     Type: String
     Description: Use the latest release version for the best result (a tag, e.g. 0.17.0)
     Default: latest
+  ApplicationOptions:
+    Type: String
+    Description: Extra parameters passed to the ampagent for core services deployment
+    Default: ""
   MirrorRegistry:
     Type: String
     Description: If yes, a mirror registry will be installed
@@ -229,12 +256,23 @@ Parameters:
     Default: 8080
     MinValue: 1025
     MaxValue: 32768
+  EnableTLS:
+    Type: String
+    Description: "Secure the Docker engine API for mutual auth"
+    AllowedValues:
+    - yes
+    Default: yes
+  TLSRotation:
+    Type: String
+    Description: "Expiration of Docker API certificates issued by the PKI"
+    Default: "168h"
 
 Conditions:
   InstallApplicationCond: !Or [ !Equals [ !Ref InstallApplication, "yes" ], !Equals [ !Ref InstallApplication, "true" ] ]
   EnableSystemPruneCond:  !Or [ !Equals [ !Ref EnableSystemPrune, "yes" ], !Equals [ !Ref EnableSystemPrune, "true" ] ]
   MirrorRegistryCond:     !Or [ !Equals [ !Ref MirrorRegistry, "yes" ], !Equals [ !Ref MirrorRegistry, "true" ] ]
   NFSEndpointCond:     !Or [ !Equals [ !Ref NFSEndpoint, "yes" ], !Equals [ !Ref NFSEndpoint, "true" ] ]
+  EnableTLSCond:          !Or [ !Equals [ !Ref EnableTLS,          "yes" ], !Equals [ !Ref EnableTLS,          "true" ] ]
 
 Resources:
   Vpc:
@@ -448,7 +486,7 @@ Resources:
     Properties:
       GroupDescription: Manager nodes security group
       SecurityGroupIngress:
-      # engine API open from all VPC
+      # http engine API open from all VPC
       - SourceSecurityGroupId:
           !Ref CoreSecurityGroup
         IpProtocol: tcp
@@ -518,6 +556,10 @@ Resources:
         IpProtocol: tcp
         FromPort: '443'
         ToPort: '443'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '2376'
+        ToPort: '2376'
       - CidrIp: 0.0.0.0/0
         IpProtocol: tcp
         FromPort: '50101'
@@ -699,6 +741,58 @@ Resources:
       IpProtocol: -1
       SourceSecurityGroupId:
         Ref: MetricsSecurityGroup
+
+  CAExtSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Certificate Authority ELB security group
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      VpcId:
+        Ref: Vpc
+
+  CASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: InternetGateway
+    Properties:
+      GroupDescription: Certificate Authority security group
+      SecurityGroupIngress:
+      # all nodes to internal ELB
+      - CidrIp:
+          Fn::FindInMap:
+          - VpcCidrs
+          - vpc
+          - cidr
+        IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+      # internet facing ELB to CA intances
+      - SourceSecurityGroupId:
+          !Ref CAExtSecurityGroup
+        IpProtocol: tcp
+        FromPort: '8888'
+        ToPort: '8888'
+      VpcId:
+        Ref: Vpc
+  # internal ELB to CA instances
+  CASelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: CASecurityGroup
+      IpProtocol: tcp
+      FromPort: '8888'
+      ToPort: '8888'
+      SourceSecurityGroupId:
+        Ref: CASecurityGroup
 
   ClusterRole:
     Type: AWS::IAM::Role
@@ -920,6 +1014,130 @@ Resources:
         Enabled: 'true'
         Timeout: '60'
 
+  CAWaitHandle:
+    Type: "AWS::CloudFormation::WaitConditionHandle"
+    Condition: EnableTLSCond
+
+  CAWaitCondition:
+    Type: "AWS::CloudFormation::WaitCondition"
+    Condition: EnableTLSCond
+    DependsOn: CAAutoScalingGroup
+    Properties:
+      Handle: !Ref CAWaitHandle
+      Timeout: 420
+      Count: 1
+
+  CAAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Condition: EnableTLSCond
+    DependsOn:
+      - PublicSubnet1
+      - PublicSubnet2
+      - PublicSubnet3
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: 0
+        PauseTime: PT30S
+        WaitOnResourceSignals: false
+    Properties:
+      DesiredCapacity: 1
+      HealthCheckGracePeriod: 300
+      HealthCheckType: ELB
+      LoadBalancerNames:
+      - !Ref CAInternalELB
+      - !Ref CAExternalELB
+      LaunchConfigurationName: !Ref CAAsgLaunchConfig
+      MaxSize: 2
+      MinSize: 0
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value:
+          Fn::Join:
+          - '-'
+          - - Ref: AWS::StackName
+            - CA
+      - Key: amp.clusterid
+        PropagateAtLaunch: true
+        Value: !Ref AWS::StackName
+      VPCZoneIdentifier:
+      - !Ref PublicSubnet1
+  CAAsgLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Condition: EnableTLSCond
+    DependsOn:
+      - CAWaitHandle
+    Properties:
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref ClusterInstanceProfile
+      ImageId:
+        Fn::FindInMap:
+        - AMI
+        - Ref: AWS::Region
+        - Ref: LinuxDistribution
+      InstanceType: !Ref CAInstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - Ref: CASecurityGroup
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #cloud-config
+              repo_update: false
+              repo_upgrade: none
+              runcmd:
+                - curl -sf ${ConfigurationURL}/userdata-aws-ca -o /usr/local/bin/userdata-aws-ca && chmod +x /usr/local/bin/userdata-aws-ca || true
+                - SYSTEM_PRUNE="${EnableSystemPrune}" SYNC=true SIGNAL_URL="${CAWaitHandle}" CHANNEL="stable" PLUGINS="rexray/ebs" REGION=${AWS::Region} STACK_ID="${AWS::StackId}" STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-ca || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
+  CAInternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Condition: EnableTLSCond
+    Properties:
+      Scheme: internal
+      Subnets:
+        - !Ref PublicSubnet1
+      SecurityGroups:
+        - Ref: CASecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '80'
+        InstancePort: '8888'
+        Protocol: HTTP
+        InstanceProtocol: HTTP
+      HealthCheck:
+        Target: HTTP:8888/
+        HealthyThreshold: 2
+        UnhealthyThreshold: 3
+        Interval: 30
+        Timeout: 5
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+  CAExternalELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Condition: EnableTLSCond
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnet1
+      SecurityGroups:
+        - Ref: CAExtSecurityGroup
+      CrossZone: true
+      Listeners:
+      - LoadBalancerPort: '22'
+        InstancePort: '22'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '80'
+        InstancePort: '8888'
+        Protocol: HTTP
+        InstanceProtocol: HTTP
+      ConnectionDrainingPolicy:
+        Enabled: 'true'
+        Timeout: '60'
+
   CoreWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
 
@@ -1003,8 +1221,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
+                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.metrics=true amp.type.api=true amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
 
   UserWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1089,8 +1307,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
+                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
 
   ApplicationWaitHandle:
     Type: "AWS::CloudFormation::WaitConditionHandle"
@@ -1124,6 +1342,7 @@ Resources:
       - PublicSubnet1
       - PublicSubnet2
       - PublicSubnet3
+      - CAWaitCondition
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -1192,8 +1411,8 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.api=true amp.type.route=true amp.type.metrics=true" /usr/local/bin/userdata-aws-manager || shutdown -h
-            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ] }
+                - SYNC=true CA_URL="${CADnsName}" INTERNAL_LB="${ManagerInternalELB.DNSName}" EXTERNAL_LB="${ManagerExternalELB.DNSName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" APP_OPTIONS="${ApplicationOptions}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.route=true" /usr/local/bin/userdata-aws-manager || shutdown -h
+            - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
@@ -1210,12 +1429,16 @@ Resources:
         InstancePort: '2375'
         Protocol: TCP
         InstanceProtocol: TCP
+      - LoadBalancerPort: '2376'
+        InstancePort: '2376'
+        Protocol: TCP
+        InstanceProtocol: TCP
       - LoadBalancerPort: '2377'
         InstancePort: '2377'
         Protocol: TCP
         InstanceProtocol: TCP
       HealthCheck:
-        Target: TCP:2375
+        Target: !Join [ ":", [ "TCP", !If [ EnableTLSCond, "2376", "2375" ] ] ]
         HealthyThreshold: 3
         UnhealthyThreshold: 5
         Interval: 30
@@ -1246,6 +1469,10 @@ Resources:
         InstanceProtocol: TCP
       - LoadBalancerPort: '443'
         InstancePort: '443'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      - LoadBalancerPort: '2376'
+        InstancePort: '2376'
         Protocol: TCP
         InstanceProtocol: TCP
       - LoadBalancerPort: !Ref MonitoringPort
@@ -1356,11 +1583,15 @@ Metadata:
       - AufsVolumeSize
       - OverlayNetworks
       - EnableSystemPrune
+      - EnableTLS
+      - TLSRotation
+      - CAInstanceType
     - Label:
         default: AMP deployment
       Parameters:
       - InstallApplication
       - ApplicationVersion
+      - ApplicationOptions
     ParameterLabels:
       KeyName:
         default: Which SSH key to use?
@@ -1391,7 +1622,9 @@ Metadata:
       InstallApplication:
         default: Install Application
       ApplicationVersion:
-        default: Application Version
+        default: AMP Version
+      ApplicationOptions:
+        default: AMP Deployment Options
       EnableSystemPrune:
         default: Enable System Prune
       MirrorRegistry:
@@ -1400,13 +1633,33 @@ Metadata:
         default: Shared File System
       RegistryInstanceType:
         default: Registry instance type?
+      RegistryInstanceType:
+        default: PKI instance type?
       MonitoringPort:
         default: Monitoring Port
+      EnableTLS:
+        default: Enable TLS
+      TLSRotation:
+        default: TLS Rotation
 
 Outputs:
   DNSTarget:
     Description: public facing endpoint for the cluster
     Value: !GetAtt ManagerExternalELB.DNSName
+  InternalDockerHost:
+    Description: Docker host for services requiring access to the secured API
+    Value:
+      Fn::Join:
+        - ""
+        - - "tcp://"
+          - !GetAtt ManagerInternalELB.DNSName
+          - ":2376"
+  #PKITarget:
+    #Description: public facing endpoint for the PKI service
+    #Value: !If [ EnableTLSCond, !GetAtt CAExternalELB.DNSName, "disabled" ]
+  InternalPKITarget:
+    Description: internal endpoint for the PKI service
+    Value: !If [ EnableTLSCond, !GetAtt CAInternalELB.DNSName, "disabled" ]
   InternalRegistryTarget:
     Description: internal endpoint for the registry service
     Value: !If [ MirrorRegistryCond, !GetAtt RegistryInternalELB.DNSName, "disabled" ]

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
 
 	"docker.io/go-docker"
@@ -29,6 +30,11 @@ const (
 	TARGET_CLUSTER = "cluster"
 )
 
+type StackVariables struct {
+	DeploymentMode string
+	EnableTLS      bool
+}
+
 type InstallOptions struct {
 	NoLogs    bool
 	NoMetrics bool
@@ -36,7 +42,7 @@ type InstallOptions struct {
 }
 
 var InstallOpts = &InstallOptions{}
-var Docker = ampdocker.NewClient(ampdocker.DefaultURL, ampdocker.DefaultVersion)
+var Docker *ampdocker.Docker
 
 func NewInstallCommand() *cobra.Command {
 	installCmd := &cobra.Command{
@@ -49,6 +55,7 @@ func NewInstallCommand() *cobra.Command {
 }
 
 func Install(cmd *cobra.Command, args []string) error {
+	Docker = ampdocker.NewEnvClient()
 	stdin, stdout, stderr := term.StdStreams()
 	dockerCli := ampdocker.NewDockerCli(stdin, stdout, stderr)
 	if err := Docker.Connect(); err != nil {
@@ -84,6 +91,7 @@ func Install(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Deploying in %s mode\n", deploymentMode)
 
 	stackFiles, err := getStackFiles("./stacks", deploymentMode)
 	if err != nil {
@@ -142,7 +150,6 @@ func getStackFiles(path string, deploymentMode string) ([]string, error) {
 	if path == "" {
 		path = "./stacks"
 	}
-	path += "/" + deploymentMode
 
 	// a bit more work but we can't just use filepath.Glob
 	// since we need to match both *.yml and *.yaml
@@ -151,9 +158,25 @@ func getStackFiles(path string, deploymentMode string) ([]string, error) {
 		return nil, err
 	}
 	stackfiles := []string{}
+	stackVars := StackVariables{DeploymentMode: deploymentMode, EnableTLS: os.Getenv("AMP_TLS_VERIFY") != ""}
 	for _, f := range files {
 		name := f.Name()
-		if matched, _ := regexp.MatchString("\\.ya?ml$", name); matched {
+		// first, look for yml.tpl files and transform them to yml files
+		if matched, _ := regexp.MatchString("\\.ya?ml.tpl$", name); matched {
+			log.Println("converting template", name, "to yml file")
+			t := template.Must(template.New(name).Funcs(template.FuncMap{"StringsJoin": strings.Join}).ParseFiles(filepath.Join(path, name)))
+			if err != nil {
+				return nil, err
+			}
+			ymlFilepath := strings.TrimSuffix(filepath.Join(path, name), ".tpl")
+			ymlFile, err := os.Create(ymlFilepath)
+			err = t.Execute(ymlFile, stackVars)
+			if err != nil {
+				return nil, err
+			}
+			ymlFile.Close()
+			stackfiles = append(stackfiles, ymlFilepath)
+		} else if matched, _ := regexp.MatchString("\\.ya?ml$", name); matched {
 			stackfiles = append(stackfiles, filepath.Join(path, name))
 		}
 	}
