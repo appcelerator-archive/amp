@@ -14,8 +14,31 @@ volumes:
   mongo-primary-db:
   mongo-secondary-db:
   mongo-arbiter-db:
-  consul-data:
+  consul-data-member-a:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/consul/a
+      o: addr=${NFS_SERVER},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+  consul-data-member-b:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/consul/b
+      o: addr=${NFS_SERVER},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
+  consul-data-member-c:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/appc/consul/c
+      o: addr=${NFS_SERVER},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
   redis-data:
+  nfs_init:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: :/
+      o: addr=${NFS_SERVER},nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2
 
 services:
   mongo-primary:
@@ -90,22 +113,83 @@ services:
         io.amp.metrics.port: "9104"
         io.amp.metrics.mode: "exporter"
 
-  consul:
-    image: consul:1.0.0
+  consul-member-a:
+    image: consul:1.0.1
     networks:
-      - backend
-      - db
-      - public
+      backend:
+        aliases:
+         - consul
+      db:
+        aliases:
+         - consul
+      public:
+        aliases:
+         - consul
     deploy:
       replicas: 1
       placement:
         constraints:
           - node.labels.amp.type.user == true
     volumes:
-      - consul-data:/consul/data
+      - consul-data-member-a:/consul/data
     environment:
       SERVICE_PORTS: 8500
       VIRTUAL_HOST: "https://consul.apirs.*,consul.apirs.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-b", "-retry-join=consul-member-c"]
+
+  consul-member-b:
+    image: consul:1.0.1
+    networks:
+      backend:
+        aliases:
+         - consul
+      db:
+        aliases:
+         - consul
+      public:
+        aliases:
+         - consul
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data-member-b:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.apirs.*,consul.apirs.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-b", "-retry-join=consul-member-c"]
+
+  consul-member-c:
+    image: consul:1.0.1
+    networks:
+      backend:
+        aliases:
+         - consul
+      db:
+        aliases:
+         - consul
+      public:
+        aliases:
+         - consul
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data-member-c:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.apirs.*,consul.apirs.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-b", "-retry-join=consul-member-c"]
 
   consul_exporter:
     image: prom/consul-exporter:v0.3.0
@@ -166,3 +250,21 @@ services:
 #      REGISTRY_STORAGE_MAINTENANCE_READONLY_ENABLED: "false"
       SERVICE_PORTS: 5000
       VIRTUAL_HOST: "registry.apirs.*,https://registry.apirs.*"
+
+  nfs-init:
+    image: alpine:3.7
+    networks:
+      - db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - type: volume
+        source: nfs_init
+        target: /nfs
+    command: [ "mkdir", "-p", "/nfs/appc/consul/a", "/nfs/appc/consul/b", "/nfs/appc/consul/c",  "/nfs/appc/arrowdb/photos", "/nfs/appc/arrowdb/files", "/nfs/appc/arrowdb/exports" ]
+
