@@ -72,6 +72,9 @@ message StatusReply {
   string user_services = 6;
   string endpoint = 7;
   string nfs_endpoint = 8;
+  string internal_endpoint = 9;
+  string internal_pki = 10;
+  string pki = 11;
 }
 
 message UpdateRequest {

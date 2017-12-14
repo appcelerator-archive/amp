@@ -39,19 +39,25 @@ func status(c cli.Interface, cmd *cobra.Command) error {
 	if reply.Provider == "" {
 		return errors.New("empty reply from server, probably an API mismatch")
 	}
-	fmt.Printf("Provider:      %s\n", reply.Provider)
+	fmt.Printf("Provider:                %s\n", reply.Provider)
 	if reply.Provider != string(cloud.ProviderLocal) {
-		fmt.Printf("Cluster name:  %s\n", reply.Name)
-		fmt.Printf("Region:        %s\n", reply.Region)
+		fmt.Printf("Cluster name:            %s\n", reply.Name)
+		fmt.Printf("Region:                  %s\n", reply.Region)
 	}
-	fmt.Printf("Swarm Status:  %s\n", reply.SwarmStatus)
-	fmt.Printf("Core Services: %s\n", reply.CoreServices)
-	fmt.Printf("User Services: %s\n", reply.UserServices)
+	fmt.Printf("Swarm Status:            %s\n", reply.SwarmStatus)
+	fmt.Printf("Core Services:           %s\n", reply.CoreServices)
+	fmt.Printf("User Services:           %s\n", reply.UserServices)
 	if reply.Endpoint != "" {
-		fmt.Printf("DNS Target:    %s\n", reply.Endpoint)
+		fmt.Printf("DNS Target:              %s\n", reply.Endpoint)
+	}
+	if reply.InternalEndpoint != "" {
+		fmt.Printf("Docker Host (internal):  %s\n", reply.InternalEndpoint)
+	}
+	if reply.InternalPki != "" {
+		fmt.Printf("PKI Endpoint (internal): %s\n", reply.InternalPki)
 	}
 	if reply.NfsEndpoint != "disabled" {
-		fmt.Printf("NFS Endpoint:  %s\n", reply.NfsEndpoint)
+		fmt.Printf("NFS Endpoint:            %s\n", reply.NfsEndpoint)
 	}
 	return nil
 }
