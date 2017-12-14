@@ -1,0 +1,81 @@
+version: "3.3"
+
+networks:
+  public:
+    external: true
+  db:
+    driver: overlay
+
+services:
+  consul-member-a:
+    image: consul:1.0.1
+    networks:
+      db:
+        aliases:
+          - consul
+      public:
+        aliases:
+          - consul
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data-member-a:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.examples.*,consul.examples.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-b", "-retry-join=consul-member-c"]
+  consul-member-b:
+    image: consul:1.0.1
+    networks:
+      db:
+        aliases:
+          - consul
+      public:
+        aliases:
+          - consul
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data-member-b:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.examples.*,consul.examples.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-a", "-retry-join=consul-member-c"]
+  consul-member-c:
+    image: consul:1.0.1
+    networks:
+      db:
+        aliases:
+          - consul
+      public:
+        aliases:
+          - consul
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+    volumes:
+      - consul-data-member-c:/consul/data
+    environment:
+      SERVICE_PORTS: 8500
+      VIRTUAL_HOST: "https://consul.examples.*,consul.examples.*"
+      CONSUL_BIND_INTERFACE: "eth0"
+      CONSUL_CLIENT_INTERFACE: "eth0"
+    command: ["agent", "-server", "-client=0.0.0.0", "-ui", "-bootstrap-expect=3", "-retry-join=consul-member-a", "-retry-join=consul-member-b"]
+
+
+volumes:
+  consul-data-member-a:
+  consul-data-member-b:
+  consul-data-member-c:
