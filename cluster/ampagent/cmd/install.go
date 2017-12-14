@@ -91,11 +91,19 @@ func Install(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, stackFile := range stackFiles {
-		if strings.Contains(stackFile, "logs") && InstallOpts.NoLogs ||
-			strings.Contains(stackFile, "metrics") && InstallOpts.NoMetrics ||
-			strings.Contains(stackFile, "proxy") && InstallOpts.NoProxy {
+		if strings.Contains(stackFile, "logs") && InstallOpts.NoLogs {
+			log.Println("Logs stack is disabled. Skipping deployment.")
 			continue
 		}
+		if strings.Contains(stackFile, "metrics") && InstallOpts.NoMetrics {
+			log.Println("Metrics stack is disabled. Skipping deployment.")
+			continue
+		}
+		if strings.Contains(stackFile, "proxy") && InstallOpts.NoProxy {
+			log.Println("Proxy stack is disabled. Skipping deployment.")
+			continue
+		}
+
 		log.Println("Deploying stack", stackFile)
 		if err := deploy(dockerCli, stackFile, namespace); err != nil {
 			stack.RunRemove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})

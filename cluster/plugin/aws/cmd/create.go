@@ -26,6 +26,15 @@ func NewCreateCommand() *cobra.Command {
 
 func create(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
+	if val, ok := os.LookupEnv("NO_LOGS"); ok && val == "true" {
+		plugin.Config.Params = append(plugin.Config.Params, "NoLogs=true")
+	}
+	if val, ok := os.LookupEnv("NO_METRICS"); ok && val == "true" {
+		plugin.Config.Params = append(plugin.Config.Params, "NoMetrics=true")
+	}
+	if val, ok := os.LookupEnv("NO_PROXY"); ok && val == "true" {
+		plugin.Config.Params = append(plugin.Config.Params, "NoProxy=true")
+	}
 	resp, err := plugin.AWS.CreateStack(ctx, 20)
 	if err != nil {
 		j, jerr := plugin.PluginOutputToJSON(nil, nil, err)

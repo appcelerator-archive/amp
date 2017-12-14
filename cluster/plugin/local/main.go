@@ -128,9 +128,6 @@ func main() {
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.ListenAddr, "listen-addr", "l", "0.0.0.0:2377", "Listen address")
 	initCmd.PersistentFlags().StringVarP(&opts.InitRequest.AdvertiseAddr, "advertise-addr", "a", "eth0", "Advertise address")
 	initCmd.PersistentFlags().BoolVarP(&opts.InitRequest.ForceNewCluster, "force-new-cluster", "", false, "force initialization of a new swarm")
-	initCmd.PersistentFlags().BoolVar(&opts.NoLogs, "no-logs", false, "Don't deploy logs stack")
-	initCmd.PersistentFlags().BoolVar(&opts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
-	initCmd.PersistentFlags().BoolVar(&opts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -157,17 +154,23 @@ func main() {
 	destroyCmd.PersistentFlags().BoolVarP(&opts.ForceLeave, "force-leave", "", false, "force leave the swarm")
 
 	// override default value if env vars are set
-	val, ok := os.LookupEnv("TAG")
-	if ok {
+	if val, ok := os.LookupEnv("TAG"); ok {
 		opts.Tag = val
 	}
-	val, ok = os.LookupEnv("REGISTRATION")
-	if ok {
+	if val, ok := os.LookupEnv("REGISTRATION"); ok {
 		opts.Registration = val
 	}
-	val, ok = os.LookupEnv("NOTIFICATIONS")
-	if ok {
-		opts.Notifications = val == "true"
+	if val, ok := os.LookupEnv("NOTIFICATIONS"); ok && val == "true" {
+		opts.Notifications = true
+	}
+	if val, ok := os.LookupEnv("NO_LOGS"); ok && val == "true" {
+		opts.NoLogs = true
+	}
+	if val, ok := os.LookupEnv("NO_METRICS"); ok && val == "true" {
+		opts.NoMetrics = true
+	}
+	if val, ok := os.LookupEnv("NO_PROXY"); ok && val == "true" {
+		opts.NoProxy = true
 	}
 
 	rootCmd.AddCommand(initCmd, versionCmd, infoCmd, updateCmd, destroyCmd)

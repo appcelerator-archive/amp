@@ -260,7 +260,7 @@ _wait_for_quorum(){
 
 # leader election means looking for other members of the group
 # and checking if there's already a leader there
-# if not, the leader should be elected based on an deterministic algorithm 
+# if not, the leader should be elected based on an deterministic algorithm
 _elect_leader(){
   local _local_node=$1
   shift
@@ -348,7 +348,7 @@ _swarm_cleanup(){
 	  echo "removing $_node from the Swarm" >&2
 		docker -H "$_manager:2375" node demote $_node
 		docker -H "$_manager:2375" node rm $_node
-	done 
+	done
 }
 
 _swarm_join(){
@@ -465,11 +465,11 @@ _wait_for_full_swarm() {
     return 1
   fi
 
-  
+
 }
 
 _setup() {
-  docker run --rm -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent:${AMPAGENT_VERSION}
+  docker run --rm -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock -e NO_LOGS=${NO_LOGS:-false} -e NO_METRICS=${NO_METRICS:-false} -e NO_PROXY=${NO_PROXY:-false} appcelerator/ampagent:${AMPAGENT_VERSION}
 }
 
 _sanity_check || exit 1
@@ -491,7 +491,7 @@ if [[ "x$nodeip" = "x$leader" ]]; then
   _swarm_init "$nodeip" || exit 1
   _create_networks $OVERLAY_NETWORKS || exit 1
 else
-	_swarm_cleanup "$leader" 
+	_swarm_cleanup "$leader"
   _swarm_join "$leader" || exit 1
 fi
 _label_node || exit 1
