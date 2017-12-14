@@ -24,6 +24,7 @@
 
 - name: Make Copies Public
   ec2_ami:
+    name: "{{ image_name }}"
     image_id: "{{ item.image_id }}"
     region: "{{ item.item }}"
     state: present
