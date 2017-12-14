@@ -125,7 +125,7 @@ func StackInfo(ctx context.Context, outputs *map[string]string) error {
 	}
 	for _, o := range stack.Outputs {
 		switch awssdk.StringValue(o.OutputKey) {
-		case "DNSTarget", "NFSEndpoint":
+		case "DNSTarget", "NFSEndpoint", "InternalPKITarget", "InternalDockerHost":
 			(*outputs)[awssdk.StringValue(o.OutputKey)] = awssdk.StringValue(o.OutputValue)
 		}
 	}
