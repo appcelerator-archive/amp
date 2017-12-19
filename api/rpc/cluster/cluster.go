@@ -128,14 +128,16 @@ func (s *Server) ClusterStatus(ctx context.Context, in *StatusRequest) (*StatusR
 	}
 	log.Infoln("[cluster] Success: status")
 	return &StatusReply{
-		Name:         stackInfo["StackName"],
-		Provider:     string(s.Provider),
-		Region:       s.Region,
-		SwarmStatus:  string(swarmStatus),
-		CoreServices: strconv.Itoa(coreServices),
-		UserServices: strconv.Itoa(userServices),
-		Endpoint:     stackInfo["DNSTarget"],
-		NfsEndpoint:  stackInfo["NFSEndpoint"],
+		Name:             stackInfo["StackName"],
+		Provider:         string(s.Provider),
+		Region:           s.Region,
+		SwarmStatus:      string(swarmStatus),
+		CoreServices:     strconv.Itoa(coreServices),
+		UserServices:     strconv.Itoa(userServices),
+		Endpoint:         stackInfo["DNSTarget"],
+		NfsEndpoint:      stackInfo["NFSEndpoint"],
+		InternalEndpoint: stackInfo["InternalDockerHost"],
+		InternalPki:      stackInfo["InternalPKITarget"],
 	}, nil
 }
 
