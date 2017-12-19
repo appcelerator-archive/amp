@@ -22,7 +22,7 @@ script:
   - sudo modprobe ip_vs ip_vs_rr
   - docker swarm init --advertise-addr 127.0.0.1
   - docker secret create amplifier_yml tests/test.amplifier.yml
-  - amp cluster create --local-no-metrics
+  - amp cluster create
 # Tests: CLI
   - sudo apt-get install pcregrep
   - sudo mkdir -p $HOME/.config/amp
