@@ -13,6 +13,13 @@ VPC_ID=${VPC_ID:-unset}
 SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
 SYSV_DOCKER_DEFAULT=/etc/default/docker
 #LEADER=
+# CA_URL=
+ENGINE_API_HTTP_PORT=2375
+ENGINE_API_TLS_PORT=2376
+[[ -n "$CA_URL" ]] && ENGINE_API_PORT=$ENGINE_API_TLS_PORT || ENGINE_API_PORT=$ENGINE_API_HTTP_PORT
+DOCKER_CERT_PATH=/etc/docker/tls/client
+CFSSL_IMAGE=appcelerator/cfssl
+CFSSL_VERSION=dev-20171208
 
 _init_system(){
   systemctl --version >/dev/null 2>&1 && echo systemd && return
@@ -56,10 +63,11 @@ _install_plugins(){
   local options
   for plugin in $PLUGINS; do
     options="${plugin#*#}"
-    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//#/ }"
+    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//\#/ }"
     plugin="${plugin%%#*}"
     alias=${plugin#store/}
     alias=${alias%:*}
+    docker plugin ls | grep -q "$plugin" && continue
     docker plugin install "$plugin" $options --alias "$alias" --grant-all-permissions # || return 1
   done
   return 0
@@ -191,18 +199,75 @@ _set_metrics_address(){
   mv "$_tmp" /etc/docker/daemon.json
 }
 
+# get the CA cert and a new certificate for the client
+_gen_cert() {
+  [[ -z "$CA_URL" ]] && return 0
+  # prepare a csr
+  local _csr=certs/keyrequest.json
+  mkdir -p certs
+  mkdir -p $DOCKER_CERT_PATH
+  if [[ ! -f $DOCKER_CERT_PATH/ca.pem ]]; then
+    docker run --rm ${CFSSL_IMAGE}:${CFSSL_VERSION} info -remote=$CA_URL | jq -r .certificate > $DOCKER_CERT_PATH/ca.pem
+  fi
+  if [[ ! -f $DOCKER_CERT_PATH/key.pem ]]; then
+    cat > $_csr << EOF
+{
+    "CN": "docker-client-$(hostname)",
+    "hosts": [
+        "$(hostname)"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "Santa Clara",
+            "O": "Axway",
+            "OU": "AMP",
+            "ST": "California"
+        }
+    ]
+}
+EOF
+    docker run --rm -v $PWD/certs:/csr ${CFSSL_IMAGE}:${CFSSL_VERSION} gencert -remote=$CA_URL -profile client /csr/keyrequest.json > response.json || return 1
+    jq -r .cert < response.json > $DOCKER_CERT_PATH/cert.pem
+    jq -r .key < response.json > $DOCKER_CERT_PATH/key.pem
+    rm $_csr
+  fi
+  # one last check on the content of the keys and certs
+  for f in ca.pem cert.pem key.pem; do
+    echo "Checking integrity of $f"
+    grep -q -- '-----BEGIN' "$DOCKER_CERT_PATH/$f" || return 1
+  done
+}
+
+# prepare the docker client for TLS connections
+_secure_client() {
+  unset DOCKER_TLS_VERIFY
+  if [[ -z "$CA_URL" ]]; then
+    return 0
+  fi
+  # the docker remote API is not enabled on the worker nodes, so TLS is not set. Only on the remote manager nodes.
+  export DOCKER_CERT_PATH
+  DOCKER_TLS_VERIFY_MANAGER=1
+}
+
 _get_worker_join_token(){
   local _manager=$1
   local _loop=0
   local _timeout=900
   local _token
+  [[ -n "$DOCKER_TLS_VERIFY_MANAGER" ]] && export DOCKER_TLS_VERIFY=1
   echo "retrieving the swarm worker token (will timeout after $_timeout s)" >&2
   SECONDS=0
   while [[ $SECONDS -lt $_timeout ]]; do
-    _token=$(docker -H "$_manager:2375" swarm join-token -q worker)
+    _token=$(docker -H "$_manager:$ENGINE_API_PORT" swarm join-token -q worker)
     if [[ $? -eq 0 && -n "$_token" ]]; then
       echo "worker token obtained ($SECONDS s)" >&2
       echo $_token
+      unset DOCKER_TLS_VERIFY
       return 0
     fi
     sleep 2
@@ -224,14 +289,18 @@ _label_node(){
   local _manager=$1
   local _self
   local _publicip
+  echo "labeling node" >&2
   _self=$(docker info -f '{{.Swarm.NodeID}}') || return 1
   _publicip=$(curl -sf 169.254.169.254/latest/meta-data/public-ipv4) || return 1
+  # in case TLS has been enabled on the manager, we should force it for the client
+  [[ -n "$DOCKER_TLS_VERIFY_MANAGER" ]] && export DOCKER_TLS_VERIFY=1
   echo "applying label PublicIP=$_publicip" >&2
-  docker -H "$_manager" node update --label-add "PublicIP=$_publicip" "$_self" >/dev/null || return 1
+  docker -H "$_manager:$ENGINE_API_PORT" node update --label-add "PublicIP=$_publicip" "$_self" >/dev/null|| return 1
   for _label in $LABELS; do
     echo "applying label $_label" >&2
-    docker -H "$_manager" node update --label-add "${_label}" "$_self" >/dev/null || return 1
+    docker -H "$_manager:$ENGINE_API_PORT" node update --label-add "${_label}" "$_self" >/dev/null || return 1
   done
+  unset DOCKER_TLS_VERIFY
 }
 
 _get_node_ip(){
@@ -243,6 +312,7 @@ _get_node_ip(){
 _smoke_test(){
   local _state
   SECONDS=0
+  unset DOCKER_TLS_VERIFY
   while [[ $SECONDS -lt 10 ]]; do
     _state=$(docker info -f '{{.Swarm.LocalNodeState}}')
     [[ "x$_state" = "xactive" ]] && return 0
@@ -272,6 +342,8 @@ _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
 _set_log_rotation "10m" "3" || exit 1
 _set_metrics_address "bridge" "9323" || exit 1
 _restart_docker || exit 1
+_gen_cert || exit 1
+_secure_client || exit 1
 _swarm_join "$LEADER" || exit 1
 _label_node "$LEADER" || exit 1
 _configure_system_prune || exit 1
