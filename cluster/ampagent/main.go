@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/appcelerator/amp/cluster/ampagent/cmd"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -18,18 +17,7 @@ var (
 
 func main() {
 	log.Printf("ampctl (version: %s, build: %s)\n", Version, Build)
-	rootCmd := &cobra.Command{
-		Use:   "ampctl",
-		Short: "Run commands in target amp cluster",
-		RunE: func(command *cobra.Command, args []string) error {
-			// perform checks and install by default when no sub-command is specified
-			if err := cmd.Checks(command, []string{}); err != nil {
-				return err
-			}
-			return cmd.Install(command, args)
-		},
-	}
-
+	rootCmd := cmd.NewRootCommand()
 	rootCmd.AddCommand(cmd.NewChecksCommand())
 	rootCmd.AddCommand(cmd.NewInstallCommand())
 	rootCmd.AddCommand(cmd.NewUninstallCommand())

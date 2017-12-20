@@ -39,10 +39,6 @@ func Checks(cmd *cobra.Command, args []string) error {
 	if !checksOpts.version && !checksOpts.labels && !checksOpts.scheduling {
 		checksOpts.all = true
 	}
-	Docker = ampdocker.NewEnvClient()
-	if err := Docker.Connect(); err != nil {
-		return err
-	}
 	if checksOpts.version || checksOpts.all {
 		if err := VerifyDockerVersion(); err != nil {
 			log.Println("Version test: FAIL")
