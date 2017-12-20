@@ -1,12 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
-	"fmt"
-
-	"docker.io/go-docker"
-	"docker.io/go-docker/api"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/versions"
 	ampdocker "github.com/appcelerator/amp/pkg/docker"
@@ -71,11 +68,11 @@ func Checks(cmd *cobra.Command, args []string) error {
 }
 
 func VerifyDockerVersion() error {
-	c, err := docker.NewClient(ampdocker.DefaultURL, ampdocker.DefaultVersion, nil, nil)
+	c := Docker.GetClient()
+	version, err := c.ServerVersion(context.Background())
 	if err != nil {
 		return err
 	}
-	version, err := c.ServerVersion(context.Background())
 	apiVersion := version.APIVersion
 	if versions.LessThan(apiVersion, ampdocker.MinVersion) {
 		log.Printf("Docker engine version %s\n", version.Version)
@@ -90,10 +87,7 @@ func VerifyLabels() error {
 	expectedLabels := []string{"amp.type.api=true", "amp.type.route=true", "amp.type.core=true", "amp.type.metrics=true",
 		"amp.type.search=true", "amp.type.mq=true", "amp.type.kv=true", "amp.type.user=true"}
 	missingLabel := false
-	c, err := docker.NewClient(ampdocker.DefaultURL, api.DefaultVersion, nil, nil)
-	if err != nil {
-		return err
-	}
+	c := Docker.GetClient()
 	nodes, err := c.NodeList(context.Background(), types.NodeListOptions{})
 	if err != nil {
 		return err

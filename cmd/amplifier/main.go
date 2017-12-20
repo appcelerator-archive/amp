@@ -6,7 +6,6 @@ import (
 	"github.com/appcelerator/amp/cmd/amplifier/server"
 	"github.com/appcelerator/amp/cmd/amplifier/server/configuration"
 	"github.com/appcelerator/amp/data/storage/etcd"
-	"github.com/appcelerator/amp/pkg/docker"
 	"github.com/appcelerator/amp/pkg/elasticsearch"
 	"github.com/appcelerator/amp/pkg/mail"
 	"github.com/appcelerator/amp/pkg/nats-streaming"
@@ -52,8 +51,6 @@ func main() {
 		EtcdEndpoints:    []string{etcd.DefaultEndpoint},
 		ElasticsearchURL: elasticsearch.DefaultURL,
 		NatsURL:          ns.DefaultURL,
-		DockerURL:        docker.DefaultURL,
-		DockerVersion:    docker.DefaultVersion,
 		Registration:     configuration.RegistrationDefault,
 		Notifications:    configuration.NotificationsDefault,
 	}
