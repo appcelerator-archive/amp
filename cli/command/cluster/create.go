@@ -18,18 +18,19 @@ func NewCreateCommand(c cli.Interface) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&opts.name, "name", "", "Cluster Label")
-	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
+
+	// global flags
 	flags.StringVar(&opts.provider, "provider", "local", "Cluster provider (\"local\" (default) or \"aws\")")
-	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
 	flags.StringVarP(&opts.tag, "tag", "t", c.Version(), "Specify tag for cluster plugin image")
+	flags.BoolVarP(&opts.notifications, "notifications", "n", false, "Enable/disable server notifications (default is 'false')")
+	flags.StringVarP(&opts.registration, "registration", "r", configuration.RegistrationNone, "Specify the registration policy (possible values are 'none' or 'email')")
+	flags.BoolVar(&opts.noLogs, "no-logs", false, "Disable logs stack")
+	flags.BoolVar(&opts.noMetrics, "no-metrics", false, "Disable metrics stack")
+	flags.BoolVar(&opts.noProxy, "no-proxy", false, "Disable proxy stack")
 
 	// local options
 	flags.String("local-advertise-addr", "", "Swarm advertised address (format: <ip|interface>[:port])")
 	flags.Bool("local-force-new-cluster", false, "Force initialization of a new swarm")
-	flags.Bool("local-no-logs", false, "Don't deploy logs stack")
-	flags.Bool("local-no-metrics", false, "Don't deploy metrics stack")
-	flags.Bool("local-no-proxy", false, "Don't deploy proxy stack")
 
 	// aws options
 	flags.String("aws-onfailure", "", "'DO_NOTHING', 'ROLLBACK' (default), or 'DELETE")

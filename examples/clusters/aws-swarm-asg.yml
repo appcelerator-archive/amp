@@ -229,6 +229,27 @@ Parameters:
     Default: 8080
     MinValue: 1025
     MaxValue: 32768
+  NoLogs:
+    Type: String
+    Description: "Specify whether the logs stack should be deployed"
+    AllowedValues:
+    - true
+    - false
+    Default: false
+  NoMetrics:
+    Type: String
+    Description: "Specify whether the metrics stack should be deployed"
+    AllowedValues:
+    - true
+    - false
+    Default: false
+  NoProxy:
+    Type: String
+    Description: "Specify whether the proxy stack should be deployed"
+    AllowedValues:
+    - true
+    - false
+    Default: false
 
 Conditions:
   InstallApplicationCond: !Or [ !Equals [ !Ref InstallApplication, "yes" ], !Equals [ !Ref InstallApplication, "true" ] ]
@@ -1192,7 +1213,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.api=true amp.type.route=true amp.type.metrics=true" /usr/local/bin/userdata-aws-manager || shutdown -h
+                - SYNC=true SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" NO_LOGS="${NoLogs}" NO_METRICS="${NoMetrics}" NO_PROXY="${NoProxy}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.api=true amp.type.route=true amp.type.metrics=true" /usr/local/bin/userdata-aws-manager || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ] }
   ManagerInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer

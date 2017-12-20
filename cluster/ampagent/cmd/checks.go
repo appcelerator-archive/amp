@@ -38,7 +38,7 @@ func NewChecksCommand() *cobra.Command {
 }
 
 func Checks(cmd *cobra.Command, args []string) error {
-	// if zero tests have been explicitely asked, run them all
+	// if zero tests have been explicitly asked, run them all
 	if !checksOpts.version && !checksOpts.labels && !checksOpts.scheduling {
 		checksOpts.all = true
 	}

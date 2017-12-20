@@ -165,20 +165,14 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 			fmt.Sprintf("TAG=%s", opts.Tag),
 			fmt.Sprintf("REGISTRATION=%s", opts.Registration),
 			fmt.Sprintf("NOTIFICATIONS=%t", opts.Notifications),
+			fmt.Sprintf("NO_LOGS=%t", opts.NoLogs),
+			fmt.Sprintf("NO_METRICS=%t", opts.NoMetrics),
+			fmt.Sprintf("NO_PROXY=%t", opts.NoProxy),
 		},
 		Labels: ContainerLabels,
 		Tty:    false,
 	}
 	var actionArgs []string
-	if opts.NoLogs {
-		actionArgs = append(actionArgs, "--no-logs")
-	}
-	if opts.NoMetrics {
-		actionArgs = append(actionArgs, "--no-metrics")
-	}
-	if opts.NoProxy {
-		actionArgs = append(actionArgs, "--no-proxy")
-	}
 	switch action {
 	case "install":
 		action = ""

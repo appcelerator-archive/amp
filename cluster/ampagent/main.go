@@ -34,15 +34,19 @@ func main() {
 	rootCmd.AddCommand(cmd.NewInstallCommand())
 	rootCmd.AddCommand(cmd.NewUninstallCommand())
 
-	// These flags pertain to install, but need to be enabled here at root and persist for when it is invoked with no subcommand
-	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoLogs, "no-logs", false, "Don't deploy logs stack")
-	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
-	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
-
-	// Environment variables
 	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version
 		os.Setenv("TAG", Version)
 	}
+	if val, ok := os.LookupEnv("NO_LOGS"); ok && val == "true" {
+		cmd.InstallOpts.NoLogs = true
+	}
+	if val, ok := os.LookupEnv("NO_METRICS"); ok && val == "true" {
+		cmd.InstallOpts.NoMetrics = true
+	}
+	if val, ok := os.LookupEnv("NO_PROXY"); ok && val == "true" {
+		cmd.InstallOpts.NoProxy = true
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("Error: %s\n", err)
 	}

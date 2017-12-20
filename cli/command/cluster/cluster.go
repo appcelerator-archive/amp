@@ -24,6 +24,9 @@ type clusterOpts struct {
 	tag           string
 	registration  string
 	notifications bool
+	noLogs        bool
+	noMetrics     bool
+	noProxy       bool
 }
 
 var (
@@ -98,6 +101,15 @@ func runPluginCommand(c cli.Interface, cmd *cobra.Command, command string) error
 	}
 	if opts.notifications {
 		env["NOTIFICATIONS"] = strconv.FormatBool(opts.notifications)
+	}
+	if opts.noLogs {
+		env["NO_LOGS"] = strconv.FormatBool(opts.noLogs)
+	}
+	if opts.noMetrics {
+		env["NO_METRICS"] = strconv.FormatBool(opts.noMetrics)
+	}
+	if opts.noProxy {
+		env["NO_PROXY"] = strconv.FormatBool(opts.noProxy)
 	}
 
 	args = append(args, command)
